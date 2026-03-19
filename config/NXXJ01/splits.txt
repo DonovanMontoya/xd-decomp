@@ -143,7 +143,7 @@ game/dbgMenuToolBattle.cpp:
 game/menuKeyDisc.cpp:
 	.text       start:0x8000E61C end:0x8000E64C
 
-PowerPC_EABI_Support/Runtime/Src/global_destructor_chain.c:
+PowerPC_EABI_Support/Runtime/Src/global_destructor_chain.s:
 	.text       start:0x8000E64C end:0x8000E694
 	.sbss       start:0x804CB480 end:0x804CB488
 
@@ -1224,18 +1224,18 @@ runtime_libs/gamedev/cust_connection/utils/common/MWTrace.c:
 runtime_libs/gamedev/cust_connection/utils/gc/MWCriticalSection_gc.c:
 	.text       start:0x800D83D8 end:0x800D8430
 
-PowerPC_EABI_Support/Runtime/Src/__va_arg.c:
+PowerPC_EABI_Support/Runtime/Src/__va_arg.s:
 	.text       start:0x800D8430 end:0x800D84F8
 
-PowerPC_EABI_Support/Runtime/Src/CPlusLibPPC.cp:
+PowerPC_EABI_Support/Runtime/Src/CPlusLibPPC.s:
 	.text       start:0x800D84F8 end:0x800D8528
 
-PowerPC_EABI_Support/Runtime/Src/NMWException.cp:
+PowerPC_EABI_Support/Runtime/Src/NMWException.s:
 	extab       start:0x80005600 end:0x80005640
 	extabindex  start:0x80005640 end:0x80005670
 	.text       start:0x800D8528 end:0x800D885C
 
-PowerPC_EABI_Support/Runtime/Src/runtime.c:
+PowerPC_EABI_Support/Runtime/Src/runtime.s:
 	.text       start:0x800D885C end:0x800D908C
 	.rodata     start:0x802E99A0 end:0x802E99B8
 
@@ -1245,11 +1245,11 @@ PowerPC_EABI_Support/Runtime/Src/__init_cpp_exceptions.cpp:
 	.dtors      start:0x802E7000 end:0x802E7004
 	.sdata      start:0x804C9088 end:0x804C9090
 
-PowerPC_EABI_Support/Runtime/Src/Gecko_ExceptionPPC.cp:
+PowerPC_EABI_Support/Runtime/Src/Gecko_ExceptionPPC.s:
 	.text       start:0x800D90FC end:0x800D9164
 	.bss        start:0x80423488 end:0x80423498
 
-PowerPC_EABI_Support/Runtime/Src/GCN_mem_alloc.c:
+PowerPC_EABI_Support/Runtime/Src/GCN_mem_alloc.s:
 	.text       start:0x800D9164 end:0x800D921C
 	.rodata     start:0x802E99B8 end:0x802E9A30
 
@@ -1284,7 +1284,7 @@ PowerPC_EABI_Support/MSL_C/MSL_Common/Src/arith.c:
 PowerPC_EABI_Support/MSL_C/MSL_Common/Src/buffer_io.c:
 	.text       start:0x800DCEC4 end:0x800DCFBC
 
-PowerPC_EABI_Support/MSL_C/PPC_EABI/Src/critical_regions.gamecube.c:
+PowerPC_EABI_Support/MSL_C/PPC_EABI/Src/critical_regions.gamecube.s:
 	.text       start:0x800DCFBC end:0x800DCFC8
 
 PowerPC_EABI_Support/MSL_C/MSL_Common/Src/ctype.c:
@@ -1348,7 +1348,7 @@ PowerPC_EABI_Support/MSL_C/MSL_Common/Src/strtoul.c:
 PowerPC_EABI_Support/MSL_C/MSL_Common/Src/wchar_io.c:
 	.text       start:0x800E1A38 end:0x800E1AC0
 
-PowerPC_EABI_Support/MSL_C/PPC_EABI/Src/uart_console_io_gcn.c:
+PowerPC_EABI_Support/MSL_C/PPC_EABI/Src/uart_console_io_gcn.s:
 	.text       start:0x800E1AC0 end:0x800E1B90
 	.sbss       start:0x804CBC38 end:0x804CBC40
 
@@ -1445,19 +1445,19 @@ PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_tan.c:
 	.text       start:0x800E5200 end:0x800E5278
 	.sdata2     start:0x804CE030 end:0x804CE038
 
-PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_acos.c:
+PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_acos.s:
 	.text       start:0x800E5278 end:0x800E5298
 
-PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_asin.c:
+PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_asin.s:
 	.text       start:0x800E5298 end:0x800E52B8
 
-PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_atan2.c:
+PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_atan2.s:
 	.text       start:0x800E52B8 end:0x800E52D8
 
-PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_exp.c:
+PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_exp.s:
 	.text       start:0x800E52D8 end:0x800E52F8
 
-PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_fmod.c:
+PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_fmod.s:
 	.text       start:0x800E52F8 end:0x800E5318
 
 PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_log.c:
@@ -1466,11 +1466,11 @@ PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_log.c:
 PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_pow.c:
 	.text       start:0x800E5338 end:0x800E5358
 
-PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_sqrt.c:
+PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_sqrt.s:
 	.text       start:0x800E5358 end:0x800E557C
 	.sdata2     start:0x804CE038 end:0x804CE040
 
-PowerPC_EABI_Support/MSL_C/PPC_EABI/Src/math_ppc.c:
+PowerPC_EABI_Support/MSL_C/PPC_EABI/Src/math_ppc.s:
 	.text       start:0x800E557C end:0x800E575C
 	.sdata2     start:0x804CE040 end:0x804CE060
 

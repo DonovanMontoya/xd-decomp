@@ -1,0 +1,76 @@
+.include "macros.inc"
+.file "uart_console_io_gcn.c"
+
+# 0x800E32C0..0x800E3390 | size: 0xD0
+.text
+.balign 4
+
+# .text:0x0 | 0x800E32C0 | size: 0xD0
+.fn __write_console, weak
+/* 800E32C0 000E0220  94 21 FF E0 */	stwu r1, -0x20(r1)
+/* 800E32C4 000E0224  7C 08 02 A6 */	mflr r0
+/* 800E32C8 000E0228  90 01 00 24 */	stw r0, 0x24(r1)
+/* 800E32CC 000E022C  93 E1 00 1C */	stw r31, 0x1c(r1)
+/* 800E32D0 000E0230  7C DF 33 78 */	mr r31, r6
+/* 800E32D4 000E0234  93 C1 00 18 */	stw r30, 0x18(r1)
+/* 800E32D8 000E0238  7C BE 2B 78 */	mr r30, r5
+/* 800E32DC 000E023C  93 A1 00 14 */	stw r29, 0x14(r1)
+/* 800E32E0 000E0240  7C 9D 23 78 */	mr r29, r4
+/* 800E32E4 000E0244  93 81 00 10 */	stw r28, 0x10(r1)
+/* 800E32E8 000E0248  7C 7C 1B 78 */	mr r28, r3
+/* 800E32EC 000E024C  4B FC 64 E9 */	bl OSGetConsoleType
+/* 800E32F0 000E0250  54 60 00 85 */	rlwinm. r0, r3, 0, 2, 2
+/* 800E32F4 000E0254  40 82 00 64 */	bne .L_800E3358
+/* 800E32F8 000E0258  80 0D B0 60 */	lwz r0, initialized$60@sda21(r0)
+/* 800E32FC 000E025C  38 60 00 00 */	li r3, 0x0
+/* 800E3300 000E0260  2C 00 00 00 */	cmpwi r0, 0x0
+/* 800E3304 000E0264  40 82 00 20 */	bne .L_800E3324
+/* 800E3308 000E0268  3C 60 00 01 */	lis r3, 0x1
+/* 800E330C 000E026C  38 63 E1 00 */	subi r3, r3, 0x1f00
+/* 800E3310 000E0270  48 00 64 D5 */	bl InitializeUART
+/* 800E3314 000E0274  2C 03 00 00 */	cmpwi r3, 0x0
+/* 800E3318 000E0278  40 82 00 0C */	bne .L_800E3324
+/* 800E331C 000E027C  38 00 00 01 */	li r0, 0x1
+/* 800E3320 000E0280  90 0D B0 60 */	stw r0, initialized$60@sda21(r0)
+.L_800E3324:
+/* 800E3324 000E0284  2C 03 00 00 */	cmpwi r3, 0x0
+/* 800E3328 000E0288  41 82 00 0C */	beq .L_800E3334
+/* 800E332C 000E028C  38 60 00 01 */	li r3, 0x1
+/* 800E3330 000E0290  48 00 00 40 */	b .L_800E3370
+.L_800E3334:
+/* 800E3334 000E0294  80 9E 00 00 */	lwz r4, 0x0(r30)
+/* 800E3338 000E0298  7F A3 EB 78 */	mr r3, r29
+/* 800E333C 000E029C  48 00 65 19 */	bl WriteUARTN
+/* 800E3340 000E02A0  2C 03 00 00 */	cmpwi r3, 0x0
+/* 800E3344 000E02A4  41 82 00 14 */	beq .L_800E3358
+/* 800E3348 000E02A8  38 00 00 00 */	li r0, 0x0
+/* 800E334C 000E02AC  38 60 00 01 */	li r3, 0x1
+/* 800E3350 000E02B0  90 1E 00 00 */	stw r0, 0x0(r30)
+/* 800E3354 000E02B4  48 00 00 1C */	b .L_800E3370
+.L_800E3358:
+/* 800E3358 000E02B8  7F 83 E3 78 */	mr r3, r28
+/* 800E335C 000E02BC  7F A4 EB 78 */	mr r4, r29
+/* 800E3360 000E02C0  7F C5 F3 78 */	mr r5, r30
+/* 800E3364 000E02C4  7F E6 FB 78 */	mr r6, r31
+/* 800E3368 000E02C8  4B FF 5D 69 */	bl __TRK_write_console
+/* 800E336C 000E02CC  38 60 00 00 */	li r3, 0x0
+.L_800E3370:
+/* 800E3370 000E02D0  80 01 00 24 */	lwz r0, 0x24(r1)
+/* 800E3374 000E02D4  83 E1 00 1C */	lwz r31, 0x1c(r1)
+/* 800E3378 000E02D8  83 C1 00 18 */	lwz r30, 0x18(r1)
+/* 800E337C 000E02DC  83 A1 00 14 */	lwz r29, 0x14(r1)
+/* 800E3380 000E02E0  83 81 00 10 */	lwz r28, 0x10(r1)
+/* 800E3384 000E02E4  7C 08 03 A6 */	mtlr r0
+/* 800E3388 000E02E8  38 21 00 20 */	addi r1, r1, 0x20
+/* 800E338C 000E02EC  4E 80 00 20 */	blr
+.endfn __write_console
+
+# 0x804EAE80..0x804EAE88 | size: 0x8
+.section .sbss, "wa", @nobits
+.balign 8
+
+# .sbss:0x0 | 0x804EAE80 | size: 0x4
+.obj initialized$60, local
+	.skip 0x4
+.endobj initialized$60
+	.skip 0x4
