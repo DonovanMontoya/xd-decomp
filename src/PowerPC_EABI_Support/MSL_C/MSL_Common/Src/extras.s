@@ -1,0 +1,51 @@
+.include "macros.inc"
+.file "extras.c"
+
+# 0x800E6F7C..0x800E7008 | size: 0x8C
+.text
+.balign 4
+
+# .text:0x0 | 0x800E6F7C | size: 0x8C
+.fn stricmp, global
+/* 800E6F7C 000E3EDC  88 03 00 00 */	lbz r0, 0x0(r3)
+/* 800E6F80 000E3EE0  38 63 00 01 */	addi r3, r3, 0x1
+/* 800E6F84 000E3EE4  7C 00 07 74 */	extsb r0, r0
+/* 800E6F88 000E3EE8  2C 00 FF FF */	cmpwi r0, -0x1
+/* 800E6F8C 000E3EEC  40 82 00 0C */	bne .L_800E6F98
+/* 800E6F90 000E3EF0  38 A0 FF FF */	li r5, -0x1
+/* 800E6F94 000E3EF4  48 00 00 14 */	b .L_800E6FA8
+.L_800E6F98:
+/* 800E6F98 000E3EF8  3C A0 80 3D */	lis r5, __lower_map@ha
+/* 800E6F9C 000E3EFC  54 00 06 3E */	clrlwi r0, r0, 24
+/* 800E6FA0 000E3F00  38 A5 48 08 */	addi r5, r5, __lower_map@l
+/* 800E6FA4 000E3F04  7C A5 00 AE */	lbzx r5, r5, r0
+.L_800E6FA8:
+/* 800E6FA8 000E3F08  88 04 00 00 */	lbz r0, 0x0(r4)
+/* 800E6FAC 000E3F0C  7C A6 07 74 */	extsb r6, r5
+/* 800E6FB0 000E3F10  38 84 00 01 */	addi r4, r4, 0x1
+/* 800E6FB4 000E3F14  7C 00 07 74 */	extsb r0, r0
+/* 800E6FB8 000E3F18  2C 00 FF FF */	cmpwi r0, -0x1
+/* 800E6FBC 000E3F1C  40 82 00 0C */	bne .L_800E6FC8
+/* 800E6FC0 000E3F20  38 00 FF FF */	li r0, -0x1
+/* 800E6FC4 000E3F24  48 00 00 14 */	b .L_800E6FD8
+.L_800E6FC8:
+/* 800E6FC8 000E3F28  3C A0 80 3D */	lis r5, __lower_map@ha
+/* 800E6FCC 000E3F2C  54 00 06 3E */	clrlwi r0, r0, 24
+/* 800E6FD0 000E3F30  38 A5 48 08 */	addi r5, r5, __lower_map@l
+/* 800E6FD4 000E3F34  7C 05 00 AE */	lbzx r0, r5, r0
+.L_800E6FD8:
+/* 800E6FD8 000E3F38  7C 00 07 74 */	extsb r0, r0
+/* 800E6FDC 000E3F3C  7C 06 00 00 */	cmpw r6, r0
+/* 800E6FE0 000E3F40  40 80 00 0C */	bge .L_800E6FEC
+/* 800E6FE4 000E3F44  38 60 FF FF */	li r3, -0x1
+/* 800E6FE8 000E3F48  4E 80 00 20 */	blr
+.L_800E6FEC:
+/* 800E6FEC 000E3F4C  40 81 00 0C */	ble .L_800E6FF8
+/* 800E6FF0 000E3F50  38 60 00 01 */	li r3, 0x1
+/* 800E6FF4 000E3F54  4E 80 00 20 */	blr
+.L_800E6FF8:
+/* 800E6FF8 000E3F58  7C C0 07 75 */	extsb. r0, r6
+/* 800E6FFC 000E3F5C  40 82 FF 80 */	bne stricmp
+/* 800E7000 000E3F60  38 60 00 00 */	li r3, 0x0
+/* 800E7004 000E3F64  4E 80 00 20 */	blr
+.endfn stricmp
