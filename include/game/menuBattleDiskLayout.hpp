@@ -21,7 +21,8 @@ struct tagSPRITE_WORK {
     s16 id;                 // 0x06
     u8 reserved8[0x44];
     s32 value4C;            // 0x4C
-    u8 reserved50[4];
+    s16 baseX;
+    s16 baseY;
     s16 x;                  // 0x54
     s16 y;                  // 0x56
 };
@@ -33,7 +34,9 @@ struct BDiskMenuItem {
     u8 reserved1[5];
     s16 x;                  // 0x06
     s16 y;                  // 0x08
-    u8 reservedA[0xE];
+    s16 width;
+    s16 height;
+    u8 reservedE[0xA];
     s16 next;               // 0x18
 };
 
@@ -42,10 +45,12 @@ struct BDiskMenuData {
     s16 first;              // 0x06
 };
 
+struct Pokemon;
 struct Hero {
     u8 reserved0[0x978];
     Hero();
     static Hero* getHeroPtr();
+    Pokemon* getPokemon(long);
 };
 
 
@@ -83,7 +88,9 @@ struct BDisk {
     u8 unk16;                   // 0x16
     u8 selectedID;              // 0x17
     u16 result;                 // 0x18
-    u8 reserved1A[6];
+    u16 currentFrame;
+    u16 endFrame;
+    u8 reserved1E[2];
     f32 slide;                  // 0x20
     s32 field24;                // 0x24
     u8 entries[0x5A0];      // 0x28 (BDiskEntry rows, stride 0x18)

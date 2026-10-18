@@ -35,8 +35,8 @@ struct MenuOrreKey {
     u16 unk4;
 };
 struct MenuOrreItem {
-    u8 reserved0[0xA];
-    s16 unkA;
+    u8 reserved0[6];
+    s16 x,y,unkA,height;
 };
 MenuOrreKey *windowGetKeyInfo(void);
 u16 *heroBiosGetNamePtr(Hero *);
@@ -44,7 +44,7 @@ void msgctrlSetValue(s32, void *);
 MenuOrreItem *menuItemBiosGetPtr(s32, s16);
 u32 GSmsgGetRect(s32);
 s32 winSpriteGetLayerID(tagWINDOW_WORK *, tagSPRITE_WORK *);
-void GSmsgPrint2(s32, s16, s16, u32, s32);
+void GSmsgPrint2(s32, s32, s32, u32, s32);
 s32 fightTrainerDB_GetName(u16);
 void *GSmsgGetGSchar(u16);
 void windowDrawSprite2(s16, s16, s16, s16, u32, tagWINDOW_WORK *, u16, s32, s32);
@@ -387,7 +387,7 @@ s32 menuOrre::Hook(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite)
         msgctrlSetValue(0x37, heroBiosGetNamePtr(GetHeroPtr(0)));
         item = menuItemBiosGetPtr(0xFD, sprite->unk6);
         rect = GSmsgGetRect(0x4276);
-        GSmsgPrint2(winSpriteGetLayerID(window, sprite), item->unkA - (rect >> 16), 0, window->unk93 | 0xFFFFFF00, 0x4276);
+        GSmsgPrint2(winSpriteGetLayerID(window, sprite), (s16)(item->unkA - (rect >> 16)), 0, window->unk93 | 0xFFFFFF00, 0x4276);
         break;
     }
     case 0x1A:
@@ -397,4 +397,265 @@ s32 menuOrre::Hook(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite)
         break;
     }
     return 0;
+}
+
+extern "C" {
+void GSmsgPrintRect(s32,s32,s32,s32,s32,u32,s32);
+void menuFaceDispFromID3(tagWINDOW_WORK *,tagSPRITE_WORK *,s32,s16 *,s16 *);
+}
+
+void menuOrre::LeftPanel(tagWINDOW_WORK *window,tagSPRITE_WORK *sprite) {
+    s16 ids[6]={1,2,3,4,5,6};
+    s16 position[2],size[2];
+    u16 index=0;
+    for(;index<6;++index)if(sprite->unk6==ids[index])break;
+    MenuOrreItem *frame=menuItemBiosGetPtr(0xFD,sprite->unk6);
+    windowDrawSprite2(0,0,frame->unkA,frame->height,window->unk93|0xFFFFFF00,window,0x31B,0,winSpriteGetLayerID(window,sprite));
+    MenuOrreItem *name=menuItemBiosGetPtr(0xFD,37);
+    u16 *nickname=GetTemochiPokemonName(index);
+    msgctrlSetValue(0x37,nickname);
+    GSmsgPrintRect(winSpriteGetLayerID(window,sprite),name->x,name->y,sprite->unk54,sprite->unk56,window->unk93|0xFFFFFF00,0x4277);
+    MenuOrreItem *level=menuItemBiosGetPtr(0xFD,38);
+    GSmsgPrint2(winSpriteGetLayerID(window,sprite),level->x,level->y+2,window->unk93|0xFFFFFF00,0x42C1);
+    u32 rect=GSmsgGetRect(0x42C1);
+    u8 pokemonLevel=GetTemochiPokemonLevel(index);
+    msgctrlSetValue(0x5F,(void *)pokemonLevel);
+    s32 layer=winSpriteGetLayerID(window,sprite);
+    s32 x=level->x;
+    x+=(s16)(rect>>16);
+    x+=4;
+    GSmsgPrintRect(layer,x,level->y+2,sprite->unk54,sprite->unk56,window->unk93|0xFFFFFF00,0x4352);
+    u32 sex=GetTemochiPokemonSex(index);
+    MenuOrreItem *gender=menuItemBiosGetPtr(0xFD,39);
+    u32 message;
+    switch((u8)sex) {case 0:message=0x9C5;break;case 1:message=0x9C6;break;case 2:default:message=0;break;}
+    if(message!=0)GSmsgPrint2(winSpriteGetLayerID(window,sprite),gender->x+18,gender->y,window->unk93|0xFFFFFF00,message);
+    if((u16)GetTemochiPokemonMochimono(index)!=0) {
+        MenuOrreItem *item=menuItemBiosGetPtr(0xFD,36);
+        windowDrawSprite2(item->x,item->y,item->unkA,item->height,window->unk93|0xFFFFFF00,window,0x14B,0,winSpriteGetLayerID(window,sprite));
+    }
+    MenuOrreItem *face=menuItemBiosGetPtr(0xFD,34);
+    position[0]=face->x;position[1]=face->y;size[0]=face->unkA;size[1]=face->height;
+    s32 faceId=GetTemochiPokemonFaceID(index);
+    menuFaceDispFromID3(window,sprite,faceId,size,position);
+}
+
+void menuOrre::RightPanel(tagWINDOW_WORK *window,tagSPRITE_WORK *sprite) {
+    s16 ids[6]={7,8,9,10,11,12};
+    s16 position[2],size[2];
+    u16 index=0;
+    for(;index<6;++index)if(sprite->unk6==ids[index])break;
+    MenuOrreItem *frame=menuItemBiosGetPtr(0xFD,sprite->unk6);
+    windowDrawSprite2(0,0,frame->unkA,frame->height,window->unk93|0xFFFFFF00,window,0x31B,0,winSpriteGetLayerID(window,sprite));
+    MenuOrreItem *name=menuItemBiosGetPtr(0xFD,31);
+    u16 *nickname=GetDeckPokemonName(index);
+    msgctrlSetValue(0x37,nickname);
+    GSmsgPrintRect(winSpriteGetLayerID(window,sprite),name->x,name->y,sprite->unk54,sprite->unk56,window->unk93|0xFFFFFF00,0x4277);
+    MenuOrreItem *level=menuItemBiosGetPtr(0xFD,32);
+    GSmsgPrint2(winSpriteGetLayerID(window,sprite),level->x,level->y+2,window->unk93|0xFFFFFF00,0x42C1);
+    u32 rect=GSmsgGetRect(0x42C1);
+    u8 pokemonLevel=GetDeckPokemonLevel(index);
+    msgctrlSetValue(0x5F,(void *)pokemonLevel);
+    s32 layer=winSpriteGetLayerID(window,sprite);
+    s32 x=level->x;
+    x+=(s16)(rect>>16);
+    x+=4;
+    GSmsgPrintRect(layer,x,level->y+2,sprite->unk54,sprite->unk56,window->unk93|0xFFFFFF00,0x4352);
+    u32 sex=GetDeckPokemonSex(index);
+    MenuOrreItem *gender=menuItemBiosGetPtr(0xFD,33);
+    u32 message;
+    switch((u8)sex) {case 0:message=0x9C5;break;case 1:message=0x9C6;break;case 2:default:message=0;break;}
+    if(message!=0)GSmsgPrint2(winSpriteGetLayerID(window,sprite),gender->x+18,gender->y,window->unk93|0xFFFFFF00,message);
+    if((u16)GetDeckPokemonMochimono(index)!=0) {
+        MenuOrreItem *item=menuItemBiosGetPtr(0xFD,30);
+        windowDrawSprite2(item->x,item->y,item->unkA,item->height,window->unk93|0xFFFFFF00,window,0x14B,0,winSpriteGetLayerID(window,sprite));
+    }
+    MenuOrreItem *face=menuItemBiosGetPtr(0xFD,28);
+    position[0]=face->x;position[1]=face->y;size[0]=face->unkA;size[1]=face->height;
+    s32 faceId=GetDeckPokemonFaceID(index);
+    menuFaceDispFromID3(window,sprite,faceId,size,position);
+}
+extern "C" {
+s32 windowGetActiveID();
+tagWINDOW_WORK *windowSearchID(s32);
+void winSpriteSetDisp(tagSPRITE_WORK *,u8);
+u32 FlashSystemGetEndFrame(u32);
+u32 FlashSystemGetNowFrame(u32);
+void FlashSystemSetPlayFrameLabel(u32,const char *,const char *);
+void winSeqSetMenu(s32,u32);
+s32 HSD_Rand();
+f32 timeGetLastFrameSec();
+}
+extern "C" double sin(double);
+void menuOrre::ControlCursor(tagWINDOW_WORK *window,tagSPRITE_WORK *sprite) {
+    MenuOrrePos pos=window->unk9C;
+    s32 ids[6]={13,14,15,16,17,18};
+    s16 i=0;
+    for(;i<6;++i)if(sprite->unk6==ids[i])break;
+    if(i==pos.b) {
+        if(window==windowSearchID(windowGetActiveID())) {
+            s32 frame=unk10%60;
+            sprite->color.value=0xFFFFFFFF;
+            if(frame<30) {
+                s32 alpha=sprite->color.channels.alpha-(s32)(128.0f*(f32)sin(3.14f*((f32)frame/30.0f)));
+                sprite->color.channels.alpha=alpha;
+            }
+        } else sprite->color.channels.alpha=255;
+        winSpriteSetDisp(sprite,1);
+        return;
+    }
+    winSpriteSetDisp(sprite,0);
+}
+void menuOrre::Ctrl(tagWINDOW_WORK *window) {
+    switch(window->phase) {
+    case 0:
+        if(window->step==0) {winSeqSetMenu(window->menu,0x24);window->step=1;}
+        break;
+    case 2:
+        if(unk16<4) {
+            u32 end=FlashSystemGetEndFrame(0x1F5B3000);
+            u8 finished;
+            if(FlashSystemGetNowFrame(0x1F5B3000)>=end)finished=1;else finished=0;
+            if(finished!=0) {
+                unk18-=timeGetLastFrameSec();
+                if(unk18<=0.0f) {
+                    u16 random=HSD_Rand();
+                    f32 delay=50.0f+(f32)(random%50);
+                    unk18=delay/100.0f;
+                    ++unk16;
+                    const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
+                    const char **pair=labels[(s16)unk16];
+                    FlashSystemSetPlayFrameLabel(0x1F5B3000,pair[0],pair[1]);
+                }
+            }
+        }
+        break;
+    case 3:
+        if(window->step==0)window->step=1;
+        break;
+    }
+    unk10=(s32)(60.0f*timeGetLastFrameSec()+(f32)unk10)%1000;
+}
+extern "C" {
+void menuFaceLoad(u32,s32 (*)(void *),void *);
+void menuOpen(s32,s32);
+void GSthreadSwitch();
+u8 FlashSystemIsLastFrame(u32);
+s32 menuOpenCustom(s32,s32,s32 *,s32,s32,s32);
+void FlashSystemSetNowFrame(u32,u32,u32);
+u32 FlashSystemGetFrameFromLabel(u32,const char *);
+void menuClose(s32);
+void menuCloseSync(s32,s32);
+void fadeSet(s32,f32);
+void menuPokemonStatusOpenFromPokemonChange(Pokemon *,Pokemon *(*)(Pokemon *,MENU_POKEMON_CB_TYPE,long),long);
+u8 menuFaceCheckLoading();
+void pokemonInit(Pokemon *);
+void pokemonBiosCopy(Pokemon *,Pokemon *);
+void fightSetMenuCtrlHero(Hero *);
+u16 fightEncount(u16);
+void GSfloorPop();
+}
+void menuOrre::Main() {
+    _loadFaceCount=0;
+    u8 battle=1;
+    menuFaceLoad(0,_loadPokemonCallBack,&_loadFaceCount);menuOpen(0xFF,0);
+    do {GSthreadSwitch();}while(FlashSystemIsLastFrame(0x1F5C3000)==0);
+    {
+        const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
+        FlashSystemSetPlayFrameLabel(0x1F5B3000,labels[0][0],labels[0][1]);
+    }
+    for(;;) {
+        unk18=1.0f;
+        u8 selecting=1;
+        {
+            const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
+            FlashSystemSetPlayFrameLabel(0x1F5A3000,labels[0][0],labels[0][1]);
+        }
+        do {
+            s32 cursor=unkE;
+            if(menuOpenCustom(0xFD,windowGetActiveID(),&cursor,0,1,0)>=0) {
+                u8 selected=0;
+                for(u16 i=0;i<4;++i)if(slots[i]==(s16)unkE) {selected=1;break;}
+                switch(SelectPokemon(unkE,selected)) {
+                case 0:
+                    if(selected!=0) {
+                        u8 removed;
+                        if(unk4!=0) {
+                            u16 i=0;
+                            for(;i<4;++i)if(slots[i]==unkE)break;
+                            --unk4;
+                            for(;i<3;++i)slots[i]=slots[i+1];
+                            {
+                                const char *labels[5]={"1_start","1_end","2_end","3_end","4_end"};
+                                FlashSystemSetNowFrame(0x1F5A3000,FlashSystemGetFrameFromLabel(0x1F5A3000,labels[unk4]),0x1F5A0000);
+                            }
+                            const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
+                            FlashSystemSetPlayFrameLabel(0x1F5A3000,labels[unk4][0],labels[unk4][1]);
+                            removed=1;
+                        } else removed=0;
+                        battle=removed;
+                    } else {
+                        u8 full=0;
+                        slots[unk4++]=unkE;
+                        if(unk4>=4)full=1;
+                        const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
+                        FlashSystemSetPlayFrameLabel(0x1F5A3000,labels[unk4][0],labels[unk4][1]);
+                        if(full==1)selecting=0;
+                    }
+                    break;
+                case 1:
+                    menuPokemonStatusOpenFromPokemonChange(GetTemochiPokemonPtr(unkE),_PokemonStatusDisp_CallBack,(long)&unkE);
+                    fadeSet(2,0.5f);
+                    break;
+                }
+            } else {
+                u8 removed;
+                if(unk4!=0) {
+                    slots[--unk4]=-1;
+                    {
+                        const char *labels[5]={"1_start","1_end","2_end","3_end","4_end"};
+                        FlashSystemSetNowFrame(0x1F5A3000,FlashSystemGetFrameFromLabel(0x1F5A3000,labels[unk4]),0x1F5A0000);
+                    }
+                    const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
+                    FlashSystemSetPlayFrameLabel(0x1F5A3000,labels[unk4][0],labels[unk4][1]);
+                    removed=1;
+                } else removed=0;
+                battle=removed;
+                if(removed==0)selecting=0;
+            }
+        }while(selecting!=0);
+        if(battle==0) {menuClose(0xFD);break;}
+        else {
+            u8 finished;
+            do {
+                GSthreadSwitch();
+                u32 end=FlashSystemGetEndFrame(0x1F5A3000);
+                if(FlashSystemGetNowFrame(0x1F5A3000)>=end)finished=1;else finished=0;
+            }while(finished==0);
+            if(ConfirmPokemon()==0) {
+                unk4=0;slots[0]=-1;slots[1]=-1;slots[2]=-1;slots[3]=-1;
+                continue;
+            }
+        }
+        break;
+    }
+    if(battle==1) {
+        while(menuFaceCheckLoading()!=0)GSthreadSwitch();
+        u8 finished;
+        do {
+            GSthreadSwitch();
+            u32 end=FlashSystemGetEndFrame(0x1F5B3000);
+            if(FlashSystemGetNowFrame(0x1F5B3000)>=end)finished=1;else finished=0;
+        }while(finished==0);
+        Hero *hero=fightGetMenuCtrlHero();
+        for(u16 i=0;i<6;++i)pokemonInit(heroBiosGetPokemonPtr(hero,i));
+        for(u16 i=0;i<4;++i) {
+            Pokemon *pokemon=GetTemochiPokemonPtr(slots[i]);
+            pokemonBiosCopy(heroBiosGetPokemonPtr(hero,i),pokemon);
+        }
+        fightSetMenuCtrlHero(fightGetMenuCtrlHero());
+        _fightresult=fightEncount(deckNumber);
+    }
+    menuCloseSync(0xFD,1);menuClose(0xFF);menuCloseSync(0xFF,1);
+    if(isPush!=0)GSfloorPop();
 }

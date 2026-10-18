@@ -8,6 +8,8 @@ struct _SHAPERECORD;
 struct _DEFINETEXT;
 struct _DEFINEFONT2;
 struct _DEFINESHAPE;
+struct _DEFINEMORPHSHAPE;
+struct _DEFINESPRITE;
 struct GStexture;
 struct GSgfxLayer;
 enum GSgfxLayerID { GSGFX_LAYER_ID_DUMMY };
@@ -15,6 +17,9 @@ struct tagWINDOW_WORK;
 struct tagSPRITE_WORK;
 
 struct FLASHMATRIX {
+    s32 m[6];
+};
+struct FLASHMATRIXF {
     f32 m[6];
 };
 
@@ -54,6 +59,7 @@ struct FlashMenuLabel {
     u16 pad;
     char *name;
     FlashMenuLabel *next;
+    FlashMenuLabel() : name(0), next(0) {}
 };
 
 struct FlashMenuTextureSlot {
@@ -70,7 +76,8 @@ public:
     u16 field10;
     u8 reserved12[2];
     u32 field14;
-    u8 reserved18[6];
+    s32 activeLayer;
+    u16 activeFrame;
     u8 field1E;
     u8 reserved1F;
     u32 field20;
@@ -79,7 +86,8 @@ public:
     u8 reserved26[2];
     u32 loopFrame;
     u32 endFrame;
-    u8 reserved30[8];
+    u32 totalFrames;
+    u32 field34;
     void *memory;
     FlashItem *items;
     FlashLayer *layers;
@@ -88,6 +96,7 @@ public:
     FlashMenuTextureSlot textures[30];
     FlashMenuLabel *labels;
 
+    void Init(void*,unsigned long);
     FlashMenu();
     ~FlashMenu();
     GStexture *GetGStexture(long);
@@ -101,8 +110,11 @@ public:
     void Draw(tagWINDOW_WORK *, tagSPRITE_WORK *);
     void Release();
     void DrawSub(GSgfxLayerID, tagWINDOW_WORK *, tagSPRITE_WORK *);
+    void DrawSprite(_DEFINESPRITE*,FLASHMATRIXF*,FLASHCXFORM*,u16,u8);
+    void DrawText(_DEFINETEXT*,FLASHMATRIXF*,FLASHMATRIXF*,FLASHCXFORM*,u8);
     unsigned char ParseTag(unsigned long, unsigned long, bool, bool, bool);
     void ParseDefineShapeSub(_DEFINESHAPE *);
+    void ParseDefineMorphShapeSub(_DEFINEMORPHSHAPE *);
     void ParseDefineFont2Sub(_DEFINEFONT2 *);
     void ParaseTextRecord(_DEFINETEXT *);
     void BlendShapeRecord(_SHAPERECORD *, _SHAPERECORD *, _SHAPERECORD *, f32);

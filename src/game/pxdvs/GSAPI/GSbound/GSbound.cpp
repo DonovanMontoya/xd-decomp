@@ -333,3 +333,342 @@ s32 GSboundIsInViewFast(GSbound* bound) {
     else return 1;
 }
 }
+
+#include <game/pxdvs/GSAPI/GSgfxM/matrixStack.hpp>
+struct GSgfxVF;
+class GSgfxLayer {public:
+    u8 reserved0[0x28];
+    s32 field28;
+    u8 reserved2C[0xD08];
+    u8 fieldD34;
+    u8 reservedD35[0x3];
+    s32 fieldD38;
+    u8 reservedD3C[0x50];
+    s32 fieldD8C;
+    s32 fieldD90;
+    u8 reservedD94[0x8B0];
+    s32 field1644;
+    s32 field1648;
+    s32 field164C;
+    s32 field1650;
+    u8 reserved1654[0x2];
+    u8 field1656;
+    u8 field1657;
+    u8 field1658;
+    u8 reserved1659[0x3];
+    u8 field165C;
+    u8 reserved165D[0x3];
+    s32 field1660;
+    s32 field1664;
+    s32 field1668;
+    s32 field166C;
+    u8 field1670;
+    u8 field1671;
+    u8 field1672;
+    u8 reserved1673[0x35];
+    s32 field16A8;
+    s32 field16AC;
+    u8 reserved16B0[0x8];
+    s32 field16B8;
+    u8 reserved16BC[0x50];
+    s32 field170C;
+    u8 reserved1710[0x50];
+    s32 field1760;
+    s32 field1764;
+    u8 reserved1768[0x8];
+    s32 field1770;
+    u8 reserved1774[0x50];
+    s32 field17C4;
+    u8 reserved17C8[0x1C8];
+    void* field1990;
+    s32 field1994;
+    s32 field1998;
+    GSgfxVF* field199C;
+    GSgfxMatrixStack* field19A0;
+    void setRenderState(bool,u8,bool);void beginSurface(u16);void endSurface();
+};
+extern "C" {void GScameraLoadActiveCameraMatrix(s32);GSgfxVF* GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);}
+void GSboundDraw(GSbound* bound,GSgfxLayer* layer) {
+    Mtx matrix,inverseScale,transform,modelRotation,transformRotation;
+    Vec size,center,angles;Quaternion quaternion;Vec maximum,minimum;
+    if(layer->field1994==1 && !(bound->flags&1)) {
+        GSboundGetSize(bound,&size,1,0);
+        if(!(PSVECSquareMag(&size)<0.00001f)) {
+            GScameraLoadActiveCameraMatrix(layer->field28);
+            layer->field1656 = 1;
+            layer->field1657 = 1;
+            layer->field1658 = 0;
+            layer->field170C = layer->field170C | 4;
+            layer->field16A8 = layer->field16A8 | 0x40;
+            layer->field17C4 = layer->field17C4 | 4;
+            layer->field1760 = layer->field1760 | 0x40;
+            layer->field165C = 0;
+            layer->field1660 = 3;
+            layer->field170C = layer->field170C | 8;
+            layer->field16A8 = layer->field16A8 | 0x40;
+            layer->field17C4 = layer->field17C4 | 8;
+            layer->field1760 = layer->field1760 | 0x40;
+            layer->field1664 = 7;
+            layer->field1670 = 0;
+            layer->field1668 = 0;
+            layer->field166C = 7;
+            layer->field1671 = 0;
+            layer->field1672 = 1;
+            layer->field170C = layer->field170C | 0x10;
+            layer->field16A8 = layer->field16A8 | 0x40;
+            layer->field17C4 = layer->field17C4 | 0x10;
+            layer->field1760 = layer->field1760 | 0x40;
+            layer->fieldD8C = 0;
+            layer->field16B8 = layer->field16B8 | 2;
+            layer->field16A8 = layer->field16A8 | 2;
+            layer->field1770 = layer->field1770 | 2;
+            layer->field1760 = layer->field1760 | 2;
+            if ((s32) layer->field1994 != 1) {
+                layer->field1994 = 1;
+                layer->field1990 = (u8*)layer+layer->field1994*0xbc+0x1818;
+            }
+            layer->field1644 = 1;
+            layer->field1648 = 4;
+            layer->field164C = 1;
+            layer->field1650 = 5;
+            layer->field170C = layer->field170C | 1;
+            layer->field16A8 = layer->field16A8 | 0x40;
+            layer->field17C4 = layer->field17C4 | 1;
+            layer->field1760 = layer->field1760 | 0x40;
+            layer->fieldD90 = 0;
+            layer->field16B8 = layer->field16B8 | 4;
+            layer->field16A8 = layer->field16A8 | 2;
+            layer->field1770 = layer->field1770 | 4;
+            layer->field1760 |= 2;
+            layer->fieldD34 = 6;
+            layer->fieldD38 = 0;
+            layer->field16AC = layer->field16AC | 4;
+            layer->field16A8 = layer->field16A8 | 1;
+            layer->field1764 = layer->field1764 | 4;
+            layer->field1760 = layer->field1760 | 1;
+            layer->setRenderState(true,0,false);
+            layer->field199C = GSgfxVFBuildTemp(1,4,0,0,1,5,0,0,0);
+
+            PSMTXScale(matrix,size.x,size.y,size.z);
+            switch(bound->transformType) {
+            case 1:
+                GSmodelGetRotation(bound->transform.model,(GSvec*)&angles);
+                boundEulerToQuat(&angles,&quaternion);
+                PSMTXQuat(modelRotation,&quaternion);PSMTXConcat(modelRotation,matrix,matrix);break;
+            case 2: {
+                PSMTXCopy(bound->transform.matrix,transform);
+                transform[0][3]=0.0f;transform[1][3]=0.0f;transform[2][3]=0.0f;
+                MtxPtr source=bound->transform.matrix;
+                f32 x=PSVECMag((Vec*)source[0]);f32 y=PSVECMag((Vec*)source[1]);
+                PSMTXScale(inverseScale,x,y,PSVECMag((Vec*)source[2]));
+                PSMTXInverse(inverseScale,inverseScale);PSMTXConcat(inverseScale,transform,transform);PSMTXConcat(transform,matrix,matrix);break;
+            }
+            case 3:
+                PSMTXQuat(transformRotation,&bound->transform.transform->rotation);PSMTXConcat(transformRotation,matrix,matrix);break;
+            }
+            GSboundGetMinMax(bound,&minimum,&maximum,1,1,1,0);
+            PSVECAdd(&minimum,&maximum,&center);PSVECScale(&center,&center,0.5f);
+            PSMTXTransApply(matrix,matrix,center.x,center.y,center.z);
+            layer->field19A0->pushMult((GSmtx*)matrix);
+            layer->field1998 = 0x80;
+            layer->beginSurface(0x18);
+            for(f32 coordinate=-0.5f;coordinate<1.0f;coordinate+=1.0f) {
+                *(f32 *)0xCC008000 = coordinate;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(u32 *)0xCC008000 = 0x80808040;
+                *(f32 *)0xCC008000 = coordinate;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(u32 *)0xCC008000 = 0x80808040;
+                *(f32 *)0xCC008000 = coordinate;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(u32 *)0xCC008000 = 0x80808040;
+                *(f32 *)0xCC008000 = coordinate;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(u32 *)0xCC008000 = 0x80808040;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(f32 *)0xCC008000 = coordinate;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(u32 *)0xCC008000 = 0x80808040;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(f32 *)0xCC008000 = coordinate;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(u32 *)0xCC008000 = 0x80808040;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(f32 *)0xCC008000 = coordinate;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(u32 *)0xCC008000 = 0x80808040;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(f32 *)0xCC008000 = coordinate;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(u32 *)0xCC008000 = 0x80808040;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(f32 *)0xCC008000 = coordinate;
+                *(u32 *)0xCC008000 = 0x80808040;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(f32 *)0xCC008000 = coordinate;
+                *(u32 *)0xCC008000 = 0x80808040;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(f32 *)0xCC008000 = coordinate;
+                *(u32 *)0xCC008000 = 0x80808040;
+                *(f32 *)0xCC008000 = -0.5f;
+                *(f32 *)0xCC008000 = 0.5f;
+                *(f32 *)0xCC008000 = coordinate;
+                *(u32 *)0xCC008000 = 0x80808040;
+            }
+            layer->endSurface();
+            layer->field165C = 1;
+            layer->field1660 = 3;
+            layer->field170C = layer->field170C | 8;
+            layer->field16A8 = layer->field16A8 | 0x40;
+            layer->field17C4 = layer->field17C4 | 8;
+            layer->field1760 = layer->field1760 | 0x40;
+            if ((s32) layer->field1994 != 1) {
+                layer->field1994 = 1;
+                layer->field1990 = (u8*)layer+layer->field1994*0xbc+0x1818;
+            }
+            layer->field1644 = 1;
+            layer->field1648 = 4;
+            layer->field164C = 5;
+            layer->field1650 = 5;
+            layer->field170C = layer->field170C | 1;
+            layer->field16A8 = layer->field16A8 | 0x40;
+            layer->field17C4 = layer->field17C4 | 1;
+            layer->field1760 |= 0x40;
+            layer->field1998 = 0xB0;
+            layer->beginSurface(5);
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            layer->endSurface();
+            layer->beginSurface(5);
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            layer->endSurface();
+            layer->field1998 = 0xA8;
+            layer->beginSurface(8);
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(f32 *)0xCC008000 = -0.5f;
+            *(f32 *)0xCC008000 = 0.5f;
+            *(u32 *)0xCC008000 = 0x80808080;
+            layer->endSurface();
+            layer->field19A0->pop();
+        }
+    }
+}
+
+extern "C" void GSboundGetShadowVolume(GSbound* output,GSbound* bound,Vec* light,f32 plane) {
+    Vec corners[8];
+    Mtx matrix,modelRotation,transformRotation;
+    Vec maximum,minimum,temp,center;
+    Quaternion quaternion;
+    Vec sumCopy,transformCopy,scaleCopy,halfCenter,transformed,difference,projection,sum,scaled;
+    memset(output,0,sizeof(GSbound));output->flags|=1;
+    GSboundGetMinMax(bound,&minimum,&maximum,0,0,0,0);
+    corners[0].x=minimum.x;corners[0].y=minimum.y;corners[0].z=minimum.z;
+    corners[1].x=minimum.x;corners[1].y=minimum.y;corners[1].z=maximum.z;
+    corners[2].x=minimum.x;corners[2].y=maximum.y;corners[2].z=minimum.z;
+    corners[3].x=minimum.x;corners[3].y=maximum.y;corners[3].z=maximum.z;
+    corners[4].x=maximum.x;corners[4].y=minimum.y;corners[4].z=minimum.z;
+    corners[5].x=maximum.x;corners[5].y=minimum.y;corners[5].z=maximum.z;
+    corners[6].x=maximum.x;corners[6].y=maximum.y;corners[6].z=minimum.z;
+    corners[7].x=maximum.x;corners[7].y=maximum.y;corners[7].z=maximum.z;
+    PSVECAdd(&minimum,&maximum,&sum);sumCopy=sum;PSVECScale(&sumCopy,&halfCenter,0.5f);center=halfCenter;
+    switch(bound->transformType) {
+    case 1:
+        GSmodelGetScale(bound->transform.model,(GSvec*)&temp);PSMTXScale(matrix,temp.x,temp.y,temp.z);
+        GSmodelGetRotation(bound->transform.model,(GSvec*)&temp);boundEulerToQuat(&temp,&quaternion);PSMTXQuat(modelRotation,&quaternion);PSMTXConcat(modelRotation,matrix,matrix);
+        GSmodelGetPosition(bound->transform.model,(GSvec*)&temp);PSMTXTransApply(matrix,matrix,temp.x,temp.y,temp.z);break;
+    case 2:PSMTXCopy(bound->transform.matrix,matrix);break;
+    case 3: {
+        GSboundTransform* transform=bound->transform.transform;
+        PSMTXScale(matrix,transform->scale.x,transform->scale.y,transform->scale.z);
+        PSMTXQuat(transformRotation,&bound->transform.transform->rotation);PSMTXConcat(transformRotation,matrix,matrix);
+        transform=bound->transform.transform;PSMTXTransApply(matrix,matrix,transform->position.x,transform->position.y,transform->position.z);break;
+    }
+    default:PSMTXIdentity(matrix);break;
+    }
+    f32 distance=light->y-plane;
+    if(!(distance<0.00001f) || !(distance>-0.00001f)) {
+        Vec* corner=corners;
+        for(s32 i=0;i<8;i++,corner++) {
+            PSVECSubtract(corner,&center,corner);PSMTXMultVec(matrix,corner,corner);
+            PSMTXMultVecSR(matrix,&center,&transformed);transformCopy=transformed;PSVECAdd(corner,&transformCopy,corner);
+            PSVECSubtract(corner,light,&difference);temp=difference;
+            if(!(difference.y<0.00001f) || !(difference.y>-0.00001f)) {
+                PSVECScale(&temp,&scaled,distance/(difference.y-plane));scaleCopy=scaled;
+                PSVECSubtract(light,&scaleCopy,&projection);*corner=projection;
+                GSboundAddPoint(output,corner->x,corner->y,corner->z);
+            }
+        }
+    }
+}

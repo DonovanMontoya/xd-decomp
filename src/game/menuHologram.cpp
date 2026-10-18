@@ -93,6 +93,43 @@ struct GSvec {
     }
 };
 
+
+extern "C" {
+s32 scriptModelOpen(u32);
+void GSfsysReadWait(u32);
+void GSmodelSetRenderLayer(void *, s32, GSgfxLayerID *);
+GSpart *GSmodelGetPart(void *, s32);
+void GSmodelAttachToGSpart(void *, GSpart *, s32, s32, s32);
+void GSpartFree(GSpart *);
+void GSmodelDisableModulation(void *);
+void GSmaterialSetModulate(void *, GSgfxColAu8 *);
+void GSmaterialEnableExtension(void *, s32);
+s32 GSlightLoad(u32);
+void GSlightSetActive(s32, s32);
+u8 GSlightCanAnimate(s32);
+void GSlightSetAnimIndex(s32, s32);
+void GSlightSetAnimRate(s32, f32);
+void GSlightStartAnimation(s32);
+void floorReadMakeLightResID(u32);
+void *floorOpenObject(u32);
+void GSmodelSetAnimRate(void *, f32);
+void *peopleInfoBiosGetPtr(u32);
+s8 peopleInfoBiosGetNeckIndex(void *);
+void GSpartRegisterAnimMix(GSpart *, s32, s32, void (*)(GSpart *, GSpartMixType, void *, GSvec *), void *);
+u32 Sequence_CreateNull();
+void Sequence_SetRotation(u32, f32 *);
+}
+
+extern "C" {
+GSgfxVF *GSgfxVFBuildTemp(s32, s32, s32, s32, s32, s32, s32, s32, s32);
+void spriteSetOffset(s32, s32, s32);
+void spriteClearScissor(s32);
+void spriteSetEnv(s32);
+void GSmtx44Ortho(f32 *, f32, f32, f32, f32, f32, f32);
+extern f32 mtxIdent[3][4];
+}
+struct HologramTextureFlags { u8 reserved0[7]; u8 dirty; };
+
 inline void CState::change(s32 n)
 {
     next = n;
@@ -482,6 +519,185 @@ void CMenuHologram::init(CMenuGlobalState &gstate)
 
 s32 CMenuHologram::model_z_layer = -1;
 
+void CMenuHologram::renderOffscreenData()
+{
+    if (offscreenTexture != 0) {
+        GSgfxLayer *layer = GSgfxLayerFindByID((GSgfxLayerID)6);
+        if (layer != 0) {
+            GSgfxVF *format = GSgfxVFBuildTemp(0, 2, 0, 0, 1, 5, 1, 1, 0);
+            spriteSetOffset(6, 0, 0);
+            spriteClearScissor(6);
+            spriteSetEnv(6);
+            f32 projection[16];
+            GSmtx44Ortho(projection, 0.0f, 480.0f, 0.0f, 640.0f, 0.0f, -30000.0f);
+            layer->projectionType = 1;
+
+            layer->projectionScaleX = projection[0];
+            layer->projectionOffsetX = projection[3];
+            layer->projectionScaleY = projection[5];
+            layer->projectionOffsetY = projection[7];
+            layer->projectionScaleZ = projection[10];
+            layer->projectionOffsetZ = projection[11];
+            LayerMatrixStack *stack = layer->matrixStack;
+            memcpy(stack->frame->matrix, mtxIdent, 0x30);
+            u32 *matrixFlags = &stack->frame->flags;
+            *matrixFlags |= 1;
+            layer->depthRangeNear = 0.0f;
+            layer->depthRangeFar = 30000.0f;
+            if ((u8) layer->projectionDepthEnabled != 0) {
+                if ((u8) layer->projectionDepthDirty != 0) {
+                    layer->pixelDirty = (s32) (layer->pixelDirty | 0x100);
+                    layer->savedPixelDirty = (s32) (layer->savedPixelDirty | 0x100);
+                }
+                layer->pixelDirty = (s32) (layer->pixelDirty | 0x40);
+                layer->dirty = (s32) (layer->dirty | 0x40);
+                layer->savedPixelDirty = (s32) (layer->savedPixelDirty | 0x40);
+                layer->savedDirty = (s32) (layer->savedDirty | 0x40);
+            }
+            layer->unk16AC = (s32) (layer->unk16AC | 0x20);
+            layer->dirty = (s32) (layer->dirty | 1);
+            layer->unk1764 = (s32) (layer->unk1764 | 0x20);
+            layer->savedDirty = (s32) (layer->savedDirty | 1);
+            layer->colorUpdate = 1;
+            layer->alphaUpdate = 0;
+            layer->depthBeforeTexture = 0;
+            layer->pixelDirty = (s32) (layer->pixelDirty | 4);
+            layer->dirty = (s32) (layer->dirty | 0x40);
+            layer->savedPixelDirty = (s32) (layer->savedPixelDirty | 4);
+            layer->savedDirty = (s32) (layer->savedDirty | 0x40);
+            layer->depthEnable = 0;
+            layer->depthCompare = 7;
+            layer->pixelDirty = (s32) (layer->pixelDirty | 8);
+            layer->dirty = (s32) (layer->dirty | 0x40);
+            layer->savedPixelDirty = (s32) (layer->savedPixelDirty | 8);
+            layer->savedDirty = (s32) (layer->savedDirty | 0x40);
+            layer->unkD8C = 2;
+            layer->unk16B8 = (s32) (layer->unk16B8 | 2);
+            layer->dirty = (s32) (layer->dirty | 2);
+            layer->unk1770 = (s32) (layer->unk1770 | 2);
+            layer->savedDirty = (s32) (layer->savedDirty | 2);
+            layer->primitiveType = 0x80;
+            layer->vertexFormat = format;
+            layer->unkC70 = 1;
+            layer->unk16AC = (s32) (layer->unk16AC | 1);
+            layer->dirty = (s32) (layer->dirty | 1);
+            layer->unk1764 = (s32) (layer->unk1764 | 1);
+            layer->savedDirty = (s32) (layer->savedDirty | 1);
+            layer->tgenFunc(0, (GSgfxTgenFunc)1, (GSgfxTgenSrc)4, 0, false, 0);
+            layer->unkDB8 = 1;
+            layer->unk16BC = (s32) (layer->unk16BC | 1);
+            layer->dirty = (s32) (layer->dirty | 4);
+            layer->unk1774 = (s32) (layer->unk1774 | 1);
+            layer->savedDirty = (s32) (layer->savedDirty | 4);
+                        layer->cunitChannelGen(0, (GSgfxCunitAlpha)2, (GSgfxCunitSrc)1, (GSgfxCunitSrc)1, 0, 0, (GSgfxLightType)2, (GSgfxDiffuseFunc)0);
+            layer->unkEAC = 1;
+            layer->unk16CC = (s32) (layer->unk16CC | 1);
+            layer->dirty = (s32) (layer->dirty | 8);
+            layer->unk1784 = (s32) (layer->unk1784 | 1);
+            layer->savedDirty = (s32) (layer->savedDirty | 8);
+            layer->unkEB0 = 0;
+            layer->unkEB4 = 0;
+            layer->unkEB8 = 4;
+            layer->unk16D0 = (s32) (layer->unk16D0 | 1);
+            layer->dirty = (s32) (layer->dirty | 8);
+            layer->unk1788 = (s32) (layer->unk1788 | 1);
+            layer->savedDirty = (s32) (layer->savedDirty | 8);
+            layer->unk1170 = 0;
+            layer->unk1174 = 0;
+            layer->unk1178 = 0;
+            layer->unk117C = 1;
+            layer->unk1180 = 0;
+            layer->unk16DC = (s32) (layer->unk16DC | 1);
+            layer->dirty = (s32) (layer->dirty | 8);
+            layer->unk1794 = (s32) (layer->unk1794 | 1);
+            layer->savedDirty = (s32) (layer->savedDirty | 8);
+            layer->unkF70 = 0xF;
+            layer->unkF74 = 0xF;
+            layer->unkF78 = 0xF;
+            layer->unkF7C = 8;
+            layer->unk16D4 = (s32) (layer->unk16D4 | 1);
+            layer->dirty = (s32) (layer->dirty | 8);
+            layer->unk178C = (s32) (layer->unk178C | 1);
+            layer->savedDirty = (s32) (layer->savedDirty | 8);
+            layer->unk12B0 = 0;
+            layer->unk12B4 = 0;
+            layer->unk12B8 = 0;
+            layer->unk12BC = 1;
+            layer->unk12C0 = 0;
+            layer->unk16E0 = (s32) (layer->unk16E0 | 1);
+            layer->dirty = (s32) (layer->dirty | 8);
+            layer->unk1798 = (s32) (layer->unk1798 | 1);
+            layer->savedDirty = (s32) (layer->savedDirty | 8);
+            layer->unk1070 = 7;
+            layer->unk1074 = 5;
+            layer->unk1078 = 4;
+            layer->unk107C = 7;
+            layer->unk16D8 = (s32) (layer->unk16D8 | 1);
+            layer->dirty = (s32) (layer->dirty | 8);
+            layer->unk1790 = (s32) (layer->unk1790 | 1);
+            layer->savedDirty = (s32) (layer->savedDirty | 8);
+            if ((s32) layer->pass != 1) {
+                layer->pass = 1;
+                layer->currentPass = &layer->passes[layer->pass];
+            }
+            layer->blendMode = 1;
+            layer->blendSource = 4;
+            layer->blendDestination = 1;
+            layer->logicOperation = 5;
+            layer->pixelDirty = (s32) (layer->pixelDirty | 1);
+            layer->dirty = (s32) (layer->dirty | 0x40);
+            layer->savedPixelDirty = (s32) (layer->savedPixelDirty | 1);
+            layer->savedDirty = (s32) (layer->savedDirty | 0x40);
+            GStexture *texture = offscreenTexture;
+            if ((layer->texture0 != texture) || (layer->savedTexture0 != texture) || (((HologramTextureFlags *)texture)->dirty != 0)) {
+                layer->texture0 = texture;
+                layer->textureDirty = (s32) (layer->textureDirty | 1);
+                layer->savedTexture0 = texture;
+                layer->savedTextureDirty = (s32) (layer->savedTextureDirty | 1);
+            }
+            layer->beginSurface(4);
+            *(volatile s16 *)0xCC008000 = 0;
+            *(volatile s16 *)0xCC008000 = 0;
+            u8 *hallData = (u8 *)relivehall_data;
+            u8 alpha00 = hallData[0];
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = alpha00;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile s16 *)0xCC008000 = 640;
+            *(volatile s16 *)0xCC008000 = 0;
+            u8 alpha10 = hallData[0];
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = alpha10;
+            *(volatile u8 *)0xCC008000 = 1;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile s16 *)0xCC008000 = 640;
+            *(volatile s16 *)0xCC008000 = 480;
+            u8 alpha11 = hallData[0];
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = alpha11;
+            *(volatile u8 *)0xCC008000 = 1;
+            *(volatile u8 *)0xCC008000 = 1;
+            *(volatile s16 *)0xCC008000 = 0;
+            *(volatile s16 *)0xCC008000 = 480;
+            u8 alpha01 = hallData[0];
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = 255;
+            *(volatile u8 *)0xCC008000 = alpha01;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 1;
+            layer->endSurface();
+        }
+    }
+}
+
 void CMenuHologram::releaseOffscreenData()
 {
     GSgfxLayer *layer = GSgfxLayerFindByID((GSgfxLayerID)2);
@@ -517,6 +733,219 @@ void CMenuHologram::initializeOffscreenData()
         layer->SetTextureCopy(offscreenTexture, false, 0);
         layer->SetClearFlags(true, true, true);
     }
+}
+
+static s32 plateIndexTbl[4][5][5] = {
+    {
+        { 1, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+    },
+    {
+        { 0, 0, 0, 0, 0 },
+        { 2, 3, 0, 0, 0 },
+        { 4, 5, 6, 0, 0 },
+        { 7, 8, 9, 10, 0 },
+        { 11, 12, 13, 14, 15 },
+    },
+    {
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 16, 17, 18, 19, 20 },
+    },
+    {
+        { 0, 0, 0, 0, 0 },
+        { 21, 22, 0, 0, 0 },
+        { 23, 24, 25, 0, 0 },
+        { 26, 27, 28, 29, 0 },
+        { 30, 31, 32, 33, 34 },
+    },
+};
+
+static s32 colorLineIndexTbl[4][5][5] = {
+    {
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+    },
+    {
+        { 0, 0, 0, 0, 0 },
+        { 35, 36, 0, 0, 0 },
+        { 37, 39, 38, 0, 0 },
+        { 40, 43, 42, 41, 0 },
+        { 44, 48, 47, 46, 45 },
+    },
+    {
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { 49, 53, 52, 51, 50 },
+    },
+    {
+        { 0, 0, 0, 0, 0 },
+        { 54, 55, 0, 0, 0 },
+        { 56, 58, 57, 0, 0 },
+        { 59, 62, 61, 60, 0 },
+        { 63, 67, 66, 65, 64 },
+    },
+};
+
+void *_makeArchiveHeader(u32);
+
+inline void loadStageModel(ModelSlot &slot, u32 id)
+{
+    memset(&slot, 0, sizeof(slot));
+    const GSgfxLayerID layer[1] = { (GSgfxLayerID)0 };
+    slot.script = scriptModelOpen(id);
+    slot.model = GSresGetResourceAllGroup(slot.script);
+    GSmodelSetRenderLayer(slot.model, 1, (GSgfxLayerID *)layer);
+    if (slot.model != 0) {
+        GSmodelSetAnimIndex(slot.model, 1);
+        GSmodelSetAnimType(slot.model, 0);
+        GSmodelStartAnimation(slot.model);
+    }
+}
+
+void CMenuHologram::stageAllModelLoad()
+{
+    s32 st;
+    u32 archive;
+    u32 camera;
+    s32 count;
+    u16 effect;
+    stageAllModelUnLoad();
+    initializeOffscreenData();
+    st = stage->getState();
+    count = stage->getDancerQuantity();
+    switch (st) {
+    case 0:
+        if (stage->getVisitorPointer() != 0) {
+            effect = 0xF0;
+        } else {
+            effect = 0;
+        }
+        resGroup = 0x8E4;
+        GSfsysReadWait(resGroup);
+        loadStageModel(slots[0], 0x18D91000);
+        loadStageModel(slots[1], 0x18D91000 + 1);
+        camera = 0x18D71800;
+        archive = 0x18D90400;
+        break;
+    case 1:
+        effect = 0xF3;
+        resGroup = 0x8E5;
+        GSfsysReadWait(resGroup);
+        loadStageModel(slots[0], 0x18DC1000);
+        loadStageModel(slots[1], 0x18DC1000 + count);
+        camera = 0x18DA1800;
+        archive = 0x18DC0400;
+        break;
+    case 2:
+        effect = 0xEF;
+        resGroup = 0x8E6;
+        GSfsysReadWait(resGroup);
+        loadStageModel(slots[0], 0x18DF1000);
+        loadStageModel(slots[1], 0x18DF1000 + 1);
+        camera = 0x18DD1800;
+        archive = 0x18DF0400;
+        break;
+    case 3:
+        effect = 0xEF;
+        resGroup = 0x8E7;
+        GSfsysReadWait(resGroup);
+        loadStageModel(slots[0], 0x18E41000);
+        loadStageModel(slots[1], 0x18E41000 + count);
+        camera = 0x18E01800;
+        archive = 0x18E40400;
+        break;
+    }
+    Pokemon *visitor = stage->getVisitorPointer();
+    if (visitor != 0) {
+        ModelSlot *slot = modelPokemonLoad(2);
+        GSpart *part = GSmodelGetPart(slots[1].model, ((u8 *)relivehall_data)[6 + plateIndexTbl[st][count][0]]);
+        GSmodelAttachToGSpart(slot->model, part, 7, 0, 1);
+        GSpartFree(part);
+        modelVisitorSetYPosition(2);
+        modelPokemonSetScale(2);
+    }
+    for (s32 i = 0; i < count; i++) {
+        s32 index = i + 3;
+        ModelSlot *slot = modelPokemonLoad(index);
+        GSpart *part = GSmodelGetPart(slots[1].model, ((u8 *)relivehall_data)[6 + plateIndexTbl[st][count][(count + i - stage->firstDancer) % count + 1]]);
+        GSmodelAttachToGSpart(slot->model, part, 7, 0, 1);
+        GSpartFree(part);
+        modelPokemonSetScale(index);
+    }
+    u8 *materials = slots[1].model != 0 ? *(u8 **)((u8 *)slots[1].model + 0x5E0) : 0;
+    GSmodelDisableModulation(slots[1].model);
+    if (count != 0) {
+        GSgfxColAu8 color;
+        memset(&color, 0, 4);
+        if (visitor != 0) {
+            GSgfxColAu8 c = pokemonToAisyouColor(visitor, stage->getDancerPointer(stage->firstDancer));
+            ((u8 *)&color)[0] = ((u8 *)&c)[0];
+            ((u8 *)&color)[1] = ((u8 *)&c)[1];
+            ((u8 *)&color)[2] = ((u8 *)&c)[2];
+            ((u8 *)&color)[3] = ((u8 *)&c)[3];
+        }
+        void *material = materials + (((u8 *)relivehall_data)[6 + colorLineIndexTbl[st][count][0]] - 1) * 0x34;
+        GSmaterialSetModulate(material, &color);
+        GSmaterialEnableExtension(material, 1);
+    }
+    for (s8 i = 0; i < count; i++) {
+        Pokemon *next = stage->getDancerPointer((i + 1) % count);
+        GSgfxColAu8 color = pokemonToAisyouColor(stage->getDancerPointer(i), next);
+        void *material = materials + (((u8 *)relivehall_data)[6 + colorLineIndexTbl[st][count][(count + i - stage->firstDancer) % count + 1]] - 1) * 0x34;
+        GSmaterialSetModulate(material, &color);
+        GSmaterialEnableExtension(material, 1);
+    }
+    cameraPlayAnime(resGroup, camera, 0.0f, 1);
+    cameraSetType(4);
+    struct ArchiveHeader { u8 reserved0[8]; u32 *lights; };
+    ArchiveHeader *header = (ArchiveHeader *)_makeArchiveHeader(archive);
+    if (header->lights != 0) {
+        floorReadMakeLightResID(archive);
+        for (s32 i = 0; header->lights[i] != 0; i++) {
+            s32 light = GSlightLoad(header->lights[i]);
+            lights[lightCount++] = light;
+            GSlightSetActive(light, 1);
+            if (GSlightCanAnimate(light)) {
+                GSlightSetAnimIndex(light, 0);
+                GSlightSetAnimRate(light, 0.5f);
+                GSlightStartAnimation(light);
+            }
+        }
+    }
+    GSgfxLayerID layers[2] = { (GSgfxLayerID)0, (GSgfxLayerID)0 };
+    layers[1] = (GSgfxLayerID)model_z_layer;
+    stageModel = floorOpenObject(0x16C90400);
+    GSmodelSetAnimIndex(stageModel, 3);
+    GSmodelSetAnimRate(stageModel, 0.5f);
+    GSmodelStartAnimation(stageModel);
+    GSmodelSetVisibility(stageModel, 1);
+    GSmodelSetAnimType(stageModel, 1);
+    GSmodelSetRenderLayer(stageModel, 2, layers);
+    s8 neck = peopleInfoBiosGetNeckIndex(peopleInfoBiosGetPtr(0x16C90400));
+    GSpart *part = GSmodelGetPart(stageModel, neck);
+    GSpartRegisterAnimMix(part, 2, 0x20202, _getNeckRotationCB, 0);
+    GSpartFree(part);
+    if (effect != 0) {
+        unk37C = Sequence_CreateNull();
+        unk380 = Sequence_LoadWaza(unk37C, effect, 4, 0);
+        GSvec pos(0.0f, 0.0f, 0.0f);
+        GSvec rot(0.0f, 0.0f, 0.0f);
+        Sequence_SetPosition(unk37C, &pos.x);
+        Sequence_SetRotation(unk37C, &rot.x);
+        WazaSequence_Start(unk380, 0);
+    }
+    stageLoaded = 1;
 }
 
 void CMenuHologram::stageAllModelUnLoad()
@@ -757,7 +1186,7 @@ void CMenuHologram::main(CMenuGlobalState &state)
 
 void *_makeArchiveHeader(u32 group)
 {
-    return HSD_ArchiveGetPublicAddress(GSresGetResourceAllGroup(group), "");
+    return HSD_ArchiveGetPublicAddress(GSresGetResourceAllGroup(group), "scene_data");
 }
 
 }

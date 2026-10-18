@@ -17,7 +17,9 @@ struct tagSPRITE_WORK {
     s16 id;
     u8 pad8[0x44];
     u32 message;
-    u8 pad50[0x10];
+    s16 x, y, width, height;
+    u8 pad58[0xC];
+    union { u32 color; struct { u8 red, green, blue, alpha; } channels; };
 };
 
 struct tagWINDOW_WORK {
@@ -26,7 +28,9 @@ struct tagWINDOW_WORK {
     s8 step;
     u8 pad3;
     s32 menu;
-    u8 pad8[0x84];
+    u8 pad8[0x14];
+    s32 messageContext;
+    u8 pad20[0x6C];
     s16 x;
     u8 pad8E[5];
     u8 alpha;
@@ -44,6 +48,9 @@ public:
     u8 reserved[0xC4];
     DarkPokemon *getDarkPokemon();
     u16 getHp() const;
+    u8 getLevel() const;
+    u32 getNicknamePtr();
+    void* getPokemonDataPtr() const;
     u16 getItemDataId() const;
     bool isDarkPokemon() const;
 };
@@ -63,6 +70,7 @@ public:
     s32 unkA0;
     u8 reservedA4[4];
     void init();
+    void update();
 };
 
 struct MENU_MODEL {

@@ -141,16 +141,14 @@ u8 GSfsysInit2(u32 blocks, u32 cacheBytes, u32 cacheEntries) {
 u8 GSfsysInit(u32 dvdEntries) { GSdvdInit(dvdEntries); return GSfsysInit2(0, 0, 0); }
 u32 GSfsysGetInvalidID() { return 0xffff; }
 u32 GSfsysStreamGetCacheSize() { return _fsysStreamGetCacheSize(); }
-s32 GSfsysGetDriveStatus() { if (!_initFlag) { return -1; } else { return GSdvdGetDriveStatus(); } }
-s32 GSfsysStreamHeaderPostFunc(u32, u32) { if (!_initFlag) return 0; return 0; }
-s32 GSfsysStreamMovieHeaderPostFunc(u32, u32) { if (!_initFlag) return 0; return 0; }
+s32 GSfsysGetDriveStatus() { if (_initFlag == 0) { return -1; } else { return GSdvdGetDriveStatus(); } }
+s32 GSfsysStreamHeaderPostFunc(u32, u32) { if (_initFlag == 0) { return 0; } else { return 0; } }
+s32 GSfsysStreamMovieHeaderPostFunc(u32, u32) { if (_initFlag == 0) { return 0; } else { return 0; } }
 s32 GSfsysStreamHeaderPreFunc(u32 group, u32 resource, u32 bytes) {
-    if (!_initFlag) return 0;
-    return GSsndStreamPreFunc(group, resource, bytes);
+    if (_initFlag == 0) { return 0; } else { return GSsndStreamPreFunc(group, resource, bytes); }
 }
 s32 GSfsysStreamMovieHeaderPreFunc(u32 group, u32 resource, u32 bytes) {
-    if (!_initFlag) return 0;
-    return GSmovieStreamPreFunc(group, resource, bytes);
+    if (_initFlag == 0) { return 0; } else { return GSmovieStreamPreFunc(group, resource, bytes); }
 }
 s32 GSfsysStreamPreFunc(u32 group, u32 resource) {
     if (!_initFlag) return 0;
@@ -167,7 +165,10 @@ s32 GSfsysStreamMoviePreFunc(u32 group, u32 resource) {
     return 0;
 }
 void GSfsysFreeCache(u32 group) {
-    if (_initFlag) while (_fsysMemFreeCacheGroup(group) != 0) {}
+    if (_initFlag) {
+        u32 cacheGroup = group;
+        while (_fsysMemFreeCacheGroup(cacheGroup) != 0) {}
+    }
 }
 u32 GSfsysRead(u32 group) { return _fsysRequest(1, group, 0xffff, 0, 0, 0, 0, 1); }
 u32 GSfsysReadID(u32 group, u32 resource) { return _fsysRequest(1, group, resource, 0, 0, 0, 0, 1); }
@@ -254,15 +255,21 @@ s32 _fsysGetFilename(FsysWork* work, char* output) {
     return 1;
 }
 FsysWork* _fsysGetWork(u32 group, u8 activeOnly) {
-    FsysWork* work = _fsysWork;
-    for (u32 i = 0; i < _fsysWorkMax; ++i, ++work) {
-        s32 status = work->status;
+    FsysWork* work;
+    FsysWork* base = _fsysWork;
+    work = base;
+    for (u32 i = 0; i < _fsysWorkMax; ++work, ++i) {
         if (activeOnly == 1) {
-            if (status == 0 || status == -999 || status == 12) continue;
-        } else if (status == 0) {
+            switch (work->status) {
+            case 0:
+            case -999:
+            case 12:
+                continue;
+            }
+        } else if (work->status == 0) {
             continue;
         }
-        if (group == work->group) return _fsysWork + i;
+        if (group == work->group) return base + i;
     }
     return 0;
 }
@@ -301,12 +308,19 @@ s32 _fsysWait(u32 group, u8 allowPreread) {
     }
 }
 s32 _fsysGetActiveTask(s32 mode) {
+    FsysWork* work;
     s32 count = 0;
-    FsysWork* work = _fsysWork;
+    work = _fsysWork;
     for (u32 i = 0; i < _fsysWorkMax; ++i, ++work) {
-        s32 status = work->status;
-        if ((status < 0 && status != -999) || (status >= 2 && status != 12)) {
+        switch (work->status) {
+        case -999:
+        case 0:
+        case 1:
+        case 12:
+            break;
+        default:
             if (mode == work->mode) ++count;
+            break;
         }
     }
     return count;
@@ -350,10 +364,13 @@ s32 GSfsysReadWait(u32 group) {
 }
 
 FsysQueue* _fsysGetNewQueManage(s32 mode, u32 group, u32 resource, u8 keep, u32 pre, u32 post, u32 secondary) {
-    FsysQueue* queue = _fsysQueManage;
-    for (u32 i = 0; i < _fsysQueManageMax; ++i, ++queue) {
+    FsysQueue* queue;
+    FsysQueue* result;
+    result = 0;
+    queue = _fsysQueManage;
+    for (u32 i = 0; i < _fsysQueManageMax; ++queue, ++i) {
         if (queue->group == 0) {
-            FsysQueue* result = _fsysQueManage + i;
+            result = _fsysQueManage + i;
             result->previous = 0;
             result->next = 0;
             result->mode = mode;
@@ -364,19 +381,27 @@ FsysQueue* _fsysGetNewQueManage(s32 mode, u32 group, u32 resource, u8 keep, u32 
             result->secondaryResourceID = secondary;
             result->keepCache = keep;
             result->processed = 0;
-            return result;
+            break;
         }
     }
-    return 0;
+    return result;
 }
 u8 _fsysAddQueManage(FsysQueue* queue, s32 priority) {
+    u8 result;
     FsysQueue* current = _fsysQueManageRoot[priority];
-    if (!current) { _fsysQueManageRoot[priority] = queue; return 1; }
-    while (current->next) current = current->next;
-    current->next = queue;
-    queue->previous = current;
-    return 0;
+    if (!current) {
+        _fsysQueManageRoot[priority] = queue;
+        result = 1;
+    } else {
+        FsysQueue* tail = current;
+        while (tail->next) tail = tail->next;
+        tail->next = queue;
+        result = 0;
+        queue->previous = tail;
+    }
+    return result;
 }
+
 void _fsysDelQueManage(FsysQueue* queue) {
     if (queue->previous) queue->previous->next = queue->next;
     if (queue->next) queue->next->previous = queue->previous;
@@ -416,12 +441,12 @@ u8 _fsysQueExecSub(FsysQueue* queue) {
         case 5:
             GSfsysCancel(queue->group);
             return 0;
-        case 1: case 2: case 3: case 4:
-            _fsysExec(queue->group, queue->resourceID, queue->mode, queue->keepCache, queue->preCallback, queue->postCallback, queue->secondaryResourceID);
-            return 0;
         default:
             _fsysDelQueManage(queue);
             return 1;
+        case 1: case 2: case 3: case 4:
+            _fsysExec(queue->group, queue->resourceID, queue->mode, queue->keepCache, queue->preCallback, queue->postCallback, queue->secondaryResourceID);
+            return 0;
         }
     }
     if (GSfsysGetStatus(queue->group) <= 0) { _fsysDelQueManage(queue); return 1; }
@@ -450,10 +475,15 @@ FsysWork* _fsysGetNewWork_Sub(s32 preserveFinished) {
     u32 index = _fsysWorkIndex;
     while (!result) {
         FsysWork* work = _fsysWork + index;
-        s32 status = work->status;
-        if (status == -999 || status == 0 || status == 1 || (status == 12 && preserveFinished != 1)) {
+        switch (work->status) {
+        case 12:
+            if (preserveFinished == 1) break;
+        case -999:
+        case 0:
+        case 1:
             result = work;
             if (work->header) _fsysMemFreeHeader((GSfsysRequest*)work);
+            break;
         }
         ++index;
         if (index >= _fsysWorkMax) index = 0;
@@ -489,8 +519,7 @@ s32 _fsysExec(u32 group, u32 resource, s32 mode, u8 keep, u32 pre, u32 post, u32
         work = _fsysGetNewWork();
         if (!work) {
             s32 previous = OSRestoreInterrupts(interrupts);
-            if (work) return 0;
-            return previous;
+            if (work == 0) { return previous; } else { return 0; }
         }
         work->header = 0;
         work->cacheGroup = _fsysIncCacheUniqueGroupID();
@@ -663,7 +692,8 @@ u8 _fsysOSUnLink(void*, unsigned long group, unsigned long identifier) {
 }
 void* GSfsysOSLinkPreFunc(u32 group, u32 identifier, u32 bytes) {
     void* resource = GSresAllocResourceAlign(bytes, 32, group, identifier, _fsysOSUnLink);
-    if (!resource) { return 0; } else { return resource; }
+    if (resource == 0) resource = 0;
+    return resource;
 }
 void* GSfsysOSLinkPostFunc(u32 group, u32 identifier) {
     OSModuleHeader* module = (OSModuleHeader*)GSresGetResource(group, identifier);
@@ -786,9 +816,11 @@ void _fsysHeaderSizeReadDvdCallback(s32 result, GSdvdWork* dvd) {
     if (!work) {
         _headerTop = 0;
         _fsysWorkSetTaskStatus(work, 3);
+        if (work != 0) return;
     } else if (result < 0) {
         _headerTop = 0;
         _fsysWorkSetTaskStatus(work, 3);
+        if (work != 0) return;
     } else {
         work->directory->headerLength = _headerTop[7];
         _headerTop = 0;
@@ -900,7 +932,7 @@ u8 _fsysInitTOC() {
     return 1;
 }
 void _fsysBackgroundTaskCompressType(FsysBackgroundWork* entry) {
-    if (entry->loaded == 1 || _fsysBGTaskCancel(entry) == 1) return;
+    if (entry->loaded != 1 && _fsysBGTaskCancel(entry) != 1) {
     GSfsysBlock* block = entry->resource->expandBlocks;
     if (!block) return;
     u32 position;
@@ -932,6 +964,7 @@ void _fsysBackgroundTaskCompressType(FsysBackgroundWork* entry) {
 nextBlock:
     input = (u8*)block->data;
     switch (state) {
+    case 0: break;
     case 1: goto readFlags;
     case 2: goto literal;
     case 3: goto matchLow;
@@ -997,4 +1030,5 @@ finishBlock:
     entry->decodeState = state;
 }
 
+    }
 }

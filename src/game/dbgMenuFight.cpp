@@ -1256,3 +1256,164 @@ static void _dbgMenuFightGetFightEncountDataIdSub(u32 id) {
     }
     GScharCat(strbuf, (s16*)GSmsgGetGSchar(msg));
 }
+
+typedef struct DbgFightEncountData {u32 words[15];} DbgFightEncountData;
+extern u32* fight_encount_data_number;
+extern DbgFightEncountData* fightEncountDataBiosGetPtr(u16);
+extern u32 fightEncountDataBiosGetFightKind(DbgFightEncountData*);
+extern u32 fightEncountDataBiosGetTrainer(DbgFightEncountData*);
+extern u32 fightEncountDataBiosGetPokemon(DbgFightEncountData*);
+extern u32 fightEncountDataBiosGetEntry(DbgFightEncountData*);
+extern u16 fightEncountDataBiosGetFightFloorDataId(DbgFightEncountData*);
+extern u16 fightEncountDataBiosGetFightTrainerDataId(DbgFightEncountData*,s32);
+extern u16 fightEncountDataBiosGetGSInputDevice(DbgFightEncountData*,s32);
+extern void fightEncountDataBiosSetFightKind(DbgFightEncountData*,u8);
+extern void fightEncountDataBiosSetTrainer(DbgFightEncountData*,u8);
+extern void fightEncountDataBiosSetPokemon(DbgFightEncountData*,u8);
+extern void fightEncountDataBiosSetEntry(DbgFightEncountData*,u8);
+extern void fightEncountDataBiosSetFightFloorDataId(DbgFightEncountData*,u16);
+extern void fightEncountDataBiosSetFightTrainerDataId(DbgFightEncountData*,s32,u16);
+extern void fightEncountDataBiosSetGSInputDevice(DbgFightEncountData*,s32,s32);
+s32 dbgMenuFightEncountDataEditSub(u16 id) {
+    DbgFightEncountData backup;
+    DbgFightEncountData* data;
+    s32 result;
+    if(id==0)return 1;
+    if(id>=*fight_encount_data_number)return 1;
+    data=fightEncountDataBiosGetPtr(id);
+    backup=*data;
+    for(;;) {
+        result=menuOpenCustom(0x25,0,0,0,1,1,id);
+        if(result==-1) {
+            menuCloseCustom(0x25,0,1);
+            *data=backup;
+            return -1;
+        }
+        if(result==-2) {
+            if(menuOpen(0x55,1)!=0) {menuCloseCustom(0x55,0,1);continue;}
+            menuCloseCustom(0x55,0,1);
+            break;
+        }
+        switch(menuGetCursorItemID(0x25)) {
+        case 0x10A:result=dbgMenuFightGetFightKindDataId(fightEncountDataBiosGetFightKind(data));if(result>=0)fightEncountDataBiosSetFightKind(data,(u8)result);break;
+        case 0x10B:result=dbgMenuFightGetFightTypeDataId(fightEncountDataBiosGetTrainer(data));if(result>=0)fightEncountDataBiosSetTrainer(data,(u8)result);break;
+        case 0x10C:result=dbgMenuFightGetPokemonFightType(fightEncountDataBiosGetPokemon(data));if(result>=0)fightEncountDataBiosSetPokemon(data,(u8)result);break;
+        case 0x10D:result=dbgMenuFightGetPokemonEntry(fightEncountDataBiosGetEntry(data));if(result>=0)fightEncountDataBiosSetEntry(data,(u8)result);break;
+        case 0x10E:result=dbgMenuFightGetFightFloorDataId(fightEncountDataBiosGetFightFloorDataId(data));if(result>=0)fightEncountDataBiosSetFightFloorDataId(data,(u16)result);break;
+        case 0x10f:
+            result=dbgMenuFightGetFightTrainerDataId(fightEncountDataBiosGetFightTrainerDataId(data,0));
+            if(result>=0) {
+                fightEncountDataBiosSetFightTrainerDataId(data,0,(u16)result);
+                result=dbgMenuFightGetGsinputDevId(fightEncountDataBiosGetGSInputDevice(data,0));
+                if(result>=0)fightEncountDataBiosSetGSInputDevice(data,0,result);
+            }
+            break;
+        case 0x110:
+            result=dbgMenuFightGetFightTrainerDataId(fightEncountDataBiosGetFightTrainerDataId(data,1));
+            if(result>=1) {
+                fightEncountDataBiosSetFightTrainerDataId(data,1,(u16)result);
+                result=dbgMenuFightGetGsinputDevId(fightEncountDataBiosGetGSInputDevice(data,1));
+                if(result>=0)fightEncountDataBiosSetGSInputDevice(data,1,result);
+            }
+            break;
+        case 0x111:
+            result=dbgMenuFightGetFightTrainerDataId(fightEncountDataBiosGetFightTrainerDataId(data,2));
+            if(result>=0) {
+                fightEncountDataBiosSetFightTrainerDataId(data,2,(u16)result);
+                result=dbgMenuFightGetGsinputDevId(fightEncountDataBiosGetGSInputDevice(data,2));
+                if(result>=0)fightEncountDataBiosSetGSInputDevice(data,2,result);
+            }
+            break;
+        case 0x112:
+            result=dbgMenuFightGetFightTrainerDataId(fightEncountDataBiosGetFightTrainerDataId(data,3));
+            if(result>=0) {
+                fightEncountDataBiosSetFightTrainerDataId(data,3,(u16)result);
+                result=dbgMenuFightGetGsinputDevId(fightEncountDataBiosGetGSInputDevice(data,3));
+                if(result>=0)fightEncountDataBiosSetGSInputDevice(data,3,result);
+            }
+            break;
+        }
+    }
+    menuCloseCustom(0x25,0,1);
+    return 1;
+}
+
+extern void* GSmemAlloc(u32);
+extern void GSmemFree(void*);
+extern void fightFreeResourceDeclArchive(void);
+extern void GSfsysFreeCache(s32);
+extern void fightFreeResourceID(s32,u32);
+extern u8 fightReadResourceID(s32,u32);
+extern u32 getDeckResourceID(u8);
+extern u16 fightEncountDataBiosGetFightDeckGrpId(DbgFightEncountData*,u8);
+extern u32 fightEncountDataBiosGetFightName(DbgFightEncountData*);
+s32 dbgMenuFightEncountSelect(void) {
+    s32 selected;
+    s32 deck;
+    u32 loaded=0;
+    u32 index;
+    u16 i;
+    _readEncountDataName=GSmemAlloc(0x1200);
+    _readEncountDataID=GSmemAlloc(0x600);
+chooseDeck:
+    selected=dbgMenuFightGetFightDeckDataId(_dbgmenu_fight_deck_data_id);
+    if(selected<0)goto cancel;
+    _dbgmenu_fight_deck_data_id=(u16)selected;
+    if(!fightIsFight()) {
+        fightFreeResourceDeclArchive();
+        GSfsysFreeCache(0x842);
+        fightFreeResourceID(10,0x184D3400);
+        fightReadResourceID(0x842,0x184D3400);
+        loaded=fightReadResourceID(0x842,getDeckResourceID((u8)selected));
+        if(loaded==1)deck=selected;
+        _readEncountDataCnt=0;
+        for(i=0;i<*fight_encount_data_number;i++) {
+            if(selected==fightEncountDataBiosGetFightDeckGrpId(fightEncountDataBiosGetPtr(i),1)) {
+                _readEncountDataName[_readEncountDataCnt]=fightEncountDataBiosGetFightName(fightEncountDataBiosGetPtr(i));
+                _readEncountDataID[_readEncountDataCnt]=i;
+                _readEncountDataCnt++;
+            }
+        }
+    }
+chooseEncount:
+    switch(deck) {
+    case 1:index=_dbgmenu_fight_story_encount_data_id;break;
+    case 2:index=_dbgmenu_fight_hundred_encount_data_id;break;
+    case 3:index=_dbgmenu_fight_imasugu_encount_data_id;break;
+    case 4:index=_dbgmenu_fight_virtual_encount_data_id;break;
+    case 5:index=_dbgmenu_fight_bingo_encount_data_id;break;
+    case 6:index=_dbgmenu_fight_colosseum_encount_data_id;break;
+    case 7:index=_dbgmenu_fight_sample_encount_data_id;break;
+    }
+    if((u16)index>_readEncountDataCnt)index=_readEncountDataCnt;
+    selected=dbgMenuFightGetFightEncountDataId(index);
+    if(selected<0)goto chooseDeck;
+    switch(deck) {
+    case 1:_dbgmenu_fight_story_encount_data_id=(u16)selected;break;
+    case 2:_dbgmenu_fight_hundred_encount_data_id=(u16)selected;break;
+    case 3:_dbgmenu_fight_imasugu_encount_data_id=(u16)selected;break;
+    case 4:_dbgmenu_fight_virtual_encount_data_id=(u16)selected;break;
+    case 5:_dbgmenu_fight_bingo_encount_data_id=(u16)selected;break;
+    case 6:_dbgmenu_fight_colosseum_encount_data_id=(u16)selected;break;
+    case 7:_dbgmenu_fight_sample_encount_data_id=(u16)selected;break;
+    }
+    if(_readEncountDataID[selected-1]!=0) {
+        if(dbgMenuFightEncountDataEditSub(_readEncountDataID[selected-1])>=0) {
+            if(!fightIsFight()) {
+                dbgMenuFightEncount(_readEncountDataID[selected-1]);
+                GSmemFree(_readEncountDataName);
+                GSmemFree(_readEncountDataID);
+                if(loaded==1)fightFreeResourceID(0x842,getDeckResourceID((u8)deck));
+                return 0;
+            }
+            goto chooseDeck;
+        }
+        goto chooseEncount;
+    }
+    goto chooseDeck;
+cancel:
+    if(loaded==1)fightFreeResourceID(0x842,getDeckResourceID((u8)deck));
+    GSmemFree(_readEncountDataName);
+    GSmemFree(_readEncountDataID);
+    return -1;
+}

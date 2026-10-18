@@ -264,6 +264,7 @@ static void _fadeDistBallInit();
 static void _fadeEffectSlideBallInit();
 static void _fadeEffectBoundBallInit();
 static void _disp_bound_ball(GSgfxLayer* layer, GSvec* center, f32 scale, f32 angle, int alpha);
+#pragma opt_common_subs reset
 static void _disp_dist_ball(GSgfxLayer* layer, GSvec* center, f32 scale, f32 angle, int alpha);
 static void _disp_blur_ball(GSgfxLayer* layer, GSvec* center, f32 scale, f32 angle, int alpha);
 static void _fadeTearOffDraw(GSgfxLayer* layer, u8 alpha, int shift);
@@ -391,11 +392,15 @@ static void _fadeDistortionStripInit(int columns, int rows) {
     f32 du = 1.0f / (columns - 1);
     f32 dv = 1.0f / (rows - 1);
     if (_fadeDistortionWork.points && uv) {
-        FadeGridPoint* points = _fadeDistortionWork.points;
-        for (s32 y = 0; y < rows; ++y) {
-            FadeGridPoint* point = points;
-            FadeUV* coord = uv;
-            for (s32 x = 0; x < columns; ++x) {
+        FadeGridPoint* point;
+        FadeUV* coord;
+        FadeGridPoint* points;
+        s32 x,y;
+        points = _fadeDistortionWork.points;
+        for (y = 0; y < rows; ++y) {
+            point = points;
+            coord = uv;
+            for (x = 0; x < columns; ++x) {
                 point->x = (s16)(dx * x);
                 point->y = (s16)(dy * y);
                 if (x == columns - 1 && rows > 2) ++point->x;
@@ -2754,8 +2759,8 @@ bool fadeEffectHookFunction_distortion_yoko(GSgfxLayerID id, bool active, f32 el
     f32 progress = elapsed / duration;
     f32 progressSecond = elapsedSecond / durationSecond;
     if (timeGetLastFrameTime() != 0) {
-        f32 pos = _fadeEffectWork.rotation + _fadeEffectWork.rotationStep;
         f32 step = _fadeEffectWork.rotationStep;
+        f32 pos = _fadeEffectWork.rotation + step;
         ++_fadeEffectWork.frame;
         _fadeEffectWork.rotation = pos;
         if (step >= 0.0f) {
@@ -2780,17 +2785,16 @@ bool fadeEffectHookFunction_distortion_yoko(GSgfxLayerID id, bool active, f32 el
     FadeGridPoint* points = _fadeDistortionWork.points;
     FadeUV* uv = _fadeDistortionWork.uv;
     if (!points || !uv) return false;
-    int count = columns * 2;
-    s32 alpha = (s32)(255.0f * (1.0f - fadeSqrt(progress)));
+    s8 alpha = (s32)(255.0f * (1.0f - fadeSqrt(progress)));
     for (int x = 1; x < rows; ++x) {
-        layer->beginSurface(count);
+        layer->beginSurface(columns * 2);
         for (int y = 0; y < columns; ++y) {
             int index = x * columns + y;
-            GXPosition3s16(points[index].x, points[index].y, 0);
+            GXPosition2s16(points[index].x, points[index].y);
             GXColor4u8(255, 255, 255, alpha);
             GXTexCoord2f32(uv[index].u, uv[index].v);
             index = (x - 1) * columns + y;
-            GXPosition3s16(points[index].x, points[index].y, 0);
+            GXPosition2s16(points[index].x, points[index].y);
             GXColor4u8(255, 255, 255, alpha);
             GXTexCoord2f32(uv[index].u, uv[index].v);
         }
@@ -3347,6 +3351,7 @@ bool fadeEffectHookFunction_four_ball(GSgfxLayerID id, bool active, f32 elapsed,
     return active;
 }
 
+#pragma opt_common_subs off
 bool fadeEffectHookFunction_blur_ball(GSgfxLayerID id, bool active, f32 elapsed, f32 duration, f32 elapsedSecond, f32 durationSecond, void* opaque) {
     GSgfxLayer* layer = GSgfxLayerFindByID(id);
     if (!layer) return active;
@@ -3387,19 +3392,21 @@ bool fadeEffectHookFunction_blur_ball(GSgfxLayerID id, bool active, f32 elapsed,
     f32 angle = (360.0f * dist) / 376.99112f;
     if (dist > 753.98224f) dist = 753.98224f;
     if (dist > 580.0f) dist = 580.0f;
+    FADE_EFFECT_WORK* work = &_fadeEffectWork;
     center.param1 = 640.0f - dist;
-    center.param2 = _fadeEffectWork.direction == 0 ? 72.0f : 408.0f;
+    center.param2 = work->direction == 0 ? 72.0f : 408.0f;
     f32 x2 = 320.0f + center.param1;
     if (x2 > 640.0f) x2 = 640.0f;
     _disp_blur_ball(layer, &center, x2, -angle, alpha);
     center.param1 = dist;
-    center.param2 = _fadeEffectWork.direction != 0 ? 72.0f : 408.0f;
+    center.param2 = work->direction != 0 ? 72.0f : 408.0f;
     f32 x3 = center.param1 - 320.0f;
     if (x3 < 0.0f) x3 = 0.0f;
     _disp_blur_ball(layer, &center, x3, angle, alpha);
     return true;
 }
 
+#pragma opt_common_subs reset
 static void _disp_dist_ball(GSgfxLayer* layer, GSvec* center, f32 scale, f32 angle, int alpha) {
     FadeMtx transform, rotation;
     GSvec point, output;
@@ -3679,4 +3686,731 @@ bool fadeEffectHookFunction_boss_second(GSgfxLayerID id,bool active,f32 elapsed,
         fadeFluidDispSecond(id,texture,progress,second);
     }
     return active;
+}
+
+#pragma opt_common_subs off
+bool fadeEffectHookFunction_trainer_second(GSgfxLayerID id,bool active,f32 elapsed,f32 duration,f32,f32,void* opaque) {
+    FadeMtx transform;
+    f32 projection[4][4];
+    FadeMtx rotation;
+    GSvec center,point,output;
+    f32 temp_f31,temp_f28;
+    f32 temp_f1,temp_f2,temp_f3,temp_f5,temp_f6,temp_f7,var_f2;
+    u32* temp_r3_2;
+    s32 temp_r10,var_r4;
+    FadeMatrixSlot* temp_r28;
+    u8 temp_r28_2;
+    GStexture* texture;
+    GSgfxLayer* layer;
+    layer = GSgfxLayerFindByID(id);
+    if (layer == NULL) {
+        return active;
+    }
+    texture=(GStexture*)opaque;
+    if (opaque == NULL) {
+        return active;
+    }
+    if ((u8) _fadeEffectFirstFlag == 1) {
+        _fadeEffectFirstFlag = 0;
+        _fadeEffectFunction_trainer_second_FirstInit();
+        _fadeEffectWork.state = 0xFFU;
+        GSgfxBeginBackFBCapture((GStexture*)opaque, _myBackFB, 0);
+    }
+    if (((u8) _fadeEffectFirstFlag == 0) && (active == 0)) {
+        GSgfxVFFree(&_fadeEffectTrainer_vf);
+        GSgfxEndBackFBCapture(texture);
+        return active;
+    }
+    temp_f31 = elapsed / duration;
+    if (timeGetLastFrameTime() != 0U) {
+        f32 step,pos;
+        step=_fadeEffectWork.rotationStep;
+        _fadeEffectWork.frame++;
+        _fadeEffectWork.rotation += step;
+        pos = _fadeEffectWork.rotation;
+        if (step >= 0.0f) {
+            _fadeEffectWork.rotationStep = (f32) ((1.5f * temp_f31) + step);
+            f32 limit=_fadeEffectWork.distanceStep;
+            if (pos >= limit) {
+                _fadeEffectWork.rotation = limit;
+            }
+        } else {
+            _fadeEffectWork.rotationStep = (f32) -((1.5f * temp_f31) - step);
+            f32 limit=_fadeEffectWork.distanceStep;
+            if (pos <= limit) {
+                _fadeEffectWork.rotation = limit;
+            }
+        }
+        GSgfxBeginBackFBCapture(texture, _myBackFB, 0);
+    } else {
+        GSgfxEndBackFBCapture(texture);
+    }
+    center.param1 = 320.0f;
+    temp_f28 = _fadeEffectWork.rotation;
+    center.param2 = 240.0f;
+    center.param3 = 0.0f;
+    _fadeEffectSnapshotFadeFunction(layer, texture, &center, 1.0f, 0.0f, temp_f31, 0.0f);
+    center.param1 = 320.0f + temp_f28;
+    _fadeEffectSnapshotFadeFunction(layer, texture, &center, 1.0f, 0.0f, temp_f31, 0.5f);
+    if (GSgfxVFIsUsed(&_fadeEffectTrainer_vf) != 0) {
+        layer->setRenderStateAndSelect(&_fadeEffectTrainer_vf);
+        GSmtx44Ortho(projection, 0.0f, 480.0f, 0.0f, 640.0f, 0.0f, -30000.0f);
+        layer->fieldD54 = 1;
+        layer->fieldD58 = projection[0][0];
+        layer->fieldD5C = projection[0][3];
+        layer->fieldD60 = projection[1][1];
+        layer->fieldD64 = projection[1][3];
+        layer->fieldD68 = projection[2][2];
+        layer->fieldD6C = projection[2][3];
+        temp_r28 = layer->field19A0;
+        memcpy(temp_r28->state->matrix, mtxIdent, 0x30);
+        temp_r3_2 = &temp_r28->state->flags;
+        *temp_r3_2 |= 1;
+        layer->field1684 = 0.0f;
+        layer->field1688 = 30000.0f;
+        if ((u8) layer->field16A7 != 0) {
+            if ((u8) layer->field16A6 != 0) {
+                layer->field170C = (s32) (layer->field170C | 0x100);
+                layer->field17C4 = (s32) (layer->field17C4 | 0x100);
+            }
+            layer->field170C = (s32) (layer->field170C | 0x40);
+            layer->field16A8 = (s32) (layer->field16A8 | 0x40);
+            layer->field17C4 = (s32) (layer->field17C4 | 0x40);
+            layer->field1760 = (s32) (layer->field1760 | 0x40);
+        }
+        layer->field16AC = (s32) (layer->field16AC | 0x20);
+        layer->field16A8 = (s32) (layer->field16A8 | 1);
+        layer->field1764 = (s32) (layer->field1764 | 0x20);
+        layer->field1760 = (s32) (layer->field1760 | 1);
+        if ((s32) layer->field1994 != 1) {
+            layer->field1994 = 1;
+            layer->field1990 = (void*)((FadeLayerConfigView*)layer)->configs[layer->field1994];
+        }
+        layer->field1644 = 1;
+        layer->field1648 = 4;
+        layer->field164C = 5;
+        layer->field1650 = 5;
+        layer->field170C = (s32) (layer->field170C | 1);
+        layer->field16A8 = (s32) (layer->field16A8 | 0x40);
+        layer->field17C4 = (s32) (layer->field17C4 | 1);
+        layer->field1760 = (s32) (layer->field1760 | 0x40);
+        layer->field1656 = 1;
+        layer->field1657 = 1;
+        layer->field1658 = 0;
+        layer->field170C = (s32) (layer->field170C | 4);
+        layer->field16A8 = (s32) (layer->field16A8 | 0x40);
+        layer->field17C4 = (s32) (layer->field17C4 | 4);
+        layer->field1760 = (s32) (layer->field1760 | 0x40);
+        layer->field165C = 0;
+        layer->field1660 = 1;
+        layer->field170C = (s32) (layer->field170C | 8);
+        layer->field16A8 = (s32) (layer->field16A8 | 0x40);
+        layer->field17C4 = (s32) (layer->field17C4 | 8);
+        layer->field1760 = (s32) (layer->field1760 | 0x40);
+        layer->field1664 = 7;
+        layer->field1670 = 0;
+        layer->field1668 = 0;
+        layer->field166C = 7;
+        layer->field1671 = 0;
+        layer->field1672 = 1;
+        layer->field170C = (s32) (layer->field170C | 0x10);
+        layer->field16A8 = (s32) (layer->field16A8 | 0x40);
+        layer->field17C4 = (s32) (layer->field17C4 | 0x10);
+        temp_r10 = layer->field1760 | 0x40;
+        layer->field1760 = temp_r10;
+        layer->fieldD8C = 0;
+        layer->field16B8 = (s32) (layer->field16B8 | 2);
+        layer->field16A8 = (s32) (layer->field16A8 | 2);
+        layer->field1770 = (s32) (layer->field1770 | 2);
+        layer->field1760 = (s32) (layer->field1760 | 2);
+        layer->tgenFunc(0,(GSgfxTgenFunc)1,(GSgfxTgenSrc)4,0,false,0);
+        layer->tgenFunc(1,(GSgfxTgenFunc)1,(GSgfxTgenSrc)5,0,false,0);
+        FL(u8, 0xEAC) = 3;
+        FL(s32, 0x16CC) = (s32) (FL(s32, 0x16CC) | 1);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1784) = (s32) (FL(s32, 0x1784) | 1);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        GStexture* tex0=_fadeEffectWork.ballTexture;
+        if (((void *) layer->field1740 != (void *) tex0) || ((void *) layer->field17F8 != (void *) tex0) || ((u8) tex0->dirty != 0)) {
+            layer->field1740 = tex0;
+            layer->field173C = (s32) (layer->field173C | 1);
+            layer->field17F8 = tex0;
+            layer->field17F4 = (s32) (layer->field17F4 | 1);
+        }
+        FL(s32, 0xEB0) = 0;
+        FL(s32, 0xEB4) = 0;
+        FL(s32, 0xEB8) = 4;
+        FL(s32, 0x16D0) = (s32) (FL(s32, 0x16D0) | 1);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1788) = (s32) (FL(s32, 0x1788) | 1);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0x1170) = 8;
+        FL(s32, 0x1174) = 0;
+        FL(s32, 0x1178) = 0;
+        FL(u8, 0x117C) = 0;
+        FL(s32, 0x1180) = 0;
+        FL(s32, 0x16DC) = (s32) (FL(s32, 0x16DC) | 1);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1794) = (s32) (FL(s32, 0x1794) | 1);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0xF70) = 8;
+        FL(s32, 0xF74) = 0xD;
+        FL(s32, 0xF78) = 0xC;
+        FL(s32, 0xF7C) = 0xF;
+        FL(s32, 0x16D4) = (s32) (FL(s32, 0x16D4) | 1);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x178C) = (s32) (FL(s32, 0x178C) | 1);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0x12B0) = 0;
+        FL(s32, 0x12B4) = 0;
+        FL(s32, 0x12B8) = 0;
+        FL(u8, 0x12BC) = 0;
+        FL(s32, 0x12C0) = 0;
+        FL(s32, 0x16E0) = (s32) (FL(s32, 0x16E0) | 1);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1798) = (s32) (FL(s32, 0x1798) | 1);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0x1070) = 7;
+        FL(s32, 0x1074) = 7;
+        FL(s32, 0x1078) = 7;
+        FL(s32, 0x107C) = 4;
+        FL(s32, 0x16D8) = (s32) (FL(s32, 0x16D8) | 1);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1790) = (s32) (FL(s32, 0x1790) | 1);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        GStexture* tex1=_fadeEffectWork.secondTexture;
+        if (((void *) FL(GStexture*, 0x1744) != (void *) tex1) || ((void *) FL(GStexture*, 0x17FC) != (void *) tex1) || ((u8) tex1->dirty != 0)) {
+            FL(GStexture*, 0x1744) = tex1;
+            layer->field173C = (s32) (layer->field173C | 2);
+            FL(GStexture*, 0x17FC) = tex1;
+            layer->field17F4 = (s32) (layer->field17F4 | 2);
+        }
+        FL(s32, 0xEBC) = 0;
+        FL(s32, 0xEC0) = 1;
+        FL(s32, 0xEC4) = 4;
+        FL(s32, 0x16D0) = (s32) (FL(s32, 0x16D0) | 2);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1788) = (s32) (FL(s32, 0x1788) | 2);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0x1184) = 0;
+        FL(s32, 0x1188) = 0;
+        FL(s32, 0x118C) = 0;
+        FL(u8, 0x1190) = 0;
+        FL(s32, 0x1194) = 0;
+        FL(s32, 0x16DC) = (s32) (FL(s32, 0x16DC) | 2);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1794) = (s32) (FL(s32, 0x1794) | 2);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0xF80) = 0xF;
+        FL(s32, 0xF84) = 0xF;
+        FL(s32, 0xF88) = 0xF;
+        FL(s32, 0xF8C) = 0;
+        FL(s32, 0x16D4) = (s32) (FL(s32, 0x16D4) | 2);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x178C) = (s32) (FL(s32, 0x178C) | 2);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0x12C4) = 1;
+        FL(s32, 0x12C8) = 0;
+        FL(s32, 0x12CC) = 0;
+        FL(u8, 0x12D0) = 0;
+        FL(s32, 0x12D4) = 0;
+        FL(s32, 0x16E0) = (s32) (FL(s32, 0x16E0) | 2);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1798) = (s32) (FL(s32, 0x1798) | 2);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0x1080) = 4;
+        FL(s32, 0x1084) = 7;
+        FL(s32, 0x1088) = 7;
+        FL(s32, 0x108C) = 0;
+        FL(s32, 0x16D8) = (s32) (FL(s32, 0x16D8) | 2);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1790) = (s32) (FL(s32, 0x1790) | 2);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        if (((void *) FL(GStexture*, 0x1748) != texture) || ((void *) FL(GStexture*, 0x1800) != texture) || ((u8) texture->dirty != 0)) {
+            FL(GStexture*, 0x1748) = texture;
+            layer->field173C = (s32) (layer->field173C | 4);
+            FL(GStexture*, 0x1800) = texture;
+            layer->field17F4 = (s32) (layer->field17F4 | 4);
+        }
+        var_r4 = 1;
+        FL(s32, 0xEC8) = 1;
+        FL(s32, 0xECC) = 2;
+        FL(s32, 0xED0) = 4;
+        FL(s32, 0x16D0) = (s32) (FL(s32, 0x16D0) | 4);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1788) = (s32) (FL(s32, 0x1788) | 4);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0x1198) = 0;
+        FL(s32, 0x119C) = 0;
+        FL(s32, 0x11A0) = 0;
+        FL(u8, 0x11A4) = 0;
+        FL(s32, 0x11A8) = 0;
+        FL(s32, 0x16DC) = (s32) (FL(s32, 0x16DC) | 4);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1794) = (s32) (FL(s32, 0x1794) | 4);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0xF90) = 0xF;
+        FL(s32, 0xF94) = 8;
+        FL(s32, 0xF98) = 0;
+        FL(s32, 0xF9C) = 0xF;
+        FL(s32, 0x16D4) = (s32) (FL(s32, 0x16D4) | 4);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x178C) = (s32) (FL(s32, 0x178C) | 4);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0x12D8) = 0;
+        FL(s32, 0x12DC) = 0;
+        FL(s32, 0x12E0) = 0;
+        FL(u8, 0x12E4) = 0;
+        FL(s32, 0x12E8) = 0;
+        FL(s32, 0x16E0) = (s32) (FL(s32, 0x16E0) | 4);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1798) = (s32) (FL(s32, 0x1798) | 4);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(s32, 0x1090) = 7;
+        FL(s32, 0x1094) = 5;
+        FL(s32, 0x1098) = 0;
+        FL(s32, 0x109C) = 7;
+        FL(s32, 0x16D8) = (s32) (FL(s32, 0x16D8) | 4);
+        layer->field16A8 = (s32) (layer->field16A8 | 8);
+        FL(s32, 0x1790) = (s32) (FL(s32, 0x1790) | 4);
+        layer->field1760 = (s32) (layer->field1760 | 8);
+        FL(GSgfxVF*, 0x199C) = &_fadeEffectTrainer_vf;
+        layer->field1998 = 0x98;
+        center.param1 = 320.0f;
+        center.param2 = 240.0f;
+        center.param3 = 0.0f;
+        var_f2 = fadeSqrt(temp_f31);
+        temp_r28_2 = 255.0f * (1.0f - var_f2);
+        if (((s32) (u8) temp_r28_2 <= (s32) _fadeEffectWork.state) && ((u8) temp_r28_2 != 0)) {
+            f32 u0,v0,u1,v1;
+            _fadeEffectWork.state = temp_r28_2;
+            point.param1 = 1.9f;
+            point.param2 = 1.9f;
+            point.param3 = 1.9f;
+            PSMTXScale(transform, 1.9f, 1.9f, 1.9f);
+            PSMTXRotRad(rotation, 0x5A, 0.0f);
+            PSMTXConcat(rotation,transform,transform);
+            PSMTXTransApply(transform,transform, center.param1, center.param2, center.param3);
+            point.param1 = 128.0f;
+            point.param2 = 128.0f;
+            point.param3 = 0.0f;
+            PSMTXMultVec(transform,&point,&output);
+            temp_f7 = output.param1 - center.param1;
+            temp_f6 = output.param2 - center.param2;
+            temp_f5 = 320.0f - temp_f7;
+            temp_f3 = 320.0f + temp_f7;
+            temp_f2 = 240.0f - temp_f6;
+            output.param1 = temp_f7;
+            u0 = temp_f5 / 640.0f;
+            output.param2 = temp_f6;
+            u1 = temp_f3 / 640.0f;
+            v0 = temp_f2 / 480.0f;
+            v1 = (240.0f + temp_f6) / 480.0f;
+            layer->beginSurface(4);
+            point.param1 = -128.0f;
+            point.param2 = -128.0f;
+            point.param3 = 0.0f;
+            PSMTXMultVec(transform,&point,&output);
+            *(f32 *)0xCC008000 = output.param1;
+            *(f32 *)0xCC008000 = output.param2;
+            *(f32 *)0xCC008000 = output.param3;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = temp_r28_2;
+            *(f32 *)0xCC008000 = 0.01f;
+            *(f32 *)0xCC008000 = 0.01f;
+            *(f32 *)0xCC008000 = u0;
+            *(f32 *)0xCC008000 = v0;
+            point.param1 = 128.0f;
+            point.param2 = -128.0f;
+            point.param3 = 0.0f;
+            PSMTXMultVec(transform,&point,&output);
+            *(f32 *)0xCC008000 = output.param1;
+            *(f32 *)0xCC008000 = output.param2;
+            *(f32 *)0xCC008000 = output.param3;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = temp_r28_2;
+            *(f32 *)0xCC008000 = 0.99f;
+            *(f32 *)0xCC008000 = 0.01f;
+            *(f32 *)0xCC008000 = u1;
+            *(f32 *)0xCC008000 = v0;
+            point.param1 = -128.0f;
+            point.param2 = 128.0f;
+            point.param3 = 0.0f;
+            PSMTXMultVec(transform,&point,&output);
+            *(f32 *)0xCC008000 = output.param1;
+            *(f32 *)0xCC008000 = output.param2;
+            *(f32 *)0xCC008000 = output.param3;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = temp_r28_2;
+            *(f32 *)0xCC008000 = 0.01f;
+            *(f32 *)0xCC008000 = 0.99f;
+            *(f32 *)0xCC008000 = u0;
+            *(f32 *)0xCC008000 = v1;
+            point.param1 = 128.0f;
+            point.param2 = 128.0f;
+            point.param3 = 0.0f;
+            PSMTXMultVec(transform,&point,&output);
+            *(f32 *)0xCC008000 = output.param1;
+            *(f32 *)0xCC008000 = output.param2;
+            *(f32 *)0xCC008000 = output.param3;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = 0xFF;
+            *(u8 *)0xCC008000 = temp_r28_2;
+            *(f32 *)0xCC008000 = 0.99f;
+            *(f32 *)0xCC008000 = 0.99f;
+            *(f32 *)0xCC008000 = u1;
+            *(f32 *)0xCC008000 = v1;
+            layer->endSurface();
+        }
+    }
+    return active;
+}
+
+extern void _fadeVirtualHexaDecayNoiseDraw(GSgfxLayer*,GStexture*,f32);
+extern void _fadeVirtualHexaDecayRibbonDraw(GSgfxLayer*,GStexture*,f32);
+extern void _fadeVirtualHexaDecayLineDraw(GSgfxLayer*,f32);
+#pragma opt_common_subs reset
+
+bool fadeEffectHookFunction_virtual_hexa_decay(GSgfxLayerID id,bool active,f32 elapsed,f32 duration,f32 elapsedSecond,f32 durationSecond,void* opaque) {
+    GSvec center;
+    f32 progressSecond,remaining,progress,opacity;
+    GSgfxLayer* layer;
+    GStexture* texture;
+    layer=GSgfxLayerFindByID(id);
+    if(!layer)return active;
+    progressSecond=elapsedSecond/durationSecond;
+    f32 square=progressSecond*progressSecond;
+    progress=elapsed/duration;
+    remaining=square*square;
+    _fadeEffectMaskFunction(layer,0.0f);
+    texture=(GStexture*)opaque;
+    if(!texture)return active;
+    if(_fadeEffectFirstFlag==1) {
+        GSgfxVideoSetLockFrameRate(true);
+        _fadeEffectFirstFlag=0;
+        s32 low=HSD_Rand();
+        u16 direction;
+        if(((HSD_Rand()<<16)|low)&1)direction=1;
+        else direction=0;
+        _fadeEffectWork.direction=direction;
+        _fadeEffectWork.frame=0;
+        _fadeVirtualHexaDecayInit();
+        GSgfxBeginBackFBCapture(texture,_myBackFB,0);
+    }
+    if(_fadeEffectFirstFlag==0&&!active) {
+        _fadeVirtualHexaDecayQuit();
+        GSgfxEndBackFBCapture(texture);
+        return active;
+    }
+    if(timeGetLastFrameTime()!=0)GSgfxBeginBackFBCapture(texture,_myBackFB,0);
+    else GSgfxEndBackFBCapture(texture);
+    f32 amount;
+    if(progress<=0.4f)amount=0.0f;
+    else amount=1.6666666f*(progress-0.4f);
+    remaining=(1.0f-amount)*(1.0f-remaining);
+    opacity=1.0f-remaining;
+    if(opacity<0.00001f)opacity=0.0f;
+    else if(opacity>1.0f)opacity=1.0f;
+    center.param1=320.0f;center.param2=240.0f;center.param3=0.0f;
+    _fadeEffectSnapshotFadeFunction(layer,texture,&center,1.0f,0.0f,opacity,0.0f);
+    f32 offset=6.0f*progressSecond;
+    center.param1=320.0f-offset;
+    _fadeEffectSnapshotFadeFunction(layer,texture,&center,1.0f,0.0f,opacity,0.5f);
+    center.param1=320.0f+offset;
+    _fadeEffectSnapshotFadeFunction(layer,texture,&center,1.0f,0.0f,opacity,0.666f);
+    if(timeGetLastFrameTime()!=0) {
+        _fadeEffectWork.frame++;
+        _fadeVirtualHexaDecayRibbonUpdate();
+        _fadeVirtualHexaDecayLineUpdate();
+    }
+    _fadeVirtualHexaDecayNoiseDraw(layer,texture,0.2f*(remaining*progressSecond));
+    _fadeVirtualHexaDecayRibbonDraw(layer,texture,remaining*(1.8333334f+((0.16666667f*remaining*remaining)-remaining)));
+    _fadeVirtualHexaDecayLineDraw(layer,remaining);
+    _fadeHexaDecayTime=progressSecond;
+    return active;
+}
+
+#pragma opt_common_subs off
+#pragma opt_loop_invariants off
+void _fadeVirtualHexaDecayLineDraw(GSgfxLayer* input,f32 opacity) {
+    u8 alpha;
+    s32 side,i;
+    s16 count;
+    register s32 middle;
+    GSgfxLayer* layer;
+    FadeHexaLine* line;
+    layer=input;
+    if(opacity<0.00001f)return;
+    alpha=255.0f*opacity;
+    FADE_LAYER_SETUP
+    layer->field1998=0xB0;
+    layer->setRenderStateAndSelect(GSgfxVFBuildTemp(0,3,0,0,1,5,0,0,0));
+    u8 red[3]={50,200,0};
+    u8 green[3]={60,240,0};
+    u8 blue[3]={255,255,0};
+    FL(u8,0xD34)=6;
+    FL(s32,0xD38)=0;
+    layer->field16AC |=4;
+    layer->field16A8 |=1;
+    layer->field1764 |=4;
+    layer->field1760 |=1;
+    for(side=0;side<2;side++) {
+        for(i=0;i<19;i++) {
+            line=(FadeHexaLine*)_fadeHexaLine[side]+i;
+            count=line->count;
+            if(count>=2) {
+                middle=count/2;
+                layer->beginSurface(count);
+                s32 vertex;
+                s16 u,v;
+                FadeHexaLine* point=line;
+                for(vertex=0;vertex<count;vertex++) {
+                    s32 index;
+                    if(vertex==middle)index=1;
+                    else if(vertex<count-1)index=0;
+                    else index=2;
+                    u=point->points[0].u;
+                    v=point->points[0].v;
+                    *(s16*)0xCC008000=u;
+                    *(s16*)0xCC008000=v;
+                    *(u8*)0xCC008000=red[index];
+                    *(u8*)0xCC008000=green[index];
+                    *(u8*)0xCC008000=blue[index];
+                    *(u8*)0xCC008000=alpha;
+                    point=(FadeHexaLine*)((char*)point+8);
+                }
+                layer->endSurface();
+            }
+        }
+    }
+    FL(u8,0xD34)=6;
+    FL(s32,0xD38)=0;
+    layer->field16AC |=4;
+    layer->field16A8 |=1;
+    layer->field1764 |=4;
+    layer->field1760 |=1;
+}
+
+#pragma opt_common_subs reset
+
+#pragma opt_loop_invariants reset
+
+void _fadeVirtualHexaDecayRibbonDraw(GSgfxLayer* layer,GStexture* texture,f32 opacity) {
+    u8 shade=255.0f*opacity;
+    FADE_LAYER_SETUP
+    layer->field1998=0x80;
+    layer->setRenderStateAndSelect(GSgfxVFBuildTemp(0,3,0,0,1,5,1,1,4));
+    FADE_LAYER_BIND_TEXTURE(texture)
+    if(_fadeHexaRibbonNum>0) {
+        layer->beginSurface(_fadeHexaRibbonNum*4);
+        FadeHexaRibbon* ribbon=(FadeHexaRibbon*)_fadeHexaRibbon;
+        s32 count=_fadeHexaRibbonNum;
+        for(s32 i=0;i<count;i++) {
+            s16 x0=ribbon->x,y0=ribbon->y;
+            s16 x1=x0+ribbon->width,y1=y0+ribbon->height;
+            f32 u0=(f32)(x0+21)/640.0f;
+            f32 v0=(f32)y0/480.0f;
+            f32 u1=(f32)(x1-19)/640.0f;
+            f32 v1=(f32)y1/480.0f;
+            *(s16*)0xCC008000=x0;
+            *(s16*)0xCC008000=y0;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=255;
+            *(f32*)0xCC008000=u0;
+            *(f32*)0xCC008000=v0;
+            *(s16*)0xCC008000=x1;
+            *(s16*)0xCC008000=y0;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=255;
+            *(f32*)0xCC008000=u1;
+            *(f32*)0xCC008000=v0;
+            *(s16*)0xCC008000=x1;
+            *(s16*)0xCC008000=y1;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=255;
+            *(f32*)0xCC008000=u1;
+            *(f32*)0xCC008000=v1;
+            *(s16*)0xCC008000=x0;
+            *(s16*)0xCC008000=y1;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=shade;
+            *(u8*)0xCC008000=255;
+            *(f32*)0xCC008000=u0;
+            *(f32*)0xCC008000=v1;
+            ribbon++;
+        }
+        layer->endSurface();
+    }
+}
+
+void _fadeVirtualHexaDecayNoiseDraw(GSgfxLayer* layer,GStexture* texture,f32 opacity) {
+    if(_fadeHexaTexture && texture) {
+    u8 alpha=255.0f*opacity;
+    layer->setRenderStateAndSelect(_fadeHexaNoiseVF);
+    FADE_LAYER_SETUP
+        layer->tgenFunc(0,(GSgfxTgenFunc)1,(GSgfxTgenSrc)4,0,false,0);
+        layer->tgenFunc(1,(GSgfxTgenFunc)1,(GSgfxTgenSrc)5,0,false,0);
+        FL(u8, 0xEAC) = 2;
+        FL(s32, 0x16CC) = (s32) (FL(s32, 0x16CC) | 1);
+        FL(s32, 0x16A8) = (s32) (FL(s32, 0x16A8) | 8);
+        FL(s32, 0x1784) = (s32) (FL(s32, 0x1784) | 1);
+        FL(s32, 0x1760) = (s32) (FL(s32, 0x1760) | 8);
+        if (((void *) FL(GStexture*, 0x1740) != texture) || ((void *) FL(GStexture*, 0x17F8) != texture) || ((u8) texture->dirty != 0)) {
+            FL(GStexture*, 0x1740) = texture;
+            FL(s32, 0x173C) = (s32) (FL(s32, 0x173C) | 1);
+            FL(GStexture*, 0x17F8) = texture;
+            FL(s32, 0x17F4) = (s32) (FL(s32, 0x17F4) | 1);
+        }
+        FL(s32, 0xEB0) = 0;
+        FL(s32, 0xEB4) = 0;
+        FL(s32, 0xEB8) = 4;
+        FL(s32, 0x16D0) = (s32) (FL(s32, 0x16D0) | 1);
+        FL(s32, 0x16A8) = (s32) (FL(s32, 0x16A8) | 8);
+        FL(s32, 0x1788) = (s32) (FL(s32, 0x1788) | 1);
+        FL(s32, 0x1760) = (s32) (FL(s32, 0x1760) | 8);
+        FL(s32, 0x1170) = 0;
+        FL(s32, 0x1174) = 0;
+        FL(s32, 0x1178) = 0;
+        FL(u8, 0x117C) = 0;
+        FL(s32, 0x1180) = 1;
+        FL(s32, 0x16DC) = (s32) (FL(s32, 0x16DC) | 1);
+        FL(s32, 0x16A8) = (s32) (FL(s32, 0x16A8) | 8);
+        FL(s32, 0x1794) = (s32) (FL(s32, 0x1794) | 1);
+        FL(s32, 0x1760) = (s32) (FL(s32, 0x1760) | 8);
+        FL(s32, 0xF70) = 0xF;
+        FL(s32, 0xF74) = 8;
+        FL(s32, 0xF78) = 0xA;
+        FL(s32, 0xF7C) = 0xF;
+        FL(s32, 0x16D4) = (s32) (FL(s32, 0x16D4) | 1);
+        FL(s32, 0x16A8) = (s32) (FL(s32, 0x16A8) | 8);
+        FL(s32, 0x178C) = (s32) (FL(s32, 0x178C) | 1);
+        FL(s32, 0x1760) = (s32) (FL(s32, 0x1760) | 8);
+        FL(s32, 0x12B0) = 0;
+        FL(s32, 0x12B4) = 0;
+        FL(s32, 0x12B8) = 0;
+        FL(u8, 0x12BC) = 0;
+        FL(s32, 0x12C0) = 1;
+        FL(s32, 0x16E0) = (s32) (FL(s32, 0x16E0) | 1);
+        FL(s32, 0x16A8) = (s32) (FL(s32, 0x16A8) | 8);
+        FL(s32, 0x1798) = (s32) (FL(s32, 0x1798) | 1);
+        FL(s32, 0x1760) = (s32) (FL(s32, 0x1760) | 8);
+        FL(s32, 0x1070) = 7;
+        FL(s32, 0x1074) = 4;
+        FL(s32, 0x1078) = 5;
+        FL(s32, 0x107C) = 7;
+        FL(s32, 0x16D8) = (s32) (FL(s32, 0x16D8) | 1);
+        FL(s32, 0x16A8) = (s32) (FL(s32, 0x16A8) | 8);
+        FL(s32, 0x1790) = (s32) (FL(s32, 0x1790) | 1);
+        FL(s32, 0x1760) = (s32) (FL(s32, 0x1760) | 8);
+        GStexture* noiseTexture=_fadeHexaTexture;
+        if (((void *) FL(GStexture*, 0x1744) != (void *) noiseTexture) || ((void *) FL(GStexture*, 0x17FC) != (void *) noiseTexture) || ((u8) noiseTexture->dirty != 0)) {
+            FL(GStexture*, 0x1744) = noiseTexture;
+            FL(s32, 0x173C) = (s32) (FL(s32, 0x173C) | 2);
+            FL(GStexture*, 0x17FC) = noiseTexture;
+            FL(s32, 0x17F4) = (s32) (FL(s32, 0x17F4) | 2);
+        }
+        FL(s32, 0xEBC) = 1;
+        FL(s32, 0xEC0) = 1;
+        FL(s32, 0xEC4) = 4;
+        FL(s32, 0x16D0) = (s32) (FL(s32, 0x16D0) | 2);
+        FL(s32, 0x16A8) = (s32) (FL(s32, 0x16A8) | 8);
+        FL(s32, 0x1788) = (s32) (FL(s32, 0x1788) | 2);
+        FL(s32, 0x1760) = (s32) (FL(s32, 0x1760) | 8);
+        FL(s32, 0x1184) = 0;
+        FL(s32, 0x1188) = 0;
+        FL(s32, 0x118C) = 0;
+        FL(u8, 0x1190) = 0;
+        FL(s32, 0x1194) = 0;
+        FL(s32, 0x16DC) = (s32) (FL(s32, 0x16DC) | 2);
+        FL(s32, 0x16A8) = (s32) (FL(s32, 0x16A8) | 8);
+        FL(s32, 0x1794) = (s32) (FL(s32, 0x1794) | 2);
+        FL(s32, 0x1760) |= 8;
+        FL(s32, 0xF80) = 0xF;
+        FL(s32, 0xF84) = 8;
+        FL(s32, 0xF88) = 2;
+        FL(s32, 0xF8C) = 0xF;
+        FL(s32, 0x16D4) = (s32) (FL(s32, 0x16D4) | 2);
+        FL(s32, 0x16A8) = (s32) (FL(s32, 0x16A8) | 8);
+        FL(s32, 0x178C) = (s32) (FL(s32, 0x178C) | 2);
+        FL(s32, 0x1760) = (s32) (FL(s32, 0x1760) | 8);
+        FL(s32, 0x12C4) = 0;
+        FL(s32, 0x12C8) = 0;
+        FL(s32, 0x12CC) = 0;
+        FL(u8, 0x12D0) = 0;
+        FL(s32, 0x12D4) = 0;
+        FL(s32, 0x16E0) = (s32) (FL(s32, 0x16E0) | 2);
+        FL(s32, 0x16A8) = (s32) (FL(s32, 0x16A8) | 8);
+        FL(s32, 0x1798) = (s32) (FL(s32, 0x1798) | 2);
+        FL(s32, 0x1760) = (s32) (FL(s32, 0x1760) | 8);
+        FL(s32, 0x1080) = 7;
+        FL(s32, 0x1084) = 7;
+        FL(s32, 0x1088) = 7;
+        FL(s32, 0x108C) = 1;
+        FL(s32, 0x16D8) = (s32) (FL(s32, 0x16D8) | 2);
+        FL(s32, 0x16A8) = (s32) (FL(s32, 0x16A8) | 8);
+        FL(s32, 0x1790) = (s32) (FL(s32, 0x1790) | 2);
+        FL(s32, 0x1760) = (s32) (FL(s32, 0x1760) | 8);
+        FL(GSgfxVF*, 0x199C) = _fadeHexaNoiseVF;
+        FL(s32, 0x1998) = 0x98;
+        layer->beginSurface(4);
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = alpha;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 641.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = alpha;
+        *(f32 *)0xCC008000 = 1.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 1.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 481.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = alpha;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 1.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(f32 *)0xCC008000 = 15.0f;
+        *(f32 *)0xCC008000 = 641.0f;
+        *(f32 *)0xCC008000 = 481.0f;
+        *(f32 *)0xCC008000 = 0.0f;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = 0xFF;
+        *(u8 *)0xCC008000 = alpha;
+        *(f32 *)0xCC008000 = 1.0f;
+        *(f32 *)0xCC008000 = 1.0f;
+        *(f32 *)0xCC008000 = 1.0f;
+        *(f32 *)0xCC008000 = 15.0f;
+        layer->endSurface();
+    }
 }

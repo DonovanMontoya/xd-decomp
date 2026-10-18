@@ -1,6 +1,12 @@
+extern "C" {
+#include <libc/stdio.h>
+}
 #include <game/pxdvs/app/script/appScriptPrivate.hpp>
 
 using namespace GSscript;
+
+struct ScriptPrintBuffer { char text[256]; };
+static const ScriptPrintBuffer scriptPrintInitial = {0};
 
 static void _appScriptModelSetVisibility(_GSmodel*, void*);
 
@@ -590,7 +596,12 @@ int AppScript::cmpLight(int cmd, tigaVariant* args, tigaVariant* result) {
     }
     case 0x16: {
         GSlight* light = lightGetLight(appScriptGetInt(&args[1]));
-        AppScriptColor color = appScriptGetColor(&args[2]);
+        AppScriptColor components;
+        components.r = appScriptGetInt(&args[2]);
+        components.g = appScriptGetInt(&args[3]);
+        components.b = appScriptGetInt(&args[4]);
+        components.a = appScriptGetInt(&args[5]);
+        AppScriptColor color = components;
         GSlightSetColor(light, &color);
         break;
     }
@@ -915,7 +926,95 @@ int AppScript::andFlagTest(tigaVariant* args) {
     return result;
 }
 
-// AppScript::fncPrintf (0x4AC bytes) is not recovered yet.
+extern "C" void GSlogWrite(const char*, ...);
+
+static inline char* scriptPrintString(tigaVariant* value, char* buffer) {
+    if (value->type == 3) return value->value.string;
+    return value->getCnvString(buffer);
+}
+
+static inline GSresID* scriptPrintPeople(tigaVariant* value) {
+    if (value->type == 0x23) return (GSresID*)value->value.pointer;
+    tigaErrMessage("people not access");
+    return 0;
+}
+
+int AppScript::fncPrintf(tigaVariant* args) {
+    ScriptPrintBuffer buffer = scriptPrintInitial;
+    int length = 0;
+    int argument = 1;
+    char* format = scriptPrintString(args, (char*)field954);
+    for (; *format != 0; ++format) {
+        if (*format == '%') {
+            ++format;
+            if (*format == 'd' || *format == 'D') {
+                if (args[argument].type == 1) {
+                    length = sprintf(buffer.text, "%s%d", buffer.text, appScriptGetInt(&args[argument]));
+                } else {
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    return 0;
+                }
+            } else if (*format == 'f' || *format == 'F') {
+                if (args[argument].type == 2) {
+                    length = sprintf(buffer.text, "%s%f", buffer.text, appScriptGetFloat(&args[argument]));
+                } else {
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    return 0;
+                }
+            } else if (*format == 's' || *format == 'S') {
+                if (args[argument].type == 3) {
+                    length = sprintf(buffer.text, "%s%s", buffer.text, scriptPrintString(&args[argument], (char*)field954));
+                } else {
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    return 0;
+                }
+            } else if (*format == 'c' || *format == 'C') {
+                if (args[argument].type == 3) {
+                    length = sprintf(buffer.text, "%s%c", buffer.text, scriptPrintString(&args[argument], (char*)field954));
+                } else {
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    return 0;
+                }
+            } else if (*format == 'v' || *format == 'V') {
+                if (args[argument].type == 4) {
+                    GSvec* vector = appScriptGetVec(&args[argument]);
+                    length = sprintf(buffer.text, "%s x:%f y:%f z:%f", buffer.text, vector->param1, vector->param2, vector->param3);
+                } else {
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    return 0;
+                }
+            } else if (*format == 'p' || *format == 'P') {
+                if (args[argument].type == 0x23) {
+                    GSresID* person = scriptPrintPeople(&args[argument]);
+                    length = sprintf(buffer.text, "%s grpID:%d resID:%d", buffer.text, person->group, person->id);
+                } else {
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    return 0;
+                }
+            }
+            ++argument;
+        } else if (*format == '\\') {
+            ++format;
+            if (*format == 'n') {
+                sprintf(buffer.text, "%s\n", buffer.text);
+                GSlogWrite(buffer.text);
+                for (int i = 0; i < 256; ++i) buffer.text[i] = 0;
+                length = 0;
+            } else if (*format == 't') {
+                length = sprintf(buffer.text, "%s\t", buffer.text);
+            }
+        } else {
+            buffer.text[length] = (s8)*format;
+            ++length;
+        }
+    }
+    if (buffer.text[length] != '\n' && length != 0) {
+        buffer.text[length] = '\n';
+        GSlogWrite(buffer.text);
+    }
+    return 0;
+}
+
 
 int AppScript::setExtendVariable(tigaVariant*, int, int) {
     return 0;

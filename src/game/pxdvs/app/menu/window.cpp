@@ -9,7 +9,7 @@ void *GSthreadGetCurrentThread();
 MenuData *menuDataBiosGetPtr(s32);
 MENU_ITEM_dd_ *menuItemBiosGetPtr(s32,s16);
 s32 menuItemBiosGetLayerID(s32);
-MenuSpriteData *menuSpriteBiosGetPtr(u16);
+MenuSpriteData *menuSpriteBiosGetPtr(s32);
 MenuSpriteValue *menuSpriteBiosGetValPtr(MenuSpriteData *);
 s32 menuGetCursorItemID(s32);
 s8 menuGetEnablePort();
@@ -35,7 +35,7 @@ static s32 _windowCreateItemSprite(tagWINDOW_WORK *);
 static void _winCalcWindowSize(long,const MENU_ITEM_dd_ *,s16 *,s16 *);
 extern "C" {
 WindowKeyInfo *windowGetKeyInfo2();
-void windowDrawSprite2(s16,s16,s16,s16,s32,tagWINDOW_WORK *,u16,s32,s32);
+void windowDrawSprite2(s16,s16,s16,s16,s32,tagWINDOW_WORK *,u16,u32,s32);
 void *windowGetAllocPtr(tagWINDOW_WORK *window) { if(window!=0)return window->allocation;return 0; }
 void *windowAllocMemory(tagWINDOW_WORK *window,s32 size) {
     if(window==0)return 0;
@@ -48,84 +48,84 @@ void *windowAllocMemory(tagWINDOW_WORK *window,s32 size) {
 void *windowGetFreeWork(tagWINDOW_WORK *window) { if(window!=0)return window->freeWork;return 0; }
 void windowSetParam(tagWINDOW_WORK *window,s32 index,u32 value) { if(window!=0)window->parameters[index]=value; }
 u32 windowGetParam(tagWINDOW_WORK *window,s32 index) { if(window!=0)return window->parameters[index];return 0; }
-void windowDrawSprite(s16 x,s16 y,tagWINDOW_WORK *work,u16 spriteID,s32 flags,s32 layer) {
+void windowDrawSprite(s16 x,s16 y,tagWINDOW_WORK *work,u16 spriteID,u32 flags,s32 layer) {
     if(spriteID!=0) { MenuSpriteValue *value=menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(spriteID));windowDrawSprite2(x,y,value->width,value->height,-1,work,spriteID,flags,layer); }
 }
-void windowDrawSpriteCursor(s16 x,s16 y,s32 color,tagWINDOW_WORK *work,u16 spriteID,s32 flags,s32 layer,const s32 *offset,s32 followingColor) {
+void windowDrawSpriteCursor(s16 x,s16 y,s32 color,tagWINDOW_WORK *work,u16 spriteID,u32 flags,s32 layer,const f32 *offset,s32 followingColor) {
     s32 index=0;
+    WindowDrawParameter drawData;
+    WindowDrawParameter* draw=&drawData;
     tagWINDOW_WORK temporary;
     MenuSpriteData *sprite=menuSpriteBiosGetPtr(spriteID);
     for(;;) {
         MenuSpriteValue *value=menuSpriteBiosGetValPtr(sprite);
-        WindowDrawParameter draw;
-        memset(&draw,0,sizeof(draw));
-        draw.type=7;
-        if(index==0)draw.color.value=color;else draw.color.value=followingColor;
-        draw.scaleX=1.0f;draw.scaleY=1.0f;
-        if(layer==floorGetMenuLayerID())draw.screenRelative=1;
-        switch(sprite->flags.fields.kind) {
-        case 1:draw.flags|=1;draw.resource=value->resource;break;
-        case 2:draw.flags|=2;draw.texture=value->resource;break;
-        case 3:draw.flags|=0x10;draw.texture=value->resource;break;
-        }
-        if(index==0) { draw.x=x+sprite->x;draw.y=y+sprite->y; }
-        else { draw.x=x+(sprite->x+offset[0]);draw.y=y+(sprite->y+offset[1]); }
-        draw.width=value->width;draw.height=value->height;
-        draw.sourceX=value->x;draw.sourceY=value->y;draw.sourceWidth=value->width;draw.sourceHeight=value->height;
-        draw.color.channels.alpha=(sprite->alpha*draw.color.channels.alpha)/255;
-        if((flags&1)!=0)draw.width=-draw.width;
-        if((flags&2)!=0)draw.height=-draw.height;
-        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;temporary.frame=-1; }
-        winSpriteDraw(work,&draw);
+        memset(draw,0,sizeof(*draw));
+        draw->type=7;
+        if(index==0)draw->color.value=color;else draw->color.value=followingColor;
+        draw->scaleX=1.0f;draw->scaleY=1.0f;
+        if(layer==floorGetMenuLayerID())draw->screenRelative=1;
+        u32 kind=sprite->flags.fields.kind;
+        if(kind==1){draw->flags|=1;draw->resource=value->resource;}
+        else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
+        else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
+        if(index==0) { draw->x=x+sprite->x;draw->y=y+sprite->y; }
+        else { draw->x=x+(sprite->x+(s32)offset[0]);draw->y=y+(sprite->y+(s32)offset[1]); }
+        draw->width=value->width;draw->height=value->height;
+        draw->sourceX=value->x;draw->sourceY=value->y;draw->sourceWidth=value->width;draw->sourceHeight=value->height;
+        draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
+        if((flags&1)!=0)draw->width=-draw->width;
+        if((flags&2)!=0)draw->height=-draw->height;
+        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;*(s32 *)&temporary.frame=-1; }
+        winSpriteDraw(work,draw);
         if(sprite->flags.fields.last!=0)break;
         ++index;
         sprite=menuSpriteBiosGetPtr(sprite->nextSprite);
     }
 }
-void windowDrawSprite2(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK *work,u16 spriteID,s32 flags,s32 layer) {
+void windowDrawSprite2(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK *work,u16 spriteID,u32 flags,s32 layer) {
+    WindowDrawParameter drawData;
+    WindowDrawParameter* draw=&drawData;
     tagWINDOW_WORK temporary;
     MenuSpriteData *sprite=menuSpriteBiosGetPtr(spriteID);
     for(;;) {
         MenuSpriteValue *value=menuSpriteBiosGetValPtr(sprite);
-        WindowDrawParameter draw;
-        memset(&draw,0,sizeof(draw));draw.color.value=color;draw.type=7;draw.scaleX=1.0f;draw.scaleY=1.0f;
-        if(layer==floorGetMenuLayerID())draw.screenRelative=1;
-        switch(sprite->flags.fields.kind) {
-        case 1:draw.flags|=1;draw.resource=value->resource;break;
-        case 2:draw.flags|=2;draw.texture=value->resource;break;
-        case 3:draw.flags|=0x10;draw.texture=value->resource;break;
-        }
-        draw.x=x+sprite->x;draw.width=width;draw.height=height;draw.y=y+sprite->y;
-        draw.sourceX=value->x;draw.sourceY=value->y;draw.sourceWidth=value->width;draw.sourceHeight=value->height;
-        draw.color.channels.alpha=(sprite->alpha*draw.color.channels.alpha)/255;
-        if((flags&1)!=0)draw.width=-width;
-        if((flags&2)!=0)draw.height=-draw.height;
-        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;temporary.frame=-1; }
-        winSpriteDraw(work,&draw);
+        memset(draw,0,sizeof(*draw));draw->color.value=color;draw->type=7;draw->scaleX=1.0f;draw->scaleY=1.0f;
+        if(layer==floorGetMenuLayerID())draw->screenRelative=1;
+        u32 kind=sprite->flags.fields.kind;
+        if(kind==1){draw->flags|=1;draw->resource=value->resource;}
+        else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
+        else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
+        draw->x=x+sprite->x;draw->width=width;draw->height=height;draw->y=y+sprite->y;
+        draw->sourceX=value->x;draw->sourceY=value->y;draw->sourceWidth=value->width;draw->sourceHeight=value->height;
+        draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
+        if((flags&1)!=0)draw->width=-width;
+        if((flags&2)!=0)draw->height=-draw->height;
+        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;*(s32 *)&temporary.frame=-1; }
+        winSpriteDraw(work,draw);
         if(sprite->flags.fields.last!=0)break;
         sprite=menuSpriteBiosGetPtr(sprite->nextSprite);
     }
 }
-void windowDrawSprite3(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK *work,u16 spriteID,s16 sourceX,s16 sourceY,s16 sourceWidth,s16 sourceHeight,s32 flags,s32 layer) {
+void windowDrawSprite3(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK *work,u16 spriteID,s16 sourceX,s16 sourceY,s16 sourceWidth,s16 sourceHeight,u32 flags,s32 layer) {
+    WindowDrawParameter drawData;
+    WindowDrawParameter* draw=&drawData;
     tagWINDOW_WORK temporary;
     MenuSpriteData *sprite=menuSpriteBiosGetPtr(spriteID);
     for(;;) {
         MenuSpriteValue *value=menuSpriteBiosGetValPtr(sprite);
-        WindowDrawParameter draw;
-        memset(&draw,0,sizeof(draw));draw.color.value=color;draw.type=7;draw.scaleX=1.0f;draw.scaleY=1.0f;
-        if(layer==floorGetMenuLayerID())draw.screenRelative=1;
-        switch(sprite->flags.fields.kind) {
-        case 1:draw.flags|=1;draw.resource=value->resource;break;
-        case 2:draw.flags|=2;draw.texture=value->resource;break;
-        case 3:draw.flags|=0x10;draw.texture=value->resource;break;
-        }
-        draw.x=x+sprite->x;draw.width=width;draw.height=height;draw.y=y+sprite->y;
-        draw.sourceX=value->x+sourceX;draw.sourceWidth=sourceWidth;draw.sourceY=value->y+sourceY;draw.sourceHeight=sourceHeight;
-        draw.color.channels.alpha=(sprite->alpha*draw.color.channels.alpha)/255;
-        if((flags&1)!=0)draw.width=-width;
-        if((flags&2)!=0)draw.height=-draw.height;
-        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;temporary.frame=-1; }
-        winSpriteDraw(work,&draw);
+        memset(draw,0,sizeof(*draw));draw->color.value=color;draw->type=7;draw->scaleX=1.0f;draw->scaleY=1.0f;
+        if(layer==floorGetMenuLayerID())draw->screenRelative=1;
+        u32 kind=sprite->flags.fields.kind;
+        if(kind==1){draw->flags|=1;draw->resource=value->resource;}
+        else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
+        else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
+        draw->x=x+sprite->x;draw->width=width;draw->height=height;draw->y=y+sprite->y;
+        draw->sourceX=value->x+sourceX;draw->sourceWidth=sourceWidth;draw->sourceY=value->y+sourceY;draw->sourceHeight=sourceHeight;
+        draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
+        if((flags&1)!=0)draw->width=-width;
+        if((flags&2)!=0)draw->height=-draw->height;
+        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;*(s32 *)&temporary.frame=-1; }
+        winSpriteDraw(work,draw);
         if(sprite->flags.fields.last!=0)break;
         sprite=menuSpriteBiosGetPtr(sprite->nextSprite);
     }

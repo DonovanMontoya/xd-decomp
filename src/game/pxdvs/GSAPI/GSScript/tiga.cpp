@@ -1114,17 +1114,21 @@ static inline void prepareVector(Tiga* owner,tigaVariant* value) {
 }
 int Tiga::execute(TigaThread* thread) {
     tigaVariant result;
-    u8 running=1;
-    Tiga* previous=m_cpCurrentObject;
+    bool running=1;
+    TigaWorkPrefix* previousWork;
+    Tiga* previous;
+    TPCCode** codePtr;
+    codePtr=&thread->code;
+    previous=m_cpCurrentObject;
     m_cpCurrentObject=this;
-    TigaWorkPrefix* previousWork=workBuffer;
+    previousWork=workBuffer;
     workBuffer=(TigaWorkPrefix*)&thread->code;
     while(running){
         tigaVariant* stack=thread->stackPtr10;
         if(stack<=thread->stackArea)break;
-        TigaInstruction* instruction=(TigaInstruction*)thread->code;
+        TigaInstruction* instruction=(TigaInstruction*)*codePtr;
         switch(instruction->opcode){
-        case 0:thread->code=(TPCCode*)(instruction+1);break;
+        case 0:*codePtr=(TPCCode*)(instruction+1);break;
         case 1:
             if(instruction->subcode<0x20){
                 calcExpr1(instruction->subcode,&result,stack);
@@ -1136,26 +1140,26 @@ int Tiga::execute(TigaThread* thread) {
                 releaseExpression(thread->stackPtr10);
             }
             *thread->stackPtr10=result;
-            thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
+            *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         case 2:{
             u8 type=instruction->subcode;
-            s16 index=instruction->argument;
+            u16 index=instruction->argument;
             --thread->stackPtr10;
             thread->stackPtr10->type=type;
             thread->stackPtr10->flags=0;
             if(type<=2){
-                thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
-                thread->stackPtr10->value.integer=*(s32*)thread->code;
+                *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
+                thread->stackPtr10->value.integer=*(s32*)*codePtr;
             }else if(type==0x35){
                 thread->stackPtr10->type=1;
-                thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
-                thread->stackPtr10->value.integer=*(s32*)thread->code;
+                *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
+                thread->stackPtr10->value.integer=*(s32*)*codePtr;
             }else if(type==3)thread->stackPtr10->value.string=(char*)field954+(u16)index;
             else if(type==4)thread->stackPtr10->value.vector=(GSvec*)field95C+(u16)index;
             else if(type==0x2c)thread->stackPtr10->value.pointer=resIdTable+(u16)index*2;
             retainExpression(thread->stackPtr10);
-            thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
+            *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
         case 3:{
@@ -1167,7 +1171,7 @@ int Tiga::execute(TigaThread* thread) {
             else if(kind==2){*thread->stackPtr10=(&thread->retVar)[index];}
             else if(kind==3){getPresetVar(thread->stackPtr10,index,0);}
             retainExpression(thread->stackPtr10);
-            thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
+            *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
         case 17:{
@@ -1175,13 +1179,15 @@ int Tiga::execute(TigaThread* thread) {
             u32 kind=instruction->subcode&15;
             --thread->stackPtr10;
             if(kind==0){
-                if(((TigaInstruction*)thread->code)[1].subcode==4)prepareVector(this,&globals[index]);
+                tigaVariant* value=&globals[index];
+                if(((TigaInstruction*)*codePtr)[1].subcode==4)prepareVector(this,value);
                 *thread->stackPtr10=globals[index];}
             else if(kind==1){
-                if(((TigaInstruction*)thread->code)[1].subcode==4)prepareVector(this,&thread->stackPtr0C[index]);
+                tigaVariant* value=&thread->stackPtr0C[index];
+                if(((TigaInstruction*)*codePtr)[1].subcode==4)prepareVector(this,value);
                 *thread->stackPtr10=thread->stackPtr0C[index];}
             else if(kind==2){
-                if(((TigaInstruction*)thread->code)[1].subcode==4)prepareVector(this,&(&thread->retVar)[index]);
+                if(((TigaInstruction*)*codePtr)[1].subcode==4)prepareVector(this,&(&thread->retVar)[index]);
                 *thread->stackPtr10=(&thread->retVar)[index];}
             else if(kind==3){getPresetVar(thread->stackPtr10,index,0);}
             if(thread->stackPtr10->type==4){
@@ -1190,7 +1196,7 @@ int Tiga::execute(TigaThread* thread) {
                 else vector=thread->stackPtr10->getCnvVector();
                 objManager.addVectorIdx(vector);
             }
-            thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
+            *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
         case 4:{
@@ -1202,45 +1208,44 @@ int Tiga::execute(TigaThread* thread) {
             else if(kind==3){setPresetVar(stack,index,0);}
             clearExpression(thread->stackPtr10);
             ++thread->stackPtr10;
-            thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
+            *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
         case 5:{
             u8 kind=instruction->subcode;
             s16 index=instruction->argument;
             int component=(kind>>4)&15;
-            switch((u32)(kind&15)){
-            case 0:globals[index].setVectorIdx(component,stack);break;
-            case 1:thread->stackPtr0C[index].setVectorIdx(component,stack);break;
-            case 2:(&thread->retVar)[index].setVectorIdx(component,stack);break;
-            case 3:setPresetVar(stack,index,component);break;
-            }
+            if((u32)(kind&15)==0)globals[index].setVectorIdx(component,stack);
+            else if((u32)(kind&15)==1)thread->stackPtr0C[index].setVectorIdx(component,stack);
+            else if((u32)(kind&15)==2)(&thread->retVar)[index].setVectorIdx(component,stack);
+            else if((u32)(kind&15)==3)setPresetVar(stack,index,component);
             clearExpression(thread->stackPtr10);
             ++thread->stackPtr10;
-            thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
+            *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
         case 6:{
             u8 count=instruction->subcode;
             for(int i=0;i<count;++i){releaseExpression(thread->stackPtr10);++thread->stackPtr10;}
-            thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
+            *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
         case 7:
             --thread->stackPtr10;
             thread->stackPtr10->type=0x35;
-            thread->stackPtr10->value.pointer=(TigaInstruction*)thread->code+1;
-            instruction=(TigaInstruction*)thread->code;
-            thread->code=(TPCCode*)(field944+((u16)instruction->argument+(instruction->subcode<<16))*4);
+            thread->stackPtr10->value.pointer=(TigaInstruction*)*codePtr+1;
+            instruction=(TigaInstruction*)*codePtr;
+            *codePtr=(TPCCode*)(field944+(*(u16*)&instruction->argument+(instruction->subcode<<16))*4);
             --thread->stackPtr14;
             *thread->stackPtr14=(s32)thread->stackPtr0C;
             thread->stackPtr0C=thread->stackPtr10;
             break;
         case 8:{
-            thread->stackPtr0C=(tigaVariant*)*thread->stackPtr14++;
+            thread->stackPtr0C=(tigaVariant*)*thread->stackPtr14;
+            ++thread->stackPtr14;
             void* address=thread->stackPtr10->value.pointer;
             if(address){
-                thread->code=(TPCCode*)address;
+                *codePtr=(TPCCode*)address;
                 clearExpression(thread->stackPtr10);
                 ++thread->stackPtr10;
             }else{
@@ -1254,32 +1259,32 @@ int Tiga::execute(TigaThread* thread) {
             u8 wait=execMethod(instruction->subcode,instruction->argument,stack,&thread->retVar);
             workBuffer=(TigaWorkPrefix*)&thread->code;
             running=wait==0;
-            thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
+            *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
         case 10:
-            if(stack->value.integer!=0)thread->code=(TPCCode*)(field944+((u16)instruction->argument+(instruction->subcode<<16))*4);
-            else thread->code=(TPCCode*)(instruction+1);
+            if(stack->value.integer!=0)*codePtr=(TPCCode*)(field944+(*(u16*)&instruction->argument+(instruction->subcode<<16))*4);
+            else *codePtr=(TPCCode*)(instruction+1);
             clearExpression(thread->stackPtr10);++thread->stackPtr10;break;
         case 11:
-            if(stack->value.integer==0)thread->code=(TPCCode*)(field944+((u16)instruction->argument+(instruction->subcode<<16))*4);
-            else thread->code=(TPCCode*)(instruction+1);
+            if(stack->value.integer==0)*codePtr=(TPCCode*)(field944+(*(u16*)&instruction->argument+(instruction->subcode<<16))*4);
+            else *codePtr=(TPCCode*)(instruction+1);
             clearExpression(thread->stackPtr10);++thread->stackPtr10;break;
-        case 12:thread->code=(TPCCode*)(field944+((u16)instruction->argument+(instruction->subcode<<16))*4);break;
+        case 12:*codePtr=(TPCCode*)(field944+(*(u16*)&instruction->argument+(instruction->subcode<<16))*4);break;
         case 13:{
             u8 count=instruction->subcode;
             for(int i=0;i<count;++i){--thread->stackPtr10;clearExpression(thread->stackPtr10);}
-            thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
+            *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
         case 14:{
             u8 count=instruction->subcode;
-            for(int i=0;i<count;++i){releaseExpression(thread->stackPtr10);++thread->stackPtr10;}
-            thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);
+            for(s32 i=0;i<count;++i){releaseExpression(thread->stackPtr10);++thread->stackPtr10;}
+            *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
-        case 15:running=0;thread->stop();--threadCount;thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);break;
-        case 16:thread->field14C=instruction->argument;thread->code=(TPCCode*)((TigaInstruction*)thread->code+1);break;
+        case 15:running=0;thread->stop();--threadCount;*codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);break;
+        case 16:thread->field14C=instruction->argument;*codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);break;
         }
     }
     workBuffer=previousWork;

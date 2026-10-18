@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/script/objCameraPrivate.hpp>
+static inline void setCameraPosition(GSvec *v, f32 x, f32 y, f32 z) {v->param1=x;v->param2=y;v->param3=z;}
 #define I(N) appScriptGetInt(&args[N])
 #define F(N) appScriptGetFloat(&args[N])
 #define V(N) appScriptGetVec(&args[N])
@@ -14,7 +15,7 @@ int AppScript::cmpCamera(int method,GSscript::tigaVariant *args,GSscript::tigaVa
     case 0x14:{GSvec *v=V(1);cameraSetTargetPosXYZ(v->param1,v->param2,v->param3);break;}
     case 0x15:{f32 a=F(1),b=F(2);cameraSetTargetOfsXYZ(a,b,F(3));break;}
     case 0x16:{GSvec *v=V(1);cameraSetTargetOfsXYZ(v->param1,v->param2,v->param3);break;}
-    case 0x17:{void *camera=GSresGetResource(0,0);f32 z=F(3),y=F(2);position.param1=F(1);position.param2=y;position.param3=z;cameraSetPosition(&position);GScameraSetPosition(camera,&position);break;}
+    case 0x17:{void *camera=GSresGetResource(0,0);setCameraPosition(&position,F(1),F(2),F(3));cameraSetPosition(&position);GScameraSetPosition(camera,&position);break;}
     case 0x18:{void *camera=GSresGetResource(0,0);cameraSetPosition(V(1));GScameraSetPosition(camera,V(1));break;}
     case 0x19:{f32 a=F(1),b=F(2);cameraSetRotationXYZ(a,b,F(3));break;}
     case 0x1A:{GSvec *v=V(1);cameraSetRotationXYZ(v->param1,v->param2,v->param3);break;}

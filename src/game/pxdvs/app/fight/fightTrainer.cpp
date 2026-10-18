@@ -653,7 +653,12 @@ void fightTrainerHokakuThrowEffect(FightTrainer* trainer, u8 ball, u8 phase) {
 // The property range selects the record; each case preserves its field width.
 struct FightTrainerPokemonPartData;
 struct FightTrainerAiValueAddsubData;
-class DeckPokemon { public: static DeckPokemon* getDeckPokemonObj(u32); u32 getPokemonID() const; };
+class DeckPokemon { public:
+static DeckPokemon* getDeckPokemonObj(u32);u32 getPokemonID() const;
+u8 getRandomSetting() const;u32 getLevel() const;u8 getFriendLevel() const;
+s8 getSex() const;s8 getSeikakuID() const;u8 getTokuseiFlag() const;
+u32 getHoldItem() const;u32 getComboPartnerAll() const;s8 getStatusRnd(u8) const;s8 getStatusEffort(u8) const;s16 getWazaID(u8) const;
+};
 class DeckTrainerAI { public: static DeckTrainerAI* getDeckTrainerAIObj(u32); };
 enum FightTrainerStatus {
     TRAINER_STATUS_DB_AI_DATA_ID = 0x2,
@@ -1778,4 +1783,101 @@ void _fightTrainerCreateDeckUnderTakerInColosseum(u16 trainerId, Hero* hero, u16
     }
     fightFreeResourceID(0x842, 0x18503400);
     fightReadResourceID(0x842, 0x184C3400);
+}
+
+extern "C" {
+u8 darkPokemonBiosGetFightFlag(u16);
+u32 darkPokemonBiosGetRnd(u16);
+s8 darkPokemonBiosGetStatusRnd(u16,u8);
+void darkPokemonBiosSetRnd(u16,u32);
+void darkPokemonBiosSetStatusRnd(u16,u8,s8);
+u32 heroBiosGetRnd(Hero*);
+void pokemon_SetComboPartnerAll(Pokemon*,u32);
+void pokemon_SetFriend(Pokemon*,u8);
+void pokemonDoItemSoubi(Pokemon*,u32,u8);
+void pokemonSetDarkPokemonStatus(Pokemon*,u16);
+u8 wazaCheckDarkWaza(u16);
+u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 dataId,Pokemon* pokemon,u32,u16 darkId,u16 encounterId) {
+    u16 individualStatus[6]={0x93,0x94,0x95,0x96,0x97,0x98};
+    u16 effortStatus[6]={0x8D,0x8E,0x8F,0x90,0x91,0x92};
+    u8 individuals[6],efforts[6];u16 moves[4];
+    DeckPokemon *deck=DeckPokemon::getDeckPokemonObj(dataId);
+    u8 reuseDark=0;
+    Hero *hero=(Hero*)savedataGetStatus(0,2);
+    if(encounterId==0)encounterId=fightGetFightEncountDataId();
+    u8 kind=fightEncountDataBiosGetFightKind(fightEncountDataBiosGetPtr(encounterId));
+    u16 species=deck->getPokemonID();
+    if(species==0)return 0;
+    u8 random=deck->getRandomSetting()!=0;
+    u32 level=deck->getLevel();
+    u8 friendship=deck->getFriendLevel();s8 sex=deck->getSex(),nature=deck->getSeikakuID();
+    u8 ability=deck->getTokuseiFlag();
+    u32 item=deck->getHoldItem(),combo=deck->getComboPartnerAll();
+    u8 i;
+    for(i=0;i<6;i++)individuals[i]=deck->getStatusRnd(i);
+    for(i=0;i<6;i++)efforts[i]=deck->getStatusEffort(i);
+    for(i=0;i<4;i++)moves[i]=deck->getWazaID(i);
+    pokemonCreate(pokemon,species,level,gamedataGetStatus(0,1));
+    DarkPokemon *dark=darkPokemonGetDarkPokemon(darkId);
+    if(dark){u16 floor=dark->getCatchFloorId();if(darkPokemonBiosGetFightFlag(darkId)==1&&floor!=0xB5)reuseDark=1;else reuseDark=0;}
+    u32 rnd=heroBiosGetRnd(hero);
+    if(darkId!=0&&reuseDark==1){
+        for(i=0;i<6;i++)pokemonSetStatus(pokemon,0,individualStatus[i],0,(u16)darkPokemonBiosGetStatusRnd(darkId,i));
+        pokemon_SetRnd(pokemon,darkPokemonBiosGetRnd(darkId));
+    }
+    if(darkId==0){
+        pokemon_SetFriend(pokemon,friendship);
+        if(random==0){
+            pokemon_SetRnd(pokemon,pokemonCreateRndFit(pokemon,sex,nature,0,rnd));
+            pokemonSetTokuseiFlag(pokemon,(u8)(ability!=0));
+            for(i=0;i<6;i++)pokemonSetStatus(pokemon,0,individualStatus[i],0,(u16)individuals[i]);
+            for(i=0;i<6;i++)pokemonSetStatus(pokemon,0,effortStatus[i],0,(u16)efforts[i]);
+        }
+        if(random==1){
+            pokemon_SetRnd(pokemon,pokemonCreateRndFit(pokemon,-1,-1,0,rnd));
+            for(i=0;i<6;i++)efforts[i]=0;
+            u16 tries=0,total;
+            for(;;){
+                total=0;
+                for(i=0;i<6;i++){efforts[i]+=(u8)(HSD_Rand()%256);total+=efforts[i];}
+                if(kind==10||kind==17){if(total==510)break;if(total>490&&total<530)goto adjust;}
+                else if(total<=510)break;
+                if(total>510&&tries<100)for(i=0;i<6;i++)efforts[i]=0;
+                if(tries++>=100){
+adjust:
+                    for(;;){
+                        for(u8 j=0;j<6;j++){
+                            if(kind==10||kind==17){
+                                if(total<510&&efforts[j]<255){total++;efforts[j]++;}
+                                else if(total>510&&efforts[j]!=0){total--;efforts[j]--;}
+                                if(total==510)goto adjusted;
+                            }else{
+                                if(efforts[j]!=0){total--;efforts[j]--;}
+                                if(total<=510)goto adjusted;
+                            }
+                        }
+                    }
+                }
+            }
+adjusted:
+            for(i=0;i<6;i++)pokemonSetStatus(pokemon,0,effortStatus[i],0,(u16)efforts[i]);
+        }
+    }
+    pokemon_SetComboPartnerAll(pokemon,combo);pokemonDoItemSoubi(pokemon,item,1);
+    for(i=0;i<4;i++){
+        u16 move=moves[i];
+        if(move==0&&wazaCheckDarkWaza(move)==1&&move==0x176&&move==0x163)pokemonWazaInit(pokemon,i);
+        else pokemonWazaCreate(pokemon,i,move);
+    }
+    if(darkId!=0){
+        pokemonSetDarkPokemonStatus(pokemon,darkId);
+        if(reuseDark==0){
+            u32 value=pokemonCreateRndFit(pokemon,-1,-1,0,rnd);
+            darkPokemonBiosSetRnd(darkId,value);pokemon_SetRnd(pokemon,value);
+            if(dark)dark->setRnd(value);
+            for(i=0;i<6;i++)darkPokemonBiosSetStatusRnd(darkId,i,(s8)pokemonGetStatus(pokemon,0,individualStatus[i],0));
+        }
+    }
+    pokemonResetBasisStatus(pokemon);return 1;
+}
 }

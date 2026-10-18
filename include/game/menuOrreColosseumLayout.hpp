@@ -12,7 +12,10 @@ struct MenuOrrePos {
     s16 b;
 };
 struct tagWINDOW_WORK {
-    u8 reserved0[0x93];
+    u8 flags;
+    s8 phase,step;u8 pad3;
+    s32 menu;
+    u8 reserved8[0x93-8];
     u8 unk93;
     u8 reserved94[8];
     MenuOrrePos unk9C;
@@ -26,6 +29,8 @@ struct tagSPRITE_WORK {
     u8 reserved8[0x4C];
     s16 unk54;
     s16 unk56;
+    u8 reserved58[0xC];
+    union {u32 value;struct {u8 red,green,blue,alpha;} channels;} color;
 };
 
 class menuOrre {
@@ -36,7 +41,7 @@ public:
     s16 unk4;
     s16 slots[4];
     u16 unkE;
-    u16 unk10;
+    s16 unk10;
     u8 isPush;
     u8 reserved13;
     u16 trainerDataId;

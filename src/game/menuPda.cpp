@@ -1,5 +1,91 @@
 #include <game/menuPdaLayout.hpp>
 
+struct GSgfxVF;
+struct GStexture;
+struct GSgfxMatrixStack;
+struct GSgfxShader { u8 state[0xBC]; };
+struct GXColorS10 { s16 r,g,b,a; };
+struct GSgfxLayer {
+    u8 reserved00[0x28];
+    u32 id;
+    u8 reserved2c[0xd34 - 0x2c];
+    u8 lineWidth;
+    u8 reservedD35[3];
+    u32 lineTexOffset;
+    u8 pointSize;
+    u8 reservedD3d[3];
+    u32 pointTexOffset;
+    u8 reservedD44[0xd54 - 0xd44];
+    u32 projectionType;
+    f32 projection[6];
+    u8 reservedD70[0xd8c - 0xd70];
+    u32 cullMode;
+    u8 reservedD90[0xf70 - 0xd90];
+    u32 tevColorInputs[4];
+    u8 reservedF80[0x1070 - 0xf80];
+    u32 tevAlphaInputs[4];
+    u8 reserved1080[0x1170 - 0x1080];
+    u32 tevColorOperation, tevColorBias, tevColorScale;
+    u8 tevColorClamp;
+    u8 reserved117d[3];
+    u32 tevColorOutput;
+    u8 reserved1184[0x12b0 - 0x1184];
+    u32 tevAlphaOperation, tevAlphaBias, tevAlphaScale;
+    u8 tevAlphaClamp;
+    u8 reserved12bd[3];
+    u32 tevAlphaOutput;
+    u8 reserved12c4[0x13fc - 0x12c4];
+    u32 tevConstantIndex;
+    GXColorS10 tevConstant;
+    u8 reserved1408[0x1644 - 0x1408];
+    u32 blendMode, blendSource, blendDestination, blendLogic;
+    u8 reserved1654[2];
+    u8 colorUpdate, alphaUpdate, destinationAlpha;
+    u8 reserved1659[3];
+    u8 depthEnable;
+    u8 reserved165d[3];
+    u32 depthFunction;
+    u32 alphaFunction0, alphaOperation, alphaFunction1;
+    u8 alphaReference0, alphaReference1, depthBeforeTexture;
+    u8 reserved1673[0x1684 - 0x1673];
+    f32 depthNear, depthFar;
+    u8 reserved168c[0x16a6 - 0x168c];
+    u8 fogRangeAdjust, fogEnable;
+    u32 dirty, rasterDirty;
+    u8 reserved16b0[8];
+    u32 transformDirty;
+    u8 reserved16bc[0x16d4 - 0x16bc];
+    u32 tevColorInputDirty, tevAlphaInputDirty, tevColorOperationDirty, tevAlphaOperationDirty, tevConstantDirty;
+    u8 reserved16e8[0x170c - 0x16e8];
+    u32 pixelDirty;
+    u8 reserved1710[0x173c - 0x1710];
+    u32 textureDirty;
+    GStexture* texture;
+    u8 reserved1744[0x1760 - 0x1744];
+    u32 savedDirty, savedRasterDirty;
+    u8 reserved1768[8];
+    u32 savedTransformDirty;
+    u8 reserved1774[0x178c - 0x1774];
+    u32 savedTevColorInputDirty, savedTevAlphaInputDirty, savedTevColorOperationDirty, savedTevAlphaOperationDirty, savedTevConstantDirty;
+    u8 reserved17a0[0x17c4 - 0x17a0];
+    u32 savedPixelDirty;
+    u8 reserved17c8[0x17f4 - 0x17c8];
+    u32 savedTextureDirty;
+    GStexture* savedTexture;
+    u8 reserved17fc[0x1818 - 0x17fc];
+    GSgfxShader shaders[2];
+    GSgfxShader* shader;
+    s32 shaderIndex;
+    u32 primitive;
+    u8 reserved199c[4];
+    GSgfxMatrixStack* matrixStack;
+
+    void setRenderStateAndSelect(GSgfxVF*);
+    void beginSurface(u16);
+    void endSurface();
+};
+extern "C" GSgfxLayer *GSgfxLayerFindByID(u32);
+
 enum PDATOP_MENU_RES { PDATOP_MENU_RES_0 };
 
 struct Hero {
@@ -207,9 +293,9 @@ static bool _checkAddFunc(tagWINDOW_WORK *win) {
     return win->menu == 0x107;
 }
 
-static void _SelectCursorSub(s8 dir, GSvec2 *pos) {
+static s32 _SelectCursorSub(s8 dir, GSvec2 *pos) {
     _SelectCursorCalcAngle(dir);
-    _SelectCursorCalcPositon(pos);
+    return _SelectCursorCalcPositon(pos);
 }
 
 extern "C" s32 menuPdaDummyCtrl(void) {
@@ -821,6 +907,291 @@ extern "C" s32 menuPdaCursorCtrl(tagWINDOW_WORK *win) {
             }
         }
         break;
+    }
+    return 0;
+}
+
+extern "C" { s32 menuPdaMemoXDGetItem(); void winSpriteSetDisp(tagSPRITE_WORK *, u8); }
+
+extern "C" s32 menuPdaDrawTitle(tagWINDOW_WORK *window, tagSPRITE_WORK *arg1) {
+    s16 temp_r0;
+    s32 temp_r31;
+    s32 temp_r3;
+
+    temp_r31 = menuPdaGetRes();
+    temp_r3 = menuPdaGetSubres();
+    temp_r0 = arg1->id;
+    switch (temp_r0) {                              /* irregular */
+    case 0x1CA: case 0x1CB: case 0x1CC:
+        if ((temp_r31 == 0) && (temp_r3 == 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 22:
+        if (temp_r31 == 0) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 23:
+        if (temp_r31 == 2) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 24:
+        if ((temp_r31 == 1) && (temp_r3 == 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 26:
+        if ((temp_r31 == 1) && (temp_r3 > 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 27:
+        if ((temp_r31 == 1) && (temp_r3 > 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 28:
+        if ((temp_r31 == 1) && (temp_r3 > 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 29:
+        if ((temp_r31 == 1) && (temp_r3 > 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 30:
+        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 0)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 31:
+        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 32:
+        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 2)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 33:
+        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 3)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 25:
+        if (temp_r31 == 3) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    }
+    return 0;
+}
+
+extern "C" {
+void scriptLightSetDisp(u32,s32);
+s32 pokecoloGetRomVersion();
+void GSflagOn(s32);
+void menuPdaDPMonList();
+void menuPdaMemoList();
+void menuPdaMailListXD();
+void menuPdaSearcher();
+void menuOffScreenSetDisp(s32);
+void menuPda()
+{
+    struct { u8 a,b,c; s32 *title,*time; } args;
+    s32 selected = 0;
+    scriptLightSetDisp(0x17CF1600,0);
+    scriptLightSetDisp(0x17CF1601,0);
+    if (pokecoloGetRomVersion() == 1) GSflagOn(0x3F2);
+    FlashSystemSetLoopFlag(0x1FBD3000,1);
+    FlashSystemSetLoopFlag(0x20543000,0);
+    menuOpen(0xA8,0);
+    _pModel = GSresGetResourceAllGroup(0x17CF1000);
+    GSmodelSetVisibility(_pModel,false);
+    GSthreadSwitch();
+    _menuPdaStatus.unk41 = 0;
+    _menuPdaInit();
+    _menuPdaStartEvent();
+    _menuPdaSetMenuItem();
+    _SelectCursorCalcAngle(_cursor_index[0]);
+    _menuPdaStatus.unk5C = _menuPdaStatus.unk60;
+    args.title = &TitleMsgID;
+    args.a = 0; args.b = -1; args.c = 0;
+    args.time = &LineAnimTime;
+    menuOpenCustom(0x6C,windowGetActiveID(),0,0,0,1,&args);
+    while (_menuPdaStatus.unk41 == 0) {
+        _menuPdaSetMenuItem();
+        selected = topMenu((PDATOP_MENU_RES)selected);
+        _menuPdaStatus.subres = 1;
+        _menuPdaStatus.res = selected;
+        switch (selected) {
+        case 0:
+            _menuPdaTopClose(); _menuPdaZoomIn(); menuPdaDPMonList();
+            _menuPdaStatus.subres = 0; _menuPdaZoomOut(); break;
+        case 1:
+            _menuPdaTopClose(); _menuPdaZoomIn(); menuPdaMemoList();
+            _menuPdaStatus.subres = 0; _menuPdaZoomOut(); break;
+        case 2:
+            _menuPdaTopClose(); _menuPdaZoomIn(); menuPdaMailListXD();
+            _menuPdaStatus.subres = 0; _menuPdaZoomOut(); break;
+        case 3:
+            _menuPdaTopClose(); _menuPdaZoomIn(); menuPdaSearcher();
+            _menuPdaStatus.subres = 0; _menuPdaZoomOut(); break;
+        default:
+            _menPdaFadeOutSet(); _menuPdaExit(); _menuPdaStatus.unk41 = 1; break;
+        }
+    }
+    _menPdaFadeOutWait();
+    if (_menuPdaStatus.unk40 != 1) {
+        menuOffScreenSetDisp(1); _menuPdaStatus.unk40 = 1;
+    }
+    _menuPdaTopClose();
+    menuClose(0x6C); menuCloseSync(0x6C,1);
+    menuClose(0xA8); menuCloseSync(0xA8,1);
+    _menuPdaModelVisibility(0x17CF1000,false);
+    _menPdaFadeInWait(); menuOffScreenSetPriority(1); GSfloorPop(); floorSetFadeScript(0,0);
+}
+}
+
+extern "C" {
+u8 menuItemBiosGetSelectFlag(s32,s16);
+GSgfxVF *GSgfxVFGetPredef(s32);
+void msgctrlSetValue(s32,void *);
+u32 GSmsgGetRect(s32);
+void GSmsgPrint2(s32,s32,s32,u32,s32);
+s32 pokecoloGetPlayTimeValue();
+}
+static void _SelectCursor(tagWINDOW_WORK *window,tagSPRITE_WORK *sprite,s8 index)
+{
+    GSvec2 vertices[72];
+    s32 alpha;
+    _checkAddFunc(window);
+    f32 height = _next_height;
+    f32 half = height / 2.0f;
+    if (menuItemBiosGetSelectFlag(0x6B,sprite->id)) winSpriteSetDisp(sprite,1);
+    else winSpriteSetDisp(sprite,0);
+    if (_menuPdaStatus.res == index) {
+        GSgfxLayer *layer = GSgfxLayerFindByID(window->layer);
+        if (layer) {
+            f32 delta = __fabs(_menuPdaStatus.unk60 - _menuPdaStatus.unk5C);
+            if (delta > _next_height) delta = _next_height;
+            alpha = 255.0f * ((f32)__fabs(delta - half) / half);
+            s32 count = _SelectCursorSub(index,vertices);
+            struct Item { u8 pad[6]; s16 x,y; };
+            Item *item = (Item *)menuItemBiosGetPtr(0x6B,sprite->id);
+            for (s32 i=0;i<count;i++) {
+                vertices[i].x -= item->x; vertices[i].y -= item->y;
+            }
+            if (layer->shaderIndex != 1) {
+                layer->shaderIndex = 1;
+                layer->shader = &layer->shaders[layer->shaderIndex];
+            }
+            u32 one=1; u32 four=4;
+            layer->blendMode=one;layer->blendSource=four;layer->blendDestination=one;layer->blendLogic=5;
+            layer->pixelDirty|=1;layer->dirty|=0x40;layer->savedPixelDirty|=1;layer->savedDirty|=0x40;
+            GSgfxVF *format = GSgfxVFGetPredef(3);
+            layer->primitive=0xA0;
+            layer->setRenderStateAndSelect(format);
+            layer->beginSurface(count);
+            for (s32 i=0;i<count;i++) {
+                *(volatile s16 *)0xCC008000 = vertices[i].x;
+                *(volatile s16 *)0xCC008000 = vertices[i].y;
+                *(volatile u32 *)0xCC008000 = (u8)alpha | 0x405A2600;
+            }
+            layer->endSurface();
+            if (layer->shaderIndex != 1) {
+                layer->shaderIndex = 1;
+                layer->shader = &layer->shaders[layer->shaderIndex];
+            }
+            layer->blendMode=1;layer->blendSource=4;layer->blendDestination=5;layer->blendLogic=5;
+            layer->pixelDirty|=1;layer->dirty|=0x40;layer->savedPixelDirty|=1;layer->savedDirty|=0x40;
+        }
+    }
+}
+
+extern "C" s32 menuPdaBackDrawTitleText(tagWINDOW_WORK *window,tagSPRITE_WORK *sprite)
+{
+    bool add = _checkAddFunc(window);
+    u32 value;
+    s32 i;
+    s32 x;
+    switch (sprite->id) {
+    case 7: { s32 value = pokecoloGetPlayTimeValue(); msgctrlSetValue(0x4C,(void *)value);break; }
+    case 14:case 15:break;
+    case 9:msgctrlSetValue(0x69,_menuPdaGetPokecoupon());break;
+    case 11:msgctrlSetValue(0x69,_menuPdaGetMoney());break;
+    case 13: {
+        value=(u16)(u32)heroGetStatus(0,2,0);
+        i=0;
+        x=sprite->width-18;
+        do {
+            s32 digit=value%10U;
+            value/=10U;
+            msgctrlSetValue(0x34,(void *)digit);
+            GSmsgPrint2(window->layer,x,0,WIN_ALPHA(window)|0xFFFFFF00,0x426F);
+            u32 width=GSmsgGetRect(0x426F)>>16;
+            i++;
+            x-=width;
+        } while(i<5);
+        break;
+    }
+    case 2:
+        if(add && _addfunc==0) { s32 alpha=_menuPdaScriptGetAlpha(); sprite->color.channels.alpha=alpha; }
+        _SelectCursor(window,sprite,0);break;
+    case 3:_SelectCursor(window,sprite,1);break;
+    case 4:_SelectCursor(window,sprite,2);break;
+    case 5:
+        if(add && _addfunc==1) { s32 alpha=_menuPdaScriptGetAlpha(); sprite->color.channels.alpha=alpha; }
+        _SelectCursor(window,sprite,3);break;
+    case 6:_SelectCursor(window,sprite,4);break;
+    case 1:
+        _menuPdaDrawFace(window,sprite);_menuPdaGetCurrentID(window,sprite);
+        _menuPdaModelCursorAnime();_SelectCursorPositionCheck();
+        if(_menuPdaStatus.res>=0)_menuPdaStatus.unk8=_menuPdaStatus.res;
+        break;
+    case 0x173: {
+        s32 messages[5]={0x3B53,0x3B54,0x3B55,0x3C03,0x3B56};
+        sprite->message=messages[menuPdaGetRes()];break;
+    }
+    case 0x1C6: {
+        u32 flag=GSflagGet(0x6C2);
+        s32 messages[7]={0x3B72,0x3B73,0x3B74,0x3B75,0x3B76,0x3B77,0x3C2E};
+        if(flag && flag<=8)sprite->message=messages[flag-1];
+        else sprite->message=0;
+        break;
+    }
+    case 0x1C8:winSpriteSetDisp(sprite,add);break;
+    case 0x1C9:winSpriteSetDisp(sprite,_pdaSelectAnimeFlag);break;
     }
     return 0;
 }

@@ -11,7 +11,9 @@ struct tagWINDOW_WORK {
     s32 menu;
     u8 reserved8[0x14];
     s32 layer;
-    u8 reserved20[0x73];
+    u8 reserved20[0x48];
+    void *contents;
+    u8 reserved6C[0x27];
     u8 alpha;
     u8 reserved94[0x10];
     u8 accepted, cancelled;
@@ -37,6 +39,7 @@ struct MENU_ITEM {
 struct tagKEY {
     u32 reserved0;
     u16 triggers;
+    u16 repeat;
 };
 
 extern "C" {
@@ -111,6 +114,7 @@ public:
     f32 f14, f18, f1c, f20;
     u8 reserved24[0xe8 - 0x24];
 
+    void PokemonTokuseiSetumei(tagWINDOW_WORK *, tagSPRITE_WORK *, MEMO_CONTENTS *, u16);
     void PokemonHeight(tagWINDOW_WORK *, tagSPRITE_WORK *, MEMO_CONTENTS *);
     void PokemonWeight(tagWINDOW_WORK *, tagSPRITE_WORK *, MEMO_CONTENTS *);
     void PokemonSyuzoku(tagWINDOW_WORK *, tagSPRITE_WORK *, MEMO_CONTENTS *);
@@ -429,8 +433,9 @@ u16 menuPdaMemoXD::GetAisyouIndex(u16 x) {
 }
 
 bool menuPdaMemoXD::TaskCloseCheck() {
+    s32 current = item;
     s32 id = 0;
-    switch (item) {
+    switch (current) {
     case 0:
         id = 0x7C;
         break;
@@ -714,5 +719,264 @@ extern "C" void menuPdaMemoBackHook(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
             winSpriteSetDisp(spr, 0);
         }
         break;
+    }
+}
+
+extern "C" { u8 menuPdaMemoListIsTermModel(); void GSsndPlayNow(u32); void menuPlaySe(s32,s32); }
+void menuPdaMemoXD::Cursor(tagWINDOW_WORK *window)
+{
+    tagKEY *key=windowGetKeyInfo();
+    MEMO_CONTENTS *contents=(MEMO_CONTENTS *)window->contents;
+    CURSOR *cursor=contents->cursor;
+    s32 total=memoDataGetCount(0);
+    u16 repeat=key->repeat;
+    s32 visible=8;
+    s16 current=item;
+    if (menuPdaMemoListIsTermModel()!=1) {
+        s16 oldSelected=cursor->selected;
+        s16 oldFirst=cursor->first;
+        s32 previous=oldSelected+oldFirst;
+        if((s32)total<8)visible=total;
+        s16 oldItem=item;
+        if(repeat&1) {
+            if(previous!=0)GSsndPlayNow(0x450);
+            cursor->selected--;
+            if(current==1 && cursor->selected+cursor->first>=0)SetModelAngle(1);
+            if(current==2) {
+                f32 *rotation=menuModelGetCameraRotation(menuPdaMemoListGetMenuModelWork());
+                rotation[0]=0.0f;rotation[1]=0.0f;rotation[2]=0.0f;
+            }
+        } else if(repeat&2) {
+            if(total-1!=oldSelected+oldFirst)GSsndPlayNow(0x450);
+            cursor->selected++;
+            if(current==1 && total!=cursor->selected+cursor->first)SetModelAngle(1);
+            if(current==2) {
+                f32 *rotation=menuModelGetCameraRotation(menuPdaMemoListGetMenuModelWork());
+                rotation[0]=0.0f;rotation[1]=0.0f;rotation[2]=0.0f;
+            }
+        } else if(repeat&4) {
+            if(TaskCloseCheck()) {
+                if(current==1)menuPdaMemoWaveInit();
+                if(current>0) {
+                    GSsndPlayNow(0x453);TaskClose(window,false);current--;
+                    itemPrev=item;item=current;
+                }
+                SetModelAngle(current);
+            }
+        } else if((repeat&8) && TaskCloseCheck()) {
+            if(current==1)menuPdaMemoWaveInit();
+            if(current<3) {
+                GSsndPlayNow(0x453);TaskClose(window,false);current++;
+                itemPrev=item;item=current;
+            }
+            SetModelAngle(current);
+        }
+        if((s16)item==1)CameraControl();
+        else if((s16)item==2)OokisaCameraControl();
+        if(cursor->selected<0) {
+            cursor->first+=cursor->selected;cursor->selected=0;
+            if(cursor->first<0) {cursor->first=0;cursor->selected=0;}
+        } else if(cursor->selected>=visible) {
+            s16 last=visible-1;
+            cursor->first+=cursor->selected-last;cursor->selected=last;
+            if(cursor->first+cursor->selected>=total) {
+                cursor->selected=last;cursor->first=total-visible;
+            }
+        }
+        if(previous!=cursor->selected+cursor->first) {
+            LoadPokemon(cursor);menuPlaySe(window->menu,1);
+        }
+        if(oldItem!=item)menuPlaySe(window->menu,1);
+    }
+}
+
+extern "C" void menuPdaMemoWaveHook();
+
+extern "C" s32 menuPdaMemoXDHook(tagWINDOW_WORK *arg0, tagSPRITE_WORK *arg1) {
+    s16 temp_r0;
+    s32 temp_r30;
+    u8 temp_r29;
+    u8 var_r0;
+    CURSOR *temp_r4;
+    MEMO_CONTENTS *contents;
+    menuPdaMemoXD *memo=pMemo;
+
+    if (memo == 0) {
+        return 0;
+    }
+    temp_r0 = arg1->id;
+    contents = (MEMO_CONTENTS *)arg0->contents;
+    switch (temp_r0) {                              /* irregular */
+    case 0xFD:
+        memo->PokemonType(arg0,arg1,contents,0);
+        break;
+    case 0xFE:
+        memo->PokemonType(arg0,arg1,contents,1);
+        break;
+    case 0x103:
+        memo->PokemonTokusei(arg0,arg1,contents,0);
+        break;
+    case 0x102:
+        memo->PokemonTokusei(arg0,arg1,contents,1);
+        break;
+    case 0x105:
+        memo->PokemonSyuzoku(arg0,arg1,contents);
+        break;
+    case 0x106:
+        memo->PokemonName(arg0,arg1,contents);
+        break;
+    case 0x100:
+        arg1->col[0] = 0xD5;
+        arg1->col[1] = 0xAA;
+        arg1->col[2] = 0x33;
+        memo->PokemonWeight(arg0,arg1,contents);
+        break;
+    case 0x101:
+        arg1->col[0] = 0xD5;
+        arg1->col[1] = 0xAA;
+        arg1->col[2] = 0x33;
+        memo->PokemonHeight(arg0,arg1,contents);
+        break;
+    case 0x104:
+        arg1->col[0] = 0xD5;
+        arg1->col[1] = 0xAA;
+        arg1->col[2] = 0x33;
+        break;
+    case 0x10B:
+        menuPdaMemoWaveHook();
+        break;
+    case 0x144: case 0x145: case 0x146: case 0x147: case 0x148: case 0x149: case 0x14A: case 0x14B: case 0x14C: case 0x14D: case 0x14E: case 0x14F: case 0x150: case 0x151: case 0x152: case 0x153: case 0x154:
+        memo->PokemonAisyou(arg0,arg1,contents);
+        break;
+    case 0x15A:
+        memo->PokemonTokuseiSetumei(arg0,arg1,contents,0);
+        break;
+    case 0x15B:
+        memo->PokemonTokusei(arg0,arg1,contents,0);
+        break;
+    case 0x157:
+        memo->PokemonTokuseiSetumei(arg0,arg1,contents,1);
+        break;
+    case 0x158:
+        memo->PokemonTokusei(arg0,arg1,contents,1);
+        break;
+    case 0x15D:
+        memo->PokemonSyuzoku(arg0,arg1,contents);
+        break;
+    case 0x15E:
+        memo->PokemonName(arg0,arg1,contents);
+        break;
+    case 0x155:
+        memo->PokemonType(arg0,arg1,contents,0);
+        break;
+    case 0x156:
+        memo->PokemonType(arg0,arg1,contents,1);
+        break;
+    case 0x15C:
+        msgctrlSetValue(0x4D, GSmsgGetGSchar(0x3B68));
+        msgctrlSetValue(0x37, GSmsgGetGSchar(0x3B69));
+        GSmsgPrint2(arg0->layer, 0, 0, arg0->alpha | ~0xFF, 0x4278);
+        break;
+    case 0x159:
+        temp_r4 = contents->cursor;
+        temp_r30 = pokemonDataBiosGetPtr(menuPdaMemoListGetPokemonID(temp_r4->selected + temp_r4->first,temp_r4));
+        temp_r29 = pokemonDataBiosGetTokuseiDataId(temp_r30,0);
+        var_r0 = pokemonDataBiosGetTokuseiDataId(temp_r30, 1);
+        if (var_r0 == temp_r29) {
+            var_r0 = 0;
+        }
+        if ((u16) var_r0 != 0) {
+            msgctrlSetValue(0x4D, GSmsgGetGSchar(0x3B68));
+            msgctrlSetValue(0x37, GSmsgGetGSchar(0x3B6A));
+            GSmsgPrint2(arg0->layer, 0, 0, arg0->alpha | ~0xFF, 0x4278);
+        }
+        break;
+    }
+    return 0;
+}
+
+extern "C" {
+u32 pokemonTokuseiDataBiosGetDoc(long);
+u32 GSmsgGetCharLength(const u16 *);
+u32 GSmsgGetRect(u32);
+void *__nwa__FUl(u32);
+void __dla__FPv(void *);
+}
+void menuPdaMemoXD::PokemonTokuseiSetumei(tagWINDOW_WORK *window,tagSPRITE_WORK *sprite,MEMO_CONTENTS *contents,u16 index)
+{
+    CURSOR *cursor=contents->cursor;
+    long data=pokemonDataBiosGetPtr(menuPdaMemoListGetPokemonID(cursor->selected+cursor->first,cursor));
+    MENU_ITEM *item=menuItemBiosGetPtr(0x7E,sprite->id);
+    GSmsgGetGSchar(0x3BBC);
+    u8 first=pokemonDataBiosGetTokuseiDataId(data,0);
+    u8 ability=pokemonDataBiosGetTokuseiDataId(data,index);
+    if(index!=0 && ability==first)ability=0;
+    if((u16)ability!=0) {
+        const u16 *text=GSmsgGetGSchar(pokemonTokuseiDataBiosGetDoc(pokemonTokuseiDataBiosGetPtr(ability)));
+        u32 length=GSmsgGetCharLength(text);
+        s32 size=(length+2)*2;
+        u16 *line1=(u16 *)__nwa__FUl(size);
+        u16 *line2=(u16 *)__nwa__FUl(size);
+        s32 word=0;
+        s32 splitWord=0;
+        u8 overflow=0;
+        s32 copied;
+        do {
+            s32 spaces=0;
+            s32 endWord=word;
+            copied=0;
+            const u16 *src=text;
+            u16 *dst=line1;
+            word++;
+            for(;;) {
+                u16 ch=*src;
+                switch(ch) {
+                case 0:goto endPrefix;
+                case 0x20:case 0x3000:
+                    if(spaces==endWord)goto endPrefix;
+                    *dst=ch;spaces++;break;
+                default:*dst=ch;break;
+                }
+                src++;dst++;copied++;
+            }
+endPrefix:
+            line1[copied]=0;
+            msgctrlSetValue(0x37,line1);
+            u32 rect=GSmsgGetRect(0x4276);
+            if((rect>>16)<=(u32)item->x)splitWord=word;
+            if(!((rect>>16)<=(u32)item->x))overflow=1;
+        } while((u32)(copied+1)<length);
+        if(overflow) {
+            s32 spaces=0;
+            s32 n1=0;
+            s32 n2=0;
+            u8 secondLine=0;
+            u32 chars=GSmsgGetCharLength(text);
+            u32 i=0;
+            const u16 *src=text;
+            for(;;) {
+                u16 ch=*src;
+                if(ch==0xFFFF) {
+                } else if(ch==0x20 || ch==0x3000) {
+                    if(spaces==splitWord-1)secondLine=1;
+                    else if(secondLine)line2[n2++]=ch;
+                    else line1[n1++]=ch;
+                    spaces++;
+                } else if(ch!=0) {
+                    if(secondLine)line2[n2++]=ch;
+                    else line1[n1++]=ch;
+                } else if(chars<=i)break;
+                src++;i++;
+            }
+            line1[n1]=0;line2[n2]=0;
+            msgctrlSetValue(0x37,line1);
+            GSmsgPrint2(window->layer,0,0,window->alpha|0xFFFFFF00,0x4276);
+            msgctrlSetValue(0x37,line2);
+            GSmsgPrint2(window->layer,0,18,window->alpha|0xFFFFFF00,0x4276);
+        } else {
+            msgctrlSetValue(0x37,text);
+            GSmsgPrint2(window->layer,0,0,window->alpha|0xFFFFFF00,0x4276);
+        }
+        __dla__FPv(line1);__dla__FPv(line2);
     }
 }

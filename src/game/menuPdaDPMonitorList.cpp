@@ -16,6 +16,11 @@ public:
     u16 getPokemonID() const;
     s32 getStatus() const;
     void getDarkPoint() const;
+    s32 getDarkPointDirect() const;
+    s32 getInitDarkPointDirect() const;
+    bool isSnach() const;
+    bool isRelive() const;
+    u16 getCatchBallID() const;
     void getPlace(darkPokemonWhere &, u8 &) const;
     bool isUpdate() const;
     u8 getSnatchIndex() const;
@@ -23,7 +28,8 @@ public:
 };
 
 struct DpmMenuItem {
-    u8 pad[0xA];
+    u8 pad[6];
+    s16 x,y;
     s16 width;
     s16 height;
 };
@@ -673,18 +679,13 @@ void menuPdaDPMList::SortSub(SnatchSortBuff *buf, long n, bool asc) {
             for (i = gap; i < n; i++) {
                 j = i - gap;
                 a = &buf[j];
-                while (j >= 0) {
-                    b = &buf[j + gap];
-                    if ((s32)a->snatchIndex > (s32)b->snatchIndex) {
+                while (j >= 0 && (s32)a->snatchIndex > (s32)(b = &buf[j + gap])->snatchIndex) {
                         memcpy(&tmp, a, 8);
                         memcpy(a, b, 8);
                         memcpy(b, &tmp, 8);
                         a -= gap;
                         j -= gap;
-                    } else {
-                        break;
                     }
-                }
             }
         }
         return;
@@ -693,18 +694,285 @@ void menuPdaDPMList::SortSub(SnatchSortBuff *buf, long n, bool asc) {
         for (i = gap; i < n; i++) {
             j = i - gap;
             a = &buf[j];
-            while (j >= 0) {
-                b = &buf[j + gap];
-                if ((s32)a->snatchIndex < (s32)b->snatchIndex) {
+            while (j >= 0 && (s32)a->snatchIndex < (s32)(b = &buf[j + gap])->snatchIndex) {
                     memcpy(&tmp, a, 8);
                     memcpy(a, b, 8);
                     memcpy(b, &tmp, 8);
                     a -= gap;
                     j -= gap;
-                } else {
-                    break;
                 }
+        }
+    }
+}
+
+extern "C" {
+void winSpriteSetDisp(tagSPRITE_WORK*,u8);
+u16 windowGetKeyRepeat();
+void GSsndPlayNow(u32);
+}
+void menuPdaDPMList::SortCursor(tagWINDOW_WORK*,tagSPRITE_WORK* sprite) {
+    switch(sprite->id) {
+    case 0x1cd:
+        if(sortMode==0) {winSpriteSetDisp(sprite,1);sprite->color.value=0xffb400ff;}
+        else {winSpriteSetDisp(sprite,0);sprite->color.value=0xffffffff;}
+        break;
+    case 0x1ce:
+        if(sortMode==1) {winSpriteSetDisp(sprite,1);sprite->color.value=0xffb400ff;}
+        else {winSpriteSetDisp(sprite,0);sprite->color.value=0xffffffff;}
+        break;
+    case 0x1cf:
+        if(sortMode==2) {sprite->color.value=0xffb400ff;winSpriteSetDisp(sprite,1);}
+        else {winSpriteSetDisp(sprite,0);sprite->color.value=0xffffffff;}
+        break;
+    }
+}
+void menuPdaDPMList::ListCursor(tagWINDOW_WORK* win,tagSPRITE_WORK* sprite) {
+    s32 selected=win->pos.selected;
+    s32 ids[10]={0x38,0x39,0x3a,0x3b,0x3c,0x3d,0x3e,0x3f,0x40,0x41};
+    if(count==0)selected=0;
+    s32 i;
+    for(i=0;i<10;++i)if(sprite->id==ids[i])break;
+    sprite->color.channels.alpha=(u8)((f32*)alpha)[i];
+    if(selected==i)winSpriteSetDisp(sprite,1);
+    else if(((f32*)alpha)[selected]==0.0f)winSpriteSetDisp(sprite,0);
+}
+void menuPdaDPMList::Cursor(tagWINDOW_WORK* win) {
+    windowGetKeyInfo();
+    CURSOR cursor=_getCursor();
+    cursor.first=win->pos.first;cursor.selected=win->pos.selected;
+    s32 total=menuPdaDPMListGetDPNum();
+    s32 visible=10;
+    if(total<10)visible=total;
+    u16 keys=windowGetKeyRepeat();
+    s32 mode=sortMode;
+    if(keys&0x400) {++mode;if(mode>=3)mode=0;Sort((DPMSelSort)mode);}
+    else if(keys&0x200) {--mode;if(mode<0)mode=2;Sort((DPMSelSort)mode);}
+    sortMode=mode;
+    if(visible) {
+        if(keys&1) {if(cursor.selected+cursor.first!=0)GSsndPlayNow(0x450);--cursor.selected;}
+        else if(keys&2) {if(total-1!=cursor.selected+cursor.first)GSsndPlayNow(0x450);++cursor.selected;}
+        else if(keys&8) {if(total-1!=cursor.selected+cursor.first)GSsndPlayNow(0x453);cursor.selected+=visible;}
+        else if(keys&4) {if(cursor.selected+cursor.first!=0)GSsndPlayNow(0x453);cursor.selected-=visible;}
+        if(cursor.selected<0) {
+            s16 selected=cursor.selected;
+            cursor.selected=0;
+            cursor.first+=selected;
+            if(cursor.first<0) {cursor.first=0;cursor.selected=0;}
+        } else if(cursor.selected>=visible) {
+            s32 last=visible-1;
+            cursor.first+=cursor.selected-last;
+            s8 lastByte=last;
+            cursor.selected=lastByte;
+            if(cursor.first+lastByte>=total) {cursor.selected=lastByte;cursor.first=(s8)(total-visible);}
+        }
+    }
+    _setCursor(cursor);
+    win->pos.first=cursor.first;win->pos.selected=cursor.selected;
+}
+
+s32 menuPdaDPMList::SortDP() {
+    s32 firstIndex;
+    s32 caught=0;
+    s32 n=Sort(DPM_SEL_SORT_0);
+    unk5C=0;
+    for(firstIndex=0;firstIndex<n;++firstIndex) {
+        u16 dark=GetDarkPokemonID(firstIndex);
+        DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+        if(pokemon->isSnach() && !pokemon->isRelive()) {
+            u16 id=pokemon->getPokemonID();
+            s32 initial=pokemon->getInitDarkPointDirect();
+            ((SnatchSortBuff*)unk54)[caught].snatchIndex=(s32)((f32)(pokemon->getDarkPointDirect()*100)/(f32)initial);
+            ((SnatchSortBuff*)unk54)[caught].pokemonID=id;
+            ((SnatchSortBuff*)unk54)[caught].darkID=dark;
+            ++caught;
+        }
+    }
+    if(caught) {SortSub2((SnatchSortBuff*)unk54,caught,true);SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,caught);}
+    s32 relived=0;
+    for(s32 i=0;i<n;++i) {
+        u16 dark=GetDarkPokemonID(i);
+        DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+        if(pokemon->isRelive()) {
+            u16 id=pokemon->getPokemonID();
+            ((SnatchSortBuff*)unk54)[relived].snatchIndex=pokemon->getSnatchIndex();
+            ((SnatchSortBuff*)unk54)[relived].pokemonID=id;
+            ((SnatchSortBuff*)unk54)[relived].darkID=dark;
+            ++relived;
+        }
+    }
+    if(relived) {SortSub((SnatchSortBuff*)unk54,relived,true);SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,relived);}
+    s32 remaining=0;
+    for(s32 i=0;i<n;++i) {
+        u16 dark=GetDarkPokemonID(i);
+        DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+        if(!pokemon->isSnach()) {
+            u16 id=pokemon->getPokemonID();
+            ((SnatchSortBuff*)unk54)[remaining].snatchIndex=pokemon->getSnatchIndex();
+            ((SnatchSortBuff*)unk54)[remaining].pokemonID=id;
+            ((SnatchSortBuff*)unk54)[remaining].darkID=dark;
+            ++remaining;
+        }
+    }
+    if(remaining) {SortSub((SnatchSortBuff*)unk54,remaining,true);SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,remaining);}
+    unk5C=0;
+    SortSetTemp((SnatchSortBuff*)entries,(SnatchSortBuff*)unk58,n);
+    return n;
+}
+
+extern "C" {
+void spriteSetScissor(s32,s32,s32,s16,s16);
+void spriteClearScissor(s32);
+void menuDrawReliveUpdate();
+u16 mballBiosGetSpriteID(u16);
+void windowDrawSprite2(s16,s32,s16,s16,u32,tagWINDOW_WORK*,u16,s32,s32);
+}
+void menuPdaDPMList::DispList(tagWINDOW_WORK* win,tagSPRITE_WORK* sprite) {
+    CURSOR cursor=_getCursor();
+    s32 total=count;
+    DpmMenuItem* name=menuItemBiosGetPtr(0x74,0x4b);
+    DpmMenuItem* meter=menuItemBiosGetPtr(0x74,0x4a);
+    DpmMenuItem* place=menuItemBiosGetPtr(0x74,0x49);
+    DpmMenuItem* ball=menuItemBiosGetPtr(0x74,0x45);
+    DpmMenuItem* clip=menuItemBiosGetPtr(0x74,0x48);
+    DpmMenuItem* base=menuItemBiosGetPtr(0x74,sprite->id);
+    spriteSetScissor(win->layer,clip->x-base->x,clip->y-base->y,clip->width,clip->height);
+    f32 y=posY;
+    menuDrawReliveUpdate();
+    for(s32 i=0;i<total;y+=23.0f,++i) {
+        if(i>=cursor.first-1 && i<cursor.first+11) {
+            DarkPokemon* pokemon=darkPokemonGetDarkPokemon(GetDarkPokemonID(i));
+            u32 nameColor,placeColor;
+            if(pokemon->isUpdate()) {nameColor=0xd5aa3300;placeColor=0xd5aa3300;}
+            else {nameColor=0xffffff00;placeColor=0xffffff00;}
+            u32 message=menuPdaDPMListGetPokemonName(i);
+            if(!message)message=GSmsgGetGSchar(1);
+            u8 slot;
+            u32 placeMessage=menuPdaDPMListGetDarkPokemonPlaceMsgID(i,&slot);
+            msgctrlSetValue(0x37,message);
+            s32 row=(s32)y;
+            GSmsgPrint2(win->layer,0,row,nameColor|WIN_ALPHA(win),0x4277);
+            menuPdaDPMListDispRelive(win,sprite,meter->x-name->x,row,i,WIN_ALPHA(win),1);
+            if(placeMessage) {
+                msgctrlSetValue(0x2f,slot+1);
+                GSmsgPrint2(win->layer,place->x-name->x,row,placeColor|WIN_ALPHA(win),placeMessage);
+            }
+            if(pokemon->isSnach()) {
+                u16 id=mballBiosGetSpriteID(pokemon->getCatchBallID());
+                if(id)windowDrawSprite2(ball->x-name->x,(s32)y,ball->width,ball->height,WIN_ALPHA(win)|0xffffff00,win,id,0,win->layer);
             }
         }
     }
+    spriteClearScissor(win->layer);
+}
+
+s32 menuPdaDPMList::SortPlace() {
+    darkPokemonWhere where;
+    u8 slot;
+    s32 amount=0;
+    s32 n=Sort(DPM_SEL_SORT_0);
+    unk5C=0;
+    for(s32 i=0;i<n;++i) {
+        u16 dark=GetDarkPokemonID(i);
+        DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+        pokemon->getPlace(where,slot);
+        if(pokemon->isSnach() && where==1) {
+            u16 id=pokemon->getPokemonID();
+            slot=getTemochiIndex(id,dark);
+            ((SnatchSortBuff*)unk54)[amount].snatchIndex=slot;
+            ((SnatchSortBuff*)unk54)[amount].pokemonID=id;
+            ((SnatchSortBuff*)unk54)[amount].darkID=dark;
+            ++amount;
+        }
+    }
+    if(amount) {SortSub((SnatchSortBuff*)unk54,amount,true);SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,amount);}
+    for(s32 location=0;location<9;++location) {
+        s32 amount=0;
+        for(s32 i=0;i<n;++i) {
+            u16 dark=GetDarkPokemonID(i);
+            DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+            pokemon->getPlace(where,slot);
+            if(pokemon->isSnach() && where==3 && slot==location) {
+                u16 id=pokemon->getPokemonID();
+                ((SnatchSortBuff*)unk54)[amount].snatchIndex=slot;
+                ((SnatchSortBuff*)unk54)[amount].pokemonID=id;
+                ((SnatchSortBuff*)unk54)[amount].darkID=dark;
+                ++amount;
+            }
+        }
+        if(amount)SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,amount);
+    }
+    for(s32 location=0;location<8;++location) {
+        s32 amount=0;
+        for(s32 i=0;i<n;++i) {
+            u16 dark=GetDarkPokemonID(i);
+            DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+            pokemon->getPlace(where,slot);
+            if(pokemon->isSnach() && where==2 && slot==location) {
+                u16 id=pokemon->getPokemonID();
+                ((SnatchSortBuff*)unk54)[amount].snatchIndex=slot;
+                ((SnatchSortBuff*)unk54)[amount].pokemonID=id;
+                ((SnatchSortBuff*)unk54)[amount].darkID=dark;
+                ++amount;
+            }
+        }
+        if(amount)SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,amount);
+    }
+    {
+        s32 amount=0;
+        for(s32 i=0;i<n;++i) {
+            u16 dark=GetDarkPokemonID(i);
+            DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+            pokemon->getPlace(where,slot);
+            if(pokemon->isSnach() && where==4) {
+                u16 id=pokemon->getPokemonID();
+                ((SnatchSortBuff*)unk54)[amount].snatchIndex=slot;
+                ((SnatchSortBuff*)unk54)[amount].pokemonID=id;
+                ((SnatchSortBuff*)unk54)[amount].darkID=dark;
+                ++amount;
+            }
+        }
+        if(amount) {
+            SortSub((SnatchSortBuff*)unk54,amount,true);
+            SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,amount);
+        }
+    }
+    {
+        s32 amount=0;
+        for(s32 i=0;i<n;++i) {
+            u16 dark=GetDarkPokemonID(i);
+            DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+            pokemon->getPlace(where,slot);
+            if(pokemon->isSnach() && (where==5 || where==6)) {
+                u16 id=pokemon->getPokemonID();
+                ((SnatchSortBuff*)unk54)[amount].snatchIndex=slot;
+                ((SnatchSortBuff*)unk54)[amount].pokemonID=id;
+                ((SnatchSortBuff*)unk54)[amount].darkID=dark;
+                ++amount;
+            }
+        }
+        if(amount) {
+            SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,amount);
+        }
+    }
+    {
+        s32 amount=0;
+        for(s32 i=0;i<n;++i) {
+            u16 dark=GetDarkPokemonID(i);
+            DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+            if(!pokemon->isSnach()) {
+                u16 id=pokemon->getPokemonID();
+                ((SnatchSortBuff*)unk54)[amount].snatchIndex=pokemon->getSnatchIndex();
+                ((SnatchSortBuff*)unk54)[amount].pokemonID=id;
+                ((SnatchSortBuff*)unk54)[amount].darkID=dark;
+                ++amount;
+            }
+        }
+        if(amount) {
+            SortSub((SnatchSortBuff*)unk54,amount,true);
+            SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,amount);
+        }
+    }
+    unk5C=0;
+    SortSetTemp((SnatchSortBuff*)entries,(SnatchSortBuff*)unk58,n);
+    return n;
 }

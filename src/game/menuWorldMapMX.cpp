@@ -32,7 +32,7 @@ void GScameraGetAnimFrame(u32);
 void GSmodelSetRenderCamera(void *, u32);
 void GSparticleGeneratorSetCamera(void *, u32);
 void *GSresGetResource(u32, u32);
-void GScameraGetMatrixPtr(void *);
+f32 (*GScameraGetMatrixPtr(void *))[4];
 void GScameraGetPerspective(void *, f32 *, f32 *, f32 *, f32 *);
 void GScameraSetPerspective(void *, f32, f32, f32, f32);
 void GScameraLookAt(void *, void *, void *);
@@ -82,6 +82,7 @@ struct GSvec {
 };
 
 struct WorldMapCamera {
+    WorldMapCamera() { unk14=0.0f; blendT=0.0f; accel=0.0f; }
     s32 cur_;
     s32 prev_;
     f32 blendT;
@@ -114,13 +115,15 @@ struct WorldMapCameraData {
     f32 d;
 };
 
+struct WorldMapIconSubWork;
 struct WorldMapIconData {
-    u8 pad0[4];
+    u32 model;
     s16 motion;
     u8 pad6[2];
     GSvec pos;
     s8 nbr[8];
-    u8 pad1C[0x2C - 0x1C];
+    GSvec screen;
+    WorldMapIconSubWork *subs;
 };
 
 struct WorldMapMsgData {
@@ -150,6 +153,7 @@ struct Hero {
 
 struct _GSparticleGen;
 
+enum GSattachMode { AttachDummy };
 class WorldMapModel {
 public:
     u32 unk0;
@@ -168,13 +172,24 @@ public:
     void SetLayerID(u32, long, GSgfxLayerID *);
     u8 CheckMotion(u32);
     void StopMotion(u32);
+    void Visibility(u32,bool);
+    void ObjectVisibility(u32,bool);
+    void initializeOffscreenData();
+    f32 GetAnimeFrameCount(u32,u32);
+    f32 GetAnimeFrame(u32);
+    s32 ModelAttach(u32,u32,long,GSattachMode);
+    _GSparticleGen *SetModelPartPaticle(u32,u32,long,GSattachMode,bool,bool,bool);
     void SetMotion(u32, short, f32, bool);
 };
 
-struct GlowObj {
-    u8 pad0[0xC];
-    f32 glow;
+class EffectBase { public: u8 reserved[8]; };
+class GSeffect:public EffectBase {
+public:
+    virtual void a();virtual void b();virtual void c();virtual void d();virtual void e();virtual ~GSeffect();
+    f32 glow;u8 width,blend,normalize,method,samples,pad[3];
+    void Start();
 };
+class glowEffect:public GSeffect { public:glowEffect();~glowEffect(); };
 
 struct MapScooterData {
     u32 id;
@@ -183,19 +198,23 @@ struct MapScooterData {
 
 struct WorldMapState {
     u8 flag;
-    u8 pad1[0x2B];
+    u8 pad1[3];
+    u32 savedCamera;
+    f32 field8,fieldC,field10;
+    u8 pad14[0x18];
     s32 field2c;
     s32 cursor;
     s32 floorId;
-    u8 pad38[4];
+    f32 angle;
     f32 f3c;
     u32 *modelPair;
     u32 camId;
     u8 flag48;
-    u8 pad49[0x54 - 0x49];
+    u8 pad49[3];
+    u32 archive4C,model50;
     u32 model54;
     u32 model58;
-    u8 pad5c[4];
+    u32 model5C;
     s32 scooterType;
     void *res64;
     u32 model68;
@@ -204,6 +223,7 @@ struct WorldMapState {
     MapScooterData *resList;
     u32 ids78[3];
     _GSparticleGen *particles[3];
+    u8 travelled;u8 pad91[3];
 };
 
 struct WorldMapIconSubWork {
@@ -226,7 +246,7 @@ struct WorldMapIconWork {
 
 class WorldMap : public WorldMapModel {
 public:
-    GlowObj *unk4;
+    glowEffect *unk4;
     WorldMapState *unk8;
     WorldMapIconData *icons;
     u32 cursorModel;
@@ -245,6 +265,10 @@ public:
     WorldMap();
     ~WorldMap();
     void Init();
+    void InitModel(long);
+    void moveDemo(long,long);
+    void CheckPadIndex(bool);
+    u32 readScooter();
     void setNullModel();
     void InitCamera(long);
     void RenderMoveDemoModel();
@@ -326,7 +350,7 @@ static MapScooterData _mapScooterData[7] = {
     { 0x20720400, { 0x20721000, 0x54, 0x55, 0x56 } },
     { 0x20730400, { 0x20731000, 0x57, 0x58, 0x59 } },
 };
-static f32 _glowstrngth = 0.0f;
+static f32 _glowstrngth = 0.5f;
 static u8 _release_flag = 1;
 static WorldMap *pWorldmap;
 static u8 _DebugControl;
@@ -1119,7 +1143,8 @@ void WorldMap::SelectIcon(long index) {
     f32 c;
     f32 b;
     u32 model;
-    s16 cursor = _cursor_index[index];
+    s16 cursor;
+    cursor = _cursor_index[index];
     WorldMapData *data = SearchData(cursor);
     GetCameraData(data->unk0, &pos, &a, &b, &c, &d);
     PSVECAdd(&icons[cursor].pos, &pos, &out);
@@ -1201,5 +1226,345 @@ extern "C" void menuWorldMapMXDebug(void) {
             GSflagSet(*(void **)((u8 *)worldmapXD_data + off + 4), 2);
         }
         off += 0x24;
+    }
+}
+
+extern "C" {
+void soundStopEnv(u32);
+void *GSmemAlloc(u32);
+void *memset(void *,s32,u32);
+u32 GScameraGetActiveCamera();
+void menuItemBiosSetSelectFlag(u32,u32,u8);
+u16 menuScriptOpenWorldMapGetMapNumber();
+u32 floorGetNextFloorID();
+u32 floorGetPrevFloorID();
+}
+void WorldMap::Init() {
+    soundStopEnv(1000);
+    unk8=(WorldMapState *)GSmemAlloc(0x94);
+    memset(unk8,0,0x94);
+    unk8->savedCamera=GScameraGetActiveCamera();
+    icons=(WorldMapIconData *)new WorldMapIconWork[*worldmapXD_data_number];
+    camera=new WorldMapCamera;
+    unk8->flag=IsFloorPush();
+    unk8->flag48=1;
+    unk8->field8=0.0f;unk8->fieldC=1.0f;unk8->field10=0.0f;
+    s16 count=0;
+    for(s16 i=0;i<GetDataNum();++i) {
+        WorldMapData *data=SearchData(i);
+        if(data->flag==0) {
+            menuItemBiosSetSelectFlag(0x54,data->pad8,1);
+            _cursor_index[count++]=i;
+        } else if(GSflagGet(data->flag)!=0) {
+            menuItemBiosSetSelectFlag(0x54,data->pad8,1);
+            _cursor_index[count++]=i;
+        } else menuItemBiosSetSelectFlag(0x54,data->pad8,0);
+    }
+    _cursor_index_num=count;
+    if(unk8->flag!=0) {
+        u16 mapNumber=menuScriptOpenWorldMapGetMapNumber();
+        unk8->floorId=SearchFloorID(mapNumber);
+        unk8->field2c=SearchDataFloorID(unk8->floorId);
+        unk8->cursor=unk8->field2c;
+        unk8->angle=GetAngle(unk8->field2c);
+        unk8->floorId=floorGetNextFloorID();
+    } else {
+        unk8->floorId=floorGetPrevFloorID();
+        unk8->field2c=SearchDataFloorID(unk8->floorId);
+        unk8->cursor=unk8->field2c;
+        unk8->angle=GetAngle(unk8->field2c);
+    }
+    InitModel(unk8->field2c);InitCamera(unk8->field2c);InitRenderModule();
+}
+extern "C" {
+void GSmodelSetAnimIndex(void *,u32);
+void GSmodelSetAnimFrame(void *,f32);
+void GSmodelSetAnimRate(void *,f32);
+void GSmodelStartAnimation(void *);
+void GSmodelGetPosition(void *,void *);
+}
+void WorldMap::InitModel(long selected) {
+    void *ptr;
+    long i;
+    u32 model;
+    GSgfxLayerID layer={2};
+    void *cursor=GSresGetResourceAllGroup(0x18531000);
+    GSmodelSetAnimIndex(cursor,0);GSmodelSetAnimFrame(cursor,0.0f);GSmodelSetAnimRate(cursor,0.5f);GSmodelStartAnimation(cursor);
+    SetLayerID(0x18531000,1,&layer);
+    for(i=0;i<GetDataNum();++i) {
+        model=GetModelID(i);
+        u32 flag=GetFlagData(i);
+        ptr=GetModelPointer(i);
+        icons[i].model=model;
+        if(unk8->flag!=0) {
+            if(i==_cursor_index[selected]) {
+                if(flag==2)icons[i].motion=3;
+                else icons[i].motion=7;
+            } else icons[i].motion=GetStartIconAnimIndex(flag);
+        } else if(i==_cursor_index[selected])icons[i].motion=4;
+        else icons[i].motion=GetStartIconAnimIndex(flag);
+        SetLayerID(model,1,&layer);
+        switch(icons[i].motion) {
+        case 0:Visibility(model,false);break;
+        case 3:case 4:SetMotion(model,icons[i].motion,0.0f,true);break;
+        default:SetMotion(model,icons[i].motion,0.0f,false);break;
+        }
+        GSmodelGetPosition(ptr,&icons[i].pos);
+    }
+    InitCursor(selected,1);
+}
+extern "C" void GSfsysFree(u32);
+u32 WorldMap::readScooter() {
+    if(unk8->flag!=0)return 0;
+    unk8->resList=&_mapScooterData[unk8->scooterType];
+    u32 model=unk8->resList->pad[0];
+    u32 archive=unk8->resList->id;
+    while(GSfsysWait(0x9E6)==0)GSthreadSwitch();
+    GSfsysFree(0x9E6);
+    SetModel(0x9E6,archive,false);ObjectVisibility(archive,true);
+    unk8->res64=(void *)archive;unk8->model68=model;
+    SetMotion(model,8,0.0f,true);
+    if(unk8->modelB!=0 && unk8->model68!=0)ModelAttach(unk8->model68,unk8->modelB,*(s16 *)((u8 *)unk8->modelPair+0xA),(GSattachMode)7);
+    GSgfxLayerID layer={1};
+    SetLayerID(unk8->model68,1,&layer);
+    if(unk8->scooterType>=4) {
+        unk8->ids78[0]=0x213E1400;unk8->ids78[1]=0x213D1400;unk8->ids78[2]=0x213D1400;
+        unk8->particles[0]=SetModelPartPaticle(unk8->model68,unk8->ids78[0],unk8->resList->pad[1],(GSattachMode)4,false,true,false);
+        unk8->particles[1]=SetModelPartPaticle(unk8->model68,unk8->ids78[1],unk8->resList->pad[2],(GSattachMode)4,false,true,false);
+        unk8->particles[2]=SetModelPartPaticle(unk8->model68,unk8->ids78[2],unk8->resList->pad[3],(GSattachMode)4,false,true,false);
+    } else {
+        unk8->ids78[0]=0x20D01400;unk8->ids78[1]=0x20CF1400;unk8->ids78[2]=0x20CF1400;
+        unk8->particles[0]=SetModelPartPaticle(unk8->model68,unk8->ids78[0],unk8->resList->pad[1],(GSattachMode)4,false,true,false);
+        unk8->particles[1]=SetModelPartPaticle(unk8->model68,unk8->ids78[1],unk8->resList->pad[2],(GSattachMode)4,false,true,false);
+        unk8->particles[2]=0;
+    }
+    GSmodelSetBoundCheck(GSresGetResourceAllGroup(model),0);
+    return model;
+}
+extern "C" {
+void *GScameraGetProjMatrixPtr(void *);
+void PSMTXConcat(f32 (*)[4],f32 (*)[4],f32 (*)[4]);
+f32 PSVECDistance(const GSvec *,const GSvec *);
+}
+double tan(double);
+void WorldMap::CalcModel2D(f32 fov,bool initial) {
+    struct Matrix {f32 m[3][4];};
+    Matrix projection;
+    Matrix combined;
+    GSvec view;
+    void *cam=GSresGetResource(0,0);
+    f32 (*matrix)[4]=GScameraGetMatrixPtr(cam);
+    f32 (*source)[4]=(f32 (*)[4])GScameraGetProjMatrixPtr(cam);
+    for(long row=0;row<3;++row)for(long column=0;column<4;++column)projection.m[row][column]=source[row][column];
+    PSMTXConcat(matrix,projection.m,combined.m);
+    f32 factor=-240.0f/(f32)tan(0.017453292f*fov*0.5f);
+    for(long i=0;i<GetDataNum();++i) {
+        WorldMapIconData *icon=&icons[i];
+        PSMTXMultVec(matrix,&icon->pos,&view);
+        icon->screen.x=320.0f+(factor*view.x)/view.z;
+        icon->screen.y=240.0f+(-factor*view.y)/view.z;
+        icon->screen.z=0.0f;
+    }
+    for(long i=0;i<GetDataNum();++i) {
+        WorldMapIconData *icon=&icons[i];
+        for(long j=0;j<GetDataNum();++j) {
+            WorldMapIconData *other=&icons[j];
+            if(i!=j) {
+                f32 distance,angle;
+                if(GetFlagData(i)==0 || GetFlagData(j)==0) {distance=0.0f;angle=0.0f;}
+                else {
+                    distance=PSVECDistance(&icon->screen,&other->screen);
+                    angle=(f32)atan2(other->screen.y-icon->screen.y,other->screen.x-icon->screen.x);
+                    if(angle<0.0f)angle+=6.2831855f;
+                }
+                icon->subs[j].a=distance;icon->subs[j].b=angle;
+            } else {icon->subs[j].a=0.0f;icon->subs[j].b=0.0f;}
+        }
+    }
+    CheckPadIndex(initial);
+}
+static f32 CURSOR_DISTANCE_MAX=700.0f;
+static f32 _checkAngle=1.3089969f;
+static f32 _checkAngleStart=0.3926991f;
+static f32 _checkAngleAdd=0.08726646f;
+void WorldMap::CheckPadIndex(bool) {
+    f32 range=_checkAngleStart;
+    f32 step=_checkAngleAdd;
+    for(long i=0;i<GetDataNum();++i) {
+        WorldMapIconData *icon=&icons[i];
+        for(long k=0;k<8;++k)icon->nbr[k]=-1;
+    }
+    do {
+        for(long i=0;i<GetDataNum();++i) {
+            s32 distances[8];
+            s8 neighbors[8];
+            memset(distances,0,0x20);
+            for(long k=0;k<8;++k)neighbors[k]=-1;
+            WorldMapIconData *icon=&icons[i];
+            for(long j=0;j<GetDataNum();++j) {
+                if(i!=j && GetFlagData(i)!=0 && GetFlagData(j)!=0) {
+                    for(long direction=0;direction<8;++direction) {
+                        long slot=GetPadIndex3(icon->subs[j].b,direction,range);
+                        if(slot>=0 && icon->nbr[slot]<0) {
+                            f32 distance=icon->subs[j].a;
+                            if(distance<CURSOR_DISTANCE_MAX) {
+                                s32 nearest=distances[slot];
+                                if(nearest==0) {neighbors[slot]=j;distances[slot]=distance;}
+                                else if(nearest>(s32)distance) {neighbors[slot]=j;distances[slot]=distance;}
+                            }
+                        }
+                    }
+                }
+            }
+            for(long k=0;k<8;++k)if((f32)distances[k]!=0.0f)icon->nbr[k]=neighbors[k];
+        }
+        range+=step;
+    }while(range<=_checkAngle);
+}
+extern "C" {
+extern u8 _mojiOn;
+u8 menuItemBiosGetSelectFlag(u32);
+void winSpriteSetDisp(tagSPRITE_WORK *,u8);
+}
+void WorldMap::CallBackFunc(tagWINDOW_WORK *win,tagSPRITE_WORK *sprite) {
+    long item;
+    long cursor=GetNowCursor(win);
+    item=sprite->id;
+    switch(item) {
+    case 0x395:SetSnap(cursor,win,sprite);break;
+    case 0x3A4:SetInfo(cursor,win,sprite);break;
+    case 0x38F:case 0x390:case 0x391:case 0x392:case 0x393:case 0x394:case 0x3A5:case 0x3A6:
+        if(unk8->flag!=0)winSpriteSetDisp(sprite,0);
+        else winSpriteSetDisp(sprite,1);
+        break;
+    case 0x147:case 0x148:case 0x149:case 0x14A:case 0x14B:case 0x14C:case 0x14D:case 0x14E:
+    case 0x14F:case 0x150:case 0x151:case 0x152:case 0x153:case 0x154:case 0x5E1:case 0x38C:case 0x38D:case 0x38E:
+        if(_mojiOn!=0) {
+            if(menuItemBiosGetSelectFlag(0x54)!=0) {
+                u32 ids[18]={0x147,0x148,0x149,0x14A,0x14B,0x14C,0x14D,0x14E,0x14F,0x150,0x151,0x152,0x153,0x154,0x5E1,0x38C,0x38D,0x38E};
+                long i;
+                long found=-1;
+                for(i=0;i<18;++i) {
+                    if((u32)sprite->id==ids[i]) {
+                        for(found=0;found<_cursor_index_num;++found) {
+                            if(i==_cursor_index[found])break;
+                        }
+                        break;
+                    }
+                }
+                if(cursor==found) {
+                    sprite->color.channels.red=0x22;sprite->color.channels.green=0x44;sprite->color.channels.blue=0xEE;
+                } else {
+                    sprite->color.channels.red=255;sprite->color.channels.green=255;sprite->color.channels.blue=255;
+                }
+                winSpriteSetDisp(sprite,1);
+            } else winSpriteSetDisp(sprite,0);
+        } else winSpriteSetDisp(sprite,0);
+        break;
+    case 0x5C4:break;
+    }
+}
+extern "C" {
+void fadeSet(s32,f32);
+void floorLink(u32,u32);
+void floorSetFadeScript(u32,u32);
+void heroMovePoolCounter(u32,s32);
+void GSsndStopNow(u32);
+}
+void WorldMap::MainSub() {
+    long *position=&unk8->field2c;
+    long selected;
+    long previous=*position;
+    selected=menuOpenCustom(0x54,windowGetActiveID(),position,0,1,0);
+    if(pWorldmap!=0) {
+        if(selected<0)selected=previous;
+        PreRead(selected);SelectIcon(selected);
+        WorldMapData *data=SearchData(_cursor_index[selected]);
+        menuClose(0x54);menuCloseSync(0x54,1);
+        if(selected!=previous) {
+            unk8->travelled=1;heroMovePoolCounter(2,40);moveDemo(previous,selected);
+        }
+        if(selected!=previous) {
+            fadeSet(3,1.0f);
+            do {RenderMoveDemoModel();GSthreadSwitch();}while(fadeCheck(0)!=0);
+            if(unk8->scooterType>=4)GSsndStopNow(0x5DC);
+            else GSsndStopNow(0x5B2);
+            releaseOffscreenData();
+        } else {
+            do {MainControl(selected);GSthreadSwitch();}while(IsBlending()==0);
+        }
+        GSthreadSwitch();
+        if(unk4!=0) {delete unk4;unk4=0;}
+        if(data!=0) {
+            floorLink(data->floorId,0);
+            if(unk8->travelled!=0)floorSetFadeScript(0,0x05960008);
+            SetFlagData(_cursor_index[selected]);
+            return;
+        }
+        floorLink(unk8->floorId,0);
+    }
+}
+static u32 _animeTable_A[4][4]={
+    {0x20C30400,0x20C31000,1,0x20BF1800},{0x20C40400,0x20C41000,1,0x20C01800},
+    {0x20C50400,0x20C51000,1,0x20C11800},{0x20C60400,0x20C61000,1,0x20C21800}
+};
+static u32 _animeTable_B[4][4]={
+    {0x20CB0400,0x20CB1000,1,0x20C71800},{0x20CC0400,0x20CC1000,1,0x20C81800},
+    {0x20CD0400,0x20CD1000,1,0x20C91800},{0x20CE0400,0x20CE1000,1,0x20CA1800}
+};
+static u32 (*_animeTable[2])[4]={_animeTable_A,_animeTable_B};
+static u8 _testVisibility=1,_testExit=1,_glowwidth=20,_glownormalize=1,_glowsamples=1;
+static f32 _testFadeTime=1.5f;
+extern "C" {
+extern u8 _AnimeLoop,_glowblend,_glowmethod;
+u16 HSD_Rand();
+void GSgfxVideoSetLockFrameRate(u32);
+void GSmodelSetShadowFlags(void *,u32);
+void GSmodelSetShadowLight(void *,void *);
+void GSmodelSetShadowSurface(void *,u32,void **);
+void GSsndPlayNow(u32);
+}
+void WorldMap::moveDemo(long previous,long selected) {
+    u16 variant=HSD_Rand()%2;
+    unk4=new glowEffect;
+    GSgfxVideoSetLockFrameRate(1);
+    WorldMapIconData *to=&icons[_cursor_index[selected]];
+    WorldMapIconData *from=&icons[_cursor_index[previous]];
+    f32 angle=(f32)atan2(to->screen.y-from->screen.y,to->screen.x-from->screen.x);
+    if(angle<0.0f)angle+=6.2831855f;
+    if(!(angle>=1.5707964f && angle<4.712389f))variant+=2;
+    WorldMapData *data=SearchData(_cursor_index[previous]);
+    unk8->archive4C=*(u32 *)((u8 *)data+0x14);
+    if(*(u32 *)((u8 *)data+0x14)==0x1B4A0400) {
+        unk8->model50=0x1B4A1000;unk8->model54=0x1B4A1001;unk8->model58=0x1B4A1002;unk8->model5C=0x1B4A1603;
+        unk8->modelPair=_animeTable[0][variant];
+    } else {
+        unk8->model50=0x1FDA1000;unk8->model54=0x1FDA1001;unk8->model58=0x1FDA1002;unk8->model5C=0x1FDA1602;
+        unk8->modelPair=_animeTable[1][variant];
+    }
+    setNullModel();readScooter();GSthreadSwitch();
+    SetModel(floorGetCurrentGroupID(),unk8->archive4C,true);GSthreadSwitch();ObjectVisibility(unk8->archive4C,true);
+    unk8->f3c=1.0f;initializeOffscreenData();
+    if(unk8->model54==0x1B4A1001 && unk4!=0) {
+        unk4->glow=0.0f;unk4->width=_glowwidth;unk4->blend=_glowblend;unk4->normalize=_glownormalize;unk4->method=_glowmethod;unk4->samples=_glowsamples;unk4->Start();
+    }
+    void *model=GSresGetResourceAllGroup(unk8->resList->pad[0]);
+    void *surface=GSresGetResourceAllGroup(unk8->model58);
+    void *light=GSresGetResourceAllGroup(unk8->model5C);
+    GSmodelSetShadowFlags(model,1);GSmodelSetShadowLight(model,light);GSmodelSetShadowSurface(model,1,&surface);
+    SetMotion(unk8->modelB,0,0.0f,_AnimeLoop);
+    f32 frames=GetAnimeFrameCount(unk8->modelB,0);
+    unk8->camId=(u32)_cameraPlayAnime(unk8->modelPair[3],0,_AnimeLoop);
+    if(unk8->scooterType>=4)GSsndPlayNow(0x5DC);
+    else GSsndPlayNow(0x5B2);
+    for(;;) {
+        f32 fade=GetLastTime()/_testFadeTime;
+        MainControl(selected);RenderMoveDemoModel();
+        if(unk8->f3c!=0.0f) {
+            unk8->f3c-=fade;
+            if(unk8->f3c<0.0f) {unk8->f3c=0.0f;ObjectVisibility(0x18530200,_testVisibility);}
+        }
+        if(_testExit!=0 && GetAnimeFrame(unk8->modelB)>frames-60.0f)break;
+        GSthreadSwitch();
     }
 }

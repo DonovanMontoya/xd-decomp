@@ -271,6 +271,71 @@ void menuStaffRollExit(void) {
     fadeCheck(1);
 }
 
+void* savedataGetStatus(void*, s32);
+void gamedatasaveSetStatus(void*, s32, u32);
+u32 gamedatasaveGetStatus(void*, s32);
+void* memcardMemAllocForSavedata();
+void memcardMemFreeForSavedata(void*);
+s32 memcardTaskCall(s32,s32,s32);
+u32 heroGetStatus(void*,s32,s32);
+s8 menuSubOpenYesNo(s32,s32,s32,s32);
+s32 fn_801E3C5C(s32);
+u8 pauseIsPause();
+double pokecoloGetFrameTime();
+double lbl_804EA9F0;
+
+void menuStaffRollMain(void) {
+    u32 id;
+    s32 selection;
+    void* backup;
+    if (floorGetPrevFloorID() != 0x384) {
+        void* data = savedataGetStatus(0, 1);
+        gamedatasaveSetStatus(data, 5, 0x8A);
+        gamedatasaveSetStatus(data, 7, 0x8F);
+        gamedatasaveSetStatus(data, 8, 2);
+        backup = memcardMemAllocForSavedata();
+        memcpy(backup, savedataGetStatus(0,0), 0x27FD0);
+        for (;;) {
+            winMsgOpen(2,0x3C38,1,0);
+            selection = menuSubOpenYesNo(0,60,170,0);
+            if (selection != 0) {
+                winMsgOpen(2,0x3C39,1,0);
+                if (menuSubOpenYesNo(0,60,170,1) == 0) break;
+                continue;
+            }
+            if (memcardTaskCall(3,2,0) == 3 && gamedatasaveGetStatus(0,4) != 0) {
+                id = heroGetStatus(savedataGetStatus(backup,2),2,0);
+                if (id == heroGetStatus(0,2,0) || gamedatasaveGetStatus(backup,4) == 0) {
+                    winMsgOpen(2,0x3BF3,1,0);
+                    selection = menuSubOpenYesNo(0,60,170,0);
+                }
+            }
+            memcpy(savedataGetStatus(0,0), backup, 0x27FD0);
+            if (selection == 0 && memcardTaskCall(14,2,0) == 4) break;
+        }
+        winMsgClose(1);
+        memcardMemFreeForSavedata(backup);
+    }
+    GSmoviePlay(0x7DD,0,0,0);
+    soundOpenPlay(8,0,127);
+    while(fn_801E3C5C(0x7DD) < 0) GSthreadSwitch();
+    lbl_804EA9F0 = 0.0;
+    u8 visible = 0;
+    while (GSmoviePlayCheck(0x7DD) == 1) {
+        if (!pauseIsPause()) lbl_804EA9F0 += pokecoloGetFrameTime();
+        if (lbl_804EA9F0 >= 193.12f) {
+            if (visible == 1) {visible = 0; menuClose(0xE0);}
+        } else if (lbl_804EA9F0 >= 186.16f) {
+            if (visible == 0) {visible = 1; menuOpen(0xE0,0);}
+        }
+        GSthreadSwitch();
+    }
+    soundOpenPlay(8,0,127);
+    floorGetPrevFloorID();
+    GSfloorChange(0x384);
+    floorSetFadeScript(0,0x5960008);
+}
+
 void menuStaffRollInit(void) {
     fadeSet(2, 0.0f);
     fadeCheck(1);

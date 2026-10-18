@@ -24,7 +24,7 @@ s32 PKJB_GetKey(s32,u16*);
 s32 PKJB_IdleSend(s32);
 u16 pokemonBiosGetPokemonDataId(void*);
 u8 pokemonBiosGetTokuseiFlag(void*);
-void pokemonBiosSetTokuseiFlag(void*,u8);
+void pokemonBiosSetTokuseiFlag(void*,bool);
 void gbaPokemonFromGC(void*,GbaPokemonRecord*);
 s8 exribbonGetNo(s32);
 void wazaconv(u32,GbaWazaText*);
@@ -75,7 +75,7 @@ s32 gbaCommandEntryResult(s32 channel,u32* result){
     s32 index=channel-1;
     *result=0x02000000;
     s32 state=PKJB_EntryGetStatus(index,&value);
-    if(state==1){u8* errors=&gba_SIProbe_ErrorCnt[channel-1];++*errors;if(*errors!=2)state=-1;}
+    if(state==1){u8* errors=gba_SIProbe_ErrorCnt;errors+=channel;--errors;++*errors;if(*errors!=2)state=-1;}
     else gba_SIProbe_ErrorCntClear(index);
     if(state<0){value=0x02000000;}
     else {
@@ -133,3 +133,164 @@ s32 gbaCommandKeyRead(s32 channel){
 }
 }
 #pragma force_active reset
+
+extern "C" {
+u16 fightFloorGetStatus(s32,s32,s32,s32);
+void* fightTypeDataBiosGetPtr(u16);
+u8 fightTypeDataBiosGetTrainerNum(void*);
+u8 fightTypeDataBiosGetEntryPokemonNum(void*);
+u8 fightTypeDataBiosGetFightoutPokemonNum(void*);
+void* fightTargetGetPtr(s32,void*,u16);
+FightOutPokemon* fightTrainerGetValidFightOutPokemonPtr(void*,u16);
+s8 fightTrainerBiosGetControllerId(void*);
+void* fightTrainerGetValidFightPokemonPtr(void*,u16);
+void* fightPokemonGetPokemonPtr(void*);
+u16 pokemonBiosGetFightTrainerPokemonDataId(void*);
+u8 fightTrainerCheckCanIrekaeFightPokemon(void*,void*);
+u8 pokemonBiosGetPokerus(void*);
+u16 pokemonBiosGetHp(void*);
+u16 pokemonBiosGetMaxHp(void*);
+u16 gbaPokemonConditonFromGC(void*);
+u16 fightPokemonGetSoubiItemDataId(void*);
+u8 pokemonBiosGetMailId(void*);
+u16 pokemonBiosGetPokemonWazaDataId(void*,u16);
+s8 pokemonBiosGetPokemonWazaPp(void*,u16);
+void GetWazaDocGBA(void*,u16);
+void* fightOutPokemonGetPokemonPtr(FightOutPokemon*);
+void fightOutPokemonGetRndStatus(FightOutPokemon*,u32*,u32*);
+u16 fightOutPokemonBiosGetZokuseiDataId(FightOutPokemon*,u16);
+void* fightFloorBiosGetFightFloorPtr();
+u8 fightFloorCheckFightActionFightOutPokemonIrekaeSelect(FightOutPokemon*,FightOutPokemon**);
+u16 fightOutPokemonGetTokuseiDataId(FightOutPokemon*);
+s32 fightOutPokemonCheckFightActionWazaSelect(FightOutPokemon*,s32);
+FightOutPokemon* fightSeqSelectDefensePokemonPtr(FightOutPokemon*,u16,u16,s32(*)(FightOutPokemon*,u16,u16),u8,u8,s16);
+u8 fightOutPokemonCheckCanOutOkWazaBanme(FightOutPokemon*,u16,u8,u16*);
+u32 pokemonBiosGetAttest(void*);
+u8 gamedataAttestBiosGetLangareaId(u32);
+s32 GBAMakeFromGSchar(void*,const void*,u8);
+const void* pokemonBiosGetNicknamePtr(void*);
+s32 pokemonGetSex(void*);
+s8 pokemonBiosGetLevel(void*);
+u32 pokemonBiosGetRnd(void*);
+u8 menuCBRule_DEOKISISUCamouflage();
+u8 pokemonGetDeoxysSel(u8);
+u8 fightOutPokemonIsJoutaiDataId(FightOutPokemon*,u16);
+extern u8 _CB[];
+void* memmove(void*,const void*,u32);
+void PKJB_BattleRequest(s32,GbaActionPacket*,s32);
+u16 fightGetFightResultId();
+u8 fightFloorIsUseFightTimerCommand(s32);
+u8 fightTimerCommandIsOver();
+void PKJB_ReturnTitle(s32);
+s32 PKJB_BattleGetStatus(s32,u32*);
+void GSthreadSwitch();
+}
+extern "C" s32 gbaCommandRequestAction(s32 channel,void* trainer,u16 position,s32 special) {
+    GbaActionPacket packet;
+    u32 random0,random1;
+    FightOutPokemon* trapped;
+    FightOutPokemon* opponents[4];
+    u8 controllers[4];
+    u16 fightType=fightFloorGetStatus(0,0,20,0);
+    void* type=fightTypeDataBiosGetPtr(fightType);
+    u8 trainers=fightTypeDataBiosGetTrainerNum(type);
+    u8 partySize=fightTypeDataBiosGetEntryPokemonNum(type);
+    u8 active=fightTypeDataBiosGetFightoutPokemonNum(type);
+    u8 count=trainers*active*2;
+    void* host=fightTargetGetPtr(11,trainer,fightType);
+    opponents[0]=fightTrainerGetValidFightOutPokemonPtr(host,0);controllers[0]=1;
+    if(trainers==2) {
+        void* target=fightTargetGetPtr(7,host,fightType);opponents[1]=fightTrainerGetValidFightOutPokemonPtr(target,0);controllers[1]=fightTrainerBiosGetControllerId(target);
+        target=fightTargetGetPtr(9,host,fightType);opponents[2]=fightTrainerGetValidFightOutPokemonPtr(target,0);controllers[2]=fightTrainerBiosGetControllerId(target);
+        target=fightTargetGetPtr(10,host,fightType);opponents[3]=fightTrainerGetValidFightOutPokemonPtr(target,0);controllers[3]=fightTrainerBiosGetControllerId(target);
+    }else if(active==2) {
+        opponents[1]=fightTrainerGetValidFightOutPokemonPtr(host,1);
+        void* target=fightTargetGetPtr(9,host,fightType);opponents[2]=fightTrainerGetValidFightOutPokemonPtr(target,0);opponents[3]=fightTrainerGetValidFightOutPokemonPtr(target,1);
+        controllers[1]=1;controllers[2]=2;controllers[3]=2;
+    }else {opponents[1]=fightTrainerGetValidFightOutPokemonPtr(fightTargetGetPtr(9,host,fightType),0);controllers[1]=1;}
+    FightOutPokemon* current=fightTrainerGetValidFightOutPokemonPtr(trainer,position);
+    packet.slot=active==2?position+1:0;packet.count=count;packet.special=special;
+    u32 ids=0,swaps=0;
+    s32 shift=8,index=0;
+    GbaPartyActionRecord* party=packet.party;
+    for(;index<partySize;index++,shift+=4,party++) {
+        void* fightPokemon=fightTrainerGetValidFightPokemonPtr(trainer,index);
+        if(!fightPokemon)break;
+        void* pokemon=fightPokemonGetPokemonPtr(fightPokemon);
+        ids|=pokemonBiosGetFightTrainerPokemonDataId(pokemon)<<shift;
+        swaps|=fightTrainerCheckCanIrekaeFightPokemon(trainer,fightPokemon)<<shift;
+        u8 pokerus=pokemonBiosGetPokerus(pokemon);
+        party->hp=_swap16(pokemonBiosGetHp(pokemon));
+        u16 condition=gbaPokemonConditonFromGC(pokemon);party->condition=condition;
+        party->held=fightPokemonGetSoubiItemDataId(fightPokemon)!=0;
+        party->mail=pokemonBiosGetMailId(pokemon)!=255;
+        party->pokerusActive=(pokerus&15)!=0;party->pokerusPast=(pokerus&0xf0)!=0;party->conditionHigh=condition>>8;
+        party->item=_swap16(fightPokemonGetSoubiItemDataId(fightPokemon));
+        for(u16 move=0;move<4;move++) {
+            u16 id=pokemonBiosGetPokemonWazaDataId(pokemon,move);
+            party->moves[move]=_swap16(id);party->pp[move]=pokemonBiosGetPokemonWazaPp(pokemon,move);GetWazaDocGBA(party->descriptions[move],id);
+        }
+    }
+    packet.selection=_swap32(ids|-(1<<((u8)index*4+8)));packet.swaps=_swap32(swaps);
+    void* pokemon=fightOutPokemonGetPokemonPtr(current);
+    fightOutPokemonGetRndStatus(current,&random0,&random1);packet.random[0]=_swap32(random0);packet.random[1]=_swap32(random1);
+    u16 species=pokemonBiosGetPokemonDataId(pokemon);packet.species=_swap16(species);
+    if(species==0x181) {
+        u16 form;
+        switch(fightOutPokemonBiosGetZokuseiDataId(current,0)) {case 10:form=1;break;case 11:form=2;break;case 15:form=3;break;default:form=0;break;}
+        packet.form=_swap16(form);
+    }else packet.form=0;
+    u8 trap; s32 trapIndex;
+    if(special) {trap=0;trapIndex=0;}
+    else {
+        fightFloorBiosGetFightFloorPtr();trap=fightFloorCheckFightActionFightOutPokemonIrekaeSelect(current,&trapped);
+        if(trap==2) {switch(fightOutPokemonGetTokuseiDataId(trapped)){case 23:trap=2;break;case 42:trap=3;break;case 71:trap=4;break;default:trap=0;break;}}
+        for(trapIndex=count-1;trapIndex>0;trapIndex--)if(trapped==opponents[trapIndex])break;
+    }
+    packet.trap=trap;packet.trappedBy=trapIndex;
+    packet.forbidden=fightOutPokemonCheckFightActionWazaSelect(current,0);
+    u16 available=0,forced;
+    for(u16 move=0,bit=0;move<4;move++,bit+=4) {
+        _needSelect=0;
+        u16 id=pokemonBiosGetPokemonWazaDataId(pokemon,move);packet.moves[move]=_swap16(id);packet.pp[move]=pokemonBiosGetPokemonWazaPp(pokemon,move);
+        fightSeqSelectDefensePokemonPtr(current,id,fightType,_dummySelect,1,0,-1);
+        if(_needSelect)available|=8<<bit;
+        u16 forcedId;
+        u8 allowed=fightOutPokemonCheckCanOutOkWazaBanme(current,move,1,&forcedId);
+        available|=allowed<<bit;
+        if(allowed==5)forced=forcedId;
+    }
+    packet.available=_swap16(available);
+    s32 forcedIndex=3;
+    while(packet.moves[forcedIndex]!=_swap16(forced)) {--forcedIndex;if(forcedIndex<=0)break;}
+    packet.forcedMove=forcedIndex;
+    for(s32 i=0;i<count;i++) {
+        GbaOpponentActionRecord* record=&packet.opponents[i];memset(record,0,sizeof(*record));
+        if(opponents[i]==current)record->nickname[0]=255;
+        else {
+            void* other=fightOutPokemonGetPokemonPtr(opponents[i]);
+            u32 attest=pokemonBiosGetAttest(other);u8 language=gamedataAttestBiosGetLangareaId(attest);
+            s32 length=GBAMakeFromGSchar(record->nickname,pokemonBiosGetNicknamePtr(other),language);if(length<10)record->nickname[length]=255;
+            u16 id=pokemonBiosGetPokemonDataId(other);
+            record->sex=pokemonGetSex(other);record->nidoranMale=id==32;record->nidoranFemale=id==29;record->controller=controllers[i];record->japanese=gamedataAttestBiosGetLangareaId(attest)==1;
+            record->level=pokemonBiosGetLevel(other);record->random=_swap32(pokemonBiosGetRnd(other));record->species=_swap16(pokemonBiosGetPokemonDataId(other));record->hp=_swap16(pokemonBiosGetHp(other));record->maxHp=_swap16(pokemonBiosGetMaxHp(other));record->form=0;
+            if(pokemonBiosGetPokemonDataId(other)==0x19a) {
+                if(menuCBRule_DEOKISISUCamouflage()) {if(*(s32*)(_CB+8)==2 || *(s32*)(_CB+28)==0)record->form=_swap16(pokemonGetDeoxysSel(controllers[i]));else record->form=_swap16(pokemonGetDeoxysSel(controllers[i]+1));}
+                if(fightOutPokemonIsJoutaiDataId(opponents[i],16)==1)record->form=0;
+            }
+        }
+    }
+    s32 opponentBytes=count*sizeof(GbaOpponentActionRecord);
+    memmove((u8*)&packet+0x24+(u8)index*0x154,packet.opponents,opponentBytes);
+    s32 port=channel-1;
+    PKJB_BattleRequest(port,&packet,(u8)index*0x154+opponentBytes+0x24);gba_SIProbe_ErrorCntClear(port);
+    for(;;) {
+        if(fightGetFightResultId()==1) {PKJB_ReturnTitle(port);return 0x50000;}
+        if(fightFloorIsUseFightTimerCommand(0)==1 && fightTimerCommandIsOver()==1) {PKJB_ReturnTitle(port);return 0x40000;}
+        u32 response;s32 result=PKJB_BattleGetStatus(port,&response);
+        if(result==1) {if(++gba_SIProbe_ErrorCnt[port]!=2)result=-1;}else gba_SIProbe_ErrorCntClear(port);
+        if(result>0)return result|0x50000;
+        if(result==0)return _swap32(response);
+        GSthreadSwitch();
+    }
+}

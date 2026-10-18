@@ -196,6 +196,7 @@ extern "C" void GSmodelSetTexAnimType(GSmodel* m, s32 type) {
     }
 }
 extern "C" void GSmodelSetTexAnimIndex(GSmodel* m, u32 index) {
+    HSD_AObj *aobj;
     HSD_JObj* joint = m->joint;
     if ((m->flags & 8) && index < m->textureAnimationCount) {
         if (index != m->textureAnimationIndex || m->partTextureAnimationChanged == 1) {
@@ -205,7 +206,7 @@ extern "C" void GSmodelSetTexAnimIndex(GSmodel* m, u32 index) {
             if ((m->flags & 0x20000000) && joint->aobj) HSD_JObjRemoveAnim(joint);
             m->textureEndFrame = 0.0f;
             HSD_ForeachAnim(joint, JOBJ_TYPE, (HSD_TypeMask)0x64db, (void*)_modelGetEndFrame, AOBJ_ARG_AV, &m->textureEndFrame);
-            HSD_AObj* aobj = 0;
+            aobj = 0;
             HSD_ForeachAnim(joint, JOBJ_TYPE, (HSD_TypeMask)0x480, (void*)_modelGetAObjFunc__FP9_HSD_AObjPv, AOBJ_ARG_AV, &aobj);
             m->textureAnimation = aobj;
         }
@@ -219,15 +220,14 @@ extern "C" void GSmodelSetTexAnimIndex(GSmodel* m, u32 index) {
     }
 }
 // IEEE-754 classification, following the runtime's five-class float contract.
-static inline s32 classifyAnimationFrame(f32 value) {
-    union { f32 value; u32 bits; } representation;
-    representation.value = value;
-    switch (representation.bits & 0x7f800000) {
-    case 0x7f800000: if (representation.bits & 0x7fffff) return 1; return 2;
-    case 0: if (representation.bits & 0x7fffff) return 5; return 3;
+static inline s32 classifyAnimationBits(u32 bits) {
+    switch (bits & 0x7f800000) {
+    case 0x7f800000: if (bits & 0x7fffff) return 1; return 2;
+    case 0: if (bits & 0x7fffff) return 5; return 3;
     default: return 4;
     }
 }
+static inline s32 classifyAnimationFrame(f32 value) { return classifyAnimationBits(*(u32*)&value); }
 extern "C" void GSmodelSetAnimRate(GSmodel* m, f32 rate) {
     if (!(rate < 0.0f) && classifyAnimationFrame(rate) != 1) {
     if (m->flags & 4) {
@@ -244,6 +244,17 @@ extern "C" void GSmodelSetAnimRate(GSmodel* m, f32 rate) {
     if (m->flags & 0x2000) GSmodelSetTexAnimRate(m, rate);
     }
 }
+static inline void modelFreezePartAnimations(GSmodel *model) {
+    for (s32 i = 0; i < 8; ++i) {
+        if (model->partAnimations[i].animation) HSD_AObjSetFlags(model->partAnimations[i].animation, 0x10000);
+    }
+}
+static inline void modelUnfreezePartAnimations(GSmodel *model) {
+    for (s32 i = 0; i < 8; ++i) {
+        if (model->partAnimations[i].animation) HSD_AObjClearFlags(model->partAnimations[i].animation, 0x10000);
+    }
+}
+#pragma dont_inline on
 extern "C" void GSmodelSetAnimFrame(GSmodel* m, f32 frame) {
     s32 i;
     HSD_JObj* joint;
@@ -254,12 +265,12 @@ extern "C" void GSmodelSetAnimFrame(GSmodel* m, f32 frame) {
             if ((m->flags & 0x20000) == 0x20000) joint = joint->child;
             m->animationFrame = frame; m->requestedFrame = m->animationFrame;
             if (m->flags & 0x80000000) {
-                for (i = 0; i < 8; ++i) if (m->partAnimations[i].animation) HSD_AObjSetFlags(m->partAnimations[i].animation, 0x10000);
+                modelFreezePartAnimations(m);
             }
             HSD_JObjReqAnimAllByFlags(joint, 0x1cb, m->requestedFrame);
             HSD_JObjAnimAll(joint);
             if (m->flags & 0x80000000) {
-                for (i = 0; i < 8; ++i) if (m->partAnimations[i].animation) HSD_AObjClearFlags(m->partAnimations[i].animation, 0x10000);
+                modelUnfreezePartAnimations(m);
             }
         } else {
             f32 ratio = m->blendRate != 0.0f ? m->animationRate / m->blendRate : 1.0f;
@@ -275,6 +286,7 @@ extern "C" void GSmodelSetAnimFrame(GSmodel* m, f32 frame) {
     }
 }
 
+#pragma dont_inline reset
 static inline void modelSetAnimTypeInline(GSmodel* m, s32 type) {
     if (m->flags & 4) {
         s32 i, j;
@@ -283,7 +295,7 @@ static inline void modelSetAnimTypeInline(GSmodel* m, s32 type) {
         if ((m->flags & 0x20000) == 0x20000) joint = joint->child;
         m->animationType = type; m->blendType = type;
         if (m->flags & 0x80000000) {
-            for (i = 0; i < 8; ++i) if (m->partAnimations[i].animation) HSD_AObjSetFlags(m->partAnimations[i].animation, 0x10000);
+            modelFreezePartAnimations(m);
         }
         switch (m->animationType) {
         case 0:
@@ -296,7 +308,7 @@ static inline void modelSetAnimTypeInline(GSmodel* m, s32 type) {
             break;
         }
         if (m->flags & 0x80000000) {
-            for (j = 0; j < 8; ++j) if (m->partAnimations[j].animation) HSD_AObjClearFlags(m->partAnimations[j].animation, 0x10000);
+            modelUnfreezePartAnimations(m);
         }
     }
     if (m->flags & 0x2000) GSmodelSetTexAnimType(m, type);
@@ -893,13 +905,15 @@ extern "C" void modelApplyAnimation__FP8_GSmodel(GSmodel* m) {
 
 extern "C" void GSboundSetAnimIndex(GSbound*, u32);
 extern "C" void GSmodelSetAnimIndex(GSmodel* m, u32 index) {
+    // Keep the animation, rate-classification, and texture scratch values distinct.
+    HSD_AObj *aobj;
+    f32 rateArgument;
+    HSD_AObj *textureAobj;
     f32 rate;
     if (m->flags & 4) {
         if (index >= m->animationCount) return;
         if (GSmodelIsNullAnimation(m, index)) return;
-        if (m->flags & 0x80) rate = m->blendRate;
-        else rate = m->animationRate;
-        if (GSgfxVideoGetVsyncRate() == 50) rate /= 1.2f;
+        rate = GSmodelGetAnimRate(m);
         if (index != m->animationIndex || (m->flags & 0x80) || m->partAnimationChanged == 1) {
             HSD_JObj* joint = m->joint;
             void** shape;
@@ -909,24 +923,37 @@ extern "C" void GSmodelSetAnimIndex(GSmodel* m, u32 index) {
             if (m->flags & 0x10) shape = (void**)m->scene->shapeAnimations[m->animationIndex];
             else shape = 0;
             if (m->flags & 0x80000000) {
-                s32 i;
-                for (i = 0; i < 8; ++i) if (m->partAnimations[i].animation) HSD_AObjSetFlags(m->partAnimations[i].animation, 0x10000);
+                modelFreezePartAnimations(m);
             }
             _jobjAddAnimAll__FP9_HSD_JObjP14_HSD_AnimJointP17_HSD_MatAnimJointP19_HSD_ShapeAnimJoint(joint, m->scene->animations[m->animationIndex], 0, (HSD_ShapeAnimJoint*)shape);
             if ((m->flags & 0x20000000) && joint->aobj) HSD_JObjRemoveAnim(joint);
             m->endFrame = 0.0f;
             HSD_ForeachAnim(joint, JOBJ_TYPE, (HSD_TypeMask)0x9b2f, (void*)_modelGetEndFrame, AOBJ_ARG_AV, &m->endFrame);
-            HSD_AObj* aobj = 0;
+            aobj = 0;
             HSD_ForeachAnim(joint, JOBJ_TYPE, (HSD_TypeMask)0x20, (void*)_modelGetAObjFunc__FP9_HSD_AObjPv, AOBJ_ARG_AV, &aobj);
             m->animation = aobj;
             if (m->flags & 0x80000000) {
-                s32 i;
-                for (i = 0; i < 8; ++i) if (m->partAnimations[i].animation) HSD_AObjClearFlags(m->partAnimations[i].animation, 0x10000);
+                modelUnfreezePartAnimations(m);
             }
         }
         GSmodelSetAnimFrame(m, 0.0f);
         modelSetAnimTypeInline(m, m->animationType);
-        GSmodelSetAnimRate(m, rate);
+
+        if (!(rate < 0.0f) && (rateArgument = rate, classifyAnimationBits(*(u32*)&rateArgument)) != 1) {
+            if (m->flags & 4) {
+                f32 adjusted = rate;
+                if (GSgfxVideoGetVsyncRate() == 50) adjusted *= 1.2f;
+                if (!(m->flags & 0x80)) m->animationRate = adjusted;
+                else {
+                    f32 first = 1.0f + m->endFrame;
+                    f32 second = 1.0f + m->blendEndFrame;
+                    m->blendRate = adjusted;
+                    m->animationRate = adjusted * (first / second);
+                }
+            }
+            if (m->flags & 0x2000) GSmodelSetTexAnimRate(m, rate);
+        }
+
         if (!(m->flags & 0x80000000)) {
             m->partAnimations[0].animation = 0;
             m->partAnimations[1].animation = 0;
@@ -939,7 +966,29 @@ extern "C" void GSmodelSetAnimIndex(GSmodel* m, u32 index) {
         }
         GSboundSetAnimIndex((GSbound*)m->boundStorage, index);
     }
-    if (m->flags & 0x2000) GSmodelSetTexAnimIndex(m, index);
+    if (m->flags & 0x2000) {
+        HSD_JObj* joint = m->joint;
+        if ((m->flags & 8) && index < m->textureAnimationCount) {
+            if (index != m->textureAnimationIndex || m->partTextureAnimationChanged == 1) {
+                if ((m->flags & 0x20000) == 0x20000) joint = joint->child;
+                m->textureAnimationIndex = index;
+                HSD_JObjAddAnimAll(joint, 0, m->scene->materialAnimations[m->textureAnimationIndex], 0);
+                if ((m->flags & 0x20000000) && joint->aobj) HSD_JObjRemoveAnim(joint);
+                m->textureEndFrame = 0.0f;
+                HSD_ForeachAnim(joint, JOBJ_TYPE, (HSD_TypeMask)0x64db, (void*)_modelGetEndFrame, AOBJ_ARG_AV, &m->textureEndFrame);
+                textureAobj = 0;
+                HSD_ForeachAnim(joint, JOBJ_TYPE, (HSD_TypeMask)0x480, (void*)_modelGetAObjFunc__FP9_HSD_AObjPv, AOBJ_ARG_AV, &textureAobj);
+                m->textureAnimation = textureAobj;
+            }
+            GSmodelSetTexAnimFrame(m, 0.0f);
+            GSmodelSetTexAnimType(m, m->textureAnimationType);
+            m->partTextureAnimations[0].animation = 0;
+            m->partTextureAnimations[1].animation = 0;
+            m->partTextureAnimations[2].animation = 0;
+            m->partTextureAnimations[3].animation = 0;
+            m->partTextureAnimationChanged = 0;
+        }
+    }
     GSmodelForceAnimTransformUpdate(m);
 }
 

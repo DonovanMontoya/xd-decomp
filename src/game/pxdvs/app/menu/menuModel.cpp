@@ -1,4 +1,7 @@
 #include <game/pxdvs/app/menu/menuModelPrivate.hpp>
+#include <dolphin/mtx.h>
+#include <libc/math.h>
+#include <libc/string.h>
 
 extern "C" {
 s32 pokemonGetStatus(Pokemon *, u16, u16, u16);
@@ -48,7 +51,7 @@ void GSthreadSetArgs(u32, u32, ...);
 s32 GSfloorGetCurrentFloorGroupID();
 void GSlogWrite(const char *, ...);
 void GScameraFree(u32);
-void GScameraSetScissor(u32, u32, u32, u32, u32);
+void GScameraSetScissor(u32, u32, u32, u32, u32, u32);
 void GScameraSetViewport(u32, u32, f32, f32, f32, f32);
 u32 floorOpenObject(u32);
 u8 menuFaceCheckLoading();
@@ -61,6 +64,17 @@ struct PokemonMenuAnimation {
 };
 extern PokemonMenuAnimation *pokemon_menu_animation;
 extern u32 *pokemon_menu_animation_number;
+
+struct MenuModelVector : Vec {
+    MenuModelVector(f32 vx=0.0f,f32 vy=0.0f,f32 vz=0.0f) { x=vx; y=vy; z=vz; }
+};
+static MenuModelVector _testpos;
+static MenuModelVector _testPos;
+static MenuModelVector _testPos2D;
+static MenuModelVector _lightOffset;
+static f32 _camFov=35.0f;
+static MENU_COLOR _lightColor={128,128,128,255};
+static f32 _disp_scale=0.7f;
 
 static f32 _menuModelScaleMultiValue = 1.0f;
 u8 _modeloff;
@@ -147,7 +161,7 @@ u32 menuModelGetModelPtr(MENU_MODEL *m) {
     return m->model;
 }
 
-void menuModelSetClip(MENU_MODEL *m, s8 clip) {
+void menuModelSetClip(MENU_MODEL *m, u8 clip) {
     m->clip = clip;
 }
 
@@ -746,19 +760,19 @@ static void _menuModelSetupViewport(MENU_MODEL *m) {
     f32 baseH;
     f32 ox;
     f32 oy;
-    s32 sw;
     s32 sh;
-    s32 sx;
+    s32 sw;
     s32 sy;
+    s32 sx;
     if (m->camera != 0) {
         sw = m->sizeW;
         sh = m->sizeH;
         sx = m->sizeX;
         sy = m->sizeY;
-        w = (f32)sw;
-        h = (f32)sh;
         fx = (f32)sx;
         fy = (f32)sy;
+        w = (f32)sw;
+        h = (f32)sh;
         baseW = w;
         baseH = h;
         if (_checkLarge != 0) {
@@ -776,10 +790,10 @@ static void _menuModelSetupViewport(MENU_MODEL *m) {
         oy = 0.5f * (baseH - h);
         fx = fx + ox;
         fy = fy + oy;
-        if (m->clip != 0) {
-            GScameraSetScissor(1, (u16)sx, (u16)sy, (u16)sw, (u16)sh);
+        if ((u8)m->clip != 0) {
+            GScameraSetScissor(m->camera, 1, (u16)sx, (u16)sy, (u16)sw, (u16)sh);
         } else {
-            GScameraSetScissor(0, 0, 0, 0x280, 0x1E0);
+            GScameraSetScissor(m->camera, 0, 0, 0, 0x280, 0x1E0);
         }
         if (fx < 0.0f) {
             fx = 0.0f;
@@ -801,4 +815,232 @@ static void _menuModelSetupViewport(MENU_MODEL *m) {
             }
         }
     }
+}
+
+static void _menuModelSetupViewport2(MENU_MODEL* a,MENU_MODEL* b) {
+    f32 x,y,w,h,baseW,baseH,ox,oy;
+    if(a->camera) {
+        x=(f32)a->sizeX; y=(f32)a->sizeY;
+        w=(f32)a->sizeW; h=(f32)a->sizeH;
+        baseW=w; baseH=h;
+        bool wide=w>h;
+        if(wide) w=1.3333334f*h;
+        if(!wide) h=w/1.3333334f;
+        ox=0.5f*(baseW-w); oy=0.5f*(baseH-h);
+        x=x+ox; y=y+oy;
+        if((u8)a->clip) GScameraSetScissor(a->camera,1,(s32)x,(s32)y,(s32)w,(s32)h);
+        else GScameraSetScissor(a->camera,0,0,0,0x280,0x1e0);
+        GScameraSetViewport(a->camera,1,x,y,0.5f*w+x,0.5f*h+y);
+        if(a->unk80<_waitframe) ++a->unk80;
+        if(a->unk80>=_waitframe) {
+            if(a->cur.isPokemon) {
+                Sequence_SetVisibility(a->model,1); Sequence_SetCamera(a->model,a->camera);
+            } else {
+                GSmodelSetVisibility(a->model,1); GSmodelSetRenderCamera(a->model,a->camera);
+            }
+            if(b->cur.isPokemon) {
+                Sequence_SetVisibility(b->model,1); Sequence_SetCamera(b->model,a->camera);
+            } else {
+                GSmodelSetVisibility(b->model,1); GSmodelSetRenderCamera(b->model,a->camera);
+            }
+        } else {
+            _menuModelRenderOff(a); _menuModelRenderOff(b);
+        }
+    }
+}
+
+extern "C" s32 menuModelSetMotion(MENU_MODEL* m,u32 motion) {
+    if(m==0) return 0;
+    if(m->loading) {
+        if(!m->req.isPokemon) m->req.rnd=motion;
+    } else if(!m->cur.isPokemon) {
+        m->cur.rnd=motion;
+        if(GSmodelCanAnimate(m->model)) {
+            GSmodelSetAnimIndex(m->model,m->cur.rnd);
+            GSmodelSetAnimRate(m->model,0.5f);
+            GSmodelStartAnimation(m->model);
+        }
+    }
+    return 1;
+}
+
+extern "C" {
+u32 GSmodelGetBound(u32);
+u16 GSmodelCenterNull(u32);
+u32 GSmodelGetPart(u32,u16);
+void GSpartGetTransform(u32,Vec*,Vec*,Vec*);
+void GSpartFree(u32);
+void GSboundGetSize(u32,Vec*,u8,u8);
+void GSboundGetMinMax(u32,Vec*,Vec*,u8,u8,u8,u8);
+void GSmodelSetPosition(u32,Vec*);
+void GSmodelGetPosition(u32,Vec*);
+void GScameraGetPerspective(u32,f32*,f32*,f32*,f32*);
+void GScameraSetPerspective(u32,f32,f32,f32,f32);
+void GScameraLookAt(u32,Vec*,Vec*);
+void memoGetScaleAngle(u16,f32*,s32*);
+f64 tan(f64);
+}
+static s32 _menuModelAdjustCamera(MENU_MODEL* m,bool) {
+    Mtx inverse,rot,rotY;
+    Vec camera,part,position,light,delta,lightSum,targetSum;
+    f32 fov,aspect,nearPlane,farPlane;
+    f32 scale;
+    s32 angle;
+    MENU_COLOR color;
+    f32 sizeRatio;
+    f32 size;
+    u32 bound;
+    u32 model;
+    u32 partHandle;
+    static MenuModelVector upVec(0.0f,1.0f,0.0f);
+    static MenuModelVector target(0.0f,0.0f,0.0f);
+    if(!m) return 0;
+    if(m->cur.isPokemon) {
+        model=Sequence_GetGSmodel(m->model);
+        switch(Sequence_GetModelSize(m->model)) {
+        case -2:sizeRatio=0.8f;break;
+        case -1:sizeRatio=0.9f;break;
+        case 0:sizeRatio=1.0f;break;
+        case 1:sizeRatio=1.1f;break;
+        case 2:sizeRatio=1.15f;break;
+        case 3:sizeRatio=1.2f;break;
+        default:sizeRatio=1.0f;break;
+        }
+        memoGetScaleAngle(m->cur.u.p.id,&scale,&angle);
+    } else {
+        model=m->model; sizeRatio=1.0f; scale=1.0f;
+    }
+    if(!model) {m->state=0;return 0;}
+    partHandle=GSmodelGetPart(model,GSmodelCenterNull(model));
+    if(partHandle) {GSpartGetTransform(partHandle,&part,0,0);GSpartFree(partHandle);}
+    if(!m->boundValid) {
+        bound=GSmodelGetBound(model);
+        GSboundGetSize(bound,(Vec*)m->boundSize,0,0);
+        GSboundGetMinMax(bound,(Vec*)m->boundMin,(Vec*)m->boundMax,0,0,0,0);
+        m->boundValid=1;
+    }
+    position.x=0.0f;position.z=0.0f;
+    position.y=-(m->boundMin[1]+m->boundMax[1])*0.5f;
+    PSVECAdd(&position,(Vec*)m->offset,&position);
+    GSmodelSetPosition(model,&position);
+    if(!m->camera) return 0;
+    GScameraGetPerspective(m->camera,&fov,&aspect,&nearPlane,&farPlane);
+    aspect=1.3333334f;fov=_camFov;
+    f32 displayScale;
+    if(m->sizeW>m->sizeH) displayScale=1.0f; else displayScale=1.0f;
+    if(m->boundSize[0]>m->boundSize[1]) size=m->boundSize[0];else size=m->boundSize[1];
+    camera.x=0.0f;camera.y=0.0f;
+    f32 tangent=(f32)tan((0.017453292f*fov)/2.0f);
+    camera.z=(((0.8f*(size/sizeRatio)/tangent)*scale)/displayScale)/m->zoom;
+    PSMTXRotRad(rot,'X',m->angle[0]);
+    PSMTXRotRad(rotY,'Y',-m->angle[1]);
+    PSMTXConcat(rotY,rot,rot);
+    PSMTXMultVec(rot,&camera,&camera);
+    farPlane=4000.0f;
+    GScameraSetPosition(m->camera,(f32*)&camera);
+    GScameraSetPerspective(m->camera,fov,aspect,nearPlane,farPlane);
+    GScameraLookAt(m->camera,&upVec,&target);
+    C_MTXLookAt((MtxPtr)m->mtx,&camera,&upVec,&target);
+    PSMTXInverse((MtxPtr)m->mtx,inverse);
+    PSVECSubtract(&position,&part,&delta);
+    PSVECDistance(&light,&part);
+    memcpy(&color,&_lightColor,4);
+    memcpy(&light,&camera,12);
+    PSVECAdd(&light,&_lightOffset,&lightSum);
+    light=lightSum;
+    PSVECAdd(&part,&_lightOffset,&targetSum);
+    part=targetSum;
+    GSlightSetType(m->light[2],2);
+    GSlightSetColor(m->light[2],color);
+    GSlightSetPosition(m->light[2],(f32*)&light);
+    GSlightSetTarget(m->light[2],(f32*)&part);
+    return 1;
+}
+
+static s32 _menuModelAdjustCamera2(MENU_MODEL* a,MENU_MODEL* b) {
+    Mtx rot,rotY;
+    Vec camera,lightTarget,positionA,positionB,light;
+    f32 fov,aspect,nearPlane,farPlane;
+    f32 scale;
+    s32 angle;
+    MENU_COLOR color;
+    f32 sizeRatio,width,height,displayScale;
+    u32 bound,modelA,modelB;
+    static MenuModelVector upVec(0.0f,1.0f,0.0f);
+    static MenuModelVector target(0.0f,0.0f,0.0f);
+    if(!a) return 0;
+    if(!b) return 0;
+    if(a->cur.isPokemon) {
+        modelA=Sequence_GetGSmodel(a->model);
+        switch(Sequence_GetModelSize(a->model)) {
+        case -2:sizeRatio=0.8f;break;
+        case -1:sizeRatio=0.9f;break;
+        case 0:sizeRatio=1.0f;break;
+        case 1:sizeRatio=1.1f;break;
+        case 2:sizeRatio=1.15f;break;
+        case 3:sizeRatio=1.2f;break;
+        default:sizeRatio=1.0f;break;
+        }
+        memoGetScaleAngle(a->cur.u.p.id,&scale,&angle);
+    } else {modelA=a->model;sizeRatio=1.0f;scale=1.0f;}
+    if(b) modelB=b->model;
+    if(!modelA) {a->state=0;return 0;}
+    if(!modelB) return 0;
+    if(!a->boundValid) {
+        bound=GSmodelGetBound(modelA);
+        if(!bound)return 0;
+        GSboundGetSize(bound,(Vec*)a->boundSize,0,0);
+        GSboundGetMinMax(bound,(Vec*)a->boundMin,(Vec*)a->boundMax,0,0,0,0);
+        a->boundValid=1;
+    }
+    if(!b->boundValid) {
+        bound=GSmodelGetBound(modelB);
+        if(!bound)return 0;
+        GSboundGetSize(bound,(Vec*)b->boundSize,0,0);
+        GSboundGetMinMax(bound,(Vec*)b->boundMin,(Vec*)b->boundMax,0,0,0,0);
+        b->boundValid=1;
+    }
+    width=a->boundSize[0]+b->boundSize[0];
+    height=a->boundSize[1];
+    if(!(height>=b->boundSize[1])) height=b->boundSize[1];
+    f32 shift=width*0.5f-b->boundSize[0];
+    GSmodelGetPosition(modelA,&positionA);
+    positionA.y=0.0f;positionA.z=0.0f;
+    positionA.x=-(a->boundSize[0]*0.5f)+shift;
+    PSVECAdd(&positionA,(Vec*)a->offset,&positionA);
+    GSmodelSetPosition(modelA,&positionA);
+    GSmodelGetPosition(modelB,&positionB);
+    positionB.y=0.0f;positionB.z=0.0f;
+    positionB.x=b->boundSize[0]*0.5f+shift;
+    PSVECAdd(&positionB,(Vec*)b->offset,&positionB);
+    GSmodelSetPosition(modelB,&positionB);
+    if(!a->camera)return 0;
+    GScameraGetPerspective(a->camera,&fov,&aspect,&nearPlane,&farPlane);
+    aspect=1.3333334f;fov=_camFov;
+    switch(a->cur.u.p.id) {
+    case 0x4e:case 0x82:case 0x90:case 0x96:case 0xd0:case 0xf3:case 0xfa:displayScale=_disp_scale;break;
+    default:displayScale=1.0f;break;
+    }
+    if(!(width>height)) width=height;
+    camera.x=0.0f;camera.y=0.0f;
+    f32 tangent=(f32)tan((0.017453292f*fov)/2.0f);
+    f32 zoom=a->zoom;
+    camera.z=(((0.8f*(width/sizeRatio)/tangent)*scale)/displayScale)/zoom;
+    target.y=0.75f*height;
+    PSMTXRotRad(rot,'X',a->camRot[0]);
+    PSMTXRotRad(rotY,'Y',-a->camRot[1]);
+    PSMTXConcat(rotY,rot,rot);
+    PSMTXMultVec(rot,&camera,&camera);
+    GScameraSetPosition(a->camera,(f32*)&camera);
+    GScameraSetPerspective(a->camera,fov,aspect,nearPlane,farPlane);
+    GScameraLookAt(a->camera,&upVec,&target);
+    C_MTXLookAt((MtxPtr)a->mtx,&camera,&upVec,&target);
+    memcpy(&color,&_lightColor,4);
+    memcpy(&light,&camera,12);
+    light.x+=_lightOffset.x;light.y+=_lightOffset.y;light.z+=_lightOffset.z;
+    GSlightSetType(a->light[2],2);
+    GSlightSetColor(a->light[2],color);
+    GSlightSetPosition(a->light[2],(f32*)&light);
+    GSlightSetTarget(a->light[2],(f32*)&lightTarget);
+    return 1;
 }

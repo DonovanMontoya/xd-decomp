@@ -214,3 +214,143 @@ u16 fightGetFightResultId(){return _fight_result_id;}
 void fightSetFightFlag(u8 flag){_is_fight_flag=flag;}
 u8 fightIsFight(){return _is_fight_flag;}
 }
+struct FightVirtualDeckHeader { u8 reserved[4]; u16 floor; };
+FightVirtualDeckHeader *deckDataVirtual_GetPtr(u16);
+extern "C" {
+FIGHT_ENCOUNT *fightEncountGetStrObj();
+u16 getField__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
+u8 getFightMode__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
+u8 getDestroyFlag__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
+u32 getRoundNo__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
+u8 getTrainerKind__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
+u16 getMsg__13FIGHT_ENCOUNTCFUc(FIGHT_ENCOUNT *,u8);
+u8 fightEncountDataBiosGetFightKind(void *);
+u16 fightEncountDataBiosGetDiskId(void *);
+void fightEncountDataBiosSetFightFloorDataId(void *,u16);
+u16 fightEncountDataBiosGetFightFloorDataId(void *);
+s32 HSD_Rand();
+void fightEncountDataBiosSetFightTrainerDataId(void *,u8,u32);
+void fightEncountDataBiosSetFightKind(void *,u8);
+void fightEncountDataBiosSetZenmetuFlag(void *,u8);
+void fightEncountDataBiosSetSyoukaiWzxDataId(void *,u32);
+u32 fightEncountDataBiosGetFightTrainerDataId(void *,u8);
+void fightTrainerDB_SetSerihuMsgId(u32,u8,u16);
+void fightTrainerDB_SetKindDataId(u32,u8);
+extern s8 underTakerDeckRand;
+void fightDataRewrite() {
+    FIGHT_ENCOUNT *settings;
+    void *data;
+    u16 id;
+    u32 trainer;
+    u16 field;
+    u32 mode,destroy,round;
+    u8 trainerKind;
+    u16 message;
+    u8 messageIndex;
+    u16 messages[4];
+    FightVirtualDeckHeader *deck;
+    u8 kind;
+    settings = fightEncountGetStrObj();
+    id = fightGetFightEncountDataId();
+    data = fightEncountDataBiosGetPtr(id);
+    kind = fightEncountDataBiosGetFightKind(fightEncountDataBiosGetPtr(id));
+    deck = deckDataVirtual_GetPtr(fightEncountDataBiosGetDiskId(data));
+    field = getField__13FIGHT_ENCOUNTCFv(settings);
+    mode = getFightMode__13FIGHT_ENCOUNTCFv(settings);
+    destroy = getDestroyFlag__13FIGHT_ENCOUNTCFv(settings);
+    round = getRoundNo__13FIGHT_ENCOUNTCFv(settings);
+    trainerKind = getTrainerKind__13FIGHT_ENCOUNTCFv(settings);
+    for (u8 i=0;i<4;++i) messages[i]=getMsg__13FIGHT_ENCOUNTCFUc(settings,i);
+    if ((kind==0xF || kind==0xE) && deck != 0 && deck->floor != 0) fightEncountDataBiosSetFightFloorDataId(data,deck->floor);
+    if (id==0x73) {
+        if (underTakerDeckRand==-1) underTakerDeckRand=(u16)HSD_Rand()%4;
+        if (fightEncountDataBiosGetFightFloorDataId(data)==0x1F) {
+            switch (underTakerDeckRand) {
+            case 0: trainer=0x60001;break;
+            case 1: trainer=0x60002;break;
+            case 2: trainer=0x60003;break;
+            case 3: trainer=0x60004;break;
+            }
+        } else if (fightEncountDataBiosGetFightFloorDataId(data)==0x21) {
+            switch (underTakerDeckRand) {
+            case 0: trainer=0x60005;break;
+            case 1: trainer=0x60006;break;
+            case 2: trainer=0x60007;break;
+            case 3: trainer=0x60008;break;
+            }
+        }
+        u16 trainerId=trainer;
+        fightEncountDataBiosSetFightTrainerDataId(data,1,trainerId);
+    }
+    if (field!=0) fightEncountDataBiosSetFightFloorDataId(data,field);
+    switch(mode) {
+    case 2:fightEncountDataBiosSetFightKind(data,0x10);break;
+    case 3:fightEncountDataBiosSetFightKind(data,0xC);break;
+    }
+    switch(destroy) {
+    case 1:fightEncountDataBiosSetZenmetuFlag(data,1);break;
+    case 2:fightEncountDataBiosSetZenmetuFlag(data,0);break;
+    }
+    if (round!=0) fightEncountDataBiosSetSyoukaiWzxDataId(data,round);
+    for (messageIndex=0;messageIndex<4;++messageIndex) {
+        message=messages[messageIndex];
+        if (message!=0) fightTrainerDB_SetSerihuMsgId(fightEncountDataBiosGetFightTrainerDataId(data,1),messageIndex,message);
+    }
+    if (trainerKind!=0) fightTrainerDB_SetKindDataId(fightEncountDataBiosGetFightTrainerDataId(data,1),trainerKind);
+}
+}
+
+extern "C" {
+void *fightFloorGetNowPtr();
+u8 fightFloor_GetFightType(u32);
+s8 fightFloor_GetStatusMenuCnt(u8);
+void fightFloor_SetStatusMenuCnt(u8,s8);
+u8 menuIsCheck(u32);
+void menuCloseCustom(u32,s32,s32);
+void fightMenuCloseMsg();
+struct FightServerWork { u8 reserved[7]; u8 messageState; };
+extern FightServerWork ServerWork;
+extern s16 msgFrame;
+}
+static void _fightUpdate(unsigned int,FloorEnterMode) {
+    fightFloorGetNowPtr();
+    fightFloor_GetFightType(0);
+    u8 menuIds[4]={0x37,0x38,0x40,0x41};
+    u8 menu;
+    s32 next;
+    for(u8 i=0;i<4;++i) {
+        menu=menuIds[i];
+        s8 count=fightFloor_GetStatusMenuCnt(menu);
+        if(count>=0) {
+            next=count-1;
+            fightFloor_SetStatusMenuCnt(menu,next);
+            if((s8)next<=0) {
+                if(!menuIsCheck(menu)) return;
+                menuCloseCustom(menu,2,0);
+                fightFloor_SetStatusMenuCnt(menu,-1);
+            }
+        }
+    }
+    if(ServerWork.messageState==2) {
+        if(msgFrame--<=0) {
+            fightMenuCloseMsg();
+            ServerWork.messageState=0;
+        }
+    }
+}
+extern "C" void fightInit() {
+    fightSetFightFlag(0);
+    fightSetFightResultId(0);
+    fightSetFightEncountDataId(0);
+    fightSetGsthreadPtrFightMain(0);
+    FloorModuleInterface_clear(&_floorModuleFight);
+    _floorModuleFight.pre=_fightInitialize;
+    _floorModuleFight.normal=_fightUpdate;
+    _floorModuleFight.post=_fightFinalize;
+    _floorModuleFight.free=_fightFree;
+    _floorModuleFight.saveState=_fightMakeStateData;
+    _floorModuleFight.loadState=_fightRestoreStateData;
+    _floorModuleFight.getStateSize=_fightGetStateSize;
+    _floorModuleFight.getStateID=_fightGetUID;
+    _floorModuleFight.getName=_fightGetModuleName;
+}

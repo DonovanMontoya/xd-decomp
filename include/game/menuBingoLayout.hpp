@@ -200,7 +200,7 @@ void menuItemBiosSetSelectFlag(s32, u32, s32);
 void menuOffScreenSetPriority(s32);
 void menuOpen(s32, s32);
 s32 menuOpenCustom(s32, s32, ...);
-void menuPlaySe(s32);
+void menuPlaySe(s32,s32);
 void menuSetPosition(s32, s32, s16);
 BingoSprite *menuSpriteBiosGetValPtr(void *);
 void menuSubCalcColor(void);

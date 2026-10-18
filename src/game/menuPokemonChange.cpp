@@ -1,6 +1,32 @@
 #include <game/menuPokemonChangeLayout.hpp>
 
 extern "C" {
+s32 windowGetParam(tagWINDOW_WORK*, s32);
+u8 GSgfxVideoGetVsyncRate();
+double sin(double);
+u32 GSmsgGetGSchar(u32);
+u32 GSmsgGetRect(u32);
+void GSmsgPrint2(s32,s32,s32,u32,u32);
+void GSmsgPrintRect(s32,s16,s16,s16,s16,u32,u32);
+u32 heroBiosGetNamePtr(Hero*);
+void menuFaceDisp(tagWINDOW_WORK*,tagSPRITE_WORK*,Pokemon*);
+void menuCBMessageCenterDisp(tagWINDOW_WORK*,tagSPRITE_WORK*,u32);
+void menuModelAdjustCamera(MENU_MODEL*);
+void menuModelSetSize(MENU_MODEL*,s32,s16,s16,s16);
+void menuModelSetZoom(MENU_MODEL*,f32);
+void menuModelRender(MENU_MODEL*);
+u8 menuSubGetPokemonSexForFightDisp(Pokemon*);
+u8 fn_80098B44(u8,Pokemon*);
+u16 pokemonBiosGetItemDataId(Pokemon*);
+u16 pokemonBiosGetPokemonDataId(Pokemon*);
+u32 pokemonBiosGetPokemonWazaDataId(Pokemon*,u16);
+u16 pokemonGetSoubiItemDataId(Pokemon*);
+u8 pokemonWazaCheckValid(Pokemon*,u16);
+u32 pokemonDataBiosGetName(void*);
+u32 itemDataBiosGetName(void*);
+u32 wazaGetStatus(void*,s32,s32,s32);
+s32 pokecoloGetCountryCode();
+
 void floorMapSetDisp(s32);
 void scriptModelStopMotion(u32);
 void GSthreadSwitch(void);
@@ -114,6 +140,7 @@ struct MenuItemSimple {
     s16 height;
 };
 MenuItemSimple *menuPtItemGetByMenuIdAndItemId(long, u32, long);
+u32 menuPtSpriteWorkGetIndexFromId(tagWINDOW_WORK*,tagSPRITE_WORK*,u32);
 struct MENU_MODEL;
 extern "C" {
 void menuModelInit(MENU_MODEL *, long, long);
@@ -133,7 +160,7 @@ extern PokemonChangeKeys winSysWork;
 extern PokemonChangeKeys winSysWork2;
 
 struct POKEMON_EVOLUTION_INFO {
-    u8 data[0x20];
+    u8 data[4];
 };
 
 namespace {
@@ -144,6 +171,7 @@ enum enumMenuState { MENU_STATE_0, MENU_STATE_1, MENU_STATE_2, MENU_STATE_3, MEN
 
 void _menuSetMsg(long, u16, u32);
 long _getPokemonState(Pokemon *, enumPlayerIndex);
+bool _isPokemonItemExchangeOk(Pokemon*,enumPlayerIndex);
 bool _isPokemonBattleAble(Pokemon *, enumPlayerIndex);
 
 bool _isPokemonValid(Pokemon *, enumPlayerIndex);
@@ -174,7 +202,8 @@ public:
     s32 selectIndex[2];
     s32 lookIndex;
     MENU_MODEL models[2];
-    u8 padC44[0xC50 - 0xC44];
+    s32 exchangeSeed;
+    unsigned long long elapsed;
     u8 flagC50;
     u8 flagC51;
     u8 padC52[6];
@@ -185,6 +214,8 @@ public:
     void selectDrawHook(tagWINDOW_WORK *);
     void bgDrawFadeIn();
     void bgDrawFadeIn(f32);
+    void stateFunctionSaveReport();
+    void stateFunctionEvolution();
     void stateFunctionExChangeOK();
     void stateFunctionExChangeMain();
     void stateFunctionExChangeStart();
@@ -246,6 +277,245 @@ public:
 
 CMenuPokemonChange MenuPokemonChange;
 
+
+inline u32 pokemonChangeSecondsToFrames(f32 seconds) {
+    return (u32)(seconds * (f32)GSgfxVideoGetVsyncRate());
+}
+
+#pragma opt_common_subs off
+void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite, u32 id) {
+    s32 player;
+    u32 color;
+    Hero* hero;
+    Pokemon* selected;
+    u8 pulse;
+    player = windowGetParam(win,0);
+    hero = player == 0 ? hero0 : &hero1;
+    selected = getPokemonBySelect(selectIndex[player]);
+    u8 alpha = win->alpha;
+    sprite->channels.alpha = alpha;
+    color = alpha | ~0xFF;
+    if (cstate.unk0 == 13 || cstate.unk0 == 8) pulse = 255;
+    else {
+        u32 period = pokemonChangeSecondsToFrames(1.0f);
+        f32 frame = (f32)(u32)(elapsed % period);
+        pulse = (sprite->channels.alpha * (u32)(205.0f * (f32)sin(3.1415927f * (frame / (f32)period)) + 50.0f)) / 255;
+    }
+    switch(id) {
+    case 0x5F3:
+    case 0x5F4:
+    case 0x5F5:
+    case 0x5F6:
+    case 0x5F7:
+    case 0x5F8:
+    {
+        Pokemon* poke = hero->getPokemon(menuPtSpriteWorkGetIndexFromId(win,sprite,0x5F3));
+        if (_isPokemonValid(poke,(enumPlayerIndex)player)) {
+            menuFaceDisp(win,sprite,poke); winSpriteSetDisp(sprite,1);
+        } else winSpriteSetDisp(sprite,0);
+        break;
+    }
+    case 0x5F9:
+    case 0x5FA:
+    case 0x5FB:
+    case 0x5FC:
+    case 0x5FD:
+    case 0x5FE:
+    {
+        Pokemon* poke = hero->getPokemon(menuPtSpriteWorkGetIndexFromId(win,sprite,0x5F9));
+        switch(_getPokemonState(poke,(enumPlayerIndex)player)) {
+        case 4: case 7: case 0: sprite->color = 0xFFFFFFFF; break;
+        case 3: sprite->color = 0xB473C8FF; break;
+        default: sprite->color = 0xDC6464FF; break;
+        }
+        break;
+    }
+    case 0x5FF:
+    case 0x600:
+    case 0x601:
+    case 0x602:
+    case 0x603:
+    case 0x604:
+    {
+        Pokemon* poke = hero->getPokemon(menuPtSpriteWorkGetIndexFromId(win,sprite,0x5FF));
+        u16 item = 0;
+        if (_isPokemonValid(poke,(enumPlayerIndex)player)) item = pokemonBiosGetItemDataId(poke);
+        sprite->color = 0xFFFFFFFF;
+        if (item != 0 && !_isPokemonItemExchangeOk(poke,(enumPlayerIndex)player)) sprite->color = 0xFF0000FF;
+        winSpriteSetDisp(sprite,item != 0);
+        break;
+    }
+    case 0x60F:
+    case 0x610:
+    case 0x611:
+    case 0x612:
+    case 0x613:
+    case 0x614:
+    {
+        Pokemon* poke = hero->getPokemon(menuPtSpriteWorkGetIndexFromId(win,sprite,0x60F));
+        u32 sex = 0;
+        switch(_getPokemonState(poke,(enumPlayerIndex)player)) {
+        case 0: case 1: case 2: break;
+        default:
+            switch(fn_80098B44(menuSubGetPokemonSexForFightDisp(poke),poke)) {
+            case 0: sex = 0x9C5; break;
+            case 1: sex = 0x9C6; break;
+            }
+        }
+        if (sex != 0) {
+            msgctrlSetValue(0x37,GSmsgGetGSchar(sex));
+            GSmsgPrint2(win->messageContext,0,0,color,0x4276);
+            winSpriteSetDisp(sprite,1);
+        } else winSpriteSetDisp(sprite,0);
+        break;
+    }
+    case 0x615:
+    case 0x616:
+    case 0x617:
+    case 0x618:
+    case 0x619:
+    case 0x61A:
+    {
+        Pokemon* poke = hero->getPokemon(menuPtSpriteWorkGetIndexFromId(win,sprite,0x615));
+        u32 message = 0x4277;
+        switch(_getPokemonState(poke,(enumPlayerIndex)player)) {
+        case 1: msgctrlSetValue(0x37,GSmsgGetGSchar(0x56C)); break;
+        case 2: msgctrlSetValue(0x37,GSmsgGetGSchar(0x56B)); break;
+        case 0: message = 0; break;
+        default: msgctrlSetValue(0x37,pokemonBiosGetNicknamePtr(poke)); break;
+        }
+        if (message) {
+            u32 rect = GSmsgGetRect(message);
+            GSmsgPrint2(win->messageContext,(s16)(sprite->width / 2 - (s16)(rect >> 16) / 2) - 1,0,color,0x4277);
+            winSpriteSetDisp(sprite,1);
+        } else winSpriteSetDisp(sprite,0);
+        break;
+    }
+    case 0x61B:
+        msgctrlSetValue(0x37,heroBiosGetNamePtr(hero));
+        GSmsgPrint2(win->messageContext,0,0,color,0x4277); break;
+    case 0x605:
+    case 0x606:
+    case 0x607:
+    case 0x608:
+    case 0x609:
+    case 0x60A:
+    case 0x60B:
+    case 0x60C:
+        winSpriteSetDisp(sprite, menuState == player); break;
+    case 0x8B9:
+    case 0x8BA:
+    case 0x8BB:
+    case 0x8BC:
+    case 0x8BD:
+    case 0x8BE:
+    {
+        s32 index = selectIndex[player];
+        if (index >= getQuantityHeroPokemon(PLAYER_0)) index -= getQuantityHeroPokemon(PLAYER_0);
+        u8 display = 0;
+        if (index == menuPtSpriteWorkGetIndexFromId(win,sprite,0x8B9)) {
+            if (player == 0) {u8 active = 0; if(cstate.unk0 >= 12 && cstate.unk0 <= 16) active=1; display=active;}
+            else if (player == 1) display = cstate.unk0 == 16;
+        }
+        winSpriteSetDisp(sprite,display); break;
+    }
+    case 0x8CE:
+    case 0x8CF:
+    case 0x8D0:
+    case 0x8D1:
+    case 0x8D2:
+    case 0x8D3:
+    {
+        s32 selection=windowGetValue(0xD6);
+        s32 index=selection;
+        if(index>=getQuantityHeroPokemon(PLAYER_0)) index-=getQuantityHeroPokemon(PLAYER_0);
+        s32 side;
+        if(selection>=getQuantityHeroPokemon(PLAYER_0)) side=1;else side=0;
+        s32 slot=menuPtSpriteWorkGetIndexFromId(win,sprite,0x8CE);
+        u8 display=0;
+        if(slot==index && side==player && cstate.unk0!=16 && slot<getQuantityHeroPokemon((enumPlayerIndex)side)) display=1;
+        winSpriteSetDisp(sprite,display); sprite->channels.alpha=pulse;break;
+    }
+    case 0x620:
+        winSpriteSetDisp(sprite,flagC50);
+        if (flagC50) menuCBMessageCenterDisp(win,sprite,0xC4AC);
+        break;
+    case 0x61F: winSpriteSetDisp(sprite,flagC50); break;
+    case 0x8D4:
+        {s32 selection=windowGetValue(0xD6);s32 count=getQuantityHeroPokemon(PLAYER_1);
+        winSpriteSetDisp(sprite,selection==getQuantityHeroPokemon(PLAYER_0)+count);sprite->channels.alpha=pulse;}break;
+    case 0x8BF: winSpriteSetDisp(sprite,windowGetValue(win->menu)==0); break;
+    case 0x8C0: winSpriteSetDisp(sprite,windowGetValue(win->menu)==1); break;
+    case 0x8C5: winSpriteSetDisp(sprite,windowGetValue(win->menu)==0); break;
+    case 0x8C6: winSpriteSetDisp(sprite,windowGetValue(win->menu)==1); break;
+    case 0x8C7: winSpriteSetDisp(sprite,windowGetValue(win->menu)==2); break;
+    case 0x63D:
+        if(win->alpha==255) {
+            MENU_MODEL* model = &models[player];
+            menuModelAdjustCamera(model);
+            menuModelSetSize(model,win->x+sprite->x,sprite->y,sprite->width,sprite->height);
+            f32 zoom;
+            if(pokemonBiosGetPokemonDataId(selected)==0x18E) zoom=0.4f; else zoom=0.65f;
+            menuModelSetZoom(model,zoom); menuModelRender(model);
+        }
+        break;
+    case 0x640: selectItemHookPrime(win,sprite,0x61B); break;
+    case 0x642:
+        msgctrlSetValue(0x34,selected->getLevel());
+        GSmsgPrint2(win->messageContext,0,0,color,0x426F); break;
+    case 0x7B3:
+        msgctrlSetValue(0x37,selected->getNicknamePtr());
+        switch(pokecoloGetCountryCode()) {
+        case 0: GSmsgPrint2(win->messageContext,0,0,color,0x4276); break;
+        case 1: case 2: GSmsgPrint2(win->messageContext,0,0,color,0x4277); break;
+        }
+        break;
+    case 0x7B4: {
+        u32 sex;
+        switch(fn_80098B44(menuSubGetPokemonSexForFightDisp(selected),selected)) {
+        case 0: sex=0x9C5; break; case 1:sex=0x9C6;break; default:sex=0;break;
+        }
+        if(sex) {msgctrlSetValue(0x37,GSmsgGetGSchar(sex)); GSmsgPrint2(win->messageContext,0,0,color,0x4276);winSpriteSetDisp(sprite,1);}
+        else winSpriteSetDisp(sprite,0);
+        break;
+    }
+    case 0x643:
+        msgctrlSetValue(0x37,GSmsgGetGSchar(pokemonDataBiosGetName(selected->getPokemonDataPtr())));
+        switch(pokecoloGetCountryCode()) {
+        case 0: GSmsgPrint2(win->messageContext,0,0,color,0x4276); break;
+        case 1: case 2: GSmsgPrint2(win->messageContext,0,0,color,0x4277); break;
+        }
+        break;
+    case 0x645:
+    case 0x646:
+    case 0x647:
+    case 0x648:
+    {
+        u16 slot=menuPtSpriteWorkGetIndexFromId(win,sprite,0x645);
+        s32 move=pokemonBiosGetPokemonWazaDataId(selected,slot);
+        if(pokemonWazaCheckValid(selected,slot)) {
+            u32 name=wazaGetStatus(0,move,1,0);
+            if(name) {msgctrlSetValue(0x37,GSmsgGetGSchar(name));GSmsgPrintRect(win->messageContext,0,0,sprite->width,sprite->height,color,0x4277);winSpriteSetDisp(sprite,1);}
+            else winSpriteSetDisp(sprite,0);
+        } else winSpriteSetDisp(sprite,0);
+        break;
+    }
+    case 0x64A:
+        {u16 item=pokemonGetSoubiItemDataId(selected);
+        if(item) {msgctrlSetValue(0x37,GSmsgGetGSchar(itemDataBiosGetName(itemDataBiosGetPtr(item))));GSmsgPrint2(win->messageContext,0,0,color,0x4277);winSpriteSetDisp(sprite,1);}
+        else winSpriteSetDisp(sprite,0);}
+        break;
+    case 0x637: winSpriteSetDisp(sprite,ready[player]==0);break;
+    case 0x638: winSpriteSetDisp(sprite,ready[player]==0);break;
+    case 0x64B: sprite->message=0xC495;winSpriteSetDisp(sprite,ready[player]==0);break;
+    case 0x64C: winSpriteSetDisp(sprite,ready[player]==0);sprite->message=0x4295;break;
+    case 0x64D: winSpriteSetDisp(sprite,ready[player]);break;
+    case 0x652: selectItemHookPrime(win,sprite,0x63D);break;
+    case 0x653: selectItemHookPrime(win,sprite,0x61B);break;
+    }
+}
+
+#pragma opt_common_subs reset
 void CMenuPokemonChange::selectItemHook(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
     selectItemHookPrime(win, sprite, sprite->id);
 }
@@ -1376,4 +1646,245 @@ extern "C" u8 fn_80098B44(u8 mode, Pokemon *pokemon) {
         return 2;
     }
     return mode;
+}
+
+extern "C" {
+s32 gbaCommandChangePokemon(s32,Pokemon*,s32,s32);
+s32 gbaCommandChangePokemonIsPrepared(s32);
+void gbaCommandSetKeyState(s32,s32);
+void memcardSetupTask(s32,s32,s32);
+u8 memcardCheckTaskWaitGBA();
+void memcardUnlockWaitGBA(s32);
+s32 memcardGetTaskResult();
+void memcardFinalizeTask();
+u32 HSD_Rand();
+}
+namespace {
+void CMenuPokemonChange::stateFunctionSaveReport() {
+    u8 unlocked,success;
+    success=0;unlocked=0;
+    winMsgOpen(2,0xC49D,1,1);
+    s32 index;
+    Pokemon* pokemon=getPokemonBySelect(selectIndex[1]);
+    index=selectIndex[1];
+    if(index>=getQuantityHeroPokemon(PLAYER_0))index-=getQuantityHeroPokemon(PLAYER_0);
+    if(gbaCommandChangePokemon(2,pokemon,index,exchangeSeed)==0) {
+        memcardSetupTask(8,2,0);
+        s32 result;
+        do {
+            if(!unlocked && memcardCheckTaskWaitGBA()) {
+                s32 prepared=gbaCommandChangePokemonIsPrepared(2);
+                if(prepared>=0) {
+                    if(prepared)memcardUnlockWaitGBA(0);
+                    else memcardUnlockWaitGBA(1);
+                    unlocked=1;
+                }
+            }
+            GSthreadSwitch();
+            result=memcardGetTaskResult();
+        }while(result==0);
+        gbaCommandSetKeyState(2,1);
+        memcardFinalizeTask();
+        if(result==4)success=1;
+    }
+    if(!unlocked || !success) {
+        memcpy(savedataGetStatus(0,0),saveData,0x27FD0);
+        GSsndPlayNow(0x13);
+        winMsgOpen(2,0xC49E,1,0);
+        winMsgClose(1);
+        for(index=0;index<2;index++) {menuModelFree(&models[index]);menuModelTerm(&models[index]);}
+        cstate.unk4=3;
+        memset(cstate.saved,0,0x40);
+        return;
+    }
+    u32 low=HSD_Rand();
+    u32 high=HSD_Rand()<<16;
+    u32 combined=high|low;
+    s32 wait=combined%60;
+    u32 frames=wait;
+    while(frames--)GSthreadSwitch();
+    winMsgOpen(2,0xC4A0,1,0);
+    winMsgClose(1);
+    cstate.unk4=0x17;
+    memset(cstate.saved,0,0x40);
+}
+}
+
+namespace {
+void CMenuPokemonChange::setMenuByTbl(long* table) {
+    s32 count=0;
+    for(long* entry=table;*entry;) {entry++;count++;}
+    u32 same=0;
+    for(;same<8;same++) {
+        if(!menuTbl[same] || menuTbl[same]!=table[same])break;
+    }
+    u32 first=same;
+    s32 old;
+    for(;(old=menuTbl[same]) && same<8;same++) {
+        long* entry;
+        u8 found=0;
+        for(entry=table;*entry;entry++) {
+            if(old==*entry){found=1;break;}
+        }
+        if(!found)menuCloseCustom(old,2,0);
+    }
+    u8 loaded=0;
+    for(same=first;table[same] && same<8;same++) {
+        oneMenuLoad(table[same]);
+        loaded=1;
+    }
+    if(!loaded) {
+        switch(table[count-1]) {case 0xD6:oneMenuLoad(table[count-1]);break;}
+    }
+    memset(menuTbl,0,0x20);
+    memcpy(menuTbl,table,(count+1)*4);
+}
+}
+
+extern "C" void* memcardMemFreeForSavedata(void*);
+namespace {
+void CMenuPokemonChange::loop() {
+    u8* stateSaved=cstate.saved;
+    for(;;) {
+        cstate.update();
+        switch(cstate.unk0) {
+        case 1:cstate.unk4=5;memset(stateSaved,0,0x40);break;
+        case 2:
+            menuStateChange(MENU_STATE_2);bgDrawFadeIn();
+            winMsgOpen(2,0xC4A2,1,0);winMsgClose(1);
+            cstate.unk4=4;memset(stateSaved,0,0x40);break;
+        case 3:
+            menuStateChange(MENU_STATE_2);bgDrawFadeIn();
+            winMsgOpen(2,0xC49F,1,0);winMsgClose(1);
+            cstate.unk4=4;memset(stateSaved,0,0x40);break;
+        case 4:saveData=memcardMemFreeForSavedata(saveData);return;
+        case 5:stateFunctionCheckconnection();break;
+        case 6:stateFunctionSelectPokemonStart();break;
+        case 7:stateFunctionSelectPokemon1Main();break;
+        case 8:stateFunctionSelectPokemon1Selected();break;
+        case 9:stateFunctionSelectPokemon1Chanceld();break;
+        case 10:stateFunctionSelectPokemon1CheckStatus();break;
+        case 11:stateFunctionSelectPokemon1PokeExChange();break;
+        case 12:stateFunctionSelectPokemon2Main();break;
+        case 13:stateFunctionSelectPokemon2Selected();break;
+        case 14:stateFunctionSelectPokemon2CheckStatus();break;
+        case 15:stateFunctionSelectPokemon2PokeExChange();break;
+        case 16:stateFunctionSelectPokemon2DecideAfterWait();break;
+        case 17:stateFunctionConfirmExChange();break;
+        case 18:stateFunctionExChangeStart();break;
+        case 19:stateFunctionExChangeMain();break;
+        case 20:stateFunctionExChangeOK();break;
+        case 21:stateFunctionEvolution();break;
+        case 22:stateFunctionSaveReport();break;
+        case 23:stateFunctionCheckNext();break;
+        }
+    }
+}
+}
+
+void menuPtWindowWorkDraw(tagWINDOW_WORK*);
+void menuPtWindowWorkDraw(long);
+tagSPRITE_WORK* menuPtSpriteWorkGetByItemID(long,u32,long);
+void menuPtSpriteWorkSetSpriteId(tagSPRITE_WORK*,u32);
+extern "C" {
+void windowSetParam(tagWINDOW_WORK*,s32,s32);
+u32 timeGetLastFrameTime();
+}
+namespace {
+void CMenuPokemonChange::selectDrawHook(tagWINDOW_WORK*) {
+    if(menuState) {
+        tagWINDOW_WORK* win=windowSearchID(0xE1);
+        if(win)menuPtWindowWorkDraw(win);
+        win=windowSearchID(0xD4);
+        if(win) {
+            tagSPRITE_WORK* sprite=menuPtSpriteWorkGetByItemID(win->menu,0x60D,0);
+            s16 x=win->x;
+            win->x=x;
+            menuPtSpriteWorkSetSpriteId(sprite,0x20F);
+            windowSetParam(win,0,0);
+            menuPtWindowWorkDraw(win);
+            win->x=(s16)(_selectDisplay_2p_offset()-x);
+            menuPtSpriteWorkSetSpriteId(sprite,0x20E);
+            windowSetParam(win,0,1);
+            menuPtWindowWorkDraw(win);
+            win->x=x;
+            menuPtWindowWorkDraw(0xD5);
+        }
+        win=windowSearchID(0xDD);
+        if(win) {
+            tagSPRITE_WORK* sprite=menuPtSpriteWorkGetByItemID(win->menu,0x63E,0);
+            win->x=0;
+            menuPtSpriteWorkSetSpriteId(sprite,0x20F);
+            windowSetParam(win,0,0);
+            menuPtWindowWorkDraw(win);
+            win->x=_selectDisplay_2p_offset();
+            menuPtSpriteWorkSetSpriteId(sprite,0x20E);
+            windowSetParam(win,0,1);
+            menuPtWindowWorkDraw(win);
+        }
+        win=windowSearchID(0xDE);
+        if(win) {
+            tagSPRITE_WORK* sprite=menuPtSpriteWorkGetByItemID(win->menu,0x650,0);
+            win->x=0;
+            menuPtSpriteWorkSetSpriteId(sprite,0x20F);
+            windowSetParam(win,0,0);
+            menuPtWindowWorkDraw(win);
+            win->x=_selectDisplay_2p_offset();
+            menuPtSpriteWorkSetSpriteId(sprite,0x20E);
+            windowSetParam(win,0,1);
+            menuPtWindowWorkDraw(win);
+        }
+        elapsed+=timeGetLastFrameTime();
+    }
+}
+}
+
+extern "C" {
+u16 pokemonEvolutionCheck(Pokemon*,s32,s32,s32*,POKEMON_EVOLUTION_INFO*);
+u16 pokemonBiosGetPokemonDataId(Pokemon*);
+u32 menuFaceGetID(Pokemon*);
+s8 menuFaceSearchEnable(u32);
+}
+namespace {
+void CMenuPokemonChange::stateFunctionEvolution() {
+    POKEMON_EVOLUTION_INFO info0,info1;
+    s32 auxiliary;
+    u16 species0,species1;
+    u8 evolution=0;
+    exchangeSeed=0;
+    species0=pokemonEvolutionCheck(getPokemonBySelect(selectIndex[0]),2,0,&auxiliary,&info0);
+    if(species0 && species0!=0xFFFF)evolution=1;
+    species1=pokemonEvolutionCheck(getPokemonBySelect(selectIndex[1]),2,0,&auxiliary,&info1);
+    if(species1 && species1!=0xFFFF) {
+        evolution=1;
+        exchangeSeed=pokemonBiosGetPokemonDataId(getPokemonBySelect(selectIndex[1]));
+    }
+    if(evolution) {
+        _pokemonChangeFadeOut(0.3f);
+        menuStateChange(MENU_STATE_0);
+        for(s32 i=0;i<2;i++) {menuModelFree(&models[i]);menuModelTerm(&models[i]);}
+        bgModelRelease();
+        GSthreadSwitch();
+        _pokemonChangeFadeIn(0.0f);
+        _pokemonChangeEvolutionEffect(getPokemonBySelect(selectIndex[0]),MENU_POKEMONCHANGE_USERTYPE_1,species0,info0);
+        _pokemonChangeEvolutionEffect(getPokemonBySelect(selectIndex[1]),MENU_POKEMONCHANGE_USERTYPE_0,species1,info1);
+        _pokemonChangeFadeOut(0.0f);
+        bgModelLoad();
+        MenuItemSimple* item=menuPtItemGetByMenuIdAndItemId(0xDE,0x652,0);
+        for(s32 i=0;i<2;i++) {
+            menuModelInit(&models[i],item->width,item->height);
+            menuModelLoadPokemon(&models[i],getPokemonBySelect(selectIndex[i]));
+            menuModelCheck(&models[i],1);
+        }
+        menuStateChange(MENU_STATE_6);
+        _pokemonChangeFadeIn(0.3f);
+        for(s32 i=0;i<2;i++) {
+            Pokemon* pokemon=getPokemonBySelect(selectIndex[i]);
+            menuFaceLoad(0,0);
+            while(menuFaceSearchEnable(menuFaceGetID(pokemon))==0)GSthreadSwitch();
+        }
+    }
+    cstate.unk4=0x16;
+    memset(cstate.saved,0,0x40);
+}
 }

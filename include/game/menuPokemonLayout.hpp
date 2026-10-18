@@ -33,11 +33,17 @@ struct MENU_POKEMON_WORK {
 
 struct MENU_POKEMON_STATUS_TBL {
     u16 unk0;
-    u8 reserved2[0x18];
+    u8 reserved2[0x15];
+    u8 level;
+    s16 hpMax;
     s16 unk1A;
     u8 reserved1C[8];
     u16 unk24;
-    u8 reserved26[0xA];
+    u16 faceId;
+    u8 sex;
+    u8 state;
+    u16 item;
+    u8 reserved2C[4];
 };
 
 struct tagWINDOW_WORK {
@@ -59,8 +65,10 @@ struct tagWINDOW_WORK {
 struct tagSPRITE_WORK {
     u8 reserved0[6];
     s16 unk6;
-    u8 reserved8[0x5C];
-    s32 unk64;
+    u8 reserved8[0x48];
+    s16 x, y, width, height;
+    u8 reserved58[0xC];
+    union { s32 unk64; struct {u8 r,g,b,a;} channels; };
 };
 
 #endif

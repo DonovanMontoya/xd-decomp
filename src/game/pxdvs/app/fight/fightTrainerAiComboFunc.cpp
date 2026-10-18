@@ -1922,7 +1922,6 @@ s32 fightAiCombo_Zisin_Mamoru_2(FIGHT_TRAINER *arg0, FightOutPokemon **arg1, u16
 }
 
 s32 fightAiCombo_DarkWeather_Whezaabooru_2(FIGHT_TRAINER *arg0, FightOutPokemon **arg1, u16 arg2, FightOutPokemon **arg3, u16 arg4, FightAiAllWazaValid *arg5, u8 arg6) {
-    u8 var_r22;
     u8 var_r21;
     FightOutPokemon *temp_r4;
     FightAiAllWazaValid spC[64];
@@ -1964,14 +1963,14 @@ s32 fightAiCombo_DarkWeather_Whezaabooru_2(FIGHT_TRAINER *arg0, FightOutPokemon 
         return 0;
     }
     var_r29 = fightAiCombo_GetValidValue(arg1, arg2, arg3, arg4);
-    for (var_r22 = 0; var_r22 < arg2; var_r22++) {
-        temp_r4 = arg1[var_r22];
+    for (var_r21 = 0; var_r21 < arg2; var_r21++) {
+        temp_r4 = arg1[var_r21];
         if (temp_r4 != 0 && pokemonIsDarkPokemon(fightOutPokemonGetPokemonPtr(temp_r4)) == 1) {
             var_r29 = fightTrainerAiAddValueByAddsubDataId((s32) var_r29, arg0, 0x2AFU);
         }
     }
-    for (var_r22 = 0; var_r22 < arg4; var_r22++) {
-        temp_r4 = arg3[var_r22];
+    for (var_r21 = 0; var_r21 < arg4; var_r21++) {
+        temp_r4 = arg3[var_r21];
         if (temp_r4 != 0 && pokemonIsDarkPokemon(fightOutPokemonGetPokemonPtr(temp_r4)) == 1) {
             var_r29 = fightTrainerAiAddValueByAddsubDataId((s32) var_r29, arg0, 0x2AEU);
         }
@@ -2030,17 +2029,9 @@ s32 fightAiCombo_Migawari_Kisikaisei_1(FIGHT_TRAINER *arg0, FightOutPokemon **ar
     sp8 = 0;
     temp_r29 = fightAiCombo_GetValidValue(arg1, arg2, arg3, arg4);
     spB4C = (s32) arg6;
-    var_r31 = 0;
-loop_34:
-    if ((s32) var_r31 >= (s32) arg2) {
-        return 0;
-    }
-    var_r15 = 0;
-loop_3:
-    if (var_r15 < 0x40U) {
+    for (var_r31 = 0; (s32)var_r31 < (s32)arg2; ++var_r31) {
+    for (var_r15 = 0; var_r15 < 0x40U; ++var_r15) {
         fightAi_InitAllWazaValidSub(&sp4C[var_r15]);
-        var_r15 += 1;
-        goto loop_3;
     }
     sp8 = 0;
     fightAi_AllWazaValid_AddComboList(arg0, sp4C, &sp8, 1U, 0xA4U, 0U, 0U);
@@ -2050,9 +2041,7 @@ loop_3:
     temp_r19 = (var_r31 * 4) & 0x3FC;
     var_r30 = 0;
     temp_r20 = (u8 *)sp4C + temp_r19;
-    var_r16 = 0;
-loop_29:
-    if (var_r16 < sp8) {
+    for (var_r16 = 0; var_r16 < sp8; ++var_r16) {
         temp_r17 = var_r16 * 0x2C;
         temp_r18 = &sp4C[var_r16];
         var_r28 = fightAiCombo_GetAllWazaValueTable(temp_r18, temp_r29, arg0, arg1, arg3, -1);
@@ -2061,23 +2050,15 @@ loop_29:
             if ((fightAi_GetWazaHaveFlag(arg0, getFightPokemonPtr__15FightOutPokemonFv(*(FightOutPokemon **)((u8 *)temp_r20 + temp_r17)), 0xB3U) != 2) && (fightAi_GetWazaHaveFlag(arg0, getFightPokemonPtr__15FightOutPokemonFv(*(FightOutPokemon **)((u8 *)temp_r20 + temp_r17)), 0xAFU) != 2)) {
                 var_r28 = 0;
             }
-            var_r15_2 = 0;
-loop_15:
-            if (var_r15_2 < 4U) {
+            for (var_r15_2 = 0; var_r15_2 < 4U; ++var_r15_2) {
                 if (fightAi_GetTokuseiHaveFlag(arg0, *(FightOutPokemon **)((u8 *)temp_r18 + temp_r19), *(u16 *)((u8 *)moukakeiTbl + ((var_r15_2 * 2) & 0x1FE))) == 2) {
                     var_r28 += 0xA;
                 }
-                var_r15_2 += 1;
-                goto loop_15;
             }
-            var_r15_3 = 0;
-loop_20:
-            if (var_r15_3 < 7U) {
+            for (var_r15_3 = 0; var_r15_3 < 7U; ++var_r15_3) {
                 if ((u16) *(u16 *)((u8 *)statusUpKinomiTbl + ((var_r15_3 * 2) & 0x1FE)) == fightTrainerAiGetFightOutPokemonSoubiItemSoubiDataId(arg0, *(FightOutPokemon **)((u8 *)temp_r18 + temp_r19))) {
                     var_r28 += 0xA;
                 }
-                var_r15_3 += 1;
-                goto loop_20;
             }
             if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, *(FightOutPokemon **)((u8 *)temp_r20 + temp_r17), 0x14U) == 1) {
                 var_r28 = 0;
@@ -2091,8 +2072,6 @@ loop_20:
             spC[var_r27] = var_r16;
             var_r27 += 1;
         }
-        var_r16 += 1;
-        goto loop_29;
     }
     rnd = HSD_Rand();
     fightAi_CopyAllWazaValidTable(arg5, &sp4C[spC[rnd % var_r27]]);
@@ -2101,8 +2080,8 @@ loop_20:
         setComboFuncId__15FightOutPokemonFUc(*(FightOutPokemon **)((u8 *)arg1 + temp_r19), 0U);
         fightAi_CreateAction_FromAllWazaValid(arg0, arg5);
     }
-    var_r31 += 1;
-    goto loop_34;
+    }
+    return 0;
 }
 
 s32 fightAiCombo_Hakaikousen_Hoeru_2(FIGHT_TRAINER *arg0, FightOutPokemon **arg1, u16 arg2, FightOutPokemon **arg3, u16 arg4, FightAiAllWazaValid *arg5, u8 arg6) {
@@ -2565,25 +2544,15 @@ s32 fightAiCombo_StatusUp_Batontatti_1(FIGHT_TRAINER *arg0, FightOutPokemon **ar
     }
     temp_r3 = fightAiCombo_GetValidValue(arg1, arg2, arg3, arg4);
     spB4C = (s32) arg6;
-    var_r19 = 0;
-loop_38:
-    if ((s32) var_r19 >= (s32) arg2) {
-        return 0;
-    }
+    for (var_r19 = 0; (s32)var_r19 < (s32)arg2; ++var_r19) {
     var_r15 = 0;
-loop_5:
-    if (var_r15 < 0x40U) {
+    for (; var_r15 < 0x40U; ++var_r15) {
         fightAi_InitAllWazaValidSub(&sp4C[var_r15]);
-        var_r15 += 1;
-        goto loop_5;
     }
     var_r15_2 = 0;
     sp8 = 0;
-loop_8:
-    if (var_r15_2 < 0xEU) {
+    for (; var_r15_2 < 0xEU; ++var_r15_2) {
         fightAi_AllWazaValid_AddComboList(arg0, sp4C, &sp8, 1U, *(u16 *)((u8 *)statusUpWazaTbl + (var_r15_2 * 6)), 0U, 0U);
-        var_r15_2 += 1;
-        goto loop_8;
     }
     if (sp8 == 0) {
         return 0;
@@ -2592,25 +2561,20 @@ loop_8:
     var_r18 = 0;
     var_r21 = 0;
     temp_r23 = ((var_r19 * 2) & 0x1FE) + 0x10;
-loop_33:
-    if (var_r21 < sp8) {
+    for (; var_r21 < sp8; ++var_r21) {
         var_r15_3 = 1;
         var_r4 = 0;
         temp_r25 = &sp4C[var_r21];
         temp_r24 = (u8 *)temp_r25 + temp_r22;
-loop_16:
-        if (var_r4 < 0xEU) {
+        for (; var_r4 < 0xEU; ++var_r4) {
             if ((u16) *(u16 *)((u8 *)temp_r25 + temp_r23) == (u16) *(u16 *)((u8 *)statusUpWazaTbl + (var_r4 * 6))) {
                 *(FightOutPokemon **)((u8 *)temp_r24 + 8) = (FightOutPokemon *) *(FightOutPokemon **)(temp_r24);
             }
-            var_r4 += 1;
-            goto loop_16;
         }
         var_r16 = fightAiCombo_GetAllWazaValueTable(temp_r25, temp_r3, arg0, arg1, arg3, -1);
         var_r20 = 0;
         temp_r25->attacker[(s8) fightAi_getAnotherPokeNo(var_r19)] = 0;
-loop_24:
-        if (var_r20 < 0xEU) {
+        for (; var_r20 < 0xEU; ++var_r20) {
             temp_r3_2 = *(u16 *)((u8 *)temp_r25 + temp_r23);
             if (temp_r3_2 == (u16) *(u16 *)((u8 *)statusUpWazaTbl + (var_r20 * 6))) {
                 if (wazaDB_GetFightTrainerAiWazaHitFuncPtr(temp_r3_2)(arg0, *(FightOutPokemon **)(temp_r24), *(u16 *)((u8 *)temp_r25 + temp_r23), *(FightOutPokemon **)((u8 *)temp_r24 + 8)) == 0) {
@@ -2621,8 +2585,6 @@ loop_24:
                     var_r16 = 0;
                 }
             }
-            var_r20 += 1;
-            goto loop_24;
         }
         if (var_r15_3 == 1) {
             var_r16 = 0;
@@ -2635,8 +2597,6 @@ loop_24:
             spC[var_r31] = var_r21;
             var_r31 += 1;
         }
-        var_r21 += 1;
-        goto loop_33;
     }
     rnd = HSD_Rand();
     fightAi_CopyAllWazaValidTable(arg5, &sp4C[spC[rnd % var_r31]]);
@@ -2645,8 +2605,8 @@ loop_24:
         setComboFuncId__15FightOutPokemonFUc(*(FightOutPokemon **)((u8 *)arg1 + temp_r22), 0U);
         fightAi_CreateAction_FromAllWazaValid(arg0, arg5);
     }
-    var_r19 += 1;
-    goto loop_38;
+    }
+    return 0;
 }
 
 s32 fightAiCombo_Haradaiko_Zikoanzi_2(FIGHT_TRAINER *arg0, FightOutPokemon **arg1, u16 arg2, FightOutPokemon **arg3, u16 arg4, FightAiAllWazaValid *arg5, u8 arg6) {
@@ -2754,11 +2714,8 @@ s32 fightAiCombo_Daibakuhatu_Koraeru_2(FIGHT_TRAINER *arg0, FightOutPokemon **ar
     sp8 = arg6;
     var_r14 = 0;
     sp9 = 0;
-loop_2:
-    if (var_r14 < 0x40U) {
+    for (; var_r14 < 0x40U; ++var_r14) {
         fightAi_InitAllWazaValidSub(&sp4C[var_r14]);
-        var_r14 += 1;
-        goto loop_2;
     }
     if ((u8) ai_allwaza_valid_work < 2U) {
         return 0;
@@ -2776,33 +2733,25 @@ loop_2:
     temp_r14 = fightAiCombo_GetValidValue(arg1, arg2, arg3, arg4);
     var_r30 = 0;
     var_r16 = 0;
-loop_57:
-    if (var_r16 < sp9) {
+    for (; var_r16 < sp9; ++var_r16) {
         var_r31 = 0;
         var_r29 = fightAiCombo_GetAllWazaValueTable(&sp4C[var_r16], temp_r14, arg0, arg1, arg3, -1);
-loop_50:
-        if (var_r31 < (u8) ai_allwaza_valid_work) {
+        for (; var_r31 < (u8) ai_allwaza_valid_work; ++var_r31) {
             if ((u16) sp4C[var_r16].wazaId[var_r31] == 0xCB) {
                 var_r15 = 0;
-loop_16:
-                if (var_r15 < 4U) {
+                for (; var_r15 < 4U; ++var_r15) {
                     if (fightAi_GetTokuseiHaveFlag(arg0, sp4C[var_r16].attacker[var_r31], moukakeiTbl[var_r15]) == 2) {
                         var_r29 += 0xA;
                     }
-                    var_r15 += 1;
-                    goto loop_16;
                 }
                 if ((fightAi_GetWazaHaveFlag(arg0, getFightPokemonPtr__15FightOutPokemonFv(sp4C[var_r16].attacker[var_r31]), 0xB3U) == 2) || (fightAi_GetWazaHaveFlag(arg0, getFightPokemonPtr__15FightOutPokemonFv(sp4C[var_r16].attacker[var_r31]), 0xAFU) == 2)) {
                     var_r29 += 0xA;
                 }
                 var_r15_2 = 0;
-loop_24:
-                if (var_r15_2 < 7U) {
+                for (; var_r15_2 < 7U; ++var_r15_2) {
                     if ((u16) statusUpKinomiTbl[var_r15_2] == fightTrainerAiGetFightOutPokemonSoubiItemSoubiDataId(arg0, sp4C[var_r16].attacker[var_r31])) {
                         var_r29 += 0xA;
                     }
-                    var_r15_2 += 1;
-                    goto loop_24;
                 }
                 if (fightOutPokemon_GetLastUseWazaDataId(sp4C[var_r16].attacker[var_r31]) == 0xCB) {
                     var_r29 = 0;
@@ -2811,13 +2760,10 @@ loop_24:
             temp_r0 = sp4C[var_r16].wazaId[var_r31];
             if ((temp_r0 == 0x59) || (temp_r0 == 0xDE)) {
                 var_r15_3 = 0;
-loop_33:
-                if ((s32) var_r15_3 < (s32) arg4) {
+                for (; (s32) var_r15_3 < (s32) arg4; ++var_r15_3) {
                     if (fightTrainerAiIsFightOutPokemonZokuseiDataId(arg0, arg3[var_r15_3], 2U) == 1) {
                         var_r29 -= 0xA;
                     }
-                    var_r15_3 += 1;
-                    goto loop_33;
                 }
             }
             temp_r0_2 = sp4C[var_r16].wazaId[var_r31];
@@ -2826,8 +2772,7 @@ loop_33:
                     var_r29 = 0;
                 }
                 var_r17 = 0;
-loop_48:
-                if ((s32) var_r17 < (s32) arg4) {
+                for (; (s32) var_r17 < (s32) arg4; ++var_r17) {
                     if (fightTrainerAiIsFightOutPokemonZokuseiDataId(arg0, arg3[var_r17], 7U) == 1) {
                         var_r29 -= 0x1E;
                     }
@@ -2837,12 +2782,8 @@ loop_48:
                     if (fightAi_GetTokuseiHaveFlag(arg0, arg3[var_r17], 6U) >= 1U) {
                         var_r29 = 0;
                     }
-                    var_r17 += 1;
-                    goto loop_48;
                 }
             }
-            var_r31 += 1;
-            goto loop_50;
         }
         if (var_r30 < var_r29) {
             spC[0] = var_r16;
@@ -2852,19 +2793,14 @@ loop_48:
             spC[var_r28] = var_r16;
             var_r28 += 1;
         }
-        var_r16 += 1;
-        goto loop_57;
     }
     rnd = HSD_Rand();
     fightAi_CopyAllWazaValidTable(arg5, &sp4C[spC[rnd % var_r28]]);
     temp_r4 = HSD_Rand() % 100;
     if ((var_r30 != 0) && ((s32) (var_r30 + sp8) > (s32) temp_r4)) {
         var_r15_4 = 0;
-loop_62:
-        if ((s32) var_r15_4 < (s32) arg2) {
+        for (; (s32) var_r15_4 < (s32) arg2; ++var_r15_4) {
             setComboFuncId__15FightOutPokemonFUc(arg1[var_r15_4], 0U);
-            var_r15_4 += 1;
-            goto loop_62;
         }
         return 1;
     }

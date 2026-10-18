@@ -72,10 +72,10 @@ u16 pokemonDataBiosGetGetWazaDataId(void *, u16);
 u8 pokemonBiosGetLevel(Pokemon *);
 void *wazaDataBiosGetPtr(u16);
 s32 wazaDataBiosGetName(void *);
-s8 wazaDataBiosGetPp(void *);
-s8 wazaDataBiosGetZokuseiDataId(void *);
+u8 wazaDataBiosGetPp(void *);
+u8 wazaDataBiosGetZokuseiDataId(void *);
 s16 wazaDataBiosGetIryoku(void *);
-s8 wazaDataBiosGetAvg(void *);
+u8 wazaDataBiosGetAvg(void *);
 s32 wazaDataBiosGetDoc(void *);
 u32 GSflagGet(s32);
 u8 GSflagTest(void *, u16);
@@ -116,10 +116,10 @@ enum pdaAddFuncDef { PDA_ADD_FUNC_0 };
 struct WAZAOSHIEDEF {
     u16 id;
     u32 name;
-    s8 pp;
-    s8 type;
+    u8 pp;
+    u8 type;
     s16 power;
-    s8 accuracy;
+    u8 accuracy;
     u32 doc;
     u8 released;
 };
@@ -162,8 +162,8 @@ struct POKEMON_DATA_dd_;
 static void _menuScriptTokuseiSetumei(tagWINDOW_WORK *, tagSPRITE_WORK *, CURSOR *, POKEMON_DATA_dd_ *);
 
 struct MENU_ITEM_dd_ {
-    u8 reserved[0xA];
-    s16 width;
+    u8 reserved[6];
+    s16 x,y,width,height;
 };
 extern "C" MENU_ITEM_dd_ *menuItemBiosGetPtr(s32, s16);
 extern "C" u32 GSmsgGetCharLength(u16 *);
@@ -1032,5 +1032,142 @@ static void _menuScriptTokuseiSetumei(tagWINDOW_WORK *win, tagSPRITE_WORK *sprit
         }
         __dla__FPv(buf1);
         __dla__FPv(buf2);
+    }
+}
+
+extern "C" {
+void menuPdaSubCheckUpDownCursor(tagWINDOW_WORK*,tagSPRITE_WORK*,CURSOR*,u32,s32,s32);
+void spriteSetScissor(s32,s32,s32,s32,s32);
+void spriteClearScissor(s32);
+void GSmsgPrintRect(s32,s32,s32,s32,s32,u32,u32);
+void GSmsgPrintRight(s32,s32,s32,s32,s32,u32,u32);
+void* menuSpriteBiosGetPtr(s16);
+void* menuSpriteBiosGetValPtr(void*);
+u32 heroBiosGetPokecoupon(void*);
+s32 zokuseiBiosGetSpriteID(u8);
+}
+struct ScriptSpriteValue {s16 x,y,width,height;};
+extern "C" void menuScriptWazaOshieHook(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite) {
+    CURSOR cursor;
+    *(u32*)&cursor=*(u32*)&window->pos;
+    u32 count=_wazaOshieWazaNum(window);
+    WAZAOSHIEDEF* selected=_getWaza2Pointer(cursor.selected+cursor.first);
+    u32 color;
+    s32 layer=winSpriteGetLayerID(window,sprite);
+    color=WIN_ALPHA(window)|~255;
+    switch(sprite->id) {
+    case 0x6bb:case 0x6bc:case 0x6bd:case 0x6be:case 0x6bf:case 0x6c0:case 0x6c1:case 0x6c2:case 0x6c3:
+        _wazaOshieCursor(window,sprite);return;
+    case 0x6b6:case 0x6b7:case 0x6b8:
+        if(window->menu==0xe4)winSpriteSetDisp(sprite,true);else winSpriteSetDisp(sprite,false);return;
+    case 0x6b9:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,(u16)count,9,0);return;
+    case 0x6ba:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,(u16)count,9,1);return;
+    case 0x6d5:
+        if(count) {
+            MENU_ITEM_dd_* clip=menuItemBiosGetPtr(window->menu,0x6d5);
+            MENU_ITEM_dd_* item=menuItemBiosGetPtr(window->menu,sprite->id);
+            spriteSetScissor(layer,clip->x-item->x,clip->y-item->y,clip->width,clip->height);
+            u16 index=0;s16 y=-cursor.first*31;
+            for(;index<count;index++,y+=31) {
+                if(index>=cursor.first-1 && index<cursor.first+10) {
+                    WAZAOSHIEDEF* entry=_getWaza2Pointer(index);
+                    if(entry->id) {
+                        GSmsgPrint2(layer,0,y,color,entry->name);
+                        if(window->menu==0xe4) {
+                            msgctrlSetValue(0x50,1000);
+                            GSmsgPrint2(layer,(s16)(sprite->width-(GSmsgGetRect(0x4359)>>16)),y,color,0x4359);
+                        }else if(entry->released) {
+                            ScriptSpriteValue* value=(ScriptSpriteValue*)menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x241));
+                            windowDrawSprite((s16)(item->width-value->width),(s16)(y+(18-value->height)/2),window,0x241,0,layer);
+                        }
+                    }else if(window->menu==0xe4)GSmsgPrint2(layer,0,y,color,0x4295);
+                    else GSmsgPrint2(layer,0,y,color,0xc753);
+                }
+            }
+            spriteClearScissor(layer);
+        }
+        return;
+    case 0x6d4:
+        if(selected) {
+            if(selected->id)GSmsgPrint2(layer,0,0,color,selected->doc);
+            else {u32 message;if(window->menu==0xe4)message=0xc6da;else message=0xc73b;GSmsgPrint2(layer,0,0,color,message);}
+        }
+        return;
+    case 0x6d6:
+        if(window->menu==0xe4) {
+            msgctrlSetValue(0x50,heroBiosGetPokecoupon(savedataGetStatus(0,2)));
+            GSmsgPrint2(layer,(s16)(sprite->width-(GSmsgGetRect(0x434e)>>16)),0,color,0x434e);
+        }
+        return;
+    case 0x6cf:
+        if(selected && selected->id) {msgctrlSetValue(0x5f,selected->pp);GSmsgPrintRect(layer,0,0,sprite->width,sprite->height,color,0x4287);}
+        return;
+    case 0x6cd:
+        if(selected && selected->id) {
+            if((u8)selected->accuracy<=1)GSmsgPrintRight(layer,0,0,sprite->width,sprite->height,color,0x3af6);
+            else {msgctrlSetValue(0x34,(u8)selected->accuracy);GSmsgPrintRect(layer,0,0,sprite->width,sprite->height,color,0x4287);}
+        }
+        return;
+    case 0x6ce:
+        if(selected && selected->id) {
+            if(selected->power<=1)GSmsgPrintRight(layer,0,0,sprite->width,sprite->height,color,0x3af6);
+            else {msgctrlSetValue(0x34,selected->power);GSmsgPrintRect(layer,0,0,sprite->width,sprite->height,color,0x4287);}
+        }
+        return;
+    case 0x6b5:
+        if(selected && selected->id) {
+            MENU_ITEM_dd_* item=menuItemBiosGetPtr(window->menu,0x6b5);
+            s32 spriteID=zokuseiBiosGetSpriteID(selected->type);
+            windowDrawSprite2(0,0,item->width,item->height,color,window,spriteID,0,layer);
+        }
+        return;
+    }
+}
+
+u32 deckDataVirtualDB_GetTitle(u16);
+u32 deckDataVirtualDB_GetFlag(u16);
+u32 deckDataVirtualDB_GetExplanetion2(u16);
+extern "C" void menuScriptTutorialHook(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite) {
+    CURSOR cursor=cursorBiosGetPos(14);
+    switch(sprite->id) {
+    case 0x7e6:case 0x7e7:case 0x7e8:case 0x7e9:case 0x7ea:case 0x7eb:case 0x7ec:case 0x7ed: {
+        const s32 ids[8]={0x7e6,0x7e7,0x7e8,0x7e9,0x7ea,0x7eb,0x7ec,0x7ed};
+        s32* entry=(s32*)ids;s16 index=0;
+        while(index<8) {if(sprite->id==*entry)break;entry++;index++;}
+        if((u32)*tutorialdata_number>(u32)index) {
+            u16 id=tutorialdata[index+cursor.first];
+            sprite->message=id?deckDataVirtualDB_GetTitle(id):0xdece;
+        }else sprite->message=0;
+        return;
+    }
+    case 0x7cf:case 0x7d1:case 0x7d3:case 0x7d5:case 0x7d7:case 0x7d9:case 0x7db:case 0x7dd: {
+        const s32 ids[8]={0x7cf,0x7d1,0x7d3,0x7d5,0x7d7,0x7d9,0x7db,0x7dd};
+        s32* entry=(s32*)ids;s16 index=0;
+        while(index<8) {if(sprite->id==*entry)break;entry++;index++;}
+        if(index==cursor.selected)winSpriteSetDisp(sprite,true);else winSpriteSetDisp(sprite,false);
+        return;
+    }
+    case 0x7ce:case 0x7d0:case 0x7d2:case 0x7d4:case 0x7d6:case 0x7d8:case 0x7da:case 0x7dc: {
+        const s32 ids[8]={0x7ce,0x7d0,0x7d2,0x7d4,0x7d6,0x7d8,0x7da,0x7dc};
+        s32* entry=(s32*)ids;s16 index=0;
+        while(index<8) {if(sprite->id==*entry)break;entry++;index++;}
+        if(index==cursor.selected)winSpriteSetDisp(sprite,true);else winSpriteSetDisp(sprite,false);
+        return;
+    }
+    case 0x7de:case 0x7df:case 0x7e0:case 0x7e1:case 0x7e2:case 0x7e3:case 0x7e4:case 0x7e5: {
+        const s32 ids[8]={0x7de,0x7df,0x7e0,0x7e1,0x7e2,0x7e3,0x7e4,0x7e5};
+        s32* entry=(s32*)ids;s16 index=0;
+        while(index<8) {if(sprite->id==*entry)break;entry++;index++;}
+        u16 id=tutorialdata[index+cursor.first];
+        u32 flag=id?deckDataVirtualDB_GetFlag(id):0;
+        if(((u8(*)(void*))GSflagTest)((void*)flag) && flag)winSpriteSetDisp(sprite,true);else winSpriteSetDisp(sprite,false);
+        return;
+    }
+    case 0x7ee: {
+        u16 id=tutorialdata[cursor.selected+cursor.first];sprite->message=id?deckDataVirtualDB_GetExplanetion2(id):0;
+        return;
+    }
+    case 0x7f0:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,*tutorialdata_number,8,0);return;
+    case 0x7f1:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,*tutorialdata_number,8,1);return;
     }
 }

@@ -649,7 +649,6 @@ u8 fightTrainerAiCheckHaveFightOutPokemonWazaDataId(FIGHT_TRAINER *arg0, FightOu
 
 u16 fightTrainerAiGetFightOutPokemonWazaDataIdAry(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 *arg2, s16 *arg3, u8 arg4) {
     u16 var_r5;
-    u16 var_r5_2;
     u16 temp_r3;
     u16 var_r31;
     u8 temp_r30;
@@ -693,17 +692,18 @@ loop_22:
             var_r23 += 1;
         }
     } else {
-        var_r5_2 = 0;
+        var_r5 = 0;
         var_r31 = 0;
+        u16 zero=var_r5;
 loop_30:
-        while (var_r5_2 < 4U) {
+        while (var_r5 < 4U) {
             if (arg2 != NULL) {
-                *((u16 *)((u8 *)arg2 + ((var_r5_2 * 2) & 0x1FFFE))) = 0;
+                *((u16 *)((u8 *)arg2 + ((var_r5 * 2) & 0x1FFFE))) = zero;
             }
             if (arg3 != NULL) {
-                *((s16 *)((u8 *)arg3 + ((var_r5_2 * 2) & 0x1FFFE))) = -1;
+                *((s16 *)((u8 *)arg3 + ((var_r5 * 2) & 0x1FFFE))) = -1;
             }
-            var_r5_2 += 1;
+            var_r5 += 1;
         }
         var_r24 = 0;
 loop_43:
@@ -3487,6 +3487,54 @@ void fightAi_CheckDoFightActionStroke(FIGHT_TRAINER *trainer){
             }
         }
     }
+}
+
+struct AiComboRecord { u8 count, inverted; u8 rest[10]; };
+extern AiComboRecord comboid[];
+u8 pokemon_GetComboPartner(Pokemon*,u8,u8);
+u8 fightTrainerAi_SelComboPartner(Pokemon **candidates, Pokemon **out, u8 count, FIGHT_TRAINER *trainer) {
+    u8 order[4]={0,1,2,3};
+    u8 second[6],first[6],single[6];
+    void *deck=getDeckTrainerObj__11DeckTrainerFUl(fightTrainer_GetFightTrainerDataId(trainer));
+    u8 outCount=fightFloor_GetFightTypeFightoutPokemonNum(0);
+    u8 i;
+    for(i=0;i<20;i++) {
+        s32 a=(u16)HSD_Rand(); s32 b=(u16)HSD_Rand();
+        u8 x=a%4,y=b%4,tmp=order[x];order[x]=order[y];order[y]=tmp;
+    }
+    u8 selected=0;
+    for(i=0;i<4;i++) {
+        u16 id=getComboID__11DeckTrainerCFUc(deck,order[i]);
+        if(id) {
+            AiComboRecord *combo=&comboid[id];u8 inverted=combo->inverted;
+            if(combo->count==2) {
+                if(outCount==1)continue;
+                u8 firstCount=0,secondCount,j;
+                for(j=0;j<count;j++)if((u8)(pokemon_GetComboPartner(candidates[j],order[i],1)!=0))first[firstCount++]=j;
+                secondCount=0;
+                for(j=0;j<count;j++) {
+                    u8 partner=pokemon_GetComboPartner(candidates[j],order[i],0)!=0;
+                    if(inverted==0) {if(partner){second[secondCount]=j;secondCount++;}}
+                    else {if(partner==1)continue;second[secondCount]=j;secondCount++;}
+                }
+                if(firstCount && secondCount) {
+                    u8 attempts=0,x,y;
+                    do {x=HSD_Rand()%firstCount;y=HSD_Rand()%secondCount;attempts++;}while(attempts<=100 && first[x]==second[y]);
+                    if(inverted==1) {
+                        u8 valid=1;
+                        if(valid==1) {out[selected++]=candidates[first[x]];out[selected++]=candidates[second[y]];return selected;}
+                    }else {out[selected++]=candidates[first[x]];out[selected++]=candidates[second[y]];return selected;}
+                }
+            }
+            if(combo->count==1) {
+                u8 singleCount=0,j;
+                for(j=0;j<count;j++)if((u8)(pokemon_GetComboPartner(candidates[j],order[i],1)!=0))single[singleCount++]=j;
+                for(j=0;j<count;j++)if((u8)(pokemon_GetComboPartner(candidates[j],order[i],0)!=0))single[singleCount++]=j;
+                if(singleCount) {out[selected++]=candidates[single[(u8)(HSD_Rand()%singleCount)]];if(selected>=outCount)return selected;}
+            }
+        }
+    }
+    return selected;
 }
 
 #ifdef __cplusplus

@@ -1,4 +1,5 @@
 #include <game/menuNameEntryLayout.hpp>
+#include <game/pxdvs/GSAPI/GSprim/GSprim.hpp>
 
 struct Pokemon;
 struct MENU_MODEL {
@@ -23,6 +24,8 @@ void floorWaitForChange(void);
 Pokemon *heroGetStatus(s32, s32, u16);
 Pokemon *fightFloorGetDefPokemonPtr(s32);
 u8 pokemonCheckValid(Pokemon *);
+u8 pokemonGetSex(Pokemon *);
+u16 pokemonBiosGetPokemonDataId(Pokemon *);
 u8 menuIsCheck(s32);
 void menuSetDisp(s32, s32);
 void menuNameEntry(void);
@@ -54,6 +57,15 @@ void FlashSystemSetNowFrameLabel(u32, const char *);
 void fadeSet(s32, f32);
 void fadeCheck(s32);
 void menuModelTerm(MENU_MODEL *);
+void menuModelAdjustCamera(MENU_MODEL *);
+void menuModelSetSize(MENU_MODEL *, s16, s16, s16, s16);
+void menuModelSetClip(MENU_MODEL *, u8);
+void menuModelSetAngle(MENU_MODEL *, Vec *);
+void menuModelSetOffset(MENU_MODEL *, Vec *);
+void menuModelSetZoom(MENU_MODEL *, f32);
+GStexture *menuModelRender(MENU_MODEL *);
+
+GSgfxVF *GSgfxVFBuildTemp(u32,u32,u32,u32,u32,u32,u32,u32,u32);
 s32 GScharCmp(u16 *, u16 *);
 void menuTitleBattleSelectFree(void);
 void dbgMenuSetEnable(s32, s32 *, s32 *, s32 *, s32 *, s32 *, f32 *, s32 *);
@@ -161,7 +173,220 @@ static s32 inputName(u16 *dst, u16 *backup, int mode, int idx, int flag);
 static void loadModel(long layer, MENU_MODEL *model, int mode, int idx);
 static u16 exchangeDakuon(u16 ch, DAKUON_MODE mode);
 
+static void drawTexture(GStexture *texture, tagSPRITE_WORK *sprite, GSgfxLayerID id)
+{
+    GSgfxLayer *layer = GSgfxLayerFindByID(id);
+    if (layer) {
+        layer->setRenderStateAndSelect(GSgfxVFBuildTemp(0,3,0,0,1,5,1,1,4));
+        if (layer->texture != texture || layer->savedTexture != texture || texture->dirty) {
+            layer->texture = texture;
+            layer->textureDirty |= 1;
+            layer->savedTexture = texture;
+            layer->savedTextureDirty |= 1;
+        }
+        layer->primitive = 0x98;
+        layer->beginSurface(4);
+        f32 zero = 0.0f;
+        f32 one = 1.0f;
+        *(volatile s16 *)0xCC008000 = 0;
+        *(volatile s16 *)0xCC008000 = 0;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile f32 *)0xCC008000 = zero;
+        *(volatile f32 *)0xCC008000 = zero;
+        *(volatile s16 *)0xCC008000 = sprite->unk54;
+        *(volatile s16 *)0xCC008000 = 0;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile f32 *)0xCC008000 = one;
+        *(volatile f32 *)0xCC008000 = zero;
+        s16 height = sprite->unk56;
+        *(volatile s16 *)0xCC008000 = 0;
+        *(volatile s16 *)0xCC008000 = height;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile f32 *)0xCC008000 = zero;
+        *(volatile f32 *)0xCC008000 = one;
+        height = sprite->unk56;
+        s16 width = sprite->unk54;
+        *(volatile s16 *)0xCC008000 = width;
+        *(volatile s16 *)0xCC008000 = height;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile u8 *)0xCC008000 = 255;
+        *(volatile f32 *)0xCC008000 = one;
+        *(volatile f32 *)0xCC008000 = one;
+        layer->endSurface();
+    }
+}
+
 extern "C" {
+s32 menuNameEntryBackDrawPokemonModel(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite)
+{
+    s32 mode = *(s32 *)window->unk68;
+    if (mode == 2 || mode == 4 || mode == 5) {
+        Vec angle;
+        Vec offset;
+        s16 position[2] = {0,120};
+        s16 size[2] = {300,300};
+        f32 zoom = 1.2f;
+        angle.x = 0.0f; angle.y = 0.3f; angle.z = 0.0f;
+        offset.x = 0.0f; offset.y = 0.0f; offset.z = 0.0f;
+        switch (*(u16 *)(MenuModel.data + 0x24)) {
+        case 40: case 62: case 71: case 87: case 95: case 96: case 108:
+        case 163: case 174: case 192: case 230: case 340: case 398:
+            zoom = 1.0f; break;
+        case 26: case 123: case 151: case 323: zoom = 0.9f; break;
+        case 233: zoom = 0.8f; break;
+        case 208: zoom = 0.95f; break;
+        }
+        menuItemBiosGetPtr(window->unk4, sprite->unk6);
+        menuModelAdjustCamera(&MenuModel);
+        menuModelSetSize(&MenuModel,position[0],position[1],size[0],size[1]);
+        menuModelSetClip(&MenuModel,0);
+        menuModelSetAngle(&MenuModel,&angle);
+        menuModelSetZoom(&MenuModel,zoom);
+        menuModelSetOffset(&MenuModel,&offset);
+        GStexture *texture = menuModelRender(&MenuModel);
+        if (texture) drawTexture(texture,sprite,(GSgfxLayerID)winSpriteGetLayerID(window,sprite));
+    }
+    return 0;
+}
+
+s32 menuNameEntryBackDrawHumanModel(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite)
+{
+    s32 mode = *(s32 *)window->unk68;
+    if (mode == 0 || mode == 1) {
+        Vec angle;
+        Vec offset;
+        angle.x = 0.0f; angle.y = 0.3f; angle.z = 0.0f;
+        offset.x = -4.0f; offset.y = 0.0f; offset.z = 0.0f;
+        s16 position[2] = {0,80};
+        s16 size[2] = {520,300};
+        menuItemBiosGetPtr(window->unk4, sprite->unk6);
+        menuModelAdjustCamera(&MenuModel);
+        menuModelSetSize(&MenuModel,position[0],position[1],size[0],size[1]);
+        menuModelSetClip(&MenuModel,0);
+        menuModelSetAngle(&MenuModel,&angle);
+        menuModelSetZoom(&MenuModel,1.4f);
+        menuModelSetOffset(&MenuModel,&offset);
+        GStexture *texture = menuModelRender(&MenuModel);
+        if (texture) drawTexture(texture,sprite,(GSgfxLayerID)winSpriteGetLayerID(window,sprite));
+    }
+    return 0;
+}
+}
+
+extern "C" {
+s32 menuNameEntryDrawTitle(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite)
+{
+    if (window->unk4 == 0x65) {
+        s32 width = GSmsgGetRect(0x3B11) >> 16;
+        GSmsgPrint2(winSpriteGetLayerID(window, sprite), (sprite->unk54 - width) / 2, 0,
+                    window->unk93 | 0xFFFFFF00, 0x3B11);
+    } else {
+        NAME_ENTRY_ARG *arg = (NAME_ENTRY_ARG *)window->unk68;
+        Pokemon *pokemon;
+        u16 id;
+        switch (arg->unk1C) {
+        case 2: {
+            pokemon = heroGetStatus(0, 3, arg->unk20);
+            if (pokemonCheckValid(pokemon)) id = pokemonBiosGetPokemonDataId(pokemon);
+            else id = 1;
+            msgctrlSetValue(0x4E, (u16 *)id);
+            s32 width = GSmsgGetRect(ModeData[arg->unk1C].msg) >> 16;
+            GSmsgPrint2(winSpriteGetLayerID(window, sprite), (sprite->unk54 - width) / 2, 0,
+                        window->unk93 | 0xFFFFFF00, ModeData[arg->unk1C].msg);
+            break;
+        }
+        case 5: {
+            id = pokemonBiosGetPokemonDataId((Pokemon *)arg->unk20);
+            msgctrlSetValue(0x4E, (u16 *)id);
+            s32 width = GSmsgGetRect(ModeData[arg->unk1C].msg) >> 16;
+            GSmsgPrint2(winSpriteGetLayerID(window, sprite), (sprite->unk54 - width) / 2, 0,
+                        window->unk93 | 0xFFFFFF00, ModeData[arg->unk1C].msg);
+            break;
+        }
+        case 4: {
+            pokemon = fightFloorGetDefPokemonPtr(0);
+            if (pokemonCheckValid(pokemon)) id = pokemonBiosGetPokemonDataId(pokemon);
+            else id = 1;
+            msgctrlSetValue(0x4E, (u16 *)id);
+            s32 width = GSmsgGetRect(ModeData[arg->unk1C].msg) >> 16;
+            GSmsgPrint2(winSpriteGetLayerID(window, sprite), (sprite->unk54 - width) / 2, 0,
+                        window->unk93 | 0xFFFFFF00, ModeData[arg->unk1C].msg);
+            break;
+        }
+        default: {
+            s32 width = GSmsgGetRect(ModeData[arg->unk1C].msg) >> 16;
+            GSmsgPrint2(winSpriteGetLayerID(window, sprite), (sprite->unk54 - width) / 2, 0,
+                        window->unk93 | 0xFFFFFF00, ModeData[arg->unk1C].msg);
+            break;
+        }
+        }
+    }
+    return 0;
+}
+
+s32 menuNameEntryDrawNamePokemonWaku(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite)
+{
+    Pokemon *pokemon;
+    s32 display;
+    NAME_ENTRY_ARG *arg;
+    s32 position;
+    position = 0;
+    arg = (NAME_ENTRY_ARG *)window->unk68;
+    display = 0;
+    switch (sprite->unk6) {
+    case 0x675: case 0x676: case 0x677: case 0x678: case 0x679:
+    case 0x8EA: case 0x8EB:
+        if (arg->unk1C >= 7 || arg->unk1C < 2) display = 1;
+        break;
+    case 0x683: position = 1;
+    case 0x682: position++;
+    case 0x681: position++;
+    case 0x680: position++;
+    case 0x67F: position++;
+    case 0x67E: position++;
+    case 0x67D: position++;
+    case 0x67C: position++;
+    case 0x67B: position++;
+    case 0x67A:
+        switch (arg->unk1C) {
+        case 2: case 4: case 5: case 6: display = 1; break;
+        case 3: if (position != 0 && position != 9) display = 1; break;
+        }
+        break;
+    case 0x876:
+        pokemon = 0;
+        switch (arg->unk1C) {
+        case 2: pokemon = heroGetStatus(0, 3, arg->unk20); break;
+        case 4: pokemon = fightFloorGetDefPokemonPtr(0); break;
+        case 5: pokemon = (Pokemon *)arg->unk20; break;
+        }
+        if (pokemon) {
+            if (pokemonGetSex(pokemon) == 0) display = 0x9C5;
+            else if (pokemonGetSex(pokemon) == 1) display = 0x9C6;
+            if (display) {
+                msgctrlSetValue(0x37, GSmsgGetGSchar(display));
+                GSmsgPrint2(winSpriteGetLayerID(window, sprite), 0, 0, *(u32 *)((u8 *)window + 0x90), 0x4275);
+                display = 0;
+            }
+        }
+        break;
+    }
+    winSpriteSetDisp(sprite, 0);
+    if (display) winSpriteSetDisp(sprite, 1);
+    return 0;
+}
+
 s32 menuNameEntryDrawBkCur(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite)
 {
     s16 idx;
@@ -499,8 +724,9 @@ s32 menuNameEntryOpen(int mode, int index)
             menuSetDisp(*p, 0);
         }
     }
+    int j;
     result = pushNameEntryFloor(mode, index, 1);
-    for (int j = 0; j < 4; base++, j++) {
+    for (j = 0; j < 4; base++, j++) {
         if (menuIsCheck(*base) != 0) {
             menuSetDisp(*base, 1);
         }
@@ -573,11 +799,11 @@ s32 menuNameEntryDraw50Text(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite)
     int y;
     int col;
     int row;
-    s32 sheet;
+    SHEET sheet;
     u16 ch;
     row = 0;
     y = 0;
-    sheet = *((NAME_ENTRY_ARG *)window->unk68)->unk24;
+    sheet = (SHEET)*((NAME_ENTRY_ARG *)window->unk68)->unk24;
     do {
         col = 0;
         x = -2;
@@ -701,47 +927,49 @@ s32 menuNameEntryBackDrawBall(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite)
 
 static s32 getName(u16 *dst, int mode, int arg)
 {
+    u16 *name;
     switch (mode) {
     case 0:
-        arg = (int)GSmsgGetGSchar(DefKenName[0]);
+        name = GSmsgGetGSchar(DefKenName[0]);
         break;
     case 1:
-        arg = (int)GSmsgGetGSchar(DefHizukiName[0]);
+        name = GSmsgGetGSchar(DefHizukiName[0]);
         break;
     case 2: {
         Pokemon *p = heroGetStatus(0, 3, arg);
         if (pokemonCheckValid(p) == 0) {
-            arg = 0;
+            name = 0;
         } else {
-            arg = (int)pokemonBiosGetNicknamePtr(p);
+            name = pokemonBiosGetNicknamePtr(p);
         }
         break;
     }
     case 5:
-        arg = (int)pokemonBiosGetNicknamePtr((Pokemon *)arg);
+        name = pokemonBiosGetNicknamePtr((Pokemon *)arg);
         break;
     case 3:
-        arg = (int)pcboxGetPokemonBoxName(0, arg);
+        name = pcboxGetPokemonBoxName(0, arg);
         break;
     case 4: {
         Pokemon *p = fightFloorGetDefPokemonPtr(0);
         if (pokemonCheckValid(p) == 0) {
-            arg = 0;
+            name = 0;
         } else {
-            arg = (int)pokemonBiosGetNicknamePtr(p);
+            name = pokemonBiosGetNicknamePtr(p);
         }
         break;
     }
     case 6:
+        name = (u16 *)arg;
         break;
     default:
-        arg = 0;
+        name = 0;
         break;
     }
-    if (arg == 0) {
+    if (name == 0) {
         return 0;
     }
-    GScharCpy(dst, (u16 *)arg);
+    GScharCpy(dst, name);
     return 1;
 }
 
@@ -960,11 +1188,8 @@ static u16 exchangeDakuon(u16 ch, DAKUON_MODE mode)
         return ch;
     }
     switch (cur) {
-    case 1:
-        ch = p[-1];
-        break;
-    default:
-        break;
+    case 1: ch = p[-1]; break;
+    default: break;
     }
     if (mode == 0) {
         return ch;
@@ -1319,4 +1544,57 @@ static void loadModel(long layer, MENU_MODEL *model, int mode, int idx)
         break;
     }
     menuModelCheck(model, 1);
+}
+
+static s32 menuNameEntryDrawNameCursor(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite, int count, int mode)
+{
+    NAME_ENTRY_ARG *arg = (NAME_ENTRY_ARG *)window->unk68;
+    s32 position;
+    s32 cursor;
+    s32 display;
+    cursor = 0;
+    display = 0;
+    s32 maxLen = ModeData[arg->unk1C].maxLen;
+    position = *arg->unk34;
+    if (position >= maxLen) position = maxLen - 1;
+    winSpriteSetDisp(sprite, 0);
+    switch (sprite->unk6) {
+    case 0x8ED: cursor = 1;
+    case 0x8EC: cursor++;
+    case 0x30B: cursor++;
+    case 0x30A: cursor++;
+    case 0x309: cursor++;
+    case 0x308: cursor++;
+    case 0x307:
+        if (arg->unk1C >= 7 || arg->unk1C < 2) display = 1;
+        break;
+    case 0x68D: cursor = 1;
+    case 0x68C: cursor++;
+    case 0x68B: cursor++;
+    case 0x68A: cursor++;
+    case 0x689: cursor++;
+    case 0x688: cursor++;
+    case 0x687: cursor++;
+    case 0x686: cursor++;
+    case 0x685: cursor++;
+    case 0x684:
+        switch (mode) {
+        case 2: case 4: case 5: case 6: display = 1; break;
+        case 3:
+            if (cursor != 0 && cursor != 9) { display = 1; cursor--; }
+            break;
+        }
+        break;
+    }
+    if (display) {
+        if (cursor == position) {
+            f32 sv = sin(2.0f * (3.14f * *arg->unk30));
+            sprite->unk67 = 128.0f * (1.0f + sv);
+            winSpriteSetDisp(sprite, 1);
+        } else if (cursor < position) {
+            sprite->unk67 = 255;
+            winSpriteSetDisp(sprite, 1);
+        }
+    }
+    return 0;
 }

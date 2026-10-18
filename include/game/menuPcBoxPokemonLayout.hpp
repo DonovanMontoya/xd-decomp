@@ -137,6 +137,7 @@ public:
     u8 reservedA4[4];
     void update();
     void addTime();
+    void change(s32);
     void init();
 };
 
@@ -144,7 +145,7 @@ class CMenuGlobalState {
 public:
     u8 reserved0[4];
     s32 mode;
-    u8 reserved8[4];
+    s32 current;
     CMenuPokemonCursor cursor;
     CState state;
     void init();

@@ -68,7 +68,7 @@ void WS_SUBROUTINE_CALL(void) {
                 FightOutPokemon* out = fightTrainerCheckFightPokemonFightOut(trainer, expPokemon);
                 if (out != 0) {
                     if (fightOutPokemonIsJoutaiDataId(out, 0x36) == 1) {
-                        s32 id = fightOutPokemonGetIdBuffJoutaiDataId(out, 0x36);
+                        u16 id = fightOutPokemonGetIdBuffJoutaiDataId(out, 0x36);
                         if (pokemonSearchWazaDataId(fightOutPokemonGetPokemonPtr(out), id) < 0) {
                             fightOutPokemonInitJoutaiDataId(out, 0x36);
                         }
@@ -114,7 +114,7 @@ void WS_STATUS_RECOVER(void) {
     poke = fightPokemonGetPokemonPtr(fightPokemon);
     hp = pokemon_GetHp(poke);
     itemId = fightItem_GetItemDataId(fightOutPokemon_GetFightItemPtr(pokemon));
-    itemType = fightSeqGetItemType(pokemon);
+    itemType = fightSeqGetItemType(itemId, pokemon);
     sequence = fightOutPokemon_GetSequencePtr(pokemon);
     count = itemUse2Pokemon(effects, 0, motoPokemon, itemId, 0);
     if (itemType == 1 || itemType == 2) {

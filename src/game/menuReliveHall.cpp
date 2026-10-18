@@ -125,6 +125,8 @@ long degreeRefresh360(long);
 
 bool lbl_804EA7F0;
 
+extern "C" long actionMenu__9CMetaMenuFPUlill(CMetaMenu *, u32 *, int, long, long, long);
+
 namespace {
 
 class CStick {
@@ -167,7 +169,7 @@ public:
 
 class SPokemonView {
 public:
-    u8 unk0, hidden;
+    u8 unk0; bool hidden;
     u8 reserved2[2];
     f32 unk4, targetAngle, startAngle;
     CAnt ant;
@@ -207,7 +209,8 @@ public:
     u8 reserved81089[3];
     s32 animationState;
     s32 animationFlag;
-    u8 reserved10a0[0x10];
+    s32 animationSaved, animationFrames;
+    f32 animationTime, animationLastFrame;
     u8 animationWork[0x40];
     u8 reserved810e4[0x81134 - 0x810e4];
     u8 markerAlpha, effectAlpha, circleAlpha, starAlpha, lineAlpha;
@@ -812,7 +815,7 @@ long rate01ToAlphaFrom50(f32 rate) {
     return (s32)(205.0f * rate + 50.0f);
 }
 
-long isDirRegionInReverseClockwise(f32 a, f32 b, f32 c) {
+u8 isDirRegionInReverseClockwise(f32 a, f32 b, f32 c) {
     if (c > b) {
         if (c <= a || a <= b) {
             return 1;
@@ -1097,7 +1100,7 @@ void CMenuReliveHall::cursorPositionDecideAtStageChange(int old) {
         position = index;
         if (position == 6) {
             if (stage->getVisitorPointer() == 0) {
-                if (!catchDark()) {
+                if (!catchDarkB()) {
                     position = -1;
                 }
             }
@@ -1503,7 +1506,7 @@ void CMenuReliveHall::loop() {
             } else {
                 u32 choices[2] = {0x426A, 0x426B};
                 infoWindow.open(globalState->mode == 3 ? 0xD15B : 0xD124, false);
-                int selected = actionMenu(choices, 2, 0x1FB, 0x8C);
+                int selected = actionMenu__9CMetaMenuFPUlill(this, choices, 2, 0x1FB, 0x8C, 0);
                 infoWindow.close();
                 if (selected == 0) {
                     state = 2;
@@ -1571,7 +1574,7 @@ int CMenuReliveHall::actionMenuMain() {
     static s32 yTbl[7] = {0, 0, 0, 0x79, 0x64, 0, 0};
     s32 *table = menuTable;
     s32 count = table[0];
-    return actionMenu((u32 *)(table + 1), count, 0x1D7, yTbl[count]);
+    return actionMenu__9CMetaMenuFPUlill(this, (u32 *)(table + 1), count, 0x1D7, yTbl[count], 0);
 }
 
 f32 CMenuReliveHall::calcStarDir(int a, int b) {
@@ -1790,8 +1793,8 @@ f32 CMenuReliveHall::starTimeFromBorn(f32 &x, f32 &y, f32 direction) {
             f32 cosine = (f32)cos(first->unk4);
             y = 90.0f * -cosine + 280.0f;
             f32 distance = dirSubOne(direction, first->unk4);
-            distance /= 6.2831855f;
-            return distance * 6.0f;
+            f32 fraction=distance/6.2831855f;
+            return 6.0f*fraction;
         }
     }
     return 0.0f;
@@ -2442,4 +2445,240 @@ long relivehallTempoToLevel(int tempo) {
 
 f32 relivehallTempoToRate(int tempo) {
     return (f32)tempo / 96.0f;
+}
+
+extern "C" {
+s32 pokecoloGetCountryCode();
+u32 pokemonDataBiosGetName(void*);
+const u16* GSmsgGetGSchar(u32);
+u32 GSmsgGetRect(u32);
+void GSmsgPrint2(s32,s32,s32,u32,u32);
+}
+namespace {
+void CMenuReliveHall::drawStatusPanel() {
+    tagWINDOW_WORK* window=windowSearchID(0x67);
+    Pokemon* pokemon=getStatusDisplayVisitorGetPointer();
+    if(pokemon) {
+        MENU_ITEM_dd_* item=menuItemBiosGetPtr(window->menu,0x289);
+        _menuDrawReliveMeter(pokemon,item->x,item->y,item->width,item->height,255,(GSgfxLayerID)window->layer,stageIndex);
+        u16 types[2];
+        u16* type=types;
+        s32 i=0;
+        do {*type++=zokuseiGetPokemonSpriteID(pokemon->getPokemonDataPtr(),(u16)i);++i;}while(i<2);
+        tagSPRITE_WORK* first=menuPtSpriteWorkGetByItemID(window,0x297,0);
+        tagSPRITE_WORK* second=menuPtSpriteWorkGetByItemID(window,0x298,0);
+        if(types[0]==types[1])menuPtSpriteDraw(types[0],(first->x+second->x)/2,(first->y+second->y)/2);
+        else {menuPtSpriteDraw(types[0],first->x,first->y);menuPtSpriteDraw(types[1],second->x,second->y);}
+    }
+    if(pokemon) {
+        switch(pokecoloGetCountryCode()) {
+        case 0: {
+            tagSPRITE_WORK* sprite=menuPtSpriteWorkGetByItemID(window,0x4d3,0);
+            msgctrlSetValue(0x37,GSmsgGetGSchar(pokemonDataBiosGetName(pokemon->getPokemonDataPtr())));
+            GSmsgPrint2(window->layer,sprite->x,sprite->y,-1,0x4278);
+            break;
+        }
+        case 1:case 2: {
+            msgctrlSetValue(0x37,pokemon->getNicknamePtr());
+            tagSPRITE_WORK* sprite=menuPtSpriteWorkGetByItemID(window,0x4d3,0);
+            GSmsgPrint2(window->layer,sprite->x,sprite->y,-1,0x4279);
+            break;
+        }
+        }
+        tagSPRITE_WORK* sprite=menuPtSpriteWorkGetByItemID(window,0x4d4,0);
+        msgctrlSetValue(0x34,(void*)(u32)pokemon->getLevel());
+        GSmsgPrint2(window->layer,sprite->x,sprite->y,-1,0x4271);
+        switch(pokecoloGetCountryCode()) {
+        case 1:case 2:
+            sprite=menuPtSpriteWorkGetByItemID(window,0x8ee,0);
+            GSmsgPrint2(window->layer,sprite->x,sprite->y,-1,0xd15f);
+            break;
+        }
+    }
+    tagSPRITE_WORK* sprite=menuPtSpriteWorkGetByItemID(window,0x2a5,0);
+    msgctrlSetValue(0x2f,(void*)(stageIndex+1));
+    GSmsgPrint2(window->layer,sprite->x,sprite->y,-1,0xd157);
+    sprite=menuPtSpriteWorkGetByItemID(window,0x2a6,0);
+    s16 width=GSmsgGetRect(0xd161)>>16;
+    GSmsgPrint2(window->layer,sprite->x+(s16)(sprite->width/2-width/2),sprite->y,-1,0xd161);
+    sprite=menuPtSpriteWorkGetByItemID(window,0x2d2,0);
+    width=GSmsgGetRect(0xd123)>>16;
+    GSmsgPrint2(window->layer,sprite->x+(s16)(sprite->width/2-width/2),sprite->y,-1,0xd123);
+    sprite=menuPtSpriteWorkGetByItemID(window,0x4d0,0);
+    u32 message=0xd122;
+    if(lbl_804EA7F0)message=0xd15a;
+    width=GSmsgGetRect(message)>>16;
+    GSmsgPrint2(window->layer,sprite->x+(s16)(sprite->width/2-width/2),sprite->y,-1,message);
+    if(hitEffect.active) {
+        menuPtSpriteWorkSetSw(window,0x316,0,false);
+        s32 from=hallTempo;
+        s32 difference=getTempo(false)-from;
+        f32 rate=hitEffect.rate;
+        _relivehallTempoBarSpriteSetting(window,0x28b,rate*difference+from,255,true);
+        return;
+    }
+    u8 preview=0;
+    u8 dancer=0;
+    if(cursor->isCatchPokemon()) {
+        CMenuPokemonCursor* c=cursor;
+        Pokemon* caught;
+        if(c->pokemon.checkValid())caught=&c->pokemon;else caught=0;
+        if(!caught->isDarkPokemon())dancer=true;
+    }
+    if(dancer) {
+        bool valid=false;
+        if(cursor->index>=0 && cursor->index<=5)valid=true;
+        if(valid)preview=true;
+    }
+    u8 alpha=0;
+    if(preview)alpha=255;
+    _relivehallTempoBarSpriteSetting(window,0x316,getTempo(true),alpha,true);
+    alpha=255;
+    if(preview)alpha=rate01ToAlphaFrom50(calcAnimationTimeRate0to1to0(0.6f));
+    _relivehallTempoBarSpriteSetting(window,0x28b,getTempo(false),alpha,true);
+}
+}
+
+f32 dirRefresh2PI(f32);
+namespace {
+static inline bool animationAtStart(f32 time) {return time==0.0f;}
+void CMenuReliveHall::animationStateUpdate() {
+    ((CState*)&animationState)->update();
+    switch(animationState) {
+    case 0:
+        if(animationAtStart(animationTime)) {animationDataReset();resetStatusDisplayVisitor();cursor->setAnimationOff();setCircleSw();}
+        break;
+    case 1: {
+        if(animationAtStart(animationTime))animationDataReset();
+        f32 rate=1.0f;
+        f32 time=animationTime/0.6f;
+        if(1.0f<time){}else rate=time;
+        markerAlpha=effectAlpha=starAlpha=lineAlpha=circleAlpha=255.0f*rate;
+        for(u32 i=0;i<3;i++)circles[i].setFade(markerAlpha);
+        f32 start;
+        if(stageIndex<=3)start=5.585054f;else if(stageIndex==4)start=0.08726647f;else start=0.87266463f;
+        s32 count=getQuantityMarkerDancerOnPlusDancerEmpty();
+        f32 sweep=7.5398235f*rate;
+        if(sweep<6.2657323f) {
+            f32 end=dirRefresh2PI(start-sweep);
+            for(s32 i=0;i<count;i++)views[i].hidden=isDirRegionInReverseClockwise(dirRefresh2PI(views[i].unk4),start,end)==0;
+            views[6].hidden=1;
+        }else for(s32 i=0;i<count;i++)views[i].hidden=0;
+        if(rate>=1.0f) {animationFlag=0;memset(animationWork,0,0x40);}
+        break;
+    }
+    case 2: {
+        if(animationAtStart(animationTime)) {starAlpha=0;hitEffect.active=1;}
+        f32 rate=1.0f,time=animationTime/0.2f;
+        if(time<1.0f)rate=time;
+        dancerMoveAnimationAll(rate);
+        if(rate>=1.0f) {animationFlag=3;memset(animationWork,0,0x40);}
+        hitEffect.rate=rate;
+        break;
+    }
+    case 3: {
+        s32 alpha=255.0f*animationTime/0.1f;
+        if(alpha>255)alpha=255;
+        starAlpha=alpha;
+        if(starAlpha>=255) {animationFlag=0;memset(animationWork,0,0x40);}
+        break;
+    }
+    case 4: {
+        s32 alpha=255.0f*animationTime/0.1f;
+        lineAlpha=alpha>255?255:alpha;
+        if(alpha>=255) {animationFlag=0;memset(animationWork,0,0x40);}
+        break;
+    }
+    case 5: {
+        if(animationAtStart(animationTime)) {starAlpha=255;lineAlpha=255;}
+        s32 alpha=255.0f*animationTime/0.1f;
+        u8 fade=255-(alpha>255?255:alpha);
+        lineAlpha=fade;starAlpha=fade;
+        if(alpha>=255) {animationFlag=0;memset(animationWork,0,0x40);}
+        break;
+    }
+    case 6: {
+        if(animationAtStart(animationTime))cursor->unk4=3;
+        f32 rate=animationTime/0.1f;
+        cursor->unk8=rate<1.0f?rate:1.0f;
+        setCircleSw();
+        if(rate>=1.0f) {animationFlag=0;memset(animationWork,0,0x40);}
+        break;
+    }
+    case 7: {
+        if(animationAtStart(animationTime)) {cursor->unk4=1;views[cursor->index].ant.unk14=1;hitEffect.active=1;}
+        f32 rate=1.0f,time=animationTime/0.25f;
+        if(time<1.0f)rate=time;
+        cursor->unk8=time<1.0f?time:1.0f;
+        if(time>=1.0f) {animationFlag=0;memset(animationWork,0,0x40);}
+        hitEffect.rate=rate;
+        break;
+    }
+    }
+}
+}
+
+#pragma dollar_identifiers on
+extern "C" {
+void* menuSpriteBiosGetPtr(u32);
+MenuSpriteValue* menuSpriteBiosGetValPtr(void*);
+void* GSresGetResourceAllGroup(u32);
+u16 GStextureGetXsize(void*);
+u16 GStextureGetYsize(void*);
+void GSprimSetQuadVertexOrder(s32);
+void* GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);
+void GSgfxSetupRenderAndSelect(void*);
+void GSgfxSetTUnitUserColorArg(s32,s32,s32,s32,s32);
+void GSgfxSetTUnitUserColorOp(s32,s32,s32,s32,s32,s32);
+void GSgfxSetTUnitUserAlphaArg(s32,s32,s32,s32,s32);
+void GSgfxSetTUnitUserAlphaOp(s32,s32,s32,s32,s32,s32);
+void GSgfxSelectTexture(s32,void*);
+void GSgfxSetPrimitiveType(s32);
+void GSgfxBeginSurface(s32);
+void GSgfxVertex2f(f32,f32);
+void GSgfxColor4u8(u8,u8,u8,u8);
+void GSgfxTexCoord2f(f32,f32);
+void GSgfxEndSurface();
+static PocketVec<f32> xy$3116[4];
+static PocketVec<f32> st$3117[4];
+}
+namespace {
+inline void arrowSetColor(GSgfxColAu8* c,u8 r,u8 g,u8 b,u8 a) {c->r=r;c->g=g;c->b=b;c->a=a;}
+void menuPtSpriteDrawArrow(u16 id,u32 packedColor,f32 rotation,int offset) {
+    MenuSpriteValue* data=menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(id));
+    void* texture=GSresGetResourceAllGroup(data->resource);
+    f32 left=data->x,top=data->y,width=data->width,height=data->height;
+    GSgfxColAu8 color={255,255,255,255};
+    arrowSetColor(&color,packedColor>>24,packedColor>>16,packedColor>>8,packedColor);
+    st$3117[0].x=st$3117[1].x=left/GStextureGetXsize(texture);
+    st$3117[2].x=st$3117[3].x=(left+width)/GStextureGetXsize(texture);
+    st$3117[1].y=st$3117[2].y=top/GStextureGetYsize(texture);
+    st$3117[0].y=st$3117[3].y=(top+height)/GStextureGetYsize(texture);
+    xy$3116[0].x=xy$3116[1].x=0;xy$3116[2].x=xy$3116[3].x=width;
+    xy$3116[1].y=xy$3116[2].y=0;xy$3116[0].y=xy$3116[3].y=height;
+    for(s32 i=0;i<4;i++) {xy$3116[i].x-=width/2.0f;xy$3116[i].y-=height;xy$3116[i].y+=offset;}
+    f32 angle=-rotation;
+    for(s32 i=0;i<4;i++) {
+        f32 oldX=xy$3116[i].x,oldY=xy$3116[i].y;
+        f32 cosine=cos(angle);f32 sine=sin(angle);
+        xy$3116[i].x=oldX*cosine+oldY*sine;
+        sine=sin(angle);cosine=cos(angle);
+        xy$3116[i].y=oldY*cosine-oldX*sine;
+    }
+    for(s32 i=0;i<4;i++){xy$3116[i].x+=320.0f;xy$3116[i].y+=280.0f;}
+    GSprimSetQuadVertexOrder(1);
+    GSprimSetBlendMode(1);
+    GSgfxSetupRenderAndSelect(GSgfxVFBuildTemp(0,4,0,0,1,5,1,1,4));
+    GSgfxSetTUnitUserColorArg(0,10,15,15,15);
+    GSgfxSetTUnitUserColorOp(0,0,0,0,1,0);
+    GSgfxSetTUnitUserAlphaArg(0,7,5,4,7);
+    GSgfxSetTUnitUserAlphaOp(0,0,0,0,1,0);
+    GSgfxSelectTexture(0,texture);GSgfxSetPrimitiveType(0x80);GSgfxBeginSurface(4);
+    for(s32 i=0;i<4;i++) {
+        GSgfxVertex2f(xy$3116[i].x,xy$3116[i].y);
+        GSgfxColor4u8(color.r,color.g,color.b,color.a);
+        GSgfxTexCoord2f(st$3117[i].x,st$3117[i].y);
+    }
+    GSgfxEndSurface();
+}
 }

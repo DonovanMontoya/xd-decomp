@@ -406,3 +406,168 @@ void GsShapeRender::Update(f32 time,s16 id) {
         }
     }
 }
+struct GSgfxVF;
+struct GsShapeTexture;
+enum GSgfxTgenFunc { SHAPE_TGEN_DEFAULT };
+enum GSgfxTgenSrc { SHAPE_TGEN_SRC_DEFAULT };
+enum GSgfxLayerPass { SHAPE_PASS_DEFAULT };
+struct ShapeMatrixFrame {u32 flags;GSmtx matrix;};
+struct GSgfxMatrixStack {
+    u32 reserved0;
+    ShapeMatrixFrame *frame;
+    void push(GSmtx *);
+    void pushMult(GSmtx *);
+    void pop();
+};
+struct GSgfxLayer {
+    u8 reserved0[0xEAC];
+    u8 textureStages;
+    u8 reservedEAD[0x647];
+    u32 constantColor[4];
+    u8 reserved1504[0x1A4];
+    u32 dirty;
+    u8 reserved16AC[0x20];
+    u32 stageDirty;
+    u8 reserved16D0[0x28];
+    u32 constantColorDirty;
+    u8 reserved16FC[0x64];
+    u32 savedDirty;
+    u8 reserved1764[0x20];
+    u32 savedStageDirty;
+    u8 reserved1788[0x28];
+    u32 savedConstantColorDirty;
+    u8 reserved17B4[0x1E0];
+    GSgfxLayerPass pass;
+    u8 reserved1998[8];
+    GSgfxMatrixStack *matrixStack;
+    void setRenderStateAndSelect(GSgfxVF *);
+    void tgenFunc(u8,GSgfxTgenFunc,GSgfxTgenSrc,GSmtx *,bool,GSmtx *);
+    void textureCopy(GSgfxLayerPass,GStexture *,bool,u8 *,bool,bool,bool);
+    inline void setTextureStages(u8 count) {
+        textureStages=count;
+        stageDirty|=1;
+        dirty|=8;
+        savedStageDirty|=1;
+        savedDirty|=8;
+    }
+    inline void setConstantColor(u8 index,tagGScol4ub color) {
+        constantColor[index]=*(u32 *)&color;
+        constantColorDirty|=1<<index;
+        dirty|=0x10;
+        savedConstantColorDirty|=1<<index;
+        savedDirty|=0x10;
+    }
+};
+typedef char ShapeRenderLayerMatrixOffset[offsetof(GSgfxLayer,matrixStack)==0x19A0?1:-1];
+extern "C" {
+GSgfxLayer *GSgfxLayerFindByID(GSgfxLayerID);
+u32 GScameraGetActiveCamera();
+void GScameraGetPerspective(u32,f32 *,f32 *,f32 *,f32 *);
+u16 GSgfxTokenMark();
+void MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(GsShapeObject *,GSmtx *,f32);
+bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShapeObject *,GSmtx *,GSmtx *,GSmtx *,f32,bool);
+bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(GsShapeObject *,f32,f32,GSmtx *,GSmtx *,GSmtx *,f32);
+void SetStateMode__13GsShapeObjectFP10GSgfxLayer(GsShapeObject *,GSgfxLayer *);
+void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(GsShapeObject *,GSgfxLayer *,GsShapeTexture *,GStexture *);
+void CallDisplayListShape__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject *,GSgfxLayer *,s16,u8);
+}
+
+inline bool shapeObjectBillboard(GsShapeObject *object)
+{
+    u8 type=((u8 *)object->entry)[0xCD];
+    u8 result=0;
+    if(type>=1 && type<=3) result=1;
+    return result!=0;
+}
+
+void GsShapeRender::Render(s16 instanceId,GSgfxLayerID layerId)
+{
+    if(active && frame<animation->frameCount) {
+        GSgfxLayer *renderLayer=GSgfxLayerFindByID(layerId);
+        f32 fov,aspect,depth,farPlane;
+        depth=0.1f;
+        u32 activeCamera=GScameraGetActiveCamera();
+        if(activeCamera) GScameraGetPerspective(activeCamera,&fov,&aspect,&depth,&farPlane);
+        GSmtx *camera=&renderLayer->matrixStack->frame->matrix;
+        if(camera) {
+            for(s32 i=0;i<keyCount;i++) {
+                GsKeyObject *key=&keys[i];
+                GsShapeKeyEntry *channel=key->entry;
+                GsShapeObject *object=&objects[channel->objectIndex];
+                tagGsFilePrimObjectEntry *primitive=object->entry;
+                if(primitive->dynamic && key->visible) {
+                    bool billboard=shapeObjectBillboard(object);
+                    if(billboard==1) MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(object,camera,depth);
+                    GSmtx *view;
+                    if(billboard==1) view=(GSmtx *)((u8 *)object+0x470);
+                    else view=camera;
+                    if(primitive->colorMode && object->entry->reserved1C) {
+                        tagGsFilePrimKeyFrame *first,*second;
+                        f32 t;
+                        if(!key->GetFrameInterval(frame,first,second,t)) continue;
+                        if(channel->channelFlags[7]==1) {
+                            if(channel->channelFlags[8]==0) {
+                                tagGScol4ub color=key->GetShapeColor(first,second,t);
+                                object->SetVertexColorSpecify(color,false);
+                            } else {
+                                f32 alpha=key->GetShapeColorAlpha(first,second,t);
+                                u8 axis;
+                                key->GetGradationParameter(&axis,gradation,first,second,t);
+                                object->SetVertexColorGradation(axis,gradation,primitive->shapeType,alpha,false);
+                            }
+                        } else {
+                            f32 alpha=key->GetShapeColorAlpha(first,second,t);
+                            object->SetVertexColorAlpha(channel->channelFlags[8],primitive->shapeType,alpha,false);
+                        }
+                        ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(object,&key->transformMatrix,&key->shapeMatrix,view,depth,channel->channelFlags[2]!=0);
+                    }
+                    if(primitive->shapeType==8 && primitive->textureCount) {
+                        tagGsFilePrimKeyFrame *first,*second;
+                        f32 t;
+                        if(key->GetFrameInterval(frame,first,second,t)) {
+                            GsShapePair offset=key->GetTextureOffset(first,second,t,0);
+                            GsShapePair scale=key->GetTextureScale(first,second,t,0);
+                            offset.u*=scale.u;
+                            offset.v*=scale.v;
+                            RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(object,offset.u,offset.v,&key->transformMatrix,&key->shapeMatrix,view,depth);
+                        }
+                    }
+                }
+            }
+            GSgfxTgenSrc sources[8]={(GSgfxTgenSrc)4,(GSgfxTgenSrc)5,(GSgfxTgenSrc)6,(GSgfxTgenSrc)7,(GSgfxTgenSrc)8,(GSgfxTgenSrc)9,(GSgfxTgenSrc)10,(GSgfxTgenSrc)11};
+            for(s32 i=0;i<keyCount;i++) {
+                GsKeyObject *key=&keys[i];
+                GsShapeObject *object=&objects[key->entry->objectIndex];
+                tagGsFilePrimObjectEntry *primitive=object->entry;
+                if(primitive->dynamic && key->visible) {
+                    u8 count=primitive->textureCount;
+                    if(count) {
+                        renderLayer->setRenderStateAndSelect((GSgfxVF *)object->vertexFormat);
+                        renderLayer->setTextureStages(object->reserved45C[0]);
+                        renderLayer->setConstantColor(0,*(tagGScol4ub *)&object->reserved45C[1]);
+                        renderLayer->setConstantColor(1,*(tagGScol4ub *)&object->reserved45C[5]);
+                        renderLayer->setConstantColor(2,*(tagGScol4ub *)&object->reserved45C[9]);
+                        renderLayer->setConstantColor(3,*(tagGScol4ub *)&object->reserved45C[13]);
+                    } else renderLayer->setRenderStateAndSelect((GSgfxVF *)object->vertexFormat);
+                    SetStateMode__13GsShapeObjectFP10GSgfxLayer(object,renderLayer);
+                    if(primitive->shapeType==8 && refractTexture) renderLayer->textureCopy(renderLayer->pass,refractTexture,false,0,false,false,false);
+                    GStexture *refract;
+                    if(primitive->shapeType==8) refract=refractTexture;
+                    else refract=0;
+                    SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(object,renderLayer,(GsShapeTexture *)textures,refract);
+                    for(u8 texture=0;texture<count;texture++) renderLayer->tgenFunc(texture,(GSgfxTgenFunc)1,sources[texture],&key->textureMatrices[texture],false,0);
+                    bool billboard=shapeObjectBillboard(object);
+                    if(billboard==1) renderLayer->matrixStack->push((GSmtx *)((u8 *)object+0x470));
+                    renderLayer->matrixStack->pushMult(&key->transformMatrix);
+                    renderLayer->matrixStack->pushMult(&key->shapeMatrix);
+                    CallDisplayListShape__13GsShapeObjectFP10GSgfxLayersUc(object,renderLayer,instanceId,currentBuffer);
+                    renderLayer->matrixStack->pop();
+                    renderLayer->matrixStack->pop();
+                    if(billboard==1) renderLayer->matrixStack->pop();
+                    if(count) renderLayer->setTextureStages(1);
+                }
+            }
+            if(instanceId>=0 && instanceId<256) tokens[currentBuffer][instanceId]=GSgfxTokenMark();
+        }
+    }
+}

@@ -2,6 +2,7 @@
 #define NULL ((void*)0)
 #define fabs __fabs
 static PSByteFloat BYTEF32;
+static inline f32 particleAtan2(f32 y,f32 x) {return (f32)atan2(y,x);}
 
 static u8 *getFloat(u8 *arg0,f32 *arg1);
 static u8 *getTime(u8 *arg0, u16 *arg1);
@@ -78,7 +79,7 @@ static void modifyDirGenBase(PSParticle *arg0, f32 farg0, f32 farg1, f32 farg2, 
             var_f24 = -1.5707964f;
         }
     } else {
-        var_f24 = (f32) atan2((f64) temp_f27, (f64) temp_f28);
+        var_f24 = particleAtan2(temp_f27, temp_f28);
     }
     temp_f30 = (f32) sin((f64) var_f24);
     temp_f29 = (f32) cos((f64) var_f24);
@@ -91,7 +92,7 @@ static void modifyDirGenBase(PSParticle *arg0, f32 farg0, f32 farg1, f32 farg2, 
             var_f24_2 = -1.5707964f;
         }
     } else {
-        var_f24_2 = (f32) atan2((f64) temp_f25, (f64) temp_f2);
+        var_f24_2 = particleAtan2(temp_f25, temp_f2);
     }
     temp_f28_2 = (f32) sin((f64) var_f24_2);
     temp_f2_2 = arg0->velocity.x;
@@ -179,7 +180,7 @@ static void modifyDir(PSParticle *arg0, f32 farg0) {
             var_f24 = -1.5707964f;
         }
     } else {
-        var_f24 = (f32) atan2((f64) temp_f28, (f64) temp_f26);
+        var_f24 = particleAtan2(temp_f28, temp_f26);
     }
     temp_f31 = (f32) sin((f64) var_f24);
     temp_f30 = (f32) cos((f64) var_f24);
@@ -192,7 +193,7 @@ static void modifyDir(PSParticle *arg0, f32 farg0) {
             var_f24_2 = -1.5707964f;
         }
     } else {
-        var_f24_2 = (f32) atan2((f64) temp_f27, (f64) temp_f2);
+        var_f24_2 = particleAtan2(temp_f27, temp_f2);
     }
     temp_f29 = (f32) sin((f64) var_f24_2);
     temp_f28_2 = (f32) cos((f64) var_f24_2);
@@ -463,10 +464,7 @@ static void psApplyOffsetLocalRotation(PSParticle *arg0, PSVec *arg1) {
 }
 
 static void psCopyGeneratorData(PSGenerator *arg0, PSGenerator *arg1) {
-    if (arg1 != NULL) {
-        if (arg0 == NULL) {
-            return;
-        }
+    if ((arg1 != NULL) && (arg0 != NULL)) {
         if (arg1->kind & 0x20000000) {
             arg0->kind |= 0x20000000;
         }
@@ -608,11 +606,11 @@ static void HSD_JObjAddTz(PSJObj *arg0, f32 farg0) {
 }
 
 PSParticle *psInterpretParticle0(PSParticle *arg0, PSParticle *arg1) {
-    PSVec vec18;
-    PSVec vec24;
-    PSVec vec30;
-    PSVec vec3C;
     PSVec vec48;
+    PSVec vec3C;
+    PSVec vec30;
+    PSVec vec24;
+    PSVec vec18;
     f32 sp14;
     f32 sp10;
     f32 spC;
@@ -742,7 +740,7 @@ PSParticle *psInterpretParticle0(PSParticle *arg0, PSParticle *arg1) {
     s32 temp_r26_7;
     s32 temp_r27_3;
     s32 temp_r27_4;
-    s32 temp_r27_6;
+    u32 temp_r27_6;
     s32 temp_r3_45;
     s32 temp_r3_46;
     s32 temp_r3_47;
@@ -1026,12 +1024,7 @@ loop_30:
                 arg0->position.x = vec48.x;
                 arg0->position.y = vec48.y;
                 arg0->position.z = vec48.z;
-            default:                                /* switch 2 */
-block_427:
-                if (var_r29 == 0) {
-                    goto loop_30;
-                }
-                break;
+                goto block_427;
             case 0x88:                              /* switch 2 */
                 if (temp_r26 & 1) {
                     var_r30 = getFloat(var_r30, &sp14);
@@ -2228,8 +2221,13 @@ block_427:
             case 0xFE:                              /* switch 2 */
             case 0xFF:                              /* switch 2 */
                 arg0->life = 1;
+                goto command_done;
+            default:
                 break;
             }
+block_427:
+            if (var_r29 == 0) goto loop_30;
+command_done:
             arg0->commandPtr = var_r30 - arg0->commands;
             arg0->wait = var_r29;
         }

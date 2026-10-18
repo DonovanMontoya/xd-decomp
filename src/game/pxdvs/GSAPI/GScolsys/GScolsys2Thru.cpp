@@ -131,16 +131,24 @@ static inline u8 vertexContact(Vec *point,Vec *vertices,Vec *normal,u16 flags,f3
     }
     return 0;
 }
+static inline void getCellBounds(GSvec *point,f32 radius,CCD_THRUMDL_HEAD *model,s32 *minX,s32 *minZ,s32 *maxX,s32 *maxZ) {
+    f32 left=point->x-radius;
+    f32 near=point->z-radius;
+    f32 right=point->x+radius;
+    f32 far=point->z+radius;
+    *minX=(s32)((left-model->originX)/model->cellWidth);
+    if(*minX<0)*minX=0;
+    *minZ=(s32)((near-model->originZ)/model->cellDepth);
+    if(*minZ<0)*minZ=0;
+    *maxX=(s32)((right-model->originX)/model->cellWidth);
+    if(*maxX>model->width-1)*maxX=model->width-1;
+    *maxZ=(s32)((far-model->originZ)/model->cellDepth);
+    if(*maxZ>model->depth-1)*maxZ=model->depth-1;
+}
 static s32 getFixedMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THRUMDL_HEAD *model,ThruEvent *events) {
     s32 count=0;
-    s32 minX=(s32)(((point->x-radius)-model->originX)/model->cellWidth);
-    if(minX<0) minX=0;
-    s32 minZ=(s32)(((point->z-radius)-model->originZ)/model->cellDepth);
-    if(minZ<0) minZ=0;
-    s32 maxX=(s32)(((point->x+radius)-model->originX)/model->cellWidth);
-    if(maxX>model->width-1) maxX=model->width-1;
-    s32 maxZ=(s32)(((point->z+radius)-model->originZ)/model->cellDepth);
-    if(maxZ>model->depth-1) maxZ=model->depth-1;
+    s32 minX,minZ,maxX,maxZ;
+    getCellBounds(point,radius,model,&minX,&minZ,&maxX,&maxZ);
     f32 radiusSquared=radius*radius;
     {
         ThruEvent *output=events+count;
@@ -156,8 +164,8 @@ static s32 getFixedMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THR
         if(duplicate<count) continue;
                     if(PSVECDotProduct(&polygon->normal,(Vec *)direction)>=0.0f) continue;
                     if(faceContact((Vec *)point,polygon->vertices,&polygon->normal,radiusSquared)) {
-                        copyEvent(output,polygon->vertices,&polygon->normal,polygon->eventID);
-                        output++;count++;
+                        copyEvent(output++,polygon->vertices,&polygon->normal,polygon->eventID);
+                        count++;
                     }
                 }
             }
@@ -178,8 +186,8 @@ static s32 getFixedMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THR
         if(duplicate<count) continue;
                     if(PSVECDotProduct(&polygon->normal,(Vec *)direction)>=0.0f) continue;
                     if(edgeContact((Vec *)point,polygon->vertices,&polygon->normal,polygon->edgeFlags,radiusSquared)) {
-                        copyEvent(output,polygon->vertices,&polygon->normal,polygon->eventID);
-                        output++;count++;
+                        copyEvent(output++,polygon->vertices,&polygon->normal,polygon->eventID);
+                        count++;
                     }
                 }
             }
@@ -200,8 +208,8 @@ static s32 getFixedMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THR
         if(duplicate<count) continue;
                     if(PSVECDotProduct(&polygon->normal,(Vec *)direction)>=0.0f) continue;
                     if(vertexContact((Vec *)point,polygon->vertices,&polygon->normal,polygon->edgeFlags,radiusSquared)) {
-                        copyEvent(output,polygon->vertices,&polygon->normal,polygon->eventID);
-                        output++;count++;
+                        copyEvent(output++,polygon->vertices,&polygon->normal,polygon->eventID);
+                        count++;
                     }
                 }
             }

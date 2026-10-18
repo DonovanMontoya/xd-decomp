@@ -612,7 +612,6 @@ extern "C" s32 menuPokemonStatusCtrl(tagWINDOW_WORK* win) {
 static s32 _menuPokemonStatusOpen(u8 flags, FIGHT_TRAINER* trainer, Pokemon* pokemon, u16 wazaId, MenuPokemonStatusCb callback, long arg) {
     s32 i;
     DarkPokemon* dark;
-    s32 id;
     while (menuFaceCheckLoading()) {
         GSthreadSwitch();
     }
@@ -629,12 +628,28 @@ static s32 _menuPokemonStatusOpen(u8 flags, FIGHT_TRAINER* trainer, Pokemon* pok
         if (pokemon->isDarkPokemon()) {
             dark = pokemon->getDarkPokemon();
             if (dark != 0) {
-                id = (u16)pokemonGetStatus(pokemon, 0, 0x7F, (u8)i);
-                if (id < 0x164) {
-                    if (id == 0) {
-                        continue;
-                    }
-                } else if (id < 0x177) {
+                wazaId = (u16)pokemonGetStatus(pokemon, 0, 0x7F, (u8)i);
+                switch ((s32)wazaId) {
+                case 0:
+                case 0x164:
+                case 0x165:
+                case 0x166:
+                case 0x167:
+                case 0x168:
+                case 0x169:
+                case 0x16A:
+                case 0x16B:
+                case 0x16C:
+                case 0x16D:
+                case 0x16E:
+                case 0x16F:
+                case 0x170:
+                case 0x171:
+                case 0x172:
+                case 0x173:
+                case 0x174:
+                case 0x175:
+                case 0x176:
                     continue;
                 }
                 if (i != 0) {
@@ -1630,7 +1645,7 @@ extern "C" void menuPokemonStatusDrawTitle(tagWINDOW_WORK* win, tagSPRITE_WORK* 
     }
 }
 
-extern "C" s32 menuPokemonStatusCursor(tagWINDOW_WORK* win) {
+extern "C" void menuPokemonStatusCursor(tagWINDOW_WORK* win) {
     s32 dir = 0;
     s8 maxPage;
     u16 key;
@@ -1698,11 +1713,27 @@ extern "C" s32 menuPokemonStatusCursor(tagWINDOW_WORK* win) {
                             DarkPokemon* dark = p->getDarkPokemon();
                             if (dark != 0) {
                                 s32 id = (u16)pokemonGetStatus(p, 0, 0x7F, (u8)i);
-                                if (id < 0x164) {
-                                    if (id == 0) {
-                                        continue;
-                                    }
-                                } else if (id < 0x177) {
+                                switch (id) {
+                                case 0:
+                                case 0x164:
+                                case 0x165:
+                                case 0x166:
+                                case 0x167:
+                                case 0x168:
+                                case 0x169:
+                                case 0x16A:
+                                case 0x16B:
+                                case 0x16C:
+                                case 0x16D:
+                                case 0x16E:
+                                case 0x16F:
+                                case 0x170:
+                                case 0x171:
+                                case 0x172:
+                                case 0x173:
+                                case 0x174:
+                                case 0x175:
+                                case 0x176:
                                     continue;
                                 }
                                 if (!dark->isWazaNew(i - 1)) {
@@ -1745,8 +1776,9 @@ extern "C" s32 menuPokemonStatusCursor(tagWINDOW_WORK* win) {
         s32 row = old / 9;
         s32 r;
         s32 c;
-        s8 idx;
         if (key & 1) {
+            s32 c;
+            s32 r;
             r = row;
             while (r-- > 0) {
                 c = col;
@@ -1805,15 +1837,15 @@ extern "C" s32 menuPokemonStatusCursor(tagWINDOW_WORK* win) {
                 }
             }
         }
-        idx = row * 9 + col;
-        if (idx != old) {
+        maxPage = row * 9 + col;
+        if (maxPage != old) {
             menuPlaySe(win->menu, 1);
-            _menuStatus.unk1A = idx;
+            _menuStatus.unk1A = maxPage;
         }
         break;
     }
     }
-    return 0;
+    return;
 }
 
 extern "C" void menuPokemonStatusButton(tagWINDOW_WORK* win) {

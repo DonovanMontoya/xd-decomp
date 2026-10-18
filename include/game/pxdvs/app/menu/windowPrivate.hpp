@@ -47,7 +47,7 @@ struct MENU_ITEM_dd_ {
 struct MenuData { u8 flags,flags1,flags2,reserved3,cursorID,reserved5; s16 firstItem,x,y; u8 reservedC[8]; s32 (*control)(tagWINDOW_WORK *); };
 struct MenuSpriteValue { s16 x,y,width,height; u32 resource; };
 union MenuSpriteFlags { u16 value; struct { u16 last:1, stretch:1, kind:2, sequence:12; } fields; };
-struct MenuSpriteData { MenuSpriteFlags flags; u8 reserved2; s8 x,y; u8 alpha; u8 reserved6[0x3E]; u16 nextSprite; };
+struct MenuSpriteData { MenuSpriteFlags flags; u8 reserved2; s8 x,y; u8 alpha; u8 reserved6[0x3E]; s16 nextSprite; };
 typedef char WindowDrawSize[sizeof(WindowDrawParameter)==0x78?1:-1];
 typedef char MenuItemSize[sizeof(MENU_ITEM_dd_)==0x1C?1:-1];
 typedef char MenuSpriteNextOffset[offsetof(MenuSpriteData,nextSprite)==0x44?1:-1];

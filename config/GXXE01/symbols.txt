@@ -1595,7 +1595,7 @@ stateDepositToPcBoxProc__Q230@unnamed@menuPcBoxPokemon_cpp@17CMenuPokemonLeaveFv
 _depositMenuDrawHook__30@unnamed@menuPcBoxPokemon_cpp@FP9CMetaMenul = .text:0x8005A058; // type:function size:0x20 scope:local align:4
 infoMessageDisplay__Q230@unnamed@menuPcBoxPokemon_cpp@17CMenuPokemonLeaveFUl = .text:0x8005A078; // type:function size:0x30 scope:local align:4
 actionExecByMsgID__Q230@unnamed@menuPcBoxPokemon_cpp@17CMenuPokemonLeaveFUl = .text:0x8005A0A8; // type:function size:0x3D4 scope:local align:4
-confirmWindow__Q230@unnamed@menuPcBoxPokemon_cpp@17CMenuPokemonLeaveFUl = .text:0x8005A47C; // type:function size:0x80 scope:local align:4
+confirmWindow__Q230@unnamed@menuPcBoxPokemon_cpp@17CMenuPokemonLeaveFUll = .text:0x8005A47C; // type:function size:0x80 scope:local align:4
 stateActionMenuMainProc__Q230@unnamed@menuPcBoxPokemon_cpp@17CMenuPokemonLeaveFv = .text:0x8005A4FC; // type:function size:0x11C scope:local align:4
 directActionExec__Q230@unnamed@menuPcBoxPokemon_cpp@17CMenuPokemonLeaveFv = .text:0x8005A618; // type:function size:0x78 scope:local align:4
 loop__Q230@unnamed@menuPcBoxPokemon_cpp@17CMenuPokemonLeaveFv = .text:0x8005A690; // type:function size:0x830 scope:local align:4

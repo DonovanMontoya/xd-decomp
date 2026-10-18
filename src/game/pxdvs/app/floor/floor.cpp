@@ -1036,14 +1036,17 @@ static void _floorInitMapFog(GSfloor_dd_ *floor) {
             layer0->fog(true);
             layer2->fog(true);
             GSgfxVideoSetClearColor(fog->color);
-            u32 j = 0;
+            void *m;
+            u32 j;
+            u32 id;
+            j = 0;
             SceneData *scene = (SceneData *)HSD_ArchiveGetPublicAddress(GSresGetResource(group, mapRes), "scene_data");
             if (scene != 0) {
                 if (scene->models != 0) {
                     u32 base = floorReadMakeModelResID(mapRes);
                     for (u32 i = 0; scene->models[i] != 0; i++, j++) {
-                        u32 id = base | j;
-                        void *m = GSresGetResource(group, id);
+                        id = base | j;
+                        m = GSresGetResource(group, id);
                         if (m != 0) {
                             s32 state = floorDataBiosModelIDGetFogState(id);
                             GSmodelSetFogState(m, state, state);
@@ -1302,10 +1305,11 @@ void floorInitMap(u32 group, u32 mapRes) {
             u32 camID = floorReadMakeCameraResID(mapRes);
             void *cam = GSresGetResource(group, camID);
             if (cam != 0) cameraSetGScamera(cam);
+            u32 k;
             GSfloor_dd_ *fd = floorDataBiosGetPtr(floorGetCurrent());
             if (fd != 0) {
                 u32 n = floorDataBiosGetSecondaryRenderNum(fd);
-                for (u32 k = 0; k < n; k++) {
+                for (k = 0; k < n; k++) {
                     u32 id = floorDataBiosGetSecondaryRenderID(fd, k);
                     if (id != 0) GSmodelSetRenderLayer(GSresGetResource(group, id), 1, &layerB);
                 }

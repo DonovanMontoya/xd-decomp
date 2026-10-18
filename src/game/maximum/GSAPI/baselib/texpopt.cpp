@@ -447,6 +447,10 @@ static int SimplifyThis(HSD_TExp* arg0)
 /* XD merges color and alpha inputs after checking range, resource, bias,
  * and scale compatibility. Argument copies retain reference counts. */
 int SimplifyByMerge(HSD_TExp *arg0) {
+    s32 var_r30;
+    u8 var_r29;
+    u8 var_r28;
+    s32 var_r31;
     HSD_TEArg tmp_arg;
     HSD_TExp *temp_r20_2;
     HSD_TExp *temp_r20_3;
@@ -510,8 +514,6 @@ int SimplifyByMerge(HSD_TExp *arg0) {
     s32 var_r22_4;
     s32 var_r22_5;
     s32 var_r22_6;
-    s32 var_r30;
-    s32 var_r31;
     s32 var_r3;
     s32 var_r3_10;
     s32 var_r3_11;
@@ -595,8 +597,6 @@ int SimplifyByMerge(HSD_TExp *arg0) {
     u8 temp_r7_2;
     u8 var_r25_2;
     u8 var_r26;
-    u8 var_r28;
-    u8 var_r29;
 
     var_r31 = 0;
     do {
@@ -674,17 +674,10 @@ block_30:
 block_57:
                             if (temp_r3 == 1) {
                                 if (temp_r0 == 1) {
-                                    if ((u8) temp_r4->tev.c_range != 0) {
-                                        if ((u8) temp_r4->tev.c_clamp == 1) {
-                                            goto block_64;
-                                        }
-                                    } else {
-                                        goto block_64;
-                                    }
-                                } else if (((u8) temp_r4->tev.a_range == 0) || ((u8) temp_r4->tev.a_clamp == 1)) {
-                                    goto block_64;
-                                }
-                            } else {
+                                    if ((u8)temp_r4->tev.c_range != 0 && (u8)temp_r4->tev.c_clamp != 1) goto skipColorABMerge;
+                                } else if ((u8)temp_r4->tev.a_range != 0 && (u8)temp_r4->tev.a_clamp != 1) goto skipColorABMerge;
+                            }
+                            {
 block_64:
                                 tmp_arg = arg0->tev.c_in[0];
                                 arg0->tev.c_in[0] = arg0->tev.c_in[3];
@@ -778,9 +771,8 @@ block_65:
                                     switch (temp_r0_4) {
                                     case 1:
                                         var_r28 = 3;
-block_132:
-                                        var_r0_3 = 1;
-                                        break;
+
+                                        goto block_132;
                                     case 2:
                                         var_r28 = 0;
                                         goto block_132;
@@ -792,8 +784,11 @@ block_132:
                                         goto block_132;
                                     default:
                                         var_r0_3 = 0;
-                                        break;
+                                        goto block_132_done;
                                     }
+block_132:
+                                        var_r0_3 = 1;
+block_132_done:
                                     if (var_r0_3 != 0) {
                                         var_r29 = var_r25->tev.c_bias;
 block_135:
@@ -836,6 +831,7 @@ block_135:
                 }
             }
         }
+skipColorABMerge:
         temp_r4_3 = arg0->tev.c_in[3].type;
         var_r26_2 = arg0->tev.c_in[3].exp;
         temp_r25 = arg0->tev.c_in[3].sel;
@@ -910,9 +906,8 @@ block_173:
                                 switch (temp_r0_8) {
                                 case 1:
                                     var_r28 = 3;
-block_216:
-                                    var_r0_6 = 1;
-                                    break;
+
+                                    goto block_216;
                                 case 2:
                                     var_r28 = 0;
                                     goto block_216;
@@ -924,8 +919,11 @@ block_216:
                                     goto block_216;
                                 default:
                                     var_r0_6 = 0;
-                                    break;
+                                    goto block_216_done;
                                 }
+block_216:
+                                    var_r0_6 = 1;
+block_216_done:
                                 if (var_r0_6 != 0) {
                                     var_r30 = 1;
                                     arg0->tev.c_bias = var_r26_2->tev.c_bias;
@@ -1050,9 +1048,8 @@ block_216:
                                 switch (temp_r0_11) {
                                 case 1:
                                     var_r28 = 3;
-block_308:
-                                    var_r0_9 = 1;
-                                    break;
+
+                                    goto block_308;
                                 case 2:
                                     var_r28 = 0;
                                     goto block_308;
@@ -1064,8 +1061,11 @@ block_308:
                                     goto block_308;
                                 default:
                                     var_r0_9 = 0;
-                                    break;
+                                    goto block_308_done;
                                 }
+block_308:
+                                    var_r0_9 = 1;
+block_308_done:
                                 if (var_r0_9 != 0) {
                                     var_r29 = var_r26_2->tev.c_bias;
 block_311:
@@ -1271,9 +1271,8 @@ block_383:
                                 switch (temp_r0_15) {
                                 case 1:
                                     var_r28 = 3;
-block_450:
-                                    var_r0_12 = 1;
-                                    break;
+
+                                    goto block_450;
                                 case 2:
                                     var_r28 = 0;
                                     goto block_450;
@@ -1285,8 +1284,11 @@ block_450:
                                     goto block_450;
                                 default:
                                     var_r0_12 = 0;
-                                    break;
+                                    goto block_450_done;
                                 }
+block_450:
+                                    var_r0_12 = 1;
+block_450_done:
                                 if (var_r0_12 != 0) {
                                     var_r29 = var_r26_3->tev.a_bias;
 block_453:
@@ -1402,9 +1404,8 @@ block_490:
                                 switch (temp_r0_19) {
                                 case 1:
                                     var_r28 = 3;
-block_533:
-                                    var_r0_15 = 1;
-                                    break;
+
+                                    goto block_533;
                                 case 2:
                                     var_r28 = 0;
                                     goto block_533;
@@ -1416,8 +1417,11 @@ block_533:
                                     goto block_533;
                                 default:
                                     var_r0_15 = 0;
-                                    break;
+                                    goto block_533_done;
                                 }
+block_533:
+                                    var_r0_15 = 1;
+block_533_done:
                                 if (var_r0_15 != 0) {
                                     var_r30 = 1;
                                     arg0->tev.a_bias = var_r26_4->tev.a_bias;
@@ -1540,9 +1544,8 @@ block_533:
                             switch (temp_r0_22) {
                             case 1:
                                 var_r28 = 3;
-block_619:
-                                var_r0_18 = 1;
-                                break;
+
+                                goto block_619;
                             case 2:
                                 var_r28 = 0;
                                 goto block_619;
@@ -1554,8 +1557,11 @@ block_619:
                                 goto block_619;
                             default:
                                 var_r0_18 = 0;
-                                break;
+                                goto block_619_done;
                             }
+block_619:
+                                var_r0_18 = 1;
+block_619_done:
                             if (var_r0_18 != 0) {
                                 var_r29 = var_r26_4->tev.a_bias;
 block_622:

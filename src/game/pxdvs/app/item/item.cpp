@@ -85,7 +85,8 @@ static inline s32 itemAddInner(ITEM *p, u16 num, u16 max) {
     if (!itemValid(p)) {
         return -1;
     }
-    s32 n = item_GetNum(p) + num;
+    s32 n = item_GetNum(p);
+    n += num;
     s32 over;
     if (n > (s32)max) {
         over = n - max;
@@ -122,7 +123,9 @@ static inline s32 itemAddNew(ITEM *p, u16 id, u16 num, u16 max) {
         item_SetNum(p, 0);
     }
     item_SetItemDataId(p, id);
-    return itemAddInner(p, num, max);
+    s32 result = itemAddInner(p, num, max);
+    if (result < 0) return result;
+    return result;
 }
 
 static inline s32 itemDecNum(ITEM *p, u16 id, u16 num) {
@@ -336,7 +339,7 @@ s32 itemAddItemDataIdAry(ITEM *ary, u16 count, u16 id, u16 num, s16 idx, u16 max
         }
     } else {
         ITEM *p = ary + idx;
-        rem = itemAddNum(p, id, rem, max);
+        rem = itemAddNum(p, id, num, max);
     }
     if (needSort == 1) {
         _itemSortAry(ary, count, sortType);

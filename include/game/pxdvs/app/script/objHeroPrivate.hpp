@@ -25,7 +25,7 @@ void scriptSetPremium(s32);s32 scriptGetPoint();void scriptSetPoint(s32);void sc
 s32 scriptBattleMountainEnd(u8);s16 scriptCatchPokemon(u8);
 u8 scriptCheckHizukiFollow();u8 scriptCheckTemochiPokemon();
 s32 scriptGetDarkPointZeroPokemonNum();s32 scriptGetDarkPokemonNum();s32 scriptGetEarthRibbon();s32 scriptGetPokemonNum();
-char *scriptGetPokemonNickName(s32);s32 scriptHeroCtrlElevator(u16,s32,u16,s32);s32 scriptHizukiAway(u32,u32);
+char *scriptGetPokemonNickName(s32);s32 scriptHeroCtrlElevator(u32,u32,u16,u32);s32 scriptHizukiAway(u32,u32);
 void scriptPartyChange(u8);void scriptStoreTemochiPokemon();
 s32 darkPokemonGetReliveNum();s32 darkPokemonGetSnatchSuccessNum();u16 darkpokemonBiosGetScenarioNum();
 s32 floorEventGetTresureEx(u8,s32,s32,u8);u8 pcBoxAllSearchPokemon(s32);

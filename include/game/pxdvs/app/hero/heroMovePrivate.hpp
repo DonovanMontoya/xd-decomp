@@ -19,14 +19,15 @@ enum HEROMOVE_MEMBER {
 enum FloorEnterMode { FloorEnterModeNone };
 
 struct AnalogStickEmu {
-    u8 b0;
-    u8 b1;
-    u8 b2;
-    u8 b3;
+    s8 b0;
+    s8 b1;
+    s8 b2;
+    s8 b3;
     u8 b4;
     u8 b5;
 
     void init();
+    void calculate(s8&, s8&, s8&, s8&);
 };
 
 struct HeroMoveMember {
@@ -56,13 +57,24 @@ struct FOOTWORK {
     f32 d;
 };
 
-struct Pokemon;
+struct DarkPokemon {
+    void setReversMode(bool);
+};
+struct Pokemon {
+    u16 getHp() const;
+    u8 getCondition() const;
+    void setHp(u16);
+    void initCondition();
+    DarkPokemon* getDarkPokemon();
+};
 
 enum FootStepCounter { FOOTSTEP_COUNTER_0, FOOTSTEP_COUNTER_1, FOOTSTEP_COUNTER_2, FOOTSTEP_COUNTER_3 };
 
 class Hero {
 public:
     static Hero* getHeroPtr();
+    u8 getFollowerID();
+    u8 getFollowerModelLevel();
     void setFollowerID(u8);
     void addFootStep(unsigned long);
     void setFollowerResID(unsigned long);

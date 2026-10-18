@@ -26,7 +26,7 @@ struct MSG_TASK_WORK {
     u32 color;
     const u16 *textStart, *textBase, *textCursor;
     const u16* returnText[3];
-    u8 textDepth;
+    s8 textDepth;
     s8 quoteMode;
     s8 glyphAdvance;
     s8 reserved43;

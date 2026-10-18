@@ -239,12 +239,13 @@ void CAnt::systemUsecountReset() {
 }
 
 static inline void pokeDanceRelease() {
-    u32 kept = 0;
-    s32 off = 0;
+    u32 kept;
+    s32 off;
     u32 i;
-    PokeDanceEntry *src = _pokeDance.entries;
     _pokeDance.entries[_pokeDance.loading].useCount = 2;
-    for (i = 0; i < 0xF0; i++, src++) {
+    kept = 0;off = 0;
+    for (i = 0; i < 0xF0; i++) {
+        PokeDanceEntry *src = &_pokeDance.entries[i];
         if (src->id == 0) {
             break;
         }
@@ -259,12 +260,11 @@ static inline void pokeDanceRelease() {
             GSresFreeResource(0x825, src->id);
         }
     }
-    PokeDanceEntry *clr = &_pokeDance.entries[kept];
-    for (; kept < 0xF0; kept++, clr++) {
-        memset(clr, 0, 0xC);
+    for (; kept < 0xF0; kept++) {
+        memset(&_pokeDance.entries[kept], 0, 0xC);
     }
-    PokeDanceEntry *q = _pokeDance.entries;
-    for (u32 j = 0; j < 0xF0; q++, j++) {
+    for (u32 j = 0; j < 0xF0; j++) {
+        PokeDanceEntry *q = &_pokeDance.entries[j];
         if (q->id == 0) {
             break;
         }

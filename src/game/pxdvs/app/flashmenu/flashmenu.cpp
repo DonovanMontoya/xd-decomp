@@ -18,6 +18,7 @@ u32 timeGetLastFrameTime();
 void GSprimSetup2DRender(GSgfxLayer *);
 void operator delete(void *);
 void operator delete[](void *);
+extern "C" void* GSmemAlloc(u32);
 
 #define FLASH_FREE(p) \
     if (p != 0) { \
@@ -433,4 +434,683 @@ u32 FlashMenu::GetPlayFrame() {
 
 void FlashMenu::SetPlayFrame(unsigned long frame) {
     playFrame = frame;
+}
+
+struct _PLACEOBJECT2 {
+    u8 flags;u8 reserved1[3];s32 character,depth;
+    FLASHMATRIX matrix;FLASHCXFORM cxform;u32 ratio,name;
+};
+inline void flashPlaceReference(FlashMenu* menu,s32 depth, _PLACEOBJECT2* object) {
+    if((s32)menu->field14 != 0) {
+        s32 layer=menu->activeLayer;
+        if(menu->activeFrame <= ((u16*)menu->items[menu->field10].extra)[(u16)layer]) {
+            FlashItem* item=&menu->layers[layer].items[depth];
+            item->field30=0;item->field34=(s32)object;
+        }
+    } else {menu->items[depth].field30=0;menu->items[depth].field34=(s32)object;}
+}
+inline void flashPlaceCharacter(FlashMenu* menu,u16 character, s32 depth) {
+    if((s32)menu->field14 != 0) {
+        s32 layer=menu->activeLayer;
+        if(menu->activeFrame <= ((u16*)menu->items[menu->field10].extra)[(u16)layer]) {
+            FlashItem* item=&menu->layers[layer].items[depth];
+            item->frame=character;
+        }
+    } else {menu->items[depth].frame=character;}
+}
+inline void flashPlaceMatrix(FlashMenu* menu,FLASHMATRIX* matrix,s32 depth) {
+    if((s32)menu->field14 != 0) {
+        s32 layer=menu->activeLayer;
+        if(menu->activeFrame <= ((u16*)menu->items[menu->field10].extra)[(u16)layer]) {
+            FlashItem* item=&menu->layers[layer].items[depth];
+            memcpy(&item->matrix,matrix,0x18);
+        }
+    } else {memcpy(&menu->items[depth].matrix,matrix,0x18);}
+}
+inline void flashPlaceColor(FlashMenu* menu,FLASHCXFORM* color,s32 depth) {
+    if((s32)menu->field14 != 0) {
+        s32 layer=menu->activeLayer;
+        if(menu->activeFrame <= ((u16*)menu->items[menu->field10].extra)[(u16)layer]) {
+            FlashItem* item=&menu->layers[layer].items[depth];
+            memcpy(&item->cxform,color,0x10);
+        }
+    } else {memcpy(&menu->items[depth].cxform,color,0x10);}
+}
+inline void flashPlaceRatio(FlashMenu* menu,u32 ratio,s32 depth) {
+    if((s32)menu->field14 != 0) {
+        s32 layer=menu->activeLayer;
+        if(menu->activeFrame <= ((u16*)menu->items[menu->field10].extra)[(u16)layer]) {
+            FlashItem* item=&menu->layers[layer].items[depth];
+            item->depth=(f32)ratio/65536.0f;
+        }
+    } else {menu->items[depth].depth=(f32)ratio/65536.0f;}
+}
+void FlashMenu::ParsePlaceObject2Sub(_PLACEOBJECT2* object) {
+    u8 flags=object->flags;
+    flashPlaceReference(this,object->depth,object);
+    if(flags&2) flashPlaceCharacter(this,object->character,object->depth);
+    if(flags&4) flashPlaceMatrix(this,&object->matrix,object->depth);
+    if(flags&8) flashPlaceColor(this,&object->cxform,object->depth);
+    if(flags&16) flashPlaceRatio(this,object->ratio,object->depth);
+    if((flags&32) && header->relocated==0 && field1E!=0) object->name=(u32)object+object->name;
+}
+
+struct FlashGradientEntry {u8 ratio;u8 reserved1[3];u32 color;};
+struct FlashFillStyle {u8 flags;u8 reserved1[3];u32 color;s32 matrix[6];u8 count;u8 reserved21[3];FlashGradientEntry gradients[8];u8 reserved64[0x1C];};
+struct _DEFINESHAPE {u32 id;s32 fillCount;FlashFillStyle* fills;s32 lineCount;void* lines;u32 reserved14;_SHAPERECORD* records;};
+struct FlashShapeEdges {u8 flags;u8 reserved1[0xF];s32 pointCount;void* points;s32 edgeCount;void* edges;};
+void FlashMenu::ParseDefineShapeSub(_DEFINESHAPE* shape) {
+    FlashFillStyle* fills;
+    if(header->relocated==0 && field1E!=0) {fills=(FlashFillStyle*)((u32)shape+(u32)shape->fills);shape->fills=fills;}
+    else fills=shape->fills;
+    FlashFillStyle* fill=fills;
+    for(s32 i=0;i<shape->fillCount;i++,fill++) {
+        if(fills->flags&0x10) {
+            for(s32 j=0;j<fill->count;j++) {}
+        }
+    }
+    s32 lineCount=shape->lineCount;
+    if(header->relocated==0 && field1E!=0) shape->lines=(void*)((u32)shape+(u32)shape->lines);
+    for(s32 i=0;i<lineCount;i++) {}
+    _SHAPERECORD* record;
+    if(header->relocated==0 && field1E!=0) {record=(_SHAPERECORD*)((u32)shape+(u32)shape->records);shape->records=record;}
+    else record=shape->records;
+    ((FlashDataPointer*)memory)[shape->id].type=2;
+    ((FlashDataPointer*)memory)[shape->id].data=shape;
+    while(record->next) {
+        switch(record->type) {
+        case 0:break;
+        case 1:{
+            FlashShapeEdges* edges;
+            if(header->relocated==0 && field1E!=0) {edges=(FlashShapeEdges*)((u32)shape+(u32)record->data);record->data=edges;}
+            else edges=(FlashShapeEdges*)record->data;
+            if(edges->flags&0x10) {
+                s32 points=edges->pointCount;
+                if(header->relocated==0 && field1E!=0) edges->points=(void*)((u32)shape+(u32)edges->points);
+                while(points-- > 0) {}
+                s32 count=edges->edgeCount;
+                if(header->relocated==0 && field1E!=0) edges->edges=(void*)((u32)shape+(u32)edges->edges);
+                for(s32 i=0;i<count;i++) {}
+            }
+            break;
+        }
+        case 2:{
+            SRecordLine* line;
+            if(header->relocated==0 && field1E!=0) {line=(SRecordLine*)((u32)shape+(u32)record->data);record->data=line;}
+            else line=(SRecordLine*)record->data;
+            if(line->x!=0 && line->y==0) {}
+            break;
+        }
+        case 3:
+            if(header->relocated==0 && field1E!=0) record->data=(void*)((u32)shape+(u32)record->data);
+            break;
+        }
+        _SHAPERECORD* next;
+        if(header->relocated==0 && field1E!=0) {next=(_SHAPERECORD*)((u32)shape+(u32)record->next);record->next=next;}
+        else next=record->next;
+        record=next;
+    }
+}
+struct FlashMorphGradientEntry {u8 ratioA,ratioB;u8 reserved2[2];u32 colorA,colorB;};
+struct FlashMorphFillStyle {u8 flags;u8 reserved1[3];u32 colorA,colorB;s32 matrixA[6],matrixB[6];u8 count;u8 reserved3D[3];FlashMorphGradientEntry gradients[8];u8 reservedA0[0x34];};
+struct _DEFINEMORPHSHAPE {u32 id;u32 reserved4;u32 fillCount;FlashMorphFillStyle* fills;u32 lineCount;void* lines;u32 reserved18;void* start;u32 reserved20;void* end;_DEFINESHAPE* shapes[3];};
+void FlashMenu::ParseDefineMorphShapeSub(_DEFINEMORPHSHAPE* morph) {
+    s32 count;
+    s32 j;
+    u32 lines;
+    s32 offset;
+    s32 i;
+    if(morph->fillCount) {
+        i=0;
+        offset=0;
+        for(;i<(s32)morph->fillCount;i++) {
+            FlashMorphFillStyle* fills;
+            if(header->relocated==0 && field1E!=0) {fills=(FlashMorphFillStyle*)((u32)morph+(u32)morph->fills);morph->fills=fills;}
+            else fills=morph->fills;
+            if(((FlashMorphFillStyle*)((u8*)fills+offset))->flags&0x10) {
+                count=((FlashMorphFillStyle*)((u8*)fills+offset))->count;
+                for(j=0;j<count;j++) {}
+            }
+            offset+=0xD4;
+        }
+    }
+    if(header->relocated==0 && field1E!=0) morph->lines=(void*)((u32)morph+(u32)morph->lines);
+    lines=morph->lineCount;
+    if(lines) for(s32 i=0;i<(s32)lines;i++) {}
+    if(header->relocated==0 && field1E!=0) morph->start=(void*)((u32)morph+(u32)morph->start);
+    if(header->relocated==0 && field1E!=0) morph->end=(void*)((u32)morph+(u32)morph->end);
+    _DEFINESHAPE* shape;
+    if(header->relocated==0 && field1E!=0) {shape=(_DEFINESHAPE*)((u32)morph+(u32)morph->shapes[0]);morph->shapes[0]=shape;}else shape=morph->shapes[0];
+    ParseDefineShapeSub(shape);
+    if(header->relocated==0 && field1E!=0) {shape=(_DEFINESHAPE*)((u32)morph+(u32)morph->shapes[1]);morph->shapes[1]=shape;}else shape=morph->shapes[1];
+    ParseDefineShapeSub(shape);
+    if(header->relocated==0 && field1E!=0) {shape=(_DEFINESHAPE*)((u32)morph+(u32)morph->shapes[2]);morph->shapes[2]=shape;}else shape=morph->shapes[2];
+    ParseDefineShapeSub(shape);
+    u32 index=morph->id;
+    ((FlashDataPointer*)memory)[index].type=1;
+    ((FlashDataPointer*)memory)[index].data=morph;
+}
+
+struct FlashTagName {s32 id;const char* name;};
+static const FlashTagName _fltagnametable[] = {
+    {0, "stagEnd"},
+    {1, "stagShowFrame"},
+    {2, "stagDefineShape"},
+    {3, "stagFreeCharacter"},
+    {4, "stagPlaceObject"},
+    {5, "stagRemoveObject"},
+    {6, "stagDefineBits"},
+    {7, "stagDefineButton"},
+    {8, "stagJPEGTables"},
+    {9, "stagSetBackgroundColor"},
+    {10, "stagDefineFont"},
+    {11, "stagDefineText"},
+    {12, "stagDoAction"},
+    {13, "stagDefineFontInfo"},
+    {14, "stagDefineSound"},
+    {14, "stagDefineSound"},
+    {17, "stagDefineButtonSound"},
+    {18, "stagSoundStreamHead"},
+    {19, "stagSoundStreamBlock"},
+    {20, "stagDefineBitsLossless"},
+    {21, "stagDefineBitsJPEG2"},
+    {22, "stagDefineShape2"},
+    {23, "stagDefineButtonCxform"},
+    {24, "stagProtect"},
+    {26, "stagPlaceObject2"},
+    {28, "stagRemoveObject2"},
+    {32, "stagDefineShape3"},
+    {33, "stagDefineText2"},
+    {34, "stagDefineButton2"},
+    {35, "stagDefineBitsJPEG3"},
+    {36, "stagDefineBitsLossless2"},
+    {37, "stagDefineEditText"},
+    {39, "stagDefineSprite"},
+    {40, "stagNameCharacter"},
+    {43, "stagFrameLabel"},
+    {45, "stagSoundStreamHead2"},
+    {46, "stagDefineMorphShape"},
+    {48, "stagDefineFont2"},
+    {56, "stagExportAssets"},
+    {57, "stagImportAssets"},
+    {-1, 0},
+};
+struct FlashTag {u32 type,size;};
+
+void FlashMenu::Init(void* data,unsigned long parameter) {
+    GSgfxLayer* layer=(GSgfxLayer*)GSgfxLayerFindByID(7);
+    field34=parameter;
+    GSprimSetup2DRender(layer);
+    GSprimSetBlendMode(1);
+    memory=GSmemAlloc(0x640);
+    FlashHeader* input=(FlashHeader*)data;
+    u16 layerCount;
+    if(input->layerCount==0) {layerCount=40;input->layerCount=40;}else layerCount=input->layerCount;
+    u16 itemCount;
+    if(input->itemCount==0) {itemCount=40;input->itemCount=40;}else itemCount=input->itemCount;
+    layers=(FlashLayer*)GSmemAlloc((layerCount*8+31)&~31);
+    for(s32 i=0;i<layerCount;i++) {
+        layers[i].items=0;
+        layers[i].items=new FlashItem[itemCount];
+        for(s32 j=0;j<itemCount;j++) {
+            layers[i].items[j].extra=0;
+            layers[i].items[j].extra=new u16[layerCount];
+        }
+    }
+    items=(FlashItem*)GSmemAlloc(((itemCount<<6)+31)&~31);
+    for(s32 i=0;i<itemCount;i++) {items[i].extra=0;items[i].extra=new u16[layerCount];}
+    labels=0;
+    pos=0x30;
+    frameStart=0;
+    field1E=0;
+    for(s32 i=0;i<layerCount;i++) layers[i].reserved0=0;
+    start=pos;
+    header=input;
+    FlashHeader* original=header;
+    field14=0;
+    FlashTag* tag=(FlashTag*)((u8*)original+pos);
+    frameStart=0;
+    field1E=1;
+    for(s32 i=0;i<30;i++) {textures[i].id=0;textures[i].texture=0;}
+    InitDataPointer();
+    FlashHeader* hdr=header;
+    playFrame=0;
+    fps=0.0f;
+    for(u16 item=0;item<hdr->itemCount;item++) {
+        for(u16 layer=0;layer<hdr->layerCount;layer++) ((u16*)items[item].extra)[layer]=0;
+    }
+    for(;;) {
+        const FlashTagName* name=_fltagnametable;
+        while(name->id!=(s32)tag->type && name->id>=0) ++name;
+        if(ParseTag(tag->type,tag->size,true,false,true)) break;
+        tag=(FlashTag*)((u8*)header+pos);
+    }
+    if(field1E!=0 && original->relocated==0) original->relocated=(u32)header;
+    loopFrame=0;
+    endFrame=frameStart-1;
+    loop=0;
+    paused=0;
+    totalFrames=frameStart;
+}
+
+extern "C" u32 GStextureLoad(GStexture*);
+struct FlashAction {u32 type;void* data;FlashAction* next;};
+struct FlashBitmap {u16 format,id;u8 reserved4[0xC];GStexture* texture;};
+struct FlashEditText {u32 reserved0,color;u16 id;u8 flags;u8 reservedB[3];u16 height;u8 reserved10[0xC];u16* text;};
+struct _DEFINESPRITE {u16 id,frames;u8 data[1];};
+u8 FlashMenu::ParseTag(unsigned long type,unsigned long size,bool advance,bool,bool load) {
+    s32 end=0;
+    if(type!=0) pos+=8;
+    switch(type) {
+    case 0:
+        activeFrame=0;
+        field14--;
+        if((s32)field14<0) end=1;else pos+=8;
+        break;
+    case 1:{
+        u32 frame=*(u32*)((u8*)header+pos);
+        if(load && (s32)field14==0) frameStart++;
+        if((s32)field14!=0) activeFrame=frame;
+        else if(!advance && (u16)frame>(u16)playFrame) end=1;
+        break;
+    }
+    case 2:if(load) ParseDefineShapeSub((_DEFINESHAPE*)((u8*)header+pos));break;
+    case 11:{
+        _DEFINETEXT* text=(_DEFINETEXT*)((u8*)header+pos);
+        u32 index=*(u16*)text;
+        ((FlashDataPointer*)memory)[index].type=0x20;
+        ((FlashDataPointer*)memory)[index].data=text;
+        ParaseTextRecord(text);break;
+    }
+    case 12:{
+        FlashAction** root=(FlashAction**)((u8*)header+pos);
+        FlashAction* action;
+        if(header->relocated==0 && field1E!=0) {action=(FlashAction*)((u32)root+(u32)*root);*root=action;}
+        else action=*root;
+        while(action) {
+            void* data=action->data;
+            if(data && header->relocated==0 && field1E!=0) action->data=(void*)((u32)root+(u32)data);
+            FlashAction* next=action->next;
+            if(next) {
+                if(header->relocated==0 && field1E!=0) {next=(FlashAction*)((u32)root+(u32)next);action->next=next;}
+                else next=action->next;
+                action=next;
+            } else action=next;
+        }
+        break;
+    }
+    case 20:{
+        FlashBitmap* bitmap=(FlashBitmap*)((u8*)header+((pos+31)&~31));
+        if(load) {
+            GStexture* texture;
+            if(header->relocated==0 && field1E!=0) {texture=(GStexture*)((u32)bitmap+(u32)bitmap->texture);bitmap->texture=texture;}
+            else texture=bitmap->texture;
+            if(load && GStextureLoad(texture)) {
+                u16 id=bitmap->id;
+                FlashMenuTextureSlot* slot=textures;
+                for(s32 i=0;i<30;i++,slot++) {
+                    if(slot->id==id) break;
+                    if(slot->id==0) {textures[i].id=id;textures[i].texture=texture;break;}
+                }
+            }
+        }
+        break;
+    }
+    case 22:if(load) ParseDefineShapeSub((_DEFINESHAPE*)((u8*)header+pos));break;
+    case 26:ParsePlaceObject2(load);break;
+    case 28:flashPlaceReference(this,*(u16*)((u8*)header+pos),0);break;
+    case 32:if(load) ParseDefineShapeSub((_DEFINESHAPE*)((u8*)header+pos));break;
+    case 33:{
+        _DEFINETEXT* text=(_DEFINETEXT*)((u8*)header+pos);
+        u32 index=*(u16*)text;
+        ((FlashDataPointer*)memory)[index].type=0x20;
+        ((FlashDataPointer*)memory)[index].data=text;
+        ParaseTextRecord(text);break;
+    }
+    case 36:{
+        FlashBitmap* bitmap=(FlashBitmap*)((u8*)header+((pos+31)&~31));
+        if(load) {
+            GStexture* texture;
+            if(header->relocated==0 && field1E!=0) {texture=(GStexture*)((u32)bitmap+(u32)bitmap->texture);bitmap->texture=texture;}
+            else texture=bitmap->texture;
+            if(load && GStextureLoad(texture)) {
+                u16 id=bitmap->id;
+                FlashMenuTextureSlot* slot=textures;
+                for(s32 i=0;i<30;i++,slot++) {
+                    if(slot->id==id) break;
+                    if(slot->id==0) {textures[i].id=id;textures[i].texture=texture;break;}
+                }
+            }
+        }
+        break;
+    }
+    case 37:{
+        FlashEditText* text=(FlashEditText*)((u8*)header+pos);
+        u32 index=text->id;
+        ((FlashDataPointer*)memory)[index].type=0x10;
+        ((FlashDataPointer*)memory)[index].data=text;
+        if(text->flags&0x80) {
+            u16* string;
+            if(header->relocated==0 && field1E!=0) {string=(u16*)((u32)text+(u32)text->text);text->text=string;}
+            else string=text->text;
+            while(*string) ++string;
+        }
+        break;
+    }
+    case 39:{
+        _DEFINESPRITE* sprite=(_DEFINESPRITE*)((u8*)header+pos);
+        u32 index=sprite->id;
+        ((FlashDataPointer*)memory)[index].type=4;
+        ((FlashDataPointer*)memory)[index].data=sprite;
+        field14++;
+        activeLayer=sprite->id;
+        layers[activeLayer].reserved0=sprite->frames;
+        break;
+    }
+    case 43:{
+        char** label=(char**)((u8*)header+pos);
+        if(header->relocated==0 && field1E!=0) *label=(char*)((u32)*label+(u32)label);
+        if(load) {
+            FlashMenuLabel* current=labels;
+            if(current) {
+                while(current->next) current=current->next;
+                current->next=new FlashMenuLabel;
+                current->next->frame=frameStart;
+                current->next->name=*label;
+            } else {
+                labels=new FlashMenuLabel;
+                labels->frame=frameStart;
+                labels->name=*label;
+            }
+        }
+        break;
+    }
+    case 48:ParseDefineFont2Sub((_DEFINEFONT2*)((u8*)header+pos));break;
+    case 46:ParseDefineMorphShapeSub((_DEFINEMORPHSHAPE*)((u8*)header+pos));break;
+    }
+    pos+=size;
+    return end;
+}
+
+extern "C" {
+s32 flcalcBlendColor(s32,s32,f32);
+void flcalcConvFlashMatrix(FLASHMATRIXF*,FLASHMATRIX*);
+void flcalcMulMatrixf(FLASHMATRIXF*,FLASHMATRIXF*,FLASHMATRIXF*);
+void flcalcMulCxform(FLASHCXFORM*,FLASHCXFORM*,FLASHCXFORM*);
+void vectorGraph(s32,s32*,s32*,_SHAPERECORD*,FLASHMATRIXF*,FLASHMATRIXF*,FLASHCXFORM*,u8);
+void msgctrlSetValue(s32,u32);
+void GSmsgPrint2(s32,s32,s32,s32,u32);
+}
+static u8 _drawflag=1;
+void FlashMenu::DrawSprite(_DEFINESPRITE* sprite,FLASHMATRIXF* parent,FLASHCXFORM* parentColor,u16 outerItem,u8 flags) {
+    u16 parentItem=outerItem;
+    FLASHCXFORM combinedColor;
+    FLASHMATRIXF textMatrix;
+    _DEFINESHAPE drawShape;
+    FLASHMATRIXF local,combined;
+    FlashHeader* hdr=header;
+    s32 inherited=flags;
+    s32 offset=0;
+    for(u16 i=0;i<hdr->itemCount;i++,offset+=0x40) {
+        FlashItem* item=(FlashItem*)((u8*)layers[sprite->id].items+offset);
+        if(item->field34) {
+            FlashDataPointer* entry=&((FlashDataPointer*)memory)[item->frame];
+            flcalcConvFlashMatrix(&local,&item->matrix);
+            field10=i;
+            f32 ratio=((FlashItem*)((u8*)layers[sprite->id].items+offset))->depth;
+            flcalcMulMatrixf(&combined,&local,parent);
+            flcalcMulCxform(&combinedColor,&item->cxform,parentColor);
+            item->flag = inherited | item->flag | ((_PLACEOBJECT2*)item->field34)->flags;
+            if(entry->type&1) {
+                u8 drawFlags=item->flag;
+                _DEFINEMORPHSHAPE* morph=(_DEFINEMORPHSHAPE*)entry->data;
+                memset(&drawShape,0,0x1C);
+                drawShape.fillCount=morph->reserved18;
+                drawShape.fills=(FlashFillStyle*)morph->start;
+                drawShape.lineCount=morph->reserved20;
+                drawShape.lines=morph->end;
+                s32 inputOffset=0,outputOffset=0;
+                for(s32 fill=0;fill<(s32)morph->fillCount;fill++,inputOffset+=0xD4,outputOffset+=0x80) {
+                    FlashMorphFillStyle* source=(FlashMorphFillStyle*)((u8*)morph->fills+inputOffset);
+                    FlashFillStyle* destination=(FlashFillStyle*)((u8*)drawShape.fills+outputOffset);
+                    if(source->flags==0) destination->color=flcalcBlendColor(source->colorA,source->colorB,ratio);
+                    else if(source->flags&16) {
+                        u8* input=(u8*)source+0x3C;
+                        u8* output=(u8*)destination+0x20;
+                        for(s32 j=0;j<source->count;j++,input+=0xC,output+=8) {
+                            output[4]=flcalcBlend(input[4],input[5],ratio);
+                            *(u32*)(output+8)=flcalcBlendColor(*(u32*)(input+8),*(u32*)(input+12),ratio);
+                        }
+                        s32* matrix=destination->matrix;
+                        matrix[0]=flcalcBlend(source->matrixA[0],source->matrixB[0],ratio);
+                        matrix[1]=flcalcBlend(source->matrixA[1],source->matrixB[1],ratio);
+                        matrix[2]=flcalcBlend(source->matrixA[2],source->matrixB[2],ratio);
+                        matrix[3]=flcalcBlend(source->matrixA[3],source->matrixB[3],ratio);
+                        matrix[4]=flcalcBlend(source->matrixA[4],source->matrixB[4],ratio);
+                        matrix[5]=flcalcBlend(source->matrixA[5],source->matrixB[5],ratio);
+                    }
+                }
+                BlendShapeRecord(morph->shapes[2]->records,morph->shapes[0]->records,morph->shapes[1]->records,ratio);
+                vectorGraph(field34,&drawShape.fillCount,&drawShape.lineCount,morph->shapes[2]->records,parent,&local,&combinedColor,drawFlags);
+            }
+            if(entry->type&4) {
+                _DEFINESPRITE* child=(_DEFINESPRITE*)entry->data;
+                if(child!=sprite) {
+                    u32 frame=playFrame;
+                    if(header->frameCount>frame) {
+                        pos=start;frameStart=frame;field14=0;
+                        FlashTag* tag=(FlashTag*)((u8*)header+pos);
+                        while(!ParseTag(tag->type,tag->size,false,false,false)) tag=(FlashTag*)((u8*)header+pos);
+                    }
+                    FlashItem* current=(FlashItem*)((u8*)layers[sprite->id].items+offset);
+                    flcalcConvFlashMatrix(&local,&current->matrix);
+                    flcalcMulMatrixf(&combined,&local,parent);
+                    flcalcMulCxform(&combinedColor,&current->cxform,parentColor);
+                    DrawSprite(child,&combined,&combinedColor,i,item->flag);
+                }
+            }
+            if(entry->type&2) {
+                _DEFINESHAPE* shape=(_DEFINESHAPE*)entry->data;
+                if(_drawflag) vectorGraph(field34,&shape->fillCount,&shape->lineCount,shape->records,parent,&local,&combinedColor,item->flag);
+                field20++;
+            }
+            if(entry->type&0x10) {
+                FlashEditText* text=(FlashEditText*)entry->data;
+                if(text->text) {
+                    s32 color=text->color;
+                    u16 height=text->height/20;
+                    if(parent) flcalcMulMatrixf(&textMatrix,&local,parent);
+                    else textMatrix=local;
+                    msgctrlSetValue(0x37,(u32)text->text);
+                    switch(height) {
+                    case 13:GSmsgPrint2(7,(s32)textMatrix.m[4],(s32)textMatrix.m[5],color,0x4278);break;
+                    case 22:GSmsgPrint2(7,(s32)textMatrix.m[4],(s32)textMatrix.m[5],color,0x4275);break;
+                    default:case 18:GSmsgPrint2(7,(s32)textMatrix.m[4],(s32)textMatrix.m[5],color,0x4276);break;
+                    }
+                }
+            }
+            if(entry->type&0x20) DrawText((_DEFINETEXT*)entry->data,parent,&local,parentColor,item->flag);
+        }
+    }
+    u16 id=sprite->id;
+    u16 frameCount=layers[id].reserved0;
+    if(paused==0 && frameCount!=0) {
+        u16 frame=((u16*)items[parentItem].extra)[id];
+        u16 elapsed=timeGetLastFrameTime();
+        GSgfxVideoGetVsyncRate();
+        u16 next=frame+elapsed;
+        if(next>=frameCount) {
+            next=0;
+            FlashHeader* hdr=header;
+            FlashLayer* layer=&layers[id];
+            s32 offset=0;
+            for(u32 i=0;i<hdr->itemCount;i++,offset+=0x40) {
+                ((FlashItem*)((u8*)layer->items+offset))->depth=0.0f;
+                ((FlashItem*)((u8*)layer->items+offset))->field30=0;
+                ((FlashItem*)((u8*)layer->items+offset))->field34=0;
+                flcalcUnitCxform(&((FlashItem*)((u8*)layer->items+offset))->cxform);
+            }
+        }
+        ((u16*)items[parentItem].extra)[id]=next;
+    }
+}
+
+struct FlashTextStyle {
+    u8 flags, reserved1;
+    u16 font;
+    s16 x, y;
+    u16 height, reservedA;
+    u32 color;
+};
+struct FlashGlyph { s32 index, scale; };
+struct FlashPoint { f32 x, y; };
+extern "C" {
+void flcalcMatrixCopy(FLASHMATRIXF*, FLASHMATRIXF*);
+void flcalcMatrixScale(FLASHMATRIXF*, FLASHMATRIXF*, FlashPoint*);
+void flcalcMatrixTranslate(FLASHMATRIXF*, FLASHMATRIXF*, FlashPoint*);
+void flcalcUnitMatrix(FLASHMATRIXF*);
+void flcalcCreateCxform(FLASHCXFORM*, u32);
+}
+void FlashMenu::DrawText(_DEFINETEXT* text, FLASHMATRIXF* parent, FLASHMATRIXF* matrix, FLASHCXFORM* color, u8 flags) {
+    u16 fontId = 0;
+    s16 x = 0, y = 0;
+    FLASHMATRIXF local;
+    FLASHMATRIXF combined;
+    FLASHCXFORM glyphColor;
+    FlashPoint scale, translation;
+    u16 height = 0;
+    s32 currentColor = 0;
+    s32 offset = 0;
+    TextRecord* record = (TextRecord*)text->records;
+    flcalcMatrixCopy(&local, matrix);
+    for (;;) {
+        switch (record->type) {
+        case 1: {
+            FlashTextStyle* style = (FlashTextStyle*)record->data;
+            u8 styleFlags = style->flags;
+            s32 changeFont = styleFlags & 8;
+            if (changeFont) fontId = style->font;
+            if (styleFlags & 4) currentColor = style->color;
+            if (styleFlags & 1) { x = style->x; x = style->x / 20; }
+            if (styleFlags & 2) { y = style->y; y = style->y / 20; }
+            if (changeFont) height = style->height / 20;
+            break;
+        }
+        case 2: {
+            TextGlyphs* glyphs = (TextGlyphs*)record->data;
+            _DEFINEFONT2* font = (_DEFINEFONT2*)((FlashDataPointer*)memory)[fontId].data;
+            if (font) {
+                FlashGlyph* glyph = (FlashGlyph*)glyphs->data;
+                for (s32 i = 0; i < glyphs->count; ++i, ++glyph) {
+                    flcalcCreateCxform(&glyphColor, currentColor);
+                    flcalcMulCxform(&glyphColor, &glyphColor, color);
+                    s32 glyphScale = glyph->scale;
+                    flcalcMatrixCopy(&local, matrix);
+                    if (parent) flcalcMatrixCopy(&combined, parent);
+                    else flcalcUnitMatrix(&combined);
+                    scale.y = scale.x = (f32)glyphScale * 0.0009765625f;
+                    flcalcMatrixScale(&local, &local, &scale);
+                    translation.x = x; translation.y = y;
+                    flcalcMatrixTranslate(&local, &local, &translation);
+                    s32 previous = offset;
+                    offset += height;
+                    local.m[4] += previous;
+                    _DEFINESHAPE* shape = ((_DEFINESHAPE**)font->shapes)[glyph->index];
+                    if (*(u32*)((u8*)shape->records + 8)) {
+                        vectorGraph(field34, &shape->fillCount, &shape->lineCount, shape->records, &combined, &local, &glyphColor, flags);
+                    }
+                }
+            }
+            break;
+        }
+        }
+        TextRecord* next = (TextRecord*)record->next;
+        if (!next) return;
+        record = next;
+    }
+}
+
+extern "C" void vectroGraphSetBlendMode(s32,s32);
+void FlashMenu::DrawSub(GSgfxLayerID, tagWINDOW_WORK*, tagSPRITE_WORK* sprite) {
+    FLASHMATRIXF local, textMatrix;
+    _DEFINESHAPE drawShape;
+    FlashHeader* hdr = header;
+    vectroGraphSetBlendMode(4,5);
+    s32 offset = 0;
+    for (u16 i = 0; i < hdr->itemCount; ++i, offset += 0x40) {
+        FlashItem* item = (FlashItem*)((u8*)items + offset);
+        if (item->field34) {
+            field10 = i;
+            FlashDataPointer* entry = &((FlashDataPointer*)memory)[(u16)item->frame];
+            flcalcConvFlashMatrix(&local, &item->matrix);
+            item->flag |= *(u8*)item->field34;
+            local.m[4] += *(s16*)((u8*)sprite + 0x50);
+            local.m[5] += *(s16*)((u8*)sprite + 0x52);
+            if (item->flag & 0x40) vectroGraphSetBlendMode(2,5);
+            if(entry->type&1) {
+                u8 drawFlags=item->flag;
+                f32 ratio=item->depth;
+                _DEFINEMORPHSHAPE* morph=(_DEFINEMORPHSHAPE*)entry->data;
+                memset(&drawShape,0,0x1C);
+                drawShape.fillCount=morph->reserved18;
+                drawShape.fills=(FlashFillStyle*)morph->start;
+                drawShape.lineCount=morph->reserved20;
+                drawShape.lines=morph->end;
+                s32 inputOffset=0,outputOffset=0;
+                for(s32 fill=0;fill<(s32)morph->fillCount;fill++,inputOffset+=0xD4,outputOffset+=0x80) {
+                    FlashMorphFillStyle* source=(FlashMorphFillStyle*)((u8*)morph->fills+inputOffset);
+                    FlashFillStyle* destination=(FlashFillStyle*)((u8*)drawShape.fills+outputOffset);
+                    if(source->flags==0) destination->color=flcalcBlendColor(source->colorA,source->colorB,ratio);
+                    else if(source->flags&16) {
+                        u8* input=(u8*)source+0x3C;
+                        u8* output=(u8*)destination+0x20;
+                        for(s32 j=0;j<source->count;j++,input+=0xC,output+=8) {
+                            output[4]=flcalcBlend(input[4],input[5],ratio);
+                            *(u32*)(output+8)=flcalcBlendColor(*(u32*)(input+8),*(u32*)(input+12),ratio);
+                        }
+                        s32* matrix=destination->matrix;
+                        matrix[0]=flcalcBlend(source->matrixA[0],source->matrixB[0],ratio);
+                        matrix[1]=flcalcBlend(source->matrixA[1],source->matrixB[1],ratio);
+                        matrix[2]=flcalcBlend(source->matrixA[2],source->matrixB[2],ratio);
+                        matrix[3]=flcalcBlend(source->matrixA[3],source->matrixB[3],ratio);
+                        matrix[4]=flcalcBlend(source->matrixA[4],source->matrixB[4],ratio);
+                        matrix[5]=flcalcBlend(source->matrixA[5],source->matrixB[5],ratio);
+                    }
+                }
+                BlendShapeRecord(morph->shapes[2]->records,morph->shapes[0]->records,morph->shapes[1]->records,ratio);
+                vectorGraph(field34,&drawShape.fillCount,&drawShape.lineCount,morph->shapes[2]->records,0,&local,&item->cxform,drawFlags);
+            }
+
+            if (entry->type & 4) {
+                _DEFINESPRITE* child = (_DEFINESPRITE*)entry->data;
+                u32 frame = playFrame;
+                if (header->frameCount > frame) {
+                    pos = start; frameStart = frame; field14 = 0;
+                    FlashTag* tag = (FlashTag*)((u8*)header + pos);
+                    while (!ParseTag(tag->type, tag->size, false, false, false)) tag = (FlashTag*)((u8*)header + pos);
+                }
+                DrawSprite(child, &local, &item->cxform, i, item->flag);
+            }
+            if (entry->type & 2) {
+                _DEFINESHAPE* shape = (_DEFINESHAPE*)entry->data;
+                if (_drawflag) vectorGraph(field34, &shape->fillCount, &shape->lineCount, shape->records, 0, &local, &item->cxform, item->flag);
+                field20++;
+            }
+            if (entry->type & 0x10) {
+                FlashEditText* text = (FlashEditText*)entry->data;
+                if (text->text) {
+                    textMatrix = local;
+                    s32 color = text->color;
+                    u16 height = text->height / 20;
+                    msgctrlSetValue(0x37, (u32)text->text);
+                    switch (height) {
+                    case 13: GSmsgPrint2(7, (s32)textMatrix.m[4], (s32)textMatrix.m[5], color, 0x4278); break;
+                    case 22: GSmsgPrint2(7, (s32)textMatrix.m[4], (s32)textMatrix.m[5], color, 0x4275); break;
+                    default: case 18: GSmsgPrint2(7, (s32)textMatrix.m[4], (s32)textMatrix.m[5], color, 0x4276); break;
+                    }
+                }
+            }
+            if (entry->type & 0x20) DrawText((_DEFINETEXT*)entry->data, 0, &local, &item->cxform, item->flag);
+        }
+    }
 }

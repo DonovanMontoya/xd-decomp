@@ -60,6 +60,8 @@ static s16 friendXUp__FP7PokemonP12FightPokemonScUsUs(void* pokemon, void* fight
     return (s16)(value-original);
 }
 
+#pragma push
+#pragma opt_common_subs off
 static void hpRecover__FP20ITEMUSE2POKEMON_LOG1PsP7PokemonUcbUsP12FightPokemon(ITEMUSE2POKEMON_LOG1 *arg0, s16 *arg1, void *arg2, u8 arg3, u8 arg4, u16 arg5, void *arg6) {
     LogEntry *temp_r3_3;
     LogEntry *temp_r4;
@@ -126,11 +128,12 @@ block_16:
                         *arg1 = temp_r3_2 + 1;
                     }
                 }
+                u16 recovered = var_r30 - temp_r30;
                 temp_r3_4 = *arg1;
                 if (temp_r3_4 < 0x20) {
                     arg0->e[temp_r3_4].key = 0x15;
                     temp_r4 = &arg0->e[temp_r3_4];
-                    temp_r4->a = (s16) (u16) (var_r30 - temp_r30);
+                    temp_r4->a = (s16) recovered;
                     temp_r4->b = 0;
                     *arg1 = temp_r3_4 + 1;
                 }
@@ -138,6 +141,8 @@ block_16:
         }
     }
 }
+
+#pragma pop
 
 s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3, u8 arg4) {
     ItemParam sp10;
@@ -395,7 +400,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
                 fightSeqCheckSetMotoPokemonToHensinBuff(var_r3_3, 0x7CU);
             }
             if ((logIndex = spA) < 0x20) {
-                arg0->e[logIndex].key = 0;
+                ((s32*)arg0)[(logIndex) * 2] = 0;
                 temp_r3_3 = &arg0->e[logIndex];
                 temp_r3_3->a = 0;
                 temp_r3_3->b = 0;
@@ -428,7 +433,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
                 fightSeqCheckSetMotoPokemonToHensinBuff(var_r3_5, 0x99U);
             }
             if ((logIndex = spA) < 0x20) {
-                arg0->e[logIndex].key = 1;
+                ((s32*)arg0)[(logIndex) * 2] = 1;
                 temp_r3_4 = &arg0->e[logIndex];
                 temp_r3_4->a = 0;
                 temp_r3_4->b = 0;
@@ -467,7 +472,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
             }
         }
         if ((var_r0 != 0) && ((logIndex = spA) < 0x20)) {
-            arg0->e[logIndex].key = 2;
+            ((s32*)arg0)[(logIndex) * 2] = 2;
             temp_r4 = &arg0->e[logIndex];
             temp_r4->a = (s16) var_r0;
             temp_r4->b = 0;
@@ -505,7 +510,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
             }
         }
         if ((var_r0_2 != 0) && ((logIndex = spA) < 0x20)) {
-            arg0->e[logIndex].key = 3;
+            ((s32*)arg0)[(logIndex) * 2] = 3;
             temp_r4_2 = &arg0->e[logIndex];
             temp_r4_2->a = (s16) var_r0_2;
             temp_r4_2->b = 0;
@@ -543,7 +548,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
             }
         }
         if ((var_r0_3 != 0) && ((logIndex = spA) < 0x20)) {
-            arg0->e[logIndex].key = 4;
+            ((s32*)arg0)[(logIndex) * 2] = 4;
             temp_r4_3 = &arg0->e[logIndex];
             temp_r4_3->a = (s16) var_r0_3;
             temp_r4_3->b = 0;
@@ -581,7 +586,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
             }
         }
         if ((var_r0_4 != 0) && ((logIndex = spA) < 0x20)) {
-            arg0->e[logIndex].key = 5;
+            ((s32*)arg0)[(logIndex) * 2] = 5;
             temp_r4_4 = &arg0->e[logIndex];
             temp_r4_4->a = (s16) var_r0_4;
             temp_r4_4->b = 0;
@@ -619,7 +624,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
             }
         }
         if ((var_r0_5 != 0) && ((logIndex = spA) < 0x20)) {
-            arg0->e[logIndex].key = 6;
+            ((s32*)arg0)[(logIndex) * 2] = 6;
             temp_r4_5 = &arg0->e[logIndex];
             temp_r4_5->a = (s16) var_r0_5;
             temp_r4_5->b = 0;
@@ -645,7 +650,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
                     fightSeqCheckSetMotoPokemonToHensinBuff(var_r3_12, 0x99U);
                 }
                 if ((logIndex = spA) < 0x20) {
-                    arg0->e[logIndex].key = 7;
+                    ((s32*)arg0)[(logIndex) * 2] = 7;
                     temp_r4_6 = &arg0->e[logIndex];
                     temp_r4_6->a = 5;
                     temp_r4_6->b = 0;
@@ -667,7 +672,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
                 pokemonResetBasisStatus(var_r31);
                 temp_r3_17 = pokemonBiosGetMaxHp(var_r31);
                 if ((logIndex = spA) < 0x20) {
-                    arg0->e[logIndex].key = 8;
+                    ((s32*)arg0)[(logIndex) * 2] = 8;
                     temp_r4_7 = &arg0->e[logIndex];
                     temp_r4_7->a = 0;
                     temp_r4_7->b = 0;
@@ -700,14 +705,14 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
                 fightSeqCheckSetMotoPokemonToHensinBuff(var_r3_14, 0x7CU);
             }
             if ((logIndex = spA) < 0x20) {
-                arg0->e[logIndex].key = 9;
+                ((s32*)arg0)[(logIndex) * 2] = 9;
                 temp_r3_18 = &arg0->e[logIndex];
                 temp_r3_18->a = 0;
                 temp_r3_18->b = 0;
                 spA = logIndex + 1;
             }
             if ((var_r21_8 != 0) && ((logIndex = spA) < 0x20)) {
-                arg0->e[logIndex].key = 0xA;
+                ((s32*)arg0)[(logIndex) * 2] = 0xA;
                 temp_r3_19 = &arg0->e[logIndex];
                 temp_r3_19->a = 0;
                 temp_r3_19->b = 0;
@@ -735,14 +740,14 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
             fightSeqCheckSetMotoPokemonToHensinBuff(var_r3_15, 0x7CU);
         }
         if ((var_r22 != 0) && ((logIndex = spA) < 0x20)) {
-            arg0->e[logIndex].key = 0xB;
+            ((s32*)arg0)[(logIndex) * 2] = 0xB;
             temp_r3_20 = &arg0->e[logIndex];
             temp_r3_20->a = 0;
             temp_r3_20->b = 0;
             spA = logIndex + 1;
         }
         if ((var_r21_9 != 0) && ((logIndex = spA) < 0x20)) {
-            arg0->e[logIndex].key = 0xC;
+            ((s32*)arg0)[(logIndex) * 2] = 0xC;
             temp_r3_21 = &arg0->e[logIndex];
             temp_r3_21->a = 0;
             temp_r3_21->b = 0;
@@ -760,7 +765,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
             fightSeqCheckSetMotoPokemonToHensinBuff(var_r3_16, 0x7CU);
         }
         if ((logIndex = spA) < 0x20) {
-            arg0->e[logIndex].key = 0xE;
+            ((s32*)arg0)[(logIndex) * 2] = 0xE;
             temp_r3_22 = &arg0->e[logIndex];
             temp_r3_22->a = 0;
             temp_r3_22->b = 0;
@@ -778,7 +783,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
             fightSeqCheckSetMotoPokemonToHensinBuff(var_r3_17, 0x7CU);
         }
         if ((logIndex = spA) < 0x20) {
-            arg0->e[logIndex].key = 0xF;
+            ((s32*)arg0)[(logIndex) * 2] = 0xF;
             temp_r3_23 = &arg0->e[logIndex];
             temp_r3_23->a = 0;
             temp_r3_23->b = 0;
@@ -796,7 +801,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
             fightSeqCheckSetMotoPokemonToHensinBuff(var_r3_18, 0x7CU);
         }
         if ((logIndex = spA) < 0x20) {
-            arg0->e[logIndex].key = 0x10;
+            ((s32*)arg0)[(logIndex) * 2] = 0x10;
             temp_r3_24 = &arg0->e[logIndex];
             temp_r3_24->a = 0;
             temp_r3_24->b = 0;
@@ -820,7 +825,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
                 fightSeqCheckSetMotoPokemonToHensinBuff(var_r3_19, 0x7CU);
             }
             if ((logIndex = spA) < 0x20) {
-                arg0->e[logIndex].key = 0x11;
+                ((s32*)arg0)[(logIndex) * 2] = 0x11;
                 temp_r3_25 = &arg0->e[logIndex];
                 temp_r3_25->a = 0;
                 temp_r3_25->b = 0;
@@ -838,7 +843,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
                 temp_r21_3 = pokemonWazaGetMaxPP(var_r31, arg4) - temp_r21_2;
                 pokemonBiosSetPokemonWazaPp(var_r31, arg4, pokemonBiosGetPokemonWazaPp(var_r31, arg4) + temp_r21_3);
                 if ((logIndex = spA) < 0x20) {
-                    arg0->e[logIndex].key = 0x12;
+                    ((s32*)arg0)[(logIndex) * 2] = 0x12;
                     temp_r4_8 = &arg0->e[logIndex];
                     temp_r4_8->a = (s16) temp_r21_3;
                     temp_r4_8->b = (s16) arg4;
@@ -892,7 +897,7 @@ s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3
                 var_r0_7 = 1;
             } else {
                 if ((logIndex = spA) < 0x20) {
-                    arg0->e[logIndex].key = 0x13;
+                    ((s32*)arg0)[(logIndex) * 2] = 0x13;
                     temp_r4_9 = &arg0->e[logIndex];
                     temp_r4_9->a = var_r5;
                     temp_r4_9->b = 0;
@@ -949,7 +954,7 @@ block_270:
             var_r0_8 = 1;
         } else {
             if ((logIndex = spA) < 0x20) {
-                arg0->e[logIndex].key = 0x14;
+                ((s32*)arg0)[(logIndex) * 2] = 0x14;
                 temp_r4_10 = &arg0->e[logIndex];
                 temp_r4_10->a = var_r5_2;
                 temp_r4_10->b = 0;
@@ -998,7 +1003,7 @@ block_294:
                 }
             }
             if ((var_r0_9 != 0) && ((logIndex = spA) < 0x20)) {
-                arg0->e[logIndex].key = 0x17;
+                ((s32*)arg0)[(logIndex) * 2] = 0x17;
                 temp_r4_11 = &arg0->e[logIndex];
                 temp_r4_11->a = (s16) var_r0_9;
                 temp_r4_11->b = (s16) var_r25_2;
@@ -1040,7 +1045,7 @@ loop_329:
         }
     }
     if ((itemParamGetEvolutionFlag(var_r28) != 0) && (pokemonIsDarkPokemon(var_r31) == 0) && ((temp_r3_38 = pokemonEvolutionCheck(var_r31, 1, arg3, &sp8, &spC), ((temp_r3_38 == 0) == 0)) || (sp8 != 0)) && ((logIndex = spA) < 0x20)) {
-        arg0->e[logIndex].key = 0x18;
+        ((s32*)arg0)[(logIndex) * 2] = 0x18;
         temp_r3_39 = &arg0->e[logIndex];
         temp_r3_39->a = (s16) temp_r3_38;
         temp_r3_39->b = (s16) sp8;
@@ -1088,7 +1093,7 @@ loop_329:
             var_r0_11 = 1;
         } else {
             if ((logIndex = spA) < 0x20) {
-                arg0->e[logIndex].key = 0x19;
+                ((s32*)arg0)[(logIndex) * 2] = 0x19;
                 temp_r4_12 = &arg0->e[logIndex];
                 temp_r4_12->a = var_r5_3;
                 temp_r4_12->b = 0;
@@ -1144,7 +1149,7 @@ block_360:
             var_r0_12 = 1;
         } else {
             if ((logIndex = spA) < 0x20) {
-                arg0->e[logIndex].key = 0x1A;
+                ((s32*)arg0)[(logIndex) * 2] = 0x1A;
                 temp_r4_13 = &arg0->e[logIndex];
                 temp_r4_13->a = var_r5_4;
                 temp_r4_13->b = 0;
@@ -1200,7 +1205,7 @@ block_384:
             var_r0_13 = 1;
         } else {
             if ((logIndex = spA) < 0x20) {
-                arg0->e[logIndex].key = 0x1B;
+                ((s32*)arg0)[(logIndex) * 2] = 0x1B;
                 temp_r4_14 = &arg0->e[logIndex];
                 temp_r4_14->a = var_r5_5;
                 temp_r4_14->b = 0;
@@ -1256,7 +1261,7 @@ block_408:
             var_r0_14 = 1;
         } else {
             if ((logIndex = spA) < 0x20) {
-                arg0->e[logIndex].key = 0x1C;
+                ((s32*)arg0)[(logIndex) * 2] = 0x1C;
                 temp_r4_15 = &arg0->e[logIndex];
                 temp_r4_15->a = var_r5_6;
                 temp_r4_15->b = 0;
@@ -1280,7 +1285,7 @@ block_432:
                 pokemonBiosSetPokemonWazaPp(var_r31, arg4, pokemonBiosGetPokemonWazaPp(var_r31, arg4) + temp_r0_7);
             }
             if ((logIndex = spA) < 0x20) {
-                arg0->e[logIndex].key = 0x1D;
+                ((s32*)arg0)[(logIndex) * 2] = 0x1D;
                 temp_r4_16 = &arg0->e[logIndex];
                 temp_r4_16->a = (s16) temp_r0_7;
                 temp_r4_16->b = (s16) arg4;
@@ -1298,7 +1303,7 @@ block_432:
             if (var_r3_26 == 0) {
                 var_r3_26 = 0;
             } else if ((logIndex = spA) < 0x20) {
-                arg0->e[logIndex].key = 0x1E;
+                ((s32*)arg0)[(logIndex) * 2] = 0x1E;
                 temp_r5_2 = &arg0->e[logIndex];
                 temp_r5_2->a = var_r3_26;
                 temp_r5_2->b = 0;
@@ -1317,7 +1322,7 @@ block_432:
                 if (var_r3_27 == 0) {
                     var_r3_27 = 0;
                 } else if ((logIndex = spA) < 0x20) {
-                    arg0->e[logIndex].key = 0x1E;
+                    ((s32*)arg0)[(logIndex) * 2] = 0x1E;
                     temp_r5_3 = &arg0->e[logIndex];
                     temp_r5_3->a = var_r3_27;
                     temp_r5_3->b = 0;
@@ -1332,7 +1337,7 @@ block_432:
         if ((temp_r3_51 != 0) && (spA > 0)) {
             temp_r3_52 = friendXUp__FP7PokemonP12FightPokemonScUsUs(var_r31, arg2, temp_r3_51, 0xC8U, 0xFFFFU);
             if ((temp_r3_52 != 0) && ((logIndex = spA) < 0x20)) {
-                arg0->e[logIndex].key = 0x1E;
+                ((s32*)arg0)[(logIndex) * 2] = 0x1E;
                 temp_r5_4 = &arg0->e[logIndex];
                 temp_r5_4->a = temp_r3_52;
                 temp_r5_4->b = 0;

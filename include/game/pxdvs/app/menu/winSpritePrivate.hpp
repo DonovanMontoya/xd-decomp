@@ -34,6 +34,29 @@ struct SEQ_WORK_COMMON {
 typedef char SeqWorkCommonSize[sizeof(SEQ_WORK_COMMON) == 0x24 ? 1 : -1];
 typedef char SpriteWorkSize[sizeof(tagSPRITE_WORK) == 0x78 ? 1 : -1];
 
-struct tagSEQ_WORK;
+struct WindowSequenceCommand {
+    union {
+        u8 flags;
+        struct { u8 relative:1; u8 easing:2; u8 axes:2; u8 reserved:3; } bits;
+    };
+    u8 command;
+    s16 duration;
+    s32 x, y;
+};
+struct tagSEQ_WORK {
+    WindowSequenceCommand *commands;
+    s16 index, wait;
+    u8 moveMode, colorMode, scaleMode, loopActive;
+    s16 startX, startY, endX, endY, moveFrame, moveDuration;
+    u8 startColor[4], endColor[4];
+    s16 colorFrame, colorDuration;
+    f32 startScaleX, startScaleY, endScaleX, endScaleY;
+    s16 scaleFrame, scaleDuration, loopCount;
+    u8 loopFlag, pad3B;
+};
+struct WindowSpriteValue {
+    s16 x, y, width, height;
+    u32 resource;
+};
 
 #endif

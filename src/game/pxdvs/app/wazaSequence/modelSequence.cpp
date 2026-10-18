@@ -1279,7 +1279,7 @@ void* GSparticleLoad(void*);
 void GSmodelRecalculateBound(_GSmodel*);
 void GSmodelLinkToGSparticleBank(_GSmodel*, void*);
 void GSmodelSetGSparticleLinkAttachMode(_GSmodel*, s32);
-void GSmodelCreateDistortion(_GSmodel*, u16, u8);
+void GSmodelCreateDistortion(_GSmodel*, u16, u8, u8);
 void GSmodelEnableDistortion(_GSmodel*);
 void GSmodelSetBoundCheck(_GSmodel*, u8);
 void GSmodelSetShadowFlags(_GSmodel*, u32);
@@ -1433,7 +1433,7 @@ u8 ModelSequence::LoadData(u8* data) {
             }
         }
         if (mask != 0) {
-            GSmodelCreateDistortion(model, *(u16*)&pad4C[0], pad4F);
+            GSmodelCreateDistortion(model, *(u16*)&pad4C[0], pad4F, mask);
             GSmodelEnableDistortion(model);
         }
     }
@@ -1444,18 +1444,18 @@ u8 ModelSequence::LoadData(u8* data) {
     if (wazaSequenceSysGetModelShadowLight() != 0 && (u32)wazaSequenceSysGetModelShadowCount() != 0) {
         GSmodelSetShadowFlags(model, 1);
         GSmodelSetShadowLight(model, wazaSequenceSysGetModelShadowLight());
-        void* list = wazaSequenceSysGetModelShadowList();
-        GSmodelSetShadowSurface(model, wazaSequenceSysGetModelShadowCount(), list);
+        archive = wazaSequenceSysGetModelShadowList();
+        GSmodelSetShadowSurface(model, wazaSequenceSysGetModelShadowCount(), archive);
     }
     if (model != 0 && isPokemon == 0 && field46 != 0) {
-        void* part = GSmodelGetPart(model, field46);
-        if (part != 0) {
-            GSpartRegisterAnimMix(part, 2, 0x202, (void*)_getHeadRotationCallback, this);
+        archive = GSmodelGetPart(model, field46);
+        if (archive != 0) {
+            GSpartRegisterAnimMix(archive, 2, 0x202, (void*)_getHeadRotationCallback, this);
             lookEnabled = 1;
             lookVec.param1 = 0.0f;
             lookVec.param2 = 0.0f;
             lookVec.param3 = 0.0f;
-            GSpartFree(part);
+            GSpartFree(archive);
         }
     }
     return 1;

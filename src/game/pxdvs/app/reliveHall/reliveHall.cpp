@@ -605,3 +605,66 @@ s32 CReliveHall::getReliveGiveStageQuantity() {
     }
     return count;
 }
+
+void menuPocketDebugMakePokemonByID(Pokemon&,u16,bool,f32);
+void menuPocketDebugMakeDarkPokemonByID(Pokemon&,u16,f32);
+
+static inline void reliveDebugPutDancer(CReliveStage* stage,Pokemon& pokemon) {
+    s32 index=0;
+    while(pokemonCheckValid(&stage->dancer[index])) {
+        ++index;
+        if(index>=4) { index=-1;break; }
+    }
+    Pokemon* target=&stage->dancer[index];
+    memcpy(target,&pokemon,sizeof(Pokemon));
+    setDancerPlace(stage,target);
+    pokemonInit((u32)&pokemon);
+}
+
+void CReliveHall::debugPokemonSetup(long mode) {
+    static f32 _darkRateTbl[2][10]={
+        {0,0,0,0,0,0,0,0,0,0},
+        {0.1f,0.2f,0.3f,0.4f,0.5f,0.5f,0.5f,0.5f,0.5f,0}
+    };
+    if(mode==0 || mode==1) {
+        init();
+        u16 species=0;
+        CReliveStage* stage=(CReliveStage*)this;
+        for(s32 i=0;i<8;i++,stage++,species+=2) {
+            Pokemon pokemon;
+            s32 count[10]={4,3,2,1,1,1,1,1,1,0};
+            static u16 tempMaxTbl[4]={185,280,387,306};
+            static u16 tempMaxTbl2[3]={390,292,312};
+            u16 next=species;
+            for(s32 j=0;j<count[i];j++,next++) {
+                u16 id;
+                if(i==0) id=tempMaxTbl[j];
+                else if(i==1) id=tempMaxTbl2[j];
+                else id=next;
+                menuPocketDebugMakePokemonByID(pokemon,id,false,0.0f);
+                reliveDebugPutDancer(stage,pokemon);
+            }
+            static u16 dptbl[9]={68,186,187,188,189,190,191,192,193};
+            menuPocketDebugMakePokemonByID(pokemon,dptbl[i],true,_darkRateTbl[mode!=1][i]);
+            stage->putVisitor(pokemon);
+            stage->pairIndex=0;
+        }
+        return;
+    }
+    if(mode==2) {
+        init();
+        CReliveStage* stage=(CReliveStage*)this;
+        for(s32 i=0;i<9;i++,stage++) {
+            Pokemon pokemon;
+            for(s32 j=0;j<4;j++) {
+                static u16 tempMaxTbl[4]={185,280,387,306};
+                menuPocketDebugMakePokemonByID(pokemon,tempMaxTbl[j],false,0.0f);
+                reliveDebugPutDancer(stage,pokemon);
+            }
+            static u16 dptbl[9]={73,1,2,3,4,5,6,7,8};
+            menuPocketDebugMakeDarkPokemonByID(pokemon,dptbl[i],_darkRateTbl[1][i]);
+            stage->putVisitor(pokemon);
+            stage->pairIndex=0;
+        }
+    }
+}

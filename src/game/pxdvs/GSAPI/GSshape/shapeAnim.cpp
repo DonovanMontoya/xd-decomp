@@ -179,29 +179,32 @@ tagGScol4ub GsKeyObject::GetTextureColorLow(const tagGsFilePrimKeyFrame* a, cons
 
 extern "C" GSmtx mtxIdent;
 bool GsKeyObject::GetShapeMatrix(GSmtx* shape,GSmtx* transform,const tagGsFilePrimObjectEntry* object,u8 count,const u8* order,const tagGsFilePrimKeyFrame* a,const tagGsFilePrimKeyFrame* b,f32 t) const {
-    Vec scale,position,pivot,rotation;
+    Vec axis2,axis1,scale,position,pivot,rotation;
     f32* output=&scale.x;
     const f32 *first=&a->scale.x,*second=&b->scale.x;
     for(int i=0;i<3;i++) {
         if(a->transformCurveCount[i]) output[i]=entry->transformScales[0]*shapeCurve(a->transformCurves[i],a->transformCurveCount[i],t);
         else output[i]=(1.0f-t)*first[i]+t*second[i];
     }
+    f32 sx=scale.x,sy=scale.y,sz=scale.z;
     output=&position.x; first=&a->position.x; second=&b->position.x;
     for(int i=0;i<3;i++) {
         if(a->transformCurveCount[i+3]) output[i]=entry->transformScales[1]*shapeCurve(a->transformCurves[i+3],a->transformCurveCount[i+3],t);
         else output[i]=(1.0f-t)*first[i]+t*second[i];
     }
+    f32 px=position.x,py=position.y,pz=position.z;
     output=&pivot.x; first=&a->pivot.x; second=&b->pivot.x;
     for(int i=0;i<3;i++) {
         if(a->transformCurveCount[i+6]) output[i]=entry->transformScales[2]*shapeCurve(a->transformCurves[i+6],a->transformCurveCount[i+6],t);
         else output[i]=(1.0f-t)*first[i]+t*second[i];
     }
+    f32 cx=pivot.x,cy=pivot.y,cz=pivot.z;
     output=&rotation.x; first=&a->rotation.x; second=&b->rotation.x;
     for(int i=0;i<3;i++) {
         if(a->transformCurveCount[i+9]) output[i]=entry->transformScales[3]*shapeCurve(a->transformCurves[i+9],a->transformCurveCount[i+9],t);
         else output[i]=(1.0f-t)*first[i]+t*second[i];
     }
-    f32 sx=scale.x,sy=scale.y,sz=scale.z,px=position.x,py=position.y,pz=position.z,cx=pivot.x,cy=pivot.y,cz=pivot.z,rx=rotation.x,ry=rotation.y,rz=rotation.z;
+    f32 rx=rotation.x,ry=rotation.y,rz=rotation.z;
     f32 nx=-cx,ny=-cy,nz=-cz;
     u8 scaleInShape=1;
     memcpy(transform,&mtxIdent,sizeof(GSmtx));
@@ -221,7 +224,7 @@ bool GsKeyObject::GetShapeMatrix(GSmtx* shape,GSmtx* transform,const tagGsFilePr
             if((f32)fabs(rx)>0.00001f) {
                 Mtx matrix;
                 PSMTXTransApply(transform->matrix,transform->matrix,nx,ny,nz);
-                PSMTXRotRad(matrix,'x',0.017453292f*rx);
+                PSMTXRotRad(matrix,'X',0.017453292f*rx);
                 PSMTXConcat(matrix,transform->matrix,transform->matrix);
                 PSMTXTransApply(transform->matrix,transform->matrix,cx,cy,cz);
             }
@@ -230,7 +233,7 @@ bool GsKeyObject::GetShapeMatrix(GSmtx* shape,GSmtx* transform,const tagGsFilePr
             if((f32)fabs(ry)>0.00001f) {
                 Mtx matrix;
                 PSMTXTransApply(transform->matrix,transform->matrix,nx,ny,nz);
-                PSMTXRotRad(matrix,'y',0.017453292f*ry);
+                PSMTXRotRad(matrix,'Y',0.017453292f*ry);
                 PSMTXConcat(matrix,transform->matrix,transform->matrix);
                 PSMTXTransApply(transform->matrix,transform->matrix,cx,cy,cz);
             }
@@ -239,7 +242,7 @@ bool GsKeyObject::GetShapeMatrix(GSmtx* shape,GSmtx* transform,const tagGsFilePr
             if((f32)fabs(rz)>0.00001f) {
                 Mtx matrix;
                 PSMTXTransApply(transform->matrix,transform->matrix,nx,ny,nz);
-                PSMTXRotRad(matrix,'z',0.017453292f*rz);
+                PSMTXRotRad(matrix,'Z',0.017453292f*rz);
                 PSMTXConcat(matrix,transform->matrix,transform->matrix);
                 PSMTXTransApply(transform->matrix,transform->matrix,cx,cy,cz);
             }
@@ -250,13 +253,13 @@ bool GsKeyObject::GetShapeMatrix(GSmtx* shape,GSmtx* transform,const tagGsFilePr
     else memcpy(shape,&mtxIdent,sizeof(GSmtx));
     if(object->transformEnabled) {
         if(object->rotation2Enabled) {
-            Vec axis; axis.x=object->rotationAxis2.x; axis.y=object->rotationAxis2.y; axis.z=object->rotationAxis2.z;
-            Mtx matrix; PSMTXRotAxisRad(matrix,&axis,object->rotationAngle2);
+            axis2.x=object->rotationAxis2.x; axis2.y=object->rotationAxis2.y; axis2.z=object->rotationAxis2.z;
+            Mtx matrix; PSMTXRotAxisRad(matrix,&axis2,object->rotationAngle2);
             PSMTXConcat(matrix,shape->matrix,shape->matrix);
         }
         if(object->rotation1Enabled) {
-            Vec axis; axis.x=object->rotationAxis1.x; axis.y=object->rotationAxis1.y; axis.z=object->rotationAxis1.z;
-            Mtx matrix; PSMTXRotAxisRad(matrix,&axis,object->rotationAngle1);
+            axis1.x=object->rotationAxis1.x; axis1.y=object->rotationAxis1.y; axis1.z=object->rotationAxis1.z;
+            Mtx matrix; PSMTXRotAxisRad(matrix,&axis1,object->rotationAngle1);
             PSMTXConcat(matrix,shape->matrix,shape->matrix);
         }
         PSMTXTransApply(shape->matrix,shape->matrix,object->position.x,object->position.y,object->position.z);

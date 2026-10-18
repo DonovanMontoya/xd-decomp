@@ -1,7 +1,7 @@
 #ifndef APP_SCRIPT_OBJ_PEOPLE_PRIVATE_HPP
 #define APP_SCRIPT_OBJ_PEOPLE_PRIVATE_HPP
 #include <game/pxdvs/app/script/appScriptPrivate.hpp>
-struct PersonScriptWork {u8 pad[0x54];void *field54;};
+struct PersonScriptWork {u8 pad[0x54];u8 field54;};
 extern "C" {
 void setRpVec__Q28GSscript4TigaFPC5GSvec(GSscript::Tiga *,const GSvec *);
 GSscript::tigaArrayFixed *getArray__Q28GSscript11tigaVariantFv(GSscript::tigaVariant *);

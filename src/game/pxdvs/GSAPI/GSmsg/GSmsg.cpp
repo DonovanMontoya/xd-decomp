@@ -1,3 +1,4 @@
+#pragma dollar_identifiers on
 extern "C" {
 #include <libc/string.h>
 }
@@ -684,8 +685,9 @@ static inline u16 _msgNextCode(MsgTask* task) {
         code = *cursor;
         if (code == 0) {
             if ((s8)task->textDepth == 0) return code;
-            --task->textDepth;
-            task->textCursor = task->returnText[(s8)task->textDepth];
+            s8 depth=(s8)task->textDepth-1;
+            task->textDepth=depth;
+            task->textCursor = task->returnText[depth];
         } else {
             task->textCursor = cursor + 1;
             break;
@@ -987,9 +989,14 @@ double cos(double);
 #pragma dont_inline off
 static inline u32 &msgLayerWord(u32 offset) {return *(u32*)((u8*)_TargetLayer+offset);}
 static inline u8 &msgLayerByte(u32 offset) {return *((u8*)_TargetLayer+offset);}
+static inline u32 &msgLayerWord(GSgfxLayer* layer,u32 offset) {return *(u32*)((u8*)layer+offset);}
+static inline u8 &msgLayerByte(GSgfxLayer* layer,u32 offset) {return *((u8*)layer+offset);}
 static inline u8 msgStepControl(MsgTask *task,u32 code) {
  MsgControl *controls=_pMw->controls;if(!controls)return 0;
- u32 enabled=task->measuring?((controls[code].flags>>3)&1):((controls[code].flags>>4)&1);if(!enabled)return 0;
+ u32 enabled;
+ if(task->measuring==0)enabled=(controls[code].flags>>4)&1;
+ else enabled=(controls[code].flags>>3)&1;
+ if(!enabled)return 0;
  MsgControl *control=&controls[code];
  if(control->callback) {
   u32 result=control->callback(task);u32 kind=(control->flags>>6)&3;
@@ -1001,27 +1008,34 @@ static inline u8 msgStepControl(MsgTask *task,u32 code) {
   }
  }return(control->flags>>5)&1;
 }
-#pragma dont_inline on
+#pragma dont_inline off
 extern "C" u8 lbl_804E834C=3;
+extern "C" {
+static s32 cnt$2342, cnt$2348;
+static s8 init$2343, init$2349;
+}
 s32 _msgMainSub__FP13MSG_TASK_WORKUcUlb(MsgTask *task,u8 mode,u32 buttons,bool paused) {
  u8 quote=0,speaking=0;MsgColor white={0xffffffff};
- if(!task||!task->state)return -1;
+ if(!task)return -1;
+ if(!task->state)return -1;
  spriteSetEnv(msgLayerWord(0x28));setRenderStateAndSelect__10GSgfxLayerFP7GSgfxVF(_TargetLayer,GSgfxVFBuildTemp(0,3,0,0,1,5,1,1,4));
  GStexture *texture=_pMw->textures[_pMw->textureIndex];
- if((GStexture*)msgLayerWord(0x1740)!=texture||(GStexture*)msgLayerWord(0x17f8)!=texture||texture->dirty) {
-  msgLayerWord(0x1740)=(u32)texture;msgLayerWord(0x173c)|=1;msgLayerWord(0x17f8)=(u32)texture;msgLayerWord(0x17f4)|=1;
+ {GSgfxLayer* layer=_TargetLayer;
+ if((GStexture*)msgLayerWord(layer,0x1740)!=texture||(GStexture*)msgLayerWord(layer,0x17f8)!=texture||texture->dirty) {
+  msgLayerWord(layer,0x1740)=(u32)texture;msgLayerWord(layer,0x173c)|=1;msgLayerWord(layer,0x17f8)=(u32)texture;msgLayerWord(layer,0x17f4)|=1;
  }
- msgLayerByte(0xeac)=1;msgLayerWord(0x16cc)|=1;msgLayerWord(0x16a8)|=8;msgLayerWord(0x1784)|=1;msgLayerWord(0x1760)|=8;
- msgLayerWord(0xeb0)=0;msgLayerWord(0xeb4)=0;msgLayerWord(0xeb8)=4;msgLayerWord(0x16d0)|=1;msgLayerWord(0x16a8)|=8;msgLayerWord(0x1788)|=1;msgLayerWord(0x1760)|=8;
+ }
+ {GSgfxLayer* layer=_TargetLayer; msgLayerByte(layer,0xeac)=1;msgLayerWord(layer,0x16cc)|=1;msgLayerWord(layer,0x16a8)|=8;msgLayerWord(layer,0x1784)|=1;msgLayerWord(layer,0x1760)|=8;}
+ {GSgfxLayer* layer=_TargetLayer; msgLayerWord(layer,0xeb0)=0;msgLayerWord(layer,0xeb4)=0;msgLayerWord(layer,0xeb8)=4;msgLayerWord(layer,0x16d0)|=1;msgLayerWord(layer,0x16a8)|=8;msgLayerWord(layer,0x1788)|=1;msgLayerWord(layer,0x1760)|=8;}
  _TargetLayer->setMaterialColor(white);
- msgLayerWord(0x1504)=12;msgLayerWord(0x16fc)|=1;msgLayerWord(0x16a8)|=0x10;msgLayerWord(0x17b4)|=1;msgLayerWord(0x1760)|=0x10;
- msgLayerWord(0xf70)=15;msgLayerWord(0xf74)=14;msgLayerWord(0xf78)=10;msgLayerWord(0xf7c)=15;msgLayerWord(0x16d4)|=1;msgLayerWord(0x16a8)|=8;msgLayerWord(0x178c)|=1;msgLayerWord(0x1760)|=8;
- msgLayerWord(0x1170)=0;msgLayerWord(0x1174)=0;msgLayerWord(0x1178)=0;msgLayerByte(0x117c)=1;msgLayerWord(0x1180)=0;msgLayerWord(0x16dc)|=1;msgLayerWord(0x16a8)|=8;msgLayerWord(0x1794)|=1;msgLayerWord(0x1760)|=8;
- msgLayerWord(0x1070)=7;msgLayerWord(0x1074)=4;msgLayerWord(0x1078)=5;msgLayerWord(0x107c)=7;msgLayerWord(0x16d8)|=1;msgLayerWord(0x16a8)|=8;msgLayerWord(0x1790)|=1;msgLayerWord(0x1760)|=8;
- msgLayerWord(0x12b0)=0;msgLayerWord(0x12b4)=0;msgLayerWord(0x12b8)=0;msgLayerByte(0x12bc)=1;msgLayerWord(0x12c0)=0;msgLayerWord(0x16e0)|=1;msgLayerWord(0x16a8)|=8;msgLayerWord(0x1798)|=1;msgLayerWord(0x1760)|=8;
- _pMw->image=(u8*)GStextureLockImage(_pMw->textures[_pMw->textureIndex],0);
- task->rubyEnabled=(buttons&0x30)!=0;
- u8 multiplier=(*windowGetKeyInfo()&0x30)?lbl_804E834C:1;u8 stop=0;
+ {GSgfxLayer* layer=_TargetLayer; msgLayerWord(layer,0x1504)=12;msgLayerWord(layer,0x16fc)|=1;msgLayerWord(layer,0x16a8)|=0x10;msgLayerWord(layer,0x17b4)|=1;msgLayerWord(layer,0x1760)|=0x10;}
+ {GSgfxLayer* layer=_TargetLayer; msgLayerWord(layer,0xf70)=15;msgLayerWord(layer,0xf74)=14;msgLayerWord(layer,0xf78)=10;msgLayerWord(layer,0xf7c)=15;msgLayerWord(layer,0x16d4)|=1;msgLayerWord(layer,0x16a8)|=8;msgLayerWord(layer,0x178c)|=1;msgLayerWord(layer,0x1760)|=8;}
+ {GSgfxLayer* layer=_TargetLayer; msgLayerWord(layer,0x1170)=0;msgLayerWord(layer,0x1174)=0;msgLayerWord(layer,0x1178)=0;msgLayerByte(layer,0x117c)=1;msgLayerWord(layer,0x1180)=0;msgLayerWord(layer,0x16dc)|=1;msgLayerWord(layer,0x16a8)|=8;msgLayerWord(layer,0x1794)|=1;msgLayerWord(layer,0x1760)|=8;}
+ {GSgfxLayer* layer=_TargetLayer; msgLayerWord(layer,0x1070)=7;msgLayerWord(layer,0x1074)=4;msgLayerWord(layer,0x1078)=5;msgLayerWord(layer,0x107c)=7;msgLayerWord(layer,0x16d8)|=1;msgLayerWord(layer,0x16a8)|=8;msgLayerWord(layer,0x1790)|=1;msgLayerWord(layer,0x1760)|=8;}
+ {GSgfxLayer* layer=_TargetLayer; msgLayerWord(layer,0x12b0)=0;msgLayerWord(layer,0x12b4)=0;msgLayerWord(layer,0x12b8)=0;msgLayerByte(layer,0x12bc)=1;msgLayerWord(layer,0x12c0)=0;msgLayerWord(layer,0x16e0)|=1;msgLayerWord(layer,0x16a8)|=8;msgLayerWord(layer,0x1798)|=1;msgLayerWord(layer,0x1760)|=8;}
+ _pMw->image=(u8*)GStextureLockImage(texture,0);
+ if(buttons&0x30)task->rubyEnabled=1;else task->rubyEnabled=0;
+ u32 multiplier=(*windowGetKeyInfo()&0x30)?lbl_804E834C:1;u8 stop=0;
  task->measuring=0;task->rubyState=0;task->waitPrompt=0;task->closePrompt=0;
  s32 frames=timeGetLastFrameTime();if(frames==0)frames=1;
  if(!paused) {
@@ -1035,21 +1049,21 @@ s32 _msgMainSub__FP13MSG_TASK_WORKUcUlb(MsgTask *task,u8 mode,u32 buttons,bool p
    }
   }
  }
- const u16 *end=task->textCursor;u8 depth=task->textDepth;const u16 *returns[3];returns[0]=task->returnText[0];returns[1]=task->returnText[1];returns[2]=task->returnText[2];
+ const u16 *end=task->textCursor;s8 depth=task->textDepth;const u16 *returns[3];const u16 **savedReturns=returns;savedReturns[0]=task->returnText[0];savedReturns[1]=task->returnText[1];savedReturns[2]=task->returnText[2];
  task->measuring=1;task->cursorX=task->originX;task->cursorY=task->originY;task->textCursor=task->textBase;task->textDepth=0;task->rubyState=0;
  for(;;) {
-  if(task->textCursor==end){s32 i=0;for(;i<(s8)task->textDepth;++i)if(task->returnText[i]!=returns[i])break;if(i==(s8)task->textDepth)break;}
+  if(task->textCursor==end){s32 i=0;for(;i<(s8)task->textDepth;++i)if(task->returnText[i]!=savedReturns[i])break;if(i==(s8)task->textDepth)break;}
   u16 code=_msgNextCode(task);if(!code)break;
-  if(code==0xffff){msgStepControl(task,_msgNextByte(task));if(quote&&task->cursorX==task->originX)task->cursorX+=task->glyphWidth;}
+  if(code==0xffff){msgStepControl(task,_msgNextByte(task));if(quote&&task->cursorX==task->originX)task->cursorX+=(s32)task->glyphWidth;}
   else if(task->rubyState!=2){_msgSetChar(task,code);task->cursorX+=task->charWidth;if(!task->quoteMode){if(code==0x300c)quote=1;if(code==0x300d)quote=0;}if(task->rubyState==1)_msgDispRuby(task);}
  }
  if(mode)speaking=0;
- if(speaking!=task->soundActive){u16 sound=0;if(message_se){for(u32 i=0;i<*message_se_number;++i)if(task->soundClass==message_se[i].category){sound=message_se[i].soundID;break;}}
+ if(speaking!=task->soundActive){u32 sound=0;if(message_se){for(u32 i=0;i<*message_se_number;++i)if(task->soundClass==message_se[i].category){sound=message_se[i].soundID;break;}}
   if(sound){if(speaking)GSsndPlayNow(sound);else GSsndStopNow(sound);}task->soundActive=speaking;
  }
- if(task->waitPrompt){static s32 cnt=0;s32 x=2.0f+task->cursorX;s32 y=8.0f+task->cursorY;y+=(s32)(4.0f*(f32)cos((3.1415927f*(f32)cnt)/25.0f));cnt+=timeGetLastFrameTime();cnt%=50;s32 layer=msgLayerWord(0x28);windowDrawSprite(x,y,0,(u16)menuSubGetKaiwaCsrID(),0,layer);}
- if(task->closePrompt){static s32 cnt=0;s32 y=task->cursorY;s32 x=2.0f+task->cursorX;y+=(s32)(4.0f*(f32)cos((3.1415927f*(f32)cnt)/25.0f));cnt+=timeGetLastFrameTime();cnt%=50;s32 layer=msgLayerWord(0x28);windowDrawSprite(x,y,0,(u16)menuSubGetKaiwaCloseWindowID(),0,layer);}
- task->textCursor=end;task->textDepth=depth;task->returnText[0]=returns[0];task->returnText[1]=returns[1];task->returnText[2]=returns[2];GStextureUnlockImage(_pMw->textures[_pMw->textureIndex]);return 0;
+ if(task->waitPrompt){if(init$2343==0){cnt$2342=0;init$2343=1;}s32 x=2.0f+task->cursorX;s32 y=8.0f+task->cursorY;y+=(s32)(4.0f*(f32)cos((3.1415927f*(f32)cnt$2342)/25.0f));cnt$2342+=timeGetLastFrameTime();cnt$2342%=50;s32 layer=msgLayerWord(0x28);windowDrawSprite(x,y,0,(u16)menuSubGetKaiwaCsrID(),0,layer);}
+ if(task->closePrompt){if(init$2349==0){cnt$2348=0;init$2349=1;}s32 y=task->cursorY;s32 x=2.0f+task->cursorX;y+=(s32)(4.0f*(f32)cos((3.1415927f*(f32)cnt$2348)/25.0f));cnt$2348+=timeGetLastFrameTime();cnt$2348%=50;s32 layer=msgLayerWord(0x28);windowDrawSprite(x,y,0,(u16)menuSubGetKaiwaCloseWindowID(),0,layer);}
+ task->textCursor=end;task->textDepth=depth;task->returnText[0]=savedReturns[0];task->returnText[1]=savedReturns[1];task->returnText[2]=savedReturns[2];GStextureUnlockImage(_pMw->textures[_pMw->textureIndex]);return 0;
 }
 #pragma dont_inline off
 static inline void msgShadowVertex(s16 x,s16 y,u8 alpha,f32 u,f32 v) {
@@ -1060,30 +1074,30 @@ static inline void msgShadowVertex(s16 x,s16 y,u8 alpha,f32 u,f32 v) {
 static inline void msgShadowQuad(s16 x0,s16 y0,s16 x1,s16 y1,u8 alpha,f32 u0,f32 v0,f32 u1,f32 v1) {
  msgShadowVertex(x0,y0,alpha,u0,v0);msgShadowVertex(x1,y0,alpha,u1,v0);msgShadowVertex(x0,y1,alpha,u0,v1);msgShadowVertex(x1,y1,alpha,u1,v1);
 }
-static inline void msgColorVertex(s16 x,s16 y,u32 color,f32 u,f32 v) {
- *(volatile s16*)0xcc008000=x;*(volatile s16*)0xcc008000=y;*(volatile u32*)0xcc008000=color;*(volatile f32*)0xcc008000=u;*(volatile f32*)0xcc008000=v;
+static inline void msgColorVertex(s16 x,s16 y,MSG_TASK_WORK* task,f32 u,f32 v) {
+ *(volatile s16*)0xcc008000=x;*(volatile s16*)0xcc008000=y;*(volatile u32*)0xcc008000=task->color;*(volatile f32*)0xcc008000=u;*(volatile f32*)0xcc008000=v;
 }
-#pragma dont_inline on
+#pragma dont_inline off
 void _msgMakeTexture(MSG_TASK_WORK *task,u8 *pixels,s16 width,s16 height,s16 bearing) {
  if(_pMw->textureX+width+2>=512){_pMw->textureY+=_pMw->rowHeight+2;_pMw->textureX=2;_pMw->rowHeight=task->glyphHeight+2;if(_pMw->textureY+_pMw->rowHeight>=512)_pMw->textureY=1;}
  if(_pMw->rowHeight<height)_pMw->rowHeight=task->glyphHeight;
  s32 bytes=((width+1)&~1)/2;u8 *image=_pMw->image;
- for(s32 y=-1;y<height+1;++y){s32 row=_pMw->textureY+y;for(s32 x=-2;x<width+2;x+=2){s32 column=_pMw->textureX+x;image[(((column>>3)+((row>>3)<<6))<<5)+(((column&7)+(row&7)*8)>>1)]=0;}}
- for(s32 y=0;y<height;++y){u8 *source=pixels+y*bytes;s32 row=_pMw->textureY+y;for(s32 x=0;x<width;x+=2){s32 column=_pMw->textureX+x;image[(((column>>3)+((row>>3)<<6))<<5)+(((column&7)+(row&7)*8)>>1)]=*source++;}}
+ for(s32 y=-1;y<height+1;++y){s32 row=_pMw->textureY+y;for(s32 x=-2;x<width+2;x+=2){s32 column=_pMw->textureX+x;image[(((column&7)+(row&7)*8)>>1)+(((column>>3)+((row>>3)<<6))<<5)]=0;}}
+ for(s32 y=0;y<height;++y){u8 *source=pixels+y*bytes;s32 row=_pMw->textureY+y;for(s32 x=0;x<width;x+=2){s32 column=_pMw->textureX+x;image[(((column&7)+(row&7)*8)>>1)+(((column>>3)+((row>>3)<<6))<<5)]=*source++;}}
  s16 x0=task->cursorX;s16 y0=task->reserved43+(bearing*task->scaleY+task->cursorY);s16 x1=width*task->scaleX+x0;s16 y1=height*task->scaleY+y0;
  f32 u0=_pMw->textureX*0.001953125f,v0=_pMw->textureY*0.001953125f,u1=(_pMw->textureX+width)*0.001953125f,v1=(_pMw->textureY+height)*0.001953125f;
- msgLayerWord(0x1998)=0x98;u8 alpha=(u8)task->color*0xc0/255;
- switch(task->immediate){default:beginSurface__10GSgfxLayerFUs(_TargetLayer,4);break;
+ msgLayerWord(0x1998)=0x98;u8 alpha=(u32)(u8)task->color*0xc0/255;
+ switch(task->immediate){case 0:default:beginSurface__10GSgfxLayerFUs(_TargetLayer,4);break;
  case 1:beginSurface__10GSgfxLayerFUs(_TargetLayer,8);msgShadowQuad(x0+1,(s16)(y0-2)+1,x1+1,(s16)(y1-2)+1,alpha,u0,v0,u1,v1);break;
  case 2:beginSurface__10GSgfxLayerFUs(_TargetLayer,20);s16 top=y0-2,bottom=y1-2;msgShadowQuad(x0-1,top,x1-1,bottom,alpha,u0,v0,u1,v1);msgShadowQuad(x0+1,top,x1+1,bottom,alpha,u0,v0,u1,v1);msgShadowQuad(x0,top-1,x1,bottom-1,alpha,u0,v0,u1,v1);msgShadowQuad(x0,top+1,x1,bottom+1,alpha,u0,v0,u1,v1);break;
  }
- msgColorVertex(x0,y0-2,task->color,u0,v0);msgColorVertex(x1,y0-2,task->color,u1,v0);msgColorVertex(x0,y1-2,task->color,u0,v1);msgColorVertex(x1,y1-2,task->color,u1,v1);endSurface__10GSgfxLayerFv(_TargetLayer);_pMw->textureX+=bytes*2+2;
+ msgColorVertex(x0,y0-2,task,u0,v0);msgColorVertex(x1,y0-2,task,u1,v0);msgColorVertex(x0,y1-2,task,u0,v1);msgColorVertex(x1,y1-2,task,u1,v1);endSurface__10GSgfxLayerFv(_TargetLayer);_pMw->textureX+=bytes*2+2;
 }
 #pragma dont_inline off
 static inline void msgMissingVertex(s16 x,s16 y) {
  *(volatile s16*)0xcc008000=x;*(volatile s16*)0xcc008000=y;*(volatile u8*)0xcc008000=0xff;*(volatile u8*)0xcc008000=0xff;*(volatile u8*)0xcc008000=0xff;*(volatile u8*)0xcc008000=0xff;
 }
-#pragma dont_inline on
+#pragma dont_inline off
 void _msgSetChar(MSG_TASK_WORK *task,u16 code) {
  tagFONT_INFO *group;
  if(code==0x20){task->charWidth=((u32)task->glyphWidth>>1)*task->scaleX;return;}
@@ -1098,6 +1112,7 @@ void _msgSetChar(MSG_TASK_WORK *task,u16 code) {
 }
 #include <libc/stdarg.h>
 extern "C" s32 logVsnprintf_float(char*,u32,const char*,va_list);
+extern "C" void _msgSetChar__FP13MSG_TASK_WORKUs(MSG_TASK_WORK*,u16);
 extern "C" s32 GSprint(u32 layer,s32 x,s32 y,u32 color,const char *format,...) {
  static MsgTask Task;static char buff[256];static u16 gcstr[512];
  _TargetLayer=GSgfxLayerFindByID(layer);if(!_TargetLayer)return -1;
@@ -1107,6 +1122,6 @@ extern "C" s32 GSprint(u32 layer,s32 x,s32 y,u32 color,const char *format,...) {
  GStexture *texture=_pMw->textures[_pMw->textureIndex];
  if((GStexture*)msgLayerWord(0x1740)!=texture||(GStexture*)msgLayerWord(0x17f8)!=texture||texture->dirty){msgLayerWord(0x1740)=(u32)texture;msgLayerWord(0x173c)|=1;msgLayerWord(0x17f8)=(u32)texture;msgLayerWord(0x17f4)|=1;}
  _pMw->image=(u8*)GStextureLockImage(_pMw->textures[_pMw->textureIndex],0);task->cursorX=task->originX;task->cursorY=task->originY;
- for(;;){u16 code=_msgNextCode(task);switch(code){case 0:break;case 10:case 13:continue;default:_msgSetChar(task,code);task->cursorX+=task->charWidth;continue;}break;}
+ for(;;){u16 code=_msgNextCode(task);switch(code){case 0:break;case 10:case 13:continue;default:_msgSetChar__FP13MSG_TASK_WORKUs(task,code);task->cursorX+=task->charWidth;continue;}break;}
  GStextureUnlockImage(_pMw->textures[_pMw->textureIndex]);return 0;
 }

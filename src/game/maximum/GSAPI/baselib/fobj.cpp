@@ -304,7 +304,7 @@ static inline void FObjUpdateAnim(HSD_FObj* fobj, void* obj, HSD_ObjUpdateFunc o
         }
         break;
     default:
-        break;
+        return;
     }
     obj_update(obj, fobj->obj_type, &fobjdata);
 }

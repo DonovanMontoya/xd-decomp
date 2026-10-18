@@ -54,7 +54,7 @@ private:
   u8 battleResumeFloorIndex;     // 0x95c
 
 public:
-  void itemSort(u8);
+  bool itemSort(u8);
   void setBattleResumeFloorIndex(u8);
   u8 getBattleResumeFloorIndex() const;
   void setBattleResumeFloorID(uint);
@@ -62,9 +62,9 @@ public:
   u32 getHeroObjID(s32, s32);
   void setHeroStyle(u8, bool);
   u8 getHeroStyle() const;
-  void pokemonGet(HeroPokemonGetParam *, bool);
+  s16 pokemonGet(HeroPokemonGetParam *, bool);
   u32 getLegendPokemonSize() const;
-  void itemQuantity(u16);
+  u32 itemQuantity(u16);
   Hero *getHeroPtr();
   void getRestertPos(GSvec *, short &) const;
   void setRestertPos();

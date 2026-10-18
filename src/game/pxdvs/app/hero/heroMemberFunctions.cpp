@@ -6,6 +6,20 @@
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/pxdvs/app/pokemon/pokemonBios.hpp>
 
+extern "C" {
+void* heroItemGetItemKindToItemAryPtr(Hero*,u8,u16*,u16*,u8*,u8*);
+void* heroItemGetItemDataIdToItemAryPtr(Hero*,u16,u16*,u16*,u8*,u8*);
+void itemSortAryByPriority(void*,u16,s32);
+u32 itemGetQuantityInAry(void*,u16,u16,u16);
+u32 gamedataGetStatus(u32,u32);
+void pokemonCreate(Pokemon*,u16,u8,u32);
+void pokemonWazaCreate(Pokemon*,u16,u16);
+u32 pokemonCreateRndFit(Pokemon*,s32,s32,s32,u32);
+void pokemonSetDarkPokemonStatus(Pokemon*,u16);
+void memoDataSet(u32,Pokemon*);
+s16 heroGetPokemon(Hero*,Pokemon*,bool);
+}
+
 const f32 unkFloat = 57.29578;
 
 /*
@@ -13,7 +27,13 @@ const f32 unkFloat = 57.29578;
  * Address:	801500F0
  * Size:	000064
  */
-//void Hero::itemSort(u8) {}
+bool Hero::itemSort(u8 kind) {
+    u16 count;
+    void* items = heroItemGetItemKindToItemAryPtr(this,kind,&count,0,0,0);
+    if ((u8)(kind-1)>1) return false;
+    itemSortAryByPriority(items,count,kind);
+    return true;
+}
 
 /*
  * --INFO--
@@ -135,7 +155,40 @@ u8 Hero::getHeroStyle() const { return heroStyle; }
  * Address:	8015030C
  * Size:	000210
  */
-//void Hero::pokemonGet(HeroPokemonGetParam *, bool) {}
+s16 Hero::pokemonGet(HeroPokemonGetParam* param, bool sendToBox) {
+    Pokemon pokemon;
+    pokemonCreate(&pokemon,param->pokemonDataID,param->catchLevel,gamedataGetStatus(0,1));
+    pokemon.setFriendLevel(param->friendLevel);
+    pokemon.setCatchFloorId(param->catchFloorID);
+    pokemon.setCatchLevel(param->catchLevel);
+    pokemon.setCatchBallId(4);
+    pokemon.setCatchTrainerSex(param->trainerSexID);
+    pokemon.setCatchTrainerRnd(param->trainerRnd);
+    pokemon.setCatchTrainerNamePtr(param->trainerNamePtr);
+    if(param->nicknamePtr)pokemon.setNicknamePtr(param->nicknamePtr);
+    pokemon.setExp(param->exp);
+    for(u16 i=0;i<4;i++) {
+        u16 move=(&param->move1)[i];
+        if(move && move!=0x176)pokemonWazaCreate(&pokemon,i,move);
+    }
+    u32 rnd;
+    if(param->shadowPokemonDataID)rnd=pokemonCreateRndFit(&pokemon,-1,-1,0,param->trainerRnd);
+    else rnd=pokemonCreateRndFit(&pokemon,-1,-1,-1,param->trainerRnd);
+    pokemonSetStatus(&pokemon,0,0x6F,0,rnd);
+    if(param->shadowPokemonDataID)pokemonSetDarkPokemonStatus(&pokemon,param->shadowPokemonDataID);
+    pokemonResetBasisStatus(&pokemon);
+    memoDataSet(0,&pokemon);
+    s16 result=heroGetPokemon(this,&pokemon,sendToBox);
+    if(param->shadowPokemonDataID && result>=0) {
+        DarkPokemon* dark=pokemon.getDarkPokemon();
+        if(dark) {
+            dark->setPlace(place1,(u8)result);
+            dark->addStatus(darkStatus3);
+            if(dark->getSnatchFromWho()==snatchWho0)dark->setSnatchFromWho(snatchWho1);
+        }
+    }
+    return result;
+}
 
 /*
  * --INFO--
@@ -164,7 +217,14 @@ u32 Hero::getLegendPokemonSize() const {
  * Address:	801505A4
  * Size:	000068
  */
-//void Hero::itemQuantity(u16) {}
+u32 Hero::itemQuantity(u16 id) {
+    u16 count=0,max=0;
+    u8 flag;
+    void* items=heroItemGetItemDataIdToItemAryPtr(this,id,&count,&max,&flag,0);
+    u32 quantity;
+    quantity = !items ? 0 : itemGetQuantityInAry(items,count,id,max);
+    return quantity;
+}
 
 /*
  * --INFO--
@@ -235,6 +295,7 @@ bool Hero::deletePokemon(s32 partySlot) {
  * Address:	80150714
  * Size:	000080
  */
+#pragma dont_inline on
 bool Hero::setPokemon(const Pokemon * pokemonSrcAddr, s32 partySlot) {
   bool isPokemonSet;
 
@@ -254,25 +315,23 @@ bool Hero::setPokemon(const Pokemon * pokemonSrcAddr, s32 partySlot) {
   return isPokemonSet;
 }
 
+#pragma dont_inline reset
+
 /*
  * --INFO--
  * Address:	80150794
  * Size:	000094
  */
-// u32 Hero::addPokemon(const Pokemon * pokemon) {
-//   u32 partySlot = 0;
-//   Pokemon * pokemonAtSlot;
-
-//   for (partySlot = 0; partySlot < 6; partySlot++) {
-//     pokemonAtSlot = getPokemon(partySlot);
-//     if (!pokemonAtSlot->checkValid()) {
-//       setPokemon(pokemon, partySlot);
-//       return partySlot;
-//     }
-//   }
-
-//   return -1;
-// }
+u32 Hero::addPokemon(const Pokemon* pokemon) {
+    for(u8 i=0;i<6;i++) {
+        Pokemon* current=getPokemon(i);
+        if(!current->checkValid()) {
+            setPokemon(pokemon,i);
+            return i;
+        }
+    }
+    return -1;
+}
 
 /*
  * --INFO--

@@ -27,13 +27,13 @@ void *GSresGetResource(u32, s32);
 void GSmodelGetFrameCount(u32, f32 *, f32 *);
 u8 GSgfxVideoGetVsyncRate();
 void HSD_ArchiveParse(void *, void *, u32);
-u8 GSmodelIsAnimating();
+u8 GSmodelIsAnimating(u32);
 u8 GSmodelHasAnimationEnded(u32);
 void PSVECScale(f32 *, f32 *, f32);
 u8 GSparticleIsGeneratorAlive(u32);
 void GSparticleSetGeneratorPosition(u32, f32 *);
 void GSparticleSetGeneratorRotation(u32, f32 *);
-void GSparticleSetGeneratorScale(u32, f32 *, s32, s32);
+void GSparticleSetGeneratorScale(u32, f32 *, u8, s32);
 void GSmodelRemoveNull(u32);
 void *GSmodelGetBound(u32);
 void GSboundGetWorldPosition(void *, f32 *);
@@ -481,32 +481,27 @@ static inline void *GetLensFlarePart(SequenceEntry *entry) {
     void *part;
     if (entry->fieldA & 1) {
         u8 id = entry->linkId;
-        if (id != 0 && id != 0xFF) {
-            SequenceEntry *linked = entry->waza->GetEntryFromID(id);
-            if (linked->dataType == 2) {
-                u32 model = ((ModelEntry *)linked)->model;
-                if (linked->startTime > entry->startTime) {
-                    part = 0;
-                } else if (model != 0) {
-                    part = GSmodelGetPart(model, entry->field12);
-                } else {
-                    part = 0;
-                }
-            } else {
-                part = 0;
-            }
-        } else {
+        if (id == 0 || id == 0xFF) goto unavailable;
+        SequenceEntry *linked = entry->waza->GetEntryFromID(id);
+        if (linked->dataType != 2) goto unavailable;
+        u32 model = ((ModelEntry *)linked)->model;
+        if (linked->startTime > entry->startTime) {
             part = 0;
+        } else if (model != 0) {
+            part = GSmodelGetPart(model, entry->field12);
+        } else {
+            goto unavailable;
         }
     } else {
         SequenceBase *seq = entry->waza->sequence;
         seq = seq->type == 1 ? seq : 0;
-        if (seq != 0) {
-            part = ((ModelSequence *)seq)->GetPart((enumNullJointName)entry->field10);
-        } else {
-            part = 0;
-        }
+        if (seq == 0) goto unavailable;
+        part = ((ModelSequence *)seq)->GetPart((enumNullJointName)entry->field10);
     }
+    goto done;
+unavailable:
+    part = 0;
+done:
     return part;
 }
 
@@ -685,6 +680,10 @@ bool CameraEntry::Update(f32 dt) {
     f32 position[3];
     time += dt;
     switch (cameraType) {
+    default:
+        goto finish;
+    case 2:
+        break;
     case 0:
         if (time - startTime >= param.f) {
             waza->done = 1;
@@ -695,7 +694,7 @@ bool CameraEntry::Update(f32 dt) {
         if (gCameraShakeModel == 0) {
             return false;
         }
-        if (GSmodelIsAnimating() == 0 || GSmodelHasAnimationEnded(gCameraShakeModel) != 0) {
+        if (GSmodelIsAnimating(gCameraShakeModel) == 0 || GSmodelHasAnimationEnded(gCameraShakeModel) != 0) {
             return false;
         }
         void *part = GSmodelGetPart(gCameraShakeModel, 1);
@@ -707,9 +706,10 @@ bool CameraEntry::Update(f32 dt) {
         cameraSetOffsetPosition(position);
         cameraSetOffsetRotation(rotation);
         GSpartFree(part);
-        break;
+        return true;
     }
     }
+finish:
     return true;
 }
 
@@ -900,7 +900,7 @@ bool ParticleEntry::Update(f32 dt) {
         seq->GetRotation(rotation);
         seq->GetScale(scale);
         u32 flags = field34;
-        s32 a = (flags >> 5) & 1;
+        u8 a = (flags >> 5) & 1;
         s32 b = (flags >> 9) & 1;
         GSparticleSetGeneratorPosition(generator, position);
         GSparticleSetGeneratorRotation(generator, rotation);
@@ -1149,6 +1149,12 @@ void EffectEntry::Unload(u8 **data) {
     }
 }
 
+static inline u32 interpolateEffectChannel(f32 t, u8 first, u8 last) {
+    f32 a = first;
+    f32 b = last;
+    return (s32)(a + t * (b - a));
+}
+
 bool EffectEntry::Update(f32 dt) {
     f32 rate;
     time += dt;
@@ -1202,34 +1208,32 @@ bool EffectEntry::Update(f32 dt) {
         filterEffect *fe = (filterEffect *)effect;
         u8 *c = (u8 *)table + index * 16;
         f32 t = rate;
-        bool useAlpha = false;
         if (t < 0.0f) t = 0.0f;
         if (t > 1.0f) t = 1.0f;
-        u8 out[4];
-        for (int i = 0; i < 4; i++) {
-            f32 a = c[i];
-            f32 b = c[i + 4];
-            out[i] = (s32)(a + t * (b - a));
-        }
-        fe->color[0] = out[0];
-        fe->color[1] = out[1];
-        fe->color[2] = out[2];
+        u32 red = interpolateEffectChannel(t, c[0], c[4]);
+        u32 green = interpolateEffectChannel(t, c[1], c[5]);
+        u32 blue = interpolateEffectChannel(t, c[2], c[6]);
+        u32 alpha = interpolateEffectChannel(t, c[3], c[7]);
+        bool useAlpha = false;
+        fe->color[0] = red;
+        fe->color[1] = green;
+        fe->color[2] = blue;
         if (fe->modulation == 0 || fe->pe != 0) {
             useAlpha = true;
         }
-        fe->color[3] = useAlpha ? out[3] : 255;
+        fe->color[3] = useAlpha ? alpha : 255;
         break;
     }
     case 6: {
-        f32 *e = (f32 *)((u8 *)table + index * 16);
-        f32 a = e[0];
-        ((envMapEffect *)effect)->value = a + rate * (e[1] - a);
+        f32 *e = (f32 *)table;
+        f32 a = e[index * 4];
+        ((envMapEffect *)effect)->value = a + rate * (e[index * 4 + 1] - a);
         break;
     }
     case 7: {
-        f32 *e = (f32 *)((u8 *)table + index * 16);
-        f32 a = e[0];
-        ((blurEffect *)effect)->value = a + rate * (e[1] - a);
+        f32 *e = (f32 *)table;
+        f32 a = e[index * 4];
+        ((blurEffect *)effect)->value = a + rate * (e[index * 4 + 1] - a);
         break;
     }
     case 1:

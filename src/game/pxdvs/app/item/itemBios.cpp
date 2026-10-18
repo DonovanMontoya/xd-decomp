@@ -11,52 +11,133 @@ extern u8 item_data_prime[]; extern u32 *item_data_prime_number;
 #define ITEM_FIELD(T, P, O) (*((T *)((u8 *)(P) + (O))))
 
 extern "C" {
-s32 itemParamGetRecoverType(void *arg0) {
-    u8 *data = (u8 *)arg0;
-    s32 count = 0;
-    s32 type = 0;
-
-    if (data == NULL) {
-        return 0x16;
+struct ItemParamFlags {
+    u8 b0_0 : 1;
+    u8 b0_1 : 1;
+    u8 b0_2 : 1;
+    u8 b0_3 : 4;
+    u8 b0_4 : 1;
+    u8 b1_0 : 4;
+    u8 b1_1 : 4;
+    u8 b2_0 : 4;
+    u8 b2_1 : 4;
+    u8 b3_0 : 1;
+    u8 b3_1 : 1;
+    u8 b3_2 : 1;
+    u8 b3_3 : 1;
+    u8 b3_4 : 1;
+    u8 b3_5 : 1;
+    u8 b3_6 : 1;
+    u8 b3_7 : 1;
+    u8 b4_0 : 1;
+    u8 b4_1 : 1;
+    u8 b4_2 : 1;
+    u8 b4_3 : 1;
+    u8 b4_4 : 1;
+    u8 b4_5 : 1;
+    u8 b4_6 : 1;
+    u8 b4_7 : 1;
+};
+struct ItemParamConversion { u32 field; u32 offset; u8 mask; s32 type; };
+#pragma peephole on
+void itemParamConvertOrigFormat(ItemParamRecord* target, const u8* original) {
+    ItemParamConversion table[32] = {
+        {0, 0, 0x80, 0},
+        {1, 0, 0x40, 0},
+        {2, 0, 0x30, 0},
+        {3, 0, 0x0F, 1},
+        {4, 1, 0xF0, 1},
+        {5, 1, 0x0F, 1},
+        {6, 2, 0xF0, 1},
+        {7, 2, 0x0F, 1},
+        {8, 3, 0x80, 0},
+        {9, 3, 0x40, 0},
+        {10, 3, 0x20, 0},
+        {11, 3, 0x10, 0},
+        {12, 3, 0x08, 0},
+        {13, 3, 0x04, 0},
+        {14, 3, 0x02, 0},
+        {15, 3, 0x01, 0},
+        {16, 4, 0x20, 0},
+        {17, 4, 0x01, 2},
+        {18, 4, 0x02, 2},
+        {19, 4, 0x40, 0},
+        {20, 4, 0x04, 2},
+        {21, 4, 0x10, 0},
+        {22, 4, 0x08, 2},
+        {23, 4, 0x80, 0},
+        {24, 5, 0x01, 2},
+        {25, 5, 0x02, 2},
+        {26, 5, 0x04, 2},
+        {27, 5, 0x08, 2},
+        {28, 5, 0x10, 0},
+        {29, 5, 0x20, 3},
+        {30, 5, 0x40, 3},
+        {31, 5, 0x80, 3},
+    };
+    ItemParamConversion* entry;
+    s32 i;
+    const u8* cursor = original + 6;
+    u8 value;
+    s8 signedValue;
+    u8 flag;
+    entry = table;
+    for (i = 0; i < 32; ++i, ++entry) {
+        s32 type = entry->type;
+        s32 bits = original[entry->offset];
+        if (type == 3 || type == 2) {
+            if (bits & entry->mask) {
+                value = *cursor++;
+                if (type == 3) signedValue = (s8)value;
+            } else if (type == 3) signedValue = 0;
+        } else {
+            s32 mask = entry->mask;
+            bits &= mask;
+            s32 shift = 0;
+            for (; shift < 8 && !((mask >> shift) & 1); ++shift) {}
+            value = (u8)((u8)bits >> shift);
+            if (type == 0) {
+                if (value == 0) flag = 0;
+                else flag = 1;
+            }
+        }
+        switch(entry->field) {
+        case 0: ((ItemParamFlags*)target)->b0_0 = flag; break;
+        case 2: ((ItemParamFlags*)target)->b0_2 = flag; break;
+        case 3: ((ItemParamFlags*)target)->b0_3 = value; break;
+        case 4: ((ItemParamFlags*)target)->b1_0 = value; break;
+        case 5: ((ItemParamFlags*)target)->b1_1 = value; break;
+        case 6: ((ItemParamFlags*)target)->b2_0 = value; break;
+        case 7: ((ItemParamFlags*)target)->b2_1 = value; break;
+        case 8: ((ItemParamFlags*)target)->b3_0 = flag; break;
+        case 9: ((ItemParamFlags*)target)->b3_1 = flag; break;
+        case 10: ((ItemParamFlags*)target)->b3_2 = flag; break;
+        case 11: ((ItemParamFlags*)target)->b3_3 = flag; break;
+        case 12: ((ItemParamFlags*)target)->b3_4 = flag; break;
+        case 13: ((ItemParamFlags*)target)->b3_5 = flag; break;
+        case 14: ((ItemParamFlags*)target)->b3_6 = flag; break;
+        case 15: ((ItemParamFlags*)target)->b3_7 = flag; break;
+        case 16: ((ItemParamFlags*)target)->b4_0 = flag; break;
+        case 17: target->hpEffortUp = value; break;
+        case 18: target->attackEffortUp = value; break;
+        case 19: ((ItemParamFlags*)target)->b4_1 = flag; break;
+        case 20: target->hpUp = value; break;
+        case 21: ((ItemParamFlags*)target)->b4_2 = flag; break;
+        case 22: target->ppUp = value; break;
+        case 23: ((ItemParamFlags*)target)->b4_3 = flag; break;
+        case 24: target->defenceEffortUp = value; break;
+        case 25: target->quickEffortUp = value; break;
+        case 26: target->spDefenceEffortUp = value; break;
+        case 27: target->spAttackEffortUp = value; break;
+        case 28: ((ItemParamFlags*)target)->b4_4 = flag; break;
+        case 29: target->friend1Up = signedValue; break;
+        case 30: target->friend2Up = signedValue; break;
+        case 31: target->friend3Up = signedValue; break;
+        }
     }
-    if ((data[0] & 0x20) != 0 || (data[0] & 0x1E) != 0 ||
-        (data[1] & 0xF0) != 0 || (data[1] & 0x0F) != 0 ||
-        (data[2] & 0xF0) != 0 || (data[2] & 0x0F) != 0 ||
-        (data[3] & 0x80) != 0) {
-        return 0;
-    }
-    if ((data[0] & 0x40) != 0) {
-        return 1;
-    }
-    if ((data[3] & 0x40) != 0) {
-        return 2;
-    }
-    if ((data[3] & 0x20) != 0) { type = 3; ++count; }
-    if ((data[3] & 0x10) != 0) { type = 4; ++count; }
-    if ((data[3] & 0x08) != 0) { type = 5; ++count; }
-    if ((data[3] & 0x04) != 0) { type = 6; ++count; }
-    if ((data[3] & 0x02) != 0) { type = 7; ++count; }
-    if ((data[3] & 0x01) != 0) { type = 8; ++count; }
-    if ((data[0] & 0x80) != 0) { type = 9; ++count; }
-    if (count > 1) {
-        return 0xA;
-    }
-    if (count == 1) {
-        return type;
-    }
-    if (data[0xA] != 0) return 0xB;
-    if (data[9] != 0) return 0xC;
-    if (data[8] != 0) return 0xD;
-    if (data[0xF] != 0) return 0xE;
-    if (data[0xE] != 0) return 0xF;
-    if (data[0xD] != 0) return 0x10;
-    if (data[0xC] != 0) return 0x11;
-    if ((data[4] & 0x10) != 0) return 0x12;
-    if ((data[4] & 0x80) != 0) return 0x13;
-    if ((data[4] & 0x08) != 0) return 0x14;
-    if ((data[4] & 0x20) != 0) return 0x15;
-    return data[0xB] != 0 ? 0x15 : 0x16;
 }
+
+#pragma peephole reset
 s8 itemParamGetFriend3Up(void *arg0) {
     if (arg0 == NULL) {
         return 0;
@@ -304,11 +385,63 @@ s32 itemParamGetMeromeroFlag(u8 *arg0) {
     return (((u8) *arg0 >> 7U) & 1) != 0;
 }
 
-void *itemParamGetPtr(u8 arg0) {
-    if (arg0 >= (u32) item_param_number) {
-        return NULL;
-    }
-    return item_param + ((arg0 * 0x10) & 0xFF0);
+static inline u8 itemRecoveryFlag(void *data, u32 offset, u32 shift) {
+    if (data == NULL) return 0;
+    s32 bit = (((u8*)data)[offset] >> shift) & 1;
+    return (u32)(-bit | bit) >> 31;
+}
+static inline u8 itemRecoveryNibble(void *data, u32 offset, u32 shift) {
+    if (data == NULL) return 0;
+    return (((u8*)data)[offset] >> shift) & 15;
+}
+static inline u8 itemRecoveryByte(void *data, u32 offset) {
+    if (data == NULL) return 0;
+    return ((u8*)data)[offset];
+}
+#pragma always_inline on
+#pragma peephole on
+s32 itemParamGetRecoverType(void *arg0) {
+    if (arg0 == NULL) return 0x16;
+    if (itemRecoveryFlag(arg0, 0, 5) ||
+        itemRecoveryNibble(arg0, 0, 1) ||
+        itemRecoveryNibble(arg0, 1, 4) || itemRecoveryNibble(arg0, 1, 0) ||
+        itemRecoveryNibble(arg0, 2, 4) || itemRecoveryNibble(arg0, 2, 0) ||
+        itemRecoveryFlag(arg0, 3, 7)) return 0;
+    if (itemRecoveryFlag(arg0, 0, 6)) return 1;
+    if (itemRecoveryFlag(arg0, 3, 6)) return 2;
+    s32 count = 0;
+    s32 type;
+    if (itemRecoveryFlag(arg0, 3, 5)) { type = 3; ++count; }
+    if (itemRecoveryFlag(arg0, 3, 4)) { type = 4; ++count; }
+    if (itemRecoveryFlag(arg0, 3, 3)) { type = 5; ++count; }
+    if (itemRecoveryFlag(arg0, 3, 2)) { type = 6; ++count; }
+    if (itemRecoveryFlag(arg0, 3, 1)) { type = 7; ++count; }
+    if (itemRecoveryFlag(arg0, 3, 0)) { type = 8; ++count; }
+    if (itemRecoveryFlag(arg0, 0, 7)) { type = 9; ++count; }
+    if (count > 0) return count <= 1 ? type : 0xA;
+    if (itemRecoveryByte(arg0, 10)) return 11;
+    if (itemRecoveryByte(arg0, 9)) return 12;
+    if (itemRecoveryByte(arg0, 8)) return 13;
+    if (itemRecoveryByte(arg0, 15)) return 14;
+    if (itemRecoveryByte(arg0, 14)) return 15;
+    if (itemRecoveryByte(arg0, 13)) return 16;
+    if (itemRecoveryByte(arg0, 12)) return 17;
+    if (itemRecoveryFlag(arg0, 4, 4)) return 18;
+    if (itemRecoveryFlag(arg0, 4, 7)) return 19;
+    if (itemRecoveryFlag(arg0, 4, 3)) return 20;
+    if (itemRecoveryFlag(arg0, 4, 5) || itemRecoveryByte(arg0, 11)) return 0x15;
+    return 0x16;
+}
+#pragma peephole reset
+#pragma always_inline reset
+
+void *itemParamGetPtr(u32 arg0) {
+    u32 count = item_param_number;
+    u8 *table = item_param;
+    u32 index = (u8)arg0;
+    void *result = table + ((arg0 * 16) & 0xff0);
+    if (index < count) return result;
+    return NULL;
 }
 
 
@@ -330,11 +463,13 @@ s32 tasteDataGetNigateMsgDataId(s32 *arg0) {
     return *arg0;
 }
 
-void *tasteDataGetPtr(u16 arg0) {
-    if (arg0 >= (u32) taste_data_number) {
-        return NULL;
-    }
-    return taste_data + ((arg0 << 5) & 0x1FFFE0);
+void *tasteDataGetPtr(u32 arg0) {
+    u32 count = taste_data_number;
+    u8 *table = taste_data;
+    u32 index = (u16)arg0;
+    void *result = table + ((arg0 * 32) & 0x1fffe0);
+    if (index < count) return result;
+    return NULL;
 }
 
 
@@ -345,11 +480,13 @@ u16 itemSoubiDataBiosGetFightKoukaDataId(u16 *arg0) {
     return *arg0;
 }
 
-void *itemSoubiDataBiosGetPtr(u16 arg0) {
-    if (arg0 >= (u32) item_soubi_data_number) {
-        return NULL;
-    }
-    return item_soubi_data + ((arg0 * 2) & 0x1FFFE);
+void *itemSoubiDataBiosGetPtr(u32 arg0) {
+    u32 count = item_soubi_data_number;
+    u8 *table = item_soubi_data;
+    u32 index = (u16)arg0;
+    void *result = table + ((arg0 * 2) & 0x1fffe);
+    if (index < count) return result;
+    return NULL;
 }
 
 
@@ -555,11 +692,13 @@ u16 itemBallDataBiosGetFightKoukaDataId(u16 *arg0) {
     return *arg0;
 }
 
-void *itemBallDataBiosGetPtr(u16 arg0) {
-    if (arg0 >= (u32) item_ball_data_number) {
-        return NULL;
-    }
-    return item_ball_data + ((arg0 << 6) & 0x3FFFC0);
+void *itemBallDataBiosGetPtr(u32 arg0) {
+    u32 count = item_ball_data_number;
+    u8 *table = item_ball_data;
+    u32 index = (u16)arg0;
+    void *result = table + ((arg0 * 64) & 0x3fffc0);
+    if (index < count) return result;
+    return NULL;
 }
 
 

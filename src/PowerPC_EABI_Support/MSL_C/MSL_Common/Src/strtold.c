@@ -1,7 +1,9 @@
 #include "strtold.h"
 #include <cstdio>
 #include <cstring>
+extern "C" {
 #include "ansi_fp.h"
+}
 #include <locale>
 #include <cctype>
 #include "float.h"
@@ -74,21 +76,18 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
     int exp_negative = 0;
     long exp_value = 0;
     int exp_adjust = 0;
-    register long double result = 0.0;
+    long double result;
     int sign_detected = 0;
-    int radix_marker = *(unsigned char*)(__lconv).decimal_point;
-
-    unsigned char* chptr;
-    unsigned char mantissa[TARGET_FLOAT_BYTES];
-    unsigned mantissa_digits;
-    unsigned long exponent = 0;
-
-    int ui;
-    unsigned char uch, uch1;
-    int NibbleIndex;
     int expsign = 0;
+    unsigned char* chptr = (unsigned char*)&result;
+    int NibbleIndex;
     int exp_digits = 0;
     unsigned intdigits = 0;
+    short exponent = 0;
+    int radix_marker = *(unsigned char*)(__lconv).decimal_point;
+
+    unsigned char uch, uch1;
+    int ui;
 
     *overflow = 0;
     c = fetch();
@@ -318,7 +317,7 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
                 }
 
                 exp_value = exp_value * 10 + (c - '0');
-                if (exp_value > DBL_MAX_10_EXP) {
+                if (exp_value > SHRT_MAX) {
                     *overflow = 1;
                 }
 
@@ -328,11 +327,10 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
             case hex_state: {
                 switch (hex_scan_state) {
                     case hex_start:
-                        memset(mantissa, 0, sizeof(mantissa));
-                        chptr = mantissa;
-                        mantissa_digits = (53 + 3) / 4;
-                        intdigits = 0;
-                        NibbleIndex = 0;
+                        chptr[0] = 0;chptr[1] = 0;chptr[2] = 0;chptr[3] = 0;
+                        chptr[4] = 0;chptr[5] = 0;chptr[6] = 0;chptr[7] = 0;
+
+                        NibbleIndex = 2;
                         hex_scan_state = hex_leading_sig_zeroes;
                         c = fetch();
                         break;
@@ -359,7 +357,9 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
                             break;
                         }
 
-                        if (intdigits < mantissa_digits) {
+                        if (NibbleIndex < 17) {
+                            unsigned char uch, uch1;
+                            int ui;
                             intdigits++;
                             uch = *(chptr + NibbleIndex / 2);
 
@@ -375,7 +375,7 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
                             if ((NibbleIndex % 2) != 0) {
                                 uch |= uch1;
                             } else {
-                                uch |= (unsigned char)(uch1 << 4);
+                                uch |= uch1 << 4;
                             }
 
                             *(chptr + NibbleIndex++ / 2) = uch;
@@ -394,7 +394,7 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
                             break;
                         }
 
-                        if (intdigits < mantissa_digits) {
+                        if (NibbleIndex < 17) {
                             uch = *(chptr + NibbleIndex / 2);
                             ui = toupper(c);
 
@@ -409,7 +409,7 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
                             if ((NibbleIndex % 2) != 0) {
                                 uch |= uch1;
                             } else {
-                                uch |= (unsigned char)(uch1 << 4);
+                                uch |= uch1 << 4;
                             }
 
                             *(chptr + NibbleIndex++ / 2) = uch;
@@ -435,8 +435,7 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
                         if (c == '-') {
                             expsign = 1;
                         } else if (c != '+') {
-                            c = unfetch(c);
-                            count--;
+                            unfetch(c);
                             exp_digits--;
                         }
 
@@ -453,15 +452,6 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
                         if (c == '0') {
                             exp_digits++;
                             hex_scan_state = hex_leading_exp_zeroes;
-                            c = fetch();
-                            break;
-                        }
-
-                        hex_scan_state = hex_exp_digit_loop;
-                        break;
-
-                    case hex_leading_exp_zeroes:
-                        if (c == '0') {
                             c = fetch();
                             break;
                         }
@@ -490,8 +480,7 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
         }
     }
 
-    if (scan_state != 32768 ? !success(scan_state) : !hex_success(count, hex_scan_state)) {
-        count = 0;
+    if (!success(scan_state)) {
         *chars_scanned = 0;
     } else {
         count--;
@@ -509,7 +498,7 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
             int n = d.sig.length;
             unsigned char* p = &d.sig.text[n];
 
-            while (n-- && *--p == '0') {
+            while (n-- && (unsigned int)*--p == '0') {
                 exp_adjust++;
             }
 
@@ -520,14 +509,10 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
             }
         }
 
-        if (exp_value < DBL_MIN_10_EXP || exp_value > DBL_MAX_10_EXP) {
-            if (!*overflow && d.sig.text[0] == '0' && d.sig.text[1] == 0) {
-                return 0.0;
-            }
+        exp_value += exp_adjust;
+        if (exp_value < SHRT_MIN || exp_value > SHRT_MAX) {
             *overflow = 1;
         }
-
-        exp_value += exp_adjust;
 
         if (*overflow) {
             if (exp_negative) {
@@ -554,83 +539,32 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
 
         return result;
     } else {
-        unsigned mantissa_bit, dbl_bit;
-        unsigned one_bit;
-        long double dbl_bits_storage;
-        unsigned char* dbl_bits = (unsigned char*)&dbl_bits_storage;
-
-        if (expsign) {
-            exponent = -exponent;
-        }
-
-        exponent += intdigits * 4;
-
-        one_bit = 0;
-        while (one_bit < 4 && !(mantissa[0] & (0x80 >> one_bit))) {
-            one_bit++;
-            exponent--;
-        }
-        exponent--;
-
-        if (TARGET_FLOAT_IMPLICIT_J_BIT) {
-            one_bit++;
-        }
-
-        if (one_bit) {
-            unsigned char carry = 0;
-            for (chptr = mantissa + sizeof(mantissa) - 1; chptr >= mantissa; chptr--) {
-                unsigned char a = *chptr;
-                *chptr = (unsigned char)((a << one_bit) | carry);
-                carry = (unsigned char)(a >> (8 - one_bit));
+        if (result) {
+            if (expsign) exponent = -exponent;
+            while (((*(short*)&result) & 0xF0) != 0x10) {
+                (*(unsigned long long*)&result) >>= 1;
+                exponent++;
             }
-        }
-
-        memset(dbl_bits, 0, sizeof(dbl_bits_storage));
-        dbl_bit = (TARGET_FLOAT_BITS - TARGET_FLOAT_MANT_BITS);
-
-        for (mantissa_bit = 0; mantissa_bit < TARGET_FLOAT_MANT_BITS; mantissa_bit += 8) {
-            unsigned char ui = mantissa[mantissa_bit >> 3];
-            int halfbits;
-
-            if (mantissa_bit + 8 > TARGET_FLOAT_MANT_BITS) {
-                ui &= 0xff << (TARGET_FLOAT_MANT_BITS - mantissa_bit);
+            unsigned int shift;
+            short fraction;
+            fraction = (*(short*)&result) & 0xF;
+            (*(short*)&result) = fraction;
+            shift = (intdigits - 1) * 4;
+            exponent += shift;
+            fraction |= (exponent + 1023) << 4;
+            (*(short*)&result) = fraction;
+            *chars_scanned = spaces + sign_detected + NibbleIndex + 1 + exp_digits;
+            if (result != 0.0 && result < LDBL_MIN) {
+                result = 0.0;
+                *overflow = 1;
+            } else if (result > LDBL_MAX) {
+                *overflow = 1;
+                result = HUGE_VAL;
             }
-
-            halfbits = (dbl_bit & 7);
-            dbl_bits[dbl_bit >> 3] |= (unsigned char)(ui >> halfbits);
-            dbl_bit += 8;
-            dbl_bits[dbl_bit >> 3] |= (unsigned char)(ui << (8 - halfbits));
+            if (sig_negative) (*(short*)&result) |= 0x8000;
+        } else {
+            result = 0.0;
         }
-
-        exponent += (TARGET_FLOAT_MAX_EXP - 1) + exp_value;
-
-        if ((exponent & ~(TARGET_FLOAT_MAX_EXP * 2 - 1))) {
-            *overflow = 1;
-            return 0.0;
-        }
-
-        exponent <<= 32 - TARGET_FLOAT_EXP_BITS;
-
-        dbl_bits[0] |= exponent >> 25;
-
-        if (TARGET_FLOAT_EXP_BITS > 7) {
-            dbl_bits[1] |= exponent >> 17;
-        }
-
-        if (TARGET_FLOAT_EXP_BITS > 15) {
-            dbl_bits[2] |= exponent >> 9;
-        }
-
-        if (TARGET_FLOAT_EXP_BITS > 23) {
-            dbl_bits[3] |= exponent >> 1;
-        }
-
-        if (sig_negative) {
-            dbl_bits[0] |= 0x80;
-        }
-
-        result = *(long double*)dbl_bits;
-
         return result;
     }
 }

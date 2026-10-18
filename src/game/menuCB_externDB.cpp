@@ -7869,15 +7869,16 @@ block_27:
                         }
                     }
                 } else {
+                    if ((s32) _CB.unkB11C != 0) {
                     switch ((s32) _CB.unkB11C) {    /* switch 1; irregular */
                     case 0x10:                      /* switch 1 */
                         temp_r30 = (s16) _CB.unk9C78->unk0;
                         temp_r29 = (s16) _CB.unk9C78->unk2;
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk0 = (u16) _ruleTempBuff_DB.unk0;
-                            _CB.unk9C78->unk2 = (u16) _ruleTempBuff_DB.unk2;
-                            _CB.unk9C78->unk4 = (u16) _ruleTempBuff_DB.unk4;
+                            _CB.unk9C78->unk0 = _ruleTempBuff_DB.unk0;
+                            _CB.unk9C78->unk2 = _ruleTempBuff_DB.unk2;
+                            _CB.unk9C78->unk4 = _ruleTempBuff_DB.unk4;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -7899,22 +7900,22 @@ block_27:
                         if ((s32) (windowGetKeyRepeat() & 1) != 0) {
                             switch ((s32) _ruleCursol.unk0) { /* switch 2; irregular */
                             case 0:                 /* switch 2 */
-                                _CB.unk9C78->unk0 = (s16) _CB.unk9C78->unk0 + 0x64;
+                                _CB.unk9C78->unk0 += 0x64;
                                 break;
                             case 1:                 /* switch 2 */
-                                _CB.unk9C78->unk0 = (s16) _CB.unk9C78->unk0 + 0xA;
+                                _CB.unk9C78->unk0 += 0xA;
                                 break;
                             case 2:                 /* switch 2 */
-                                _CB.unk9C78->unk0 = (s16) _CB.unk9C78->unk0 + 1;
+                                _CB.unk9C78->unk0 += 1;
                                 break;
                             case 3:                 /* switch 2 */
-                                _CB.unk9C78->unk2 = (s16) _CB.unk9C78->unk2 + 0x64;
+                                _CB.unk9C78->unk2 += 0x64;
                                 break;
                             case 4:                 /* switch 2 */
-                                _CB.unk9C78->unk2 = (s16) _CB.unk9C78->unk2 + 0xA;
+                                _CB.unk9C78->unk2 += 0xA;
                                 break;
                             case 5:                 /* switch 2 */
-                                _CB.unk9C78->unk2 = (s16) _CB.unk9C78->unk2 + 1;
+                                _CB.unk9C78->unk2 += 1;
                                 break;
                             }
                             if ((s16) _CB.unk9C78->unk0 >= 0x64) {
@@ -7925,29 +7926,29 @@ block_27:
                             }
                             temp_r4 = (s16) _CB.unk9C78->unk0;
                             if (temp_r4 >= (s16) _CB.unk9C78->unk2) {
-                                _CB.unk9C78->unk2 = (u16) temp_r4;
+                                _CB.unk9C78->unk2 = temp_r4;
                             }
-                            _CB.unk9C78->unk4 = (u16) (s16) ((s16) _CB.unk9C78->unk2 * 6);
+                            _CB.unk9C78->unk4 = (s16) ((s16) _CB.unk9C78->unk2 * 6);
                         }
                         if ((s32) (windowGetKeyRepeat() & 2) != 0) {
                             switch ((s32) _ruleCursol.unk0) { /* switch 3; irregular */
                             case 0:                 /* switch 3 */
-                                _CB.unk9C78->unk0 = (s16) _CB.unk9C78->unk0 - 0x64;
+                                _CB.unk9C78->unk0 -= 0x64;
                                 break;
                             case 1:                 /* switch 3 */
-                                _CB.unk9C78->unk0 = (s16) _CB.unk9C78->unk0 - 0xA;
+                                _CB.unk9C78->unk0 -= 0xA;
                                 break;
                             case 2:                 /* switch 3 */
-                                _CB.unk9C78->unk0 = (s16) _CB.unk9C78->unk0 - 1;
+                                _CB.unk9C78->unk0 -= 1;
                                 break;
                             case 3:                 /* switch 3 */
-                                _CB.unk9C78->unk2 = (s16) _CB.unk9C78->unk2 - 0x64;
+                                _CB.unk9C78->unk2 -= 0x64;
                                 break;
                             case 4:                 /* switch 3 */
-                                _CB.unk9C78->unk2 = (s16) _CB.unk9C78->unk2 - 0xA;
+                                _CB.unk9C78->unk2 -= 0xA;
                                 break;
                             case 5:                 /* switch 3 */
-                                _CB.unk9C78->unk2 = (s16) _CB.unk9C78->unk2 - 1;
+                                _CB.unk9C78->unk2 -= 1;
                                 break;
                             }
                             if ((s16) _CB.unk9C78->unk0 <= 1) {
@@ -7958,9 +7959,9 @@ block_27:
                             }
                             temp_r4_2 = (s16) _CB.unk9C78->unk2;
                             if ((s16) _CB.unk9C78->unk0 >= temp_r4_2) {
-                                _CB.unk9C78->unk0 = (u16) temp_r4_2;
+                                _CB.unk9C78->unk0 = temp_r4_2;
                             }
-                            _CB.unk9C78->unk4 = (u16) (s16) ((s16) _CB.unk9C78->unk2 * 6);
+                            _CB.unk9C78->unk4 = (s16) ((s16) _CB.unk9C78->unk2 * 6);
                         }
                         if ((temp_r30 != (s16) _CB.unk9C78->unk0) || (temp_r29 != (s16) _CB.unk9C78->unk2)) {
                             menuCB_SE_Play(0x10);
@@ -7971,7 +7972,7 @@ block_27:
                         temp_r29_2 = (s16) _CB.unk9C78->unk4;
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk4 = (u16) _ruleTempBuff_DB.unk4;
+                            _CB.unk9C78->unk4 = _ruleTempBuff_DB.unk4;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -7993,43 +7994,43 @@ block_27:
                         if ((s32) (windowGetKeyRepeat() & 1) != 0) {
                             switch ((s32) _ruleCursol.unk4) { /* switch 4; irregular */
                             case 0:                 /* switch 4 */
-                                _CB.unk9C78->unk4 = (s16) _CB.unk9C78->unk4 + 0x64;
+                                _CB.unk9C78->unk4 += 0x64;
                                 break;
                             case 1:                 /* switch 4 */
-                                _CB.unk9C78->unk4 = (s16) _CB.unk9C78->unk4 + 0xA;
+                                _CB.unk9C78->unk4 += 0xA;
                                 break;
                             case 2:                 /* switch 4 */
-                                _CB.unk9C78->unk4 = (s16) _CB.unk9C78->unk4 + 1;
+                                _CB.unk9C78->unk4 += 1;
                                 break;
                             }
                             temp_r0_5 = (s16) _CB.unk9C78->unk0 * 6;
                             if ((s16) _CB.unk9C78->unk4 <= temp_r0_5) {
-                                _CB.unk9C78->unk4 = (u16) temp_r0_5;
+                                _CB.unk9C78->unk4 = temp_r0_5;
                             }
                             temp_r0_6 = (s16) _CB.unk9C78->unk2 * 6;
                             if ((s16) _CB.unk9C78->unk4 >= temp_r0_6) {
-                                _CB.unk9C78->unk4 = (u16) temp_r0_6;
+                                _CB.unk9C78->unk4 = temp_r0_6;
                             }
                         }
                         if ((s32) (windowGetKeyRepeat() & 2) != 0) {
                             switch ((s32) _ruleCursol.unk4) { /* switch 5; irregular */
                             case 0:                 /* switch 5 */
-                                _CB.unk9C78->unk4 = (s16) _CB.unk9C78->unk4 - 0x64;
+                                _CB.unk9C78->unk4 -= 0x64;
                                 break;
                             case 1:                 /* switch 5 */
-                                _CB.unk9C78->unk4 = (s16) _CB.unk9C78->unk4 - 0xA;
+                                _CB.unk9C78->unk4 -= 0xA;
                                 break;
                             case 2:                 /* switch 5 */
-                                _CB.unk9C78->unk4 = (s16) _CB.unk9C78->unk4 - 1;
+                                _CB.unk9C78->unk4 -= 1;
                                 break;
                             }
                             temp_r0_7 = (s16) _CB.unk9C78->unk0 * 6;
                             if ((s16) _CB.unk9C78->unk4 <= temp_r0_7) {
-                                _CB.unk9C78->unk4 = (u16) temp_r0_7;
+                                _CB.unk9C78->unk4 = temp_r0_7;
                             }
                             temp_r0_8 = (s16) _CB.unk9C78->unk2 * 6;
                             if ((s16) _CB.unk9C78->unk4 >= temp_r0_8) {
-                                _CB.unk9C78->unk4 = (u16) temp_r0_8;
+                                _CB.unk9C78->unk4 = temp_r0_8;
                             }
                         }
                         if (temp_r29_2 != (s16) _CB.unk9C78->unk4) {
@@ -8040,7 +8041,7 @@ block_27:
                     case 0x12:                      /* switch 1 */
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk14 = (u16) _ruleTempBuff_DB.unk14;
+                            _CB.unk9C78->unk14 = _ruleTempBuff_DB.unk14;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8054,9 +8055,9 @@ block_27:
                                 _ruleCursol.unk8 -= 1;
                                 menuCB_SE_Play(0x10);
                             }
-                            _CB.unk9C78->unk14 = (u16) abs((s16) _CB.unk9C78->unk14);
+                            _CB.unk9C78->unk14 = abs((s16) _CB.unk9C78->unk14);
                             if ((s32) _ruleCursol.unk8 == 2) {
-                                _CB.unk9C78->unk14 = (u16) (s16) (abs((s16) _CB.unk9C78->unk14) * -1);
+                                _CB.unk9C78->unk14 = (s16) (abs((s16) _CB.unk9C78->unk14) * -1);
                                 return;
                             }
                         } else if ((s32) (windowGetKeyRepeat() & 8) != 0) {
@@ -8064,9 +8065,9 @@ block_27:
                                 _ruleCursol.unk8 += 1;
                                 menuCB_SE_Play(0x10);
                             }
-                            _CB.unk9C78->unk14 = (u16) abs((s16) _CB.unk9C78->unk14);
+                            _CB.unk9C78->unk14 = abs((s16) _CB.unk9C78->unk14);
                             if ((s32) _ruleCursol.unk8 == 2) {
-                                _CB.unk9C78->unk14 = (u16) (s16) (abs((s16) _CB.unk9C78->unk14) * -1);
+                                _CB.unk9C78->unk14 = (s16) (abs((s16) _CB.unk9C78->unk14) * -1);
                                 return;
                             }
                         } else {
@@ -8074,13 +8075,13 @@ block_27:
                             if ((s32) (windowGetKeyRepeat() & 1) != 0) {
                                 switch ((s32) _ruleCursol.unk8) { /* switch 6; irregular */
                                 case 0:             /* switch 6 */
-                                    _CB.unk9C78->unk14 = (s16) _CB.unk9C78->unk14 + 0xA;
+                                    _CB.unk9C78->unk14 += 0xA;
                                     if ((s16) _CB.unk9C78->unk14 >= 0x63) {
                                         _CB.unk9C78->unk14 = 0x63;
                                     }
                                     break;
                                 case 1:             /* switch 6 */
-                                    _CB.unk9C78->unk14 = (s16) _CB.unk9C78->unk14 + 1;
+                                    _CB.unk9C78->unk14 += 1;
                                     if ((s16) _CB.unk9C78->unk14 >= 0x63) {
                                         _CB.unk9C78->unk14 = 0x63;
                                     }
@@ -8090,13 +8091,13 @@ block_27:
                             if ((s32) (windowGetKeyRepeat() & 2) != 0) {
                                 switch ((s32) _ruleCursol.unk8) { /* switch 7; irregular */
                                 case 0:             /* switch 7 */
-                                    _CB.unk9C78->unk14 = (s16) _CB.unk9C78->unk14 - 0xA;
+                                    _CB.unk9C78->unk14 -= 0xA;
                                     if ((s16) _CB.unk9C78->unk14 <= 1) {
                                         _CB.unk9C78->unk14 = 1;
                                     }
                                     break;
                                 case 1:             /* switch 7 */
-                                    _CB.unk9C78->unk14 = (s16) _CB.unk9C78->unk14 - 1;
+                                    _CB.unk9C78->unk14 -= 1;
                                     if ((s16) _CB.unk9C78->unk14 <= 1) {
                                         _CB.unk9C78->unk14 = 1;
                                     }
@@ -8112,7 +8113,7 @@ block_27:
                     case 0x13:                      /* switch 1 */
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk16 = (u16) _ruleTempBuff_DB.unk16;
+                            _CB.unk9C78->unk16 = _ruleTempBuff_DB.unk16;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8126,9 +8127,9 @@ block_27:
                                 _ruleCursol.unkC -= 1;
                                 menuCB_SE_Play(0x10);
                             }
-                            _CB.unk9C78->unk16 = (u16) abs((s16) _CB.unk9C78->unk16);
+                            _CB.unk9C78->unk16 = abs((s16) _CB.unk9C78->unk16);
                             if ((s32) _ruleCursol.unkC == 2) {
-                                _CB.unk9C78->unk16 = (u16) (s16) (abs((s16) _CB.unk9C78->unk16) * -1);
+                                _CB.unk9C78->unk16 = (s16) (abs((s16) _CB.unk9C78->unk16) * -1);
                                 return;
                             }
                         } else if ((s32) (windowGetKeyRepeat() & 8) != 0) {
@@ -8136,9 +8137,9 @@ block_27:
                                 _ruleCursol.unkC += 1;
                                 menuCB_SE_Play(0x10);
                             }
-                            _CB.unk9C78->unk16 = (u16) abs((s16) _CB.unk9C78->unk16);
+                            _CB.unk9C78->unk16 = abs((s16) _CB.unk9C78->unk16);
                             if ((s32) _ruleCursol.unkC == 2) {
-                                _CB.unk9C78->unk16 = (u16) (s16) (abs((s16) _CB.unk9C78->unk16) * -1);
+                                _CB.unk9C78->unk16 = (s16) (abs((s16) _CB.unk9C78->unk16) * -1);
                                 return;
                             }
                         } else {
@@ -8146,13 +8147,13 @@ block_27:
                             if ((s32) (windowGetKeyRepeat() & 1) != 0) {
                                 switch ((s32) _ruleCursol.unkC) { /* switch 8; irregular */
                                 case 0:             /* switch 8 */
-                                    _CB.unk9C78->unk16 = (s16) _CB.unk9C78->unk16 + 0xA;
+                                    _CB.unk9C78->unk16 += 0xA;
                                     if ((s16) _CB.unk9C78->unk16 >= 0x63) {
                                         _CB.unk9C78->unk16 = 0x63;
                                     }
                                     break;
                                 case 1:             /* switch 8 */
-                                    _CB.unk9C78->unk16 = (s16) _CB.unk9C78->unk16 + 1;
+                                    _CB.unk9C78->unk16 += 1;
                                     if ((s16) _CB.unk9C78->unk16 >= 0x63) {
                                         _CB.unk9C78->unk16 = 0x63;
                                     }
@@ -8162,13 +8163,13 @@ block_27:
                             if ((s32) (windowGetKeyRepeat() & 2) != 0) {
                                 switch ((s32) _ruleCursol.unkC) { /* switch 9; irregular */
                                 case 0:             /* switch 9 */
-                                    _CB.unk9C78->unk16 = (s16) _CB.unk9C78->unk16 - 0xA;
+                                    _CB.unk9C78->unk16 -= 0xA;
                                     if ((s16) _CB.unk9C78->unk16 <= 0xA) {
                                         _CB.unk9C78->unk16 = 0xA;
                                     }
                                     break;
                                 case 1:             /* switch 9 */
-                                    _CB.unk9C78->unk16 = (s16) _CB.unk9C78->unk16 - 1;
+                                    _CB.unk9C78->unk16 -= 1;
                                     if ((s16) _CB.unk9C78->unk16 <= 0xA) {
                                         _CB.unk9C78->unk16 = 0xA;
                                     }
@@ -8184,8 +8185,8 @@ block_27:
                     case 0x14:                      /* switch 1 */
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk1A = (u16) _ruleTempBuff_DB.unk1A;
-                            _CB.unk9C78->unk1C = (u16) _ruleTempBuff_DB.unk1C;
+                            _CB.unk9C78->unk1A = _ruleTempBuff_DB.unk1A;
+                            _CB.unk9C78->unk1C = _ruleTempBuff_DB.unk1C;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8489,7 +8490,8 @@ block_27:
                             return;
                         }
                         break;
-                    case 0x0:                       /* switch 1 */
+                    }
+                    } else {
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x820) != 0) {
                             _CB.unkB010 = 1;
                             menuCB_SE_Play(0x12);
@@ -8685,8 +8687,8 @@ block_27:
                                 }
                             }
                         }
-                        break;
-                    }
+
+                                        }
                 }
             }
         }

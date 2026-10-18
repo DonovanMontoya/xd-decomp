@@ -38,7 +38,7 @@ struct MENU_MODEL {
     u8 loading;             // 0x1
     u8 initialized;         // 0x2
     u8 enable;              // 0x3
-    s8 clip;                // 0x4
+    u8 clip;                // 0x4
     u8 pad5[7];
     f32 unkC;               // 0xC
     MENU_MODEL_LOAD req;    // 0x10

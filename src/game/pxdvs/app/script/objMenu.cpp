@@ -55,7 +55,7 @@ int AppScript::cmpMenu(int method,GSscript::tigaVariant *args,GSscript::tigaVari
     case 0x43:{s32 a=I(1);menuScriptMoneyOpen(a,I(2));break;}
     case 0x44:menuScriptMoneyClose();break;
     case 0x45:R(menuScriptWazaBasanCheck());break;
-    case 0x46:{s32 a=I(1);menuScriptCouponOpen(a,I(2));break;}
+    case 0x46:{s32 a=I(1),b=I(2);s32 first=(s8)a; s32 second=(s8)b;menuScriptCouponOpen(first,second);break;}
     case 0x47:menuScriptCouponClose();break;
     case 0x48:menuOrreColosseum(I(1));break;
     case 0x49:menuScriptUsohachi2();break;

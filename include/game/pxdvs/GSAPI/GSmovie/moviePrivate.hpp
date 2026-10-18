@@ -11,7 +11,7 @@ struct MovieDecoder {
     u8 state,nextState,loop,hasAudio; s32 videoError,audioError;
     u8 preload,startAudio,paused,visible;
     u8* preloadBuffer; u32 currentOffset,currentSize,currentFrame;
-    s64 videoTicks; s64 audioTicks; u32 framesDecoded,audioTrack; s32 lastAudioFrame,playedAudioFrame;
+    s64 videoTicks; union { s64 audioTicks; struct { u32 frameClock, targetFrameClock; } playbackClock; }; u32 framesDecoded,audioTrack; s32 lastAudioFrame,playedAudioFrame;
     u16 token1,token2; THPTextureSet* displayTexture; THPAudioBuffer* currentAudio;
     THPReadBuffer reads[10]; u32 readWrite,readVideo,readAudio;
     THPTextureSet textures[3]; u32 texWrite,texRead;

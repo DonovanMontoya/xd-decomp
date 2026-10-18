@@ -144,7 +144,7 @@ s32 GSmodelSearchModelList(void *);
 s32 GSmodelGetLinkedGSparticleBank(void);
 u8 GSmodelIsRootNullAdded(s32);
 s32 GSpartGetJObjIndex(void *, void *);
-s32 GSmodelGetPart(s32);
+s32 GSmodelGetPart(s32, s32 = 0);
 s32 GSmodelGetGSparticleLinkAttachMode(s32);
 s32 GSmodelGetVisibility(s32);
 void GSpartFree(s32);
@@ -1219,7 +1219,7 @@ static void _particleJObjCallback(int, int, int id, _HSD_JObj *jobj) {
             }
             idx = GSpartGetJObjIndex(root, jobj);
             if (idx + 0x10000 != 0xffff) {
-                part = GSmodelGetPart(model);
+                part = GSmodelGetPart(model, idx);
                 if (part != 0) {
                     g = GSparticleCreateGenerator((_GSparticleBank *)bank, id, 0);
                     if (g != 0) {
@@ -1255,3 +1255,401 @@ static void _particleJObjCallback(int, int, int id, _HSD_JObj *jobj) {
         }
     }
 }
+
+#define PARTICLE_FIELD(base, type, offset) (*(type*)((u8*)(base) + (offset)))
+extern "C" {
+void GSpartGetTransform(s32, void*, void*, void*);
+void GSvecTransformQuat(void*, void*, void*);
+void PSVECAdd(void*, void*, void*);
+static inline void clampParticleScale(f32* field) {
+    f32 bound;
+    f32 magnitude;
+    f32 value = *field;
+    if (value > 0.0f) magnitude = value;
+    else magnitude = -value;
+    bound = 0.00001f;
+    if (magnitude < 0.00001f) {
+        if (value < 0.0f) bound = -0.00001f;
+        *field = bound;
+    }
+}
+#pragma opt_loop_invariants off
+static void _particleUpdateAttachment(_GSparticleGen *arg0) {
+    VecX3 position;
+    VecX3 rotation;
+    VecX3 scale;
+    QuatX4 quaternion;
+    VecX3 offset;
+    QuatX4 q48;
+    QuatX4 q38;
+    QuatX4 q28;
+    QuatX4 q18;
+    QuatX4 q8;
+    f32 temp_f2;
+    f32 temp_f2_2;
+    f32 temp_f2_3;
+    f32 var_f0;
+    f32 var_f0_10;
+    f32 var_f0_11;
+    f32 var_f0_12;
+    f32 var_f0_13;
+    f32 var_f0_14;
+    f32 var_f0_15;
+    f32 var_f0_2;
+    f32 var_f0_3;
+    f32 var_f0_4;
+    f32 var_f0_5;
+    f32 var_f0_6;
+    f32 var_f0_7;
+    f32 var_f0_8;
+    f32 var_f0_9;
+    f32 var_f1;
+    f32 var_f1_10;
+    f32 var_f1_11;
+    f32 var_f1_12;
+    f32 var_f1_13;
+    f32 var_f1_14;
+    f32 var_f1_15;
+    f32 var_f1_2;
+    f32 var_f1_3;
+    f32 var_f1_4;
+    f32 var_f1_5;
+    f32 var_f1_6;
+    f32 var_f1_7;
+    f32 var_f1_8;
+    f32 var_f1_9;
+    s32 temp_r0;
+    s32 temp_r30;
+    void *temp_r3;
+    void *temp_r3_10;
+    void *temp_r3_11;
+    void *temp_r3_12;
+    void *temp_r3_13;
+    void *temp_r3_14;
+    void *temp_r3_15;
+    void *temp_r3_2;
+    void *temp_r3_3;
+    void *temp_r3_4;
+    void *temp_r3_5;
+    void *temp_r3_6;
+    void *temp_r3_7;
+    void *temp_r3_8;
+    void *temp_r3_9;
+    void *temp_r4;
+    void *temp_r4_10;
+    void *temp_r4_11;
+    void *temp_r4_12;
+    void *temp_r4_13;
+    void *temp_r4_14;
+    void *temp_r4_15;
+    void *temp_r4_2;
+    void *temp_r4_3;
+    void *temp_r4_4;
+    void *temp_r4_5;
+    void *temp_r4_6;
+    void *temp_r4_7;
+    void *temp_r4_8;
+    void *temp_r4_9;
+
+    if (((s32) PARTICLE_FIELD(arg0, s32, 0x8) != 0) && ((u8) PARTICLE_FIELD(arg0, u8, 0x2) != 0)) {
+        temp_r30 = GSmodelGetPart(PARTICLE_FIELD(arg0, s32, 0xC), PARTICLE_FIELD(arg0, s32, 0x4));
+        GSpartGetTransform(temp_r30, &position.x, &rotation.x, &scale.x);
+        GSpartFree(temp_r30);
+        EulerToQuat(&rotation.x, &quaternion.x);
+        GSvecTransformQuat(&offset.x, &quaternion.x, (u8*)arg0 + 0x10);
+        PSVECAdd(&position.x, &offset.x, &position.x);
+        PSVECAdd(&rotation.x, (u8*)arg0 + 0x1C, &rotation.x);
+        scale.x *= PARTICLE_FIELD(arg0, f32, 0x28);
+        scale.y *= PARTICLE_FIELD(arg0, f32, 0x2C);
+        scale.z *= PARTICLE_FIELD(arg0, f32, 0x30);
+        if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+            temp_r3 = PARTICLE_FIELD(arg0, void*, 0x38);
+            if (temp_r3 != NULL) {
+                PARTICLE_FIELD(temp_r3, f32, 0x10C) = (f32) PARTICLE_FIELD(arg0, f32, 0x10);
+                PARTICLE_FIELD(temp_r3, f32, 0x110) = (f32) PARTICLE_FIELD(arg0, f32, 0x14);
+                PARTICLE_FIELD(temp_r3, f32, 0x114) = (f32) PARTICLE_FIELD(arg0, f32, 0x18);
+            }
+        } else {
+            temp_r4 = PARTICLE_FIELD(arg0, void*, 0x38);
+            PARTICLE_FIELD(temp_r4, f32, 0xC) = (f32) PARTICLE_FIELD(arg0, f32, 0x10);
+            PARTICLE_FIELD(temp_r4, f32, 0x10) = (f32) PARTICLE_FIELD(arg0, f32, 0x14);
+            PARTICLE_FIELD(temp_r4, f32, 0x14) = (f32) PARTICLE_FIELD(arg0, f32, 0x18);
+            PARTICLE_FIELD(PARTICLE_FIELD(temp_r4, void*, 8), f32, 0x20) = (f32) PARTICLE_FIELD(arg0, f32, 0x10);
+            PARTICLE_FIELD(PARTICLE_FIELD(temp_r4, void*, 8), f32, 0x24) = (f32) PARTICLE_FIELD(arg0, f32, 0x14);
+            PARTICLE_FIELD(PARTICLE_FIELD(temp_r4, void*, 8), f32, 0x28) = (f32) PARTICLE_FIELD(arg0, f32, 0x18);
+        }
+        if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+            EulerToQuat((u8*)arg0 + 0x1C, &q48.x);
+            temp_r3_2 = PARTICLE_FIELD(arg0, void*, 0x38);
+            if (temp_r3_2 != NULL) {
+                PARTICLE_FIELD(temp_r3_2, f32, 0x118) = q48.x;
+                PARTICLE_FIELD(temp_r3_2, f32, 0x11C) = q48.y;
+                PARTICLE_FIELD(temp_r3_2, f32, 0x120) = q48.z;
+                PARTICLE_FIELD(temp_r3_2, f32, 0x124) = q48.w;
+            }
+        } else {
+            temp_r4_2 = PARTICLE_FIELD(arg0, void*, 0x38);
+            PARTICLE_FIELD(temp_r4_2, f32, 0x18) = (f32) PARTICLE_FIELD(arg0, f32, 0x1C);
+            PARTICLE_FIELD(temp_r4_2, f32, 0x1C) = (f32) PARTICLE_FIELD(arg0, f32, 0x20);
+            PARTICLE_FIELD(temp_r4_2, f32, 0x20) = (f32) PARTICLE_FIELD(arg0, f32, 0x24);
+            PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_2, void*, 8), f32, 0x90) = (f32) PARTICLE_FIELD(arg0, f32, 0x1C);
+            PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_2, void*, 8), f32, 0x94) = (f32) PARTICLE_FIELD(arg0, f32, 0x20);
+            PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_2, void*, 8), f32, 0x98) = (f32) PARTICLE_FIELD(arg0, f32, 0x24);
+        }
+        clampParticleScale(&PARTICLE_FIELD(arg0, f32, 0x28));
+        clampParticleScale(&PARTICLE_FIELD(arg0, f32, 0x2C));
+        clampParticleScale(&PARTICLE_FIELD(arg0, f32, 0x30));
+        if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+            temp_r3_3 = PARTICLE_FIELD(arg0, void*, 0x38);
+            if (temp_r3_3 != NULL) {
+                PARTICLE_FIELD(temp_r3_3, f32, 0x128) = (f32) PARTICLE_FIELD(arg0, f32, 0x28);
+                PARTICLE_FIELD(temp_r3_3, f32, 0x12C) = (f32) PARTICLE_FIELD(arg0, f32, 0x2C);
+                PARTICLE_FIELD(temp_r3_3, f32, 0x130) = (f32) PARTICLE_FIELD(arg0, f32, 0x30);
+            }
+        } else {
+            temp_r4_3 = PARTICLE_FIELD(arg0, void*, 0x38);
+            PARTICLE_FIELD(temp_r4_3, f32, 0x24) = (f32) PARTICLE_FIELD(arg0, f32, 0x28);
+            PARTICLE_FIELD(temp_r4_3, f32, 0x28) = (f32) PARTICLE_FIELD(arg0, f32, 0x2C);
+            PARTICLE_FIELD(temp_r4_3, f32, 0x2C) = (f32) PARTICLE_FIELD(arg0, f32, 0x30);
+            PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_3, void*, 8), f32, 0x9C) = (f32) PARTICLE_FIELD(arg0, f32, 0x28);
+            PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_3, void*, 8), f32, 0xA0) = (f32) PARTICLE_FIELD(arg0, f32, 0x2C);
+            PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_3, void*, 8), f32, 0xA4) = (f32) PARTICLE_FIELD(arg0, f32, 0x30);
+        }
+        temp_r0 = PARTICLE_FIELD(arg0, s32, 0x8);
+        {
+            switch (temp_r0) {
+            case 1:
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    temp_r3_4 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_4 != NULL) {
+                        PARTICLE_FIELD(temp_r3_4, f32, 0x10C) = position.x;
+                        PARTICLE_FIELD(temp_r3_4, f32, 0x110) = position.y;
+                        PARTICLE_FIELD(temp_r3_4, f32, 0x114) = position.z;
+                    }
+                } else {
+                    temp_r4_4 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_4, f32, 0xC) = position.x;
+                    PARTICLE_FIELD(temp_r4_4, f32, 0x10) = position.y;
+                    PARTICLE_FIELD(temp_r4_4, f32, 0x14) = position.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_4, void*, 8), f32, 0x20) = position.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_4, void*, 8), f32, 0x24) = position.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_4, void*, 8), f32, 0x28) = position.z;
+                }
+                break;
+            case 2:
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    EulerToQuat(&rotation.x, &q38.x);
+                    temp_r3_5 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_5 != NULL) {
+                        PARTICLE_FIELD(temp_r3_5, f32, 0x118) = q38.x;
+                        PARTICLE_FIELD(temp_r3_5, f32, 0x11C) = q38.y;
+                        PARTICLE_FIELD(temp_r3_5, f32, 0x120) = q38.z;
+                        PARTICLE_FIELD(temp_r3_5, f32, 0x124) = q38.w;
+                    }
+                } else {
+                    temp_r4_5 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_5, f32, 0x18) = rotation.x;
+                    PARTICLE_FIELD(temp_r4_5, f32, 0x1C) = rotation.y;
+                    PARTICLE_FIELD(temp_r4_5, f32, 0x20) = rotation.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_5, void*, 8), f32, 0x90) = rotation.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_5, void*, 8), f32, 0x94) = rotation.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_5, void*, 8), f32, 0x98) = rotation.z;
+                }
+                break;
+            case 3:
+                clampParticleScale(&scale.x);
+                clampParticleScale(&scale.y);
+                clampParticleScale(&scale.z);
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    temp_r3_6 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_6 != NULL) {
+                        PARTICLE_FIELD(temp_r3_6, f32, 0x128) = scale.x;
+                        PARTICLE_FIELD(temp_r3_6, f32, 0x12C) = scale.y;
+                        PARTICLE_FIELD(temp_r3_6, f32, 0x130) = scale.z;
+                    }
+                } else {
+                    temp_r4_6 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_6, f32, 0x24) = scale.x;
+                    PARTICLE_FIELD(temp_r4_6, f32, 0x28) = scale.y;
+                    PARTICLE_FIELD(temp_r4_6, f32, 0x2C) = scale.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_6, void*, 8), f32, 0x9C) = scale.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_6, void*, 8), f32, 0xA0) = scale.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_6, void*, 8), f32, 0xA4) = scale.z;
+                }
+                break;
+            case 4:
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    temp_r3_7 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_7 != NULL) {
+                        PARTICLE_FIELD(temp_r3_7, f32, 0x10C) = position.x;
+                        PARTICLE_FIELD(temp_r3_7, f32, 0x110) = position.y;
+                        PARTICLE_FIELD(temp_r3_7, f32, 0x114) = position.z;
+                    }
+                } else {
+                    temp_r4_7 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_7, f32, 0xC) = position.x;
+                    PARTICLE_FIELD(temp_r4_7, f32, 0x10) = position.y;
+                    PARTICLE_FIELD(temp_r4_7, f32, 0x14) = position.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_7, void*, 8), f32, 0x20) = position.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_7, void*, 8), f32, 0x24) = position.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_7, void*, 8), f32, 0x28) = position.z;
+                }
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    EulerToQuat(&rotation.x, &q28.x);
+                    temp_r3_8 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_8 != NULL) {
+                        PARTICLE_FIELD(temp_r3_8, f32, 0x118) = q28.x;
+                        PARTICLE_FIELD(temp_r3_8, f32, 0x11C) = q28.y;
+                        PARTICLE_FIELD(temp_r3_8, f32, 0x120) = q28.z;
+                        PARTICLE_FIELD(temp_r3_8, f32, 0x124) = q28.w;
+                    }
+                } else {
+                    temp_r4_8 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_8, f32, 0x18) = rotation.x;
+                    PARTICLE_FIELD(temp_r4_8, f32, 0x1C) = rotation.y;
+                    PARTICLE_FIELD(temp_r4_8, f32, 0x20) = rotation.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_8, void*, 8), f32, 0x90) = rotation.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_8, void*, 8), f32, 0x94) = rotation.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_8, void*, 8), f32, 0x98) = rotation.z;
+                }
+                break;
+            case 5:
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    EulerToQuat(&rotation.x, &q18.x);
+                    temp_r3_9 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_9 != NULL) {
+                        PARTICLE_FIELD(temp_r3_9, f32, 0x118) = q18.x;
+                        PARTICLE_FIELD(temp_r3_9, f32, 0x11C) = q18.y;
+                        PARTICLE_FIELD(temp_r3_9, f32, 0x120) = q18.z;
+                        PARTICLE_FIELD(temp_r3_9, f32, 0x124) = q18.w;
+                    }
+                } else {
+                    temp_r4_9 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_9, f32, 0x18) = rotation.x;
+                    PARTICLE_FIELD(temp_r4_9, f32, 0x1C) = rotation.y;
+                    PARTICLE_FIELD(temp_r4_9, f32, 0x20) = rotation.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_9, void*, 8), f32, 0x90) = rotation.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_9, void*, 8), f32, 0x94) = rotation.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_9, void*, 8), f32, 0x98) = rotation.z;
+                }
+                clampParticleScale(&scale.x);
+                clampParticleScale(&scale.y);
+                clampParticleScale(&scale.z);
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    temp_r3_10 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_10 != NULL) {
+                        PARTICLE_FIELD(temp_r3_10, f32, 0x128) = scale.x;
+                        PARTICLE_FIELD(temp_r3_10, f32, 0x12C) = scale.y;
+                        PARTICLE_FIELD(temp_r3_10, f32, 0x130) = scale.z;
+                    }
+                } else {
+                    temp_r4_10 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_10, f32, 0x24) = scale.x;
+                    PARTICLE_FIELD(temp_r4_10, f32, 0x28) = scale.y;
+                    PARTICLE_FIELD(temp_r4_10, f32, 0x2C) = scale.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_10, void*, 8), f32, 0x9C) = scale.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_10, void*, 8), f32, 0xA0) = scale.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_10, void*, 8), f32, 0xA4) = scale.z;
+                }
+                break;
+            case 6:
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    temp_r3_11 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_11 != NULL) {
+                        PARTICLE_FIELD(temp_r3_11, f32, 0x10C) = position.x;
+                        PARTICLE_FIELD(temp_r3_11, f32, 0x110) = position.y;
+                        PARTICLE_FIELD(temp_r3_11, f32, 0x114) = position.z;
+                    }
+                } else {
+                    temp_r4_11 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_11, f32, 0xC) = position.x;
+                    PARTICLE_FIELD(temp_r4_11, f32, 0x10) = position.y;
+                    PARTICLE_FIELD(temp_r4_11, f32, 0x14) = position.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_11, void*, 8), f32, 0x20) = position.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_11, void*, 8), f32, 0x24) = position.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_11, void*, 8), f32, 0x28) = position.z;
+                }
+                clampParticleScale(&scale.x);
+                clampParticleScale(&scale.y);
+                clampParticleScale(&scale.z);
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    temp_r3_12 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_12 != NULL) {
+                        PARTICLE_FIELD(temp_r3_12, f32, 0x128) = scale.x;
+                        PARTICLE_FIELD(temp_r3_12, f32, 0x12C) = scale.y;
+                        PARTICLE_FIELD(temp_r3_12, f32, 0x130) = scale.z;
+                    }
+                } else {
+                    temp_r4_12 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_12, f32, 0x24) = scale.x;
+                    PARTICLE_FIELD(temp_r4_12, f32, 0x28) = scale.y;
+                    PARTICLE_FIELD(temp_r4_12, f32, 0x2C) = scale.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_12, void*, 8), f32, 0x9C) = scale.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_12, void*, 8), f32, 0xA0) = scale.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_12, void*, 8), f32, 0xA4) = scale.z;
+                }
+                break;
+            case 7:
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    temp_r3_13 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_13 != NULL) {
+                        PARTICLE_FIELD(temp_r3_13, f32, 0x10C) = position.x;
+                        PARTICLE_FIELD(temp_r3_13, f32, 0x110) = position.y;
+                        PARTICLE_FIELD(temp_r3_13, f32, 0x114) = position.z;
+                    }
+                } else {
+                    temp_r4_13 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_13, f32, 0xC) = position.x;
+                    PARTICLE_FIELD(temp_r4_13, f32, 0x10) = position.y;
+                    PARTICLE_FIELD(temp_r4_13, f32, 0x14) = position.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_13, void*, 8), f32, 0x20) = position.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_13, void*, 8), f32, 0x24) = position.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_13, void*, 8), f32, 0x28) = position.z;
+                }
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    EulerToQuat(&rotation.x, &q8.x);
+                    temp_r3_14 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_14 != NULL) {
+                        PARTICLE_FIELD(temp_r3_14, f32, 0x118) = q8.x;
+                        PARTICLE_FIELD(temp_r3_14, f32, 0x11C) = q8.y;
+                        PARTICLE_FIELD(temp_r3_14, f32, 0x120) = q8.z;
+                        PARTICLE_FIELD(temp_r3_14, f32, 0x124) = q8.w;
+                    }
+                } else {
+                    temp_r4_14 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_14, f32, 0x18) = rotation.x;
+                    PARTICLE_FIELD(temp_r4_14, f32, 0x1C) = rotation.y;
+                    PARTICLE_FIELD(temp_r4_14, f32, 0x20) = rotation.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_14, void*, 8), f32, 0x90) = rotation.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_14, void*, 8), f32, 0x94) = rotation.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_14, void*, 8), f32, 0x98) = rotation.z;
+                }
+                clampParticleScale(&scale.x);
+                clampParticleScale(&scale.y);
+                clampParticleScale(&scale.z);
+                if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
+                    temp_r3_15 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    if (temp_r3_15 != NULL) {
+                        PARTICLE_FIELD(temp_r3_15, f32, 0x128) = scale.x;
+                        PARTICLE_FIELD(temp_r3_15, f32, 0x12C) = scale.y;
+                        PARTICLE_FIELD(temp_r3_15, f32, 0x130) = scale.z;
+                    }
+                } else {
+                    temp_r4_15 = PARTICLE_FIELD(arg0, void*, 0x38);
+                    PARTICLE_FIELD(temp_r4_15, f32, 0x24) = scale.x;
+                    PARTICLE_FIELD(temp_r4_15, f32, 0x28) = scale.y;
+                    PARTICLE_FIELD(temp_r4_15, f32, 0x2C) = scale.z;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_15, void*, 8), f32, 0x9C) = scale.x;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_15, void*, 8), f32, 0xA0) = scale.y;
+                    PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_15, void*, 8), f32, 0xA4) = scale.z;
+                }
+                break;
+            }
+        }
+        PARTICLE_FIELD(arg0, u8, 0x2) = (u8) (PARTICLE_FIELD(arg0, f32, 0x1) == 0);
+    }
+}
+
+}
+#pragma opt_loop_invariants reset
+#undef PARTICLE_FIELD

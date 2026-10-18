@@ -88,7 +88,7 @@ void *getPointer__11CReliveHallFv(void); void *getStage__11CReliveHallFl(void *,
 MenuSubPokemon *getVisitorPointer__12CReliveStageFv(void *); MenuSubPokemon *getDancerPointer__12CReliveStageFl(void *,u32);
 
 s32 winSpriteGetLayerID(MenuSubWindow*,MenuSubSprite*); MenuSubItem *menuItemBiosGetPtr(s32,s16);
-u16 menuCBRule_RegulationItemID(s32); u8 itemDataCheckValid(u32);
+u32 menuCBRule_RegulationItemID(s32); u8 itemDataCheckValid(u32);
 void menuPokemonStatusOpenFromPokemonChange(MenuSubPokemon *,s32,s32);
 void menuCB_RuleMessageTblDisp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg2);
 void menuCB_RuleItemFlagDisp(MenuSubWindow *arg0, MenuSubSprite *arg1);
@@ -1703,7 +1703,9 @@ void menuCB_RuleMessageTblDisp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg
     s16 temp_r4;
     s32 temp_r5;
     s32 temp_r5_2;
-    s32 var_ctr;
+    u32 var_ctr;
+    s16 centered;
+    s32 message;
     MenuSubWindow *temp_r30;
     u16 *var_r3;
     u16 *var_r5;
@@ -1731,7 +1733,7 @@ void menuCB_RuleMessageTblDisp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg
         do {
             if (var_r3 != NULL) {
                 if ((u16) *var_r3 == 0xFFFF) {
-                    var_r3 += 1;
+                    var_r3 += 2;
                 }
                 *var_r5 = *var_r3;
                 if ((u16) *var_r3 != 0) {
@@ -1748,7 +1750,9 @@ void menuCB_RuleMessageTblDisp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg
     temp_r0 = GSmsgGetRect(fn_8007E634(0x4276)) >> 0x10U;
     temp_r4 = arg1->unk54;
     temp_r5_2 = (s16)temp_r0 / 2;
-    GSmsgPrint2(temp_r30->unk1C, (s16) ((temp_r4 / 2) - temp_r5_2), 0, ((*(u32 *)&arg1->unk64) & 0xFFFFFF00) | temp_r30->unk93, fn_8007E634(0x4276));
+    centered = (s16)((temp_r4 / 2) - temp_r5_2);
+    message = fn_8007E634(0x4276);
+    GSmsgPrint2(temp_r30->unk1C, centered, 0, ((*(u32 *)&arg1->unk64) & 0xFFFFFF00) | temp_r30->unk93, message);
 }
 
 void menuCB_RuleItemFlagDisp(MenuSubWindow *arg0, MenuSubSprite *arg1) {
@@ -1796,7 +1800,7 @@ void menuCB_RuleItemNameEntry(MenuSubWindow *arg0, MenuSubSprite *arg1) {
     s32 var_r26;
     s32 var_r27;
     s32 var_r29;
-    u16 temp_r3;
+    u32 temp_r3;
     MenuSubItem *temp_r27;
     MenuSubItem *temp_r7;
 
@@ -1815,11 +1819,9 @@ void menuCB_RuleItemNameEntry(MenuSubWindow *arg0, MenuSubSprite *arg1) {
         var_r29 = 0x3E;
     }
     spriteSetScissor(temp_r31, temp_r27->unk6 - temp_r7->unk6, temp_r27->unk8 - temp_r7->unk8, temp_r7->unkA, temp_r7->unkC);
-    var_r27 = var_r26;
-loop_12:
-    if (var_r27 <= var_r29) {
+    for (var_r27 = var_r26; var_r27 <= var_r29; ++var_r27, var_r30 += 0x18) {
         temp_r3 = menuCBRule_RegulationItemID(var_r27);
-        if (temp_r3 == 0) {
+        if ((u16)temp_r3 == 0) {
             GSmsgPrint2(arg0->unk1C, 0, var_r30, arg0->unk93 | ~0xFF, 0x4345);
         } else {
             if (itemDataCheckValid(temp_r3) != 0) {
@@ -1827,9 +1829,6 @@ loop_12:
             }
             GSmsgPrint2(arg0->unk1C, 0, var_r30, arg0->unk93 | ~0xFF, fn_8007E634(0x4276));
         }
-        var_r27 += 1;
-        var_r30 += 0x18;
-        goto loop_12;
     }
     spriteClearScissor(temp_r31);
 }
@@ -2204,6 +2203,7 @@ loop_2:
 }
 
 void menuCB_BattleBA_HPBarDispSet(MenuSubSprite *arg0, s32 arg1, s32 arg2) {
+    s16 width;
     f32 temp_f1;
     f32 temp_f4;
     f32 temp_f5;
@@ -2230,16 +2230,17 @@ void menuCB_BattleBA_HPBarDispSet(MenuSubSprite *arg0, s32 arg1, s32 arg2) {
         temp_r3_2 = (MenuSubState *)((u8 *)&_CB + (arg1 * 0x18) + (arg2 * 4));
         temp_f4 = temp_r3_2->unkB2A8;
         temp_f5 = temp_r3_2->unkB248;
-        if (temp_f5 <= ((20.0f * temp_f4) / 100.0f)) {
+        width = (s16) (48.0f * ((temp_f4 - (temp_f4 - temp_f5)) / temp_f4));
+        if (((20.0f * temp_f4) / 100.0f) >= temp_f5) {
             menuCB_SetSprite(arg0, menuSpriteBiosGetPtr(BATTLE_BA_HP_Bar_Char[2]));
         } else {
-            if (temp_f5 <= ((50.0f * temp_f4) / 100.0f)) {
+            if (((50.0f * temp_f4) / 100.0f) >= temp_f5) {
                 menuCB_SetSprite(arg0, menuSpriteBiosGetPtr(BATTLE_BA_HP_Bar_Char[1]));
             } else {
                 menuCB_SetSprite(arg0, menuSpriteBiosGetPtr(BATTLE_BA_HP_Bar_Char[0]));
             }
         }
-        arg0->unk54 = (s16) (48.0f * ((temp_f4 - (temp_f4 - temp_f5)) / temp_f4));
+        arg0->unk54 = width;
         return;
     }
     winSpriteSetDisp(arg0, 0);
@@ -2300,22 +2301,24 @@ void _menuCBGCDelPokemon__Fv(void) {
     backup_index[var_r31] = 0;
     menuCBGCEntryTypeIndex();
     temp_r30 = menuCBPokemonPtrGet__FUlUl(_CB.unkB1D4, _CB.unkB1D8);
-    temp_r3 = pokecoloGetCountryCode();
-    if (temp_r3 != 0) {
-        if ((temp_r3 >= 0) && (temp_r3 < 3)) {
+    switch (pokecoloGetCountryCode()) {
+    case 0:
+        if (temp_r27 != 6U) {
             memcpy(menuCBPokemonPtrGet__FUlUl(temp_r27, temp_r28), temp_r30, 0xC4);
             pokemonInit(temp_r30);
+        } else {
+            insertDancer__12CReliveStageFR7Pokemonl(getStage__11CReliveHallFl(getPointer__11CReliveHallFv(), temp_r28 >> 0x10U), temp_r30, 0);
         }
-    } else if (temp_r27 != 6U) {
+        break;
+    case 1:
+    case 2:
         memcpy(menuCBPokemonPtrGet__FUlUl(temp_r27, temp_r28), temp_r30, 0xC4);
         pokemonInit(temp_r30);
-    } else {
-        insertDancer__12CReliveStageFR7Pokemonl(getStage__11CReliveHallFl(getPointer__11CReliveHallFv(), temp_r28 >> 0x10U), temp_r30, 0);
+        break;
     }
     var_r30 = &backup_type[var_r31];
     var_r29 = &backup_index[var_r31];
-loop_25:
-    if (var_r31 < 5U) {
+    for (; var_r31 < 5U; ++var_r31, ++var_r30, ++var_r29) {
         temp_r27_2 = menuCBPokemonPtrGet__FUlUl(7U, var_r31);
         temp_r5 = var_r29[1];
         var_r30[0] = var_r30[1];
@@ -2325,10 +2328,6 @@ loop_25:
         temp_r3_2 = menuCBPokemonPtrGet__FUlUl(7U, var_r31 + 1);
         memcpy(temp_r27_2, temp_r3_2, 0xC4);
         pokemonInit(temp_r3_2);
-        var_r30 += 1;
-        var_r29 += 1;
-        var_r31 += 1;
-        goto loop_25;
     }
     _CB.unkB100 = (s32) (_CB.unkB100 - 1);
 }
@@ -2849,37 +2848,37 @@ void menuCBGCEntryPokemon(void) {
             backup_type[_CB.unkB100] = temp_r29;
             backup_index[_CB.unkB100] = temp_r30;
             temp_r28 = menuCBPokemonPtrGet__FUlUl(7U, (u32) _CB.unkB100);
-            temp_r3 = pokecoloGetCountryCode();
-            if (temp_r3 != 0) {
-                if ((temp_r3 >= 0) && (temp_r3 < 3)) {
-                    if ((temp_r29 == 6U) && ((s32) _CB.unkB0F8 == 4)) {
-                        backup_type[_CB.unkB100] = 0U;
-                        backup_index[_CB.unkB100] = 0;
-                        _CB.unkB0FC = 2;
-                        _CB.unkB1DC = 0x43A5;
-                        return;
-                    }
-                    temp_r3_2 = menuCBPokemonPtrGet__FUlUl(temp_r29, temp_r30);
-                    memcpy(temp_r28, temp_r3_2, 0xC4);
-                    pokemonInit(temp_r3_2);
-                    goto block_17;
+            switch (pokecoloGetCountryCode()) {
+            case 0:
+                if (temp_r29 != 6U) {
+                    temp_r3_3 = menuCBPokemonPtrGet__FUlUl(temp_r29, temp_r30);
+                    memcpy(temp_r28, temp_r3_3, 0xC4);
+                    pokemonInit(temp_r3_3);
+                    break;
                 }
-                goto block_17;
+                if ((s32) _CB.unkB0F8 == 4) {
+                    backup_type[_CB.unkB100] = 0U;
+                    backup_index[_CB.unkB100] = 0;
+                    _CB.unkB0FC = 2;
+                    _CB.unkB1DC = 0x43A5;
+                    return;
+                }
+                pickupDancer__12CReliveStageFR7Pokemonl(getStage__11CReliveHallFl(getPointer__11CReliveHallFv(), temp_r30 >> 0x10U), temp_r28, (u16)temp_r30);
+                break;
+            case 1:
+            case 2:
+                if ((temp_r29 == 6U) && ((s32) _CB.unkB0F8 == 4)) {
+                    backup_type[_CB.unkB100] = 0U;
+                    backup_index[_CB.unkB100] = 0;
+                    _CB.unkB0FC = 2;
+                    _CB.unkB1DC = 0x43A5;
+                    return;
+                }
+                temp_r3_2 = menuCBPokemonPtrGet__FUlUl(temp_r29, temp_r30);
+                memcpy(temp_r28, temp_r3_2, 0xC4);
+                pokemonInit(temp_r3_2);
+                break;
             }
-            if (temp_r29 != 6U) {
-                temp_r3_3 = menuCBPokemonPtrGet__FUlUl(temp_r29, temp_r30);
-                memcpy(temp_r28, temp_r3_3, 0xC4);
-                pokemonInit(temp_r3_3);
-                goto block_17;
-            }
-            if ((s32) _CB.unkB0F8 == 4) {
-                backup_type[_CB.unkB100] = 0U;
-                backup_index[_CB.unkB100] = 0;
-                _CB.unkB0FC = 2;
-                _CB.unkB1DC = 0x43A5;
-                return;
-            }
-            pickupDancer__12CReliveStageFR7Pokemonl(getStage__11CReliveHallFl(getPointer__11CReliveHallFv(), temp_r30 >> 0x10U), temp_r28, (u16)temp_r30);
 block_17:
             _CB.unkB100 = (s32) (_CB.unkB100 + 1);
             if ((menuCBGCEntry_ErrorDisp__FUlUl(temp_r29, _CB.unkB100 + 0x1D) != 0) && ((s32) _CB.unkB100 == 6)) {
@@ -3061,13 +3060,13 @@ loop_16:
 
 #pragma pool_strings off
 void toolbattle_drawHeroID(MenuSubWindow *arg0, s32 arg1) {
-    u16 sp88[64];
+    u16 sp88[128];
     char sp8[128];
     s32 temp_r4;
-    s32 temp_ret;
+    u32 temp_ret;
 
     temp_r4 = arg1 * 0x1320;
-    temp_ret = heroBiosGetRnd((u8 *)&_CB + temp_r4 + 0x563C);
+    temp_ret = (u16)heroBiosGetRnd((u8 *)&_CB + temp_r4 + 0x563C);
     sprintf(sp8, "%1d%1d%1d%1d%1d", (u8) ((temp_ret / 10000) % 10), (u8) ((temp_ret / 1000) % 10), (u8) ((temp_ret / 100) % 10), (u8) ((temp_ret / 10) % 10), (u8) (temp_ret % 10));
     GScharMakeFromSJIS(sp88, sp8);
     _drawStrings__FP14tagWINDOW_WORKPUsllUl(arg0, sp88, 0, 0, 0x43C4);

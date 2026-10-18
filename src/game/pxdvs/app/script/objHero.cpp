@@ -7,7 +7,7 @@ int AppScript::cmpHero(int method,GSscript::tigaVariant *args,GSscript::tigaVari
     Hero *hero=getHeroPtr__4HeroFv();
     s32 parts[6];s32 motions[7];
     switch(method) {
-    case 0x10:{start=V(1);GSvec *b=V(2);R(heroMoveInit(start,b));break;}
+    case 0x10:{R(heroMoveInit(V(1),V(2)));break;}
     case 0x11:R(heroMoveMain());break;
     case 0x12:heroMoveInitEvent();break;
     case 0x13:heroMoveTermEvent();break;
@@ -15,7 +15,7 @@ int AppScript::cmpHero(int method,GSscript::tigaVariant *args,GSscript::tigaVari
     case 0x15:scriptPartyChange((bool)I(1));break;
     case 0x16:{s32 a=I(1),b=I(2);R(heroMoveSetNeckMode(a,b));break;}
     case 0x17:R(scriptCheckHizukiFollow());break;
-    case 0x18:{s32 a=I(1),b=I(2),c=I(3);R(scriptHeroCtrlElevator(a,b,c,I(4)));break;}
+    case 0x18:{R(scriptHeroCtrlElevator((u16)I(1),I(2),I(3),I(4)));break;}
     case 0x19:{GSresID *p=heroScriptPeople(&args[1]);R(scriptHizukiAway(p->group,p->id));break;}
     case 0x1A:{s32 a=I(1),b=I(2);R(scriptGetItem(a,b));break;}
     case 0x1B:{s32 a=I(1),b=I(2);R(scriptAddItem(a,b));break;}

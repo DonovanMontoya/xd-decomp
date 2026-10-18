@@ -57,9 +57,7 @@ struct tagWINDOW_WORK {
     s32 value;
     s16 x;
     s16 y;
-    s16 frame;
-    u8 reserved92;
-    u8 alpha;
+    u32 color;
     f32 scaleX;
     f32 scaleY;
     s16 first;
@@ -81,12 +79,27 @@ struct MenuFightKey {
 class DarkPokemon {
 public:
     bool isWazaNew(u8) const;
+    void setWazaNew(u8, bool);
 };
 
 struct Pokemon {
     u8 reserved[0xC4];
+    void *getPokemonDataPtr() const;
     bool isDarkPokemon() const;
     DarkPokemon *getDarkPokemon();
+};
+
+struct MenuFightWazaEntry {
+    u32 name;
+    u32 reserved4;
+    u16 type;
+    u8 currentPP;
+    u8 maxPP;
+};
+struct MenuFightWazaLayout {
+    u32 leading;
+    MenuFightWazaEntry entries[5];
+    s32 slot;
 };
 
 struct MENU_WAZA_STATUS {
@@ -111,8 +124,7 @@ struct FightTargetSecret {
 struct FightTargetEntry {
     u8 reserved0[4];
     s32 id;
-    u16 value;
-    u8 reservedA[2];
+    u32 value;
 };
 struct FIGHT_TRAINER;
 

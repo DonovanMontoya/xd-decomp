@@ -992,3 +992,210 @@ void setBitTable(u32 *table, long bit, bool on) {
 bool getBitTable(u32 *table, long bit) {
     return (table[bit / 32] & (1 << (bit % 32))) != 0;
 }
+
+extern "C" {
+void msgctrlSetValue(u32,u32);
+s32 winSpriteGetLayerID(tagWINDOW_WORK*,tagSPRITE_WORK*);
+void GSmsgMain(s32,u32,u16,bool);
+void GSmsgPrint2(s32,s32,s32,u32,u32);
+}
+void CInfoWindow::draw() {
+    if(open_) {
+        menuPtWindowWorkDraw(unk0);
+        for(CInfoWindow* entry=this;entry->keys[0][0];entry=(CInfoWindow*)((u8*)entry+8))msgctrlSetValue(entry->keys[0][0],entry->keys[0][1]);
+        s32 layer;
+        tagWINDOW_WORK* window=windowSearchID(unk0);
+        tagSPRITE_WORK* sprite=menuPtSpriteWorkGetByItemID(window,unk4,0);
+        layer=winSpriteGetLayerID(window,sprite);
+        if(wait) {
+            spriteSetOffset(layer,(s16)(window->x+sprite->x),(s16)(window->y+sprite->y));
+            spriteClearScissor(layer);
+            spriteSetEnv(layer);
+            GSmsgMain(layer,msg,key,((s8)window->flags & 4)==0);
+            spriteSetOffset(layer,0,0);
+            spriteClearScissor(layer);
+            spriteSetEnv(layer);
+        } else GSmsgPrint2(layer,window->x+sprite->x,window->y+sprite->y,-1,msg);
+    }
+}
+
+extern "C" f32 __float_nan[];
+static inline f32 pocketDistanceSqrt(s32 sum) {
+    if((f32)sum>0.0f) {
+        f32 value=sum;
+        f64 guess=__frsqrte((f64)value);
+        guess=0.5*guess*(3.0-guess*guess*value);
+        guess=0.5*guess*(3.0-guess*guess*value);
+        guess=0.5*guess*(3.0-guess*guess*value);
+        return (f32)(value*guess);
+    } else if((f32)sum<0.0)return __float_nan[0];
+    else {
+        f32 value=sum;
+        int classification;
+        switch(*(int*)&value & 0x7F800000) {
+        case 0x7F800000:if(*(int*)&value & 0x7FFFFF)classification=1;else classification=2;break;
+        case 0:if(*(int*)&value & 0x7FFFFF)classification=5;else classification=3;break;
+        default:classification=4;break;
+        }
+        if(classification==1)return __float_nan[0];
+    }
+    return (f32)sum;
+}
+
+f32 xyxy2distance(const PocketVec<short>& a,const PocketVec<short>& b) {
+    return pocketDistanceSqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));
+}
+
+extern "C" {f64 sin(f64);f64 fmod(f64,f64);}
+void CMenuPokemonCursor::draw() {
+    if(unk0) {
+        PocketVec<short> position;
+        if(unk4==3) {
+            position.x=(s16)(unk8*(table[index].x-x)+x);
+            position.y=(s16)(unk8*(table[index].y-y)+y);
+        } else position=table[index];
+        if(isCatchPokemon()) {
+            position.x+=8;position.y-=8;
+            if(unk4==1) {
+                f32 horizontal=20.0f*(f32)sin(3.1415927f*unk8);
+                f32 progress=unk8;
+                s32 vertical=(s32)(-8.0f*progress);
+                s32 offset=(s32)horizontal;
+                PocketVec<short> left=position,right=position;
+                right.x+=offset;left.x-=offset;
+                right.y-=vertical;left.y-=-8-vertical;
+                if(progress<0.5f){ant.drawAndUpdate(left);beforeAnt.drawAndUpdate(right);}
+                else {beforeAnt.drawAndUpdate(right);ant.drawAndUpdate(left);}
+            } else ant.drawAndUpdate(position);
+        } else if(unk4==2) {
+            beforeAnt.unkC=1.0f-unk8;
+            beforeAnt.drawAndUpdate();
+        }
+        f32 pulse=pulseTime/0.5f;
+        if(pulse>0.5f)pulse=1.0f-pulse;
+        pulse=2.0f*pulse;
+        pulseTime+=timeGetLastFrameSec();
+        if(pulseTime>=0.5f)pulseTime=fmod(pulseTime,0.5);
+        position.x-=45;position.y-=45;
+        u32 color=unk14C?0xFFC800FF:0xFFFFFFFF;
+        if(!isCatchPokemon()) {
+            MenuSpriteValue* sprite=menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x216));
+            s16 width=sprite->width,height=sprite->height;
+            s16 offset=5.0f*pulse;
+            if(offset>4)offset=4;
+            s16 left=position.x+offset+4,top=position.y+offset+4;
+            menuPtSpriteDrawColor(0x216,left,top,width,height,color);
+            s16 negativeWidth=-width;
+            s16 right=position.x+50-offset;
+            menuPtSpriteDrawColor(0x216,right,top,negativeWidth,height,color);
+            s16 negativeHeight=-height;
+            s16 bottom=position.y+50-offset;
+            menuPtSpriteDrawColor(0x216,left,bottom,width,negativeHeight,color);
+            menuPtSpriteDrawColor(0x216,right,bottom,negativeWidth,negativeHeight,color);
+        } else menuPtSpriteDrawColor(0x215,(s16)(position.x+14),(s16)(position.y+14),(color&0xFFFFFF00)|(s16)(155.0f*pulse+100.0f));
+        menuPtSpriteDrawColor(0x214,(s16)(position.x+7),(s16)(position.y+35),color);
+    }
+}
+
+extern "C" {
+void* GSresGetResourceAllGroup(u32);
+u16 GStextureGetXsize(void*);
+u16 GStextureGetYsize(void*);
+void GSprimDraw2DTexQuad4V(const PocketVec<f32>*,const PocketVec<f32>*,void*,const GSgfxColAu8*);
+double sin(double);
+double cos(double);
+}
+#pragma dollar_identifiers on
+extern "C" {static PocketVec<f32> xy$2179[4],st$2180[4];}
+void menuPtSpriteDrawAndRollScale(u16 id,u32 packedColor,f32 x,f32 y,f32 rotation,f32 scale) {
+    MenuSpriteValue* data=menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(id));
+    void* texture=GSresGetResourceAllGroup(data->resource);
+    f32 left=data->x,top=data->y,width=data->width,height=data->height;
+    GSgfxColAu8 color={255,255,255,255};
+    u8 green=packedColor>>16,blue=packedColor>>8,red=packedColor>>24,alpha=packedColor;
+    color.r=red;color.g=green;color.b=blue;color.a=alpha;
+    st$2180[0].x=st$2180[1].x=left/GStextureGetXsize(texture);
+    st$2180[2].x=st$2180[3].x=(left+width)/GStextureGetXsize(texture);
+    st$2180[1].y=st$2180[2].y=top/GStextureGetYsize(texture);
+    st$2180[0].y=st$2180[3].y=(top+height)/GStextureGetYsize(texture);
+    xy$2179[0].x=xy$2179[1].x=0;xy$2179[2].x=xy$2179[3].x=width;
+    xy$2179[1].y=xy$2179[2].y=0;xy$2179[0].y=xy$2179[3].y=height;
+    for(s32 i=0;i<4;i++) {xy$2179[i].y-=height/2.0f;xy$2179[i].x-=width/2.0f;}
+    f32 angle=-rotation;
+    for(s32 i=0;i<4;i++) {
+        f32 oldX=xy$2179[i].x,oldY=xy$2179[i].y;
+        f32 t=(f32)cos(angle);f32 v=(f32)sin(angle);
+        xy$2179[i].x=oldY*v+oldX*t;
+        t=(f32)sin(angle);v=(f32)cos(angle);
+        xy$2179[i].y=oldY*v-oldX*t;
+    }
+    for(s32 i=0;i<4;i++){xy$2179[i].x*=scale;xy$2179[i].y*=scale;}
+    for(s32 i=0;i<4;i++){xy$2179[i].x+=x;xy$2179[i].y+=y;}
+    GSprimSetQuadVertexOrder(1);
+    GSgfxColAu8 drawColor=color;
+    GSprimDraw2DTexQuad4V(xy$2179,st$2180,texture,&drawColor);
+}
+
+struct PocketSelectData {
+    u8 flags;
+    union {u8 type;struct {u8 high:4,mode:3,low:1;} typeBits;};
+    union {u8 button;struct {u8 mode:3,low:5;} buttonBits;};
+    u8 byte3,byte4,pad5;
+    s16 half6,half8,halfA;
+    void (*cursor)(tagWINDOW_WORK*);
+    void (*key)(tagWINDOW_WORK*);
+    s32 word14,word18;
+};
+extern "C" long actionMenu__9CMetaMenuFPUlill(CMetaMenu* self,u32* entries,int quantity,long x,long y,long mode) {
+    u8 flags,button,type,byte3,byte4;
+    s16 half6,half8,halfA;
+    void (*cursor)(tagWINDOW_WORK*);
+    void (*key)(tagWINDOW_WORK*);
+    s32 word14,word18;
+    PocketSelectData* data=(PocketSelectData*)menuDataBiosGetPtr(0x59);
+    if(self->tutorialActive) {
+        _selectItemQuantity=quantity;_pThis=self;
+        flags=data->flags;type=data->type;button=data->button;byte3=data->byte3;byte4=data->byte4;
+        half6=data->half6;half8=data->half8;halfA=data->halfA;
+        cursor=data->cursor;key=data->key;word14=data->word14;word18=data->word18;
+        data->typeBits.mode=4;data->cursor=_tutorialWindowCursorFunc;
+        data->buttonBits.mode=4;data->key=_tutorialWindowButtonFunc;
+    }
+    long result=menuSubOpenSelect(0,entries,quantity,x,y,mode);
+    if(result==-1)result=quantity-1;
+    if(self->tutorialActive) {
+        data->flags=flags;data->type=type;data->button=button;data->byte3=byte3;data->byte4=byte4;
+        data->half6=half6;data->half8=half8;data->halfA=halfA;
+        data->cursor=cursor;data->key=key;data->word14=word14;data->word18=word18;
+    }
+    return result;
+}
+
+extern "C" {
+void* Sequence_GetGSmodel(u32);
+s32 Sequence_GetModelSize(u32);
+void memoGetScaleAngle(u16,f32*,f32*);
+void* GSmodelGetBound(void*);
+void GSboundGetSize(void*,f32*,u8,u8);
+}
+extern "C" {static f32 multi$2677;static u8 init$2678;}
+f32 menuGetPokemonScale(u32 sequence,int pokemon) {
+    f32 size[3],scale,angle;
+    void* model=Sequence_GetGSmodel(sequence);
+    f32 factor;
+    switch(Sequence_GetModelSize(sequence)) {
+    case -2:factor=0.6f;break;
+    case -1:factor=0.75f;break;
+    case 0:factor=1.0f;break;
+    case 1:factor=1.15f;break;
+    case 2:factor=1.25f;break;
+    case 3:factor=1.4f;break;
+    default:factor=1.0f;break;
+    }
+    memoGetScaleAngle(pokemon,&scale,&angle);
+    GSboundGetSize(GSmodelGetBound(model),size,0,0);
+    f32 largest=size[0]>size[1]?size[0]:size[1];
+    f32 result=11.0f/(scale*(largest/factor));
+    if((s8)init$2678==0) {init$2678=1;multi$2677=2.0f;}
+    return result*multi$2677;
+}

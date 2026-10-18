@@ -37,15 +37,15 @@ void CriticalCheckHikaePokemon(void* arg) {
     FightWaza* waza;
     u16 useWaza;
     u16 defId;
-    u8 tokuseiFlag;
+    u32 tokuseiFlag;
     u32 pokeId;
-    s32 var30;
-    s32 var29;
+    u8 var30;
+    u8 var29;
     s32 sum;
     u8 seqFlag;
     u16 level;
-    u16 maxIdx;
-    u16 rnd;
+    u32 maxIdx;
+    s32 rnd;
 
 
 
@@ -56,7 +56,7 @@ void CriticalCheckHikaePokemon(void* arg) {
     useWaza = fightOutPokemon_GetUseWazaDataId(attacker);
     pokeId = figthOutPokemonGetPokemonDataId(attacker);
     defId = pokemon_GetPokemonDataId(fightPokemon_GetPokemonBuffPtr(arg));
-    tokuseiFlag = pokemon_GetTokuseiFlag(fightPokemon_GetPokemonBuffPtr(arg));
+    tokuseiFlag = (u8)pokemon_GetTokuseiFlag(fightPokemon_GetPokemonBuffPtr(arg));
     var29 = 0;
     if ((u16)item == 0x3f && (u16)pokeId == 0x71) {
         var29 = 1;
@@ -69,13 +69,13 @@ void CriticalCheckHikaePokemon(void* arg) {
     seqFlag = wazaDB_GetSeqId(useWaza) == 0x2b;
     sum = sum + (u8)(wazaDB_GetSeqId(useWaza) == 0x4b);
     sum = sum + (u8)(wazaDB_GetSeqId(useWaza) == 0xc8);
+    level = (sum + (u8)(wazaDB_GetSeqId(useWaza) == 0xd1) + (u8)((u16)item == 0x29) + var29 * 2 + var30 * 2) + seqFlag;
     maxIdx = fight_waza_critical_data_number - 1;
-    level = seqFlag + (sum + (u8)(wazaDB_GetSeqId(useWaza) == 0xd1) + (u8)((u16)item == 0x29) + var29 * 2 + var30 * 2);
     if (level > maxIdx) {
         level = maxIdx;
     }
     if (pokemonDB_GetTokuseiDataId(defId, tokuseiFlag) != 4 && pokemonDB_GetTokuseiDataId(defId, tokuseiFlag) != 0x4b && fightFloor_GetFightKindDoCriticalAttackFlag(0) == 1) {
-        rnd = HSD_Rand();
+        rnd = (u16)HSD_Rand();
         if (rnd % fightWazaCriticalDataBiosGetBunbo(fightWazaCriticalDataBiosGetPtr(level)) == 0) {
             fightWaza_SetCritical(waza, 2);
         } else {
@@ -231,7 +231,7 @@ void fightSeqIrekaeExec(void* arg) {
     fightMenuCloseMsg();
 }
 
-s32 fightSeqGetItemType(u16 item) {
+u8 fightSeqGetItemType(u16 item, void *pokemon) {
     void* param = itemParamGetPtr(itemDataBiosGetItemEffectParam(itemDataBiosGetPtr(item)));
     if (param == 0) {
         return 7;
@@ -250,8 +250,8 @@ s32 fightSeqGetItemType(u16 item) {
     if (itemParamGetCriticalFlag(param) == 1) {
         return 4;
     }
-    if (itemParamGetAttackUp(param) != 0 || itemParamGetDefenceUp(param) != 0 || itemParamGetQuickUp(param) != 0 ||
-        itemParamGetHitUp(param) != 0 || itemParamGetSpAttackUp(param) != 0) {
+    if ((u8)itemParamGetAttackUp(param) != 0 || (u8)itemParamGetDefenceUp(param) != 0 || (u8)itemParamGetQuickUp(param) != 0 ||
+        (u8)itemParamGetHitUp(param) != 0 || (u8)itemParamGetSpAttackUp(param) != 0) {
         return 5;
     }
     if (itemParamGetGuardFlag(param) == 1) {
@@ -278,7 +278,8 @@ static s32 _fightSeqClearOneTurnCountSub(void* pokemon, u16, void* data) {
         }
         if (fightOutPokemonIsJoutaiDataId(pokemon, 0x12) == 1) {
             count = fightOutPokemonGetNowKaisuuJoutaiDataId(pokemon, 0x12);
-            if ((s8)(count + 1) >= fightOutPokemonGetKaisuuJoutaiDataId(pokemon, 0x12)) {
+            s32 limit = (s8)fightOutPokemonGetKaisuuJoutaiDataId(pokemon, 0x12);
+            if ((s8)(count + 1) >= limit) {
                 fightOutPokemonInitJoutaiDataId(pokemon, 0x12);
             } else {
                 fightOutPokemonSetNowKaisuuJoutaiDataId(pokemon, 0x12, count + 1);
@@ -322,8 +323,7 @@ void fightSeqInit(void){
     fightSeqClearOneSelfTurnCount();
     s32 count=8;
     u8 *work=ServerWork.flags;
-    u8 zero=0;
-    for(;count>0;count--)*work++=zero;
+    for(;count>0;count--)*work++=0;
     fight_seq_now_fight_action_ptr=0;
     fightFloorLoopValidFightOutPokemon(0,_fightSeqInitSubFightOutPokemon,0,0);
 }
@@ -508,12 +508,12 @@ extern "C" s32 EscapeNGCheck(void *pokemon){
     void *encounter=fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(0));
     u16 item=pokemonGetSoubiItemDataId(data);
     u16 ability=pokemonGetTokuseiDataId(data);
-    u8 count=fightFloorGetFightTrainerFightOutPokemonPtrAry(0,fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0,pokemon),enemies,0,1);
+    u32 count=(u8)fightFloorGetFightTrainerFightOutPokemonPtrAry(0,fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0,pokemon),enemies,0,1);
     u16 itemEffect=pokemonGetSoubiItemSoubiDataId(data);
     fightMsgctrlSetValue(0x29,(u32)GSmsgGetGSchar(itemDB_GetName(item)));
     if(fightEncountDataBiosGetFightKind(encounter)!=0xC){ServerWork.flags[5]=0;return 1;}
     if(itemEffect==0x25 || fightFloorIsNowEncountTuusinTaisen(0)==1 || ability==0x32)return 0;
-    for(s8 i=0;i<count;i++){
+    for(s32 i=0;i<(s32)count;i++){
         u16 enemyAbility=fightOutPokemon_GetTokuseiDataId(enemies[i]);
         if(enemyAbility==0x17){
             UserWork[0x16003]=i;
@@ -546,7 +546,7 @@ extern "C" void fightSeqCallExec(void){
         u8 probability=pokemonGetDarkPokemonCallKakuritu(fightOutPokemonGetPokemonPtr(pokemon));
         if(fightOutPokemonIsJoutaiDataId(pokemon,0x3E)==1){
             if(HSD_Rand()%100<probability){message=0x4FD3;calm=1;if(fightOutPokemonIsJoutaiDataId(pokemon,8)==1)wake=1;}
-            else{message=0x4FD4;if(fightOutPokemonIsJoutaiDataId(pokemon,8)==1 && HSD_Rand()%100<(probability>>1))wake=1;}
+            else{message=0x4FD4;if(fightOutPokemonIsJoutaiDataId(pokemon,8)==1 && HSD_Rand()%100<((u8)probability>>1))wake=1;}
         }else if(fightOutPokemonIsJoutaiDataId(pokemon,8)==1){message=0x4FD2;wake=1;}
         else boost=1;
     }else if(fightOutPokemonIsJoutaiDataId(pokemon,8)==1){message=0x4FD2;wake=1;}
@@ -593,22 +593,23 @@ extern "C" void fightSeqItemExec(void *action,u16 item){
     void *fightItem=fightOutPokemon_GetFightItemPtr(attacker);
     if(fightItem){
         fightItem_GetTargetDataId(fightItem);
-        s16 count=fightItem_GetCount(fightItem);
+        s32 count=fightItem_GetCount(fightItem);
         u8 stocked=fightItem_GetBuff(fightItem)!=0;
         void *param=itemParamGetPtr(itemDataBiosGetItemEffectParam(itemDataBiosGetPtr(item)));
         u8 oldStat=UserWork[0x1601E],oldEffect=UserWork[0x160A4];
         fightSeqSpecificationActionCounterInit(attacker);
         void *sequence;
-        if(stocked==1)sequence=ItemNormalTbl;
+        if(stocked==1)sequence=ItemNormalTbl[0];
         else if(itemDB_GetKind(item)==1)sequence=ItemBallTbl[item];
-        else if(item==0x50||item==0x51)sequence=ItemFightTbl;
+        else if(item==0x50||item==0x51)sequence=ItemFightTbl[0];
         else{
-            u8 type=fightSeqGetItemType(item);
-            if(type==7)sequence=ItemNormalTbl;
+            u8 type=fightSeqGetItemType(item,attacker);
+            if(type==7)sequence=ItemNormalTbl[0];
             else{
                 fightFloor_SetAppointPokemonPtr(0,attacker);ServerWork.flags[5]=0;
                 switch(type){
-                case 6:break;
+                case 1:
+                case 2:break;
                 case 3:
                     if(itemParamGetSleepFlag(param)==1 && itemParamGetPoisonFlag(param)==1 && itemParamGetBurnFlag(param)==1 && itemParamGetFreezeFlag(param)==1 && itemParamGetParalyzeFlag(param)==1){
                         if(fightOutPokemonIsJoutaiDataId(attacker,8)==1)ServerWork.flags[5]=5;
@@ -627,7 +628,7 @@ extern "C" void fightSeqItemExec(void *action,u16 item){
                 case 4:ServerWork.flags[5]=5;break;
                 case 5:{
                     ServerWork.flags[5]=4;
-                    u8 amount=itemParamGetAttackUp(param);
+                    s32 amount=itemParamGetAttackUp(param);
                     if(amount>0){fightMsgctrlSetValue(0xD,(u32)GSmsgGetGSchar(AbiCntMsgTbl[1]));UserWork[0x1601E]=1;}
                     else if((amount=itemParamGetDefenceUp(param))>0){fightMsgctrlSetValue(0xD,(u32)GSmsgGetGSchar(AbiCntMsgTbl[2]));UserWork[0x1601E]=2;}
                     else if((amount=itemParamGetQuickUp(param))>0){fightMsgctrlSetValue(0xD,(u32)GSmsgGetGSchar(AbiCntMsgTbl[3]));UserWork[0x1601E]=3;}
@@ -644,6 +645,7 @@ extern "C" void fightSeqItemExec(void *action,u16 item){
                     }
                     break;
                 }
+                case 6:break;
                 }
                 sequence=ItemNormalTbl[type];
             }

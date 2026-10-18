@@ -331,3 +331,91 @@ void peEmitterNode::CreateWorldParams() {
         previousWorld.scale.z = world.scale.z;
     }
 }
+
+static inline void emitterCopy(Vec* destination,const Vec* source) {
+    f32 z,y,x;
+    y=source->y;
+    z=source->z;
+    x=source->x;
+    destination->x=x;destination->y=y;destination->z=z;
+}
+static inline f32 emitterRandomAngle() { f32 turns=2.0f*HSD_Randf(); return 3.1415927f*turns; }
+static inline f32 emitterAbs(f32 value) { if(value<0.0f)value=-value;return value; }
+void peEmitterNode::GetPositionParameter(GSvec* position,GSvec* direction,_pePositionFunction* function,f32 time) {
+    Mtx matrix4,matrix3,matrix2,matrix1;
+    Vec offset;
+    Quaternion rotation;
+    Vec rotated,range1,range2,normal,cone,scaled,ring;
+    switch(function->flags&3) {
+    case 0: {
+        ((Vec*)direction)->x=function->axis.x;((Vec*)direction)->y=function->axis.y;((Vec*)direction)->z=function->axis.z;
+        if((emitterAbs(function->radius)>0.00001f || emitterAbs(function->radiusRange)>0.00001f) && PSVECSquareMag(((Vec*)direction))>0.00001f) {
+            f32 angle;
+            if(function->flags&0x80)angle=3.1415927f*(2.0f*(function->rate*time));
+            else angle=emitterRandomAngle();
+            C_QUATRotAxisRad(&rotation,((Vec*)direction),angle);
+            PSMTXQuat(matrix3,&rotation);
+            PSMTXMultVecSR(matrix3,&function->direction,&rotated);
+            emitterCopy(((Vec*)position),&rotated);
+            f32 scale;
+            if(function->flags&0x20)scale=time*function->radiusRange+function->radius;
+            else scale=function->radiusRange*HSD_Randf()+function->radius;
+            PSVECScale(((Vec*)position),((Vec*)position),scale);
+        } else {((Vec*)position)->x=0.0f;((Vec*)position)->y=0.0f;((Vec*)position)->z=0.0f;}
+        if(function->flags&0x10) {
+            PSVECScale(&function->range,&range1,time);
+            offset.x=range1.x;offset.y=range1.y;offset.z=range1.z;
+        } else {
+            PSVECScale(&function->range,&range2,HSD_Randf());
+            offset.x=range2.x;offset.y=range2.y;offset.z=range2.z;
+        }
+        PSVECAdd(&offset,&function->origin,&offset);
+        PSVECAdd(((Vec*)position),&offset,((Vec*)position));
+        if(PSVECSquareMag(((Vec*)position))>0.00001f) {
+            PSVECNormalize(((Vec*)position),&normal);
+            emitterCopy(((Vec*)direction),&normal);
+        } else {((Vec*)direction)->x=0.0f;((Vec*)direction)->y=0.0f;((Vec*)direction)->z=0.0f;}
+        return;
+    }
+    case 1: {
+        f32 angle;
+        if(function->flags&0x40)angle=function->direction.x*(function->direction.y*time)+function->axis.z;
+        else angle=function->direction.x*HSD_Randf()+function->axis.z;
+        C_QUATRotAxisRad(&rotation,&function->range,angle);
+        PSMTXQuat(matrix2,&rotation);
+        PSMTXMultVecSR(matrix2,&function->origin,&cone);
+        emitterCopy(((Vec*)direction),&cone);
+        if(function->flags&0x80)angle=3.1415927f*(2.0f*(function->direction.z*time));
+        else angle=emitterRandomAngle();
+        C_QUATRotAxisRad(&rotation,&function->origin,angle);
+        PSMTXQuat(matrix4,&rotation);
+        PSMTXMultVecSR(matrix4,((Vec*)direction),((Vec*)direction));
+        f32 scale;
+        if(function->flags&0x20)scale=time*function->axis.y+function->axis.x;
+        else scale=function->axis.y*HSD_Randf()+function->axis.x;
+        PSVECScale(((Vec*)direction),&scaled,scale);
+        emitterCopy(((Vec*)position),&scaled);
+        return;
+    }
+    case 3: {
+        ((Vec*)direction)->x=function->range.x;((Vec*)direction)->y=function->range.y;((Vec*)direction)->z=function->range.z;
+        f32 angle;
+        if(function->flags&0x80)angle=3.1415927f*(2.0f*(function->direction.z*time));
+        else angle=emitterRandomAngle();
+        C_QUATRotAxisRad(&rotation,((Vec*)direction),angle);
+        PSMTXQuat(matrix1,&rotation);
+        PSMTXMultVecSR(matrix1,&function->axis,&ring);
+        emitterCopy(((Vec*)position),&ring);
+        f32 scale;
+        if(function->flags&0x20)scale=time*function->direction.y+function->direction.x;
+        else scale=function->direction.y*HSD_Randf()+function->direction.x;
+        PSVECScale(((Vec*)position),((Vec*)position),scale);
+        PSVECAdd(((Vec*)position),&function->origin,((Vec*)position));
+        return;
+    }
+    default:
+        ((Vec*)position)->x=0.0f;((Vec*)position)->y=0.0f;((Vec*)position)->z=0.0f;
+        ((Vec*)direction)->x=0.0f;((Vec*)direction)->y=0.0f;((Vec*)direction)->z=0.0f;
+        return;
+    }
+}

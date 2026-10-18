@@ -1,6 +1,6 @@
 #include "layer_private.h"
 #include <game/pxdvs/GSAPI/GSgfxM/layerStatePrivate.hpp>
-static const u32 defaultColor=0x80808080;
+static const LayerColor defaultColor={0x80808080};
 extern "C" {
 u8 GSgfxRenderModuleIsRendering__Fv();
 u8 GSgfxVFGetColorCount(void*); u8 GSgfxVFGetTextureCount(void*); u8 GSgfxVFHasElement(void*,s32);
@@ -291,9 +291,9 @@ loop_8:
 }
 
 void renderState_NL_NVC_NT__10GSgfxLayerFv(void *arg0) {
-    s32 sp18;
-    s32 sp14;
-    s32 sp10;
+    LayerColor sp18;
+    LayerColor sp14;
+    LayerColor sp10;
     s32 sp8;
 
     layerField<u8>(arg0, 0xDB8) = 1;
@@ -319,8 +319,8 @@ void renderState_NL_NVC_NT__10GSgfxLayerFv(void *arg0) {
     layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 0x80);
     layerField<u32>(arg0, 0x17A4) = (s32) (layerField<u32>(arg0, 0x17A4) | 1);
     layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x80);
-    layerField<u32>(arg0, 0xE9C) = (s32) defaultColor;
-    layerField<u32>(arg0, 0xEA4) = (s32) defaultColor;
+    layerField<LayerColor>(arg0, 0xE9C) = sp10;
+    layerField<LayerColor>(arg0, 0xEA4) = sp14;
     layerField<u32>(arg0, 0x16C4) = (s32) (layerField<u32>(arg0, 0x16C4) | 1);
     layerField<u32>(arg0, 0x16C8) = (s32) (layerField<u32>(arg0, 0x16C8) | 1);
     layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 4);
@@ -1465,16 +1465,16 @@ __declspec(weak) void GSgfx_GCSetTevIndRepeat(s32 arg0) {
     temp_r5 = arg0 * 4;
     temp_r11 = temp_r5 + 0x313;
     temp_r10 = temp_r5 + 0x312;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) & ~3;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.stage = 0;
     temp_r8 = temp_r5 + 0x311;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) & ~0xC;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) & ~0x70;
-    layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~0x180;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~0x1E;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~0xE0) | 0xC0;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) & ~7) | 6;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) & ~8;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) | 0x10;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.format = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.bias = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.alpha = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.matrix = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapS = 6;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapT = 6;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 1;
     layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
     layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 2;
 }
@@ -1489,15 +1489,15 @@ __declspec(weak) void GSgfx_GCSetTevIndBumpXYZ(s32 arg0, u8 arg1, s32 arg2) {
     temp_r12 = temp_r31 + 0x313;
     temp_r9 = temp_r31 + 0x312;
     temp_r7 = temp_r31 + 0x311;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r12, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r12, 0) & ~3) | (arg1 & 3);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r12, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r12, 0) & ~0xC;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r12, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r12, 0) | 0x70;
-    layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) = layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) & ~0x180;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) & ~0x1E) | ((((u8)arg2) << 1) & 0x1E);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) & ~0xE0;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) & ~7;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) & ~8;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) & ~0x10;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.stage = arg1;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.format = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.bias = 7;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.alpha = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.matrix = arg2;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapS = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapT = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 0;
     layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
     layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 2;
 }
@@ -1518,21 +1518,21 @@ __declspec(weak) void GSgfx_GCSetTevIndWarp(s32 arg0, u8 arg1, u8 arg2, u8 arg3,
     temp_r31 = arg0 * 4;
     temp_r6 = temp_r31 + 0x313;
     var_r8 = 0;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r6, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r6, 0) & ~3) | (arg1 & 3);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r6, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r6, 0) & ~0xC;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.stage = arg1;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.format = 0;
     if (arg2 != 0) {
         var_r8 = 7;
     }
     temp_r5 = temp_r31 + 0x313;
     temp_r10 = temp_r31 + 0x312;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r5, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r5, 0) & ~0x70) | ((var_r8 << 4) & 0x70);
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.bias = var_r8;
     temp_r7 = temp_r31 + 0x311;
-    layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~0x180;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~0x1E) | ((((u8)arg4) << 1) & 0x1E);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~0xE0) | ((var_r12 << 5) & 0xE0);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) & ~7) | (var_r12 & 7);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) & ~8;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) & ~0x10;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.alpha = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.matrix = arg4;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapS = var_r12;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapT = var_r12;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 0;
     layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
     layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 2;
 }
@@ -1547,15 +1547,15 @@ __declspec(weak) void GSgfx_GCSetTevIndirect(s32 arg0, u8 arg1, s32 arg2, s32 ar
     temp_r27 = temp_r26 + 0x313;
     temp_r31 = temp_r26 + 0x312;
     temp_r7 = temp_r26 + 0x311;
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r27, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r27, 0) & ~3) | (arg1 & 3);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r27, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r27, 0) & ~0xC) | ((((u8)arg2) << 2) & 0xC);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r27, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r27, 0) & ~0x70) | ((((u8)arg3) << 4) & 0x70);
-    layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0x180) | (((u16) arg_spC << 7) & 0x180);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0x1E) | ((((u8)arg4) << 1) & 0x1E);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0xE0) | ((((u8)arg5) << 5) & 0xE0);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) & ~7) | (((u8)arg6) & 7);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) & ~8) | ((arg_sp8 << 3) & 8);
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) & ~0x10) | ((arg7 << 4) & 0x10);
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.stage = arg1;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.format = arg2;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.bias = arg3;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.alpha = arg_spC;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.matrix = arg4;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapS = arg5;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapT = arg6;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = arg_sp8;
+    LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = arg7;
     layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
     layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 2;
 }
@@ -1571,15 +1571,15 @@ __declspec(weak) void GSgfx_GCSetTevDirect(s32 arg0) {
         temp_r10 = temp_r4 + 0x313;
         temp_r9 = temp_r4 + 0x312;
         temp_r8 = temp_r4 + 0x311;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~3;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~0xC;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~0x70;
-        layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) = layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) & ~0x180;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) & ~0x1E;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) & ~0xE0;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) & ~7;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) & ~8;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) & ~0x10;
+        LAYER_INDIRECT_STATE->indirect[arg0].fields.stage = 0;
+        LAYER_INDIRECT_STATE->indirect[arg0].fields.format = 0;
+        LAYER_INDIRECT_STATE->indirect[arg0].fields.bias = 0;
+        LAYER_INDIRECT_STATE->indirect[arg0].fields.alpha = 0;
+        LAYER_INDIRECT_STATE->indirect[arg0].fields.matrix = 0;
+        LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapS = 0;
+        LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapT = 0;
+        LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
+        LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 0;
         layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
         layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 2;
         layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 1;

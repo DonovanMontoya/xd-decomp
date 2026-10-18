@@ -15,14 +15,14 @@ int AppScript::cmpFloor(int method,GSscript::tigaVariant *args,GSscript::tigaVar
     case 0x15:setBattleResumeFloorID__4HeroFUi(hero,I(1));setBattleResumeFloorIndex__4HeroFUc(hero,I(3));break;
     case 0x16:{s32 a=I(1);floorLink(a,I(2));floorWaitForChange();break;}
     case 0x17:{s32 a=I(1),b=I(2);floorLinkWithSE(a,b,I(3));floorWaitForChange();break;}
-    case 0x18:{s32 a=I(1),b=I(2);R(floorEventCtrlDoor(a,b,I(3)));break;}
-    case 0x19:{s32 a=I(1),b=I(2);R(floorEventCtrlElevator(a,b,I(3),0,0));break;}
-    case 0x29:{GSresID *p=floorScriptPeople(&args[4]);s32 a=I(1),b=I(2);R(floorEventCtrlElevator(a,b,I(3),p->group,p->id));break;}
-    case 0x1A:{s32 a=I(1);floorEventSetTresureDisp(a,(bool)I(2));break;}
-    case 0x1B:{s32 a=I(1),b=I(2);R(floorEventChangeTresure(a,b,I(3)));break;}
-    case 0x1C:{s32 a=I(1);R(scriptFloorCharSetDisp(a,I(2)));break;}
-    case 0x1D:{s32 a=I(1);f32 x=F(2),y=F(3);R(scriptFloorCharSetPos(a,x,y,F(4)));break;}
-    case 0x1E:{s32 a=I(1);floorSetFadeScript(a,I(2));break;}
+    case 0x18:{R(floorEventCtrlDoor(I(1),I(2),I(3)));break;}
+    case 0x19:{R(floorEventCtrlElevator(I(1),I(2),I(3),0,0));break;}
+    case 0x29:{GSresID *p=floorScriptPeople(&args[4]);R(floorEventCtrlElevator(I(1),I(2),I(3),p->group,p->id));break;}
+    case 0x1A:{floorEventSetTresureDisp(I(1),(bool)I(2));break;}
+    case 0x1B:{R(floorEventChangeTresure(I(1),I(2),I(3)));break;}
+    case 0x1C:{R(scriptFloorCharSetDisp(I(1),I(2)));break;}
+    case 0x1D:{R(scriptFloorCharSetPos(I(1),F(2),F(3),F(4)));break;}
+    case 0x1E:{floorSetFadeScript(I(1),I(2));break;}
     case 0x1F:setBattleResumeFloorID__4HeroFUi(hero,I(1));setBattleResumeFloorIndex__4HeroFUc(hero,I(3));break;
     case 0x20:setBattleResumeFloorID__4HeroFUi(hero,I(1));setBattleResumeFloorIndex__4HeroFUc(hero,I(3));break;
     case 0x21:floorClearReturnPoint();break;
@@ -45,8 +45,8 @@ int AppScript::cmpFloor(int method,GSscript::tigaVariant *args,GSscript::tigaVar
     case 0x30:
         if(floorDataBiosGetPosListData(I(1),0,&rotation)==0){R(0);return 1;}
         appScriptSetFloat(result,rotation);break;
-    case 0x31:{s32 a=I(1);floorLink(a,I(2));s32 b=I(3);floorSetFadeScript(b,I(4));floorWaitForChange();break;}
-    case 0x32:{s32 a=I(1),b=I(2),c=I(3),d=I(4),e=I(5);floorMoviePlay(a,(bool)b,(bool)c,d,e,I(6));floorOffscreenPlayWait();break;}
+    case 0x31:{floorLink(I(1),I(2));floorSetFadeScript(I(3),I(4));floorWaitForChange();break;}
+    case 0x32:{floorMoviePlay(I(1),(bool)I(2),(bool)I(3),I(4),I(5),I(6));floorOffscreenPlayWait();break;}
     case 0x33:menuBattleDiskOpen();floorWaitForChange();break;
     case 0x34:R(menuBattleDiskGetSelectID());break;
     case 0x35:R(menuBattleDiskGetResult());break;

@@ -95,25 +95,25 @@ s32 cameraWaitSyncAnime(u8 wait) {
 }
 void cameraPlayOffsetAnime(u32 group,u32 id,s32 frame,u8 loop) {
     if(pCamWork->animationGroup || pCamWork->animationID) cameraStopAnime();
-    pCamWork->previousType=cameraSetType(8);
-    pCamWork->animationGroup=group; pCamWork->animationID=id;
+    u8 previous=cameraSetType(8);
+    pCamWork->animationGroup=group; pCamWork->animationID=id; pCamWork->previousType=previous;
     GScamera* camera=animationCamera(pCamWork);
     if(camera) {
-        GScameraSetAnimIndex(camera,0); GScameraSetAnimType(camera,loop ? 1 : 0);
+        GScameraSetAnimIndex(camera,0); if(loop) GScameraSetAnimType(camera,1); else GScameraSetAnimType(camera,0);
         GScameraSetAnimRate(camera,0.5f); GScameraSetAnimFrame(camera,(f32)frame); GScameraStartAnimation(camera);
-        pCamWork->offsetPosition.param1=0.0f; pCamWork->offsetPosition.param2=0.0f; pCamWork->offsetPosition.param3=0.0f;
-        pCamWork->offsetRotation.param1=0.0f; pCamWork->offsetRotation.param2=0.0f; pCamWork->offsetRotation.param3=0.0f;
-        pCamWork->offsetScale.param1=1.0f; pCamWork->offsetScale.param2=1.0f; pCamWork->offsetScale.param3=1.0f;
+        { GSvec* v=&pCamWork->offsetPosition; v->param1=0.0f; v->param2=0.0f; v->param3=0.0f; }
+        { GSvec* v=&pCamWork->offsetRotation; v->param1=0.0f; v->param2=0.0f; v->param3=0.0f; }
+        { GSvec* v=&pCamWork->offsetScale; v->param1=1.0f; v->param2=1.0f; v->param3=1.0f; }
         GScameraSetActiveCamera((GScamera*)GSresGetResource(0,0));
     }
 }
 void cameraPlayAnime(u32 group,u32 id,u8 loop,f32 frame) {
     if(pCamWork->animationGroup || pCamWork->animationID) cameraStopAnime();
-    pCamWork->previousType=cameraSetType(4);
-    pCamWork->animationGroup=group; pCamWork->animationID=id;
+    u8 previous=cameraSetType(4);
+    pCamWork->animationGroup=group; pCamWork->animationID=id; pCamWork->previousType=previous;
     GScamera* camera=animationCamera(pCamWork);
     if(camera) {
-        GScameraSetAnimIndex(camera,0); GScameraSetAnimType(camera,loop ? 1 : 0);
+        GScameraSetAnimIndex(camera,0); if(loop) GScameraSetAnimType(camera,1); else GScameraSetAnimType(camera,0);
         GScameraSetAnimRate(camera,0.5f); GScameraSetAnimFrame(camera,frame); GScameraStartAnimation(camera); GScameraSetActiveCamera(camera);
     }
 }
@@ -167,7 +167,7 @@ void cameraMoveTargetPos(u32 mode,const GSvec* position,f32 duration) {
     pCamWork->moving=1; pCamWork->targetAnimation.start(&pCamWork->targetPosition,position,duration);
 }
 void cameraMoveTarget(u32 mode,u32 group,u32 id,f32 duration) {
-    GSvec position={0.0f,0.0f,0.0f};
+    GSvec position;position.param1=0.0f;position.param2=0.0f;position.param3=0.0f;
     cameraSetTarget(group,id);
     GSmodel* model=(GSmodel*)GSresGetResource(group,id);
     if(model) GSmodelGetPosition(model,&position);
@@ -206,8 +206,8 @@ GScamera* cameraGetActive() {
 u8 cameraGetType() { return pCamWork->type; }
 u8 cameraSetType(u8 type) {
     pCamWork->flags=0;
-    if(pCamWork->type!=type) { u8 previous=pCamWork->type; pCamWork->type=type; pCamWork->flags &= ~0x20; return previous; }
-    return type;
+    if(pCamWork->type==type) return type;
+    u8 previous=pCamWork->type; pCamWork->type=type; pCamWork->flags &= ~0x20; return previous;
 }
 void cameraRefreshTargetPos() {
     if(pCamWork->targetGroup || pCamWork->targetID) {
@@ -353,10 +353,13 @@ template<> u8 CameraAnimation<f32>::update(f32 delta) {
     if(accelerating) return updateAcceleration(delta);
     firstUpdate=0;
     elapsed+=delta;
-    f32 time=elapsed, end=duration;
+    f32 end, time; time=elapsed; end=duration;
     if(time>=end) { currentPosition=endPosition; elapsed=0.0f; moving=0; accelerating=0; return 1; }
-    f32 from=startPosition;
-    currentPosition=(endPosition-from)*(time/end)+from;
+    f32 to=endPosition, from=startPosition;
+    f32 fraction=time/end;
+    f32 difference=to-from;
+    f32 scaled=difference*fraction;
+    currentPosition=scaled+from;
     return 1;
 }
 #pragma dont_inline off
@@ -387,8 +390,10 @@ static s32 _cameraGetStateSize__F14FloorStateMode(s32 mode) { if(mode==1 || mode
 static void _cameraRestoreStateData__F14FloorStateModePvUl(s32 mode,void* data,u32 size) {
     if(mode==1 || mode==2) {
         memcpy(pCamWork,data,sizeof(CameraWork));
-        CameraWork* work=pCamWork;
-        GScamera* camera=(GScamera*)GSresGetResource(0,0);
+        GScamera* camera;
+        CameraWork* work;
+        camera=(GScamera*)GSresGetResource(0,0);
+        work=pCamWork;
         if(work->type==4 || work->type==8) camera=animationCamera(work);
         if(pCamWork->flags & 8) pCamWork->flags |= 0x10;
         GScameraPopState(camera,(GScameraState*)((u8*)data+sizeof(CameraWork)));
@@ -397,24 +402,30 @@ static void _cameraRestoreStateData__F14FloorStateModePvUl(s32 mode,void* data,u
 }
 static void _cameraMakeStateData__F14FloorStateModePvUl(s32 mode,void* data,u32 size) {
     if(mode==1 || mode==2) {
-        CameraWork* work=pCamWork;
-        GScamera* camera=(GScamera*)GSresGetResource(0,0);
+        void* destination=data;
+        GScamera* camera;
+        CameraWork* work;
+        camera=(GScamera*)GSresGetResource(0,0);
+        work=pCamWork;
         if(work->type==4 || work->type==8) camera=animationCamera(work);
-        memcpy(data,pCamWork,sizeof(CameraWork));
-        GScameraPushState(camera,(GScameraState*)((u8*)data+sizeof(CameraWork)));
+        memcpy(destination,pCamWork,sizeof(CameraWork));
+        GScameraPushState(camera,(GScameraState*)((u8*)destination+sizeof(CameraWork)));
     }
 }
 void cameraInit() {
-    GSvec offset={0.0f,0.0f,14.0f}, up={0.0f,1.0f,0.0f}, position={0.0f,0.0f,100.0f};
+    GSvec offset,up,position;
+    offset.param1=0.0f; offset.param2=0.0f; offset.param3=14.0f;
+    up.param1=0.0f; up.param2=1.0f; up.param3=0.0f;
+    position.param1=0.0f; position.param2=0.0f; position.param3=100.0f;
     memset(&_cameraWork,0,sizeof(CameraWork)); pCamWork=&_cameraWork;
     GScamera* camera=GScameraCreate();
     GSresRegisterResource(camera,0,0,0);
     cameraSetType(0); cameraSetTarget(0,100); cameraSetTargetOfs(&offset);
     _pFloorCamera=(FloorCamera*)GSmemAllocClr(*floordata_number*sizeof(FloorCamera));
     for(u32 i=0; i<*floordata_number; ++i) { _pFloorCamera[i].state=0; _pFloorCamera[i].floorID=*(u16*)(floordata+i*0x40+2); }
-    pCamWork->offsetPosition.param1=0.0f; pCamWork->offsetPosition.param2=0.0f; pCamWork->offsetPosition.param3=0.0f;
-    pCamWork->offsetRotation.param1=0.0f; pCamWork->offsetRotation.param2=0.0f; pCamWork->offsetRotation.param3=0.0f;
-    pCamWork->offsetScale.param1=1.0f; pCamWork->offsetScale.param2=1.0f; pCamWork->offsetScale.param3=1.0f;
+    { GSvec* v=&pCamWork->offsetPosition; v->param1=0.0f; v->param2=0.0f; v->param3=0.0f; }
+    { GSvec* v=&pCamWork->offsetRotation; v->param1=0.0f; v->param2=0.0f; v->param3=0.0f; }
+    { GSvec* v=&pCamWork->offsetScale; v->param1=1.0f; v->param2=1.0f; v->param3=1.0f; }
     pCamWork->fov=30.0f;
     FloorModuleInterface_clear(&_floorModuleCamera);
     _floorModuleCamera.save=_cameraMakeStateData__F14FloorStateModePvUl;

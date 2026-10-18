@@ -1,7 +1,9 @@
 #include <game/pxdvs/app/pokemon/pokemonFightRecords.hpp>
 
 #include <libc/stddef.h>
-#pragma dont_inline on
+#include <libc/string.h>
+template <typename T> struct FightCopyValue { T value; };
+template <int N> struct FightCopyWords { u32 words[N]; };
 struct FightEnemyBiosLayout {
     FightOutPokemon* target;
     u16 oumuWazaDataId, initHp, damage, reserved0A;
@@ -13,6 +15,97 @@ extern "C" {
 FightOutPokemon* __as__15FightOutPokemonFRC15FightOutPokemon(FightOutPokemon*, const FightOutPokemon*);
 void fightOutPokemonBiosCopy(FightOutPokemon* target, const FightOutPokemon* source) {
     if (target && source) __as__15FightOutPokemonFRC15FightOutPokemon(target, source);
+}
+
+FightOutPokemon* __as__15FightOutPokemonFRC15FightOutPokemon(FightOutPokemon* target, const FightOutPokemon* source) {
+    target->motoFightPokemon = source->motoFightPokemon;
+    target->fightPokemon = source->fightPokemon;
+    target->fightPokemonHensinBuff.motoPokemon = source->fightPokemonHensinBuff.motoPokemon;
+    memcpy(&target->fightPokemonHensinBuff.pokemonBuff, &source->fightPokemonHensinBuff.pokemonBuff, 0xc4);
+    *(FightCopyWords<4>*)&target->fightPokemonHensinBuff.state.joutai = *(const FightCopyWords<4>*)&source->fightPokemonHensinBuff.state.joutai;
+    target->fightPokemonHensinBuff.state.entryId = source->fightPokemonHensinBuff.state.entryId;
+    target->fightPokemonHensinBuff.state.catchEntryFlag = source->fightPokemonHensinBuff.state.catchEntryFlag;
+    target->fightPokemonHensinBuff.state.levelUpFlag = source->fightPokemonHensinBuff.state.levelUpFlag;
+    target->fightPokemonHensinBuff.state.darkOutFlag = source->fightPokemonHensinBuff.state.darkOutFlag;
+    target->fightPokemonHensinBuff.state.hokakuFlag = source->fightPokemonHensinBuff.state.hokakuFlag;
+    target->fightPokemonHensinBuff.state.reserved0de = source->fightPokemonHensinBuff.state.reserved0de;
+    *(FightCopyWords<8>*)&target->fightPokemonHensinBuff.state.reserved0e0 = *(const FightCopyWords<8>*)&source->fightPokemonHensinBuff.state.reserved0e0;
+    *(FightCopyWords<128>*)&target->fightPokemonHensinBuff.state.aiDamage = *(const FightCopyWords<128>*)&source->fightPokemonHensinBuff.state.aiDamage;
+    *(FightCopyWords<208>*)&target->joutai = *(const FightCopyWords<208>*)&source->joutai;
+    *(FightCopyWords<43>*)&target->fightWaza = *(const FightCopyWords<43>*)&source->fightWaza;
+    *(FightCopyWords<43>*)&target->keepFightWaza = *(const FightCopyWords<43>*)&source->keepFightWaza;
+    *(FightCopyWords<3>*)&target->fightItem = *(const FightCopyWords<3>*)&source->fightItem;
+    target->sequence = source->sequence;
+    target->abicntPhyAtk = source->abicntPhyAtk;
+    target->abicntPhyDef = source->abicntPhyDef;
+    target->abicntSpeAtk = source->abicntSpeAtk;
+    target->abicntSpeDef = source->abicntSpeDef;
+    target->abicntNimbleness = source->abicntNimbleness;
+    target->abicntAverage = source->abicntAverage;
+    target->abicntAvoid = source->abicntAvoid;
+    target->reserved7b7 = source->reserved7b7;
+    target->hensinMotoPkxId = source->hensinMotoPkxId;
+    target->reserved7ba = source->reserved7ba;
+    target->fightoutTurnCount = source->fightoutTurnCount;
+    *(FightCopyWords<6>*)&target->meetEnemyFightPokemonEntryId = *(const FightCopyWords<6>*)&source->meetEnemyFightPokemonEntryId;
+    *(FightCopyWords<12>*)&target->fightActionBuff = *(const FightCopyWords<12>*)&source->fightActionBuff;
+    *(FightCopyWords<1>*)&target->zokuseiDataId = *(const FightCopyWords<1>*)&source->zokuseiDataId;
+    *(FightCopyValue<u16>*)&target->tokuseiDataId = *(const FightCopyValue<u16>*)&source->tokuseiDataId;
+    *(FightCopyValue<u32>*)&target->wazaMenuCur = *(const FightCopyValue<u32>*)&source->wazaMenuCur;
+    *(FightCopyValue<u8>*)&target->comboFuncId = *(const FightCopyValue<u8>*)&source->comboFuncId;
+    *(FightCopyValue<u8>*)&target->fixAiWaza = *(const FightCopyValue<u8>*)&source->fixAiWaza;
+    *(FightCopyValue<u8>*)&target->fixAiDef = *(const FightCopyValue<u8>*)&source->fixAiDef;
+    target->reserved817[0] = source->reserved817[0];
+    *(FightCopyValue<u16>*)&target->sketchWazaDataId = *(const FightCopyValue<u16>*)&source->sketchWazaDataId;
+    *(FightCopyValue<u16>*)&target->lastSelectWazaDataId = *(const FightCopyValue<u16>*)&source->lastSelectWazaDataId;
+    *(FightCopyValue<u16>*)&target->lastUseWazaDataId = *(const FightCopyValue<u16>*)&source->lastUseWazaDataId;
+    *(FightCopyValue<u16>*)&target->lastReceiveWazaTargetDataId = *(const FightCopyValue<u16>*)&source->lastReceiveWazaTargetDataId;
+    *(FightCopyValue<u16>*)&target->hitWazaDataId = *(const FightCopyValue<u16>*)&source->hitWazaDataId;
+    *(FightCopyValue<u16>*)&target->hitWazaZokuseiDataId = *(const FightCopyValue<u16>*)&source->hitWazaZokuseiDataId;
+    *(FightCopyValue<s16>*)&target->gamanDamageValue = *(const FightCopyValue<s16>*)&source->gamanDamageValue;
+    *(FightCopyValue<u16>*)&target->gamanDamageTargetId = *(const FightCopyValue<u16>*)&source->gamanDamageTargetId;
+    *(FightCopyValue<u16>*)&target->oumuWazaDataId = *(const FightCopyValue<u16>*)&source->oumuWazaDataId;
+    *(FightCopyValue<u16>*)&target->oumuWazaAllyDataId = *(const FightCopyValue<u16>*)&source->oumuWazaAllyDataId;
+    *(FightCopyValue<u8>*)&target->namakeFlag = *(const FightCopyValue<u8>*)&source->namakeFlag;
+    *(FightCopyValue<u8>*)&target->successCnt = *(const FightCopyValue<u8>*)&source->successCnt;
+    *(FightCopyValue<u16>*)&target->usedItemDataId = *(const FightCopyValue<u16>*)&source->usedItemDataId;
+    *(FightCopyValue<u16>*)&target->stockItemDataId = *(const FightCopyValue<u16>*)&source->stockItemDataId;
+    *(u16*)target->reserved832 = *(const u16*)source->reserved832;
+    *(FightCopyValue<s16>*)&target->damageAtkValue = *(const FightCopyValue<s16>*)&source->damageAtkValue;
+    *(FightCopyValue<u16>*)&target->damageAtkTargetId = *(const FightCopyValue<u16>*)&source->damageAtkTargetId;
+    *(FightCopyValue<s16>*)&target->damageSpeValue = *(const FightCopyValue<s16>*)&source->damageSpeValue;
+    *(FightCopyValue<u16>*)&target->damageSpeTargetId = *(const FightCopyValue<u16>*)&source->damageSpeTargetId;
+    *(FightCopyValue<u8>*)&target->mahiNoAttackFlag = *(const FightCopyValue<u8>*)&source->mahiNoAttackFlag;
+    *(FightCopyValue<u8>*)&target->konranMyselfAttackFlag = *(const FightCopyValue<u8>*)&source->konranMyselfAttackFlag;
+    *(FightCopyValue<u8>*)&target->outWazaKoukanaiFlag = *(const FightCopyValue<u8>*)&source->outWazaKoukanaiFlag;
+    *(FightCopyValue<u8>*)&target->tameWazaFlag = *(const FightCopyValue<u8>*)&source->tameWazaFlag;
+    *(FightCopyValue<u8>*)&target->itemNigeruFlag = *(const FightCopyValue<u8>*)&source->itemNigeruFlag;
+    *(FightCopyValue<u8>*)&target->huuinNoAttackFlag = *(const FightCopyValue<u8>*)&source->huuinNoAttackFlag;
+    *(FightCopyValue<u8>*)&target->meroMeroNoAttackFlag = *(const FightCopyValue<u8>*)&source->meroMeroNoAttackFlag;
+    *(FightCopyValue<u8>*)&target->kanashibariNoAttackFlag = *(const FightCopyValue<u8>*)&source->kanashibariNoAttackFlag;
+    *(FightCopyValue<u8>*)&target->chouhatsuNoAttackFlag = *(const FightCopyValue<u8>*)&source->chouhatsuNoAttackFlag;
+    *(FightCopyValue<u8>*)&target->ichamonNoAttackFlag = *(const FightCopyValue<u8>*)&source->ichamonNoAttackFlag;
+    *(FightCopyValue<u8>*)&target->hirumuNoAttackFlag = *(const FightCopyValue<u8>*)&source->hirumuNoAttackFlag;
+    *(FightCopyValue<u8>*)&target->passPpdecFlag = *(const FightCopyValue<u8>*)&source->passPpdecFlag;
+    *(FightCopyValue<u8>*)&target->fightActionFlag = *(const FightCopyValue<u8>*)&source->fightActionFlag;
+    *(FightCopyValue<u8>*)&target->doClearbodyFlag = *(const FightCopyValue<u8>*)&source->doClearbodyFlag;
+    *(FightCopyValue<u8>*)&target->receivesWazaHiraishinFlag = *(const FightCopyValue<u8>*)&source->receivesWazaHiraishinFlag;
+    *(FightCopyValue<u8>*)&target->vanishoffFlag = *(const FightCopyValue<u8>*)&source->vanishoffFlag;
+    *(FightCopyValue<u8>*)&target->doIkakuFlag = *(const FightCopyValue<u8>*)&source->doIkakuFlag;
+    *(FightCopyValue<u8>*)&target->doTraceFlag = *(const FightCopyValue<u8>*)&source->doTraceFlag;
+    *(FightCopyValue<u8>*)&target->noPressureFlag = *(const FightCopyValue<u8>*)&source->noPressureFlag;
+    *(FightCopyValue<u8>*)&target->irekaetaFlag = *(const FightCopyValue<u8>*)&source->irekaetaFlag;
+    *(FightCopyValue<u8>*)&target->itemKoraetaFlag = *(const FightCopyValue<u8>*)&source->itemKoraetaFlag;
+    *(FightCopyValue<s32>*)&target->kaigaraDamageValue = *(const FightCopyValue<s32>*)&source->kaigaraDamageValue;
+    *(FightCopyValue<s16>*)&target->myselfDamageAtkValue = *(const FightCopyValue<s16>*)&source->myselfDamageAtkValue;
+    *(FightCopyValue<u16>*)&target->myselfDamageAtkTargetId = *(const FightCopyValue<u16>*)&source->myselfDamageAtkTargetId;
+    *(FightCopyValue<s16>*)&target->myselfDamageSpeValue = *(const FightCopyValue<s16>*)&source->myselfDamageSpeValue;
+    *(FightCopyValue<u16>*)&target->myselfDamageSpeTargetId = *(const FightCopyValue<u16>*)&source->myselfDamageSpeTargetId;
+    *(FightCopyValue<u8>*)&target->kizetuFlag = *(const FightCopyValue<u8>*)&source->kizetuFlag;
+    *(FightCopyValue<u8>*)&target->unknown861 = *(const FightCopyValue<u8>*)&source->unknown861;
+    *(FightCopyValue<s16>*)&target->irekaeTargetEntryId = *(const FightCopyValue<s16>*)&source->irekaeTargetEntryId;
+    *(FightCopyWords<12>*)&target->enemy = *(const FightCopyWords<12>*)&source->enemy;
+    return target;
 }
 
 

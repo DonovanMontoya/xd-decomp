@@ -1,3 +1,4 @@
+#pragma dollar_identifiers on
 #include <game/pxdvs/app/script/objPeoplePrivate.hpp>
 extern "C" {
 __declspec(weak) void setRpVec__Q28GSscript4TigaFPC5GSvec(GSscript::Tiga *script,const GSvec *vector) {
@@ -50,11 +51,10 @@ static u8 _pokeRareCol[9][8]={
 #define P person->group,person->id
 #define R(E) appScriptSetInt(result,(E))
 struct ScriptPeopleVector {f32 param1,param2,param3;};
+extern "C" { static ScriptPeopleVector Vector$2133; static s8 init$2134; }
 int AppScript::cmpPeople(int method,GSscript::tigaVariant *args,GSscript::tigaVariant *result) {
-    static ScriptPeopleVector Vector;
-    static s8 init;
     s32 parts[6],motions[7];
-    if(init==0)init=1;
+    if(init$2134==0)init$2134=1;
     GSresID *person;
     if(method!=1){
         if(args[0].type!=0x23){R(0);return 1;}
@@ -62,8 +62,8 @@ int AppScript::cmpPeople(int method,GSscript::tigaVariant *args,GSscript::tigaVa
     }else return 0;
     switch(method) {
     case 0x10:peopleSetDisp(P,(bool)I(1));break;
-    case 0x11:{s32 blend;u8 loop;loop=(bool)I(3);blend=I(2);R(peopleSetMotion(P,I(1),blend,loop));break;}
-    case 0x12:{s32 blend;u8 loop;loop=(bool)I(3);blend=I(2);peopleSetMotionForce(P,I(1),blend,loop);break;}
+    case 0x11:{s32 blend; bool loop; loop=(bool)I(3);blend=I(2);R(peopleSetMotion(P,I(1),blend,loop));break;}
+    case 0x12:{s32 blend; bool loop; loop=(bool)I(3);blend=I(2);peopleSetMotionForce(P,I(1),blend,loop);break;}
     case 0x13:peopleStopMotion(P);break;
     case 0x14:peopleWaitSyncMotion(P,(bool)I(1));break;
     case 0x15:peopleSpeakStart(P);peopleTalkMsg(P,I(1));if(I(2)!=0)peopleTalkMsgEnd(P);break;
@@ -72,17 +72,17 @@ int AppScript::cmpPeople(int method,GSscript::tigaVariant *args,GSscript::tigaVa
     case 0x18:peopleClose(P,1);break;
     case 0x19:{f32 d=F(4),c=F(3),b=F(2);R(peopleRectCheck(P,F(1),b,c,d));break;}
     case 0x1A:{GSvec *a=V(1),*b=V(2);R(peopleRectCheck(P,a->param1,a->param3,b->param1,b->param3));break;}
-    case 0x1B:{u8 mode=(bool)I(6);f32 e=F(5),d=F(4),c=F(3),b=F(2);R(peopleLineCheck(P,mode,F(1),b,c,d,e));break;}
+    case 0x1B:{bool mode=(bool)I(6);f32 e=F(5),d=F(4),c=F(3),b=F(2);R(peopleLineCheck(P,mode,F(1),b,c,d,e));break;}
     case 0x1C:{GSvec *a=V(1),*b=V(2);R(peopleLineCheck(P,(bool)I(3),a->param1,a->param3,b->param1,b->param3,0.0f));break;}
     case 0x1D:{f32 z=F(3),y=F(2);peopleSetPosXYZ(P,F(1),y,z);break;}
     case 0x1E:{GSvec *v=V(1);peopleSetPosXYZ(P,v->param1,v->param2,v->param3);break;}
     case 0x1F:{f32 z=F(3),y=F(2);peopleSetRotXYZ(P,F(1),y,z);break;}
     case 0x20:peopleSetRot(P,V(1));break;
-    case 0x21:Vector.param1=F(1);Vector.param2=F(2);Vector.param3=F(3);peopleGetPos(P,(GSvec *)&Vector);break;
+    case 0x21:Vector$2133.param1=F(1);Vector$2133.param2=F(2);Vector$2133.param3=F(3);peopleGetPos(P,(GSvec *)&Vector$2133);break;
     case 0x22:peopleGetPos(P,V(1));break;
     case 0x24:{f32 z=F(4),y=F(3),x=F(2);peopleWalkToXYZ(P,(bool)I(1),x,y,z);break;}
     case 0x25:{GSvec *v=V(2);peopleWalkToXYZ(P,(bool)I(1),v->param1,v->param2,v->param3);break;}
-    case 0x26:{GSresID *p=H(1);u8 mode=(bool)I(3);peopleWalkToTarget(P,p->group,p->id,mode,F(2));break;}
+    case 0x26:{GSresID *p=H(1);bool mode=(bool)I(3);peopleWalkToTarget(P,p->group,p->id,mode,F(2));break;}
     case 0x27:R(peopleMoveCheck(P,(bool)I(1)));break;
     case 0x28:peopleSetFlagOn(P,I(1));break;
     case 0x29:peopleSetFlagOff(P,I(1));break;
@@ -126,7 +126,7 @@ int AppScript::cmpPeople(int method,GSscript::tigaVariant *args,GSscript::tigaVa
     case 0x48:appScriptSetFloat(result,peopleGetSpeed(P));break;
     case 0x49:{
         s32 temp_r27_14,temp_r27_15,temp_r27_16,temp_r27_17,temp_r27_18;
-        s8 temp_r27_13;
+        s32 temp_r27_13;
         GSresID *temp_r3_25;
         s32 temp_r3_24;                                  /* switch 1 */
             temp_r3_24 = I(1);
@@ -317,8 +317,8 @@ int AppScript::cmpPeople(int method,GSscript::tigaVariant *args,GSscript::tigaVa
             break;
         }
     case 0x4A:{u8 mode=I(3);s32 b=I(2),a=I(1);peopleAttachWithMode(P,floorGetCurrentGroupID(),a,b,mode);break;}
-    case 0x4B:{void *model=GSresGetResource(P);if(model)GSmodelGetPosition(model,(GSvec *)&Vector);setRpVec__Q28GSscript4TigaFPC5GSvec(this,(GSvec *)&Vector);break;}
-    case 0x4C:{void *model=GSresGetResource(P);if(model)GSmodelGetRotation(model,(GSvec *)&Vector);Vector.param2=57.29578f*Vector.param2;appScriptSetFloat(result,Vector.param2);break;}
+    case 0x4B:{void *model=GSresGetResource(P);if(model)GSmodelGetPosition(model,(GSvec *)&Vector$2133);setRpVec__Q28GSscript4TigaFPC5GSvec(this,(GSvec *)&Vector$2133);break;}
+    case 0x4C:{void *model=GSresGetResource(P);if(model)GSmodelGetRotation(model,(GSvec *)&Vector$2133);Vector$2133.param2=57.29578f*Vector$2133.param2;appScriptSetFloat(result,Vector$2133.param2);break;}
     case 0x4D:peopleSetWaitAnimation(P);break;
     case 0x4E:peopleUnsetWaitAnimation(P);break;
     case 0x51:{GSresID *p=H(1);peopleMoveNeckTarget(P,p->group,p->id,F(2));break;}
@@ -327,7 +327,7 @@ int AppScript::cmpPeople(int method,GSscript::tigaVariant *args,GSscript::tigaVa
     case 0x55:peopleGetYDegreeRotation(P);break;
     case 0x57:peopleAutoAnimation(P);break;
     case 0x58:peopleManualAnimation(P);break;
-    case 0x59:{s32 source[5],table[5];source[0]=getInteger__Q28GSscript11tigaVariantFv(A(1)->get(0));source[1]=getInteger__Q28GSscript11tigaVariantFv(A(1)->get(1));source[2]=getInteger__Q28GSscript11tigaVariantFv(A(1)->get(2));source[3]=getInteger__Q28GSscript11tigaVariantFv(A(1)->get(3));source[4]=getInteger__Q28GSscript11tigaVariantFv(A(1)->get(4));memcpy(table,source,sizeof(table));peopleSetMotionTable(P,table);break;}
+    case 0x59:{struct MotionTable {s32 entries[5];}; MotionTable source,table;source.entries[0]=getInteger__Q28GSscript11tigaVariantFv(A(1)->get(0));source.entries[1]=getInteger__Q28GSscript11tigaVariantFv(A(1)->get(1));source.entries[2]=getInteger__Q28GSscript11tigaVariantFv(A(1)->get(2));source.entries[3]=getInteger__Q28GSscript11tigaVariantFv(A(1)->get(3));source.entries[4]=getInteger__Q28GSscript11tigaVariantFv(A(1)->get(4));table=source;peopleSetMotionTable(P,&table);break;}
     case 0x5A:peopleSetDefaultMotionTable(P);break;
     case 0x5B:peopleSpeedSlowDownOn(P);break;
     case 0x5C:peopleSpeedSlowDownOff(P);break;
@@ -342,15 +342,15 @@ int AppScript::cmpPeople(int method,GSscript::tigaVariant *args,GSscript::tigaVa
     case 0x66:peopleWalkPauseTalkMode(P,(bool)I(1));break;
     case 0x67:{void *model=GSresGetResource(P);GSmodelSetAnimRate(model,F(1));break;}
     case 0x68:{s32 mode=I(2);peopleSetWalkSpeed(P,mode,F(1));break;}
-    case 0x69:{void *model=GSresGetResource(P);GSmodelSetBoundCheck(model,I(1)==0);break;}
-    case 0x6A:{u8 flag=(bool)I(2);scriptSetEndedMotion(P,I(1),flag);break;}
+    case 0x69:{void *model=GSresGetResource(P);((void (*)(void *, bool))GSmodelSetBoundCheck)(model,I(1)==0);break;}
+    case 0x6A:{bool flag=(bool)I(2);scriptSetEndedMotion(P,I(1),flag);break;}
     case 0x6B:{s32 type=I(2);scriptModelPartPaticle(person->id,I(1),type);break;}
     case 0x6C:{void *model=GSresGetResource(P);GSmodelSetScale(model,V(1));break;}
     case 0x6D:GSmodelRecalculateBound(GSresGetResource(P));break;
-    case 0x6E:peopleGetPos(P,(GSvec *)&Vector);{GSvec *point=V(3);f32 radius=F(2);R(scriptPeopleInsideCheck((GSvec *)&Vector,V(1),point,radius));}break;
-    case 0x6F:{s32 index=I(1);void *model=GSresGetResource(floorGetCurrentGroupID(),person->id);void *part=GSmodelGetPart(model,index);GSpartGetTransform(part,&Vector.param1,0,0);GSpartFree(part);setRpVec__Q28GSscript4TigaFPC5GSvec(this,(GSvec *)&Vector);break;}
+    case 0x6E:peopleGetPos(P,(GSvec *)&Vector$2133);{GSvec *point=V(3);f32 radius=F(2);R(scriptPeopleInsideCheck((GSvec *)&Vector$2133,V(1),point,radius));}break;
+    case 0x6F:{s32 index=I(1);void *model=GSresGetResource(floorGetCurrentGroupID(),person->id);void *part=GSmodelGetPart(model,index);GSpartGetTransform(part,&Vector$2133.param1,0,0);GSpartFree(part);setRpVec__Q28GSscript4TigaFPC5GSvec(this,(GSvec *)&Vector$2133);break;}
     case 0x70:{void *model=GSresGetResource(P);if(model){s32 index=I(1);GSmodelEnableColorSwap(model,_pokeRareCol[index]);GSmodelEnableModulation(model,&_pokeRareCol[index][4]);}break;}
-    case 0x71:peopleGet(P)->field54=0;break;
+    case 0x71:{PersonScriptWork *p=peopleGet(P);p->field54=0;break;}
     case 0x72:{PersonScriptWork *p=peopleGet(P);peopleRotateStop(P);p->field54=0;break;}
     }
     return 0;

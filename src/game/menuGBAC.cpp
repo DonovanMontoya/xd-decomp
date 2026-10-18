@@ -31,3 +31,361 @@ extern "C" s32 pokecoloGetCountryCode();
 static u8 _check_langarea(u8 language){s32 country=pokecoloGetCountryCode();if(country!=0){if(country>=0 && country<3){u8 expected;switch(language){case 1:expected=1;break;case 2:expected=2;break;case 3:expected=4;break;case 4:expected=5;break;case 5:expected=3;break;case 7:expected=6;break;default:return 0;}if(expected==fn_8004FB00())return 1;}return 0;}u8 expected;switch(language){case 1:expected=1;break;case 2:expected=2;break;case 3:expected=4;break;case 4:expected=5;break;case 5:expected=3;break;case 7:expected=6;break;default:return 0;}if(savedataBiosGetNowSavedataPtr() && savedataBiosGetGamedataPtr() && gamedataBiosGetGamedataAtttestPtr() && gamedataAttestBiosGetLangareaId()==expected)return 1;return 0;}
 static const s32 _initial_phase[4][4]={{8,1,0,0},{8,1,1,0},{8,1,1,1},{1,1,1,1}};
 static _GBA_Connect_WORK *_open_menu(_MENU_GBAC_TYPE type,unsigned long flags,long index){gbaConectGBA_Connect_WORK.flags=flags;gbaConectGBA_Connect_WORK.type=type;gbaConectGBA_Connect_WORK.channel=chans[index];switch(type){case GBAType0:gbaConectGBA_Connect_WORK.kind[0]=1;gbaConectGBA_Connect_WORK.kind[1]=2;gbaConectGBA_Connect_WORK.kind[2]=0;gbaConectGBA_Connect_WORK.kind[3]=0;break;case GBAType1:gbaConectGBA_Connect_WORK.kind[0]=4;gbaConectGBA_Connect_WORK.kind[1]=2;gbaConectGBA_Connect_WORK.kind[2]=2;gbaConectGBA_Connect_WORK.kind[3]=0;break;case GBAType2:gbaConectGBA_Connect_WORK.kind[0]=1;gbaConectGBA_Connect_WORK.kind[1]=2;gbaConectGBA_Connect_WORK.kind[2]=2;gbaConectGBA_Connect_WORK.kind[3]=2;break;case GBAType3:gbaConectGBA_Connect_WORK.kind[0]=4;gbaConectGBA_Connect_WORK.kind[1]=2;gbaConectGBA_Connect_WORK.kind[2]=2;gbaConectGBA_Connect_WORK.kind[3]=2;break;}for(s32 i=0;i<4;i++){s8 channel=chans[i];gbaConectGBA_Connect_WORK.phase[channel]=_initial_phase[type][channel];if(index>i && gbaConectGBA_Connect_WORK.phase[channel]==1)gbaConectGBA_Connect_WORK.phase[channel]=5;gbaConectGBA_Connect_WORK.enabled[i]=1;}menuCB_SE_Play(0x14);menuOpen(0xB0,0);menuCB_MessageDispOn(1,0);*(s32*)(_CB+0xB16C)=-1;*(s32*)(_CB+0xB168)=2;return &gbaConectGBA_Connect_WORK;}
+
+
+#pragma dollar_identifiers on
+extern "C" {
+void AGB_Terminate_init();
+s32 AGB_Prepare(char*);
+void AGB_Upload(s32, s32);
+void AGB_GetPokemon(s32, Hero*, u32*);
+Hero* savedataGetStatus(s32, s32);
+u8 menuCBRule_CheckHero(Hero*);
+void menuCBRule_ErrorFlagSet(Hero*,u16);
+void menuCB_Pokemon_ErrorDisp(Hero*,u16);
+void heroBiosCopy(Hero*, Hero*);
+void heroInit(Hero*);
+char *lbl_8032EBD8[0xC] = {
+    "maxbtl.bin",
+    "maxcng.bin",
+    "maxbtl_english.bin",
+    "maxcng_english.bin",
+    "maxbtl_france.bin",
+    "maxcng_france.bin",
+    "maxbtl_germany.bin",
+    "maxcng_germany.bin",
+    "maxbtl_italy.bin",
+    "maxcng_italy.bin",
+    "maxbtl_spain.bin",
+    "maxcng_spain.bin",
+};
+static char *gba_bin_name$2220[2] = { "maxbtl.bin", "maxcng.bin" };
+}
+static inline void gbacSetHostKind(_GBA_Connect_WORK* work, u8 kind) {
+    work->kind[0] = kind;
+    if (work->kind[0] != 0) { work->kind[0] = 3; work->enabled[0] = 1; }
+}
+static u8 _mainFlow(_MENU_GBAC_TYPE arg0, unsigned long arg1, Hero **arg2) {
+    u8 *sp988;
+    u32 sp10[0x978/4];
+    u32 spC;
+    Hero **sp8;
+    Hero *temp_r0;
+    Hero *temp_r3_2;
+    Hero *var_r15;
+    s32 temp_r0_2;
+    s32 temp_r20;
+    s32 temp_r3;
+    s32 temp_r3_3;
+    s32 temp_r3_4;
+    s32 temp_r3_5;
+    s32 var_ctr;
+    s32 var_r14;
+    s32 var_r19;
+    s32 var_r29;
+    u16 *var_r27;
+    u32 temp_r22;
+    u32 temp_r23;
+    u8 *var_r3;
+    u8 temp_r16;
+    u8 var_r18;
+    u8 var_r4;
+    _GBA_Connect_WORK *var_r17;
+
+    sp8 = arg2;
+    var_r14 = 0;
+    var_r18 = 0;
+    AGB_Terminate_init();
+    temp_r22 = arg1 & 1;
+    if (temp_r22 == 1) {
+        var_r14 = 1;
+    }
+    temp_r23 = arg1 & 2;
+    if (temp_r23 == 2) {
+        var_r14 = 0;
+    }
+    temp_r3 = pokecoloGetCountryCode();
+    switch (temp_r3) {                              /* switch 1; irregular */
+    case 0:                                         /* switch 1 */
+        while (AGB_Prepare(gba_bin_name$2220[var_r14]) == 0) {
+            GSthreadSwitch();
+        }
+        break;
+    case 1:                                         /* switch 1 */
+        while (AGB_Prepare(lbl_8032EBD8[var_r14+2]) == 0) {
+            GSthreadSwitch();
+        }
+        break;
+    }
+    var_r17 = _open_menu(arg0, arg1, 0);
+    if (((u32) (arg1 & 0x10) != 0) && ((arg0 == 0) || (arg0 == 2))) {
+        temp_r3_2 = savedataGetStatus(0, 2);
+        var_r17->channel = 0;
+        var_r17->phase[0] = 8;
+        if (temp_r23 != 0) {
+            _message(0x4437, 0);
+            _menuWait(1.0f);
+            if (menuCBRule_CheckHero(temp_r3_2) == 0) {
+                menuCBRule_ErrorFlagSet(temp_r3_2, 0U);
+                menuCB_MessageDispOff();
+                menuCB_SE_Play(0x15);
+                menuCloseCustom(0xB0, 0, 1);
+                menuCB_Pokemon_ErrorDisp(temp_r3_2, 0U);
+                return 0;
+            }
+        }
+        if ((sp8 != NULL) && (*sp8 != NULL)) {
+            heroBiosCopy(*sp8, temp_r3_2);
+        }
+        var_r17->phase[0] = 0xA;
+        goto block_25;
+    }
+block_25:
+    menuGBACSetRomVer(0, 0xFFFFU);
+    sp988 = (u8*)chans;
+    var_r19 = 0;
+    var_r27 = gba_player_number;
+loop_26:
+    temp_r16 = *sp988;
+    *(u8*)&var_r17->channel = temp_r16;
+    if ((sp8 != NULL) && (temp_r0 = sp8[(s8) temp_r16], ((temp_r0 == NULL) == 0))) {
+        var_r15 = temp_r0;
+    } else {
+        var_r15 = (Hero*)sp10;
+    }
+    if ((s8) temp_r16 == 0) {
+        gbacSetHostKind(var_r17, 4);
+    }
+    temp_r20 = (s8) temp_r16 * 4;
+loop_34:
+    menuSetEnablePort((u8) (menuGetEnablePort() & ~_menu_ports[(s8)temp_r16]));
+    if ((u32) var_r17->result != 4U) {
+        var_r17->phase[(s8)temp_r16] = 2;
+        _message(0x441E, (s8) temp_r16);
+        if (_waitAction(var_r17, (_GBA_WAIT_FLAG)6) == 0) {
+            return _poweroff(var_r17, (_GBA_PHASE)6);
+        }
+    }
+    _message(0x441F, (s8) temp_r16);
+    var_r17->phase[(s8)temp_r16] = 3;
+    (*(s32*)(_CB+0xB16C)) = (s32) (s8) temp_r16;
+    (*(s32*)(_CB+0xB168)) = 2;
+    if (var_r18 == 0) {
+        if (_waitComplete(var_r17) == 4) {
+            return _poweroff(var_r17, (_GBA_PHASE)6);
+        }
+        var_r18 = 1;
+        goto block_41;
+    }
+block_41:
+    AGB_Upload((s8) temp_r16, 0);
+    temp_r3_3 = _waitComplete(var_r17);
+    switch (temp_r3_3) {                            /* switch 2; irregular */
+    case 4:                                         /* switch 2 */
+        return _poweroff(var_r17, (_GBA_PHASE)6);
+    default:                                        /* switch 2 */
+    case 2:                                         /* switch 2 */
+        if (_error(var_r17, 0x4421, (_GBA_PHASE)6) == 0) {
+            return 0;
+        }
+        goto loop_34;
+    case 0:                                         /* switch 2 */
+        var_r29 = 0;
+        var_r17->phase[(s8)temp_r16] = 4;
+loop_51:
+        if (gbaCommandIsConnected((s8) temp_r16 + 1) != 0) {
+            menuSetEnablePort((u8) (_menu_ports[(s8)temp_r16] | menuGetEnablePort()));
+        } else {
+            GSthreadSwitch();
+            var_r29 += 1;
+            if (var_r29 < 0x12C) {
+                goto loop_51;
+            }
+        }
+        if ((u32) (arg1 & 0x40) == 0) {
+            _message(0x4435, (s8) temp_r16);
+            _menuWait(1.0f);
+        }
+        heroInit(var_r15);
+        spC = 0;
+        AGB_GetPokemon((s8) temp_r16, var_r15, &spC);
+        temp_r3_4 = _waitComplete(var_r17);
+        if (temp_r3_4 != 4) {
+            menuGBACSetRomVer((spC >> 0xAU) & 0xF, *var_r27);
+            if ((u32) ((spC >> 8U) & 3) != 0) {
+                if (_error(var_r17, 0x4422, (_GBA_PHASE)6) == 0) {
+                    return 0;
+                }
+                goto loop_34;
+            }
+            if (_check_langarea((spC >> 4U) & 0xF) == 0) {
+                if (_error(var_r17, 0x4423, (_GBA_PHASE)6) == 0) {
+                    return 0;
+                }
+                goto loop_34;
+            }
+            if (temp_r3_4 != 0) {
+                goto block_68;
+            }
+            if ((u32) (spC & 2) == 0) {
+block_68:
+                if (_error(var_r17, 0x4422, (_GBA_PHASE)6) == 0) {
+                    return 0;
+                }
+                goto loop_34;
+            }
+            if (temp_r22 != 0) {
+                temp_r0_2 = (spC >> 0xAU) & 0xF;
+                var_r4 = 1;
+                if (temp_r0_2 != 5) {
+                    if (temp_r0_2 < 5) {
+                        if (temp_r0_2 < 3) {
+                            if (temp_r0_2 < 1) {
+                                goto block_91;
+                            }
+                            if ((u32) (spC & 0x4000) == 0) {
+                                var_r4 = 0;
+                            }
+                            if (var_r4 == 0) {
+                                if (_error(var_r17, 0x4445, (_GBA_PHASE)6) == 0) {
+                                    return 0;
+                                }
+                                goto loop_34;
+                            }
+                            goto block_93;
+                        }
+                        if ((u32) (spC & 8) == 0) {
+                            var_r4 = 0;
+                        }
+                        if (var_r4 == 0) {
+                            if (_error(var_r17, 0x4446, (_GBA_PHASE)6) == 0) {
+                                return 0;
+                            }
+                            goto loop_34;
+                        }
+                        goto block_93;
+                    }
+block_91:
+                    if (_error(var_r17, 0x4421, (_GBA_PHASE)6) == 0) {
+                        return 0;
+                    }
+                    goto loop_34;
+                }
+                if ((u32) (spC & 0x4000) == 0) {
+                    var_r4 = 0;
+                }
+                if (var_r4 == 0) {
+                    if (_error(var_r17, 0x4447, (_GBA_PHASE)6) == 0) {
+                        return 0;
+                    }
+                    goto loop_34;
+                }
+                goto block_93;
+            }
+block_93:
+            if (temp_r23 != 0) {
+                if ((u32) (spC & 1) == 0) {
+                    if (_error(var_r17, 0x4424, (_GBA_PHASE)6) == 0) {
+                        return 0;
+                    }
+                    goto loop_34;
+                }
+                if (menuCBRule_CheckHero(var_r15) == 0) {
+                    menuCBRule_ErrorFlagSet(var_r15, *var_r27);
+                    menuCB_MessageDispOff();
+                    menuCB_SE_Play(0x15);
+                    menuCloseCustom(0xB0, 0, 1);
+                    menuCB_Pokemon_ErrorDisp(var_r15, *var_r27);
+                    if ((u32) (arg1 & 8) == 0) {
+                        return 0;
+                    }
+                    (*(s32*)((u8*)var_r17 + 0x10)) = (s32) var_r17->phase[0];
+                    (*(s32*)((u8*)var_r17 + 0x14)) = (s32) var_r17->phase[1];
+                    (*(s32*)((u8*)var_r17 + 0x18)) = (s32) var_r17->phase[2];
+                    (*(s32*)((u8*)var_r17 + 0x1C)) = (s32) var_r17->phase[3];
+                    var_r17 = _open_menu(arg0, arg1, var_r19);
+                    if ((s8) temp_r16 == 0) {
+                        gbacSetHostKind(var_r17, 4);
+                    }
+                    var_r17->phase[0] = (s32) (*(s32*)((u8*)var_r17 + 0x10));
+                    var_r17->phase[1] = (s32) (*(s32*)((u8*)var_r17 + 0x14));
+                    var_r17->phase[2] = (s32) (*(s32*)((u8*)var_r17 + 0x18));
+                    temp_r3_5 = (*(s32*)((u8*)var_r17 + 0x1C));
+                    var_r17->phase[3] = temp_r3_5;
+                    var_r17->phase[(s8)temp_r16] = 6;
+                    GSthreadSwitch();
+                    var_r3 = (u8*)chans;
+                    var_ctr = var_r19;
+                    if (var_r19 > 0) {
+loop_104:
+                        if ((s32) var_r17->phase[(s8)*var_r3] == 7) {
+                            return _poweroff(var_r17, (_GBA_PHASE)6);
+                        }
+                        var_r3 += 1;
+                        var_ctr -= 1;
+                        if (var_ctr == 0) {
+                            goto block_107;
+                        }
+                        goto loop_104;
+                    }
+block_107:
+                    _message_type2(0x4425, (s8) temp_r16);
+                    goto loop_34;
+                }
+                goto block_108;
+            }
+block_108:
+            AGB_Terminate((s8) temp_r16);
+            GSsndPlayNow(0x1B);
+            var_r17->phase[(s8)temp_r16] = 5;
+            menuSetEnablePort((u8) (_menu_ports[(s8)temp_r16] | menuGetEnablePort()));
+            _message(0x4420, (s8) temp_r16);
+            switch (arg0) {                         /* switch 3; irregular */
+            case 0:                                 /* switch 3 */
+                if (_waitAction(var_r17, (_GBA_WAIT_FLAG)3) != 0) {
+                    return 1;
+                }
+                return _poweroff(var_r17, (_GBA_PHASE)6);
+            case 1:                                 /* switch 3 */
+                if ((s8) temp_r16 == 2) {
+                    if (_waitAction(var_r17, (_GBA_WAIT_FLAG)3) != 0) {
+                        return 1;
+                    }
+                    return _poweroff(var_r17, (_GBA_PHASE)6);
+                }
+            default:                                /* switch 3 */
+block_130:
+                var_r17->channel = (u8) sp988[1];
+                if (_waitAction(var_r17, (_GBA_WAIT_FLAG)7) == 0) {
+                    return _poweroff(var_r17, (_GBA_PHASE)6);
+                }
+                var_r27 += 1;
+                var_r19 += 1;
+                sp988 = &sp988[1];
+                if ((u32) var_r19 >= 4U) {
+                    return 1;
+                }
+                goto loop_26;
+            case 2:                                 /* switch 3 */
+                if ((s8) temp_r16 == 3) {
+                    if (_waitAction(var_r17, (_GBA_WAIT_FLAG)3) != 0) {
+                        return 1;
+                    }
+                    return _poweroff(var_r17, (_GBA_PHASE)6);
+                }
+                goto block_130;
+            case 3:                                 /* switch 3 */
+                if ((s8) temp_r16 == 0) {
+                    if (_waitAction(var_r17, (_GBA_WAIT_FLAG)3) != 0) {
+                        return 1;
+                    }
+                    return _poweroff(var_r17, (_GBA_PHASE)6);
+                }
+                goto block_130;
+            }
+        } else {
+            return _poweroff(var_r17, (_GBA_PHASE)6);
+        }
+        break;
+    }
+}

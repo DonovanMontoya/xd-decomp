@@ -249,3 +249,319 @@ extern "C" void GSmodelAttachToGSpart(GSmodel* model, GSpart* part, s32 mode, u8
         model->flags &= ~0x200;
     }
 }
+
+static inline void copyModelVector(GSvec* destination, f32 x, f32 y, f32 z) {
+    destination->param1 = x; destination->param2 = y; destination->param3 = z;
+}
+
+struct ModelJointDescriptor {
+    void* className;
+    u32 flags;
+    HSD_Joint *child, *next;
+    void* data;
+    GSvec rotation, scale, position;
+    void *inverseMatrix, *references;
+};
+struct ModelLoadState : GSmodel {
+    u32 reserved5E8, reserved5EC, reserved5F0;
+    f32 reserved5F4;
+    u32 reserved5F8;
+    f32 reserved5FC;
+    u8 reserved600[4];
+    f32 reserved604;
+    u8 reserved608[4];
+    f32 reserved60C;
+    u16 reserved610;
+    u8 reserved612, reserved613;
+    void *reserved614, *reserved618, *reserved61C;
+    u32 vertexCount, normalCount;
+};
+extern "C" {
+static u8 _invalidateVtxTex;
+static s32 _modelMaxUsedCount;
+GSmodel* modelBankGetFreeModel__Fv();
+HSD_JObj* HSD_JObjLoadJoint(HSD_Joint*);
+void GSboundCreate(GSbound*, void*);
+void GSboundSetDataPtr(GSbound*, s32, void*);
+u8 GSboundHasAnimData(GSbound*);
+void GSmodelRecalculateBound(GSmodel*);
+u32 GSmodelGetPartCount(GSmodel*);
+void GSmodelSetAnimIndex(GSmodel*, u32);
+void GSmodelSetAnimType(GSmodel*, s32);
+void HSD_JObjCountVertices(HSD_JObj*, u32*, u32*);
+void* GSmemAlloc(u32);
+static GSmodel* _modelLoad__FP18_HSD_SceneModelSetP10_HSD_JointP17GSboundAnimHeader(GSmodelScene*, HSD_Joint*, void*);
+#pragma dont_inline on
+GSmodel* GSmodelLoad(GSmodelScene* scene, void* bound) {
+    _invalidateVtxTex = 1;
+    return _modelLoad__FP18_HSD_SceneModelSetP10_HSD_JointP17GSboundAnimHeader(scene, scene->joint, bound);
+}
+GSmodel* GSmodelClone(GSmodel* model) {
+    ModelJointDescriptor joint;
+    joint.className = 0;
+    HSD_Joint* root = model->scene->joint;
+    joint.flags = ((ModelJointDescriptor*)root)->flags | 0x1000;
+    joint.child = root;
+    joint.next = 0;
+    joint.data = 0;
+    joint.rotation.param1 = 0.0f; joint.rotation.param2 = 0.0f; joint.rotation.param3 = 0.0f;
+    joint.scale.param1 = 1.0f; joint.scale.param2 = 1.0f; joint.scale.param3 = 1.0f;
+    joint.position.param1 = 0.0f; joint.position.param2 = 0.0f; joint.position.param3 = 0.0f;
+    joint.inverseMatrix = 0;
+    joint.references = 0;
+    if (GSboundHasAnimData((GSbound*)model->boundStorage) == 0) {
+        return _modelLoad__FP18_HSD_SceneModelSetP10_HSD_JointP17GSboundAnimHeader(model->scene, (HSD_Joint*)&joint, 0);
+    } else {
+        return _modelLoad__FP18_HSD_SceneModelSetP10_HSD_JointP17GSboundAnimHeader(model->scene, (HSD_Joint*)&joint, *(void**)(model->boundStorage + 0x10));
+    }
+}
+static GSmodel* _modelLoad__FP18_HSD_SceneModelSetP10_HSD_JointP17GSboundAnimHeader(GSmodelScene* scene, HSD_Joint* joint, void* bound) {
+    ModelLoadState* model = (ModelLoadState*)modelBankGetFreeModel__Fv();
+    if (!model) return 0;
+    model->flags |= 0x2000;
+    model->camera = 0;
+    model->animationCount = 0;
+    model->textureAnimationCount = 0;
+    model->endedCallback = 0;
+    model->materialCount = 0;
+    model->materials = 0;
+    for (s32 i=0; i<8; ++i) model->renderLayers[i] = 255;
+    model->renderLayers[0] = 2;
+    model->reserved5F8 = 0;
+    model->reserved60C = 1.0f;
+    model->reserved5FC = 0.0f;
+    model->reserved600[1] = 0; model->reserved600[0] = 0; model->reserved600[2] = 0; model->reserved600[3] = 0;
+    model->reserved604 = 0.0f;
+    model->reserved608[1] = 0; model->reserved608[0] = 0; model->reserved608[2] = 0; model->reserved608[3] = 0;
+    model->reserved613 = 0;
+    model->reserved610 = 0;
+    model->reserved612 = 0;
+    model->reserved614 = 0; model->reserved618 = 0; model->reserved61C = 0;
+    model->reserved5E8 = 0; model->reserved5EC = 0; model->reserved5F0 = 0;
+    model->reserved5F4 = 0.0f;
+    model->attachmentMode = 0;
+    model->attachmentModel = 0;
+    model->attachmentPart = 0;
+    model->particleBank = 0;
+    model->particleAttachMode = 1;
+    model->scene = scene;
+    model->joint = HSD_JObjLoadJoint(joint);
+    model->animationBlendJoint = 0;
+    model->blendJoint = 0;
+    copyModelVector(&model->position, model->joint->translate.x, model->joint->translate.y, model->joint->translate.z);
+    copyModelVector(&model->rotation, model->joint->rotate.x, model->joint->rotate.y, model->joint->rotate.z);
+    copyModelVector(&model->scale, model->joint->scale.x, model->joint->scale.y, model->joint->scale.z);
+    model->partAnimMixes[0].identifier = 0;
+    model->partAnimMixes[1].identifier = 0;
+    model->partAnimMixes[2].identifier = 0;
+    model->partAnimMixes[3].identifier = 0;
+    model->partAnimMixes[4].identifier = 0;
+    model->partAnimMixes[5].identifier = 0;
+    model->partAnimMixes[6].identifier = 0;
+    model->partAnimMixes[7].identifier = 0;
+    model->partAnimMixes[8].identifier = 0;
+    model->partAnimMixes[9].identifier = 0;
+    model->partAnimMixes[10].identifier = 0;
+    model->partAnimMixes[11].identifier = 0;
+    model->partAnimMixes[12].identifier = 0;
+    model->partAnimMixes[13].identifier = 0;
+    model->partAnimMixes[14].identifier = 0;
+    model->partAnimMixes[15].identifier = 0;
+    for (s32 i=0; i<8; ++i) model->partAnimations[i].animation = 0;
+    for (s32 i=0; i<4; ++i) model->partTextureAnimations[i].animation = 0;
+    model->partAnimationChanged = 0;
+    model->partTextureAnimationChanged = 0;
+    if (model->scene->shapeAnimations) model->flags |= 0x10;
+    if (model->scene->animations) {
+        model->flags |= 4;
+        model->animationIndex = -1;
+        while (model->scene->animations[model->animationCount]) ++model->animationCount;
+        GSmodelSetAnimIndex(model, 0);
+        GSmodelSetAnimRate(model, 0.5f);
+        GSmodelSetAnimType(model, 1);
+    }
+    if (model->scene->materialAnimations) {
+        model->flags |= 8;
+        model->textureAnimationIndex = -1;
+        while (model->scene->materialAnimations[model->textureAnimationCount]) ++model->textureAnimationCount;
+        GSmodelSetTexAnimIndex(model, 0);
+        GSmodelSetTexAnimRate(model, 0.5f);
+        GSmodelSetTexAnimType(model, 1);
+    }
+    GSboundCreate((GSbound*)model->boundStorage, bound);
+    GSboundSetDataPtr((GSbound*)model->boundStorage, 1, model);
+    GSmodelRecalculateBound(model);
+    u32 i;
+    u32 partCount;
+    GSpart* part;
+    u32 materialCount = 0;
+    GSmaterial* material;
+    partCount = GSmodelGetPartCount(model);
+    for (i=0; i<partCount; ++i) {
+        part = GSmodelGetPart(model, i);
+        materialCount += GSpartGetMaterialCount(part);
+        GSpartFree(part);
+    }
+    if (materialCount) {
+        material = (GSmaterial*)GSmemAlloc(materialCount*sizeof(GSmaterial));
+        if (material) {
+            model->materials = material;
+            model->materialCount = materialCount;
+            for (u32 i=0; i<partCount; ++i) {
+                GSpart* part = GSmodelGetPart(model, i);
+                u32 count = GSpartGetMaterialCount(part);
+                for (u32 n=0; n<count; ++n, ++material) {
+                    modelMaterialInit__FP10GSmaterial(material);
+                    GSpartInitMaterial(material, part, n);
+                }
+                GSpartFree(part);
+            }
+        }
+    }
+    HSD_JObjCountVertices(model->joint, &model->vertexCount, &model->normalCount);
+    ++_modelInUseCount;
+    if ((s32)_modelInUseCount > _modelMaxUsedCount) _modelMaxUsedCount = _modelInUseCount;
+    return model;
+}
+#pragma dont_inline reset
+}
+
+struct ModelRenderModule {
+    void* context;
+    void (*preUpdate)(f32);
+    void (*render)(void*, s32);
+    void (*fastRender)();
+    void (*postUpdate)(f32);
+    void (*update60)();
+    u32 identifier;
+};
+extern "C" {
+extern u8 _modelShadowShowDebug;
+void modelShadowRenderDebug__Fv();
+void modelDistortionRender__Fv();
+void modelBankInit__Fv();
+void modelShadowInit__Fv();
+void GSgfxRenderModuleRegister__FUcP17GSgfxRenderModulePv(u8, ModelRenderModule*, void*);
+void HSD_SetVertexBuffer(void*, u32);
+void HSD_SetNormalBuffer(void*, u32);
+void HSD_SetExpArgBuffer(void*, u32);
+static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(void*, s32);
+#pragma dont_inline on
+static void _modelFastRender__Fv() {
+    if (_modelShadowShowDebug == 1) modelShadowRenderDebug__Fv();
+    modelDistortionRender__Fv();
+}
+void GSmodelInit() {
+    ModelRenderModule module = {0, _modelPreUpdate__Ff, _modelRender__FP10GSgfxLayer14GSgfxLayerPass, _modelFastRender__Fv, _modelPostUpdate__Ff, _modelPostUpdate60fps__Fv, 0xB29A48E1};
+    modelBankInit__Fv();
+    modelShadowInit__Fv();
+    GSgfxRenderModuleRegister__FUcP17GSgfxRenderModulePv(0x20, &module, 0);
+    HSD_SetVertexBuffer(GSmemAlloc(0x5DC0), 0x7D0);
+    HSD_SetNormalBuffer(GSmemAlloc(0x5DC0), 0x7D0);
+    HSD_SetExpArgBuffer(GSmemAlloc(0x190), 0x64);
+}
+#pragma dont_inline reset
+}
+
+#include <game/pxdvs/GSAPI/GScamera/GScameraLayer.hpp>
+struct ModelRenderLayer {
+    u32 reserved00, flags;
+    u8 reserved08[0x20];
+    s32 id, kind;
+    u8 reserved30[0xD90-0x30];
+    u32 projectionFlag;
+    u8 reservedD94[0x16A6-0xD94];
+    u8 lightingEnabled, fogEnabled;
+    GSgfxCameraRenderState renderState[2];
+};
+static inline void modelSetLayerFog(ModelRenderLayer* layer, u8 enabled) {
+    layer->fogEnabled = enabled;
+    layer->renderState[0].lighting |= 0x40;
+    layer->renderState[1].lighting |= 0x40;
+    if (enabled) {
+        layer->renderState[0].lighting |= 0x200;
+        layer->renderState[1].lighting |= 0x200;
+        if (layer->lightingEnabled) {
+            layer->renderState[0].lighting |= 0x100;
+            layer->renderState[1].lighting |= 0x100;
+        }
+    }
+    layer->renderState[0].dirty |= 0x40;
+    layer->renderState[1].dirty |= 0x40;
+}
+extern "C" {
+void HSD_InitColorSwapTable(u32, u32, u32, u32, u32);
+void HSD_ResetColorSwapTables();
+void GScameraLoadProjection(GScamera*, GSgfxLayer*);
+void FlushState__10GSgfxLayerFv(GSgfxLayer*);
+void InvalidateState__10GSgfxLayerFv(GSgfxLayer*);
+u16 tokenMark__10GSgfxLayerFv(GSgfxLayer*);
+void HSD_StateInvalidate(u32);
+void GSlightSetupLights(HSD_CObj*);
+void modelShadowPrepare__FP8_GSmodelb(GSmodel*, bool);
+void HSD_JObjDispAll(HSD_JObj*, Mtx, u32, u32);
+void modelShadowRenderMarukage__FP8_GSmodelP10GSgfxLayer(GSmodel*, GSgfxLayer*);
+void GSboundDraw__FP7GSboundP10GSgfxLayer(GSbound*, GSgfxLayer*);
+static void _modelRenderModelSub__FP10GSgfxLayer14GSgfxLayerPassP8_GSmodel(GSgfxLayer*, s32, GSmodel*);
+#pragma dont_inline on
+void GSmodelDrawModel(GSmodel* model, GSgfxLayer* layerPtr, s32 pass) {
+    ModelRenderLayer* layer = (ModelRenderLayer*)layerPtr;
+    if (model && (model->flags & 1)) {
+        u8 fog = layer->fogEnabled != 0;
+        if (layer->kind == 1) HSD_InitColorSwapTable(0, 2, 2, 2, 3);
+        else HSD_InitColorSwapTable(0, 0, 1, 2, 3);
+        HSD_InitColorSwapTable(1, 0, 1, 2, 3);
+        HSD_InitColorSwapTable(2, 0, 1, 2, 3);
+        HSD_InitColorSwapTable(3, 0, 1, 2, 3);
+        _modelRenderModelSub__FP10GSgfxLayer14GSgfxLayerPassP8_GSmodel(layerPtr, pass, model);
+        HSD_ResetColorSwapTables();
+        modelSetLayerFog(layer, fog);
+    }
+}
+static void _modelRenderModelSub__FP10GSgfxLayer14GSgfxLayerPassP8_GSmodel(GSgfxLayer* layerPtr, s32 pass, GSmodel* model) {
+    ModelRenderLayer* layer = (ModelRenderLayer*)layerPtr;
+    modelUpdateTransform__FP8_GSmodel(model);
+    u32 fog = layer->fogEnabled != 0;
+    if (layer->kind == 0) {
+        switch (pass) {
+        case 0:
+            if (fog != ((model->flags >> 24) & 1)) modelSetLayerFog(layer, ((s32)model->flags & 0x1000000) == 0x1000000);
+            break;
+        case 1:
+            if (fog != ((model->flags >> 25) & 1)) modelSetLayerFog(layer, ((s32)model->flags & 0x2000000) == 0x2000000);
+            break;
+        }
+        GScamera* camera = model->camera;
+        if (!camera) camera = GScameraGetActiveCamera();
+        if (camera && camera->object) {
+            GScameraLoadProjection(camera, layerPtr);
+            layer->projectionFlag = 0;
+            layer->renderState[0].clipping |= 4;
+            layer->renderState[0].dirty |= 2;
+            layer->renderState[1].clipping |= 4;
+            layer->renderState[1].dirty |= 2;
+            FlushState__10GSgfxLayerFv(layerPtr);
+            HSD_StateInvalidate(-1);
+            GSlightSetupLights(camera->object);
+            modelShadowPrepare__FP8_GSmodelb(model, true);
+            HSD_JObj* joint = modelGetRenderJObj__FP8_GSmodel(model);
+            switch (pass) {
+            case 0: HSD_JObjDispAll(joint, 0, 1, 0); break;
+            case 1: HSD_JObjDispAll(joint, 0, 6, 0); break;
+            }
+            *(volatile u8*)0xCC008000 = 0x10;
+            *(volatile u16*)0xCC008000 = 0;
+            *(volatile u16*)0xCC008000 = 0x1005;
+            *(volatile u32*)0xCC008000 = 0;
+            modelShadowPrepare__FP8_GSmodelb(model, false);
+            InvalidateState__10GSgfxLayerFv(layerPtr);
+            model->renderToken = tokenMark__10GSgfxLayerFv(layerPtr);
+        }
+        if (pass == 1) {
+            if (model->flags & 0x8000000) modelShadowRenderMarukage__FP8_GSmodelP10GSgfxLayer(model, layerPtr);
+            if (model->flags & 0x200000) GSboundDraw__FP7GSboundP10GSgfxLayer((GSbound*)model->boundStorage, layerPtr);
+        }
+    }
+}
+#pragma dont_inline reset
+}

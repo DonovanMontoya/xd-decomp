@@ -1,3 +1,4 @@
+extern "C" float __float_nan[];
 #include <game/pxdvs/app/hero/heroMovePrivate.hpp>
 
 struct HeroMoveSlot {
@@ -215,7 +216,7 @@ extern "C" void fn_80151F6C() {
 }
 
 static void remakeFormation();
-static void moveParty(HEROMOVE_MEMBER);
+static f32 moveParty(HEROMOVE_MEMBER);
 static void initLeaderLog();
 static void cbPoison(long, FootStepCounter, long);
 static void cbTsureFriend(long, FootStepCounter, long);
@@ -356,7 +357,7 @@ s32 heroMoveDismissMember(s32 member) {
     if (member == heroMoveGetLeader()) {
         return 0;
     }
-    HeroMoveMember* m = (HeroMoveMember*)((u8*)&HeroMove + (member << 5));
+    HeroMoveMember* m = &HeroMove.members[member];
     m->flags = m->flags & 0xFFFE;
     remakeFormation();
     return 1;
@@ -441,7 +442,7 @@ void heroMoveInitEvent() {
     } while (i < 4);
 }
 
-void heroMoveSetEventList(u8 kind, s32 list, s32 owner) {
+void heroMoveSetEventList(u8 kind, void* list, s32 owner) {
     switch (kind) {
     case 1:
         memcpy(&HeroMove.raw[0x498], (void*)list, 0xD0);
@@ -689,7 +690,8 @@ static u8 updateChat(HEROMOVE_MEMBER);
 
 static f32 moveLeader(HEROMOVE_MEMBER member) {
     u32 changed = GSinputButtonsChanged(1);
-    if ((GSinputButtonsPressed(1) & changed & 0x100) && updateChat(member) != 0) {
+    u32 pressed = GSinputButtonsPressed(1);
+    if ((pressed & changed & 0x100) && updateChat(member) != 0) {
         return 0.0f;
     }
     return moveLeaderPosition(member);
@@ -837,11 +839,11 @@ extern "C" {
 void* peopleBiosGetPosPtr();
 void* peopleBiosGetRotPtr(void*);
 void PSVECAdd(GSvec*, GSvec*, GSvec*);
-s32 GScolsys2CheckGetEventID(GSvec*, GSvec*, s32);
+s32 GScolsys2CheckGetEventID(GSvec*, GSvec*, void*);
 double sin(double);
 double cos(double);
 
-s32 heroMoveCheckEvent(s32 arg) {
+s32 heroMoveCheckEvent(void* arg) {
     unsigned long group;
     unsigned long res;
     s32 result;
@@ -865,4 +867,820 @@ s32 heroMoveCheckEvent(s32 arg) {
     }
     return result;
 }
+}
+
+void AnalogStickEmu::calculate(s8& x, s8& y, s8& cx, s8& cy) {
+    if (b0 < x) {
+        if (b0 < 0 && x > 0) {
+            b0 = x;
+        } else {
+            if (abs(x) > abs(b0)) b0 += b4;
+            else b0 += b5;
+            if (b0 > x) b0 = x;
+        }
+    } else if (b0 > x) {
+        if (b0 > 0 && x < 0) {
+            b0 = x;
+        } else {
+            if (abs(x) > abs(b0)) b0 -= b4;
+            else b0 -= b5;
+            if (b0 < x) b0 = x;
+        }
+    }
+    if (b1 < y) {
+        if (b1 < 0 && y > 0) {
+            b1 = y;
+        } else {
+            if (abs(y) > abs(b1)) b1 += b4;
+            else b1 += b5;
+            if (b1 > y) b1 = y;
+        }
+    } else if (b1 > y) {
+        if (b1 > 0 && y < 0) {
+            b1 = y;
+        } else {
+            if (abs(y) > abs(b1)) b1 -= b4;
+            else b1 -= b5;
+            if (b1 < y) b1 = y;
+        }
+    }
+    if (b2 < cx) {
+        if (b2 < 0 && cx > 0) {
+            b2 = cx;
+        } else {
+            if (abs(cx) > abs(b2)) b2 += b4;
+            else b2 += b5;
+            if (b2 > cx) b2 = cx;
+        }
+    } else if (b2 > cx) {
+        if (b2 > 0 && cx < 0) {
+            b2 = cx;
+        } else {
+            if (abs(cx) > abs(b2)) b2 -= b4;
+            else b2 -= b5;
+            if (b2 < cx) b2 = cx;
+        }
+    }
+    if (b3 < cy) {
+        if (b3 < 0 && cy > 0) {
+            b3 = cy;
+        } else {
+            if (abs(cy) > abs(b3)) b3 += b4;
+            else b3 += b5;
+            if (b3 > cy) b3 = cy;
+        }
+    } else if (b3 > cy) {
+        if (b3 > 0 && cy < 0) {
+            b3 = cy;
+        } else {
+            if (abs(cy) > abs(b3)) b3 -= b4;
+            else b3 -= b5;
+            if (b3 < cy) b3 = cy;
+        }
+    }
+    x = b0;
+    y = b1;
+    cx = b2;
+    cy = b3;
+}
+
+static void _getStickData(s8&, s8&, s8&, s8&);
+extern "C" {
+void GSthreadSwitch();
+f32 timeGetLastFrameSec();
+}
+
+static void _heroMoveSlowStopFactor(float factor, bool moveFollowers) {
+    s8 x, y, rawX, rawY;
+    heroMoveGetLeader();
+    _getStickData(x, y, rawX, rawY);
+    f32 weight;
+    f32 fx = x, fy = y, frx = rawX, fry = rawY;
+    weight = 1.0f;
+    while (weight >= 0.0f) {
+        if (moveFollowers) {
+            for (s32 i = 0; i < 4; ++i) {
+                if (heroMoveIsMember(i) && i != heroMoveGetLeader()) {
+                    updateMotion((HEROMOVE_MEMBER)i, moveParty((HEROMOVE_MEMBER)i));
+                }
+            }
+        }
+        fx *= weight;
+        fy *= weight;
+        frx *= weight;
+        fry *= weight;
+        _setStickData(fx, fy, frx, fry);
+        moveLeaderPosition(HEROMOVE_MEMBER_0);
+        if (moveFollowers) {
+            moveLeaderPosition(HEROMOVE_MEMBER_1);
+            moveLeaderPosition(HEROMOVE_MEMBER_2);
+            moveLeaderPosition(HEROMOVE_MEMBER_3);
+        }
+        GSthreadSwitch();
+        weight -= factor * timeGetLastFrameSec();
+    }
+    HeroMove.raw[0x3AE] = 0;
+}
+
+extern "C" {
+void fadeEffectDokuStart();
+void heroMoveInitEvent();
+void heroMoveTermEvent();
+void* pokemonBiosGetNicknamePtr(Pokemon*);
+void msgctrlSetValue(u32, void*);
+void winMsgOpenField(u32, u32, u32);
+void winMsgCloseField(u32);
+}
+
+static void cbPoison(long, FootStepCounter counter, long) {
+    s32 fainted[6];
+    s32* readFainted;
+    s32 faintedCount = 0;
+    u8 poisoned = 0;
+    if (counter == 0) {
+        if (++*(s32*)&HeroMove.raw[0x3A0] >= 4) {
+            *(s32*)&HeroMove.raw[0x3A0] = 0;
+            s32 healthyCount = 0;
+            for (s32 i = 0; i < 6; ++i) {
+                Pokemon* pokemon = (Pokemon*)heroGetStatus(0, 3, i);
+                if (pokemon && pokemonCheckValid(pokemon) && pokemon->getHp()) ++healthyCount;
+            }
+            readFainted = fainted;
+            s32* nextFainted = readFainted;
+            for (s32 i = 0; i < 6; ++i) {
+                Pokemon* pokemon = (Pokemon*)heroGetStatus(0, 3, i);
+                if (pokemon && pokemonCheckValid(pokemon)) {
+                    u32 hp = pokemon->getHp();
+                    if ((u16)hp) {
+                        u8 condition = pokemon->getCondition();
+                        if (condition == 3 || condition == 4) {
+                            poisoned = 1;
+                            if (healthyCount > 1 || (u16)hp > 1) {
+                                pokemon->setHp(hp - 1);
+                                if ((u16)(hp - 1) == 0) {
+                                    *nextFainted = i;
+                                    --healthyCount;
+                                    ++nextFainted;
+                                    ++faintedCount;
+                                    pokemon->initCondition();
+                                    DarkPokemon* dark = pokemon->getDarkPokemon();
+                                    if (dark) dark->setReversMode(false);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (poisoned) fadeEffectDokuStart();
+            if (faintedCount > 0) {
+                heroMoveInitEvent();
+                for (s32 i = 0; i < faintedCount; ++readFainted, ++i) {
+                    Pokemon* pokemon = (Pokemon*)heroGetStatus(0, 3, *readFainted);
+                    void* nickname = pokemonBiosGetNicknamePtr(pokemon);
+                    msgctrlSetValue(0x32, nickname);
+                    winMsgOpenField(0xC37E, 1, 0);
+                    winMsgCloseField(1);
+                    actionFriendSet(pokemon, 7);
+                }
+                heroMoveTermEvent();
+            }
+        }
+    }
+}
+
+extern "C" {
+u32 heroGetObjID(void*);
+u32 floorGetNextFloorID();
+s32 menuCBBios_GetToolBattleTrainerKind();
+
+u32 heroMoveGetKenObjID() {
+    u32 floors[20] = {0x20, 0x17, 0x21, 0x18, 0x22, 0x19, 0x11, 0x1A, 0x12, 0x1B,
+                      0x13, 0x1C, 0x0C, 0x1D, 0x0D, 0x1E, 0x0E, 0x1F, 0x0F, 0x10};
+    struct TrainerModel { s32 kind; u32 id; } models[5] = {
+        {0, 0x16C90400}, {1, 0x16C90400}, {2, 0x16C90400}, {3, 0x16C90400}, {4, 0x16C90400}
+    };
+    if (isStoryMode()) return heroGetObjID(0);
+    u32 floor = floorGetNextFloorID();
+    s32 i;
+    for (i = 0; i < 20; ++i) if (floor == floors[i]) break;
+    if (i >= 20) return heroGetObjID(0);
+    s32 kind = menuCBBios_GetToolBattleTrainerKind();
+    for (i = 0; i < 5; ++i) if (kind == models[i].kind) break;
+    return models[i].id;
+}
+}
+
+static void initFloor();
+extern "C" {
+u8 GSfloorIsPop();
+void peopleOpen(u32, u32, u32);
+void GSmodelEnableAnimBlend(void*);
+void peopleAddCollision(u32, u32);
+void peopleSetFlags(u32, u32, u32);
+void peopleSetNeckLimitHold(u32, u32, u8);
+void peopleSetRot(u32, u32, GSvec*);
+void heroSetFollowerWithID(u8, u8);
+
+s32 heroMoveInit(GSvec* position, GSvec* rotation) {
+    s32 animationIndex;
+    void* models[4];
+    if (!GSfloorIsPop()) {
+        u32 id = heroMoveGetKenObjID();
+        peopleOpen(0, 0x64, id);
+        peopleOpen(0, 0x65, 0x16C70400);
+        peopleOpen(0, 0x68, 0x195B0400);
+        peopleOpen(0, 0x69, 0x19540400);
+    }
+    for (s32 i = 0; i < 4; ++i) {
+        models[i] = getModel((HEROMOVE_MEMBER)i);
+        if (models[i]) GSmodelEnableAnimBlend(models[i]);
+    }
+    peopleAddCollision(0, 0x64);
+    peopleAddCollision(0, 0x65);
+    peopleAddCollision(0, 0x68);
+    peopleAddCollision(0, 0x69);
+    if (!GSfloorIsPop()) {
+        peopleSetFlags(0, 0x64, 0x40000F00);
+        peopleSetFlags(0, 0x65, 0x701);
+        peopleSetFlags(0, 0x68, 0x701);
+        peopleSetFlags(0, 0x69, 0x701);
+    }
+    peopleSetNeckLimitHold(0, 0x65, 1);
+    peopleSetNeckLimitHold(0, 0x68, 1);
+    peopleSetNeckLimitHold(0, 0x69, 1);
+    if (!GSfloorIsPop()) {
+        peopleSetPos(0, 0x64, position);
+        peopleSetRot(0, 0x64, rotation);
+    }
+    animationIndex = 0;
+    do {
+        updateAnimation(0.0f, (HEROMOVE_MEMBER)animationIndex);
+        ++animationIndex;
+    } while (animationIndex < 4);
+    initFloor();
+    initLeaderLog();
+    *(s32*)&HeroMove.raw[0x63C] = 0;
+    *(s32*)&HeroMove.raw[0x640] = 0;
+    *(s32*)&HeroMove.raw[0x638] = 0;
+    *(s32*)&HeroMove.raw[0x3A8] = 0;
+    ((AnalogStickEmu*)&HeroMove.raw[0x654])->init();
+    Hero* hero = Hero::getHeroPtr();
+    u8 follower = hero->getFollowerID();
+    u8 level = hero->getFollowerModelLevel();
+    if (follower) {
+        heroMoveJoinMember(follower);
+        heroSetFollowerWithID(follower, level);
+    } else {
+        heroMoveDismissMember(1);
+        heroMoveDismissMember(2);
+        heroMoveDismissMember(3);
+    }
+    return 0;
+}
+}
+
+extern "C" {
+double sin(double);
+double cos(double);
+struct WalkHeight { f32 height; u8 reserved[8]; };
+s32 GScolsys2WalkGetHeight(GSvec*, WalkHeight*);
+}
+
+static void initFloor() {
+    GSvec rotation, position, followerPosition;
+    WalkHeight heights[8];
+    if (!GSfloorIsPop()) {
+        getPos(&position, (HEROMOVE_MEMBER)heroMoveGetLeader());
+        getRot(&rotation, (HEROMOVE_MEMBER)heroMoveGetLeader());
+        f32 dx = sin(rotation.y);
+        f32 dz = cos(rotation.y);
+        dx = -dx;
+        followerPosition.y = position.y;
+        dz = -dz;
+        f32 distance = 10.0f;
+        for (s32 i = 0; i < 4; ++i) {
+            if (heroMoveIsMember(i) && i != heroMoveGetLeader()) {
+                followerPosition.x = dx * distance + position.x;
+                followerPosition.y = position.y;
+                followerPosition.z = dz * distance + position.z;
+                s32 count = GScolsys2WalkGetHeight(&followerPosition, heights);
+                if (count > 0) {
+                    if (count >= 2) {
+                        f32 closest = -1000000.0f;
+                        f32 highest = closest;
+                        s32 found = 0;
+                        for (s32 j = 0; j < count; ++j) {
+                            f32 height = heights[j].height;
+                            if (highest < height) highest = height;
+                            if (!(height - followerPosition.y >= 100.0f) && closest < height) {
+                                closest = height;
+                                found = 1;
+                            }
+                        }
+                        if (found) followerPosition.y = closest;
+                        else followerPosition.y = highest;
+                    } else {
+                        followerPosition.y = heights[0].height;
+                    }
+                }
+                distance += 10.0f;
+                setPos((HEROMOVE_MEMBER)i, &followerPosition);
+                setRot((HEROMOVE_MEMBER)i, &rotation);
+            }
+        }
+    }
+    setDisp(HEROMOVE_MEMBER_0, heroMoveIsMember(0));
+    if (!GSfloorIsPop()) {
+        for (s32 i = 1; i < 4; ++i) setDisp((HEROMOVE_MEMBER)i, heroMoveIsMember(i));
+    }
+    u8* member = HeroMove.raw;
+    for (s32 i = 0; i < 4; ++i, member += 0x20) initFootWork((FOOTWORK*)(member + 0x14));
+    for (s32 i = 0; i < 4; ++i) {
+        if (heroMoveIsMember(i)) heroMoveSetNeckMode(i, heroMoveGetNeckMode(i));
+    }
+    *(s32*)&HeroMove.raw[0x10] = 300;
+    *(s32*)&HeroMove.raw[0x30] = 300;
+    *(s32*)&HeroMove.raw[0x50] = 300;
+    *(s32*)&HeroMove.raw[0x70] = 300;
+    *(f32*)&HeroMove.raw[0x35C] = 0.0f;
+}
+
+extern "C" {
+s8 GSinputGetLeftStickXData(u32, u8);
+s8 GSinputGetLeftStickYData(u32, u8);
+s8 GSinputGetRightStickXData(u32, u8);
+s8 GSinputGetRightStickYData(u32, u8);
+}
+
+static void _getStickData(s8& x, s8& y, s8& rawX, s8& rawY) {
+    s8 sx, sy, rx, ry;
+    if (HeroMove.raw[0x3AE]) {
+        sx = *(s8*)&HeroMove.raw[0x3AF];
+        sy = *(s8*)&HeroMove.raw[0x3B0];
+        rx = *(s8*)&HeroMove.raw[0x3B1];
+        ry = *(s8*)&HeroMove.raw[0x3B2];
+    } else {
+        sx = GSinputGetLeftStickXData(1, 1);
+        sy = GSinputGetLeftStickYData(1, 1);
+        rx = GSinputGetLeftStickXData(1, 0);
+        ry = GSinputGetLeftStickYData(1, 0);
+        if (sx == 0 && sy == 0) {
+            if (GSinputButtonsPressed(1) & 8) sy = -56;
+            if (GSinputButtonsPressed(1) & 4) sy = 56;
+            if (GSinputButtonsPressed(1) & 1) sx = -56;
+            if (GSinputButtonsPressed(1) & 2) sx = 56;
+            rx = sx;
+            ry = sy;
+        }
+        if (cameraGetType() != 6 && cameraGetType() != 5 && sx == 0 && sy == 0 && rx == 0 && ry == 0) {
+            s8 cry, crx, cy, cx;
+            cx = GSinputGetRightStickXData(1, 1);
+            if ((cx < 0 ? -cx : cx) < 16) cx = 0;
+            cy = GSinputGetRightStickYData(1, 1);
+            if ((cy < 0 ? -cy : cy) < 16) cy = 0;
+            crx = GSinputGetRightStickXData(1, 0);
+            if ((crx < 0 ? -crx : crx) < 16) crx = 0;
+            cry = GSinputGetRightStickYData(1, 0);
+            if ((cry < 0 ? -cry : cry) < 16) cry = 0;
+            sx = cx * 56 / 44;
+            sy = cy * 56 / 44;
+            rx = crx * 56 / 44;
+            ry = cry * 56 / 44;
+        }
+    }
+    x = sx; y = sy; rawX = rx; rawY = ry;
+    ((AnalogStickEmu*)&HeroMove.raw[0x654])->calculate(x, y, rawX, rawY);
+    if (gimmickBoxIsGimmickMoving()) { x = 0; y = 0; rawX = 0; rawY = 0; }
+}
+
+struct FOOTSTEP {f32 speed[4]; GSvec positions[4];};
+struct _GSmodel;
+extern "C" {
+f32 GSgfxVideoGetLastRenderTime();
+void* GSmodelGetPart(_GSmodel*,s32);
+void GSpartGetTransform(void*,GSvec*,GSvec*,GSvec*);
+void GSpartFree(void*);
+}
+static void getStep(FOOTSTEP* step,_GSmodel* model,int* parts,FOOTWORK* work) {
+    GSvec modelPos;
+    GSvec partPos;
+    f32 heights[4];
+    f32 time, zero;
+    time=GSgfxVideoGetLastRenderTime();
+    GSmodelGetPosition(model,&modelPos);
+    f32* base=heights;
+    f32* height=base;
+    zero=0.0f;
+    int* part=parts;
+    for(s32 i=0;i<4;i++,part++,height++) {
+        step->positions[i].x=zero;
+        step->positions[i].y=zero;
+        step->positions[i].z=zero;
+        *height=zero;
+        if(*part>=0) {
+            void* object=GSmodelGetPart(model,*part);
+            if(object) {
+                GSpartGetTransform(object,&partPos,0,0);
+                GSpartFree(object);
+                *height=partPos.y-modelPos.y;
+                step->positions[i].x=partPos.x;
+                step->positions[i].y=partPos.y;
+                step->positions[i].z=partPos.z;
+            }
+        }
+    }
+    f32 threshold=0.5f;
+    zero=0.0f;
+    if(work->a>=threshold && heights[0]<threshold)step->speed[0]=(work->a-heights[0])/time;
+    else step->speed[0]=zero;
+    if(work->b>=threshold && heights[1]<threshold)step->speed[1]=(work->b-heights[1])/time;
+    else step->speed[1]=zero;
+    if(work->c>=threshold && base[2]<threshold)step->speed[2]=(work->c-base[2])/time;
+    else step->speed[2]=zero;
+    if(work->d>=threshold && base[3]<threshold)step->speed[3]=(work->d-base[3])/time;
+    else step->speed[3]=zero;
+    work->a=heights[0];work->b=heights[1];work->c=base[2];work->d=base[3];
+}
+
+static void updateLeaderLog() {
+    GSvec previous,current;
+    u8 append=0;
+    getPos(&current,(HEROMOVE_MEMBER)heroMoveGetLeader());
+    if(getLeaderLog(&previous,1)) {
+        f32 x=previous.x-current.x;
+        f32 z=previous.z-current.z;
+        f32 xs=x*x,zs=z*z;
+        f32 mag=xs+zs;
+        if(mag>0.0f) {
+            f64 guess=__frsqrte((f64)mag);
+            guess=0.5*guess*(3.0-guess*guess*mag);
+            guess=0.5*guess*(3.0-guess*guess*mag);
+            guess=0.5*guess*(3.0-guess*guess*mag);
+            mag=(f32)(mag*guess);
+        } else if(mag<0.0)mag=__float_nan[0];
+        else {
+            s32 classification;
+            f32 classifyValue=mag;
+            switch(*(s32*)&classifyValue & 0x7F800000) {
+            case 0x7F800000: if(*(s32*)&classifyValue & 0x7FFFFF)classification=1;else classification=2;break;
+            case 0: if(*(s32*)&classifyValue & 0x7FFFFF)classification=5;else classification=3;break;
+            default: classification=4;break;
+            }
+            if(classification==1)mag=__float_nan[0];
+        }
+        if(mag>1.0f)append=1;
+    } else append=1;
+    if(append) {
+        for(s32 i=58;i>=0;i--) {
+            HeroMove.leaderLog.log[i+1].x=HeroMove.leaderLog.log[i].x;
+            HeroMove.leaderLog.log[i+1].y=HeroMove.leaderLog.log[i].y;
+            HeroMove.leaderLog.log[i+1].z=HeroMove.leaderLog.log[i].z;
+        }
+        *(s32*)&HeroMove.raw[0x84]=0;
+        HeroMove.leaderLog.log[0].x=current.x;
+        HeroMove.leaderLog.log[0].y=current.y;
+        HeroMove.leaderLog.log[0].z=current.z;
+        if(*(s32*)&HeroMove.raw[0x88]<60)(*(s32*)&HeroMove.raw[0x88])++;
+    }
+}
+
+extern "C" {
+f32 cameraGetRotY();
+f32 peopleGetBlendFactor(f32,f32,f32);
+void peopleRotateToAngle(u32,u32,f32,f32);
+void peopleMoveForward(u32,u32,f32);
+void peopleRotateStop(u32,u32);
+f64 sin(f64);
+}
+static void updateLeaderMovement(HEROMOVE_MEMBER member,float* movement) {
+    unsigned long group,res;
+    s8 x,y,rx,ry;
+    GSresGetResource(0,2);
+    getResID(&group,&res,member);
+    getModel(member);
+    _getStickData(x,y,rx,ry);
+    if(!gimmickBoxIsGimmickMoving()) {
+        if(x || y) {
+            if(x>56)x=56;else if(x<-56)x=-56;
+            if(y>56)y=56;else if(y<-56)y=-56;
+            f32 mag,ax,ay;
+            ax=(f32)(x>0?x:-x)/28.0f;
+            ay=(f32)(y>0?y:-y)/28.0f;
+            mag=ax*ax+ay*ay;
+        if(mag>0.0f) {
+            f64 guess=__frsqrte((f64)mag);
+            guess=0.5*guess*(3.0-guess*guess*mag);
+            guess=0.5*guess*(3.0-guess*guess*mag);
+            guess=0.5*guess*(3.0-guess*guess*mag);
+            mag=(f32)(mag*guess);
+        } else if(mag<0.0)mag=__float_nan[0];
+        else {
+            s32 classification;
+            f32 classifyValue=mag;
+            switch(*(s32*)&classifyValue & 0x7F800000) {
+            case 0x7F800000: if(*(s32*)&classifyValue & 0x7FFFFF)classification=1;else classification=2;break;
+            case 0: if(*(s32*)&classifyValue & 0x7FFFFF)classification=5;else classification=3;break;
+            default: classification=4;break;
+            }
+            if(classification==1)mag=__float_nan[0];
+        }
+            *movement=mag;
+            if(*movement>2.0f)*movement=2.0f;
+            if(rx<=-2 || rx>=2 || ry<=-2 || ry>=2) {
+                f32 angle;
+                if(ay<0.001f)angle=1.5707964f;
+                else {
+                    f32 ratio=ax/ay;
+                    if(ratio>5.0f)ratio=5.0f;
+                    angle=1.5707964f*(f32)sin(ratio/3.1830988f);
+                }
+                f32 rotation;
+                if(y>=0)rotation=angle;else rotation=3.1415927f-angle;
+                if(x<0) {
+                    if(y>=0)rotation=3.1415927f+(3.1415927f-angle);
+                    else rotation=3.1415927f+angle;
+                }
+                peopleRotateToAngle(group,res,rotation+cameraGetRotY(),*movement);
+            }
+            u8* people=(u8*)peopleSearchID(peopleGetHumanID(group,res));
+            if(*movement<1.0f)*movement=*(f32*)(people+0x20)*peopleGetBlendFactor(*movement,0.0f,1.0f);
+            else {
+                f32 blend=peopleGetBlendFactor(*movement,1.0f,2.0f);
+                *movement=(1.0f-blend)**(f32*)(people+0x20)+blend**(f32*)(people+0x24);
+            }
+            peopleMoveForward(group,res,*movement);
+        } else {
+            *movement=0.0f;
+            peopleRotateStop(group,res);
+        }
+    }
+}
+
+extern "C" {
+void* peopleInfoBiosGetPtr(s32);
+f32 peopleInfoBiosGetColBallSize(void*);
+u8 GScolsys2HitCollision(GSvec*,GSvec*,s32);
+void PSVECScale(GSvec*,GSvec*,f32);
+s32 GScolsys2HumanCollision(void*,GSvec*,GSvec*,s32);
+
+u8 heroMoveChkHinderClear(s32 member) {
+    GSvec memberPosition,leaderPosition,direction,scaled;
+    unsigned long group,res;
+    if(!heroMoveIsMember(member))return 0;
+    HEROMOVE_MEMBER leader=(HEROMOVE_MEMBER)heroMoveGetLeader();
+    getPos(&memberPosition,(HEROMOVE_MEMBER)member);
+    memberPosition.y+=8.5f;
+    getPos(&leaderPosition,leader);
+    leaderPosition.y+=8.5f;
+    u32 object=getObjID((HEROMOVE_MEMBER)member);
+    if(object==0xFFFFFFFF)return 0;
+    void* info=peopleInfoBiosGetPtr(object);
+    if(!info)return 0;
+    f32 memberSize=peopleInfoBiosGetColBallSize(info);
+    if(GScolsys2HitCollision(&memberPosition,&leaderPosition,0))return 0;
+    object=getObjID(leader);
+    if(object==0xFFFFFFFF)return 0;
+    info=peopleInfoBiosGetPtr(object);
+    if(!info)return 0;
+    f32 leaderSize=peopleInfoBiosGetColBallSize(info);
+    getResID(&group,&res,(HEROMOVE_MEMBER)member);
+    u8* people=(u8*)peopleSearchID(peopleGetHumanID(group,res));
+    if(!people)return 0;
+    void* collision=*(void**)(people+0x50);
+    getPos(&memberPosition,(HEROMOVE_MEMBER)member);
+    getPos(&leaderPosition,leader);
+    PSVECSubtract(&leaderPosition,&memberPosition,&direction);
+    f32 x=memberPosition.x-leaderPosition.x;
+    f32 z=memberPosition.z-leaderPosition.z;
+    f32 mag,radius;
+    radius=memberSize+leaderSize;
+    f32 xs=x*x,zs=z*z;
+    mag=xs+zs;
+        if(mag>0.0f) {
+            f64 guess=__frsqrte((f64)mag);
+            guess=0.5*guess*(3.0-guess*guess*mag);
+            guess=0.5*guess*(3.0-guess*guess*mag);
+            guess=0.5*guess*(3.0-guess*guess*mag);
+            mag=(f32)(mag*guess);
+        } else if(mag<0.0)mag=__float_nan[0];
+        else {
+            s32 classification;
+            f32 classifyValue=mag;
+            switch(*(s32*)&classifyValue & 0x7F800000) {
+            case 0x7F800000: if(*(s32*)&classifyValue & 0x7FFFFF)classification=1;else classification=2;break;
+            case 0: if(*(s32*)&classifyValue & 0x7FFFFF)classification=5;else classification=3;break;
+            default: classification=4;break;
+            }
+            if(classification==1)mag=__float_nan[0];
+        }
+    if(mag<=0.0f)return 1;
+    if(mag<=radius)return 1;
+    PSVECScale(&direction,&scaled,(mag-radius-1.0f)/mag);
+    PSVECAdd(&memberPosition,&scaled,&leaderPosition);
+    return GScolsys2HumanCollision(collision,&memberPosition,&leaderPosition,0)!=6;
+}
+}
+
+struct tagPeopleWork {
+    u8 pad[0x14];
+    u32 group,res;
+    u8 getMoveType();
+};
+struct HeroMoveEvent {GSvec points[3]; u8 data[16];};
+extern "C" {
+void __ct__5GSvecFv(void*);
+void __construct_array(void*,void (*)(void*),void (*)(void*),u32,u32);
+tagPeopleWork* peopleTalkCheck(u32,u32,f32,f32);
+void GSinputResetLeftSmoothing(u32,s32,s32);
+void GSinputResetRightSmoothing(u32,s32,s32);
+void peopleGetNeckPos(u32,u32,GSvec*);
+void peopleRotateToXYZ(u32,u32,f32,f32,f32,f32);
+u8 peopleCheckTresure(u32,u32);
+void floorEventCtrlTresure(u32,u32,s32);
+void peopleBlockMoveScript(u32);
+void peopleUnblockMoveScript(u32);
+void peopleWalkPause(u32,u32,s32);
+s32 peopleGetTalkSctID(u32,u32);
+void peopleWalkPauseTalkMode(u32,u32,s32);
+void floorExecScriptRes(s32,u32,u32);
+void peopleTalkMsgEnd(u32,u32);
+u8 peopleBiosCheckFlag(void*,u32);
+}
+static u8 updateChat(HEROMOVE_MEMBER member) {
+    HeroMoveEvent events[4];
+    GSvec neck;
+    unsigned long group,res;
+    s32 count;
+    getResID(&group,&res,member);
+    tagPeopleWork* person=peopleTalkCheck(group,res,0.3f,40.0f);
+    if(!person) {
+        __construct_array(events[0].points,__ct__5GSvecFv,0,12,3);
+        __construct_array(events[1].points,__ct__5GSvecFv,0,12,3);
+        __construct_array(events[2].points,__ct__5GSvecFv,0,12,3);
+        __construct_array(events[3].points,__ct__5GSvecFv,0,12,3);
+        count=heroMoveCheckEvent(events);
+        heroMoveSetEventList(3,events,count);
+        if(count) {peopleRotateStop(0,100);return 1;}
+        return 0;
+    }
+    GSinputResetLeftSmoothing(1,0,0);
+    GSinputResetRightSmoothing(1,0,0);
+    heroMoveInitEvent();
+    peopleGetNeckPos(person->group,person->res,&neck);
+    peopleRotateToXYZ(group,res,neck.x,neck.y,neck.z,1.0f);
+    if(peopleCheckTresure(person->group,person->res))floorEventCtrlTresure(person->group,person->res,2);
+    else {
+        s32 script;
+        u8 moving=0;
+        u8 type=person->getMoveType();
+        if(type==2 || type==3)moving=1;
+        peopleBlockMoveScript(peopleGetHumanID(person->group,person->res));
+        if(moving)peopleWalkPause(person->group,person->res,1);
+        script=peopleGetTalkSctID(person->group,person->res);
+        if(script) {
+            peopleWalkPauseTalkMode(person->group,person->res,1);
+            floorExecScriptRes(script,person->group,person->res);
+            peopleWalkPauseTalkMode(person->group,person->res,0);
+            peopleTalkMsgEnd(person->group,person->res);
+        }
+        if(moving && !peopleBiosCheckFlag(person,0x80000))peopleWalkPause(person->group,person->res,0);
+        peopleUnblockMoveScript(peopleGetHumanID(person->group,person->res));
+    }
+    heroMoveTermEvent();
+    GSinputResetLeftSmoothing(1,0,0);
+    GSinputResetRightSmoothing(1,0,0);
+    return 1;
+}
+
+static void procStep(HEROMOVE_MEMBER member) {
+    int parts[2][4]={{0x35,0x30,-1,-1},{0x2E,0x29,-1,-1}};
+    GSgfxVideoGetLastRenderTime();
+    FOOTSTEP step;
+    __construct_array(step.positions,__ct__5GSvecFv,0,12,4);
+    _GSmodel* model=(_GSmodel*)getModel(member);
+    if(model)getStep(&step,model,parts[member],(FOOTWORK*)(HeroMove.raw+member*0x20+0x14));
+}
+
+#pragma dollar_identifiers on
+extern "C" {
+static f32 radius_fix$2457;
+static s8 init$2458;
+static f32 len_fix$2474;
+static s8 init$2475;
+u8 peopleBiosCheckFlag(void*,u32);
+GSvec* peopleBiosGetPrevPosPtr(void*);
+f32 peopleVecCalcRotY(GSvec*,GSvec*,f32);
+f32 peopleGetBlendFactor(f32,f32,f32);
+f32 GScolsys2HumanGetWalkHeight(GSvec*);
+void peopleRotateToAngle(u32,u32,f32,f32);
+void peopleMoveAlongAngle(u32,u32,f32,f32);
+void PSVECNormalize(GSvec*,GSvec*);
+}
+struct FollowerPeople {
+    u8 pad00[0x24];
+    f32 speed;
+    u8 pad28[4];
+    f32 slowSpeed;
+    u8 pad30[0x38];
+    GSvec destination;
+    u8 pad74[0xB0];
+    s32 lockFrames;
+    u8 pad128[0x18];
+    s32 hinder;
+};
+static f32 moveParty(HEROMOVE_MEMBER member) {
+    GSvec destination;
+    GSvec direction;
+    GSvec closeDirection;
+    GSvec difference;
+    GSvec added;
+    s8 x,y,rx,ry;
+    FollowerPeople* current=(FollowerPeople*)_heroGetPeople(member);
+    if (!current) return 0.0f;
+    if (current->lockFrames>0) {
+        *(s32*)&HeroMove.raw[0x88]=0;
+        return 0.0f;
+    }
+    FollowerPeople* leader=(FollowerPeople*)peopleGet(0,0x64);
+    if (!leader) return 0.0f;
+    Hero* hero=Hero::getHeroPtr();
+    unsigned long resource=hero->getFollowerResID();
+    FollowerPeople* follower=(FollowerPeople*)peopleGet(hero->getFollowerGrpID(),resource);
+    if (!follower) return 0.0f;
+    if (peopleBiosCheckFlag(follower,0x80000000)) return 0.0f;
+    GSvec* leaderPosition=(GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(leader);
+    GSvec* position=(GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(follower);
+    s32 followerID=heroGetFollower();
+    if (!followerID) return 0.0f;
+    if (heroMoveChkHinderClear(followerID) && !follower->hinder) *(s32*)&HeroMove.raw[0x88]=0;
+    if (!init$2458) { init$2458=1;radius_fix$2457=3.0f; }
+    for(s32 i=0;i<*(s32*)&HeroMove.raw[0x88];i++) {
+        if(PSVECDistance(position,&HeroMove.leaderLog.log[i])<radius_fix$2457) {
+            *(s32*)&HeroMove.raw[0x88]=i+1;
+            break;
+        }
+    }
+    if(current->hinder) return 0.0f;
+    s32 count=*(s32*)&HeroMove.raw[0x88];
+    if(count>0) {
+        GSvec* point=&HeroMove.leaderLog.log[count-1];
+        destination.x=point->x;destination.y=point->y;destination.z=point->z;
+    }
+    else {
+        PSVECSubtract(position,leaderPosition,&difference);
+        f32 dx=difference.x,dy=difference.y,dz=difference.z;
+        direction.x=dx;direction.y=dy;direction.z=dz;
+        u8 zero;
+        if(!(dx<0.00001f) || !(dx>-0.00001f) ||
+           !(dy<0.00001f) || !(dy>-0.00001f) ||
+           !(dz<0.00001f) || !(dz>-0.00001f)) zero=0;
+        else zero=1;
+        if(zero) {
+            direction.x=0.0f;direction.y=0.0f;direction.z=1.0f;
+        }
+        PSVECNormalize(&direction,&direction);
+        PSVECScale(&direction,&direction,10.950001f);
+        PSVECAdd(leaderPosition,&direction,&added);
+        destination.x=added.x;destination.y=added.y;destination.z=added.z;
+    }
+    GSvecDistanceXZ(position,&destination);
+    f32 distance=GSvecDistanceXZ(position,leaderPosition);
+    _getStickData(x,y,rx,ry);
+    if(!init$2475) { init$2475=1;len_fix$2474=0.5f; }
+    if(distance<12.0f-len_fix$2474 && !x && !y && !rx && !ry) return 0.0f;
+    follower->destination.x=destination.x;
+    follower->destination.y=destination.y;
+    follower->destination.z=destination.z;
+    f32 movementAngle=peopleVecCalcRotY(position,&follower->destination,0.0f);
+    f32 facingAngle=peopleVecCalcRotY(position,leaderPosition,0.0f);
+    f32 speed;
+    if(distance<=12.0f) {
+        PSVECSubtract(position,leaderPosition,&closeDirection);
+        if(distance<0.00001f && distance>-0.00001f) {
+            closeDirection.x=0.0f;closeDirection.y=0.0f;closeDirection.z=10.950001f;
+        } else {
+            closeDirection.y=0.0f;
+            PSVECNormalize(&closeDirection,&closeDirection);
+            PSVECScale(&closeDirection,&closeDirection,10.950001f);
+        }
+        PSVECAdd(leaderPosition,&closeDirection,&follower->destination);
+        follower->destination.y=GScolsys2HumanGetWalkHeight(&follower->destination);
+        movementAngle=peopleVecCalcRotY(position,&follower->destination,0.0f);
+        if(distance<9.900001f) {
+            if(distance<=9.0f) speed=leader->slowSpeed;
+            else speed=leader->slowSpeed*peopleGetBlendFactor(distance,9.900001f,9.0f);
+        } else speed=0.0f;
+    } else if(distance<18.0f) {
+        speed=leader->speed*peopleGetBlendFactor(distance,12.0f,18.0f);
+    } else speed=leader->speed;
+    {
+        unsigned long res=hero->getFollowerResID();
+        peopleRotateToAngle(hero->getFollowerGrpID(),res,facingAngle,20.0f);
+    }
+    {
+        unsigned long res=hero->getFollowerResID();
+        peopleMoveAlongAngle(hero->getFollowerGrpID(),res,speed,movementAngle);
+    }
+    position=peopleBiosGetPrevPosPtr(follower);
+    return GSvecDistanceXZ((GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(follower),position);
 }

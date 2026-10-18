@@ -58,6 +58,8 @@ public:
     void init();
     void initByPokemonAndSetColorAnimationInAny(Pokemon *);
     void setAnimation(long);
+    void drawAndUpdate(PocketVec<short>);
+    void drawAndUpdate();
 };
 
 class CMenuPokemonCursor {
@@ -70,7 +72,7 @@ public:
     s16 x;
     s16 y;
     PocketVec<short> *table;
-    u8 reserved1C[4];
+    f32 pulseTime;
     Pokemon pokemon;
     CAnt ant;
     CAnt beforeAnt;
