@@ -41,8 +41,10 @@ void dbgMenuPokemonEditButton(DbgMenuPokemonWindow* win) {
     u32 pokemon = win->pokemon;
     s32* out = win->out;
     if (win != 0) {
-        u16 trigger = windowGetKeyInfo()->trigger;
-        u16 held = windowGetKeyInfo()->held;
+        s32 t = windowGetKeyInfo()->trigger;
+        s32 h = windowGetKeyInfo()->held;
+        u16 trigger = t;
+        u16 held = h;
         s32 delta;
         s32 item;
         s32 up;

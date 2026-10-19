@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/wazaSequence/wazaSequencePrivate.hpp>
+#include <dolphin/os/OSFastCast.h>
 
 static f32 distmtx[2][3] = {{0,0,0},{0,0,0}};
 static inline ModelSequence *AsModel(NullSequence *sequence) {
@@ -83,14 +84,21 @@ bool WazaSequence::LoadData(u8 *data) {
     data += sizeof(WazaSequenceData);
     entryCount = header->entryCount - 1;
     index = header->index;
-    if (header->version >= 6) distortion = (f32)header->distortion / 65535.0f;
+    u16 rawDistortion;
+    if (header->version >= 6) { rawDistortion = header->distortion; distortion = __OSu16tof32(&rawDistortion) / 65535.0f; }
     else distortion=1.0f;
     ModelSequence *model = AsModel(sequence);
     if (model != 0) {
-        if (index == 11) {
+        switch (index) {
+        case 11:
             if (model->animationCount < index) index=0;
-        } else if (index >= 11 && index < 16) {
+            break;
+        case 12:
+        case 13:
+        case 14:
+        case 15:
             if (model->animationCount < index) index=1;
+            break;
         }
     }
     flags=header->flags;
@@ -120,8 +128,9 @@ bool WazaSequence::LoadData(u8 *data) {
             }
             entry->Link();
         }
+        SequenceEntry *entry=entries;
         startOffset=0.0f;
-        for (SequenceEntry *entry=entries;entry!=0;entry=entry->next) {
+        for (;entry!=0;entry=entry->next) {
             if (entry->startTime < startOffset) startOffset=entry->startTime;
         }
         if (startOffset < 0.0f) {
@@ -193,7 +202,7 @@ void WazaSequence::Start(bool camera) {
         u32 handle=model->model;
         model->LinkWithWazaSequence(this);
         if (model->isPokemon != 0 && kind == 2) wazaSequenceSysResetAnimationExcept(model);
-        if (flags & 0x80000000) model->DestroyParticles((flags & 0x8000)==0,false);
+        if (flags & 0x80000000) model->DestroyParticles(!(flags & 0x8000),false);
         if (flags & 0x08000000) GSmodelLinkToGSparticleBank(handle,0);
         model->ModelMotionStart();
         if ((flags & 2) && g_EnableModelLayerChange != 0) {
@@ -212,8 +221,8 @@ void WazaSequence::Start(bool camera) {
 }
 void WazaSequence::SetRenderCamera(_GScamera *camera) {
     for (SequenceEntry *entry=entries;entry!=0;entry=entry->next) {
-        s32 state = entry->state;
         bool active=false;
+        s32 state = entry->state;
         if (state == 1 || state == 3) active=true;
         if (active) entry->SetRenderCamera(camera);
     }
@@ -225,8 +234,8 @@ s32 WazaSequence::GetNumVariations(u16 id,u16 kind) {
         if (id == 0 || id >= waza_generic_wzx_data_number) return 0;
         if (waza_generic_wzx_data[id] != 0) count=1;
     } else {
-        WazaExtEntry *ext=waza_ext_wzx_data;
         u16 index=kind-1;
+        WazaExtEntry *ext=waza_ext_wzx_data;
         if (id == 0 || id >= waza_wzx_data_number) return 0;
         if (waza_wzx_data[id][index] != 0) count=1;
         for (u32 i=0;i<waza_ext_wzx_data_number;++i,++ext) {
@@ -259,13 +268,14 @@ WazaSequence::WazaSequence(NullSequence *owner,u16 id,u8 moveKind,u8 variant) {
 void WazaSequence::Unload(u8 *data) {
     MainSequenceEntry main(0,&data);
     WazaSequenceData *header=(WazaSequenceData *)data;
-    data=AlignData(data+sizeof(WazaSequenceData));
+    data+=sizeof(WazaSequenceData);
     u16 count=header->entryCount-1;
+    data=AlignData(data);
     if (header->camera != 0) {
         ::operator delete(header->camera);
         header->camera=0;
     }
-    if (header->cameraSize != 0) data += (header->cameraSize+31)&~31U;
+    if ((s32)header->cameraSize != 0) data += (header->cameraSize+31)&~31U;
     if (count != 0) {
         for (u16 i=0;i<count;++i) {
             switch (*(u32 *)(data+4)) {
@@ -284,10 +294,11 @@ bool WazaSequence::Load(u8 *data,unsigned long group,unsigned long id) {
     MainSequenceEntry main(0,&data);
     wazaSequenceSysGetResID();
     WazaSequenceData *header=(WazaSequenceData *)data;
-    data=AlignData(data+sizeof(WazaSequenceData));
+    data+=sizeof(WazaSequenceData);
     u16 count=header->entryCount-1;
+    data=AlignData(data);
     header->camera=0;
-    if (header->cameraSize != 0) {
+    if ((s32)header->cameraSize != 0) {
         void *archive=::operator new(0x44);
         if (archive != 0) {
             header->camera=archive;

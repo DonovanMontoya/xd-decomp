@@ -20,16 +20,16 @@ void *gamedatasaveBiosGetplaydata(void*);void gamedatasaveInit(void*);s32 gameda
 void gamedataAttestInit(void*);void gamedataInit(void*);void gamedataAttestCreate(void*,u8,u8,u8,u8);
 u32 gamedataGetStatus(void *data,u16 id) {
  if(id==0 || id>=7)return 0;
- if(data==0){data=savedataGetStatus(0,0);if(!data)return 0;data=savedataGetStatus(data,1);if(!data)return 0;}
+ if(data==0){data=savedataGetStatus(0,0);if(!data)return 0;if(!(data=savedataGetStatus(data,1)))return 0;}
  void *attest=gamedataBiosGetGamedataAtttestPtr(data);if(!attest)return 0;
  switch(id){case 1:return (u32)attest;case 2:return gamedataAttestBiosGetVerId(attest);case 3:return gamedataAttestBiosGetGenId(attest);case 4:return gamedataAttestBiosGetAreaId(attest);case 5:return gamedataAttestBiosGetLangareaId(attest);default:return 0;}
 }
 void gamedataSetStatus(void *data,u16 id,u32 value) {
- if(id!=0){if(id>=7)return;
- if(data==0){data=savedataGetStatus(0,0);if(!data)return;data=savedataGetStatus(data,1);if(!data)return;}
+ if(id==0 || id>=7)return;
+ if(data==0){data=savedataGetStatus(0,0);if(!data)return;if(!(data=savedataGetStatus(data,1)))return;}
  void *attest=gamedataBiosGetGamedataAtttestPtr(data);if(!attest)return;
  switch(id){case 1:gamedataBiosSetGamedataAtttestPtr(data,(void*)value);return;case 2:gamedataAttestBiosSetVerId(attest,value);return;case 3:gamedataAttestBiosSetGenId(attest,value);return;case 4:gamedataAttestBiosSetAreaId(attest,value);return;case 5:gamedataAttestBiosSetLangareaId(attest,value);return;}
-}}
+}
 
 
 
@@ -42,7 +42,7 @@ void gamedataInit(void *data){void *attest=(void*)gamedataGetStatus(data,1);if(a
 
 
 void gamedataAttestInit(void *data){if(data){gamedataSetStatus(data,2,0);gamedataSetStatus(data,3,0);gamedataSetStatus(data,4,0);gamedataSetStatus(data,5,0);}}
-void gamedatasaveSetStatus(void *data,u16 id,s32 value){if(id!=0){if(id>=16)return;if(!data){data=savedataGetStatus(0,0);if(!data)return;data=savedataGetStatus(data,1);if(!data)return;}void *save=gamedatasaveBiosGetPtr(data);if(!save)return;switch(id){
+void gamedatasaveSetStatus(void *data,u16 id,s32 value){if(id==0||id>=16)return;{if(!data){data=savedataGetStatus(0,0);if(!data)return;if(!(data=savedataGetStatus(data,1)))return;}void *save=gamedatasaveBiosGetPtr(data);if(!save)return;switch(id){
 case 1:gamedatasaveBiosSetPtr(data,(void*)value);break;
 case 2:gamedatasaveBiosSetSavernd(save,value);break;
 case 4:gamedatasaveBiosSetSavecount(save,value);break;

@@ -166,8 +166,7 @@ s32 GSfsysStreamMoviePreFunc(u32 group, u32 resource) {
 }
 void GSfsysFreeCache(u32 group) {
     if (_initFlag) {
-        u32 cacheGroup = group;
-        while (_fsysMemFreeCacheGroup(cacheGroup) != 0) {}
+        do {} while (_fsysMemFreeCacheGroup(group) != 0);
     }
 }
 u32 GSfsysRead(u32 group) { return _fsysRequest(1, group, 0xffff, 0, 0, 0, 0, 1); }

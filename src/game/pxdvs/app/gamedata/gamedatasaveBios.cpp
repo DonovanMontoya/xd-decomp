@@ -1,7 +1,7 @@
 #include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 #pragma dont_inline on
 extern "C" {
-void gamedataBiosSetZukanFLag(u16* flags,u16 index,u16 value){if(flags==0)return;if(index>0x10)return;u16 bit=(u16)(1u<<index);if(value==1){*flags|=bit;}else{*flags&=(u16)~bit;}}
+void gamedataBiosSetZukanFLag(u16* flags,u16 index,u16 value){if(flags==0)return;if(index>0x10)return;u16 bit=(u16)(1u<<index);if(value==1){*flags|=bit;}else{*flags=*flags&~bit;}}
 u32 gamedataBiosGetZukanFlag(const u16* flags,u16 index){if(flags==0)return 0;if(index>0x10)return 0;u16 bit=(u16)(1u<<index);return ((*flags&bit)!=0);}
 void* gamedatasaveBiosGetplaydata(GamedataSaveRecord* p){if(p==0)return 0;return (u8*)p+0x40;}
 void gamedatasaveBiosSetSysHeadChecksum(GamedataSaveRecord* p,u32 value){if(p)p->payload.checksumWords.sysHeadChecksum=value;}

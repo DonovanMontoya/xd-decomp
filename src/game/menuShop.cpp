@@ -449,8 +449,8 @@ s32 menuShopNumDrawBuyNum(ShopWindow *win, ShopSprite *spr) {
     for (j = 0; j < 1 - i; j++) {
         div *= 10;
     }
-    num = *arg->value / div;
-    msgctrlSetValue(0x34, num % 10);
+    num = *arg->value / div % 10;
+    msgctrlSetValue(0x34, num);
     GSmsgPrintRight(win->layer, 0, 0, spr->width, spr->height, -1, 0x4270);
     return 0;
 }
@@ -629,8 +629,8 @@ s32 menuShopDrawMoneyWaku(ShopWindow *win, ShopSprite *spr) {
 }
 
 s32 menuShopDrawHaveWakuBack(ShopWindow *win, ShopSprite *spr) {
-    ShopMenuArg *arg;
     s32 disp;
+    ShopMenuArg *arg;
     arg = (ShopMenuArg *)win->arg;
     disp = 0;
     if (arg->mode == 0 || arg->mode == 1 || arg->mode == 4 || arg->mode == 6) {
@@ -997,7 +997,8 @@ static u16 selectItem__FiUcUcP13SHOP_MENU_ARG(s32 shop, u8 mode, u8 flags, ShopM
 
 static void setDefMenuItem__Fv(void) {
     ShopMenuItem *item = &DefMenuItem;
-    item->y = menuItemBiosGetPtr(0x3C, item->id)->y;
+    s16 y = menuItemBiosGetPtr(0x3C, item->id)->y;
+    item->y = y;
 }
 
 static s32 getExchangeMax__FUsUc(u16 item, u8 mode) {
@@ -1014,7 +1015,7 @@ static s32 getExchangeMax__FUsUc(u16 item, u8 mode) {
 }
 
 static s32 getBuyMax__FUs(u16 item) {
-    s32 price = getItemPrice__FUs(item);
+    s32 price = ((s32(*)(u16))getItemPrice__FUs)(item);
     s32 max;
     if (price > 0) {
         max = getMoney__Fv() / price;

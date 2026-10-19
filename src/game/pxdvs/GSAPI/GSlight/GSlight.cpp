@@ -205,7 +205,11 @@ static inline GXColor lightCopyColor(GXColor* color) {
     return copy;
 }
 extern "C" void GSlightSetColor(GSlight* light, GXColor* color) {
-    GXColor copy = lightCopyColor(color);
+    GXColor copy;
+    copy.r = color->r;
+    copy.g = color->g;
+    copy.b = color->b;
+    copy.a = color->a;
     HSD_LObjSetColor(light->object, copy);
 }
 extern "C" void GSlightSetType(GSlight* light, s32 type) {

@@ -24,6 +24,7 @@ struct peEmitterNode {
     f32 lastLoop; f32 field34; u8 reserved38[0xc]; f32 field44; u16 flags, count; Vec spin; Vec scale; Quaternion localRotation; Vec offset; Quaternion orientation; Vec randomOffset; u8 reserved9c[0xc]; EmitterTransforms world, previousWorld; f32 depth;
     _peEmitter* emitter; peContainer* containers;
     static void GetPositionParameter(GSvec*,GSvec*,_pePositionFunction*,f32);
+    void CreateParameters(u16, f32);
     void Init(_peEmitter*); void Stop(_peEmitter*); void Render(_peEmitter*); void Release(); void SetLastLoop(); void CreateWorldParams();
     bool Update(peEmitterNode*, _peEmitter*, f32); void Start(peEmitterNode*, _peEmitter*, _EmitParams*);
 };

@@ -128,7 +128,7 @@ static s32 _menuPokemonActionGive(s8 index, short slot, u16 item, u16 *out);
 static s32 _menuPokemonActionField(s8 index);
 static s32 _menuPokemonActionFieldItem(s8 index);
 static s8 _menuPokemonOpenList(bool flag);
-static u8 _menuPokemonActionStatus(s8 index, bool flag);
+static s8 _menuPokemonActionStatus(s8 index, bool flag);
 static u8 _menuPokemonMovePanel(long index, u8 mode);
 extern "C" u16 menuPokemonGetJoutaiSpriteID(Pokemon *p, u8 mode);
 
@@ -484,7 +484,7 @@ static s8 _menuPokemonOpenList(bool flag)
     return r;
 }
 
-static u8 _menuPokemonActionStatus(s8 index, bool flag)
+static s8 _menuPokemonActionStatus(s8 index, bool flag)
 {
     Pokemon *p;
     menuCloseCustom(0x4C, 0, 1);
@@ -524,14 +524,13 @@ loop:
             result = 1;
         }
         break;
-    case -1:
-    case 2:
-    default:
-        result = 1;
-        break;
     case 1:
         index = _menuPokemonActionStatus(index, 0);
         goto loop;
+    case -1:
+    case 2:
+        result = 1;
+        break;
     }
     return result;
 }
@@ -751,9 +750,10 @@ s32 menuPokemonCtrl(tagWINDOW_WORK *window)
     if (window->unk1 == 0) {
         window->unkA2 = -1;
         if (window->unk2 == 0) {
-            s32 off = 0;
+            s32 off;
             MENU_POKEMON_STATUS_TBL *entry = tbl;
             s32 k = 0;
+            off = 0;
             do {
                 MenuInfoEntry *e = (MenuInfoEntry *)((u8 *)&menu_info[(s8)_menuPokemon.unk4] + off);
                 menuItemBiosSetXY(window->unk4, e->a, e->b, e->c);

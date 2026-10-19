@@ -816,16 +816,19 @@ long rate01ToAlphaFrom50(f32 rate) {
 }
 
 u8 isDirRegionInReverseClockwise(f32 a, f32 b, f32 c) {
+    u8 result;
     if (c > b) {
+        result = 0;
         if (c <= a || a <= b) {
-            return 1;
+            result = 1;
         }
-        return 0;
+    } else {
+        result = 0;
+        if (c <= a && a <= b) {
+            result = 1;
+        }
     }
-    if (c <= a && a <= b) {
-        return 1;
-    }
-    return 0;
+    return result;
 }
 
 void thisExec(CMenuGlobalState &state) {
@@ -1771,13 +1774,13 @@ int CMenuReliveHall::getDirToAisyou(f32 direction) {
 }
 
 void CMenuReliveHall::getCircleColorAisyou(f32 &start, f32 &end, int &color, int index) {
-    GSgfxColAu8 selectedColor;
+    volatile u32 selectedColor;
     int quantity = dancerPositionQuantityWithCatch();
     SPokemonView *first = getPokemonViewByClockwizePositionWithCatch(index);
     SPokemonView *second = getPokemonViewByClockwizePositionWithCatch((index + 1) % quantity);
     color = pokemonToAisyou(first->getPokemonWithPickupOverride(), second->getPokemonWithPickupOverride());
+    selectedColor = *(u32 *)&relivehallAisyou2ColorTbl[color];
     start = first->unk4;
-    selectedColor = relivehallAisyou2ColorTbl[color];
     end = second->unk4;
 }
 
@@ -2034,16 +2037,16 @@ void CMenuReliveHall::drawVisitorStarLight(long aisyou, SPokemonView *view) {
     f32 radius = 90.0f * calcAnimationTimeRate0to1(1.5f);
     PocketVec<short> position = view->getPosition();
     f32 dir = xyxy2dir(position, circlePosition);
-    int j = 0;
     int k = 0;
+    int j = 0;
     do {
         f32 d = radius - (f32)k;
         if (!(d < 0.0f)) {
             f32 s = (f32)sin(dir);
             drawStarLightOne(aisyou, d * s + 320.0f, d * -(f32)cos(dir) + 280.0f, j);
         }
-        k += 5;
         j++;
+        k += 5;
     } while (j < 6);
 }
 
@@ -2106,11 +2109,11 @@ void CMenuReliveHall::drawStarHitEffect(f32 x, f32 y, f32 time) {
 
 void CMenuReliveHall::drawVisitorHitEffect() {
     if (dancerPositionQuantityWithCatch() != 0) {
-        if (!getVisitorWithCatch()) return;
-        if (stage->partner != -1) {
+        if (getVisitorWithCatch() == 0) {
+            return;
+        } else if (stage->partner != -1) {
             f32 time = calcAnimationTimeRate0to1(1.5f);
-            time *= 1.5f;
-            drawStarHitEffect(320.0f, 280.0f, time);
+            drawStarHitEffect(320.0f, 280.0f, 1.5f * time);
         }
     }
 }

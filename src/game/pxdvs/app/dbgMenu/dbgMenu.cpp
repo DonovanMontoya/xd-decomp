@@ -125,7 +125,7 @@ static s32 _dbgMenuSub(long arg0) {
 
     var_r27 = 0;
     temp_r28 = _menu_data_number + arg0 + 1;
-loop_1:
+    for (;;) {
     temp_r26 = (_menu_data_number + arg0) & ~(arg0 >> 0x1F);
     temp_r30 = _pCursor+_dbgMenuGetMenuNo(temp_r26);
     temp_r26_2 = menuOpenCustom(temp_r28, temp_r26, temp_r30, 0, 1, 0);
@@ -143,15 +143,9 @@ loop_1:
         return var_r27;
     }
     temp_r3_2 = _dbgMenuGetItemNo(temp_r3, temp_r3->first + temp_r3->selected);
-    if (temp_r3_2 > 0) {
-        if (debugMenuDataGetNum == 0) {
-            var_r3 = 0U;
-        } else {
-            var_r3 = debugMenuDataGetNum();
-        }
-        if ((s32) var_r3 <= temp_r3_2) {
-            goto block_12;
-        }
+    if (temp_r3_2 <= 0 || (((debugMenuDataGetNum == 0) ? (var_r3 = 0U) : (var_r3 = debugMenuDataGetNum()), (s32) var_r3 <= temp_r3_2))) {
+        var_r26 = 0;
+    } else {
         if (debugMenuDataGetPtr == 0) {
             var_r3_2 = 0;
         } else {
@@ -162,24 +156,12 @@ loop_1:
         } else {
             var_r26 = var_r3_2->link;
         }
-        if (var_r26 > 0) {
-            if (debugMenuDataGetNum == 0) {
-                var_r3_3 = 0U;
-            } else {
-                var_r3_3 = debugMenuDataGetNum();
-            }
-            if ((s32) var_r3_3 <= var_r26) {
-                goto block_24;
-            }
-        } else {
-block_24:
+        if (var_r26 <= 0 || (((debugMenuDataGetNum == 0) ? (var_r3_3 = 0U) : (var_r3_3 = debugMenuDataGetNum()), (s32) var_r3_3 <= var_r26))) {
             var_r26 = 0;
         }
-    } else {
-block_12:
-        var_r26 = 0;
     }
-    if (var_r26 != 0) {
+    if (var_r26 == 0) break;
+    {
         if (debugMenuDataGetPtr == 0) {
             var_r3_4 = 0;
         } else {
@@ -202,7 +184,7 @@ block_12:
         if ((var_r3_5 != -1) && (var_r26 != 1) && (_dbgMenuSub(arg0 + 1) == 1)) {
             return 1;
         }
-        goto loop_1;
+    }
     }
     menuClose(_menu_data_number + 1);
     if (debugMenuDataGetPtr == 0) {
@@ -263,10 +245,10 @@ static s32 _dbgMenuCheckTerminate(tagWINDOW_WORK*arg0,long arg1) {
 }
 
 static s32 _dbgMenuGetMenuNo(long arg0) {
-    s16 var_r31_2;
+    s16 lk;
     s32 temp_r3_2;
-    s32 var_r29;
     s32 var_r30;
+    s32 var_r29;
     s32 var_r31;
     u32 var_r3;
     u32 var_r3_3;
@@ -280,46 +262,26 @@ static s32 _dbgMenuGetMenuNo(long arg0) {
     temp_r3=windowSearchID(arg0);
     if (temp_r3 != 0) {
         temp_r3_2 = _dbgMenuGetItemNo(temp_r3,temp_r3->first+temp_r3->selected);
-        if (temp_r3_2 > 0) {
-            if (debugMenuDataGetNum == 0) {
-                var_r3 = 0U;
-            } else {
-                var_r3 = debugMenuDataGetNum();
-            }
-            if ((s32) var_r3 <= temp_r3_2) {
-                goto block_6;
-            }
+        if (temp_r3_2 <= 0 || ((debugMenuDataGetNum == 0) ? (var_r3 = 0U) : (var_r3 = debugMenuDataGetNum()), (s32) var_r3 <= temp_r3_2)) {
+            lk = 0;
+        } else {
             if (debugMenuDataGetPtr == 0) {
                 var_r3_2 = 0;
             } else {
                 var_r3_2 = debugMenuDataGetPtr(temp_r3_2);
             }
             if (var_r3_2 == 0) {
-                var_r31_2 = 0;
+                lk = 0;
             } else {
-                var_r31_2 = var_r3_2->link;
+                lk = var_r3_2->link;
             }
-            if (var_r31_2 > 0) {
-                if (debugMenuDataGetNum == 0) {
-                    var_r3_3 = 0U;
-                } else {
-                    var_r3_3 = debugMenuDataGetNum();
-                }
-                if ((s32) var_r3_3 <= var_r31_2) {
-                    goto block_18;
-                }
-            } else {
-block_18:
-                var_r31_2 = 0;
+            if (lk <= 0 || ((debugMenuDataGetNum == 0) ? (var_r3_3 = 0U) : (var_r3_3 = debugMenuDataGetNum()), (s32) var_r3_3 <= lk)) {
+                lk = 0;
             }
-        } else {
-block_6:
-            var_r31_2 = 0;
         }
+        var_r30 = lk;
         var_r31 = 0;
-        var_r29 = 0;
-loop_29:
-        if (var_r29 < var_r31_2) {
+        for (var_r29 = 0; var_r29 < var_r30; var_r29++) {
             if (debugMenuDataGetPtr == 0) {
                 var_r3_4 = 0;
             } else {
@@ -333,14 +295,10 @@ loop_29:
             if (var_r0 != 0) {
                 var_r31 += 1;
             }
-            var_r29 += 1;
-            goto loop_29;
         }
     } else {
         var_r31 = 0;
-        var_r30 = 0;
-loop_41:
-        if (var_r30 < dbgMenuGetRootMenu()) {
+        for (var_r30 = 0; var_r30 < dbgMenuGetRootMenu(); var_r30++) {
             if (debugMenuDataGetPtr == 0) {
                 var_r3_5 = 0;
             } else {
@@ -354,8 +312,6 @@ loop_41:
             if (var_r0_2 != 0) {
                 var_r31 += 1;
             }
-            var_r30 += 1;
-            goto loop_41;
         }
     }
     return var_r31;
@@ -502,37 +458,18 @@ static s32 _dbgMenuGetItemNo(tagWINDOW_WORK *arg0,long arg1) {
                             var_r29 = var_r3_4 + temp_r29;
                         }
                     }
-                    if (var_r29 > 0) {
-                        if (debugMenuDataGetNum == 0) {
-                            var_r3_6 = 0U;
-                        } else {
-                            var_r3_6 = debugMenuDataGetNum();
-                        }
-                        if ((s32) var_r3_6 <= var_r29) {
-                            goto block_46;
-                        }
+                    if (var_r29 <= 0 || (((debugMenuDataGetNum == 0) ? (var_r3_6 = 0U) : (var_r3_6 = debugMenuDataGetNum()), (s32) var_r3_6 <= var_r29))) {
+                        var_r28_4 = 0;
+                    } else {
                         temp_r3_6 = dbgMenuGetPtr(var_r29);
                         if (temp_r3_6 == 0) {
                             var_r28_4 = 0;
                         } else {
                             var_r28_4 = temp_r3_6->link;
                         }
-                        if (var_r28_4 > 0) {
-                            if (debugMenuDataGetNum == 0) {
-                                var_r3_7 = 0U;
-                            } else {
-                                var_r3_7 = debugMenuDataGetNum();
-                            }
-                            if ((s32) var_r3_7 <= var_r28_4) {
-                                goto block_55;
-                            }
-                        } else {
-block_55:
+                        if (var_r28_4 <= 0 || (((debugMenuDataGetNum == 0) ? (var_r3_7 = 0U) : (var_r3_7 = debugMenuDataGetNum()), (s32) var_r3_7 <= var_r28_4))) {
                             var_r28_4 = 0;
                         }
-                    } else {
-block_46:
-                        var_r28_4 = 0;
                     }
                     var_r3_3 = (s32) var_r28_4;
                 }
@@ -540,15 +477,9 @@ block_46:
             }
             var_r28 = var_r0;
         }
-        if (var_r28 > 0) {
-            if (debugMenuDataGetNum == 0) {
-                var_r3_8 = 0U;
-            } else {
-                var_r3_8 = debugMenuDataGetNum();
-            }
-            if ((s32) var_r3_8 <= var_r28) {
-                goto block_64;
-            }
+        if (var_r28 <= 0 || (((debugMenuDataGetNum == 0) ? (var_r3_8 = 0U) : (var_r3_8 = debugMenuDataGetNum()), (s32) var_r3_8 <= var_r28))) {
+            var_r29_2 = 0;
+        } else {
             if (debugMenuDataGetPtr == 0) {
                 var_r3_9 = 0;
             } else {
@@ -559,22 +490,9 @@ block_46:
             } else {
                 var_r29_2 = var_r3_9->link;
             }
-            if (var_r29_2 > 0) {
-                if (debugMenuDataGetNum == 0) {
-                    var_r3_10 = 0U;
-                } else {
-                    var_r3_10 = debugMenuDataGetNum();
-                }
-                if ((s32) var_r3_10 <= var_r29_2) {
-                    goto block_76;
-                }
-            } else {
-block_76:
+            if (var_r29_2 <= 0 || (((debugMenuDataGetNum == 0) ? (var_r3_10 = 0U) : (var_r3_10 = debugMenuDataGetNum()), (s32) var_r3_10 <= var_r29_2))) {
                 var_r29_2 = 0;
             }
-        } else {
-block_64:
-            var_r29_2 = 0;
         }
         var_r3 = (s32) var_r29_2;
     }
@@ -587,42 +505,23 @@ static s16 _dbgMenuGetLink(long arg0) {
     u32 var_r3_3;
     DebugEntry *var_r3_2;
 
-    if (arg0 > 0) {
-        if (debugMenuDataGetNum == 0) {
-            var_r3 = 0U;
-        } else {
-            var_r3 = debugMenuDataGetNum();
-        }
-        if ((s32) var_r3 <= arg0) {
-            goto block_5;
-        }
-        if (debugMenuDataGetPtr == 0) {
-            var_r3_2 = 0;
-        } else {
-            var_r3_2 = debugMenuDataGetPtr(arg0);
-        }
-        if (var_r3_2 == 0) {
-            var_r31 = 0;
-        } else {
-            var_r31 = var_r3_2->link;
-        }
-        if (var_r31 > 0) {
-            if (debugMenuDataGetNum == 0) {
-                var_r3_3 = 0U;
-            } else {
-                var_r3_3 = debugMenuDataGetNum();
-            }
-            if ((s32) var_r3_3 <= var_r31) {
-                goto block_17;
-            }
-        } else {
-block_17:
-            var_r31 = 0;
-        }
-        return var_r31;
+    if (arg0 <= 0 || ((debugMenuDataGetNum == 0) ? (var_r3 = 0U) : (var_r3 = debugMenuDataGetNum()), (s32) var_r3 <= arg0)) {
+        return 0;
     }
-block_5:
-    return 0;
+    if (debugMenuDataGetPtr == 0) {
+        var_r3_2 = 0;
+    } else {
+        var_r3_2 = debugMenuDataGetPtr(arg0);
+    }
+    if (var_r3_2 == 0) {
+        var_r31 = 0;
+    } else {
+        var_r31 = var_r3_2->link;
+    }
+    if (var_r31 <= 0 || ((debugMenuDataGetNum == 0) ? (var_r3_3 = 0U) : (var_r3_3 = debugMenuDataGetNum()), (s32) var_r3_3 <= var_r31)) {
+        var_r31 = 0;
+    }
+    return var_r31;
 }
 
 tagWINDOW_WORK*_dbgMenuGetWin(long arg0) {

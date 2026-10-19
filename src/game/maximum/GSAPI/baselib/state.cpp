@@ -204,8 +204,7 @@ void HSD_SetMaterialColor(GXColor ambient, GXColor diffuse, GXColor specular,
     matstate.ambient = ambient;
     matstate.diffuse = diffuse;
     matstate.specular = specular;
-    alpha = alpha <= 0.0f ? 0.0f : alpha >= 1.0f ? 1.0f : alpha;
-    matstate.alpha = 255.0f * alpha;
+    matstate.alpha = 255.0f * (alpha <= 0.0f ? 0.0f : alpha >= 1.0f ? 1.0f : alpha);
 }
 
 void HSD_SetMaterialShininess(f32 shininess)

@@ -818,6 +818,7 @@ static u16 _checkWaza2(void) {
 
 extern "C" s32 menuScriptWazaOshieCursor(tagWINDOW_WORK *win) {
     CURSOR c;
+    s16 sel;
     u16 key;
     s32 num;
     s32 vis;
@@ -835,18 +836,18 @@ extern "C" s32 menuScriptWazaOshieCursor(tagWINDOW_WORK *win) {
         } else if ((key & 2) != 0) {
             c.selected += 1;
         }
-        s16 sel = c.selected;
+        sel = c.selected;
         if (sel < 0) {
             c.selected = 0;
-            s16 nf = c.first + sel;
-            c.first = nf;
-            if (nf < 0) {
+            c.first = c.first + sel;
+            if (c.first < 0) {
                 c.first = 0;
                 c.selected = 0;
             }
         } else if (sel >= vis) {
-            s8 last = vis - 1;
-            s16 nf = c.first + (sel - last);
+            s8 last;
+            s16 nf = c.first + (sel - (vis - 1));
+            last = vis - 1;
             c.selected = last;
             c.first = nf;
             if (nf + last >= num) {
@@ -855,7 +856,8 @@ extern "C" s32 menuScriptWazaOshieCursor(tagWINDOW_WORK *win) {
             }
         }
     }
-    *(s32 *)&win->pos = *(s32 *)&c;
+    win->pos.first = c.first;
+    win->pos.selected = c.selected;
     if (win->menu == 0xE5) {
         CURSOR pos;
         *(s32 *)&pos = *(s32 *)&c;
@@ -881,10 +883,11 @@ static void _wazaOshieCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
 }
 
 extern "C" void menuScriptTutorialCursor(tagWINDOW_WORK *win) {
-    u16 key;
-    s32 num;
+    s16 sel;
     s32 vis;
-    windowGetKeyInfo();
+    s32 num;
+    u16 key;
+windowGetKeyInfo();
     num = *tutorialdata_number;
     vis = 8;
     if (num < 8) {
@@ -898,7 +901,7 @@ extern "C" void menuScriptTutorialCursor(tagWINDOW_WORK *win) {
         } else if ((key & 2) != 0) {
             c.selected += 1;
         }
-        s16 sel = c.selected;
+        sel = c.selected;
         if (sel < 0) {
             c.selected = 0;
             s16 nf = c.first + sel;
@@ -908,8 +911,9 @@ extern "C" void menuScriptTutorialCursor(tagWINDOW_WORK *win) {
                 c.selected = 0;
             }
         } else if (sel >= vis) {
-            s8 last = vis - 1;
-            s16 nf = c.first + (sel - last);
+            s8 last;
+            s16 nf = c.first + (sel - (vis - 1));
+            last = vis - 1;
             c.selected = last;
             c.first = nf;
             if (nf + last >= num) {
@@ -919,14 +923,15 @@ extern "C" void menuScriptTutorialCursor(tagWINDOW_WORK *win) {
         }
     }
     s32 select;
-    if (c.selected == (s8)(*tutorialdata_number - 1)) {
+    s16 curSelected = c.selected;
+    if (curSelected == (s8)(*tutorialdata_number - 1)) {
         select = -1;
     } else {
-        select = c.selected + c.first;
+        select = curSelected + c.first;
     }
     _tutorialSelect = select;
     win->pos.first = c.first;
-    win->pos.selected = c.selected;
+    win->pos.selected = curSelected;
     CURSOR tmp;
     *(s32 *)&tmp = *(s32 *)&c;
     cursorBiosSetPos(0xE, &tmp);

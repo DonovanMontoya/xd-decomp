@@ -64,7 +64,7 @@ s32 menuOpen(s32, s32);
 void winSeqSetMenu(s32, s32);
 void menuPdaSetSubres(s32, s32);
 DarkPokemon *menuPdaDPMListGetDPointer(long);
-void menuPdaSubCalcPositon(f32 *, f32);
+void menuPdaSubCalcPositon(f32 *, f32, f32);
 u32 pokemonDataBiosGetPtr(u16);
 u32 pokemonDataBiosGetName(u32);
 u32 GSmsgGetGSchar(u32);
@@ -187,10 +187,10 @@ void menuPdaDPMList::CalcPosition(CURSOR *c) {
 
 void menuPdaDPMList::ListPosition() {
     if (posX != targetX) {
-        menuPdaSubCalcPositon(&posX, 10.0f);
+        menuPdaSubCalcPositon(&posX, targetX, 10.0f);
     }
     if (posY != targetY) {
-        menuPdaSubCalcPositon(&posY, 10.0f);
+        menuPdaSubCalcPositon(&posY, targetY, 10.0f);
     }
 }
 
@@ -628,10 +628,10 @@ u32 menuPdaDPMList::getTemochiIndex(u16, u16 key) {
 
 void menuPdaDPMList::SortSub2(SnatchSortBuff *buf, long n, bool asc) {
     SnatchSortBuff tmp;
-    long i;
-    long j;
-    SnatchSortBuff *q;
     SnatchSortBuff *p;
+    SnatchSortBuff *q;
+    long j;
+    long i;
     if (asc) {
         q = buf + 1;
         for (i = 1; i < n; i++) {
@@ -771,13 +771,14 @@ void menuPdaDPMList::Cursor(tagWINDOW_WORK* win) {
 }
 
 s32 menuPdaDPMList::SortDP() {
+    DarkPokemon* pokemon;
     s32 firstIndex;
     s32 caught=0;
     s32 n=Sort(DPM_SEL_SORT_0);
     unk5C=0;
     for(firstIndex=0;firstIndex<n;++firstIndex) {
         u16 dark=GetDarkPokemonID(firstIndex);
-        DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+        pokemon=darkPokemonGetDarkPokemon(dark);
         if(pokemon->isSnach() && !pokemon->isRelive()) {
             u16 id=pokemon->getPokemonID();
             s32 initial=pokemon->getInitDarkPointDirect();
@@ -788,32 +789,32 @@ s32 menuPdaDPMList::SortDP() {
         }
     }
     if(caught) {SortSub2((SnatchSortBuff*)unk54,caught,true);SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,caught);}
-    s32 relived=0;
-    for(s32 i=0;i<n;++i) {
-        u16 dark=GetDarkPokemonID(i);
-        DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+    caught=0;
+    for(firstIndex=0;firstIndex<n;++firstIndex) {
+        u16 dark=GetDarkPokemonID(firstIndex);
+        pokemon=darkPokemonGetDarkPokemon(dark);
         if(pokemon->isRelive()) {
             u16 id=pokemon->getPokemonID();
-            ((SnatchSortBuff*)unk54)[relived].snatchIndex=pokemon->getSnatchIndex();
-            ((SnatchSortBuff*)unk54)[relived].pokemonID=id;
-            ((SnatchSortBuff*)unk54)[relived].darkID=dark;
-            ++relived;
+            ((SnatchSortBuff*)unk54)[caught].snatchIndex=pokemon->getSnatchIndex();
+            ((SnatchSortBuff*)unk54)[caught].pokemonID=id;
+            ((SnatchSortBuff*)unk54)[caught].darkID=dark;
+            ++caught;
         }
     }
-    if(relived) {SortSub((SnatchSortBuff*)unk54,relived,true);SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,relived);}
-    s32 remaining=0;
-    for(s32 i=0;i<n;++i) {
-        u16 dark=GetDarkPokemonID(i);
-        DarkPokemon* pokemon=darkPokemonGetDarkPokemon(dark);
+    if(caught) {SortSub((SnatchSortBuff*)unk54,caught,true);SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,caught);}
+    caught=0;
+    for(firstIndex=0;firstIndex<n;++firstIndex) {
+        u16 dark=GetDarkPokemonID(firstIndex);
+        pokemon=darkPokemonGetDarkPokemon(dark);
         if(!pokemon->isSnach()) {
             u16 id=pokemon->getPokemonID();
-            ((SnatchSortBuff*)unk54)[remaining].snatchIndex=pokemon->getSnatchIndex();
-            ((SnatchSortBuff*)unk54)[remaining].pokemonID=id;
-            ((SnatchSortBuff*)unk54)[remaining].darkID=dark;
-            ++remaining;
+            ((SnatchSortBuff*)unk54)[caught].snatchIndex=pokemon->getSnatchIndex();
+            ((SnatchSortBuff*)unk54)[caught].pokemonID=id;
+            ((SnatchSortBuff*)unk54)[caught].darkID=dark;
+            ++caught;
         }
     }
-    if(remaining) {SortSub((SnatchSortBuff*)unk54,remaining,true);SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,remaining);}
+    if(caught) {SortSub((SnatchSortBuff*)unk54,caught,true);SortSetTemp((SnatchSortBuff*)unk58,(SnatchSortBuff*)unk54,caught);}
     unk5C=0;
     SortSetTemp((SnatchSortBuff*)entries,(SnatchSortBuff*)unk58,n);
     return n;

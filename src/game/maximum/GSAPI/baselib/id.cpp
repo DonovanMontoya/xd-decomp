@@ -47,9 +47,10 @@ void HSD_IDInsertToTable(HSD_IDTable* table, HSD_IDKey id, void* data)
     if (table == 0) {
         table = &default_table;
     }
-    entry = table->table[id_hash(id)];
-    while (entry != 0 && entry->id != id) {
-        entry = entry->next;
+    for (entry = table->table[id_hash(id)]; entry != 0; entry = entry->next) {
+        if (entry->id == id) {
+            break;
+        }
     }
     if (entry != 0) {
         entry->id = id;

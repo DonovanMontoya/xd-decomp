@@ -1032,14 +1032,17 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
 extern "C" f32* GSgfxMatrixGetPtr(s32);
 extern "C" bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(GsShapeObject *self,f32 offsetU,f32 offsetV,GSmtx *first,GSmtx *second,GSmtx *third,f32) {
  Mtx transform,projectionMatrix;f32 *sourceProjection=GSgfxMatrixGetPtr(4);
- f32 projection[7]={0.0f,sourceProjection[0],sourceProjection[2],sourceProjection[5],sourceProjection[6],sourceProjection[10],sourceProjection[11]};
- f32 viewport[6]={0.0f,0.0f,640.0f,480.0f,0.0f,1.0f};
+ f32 projection[7];
+ f32 viewport[6];
+ projection[0]=0.0f;projection[1]=sourceProjection[0];projection[2]=sourceProjection[2];projection[3]=sourceProjection[5];projection[4]=sourceProjection[6];projection[5]=sourceProjection[10];projection[6]=sourceProjection[11];
+ viewport[0]=0.0f;viewport[1]=0.0f;viewport[2]=640.0f;viewport[3]=480.0f;viewport[4]=0.0f;viewport[5]=1.0f;
+ u32 copySize=self->entry->vertexCount*sizeof(GsShapePair);
  for(s32 texture=0;texture<self->entry->textureCount;++texture) {
   const Vec *normalGrid=(const Vec*)self->entry->reserved1C;const Vec *positions=self->entry->vertices;
   if(!normalGrid)continue;GsShapePair *out=(GsShapePair*)self->vertexArrays[texture+2];if(!out)continue;
   PSMTXCopy(second->matrix,transform);
   if(texture==0){PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);memcpy(projectionMatrix,transform,sizeof(Mtx));}
-  else memcpy(out,self->entry->textureCoords,self->entry->vertexCount*sizeof(GsShapePair));
+  else memcpy(out,self->entry->textureCoords,copySize);
   u16 segmentsU=self->entry->segmentsU,segmentsV=self->entry->segmentsV;int columns=segmentsU+1,rows=segmentsV+1;
   if(offsetU>1.0f)offsetU-=(f32)(int)offsetU;else if(offsetU<0.0f)offsetU-=(f32)((int)offsetU-1);
   if(offsetV>1.0f)offsetV-=(f32)(int)offsetV;else if(offsetV<0.0f)offsetV-=(f32)((int)offsetV-1);
@@ -1056,11 +1059,16 @@ extern "C" bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(Gs
     int sample=sampleU+sampleV*columns;Vec value;
     if(sampleU==columns-1&&sampleV==rows-1)value=normalGrid[sample];
     else {
-     int diagonal,vertical,horizontal;
-     if(sampleU==columns-1){diagonal=sample+columns+1;vertical=sample+columns;horizontal=sample-1;}
-     else if(sampleV==rows-1){diagonal=sample-columns+1;vertical=sample-columns;horizontal=sample+1;}
-     else{diagonal=sample+columns+1;vertical=sample+columns;horizontal=sample+1;}
-     Vec a,b,c,d,sum;PSVECScale(&normalGrid[diagonal],&a,diagonalWeight);PSVECScale(&normalGrid[vertical],&b,verticalWeight);PSVECScale(&normalGrid[horizontal],&c,horizontalWeight);PSVECScale(&normalGrid[sample],&d,originWeight);PSVECAdd(&d,&c,&sum);PSVECAdd(&sum,&b,&sum);PSVECAdd(&sum,&a,&value);
+     if(sampleU==columns-1){
+      int diagonal=sample+columns+1,vertical=sample+columns,horizontal=sample-1;
+      Vec a,b,c,d,sum;PSVECScale(&normalGrid[diagonal],&a,diagonalWeight);PSVECScale(&normalGrid[vertical],&b,verticalWeight);PSVECScale(&normalGrid[horizontal],&c,horizontalWeight);PSVECScale(&normalGrid[sample],&d,originWeight);PSVECAdd(&d,&c,&sum);PSVECAdd(&sum,&b,&sum);PSVECAdd(&sum,&a,&value);
+     }else if(sampleV==rows-1){
+      int diagonal=sample-columns+1,vertical=sample-columns,horizontal=sample+1;
+      Vec a,b,c,d,sum;PSVECScale(&normalGrid[diagonal],&a,diagonalWeight);PSVECScale(&normalGrid[vertical],&b,verticalWeight);PSVECScale(&normalGrid[horizontal],&c,horizontalWeight);PSVECScale(&normalGrid[sample],&d,originWeight);PSVECAdd(&d,&c,&sum);PSVECAdd(&sum,&b,&sum);PSVECAdd(&sum,&a,&value);
+     }else{
+      int diagonal=sample+columns+1,vertical=sample+columns,horizontal=sample+1;
+      Vec a,b,c,d,sum;PSVECScale(&normalGrid[diagonal],&a,diagonalWeight);PSVECScale(&normalGrid[vertical],&b,verticalWeight);PSVECScale(&normalGrid[horizontal],&c,horizontalWeight);PSVECScale(&normalGrid[sample],&d,originWeight);PSVECAdd(&d,&c,&sum);PSVECAdd(&sum,&b,&sum);PSVECAdd(&sum,&a,&value);
+     }
     }
     PSMTXMultVecSR(transform,&value,&value);int index=rowOffset+column;
     if(texture==0) {

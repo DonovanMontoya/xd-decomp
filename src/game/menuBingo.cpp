@@ -3869,8 +3869,10 @@ static inline u8 bingoNoClearedPanel(BingoState *state) {
     return 1;
 }
 
-static inline u32 bingoCountClearedFrom(u32 i, BingoState *state) {
-    u32 count=0;
+static inline u32 bingoCountClearedFrom(u32 start, BingoState *state) {
+    u32 i;
+    u32 count=start;
+    i=count;
     for(;i<16;++i) if(state->cells[i].unk2) ++count;
     return count;
 }

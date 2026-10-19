@@ -16,7 +16,7 @@ static s32 _dummySelect(FightOutPokemon*,u16,u16){_needSelect=1;return 0;}
 extern "C" {
 void PKJB_ExchangeEnd(s32);
 s32 PKJB_ExchangeIsPrepared(s32);
-void PKJB_ExchangeStart(s32,GbaExchangePacket*);
+s32 PKJB_ExchangeStart(s32,GbaExchangePacket*);
 s32 PKJB_EntryGetStatus(s32,u32*);
 void PKJB_EntryRequest(s32,u32);
 void PKJB_SendWazaText(s32,GbaWazaText*);
@@ -44,18 +44,20 @@ s32 gbaCommandChangePokemonIsPrepared(s32 channel){
     else if(state==1 || state==2){if(++_keyCounter[channel-1]<=10)state=-1;}
     return state;
 }
-void gbaCommandChangePokemon(s32 channel,void* pokemon,u32 state,s32 id){
+s32 gbaCommandChangePokemon(s32 channel,void* pokemon,u32 state,s32 id){
+    s8* ribbon;
     GbaExchangePacket packet;
     packet.status=_swap32(state);
     packet.pokemonId=_swap32((id<<16)|pokemonBiosGetPokemonDataId(pokemon));
     if(pokemonBiosGetPokemonDataId(pokemon)==0x181)pokemonBiosSetTokuseiFlag(pokemon,!pokemonBiosGetTokuseiFlag(pokemon));
     gbaPokemonFromGC(pokemon,&packet.pokemon);
-    s8* ribbon=packet.ribbons;
-    memset(ribbon,0,sizeof(packet.ribbons));
-    s32 i=0;
-    do{*ribbon=exribbonGetNo(i);++ribbon;++i;}while(i<11);
-    PKJB_ExchangeStart(channel-1,&packet);
+    memset(packet.ribbons,0,sizeof(packet.ribbons));
+    ribbon=packet.ribbons;
+    s32 i;
+    for(i=0;i<11;i++){*ribbon++=exribbonGetNo(i);}
+    s32 r=PKJB_ExchangeStart(channel-1,&packet);
     _keyCounter[channel-1]=0;
+    return r;
 }
 u32 gbaCommandGetGBAChangePokemon(u32 state){return state&0xffff;}
 u32 gbaCommandGetWazaTarget(u32 state){return (state>>8)&0xff;}

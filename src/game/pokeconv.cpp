@@ -43,7 +43,7 @@ extern "C" void pokeconv(void *hero, u8 *data) {
     heroBiosSetSexDataId(hero, data[0xC]);
     heroBiosSetRnd(hero, _swap32(*(u32 *)(data + 0x10)));
     u8 *entry = data;
-    for (u16 i = 0; i < 6; ++i) {
+    for (s32 i = 0; i < 6; ++i) {
         void *pokemon = heroBiosGetPokemonPtr(hero, i);
         gbaPokemonToGC(pokemon, entry + 0x14);
         pokemonBiosSetFightTrainerPokemonDataId(pokemon, i);

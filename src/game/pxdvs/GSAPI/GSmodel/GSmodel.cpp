@@ -1,5 +1,6 @@
 #include <game/pxdvs/GSAPI/GSmodel/GSmodel.hpp>
 #include <dolphin/mtx.h>
+#include <dolphin/os/OSFastCast.h>
 extern "C" {
 extern GSmodel* _modelTopPtr;
 u32 GSgfxPerfbarCPUEntry(u32);
@@ -517,6 +518,106 @@ void GSmodelDrawModel(GSmodel* model, GSgfxLayer* layerPtr, s32 pass) {
         HSD_ResetColorSwapTables();
         modelSetLayerFog(layer, fog);
     }
+}
+extern "C" {
+void GSgfxTokenIfClearedReset(void*);
+void modelShadowRender__FP10GSgfxLayer(GSgfxLayer*);
+void GScameraLoadActiveCameraMatrix(s32);
+void GSgfxVideoGetEFBSize(u16*, u16*);
+extern u8 _invalidateVtxTex;
+extern s32 modelShadowLayerID;
+}
+template <class T> static inline T& modelLayerField(void* base, u32 offset) { return *(T*)((u8*)base + offset); }
+static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(void* layerArg, s32 pass) {
+    s32 perf;
+    u8 layerId;
+    GSgfxLayer* layer;
+    u16 height;
+    u16 width;
+    u16 halfWidth;
+    u16 halfHeight;
+    f32 right;
+    f32 bottom;
+    u8 fogWasOn;
+    GSmodel* model;
+    u8 rendered;
+    layer = (GSgfxLayer*)layerArg;
+    layerId = modelLayerField<s32>(layer, 0x28);
+    if (_invalidateVtxTex == 1) {
+        modelLayerField<u32>(layer, 4) |= 0x08000000;
+        modelLayerField<u32>(layer, 4) |= 0x10000000;
+        _invalidateVtxTex = 0;
+    }
+    if (layerId == modelShadowLayerID) {
+        perf = GSgfxPerfbarCPUEntry(0xFF8000);
+        modelShadowRender__FP10GSgfxLayer(layer);
+        bottom = 240.0f;
+        right = 320.0f;
+        if (pass == 0) {
+            GSgfxVideoGetEFBSize(&width, &height);
+            halfWidth = width >> 1;
+            right = __OSu16tof32(&halfWidth);
+            halfHeight = height >> 1;
+            bottom = __OSu16tof32(&halfHeight);
+        }
+        modelLayerField<f32>(layer, 0xD78) = 0.0f;
+        modelLayerField<f32>(layer, 0xD7C) = 0.0f;
+        modelLayerField<f32>(layer, 0xD80) = right;
+        modelLayerField<f32>(layer, 0xD84) = bottom;
+        modelLayerField<u32>(layer, 0x16B8) |= 0x10;
+        modelLayerField<u32>(layer, 0x16A8) |= 2;
+        modelLayerField<u32>(layer, 0x1770) |= 0x10;
+        modelLayerField<u32>(layer, 0x1760) |= 2;
+        modelLayerField<u16>(layer, 0xD70) = 0;
+        modelLayerField<u16>(layer, 0xD72) = 0;
+        GSgfxVideoGetEFBSize(&modelLayerField<u16>(layer, 0xD74), &modelLayerField<u16>(layer, 0xD76));
+        modelLayerField<u32>(layer, 0x16B8) |= 1;
+        modelLayerField<u32>(layer, 0x16A8) |= 2;
+        modelLayerField<u32>(layer, 0x1770) |= 1;
+        modelLayerField<u32>(layer, 0x1760) |= 2;
+        FlushState__10GSgfxLayerFv(layer);
+    } else {
+        rendered = 0;
+        perf = GSgfxPerfbarCPUEntry(0xFF);
+        if (modelLayerField<s32>(layer, 0x2C) == 1) HSD_InitColorSwapTable(0, 2, 2, 2, 3);
+        else HSD_InitColorSwapTable(0, 0, 1, 2, 3);
+        HSD_InitColorSwapTable(1, 0, 1, 2, 3);
+        HSD_InitColorSwapTable(2, 0, 1, 2, 3);
+        HSD_InitColorSwapTable(3, 0, 1, 2, 3);
+        model = _modelTopPtr;
+        fogWasOn = modelLayerField<u8>(layer, 0x16A7) != 0;
+        while (model) {
+            GSgfxTokenIfClearedReset((u8*)model + 0x62);
+            if (model->flags & 0x04000000) {
+                for (s32 i = 0; i < 8; i++) {
+                    if (*((u8*)model + (i + 0x64)) == layerId) {
+                        _modelRenderModelSub__FP10GSgfxLayer14GSgfxLayerPassP8_GSmodel(layer, pass, model);
+                        rendered = 1;
+                        break;
+                    }
+                }
+            }
+            model = model->next;
+        }
+        if (rendered) {
+            HSD_ResetColorSwapTables();
+            GScameraLoadActiveCameraMatrix(modelLayerField<s32>(layer, 0x28));
+        }
+        modelLayerField<u8>(layer, 0x16A7) = fogWasOn;
+        modelLayerField<u32>(layer, 0x170C) |= 0x40;
+        modelLayerField<u32>(layer, 0x17C4) |= 0x40;
+        if (fogWasOn) {
+            modelLayerField<u32>(layer, 0x170C) |= 0x200;
+            modelLayerField<u32>(layer, 0x17C4) |= 0x200;
+            if (modelLayerField<u8>(layer, 0x16A6) != 0) {
+                modelLayerField<u32>(layer, 0x170C) |= 0x100;
+                modelLayerField<u32>(layer, 0x17C4) |= 0x100;
+            }
+        }
+        modelLayerField<u32>(layer, 0x16A8) |= 0x40;
+        modelLayerField<u32>(layer, 0x1760) |= 0x40;
+    }
+    GSgfxPerfbarCPUEntry(perf);
 }
 static void _modelRenderModelSub__FP10GSgfxLayer14GSgfxLayerPassP8_GSmodel(GSgfxLayer* layerPtr, s32 pass, GSmodel* model) {
     ModelRenderLayer* layer = (ModelRenderLayer*)layerPtr;

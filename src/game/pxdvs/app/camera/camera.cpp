@@ -271,14 +271,16 @@ void cameraReturn(u8 wait,f32 duration) {
     GScamera* camera=GScameraGetActiveCamera();
     if(floorFieldCameraDataExist()) {
         if(pCamWork->type==3) {
-            GSvec offset=pCamWork->targetOffset;
-            Vec front,position;
+            Vec position,front;
+            GSvec offset;
+            offset.param1=pCamWork->targetOffset.param1; offset.param2=pCamWork->targetOffset.param2; offset.param3=pCamWork->targetOffset.param3;
             GScameraGetFrontVector(camera,&front);
             PSVECScale(&front,&front,pCamWork->distance);
             GScameraGetPosition(camera,&position);
             PSVECAdd(&position,&front,&position);
             PSVECSubtract(&position,vec(&offset),&position);
-            pCamWork->targetPosition.param1=position.x; pCamWork->targetPosition.param2=position.y; pCamWork->targetPosition.param3=position.z;
+            GSvec* target=&pCamWork->targetPosition;
+            target->param1=position.x; target->param2=position.y; target->param3=position.z;
         }
         cameraSetType(0); floorFieldCameraEnable(); floorFieldCameraBlend(duration);
     } else {
@@ -286,10 +288,13 @@ void cameraReturn(u8 wait,f32 duration) {
         FloorCamera* floor=currentFloorCamera();
         if(floor) { cameraSetHeight(floor->defaultHeight); cameraSetDistance(floor->defaultDistance); cameraSetFov(floor->defaultFov); }
         cameraMoveTarget(0,0,100,duration);
-        GSvec rotation={0.0f,floor->defaultRotation,0.0f};
-        cameraMoveRotation(0,&rotation,duration);
+        cameraMoveRotationXYZ(0,0.0f,floor->defaultRotation,0.0f,duration);
     }
-    while((pCamWork->targetAnimation.isMove() || pCamWork->offsetAnimation.isMove() || pCamWork->positionAnimation.isMove() || pCamWork->rotationAnimation.isMove() || pCamWork->fovAnimation.isMove()) && wait) GSthreadSwitch();
+    for(;;) {
+        if(!(pCamWork->targetAnimation.isMove() || pCamWork->offsetAnimation.isMove() || pCamWork->positionAnimation.isMove() || pCamWork->rotationAnimation.isMove() || pCamWork->fovAnimation.isMove())) break;
+        if(!wait) break;
+        GSthreadSwitch();
+    }
 }
 }
 

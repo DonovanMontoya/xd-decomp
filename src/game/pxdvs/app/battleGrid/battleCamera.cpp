@@ -1,5 +1,6 @@
 #include <game/pxdvs/app/battleGrid/battleCameraPrivate.hpp>
 #include <game/maximum/GSAPI/baselib/math_support.h>
+#include <dolphin/os/OSFastCast.h>
 
 extern GSvec zeroVector;
 extern GSvec unitScaleVector;
@@ -48,12 +49,12 @@ void battleCameraDoSimple() {
 }
 
 void battleCameraInit(u32 enable) {
-    u8 enabled = 0;
     g_mode = 0;
     gActiveWazaSequenceCamera = 0;
     gLastSelectedIndex = -1;
     gLoopCameraWaitTime = 3.0f;
     gBattleGridSimpleCamera = 0;
+    u8 enabled = 0;
     if (enable != 0 && floorDataBiosGetFloorKind() == 2) {
         enabled = 1;
     }
@@ -154,8 +155,8 @@ void battleCameraStartRandom(u8 simple) {
 
 static void _battleCameraStartRandom(ModelSequence *sequence) {
     static u8 old_pos_pattern[2] = {12, 12};
-    f32 fovLowB, fovHighB;
     f32 fovLowA, fovHighA;
+    f32 fovLowB, fovHighB;
     wazaSequenceCameraParams params;
     GSvec cameraPosition;
     GSvec posA;
@@ -163,7 +164,7 @@ static void _battleCameraStartRandom(ModelSequence *sequence) {
     GSvec target;
     u8 nonTrainerActive;
     u8 *history;
-    u32 pattern;
+    u8 pattern;
     u8 retry;
     bool isTrainer;
     s32 fovMask;
@@ -191,9 +192,9 @@ static void _battleCameraStartRandom(ModelSequence *sequence) {
     history = old_pos_pattern;
     while (retry) {
         bool useTrainerSet = (sequence == 0 || sequence->isPokemon == 0);
-        pattern = 12;
-        if (useTrainerSet) pattern = 10;
-        pattern = (u8)((u16)HSD_Rand() % (s32)pattern);
+        s32 range = 12;
+        if (useTrainerSet) range = 10;
+        pattern = (u16)HSD_Rand() % range;
         if (pattern != old_pos_pattern[0] && pattern != history[1]) {
             retry = 0;
         }
@@ -216,10 +217,11 @@ static void _battleCameraStartRandom(ModelSequence *sequence) {
     if (sequence != 0) {
         _wazaSequenceCameraCalculateParams(sequence, fovMask, &params);
     }
+    f32 heightSquared;
     f32 distanceFar;
+    f32 rotationStart;
     f32 distanceNear;
     f32 height;
-    f32 rotationStart;
     f32 rotationEnd;
     switch (pattern) {
     case 0: {
@@ -458,19 +460,23 @@ static void _battleCameraStartRandom(ModelSequence *sequence) {
         return;
     }
     case 8: {
-        f32 heightA = 2.0f * HSD_Randf() + 4.0f;
-        f32 heightB = 2.0f * HSD_Randf() + 4.0f;
-        f32 flip = HSD_Randf();
-        if (flip < 0.5f) heightA = heightA * -1.0f;
-        if (!(flip < 0.5f)) heightB = heightB * -1.0f;
+        f32 far;
         f32 side;
+        f32 heightA;
+        f32 heightB;
+        f32 near;
+        heightA = 2.0f * HSD_Randf() + 4.0f;
+        heightB = 2.0f * HSD_Randf() + 4.0f;
+        f32 flip = HSD_Randf();
+        if (flip < 0.5f) heightA *= -1.0f;
+        if (!(flip < 0.5f)) heightB *= -1.0f;
         if (HSD_Randf() < 0.5f) {
             side = -1.0f;
         } else {
             side = 1.0f;
         }
-        f32 near = battleGridGetDistance(1);
-        f32 far = battleGridGetDistance(0);
+        near = battleGridGetDistance(1);
+        far = battleGridGetDistance(0);
         target.param1 = -near * side;
         target.param2 = 0.0f;
         target.param3 = 0.0f;
@@ -517,73 +523,74 @@ static void _battleCameraStartRandom(ModelSequence *sequence) {
         return;
     }
     case 10:
-        distanceFar = (params.distanceMax - params.distanceMin) * HSD_Randf() + params.distanceMin;
-        distanceNear = (params.distanceMax - params.distanceMin) * HSD_Randf() + params.distanceMin;
+        { f32 rnd = HSD_Randf(); f32 lo = params.distanceMin; f32 diff = params.distanceMax - lo; distanceFar = diff * rnd + lo; }
+        { f32 rnd = HSD_Randf(); f32 lo = params.distanceMin; f32 diff = params.distanceMax - lo; distanceNear = diff * rnd + lo; }
         if (distanceFar < distanceNear) {
             f32 swap = distanceNear;
             distanceNear = distanceFar;
             distanceFar = swap;
         }
-        height = (params.heightMax - params.heightMin) * HSD_Randf() + params.heightMin;
+        { f32 rnd = HSD_Randf(); f32 lo = params.heightMin; f32 diff = params.heightMax - lo; height = diff * rnd + lo; }
         if (sequence->flipped != 0) {
-            rotationEnd = (params.baseRotation - params.rotationA) - (params.rotationB - params.rotationA) * HSD_Randf();
+            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = (params.baseRotation - a) - diff * rnd; }
             rotationStart = rotationEnd;
         } else {
-            rotationEnd = (params.rotationB - params.rotationA) * HSD_Randf() + (params.baseRotation + params.rotationA);
+            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = diff * rnd + (params.baseRotation + a); }
             rotationStart = rotationEnd;
         }
         break;
     case 11:
-        distanceNear = (params.distanceMax - params.distanceMin) * HSD_Randf() + params.distanceMin;
+        { f32 rnd = HSD_Randf(); f32 lo = params.distanceMin; f32 diff = params.distanceMax - lo; distanceNear = diff * rnd + lo; }
         distanceFar = distanceNear;
-        height = (params.heightMax - params.heightMin) * HSD_Randf() + params.heightMin;
+        { f32 rnd = HSD_Randf(); f32 lo = params.heightMin; f32 diff = params.heightMax - lo; height = diff * rnd + lo; }
         if (sequence->flipped != 0) {
-            rotationStart = (params.baseRotation - params.rotationA) - (params.rotationB - params.rotationA) * HSD_Randf();
-            rotationEnd = (params.baseRotation - params.rotationA) - (params.rotationB - params.rotationA) * HSD_Randf();
+            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationStart = (params.baseRotation - a) - diff * rnd; }
+            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = (params.baseRotation - a) - diff * rnd; }
         } else {
-            rotationStart = (params.rotationB - params.rotationA) * HSD_Randf() + (params.baseRotation + params.rotationA);
-            rotationEnd = (params.rotationB - params.rotationA) * HSD_Randf() + (params.baseRotation + params.rotationA);
+            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationStart = diff * rnd + (params.baseRotation + a); }
+            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = diff * rnd + (params.baseRotation + a); }
         }
         break;
     default:
-        distanceNear = (params.distanceMax - params.distanceMin) * HSD_Randf() + params.distanceMin;
+        { f32 rnd = HSD_Randf(); f32 lo = params.distanceMin; f32 diff = params.distanceMax - lo; distanceNear = diff * rnd + lo; }
         distanceFar = distanceNear;
-        height = (params.heightMax - params.heightMin) * HSD_Randf() + params.heightMin;
+        { f32 rnd = HSD_Randf(); f32 lo = params.heightMin; f32 diff = params.heightMax - lo; height = diff * rnd + lo; }
         if (sequence->flipped != 0) {
-            rotationEnd = (params.baseRotation - params.rotationA) - (params.rotationB - params.rotationA) * HSD_Randf();
+            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = (params.baseRotation - a) - diff * rnd; }
             rotationStart = rotationEnd;
         } else {
-            rotationEnd = (params.rotationB - params.rotationA) * HSD_Randf() + (params.baseRotation + params.rotationA);
+            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = diff * rnd + (params.baseRotation + a); }
             rotationStart = rotationEnd;
         }
         break;
     }
-    f32 heightSquared = height * height;
+    heightSquared = height * height;
     _wazaSequenceCameraGetFOVRange(&params, &fovLowA, &fovHighA, hsdSqrt(distanceFar * distanceFar + heightSquared));
     _wazaSequenceCameraGetFOVRange(&params, &fovLowB, &fovHighB, hsdSqrt(distanceNear * distanceNear + heightSquared));
     f32 fovStart;
     f32 fovEnd;
-    switch ((u8)(HSD_Rand() % 3)) {
-    case 0:
-        fovStart = (fovHighA - fovLowA) * HSD_Randf() + fovLowA;
-        fovEnd = (fovHighB - fovLowB) * HSD_Randf() + fovLowB;
+    switch ((u8)((u16)HSD_Rand() % 3)) {
+    case 1:
+        { f32 rnd = HSD_Randf(); f32 lo = fovLowA; f32 diff = fovHighA - lo; fovStart = diff * rnd + lo; }
+        { f32 rnd = HSD_Randf(); f32 lo = fovLowB; f32 diff = fovHighB - lo; fovEnd = diff * rnd + lo; }
         if (fovStart < fovEnd) {
             f32 swap = fovEnd;
             fovEnd = fovStart;
             fovStart = swap;
         }
         break;
-    case 1:
-        fovStart = (fovHighA - fovLowA) * HSD_Randf() + fovLowA;
-        fovEnd = (fovHighB - fovLowB) * HSD_Randf() + fovLowB;
+    case 2:
+        { f32 rnd = HSD_Randf(); f32 lo = fovLowA; f32 diff = fovHighA - lo; fovStart = diff * rnd + lo; }
+        { f32 rnd = HSD_Randf(); f32 lo = fovLowB; f32 diff = fovHighB - lo; fovEnd = diff * rnd + lo; }
         if (fovStart > fovEnd) {
             f32 swap = fovEnd;
             fovEnd = fovStart;
             fovStart = swap;
         }
         break;
+    case 0:
     default:
-        fovEnd = (fovHighA - fovLowA) * HSD_Randf() + fovLowA;
+        { f32 rnd = HSD_Randf(); f32 lo = fovLowA; f32 diff = fovHighA - lo; fovEnd = diff * rnd + lo; }
         fovStart = fovEnd;
         break;
     }
@@ -591,13 +598,9 @@ static void _battleCameraStartRandom(ModelSequence *sequence) {
     cameraMoveStop();
     cameraSetType(7);
     fn_80196A14(1);
-    u16 joint = 0;
     _GSmodel *model = sequence->model;
     u32 targetId = sequence->field3C;
-    if (model != 0) {
-        joint = GSmodelCenterNull(model);
-    }
-    cameraSetTargetExt(20000, targetId, joint);
+    cameraSetTargetExt(20000, targetId, model != 0 ? (u16)GSmodelCenterNull(model) : 0);
     cameraRefreshTargetPos();
     cameraSetTargetExt(0, 0, -1);
     cameraSetDistance(distanceFar);
@@ -814,9 +817,11 @@ extern "C" void battleCameraStartWaza(WazaSequence *waza) {
 
 static void _battleCameraUpdateWaza() {
     CameraFovKey *key = gFOVlist;
+    ModelSequence *sequence;
+    u16 frames;
     if (wazaSequenceSysIsValidWaza(gActiveWazaSequenceCamera) != 0 && wazaSequenceCameraAnim(gActiveWazaSequenceCamera) == 0) {
-        ModelSequence *sequence = asModel(gActiveWazaSequenceCamera->owner);
-        u16 frames = (u16)(0.5f + GSgfxVideoGetLastRenderTime());
+        sequence = asModel(gActiveWazaSequenceCamera->owner);
+        frames = __OSf32tou16(0.5f + GSgfxVideoGetLastRenderTime());
         _GSmodel *model = sequence->model;
         s32 joint;
         if (model == 0) {

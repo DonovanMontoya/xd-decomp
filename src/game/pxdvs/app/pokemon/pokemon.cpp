@@ -273,9 +273,8 @@ void pokemonSetDarkPokemonStatus(Pokemon* poke, u16 darkId)
     }
 }
 
-bool pokemonDataCheckValid(void* unused, u32 idArg)
+bool pokemonDataCheckValid(void* unused, u16 id)
 {
-    u16 id = idArg;
     bool result;
     if (id == 0) result = false;
     else if (!pokemonDB_GetName(id)) result = false;
@@ -633,7 +632,7 @@ u32 pokemonGetOboeWazaDataBanme(Pokemon* poke, u8 level)
     id = pokemon_GetPokemonDataId(poke);
     target = level;
     for (i = 0; (u8)i < 20; i++) {
-        if (target == pokemonDB_GetGetWazaLevel(id, i & 0xff)) break;
+        if (target == ((u8 (*)(u32, u32))pokemonDB_GetGetWazaLevel)(id, i & 0xff)) break;
     }
     return i;
 }
@@ -662,8 +661,8 @@ u16 pokemonGetOboeWazaDataId(Pokemon* poke, u8 level, u8* counter)
 
 s8 pokemonSearchWazaDataId(Pokemon* poke, u16 dataId)
 {
-    u32 id;
     s8 index;
+    u32 id;
     s8 i;
     if (!poke) return -1;
     id = dataId;
@@ -700,7 +699,7 @@ void pokemonWazaCreate(Pokemon* poke, u32 index, u16 dataId)
     if (poke) {
         pokemonWazaInit(poke, index);
         pokemon_SetPokemonWazaDataId(poke, index, dataId);
-        u8 pp = pokemonWazaGetMaxPP(poke, index);
+        u8 pp = ((u8 (*)(Pokemon*, u32))pokemonWazaGetMaxPP)(poke, index);
         pokemon_SetPokemonWazaPp(poke, index, pp);
     }
 }
@@ -743,7 +742,7 @@ bool pokemonCheckValid(Pokemon* poke)
     if (poke == 0) return 0;
     id = pokemon_GetPokemonDataId(poke);
     if ((u16)id == 0) return 0;
-    if (pokemonDataCheckValid(0, id) == 0) return 0;
+    if (((bool(*)(void*, u32))pokemonDataCheckValid)(0, id) == 0) return 0;
     if (gamedataAttestCheckValid(pokemon_GetAttest(poke)) == 0) return 0;
     return pokemon_GetFuseiFlag(poke) != 1;
 }
@@ -861,7 +860,7 @@ u32 pokemonCreateSequence(void* fightPokemon)
     Pokemon* poke = fightPokemonGetPokemonPtr(fightPokemon);
     u32 rnd = pokemon_GetRnd(poke);
     u32 id = pokemon_GetPokemonDataId(poke);
-    if (!pokemonDataCheckValid(0, id)) return 0;
+    if (!((bool(*)(void*, u32))pokemonDataCheckValid)(0, id)) return 0;
     id = pokemonDB_GetPkxDataId(id);
     switch (id) {
     case 0xC9:
@@ -996,7 +995,7 @@ void pokemonCreate(Pokemon* poke, u32 id, u8 level, void* attest)
     u32 limit;
     u32 i;
     u8 counter;
-    if (poke && pokemonDataCheckValid(0, id) && attest) {
+    if (poke && ((bool(*)(void*, u32))pokemonDataCheckValid)(0, id) && attest) {
         pokemonInit((u32)poke);
         pokemon_SetPokemonDataId(poke, id);
         pokemon_SetRnd(poke, pokemonCreateRnd());
@@ -1042,7 +1041,8 @@ u32 pokemonCreateRndFit(Pokemon* poke, s8 sex, s8 seikaku, s8 rare, u32 trainerR
                 if (sexValue != _pokemonGetSexSub(poke, rnd)) continue;
             } else {
                 u32 expected = _pokemonGetSexSub(poke, rnd);
-                if (pokemonGetSex(poke) != expected) continue;
+                u8 sex = pokemonGetSex(poke);
+                if (sex != expected) continue;
             }
         }
         if (seikaku >= 0) {

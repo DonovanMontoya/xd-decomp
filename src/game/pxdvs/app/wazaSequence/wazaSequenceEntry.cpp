@@ -84,7 +84,7 @@ void GSmodelGetRotation(u32, f32 *);
 bool GSsndCheckEmitter(u32);
 s32 GSsndGetStatus(s32);
 u8 GSsndUpdateEmitter(u32, f32 *);
-bool GSthreadIsRunning();
+bool GSthreadIsRunning(u32);
 u32 GSthreadCreate(s32, s32, s32, s32, s32, void *);
 void GSthreadSetArgs(u32, s32, ...);
 u32 GSsndCreateEmitterParam(s32, f32 *, f32 *, s32, u8, f32, f32);
@@ -279,7 +279,7 @@ bool SoundEntry::Update(f32 dt) {
     if (flags & 1) {
         u32 thread = gSoundThread;
         if (thread != 0) {
-            return GSthreadIsRunning();
+            return GSthreadIsRunning(thread);
         }
         return false;
     }

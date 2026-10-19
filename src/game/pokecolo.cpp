@@ -283,6 +283,7 @@ void deckInit();
 void *GSthreadCreate(u32,u32,u32,u32,u32,void (*)());
 void GSgappUpdate();
 void pokecoloMain() {
+    u64 lastTime;
     GSgfxRelocToScratch();
     pokecoloFrameCounter=0;
     switch(systemVars.perfbar) {
@@ -321,7 +322,7 @@ void pokecoloMain() {
     pokecoloGappMainDeamonHandle=GSgappCreate(1,254,0,_mainDaemon);GSgappSetName(pokecoloGappMainDeamonHandle,"mainDeamon");
     GSgfxResetEnable();GSgfxResetSetShutdownCallback(_pokecoloShutdown);fadeInit();GSfilterInitialise(8);GSeffectInitSystem();deckInit();
     GSthreadCreate(0,1000,0x4000,1,1,_pokecoloInit);
-    u64 lastTime=OSGetTime();
+    lastTime=OSGetTime();
     for(;;) {
         GSgappUpdate();pokecoloCheckDiskTray();
         _frameTime=((OSGetTime()-lastTime)*8)/((*(u32 *)0x800000F8/4)/125000);

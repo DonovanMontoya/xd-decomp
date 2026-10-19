@@ -793,11 +793,11 @@ static void _menuUpdateKeyInfo(WINDOW_SYS_WORK *, WINDOW_SYS_WORK *) {
         u16 keysA;
         u16 keysB;
         u8 type;
-        keysA = 0;
-        keysB = 0;
         portA = (MenuKeyInfo *)&winSysWork.portKeys[i];
         portB = (MenuKeyInfo *)&winSysWork2.portKeys[i];
         connect_bak[i] = connect[i];
+        keysA = 0;
+        keysB = 0;
         if (!_menuGetGcKeyInfo(i, &keysA, &keysB)) {
             if (!_menuGetAgbKeyInfo(i, &keysA)) {
                 keysA = 0;

@@ -11,16 +11,17 @@ void gbaPokemonConditonToGC(void *, u16);
 
 void gbaPokemonFromGC(void *pokemon, void *buffer) {
     GbaOrigins origins;
+    void *attest;
     GbaIndividualValues individual;
+    GbaPokemon *gba = (GbaPokemon *)buffer;
+    s32 length;
+    u16 *half;
+    u16 checksum = 0;
+    s32 checksumIndex;
+    u32 wordIndex;
+    s32 moveIndex;
     GbaRibbons ribbons;
     u32 *words;
-    void *attest;
-    GbaPokemon *gba = (GbaPokemon *)buffer;
-    u16 checksum = 0;
-    s32 length;
-    s32 moveIndex, checksumIndex;
-    u32 wordIndex;
-    u16 *half;
     memset(buffer, 0, sizeof(*gba));
     if (!pokemonCheckValid(pokemon)) return;
     gba->personality = _swap32__FUl(pokemonBiosGetRnd(pokemon));
@@ -328,8 +329,7 @@ void _rotatepp__FPUcUl(u8 *arg0, u32 arg1) {
     arg1 %= 6;
     if (arg1 / 2 != 0) {
         bytes = arg1 / 2 * 12;
-        offset = bytes + 12;
-        memcpy(saved, arg0 + offset, 12);
+        memcpy(saved, arg0 + 12 + bytes, 12);
         memmove(arg0 + 24, arg0 + 12, bytes);
         memcpy(arg0 + 12, saved, 12);
     }
@@ -353,8 +353,7 @@ void _revrotatepp__FPUcUl(u8 *arg0, u32 arg1) {
         memcpy(saved, arg0 + 12, 12);
         count *= 12;
         memmove(arg0 + 12, arg0 + 24, count);
-        offset = count + 12;
-        memcpy(arg0 + offset, saved, 12);
+        memcpy(arg0 + 12 + count, saved, 12);
     }
     count = (arg1 / 6) % 4;
     if (count != 0) {

@@ -1,4 +1,5 @@
 #include <game/pxdvs/GSAPI/GSparticle/peEmitterPrivate.hpp>
+#include <dolphin/os/OSFastCast.h>
 void peEmitterNode::Stop(_peEmitter*) {
     peContainer* container = containers;
     while (container) { container->Stop(); container = container->next; }
@@ -417,5 +418,140 @@ void peEmitterNode::GetPositionParameter(GSvec* position,GSvec* direction,_pePos
         ((Vec*)position)->x=0.0f;((Vec*)position)->y=0.0f;((Vec*)position)->z=0.0f;
         ((Vec*)direction)->x=0.0f;((Vec*)direction)->y=0.0f;((Vec*)direction)->z=0.0f;
         return;
+    }
+}
+
+#define EM_F(def, off) (*(f32 *)((u8 *)(def) + (off)))
+#define EM_H(def, off) (*(u16 *)((u8 *)(def) + (off)))
+#define EM_V(def, off) ((Vec *)((u8 *)(def) + (off)))
+#define EP_V(p, off) ((Vec *)((u8 *)(p) + (off)))
+#define EP_F(p, off) (*(f32 *)((u8 *)(p) + (off)))
+void peEmitterNode::CreateParameters(u16 count_, f32 interval) {
+    _peEmitter *def = emitter;
+    u16 remaining = count_;
+    f32 timeStep = EM_F(def, 8);
+    s16 total = this->count + remaining;
+    u32 local = (def->flags >> 6) & 1;
+    u16 countCopy = remaining;
+    f32 time = timeStep * __OSu16tof32(&countCopy);
+    f32 offset = 0.0f;
+    f32 inverseTotal = 1.0f / __OSs16tof32(&total);
+    _EmitParams *params = g_emitParams;
+    f32 blend = 1.0f;
+    f32 offsetStep = interval * inverseTotal;
+    while (remaining--) {
+        Vec position;
+        GetPositionParameter((GSvec *)EP_V(params, 8), (GSvec *)&position, (_pePositionFunction *)EM_V(def, 0x34), time);
+        switch (EM_H(def, 0x74) & 2) {
+        case 0: {
+            Quaternion rotation;
+            Mtx matrix;
+            Vec rotated;
+            C_QUATRotAxisRad(&rotation, EM_V(def, 0x84), EM_F(def, 0x9c) * HSD_Randf() + EM_F(def, 0x98));
+            PSMTXQuat(matrix, &rotation);
+            PSMTXMultVecSR(matrix, EM_V(def, 0x78), &rotated);
+            *EP_V(params, 0x14) = rotated;
+            Mtx matrix2;
+            f32 turns = 2.0f * HSD_Randf();
+            C_QUATRotAxisRad(&rotation, EM_V(def, 0x78), 3.1415927f * turns);
+            PSMTXQuat(matrix2, &rotation);
+            PSMTXMultVecSR(matrix2, EP_V(params, 0x14), EP_V(params, 0x14));
+            f32 speed;
+            if (EM_H(def, 0x74) & 0x20) speed = time * EM_F(def, 0x94) + EM_F(def, 0x90);
+            else speed = EM_F(def, 0x94) * HSD_Randf() + EM_F(def, 0x90);
+            PSVECScale(EP_V(params, 0x14), EP_V(params, 0x14), speed);
+            break;
+        }
+        case 2: {
+            Vec scaled;
+            f32 speed;
+            if (EM_H(def, 0x74) & 0x20) speed = time * EM_F(def, 0x7c) + EM_F(def, 0x78);
+            else speed = EM_F(def, 0x7c) * HSD_Randf() + EM_F(def, 0x78);
+            PSVECScale(&position, &scaled, speed);
+            *EP_V(params, 0x14) = scaled;
+            break;
+        }
+        default: {
+            EP_F(params, 0x14) = 0.0f;
+            EP_F(params, 0x18) = 0.0f;
+            EP_F(params, 0x1c) = 0.0f;
+            break;
+        }
+        }
+        Vec drift;
+        PSVECScale(EP_V(params, 0x14), &drift, offset);
+        position = drift;
+        PSVECAdd(EP_V(params, 8), &position, EP_V(params, 8));
+        _peEmitter *e1 = emitter;
+        EP_F(params, 0) = (EM_F(e1, 0x24) * HSD_Randf() + EM_F(e1, 0x20)) - offset;
+        _peEmitter *e2 = emitter;
+        EP_F(params, 4) = EM_F(e2, 0x30) * HSD_Randf() + EM_F(e2, 0x2c);
+        if (local) {
+            Vec delta, lerped, scaleDelta, scaleLerped;
+            Quaternion quat;
+            PSVECSubtract(&world.position, &previousWorld.position, &delta);
+            lerped = delta;
+            PSVECScale(&lerped, &lerped, blend);
+            PSVECAdd(&lerped, &previousWorld.position, &lerped);
+            *EP_V(params, 0x20) = lerped;
+            C_QUATLerp(&previousWorld.rotation, &world.rotation, &quat, blend);
+            *(Quaternion *)EP_V(params, 0x2c) = quat;
+            PSVECSubtract(&world.scale, &previousWorld.scale, &scaleDelta);
+            scaleLerped = scaleDelta;
+            PSVECScale(&scaleLerped, &scaleLerped, blend);
+            PSVECAdd(&scaleLerped, &previousWorld.scale, &scaleLerped);
+            *EP_V(params, 0x3c) = scaleLerped;
+            if (EM_H(def, 0x34) & 0x100) {
+                Quaternion inverse, inverseCopy;
+                Mtx matrix;
+                PSVECSubtract(EP_V(params, 8), EP_V(params, 0x20), EP_V(params, 8));
+                PSQUATInverse((Quaternion *)EP_V(params, 0x2c), &inverse);
+                inverseCopy = inverse;
+                PSMTXQuat(matrix, &inverseCopy);
+                PSMTXMultVecSR(matrix, EP_V(params, 8), EP_V(params, 8));
+                f32 sx = EP_F(params, 0x3c);
+                if (sx != 0.0f) EP_F(params, 8) = EP_F(params, 8) / sx;
+                f32 sy = EP_F(params, 0x40);
+                if (sy != 0.0f) EP_F(params, 0xc) = EP_F(params, 0xc) / sy;
+                f32 sz = EP_F(params, 0x44);
+                if (sz != 0.0f) EP_F(params, 0x10) = EP_F(params, 0x10) / sz;
+            }
+            if (EM_H(def, 0x74) & 0x10) {
+                Quaternion inverse, inverseCopy;
+                Mtx matrix;
+                PSQUATInverse((Quaternion *)EP_V(params, 0x2c), &inverse);
+                inverseCopy = inverse;
+                PSMTXQuat(matrix, &inverseCopy);
+                PSMTXMultVecSR(matrix, EP_V(params, 0x14), EP_V(params, 0x14));
+            }
+        } else {
+            if (EM_H(def, 0x34) & 0x100) {
+                Quaternion inverse, inverseCopy;
+                Mtx matrix;
+                PSVECSubtract(EP_V(params, 8), &world.position, EP_V(params, 8));
+                PSQUATInverse(&world.rotation, &inverse);
+                inverseCopy = inverse;
+                PSMTXQuat(matrix, &inverseCopy);
+                PSMTXMultVecSR(matrix, EP_V(params, 8), EP_V(params, 8));
+                f32 sx = world.scale.x;
+                if (sx != 0.0f) EP_F(params, 8) = EP_F(params, 8) / sx;
+                f32 sy = world.scale.y;
+                if (sy != 0.0f) EP_F(params, 0xc) = EP_F(params, 0xc) / sy;
+                f32 sz = world.scale.z;
+                if (sz != 0.0f) EP_F(params, 0x10) = EP_F(params, 0x10) / sz;
+            }
+            if (EM_H(def, 0x74) & 0x10) {
+                Quaternion inverse, inverseCopy;
+                Mtx matrix;
+                PSQUATInverse(&world.rotation, &inverse);
+                inverseCopy = inverse;
+                PSMTXQuat(matrix, &inverseCopy);
+                PSMTXMultVecSR(matrix, EP_V(params, 0x14), EP_V(params, 0x14));
+            }
+        }
+        time -= timeStep;
+        params = (_EmitParams *)((u8 *)params + 0x48);
+        blend -= inverseTotal;
+        offset += offsetStep;
     }
 }

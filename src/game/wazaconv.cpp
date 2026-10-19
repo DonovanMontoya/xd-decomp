@@ -30,13 +30,13 @@ extern "C" s32 GetWazaDocGBA(u8 *dst, s32 id) {
     if (data != 0) {
         wazaDataBiosGetDoc(data);
         const u16 *src = GSmsgGetGSchar();
-        u8 *out = dst + convline(dst, &src);
+        dst += convline(dst, &src);
         if (*src == 0xFFFF) {
-            *out++ = 0xFE;
-            src += 3;
-            out += convline(out, &src);
+            *dst++ = 0xFE;
+            src = (const u16 *)((const u8 *)src + 3);
+            dst += convline(dst, &src);
         }
-        *out = 0xFF;
+        *dst = 0xFF;
     }
     return 0;
 }

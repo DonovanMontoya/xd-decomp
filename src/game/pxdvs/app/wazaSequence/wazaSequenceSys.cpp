@@ -704,9 +704,14 @@ void wazaSequenceSysUpdate() {
 
 }
 
+struct WazaTimeRec {
+    s32 count;
+    f32 pad;
+    f32 times[3];
+};
 f32 wazaSequenceSysGetWazaTime(ModelSequence* seq, WazaSequence* waza, u8 phase) {
     f32 t = *(f32*)((u8*)waza + 4);
-    u8* rec = *(u8**)((u8*)seq + 0x9C) + waza->index * 0xD0;
+    WazaTimeRec* rec = (WazaTimeRec*)(*(u8**)((u8*)seq + 0x9C) + waza->index * 0xD0);
     if ((s32)phase == -1) {
         return 0.0f;
     }
@@ -714,19 +719,17 @@ f32 wazaSequenceSysGetWazaTime(ModelSequence* seq, WazaSequence* waza, u8 phase)
         return t;
     }
     if (phase == 3 || phase == 4) {
-        u8* q = rec + *(s32*)rec * 4;
-        return t + *(f32*)(q + 8);
+        return t + (&rec->pad)[rec->count + 1];
     }
     if (phase == 1) {
-        return t + *(f32*)(rec + 0x10);
+        return t + *(f32*)((u8*)rec + 0x10);
     }
     if (phase == 2) {
-        s32 count = *(s32*)rec;
-        u8* q = rec + count * 4;
+        s32 count = rec->count;
         if (count > 2) {
-            return t + *(f32*)(q + 4);
+            return t + (&rec->pad)[count];
         }
-        return t + *(f32*)(q + 8);
+        return t + (&rec->pad)[count + 1];
     }
     return 0.0f;
 }

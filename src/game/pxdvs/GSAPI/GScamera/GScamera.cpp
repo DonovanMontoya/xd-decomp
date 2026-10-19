@@ -1,6 +1,7 @@
 #include <game/pxdvs/GSAPI/GScamera/GScamera.hpp>
 #include <game/maximum/GSAPI/baselib/class.h>
 #include <libc/string.h>
+#include <dolphin/os/OSFastCast.h>
 extern "C" {
 void HSD_CObjReqAnim(HSD_CObj*, f32);
 void HSD_CObjAnim(HSD_CObj*);
@@ -212,7 +213,7 @@ extern "C" f32 (*GScameraGetProjMatrixPtr(GScamera* camera))[4] {
         GScameraGetPerspective(camera, &fov, &aspect, &nearPlane, &farPlane);
         GSmtx44Perspective(projMtx, fov, aspect, nearPlane, farPlane);
     } else {
-        f32 left, top, right, bottom;
+        f32 bottom, top, right, left;
         cameraGetOrtho(camera, &top, &bottom, &left, &right);
         GSmtx44Ortho(projMtx, top, bottom, left, right, 0.1f, 2000.0f);
     }
@@ -478,22 +479,29 @@ static void _cameraLoadClipping__FP9_GScameraP10GSgfxLayer(GScamera* camera, GSg
     if (camera->clippingFlags & 1) {
         if (camera->clippingFlags & 2) {
             HSD_CObj* object = camera->object;
-            f32 left = object->viewport[0];
-            f32 top = object->viewport[2];
+            f32 right, top, bottom, left;
+            left = object->viewport[0];
+            right = object->viewport[1];
+            top = object->viewport[2];
+            bottom = object->viewport[3];
             layer->viewport[0] = left;
             layer->viewport[1] = top;
-            layer->viewport[2] = 0.5f * (object->viewport[1] - left) + left;
-            layer->viewport[3] = 0.5f * (object->viewport[3] - top) + top;
+            layer->viewport[2] = 0.5f * (right - left) + left;
+            layer->viewport[3] = 0.5f * (bottom - top) + top;
             cameraMarkViewport(layer, 0x10);
         } else {
-            u16 width, height;
+            u16 height, width;
+            u16 halfWidth, halfHeight;
+            f32 right, bottom;
             GSgfxVideoGetEFBSize(&width, &height);
-            s16 halfWidth = width >> 1;
-            s16 halfHeight = height >> 1;
+            halfWidth = width >> 1;
+            right = __OSu16tof32(&halfWidth);
+            halfHeight = height >> 1;
+            bottom = __OSu16tof32(&halfHeight);
             layer->viewport[0] = 0.0f;
             layer->viewport[1] = 0.0f;
-            layer->viewport[2] = cameraSigned16ToFloat(&halfWidth);
-            layer->viewport[3] = cameraSigned16ToFloat(&halfHeight);
+            layer->viewport[2] = right;
+            layer->viewport[3] = bottom;
             cameraMarkViewport(layer, 0x10);
         }
         if (camera->clippingFlags & 4) {

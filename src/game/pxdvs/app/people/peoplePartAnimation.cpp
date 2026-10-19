@@ -24,11 +24,12 @@ void peoplePartAnimationBlinkOnce(tagPeopleWork*);
 #pragma dont_inline on
 void peoplePartAnimationSpeakStop(tagPeopleWork* work){
     if(work && work->flag14D){
+        GSpart* part;
         _GSmodel* model=(_GSmodel*)work->model;
         PeopleInfo* info=peopleInfoBiosGetPtr(work->object);
         for(s32 i=0;i<7;i++){
             if(work->speechAnimations[i]>=0){
-                GSpart* part=GSmodelGetPart(model,(s8)info->unknown28[i]);
+                s32 idx=(s8)info->unknown28[i];part=GSmodelGetPart(model,idx);
                 if(part){GSpartStopAnimIndex(part,work->speechAnimations[i]);GSpartFree(part);}
                 work->speechAnimations[i]=-1;
             }

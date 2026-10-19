@@ -6,8 +6,8 @@ extern u8 taste_data[]; extern u32 taste_data_number;
 extern u8 item_soubi_data[]; extern u32 item_soubi_data_number;
 extern u8 item_ball_data[]; extern u32 item_ball_data_number;
 extern u8 item_waza_machine_no[]; extern u32 item_waza_machine_no_number;
-extern u8 item_data_index[]; extern u32 *item_data_index_number;
-extern u8 item_data_prime[]; extern u32 *item_data_prime_number;
+extern u16 *item_data_index; extern u32 *item_data_index_number;
+extern u8 *item_data_prime; extern u32 *item_data_prime_number;
 #define ITEM_FIELD(T, P, O) (*((T *)((u8 *)(P) + (O))))
 
 extern "C" {
@@ -418,7 +418,9 @@ s32 itemParamGetRecoverType(void *arg0) {
     if (itemRecoveryFlag(arg0, 3, 1)) { type = 7; ++count; }
     if (itemRecoveryFlag(arg0, 3, 0)) { type = 8; ++count; }
     if (itemRecoveryFlag(arg0, 0, 7)) { type = 9; ++count; }
-    if (count > 0) return count <= 1 ? type : 0xA;
+    if (count > 0) {
+        s32 r = type; if (count > 1) r = 0xA; return r;
+    }
     if (itemRecoveryByte(arg0, 10)) return 11;
     if (itemRecoveryByte(arg0, 9)) return 12;
     if (itemRecoveryByte(arg0, 8)) return 13;
@@ -445,14 +447,15 @@ void *itemParamGetPtr(u32 arg0) {
 }
 
 
-s8 tasteDataGetAisyou(u32 arg0, u16 arg1) {
-    if (arg0 == 0U) {
+struct TasteAisyouRec { u8 pad[4]; u8 a[25]; };
+s8 tasteDataGetAisyou(TasteAisyouRec *arg0, u16 arg1) {
+    if (arg0 == 0) {
         return 0;
     }
     if (arg1 >= 0x19U) {
         return 0;
     }
-    return (s8) ITEM_FIELD(s8, (u8 *)arg0 + arg1, 0x4);
+    return (s8)arg0->a[arg1];
 }
 
 
@@ -518,9 +521,9 @@ void itemDataBiosSetBuff(void *arg0, s32 arg1) {
 }
 
 
-void itemDataBiosSetUseFriend(u32 arg0, u16 arg1, s8 arg2) {
-    if ((arg0 != 0U) && (arg1 < 3U)) {
-        ((ItemDataRecord *)((u8 *)arg0 + arg1))->useFriend[0] = arg2;
+void itemDataBiosSetUseFriend(ItemDataRecord *arg0, u16 arg1, s8 arg2) {
+    if ((arg0 != 0) && (arg1 < 3U)) {
+        arg0->useFriend[arg1] = arg2;
     }
 }
 
@@ -693,11 +696,9 @@ u16 itemBallDataBiosGetFightKoukaDataId(u16 *arg0) {
 }
 
 void *itemBallDataBiosGetPtr(u32 arg0) {
-    u32 count = item_ball_data_number;
     u8 *table = item_ball_data;
-    u32 index = (u16)arg0;
     void *result = table + ((arg0 * 64) & 0x3fffc0);
-    if (index < count) return result;
+    if ((u16)arg0 < item_ball_data_number) return result;
     return NULL;
 }
 
@@ -734,14 +735,14 @@ s32 itemDataBiosGetBuff(void *arg0) {
 }
 
 
-s8 itemDataBiosGetUseFriend(u32 arg0, u16 arg1) {
-    if (arg0 == 0U) {
+s8 itemDataBiosGetUseFriend(ItemDataRecord *arg0, u16 arg1) {
+    if (arg0 == 0) {
         return 0;
     }
     if (arg1 >= 3U) {
         return 0;
     }
-    return ((ItemDataRecord *)((u8 *)arg0 + arg1))->useFriend[0];
+    return (s8)(u8)arg0->useFriend[arg1];
 }
 
 
@@ -761,7 +762,7 @@ u8 itemDataBiosGetHidenMachineNo(void *arg0) {
     } else if ((u8) ((ItemDataRecord *)arg0)->kind != 4) {
         var_r0 = 0xFF;
     } else {
-        var_r0 = ITEM_FIELD(u8, arg0, 0x18);
+        var_r0 = (u8)ITEM_FIELD(u32, arg0, 0x18);
     }
     if (var_r0 == 0xFF) {
         return 0xFFU;
@@ -773,11 +774,11 @@ u8 itemDataBiosGetHidenMachineNo(void *arg0) {
 }
 
 
-u16 itemDataBiosGetWazaIDByWazaMachineNo(u8 arg0) {
-    if (arg0 >= (u32) item_waza_machine_no_number) {
+u16 itemDataBiosGetWazaIDByWazaMachineNo(u32 arg0) {
+    if ((u8)arg0 >= (u32) item_waza_machine_no_number) {
         return 0U;
     }
-    return ITEM_FIELD(u16, item_waza_machine_no + ((arg0 * 8) & 0x7F8), 4);
+    return (u16)ITEM_FIELD(u32, ((arg0 * 8) & 0x7F8) + item_waza_machine_no, 4);
 }
 
 
@@ -828,7 +829,7 @@ s32 itemDataBiosGetUseful(void *arg0) {
     if (arg0 == NULL) {
         return 0;
     }
-    return ((ItemDataRecord *)arg0)->useful != 0;
+    return (u8)((ItemDataRecord *)arg0)->useful != 0;
 }
 
 
@@ -836,7 +837,7 @@ s32 itemDataBiosGetImportant(void *arg0) {
     if (arg0 == NULL) {
         return 0;
     }
-    return ((ItemDataRecord *)arg0)->important != 0;
+    return (u8)((ItemDataRecord *)arg0)->important != 0;
 }
 
 
@@ -864,24 +865,24 @@ u8 itemDataBiosGetKind(u8 *arg0) {
 }
 
 
+#pragma peephole on
 s32 itemDataBiosCheckExportable(void *arg0) {
-    s32 temp_cr0_eq;
     u8 var_r0;
 
-    temp_cr0_eq = arg0 == NULL;
-    if (temp_cr0_eq != 0) {
+    if (arg0 == NULL) {
         return 0;
     }
-    if (temp_cr0_eq != 0) {
+    if (arg0 == NULL) {
         var_r0 = 0;
     } else {
-        var_r0 = ((ItemDataRecord *)arg0)->important != 0;
+        var_r0 = (u8)((ItemDataRecord *)arg0)->important != 0;
     }
     if (var_r0 != 0) {
         return 0;
     }
     return 1;
 }
+#pragma peephole reset
 
 
 s32 itemDataBiosCheckImportable(void *arg0) {
@@ -906,7 +907,7 @@ s32 itemDataBiosGetPtr(u16 arg0) {
     if (arg0 >= (u32) *item_data_index_number) {
         return 0;
     }
-    temp_r3 = *(item_data_index + ((arg0 * 2) & 0x1FFFE));
+    temp_r3 = *(u16 *)((u8 *)item_data_index + ((arg0 * 2) & 0x1FFFE));
     if (temp_r3 >= (u32) *item_data_prime_number) {
         return 0;
     }

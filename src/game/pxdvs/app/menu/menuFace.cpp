@@ -106,10 +106,10 @@ void menuFaceInit(s32 count){
     memset(pMenuFaceList,0,_menuFaceListNum*sizeof(FaceListEntry));
     if(!pMenuFaceTexList)pMenuFaceTexList=(FaceTextureEntry*)GSmemAlloc(_menuFaceListNum*sizeof(FaceTextureEntry));
     memset(pMenuFaceTexList,0,_menuFaceListNum*sizeof(FaceTextureEntry));
-    for(s8 i=0;i<_menuFaceListNum;++i){
+    for(s32 i=0;i<_menuFaceListNum;++i){
         if(!pMenuFaceTexList[i].data)pMenuFaceTexList[i].data=GSmemAllocAlign(0x1f60,0x20);
         memset(pMenuFaceTexList[i].data,0,0x1f60);
-        pMenuFaceList[i].slot=i;
+        pMenuFaceList[i].slot=(s8)i;
     }
 }
 }
@@ -138,7 +138,7 @@ static u16 _menuFaceGetIDSub(Pokemon* pokemon,u8 form,s8 rareOverride){
     if(rareOverride>=0)rare=rareOverride!=0;
     species=pokemonGetStatus(pokemon,0,0x6e,0);
     if(species==0x19a){
-        if(!rare){
+        if(rare==0){
             if(form==1)return 0x340;
             if(form==2)return 0x33f;
             if(form==3)return 0x33e;
@@ -152,15 +152,15 @@ static u16 _menuFaceGetIDSub(Pokemon* pokemon,u8 form,s8 rareOverride){
     }
     if(species==0xf9){
         if(pokemonIsDarkPokemon(pokemon))return 0x345;
-        if(!rare){return pokemonGetStatus(0,species,0x5b,0);}
+        if(rare==0){return pokemonGetStatus(0,species,0x5b,0);}
         else{return pokemonGetStatus(0,species,0x5b,1);}
     }
     if(species==0xc9){
         u32 shape=pokemonGetAnnonKatati(pokemonBiosGetRnd(pokemon));
-        if(!rare){return unknown_face_id_tbl[shape][0];}
+        if(rare==0){return unknown_face_id_tbl[shape][0];}
         else{return unknown_face_id_tbl[shape][1];}
     }
-    if(!rare){return pokemonGetStatus(0,species,0x5b,0);}
+    if(rare==0){return pokemonGetStatus(0,species,0x5b,0);}
     else{return pokemonGetStatus(0,species,0x5b,1);}
 }
 

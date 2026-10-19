@@ -1,9 +1,9 @@
 #include <game/maximum/GSAPI/baselib/list.h>
 
 extern void* GSmemGetSysdolAllocator(int);
-extern void* GSmemGetFreePool(void);
+extern int GSmemGetFreePool(void);
 extern void* GSmemAllocPool(void*);
-extern int GSmemIsRegistrationPool(void*);
+extern unsigned char GSmemIsRegistrationPool(void*, void*);
 extern void GSmemFreePool(void*, void*);
 extern void __assert(const char*, int, const char*);
 extern void* memset(void*, int, unsigned int);
@@ -72,12 +72,13 @@ HSD_SList* HSD_SListPrepend(HSD_SList* list, void* data)
 
 HSD_SList* HSD_SListRemove(HSD_SList* list)
 {
+    void* allocator;
     HSD_SList* next;
     if (list != 0) {
         next = list->next;
         {
-            void* allocator = GSmemGetSysdolAllocator(8);
-            if (allocator != 0 && GSmemIsRegistrationPool(list) != 0) {
+            allocator = GSmemGetSysdolAllocator(8);
+            if (allocator != 0 && GSmemIsRegistrationPool(allocator, list) != 0) {
                 GSmemFreePool(allocator, list);
             } else {
                 HSD_ObjFree(&s_alloc_data, list);

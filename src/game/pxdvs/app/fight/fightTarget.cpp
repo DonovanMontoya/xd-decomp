@@ -29,8 +29,10 @@ void* fightTargetDataBiosGetPtr(u16 id) {
 void *fightTargetGetPtr(u16,void*,u16);
 u8 fightFloor_GetFightType(void*);
 s32 fightTargetIsHostSide(void *target,u16 type) {
- void *host=fightTargetGetPtr(4,0,type); if(!host)return 0;
- void *side=fightTargetGetPtr(2,target,type); if(!side)return 0; return side==host;
+ void *host=fightTargetGetPtr(4,0,type);
+ if(host==0){return 0;}else{
+ void *side=fightTargetGetPtr(2,target,type);
+ if(side==0){return 0;}else{return side==host?1:0;}}
 }
 void *fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(u16 id,u16 type) {
  void *host=fightTargetGetPtr(4,0,type); if(!host)return 0;
@@ -42,8 +44,8 @@ u16 fightTargetGetTragetPtrToRelativeFightTargetId(void *base,void *target,u16 t
  }return 0;
 }
 u16 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(void *target,u16 type) {
- void *host=fightTargetGetPtr(4,0,type);if(!host)return 0;
- return fightTargetGetTragetPtrToRelativeFightTargetId(host,target,type);
+ void *host=fightTargetGetPtr(4,0,type);
+ if(host==0){return 0;}else{return fightTargetGetTragetPtrToRelativeFightTargetId(host,target,type);}
 }
 void *fightTargetGetPtrAsNowFightType(u16 id,void *base) {return fightTargetGetPtr(id,base,fightFloor_GetFightType(0));}
 }

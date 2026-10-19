@@ -1,5 +1,6 @@
 #include <game/pxdvs/GSAPI/GSlensFlare/GSlensFlarePrivate.hpp>
 #include <libc/string.h>
+#include <dolphin/os/OSFastCast.h>
 
 static LensFlareWork* _lfLensFlarePtrs[4];
 static u8 gModuleInited;
@@ -13,6 +14,8 @@ static inline u8 lensByte(f32 value) {
     if (value >= 255.0f) return 255;
     return (u8)value;
 }
+static inline f32 lensU8(u8 v) { return __OSu8tof32(&v); }
+static inline f32 lensU16(u16 v) { return __OSu16tof32(&v); }
 static inline f32 lensClamp(f32 value) {
     if (value < 0.0f) value=0.0f;
     else if (value > 1.0f) value=1.0f;
@@ -194,7 +197,7 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
                 f32 step=0.2f*header->sampleRadius;
                 for (u16 j=0;j<5;j++) {
                     GSvec offset;
-                    f32 spread=step*(f32)j;
+                    f32 spread=step*lensU16(j);
                     PSVECScale(lensVec(&up),lensVec(&offset),spread);
                     PSVECSubtract(lensVec(&flare->sun),lensVec(&offset),lensVec(&points[j]));
                     PSVECScale(lensVec(&up),lensVec(&offset),spread);
@@ -271,10 +274,10 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
                     current->flags|=1;
                 }
                 u8 color[4];
-                color[0]=lensByte(radialFade*(f32)element->color[0]);
-                color[1]=lensByte(radialFade*(f32)element->color[1]);
-                color[2]=lensByte(radialFade*(f32)element->color[2]);
-                color[3]=lensByte(occlusion*(flare->alpha*(radialFade*(f32)element->color[3]))+0.5f);
+                color[0]=__OSf32tou8(radialFade*lensU8(element->color[0]));
+                color[1]=__OSf32tou8(radialFade*lensU8(element->color[1]));
+                color[2]=__OSf32tou8(radialFade*lensU8(element->color[2]));
+                color[3]=__OSf32tou8(occlusion*(flare->alpha*(radialFade*lensU8(element->color[3])))+0.5f);
                 if (layer->field1740!=texture || layer->field17F8!=texture || texture->dirty) {
                     layer->field1740=texture; layer->field173C|=1;
                     layer->field17F8=texture; layer->field17F4|=1;

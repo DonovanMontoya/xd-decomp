@@ -24,7 +24,7 @@ s32 GSsndPlayNow(u32);
 s32 GSsndPlayVolume(u32, u16, u32, u32);
 s32 GSsndPlay(u32, u16, u32);
 u32 GSsndPopVolumeALL(u16, u32, u32);
-u32 GSsndPushVolumeALL(u16, u8, u32, u32);
+u32 GSsndPushVolumeALL(u8, u16, u32, u32);
 s32 GSsndGetStatus(u32);
 s32 GSsndContinue(u32, u16);
 s32 GSsndPause(u32, u16);
@@ -34,7 +34,7 @@ s32 GSsndOpen(u32, u32, u32);
 s32 GSsndClose(u32);
 s32 GSsndGetOutputMode();
 void GSsndSetOutputMode(s32);
-void GSsndSetMasterVolume(u8, u16, u8, u8);
+void GSsndSetMasterVolume(u32, u32, u32, u32);
 s32 GSsndCheckEnv(u32);
 s32 GSsndCheckStream(u32);
 s32 GSsndCheckSE(u32);
@@ -50,8 +50,8 @@ s32 GSsndFreeEmitter(GSsndEmitter*);
 s32 GSsndUpdateListenerParam(GSsndListener*, Vec*, Vec*, Vec*);
 s32 GSsndFreeListener(GSsndListener*);
 GSsndEmitter* GSsndCreateEmitter(u32, Vec*);
-GSsndEmitter* GSsndCreateEmitterParam(u32, Vec*, Vec*, s8, s8, f32, f32);
+GSsndEmitter* GSsndCreateEmitterParam(u32, Vec*, Vec*, s32, s32, f32, f32);
 GSsndListener* GSsndCreateListener(Vec*);
-GSsndListener* GSsndCreateListenerParam(Vec*, Vec*, Vec*, Vec*, s8, f32, f32, f32);
+GSsndListener* GSsndCreateListenerParam(Vec*, Vec*, Vec*, Vec*, s32, f32, f32, f32);
 }
 #endif

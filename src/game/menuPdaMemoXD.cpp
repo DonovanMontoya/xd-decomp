@@ -796,46 +796,45 @@ extern "C" s32 menuPdaMemoXDHook(tagWINDOW_WORK *arg0, tagSPRITE_WORK *arg1) {
     s16 temp_r0;
     s32 temp_r30;
     u8 temp_r29;
-    u8 var_r0;
+    u16 var_r0;
     CURSOR *temp_r4;
     MEMO_CONTENTS *contents;
-    menuPdaMemoXD *memo=pMemo;
 
-    if (memo == 0) {
+    if (pMemo == 0) {
         return 0;
     }
     temp_r0 = arg1->id;
     contents = (MEMO_CONTENTS *)arg0->contents;
     switch (temp_r0) {                              /* irregular */
     case 0xFD:
-        memo->PokemonType(arg0,arg1,contents,0);
+        pMemo->PokemonType(arg0,arg1,contents,0);
         break;
     case 0xFE:
-        memo->PokemonType(arg0,arg1,contents,1);
+        pMemo->PokemonType(arg0,arg1,contents,1);
         break;
     case 0x103:
-        memo->PokemonTokusei(arg0,arg1,contents,0);
+        pMemo->PokemonTokusei(arg0,arg1,contents,0);
         break;
     case 0x102:
-        memo->PokemonTokusei(arg0,arg1,contents,1);
+        pMemo->PokemonTokusei(arg0,arg1,contents,1);
         break;
     case 0x105:
-        memo->PokemonSyuzoku(arg0,arg1,contents);
+        pMemo->PokemonSyuzoku(arg0,arg1,contents);
         break;
     case 0x106:
-        memo->PokemonName(arg0,arg1,contents);
+        pMemo->PokemonName(arg0,arg1,contents);
         break;
     case 0x100:
         arg1->col[0] = 0xD5;
         arg1->col[1] = 0xAA;
         arg1->col[2] = 0x33;
-        memo->PokemonWeight(arg0,arg1,contents);
+        pMemo->PokemonWeight(arg0,arg1,contents);
         break;
     case 0x101:
         arg1->col[0] = 0xD5;
         arg1->col[1] = 0xAA;
         arg1->col[2] = 0x33;
-        memo->PokemonHeight(arg0,arg1,contents);
+        pMemo->PokemonHeight(arg0,arg1,contents);
         break;
     case 0x104:
         arg1->col[0] = 0xD5;
@@ -846,35 +845,39 @@ extern "C" s32 menuPdaMemoXDHook(tagWINDOW_WORK *arg0, tagSPRITE_WORK *arg1) {
         menuPdaMemoWaveHook();
         break;
     case 0x144: case 0x145: case 0x146: case 0x147: case 0x148: case 0x149: case 0x14A: case 0x14B: case 0x14C: case 0x14D: case 0x14E: case 0x14F: case 0x150: case 0x151: case 0x152: case 0x153: case 0x154:
-        memo->PokemonAisyou(arg0,arg1,contents);
+        pMemo->PokemonAisyou(arg0,arg1,contents);
         break;
     case 0x15A:
-        memo->PokemonTokuseiSetumei(arg0,arg1,contents,0);
+        pMemo->PokemonTokuseiSetumei(arg0,arg1,contents,0);
         break;
     case 0x15B:
-        memo->PokemonTokusei(arg0,arg1,contents,0);
+        pMemo->PokemonTokusei(arg0,arg1,contents,0);
         break;
     case 0x157:
-        memo->PokemonTokuseiSetumei(arg0,arg1,contents,1);
+        pMemo->PokemonTokuseiSetumei(arg0,arg1,contents,1);
         break;
     case 0x158:
-        memo->PokemonTokusei(arg0,arg1,contents,1);
+        pMemo->PokemonTokusei(arg0,arg1,contents,1);
         break;
     case 0x15D:
-        memo->PokemonSyuzoku(arg0,arg1,contents);
+        pMemo->PokemonSyuzoku(arg0,arg1,contents);
         break;
     case 0x15E:
-        memo->PokemonName(arg0,arg1,contents);
+        pMemo->PokemonName(arg0,arg1,contents);
         break;
     case 0x155:
-        memo->PokemonType(arg0,arg1,contents,0);
+        pMemo->PokemonType(arg0,arg1,contents,0);
         break;
     case 0x156:
-        memo->PokemonType(arg0,arg1,contents,1);
+        pMemo->PokemonType(arg0,arg1,contents,1);
         break;
     case 0x15C:
-        msgctrlSetValue(0x4D, GSmsgGetGSchar(0x3B68));
-        msgctrlSetValue(0x37, GSmsgGetGSchar(0x3B69));
+        {
+        const u16 *a0 = GSmsgGetGSchar(0x3B68);
+        msgctrlSetValue(0x4D, a0);
+        const u16 *a1 = GSmsgGetGSchar(0x3B69);
+        msgctrlSetValue(0x37, a1);
+        }
         GSmsgPrint2(arg0->layer, 0, 0, arg0->alpha | ~0xFF, 0x4278);
         break;
     case 0x159:
@@ -886,8 +889,10 @@ extern "C" s32 menuPdaMemoXDHook(tagWINDOW_WORK *arg0, tagSPRITE_WORK *arg1) {
             var_r0 = 0;
         }
         if ((u16) var_r0 != 0) {
-            msgctrlSetValue(0x4D, GSmsgGetGSchar(0x3B68));
-            msgctrlSetValue(0x37, GSmsgGetGSchar(0x3B6A));
+            const u16 *a0 = GSmsgGetGSchar(0x3B68);
+            msgctrlSetValue(0x4D, a0);
+            const u16 *a1 = GSmsgGetGSchar(0x3B6A);
+            msgctrlSetValue(0x37, a1);
             GSmsgPrint2(arg0->layer, 0, 0, arg0->alpha | ~0xFF, 0x4278);
         }
         break;

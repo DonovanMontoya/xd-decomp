@@ -630,8 +630,7 @@ s32 menuFightWazaButton(tagWINDOW_WORK *window) {
         if (key & 0xD0) {
             if (pokemon != 0) {
                 s32 saved;
-                s8 from = work->saved;
-                pokemonWazaReplace(pokemon, from, (u16)window->selected);
+                pokemonWazaReplace(pokemon, (s8)work->saved, (u16)window->selected);
                 saved = WZ_SLOT(status);
                 pokemonToMenuWazaStatus(pokemon, status);
                 WZ_SLOT(status) = saved;
@@ -1448,9 +1447,10 @@ void windowDrawSprite2(s32, s32, s16, s16, s32, tagWINDOW_WORK *, u16, s32, s32)
 
 extern "C" void menuFightDrawIwaitStatus(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) {
     FIGHT_TRAINER *trainer;
+    FIGHT_TRAINER *secondTrainer;
     if (window->menu == 0xA2) trainer = fightSideGetValidFightTrainerPtr(fightFloorGetValidFightSidePtr(fightFloorGetNowPtr(), 1), 0);
     else trainer = fightSideGetValidFightTrainerPtr(fightFloorGetValidFightSidePtr(fightFloorGetNowPtr(), 0), 0);
-    FIGHT_TRAINER *secondTrainer = trainer;
+    secondTrainer = trainer;
     u32 first = fightTrainerGetValidFightOutPokemonPtr(trainer, 0);
     u32 second = fightTrainerGetValidFightOutPokemonPtr(trainer, 1);
     Pokemon *pokemon1;
@@ -2453,15 +2453,15 @@ static u8 init$3246;
 static s32 waza_no$3039;
 static u8 init$3040;
 void menuFightButtonSecretPokemonTop(tagWINDOW_WORK *arg0) {
-    s32 temp_r26;
-    s32 var_r27;
-    s32 var_r28;
-    s32 var_r29;
-    u16 temp_r3;
-    u16 temp_r3_2;
-    u16 temp_r3_3;
-    u8 temp_r31;
     MenuFightKey *temp_r30;
+    u8 temp_r31;
+    u16 temp_r3_3;
+    u16 temp_r3_2;
+    u16 temp_r3;
+    s32 var_r29;
+    s32 var_r28;
+    s32 var_r27;
+    s32 temp_r26;
 
     if ((s8) init$3246 == 0) {
         pokemon_no$3245 = -1;
@@ -2563,15 +2563,15 @@ void menuFightButtonSecretPokemonTop(tagWINDOW_WORK *arg0) {
 }
 
 void menuFightButtonSecretWazaTop(tagWINDOW_WORK *arg0) {
-    MenuFightWazaLayout* temp_r31;
-    s32 temp_r4;
-    s32 temp_r4_2;
-    s32 var_r26;
-    s32 var_r29;
-    s32 var_r30;
-    u16 temp_r3;
-    u16 temp_r3_2;
     MenuFightKey *temp_r27;
+    u16 temp_r3_2;
+    u16 temp_r3;
+    s32 var_r30;
+    s32 var_r29;
+    s32 var_r26;
+    s32 temp_r4_2;
+    s32 temp_r4;
+    MenuFightWazaLayout *temp_r31;
 
     if ((s8) init$3040 == 0) {
         waza_no$3039 = -1;

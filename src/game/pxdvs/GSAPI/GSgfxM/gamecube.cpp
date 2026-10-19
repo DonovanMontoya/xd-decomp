@@ -1156,6 +1156,11 @@ void GSgfx_GCFirstInit(void) {
 static inline void GCFlushXF(u16 address, u32 value) {
     GCWriteByte(0x10); GCWriteHalf(0); GCWriteHalf(address); GCWriteWord(value);
 }
+struct GCColor4 { u8 r, g, b, a; };
+static inline void GCFlushXFColor(u16 address, GCColor4 c) {
+    GCWriteByte(0x10); GCWriteHalf(0); GCWriteHalf(address);
+    GCWriteWord((c.r << 24) | (c.g << 16) | (c.b << 8) | c.a);
+}
 static inline void GCFlushCP(u8 address, u32 value) {
     GCWriteByte(8); GCWriteByte(address); GCWriteWord(value);
 }
@@ -1682,7 +1687,9 @@ void GSgfx_GCWriteCopyTex(const GCCopyTextureInfo* info, u32 destination) {
 extern void GSgfxVideoGetEFBSize(u16 *width, u16 *height);
 
 void GSgfx_GCReset(void) {
-    for (u32 i = 0; i < 8; ++i) {
+    GCColor4 colorA = {0, 0, 0, 0};
+    GCColor4 colorB = {255, 255, 255, 255};
+    for (s32 i = 0; i < 8; ++i) {
         gsgfxState->textureGenerators[i].type = 1;
         gsgfxState->textureGenerators[i].source = i + 4;
         gsgfxState->textureGenerators[i].matrix = 60;
@@ -1762,14 +1769,14 @@ void GSgfx_GCReset(void) {
         GC_WORD(0x468 + i * 24) = 0; GC_WORD(0x46c + i * 24) = 2;
     }
     for (u32 i = 0; i < 4; ++i) {
-        GC_WORD(0x4b9 + i * 5) = 0;
-        GCFlushXF(0x100a + ((i + 4) & 1), 0);
-        GC_WORD(0x4b9 + i * 5) = 0; GC_BYTE(0x4b8 + i * 5) = 0;
+        GC_WORD(0x4b9 + i * 5) = *(u32 *)&colorA;
+        GCFlushXFColor(0x100a + ((i + 4) & 1), colorA);
+        GC_WORD(0x4b9 + i * 5) = *(u32 *)&colorA; GC_BYTE(0x4b8 + i * 5) = 0;
     }
     for (u32 i = 0; i < 4; ++i) {
-        GC_WORD(0x4c3 + i * 5) = 0xffffffff;
-        GCFlushXF(0x100c + ((i + 4) & 1), 0xffffffff);
-        GC_WORD(0x4c3 + i * 5) = 0xffffffff; GC_BYTE(0x4c2 + i * 5) = 0;
+        GC_WORD(0x4c3 + i * 5) = *(u32 *)&colorB;
+        GCFlushXFColor(0x100c + ((i + 4) & 1), colorB);
+        GC_WORD(0x4c3 + i * 5) = *(u32 *)&colorB; GC_BYTE(0x4c2 + i * 5) = 0;
     }
     for (u32 i = 0; i < 16; ++i) {
         s32 coordinate = i < 8 ? i : 255;

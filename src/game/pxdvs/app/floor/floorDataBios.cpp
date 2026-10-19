@@ -156,12 +156,10 @@ u8 floorDataBiosGetArea(FloorData *floor) { if (floor == 0) return 0; return flo
 FloorData *floorDataBiosGetCurrentPtr() { return floorDataBiosGetPtr(GSfloorGetCurrent()); }
 FloorData *floorDataBiosGetPtr(u32 floorID) {
     FloorData *floor = floordata;
-    u32 count = *floordata_number;
-    if (count != 0) {
-        do {
-            if (floor->floorID == floorID) return floor;
-            ++floor;
-        } while (--count != 0);
+    u32 i;
+    for (i = 0; i != *floordata_number; i++) {
+        if (floor->floorID == floorID) return floor;
+        floor++;
     }
     return 0;
 }

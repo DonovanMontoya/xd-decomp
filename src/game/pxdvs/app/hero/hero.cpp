@@ -61,7 +61,7 @@ u16 heroGetPokeomCount(Hero* hero) {
             count++;
         }
     }
-    return count;
+    return (u16)count;
 }
 
 s32 heroGetEmptySlot(Hero* hero) {

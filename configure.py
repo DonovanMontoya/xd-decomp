@@ -957,8 +957,8 @@ config.libs = [
             Object(NonMatching, "game/agbCommunication.cpp", extra_cflags=["-inline noauto,deferred", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/floorRead.cpp", extra_cflags=["-inline off", "-opt nopeephole"]),
             Object(NonMatching, "game/pokecolo.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pokeconv.cpp"),
-            Object(NonMatching, "game/wazaconv.cpp"),
+            Object(NonMatching, "game/pokeconv.cpp", extra_cflags=["-opt nopeephole"]),
+            Object(NonMatching, "game/wazaconv.cpp", extra_cflags=["-opt nopeephole"]),
             Object(NonMatching, "game/floorLayerConfig.cpp"),
         ]
     },
@@ -1100,7 +1100,7 @@ config.libs = [
             # GSgfxM
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/backfb.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/GSgfx.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/layer.cpp"),
+            Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/layer.cpp", extra_cflags=["-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/render.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/perfbar.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/token.cpp"),
@@ -1142,7 +1142,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/menu/menuFaceBios.cpp", extra_cflags=["-opt nopeephole"]),
             Object(NonMatching, "game/pxdvs/app/menu/menuModel.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/app/menu/menuOffScreen.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-use_lmw_stmw on"]),
-            Object(NonMatching, "game/pxdvs/app/menu/window.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-use_lmw_stmw on"]),
+            Object(NonMatching, "game/pxdvs/app/menu/window.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/app/menu/cursorBios.cpp", extra_cflags=["-opt nopeephole"]),
             Object(NonMatching, "game/pxdvs/app/menu/winMsg.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-use_lmw_stmw on"]),
 
@@ -1256,7 +1256,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/app/script/objPeople.cpp", cflags=cflags_xd_app_fight, extra_cflags=["-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/app/script/script.cpp", cflags=cflags_xd_app_fight, extra_cflags=["-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/app/script/scriptModel.cpp", cflags=cflags_xd_app_fight),
-            Object(NonMatching, "game/pxdvs/app/script/contSave.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
+            Object(NonMatching, "game/pxdvs/app/script/contSave.cpp", cflags=cflags_xd_app_fight, extra_cflags=["-opt nopeephole"]),
 
             # memcard
             Object(NonMatching, "game/pxdvs/app/memcard/memcard.cpp", extra_cflags=["-str reuse,nopool,readonly"]),

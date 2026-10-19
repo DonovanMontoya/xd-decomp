@@ -10,9 +10,7 @@ static inline void lineState() {
     }
 }
 static inline void selectFormat(u32 id) {
-    GSprimData* data = &primData;
-    GSgfxVF* format = GSgfxVFGetPredef(id);
-    data->layer->setRenderStateAndSelect(format);
+    primData.layer->setRenderStateAndSelect(GSgfxVFGetPredef(id));
 }
 static inline void beginQuad() {
     GSprimLayer()->primitive = primData.quadPrimitive;
@@ -83,7 +81,7 @@ extern "C" void GSprimDraw2DQuad(f32 x0, f32 y0, f32 x1, f32 y1, const GXColor* 
     GSprimLayer()->endSurface();
 }
 extern "C" void GSprimDraw2DVLine(f32 x, f32 y0, f32 y1, const GXColor* tint) {
-    GXColor first = *tint, second = *tint;
+    GXColor second = *tint, first = *tint;
     lineState();
     selectFormat(2);
     GSprimLayer()->primitive = 0xa8;
@@ -93,7 +91,7 @@ extern "C" void GSprimDraw2DVLine(f32 x, f32 y0, f32 y1, const GXColor* tint) {
     GSprimLayer()->endSurface();
 }
 extern "C" void GSprimDraw2DHLine(f32 x0, f32 x1, f32 y, const GXColor* tint) {
-    GXColor first = *tint, second = *tint;
+    GXColor second = *tint, first = *tint;
     lineState();
     selectFormat(2);
     GSprimLayer()->primitive = 0xa8;

@@ -52,10 +52,9 @@ extern "C" s32 menuCB_InitBattle(_MENUCBWORK *work)
     u16 *name,*nameOut;
     encounterId = 0;
     if (CB_BYTE(0xB4A1) == -1) {
-        const s8 *row = VS_TRAINER_RANK_SELECT_TBL[WORK_LONG(0xAFD8)][WORK_LONG(0xAFD4)];
-        s8 playerBase = row[1];
-        s8 count = row[0];
-        s8 opponentBase = row[2];
+        s8 playerBase = VS_TRAINER_RANK_SELECT_TBL[WORK_LONG(0xAFD8)][WORK_LONG(0xAFD4)][1];
+        s8 count = VS_TRAINER_RANK_SELECT_TBL[WORK_LONG(0xAFD8)][WORK_LONG(0xAFD4)][0];
+        s8 opponentBase = VS_TRAINER_RANK_SELECT_TBL[WORK_LONG(0xAFD8)][WORK_LONG(0xAFD4)][2];
         battleMode = WORK_LONG(0xAFD4);
         if (battleMode == 0) {
             random = HSD_Rand();
@@ -67,8 +66,8 @@ extern "C" s32 menuCB_InitBattle(_MENUCBWORK *work)
                 WORK_SHORT(0x2654) = (u16) ((u16) opponentBase + (HSD_Rand() % (u16) count));
             } while ((u16) WORK_SHORT(0x1334) == (u16) WORK_SHORT(0x2654));
             if ((s32) (HSD_Rand() & 0x80) != 0) {
-                WORK_SHORT(0x1334) = (u16) (WORK_SHORT(0x1334) + 5);
-                WORK_SHORT(0x2654) = (u16) (WORK_SHORT(0x2654) + 5);
+                WORK_SHORT(0x1334) += 5;
+                WORK_SHORT(0x2654) += 5;
             }
         }
     }

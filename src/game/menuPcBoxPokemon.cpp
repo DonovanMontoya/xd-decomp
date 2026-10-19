@@ -854,9 +854,8 @@ Pokemon *_cbMenuPokemonStatus(Pokemon *p, MENU_POKEMON_CB_TYPE type, long) {
 }
 
 void CMenuPokemonLeave::boxNameDraw(int box, long win, u32 item) {
-    tagSPRITE_WORK *sp;
     tagWINDOW_WORK *w = windowSearchID(win);
-    sp = menuPtSpriteWorkGetByItemID(w, item, 0);
+    tagSPRITE_WORK *sp = menuPtSpriteWorkGetByItemID(w, item, 0);
     char *name = PCBOX::getPointer()->getPokemonBoxName(box);
     msgctrlSetValue(0x37, (u32)name);
     s16 width = GSmsgGetRect(0x4276) >> 16;

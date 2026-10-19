@@ -1123,9 +1123,7 @@ loop_1:
                 var_r4 = 2;
                 break;
             default:
-                temp_r3 = _memcardStatusPtr->retryCount;
-                _memcardStatusPtr->retryCount = temp_r3 + 1;
-                if (temp_r3 < 6) {
+                if (_memcardStatusPtr->retryCount++ < 6) {
                     var_r4 = 1;
                     _memcardStatusPtr->cardResult = -1;
                 } else {
@@ -1413,11 +1411,7 @@ loop_1:
             _memcardStatusPtr->task = fn_801CC508();
             goto block_396;
         case 18:
-            var_r5_6 = 0x6000;
-            if ((u8) _memcardStatusPtr->unk40 != 0) {
-                var_r5_6 = 0x4000;
-            }
-            var_r3_14 = CARDWriteAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50, var_r5_6, 0, 0);
+            var_r3_14 = CARDWriteAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50, (u8) _memcardStatusPtr->unk40 != 0 ? 0x4000 : 0x6000, 0, 0);
             if (var_r3_14 == 0) {
                 var_r3_14 = CARDGetResultCode(_memcardStatusPtr->param);
             }

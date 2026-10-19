@@ -872,7 +872,7 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubWaza(FIGHT_TRAINER* trainer,Fig
         fightOutPokemonToMenuWazaStatus(attacker,status);
         status[0x44]=fightFloorIsNowEncountTuusinTaisen(0);
         Pokemon *pokemon=fightOutPokemonGetPokemonPtr(attacker);
-        s32 selected=menuFightOpenWaza(trainer,status,pokemonGetStatus(attacker,0,0x101,0),1);
+        s32 wazaStatus=pokemonGetStatus(attacker,0,0x101,0);s32 selected=menuFightOpenWaza(trainer,status,wazaStatus,1);
         if(selected<0){menuFightCloseWaza(1);return 0;}
         if(selected>4){
             if((u8)(fightFloorGetStatus(0,0,0x22,0)!=0)==1){
@@ -882,10 +882,10 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubWaza(FIGHT_TRAINER* trainer,Fig
             return 0;
         }
         u8 invalid=fightOutPokemonCheckCanOutOkWazaBanme(attacker,selected,1,&invalidMove);
-        u16 move=pokemonGetStatus(pokemon,0,0x7F,(u16)selected);
+        u16 failMove=pokemonGetStatus(pokemon,0,0x7F,(u16)selected);
         if(invalid!=0){
             fightMsgctrlSetValue(0x11,(u32)attacker);
-            fightMsgctrlSetValue(0x28,(u32)GSmsgGetGSchar(wazaGetStatus(0,move,1,0)));
+            fightMsgctrlSetValue(0x28,(u32)GSmsgGetGSchar(wazaGetStatus(0,failMove,1,0)));
             fightFloorSetStatus(0,0,0x56,0,fightOutPokemonGetSoubiItemDataId(attacker));
         }
         switch(invalid){
@@ -897,7 +897,7 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubWaza(FIGHT_TRAINER* trainer,Fig
         case 1:message=0x4EE6;break;
         }
         if(invalid!=0){fightMenuOpenMsg(message);fightMainWaitFrame(0x40);fightMenuCloseMsg();continue;}
-        move=pokemonGetStatus(pokemon,0,0x7F,(u16)selected);
+        u16 move=pokemonGetStatus(pokemon,0,0x7F,(u16)selected);
         if(move!=0&&move<*waza_data_number&&move!=0x176){
             _fightMenuGcHeroDefenseFlag=0;
             FightOutPokemon *target=fightSeqSelectDefensePokemonPtr(attacker,move,type,_fightMenuFightTrainerGcHeroOpenMenuSubWazaSelectDefensePokemon,1,0,-1);

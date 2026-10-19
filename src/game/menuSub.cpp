@@ -278,7 +278,8 @@ void menuSubAnimAlpha(void) {
 }
 
 static s32 _animAlpha(void) {
-    f32 t = menuGetTotalTime() * (6.2831855f / _cursorSec);
+    f32 rate = 6.2831855f / _cursorSec;
+    f32 t = rate * menuGetTotalTime();
     f32 range = _max_alpha - _min_alpha;
     f32 v;
     f32 c;
@@ -404,25 +405,26 @@ void menuSubCursorAnimeValGet(f32* out, s32* color) {
 }
 
 void menuSubCursorAnimeMain(void) {
-    if (_cursorAnimeWork.x != 0.0f) {
-        s16 t = _cursorAnimeWork.time + timeGetLastFrameTime();
-        f32 ratio = (f32)t / (f32)_cursorAnimeWork.duration;
-        _cursorAnimeWork.time = t;
-        _cursorAnimeWork.x = (f32)(s16)((((f32)t * (f32)t) / (f32)_cursorAnimeWork.duration / (f32)_cursorAnimeWork.duration) * (_cursorAnimeWork.toX - _cursorAnimeWork.fromX) + _cursorAnimeWork.fromX);
-        _cursorAnimeWork.cur[0] = (s32)(ratio * (f32)(_cursorAnimeWork.to[0] - _cursorAnimeWork.from[0]) + (f32)_cursorAnimeWork.from[0]);
-        _cursorAnimeWork.cur[1] = (s32)(ratio * (f32)(_cursorAnimeWork.to[1] - _cursorAnimeWork.from[1]) + (f32)_cursorAnimeWork.from[1]);
-        _cursorAnimeWork.cur[2] = (s32)(ratio * (f32)(_cursorAnimeWork.to[2] - _cursorAnimeWork.from[2]) + (f32)_cursorAnimeWork.from[2]);
-        _cursorAnimeWork.cur[3] = (s32)(ratio * (f32)(_cursorAnimeWork.to[3] - _cursorAnimeWork.from[3]) + (f32)_cursorAnimeWork.from[3]);
-        if (_cursorAnimeWork.x > 0.0f) {
-            _cursorAnimeWork.x = 0.0f;
-            _cursorAnimeWork.cur[3] = 0xFF;
-            _cursorAnimeWork.cur[2] = 0xFF;
-            _cursorAnimeWork.cur[1] = 0xFF;
-            _cursorAnimeWork.cur[0] = 0xFF;
+    MenuSubCursorAnimeWork *w = &_cursorAnimeWork;
+    if (w->x != 0.0f) {
+        s16 t = w->time + timeGetLastFrameTime();
+        f32 ratio = (f32)t / (f32)w->duration;
+        w->time = t;
+        w->x = (f32)(s16)((((f32)t * (f32)t) / (f32)w->duration / (f32)w->duration) * (w->toX - w->fromX) + w->fromX);
+        w->cur[0] = (s32)(ratio * (f32)(w->to[0] - w->from[0]) + (f32)w->from[0]);
+        w->cur[1] = (s32)(ratio * (f32)(w->to[1] - w->from[1]) + (f32)w->from[1]);
+        w->cur[2] = (s32)(ratio * (f32)(w->to[2] - w->from[2]) + (f32)w->from[2]);
+        w->cur[3] = (s32)(ratio * (f32)(w->to[3] - w->from[3]) + (f32)w->from[3]);
+        if (w->x > 0.0f) {
+            w->x = 0.0f;
+            w->cur[3] = 0xFF;
+            w->cur[2] = 0xFF;
+            w->cur[1] = 0xFF;
+            w->cur[0] = 0xFF;
         }
-        _cursorAnimeWork.color = (_cursorAnimeWork.cur[0] << 24) | (_cursorAnimeWork.cur[1] << 16) | (_cursorAnimeWork.cur[2] << 8) | _cursorAnimeWork.cur[3];
+        w->color = (w->cur[0] << 24) | (w->cur[1] << 16) | (w->cur[2] << 8) | w->cur[3];
     }
-    _cursorAnimeWork.sec = _cursorAnimeWork.sec + timeGetLastFrameSec();
+    w->sec = w->sec + timeGetLastFrameSec();
 }
 
 void menuSubCursorAnimeStart(void) {

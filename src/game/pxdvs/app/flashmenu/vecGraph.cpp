@@ -1,6 +1,7 @@
 // Needs extra cflags: -opt nopeephole
 extern "C" {
 #include <dolphin/types.h>
+#include <dolphin/os/OSFastCast.h>
 }
 
 struct GStexture;
@@ -648,33 +649,37 @@ static void vecExec(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines,_SHAPER
     if(!sprite)SBscan();
 }
 
-static void vecGradientPalette(VEC_GRAPH_DATA* data) {
-    VecGradient* gradient=(VecGradient*)data->gradient;
+static inline void vecGradientPalette(VEC_GRAPH_DATA* data) {
     u32 oldColor;
-    memcpy(&oldColor,&gradient->stops[0].color,4);
+    memcpy(&oldColor,&((VecGradient*)data->gradient)->stops[0].color,4);
     s32 position=0;
-    for(s32 stop=0;stop<gradient->count;++stop) {
-        s32 length=gradient->stops[stop].ratio-position;
+    for(s32 stop=0;stop<((VecGradient*)data->gradient)->count;++stop) {
+        s32 length=((VecGradient*)data->gradient)->stops[stop].ratio-position;
+        u8* previous=(u8*)&oldColor;
+        u8* next=(u8*)&((VecGradient*)data->gradient)->stops[stop].color;
+        f32 d0=(__OSu8tof32(&next[0])-(f32)previous[0])/(f32)length;
+        f32 d1=(__OSu8tof32(&next[1])-(f32)previous[1])/(f32)length;
+        f32 d2=(__OSu8tof32(&next[2])-(f32)previous[2])/(f32)length;
+        f32 d3=(__OSu8tof32(&next[3])-(f32)previous[3])/(f32)length;
         for(s32 i=0;i<length;++i) {
             u8 components[4];
-            u8* previous=(u8*)&oldColor;
-            u8* next=(u8*)&gradient->stops[stop].color;
-            for(s32 component=0;component<4;++component)
-                components[component]=(u8)(s32)((((f32)next[component]-(f32)previous[component])/(f32)length)*(f32)i+(f32)previous[component]);
+            components[0]=(u8)(s32)(d0*(f32)i+(f32)previous[0]);
+            components[1]=(u8)(s32)(d1*(f32)i+(f32)previous[1]);
+            components[2]=(u8)(s32)(d2*(f32)i+(f32)previous[2]);
+            components[3]=(u8)(s32)(d3*(f32)i+(f32)previous[3]);
             u32 interpolated=((u32)components[0]<<24)|((u32)components[1]<<16)|((u32)components[2]<<8)|components[3];
             ((u32*)data->reserved64)[position+i]=flcalcMultiTransformColor(data->colorTransform,interpolated);
         }
-        memcpy(&oldColor,&gradient->stops[stop].color,4);
+        memcpy(&oldColor,&((VecGradient*)data->gradient)->stops[stop].color,4);
         position+=length;
     }
     memcpy(&oldColor,&((u32*)data->reserved64)[position-1],4);
     for(;position<256;++position)memcpy(&((u32*)data->reserved64)[position],&oldColor,4);
 }
-static void vecGradientStops(VEC_GRAPH_DATA* data) {
-    VecGradient* gradient=(VecGradient*)data->gradient;
+static inline void vecGradientStops(VEC_GRAPH_DATA* data) {
     if(data->scale==0.0f)data->scale=1.0f;
-    for(s16 i=0;i<gradient->count;++i) {
-        f32 distance=(f32)(gradient->stops[i].ratio-128);
+    for(s16 i=0;i<((VecGradient*)data->gradient)->count;++i) {
+        f32 distance=(f32)(((VecGradient*)data->gradient)->stops[i].ratio-128);
         getCrossPoint(i,data->originX+(s16)(distance*data->scale+128.0f),-256,512,data->originX+128,128,data);
     }
     vecGradientPalette(data);

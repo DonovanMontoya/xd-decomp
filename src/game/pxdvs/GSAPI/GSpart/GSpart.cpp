@@ -409,11 +409,14 @@ s32 GSpartSetAnimIndex(GSpart* part, s32 index, s32 mode, f32 frame) {
 void GSpartStopAnimIndex(GSpart* part, s32 index) {
     GSmodel* model = part->model;
     if (index >= 0) {
-        if (index >= 8) return;
-        GSmodelPartAnimation* slot = &model->partAnimations[index];
-        if (slot->animation) {
-            slot->animation = 0;
-            model->partAnimations[GSpartSetAnimIndex(part, 0, 1, 0.0f)].animation = 0;
+        if (index < 8) {
+            if (model->partAnimations[index].animation) {
+                model->partAnimations[index].animation = 0;
+                s32 newIndex = GSpartSetAnimIndex(part, 0, 1, 0.0f);
+                model->partAnimations[newIndex].animation = 0;
+            }
+        } else {
+            return;
         }
     }
 }

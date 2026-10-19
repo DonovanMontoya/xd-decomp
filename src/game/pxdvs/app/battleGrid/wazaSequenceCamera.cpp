@@ -35,7 +35,8 @@ void _wazaSequenceCameraDoPosition(ModelSequence *sequence, wazaSequenceCameraPa
         f32 height;
         f32 side;
         f32 duration;
-        duration = record->time[record->index] * speed;
+        duration = record->time[record->index];
+        duration *= speed;
         side = 10.0f * HSD_Randf() + 25.0f;
         height = 9.0f * HSD_Randf() + 1.0f;
         distance = 30.0f * HSD_Randf() + 20.0f;
@@ -46,9 +47,9 @@ void _wazaSequenceCameraDoPosition(ModelSequence *sequence, wazaSequenceCameraPa
         GSvec position;
         cameraGetPosition(&position);
         if (flip) {
-            position.param1 = position.param1 + 10.0f;
+            position.param1 += 10.0f;
         } else {
-            position.param1 = position.param1 - 10.0f;
+            position.param1 -= 10.0f;
         }
         cameraSetPosition(&position);
         if (flip) {
@@ -65,23 +66,21 @@ void _wazaSequenceCameraDoPosition(ModelSequence *sequence, wazaSequenceCameraPa
         break;
     }
     case 2: {
-        f32 duration = record->time[record->index] * speed;
-        f32 sample1 = HSD_Randf();
-        f32 distance = sample1 * (params->distanceMax - params->distanceMin) + params->distanceMin;
-        f32 sample2 = HSD_Randf();
-        f32 height = sample2 * (params->heightMax - params->heightMin) + params->heightMin;
-        f32 rotationStart;
+        f32 duration;
+        f32 distance;
+        f32 height;
         f32 rotationEnd;
+        f32 rotationStart;
+        duration = record->time[record->index];
+        duration *= speed;
+        { f32 rnd = HSD_Randf(); f32 lo = params->distanceMin; f32 diff = params->distanceMax - lo; distance = diff * rnd + lo; }
+        { f32 rnd = HSD_Randf(); f32 lo = params->heightMin; f32 diff = params->heightMax - lo; height = diff * rnd + lo; }
         if (flip) {
-            f32 sample3 = HSD_Randf();
-            rotationStart = (params->baseRotation - params->rotationA) - sample3 * (params->rotationB - params->rotationA);
-            f32 sample4 = HSD_Randf();
-            rotationEnd = (params->baseRotation - params->rotationA) - sample4 * (params->rotationB - params->rotationA);
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationStart = (params->baseRotation - a) - diff * rnd; }
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationEnd = (params->baseRotation - a) - diff * rnd; }
         } else {
-            f32 sample5 = HSD_Randf();
-            rotationStart = sample5 * (params->rotationB - params->rotationA) + (params->baseRotation + params->rotationA);
-            f32 sample6 = HSD_Randf();
-            rotationEnd = sample6 * (params->rotationB - params->rotationA) + (params->baseRotation + params->rotationA);
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationStart = diff * rnd + (params->baseRotation + a); }
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationEnd = diff * rnd + (params->baseRotation + a); }
         }
         if (rotationStart > rotationEnd) {
             f32 swap = rotationStart;
@@ -101,18 +100,17 @@ void _wazaSequenceCameraDoPosition(ModelSequence *sequence, wazaSequenceCameraPa
         break;
     }
     case 3: {
-        f32 duration = record->time[record->index] * speed;
-        f32 sample7 = HSD_Randf();
-        f32 distance = sample7 * (params->distanceMax - params->distanceMin) + params->distanceMin;
-        f32 sample8 = HSD_Randf();
-        f32 height = sample8 * (params->heightMax - params->heightMin) + params->heightMin;
+        f32 duration = record->time[record->index];
+        duration *= speed;
+        f32 distance;
+        { f32 rnd = HSD_Randf(); f32 lo = params->distanceMin; f32 diff = params->distanceMax - lo; distance = diff * rnd + lo; }
+        f32 height;
+        { f32 rnd = HSD_Randf(); f32 lo = params->heightMin; f32 diff = params->heightMax - lo; height = diff * rnd + lo; }
         f32 rotation;
         if (flip) {
-            f32 sample9 = HSD_Randf();
-            rotation = (params->baseRotation - params->rotationA) - sample9 * (params->rotationB - params->rotationA);
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotation = (params->baseRotation - a) - diff * rnd; }
         } else {
-            f32 sample10 = HSD_Randf();
-            rotation = sample10 * (params->rotationB - params->rotationA) + (params->baseRotation + params->rotationA);
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotation = diff * rnd + (params->baseRotation + a); }
         }
         cameraSetDistance(1.25f * distance);
         cameraSetHeight(height);
@@ -154,10 +152,11 @@ void _wazaSequenceCameraDoPosition(ModelSequence *sequence, wazaSequenceCameraPa
         break;
     }
     case 5: {
-        f32 duration = record->time[record->index] * speed;
+        f32 duration = record->time[record->index];
+        duration *= speed;
         f32 distance = 50.0f * cameraSizeScale(sequence->modelSize);
-        f32 sample11 = HSD_Randf();
-        f32 height = sample11 * (params->heightMax - params->heightMin) + params->heightMin;
+        f32 height;
+        { f32 rnd = HSD_Randf(); f32 lo = params->heightMin; f32 diff = params->heightMax - lo; height = diff * rnd + lo; }
         f32 rotation;
         if (flip) {
             rotation = params->baseRotation - 0.7853982f;

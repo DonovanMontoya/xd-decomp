@@ -1,7 +1,7 @@
 #include <game/maximum/GSAPI/baselib/objalloc.h>
 
 extern void* HSD_Alloc(unsigned int);
-extern void HSD_Free(void*, unsigned int);
+extern void HSD_Free(void*);
 extern unsigned int HSD_GetNbBits(unsigned int);
 extern void __assert(const char*, int, const char*);
 extern void* memset(void*, int, unsigned int);
@@ -57,7 +57,7 @@ void HSD_ObjFree(HSD_ObjAllocData* data, void* object)
 {
     unsigned int used = data->used;
     data->used = used - 1;
-    HSD_Free(object, used);
+    HSD_Free(object);
 }
 
 void* HSD_ObjAlloc(HSD_ObjAllocData* data)

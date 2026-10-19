@@ -243,7 +243,8 @@ extern bool _peConvertFileData(_gpdHeader*,_gpdResourceItem*,_particleData*,cons
 extern "C" _gpdHeader* peBankLoadFile(_gpdHeader* source) {
     _gpdHeader* file = source;
     _gpdResourceItem* items = (_gpdResourceItem*)(file + 1);
-    if (_peConvertFileData(source,items,(_particleData*)(items+file->count),(const char*)file)) return file;
+    _particleData* records = (_particleData*)(items + file->count);
+    if (_peConvertFileData(source,items,records,(const char*)file)) return file;
     return 0;
 }
 

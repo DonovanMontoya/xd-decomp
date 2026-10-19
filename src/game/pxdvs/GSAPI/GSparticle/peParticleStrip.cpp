@@ -1,4 +1,5 @@
 #include <game/pxdvs/GSAPI/GSparticle/peParticleStripPrivate.hpp>
+#include <dolphin/os/OSFastCast.h>
 static inline f32 emitterFloat(peEmitterNode *owner,u32 offset) {return *(f32*)((u8*)owner->emitter+offset);}
 static inline u32 &layerWord(u32 offset) {return *(u32*)((u8*)g_current_layer+offset);}
 static inline u8 byte(f32 value) {if(value<0)return 0;if(value>255)return 255;return (u8)value;}
@@ -6,18 +7,19 @@ static inline s16 shortValue(f32 value) {if(value<-32768)return -32768;if(value>
 static inline f32 spline(ShapeSpline *s,f32 t) {if(!s||!(s->flags&3))return 1;f32 d=s->time-t;if(d<0)d=-d;return d<=0.00001f?s->value:peSplineGetValue(s,t);}
 void peParticleStripContainer::RearrangeIndices() {
  if(active) {
-  s16 output=0,ordinal=0;u16 total=count;u32 flags=definition->flags;u32 extended=(flags>>18)&1;
+  u16 output=0,ordinal=0;u16 total=count;u32 flags=definition->flags;u32 extended=(flags>>18)&1;
   if(total>=2) {
-   f32 step=(flags&0x10000)?1.0f/(f32)(s16)(total-1):emitterFloat(owner,8);
+   u16 lastIndex;f32 step;if(flags&0x10000){lastIndex=total-1;step=1.0f/__OSu16tof32(&lastIndex);}else step=emitterFloat(owner,8);
+   u32 mirror=(flags>>15)&1;u32 reverse=(flags>>17)&1;
    u8 vertexStride=extended?12:11,indexStep=extended?8:6,dataStride=extended?0x30:0x2c;
    GSgfxDL *list=&displayLists[swapIndex];peParticleStripNode *node=(peParticleStripNode*)nodes;
    while(node) {
     node->sortIndex=output;u16 base=node->index*vertexStride;f32 *data=(f32*)(renderData[swapIndex]+node->index*dataStride);
-    u16 *indices=(u16*)((list->flags&1)?list->data+3:0);indices+=((u16)output);
+    u16 *indices=(u16*)((list->flags&1)?list->data+3:0);indices+=output;
     if(extended) {for(u16 j=0;j<2;++j){indices[0]=base+j*3;indices[1]=base;indices[2]=base;indices[3]=base+j*2;indices+=4;}}
     else {for(u16 j=0;j<2;++j){indices[0]=base+j*3;indices[1]=base;indices[2]=base+j*2;indices+=3;}}
-    f32 value=(flags&0x20000)?(f32)(s16)(count-ordinal-1):(f32)ordinal;
-    if(flags&0x8000)data[9]=data[7]=-((value*step)-1.0f);else data[9]=data[7]=value*step;
+    f32 value;if(reverse){u16 flipped=count-ordinal-1;value=__OSu16tof32(&flipped);}else value=__OSu16tof32(&ordinal);
+    if(mirror)data[9]=data[7]=-((value*step)-1.0f);else data[9]=data[7]=value*step;
     output+=indexStep;++ordinal;data[8]=definition->v0;data[10]=definition->v1;node=(peParticleStripNode*)node->next;
    }list->flags|=2;
   }
@@ -67,16 +69,18 @@ void peParticleStripContainer::Update(f32 dt) {
  }
 }
 u16 peParticleStripContainer::Emit(u16 requested) {
- if(!active)return 0;u16 created=CreateNodes(requested),left=created;_EmitParams *params=g_emitParams;peParticleStripNode *node=(peParticleStripNode*)nodes;
- while(left){peParticleStripNode *next=(peParticleStripNode*)node->next;s16 ordinal=(*(u16*)((u8*)owner+0x4a)+created)-left;_peParticleStrip *d=definition;GSgfxDL *list=&displayLists[swapIndex];f32 progress=emitterFloat(owner,8)*(f32)ordinal;
-  if((list->flags&1)==1){node->peNode::Start(owner,params);Vec segment;
-   if(d->flags&0x2000000)PSVECScale(&d->direction,&segment,10.0f*(progress*d->speedRange+d->speedMin));else PSVECScale(&d->direction,&segment,10.0f*(d->speedRange*HSD_Randf()+d->speedMin));node->segment=segment;list->flags|=2;
+ if(!active)return 0;u16 left=CreateNodes(requested);u16 result=left;u16 created=left;_EmitParams *params=g_emitParams;peParticleStripNode *node=(peParticleStripNode*)nodes;
+ while(left){peParticleStripNode *next=(peParticleStripNode*)node->next;u16 ordinal=(*(u16*)((u8*)owner+0x4a)+created)-left;_peParticleStrip *d=definition;GSgfxDL *list=&displayLists[swapIndex];f32 progress=emitterFloat(owner,8)*__OSu16tof32(&ordinal);
+  if((list->flags&1)==1){node->peNode::Start(owner,params);
+   if(d->flags&0x2000000){Vec segment;PSVECScale(&d->direction,&segment,10.0f*(progress*d->speedRange+d->speedMin));node->segment=segment;}
+   else{Vec segment;PSVECScale(&d->direction,&segment,10.0f*(d->speedRange*HSD_Randf()+d->speedMin));node->segment=segment;}
+   list->flags|=2;
   }node=next;--left;++params;
- }return created;
+ }return result;
 }
 void peParticleStripContainer::Start() {
  if(!active){active=1;u32 flags=definition->flags;InitSwap();if(flags&0x400000)SetLayerVisibility((GSgfxLayerID)1,true);if(flags&0x800000)SetLayerVisibility((GSgfxLayerID)3,true);if(flags&0x1000000)SetLayerVisibility((GSgfxLayerID)5,true);
-  if((flags&0xc00)==0xc00)frame=byte((f32)(s16)((StripAnimation*)definition->texture)->count*HSD_Randf());else frame=0;remaining=emitterFloat(owner,0x28);
+  if((flags&0xc00)==0xc00){u16 frames;frames=((StripAnimation*)definition->texture)->count;f32 scaled=__OSu16tof32(&frames)*HSD_Randf();frame=__OSf32tou8(scaled);}else frame=0;remaining=emitterFloat(owner,0x28);
  }
 }
 peParticleStripContainer::~peParticleStripContainer(){g_particle_debug_stats.node-=0x60;g_particle_debug_stats.total-=0x60;}
@@ -84,12 +88,12 @@ peParticleStripContainer::peParticleStripContainer(peEmitterNode *emitter,_pePar
  definition=d;frame=0xff;peParticleStripNode *node=(peParticleStripNode*)freeNodes;s16 index=0;while(node){node->index=index;node->sortIndex=index;++index;node=(peParticleStripNode*)node->next;}g_particle_debug_stats.node+=0x60;g_particle_debug_stats.total+=0x60;
 }
 void peParticleStripNode::UpdateRenderData(peEmitterNode *emitter,_peParticleStrip *d,char *data,f32 progress) {
- Mtx matrix;ShapeTransform *parent=(ShapeTransform*)transform;Vec world,segment;
+ u32 flags=d->flags;u32 extended=(flags>>18)&1;Mtx matrix;Mtx segmentMatrix;ShapeTransform *parent=(ShapeTransform*)transform;Vec world,segment;
  world.x=position.x*parent->scale.x;world.y=position.y*parent->scale.y;world.z=position.z*parent->scale.z;PSMTXQuat(matrix,&parent->rotation);PSMTXMultVecSR(matrix,&world,&world);PSVECAdd(&world,&parent->position,&world);
- u32 flags=d->flags;char *out=data+index*((flags&0x40000)?0x30:0x2c);
- segment.x=this->segment.x*parent->scale.x;segment.y=this->segment.y*parent->scale.y;segment.z=this->segment.z*parent->scale.z;PSMTXQuat(matrix,&parent->rotation);PSMTXMultVecSR(matrix,&segment,&segment);
+ char *out;if(extended)out=data+index*0x30;else out=data+index*0x2c;
+ segment.x=this->segment.x*parent->scale.x;segment.y=this->segment.y*parent->scale.y;segment.z=this->segment.z*parent->scale.z;PSMTXQuat(segmentMatrix,&parent->rotation);PSMTXMultVecSR(segmentMatrix,&segment,&segment);
  if(flags&0x4000){Vec half;PSVECScale(&segment,&half,0.5f);PSVECSubtract(&world,&half,&world);}
  *(Vec*)out=world;if(g_currentBound)GSboundAddPoint(g_currentBound,world.x,world.y,world.z);PSVECAdd(&world,&segment,&world);*(Vec*)(out+0xc)=world;if(g_currentBound)GSboundAddPoint(g_currentBound,world.x,world.y,world.z);
- u8 color[4];peColorSplineGetValue(color,d->colorSpline,progress);color[0]=byte((f32)color[0]*emitter->color[0]);color[1]=byte((f32)color[1]*emitter->color[1]);color[2]=byte((f32)color[2]*emitter->color[2]);color[3]=byte((255.0f*emitter->color[3])*spline(d->alphaSpline,progress));*(u32*)(out+0x18)=*(u32*)color;
- if(flags&0x40000){peColorSplineGetValue(color,d->secondColorSpline,progress);*(u32*)(out+0x2c)=*(u32*)color;}
+ u8 color[4];peColorSplineGetValue(color,d->colorSpline,progress);color[2]=__OSf32tou8(__OSu8tof32(&color[2])*emitter->color[2]);color[1]=__OSf32tou8(__OSu8tof32(&color[1])*emitter->color[1]);color[0]=__OSf32tou8(__OSu8tof32(&color[0])*emitter->color[0]);color[3]=__OSf32tou8((255.0f*emitter->color[3])*spline(d->alphaSpline,progress));*(u32*)(out+0x18)=*(u32*)color;
+ if(extended){peColorSplineGetValue(color,d->secondColorSpline,progress);*(u32*)(out+0x2c)=*(u32*)color;}
 }

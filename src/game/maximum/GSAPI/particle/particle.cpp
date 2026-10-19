@@ -184,23 +184,17 @@ while (var_r6 != NULL) {
     return var_r5;
 }
 
-u16 psGetGeneratorChildMaxLife(PSGenerator *arg0) {
-    PSGenerator *var_r6;
-    u16 temp_r0;
-    u16 var_r5;
-
-    var_r5 = arg0->life;
-    var_r6 = activeGenerator;
-while (var_r6 != NULL) {
-        if ((u16) var_r6->id == (u16) arg0->id) {
-            temp_r0 = var_r6->life;
-            if (temp_r0 > var_r5) {
-                var_r5 = temp_r0;
+u32 psGetGeneratorChildMaxLife(PSGenerator *arg0) {
+    u32 life = arg0->life;
+    PSGenerator *g;
+    for (g = activeGenerator; g != NULL; g = g->next) {
+        if (g->id == arg0->id) {
+            if (g->life > life) {
+                life = g->life;
             }
         }
-        var_r6 = var_r6->next;
-}
-    return var_r5;
+    }
+    return life;
 }
 
 void psKillGeneratorChild(PSGenerator *arg0) {

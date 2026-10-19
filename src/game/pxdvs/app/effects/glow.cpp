@@ -1,5 +1,6 @@
 #include <game/pxdvs/app/effects/glowPrivate.hpp>
 #include <libc/string.h>
+#include <dolphin/os/OSFastCast.h>
 void operator delete(void*);
 s32 glowEffect::texture_layer_id=-1;
 u16 glowEffect::token;
@@ -15,7 +16,7 @@ void Remove__16GSgfxLayerConfigF12GSgfxLayerID(s32);
 void tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(GSgfxLayer*,u8,s32,s32,Mtx,bool,Mtx);
 void cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(GSgfxLayer*,u8,s32,s32,s32,u32,void**,s32,s32);
 }
-static inline u8 glowAlpha(f32 value){if(value<0.0f)return 0;if(value>255.0f)return 255;return (u8)value;}
+static inline u8 glowAlpha(f32 value){return __OSf32tou8(value);}
 glowEffect::~glowEffect(){
     Stop();
     if(layer_reference && --layer_reference==0){
@@ -146,9 +147,9 @@ void glowEffect::_renderOffset(GSgfxLayer *arg1) {
     f32 weights[2]={0.24197073f,0.053990968f};
     u8 alpha,diagonalAlpha;
     u8 sp13;
-    s8 sp12;
-    s8 sp11;
-    s8 sp10;
+    u8 sp12;
+    u8 sp11;
+    u8 sp10;
     f32 temp_f0;
     f32 temp_f11;
     f32 temp_f12;
@@ -182,7 +183,7 @@ void glowEffect::_renderOffset(GSgfxLayer *arg1) {
     GSgfxLayer *temp_r7;
 
     sp13 = radius;
-    temp_f1 = (f32)(u8)radius;
+    temp_f1 = __OSu8tof32(&sp13);
     temp_f29 = 0.25f * temp_f1;
     arg1->unk199C = GSgfxVFBuildTemp(0,2,0,0,1,5,4,1,4);
     arg1->unkDB8 = 1;
@@ -202,8 +203,8 @@ void glowEffect::_renderOffset(GSgfxLayer *arg1) {
     arg1->unk16A8 = (s32) (arg1->unk16A8 | 8);
     arg1->unk1784 = (s32) (arg1->unk1784 | 1);
     arg1->unk1760 = (s32) (arg1->unk1760 | 8);
-loop_16:
-    if (var_r30 < 4U) {
+
+    while (var_r30 < 4U) {
         temp_r31 = var_r30;
         tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(arg1, var_r30, 1, temp_r31 + 4, 0, 0, 0);
         var_r3 = 0;
@@ -277,7 +278,7 @@ loop_16:
         arg1->unk16A8 = (s32) (arg1->unk16A8 | 8);
         arg1->unk1788 = (s32) (arg1->unk1788 | temp_r0);
         arg1->unk1760 = (s32) (arg1->unk1760 | 8);
-        goto loop_16;
+
     }
     temp_r5 = count;
     arg1->beginSurface((u16) (temp_r5 * 4 * (temp_r5 + 1)));
@@ -287,8 +288,8 @@ loop_22:
         temp_r0_2 = var_r10 + 1;
         sp12 = temp_r0_2;
         sp11 = temp_r0_2;
-        temp_f0 = 0.0015625f * (temp_f29 * (f32)(u8)sp12);
-        temp_f6 = 0.0020833334f * (temp_f29 * (f32)(u8)sp11);
+        temp_f0 = 0.0015625f * (temp_f29 * __OSu8tof32(&sp12));
+        temp_f6 = 0.0020833334f * (temp_f29 * __OSu8tof32(&sp11));
         alpha=glowAlpha(0.25f*(255.0f*(strength*weights[var_r10]))+0.5f);
         temp_f13 = -temp_f0;
         *(volatile s16 *)0xCC008000 = 0;
@@ -360,7 +361,7 @@ loop_20:
             *(volatile s16 *)0xCC008000 = 0;
             *(volatile s16 *)0xCC008000 = 0;
             *(volatile u8 *)0xCC008000 = 0xFF;
-            temp_f5_2 = 0.0020833334f * (temp_f29 * (f32)(u8)sp10);
+            temp_f5_2 = 0.0020833334f * (temp_f29 * __OSu8tof32(&sp10));
             *(volatile u8 *)0xCC008000 = 0xFF;
             temp_f2_3 = -temp_f5_2;
             *(volatile u8 *)0xCC008000 = 0xFF;
@@ -427,11 +428,11 @@ loop_20:
 }
 
 void glowEffect::_renderScale(GSgfxLayer *arg1) {
-    f32 weights[4]={0.17603268f,0.12098537f,0.0647588f,0.026995484f};
+    f32 weights[4];
     u8 alpha;
     u8 sp12;
-    s8 sp11;
-    s8 sp10;
+    u8 sp11;
+    u8 sp10;
     f32 temp_f10;
     f32 temp_f1;
     f32 temp_f2;
@@ -458,8 +459,9 @@ void glowEffect::_renderScale(GSgfxLayer *arg1) {
     GSgfxLayer *temp_r6;
     GSgfxLayer *temp_r7;
 
+    weights[0]=0.17603268f;weights[1]=0.12098537f;weights[2]=0.0647588f;weights[3]=0.026995484f;
     sp12 = radius;
-    temp_f1 = (f32)(u8)radius;
+    temp_f1 = __OSu8tof32(&sp12);
     temp_f31 = 0.25f * temp_f1;
     arg1->unk199C = GSgfxVFBuildTemp(0,2,0,0,1,5,2,1,4);
     arg1->unkDB8 = 1;
@@ -479,8 +481,8 @@ void glowEffect::_renderScale(GSgfxLayer *arg1) {
     arg1->unk16A8 = (s32) (arg1->unk16A8 | 8);
     arg1->unk1784 = (s32) (arg1->unk1784 | 1);
     arg1->unk1760 = (s32) (arg1->unk1760 | 8);
-loop_16:
-    if (var_r30 < 2U) {
+
+    while (var_r30 < 2U) {
         temp_r31 = var_r30;
         tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(arg1, var_r30, 1, temp_r31 + 4, 0, 0, 0);
         var_r3 = 0;
@@ -554,7 +556,7 @@ loop_16:
         arg1->unk16A8 = (s32) (arg1->unk16A8 | 8);
         arg1->unk1788 = (s32) (arg1->unk1788 | temp_r0);
         arg1->unk1760 = (s32) (arg1->unk1760 | 8);
-        goto loop_16;
+
     }
     arg1->beginSurface((count * 8) & 0xFFF8);
     var_r9 = 0;
@@ -563,8 +565,8 @@ loop_19:
         temp_r0_2 = var_r9 + 1;
         sp11 = temp_r0_2;
         sp10 = temp_r0_2;
-        temp_f10 = 0.0015625f * (temp_f31 * (f32)(u8)sp11);
-        temp_f9 = 0.0020833334f * (temp_f31 * (f32)(u8)sp10);
+        temp_f10 = 0.0015625f * (temp_f31 * __OSu8tof32(&sp11));
+        temp_f9 = 0.0020833334f * (temp_f31 * __OSu8tof32(&sp10));
         alpha=glowAlpha(255.0f*(strength*weights[var_r9])+0.5f);
         temp_f8 = -temp_f10;
         *(volatile s16 *)0xCC008000 = 0;

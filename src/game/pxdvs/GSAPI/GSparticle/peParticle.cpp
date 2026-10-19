@@ -1,4 +1,8 @@
 #include <game/pxdvs/GSAPI/GSparticle/peParticlePrivate.hpp>
+#include <dolphin/os/OSFastCast.h>
+extern "C" f32 HSD_Randf();
+extern "C" GSgfxVF g_vertex_format,g_ext_vertex_format;
+extern "C" void DCFlushRange(void*,u32);
 static inline void invalidateParticle(peParticleNode* node,u32 flags,GSgfxDL* list) {
     u16* indices;
     u32 extended=(flags>>25)&1;
@@ -177,4 +181,61 @@ void peParticleContainer::Update(f32 time) {
         }
         DepthSort();
     }
+}
+
+void peParticleNode::Start(peEmitterNode* emitter,_peParticle* definition,GSgfxDL* list,_EmitParams* params) {
+    u32 flags=definition->flags;
+    u32 extended=(flags>>25)&1;
+    if((list->flags&1)==1) {
+        peNode::Start(emitter,params);
+        reserved35=0;
+        live=1;
+        f32 random=HSD_Randf();
+        width=definition->rangeX*random;
+        height=definition->rangeY*random;
+        width=width+definition->sizeX;
+        height=height+definition->sizeY;
+        if(flags&0x40)rotation=6.2831855f*HSD_Randf();
+        else rotation=0.0f;
+        if((flags&0x20)&&HSD_Randf()<0.5f)reserved35|=1;
+        angle=definition->angle;
+        angularSpeed=definition->angularRange*HSD_Randf()+definition->angularMin;
+        if((flags&0x300000)==0x300000) {
+            u16 frames=*(u32*)definition->texture;
+            f32 scaled=__OSu16tof32(&frames)*HSD_Randf();
+            texture=__OSf32tou8(scaled);
+        } else texture=0;
+        u16 slot=(u16)(sortIndex<<2);
+        u16 vertex=index*(u8)((extended!=0)+13);
+        u16* indices=(list->flags&1)?(u16*)(list->data+(slot*list->stride)+3):0;
+        u16 i=0;
+        if(extended) {
+            for(;i<4;++i){s16 uv=i*2;indices[0]=vertex+i*3;indices[1]=vertex;indices[2]=vertex;indices[3]=uv;indices+=4;}
+        } else {
+            for(;i<4;++i){s16 uv=i*2;indices[0]=vertex+i*3;indices[1]=vertex;indices[2]=uv;indices+=3;}
+        }
+        list->flags|=2;
+    }
+}
+
+peParticleContainer::peParticleContainer(peEmitterNode* emitter,_peParticle* definition,u16 maximum):peRenderContainer(emitter,0x50,maximum,(definition->flags&0x2000000)?&g_ext_vertex_format:&g_vertex_format,(GSgfxPrimType)0x80,4,(definition->flags&0x2000000)?0x38:0x34,(definition->flags>>26)&1) {
+    sorted=0;
+    particle=definition;
+    _peParticle* texture=particle;
+    s16 sv0,sv1,sv2,sv3;
+    sv0=texture->u0;
+    sv1=texture->v0;
+    f32 fu0=__OSs16tof32(&sv0)/1024.0f;
+    f32 fv0=__OSs16tof32(&sv1)/1024.0f;
+    sv2=texture->u1;
+    f32 fu1=__OSs16tof32(&sv2)/1024.0f;
+    sv3=texture->v1;
+    f32 fv1=__OSs16tof32(&sv3)/1024.0f;
+    uv[0]=fu1;uv[1]=fv1;uv[2]=fu0;uv[3]=fv1;uv[4]=fu0;uv[5]=fv0;uv[6]=fu1;uv[7]=fv0;
+    DCFlushRange(uv,0x20);
+    if(particle->flags&0x80000)sorted=(peParticleNode**)new peParticleNode*[maximum];
+    peParticleNode* node=(peParticleNode*)freeNodes;
+    u16 slot=0;
+    while(node){node->index=slot;node->sortIndex=slot;if(sorted)sorted[slot]=node;node=(peParticleNode*)node->next;++slot;}
+    g_particle_debug_stats.node+=0x7c;g_particle_debug_stats.total+=0x7c;
 }

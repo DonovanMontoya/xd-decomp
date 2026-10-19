@@ -374,13 +374,13 @@ s32 heroMoveSetNeckMode(s32 member, s32 mode) {
         return 0;
     }
     getResID(&group, &res, (HEROMOVE_MEMBER)member);
-    m = (HeroMoveMember*)((u8*)&HeroMove + (member << 5));
-    if (m->neckMode != 1) {
-    } else {
+    m = &HeroMove.members[member];
+    switch (m->neckMode) {
+    case 1:
         peopleRemoveNeckTarget(group, res, 1.0f);
     }
-    if (mode != 1) {
-    } else {
+    switch (mode) {
+    case 1:
         peopleSetNeckTargetHero(group, res);
     }
     m->neckMode = mode;
@@ -723,8 +723,9 @@ static f32 moveLeaderPosition(HEROMOVE_MEMBER member) {
     unsigned long group;
     unsigned long res;
     u8 rate = GSgfxVideoGetVsyncRate();
+    f32 rateF = (f32)rate;
     f32 frameTime = (f32)timeGetLastFrameTime(rate);
-    f32 step = (30.0f * frameTime) / rate;
+    f32 step = (30.0f * frameTime) / rateF;
     f32 dist;
     getPos(&prev, member);
     updateLeaderMovement(member, &move);

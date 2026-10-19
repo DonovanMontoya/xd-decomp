@@ -105,14 +105,16 @@ void GSgfxPerfbarCPUStart__Fv(void)
 
 s32 GSgfxPerfbarGPUEntry__FUl(u32 color)
 {
-    if (*(u32 *)(_perfCurFrame + 0x201C) >= 0x40) return 0;
+    u32 index = *(u32 *)(_perfCurFrame + 0x201C);
+    if (index >= 0x40) return 0;
     u32 previous;
-    if (*(u32 *)(_perfCurFrame + 0x201C) == 0) previous = 0xFFFF;
-    else previous = *(u32 *)(_perfCurFrame + 0x211C + *(u32 *)(_perfCurFrame + 0x201C) * 4);
+    if (*(u32 *)(_perfCurFrame + 0xC) == 0) previous = 0xFFFF;
+    else previous = *(u32 *)(_perfCurFrame + 0x211C + index * 4);
     s64 now = OSGetTime();
-    *(f32 *)(_perfCurFrame + 0x2020 + *(u32 *)(_perfCurFrame + 0x201C) * 4) =
-        (f32)(__cvt_sll_flt(now - *(s64 *)(_perfCurFrame + 0x2010)) /
-              (f32)(*(volatile u32 *)0x800000F8 / 240));
+    f32 elapsed = __cvt_sll_flt(now - *(s64 *)(_perfCurFrame + 0x2010));
+    ((f32 *)(_perfCurFrame + 0x2020))[*(u32 *)(_perfCurFrame + 0x201C)] =
+        elapsed /
+        (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
     *(u32 *)(_perfCurFrame + 0x2120 + *(u32 *)(_perfCurFrame + 0x201C) * 4) = color;
     *(u32 *)(_perfCurFrame + 0x201C) += 1;
     return previous;
@@ -120,14 +122,16 @@ s32 GSgfxPerfbarGPUEntry__FUl(u32 color)
 
 s32 GSgfxPerfbarCPUEntry(s32 color)
 {
-    if (*(u32 *)(_perfCurFrame + 0xC) >= 0x400) return 0;
+    u32 index = *(u32 *)(_perfCurFrame + 0xC);
+    if (index >= 0x400) return 0;
     u32 previous;
     if (*(u32 *)(_perfCurFrame + 0xC) == 0) previous = 0xFFFFFF;
-    else previous = *(u32 *)(_perfCurFrame + 0x1010 + *(u32 *)(_perfCurFrame + 0xC) * 4);
+    else previous = *(u32 *)(_perfCurFrame + 0x100C + index * 4);
     s64 now = OSGetTime();
-    *(f32 *)(_perfCurFrame + 0x10 + *(u32 *)(_perfCurFrame + 0xC) * 4) =
-        __cvt_sll_flt(now - *(s64 *)_perfCurFrame) /
-        (f32)(*(volatile u32 *)0x800000F8 / 240);
+    f32 elapsed = __cvt_sll_flt(now - *(s64 *)_perfCurFrame);
+    ((f32 *)(_perfCurFrame + 0x10))[*(u32 *)(_perfCurFrame + 0xC)] =
+        elapsed /
+        (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
     *(u32 *)(_perfCurFrame + 0x1010 + *(u32 *)(_perfCurFrame + 0xC) * 4) = color;
     *(u32 *)(_perfCurFrame + 0xC) += 1;
     return previous;
@@ -138,14 +142,14 @@ void GSgfxPerfbarGPUEnd__Fv(void)
     if (*(u32 *)(_perfCurFrame + 0x201C) < 0x40) {
         s64 now = OSGetTime();
         f32 elapsed = __cvt_sll_flt(now - *(s64 *)(_perfCurFrame + 0x2010));
-        *(f32 *)(_perfCurFrame + 0x2020 + *(u32 *)(_perfCurFrame + 0x201C) * 4) =
-            elapsed / (f32)(*(volatile u32 *)0x800000F8 / 240);
+        ((f32 *)(_perfCurFrame + 0x2020))[*(u32 *)(_perfCurFrame + 0x201C)] =
+            elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
         *(u32 *)(_perfCurFrame + 0x2120 + *(u32 *)(_perfCurFrame + 0x201C) * 4) = 0;
         *(u32 *)(_perfCurFrame + 0x201C) += 1;
     }
     s64 now = OSGetTime();
     f32 elapsed = __cvt_sll_flt(now - *(s64 *)(_perfCurFrame + 0x2010));
-    *(f32 *)(_perfCurFrame + 0x2018) = elapsed / (f32)(*(volatile u32 *)0x800000F8 / 240);
+    *(f32 *)(_perfCurFrame + 0x2018) = elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
     memcpy(_perfLastFrame + 0x2010, _perfCurFrame + 0x2010, 0x210);
     memset(_perfCurFrame + 0x2010, 0, 0x210);
 }
@@ -155,14 +159,14 @@ void GSgfxPerfbarCPUEnd__Fv(void)
     if (*(u32 *)(_perfCurFrame + 0xC) < 0x400) {
         s64 now = OSGetTime();
         f32 elapsed = __cvt_sll_flt(now - *(s64 *)_perfCurFrame);
-        *(f32 *)(_perfCurFrame + 0x10 + *(u32 *)(_perfCurFrame + 0xC) * 4) =
-            elapsed / (f32)(*(volatile u32 *)0x800000F8 / 240);
+        ((f32 *)(_perfCurFrame + 0x10))[*(u32 *)(_perfCurFrame + 0xC)] =
+            elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
         *(u32 *)(_perfCurFrame + 0x1010 + *(u32 *)(_perfCurFrame + 0xC) * 4) = 0;
         *(u32 *)(_perfCurFrame + 0xC) += 1;
     }
     s64 now = OSGetTime();
     f32 elapsed = __cvt_sll_flt(now - *(s64 *)_perfCurFrame);
-    *(f32 *)(_perfCurFrame + 8) = elapsed / (f32)(*(volatile u32 *)0x800000F8 / 240);
+    *(f32 *)(_perfCurFrame + 8) = elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
     memcpy(_perfLastFrame, _perfCurFrame, 0x2010);
     memset(_perfCurFrame, 0, 0x2010);
     _perfDListSize = 0;
@@ -420,7 +424,7 @@ void GSgfxPerfbarRender__FP10GSgfxLayer(GSgfxLayer *layer)
         _perfDListToken = tokenMark__10GSgfxLayerFv(layer);
     }
     s64 endTime = OSGetTime();
-    f32 drawTime = __cvt_sll_flt(endTime - startTime) / (f32)(*(volatile u32 *)0x800000F8 / 240);
+    f32 drawTime = __cvt_sll_flt(endTime - startTime) / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
     *(f32 *)(_perfLastFrame + 0x2220) = drawTime;
     *(f32 *)(_perfCurFrame + 0x2220) = drawTime;
 }

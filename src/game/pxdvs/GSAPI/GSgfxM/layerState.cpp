@@ -1,4 +1,5 @@
 #include "layer_private.h"
+#include <dolphin/os/OSFastCast.h>
 #include <game/pxdvs/GSAPI/GSgfxM/layerStatePrivate.hpp>
 static const LayerColor defaultColor={0x80808080};
 extern "C" {
@@ -1239,7 +1240,7 @@ loop_208:
                     fogProjection[3][2] = -1.0f;
                     fogProjection[3][3] = 0.0f;
                 }
-                u16 fogWidth = (u16)LAYER_STATE_FIELD(float, temp_r3_6, 8);
+                u16 fogWidth = __OSf32tou16(LAYER_STATE_FIELD(float, temp_r3_6, 8));
                 GXInitFogAdjTable(reinterpret_cast<GXFogAdjTable*>(temp_r31 + 0xA20), fogWidth, fogProjection);
             }
             if (LAYER_STATE_FIELD(s32, temp_r30, 0x64) & 0x200) {
@@ -1762,17 +1763,17 @@ __declspec(weak) void GSgfx_GCSetMatColor(s32 arg0, u32 *arg1) {
     u32 sp8;
     s32 off;
     s32 index;
-    u32 color;
     off = (arg0 - 4) * 5;
-    index = off + 0x4C2+1;
-    if (*arg1 != layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + index, 0) || reinterpret_cast<LayerMatDirtyRow*>(reinterpret_cast<u8*>(gsgfxState) + off)->dirty == 1) {
-        color = *arg1;
+    u8 *st = reinterpret_cast<u8*>(gsgfxState);
+    index = off + 0x4c3;
+    if (layerField<u32>(st, index) != *arg1 || reinterpret_cast<LayerMatDirtyRow*>(st + off)->dirty == 1) {
+        u32 color = *arg1;
         sp8 = color;
         *(volatile u8*)0xCC008000 = 0x10;
         *(volatile u16*)0xCC008000 = 0;
-        *(volatile u16*)0xCC008000 = (s16) ((arg0 & 1) + 0x100C);
+        *(volatile u16*)0xCC008000 = (s16) ((arg0 & 1) + 0x100c);
         *(volatile u32*)0xCC008000 = (layerField<u8>(&sp8,0) << 24) | (layerField<u8>(&sp8,1) << 16) | (layerField<u8>(&sp8,2) << 8) | layerField<u8>(&sp8,3);
-        layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + index, 0) = color;
+        layerField<u32>(st, index) = color;
         reinterpret_cast<LayerMatDirtyRow*>(reinterpret_cast<u8*>(gsgfxState) + off)->dirty = 0;
     }
 }
@@ -1781,15 +1782,15 @@ __declspec(weak) void GSgfx_GCSetAmbColor(s32 arg0, u32 *arg1) {
     u32 sp8;
     s32 off;
     s32 index;
-    u32 color;
+    u32 c0 = *arg1;
     off = (arg0 - 4) * 5;
-    index = off + 0x4B8+1;
-    if (*arg1 != layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + index, 0) || reinterpret_cast<LayerAmbDirtyRow*>(reinterpret_cast<u8*>(gsgfxState) + off)->dirty == 1) {
-        color = *arg1;
+    index = off + 0x4b9;
+    if (c0 != layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + index, 0) || reinterpret_cast<LayerAmbDirtyRow*>(reinterpret_cast<u8*>(gsgfxState) + off)->dirty == 1) {
+        u32 color = *arg1;
         sp8 = color;
         *(volatile u8*)0xCC008000 = 0x10;
         *(volatile u16*)0xCC008000 = 0;
-        *(volatile u16*)0xCC008000 = (s16) ((arg0 & 1) + 0x100A);
+        *(volatile u16*)0xCC008000 = (s16) ((arg0 & 1) + 0x100a);
         *(volatile u32*)0xCC008000 = (layerField<u8>(&sp8,0) << 24) | (layerField<u8>(&sp8,1) << 16) | (layerField<u8>(&sp8,2) << 8) | layerField<u8>(&sp8,3);
         layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + index, 0) = color;
         reinterpret_cast<LayerAmbDirtyRow*>(reinterpret_cast<u8*>(gsgfxState) + off)->dirty = 0;

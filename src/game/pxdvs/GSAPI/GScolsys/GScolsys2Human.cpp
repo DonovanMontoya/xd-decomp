@@ -3,7 +3,7 @@ static inline s32 getHuman(int index,GSCOLSYS2_HUMAN **out) {
     if(index<0 || index>=48) return 4;
     HumanFloor *floor=GScolsys2GetCurFloor();
     if(!floor) return 1;
-    GSCOLSYS2_HUMAN *human=(GSCOLSYS2_HUMAN *)((u8 *)floor+(index*20+0xa00));
+    GSCOLSYS2_HUMAN *human=&floor->humans[index];
     if(!(human->flags&1)) return 4;
     *out=human;
     return 0;

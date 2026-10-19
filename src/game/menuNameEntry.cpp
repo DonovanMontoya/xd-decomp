@@ -514,10 +514,10 @@ static s32 confirmName(u16 *name)
 static u8 backNameCursor(NAME_ENTRY_ARG *arg)
 {
     s32 cur = *arg->unk34;
-    s32 prev;
     if (cur <= 0) {
         return 0;
     }
+    s32 prev;
     prev = cur - 1;
     arg->unk18[prev] = 0;
     *arg->unk34 = prev;
@@ -724,9 +724,8 @@ s32 menuNameEntryOpen(int mode, int index)
             menuSetDisp(*p, 0);
         }
     }
-    int j;
     result = pushNameEntryFloor(mode, index, 1);
-    for (j = 0; j < 4; base++, j++) {
+    for (i = 0; i < 4; base++, i++) {
         if (menuIsCheck(*base) != 0) {
             menuSetDisp(*base, 1);
         }

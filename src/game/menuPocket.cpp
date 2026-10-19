@@ -330,7 +330,8 @@ u16 _getItemIDFromMenuPos(int tab, int pos) {
     u32 *ary;
     int found;
     int i;
-    ary = heroItemGetItemKindToItemAryPtr(Data.hero, TabTbl[tab].kind, &count, 0, 0, 0);
+    Hero *hero = Data.hero;
+    ary = heroItemGetItemKindToItemAryPtr(hero, TabTbl[tab].kind, &count, 0, 0, 0);
     found = -1;
     for (i = 0; i < count; i++, ary++) {
         if (itemCheckValid(ary) != 0) {
@@ -1256,10 +1257,7 @@ s32 menuPocket2PrintNumMenu(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
     for (j = 0; j < MenuPocket2Num[i].count - idx - 1; j++) {
         div *= 10;
     }
-    {
-        s32 digit = Data.num / div % 10;
-        msgctrlSetValue(0x34, digit);
-    }
+    msgctrlSetValue(0x34, Data.num / div % 10);
     GSmsgPrintRight(winSpriteGetLayerID(win, spr), 0, 0, spr->width, spr->height, -1, 0x4270);
     return 0;
 }
@@ -1297,7 +1295,7 @@ s32 menuPocket2PrintItemKind(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
             }
             off = Data.tabScroll + (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
         }
-        const PocketTab *tab2 = TabTbl + idx;
+        const PocketTab *tab2 = (const PocketTab *)((u8 *)TabTbl + idx * 32);
         msg2 = tab2->unk14;
         tw2 = GSmsgGetRect(msg2) >> 16;
         GSmsgPrint2(winSpriteGetLayerID(win, spr), (s32)off + (half - tw2 / 2), 0, -1, msg2);
@@ -1333,8 +1331,7 @@ s32 menuPocket2PrintItemList(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
             }
             off = Data.tabScroll + (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
         }
-        const PocketTab *tab = TabTbl + idx;
-        *(u32 *)&cursor2 = cursorBiosGetPos(tab->cursorId);
+        *(u32 *)&cursor2 = cursorBiosGetPos(((const PocketTab *)((u8 *)TabTbl + idx * 32))->cursorId);
         _printItemList((GSgfxLayerID)winSpriteGetLayerID(win, spr), (s32)off, idx, cursor2);
     }
     spriteClearScissor(winSpriteGetLayerID(win, spr));
@@ -1673,20 +1670,20 @@ s32 menuPocket2ActionCursor(tagWINDOW_WORK *win) {
     u16 key = windowGetKeyRepeat();
     int count = arg->count;
     CURSOR before = *(CURSOR *)&win->first;
-    s8 pos;
+    int pos;
     if ((key & 2) != 0) {
         pos = win->selected + 1;
         if (pos >= count) {
             pos = 0;
         }
-        win->selected = pos;
+        win->selected = (s8)pos;
     }
     if ((key & 1) != 0) {
         pos = win->selected - 1;
         if (pos < 0) {
             pos = count - 1;
         }
-        win->selected = pos;
+        win->selected = (s8)pos;
     }
     if (before.selected != win->selected || before.first != win->first) {
         menuSubCursorAnimeStart();
@@ -1879,14 +1876,13 @@ s32 menuPocket2DrawActionText(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
     const s32 ids[4] = { 0xE0, 0xDF, 0xDE, 0xDD };
     PocketActArg *arg = (PocketActArg *)win->parameters[0];
     int i = 0;
-    int index;
     for (; i < 4; i++) {
         if (spr->id == ids[i]) {
             break;
         }
     }
-    index = i - (4 - arg->count);
-    if (index < 0 || index >= arg->count) {
+    i -= 4 - arg->count;
+    if (i < 0 || i >= arg->count) {
         return 0;
     }
     GSmsgPrint2(winSpriteGetLayerID(win, spr), 0, 0, -1, arg->items[i].msg);

@@ -1320,9 +1320,9 @@ void fightOutPokemonSetOumuWazaDataId(FightOutPokemon* poke, FightOutPokemon* at
     if (poke == nullptr) return;
     if (fightOutPokemonIsAlly(poke, attacker) != 0 && attacker != poke) {
         fightOutPokemon_SetOumuWazaAllyDataId(poke, move);
-        fightOutPokemon_SetOumuWazaDataId(poke, move);
+        ((void (*)(FightOutPokemon*, u16))fightOutPokemon_SetOumuWazaDataId)(poke, move);
     } else {
-        fightOutPokemon_SetOumuWazaDataId(poke, move);
+        ((void (*)(FightOutPokemon*, u16))fightOutPokemon_SetOumuWazaDataId)(poke, move);
     }
     FightOutPokemonEnemy* enemies = fightOutPokemon_GetFightOutPokemonEnemyPtr(poke, 0);
     if (attacker != nullptr) {
@@ -1670,6 +1670,7 @@ u8 fightOutPokemonIsGcHeroFightOutPokemon(FightOutPokemon* poke) {
 #include <game/pxdvs/app/fight/fightPokemonMenus.hpp>
 extern "C" {
 void fightOutPokemonToMenuPokemonStatus(FightOutPokemon* poke, FightMenuPokemonStatus* menu) {
+    Pokemon* original;
     FightPokemon* current;
     s8 rare = -1;
     current = fightOutPokemon_GetFightPokemonPtr(poke);
@@ -1681,11 +1682,11 @@ void fightOutPokemonToMenuPokemonStatus(FightOutPokemon* poke, FightMenuPokemonS
         fightOutPokemonGetRndStatus(poke, &personality, &trainer);
         pokemon_SetRnd(&temporary, personality);
         pokemon_SetCatchTrainerRnd(&temporary, trainer);
-        rare = static_cast<s8>(pokemonCheckRare(
-            fightPokemonGetPokemonPtr(fightOutPokemon_GetMotoFightPokemonPtr(poke))));
+        rare = pokemonCheckRare(
+            fightPokemonGetPokemonPtr(fightOutPokemon_GetMotoFightPokemonPtr(poke)));
     }
-    pokemonToMenuPokemonStatus(&temporary, current, menu, rare);
-    Pokemon* original = fightPokemonGetPokemonPtr(fightOutPokemon_GetMotoFightPokemonPtr(poke));
+    ((void (*)(Pokemon*, FightPokemon*, FightMenuPokemonStatus*, s8))pokemonToMenuPokemonStatus)(&temporary, current, menu, rare);
+    original = fightPokemonGetPokemonPtr(fightOutPokemon_GetMotoFightPokemonPtr(poke));
     if (original != nullptr) {
         pokemonToMenuPokemonStatusSubBar(original, menu);
         menu->sex = menuSubGetPokemonSexForFightDisp(original);

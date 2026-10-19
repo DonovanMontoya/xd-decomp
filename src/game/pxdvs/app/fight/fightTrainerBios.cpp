@@ -28,6 +28,6 @@ s32 fightTrainerAiValueAddsubDataBiosGetPtr(u16 id){if(id>=*fight_trainer_ai_val
 s32 fightTrainerPokemonPartDataBiosGetPtr(u16 id){if(id>=*fight_trainer_pokemon_part_data_number)return 0;return fight_trainer_pokemon_part_data+id*0x18;}
 void fightTrainerAiDataBiosGetPtr(u16 id){getDeckTrainerAIObj__13DeckTrainerAIFUl(id);}
 u8 fightTrainerBiosGetControllerId(void* p){if(!p)return 0;return *(u8*)((u8*)p+0x3540);}
-s32 fightTrainerBiosGetFightPokemonPtr(s32 p,u16 i){if(!p||i>=6)return 0;return p+i*0x300+0x97c;}
+s32 fightTrainerBiosGetFightPokemonPtr(s32 p,u16 i){if(!p)return 0;if(i>=6)return 0;return p+i*0x300+0x97c;}
 s32 fightTrainerBiosGetHeroPtr(u32 p){if(!p)return 0;return p+4;}
 }

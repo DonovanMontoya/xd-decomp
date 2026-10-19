@@ -3,20 +3,21 @@
 extern "C" {
 void winMsgOpen(s32, s32, s32, s32);
 void winMsgClose(s32);
-s8 menuSubOpenYesNoField();
+s32 menuSubOpenYesNoField();
 s32 GSfloorChange(s32);
 }
 
 static s32 _coutineSave() {
+    s8 result;
     s32 state = 0;
     s32 done = 0;
-    do {
+    while (done == 0) {
         switch (state) {
         case 2:
             break;
         case 0: {
             winMsgOpen(2, 1, 1, 1);
-            s8 result = menuSubOpenYesNoField();
+            result = (s8)menuSubOpenYesNoField();
             winMsgClose(1);
             if (result != 0) done = 1;
             else state = 2;
@@ -30,7 +31,7 @@ static s32 _coutineSave() {
             done = 1;
             break;
         }
-    } while (done == 0);
+    }
     return 0;
 }
 

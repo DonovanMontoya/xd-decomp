@@ -1178,7 +1178,7 @@ extern "C" void WS_HUKURODATAKI(void) {
         defenderId = figthOutPokemonGetPokemonDataId(defender);
         defenderLevel = figthOutPokemonGetLevel(defender);
         fightMsgctrlSetValue(0xd, (u32)pokemon_GetNicknamePtr(pokemon));
-        damage = fightSeqGetHukuroDatakiDamage(wazaId, attackerId, (u8)attackerLevel, defenderId, defenderLevel);
+        damage = fightSeqGetHukuroDatakiDamage(wazaId, attackerId, attackerLevel, defenderId, defenderLevel);
         if (fightOutPokemonIsJoutaiDataId(attacker, 0x32) == 1) damage = (damage * 15) / 10;
         fightWaza_SetDamage(waza, damage);
         ++ServerWork.flags[0];
@@ -1207,26 +1207,23 @@ u32 fightSeqGetHukuroDatakiDamage(u16 wazaId, u16 atkPokemonId, u16 level, u32 d
 
 extern "C" {
 void WS_MIRAIYOCHI(void) {
-    FightOutPokemon *temp_r3;
-    u8 temp_r31;
-    u32 temp_r31_2;
+    u32 temp_r31;
     u8 *temp_r30;
+    FightOutPokemon *temp_r3;
     FightOutPokemon *temp_r3_2;
-    FightWaza *temp_r28;
     u32 temp_r27;
     u16 temp_r26;
-    u16 var_r25;
-    u16 temp_r25;
+    s32 var_r25;
     void *temp_r24;
 
-    temp_r31 = fightFloor_GetFightType(0);
+    temp_r31 = (u8)fightFloor_GetFightType(0);
     temp_r30 = fightSeq_GetWazaSeq();
     temp_r3 = (FightOutPokemon*)fightTargetGetPtrAsNowFightType(0x11, 0);
     temp_r27 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(temp_r3, temp_r31);
-    temp_r28 = fightOutPokemon_GetFightWazaPtr(temp_r3);
+    temp_r3_2 = (FightOutPokemon*)fightOutPokemon_GetFightWazaPtr(temp_r3);
     temp_r26 = fightOutPokemon_GetUseWazaDataId(temp_r3);
-    temp_r25 = fightWaza_GetIryoku(temp_r28);
-    temp_r31_2 = fightWaza_GetZokusei(temp_r28);
+    var_r25 = fightWaza_GetIryoku((FightWaza*)temp_r3_2);
+    temp_r31 = fightWaza_GetZokusei((FightWaza*)temp_r3_2);
     temp_r3_2 = (FightOutPokemon*)fightTargetGetPtrAsNowFightType(0x12, 0);
     temp_r24 = fightTargetGetPtrAsNowFightType(2, temp_r3_2);
     if (fightOutPokemonCheckWriteJoutaiDataId(temp_r3_2, 0x34) != 2) {
@@ -1235,7 +1232,7 @@ void WS_MIRAIYOCHI(void) {
     }
     fightOutPokemonWriteJoutaiDataId(temp_r3_2, 0x34, (u16) temp_r27);
     fightOutPokemonSetIdBuffJoutaiDataId(temp_r3_2, 0x34, temp_r26);
-    var_r25 = fightSeqWazaDamageCalc(temp_r3, temp_r3_2, (u8) temp_r24, temp_r26, (u32) temp_r25, (u16) temp_r31_2);
+    var_r25 = fightSeqWazaDamageCalc(temp_r3, temp_r3_2, (u8) temp_r24, temp_r26, var_r25, (u16) temp_r31);
     if (fightOutPokemonIsJoutaiDataId(temp_r3, 0x32) == 1) {
         var_r25 = (u16) ((s32) (var_r25 * 0xF) / 10);
     }
@@ -2704,7 +2701,7 @@ void WS_WEATHER_KEEP(void) {
     FightOutPokemon *temp_r3;
     u16 temp_r31;
     FightWaza *temp_r29;
-    u16 var_r28;
+    u32 var_r28;
     u8 temp_r27;
     Pokemon *temp_r26;
 

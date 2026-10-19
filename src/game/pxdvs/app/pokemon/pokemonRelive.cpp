@@ -200,6 +200,14 @@ loop_1:
 }
 
 static s32 reliveCeremonyAll__FlP7PokemonUl(s32 arg0, void *arg1, s32 arg2) {
+    s32 temp_r29_2;
+    WazaSequenceEntry *var_r27_2;
+    s32 var_r27_3;
+    s32 var_r26_2;
+    s32 temp_r3_9;
+    WazaSequenceEntry *var_r25_3;
+    s32 temp_r27;
+    s32 temp_r26;
     f32 sp4C[3];
     f32 sp40[3];
     f32 sp34[3];
@@ -211,25 +219,17 @@ static s32 reliveCeremonyAll__FlP7PokemonUl(s32 arg0, void *arg1, s32 arg2) {
     s32 sp10;
     s32 spC;
     u16 sp8;
-    WazaSequenceEntry *var_r25_3;
-    WazaSequenceEntry *var_r27_2;
     f32 var_f30;
     f32 var_f30_2;
     f32 var_f30_3;
     f32 var_f30_4;
-    s32 temp_r26;
     s32 temp_r26_2;
-    s32 temp_r27;
     s32 temp_r28;
     s32 temp_r28_2;
-    s32 temp_r29_2;
     s32 temp_r3_5;
     s32 temp_r3_6;
     s32 temp_r3_7;
-    s32 temp_r3_9;
     s32 var_r25_2;
-    s32 var_r26_2;
-    s32 var_r27_3;
     s32 var_r28_2;
     s32 var_r28_3;
     s32 var_r30;
@@ -290,8 +290,70 @@ static s32 reliveCeremonyAll__FlP7PokemonUl(s32 arg0, void *arg1, s32 arg2) {
             return 0;
         }
     }
-    default:
-block_44:
+        break;
+    case 1:
+        keepRelivePatternIsHologram = 1;
+        if (getPokemonDataId__7PokemonCFv(arg1) == 0xF9) {
+            Sequence_LoadWaza(arg2, 0x103U, 4U, 0);
+            temp_r26 = pokemonGetStatus(arg1, 0, 0xC1, 0) != 0;
+            temp_r29_2 = Sequence_LoadPokemon(0xF9, pokemonBiosGetRnd(arg1), temp_r26);
+            Sequence_LoadWaza(temp_r29_2,0x104,4,0);
+            sp34[0]=0.0f;sp34[1]=0.0f;sp34[2]=0.0f;
+            sp40[0]=0.0f;sp40[1]=0.0f;sp40[2]=0.0f;
+            sp4C[0]=1.0f;sp4C[1]=1.0f;sp4C[2]=1.0f;
+            Sequence_GetPosition(arg2, sp34);
+            Sequence_GetRotation(arg2, sp40);
+            Sequence_GetScale(arg2, sp4C);
+            Sequence_SetPosition(temp_r29_2, sp34);
+            Sequence_SetRotation(temp_r29_2, sp40);
+            Sequence_SetScale(temp_r29_2, sp4C);
+            temp_r27 = Sequence_GetWaza(arg2, 0x103U, 4U);
+            temp_r26 = Sequence_GetWaza(temp_r29_2, 0x104U, 4U);
+            WazaSequence_Start(temp_r27, 0);
+            WazaSequence_Start(temp_r26, 0);
+            {
+                f32 waitTime = 0.0f;
+                while (WazaSequence_IsActive(temp_r27) || WazaSequence_IsActive(temp_r26)) {
+                    GSthreadSwitch();
+                    waitTime += timeGetLastFrameSec();
+                }
+            }
+            WazaSequence_Free(temp_r27);
+            WazaSequence_Free(temp_r26);
+            var_r30 = temp_r29_2;
+        } else {
+            var_r25_3 = &hologramReliveWazaSeqTbl;
+            temp_r29_2 = 1;
+            temp_r3_8 = getPokemonDataId__7PokemonCFv(arg1);
+            if ((temp_r3_8 == 0x11) || (temp_r3_8 == 0x15C) || (temp_r3_8 == 0x15D)) {
+                var_r25_3 = &hologramPigeonReliveWazaSeqTbl;
+                temp_r29_2 = 1;
+            }
+            Sequence_GetScale(arg2, sp28);
+            menuModelSetScale(sp28[0]);
+            var_r27_2 = var_r25_3;
+            for (var_r26_2 = 0; var_r26_2 < temp_r29_2; var_r26_2++) {
+                Sequence_LoadWaza(arg2, var_r27_2->unk0, (u8) var_r27_2->unk2, 0);
+                var_r27_2++;
+            }
+            Sequence_SetVisibility(arg2, 1);
+            for (var_r27_3 = 0; var_r27_3 < temp_r29_2; var_r27_3++) {
+                temp_r3_9 = Sequence_GetWaza(arg2, var_r25_3->unk0, var_r25_3->unk2);
+                if (temp_r3_9 != 0) {
+                    WazaSequence_Start(temp_r3_9,0);
+                    while (WazaSequence_IsActive(temp_r3_9) != 0) {
+                        GSthreadSwitch();
+                    }
+                    WazaSequence_Free(temp_r3_9);
+                }
+                var_r25_3++;
+            }
+            menuModelReSetScale();
+        }
+        break;
+
+
+    }
         sp8 = 0;
         if (pokemonCheckValid(arg1) != 1) {
             return 0;
@@ -479,78 +541,6 @@ loop_63:
             }
         }
         return var_r30;
-    case 1:
-        keepRelivePatternIsHologram = 1;
-        if (getPokemonDataId__7PokemonCFv(arg1) == 0xF9) {
-            Sequence_LoadWaza(arg2, 0x103U, 4U, 0);
-            temp_r26 = pokemonGetStatus(arg1, 0, 0xC1, 0) != 0;
-            temp_r29_2 = Sequence_LoadPokemon(0xF9, pokemonBiosGetRnd(arg1), temp_r26);
-            Sequence_LoadWaza(temp_r29_2,0x104,4,0);
-            sp34[0]=sp34[1]=sp34[2]=0.0f;
-            sp40[0]=sp40[1]=sp40[2]=0.0f;
-            sp4C[0]=sp4C[1]=sp4C[2]=1.0f;
-            Sequence_GetPosition(arg2, sp34);
-            Sequence_GetRotation(arg2, sp40);
-            Sequence_GetScale(arg2, sp4C);
-            Sequence_SetPosition(temp_r29_2, sp34);
-            Sequence_SetRotation(temp_r29_2, sp40);
-            Sequence_SetScale(temp_r29_2, sp4C);
-            temp_r27 = Sequence_GetWaza(arg2, 0x103U, 4U);
-            temp_r26_2 = Sequence_GetWaza(temp_r29_2, 0x104U, 4U);
-            WazaSequence_Start(temp_r27, 0);
-            WazaSequence_Start(temp_r26_2, 0);
-loop_25:
-            if (WazaSequence_IsActive(temp_r27) != 0) {
-block_24:
-                GSthreadSwitch();
-                timeGetLastFrameSec();
-                goto loop_25;
-            }
-            if (WazaSequence_IsActive(temp_r26_2) != 0) {
-                goto block_24;
-            }
-            WazaSequence_Free(temp_r27);
-            WazaSequence_Free(temp_r26_2);
-            var_r30 = temp_r29_2;
-        } else {
-            var_r25_3 = &hologramReliveWazaSeqTbl;
-            temp_r3_8 = getPokemonDataId__7PokemonCFv(arg1);
-            if ((temp_r3_8 == 0x11) || (temp_r3_8 == 0x15C) || (temp_r3_8 == 0x15D)) {
-                var_r25_3 = &hologramPigeonReliveWazaSeqTbl;
-            }
-            Sequence_GetScale(arg2, sp28);
-            menuModelSetScale(sp28[0]);
-            var_r27_2 = var_r25_3;
-            var_r26_2 = 0;
-loop_34:
-            if (var_r26_2 < 1) {
-                Sequence_LoadWaza(arg2, var_r27_2->unk0, (u8) var_r27_2->unk2, 0);
-                var_r27_2++;
-                var_r26_2 += 1;
-                goto loop_34;
-            }
-            Sequence_SetVisibility(arg2, 1);
-            var_r27_3 = 0;
-loop_42:
-            if (var_r27_3 < 1) {
-                temp_r3_9 = Sequence_GetWaza(arg2, var_r25_3->unk0, var_r25_3->unk2);
-                if (temp_r3_9 != 0) {
-                    WazaSequence_Start(temp_r3_9,0);
-loop_39:
-                    if (WazaSequence_IsActive(temp_r3_9) != 0) {
-                        GSthreadSwitch();
-                        goto loop_39;
-                    }
-                    WazaSequence_Free(temp_r3_9);
-                }
-                var_r25_3++;
-                var_r27_3 += 1;
-                goto loop_42;
-            }
-            menuModelReSetScale();
-        }
-        goto block_44;
-    }
 }
 
 void reliveCeremonyFromHologram__FP7PokemonUl(void *arg0, s32 arg1) {

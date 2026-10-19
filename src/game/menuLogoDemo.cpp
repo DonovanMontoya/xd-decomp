@@ -1004,7 +1004,6 @@ static void _ProgressiveModeSeq(void) {
 }
 
 static s8 _ProgressiveModeYesNo(short x, short y, long initial) {
-    f32 vsync;
     f32 timer;
     s8 prev;
     s8 result;
@@ -1029,8 +1028,7 @@ static s8 _ProgressiveModeYesNo(short x, short y, long initial) {
             prev = (s8)selected;
         }
         GSthreadSwitch();
-        vsync = (f32)GSgfxVideoGetVsyncRate();
-        timer += GSgfxVideoGetLastRenderTime() / vsync;
+        timer += GSgfxVideoGetLastRenderTime() / (f32)GSgfxVideoGetVsyncRate();
     }
     if (timer >= 10.0f) {
         result = (s8)windowSearchID(0x35)->pos.selected;

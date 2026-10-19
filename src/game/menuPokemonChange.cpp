@@ -1528,7 +1528,7 @@ void CMenuPokemonChange::bgDrawFadeIn() {
 }
 
 bool CMenuPokemonChange::bgDrawFadeIsLive() {
-    return windowSearchID(0xDF) != 0;
+    return windowSearchID(0xDF) ? true : false;
 }
 
 void CMenuPokemonChange::bgModelRelease() {

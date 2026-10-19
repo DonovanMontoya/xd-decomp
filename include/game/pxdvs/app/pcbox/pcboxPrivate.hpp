@@ -44,7 +44,7 @@ public:
     static s32 isPokemonFull();
 
     s8 getPokemonBoxNbEmptySlot(s8);
-    s8 getPokemonBoxNbUsedSlot(s8);
+    s32 getPokemonBoxNbUsedSlot(s8);
     char16* getPokemonBoxName(s8);
     s32 delPokemon(s8, s8);
     s32 addPokemonLastWatchBox(Pokemon*);

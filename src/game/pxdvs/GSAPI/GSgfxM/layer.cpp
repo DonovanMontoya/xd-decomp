@@ -215,30 +215,32 @@ s32 GSgfxLayerFindByName_C(char* name) {
     return p ? p->id : -1;
 }
 void GSgfxLayerInit__Fv() {
-    for (s32 i=0;i<15;i++) _layerIDTable[i]=0;
+    _layerIDTable[0]=0; _layerIDTable[1]=0; _layerIDTable[2]=0; _layerIDTable[3]=0;
+    _layerIDTable[4]=0; _layerIDTable[5]=0; _layerIDTable[6]=0; _layerIDTable[7]=0;
+    _layerIDTable[8]=0; _layerIDTable[9]=0; _layerIDTable[10]=0; _layerIDTable[11]=0;
+    _layerIDTable[12]=0; _layerIDTable[13]=0; _layerIDTable[14]=0;
     _layerBottom=0; _layerIDTable[15]=0; gsgfx_layer_inPrimitive=0;
 }
 void SetPriority__10GSgfxLayerF16GSgfxLayerOffsetP10GSgfxLayer(void* object,s32 offset,void* relative) {
     LayerNode* layer=static_cast<LayerNode*>(object); LayerNode* other=static_cast<LayerNode*>(relative);
+    LayerNode* p;
     if (_layerBottom==layer) _layerBottom=layer->next;
-    else for (LayerNode* p=_layerBottom;p;p=p->next) if (p->next==layer) { p->next=layer->next; break; }
+    else for (p=_layerBottom;p;p=p->next) if (p->next==layer) { p->next=layer->next; break; }
     switch (offset) {
-    case 1: {
-        LayerNode* p=_layerBottom;
+    case 1:
+        p=_layerBottom;
         if (!p || p==other) { _layerBottom=layer; layer->next=p; return; }
-        while (p->next && p->next!=other) p=p->next;
+        for (;p->next;p=p->next) if (p->next==other) break;
         layer->next=p->next; p->next=layer; return;
-    }
     case 2:
-        for (LayerNode* p=_layerBottom;p;p=p->next) if (p==other) { layer->next=p->next; p->next=layer; return; }
+        for (p=_layerBottom;p;p=p->next) if (p==other) { layer->next=p->next; p->next=layer; return; }
         return;
     case 3: layer->next=_layerBottom; _layerBottom=layer; return;
-    case 4: {
-        LayerNode* p=_layerBottom; layer->next=0;
+    case 4:
+        p=_layerBottom; layer->next=0;
         if (!p) { _layerBottom=layer; return; }
         while (p->next) p=p->next;
         p->next=layer; return;
-    }
     case 0: return;
     }
 }
@@ -282,6 +284,7 @@ void PrepareNextFrame__10GSgfxLayerFv(void* layer) {
     layerField<void*>(layer,0x19dc)=0; layerField<void*>(layer,0x19ec)=0;
     layerField<void*>(layer,0x19fc)=0; layerField<void*>(layer,0x1a0c)=0;
 }
+#pragma auto_inline off
 void BuildRenderListPass__10GSgfxLayerF14GSgfxLayerPass(void* layer,s32 pass) {
     u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
     if (layerField<void*>(fifo,0xa4)) SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(layer,layerField<void*>(fifo,0xa4));
@@ -292,50 +295,56 @@ void BuildRenderList__10GSgfxLayerFv(void* layer) {
     BuildRenderListPass__10GSgfxLayerF14GSgfxLayerPass(layer,0);
     BuildRenderListPass__10GSgfxLayerF14GSgfxLayerPass(layer,1);
 }
+#pragma auto_inline reset
 }
+#pragma inline_max_size(800)
 static void updateLayerFifoUsage(u8* f) {
-    u8* start=layerField<u8*>(f,0x88); u32 used;
-    if (!start) used=0;
+    u8* write;
+    u32 used;
+    if (!layerField<u8*>(f,0x88)) used=0;
     else {
-        u8* write=layerField<u8*>(f,0x20);
-        if (write>=start) used=(write-start)+layerField<u16>(f,0xac)*layerField<u32>(f,4);
+        write=layerField<u8*>(f,0x20);
+        if (write>=layerField<u8*>(f,0x88)) { used=write-layerField<u8*>(f,0x88); used+=layerField<u16>(f,0xac)*layerField<u32>(f,4); }
         else {
             u8* base=layerField<u8*>(f,0);
-            s32 bytes=(base+layerField<u32>(f,4)-start)+(write-base);
+            used=(base+layerField<u32>(f,4)-layerField<u8*>(f,0x88))+(write-base);
             if (layerField<u16>(f,0xac)==0) {
                 GSlogWrite("fifo wrap check flag failure!\n");
-                GSlogWrite("ptr  =%08X, size =%08X\n",base,layerField<u32>(f,4));
-                GSlogWrite("start=%08X, write=%08X\n",start,write);
+                GSlogWrite("ptr  =%08X, size =%08X\n",layerField<u8*>(f,0),layerField<u32>(f,4));
+                GSlogWrite("start=%08X, write=%08X\n",layerField<u8*>(f,0x88),write);
                 GSlogWrite("reg  =%08X\n",*(volatile u32*)0xcc003014);
                 ++layerField<u16>(f,0xac);
             }
-            used=bytes+(layerField<u16>(f,0xac)-1)*layerField<u32>(f,4);
+            used+=(layerField<u16>(f,0xac)-1)*layerField<u32>(f,4);
         }
     }
     layerField<u32>(f,0xb4)=used;
     if (layerField<u32>(f,0xb4)>layerField<u32>(f,0xb8)) layerField<u32>(f,0xb8)=layerField<u32>(f,0xb4);
     if (layerField<u32>(f,0xb4)>=layerField<u32>(f,4)) layerField<u16>(f,0xae)=1;
 }
+static inline u8 fifoIsFull(u8* f) {
+    u8 full;
+    if (layerField<u32>(f,0x54)==1) full=0;
+    else {
+        u8* write=layerField<u8*>(f,0x20); u8* read=layerField<u8*>(f,0x1c); u32 count;
+        if (write>=read) count=write-read;
+        else count=(layerField<u8*>(f,0xc)-read)+(write-layerField<u8*>(f,8));
+        full=count>=layerField<u32>(f,0x14);
+    }
+    return full;
+}
 static void updateLayerFifo(void* fifo) {
     u8* f=static_cast<u8*>(fifo);
+    u32 wrapped;
     GXFifoObj* sdkFifo=reinterpret_cast<GXFifoObj*>(f+8);
     GXSaveCPUFifo(sdkFifo);
     volatile u32 status=*(volatile u32*)0xcc003014;
-    u32 wrapped=(status>>26)&1;
+    wrapped=(status>>26)&1;
     if (wrapped==1) { GXSetCPUFifo(sdk(GSgfxGPUGetImmediateFifo__Fv())); GXSetCPUFifo(sdkFifo); }
     if (wrapped==1) ++layerField<u16>(f,0xac);
     updateLayerFifoUsage(f);
     GXResetWriteGatherPipe(); GSgfxRenderWaitData wait; GSgfxRenderWaitInit__FP19GSgfxRenderWaitData(&wait);
-    for (;;) {
-        u8 full;
-        if (layerField<u32>(f,0x54)==1) full=0;
-        else {
-            u8* write=layerField<u8*>(f,0x20); u8* read=layerField<u8*>(f,0x1c); u32 count;
-            if (write>=read) count=write-read;
-            else count=(layerField<u8*>(f,0xc)-read)+(write-layerField<u8*>(f,8));
-            full=layerField<u32>(f,0x14)<=count;
-        }
-        if (full!=1) break;
+    while (fifoIsFull(f)==1) {
         GSgfxRenderWaitTick__FP19GSgfxRenderWaitData(&wait);
     }
     GSgfxRenderWaitExit__FP19GSgfxRenderWaitData(&wait);
@@ -343,8 +352,8 @@ static void updateLayerFifo(void* fifo) {
 extern "C" {
 void GSgfxLayerUpdateActiveFifoStats__Fv() {
     if (gsgfx_gpu_mode!=1) {
-        void* fifo=gsgfx_layer_activeFifo; if (!fifo) return;
-        updateLayerFifo(fifo);
+        void* fifo=gsgfx_layer_activeFifo;
+        if (fifo) updateLayerFifo(fifo);
     }
 }
 void SetupFifo__10GSgfxLayerFv(void* layer) {
@@ -600,15 +609,13 @@ extern "C" inline GXColor* GSgfxPerfColorToGSgfxCol(u32 packed) {
 }
 struct LayerStatsRedirect { char marker; u8 pad[3]; LayerNode* target; s32 pass,order; };
 ABI_SIZE(LayerStatsRedirect,0x10);
-static const LayerStatsRedirect layerStatsRedirects[4]={
-    {'#',{0,0,0},0,2,0}, {'$',{0,0,0},0,2,0},
-    {'=',{0,0,0},0,2,0}, {'+',{0,0,0},0,2,0}
-};
 // Direct offset views keep this large overlay below the compiler's inline budget.
 #define STATS_FIELD(type, base, offset) (*reinterpret_cast<type*>(reinterpret_cast<u8*>(base)+(offset)))
 extern "C" void GSgfxLayerRenderStats__FP10GSgfxLayer(void* layer) {
-    LayerStatsRedirect redirects[4];
-    memcpy(redirects,layerStatsRedirects,sizeof(redirects));
+    LayerStatsRedirect redirects[4]={
+        {'#',{0,0,0},0,2,0}, {'$',{0,0,0},0,2,0},
+        {'=',{0,0,0},0,2,0}, {'+',{0,0,0},0,2,0}
+    };
     const GXColor background={32,32,32,192};
     const GXColor inactive={96,96,96,255};
     const GXColor empty={160,160,160,255};

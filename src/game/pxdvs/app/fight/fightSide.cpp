@@ -86,7 +86,7 @@ u32 fightSideGetFightPokemonNokoriHp(void* side,u16 trainerCount,u16 pokemonCoun
     }
     return total;
 }
-void* fightSideGetValidFightTrainerPtr(void* side,u16 index){void* trainer=fightSide_GetFightTrainerPtr(side,index);void* result;if(!fightTrainerCheckValid(trainer))result=0;else result=trainer;return result;}
+void* fightSideGetValidFightTrainerPtr(void* side,u16 index){void* trainer=fightSide_GetFightTrainerPtr(side,index);void* result;if(fightTrainerCheckValid(trainer)==0){result=0;}else{result=trainer;}return result;}
 s32 fightSideGetDoFightTrainerCount(void* side){
     s32 count=0;
     for(u8 i=0;i<2;i++)if(fightTrainerCheckDoFight(fightSide_GetFightTrainerPtr(side,i)))++count;

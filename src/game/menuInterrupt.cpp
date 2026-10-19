@@ -43,11 +43,12 @@ void menuIntUnderTakerHook(tagWINDOW_WORK *arg0, tagSPRITE_WORK *arg1) {
     temp_r31 = floorDataBiosGetFloorKind(floor);
     if (((u8) _underTakerIconFlag != 0) && (GSflagTest(undertakerdata->flag) != 0) && (temp_r31 == 1)) {
         winSpriteSetDisp(arg1, 1);
-        if ((s16) arg1->id != 0x65C) {
-            return;
-        }
-        if ((s8) arg0->mode != 0) {
-            arg1->alpha = _menuIntGetAlpha2();
+        switch ((s16) arg1->id) {
+        case 0x65C:
+            if ((s8) arg0->mode != 0) {
+                arg1->alpha = _menuIntGetAlpha2();
+            }
+            break;
         }
     } else {
         winSpriteSetDisp(arg1, 0);
@@ -111,7 +112,6 @@ void menuIntHook(tagWINDOW_WORK *arg0, tagSPRITE_WORK *arg1) {
         winSpriteSetDisp(arg1, 1);
         if ((s8) arg0->mode != 0) {
             arg1->alpha = _menuIntGetAlpha();
-            return;
         }
         return;
     case 0x505:
@@ -122,7 +122,6 @@ void menuIntHook(tagWINDOW_WORK *arg0, tagSPRITE_WORK *arg1) {
         winSpriteSetDisp(arg1, 1);
         if ((s8) arg0->mode != 0) {
             arg1->alpha = _menuIntGetAlpha();
-            return;
         }
         break;
     case 0x506:

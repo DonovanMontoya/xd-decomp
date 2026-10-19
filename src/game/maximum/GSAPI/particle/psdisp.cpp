@@ -1,4 +1,7 @@
 #include "game/maximum/GSAPI/particle/psdisp.h"
+#include <dolphin/os/OSFastCast.h>
+#undef PS_FIXED6
+#define PS_FIXED6(value) __OSf32tos16_q6(value)
 #define NULL ((void*)0)
 #define fabs __fabs
 static f32 vmtx[3][4], rvmtx[3][4], prj[7], pvmtx[3][4], rvmtxRot[3][4];
@@ -405,6 +408,7 @@ __declspec(weak) void psDispSubAPPSRTPoint(PSParticle *arg0) {
 
 __declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *arg0) {
     union { f64 alignment; u8 bytes[43]; } stack;
+    s16 sz0, sy0, sx0, sz1, sy1, sx1;
     PSGenerator *temp_r30;
     f32 temp_f0;
     f32 temp_f1;
@@ -526,27 +530,24 @@ __declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *arg0) {
         GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
         GXBegin(GX_LINES, GX_VTXFMT3, 2U);
     }
-    (*(f32*)(stack.bytes+0x1C)) = var_f19;
-
-
-    (*(f32*)(stack.bytes+0x18)) = var_f20;
-    (*(f32*)(stack.bytes+0x14)) = var_f21;
-    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x14)));
-    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x18)));
-    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x1C)));
+    sz0 = PS_FIXED6(var_f19);
+    sy0 = PS_FIXED6(var_f20);
+    sx0 = PS_FIXED6(var_f21);
+    *(volatile s16 *)0xCC008000 = sx0;
+    *(volatile s16 *)0xCC008000 = sy0;
+    *(volatile s16 *)0xCC008000 = sz0;
     temp_r7_2 = (((((*(u8*)(stack.bytes+0x21)) * 0x10) & 0xF00 & ~0xF000) | (((u8) (*(s8*)(stack.bytes+0x20)) << 8) & 0xF000)) & ~0xF0) | ((*(u8*)(stack.bytes+0x22)) & 0xF0);
     temp_f0 = (f32) (*(u8*)(stack.bytes+0x23)) * arg0->textureScale;
     *(volatile s16 *)0xCC008000 = (temp_r7_2 & ~0xF) | (((u32) (s32) temp_f0 >> 4U) & 0xF);
     if (arg0->kind & 0x400) {
         *(volatile u8 *)0xCC008000 = 0;
     }
-    (*(f32*)(stack.bytes+0x10)) = arg0->position.z;
-
-    (*(f32*)(stack.bytes+0xC)) = arg0->position.y;
-    (*(f32*)(stack.bytes+0x8)) = arg0->position.x;
-    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x8)));
-    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0xC)));
-    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x10)));
+    sz1 = PS_FIXED6(arg0->position.z);
+    sy1 = PS_FIXED6(arg0->position.y);
+    sx1 = PS_FIXED6(arg0->position.x);
+    *(volatile s16 *)0xCC008000 = sx1;
+    *(volatile s16 *)0xCC008000 = sy1;
+    *(volatile s16 *)0xCC008000 = sz1;
     *(volatile s16 *)0xCC008000 = (s16) ((((*(u8*)(stack.bytes+0x23)) >> 4U) & 0xF) | temp_r7_2);
     if (arg0->kind & 0x400) {
         *(volatile u8 *)0xCC008000 = 1;

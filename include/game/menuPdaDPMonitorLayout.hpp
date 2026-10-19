@@ -34,7 +34,7 @@ typedef struct DpmWindow {
 } DpmWindow;
 typedef struct DpmSprite {
     u8 reserved0[4];
-    u8 flags;
+    s8 flags;
     u8 reserved5;
     s16 id;
     u8 reserved8[0x4c];

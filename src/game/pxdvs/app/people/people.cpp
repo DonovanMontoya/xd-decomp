@@ -1049,19 +1049,19 @@ void _peopleMoveTypeRandomWalk__FP13tagPeopleWork(tagPeopleWork* work) {
         break;
     }
 }
-static u8 m_bMoveByHero;
+static bool m_bMoveByHero;
 u8 gimmickBoxIsGimmickMoving();
 void GSmodelDisableAnimBlend(GSmodel*);
 void _peopleUpdateBlendAnimation__FP13tagPeopleWorkf(tagPeopleWork*, f32);
 void _peopleUpdateNoBlendAnimation__FP13tagPeopleWorkf(tagPeopleWork*, f32);
 extern void* g_pMana;
 void peopleUpdateAnimation(tagPeopleWork* work, u8 moveByHero) {
-    m_bMoveByHero = moveByHero ? 0 : 1;
+    m_bMoveByHero = moveByHero == 0;
     if (work->walkActive != 6 && !work->waitAnimation) {
         PeopleInfo* info = peopleInfoBiosGetPtr(work->object);
         if (info && !((info->flags >> 1) & 1) && !work->manualAnimation && !gimmickBoxIsGimmickMoving()) {
             f32 speed = work->unknown28;
-            if ((void*)work != g_pMana && (peopleBiosCheckFlag(work, 8) || work->resource == 0x64)) {
+            if ((void*)work != g_pMana && (peopleBiosCheckFlag(work, 8) || work->resource != 0x64)) {
                 f32 distance = PSVECDistance(peopleBiosGetPosPtr(work), &work->walkTarget);
                 peopleViewerGetPlaySpeedRate(work);
                 if (!isAlwayBlendChara__13tagPeopleWorkCFv(work)) {
@@ -2105,7 +2105,19 @@ static u8 m_bPeopleOpenWithModel = 1;
 static f32 m_hero_idling_time;
 static f32 m_hero_next_special_idling_time;
 #pragma dont_inline reset
-s32 __fpclassifyf(f32);
+inline s32 __fpclassifyf(f32 value) {
+    union { f32 value; u32 bits; } number;
+    number.value = value;
+    switch (number.bits & 0x7f800000) {
+    case 0x7f800000:
+        if (number.bits & 0x7fffff) return 1;
+        return 2;
+    case 0:
+        if (number.bits & 0x7fffff) return 5;
+        return 3;
+    default: return 4;
+    }
+}
 f64 __frsqrte(f64);
 extern u32 __float_nan[];
 inline f32 sqrtf(f32 x) {
@@ -2149,10 +2161,10 @@ s32 peopleMoveAlongAngle(u32 group, u32 resource, f32 speed, f32 angle) {
     if (group == 0 && resource == 0x64 && !m_hero_move) move = 0.0f;
     work->flag17F = 0;
     if (_peopleBreakWithWalkList__FP13tagPeopleWork(work)) {
-        if (peopleBiosCheckFlag(work, 8) || work->resource == 0x64) {
+        if (peopleBiosCheckFlag(work, 8) || work->resource != 0x64) {
             f32 distance = _distanceXZ__FP5GSvecP5GSvec(peopleBiosGetPosPtr(work), &work->walkTarget);
             f32 minimum = 0.001f * (30.0f * (f32)timeGetLastFrameTime() / (f32)GSgfxVideoGetVsyncRate());
-            minimum = peopleViewerGetPlaySpeedRate(work) * minimum;
+            { f32 rate = peopleViewerGetPlaySpeedRate(work); minimum = rate * minimum; }
             if (work->slowDown && work->followerMotion == 0) {
                 f32 limit = work->running ? 2.0f * END_NEED_DISTANCE : END_NEED_DISTANCE;
                 if (distance < limit) {
@@ -2171,14 +2183,15 @@ s32 peopleMoveAlongAngle(u32 group, u32 resource, f32 speed, f32 angle) {
         }
     }
     if (move > 0.0f) {
-        f32 px = position.param1, py = position.param2, pz = position.param3;
-        first.param1 = px; first.param2 = py; first.param3 = pz;
-        second.param1 = px; second.param2 = py; second.param3 = pz;
+        first.param1 = position.param1; first.param2 = position.param2; first.param3 = position.param3;
+        second.param1 = position.param1; second.param2 = position.param2; second.param3 = position.param3;
         first.param1 = move * (f32)sin(angle) + first.param1;
         first.param3 = move * (f32)cos(angle) + first.param3;
         first.param2 = GScolsys2HumanGetWalkHeight(&first);
         f32 rise = position.param2 - first.param2;
-        f32 scaled = move * move / sqrtf(move * move + rise * rise);
+        f32 moveSq = move * move;
+        f32 riseSq = rise * rise;
+        f32 scaled = moveSq / sqrtf(moveSq + riseSq);
         second.param1 = scaled * (f32)sin(angle) + second.param1;
         second.param3 = scaled * (f32)cos(angle) + second.param3;
         second.param2 = GScolsys2HumanGetWalkHeight(&second);

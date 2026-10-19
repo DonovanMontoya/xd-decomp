@@ -25,7 +25,7 @@ bool pokemonCheckValid(Pokemon*);
 bool pokemonCheckFightOut(Pokemon*);
 u32 pokemonGetTokuseiDataId(Pokemon*);
 u16 pokemonDoItemSoubi(Pokemon*, u16, u8);
-bool pokemonDataCheckValid(void*, u32);
+bool pokemonDataCheckValid(void*, u16);
 u8 pokemonIsDarkPokemon(Pokemon*);
 bool pokemonIsJoutaiDataId(Pokemon*, u16);
 u8 pokemonGetDeoxysSel(u8);

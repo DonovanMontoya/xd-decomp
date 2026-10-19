@@ -301,9 +301,10 @@ void CAnt::systemUpdate(bool request) {
         }
     }
     if (_pokeDance.loading == -1 && request) {
-        PokeDanceEntry *e = _pokeDance.entries;
         u32 i;
-        for (i = 0; i < 0xF0 && e->id != 0; i++, e++) {
+        for (i = 0; i < 0xF0; i++) {
+            PokeDanceEntry *e = &_pokeDance.entries[i];
+            if (e->id == 0) break;
             if (e->resource == 0) {
                 GSfsysReadID(0x825, e->id);
                 _pokeDance.loading = i;

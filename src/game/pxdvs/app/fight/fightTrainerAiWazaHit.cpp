@@ -10,11 +10,11 @@ s16 fightOutPokemonGetCountAsJoutaiDataId(FightOutPokemon *, u16);
 u16 fightOutPokemonGetUserFightTargetIdJoutaiDataId(FightOutPokemon *, u16);
 u16 fightTrainerAiGetWazaIryoku(FIGHT_TRAINER *, u16);
 u16 fightTrainerAiGetFightOutPokemonZokuseiDataIdWazaJoutaiDataId(FIGHT_TRAINER *, FightOutPokemon *, u16, u16);
-u8 fightTrainerAiWazaDoWazaHitFunc(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
+s32 fightTrainerAiWazaDoWazaHitFunc(FIGHT_TRAINER *, FightOutPokemon *, u32, FightOutPokemon *);
 Pokemon * fightOutPokemonGetPokemonPtr(FightOutPokemon *);
-u8 fightSeqIsDoItemGetWaza(u16);
-u8 fightFloor_GetTikeiDataId(void *);
-u16 tikeiDataBiosGetWazaId(u8);
+u8 fightSeqIsDoItemGetWaza(u32);
+u32 fightFloor_GetTikeiDataId(void *);
+u32 tikeiDataBiosGetWazaId(u8);
 u16 fightTrainerAiGetWazaZokuseiDataId(FIGHT_TRAINER *, u16, FightOutPokemon *);
 u8 itemDataCheckValid(u16);
 u32 fightFloor_GetFightType(void *);
@@ -42,7 +42,7 @@ FIGHT_TRAINER *fightFloorGetFightOutPokemonPtrToFightTrainerPtr(void *, FightOut
 FightPokemon *fightTrainerSearchIrekaeFightPokemon(FIGHT_TRAINER *, u16 *);
 Pokemon *fightOutPokemonGetPokemonPtr(FightOutPokemon *);
 u16 fightTrainerAiGetFightOutPokemonWazaDataIdAry(FIGHT_TRAINER *, FightOutPokemon *, u16 *, s16 *, u8);
-u16 tikeiDataBiosGetZokuseiDataId(u8);
+u32 tikeiDataBiosGetZokuseiDataId(u8);
 u16 fightFloorGetFightOutPokemonPtrAry(void *, u8, u8, u8, FightOutPokemon **);
 void fightFloorSortFightOutPokemonPtrArySub(void *, FightOutPokemon **, u16, u8);
 u16 fightFloor_GetFightSideFightOutPokemonSideMax(void *);
@@ -76,7 +76,7 @@ u8 fightTrainerAiIsFightOutPokemonNokoriHp(FIGHT_TRAINER *, FightOutPokemon *, s
 u16 fightTrainerGetIrekaeFightPokemonAry(FIGHT_TRAINER *, FightPokemon **);
 u8 joutaiDataBiosGetMaxCount(u16);
 void pokemonGetMezamerupower(Pokemon *, u16 *, u16 *);
-u16 wazaDB_GetSeqId(u16);
+u32 wazaDB_GetSeqId(u32);
 s32 fightTrainerAiWazaHit217(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
 s32 fightTrainerAiWazaHit216(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
 s32 fightTrainerAiWazaHit215(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
@@ -121,7 +121,7 @@ s32 fightTrainerAiWazaHit177(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPo
 s32 fightTrainerAiWazaHit176(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
 s32 fightTrainerAiWazaHit175(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
 s32 fightTrainerAiWazaHit174(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
-s32 fightTrainerAiWazaHit173(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
+s32 fightTrainerAiWazaHit173(FIGHT_TRAINER *, FightOutPokemon *, u32, FightOutPokemon *);
 s32 fightTrainerAiWazaHit172(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
 s32 fightTrainerAiWazaHit171(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
 s32 fightTrainerAiWazaHit170(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
@@ -313,7 +313,8 @@ s32 fightTrainerAiWazaHit214(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
 }
 
 s32 fightTrainerAiWazaHit213(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    if (fightTrainerAiIsFightOutPokemonZokuseiDataId(arg0, arg1, (u8) tikeiDataBiosGetZokuseiDataId(fightFloor_GetTikeiDataId(0))) == 1) {
+    s32 zokusei = tikeiDataBiosGetZokuseiDataId(fightFloor_GetTikeiDataId(0));
+    if (fightTrainerAiIsFightOutPokemonZokuseiDataId(arg0, arg1, (u16) (u8) zokusei) == 1) {
         return 0;
     }
     return 1;
@@ -419,22 +420,16 @@ s32 fightTrainerAiWazaHit203(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
     u8 temp_r3;
 
     temp_r3 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 1U);
-    switch (temp_r3) {                              /* irregular */
-    case 2:
+    if (temp_r3 == 2) {
         var_r30 = 0xB;
-        break;
-    case 3:
+    } else if (temp_r3 == 3) {
         var_r30 = 5;
-        break;
-    case 1:
+    } else if (temp_r3 == 1) {
         var_r30 = 0xA;
-        break;
-    case 4:
+    } else if (temp_r3 == 4) {
         var_r30 = 0xF;
-        break;
-    default:
+    } else {
         var_r30 = 0;
-        break;
     }
     var_r31 = _fightTrainerAiWazaHitCheck(arg0, arg1, arg2, arg3, 0U);
     if (fightTrainerAiGetFightOutPokemonZokuseiDataIdWazaJoutaiDataId(arg0, arg3, var_r30, fightTrainerAiGetWazaIryoku(arg0, arg2)) == 0x43) {
@@ -686,12 +681,12 @@ s32 fightTrainerAiWazaHit178(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
 }
 
 s32 fightTrainerAiWazaHit177(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u16 temp_r30;
     u16 temp_r31;
+    u16 temp_r30;
 
     temp_r31 = fightTrainerAiGetFightOutPokemonSoubiItemDataId(arg0, arg1);
     temp_r30 = fightTrainerAiGetFightOutPokemonSoubiItemDataId(arg0, arg3);
-    if (fightSeqIsDoItemGetWaza((u16) arg1) == 0) {
+    if (fightSeqIsDoItemGetWaza((u32) arg1) == 0) {
         return 0;
     }
     if (((temp_r31 == 0) && (temp_r30 == 0)) || (temp_r31 == 0xAF) || (temp_r30 == 0xAF) || ((temp_r31 != 0) && (itemDataCheckValid(temp_r31) == 0)) || ((temp_r30 != 0) && (itemDataCheckValid(temp_r30) == 0))) {
@@ -736,13 +731,14 @@ s32 fightTrainerAiWazaHit174(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
     return 1;
 }
 
-s32 fightTrainerAiWazaHit173(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u16 temp_r30;
+s32 fightTrainerAiWazaHit173(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u32 arg2, FightOutPokemon *arg3) {
     u16 temp_r31;
+    u32 temp_r30;
 
     temp_r30 = tikeiDataBiosGetWazaId(fightFloor_GetTikeiDataId(0));
     temp_r31 = wazaDB_GetSeqId(arg2);
-    if (wazaDB_GetSeqId(temp_r30) != temp_r31) {
+    u16 seq = wazaDB_GetSeqId(temp_r30);
+    if (seq != temp_r31) {
         return fightTrainerAiWazaDoWazaHitFunc(arg0, arg1, temp_r30, arg3);
     }
     return 1;
@@ -1047,7 +1043,7 @@ s32 fightTrainerAiWazaHit135(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
 
     pokemonGetMezamerupower(fightOutPokemonGetPokemonPtr(arg1), &spA, &sp8);
     var_r31 = _fightTrainerAiWazaHitCheck(arg0, arg1, arg2, arg3, 0U);
-    if (fightTrainerAiGetFightOutPokemonZokuseiDataIdWazaJoutaiDataId(arg0, arg3, sp8, (u16) (s16) spA) == 0x43) {
+    if (((u16 (*)(FIGHT_TRAINER *, FightOutPokemon *, u16, s16)) fightTrainerAiGetFightOutPokemonZokuseiDataIdWazaJoutaiDataId)(arg0, arg3, sp8, (s16) spA) == 0x43) {
         var_r31 = 0;
     }
     if (var_r31 == 0) {
@@ -1100,7 +1096,8 @@ s32 fightTrainerAiWazaHit127(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
     u16 sp8;
 
     sp8 = 0;
-    if (fightTrainerSearchIrekaeFightPokemon(arg0, &sp8) == 0) {
+    s32 found = -((s32(*)(FIGHT_TRAINER *, u16 *))fightTrainerSearchIrekaeFightPokemon)(arg0, &sp8);
+    if (found == 0) {
         return 0;
     }
     return 1;
@@ -1337,16 +1334,12 @@ s32 fightTrainerAiWazaHit102(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
 
     temp_r31 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 1U, 1U);
     var_r26 = 0;
-    var_r27 = 0;
-loop_7:
-    if (var_r27 < temp_r31) {
+    for (var_r27 = 0; var_r27 < temp_r31; var_r27 += 1) {
         temp_r29 = (var_r27 * 4) & 0x3FFFC;
         temp_r4 = *(FightPokemon **)((u8 *)sp8 + temp_r29);
         if ((temp_r4 != 0) && ((arg2 != 0xD7) || (fightTrainerAiIsFightPokemonTokuseiDataId(arg0, temp_r4, 0x2BU) != 1)) && (fightTrainerAiIsFightPokemonJoutaiNormal(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r29)) == 0)) {
             var_r26 = 1;
-        } else {
-            var_r27 += 1;
-            goto loop_7;
+            break;
         }
     }
     if (var_r26 == 0) {
@@ -1362,9 +1355,9 @@ s32 fightTrainerAiWazaHit101(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
 s32 fightTrainerAiWazaHit100(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u16 sp18[8];
     s16 sp8[8];
-    s16 temp_r9;
-    s32 temp_r27;
     s32 temp_r8;
+    s32 temp_r27;
+    s16 temp_r9;
     u16 temp_r28;
     u16 temp_r3;
     u8 var_r10;
@@ -1378,15 +1371,12 @@ s32 fightTrainerAiWazaHit100(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
     }
     var_r3 = 0;
     var_r10 = 0;
-loop_10:
-    if ((s32) var_r10 < (s32) temp_r28) {
+    for (; (s32) var_r10 < (s32) temp_r28; var_r10 += 1) {
         temp_r8 = (var_r10 * 2) & 0x1FE;
         temp_r9 = *(s16 *)((u8 *)sp8 + temp_r8);
         if ((temp_r9 >= 0) && (temp_r3 == (u16) *(u16 *)((u8 *)sp18 + temp_r8))) {
             var_r3 = fightTrainerAiGetFightOutPokemonWazaNowPp(arg0, arg3, (u8) temp_r9);
-        } else {
-            var_r10 += 1;
-            goto loop_10;
+            break;
         }
     }
     if (var_r3 == 0) {
@@ -1414,22 +1404,20 @@ s32 fightTrainerAiWazaHit098(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
 
 s32 fightTrainerAiWazaHit097(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u16 sp8[8];
-    u16 temp_r27;
-    u16 temp_r29;
     u16 var_r28;
+    u16 temp_r29;
+    u16 temp_r27;
 
     temp_r29 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, arg1, sp8, 0, 1U);
     if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 8U) == 0) {
         return 0;
     }
-    var_r28 = 0;
-loop_10:
-    if (var_r28 < temp_r29) {
+    for (var_r28 = 0; var_r28 < temp_r29; var_r28 += 1) {
         temp_r27 = *(u16 *)((u8 *)sp8 + ((var_r28 * 2) & 0x1FFFE));
         if ((temp_r27 == 0x176) || (temp_r27 == 0x163) || (fightSeqRendouWazaCheck(temp_r27) != 0) || (temp_r27 == 0x108) || (temp_r27 == 0xFD) || (fightSeqTameWazaCheck(temp_r27) != 0)) {
-            var_r28 += 1;
-            goto loop_10;
+            continue;
         }
+        break;
     }
     if (var_r28 >= temp_r29) {
         return 0;
@@ -1451,16 +1439,12 @@ s32 fightTrainerAiWazaHit095(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
     if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x10U) == 1) || (fightSeqIsSketchNgWazaDataId(temp_r30) == 1)) {
         return 0;
     }
-    var_r6 = 0;
-loop_9:
-    if (var_r6 >= temp_r31) {
-        return 1;
+    for (var_r6 = 0; var_r6 < temp_r31; var_r6 += 1) {
+        if (temp_r30 == (u16) *(u16 *)((u8 *)sp8 + ((var_r6 * 2) & 0x1FFFE))) {
+            return 0;
+        }
     }
-    if (temp_r30 == (u16) *(u16 *)((u8 *)sp8 + ((var_r6 * 2) & 0x1FFFE))) {
-        return 0;
-    }
-    var_r6 += 1;
-    goto loop_9;
+    return 1;
 }
 
 s32 fightTrainerAiWazaHit094(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
@@ -1523,9 +1507,9 @@ s32 fightTrainerAiWazaHit091(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
 s32 fightTrainerAiWazaHit090(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u16 sp18[8];
     s16 sp8[8];
-    s16 temp_r9;
-    s32 temp_r29;
     s32 temp_r8;
+    s32 temp_r29;
+    s16 temp_r9;
     u16 temp_r27;
     u16 temp_r28;
     u16 var_r10;
@@ -1539,15 +1523,12 @@ s32 fightTrainerAiWazaHit090(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
     }
     var_r3 = 0;
     var_r10 = 0;
-loop_7:
-    if (var_r10 < temp_r28) {
+    for (; var_r10 < temp_r28; var_r10 += 1) {
         temp_r8 = (var_r10 * 2) & 0x1FFFE;
         temp_r9 = *(s16 *)((u8 *)sp8 + temp_r8);
         if ((temp_r9 >= 0) && (temp_r27 == (u16) *(u16 *)((u8 *)sp18 + temp_r8))) {
             var_r3 = fightTrainerAiGetFightOutPokemonWazaNowPp(arg0, arg3, (u8) temp_r9);
-        } else {
-            var_r10 += 1;
-            goto loop_7;
+            break;
         }
     }
     if (var_r3 == 0) {
@@ -1580,9 +1561,9 @@ s32 fightTrainerAiWazaHit087(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
 s32 fightTrainerAiWazaHit086(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u16 sp18[8];
     s16 sp8[8];
-    s16 temp_r9;
-    s32 temp_r29;
     s32 temp_r8;
+    s32 temp_r29;
+    s16 temp_r9;
     u16 temp_r27;
     u16 temp_r28;
     u16 var_r10;
@@ -1593,15 +1574,12 @@ s32 fightTrainerAiWazaHit086(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
     temp_r29 = _fightTrainerAiWazaHitCheck(arg0, arg1, arg2, arg3, 0U);
     var_r3 = 0;
     var_r10 = 0;
-loop_5:
-    if (var_r10 < temp_r27) {
+    for (; var_r10 < temp_r27; var_r10 += 1) {
         temp_r8 = (var_r10 * 2) & 0x1FFFE;
         temp_r9 = *(s16 *)((u8 *)sp8 + temp_r8);
         if ((temp_r9 >= 0) && (temp_r28 == (u16) *(u16 *)((u8 *)sp18 + temp_r8))) {
             var_r3 = fightTrainerAiGetFightOutPokemonWazaNowPp(arg0, arg3, (u8) temp_r9);
-        } else {
-            var_r10 += 1;
-            goto loop_5;
+            break;
         }
     }
     if (var_r3 == 0) {
@@ -1665,19 +1643,18 @@ s32 fightTrainerAiWazaHit082(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg
     if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x10U) == 1) || (fightSeqMonomaneNGCheck(temp_r29) != 0) || (temp_r29 == 0) || (temp_r29 == 0xFFFFU) || (temp_r29 == 0x176) || (temp_r29 == 0x163)) {
         return 0;
     }
-    var_r6 = 0;
-loop_13:
-    if (var_r6 >= temp_r30) {
-        if (temp_r31 == 0) {
+    for (var_r6 = 0; var_r6 < temp_r30; var_r6 += 1) {
+        if (temp_r29 == (u16) *(u16 *)((u8 *)sp8 + ((var_r6 * 2) & 0x1FFFE))) {
             return 0;
         }
-        return 1;
     }
-    if (temp_r29 == (u16) *(u16 *)((u8 *)sp8 + ((var_r6 * 2) & 0x1FFFE))) {
+    if (temp_r31 == 0) {
         return 0;
     }
-    var_r6 += 1;
-    goto loop_13;
+    if (temp_r31 == -1) {
+        return 1;
+    }
+    return 1;
 }
 
 s32 fightTrainerAiWazaHit081(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
@@ -2367,9 +2344,7 @@ s32 _fightTrainerAiWazaHitCheck(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 
     fightFloorSortFightOutPokemonPtrArySub(0, sp8, 8U, 0U);
     var_r6 = 0;
     var_r7 = 0;
-    var_r5 = 0;
-loop_9:
-    if (var_r5 < temp_r24) {
+    for (var_r5 = 0; var_r5 < temp_r24; var_r5 += 1) {
         temp_r3 = *(FightOutPokemon **)((u8 *)sp8 + ((var_r5 * 4) & 0x3FFFC));
         if (temp_r3 != 0) {
             if (arg1 == temp_r3) {
@@ -2379,8 +2354,6 @@ loop_9:
                 var_r7 = var_r5;
             }
         }
-        var_r5 += 1;
-        goto loop_9;
     }
     temp_r24_2 = (u32) (var_r6 - var_r7) >> 0x1FU;
     if ((arg4 == 0xFFFFU) || (arg4 == 0xFFFEU)) {

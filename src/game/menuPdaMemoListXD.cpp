@@ -179,7 +179,7 @@ void menuPdaMemoListLoadHero(u8 arg0) {
 f32 menuPdaMemoListGetDefaultAngle(s16 arg0) { return _defaultAngle[arg0]; }
 
 void menuPdaMemoListDispPokemonModel(MemoWindow *arg0, MemoSprite *arg1, s32 arg2) {
-    s16 var_r6;
+    u32 var_r6;
 
     if ((s32 *)pMemoList != 0) {
         switch (arg2) { /* irregular */
@@ -192,6 +192,7 @@ void menuPdaMemoListDispPokemonModel(MemoWindow *arg0, MemoSprite *arg1, s32 arg
         case 2:
             var_r6 = 0xBA;
             break;
+        case 3:
         default:
             var_r6 = 0x1C7;
             break;
@@ -274,6 +275,7 @@ void menuPdaMemoListHook(MemoWindow *arg0, MemoSprite *arg1) {
 
 void menuPdaMemoList(void) {
     MemoCursor cursor;
+    MemoCursor *returned;
     MemoWork *work = (MemoWork *)__nw__FUl(sizeof(MemoWork));
     if (work != 0)
         work = __ct__11pdaMemoListFv(work);
@@ -282,15 +284,19 @@ void menuPdaMemoList(void) {
     cursor.pos.first = 0;
     menuOpen(0x7f, 0);
     menuOpen(0x77, 0);
-    while (Main__11pdaMemoListFP6CURSOR(pMemoList, &cursor) >= 0) {
-        MemoCursor *returned = menuPdaMemoXDMain(&cursor);
+    for (;;) {
+        if (Main__11pdaMemoListFP6CURSOR(pMemoList, &cursor) < 0)
+            break;
+        returned = menuPdaMemoXDMain(&cursor);
         cursor.pos.selected = returned->pos.selected;
         cursor.pos.first = returned->pos.first;
         menuPdaSubInitAlpha(pMemoList->alpha, 8, cursor.pos.selected);
         CalcPosition__11pdaMemoListFP6CURSOR(pMemoList, &cursor);
         pMemoList->y = pMemoList->targetY;
     }
-    while (pMemoList->thread != 0) {
+    for (;;) {
+        if (pMemoList->thread == 0)
+            break;
         if (GSthreadIsRunning(pMemoList->thread) == 0) {
             GSthreadClose(pMemoList->thread);
             break;
@@ -509,7 +515,7 @@ void DispPokemonModel__11pdaMemoListFP14tagWINDOW_WORKP14tagSPRITE_WORKUl(MemoWo
     s32 temp_r3;
     MemoItem *temp_r31;
 
-    temp_r31 = menuItemBiosGetPtr(0x78, arg3);
+    temp_r31 = ((MemoItem *(*)(s32, s32))menuItemBiosGetPtr)(0x78, arg3);
     if ((GSgfxLayerFindByID(arg1->layer) != 0U) &&
         (menuModelSetSize(&arg0->model, temp_r31->x, temp_r31->y, temp_r31->width,
                           temp_r31->height),
@@ -694,8 +700,8 @@ void Release__11pdaMemoListFv(MemoWork *arg0) {
 
 void InitWork__11pdaMemoListFv(MemoWork *arg0) {
     s32 count = (u16)memoDataGetCount(0);
-    s32 index;
     MemoItem *item;
+    s32 index;
     arg0->cursor.pos.selected = 0;
     arg0->cursor.pos.first = 0;
     arg0->x = 0.0f;
@@ -771,17 +777,21 @@ void Button__11pdaMemoListFP14tagWINDOW_WORK(MemoWork *arg0, MemoWindow *arg1) {
 
 void Cursor__11pdaMemoListFP14tagWINDOW_WORK(MemoWork *arg0, MemoWindow *arg1) {
     MemoCursor cursor, copy;
-    s32 before;
-    u16 count, visible = 8, repeat;
+    s32 before, visible, count;
+    u16 repeat;
     s16 selected, last;
+    s32 tf, ts;
     windowGetKeyInfo();
     cursor.packed = _getCursor__11pdaMemoListFv(arg0);
     cursor.pos.first = arg1->first;
     cursor.pos.selected = arg1->selected;
     count = (u16)memoDataGetCount(0);
+    visible = 8;
     if (count < 8)
         visible = count;
-    before = cursor.pos.first + cursor.pos.selected;
+    ts = cursor.pos.selected;
+    tf = cursor.pos.first;
+    before = ts + tf;
     repeat = windowGetKeyRepeat();
     if (repeat & 1) {
         if (before != 0)

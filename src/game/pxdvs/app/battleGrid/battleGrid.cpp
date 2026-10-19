@@ -4,7 +4,7 @@ extern "C" {void GSlogWrite(const char*);void Sequence_CopyState(NullSequence*,N
 BattleGrid gBattleGrid;
 static bool gSavedVisibilityCodes[12],gBackupVisibilityCodes[12];
 static s32 g_max_model_size;static bool gVisibilityChanged,gVisibilityBackedUp;
-static inline ModelSequence *asModel(NullSequence *sequence){if(sequence==0)return 0;if(sequence->type==1)return static_cast<ModelSequence*>(sequence);return 0;}
+static inline ModelSequence *asModel(NullSequence *sequence){if(sequence==0)return 0;if(sequence->type==1){return static_cast<ModelSequence*>(sequence);}else{return 0;}}
 static inline void lookSource(ModelSequence *model,ModelSequence *source){if(model->lookSource)model->lookSource->lookTarget=0;if(!model->isPokemon)source=0;model->lookSource=source;}
 static inline void placeModel(ModelSequence *model,GSvec *position,GSvec *rotation,u8 flipped){if(model){model->SetPosition(position);model->SetRotation(rotation);model->flipped=flipped;}}
 static inline f32 modelScale(){switch(g_max_model_size){case -2:case -1:return .875f;case 1:return 1.4f;case 2:return 1.8f;case 3:return 2.4f;default:return 1.0f;}}

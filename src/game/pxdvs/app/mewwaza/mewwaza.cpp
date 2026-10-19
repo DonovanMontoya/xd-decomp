@@ -47,7 +47,7 @@ s32 _searchwaza__FP5MWAZAlPUsll(MWAZA *arg0, s32 arg1, u16 *arg2, s32 arg3, s32 
     var_r3 = arg0;
     var_r9 = 0;
     var_r10 = 0;
-loop_1:
+    for (;;) {
     temp_r8 = var_r3->unk0;
     if (temp_r8 == 0) {
         return var_r10;
@@ -88,10 +88,9 @@ loop_1:
         break;
     }
     if (var_r9 != 0) {
-        var_r8=0;
-        for(s32 i=0;i<arg3;i++){
-            if(var_r9==*(u16*)((u8*)arg2+var_r8)){var_r9=0;break;}
-            var_r8+=2;
+        s32 i;
+        for(i=0;i<arg3;i++){
+            if(var_r9==arg2[i]){var_r9=0;break;}
         }
         if (var_r9 != 0) {
             var_r10 += 1;
@@ -99,12 +98,10 @@ loop_1:
                 return var_r9;
             }
         }
-        goto block_40;
     }
-block_40:
     var_r9 = 0;
     var_r3 += 1;
-    goto loop_1;
+    }
 }
 
 void fn_802A4BF0(void) {

@@ -63,10 +63,10 @@ static void _sndStreamPrepareGetDataCallback_Exec(GSsndStream* stream, GSsndStre
     u32 length = 0x8000 - offset;
     u8* buffer = (u8*)stream->buffer;
     u32 position = selected->readOffset;
-    void* destination;
-    if (half) destination = buffer + ((stream->bufferSize >> 1) + position);
-    else destination = buffer + position;
     void* source = buffer + 0x10000 + offset;
+    void* destination;
+    if (half) destination = buffer + position + (stream->bufferSize >> 1);
+    else destination = buffer + position;
     if (position + length > 0x8000) {
         length = 0x8000 - position;
         state->length = offset + length; state->state = 3;
@@ -147,7 +147,8 @@ void _sndStreamGetDataCallback_ACTIVATE(u8, u8, GSsndStream* stream) {
         break;
     }
 }
-static void _sndStreamPrepareGetDataCallback(u8, u8 half, GSsndStream* userData) {
+static void _sndStreamPrepareGetDataCallback(u8, u8 half_, GSsndStream* userData) {
+    u32 half = half_;
     GSsndStream* stream = userData;
     GSsndStream *first, *second;
     GSsndStreamBufferState* state;

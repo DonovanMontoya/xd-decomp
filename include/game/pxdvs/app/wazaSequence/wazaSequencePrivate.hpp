@@ -101,7 +101,7 @@ u32 GSresGetResource(u32,u32);
 void HSD_ArchiveParse(void *,u8 *,u32);
 }
 struct WazaSequenceData {
-    u16 distortion;u8 index,pad03;u32 entryCount,flags;s8 fieldC;u8 pad0D[3];
+    u16 distortion;u16 index;u32 entryCount,flags;s32 fieldC;
     s32 version;u32 cameraSize,pad18;void *camera;
 };
 typedef char WazaSequenceSizeCheck[(sizeof(WazaSequence)==0x30)?1:-1];

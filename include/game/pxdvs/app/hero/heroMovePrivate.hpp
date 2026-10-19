@@ -118,7 +118,7 @@ u8 peopleCheckFlag(u32, u32, u32);
 void PSVECSubtract(GSvec*, GSvec*, GSvec*);
 f32 PSVECMag(GSvec*);
 u32 timeGetLastFrameTime(u8);
-u8 GSgfxVideoGetVsyncRate();
+u32 GSgfxVideoGetVsyncRate();
 u32 GSinputButtonsChanged(u32);
 u32 GSinputButtonsPressed(u32);
 void FloorModuleInterface_clear(FloorModuleInterface*);

@@ -392,10 +392,10 @@ static InputDevice* _inputFindDevice(s32 id) {
 }
 static void ClampCircle(s8* px, s8* py, s8 radius, s8 min) {
     s32 x = *px, y = *py;
-    if ((s8)-min < x && x < min) x = 0;
+    if (-min < x && x < min) x = 0;
     else if (x > 0) x -= min;
     else x += min;
-    if ((s8)-min < y && y < min) y = 0;
+    if (-min < y && y < min) y = 0;
     else if (y > 0) y -= min;
     else y += min;
     s32 squared = x * x + y * y;

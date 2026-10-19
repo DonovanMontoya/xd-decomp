@@ -103,22 +103,11 @@ s32 menuPdaMailListSortInit(s32 arg0) {
     if (var_r3_2 != 0) {
         _pdaMailSort__Fv();
         var_r4 = _sortwork;
-        var_r3 = 0;
-        var_ctr = temp_r3;
-        if (temp_r3 > 0) {
-        loop_5:
+        for (var_r3 = 0; var_r3 < temp_r3; var_r4++, var_r3++) {
             if (arg0 == (s32)*var_r4) {
                 return var_r3;
             }
-            var_r4 += 1;
-            var_r3 += 1;
-            var_ctr -= 1;
-            if (var_ctr == 0) {
-                goto block_8;
-            }
-            goto loop_5;
         }
-    block_8:
         return -1;
     }
     return -1;
@@ -145,7 +134,7 @@ void menuPdaMailListButtonXD(PdaMailWindow *arg0) {
 
 s32 menuPdaMailListCursorXD(PdaMailWindow *arg0) {
     PdaMailCursor cursor, copy;
-    s32 count, visible = 5;
+    s32 count, visible;
     u16 repeat;
     s16 selected;
     windowGetKeyInfo();
@@ -153,6 +142,7 @@ s32 menuPdaMailListCursorXD(PdaMailWindow *arg0) {
     cursor.pos.first = arg0->first;
     cursor.pos.selected = arg0->selected;
     count = mailGetNbMailInMailbox();
+    visible = 5;
     if (count < 5)
         visible = count;
     repeat = windowGetKeyRepeat();
@@ -185,7 +175,7 @@ s32 menuPdaMailListCursorXD(PdaMailWindow *arg0) {
         } else if (selected >= visible) {
             s8 last = visible - 1;
             cursor.pos.selected = last;
-            cursor.pos.first += selected - last;
+            cursor.pos.first += selected - (visible - 1);
             if (cursor.pos.first + last >= count) {
                 cursor.pos.selected = last;
                 cursor.pos.first = (s8)(count - visible);
@@ -262,11 +252,9 @@ static void _pdaMailListUpCursor__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWin
 
 static void _pdaMailListCursor__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
                                                                     PdaMailSprite *arg1) {
-    struct MailCursorIds {
-        s32 a, b, c, d, e;
-    } ids = {0x81, 0x82, 0x83, 0x84, 0x85};
-    s32 id0 = ids.a, id1 = ids.b, id2 = ids.c, id3 = ids.d, id4 = ids.e;
-    s16 selected;
+    s32 ids[5] = {0x81, 0x82, 0x83, 0x84, 0x85};
+    s32 id0 = ids[0], id1 = ids[1], id2 = ids[2], id3 = ids[3], id4 = ids[4];
+    s32 selected;
     s32 index = 0;
     selected = arg0->selected;
     if (mailGetNbMailInMailbox() == 0)
@@ -349,6 +337,7 @@ s32 menuPdaMailListSubXD(s32 arg0, PdaMailCursor *arg1) {
 
 void menuPdaMailListXD(void) {
     PdaMailCursor cursor;
+    PdaMailCursor *returned;
     s32 selected = 0;
     s32 count = mailGetNbMailInMailbox();
     u16 *sort;
@@ -362,8 +351,11 @@ void menuPdaMailListXD(void) {
     cursor.pos.selected = 0;
     cursor.pos.first = 0;
     menuOpen(0x77, 0);
-    while ((selected = menuPdaMailListSubXD(selected, &cursor)) >= 0) {
-        PdaMailCursor *returned = menuPdaMailXD(&cursor, 1, 0);
+    for (;;) {
+        selected = menuPdaMailListSubXD(selected, &cursor);
+        if (selected < 0)
+            break;
+        returned = menuPdaMailXD(&cursor, 1, 0);
         cursor.pos.selected = returned->pos.selected;
         cursor.pos.first = returned->pos.first;
         menuPdaSubInitAlpha(_menuPdaMailAlpha, 5, cursor.pos.selected);
@@ -424,11 +416,11 @@ static s32 _pdaMailListDraw__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *
     PdaMailCursor sp8;
     u32 subject, sender;
     f32 var_f30;
-    s32 temp_r24;
-    s32 temp_r25;
-    s32 temp_r29;
-    s32 temp_r30;
     s32 temp_r31;
+    s32 temp_r30;
+    s32 temp_r29;
+    s32 temp_r25;
+    s32 temp_r24;
     s32 var_r23;
     u8 temp_r0;
     PdaMailItem *temp_r27;
@@ -450,8 +442,8 @@ static s32 _pdaMailListDraw__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *
     for (var_r23 = 0; var_r23 < temp_r31; var_r23++) {
         if ((var_r23 >= (s32)(sp8.pos.first - 1)) && (var_r23 < (s32)(sp8.pos.first + 6))) {
             if ((subject = _getSubject__Fl(var_r23)) != 0U) {
-                subject = GSmsgGetGSchar(subject);
-                msgctrlSetValue(0x37, subject);
+                u32 chr = GSmsgGetGSchar(subject);
+                msgctrlSetValue(0x37, chr);
                 GSmsgPrint2(arg0->layer, temp_r25, (s32)var_f30, temp_r30 | arg0->alpha, 0x4276);
             } else {
                 GSmsgPrint2(arg0->layer, temp_r25, (s32)var_f30, temp_r30 | arg0->alpha, 0);
@@ -474,11 +466,13 @@ static s32 _pdaMailListDraw__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *
 static s32 _pdaMailListPageBunbo__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
                                                                       PdaMailSprite *arg1) {
     s32 temp_r3;
+    u32 rect;
 
     temp_r3 = mailGetNbMailInMailbox();
     if (temp_r3 != 0) {
         msgctrlSetValue(0x34, temp_r3);
-        GSmsgPrint2(arg0->layer, arg1->width - (GSmsgGetRect(0x426F) >> 0x10U), 0,
+        rect = GSmsgGetRect(0x426F) >> 0x10U;
+        GSmsgPrint2(arg0->layer, arg1->width - rect, 0,
                     arg0->alpha | ~0xFF, 0x426F);
     }
     return 0;
@@ -486,9 +480,11 @@ static s32 _pdaMailListPageBunbo__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWin
 
 static s32 _pdaMailListPageBunshi__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
                                                                        PdaMailSprite *arg1) {
+    u32 rect;
     if (mailGetNbMailInMailbox() != 0) {
-        msgctrlSetValue(0x34, arg0->first + (arg0->selected + 1));
-        GSmsgPrint2(arg0->layer, arg1->width - (GSmsgGetRect(0x426F) >> 0x10U), 0,
+        msgctrlSetValue(0x34, arg0->first + arg0->selected + 1);
+        rect = GSmsgGetRect(0x426F) >> 0x10U;
+        GSmsgPrint2(arg0->layer, arg1->width - rect, 0,
                     arg0->alpha | ~0xFF, 0x426F);
     }
     return 0;
@@ -516,7 +512,7 @@ static void _sortReceive__FPUs(u16 *arg0) {
     var_r30 = arg0;
     var_r31 = mailGetNbMailInMailbox() - 1;
     while (var_r31 >= 0) {
-        temp_r0 = mailGetMailIDInMailbox(var_r31);
+        temp_r0 = ((s32 (*)(s32))mailGetMailIDInMailbox)(var_r31);
         var_r31 -= 1;
         *var_r30 = temp_r0;
         var_r30 += 1;

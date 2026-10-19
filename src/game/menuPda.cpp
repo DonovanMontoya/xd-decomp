@@ -683,11 +683,9 @@ static void _SelectCursorCalcAngle(s8 sel) {
     PdaMenuItem *item = (PdaMenuItem *)menuItemBiosGetPtr(0x6B, _SelectLabel[sel]);
     _menuPdaStatus.unk60 = (f32)(s16)(item->y - 5);
     _menuPdaStatus.unk44 = (f32)acos((_menuPdaStatus.unk5C - _center1.y) / _r1);
-    f32 t = _menuPdaStatus.unk5C + 30.0f;
-    _menuPdaStatus.unk48 = (f32)acos((t - _center1.y) / _r1);
+    _menuPdaStatus.unk48 = (f32)acos((_menuPdaStatus.unk5C + 30.0f - _center1.y) / _r1);
     _menuPdaStatus.unk4C = (f32)acos((_menuPdaStatus.unk5C - _center2.y) / _r2);
-    t = _menuPdaStatus.unk5C + 30.0f;
-    _menuPdaStatus.unk50 = (f32)acos((t - _center2.y) / _r2);
+    _menuPdaStatus.unk50 = (f32)acos((_menuPdaStatus.unk5C + 30.0f - _center2.y) / _r2);
     _menuPdaStatus.unk54 = _menuPdaStatus.unk48 - _menuPdaStatus.unk44;
     _menuPdaStatus.unk58 = _menuPdaStatus.unk50 - _menuPdaStatus.unk4C;
 }

@@ -164,7 +164,7 @@ void fightSideWriteJoutaiDataId(void*, u16, u32);
 s32 fightTargetDataBiosGetBuff(void *);
 void * fightTargetDataBiosGetPtr(s32);
 void* fightTargetGetPtrAsNowFightType(u8, void*);
-FightOutPokemon* fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(u16, u16);
+FightOutPokemon* fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(u32, u16);
 u32 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(void*, u8);
 FightPokemon * fightTrainerCheckTemotiPokemonFightEntry(void*,u32);
 u16 fightTrainerGetIrekaeFightPokemonAry(void*, void**);

@@ -77,15 +77,14 @@ void peopleBiosPopData(void* buffer, u32 size) {
     s32 index;
     tagPeopleWork* work;
     u8* cursor;
-    u32 remaining;
     memset(_pPeopleWorkTop, 0, _people_num * sizeof(tagPeopleWork));
     if (((u32*)buffer)[0] == size) {
         count = ((u32*)buffer)[1];
         if (count <= 64) {
-            remaining = count;
+            size = count;
             cursor = (u8*)buffer + 8;
             index = 0;
-            while (remaining--) {
+            while (size--) {
                 work = peopleBiosGetNewWork();
                 u32* saved = (u32*)cursor;
                 peopleOpenSub(work, saved[2], saved[3], saved[4]);

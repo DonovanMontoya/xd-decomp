@@ -4074,27 +4074,27 @@ s32 fightAiCombo_Ibaru_Irekae_2(FIGHT_TRAINER *arg0, FightOutPokemon **arg1, u16
 }
 
 s32 fightAiCombo_Horobinouta_Irekae_2(FIGHT_TRAINER *arg0, FightOutPokemon **arg1, u16 arg2, FightOutPokemon **arg3, u16 arg4, FightAiAllWazaValid *arg5, u8 arg6) {
+    u8 m;
+    FightPokemon *spC[6];
+    u8 temp_r4;
+    s16 best;
+    s16 entry;
+    u8 sp8;
+    u8 cnt;
+    u8 i;
+    u8 k;
+    s16 base;
+    u8 found;
+    u8 sp24[64];
     s32 other;
     u8 flagA;
     u8 flagB;
-    u8 ties;
-    u8 sp24[64];
-    FightPokemon *spC[6];
-    u8 sp8;
-    u8 j;
-    u8 m;
-    u8 k;
-    u8 i;
-    s16 best;
-    u8 found;
-    s16 value;
-    s16 base;
-    s16 entry;
-    u8 cnt;
-    u16 irekaeNum;
-    FightAiAllWazaValid sp64[64];
     s32 rnd;
-    u8 temp_r4;
+    u8 j;
+    u8 ties;
+    FightAiAllWazaValid sp64[64];
+    s16 value;
+    u16 irekaeNum;
 
     found = 0;
     sp8 = 0;
@@ -4193,26 +4193,26 @@ s32 fightAiCombo_Horobinouta_Irekae_2(FIGHT_TRAINER *arg0, FightOutPokemon **arg
 }
 
 s32 fightAiCombo_Horobinouta_Irekae2_2(FIGHT_TRAINER *arg0, FightOutPokemon **arg1, u16 arg2, FightOutPokemon **arg3, u16 arg4, FightAiAllWazaValid *arg5, u8 arg6) {
-    s16 base;
-    u8 ties;
-    s32 other;
-    u8 sp24[64];
-    FightPokemon *spC[6];
-    u8 sp8;
-    u8 j;
-    u8 m;
-    u8 k;
-    u8 i;
-    u8 flagA;
-    u8 flagB;
-    s16 best;
     u8 found;
-    s16 value;
+    u8 j;
+    u8 ties;
     s16 entry;
-    u8 cnt;
-    u16 irekaeNum;
+    FightPokemon *spC[6];
+    s32 other;
+    u8 k;
+    s16 best;
+    u8 i;
     FightAiAllWazaValid sp64[64];
+    u8 flagA;
     s32 rnd;
+    s16 base;
+    u8 m;
+    u8 sp8;
+    u8 sp24[64];
+    u8 cnt;
+    s16 value;
+    u8 flagB;
+    u16 irekaeNum;
     u8 temp_r4;
 
     found = 0;

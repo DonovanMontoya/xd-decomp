@@ -11,7 +11,7 @@ static s32 _menuTopMsgTable[5]={0x42E2,0x42E1,0x444E,0x42E3,0x42E6};
 static s32 _menuTopMsgTableBattleSelect[3]={0x42E4,0x42E5,0xAF};
 static void _menuTopClose(s32 id){menuCloseCustom(id,0,1);}
 static void _menuTopClose2(s32 id,u32 flags){if(menuIsCheck(id)==1)menuCloseCustom(id,flags,1);}
-static void _menuTopInitPokemon(s16 x,s16 y){menuModelInit(&_menuTopMenuModel,x,y);}
+static void _menuTopInitPokemon(s16 x,s16 y){((void(*)(MENU_MODEL*,s32,s32))menuModelInit)(&_menuTopMenuModel,x,y);}
 static void _menuTopExitPokemon(){menuModelTerm(&_menuTopMenuModel);}
 static void _menuTopLoadPokemon(){s32 a,b;menuModelLoad(&_menuTopMenuModel,heroGetObjID(1));menuModelCheck(&_menuTopMenuModel,1);peopleInfoBiosGetMotion(peopleInfoBiosGetPtr(0x16C90400),1,&a,&b);menuModelSetMotion(&_menuTopMenuModel,a);}
 static void _menuTopExit(){_menuTopClose2(0x116,2);scriptModelClose(_menuTopResID);}
@@ -31,7 +31,7 @@ u8 menuTopGetBattleMode(){return _menuTopWork.battle;}
 s32 menuTopGetBattleSelectMode(){return _menuTopWork.battleSelect;}
 void menuTopSetBattleSelectMode(s32 mode){_menuTopWork.battleSelect=mode;}
 void menuTopSetInitCursor(s32 n){_menuTopSelectCursor=n;}
-void menuTopHookMssageWindow(tagWINDOW_WORK *w){u32 value=*(u32*)&w->first;s16 selected=((s16*)&value)[1];if(pokecoloGetRomVersion()!=1 && selected>=0)GSmsgPrint2(w->layer,0,-8,0xFFFFFF00|w->alpha,_menuTopMsgTable[menuTitleGetSelect()]);}
+void menuTopHookMssageWindow(tagWINDOW_WORK *w){u32 value=*(u32*)&w->first;if(pokecoloGetRomVersion()!=1){s16 selected=((s16*)&value)[1];if(selected>=0){u32 msg=_menuTopMsgTable[menuTitleGetSelect()];u32 color=w->alpha;GSmsgPrint2(w->layer,0,-8,color|0xFFFFFF00,msg);}}}
 void menuTopHookMssageBattleSelectWindow(tagWINDOW_WORK *w){u32 value=*(u32*)&w->first;s16 selected=((s16*)&value)[1];if(selected>=0)GSmsgPrint2(w->layer,0,-8,0xFFFFFF00|w->alpha,_menuTopMsgTableBattleSelect[selected]);}
 void fn_8002F668(tagWINDOW_WORK *w,tagSPRITE_WORK *s,u32 msg){u32 rect=GSmsgGetRect(msg);MENU_ITEM_dd_ *p=menuItemBiosGetPtr(w->menu,s->id);s32 width=*(s16*)((u8*)p+0xA)-(s16)(rect>>16);s32 height=*(s16*)((u8*)p+0xC)-(s16)rect;GSmsgPrint2(w->layer,width/2,height/2,0xFFFFFF00|w->alpha,msg);}
 void menuTopHook(tagWINDOW_WORK *w,tagSPRITE_WORK *s){u32 value=*(u32*)&w->first;s16 selected=((s16*)&value)[1];switch(s->id){case 0x70:if(selected==0){menuTitleCursorAnime();winSpriteSetDisp(s,1);}else winSpriteSetDisp(s,0);break;case 0x71:if(selected==1){menuTitleCursorAnime();winSpriteSetDisp(s,1);}else winSpriteSetDisp(s,0);break;case 0x72:if(selected==2){menuTitleCursorAnime();winSpriteSetDisp(s,1);}else winSpriteSetDisp(s,0);break;case 0x76:fn_8002F668(w,s,0x445A);break;case 0x77:fn_8002F668(w,s,0x4459);break;}}

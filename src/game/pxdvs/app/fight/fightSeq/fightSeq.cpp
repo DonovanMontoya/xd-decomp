@@ -1426,8 +1426,8 @@ void fightSeqFightOutPokemonTokuseiCheckTurn__FP15FightOutPokemon(FightOutPokemo
     u16 temp_r3;
     u16 temp_r30;
     FightWaza *temp_r30_2;
-    u32 temp_r28;
     Pokemon *temp_r29;
+    u32 temp_r28;
     u8 namake;
 
     temp_r29 = fightOutPokemonGetPokemonPtr(arg0);
@@ -1470,7 +1470,7 @@ void fightSeqFightOutPokemonTokuseiCheckTurn__FP15FightOutPokemon(FightOutPokemo
             break;
         case 0x36:
             namake = fightOutPokemon_GetNamakeFlag(arg0);
-            fightOutPokemon_SetNamakeFlag(arg0, namake == 0);
+            fightOutPokemon_SetNamakeFlag(arg0, namake == 0 ? 1 : 0);
             break;
         }
     }

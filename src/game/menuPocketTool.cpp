@@ -617,14 +617,12 @@ void CMetaMenu::localWindowRemove(long id) {
 }
 
 void CMetaMenu::localWindowDrawAll(long first, long last) {
-    long i;
-    i = first;
-    for (; i <= last; i++) {
-        if (windows[i] != 0) {
-            if (windowFuncs[i] != 0) {
-                windowFuncs[i](this, windows[i]);
+    for (; first <= last; first++) {
+        if (windows[first] != 0) {
+            if (windowFuncs[first] != 0) {
+                windowFuncs[first](this, windows[first]);
             } else {
-                menuPtWindowWorkDraw(windows[i]);
+                menuPtWindowWorkDraw(windows[first]);
             }
         }
     }

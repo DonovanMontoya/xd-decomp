@@ -73,15 +73,19 @@ u8 GSdvdSeekAsync(GSdvdWork* work, s32 offset, GSdvdCallback callback) {
     return DVDSeekAsyncPrio(&work->info, offset, _AsyncCallback, 2);
 }
 s32 GSdvdGetFileInfoStatus(GSdvdWork* work) {
-    if (!_initFlag) return -1;
-    if (!work) return -1;
-    return DVDGetCommandBlockStatus(&work->info.cb);
+    if (_initFlag == 0) {
+        return -1;
+    } else if (work == 0) {
+        return -1;
+    } else {
+        return DVDGetCommandBlockStatus(&work->info.cb);
+    }
 }
-s32 GSdvdGetDriveStatus() { if (!_initFlag) return -1; return DVDGetDriveStatus(); }
+s32 GSdvdGetDriveStatus() { if (_initFlag == 0) { return -1; } else { return DVDGetDriveStatus(); } }
 s32 GSdvdWrite() { return -1; }
 s32 GSdvdRemove() { return 0 & ~-((_initFlag == 0) & 1); }
 s32 GSdvdCreate() { return 0; }
-u32 GSdvdGetLength(GSdvdWork* work) { if (!_initFlag) return 0; if (!work) return 0; return work->info.length; }
+u32 GSdvdGetLength(GSdvdWork* work) { if (!_initFlag) return 0; if (work == 0) { return 0; } else { return work->info.length; } }
 s32 GSdvdClose(GSdvdWork* work) { if (!_initFlag) return 0; if (!work) return 0; _freeDvdWork(work); return DVDClose(&work->info); }
 u8 GSdvdReadAsync(GSdvdWork* work, void* buffer, s32 length, s32 offset, GSdvdCallback callback) {
     if (!_initFlag) return 0;
@@ -101,7 +105,7 @@ s32 GSdvdRead(GSdvdWork* work, void* buffer, s32 length, s32 offset) {
     if (offset & 3) return -1;
     return DVDReadPrio(&work->info, buffer, length, offset, 2);
 }
-u32 GSdvdOpenTest(const char* path) { if (!_initFlag) return 0; return DVDConvertPathToEntrynum(path) != -1; }
+u32 GSdvdOpenTest(const char* path) { if (_initFlag == 0) { return 0; } else { return DVDConvertPathToEntrynum(path) != -1; } }
 GSdvdWork* GSdvdOpen(const char* path) {
     if (!_initFlag) return 0;
     GSdvdWork* work = _getNewDvdWork();
@@ -147,18 +151,17 @@ static void _AsyncReadCallback(s32 result, DVDFileInfo* info) {
     if (work && work->callback) { DCInvalidateRange(work->buffer, work->length); work->callback(result, work); }
 }
 static GSdvdWork* _info2work(DVDFileInfo* info) {
-    s32 index = 0; GSdvdWork* work = _dvdWork;
-    for (u32 count = _maxDvdWork; count > 0; --count, ++work, ++index) {
-        if (work->inUse && &work->info == info) return &_dvdWork[index];
+    for (u32 index = 0; index < _maxDvdWork; index++) {
+        if (_dvdWork[index].inUse && &_dvdWork[index].info == info) return &_dvdWork[index];
     }
     return 0;
 }
 static void _freeDvdWork(GSdvdWork* work) { BOOL interrupts = OSDisableInterrupts(); work->inUse = 0; OSRestoreInterrupts(interrupts); }
 static GSdvdWork* _getNewDvdWork() {
     BOOL interrupts = OSDisableInterrupts();
-    GSdvdWork* result = 0; s32 index = 0; GSdvdWork* work = _dvdWork;
-    for (u32 count = _maxDvdWork; count > 0; --count, ++work, ++index) {
-        if (work->inUse != 1) { _dvdWork[index].inUse = 1; result = &_dvdWork[index]; break; }
+    GSdvdWork* result = 0;
+    for (u32 index = 0; index < _maxDvdWork; index++) {
+        if (_dvdWork[index].inUse != 1) { _dvdWork[index].inUse = 1; result = &_dvdWork[index]; break; }
     }
     OSRestoreInterrupts(interrupts); return result;
 }

@@ -227,10 +227,11 @@ void Release__10menuPdaDPMFv(DpmWork *arg0) { menuModelTerm(&arg0->model); }
 
 void LoadPokemon__10menuPdaDPMFP6CURSOR(DpmWork *arg0, DpmCursor *arg1) {
     s16 temp_r5;
+    DpmPokemon *pkm;
 
     temp_r5 = arg1->selected;
-    menuModelLoadPokemon(&arg0->model,
-                         GetPokemonPointer__10menuPdaDPMFl(arg0, temp_r5 + arg1->first));
+    pkm = GetPokemonPointer__10menuPdaDPMFl(arg0, temp_r5 + arg1->first);
+    menuModelLoadPokemon(&arg0->model, pkm);
 }
 
 void Init__10menuPdaDPMFP6CURSOR(DpmWork *arg0, DpmCursor *arg1) {
@@ -286,22 +287,22 @@ void Ctrl__10menuPdaDPMFP14tagWINDOW_WORK(DpmWork *arg0, DpmWindow *arg1) {
 }
 
 void Cursor__10menuPdaDPMFP14tagWINDOW_WORK(DpmWork *arg0, DpmWindow *arg1) {
+    s32 temp_r31;
+    DpmCursor *temp_r30;
+    s32 temp_r29;
+    s32 var_r28;
     s16 temp_r4;
     s16 temp_r5;
     s16 temp_r5_2;
-    s32 temp_r29;
-    s32 temp_r31;
-    s32 var_r28;
     s8 temp_r3_3;
     u16 temp_r3_2;
     DpmContents *temp_r3;
-    DpmCursor *temp_r30;
 
     windowGetKeyInfo();
     temp_r3 = arg1->content;
     temp_r30 = temp_r3->cursor;
-    var_r28 = 0xA;
     temp_r29 = menuPdaDPMListGetDPNum();
+    var_r28 = 0xA;
     temp_r3_2 = windowGetKeyRepeat();
     temp_r5 = temp_r30->selected;
     temp_r4 = temp_r30->first;
@@ -313,16 +314,16 @@ void Cursor__10menuPdaDPMFP14tagWINDOW_WORK(DpmWork *arg0, DpmWindow *arg1) {
         if (temp_r31 != 0) {
             GSsndPlayNow(0x450);
         }
-        temp_r30->selected = (s16)(temp_r30->selected - 1);
+        temp_r30->selected--;
     } else if ((s32)(temp_r3_2 & 2) != 0) {
         if ((s32)(temp_r29 - 1) != (s32)(temp_r5 + temp_r4)) {
             GSsndPlayNow(0x450);
         }
-        temp_r30->selected = (s16)(temp_r30->selected + 1);
+        temp_r30->selected++;
     }
     temp_r5_2 = temp_r30->selected;
     if (temp_r5_2 < 0) {
-        temp_r30->first = (s16)(temp_r30->first + temp_r5_2);
+        temp_r30->first += temp_r5_2;
         temp_r30->selected = 0;
         if ((s16)temp_r30->first < 0) {
             temp_r30->first = 0;
@@ -417,44 +418,45 @@ void DarkPokemonRibbon__10menuPdaDPMFP14tagWINDOW_WORKP14tagSPRITE_WORKP12DPM_CO
     temp_r4 = arg3->cursor;
     if (getStatus__11DarkPokemonCFv(
             menuPdaDPMListGetDPointer(temp_r4->selected + temp_r4->first)) >= 4) {
-        arg2->flags = (u8)(s8)(arg2->flags | 2);
+        arg2->flags = arg2->flags | 2;
         return;
     }
-    arg2->flags = (u8)(s8)(arg2->flags & 0xFFFFFFFD);
+    arg2->flags = (u8)arg2->flags & 0xFFFFFFFD;
 }
 
 void DarkPokemonInfo__10menuPdaDPMFP14tagWINDOW_WORKP14tagSPRITE_WORKP12DPM_CONTENTS(
     DpmWork *arg0, DpmWindow *arg1, DpmSprite *arg2, DpmContents *arg3) {
-    s32 temp_r28;
+    s32 var_r31;
     DpmDarkPokemon *temp_r30;
-    s32 temp_r31;
     u16 temp_r29;
-    u32 var_r31;
+    s32 temp_r28;
     u32 var_r3;
+    u32 name;
     DpmCursor *temp_r4;
 
     temp_r4 = arg3->cursor;
     temp_r30 = menuPdaDPMListGetDPointer(temp_r4->selected + temp_r4->first);
-    temp_r29 = getCatchFloorId__11DarkPokemonCFv(temp_r30);
-    temp_r31 = getStatus__11DarkPokemonCFv(temp_r30);
+    temp_r29 = ((u32(*)(DpmDarkPokemon *))getCatchFloorId__11DarkPokemonCFv)(temp_r30);
+    var_r31 = getStatus__11DarkPokemonCFv(temp_r30);
     temp_r28 = winSpriteGetLayerID(arg1, arg2);
     if (getPokemonID__11DarkPokemonCFv(temp_r30) == 0xAF) {
-        var_r31 = 0x3C2FU;
-    } else if (temp_r31 >= 3) {
-        var_r31 = 0x3B63U;
+        var_r31 = 0x3C2F;
+    } else if (var_r31 >= 3) {
+        var_r31 = 0x3B63;
     } else {
-        var_r31 = 0x3B65U;
+        var_r31 = 0x3B65;
     }
     if (temp_r29 == 0xB5) {
-        var_r31 = 0x3C30U;
+        var_r31 = 0x3C30;
     }
-    if (var_r31 != 0U) {
+    if ((u32)var_r31 != 0U) {
         getOrgTrainer__11DarkPokemonCFv(temp_r30);
         var_r3 = floorGetPlaceName(temp_r29);
         if (var_r3 == 0U) {
             var_r3 = 0x3BA8U;
         }
-        msgctrlSetValue(0x4D, GSmsgGetGSchar(var_r3));
+        name = GSmsgGetGSchar(var_r3);
+        msgctrlSetValue(0x4D, name);
         msgctrlSetValue(0x57, getTrainerName__11DarkPokemonCFv(temp_r30));
         GSmsgPrint2(temp_r28, 0, 0, arg1->alpha | ~0xFF, var_r31);
     }
@@ -464,14 +466,15 @@ void DarkPokemonPlace__10menuPdaDPMFP14tagWINDOW_WORKP14tagSPRITE_WORKP12DPM_CON
     DpmWork *arg0, DpmWindow *arg1, DpmSprite *arg2, DpmContents *arg3) {
     u8 sp8;
     u32 temp_r3;
+    u32 name;
     DpmCursor *temp_r5;
 
     temp_r5 = arg3->cursor;
     temp_r3 = menuPdaDPMListGetDarkPokemonPlaceMsgID(temp_r5->selected + temp_r5->first, &sp8);
     if (temp_r3 != 0U) {
         msgctrlSetValue(0x2F, sp8 + 1);
-        temp_r3 = GSmsgGetGSchar(temp_r3);
-        msgctrlSetValue(0x37, temp_r3);
+        name = GSmsgGetGSchar(temp_r3);
+        msgctrlSetValue(0x37, name);
         GSmsgPrint2(arg1->layer, 0, 0, arg1->alpha | ~0xFF, 0x4275U);
     }
 }
@@ -494,18 +497,20 @@ void PokemonSex__10menuPdaDPMFP14tagWINDOW_WORKP14tagSPRITE_WORKP12DPM_CONTENTS(
                                                                                 DpmWindow *arg1,
                                                                                 DpmSprite *arg2,
                                                                                 DpmContents *arg3) {
-    s16 temp_r30;
+    s32 temp_r30;
+    DpmPokemon *temp_r29;
     DpmDarkPokemon *temp_r28;
     u32 var_r29;
     u8 temp_r30_2;
-    DpmPokemon *temp_r29;
     DpmCursor *temp_r4;
+    u32 rnd;
 
     temp_r4 = arg3->cursor;
     temp_r30 = temp_r4->selected + temp_r4->first;
     temp_r28 = menuPdaDPMListGetDPointer(temp_r30);
     temp_r29 = GetPokemonPointer__10menuPdaDPMFl(arg0, temp_r30);
-    pokemonBiosSetRnd(temp_r29, getRnd__11DarkPokemonCFv(temp_r28));
+    rnd = getRnd__11DarkPokemonCFv(temp_r28);
+    pokemonBiosSetRnd(temp_r29, rnd);
     temp_r30_2 = pokemonGetSex(temp_r29);
     pokemonBiosSetRnd(temp_r29, arg0->rnd);
     if (temp_r30_2 == 0x80) {

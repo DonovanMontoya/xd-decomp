@@ -462,8 +462,8 @@ static void _particlePreUpdate(f32 dt) {
                     cam = _genGetCamera(g);
                     if (GScameraIsValid((u32)cam)) {
                         u8 found = 0;
-                        s32 k;
-                        for (k = 0; k < g_particle_cameras_count; k++) {
+                        u32 k;
+                        for (k = 0; k < (u32)g_particle_cameras_count; k++) {
                             if (g_particle_cameras[k] == cam) {
                                 found = 1;
                                 break;
@@ -644,7 +644,7 @@ extern "C" void GSparticleSetOffsetRotationInLocal(_GSparticleGen *g, bool a, bo
 extern "C" void GSparticleSetVelocityRotationInLocal(_GSparticleGen *g, bool v) {
     peBankX *b = g->bank;
     if (b) {
-        switch (g->isBank) {
+        switch ((u32)g->isBank) {
         case 0:
             psSetVelocityRotationInLocal(b->ps, v);
             break;

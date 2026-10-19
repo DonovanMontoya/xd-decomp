@@ -185,7 +185,7 @@ static inline f32 vec_get_x(Vec3* v)
 
 static inline f64 vec_get_abs_y(Vec3* v)
 {
-    return fabsf(v->y);
+    return (f32)fabs(v->y);
 }
 
 static inline f32 cobj_get_up_x(Vec3* up)

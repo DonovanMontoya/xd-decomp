@@ -685,9 +685,7 @@ static inline u16 _msgNextCode(MsgTask* task) {
         code = *cursor;
         if (code == 0) {
             if ((s8)task->textDepth == 0) return code;
-            s8 depth=(s8)task->textDepth-1;
-            task->textDepth=depth;
-            task->textCursor = task->returnText[depth];
+            task->textCursor = task->returnText[(s8)(--task->textDepth)];
         } else {
             task->textCursor = cursor + 1;
             break;

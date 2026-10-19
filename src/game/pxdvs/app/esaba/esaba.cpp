@@ -5,7 +5,7 @@ struct EsaData {s32 amountFlag,appFlag,stepFlag,pokemonFlag,randomFlag,disableFl
 struct EsaApp {u16 first,last,interval,randomDiv,mode,pad;u32 unused,progressIndex; s32 progressFlag;};
 struct EsaSpecial {u16 unused,id;u32 rate,digest;};
 extern "C" {
-extern EsaData *esabadata;extern u32 *esabadata_number;extern EsaApp *esabaappdata;extern EsaSpecial *esabapokemondata_EX;extern u8 *flag_etc;
+extern EsaData *esabadata;extern u32 *esabadata_number;extern EsaApp *esabaappdata;extern EsaSpecial *esabapokemondata_EX;struct EsaFlagEtc{u32 a,b,c,d,e,f,g,h;};extern EsaFlagEtc *flag_etc;
 u32 GSflagGet(s32);void GSflagSet(s32,u32);u8 GSflagTest(s32);s32 HSD_Rand();void GSthreadSwitch();void heroMoveInitEvent();void heroMoveSetColision(s32);void heroMoveTermEvent();void menuScriptInfoEsa();
 u32 heroGetStatus(void*,u16,u32);u32 gamedataGetStatus(void*,u16);void *getHeroPtr__4HeroFv();s32 itemQuantity__4HeroFUs(void*,u16);s32 heroMoveAddStepCallback(void(*)(s32,s32,s32),s32);void underTakerCallBackFunc(s32,s32,s32);u32 underTakerGetMiraboPlace();
 void pokemonCreate(void*,u16,u8,u32);void pokemonBiosSetCatchTrainerRnd(void*,u32);u32 pokemonCreateRnd();u32 pokemonCreateRndFit(void*,s32,s32,s32,u32);
@@ -23,24 +23,22 @@ static inline void appearPokemon(u16 area,u16 id){u32 trainer;u8 pokemon[0xC4];G
 
 void esabaSetPokemon(u16 area,u16 id){if(id==0){GSflagSet(esabadata[area].pokemonFlag,0);GSflagSet(esabadata[area].appFlag,0);return;}appearPokemon(area,id);}
 u16 esabaGetPokemonMax(u16 area){EsaList *list=getList(area);if(list)return *list->count;return 0;}
-s32 esabaGetDigestRate(u16 area){u32 station=area;u16 id=GSflagGet(esabadata[station].pokemonFlag);if(id==esabapokemondata_EX[0].id)return esabapokemondata_EX[0].digest;if(id==esabapokemondata_EX[1].id)return esabapokemondata_EX[1].digest;u16 count=esabaGetPokemonMax(station);s32 index=0;for(;;){if(index>=count){index=0;break;}if(listPokemon(station,index)==GSflagGet(esabadata[station].pokemonFlag))break;index++;}return listDigest(station,index);}
+s32 esabaGetDigestRate(u16 area){u32 station=area;u16 id=GSflagGet(esabadata[station].pokemonFlag);if(id==esabapokemondata_EX[0].id)return esabapokemondata_EX[0].digest;if(id==esabapokemondata_EX[1].id)return esabapokemondata_EX[1].digest;u16 count=esabaGetPokemonMax(station);s32 index;for(index=0;index<count;index++){if(listPokemon(station,index)==GSflagGet(esabadata[station].pokemonFlag))goto found;}index=0;found:return listDigest(station,index);}
 
 s32 esabaGetEsaItemNum(){return itemQuantity__4HeroFUs(getHeroPtr__4HeroFv(),0x1FF);}
 s32 esabaGet(s32 arg0) {
-    s32 sp8;
-    s32 temp_r30;
-    s32 temp_r3;
     s32 temp_r31;
+    s32 sp8;
+    s32 temp_r3;
 
-    temp_r30 = arg0 * 0x1C;
-    temp_r3 = GSflagGet(recordAt(temp_r30)->amountFlag);
+    temp_r3 = GSflagGet(esabadata[arg0].amountFlag);
     sp8 = temp_r3;
     if (menuPanelInputNumber(0, &sp8, 0, temp_r3, 1) != 0) {
-        temp_r31 = GSflagGet(recordAt(temp_r30)->amountFlag) + -sp8;
-        GSflagSet(recordAt(temp_r30)->amountFlag, temp_r31);
+        temp_r31 = -sp8; temp_r31 = GSflagGet(esabadata[arg0].amountFlag) + temp_r31;
+        GSflagSet(esabadata[arg0].amountFlag, temp_r31);
         if ((s32) temp_r31 == 0) {
-            GSflagSet(recordAt(temp_r30)->appFlag, 0U);
-            GSflagSet(recordAt(temp_r30)->stepFlag, 0U);
+            GSflagSet(esabadata[arg0].appFlag, 0U);
+            GSflagSet(esabadata[arg0].stepFlag, 0U);
         }
         return sp8;
     }
@@ -48,20 +46,18 @@ s32 esabaGet(s32 arg0) {
 }
 
 s32 esabaPut(s32 arg0) {
-    s32 sp8;
-    s32 temp_r30;
-    s32 temp_r3;
     s32 temp_r31;
+    s32 sp8;
+    s32 temp_r3;
 
-    temp_r30 = arg0 * 0x1C;
-    temp_r3 = GSflagGet(recordAt(temp_r30)->amountFlag);
+    temp_r3 = GSflagGet(esabadata[arg0].amountFlag);
     sp8 = temp_r3;
     if (menuPanelInputNumber(0, &sp8, 0, 0xA - temp_r3, 1) != 0) {
-        temp_r31 = GSflagGet(recordAt(temp_r30)->amountFlag) + (s16) sp8;
-        GSflagSet(recordAt(temp_r30)->amountFlag, temp_r31);
+        temp_r31 = (s16) sp8; temp_r31 = GSflagGet(esabadata[arg0].amountFlag) + temp_r31;
+        GSflagSet(esabadata[arg0].amountFlag, temp_r31);
         if ((s32) temp_r31 == 0) {
-            GSflagSet(recordAt(temp_r30)->appFlag, 0U);
-            GSflagSet(recordAt(temp_r30)->stepFlag, 0U);
+            GSflagSet(esabadata[arg0].appFlag, 0U);
+            GSflagSet(esabadata[arg0].stepFlag, 0U);
         }
         return sp8;
     }
@@ -177,9 +173,9 @@ u32 esabaGetPokemonRnd(s32 area){return GSflagGet(esabadata[area].randomFlag);}
 u16 esabaGetPokemonID(s32 area){return GSflagGet(esabadata[area].pokemonFlag);}
 u32 esabaGetEsaNum(s32 area){return GSflagGet(esabadata[area].amountFlag);}
 static void _esabaCallBackFunc__Fl15FootStepCounterl(s32 id,s32 kind,s32 steps){underTakerCallBackFunc(id,kind,steps);for(u16 area=0;area<(u16)*esabadata_number;area++){if(GSflagGet(esabadata[area].amountFlag)){if(GSflagGet(esabadata[area].pokemonFlag))_esabaCallBackEsaFunc__FUs15FootStepCounterl(area,kind,steps);else _esabaCallBackAppFunc__FUs15FootStepCounterl(area,kind,steps);}}}
-static void _esabaCallBackAppFunc__FUs15FootStepCounterl(u16 area,s32,s32 steps){u32 station;u16 divisor;u16 interval;u32 count;u32 current=underTakerGetMiraboPlace();station=area;const s32 places[3]={90,91,92};if(current!=(u32)places[area]){if(!GSflagTest(esabadata[station].disableFlag)){u32 elapsed=GSflagGet(esabadata[station].appFlag);elapsed+=steps;if(elapsed>=esabaappdata->first){if(elapsed>=esabaappdata->last)_esabaAppearPokemon__FUs(area);else {interval=esabaappdata->interval;count=GSflagGet(esabadata[station].stepFlag);count+=steps;if(count>=interval){divisor=esabaappdata->randomDiv;if((u16)HSD_Rand()%divisor==0)_esabaAppearPokemon__FUs(area);else GSflagSet(esabadata[station].stepFlag,count-interval);}else GSflagSet(esabadata[station].stepFlag,count);}}GSflagSet(esabadata[station].appFlag,elapsed);}}}
+static void _esabaCallBackAppFunc__FUs15FootStepCounterl(u16 area,s32,s32 steps){u16 divisor;u16 interval;u32 count;u32 current=underTakerGetMiraboPlace();u32 station=area;const s32 places[3]={90,91,92};if(current!=(u32)places[area]){if(!GSflagTest(esabadata[station].disableFlag)){u32 elapsed=GSflagGet(esabadata[station].appFlag);elapsed+=steps;if(elapsed>=esabaappdata->first){if(elapsed>=esabaappdata->last)_esabaAppearPokemon__FUs(area);else {interval=esabaappdata->interval;count=GSflagGet(esabadata[station].stepFlag);count+=steps;if(count>=interval){divisor=esabaappdata->randomDiv;if((u16)HSD_Rand()%divisor==0)_esabaAppearPokemon__FUs(area);else GSflagSet(esabadata[station].stepFlag,count-interval);}else GSflagSet(esabadata[station].stepFlag,count);}}GSflagSet(esabadata[station].appFlag,elapsed);}}}
 static void _esabaCallBackEsaFunc__FUs15FootStepCounterl(u16 area,s32,s32 steps){u16 id=GSflagGet(esabadata[area].pokemonFlag);if(!GSflagTest(esabadata[area].disableFlag)){u32 digest;if(id==esabapokemondata_EX[0].id)digest=esabapokemondata_EX[0].digest;else if(id==esabapokemondata_EX[1].id)digest=esabapokemondata_EX[1].digest;else {u16 count=esabaGetPokemonMax(area);s32 index=0;for(;;){if(index>=count){index=0;break;}if(listPokemon(area,index)==GSflagGet(esabadata[area].pokemonFlag))break;index++;}digest=listDigest(area,index);}u32 elapsed=GSflagGet(esabadata[area].stepFlag)+steps;if(elapsed>=digest){elapsed-=digest;s32 food=GSflagGet(esabadata[area].amountFlag)-1;if(food==0){GSflagSet(esabadata[area].pokemonFlag,0);GSflagSet(esabadata[area].appFlag,0);}GSflagSet(esabadata[area].amountFlag,food);}GSflagSet(esabadata[area].stepFlag,elapsed);}}
-static void _esabaAppearPokemon__FUs(u16 area){s32 progressIndex=esabaappdata->progressIndex;u32 progress=GSflagGet(0x3C4);if(progress>=*(u32*)(flag_etc+(progressIndex<<5)+8)){u16 mode=esabaappdata->mode;if(GSflagGet(esabaappdata->progressFlag)==mode){_esabaAppearPokemonSub__FUs(area);return;}}_esabaAppearPokemonSub2__FUs(area);}
-static void _esabaAppearPokemonSub2__FUs(u16 area){u16 cumulative;u16 i;u8 exists;u16 count=esabaGetPokemonMax(area);exists=0;cumulative=0;for(i=exists;i<(u16)*esabadata_number;i++){if((u16)GSflagGet(esabadata[i].pokemonFlag)==esabapokemondata_EX[1].id){exists=1;break;}}if(!exists&&(u16)((u16)HSD_Rand()%100)<(u16)esabapokemondata_EX[1].rate){appearPokemon(area,esabapokemondata_EX[1].id);return;}u16 random=(u16)HSD_Rand()%100;for(s32 i=0;i<count;i++){cumulative+=listRate(area,i);if(cumulative>=random){appearPokemon(area,listPokemon(area,i));return;}}}
+static void _esabaAppearPokemon__FUs(u16 area){s32 progressIndex=esabaappdata->progressIndex;u32 progress=GSflagGet(0x3C4);if(progress>=flag_etc[progressIndex].c){u16 mode=esabaappdata->mode;u32 cur=GSflagGet(esabaappdata->progressFlag);if(cur==mode){_esabaAppearPokemonSub__FUs(area);return;}}_esabaAppearPokemonSub2__FUs(area);}
+static void _esabaAppearPokemonSub2__FUs(u16 area){u16 cumulative;u16 i;u8 exists;u16 count=esabaGetPokemonMax(area);exists=0;cumulative=0;i=exists;for(;i<(u16)*esabadata_number;i++){if(esabapokemondata_EX[1].id==(u16)GSflagGet(esabadata[i].pokemonFlag)){exists=1;break;}}if(!exists&&(u16)((u16)HSD_Rand()%100)<(u16)esabapokemondata_EX[1].rate){appearPokemon(area,esabapokemondata_EX[1].id);return;}u16 random=(u16)HSD_Rand()%100;for(s32 i=0;i<count;i++){cumulative+=listRate(area,i);if(cumulative>=random){appearPokemon(area,listPokemon(area,i));return;}}}
 static void _esabaAppearPokemonSub__FUs(u16 area){u16 firstIndex,secondIndex;u16 count=esabaGetPokemonMax(area);HSD_Rand();u8 firstExists=0;u16 cumulative=0;u16 first=esabapokemondata_EX[0].rate;u16 second=esabapokemondata_EX[1].rate;for(firstIndex=0;firstIndex<(u16)*esabadata_number;firstIndex++){if((u16)GSflagGet(esabadata[firstIndex].pokemonFlag)==esabapokemondata_EX[0].id){firstExists=1;break;}}if(firstExists)first=0;u8 secondExists=0;for(secondIndex=0;secondIndex<(u16)*esabadata_number;secondIndex++){if((u16)GSflagGet(esabadata[secondIndex].pokemonFlag)==esabapokemondata_EX[1].id){secondExists=1;break;}}if(secondExists)second=0;u16 random=(u16)HSD_Rand()%100;if(random<first){appearPokemon(area,esabapokemondata_EX[0].id);return;}u16 both=first+second;if(first==0)both=second;if(random<both){appearPokemon(area,esabapokemondata_EX[1].id);return;}u16 ordinary=(u16)HSD_Rand()%100;for(s32 i=0;i<count;i++){cumulative+=listRate(area,i);if(cumulative>=ordinary){appearPokemon(area,listPokemon(area,i));return;}}}
 }

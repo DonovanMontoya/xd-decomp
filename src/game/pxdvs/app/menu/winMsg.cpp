@@ -11,7 +11,7 @@ s32 GSmsgIsCheck(u32);
 void winSeqSetMenu(s32,s32);
 u8 winSeqIsCheck(s32,s32);
 u8 menuIsCheck(s32);
-void menuCloseCustom(s32,s32,u8);
+void menuCloseCustom(s32,s32,bool);
 s32 menuOpenCustom(s32,s32,void *,s32,bool,s32,...);
 void winMsgClose(bool);
 s32 winMsgCheck();

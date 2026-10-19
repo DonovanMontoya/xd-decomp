@@ -30,13 +30,13 @@ extern "C" {
 void menuOffScreenDraw() {
     if (_onoff != 0) {
         if (_menuOffScreenType != 0) {
-            u8 rate=GSgfxVideoGetVsyncRate();
-            _menuOffScreenCnt += GSgfxVideoGetLastRenderTime()/static_cast<f32>(rate);
+            f32 rate=GSgfxVideoGetVsyncRate();
+            _menuOffScreenCnt += GSgfxVideoGetLastRenderTime()/rate;
             if (_menuOffScreenCnt >= _menuOffScreenTime) { _menuOffScreenCnt=_menuOffScreenTime;_menuOffScreenType=0; }
         }
         if (_menuOffScreenDisp != 0 && _menuOffScreenEnable != 0) {
             _menuOffScreenCurrRate=(_menuOffScreenCnt/_menuOffScreenTime)*(_menuOffScreenEndRate-_menuOffScreenStartRate)+_menuOffScreenStartRate;
-            u8 alpha=static_cast<s32>(255.0f-(255.0f*_menuOffScreenCurrRate)/100.0f);
+            s32 alpha=static_cast<s32>(255.0f-(255.0f*_menuOffScreenCurrRate)/100.0f);
             s32 layerID;
             if (_menuOffScreenPrio != 0) layerID=7; else layerID=0;
             GSgfxLayer *layer=GSgfxLayerFindByID(layerID);
@@ -75,29 +75,22 @@ void menuOffScreenDraw() {
                 layer->cullMode=0;layer->cullDirty|=2;layer->dirty|=2;layer->savedCullDirty|=2;layer->savedDirty|=2;
                 layer->primitiveType=0x98;
                 layer->setRenderStateAndSelect(GSgfxVFGetPredef(7));
-                if (layer->textures[0] != reinterpret_cast<TextureRecord *>(_menuOffScreenTex) || layer->savedTextures[0] != reinterpret_cast<TextureRecord *>(_menuOffScreenTex) || reinterpret_cast<TextureRecord *>(_menuOffScreenTex)->dirty != 0) {
-                    layer->textures[0]=reinterpret_cast<TextureRecord *>(_menuOffScreenTex);layer->textureDirty|=1;
-                    layer->savedTextures[0]=reinterpret_cast<TextureRecord *>(_menuOffScreenTex);layer->savedTextureDirty|=1;
+                TextureRecord *tex=reinterpret_cast<TextureRecord *>(_menuOffScreenTex);
+                if (layer->textures[0] != tex || layer->savedTextures[0] != tex || tex->dirty != 0) {
+                    layer->textures[0]=tex;layer->textureDirty|=1;
+                    layer->savedTextures[0]=tex;layer->savedTextureDirty|=1;
                 }
                 layer->beginSurface(4);
-                GXWGFifo.s16=0;GXWGFifo.s16=0;
-                GXWGFifo.u8=alpha;GXWGFifo.u8=alpha;GXWGFifo.u8=alpha;GXWGFifo.u8=255;
-                GXWGFifo.f32=0.0f;GXWGFifo.f32=0.0f;
-                GXWGFifo.s16=640;GXWGFifo.s16=0;
-                GXWGFifo.u8=alpha;GXWGFifo.u8=alpha;GXWGFifo.u8=alpha;GXWGFifo.u8=255;
-                GXWGFifo.f32=1.0f;GXWGFifo.f32=0.0f;
-                GXWGFifo.s16=0;GXWGFifo.s16=480;
-                GXWGFifo.u8=alpha;GXWGFifo.u8=alpha;GXWGFifo.u8=alpha;GXWGFifo.u8=255;
-                GXWGFifo.f32=0.0f;GXWGFifo.f32=1.0f;
-                GXWGFifo.s16=640;GXWGFifo.s16=480;
-                GXWGFifo.u8=alpha;GXWGFifo.u8=alpha;GXWGFifo.u8=alpha;GXWGFifo.u8=255;
-                GXWGFifo.f32=1.0f;GXWGFifo.f32=1.0f;
+                GXPosition2s16(0,0);GXColor4u8(alpha,alpha,alpha,255);GXTexCoord2f32(0.0f,0.0f);
+                GXPosition2s16(640,0);GXColor4u8(alpha,alpha,alpha,255);GXTexCoord2f32(1.0f,0.0f);
+                GXPosition2s16(0,480);GXColor4u8(alpha,alpha,alpha,255);GXTexCoord2f32(0.0f,1.0f);
+                GXPosition2s16(640,480);GXColor4u8(alpha,alpha,alpha,255);GXTexCoord2f32(1.0f,1.0f);
                 layer->endSurface();
             }
         }
     }
 }
-s32 menuOffScreenFadeSync(u8 wait) { while(wait!=0 && _menuOffScreenType!=0) GSthreadSwitch();return _menuOffScreenType!=0; }
+s32 menuOffScreenFadeSync(u8 wait) { for(;wait!=0;) { if(_menuOffScreenType==0) break; GSthreadSwitch(); } return _menuOffScreenType!=0; }
 void menuOffScreenFadeSet(f32 end,f32 time) {
     _menuOffScreenType=1;_menuOffScreenStartRate=_menuOffScreenCurrRate;_menuOffScreenEndRate=end;_menuOffScreenCurrRate=0.0f;
     _menuOffScreenTime=time;_menuOffScreenCnt=0.0f;
@@ -107,7 +100,7 @@ u8 menuOffScreenSetPriority(u8 priority) { u8 previous=_menuOffScreenPrio;_menuO
 u8 menuOffScreenSetDisp(u8 display) { u8 previous=_menuOffScreenDisp;_menuOffScreenDisp=display;return previous; }
 u8 menuOffScreenIsDoing() { return _menuOffScreenUsing; }
 GStexture *menuOffScreenGetPtr() { return _menuOffScreenTex; }
-u8 menuOffScreenCheckEnable(u8 wait) { while(wait!=0 && _menuOffScreenEnable==0) GSthreadSwitch();return _menuOffScreenEnable; }
+u8 menuOffScreenCheckEnable(u8 wait) { for(;wait!=0;) { if(_menuOffScreenEnable!=0) break; GSthreadSwitch(); } return _menuOffScreenEnable; }
 void menuOffScreenRelease() {
     _menuOffScreenType=0;_menuOffScreenUsing=0;_menuOffScreenEnable=0;_menuOffScreenDisp=0;
     if(_menuOffScreenTex!=0) { GStextureFree(_menuOffScreenTex);_menuOffScreenTex=0; }

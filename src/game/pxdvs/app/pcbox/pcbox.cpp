@@ -61,8 +61,8 @@ s32 PCBOX::setPokemon(Pokemon* src, s8 box, s8 slot) {
 
 s8 PCBOX::getPokemonBoxNbEmptySlot(s8 box) {
     PCBOX* self = this;
-    s8 slot;
     int used = 0;
+    s8 slot;
     if (self == 0) {
         self = getPointer();
     }
@@ -82,7 +82,7 @@ s8 PCBOX::getPokemonBoxNbEmptySlot(s8 box) {
     return 30 - used;
 }
 
-s8 PCBOX::getPokemonBoxNbUsedSlot(s8 box) {
+s32 PCBOX::getPokemonBoxNbUsedSlot(s8 box) {
     PCBOX* self = this;
     int used = 0;
     s8 slot;

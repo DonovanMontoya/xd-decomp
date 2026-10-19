@@ -30,9 +30,12 @@ static inline f32 FluidSqrt(f32 x) {
 }
 
 static inline void FluidVertex(FluidVec *vertex,FluidUV *uv,f32 sx,f32 sy,u8 alpha) {
-    *(volatile f32 *)0xCC008000=vertex->x*sx;
-    *(volatile f32 *)0xCC008000=vertex->y*sy;
-    *(volatile f32 *)0xCC008000=vertex->z*sx;
+    f32 x=vertex->x*sx;
+    f32 y=vertex->y*sy;
+    f32 z=vertex->z*sx;
+    *(volatile f32 *)0xCC008000=x;
+    *(volatile f32 *)0xCC008000=y;
+    *(volatile f32 *)0xCC008000=z;
     *(volatile u8 *)0xCC008000=255;
     *(volatile u8 *)0xCC008000=255;
     *(volatile u8 *)0xCC008000=255;
@@ -44,9 +47,9 @@ static inline void FluidVertex(FluidVec *vertex,FluidUV *uv,f32 sx,f32 sy,u8 alp
 extern "C" void fadeFluidDispSecond(s32 layerId,GStexture *texture,f32 fade,f32 progress) {
 
     GSgfxLayer *layer=GSgfxLayerFindByID(layerId);
-    FluidVec to;
-    FluidVec from;
     FluidVec color;
+    FluidVec from;
+    FluidVec to;
     from.x=1.0f;from.y=1.0f;from.z=1.0f;
     to.x=0.0f;to.y=0.0f;to.z=0.0f;
     GSlerpGetLinearInterpolationVector(&color,&from,&to,progress);
@@ -74,14 +77,17 @@ extern "C" void fadeFluidDispSecond(s32 layerId,GStexture *texture,f32 fade,f32 
     }
     f32 sx=_fadeFluidWork.screenX,sy=_fadeFluidWork.screenY;
     u32 stride=_fadeFluidWork.width+1;
-    u16 count=stride*2;
+    u32 count=stride*2;
     for (u32 y=0;y<_fadeFluidWork.height;++y) {
         layer->primitive=0x98;
         layer->beginSurface(count);
+        FluidVec **slot=&_fadeFluidWork.vertices[_fadeFluidSw];
+        FluidUV *uv=_fadeFluidWork.uv;
+        u32 rowA=y*stride,rowB=(y+1)*stride;
         for (u32 x=0;x<stride;++x) {
-            u32 i=x+y*stride,j=x+(y+1)*stride;
-            FluidVertex(&_fadeFluidWork.vertices[_fadeFluidSw][i],&_fadeFluidWork.uv[i],sx,sy,alpha);
-            FluidVertex(&_fadeFluidWork.vertices[_fadeFluidSw][j],&_fadeFluidWork.uv[j],sx,sy,alpha);
+            u32 i=x+rowA,j=x+rowB;
+            FluidVertex(&(*slot)[i],&uv[i],sx,sy,alpha);
+            FluidVertex(&(*slot)[j],&uv[j],sx,sy,alpha);
         }
         layer->endSurface();
     }
@@ -89,9 +95,9 @@ extern "C" void fadeFluidDispSecond(s32 layerId,GStexture *texture,f32 fade,f32 
 extern "C" void fadeFluidDisp(GStexture *texture,f32 fade,f32 progress) {
 
     GSgfxLayer *layer=GSgfxLayerFindByID(7);
-    FluidVec to;
-    FluidVec from;
     FluidVec color;
+    FluidVec from;
+    FluidVec to;
     from.x=1.0f;from.y=1.0f;from.z=1.0f;
     to.x=0.0f;to.y=0.0f;to.z=0.0f;
     GSlerpGetLinearInterpolationVector(&color,&from,&to,progress);
@@ -120,13 +126,16 @@ extern "C" void fadeFluidDisp(GStexture *texture,f32 fade,f32 progress) {
     layer->primitive=0x98;
     f32 sx=_fadeFluidWork.screenX,sy=_fadeFluidWork.screenY;
     u32 stride=_fadeFluidWork.width+1;
-    u16 count=stride*2;
+    u32 count=stride*2;
     for (u32 y=0;y<_fadeFluidWork.height;++y) {
         layer->beginSurface(count);
+        FluidVec **slot=&_fadeFluidWork.vertices[_fadeFluidSw];
+        FluidUV *uv=_fadeFluidWork.uv;
+        u32 rowA=y*stride,rowB=(y+1)*stride;
         for (u32 x=0;x<stride;++x) {
-            u32 i=x+y*stride,j=x+(y+1)*stride;
-            FluidVertex(&_fadeFluidWork.vertices[_fadeFluidSw][i],&_fadeFluidWork.uv[i],sx,sy,alpha);
-            FluidVertex(&_fadeFluidWork.vertices[_fadeFluidSw][j],&_fadeFluidWork.uv[j],sx,sy,alpha);
+            u32 i=x+rowA,j=x+rowB;
+            FluidVertex(&(*slot)[i],&uv[i],sx,sy,alpha);
+            FluidVertex(&(*slot)[j],&uv[j],sx,sy,alpha);
         }
         layer->endSurface();
     }

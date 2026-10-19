@@ -866,7 +866,7 @@ extern "C" s32 menuModelSetMotion(MENU_MODEL* m,u32 motion) {
 
 extern "C" {
 u32 GSmodelGetBound(u32);
-u16 GSmodelCenterNull(u32);
+u32 GSmodelCenterNull(u32);
 u32 GSmodelGetPart(u32,u16);
 void GSpartGetTransform(u32,Vec*,Vec*,Vec*);
 void GSpartFree(u32);

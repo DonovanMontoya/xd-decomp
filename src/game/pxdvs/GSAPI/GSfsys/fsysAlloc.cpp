@@ -15,17 +15,16 @@ static void* _fsysAllocCache(GSfsysRequest*, u32, u32, u32);
 void* _fsysGetResource(u32 size, u32 group, u32 identifier) { return GSresAllocResourceAlign(size, 32, group, identifier, 0); }
 u8 _fsysMemFreeCacheGroup(u32 group) {
     GSfsysCache* cache = _fsysGetCacheManageGroup(group);
-    if (!cache) return 0;
-    return _fsysFreeCache(cache);
+    if (cache == 0) { return 0; } else { return _fsysFreeCache(cache); }
 }
 void _fsysMemFreeCache(void* address) { _fsysFreeCacheAddr(address); }
 void* _fsysMemAllocCache(GSfsysRequest* request, u32 identifier, u32 size, u32 freshness) {
     u32 length = (size + 31) & ~31;
     _fsysFreeFreshCache(request->group, length);
+    void* result;
     for (;;) {
-        void* result = _fsysAllocCache(request, identifier, length, freshness);
-        if (result) return result;
-        if (!_fsysFreeFreshCacheGroup(request->group)) return 0;
+        result = _fsysAllocCache(request, identifier, length, freshness);
+        if (result == 0) { if (!_fsysFreeFreshCacheGroup(request->group)) return 0; } else { return result; }
     }
 }
 static u8 _fsysFreeFreshCacheGroup(u32 group) {
@@ -43,16 +42,16 @@ static u8 _fsysFreeFreshCacheGroup(u32 group) {
 }
 static s32 _fsysFreeFreshCache(u32 group, u32 size) {
     for (;;) {
-        if (size < (u32)(_fsysGetFreeCacheHeapSize() - 0x80000)) return 1;
+        if (size < (u32)(_fsysGetFreeCacheHeapSize() - 0x80000)) break;
         GSfsysCache* cache = _fsysGetFreshCacheManage(group, 0);
         if (!cache) return 0;
         if (!_fsysFreeCache(cache)) return 0;
     }
+    return 1;
 }
 static u8 _fsysFreeCacheAddr(void* address) {
     GSfsysCache* cache = _fsysGetCacheManageAddr(address);
-    if (!cache) return 0;
-    return _fsysFreeCache(cache);
+    if (cache == 0) { return 0; } else { return _fsysFreeCache(cache); }
 }
 static u8 _fsysFreeCache(GSfsysCache* cache) {
     void* data = cache->data;

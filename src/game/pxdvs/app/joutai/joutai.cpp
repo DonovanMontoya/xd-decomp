@@ -10,13 +10,13 @@ static Joutai *_joutaiGetTargetJoutaiPtrAsJoutaiDataId__FPvUs(void*,u16); static
 void writeJoutaiDataId__7_JOUTAIFUsUs(Joutai *arg0, u16 arg1, u16 arg2) {
     u8 temp_r3;
     u8 temp_r3_2;
-    u8 var_r30;
-    u8 var_r31;
+    u32 var_r30;
+    u32 var_r31;
 
     if (arg1 != 0) {
         temp_r3 = joutaiDataBiosGetWriteMode(arg1);
         if (temp_r3 == 4) {
-            var_r31 = joutaiBiosGetCount(arg0);
+            var_r31 = ((u32(*)(Joutai*))joutaiBiosGetCount)(arg0);
         } else {
             var_r31 = 0;
         }
@@ -26,7 +26,7 @@ void writeJoutaiDataId__7_JOUTAIFUsUs(Joutai *arg0, u16 arg1, u16 arg2) {
         arg0->unk4 = kaisuuGetKaisuu(joutaiDataBiosGetKaisuuDataId(arg1));
         if (temp_r3 == 4) {
             var_r30 = var_r31 + 1;
-            temp_r3_2 = joutaiDataBiosGetMaxCount(arg1);
+            temp_r3_2 = ((u32(*)(u16))joutaiDataBiosGetMaxCount)(arg1);
             if (temp_r3_2 < var_r30) {
                 var_r30 = temp_r3_2;
             }

@@ -644,6 +644,7 @@ void peShapeNode::Render(_peShape* shape) {
 }
 
 #include <libc/math.h>
+#include <dolphin/os/OSFastCast.h>
 static inline f32 shapeSpline(ShapeSpline* spline,f32 progress) {
     if(!spline || !(spline->flags&3))return 1.0f;
     f32 difference=spline->time-progress;if(difference<0.0f)difference=-difference;
@@ -651,23 +652,43 @@ static inline f32 shapeSpline(ShapeSpline* spline,f32 progress) {
     return peSplineGetValue(spline,progress);
 }
 static inline u8 shapeColorByte(f32 value) {
-    if(!(value>=0.0f))return 0;
-    if(value>255.0f)return 255;
-    return (u8)value;
+    return __OSf32tou8(value);
 }
+extern "C" { extern f32 __float_nan[]; }
+static inline s32 shapeFloatClass(f32 x) {
+    union {f32 value;s32 bits;} v;v.value=x;
+    switch(v.bits&0x7f800000) {
+    case 0x7f800000:return (v.bits&0x7fffff)?1:2;
+    case 0:return (v.bits&0x7fffff)?5:3;
+    default:return 4;
+    }
+}
+static inline f32 shapeSqrt(f32 x) {
+    if(x>0.0f) {
+        f64 guess=__frsqrte(x);
+        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
+        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
+        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
+        return (f32)((f64)x*guess);
+    }
+    if((f64)x<0.0)return __float_nan[0];
+    if(shapeFloatClass(x)==1)return __float_nan[0];
+    return x;
+}
+static inline f32 shapeU8(u8 value) { return __OSu8tof32(&value); }
 bool peShapeNode::Update(peEmitterNode* emitter,_peShape* shape,f32 delta) {
     if(!peNode::Update(emitter,delta))return false;
     u32 emitterFlags=emitter->emitter->flags;
     f32 progress=1.0f-time/life;
     Vec angles;
     if(emitterFlags&0x400) {
-        Vec direction=velocity;
+        Vec direction;direction.x=velocity.x;direction.y=velocity.y;direction.z=velocity.z;
         if(emitterFlags&0x40) {
             Mtx rotation;
             PSMTXQuat(rotation,(Quaternion*)((u8*)transform+12));
             PSMTXMultVecSR(rotation,&direction,&direction);
         }
-        f32 horizontal=sqrtf(direction.x*direction.x+direction.z*direction.z);
+        f32 horizontal=shapeSqrt(direction.x*direction.x+direction.z*direction.z);
         angles.x=(f32)atan2(-direction.y,horizontal);
         angles.y=(f32)atan2(direction.x,direction.z);angles.z=0.0f;
         EulerToQuat(&angles,&localRotation);
@@ -687,9 +708,9 @@ bool peShapeNode::Update(peEmitterNode* emitter,_peShape* shape,f32 delta) {
     scale.z=baseScale.z*shapeSpline(shape->scaleSpline[2],progress);
     peColorSplineGetValue(&color,shape->colorSpline,progress);
     u8* rgba=(u8*)&color;
-    rgba[0]=shapeColorByte((f32)rgba[0]*emitter->color[0]);
-    rgba[1]=shapeColorByte((f32)rgba[1]*emitter->color[1]);
-    rgba[2]=shapeColorByte((f32)rgba[2]*emitter->color[2]);
+    rgba[0]=shapeColorByte(emitter->color[0]*shapeU8(rgba[0]));
+    rgba[1]=shapeColorByte(emitter->color[1]*shapeU8(rgba[1]));
+    rgba[2]=shapeColorByte(emitter->color[2]*shapeU8(rgba[2]));
     rgba[3]=shapeColorByte((255.0f*emitter->color[3])*shapeSpline(shape->alphaSpline,progress));
     Quaternion flipped;
     flipped.x=(flips&1)?-localRotation.x:localRotation.x;
@@ -697,7 +718,8 @@ bool peShapeNode::Update(peEmitterNode* emitter,_peShape* shape,f32 delta) {
     flipped.z=(flips&4)?-localRotation.z:localRotation.z;
     flipped.w=localRotation.w;
     ShapeTransform local;
-    local.position=position;PSQUATMultiply(&randomRotation,&flipped,&local.rotation);local.scale=scale;
+    Vec* scalePtr=&scale;
+    local.position=position;PSQUATMultiply(&randomRotation,&flipped,&local.rotation);local.scale=*scalePtr;
     peNodeTransformsConcat((ShapeTransform*)&worldPosition,transform,&local,0);
     Vec distance;PSVECSubtract(&worldPosition,&g_CameraPosition,&distance);
     Vec copy=distance;depth=PSVECDotProduct(&g_CameraLookDir,&copy);

@@ -319,11 +319,10 @@ static s32 _fightSeqTurnCheckSubFightOutPokemon(void* pokemon, u16, void*) {
 
 extern "C" {
 void fightSeqInit(void){
+    s32 count;
     fightSeqClearOneTurnCount(0);
     fightSeqClearOneSelfTurnCount();
-    s32 count=8;
-    u8 *work=ServerWork.flags;
-    for(;count>0;count--)*work++=0;
+    for(count=0;count<8;count++)ServerWork.flags[count]=0;
     fight_seq_now_fight_action_ptr=0;
     fightFloorLoopValidFightOutPokemon(0,_fightSeqInitSubFightOutPokemon,0,0);
 }
