@@ -555,8 +555,8 @@ void fn_80085E88(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
 }
 
 void menuNintendoWarningCtrl(tagWINDOW_WORK* win) {
-    f32 seqTimer;
     f32 dt = timeGetLastFrameSec();
+    f32 seqTimer;
     switch (win->phase) {
     case 0:
         _warningSeq = 0;
@@ -584,10 +584,10 @@ void menuNintendoWarningCtrl(tagWINDOW_WORK* win) {
             }
             break;
         case 2: {
-            seqTimer = _warningSeqTimer + dt;
-            _warningSeqTimer = seqTimer;
+            f32 st = _warningSeqTimer + dt;
+            _warningSeqTimer = st;
             _warningTimer += dt;
-            if (seqTimer >= 60.0f) {
+            if (st >= 60.0f) {
                 _warningSeq = 3;
                 return;
             }
@@ -703,29 +703,21 @@ static void _setTexture(GStexture* texture, GSvec2* pos, GSvec2* uv, GSgfxColAu8
 }
 
 static void _setTextureWindow(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite, GStexture* texture) {
+    u16 alpha;
     GSvec2 pos[4];
     GSvec2 uv[4];
     GSgfxColAu8 color;
-    s16 x;
-    s16 y;
-    s32 x1;
-    s32 y1;
-    u16 alpha;
 
-    x = sprite->x;
-    pos[0].x = x;
-    y = sprite->y;
-    pos[0].y = y;
-    x1 = x + sprite->width;
-    pos[1].y = y;
-    pos[1].x = x1;
-    pos[2].x = x1;
-    y1 = y + sprite->height;
-    pos[3].x = x;
+    pos[0].x = sprite->x;
+    pos[0].y = sprite->y;
+    pos[1].x = sprite->x + sprite->width;
+    pos[1].y = sprite->y;
+    pos[2].x = sprite->x + sprite->width;
+    pos[2].y = sprite->y + sprite->height;
+    pos[3].x = sprite->x;
+    pos[3].y = sprite->y + sprite->height;
     uv[0].x = 0.0f;
     uv[0].y = 0.0f;
-    pos[2].y = y1;
-    pos[3].y = y1;
     uv[1].x = 1.0f;
     uv[1].y = 0.0f;
     uv[2].x = 1.0f;
@@ -735,7 +727,7 @@ static void _setTextureWindow(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite, GStex
     color.r = 0xFF;
     color.g = 0xFF;
     color.b = 0xFF;
-    alpha = (*((u8*)win + 0x93) * sprite->color.channels.alpha) / 255;
+    alpha = (u16)(*((u8*)win + 0x93) * sprite->color.channels.alpha) / 255;
     if (alpha > 0xFF) {
         alpha = 0xFF;
     }

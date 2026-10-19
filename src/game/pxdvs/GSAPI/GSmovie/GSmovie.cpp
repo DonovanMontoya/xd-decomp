@@ -143,35 +143,34 @@ s32 fn_801E3C5C(u32 handle) {
     if(decoder->paused==1) return 2;
     switch(decoder->state) {case 5:return -2;case 3:return 0;default:case 4:return 1;}
 }
-s32 GSmoviePlayCheck(u32 handle) { if(!_initFlag) return 0; __GSmovieStreaming* movie=findMovie(handle); if(!movie) return 0; return 1; }
+u8 GSmoviePlayCheck(u32 handle) { if(!_initFlag) return 0; __GSmovieStreaming* movie=findMovie(handle); if(!movie) return 0; return 1; }
 }
 
 #pragma force_active on
 static s32 _THPPlayerSetBuffer(__GSmovieStreaming* movie) {
+    s32 i;
+    u8* memory;
     MovieDecoder* decoder=movie->decoder;
     if(decoder->state==0) {
-        u8* memory=movie->workBuffer;
+        memory=movie->workBuffer;
         if(decoder->preload) { decoder->preloadBuffer=memory; memory+=decoder->movieBytes; }
-        for(s32 i=0;i<10;++i) {
-            THPReadBuffer* buffer=&decoder->reads[i];
-            buffer->data=memory; buffer->valid=0; buffer->video=0;
-            if(decoder->hasAudio) buffer->audio=0; else buffer->audio=1;
-            buffer->size=0; memory+=(decoder->maxBufferSize+31)&~31;
+        for(i=0;i<10;++i) {
+            decoder->reads[i].data=memory; decoder->reads[i].valid=0; decoder->reads[i].video=0;
+            if(decoder->hasAudio) decoder->reads[i].audio=0; else decoder->reads[i].audio=1;
+            decoder->reads[i].size=0; memory+=(decoder->maxBufferSize+31)&~31;
         }
         u32 pixels=decoder->width*decoder->height;
         u32 yBytes=(pixels+31)&~31;
         u32 uvBytes=((pixels>>2)+31)&~31;
-        for(u32 i=0;i<3;++i) {
-            THPTextureSet* texture=&decoder->textures[i];
-            texture->y=memory; DCInvalidateRange(memory,yBytes); memory+=yBytes;
-            texture->u=memory; DCInvalidateRange(memory,uvBytes); memory+=uvBytes;
-            texture->v=memory; DCInvalidateRange(memory,uvBytes); memory+=uvBytes;
-            texture->valid=0; texture->displayed=0;
+        for(i=0;i<3;++i) {
+            decoder->textures[i].y=memory; DCInvalidateRange(memory,yBytes); memory+=yBytes;
+            decoder->textures[i].u=memory; DCInvalidateRange(memory,uvBytes); memory+=uvBytes;
+            decoder->textures[i].v=memory; DCInvalidateRange(memory,uvBytes); memory+=uvBytes;
+            decoder->textures[i].valid=0; decoder->textures[i].displayed=0;
         }
         if(decoder->hasAudio) {
-            for(s32 i=0;i<6;++i) {
-                THPAudioBuffer* buffer=&decoder->audio[i];
-                buffer->buffer=(s16*)memory; buffer->current=(s16*)memory; buffer->samples=0; buffer->flags=0;
+            for(i=0;i<6;++i) {
+                decoder->audio[i].buffer=(s16*)memory; decoder->audio[i].current=(s16*)memory; decoder->audio[i].samples=0; decoder->audio[i].state[0]=0;
                 memory+=((decoder->maxAudioSamples*4)+31)&~31;
             }
             decoder->leftBuffer=(s16*)memory;
@@ -229,17 +228,20 @@ static void _movieBeforeRender(f32) {
         offset+=0x20;
     }
     if(active==1) {
-        s32 offset=0;
-        for(u32 i=0;i<_maxStreaming;++i) {
+        s32 offset;
+        MovieDecoder* decoder;
+        u32 i=0;
+        offset=0;
+        for(;i<_maxStreaming;) {
             __GSmovieStreaming* movie=(__GSmovieStreaming*)((u8*)_movieStreaming+offset);
             if(movie->state) {
-                MovieDecoder* decoder=movie->decoder;
+                decoder=movie->decoder;
                 GSgfxTokenWaitForClearAndReset(&movie->token);
                 for(s32 j=0;j<3;++j) {
-                    THPTextureSet* texture=&decoder->textures[j];
-                    if(texture->displayed==1) {texture->displayed=0;texture->valid=0;}
+                    if(decoder->textures[j].displayed==1) {decoder->textures[j].valid=decoder->textures[j].displayed=0;}
                 }
             }
+            ++i;
             offset+=0x20;
         }
     }
