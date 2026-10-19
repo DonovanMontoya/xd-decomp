@@ -21,26 +21,26 @@ static void* _memcardGetMultiSaveDataToSTRUCT(void*, long);
 static u16 _memcard_encrypt_key[4];
 
 static inline void advanceMemcardKey() {
-    u16 key[4] = {_memcard_encrypt_key[0], _memcard_encrypt_key[1], _memcard_encrypt_key[2], _memcard_encrypt_key[3]};
+    u16 key[4];
     u32 increments[4] = {0x43, 0x29, 0x17, 0x13};
-    key[0] += increments[0];
-    key[1] += increments[1];
-    key[2] += increments[2];
-    key[3] += increments[3];
-    _memcard_encrypt_key[0] = (key[0]&0xF) | ((key[1]<<4)&0xF0) | ((key[2]<<8)&0xF00) | ((key[3]<<12)&0xF000);
-    _memcard_encrypt_key[1] = ((key[0]>>4)&0xF) | (key[1]&0xF0) | ((key[2]<<4)&0xF00) | ((key[3]<<8)&0xF000);
-    _memcard_encrypt_key[2] = ((key[0]&0xF00)>>8) | ((key[1]&0xF00)>>4) | (key[2]&0xF00) | ((key[3]<<4)&0xF000);
-    _memcard_encrypt_key[3] = ((key[0]>>12)&0xF) | ((key[1]>>8)&0xF0) | ((key[2]>>4)&0xF00) | (key[3]&0xF000);
+    s32 i;
+    for (i = 0; i < 4; i++) {
+        key[i] = _memcard_encrypt_key[i];
+    }
+    for (i = 0; i < 4; i++) {
+        key[i] += increments[i];
+    }
+    _memcard_encrypt_key[0] = (key[0]&0xF) | ((key[1]&0xF)<<4) | ((key[2]&0xF)<<8) | ((key[3]&0xF)<<12);
+    _memcard_encrypt_key[1] = ((key[0]&0xF0)>>4) | (key[1]&0xF0) | ((key[2]&0xF0)<<4) | ((key[3]&0xF0)<<8);
+    _memcard_encrypt_key[2] = ((key[0]&0xF00)>>8) | ((key[1]&0xF00)>>4) | (key[2]&0xF00) | ((key[3]&0xF00)<<4);
+    _memcard_encrypt_key[3] = ((key[0]&0xF000)>>12) | ((key[1]&0xF000)>>8) | ((key[2]&0xF000)>>4) | (key[3]&0xF000);
 }
 
 static inline void memcardChecksums(u16* data, u32* sums) {
-    s32 word = 0;
-    s32 i=0;
-    do {
-        s32 end = (i+1)*0x4FFA;
-        for (; word < end; ++word) sums[i] += data[word];
-        ++i;
-    } while (i<4);
+    s32 i;
+    for (i = 0; i < 4; i++) {
+        for (s32 word = i*0x4FFA; word < (i+1)*0x4FFA; word++) sums[i] += data[word];
+    }
 }
 
 u8 _memcard_Decryption(void* buffer) {
@@ -52,10 +52,9 @@ u8 _memcard_Decryption(void* buffer) {
     _memcard_encrypt_key[2] = data[2];
     _memcard_encrypt_key[3] = data[3];
     for (s32 word=4; word<0x13FE8; word+=4) {
-        data[word] -= _memcard_encrypt_key[0];
-        data[word+1] -= _memcard_encrypt_key[1];
-        data[word+2] -= _memcard_encrypt_key[2];
-        data[word+3] -= _memcard_encrypt_key[3];
+        for (s32 i = 0; i < 4; i++) {
+            data[word+i] -= _memcard_encrypt_key[i];
+        }
         advanceMemcardKey();
     }
     u32 check0 = data[10] | (data[11]<<16);
@@ -85,10 +84,9 @@ void _memcard_Encryption(void* buffer) {
     data[6]=sums[2]; data[7]=sums[2]>>16;
     data[4]=sums[3]; data[5]=sums[3]>>16;
     for (s32 word=4; word<0x13FE8; word+=4) {
-        data[word] += _memcard_encrypt_key[0];
-        data[word+1] += _memcard_encrypt_key[1];
-        data[word+2] += _memcard_encrypt_key[2];
-        data[word+3] += _memcard_encrypt_key[3];
+        for (s32 i = 0; i < 4; i++) {
+            data[word+i] += _memcard_encrypt_key[i];
+        }
         advanceMemcardKey();
     }
 }
