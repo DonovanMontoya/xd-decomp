@@ -1,3 +1,5 @@
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/hero/hero.hpp>
 #include <game/menuPcBoxPokemonLayout.hpp>
 
 enum MENU_POKEMON_CB_TYPE {
@@ -85,15 +87,6 @@ public:
     char *getPokemonBoxName(s8);
     static s8 lastWatchBoxID;
 };
-
-class Hero {
-public:
-    static Hero *getHeroPtr();
-    void setPokemon(const Pokemon *, long);
-    long addPokemon(const Pokemon *);
-    Pokemon *getPokemon(long);
-};
-
 
 class CMenuPokemonLeave;
 
@@ -391,7 +384,7 @@ void CMenuPokemonLeave::currentPokemonDel(bool darkOut) {
         if (darkOut) {
             DarkPokemon *dp = cur->getDarkPokemon();
             if (dp != 0) {
-                dp->setPlace(DARK_POKEMON_WHERE_6, 0);
+                dp->setPlace(place6, 0);
             }
         }
         if (cursor->isCatchPokemon()) {

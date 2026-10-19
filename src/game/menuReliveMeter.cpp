@@ -1,7 +1,7 @@
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/pxdvs/GSAPI/GSprim/GSprim.hpp>
 extern "C" double sin(double);
-class DarkPokemon {public:s32 getInitDarkPointDirect()const;s32 getDarkPointDirect()const;};
-class Pokemon {public:bool isDarkPokemon()const;DarkPokemon *getDarkPokemon();};
 class GSgfxLayer;
 static f32 meterCount;
 static f32 max_alpha=255.0f;

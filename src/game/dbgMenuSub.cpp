@@ -1,9 +1,6 @@
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/hero/hero.hpp>
 #include <global.h>
-
-struct Hero {
-    static Hero* getHeroPtr();
-    void setHeroStyle(u8, bool);
-};
 
 struct DbgScreenFilter {
     u8 v[7];

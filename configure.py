@@ -1106,7 +1106,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/token.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/project.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/halt.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/video.cpp"),
+            Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/video.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/gpu.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/vf.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/dl.cpp"),

@@ -39,7 +39,7 @@ struct PokemonData {
     u8 growDataId; // 0x0
     u8 get; // 0x1
     u8 sexRatio; // 0x2
-    u8 unk0[1];
+    u8 unk03[1]; // 0x3
     u16 giveExp; // 0x4
     u16 initFriend; // 0x6
     u16 height; // 0x8
@@ -49,10 +49,10 @@ struct PokemonData {
     u16 shout; // 0x10
     u16 numPokemon; // 0x12
     u16 numZukan; // 0x14
-    u8 unk2[2];
-    const char* name; // 0x18
-    u32 typeName; // 0x1c
-    u32 doc; // 0x20, type unk
+    u8 unk16[2]; // 0x16
+    u32 nameMsgId; // 0x18, message id (resolve with GSmsgGetGSchar)
+    u32 typeName; // 0x1c, message id
+    u32 doc; // 0x20, message id
     u32 mitaFlag; // 0x24
     u32 tukamaetaFlag; // 0x28
     u32 pkxDataId; // 0x2c
@@ -68,6 +68,15 @@ struct PokemonData {
     PokemonDataCgData cgData[2]; // 0x114
     // 292 bytes total
 };
+
+#include <libc/stddef.h>
+typedef char PokemonData_size_check[(sizeof(PokemonData) == 0x124) ? 1 : -1];
+typedef char PokemonData_name_check[(offsetof(PokemonData, nameMsgId) == 0x18) ? 1 : -1];
+typedef char PokemonData_tokusei_check[(offsetof(PokemonData, tokuseiDataId) == 0x32) ? 1 : -1];
+typedef char PokemonData_basis_check[(offsetof(PokemonData, basisStatus) == 0x8E) ? 1 : -1];
+typedef char PokemonData_sinka_check[(offsetof(PokemonData, sinka) == 0xA6) ? 1 : -1];
+typedef char PokemonData_waza_check[(offsetof(PokemonData, waza) == 0xC4) ? 1 : -1];
+typedef char PokemonData_cg_check[(offsetof(PokemonData, cgData) == 0x114) ? 1 : -1];
 
 extern "C" void pokemon_SetPoolFriend(Pokemon*, u16);
 extern "C" void pokemon_SetPoolExp(Pokemon*, u32);

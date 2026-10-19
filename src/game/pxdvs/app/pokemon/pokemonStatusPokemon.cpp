@@ -608,7 +608,7 @@ u16 Pokemon::getHp() const {
     return hp;
 }
 
-char* Pokemon::getNicknamePtr() {
+u16* Pokemon::getNicknamePtr() {
     return &nickname[0];
 }
 

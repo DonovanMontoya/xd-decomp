@@ -2,6 +2,8 @@
 #define GAME_MENUPOCKET_LAYOUT_HPP
 #include <dolphin/types.h>
 #include <game/menuPocketToolLayout.hpp>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/hero/hero.hpp>
 
 // Partial views of the pocket menu work data; every named member is tied to an
 // original load/store width.
@@ -32,11 +34,6 @@ struct PocketTab {
     u32 unk14;
     const SActionMenuItem *field;
     const SActionMenuItem *battle;
-};
-
-class Hero {
-public:
-    void itemSort(u8);
 };
 
 struct PocketData {

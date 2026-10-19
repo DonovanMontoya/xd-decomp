@@ -306,7 +306,7 @@ void fightFloor_SetStockPokemonNum(FIGHT_FLOOR* floor, u8 count) {
 Pokemon* fightFloor_GetStockPokemonPtr(FIGHT_FLOOR* floor, u8 index) {
     if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
     if (index >= 6) return 0;
-    return (Pokemon*)floor->stockPokemon[index].pokemon;
+    return &floor->stockPokemon[index].pokemon;
 }
 u8 fightFloor_GetStockPokemonBallID(FIGHT_FLOOR* floor, u8 index) {
     if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
@@ -605,7 +605,7 @@ void fightFloor_SetStockPokemonPtr(FIGHT_FLOOR* floor, u8 index, Pokemon* pokemo
     if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return; }
     if (index < 6) {
         pokemonBiosCopy((Pokemon*)copy, pokemon);
-        memcpy(floor->stockPokemon[index].pokemon, copy, 0xc4);
+        memcpy(&floor->stockPokemon[index].pokemon, copy, 0xc4);
     }
 }
 void fightFloor_SetAppointTokuseiDataId(FIGHT_FLOOR* floor, u32 ability) {

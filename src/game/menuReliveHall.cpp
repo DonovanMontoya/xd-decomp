@@ -12,7 +12,6 @@ struct SF32 {
 enum GSgfxLayerID { GSgfxLayerID_Default = 0 };
 
 extern "C" {
-DarkPokemon *darkPokemonGetDarkPokemon(long);
 void winMsgOpen(s32, u32, s32, s32);
 void GSfsysReadWait(u32);
 void GSfsysFree(u32);

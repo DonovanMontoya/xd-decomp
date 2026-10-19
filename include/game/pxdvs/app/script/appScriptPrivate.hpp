@@ -3,6 +3,8 @@
 #include <global.h>
 #include <game/pxdvs/GSAPI/GSScript/tiga.hpp>
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/hero/hero.hpp>
 
 struct GSthread;
 struct FIGHT_ENCOUNT {
@@ -31,13 +33,6 @@ struct FIGHT_ENCOUNT {
     void setRoundNo(u32);
 };
 extern "C" FIGHT_ENCOUNT* fightEncountGetStrObj(void);
-struct Pokemon {
-    u8 isLegend() const;
-};
-struct Hero {
-    u8 getMeetDarkPokemonCount() const;
-    void setMeetDarkPokemonCount(u8);
-};
 extern "C" void* savedataGetStatus(s32, u16);
 
 namespace GSscript {

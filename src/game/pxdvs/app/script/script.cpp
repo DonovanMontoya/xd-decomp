@@ -113,15 +113,15 @@ u8 scriptPokemonRememberWaza(Pokemon* pokemon, s32 waza) {
 u8 scriptSetEndedMotion(u32 group, u32 resource, s32 motion, u8 loop) {
     tagPeopleWork* work = peopleGet(group, resource);
     if (work == 0) return 0;
-    _GSmodel* model = peopleBiosGetModelPtr(work);
+    _GSmodel* model = (_GSmodel*)peopleBiosGetModelPtr(work);
     if (model == 0) return 0;
     work->setAnimType(GS_ANIM_ONCE);
     for (;;) {
         if (GSmodelHasAnimationEnded(model)) break;
         GSthreadSwitch();
     }
-    work->motion = motion;
-    work->motionBlend = 0.0f;
+    work->requestedMotion = motion;
+    work->motionBlendStep = 0.0f;
     work->setAnimIndex(motion);
     work->setAnimFrame(0.0f);
     work->setAnimRate(0.5f, true);
@@ -158,7 +158,7 @@ u8 scriptHizukiAway(u32 group, u32 resource) {
     tagPeopleWork* work = peopleGet(group, resource);
     if (work == 0) return 0;
     peopleGetPos(group, resource, &personPos);
-    PeopleInfo* info = peopleInfoBiosGetPtr(work->resource);
+    PeopleInfo* info = peopleInfoBiosGetPtr(work->object);
     if (info == 0) return 0;
     f32 radius = peopleInfoBiosGetColBallSize(info);
     radius += 1.0f;

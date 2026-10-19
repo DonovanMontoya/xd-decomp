@@ -1841,53 +1841,34 @@ __declspec(weak) void GSgfx_GCSetScissor(u16 arg0, u16 arg1, u16 arg2, u16 arg3,
     }
 }
 
+struct ProjArgs { u32 v[6]; };
+struct ProjCache { s32 type; ProjArgs args; };
+#define PROJ_CACHE (*reinterpret_cast<ProjCache*>(reinterpret_cast<u8*>(gsgfxState) + 0x41C))
 __declspec(weak) void GSgfx_GCSetProjection(s32 arg0, u8 *arg1) {
-    u8 var_r9;
-    u8 *temp_r6;
-    u8 *temp_r8;
-
-    if (arg0 != (s32) layerField<s32>(gsgfxState, 0x41C)) {
-        var_r9 = 1;
-    } else {
-        var_r9 = 0;
-        if ((u32) layerField<u32>(gsgfxState, 0x420) != (u32) layerField<u32>(arg1, 0x0)) {
-            var_r9 = 1;
-        } else {
-            temp_r6 = reinterpret_cast<u8*>(gsgfxState) + 0x424;
-            if ((u32) layerField<u32>(gsgfxState, 0x424) != (u32) layerField<u32>(arg1, 0x4)) {
-                var_r9 = 1;
-            } else {
-                temp_r8 = arg1 + 8;
-                if ((u32) layerField<u32>(temp_r6, 0x4) != (u32) layerField<u32>(arg1, 0x8)) {
-                    var_r9 = 1;
-                } else if ((u32) layerField<u32>(temp_r6, 0x8) != (u32) layerField<u32>(temp_r8, 0x4)) {
-                    var_r9 = 1;
-                } else if ((u32) layerField<u32>(temp_r6, 0xC) != (u32) layerField<u32>(temp_r8, 0x8)) {
-                    var_r9 = 1;
-                } else if ((u32) layerField<u32>(temp_r6, 0x10) != (u32) layerField<u32>(temp_r8, 0xC)) {
-                    var_r9 = 1;
-                }
-            }
+    ProjArgs *p = reinterpret_cast<ProjArgs*>(arg1);
+    u8 changed;
+    if (PROJ_CACHE.type != arg0) changed = 1;
+    else {
+        changed = 0;
+        for (s32 i = 0; i < 6; i++) {
+            if (PROJ_CACHE.args.v[i] != p->v[i]) { changed = 1; break; }
         }
     }
-    if (var_r9 == 1) {
-        *(volatile u8*)0xCC008000 = 0x10;
-        *(volatile u16*)0xCC008000 = 6;
-        *(volatile u16*)0xCC008000 = 0x1020;
-        *(volatile float*)0xCC008000 = layerField<float>(arg1, 0x0);
-        *(volatile float*)0xCC008000 = layerField<float>(arg1, 0x4);
-        *(volatile float*)0xCC008000 = layerField<float>(arg1, 0x8);
-        *(volatile float*)0xCC008000 = (f32) layerField<f32>(arg1, 0xC);
-        *(volatile float*)0xCC008000 = (f32) layerField<f32>(arg1, 0x10);
-        *(volatile float*)0xCC008000 = (f32) layerField<f32>(arg1, 0x14);
-        *(volatile u32*)0xCC008000 = arg0;
-        layerField<s32>(gsgfxState, 0x41C) = arg0;
-        layerField<s32>(gsgfxState, 0x420) = (u32) layerField<u32>(arg1, 0x0);
-        layerField<s32>(gsgfxState, 0x424) = (u32) layerField<u32>(arg1, 0x4);
-        layerField<s32>(gsgfxState, 0x428) = (u32) layerField<u32>(arg1, 0x8);
-        layerField<u32>(gsgfxState, 0x42C) = layerField<u32>(arg1, 0xC);
-        layerField<u32>(gsgfxState, 0x430) = layerField<u32>(arg1, 0x10);
-        layerField<u32>(gsgfxState, 0x434) = layerField<u32>(arg1, 0x14);
+    if (changed == 1) {
+        GXWGFifo.u8 = 0x10;
+        GXWGFifo.u16 = 6;
+        GXWGFifo.u16 = 0x1020;
+        GXWGFifo.f32 = layerField<float>(arg1, 0x0);
+        GXWGFifo.f32 = layerField<float>(arg1, 0x4);
+        GXWGFifo.f32 = layerField<float>(arg1, 0x8);
+        GXWGFifo.f32 = layerField<float>(arg1, 0xC);
+        GXWGFifo.f32 = layerField<float>(arg1, 0x10);
+        GXWGFifo.f32 = layerField<float>(arg1, 0x14);
+        GXWGFifo.u32 = arg0;
+        PROJ_CACHE.type = arg0;
+        ProjCache *c = &PROJ_CACHE;
+        c->args.v[0] = p->v[0]; c->args.v[1] = p->v[1]; c->args.v[2] = p->v[2];
+        c->args.v[3] = p->v[3]; c->args.v[4] = p->v[4]; c->args.v[5] = p->v[5];
     }
 }
 

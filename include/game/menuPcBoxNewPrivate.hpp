@@ -3,7 +3,8 @@
 #include <dolphin/types.h>
 struct tagWINDOW_WORK {u8 pad0;s8 mode,sub;u8 pad3;s32 id;};
 struct tagSPRITE_WORK {u8 pad0[0x4C];u32 message;};
-struct Pokemon {u8 data[0xC4];};
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 struct MenuPtWorkSound {u32 bgm,env;u8 volume[4];};
 class CMenuGlobalState {public:
     enum enumCallFrom {Pc,Relive,Hologram,Tutorial};

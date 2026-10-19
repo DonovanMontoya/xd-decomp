@@ -244,10 +244,10 @@ Hero *Hero::getHeroPtr() {
  * Size:	000024
  */
 void Hero::getRestertPos(GSvec *gsVec, short &unkShortAddr) const {
-  gsVec->param1 = restartPosGSvecParam1;
-  gsVec->param2 = restartPosGSvecParam2;
-  gsVec->param3 = restartPosGSvecParam3;
-  unkShortAddr = restartPosUnknownHalfWord;
+  gsVec->param1 = restartPos.param1;
+  gsVec->param2 = restartPos.param2;
+  gsVec->param3 = restartPos.param3;
+  unkShortAddr = restartPosAngle;
   return;
 }
 
@@ -262,10 +262,10 @@ void Hero::setRestertPos() {
 
   heroMoveGetHeroPos(&heroPosVector);
   heroMoveGetHeroRot(&heroRotVector);
-  restartPosGSvecParam1 = heroPosVector.param1;
-  restartPosGSvecParam2 = heroPosVector.param2;
-  restartPosGSvecParam3 = heroPosVector.param3;
-  restartPosUnknownHalfWord = unkFloat * heroRotVector.param2;
+  restartPos.param1 = heroPosVector.param1;
+  restartPos.param2 = heroPosVector.param2;
+  restartPos.param3 = heroPosVector.param3;
+  restartPosAngle = unkFloat * heroRotVector.param2;
   return;
 }
 
@@ -415,7 +415,7 @@ u8 Hero::getMeetDarkPokemonCount() const { return meetShadowPokemonCount; }
  * Address:	80150934
  * Size:	000008
  */
-Item **Hero::getDisk() { return battleCDItems; }
+ItemBiosRecord *Hero::getDisk() { return battleCDItems; }
 
 /*
  * --INFO--

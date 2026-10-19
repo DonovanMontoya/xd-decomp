@@ -1,6 +1,8 @@
 #ifndef GAME_MENURELIVEHALL_LAYOUT_HPP
 #define GAME_MENURELIVEHALL_LAYOUT_HPP
 #include <dolphin/types.h>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 
 // Partial views of the pocket-menu helper types. Every named member is tied to an
 // original load/store width.
@@ -19,37 +21,6 @@ struct PocketVec {
 };
 
 class DarkPokemon;
-
-class Pokemon {
-public:
-    u8 reserved[0xC4];
-    bool checkValid() const;
-    void setDarkPoint(f32);
-    bool isDarkPokemon() const;
-    u8 getLevel() const;
-    f32 getDarkPoint() const;
-    u16 *getNicknamePtr();
-    DarkPokemon *getDarkPokemon();
-    void *getPokemonDataPtr() const;
-    u16 getPokemonDataId() const;
-};
-
-enum darkPokemonStatus {
-    DARK_POKEMON_STATUS_0,
-    DARK_POKEMON_STATUS_1,
-    DARK_POKEMON_STATUS_2,
-    DARK_POKEMON_STATUS_3
-};
-
-class DarkPokemon {
-public:
-    u16 getPokemonID() const;
-    void setStatus(darkPokemonStatus);
-    void setSnatchIndex(u8);
-    s32 getStatus() const;
-    void setDarkPointDirect(long);
-    long getInitDarkPointDirect() const;
-};
 
 class CAnt {
 public:

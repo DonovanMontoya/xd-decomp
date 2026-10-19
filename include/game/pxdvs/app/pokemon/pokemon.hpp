@@ -12,7 +12,7 @@ struct PokemonStatusRnd {
   u8 phyDef; // 0x2
   u8 speAtk; // 0x3
   u8 speDef; // 0x4
-  u8 nimbleness; // 0x0
+  u8 nimbleness; // 0x5
 
   void setNimbleness(u8 data);
   void setSpeDef(u8 data);
@@ -78,9 +78,11 @@ struct PokemonWaza {
   u8 ppCount; // 0x3
 };
 
+// Canonical in-memory Pokemon record (size 0xC4). Party/PC box/save/battle copies all use this layout.
+// Offsets confirmed against pokemonBios.s / pokemonDB.cpp accessors (see build/findings/trackA.md).
 struct Pokemon {
-  u16 dataID; // 0x0
-  u16 itemDataID; // 0x2
+  u16 dataID; // 0x0, species id
+  u16 itemDataID; // 0x2, held item
   u16 hp; // 0x4
   u16 friendLevel; // 0x6
   u16 catchFloorId; // 0x8
@@ -98,24 +100,22 @@ struct Pokemon {
   u8 conditionCount; // 0x17
   u8 conditionTurn; // 0x18
   u8 conditionTurnNow; // 0x19
-  u8 flagAmari;
-  s8 unk1[2]; // temporary until Pokemon struct is figured out
-  PokemonFlags flags; // 0x1d
+  u8 flagAmari; // 0x1a
+  u8 unk1B[2]; // 0x1b
+  PokemonFlags flags; // 0x1d (tamago 0x80, tokusei 0x40 = second ability, fusei 0x20)
+  u8 unk1E[2]; // 0x1e
   u32 exp; // 0x20
-  u32 catchTrainerRnd; // 0x24
-  u32 rnd; // 0x28
+  u32 catchTrainerRnd; // 0x24, original trainer id
+  u32 rnd; // 0x28, personality value
   u32 conditionAmari; // 0x2c
 
   u32 eventGetFlag; // 0x30
-  Attest attest; // 0x34
+  Attest attest; // 0x34 (language/area id of the origin game)
 
-  // Are these wide strings maybe?
-  char catchTrainerName[11]; // 0x38, 11 chars
-  s8 unk2[11]; // temporary until Pokemon struct is figured out
-  char nickname[11]; // 0x4e, 11 chars
-  s8 unk3[11]; // temporary until Pokemon struct is figured out
-  char nicknameOrg[11]; // 0x64, 11 chars
-  s8 unk4[11]; // temporary until Pokemon struct is figured out
+  u16 catchTrainerName[11]; // 0x38, wide chars
+  u16 nickname[11]; // 0x4e, wide chars
+  u16 nicknameOrg[11]; // 0x64, wide chars
+  u8 unk7A[2]; // 0x7a
 
   Ribbon ribbon; // 0x7c
   PokemonWaza wazas[MAX_WAZA]; // 0x80
@@ -136,7 +136,7 @@ struct Pokemon {
   u16 fightTrainerPokemonDataId; // 0xb8
   u16 darkPokemonDataID; // 0xba
   u8 comboPartnerAll; // 0xbc
-  s8 unk5[7]; // temporary until Pokemon struct is figured out
+  u8 unkBD[7]; // 0xbd
 
 
   // Setters/getters
@@ -169,7 +169,7 @@ struct Pokemon {
   u32 getCatchTrainerRnd() const;
   Ribbon* getRibbon();
   Attest* getAttest();
-  char* getNicknamePtr();
+  u16* getNicknamePtr();
   bool isFuseiFlag() const;
   PokemonWaza* getPokemonWaza(u16);
   u8 getSpeDefRnd() const;
@@ -248,6 +248,29 @@ struct Pokemon {
   void* getPokemonDataPtr() const;
 };
 
+#include <libc/stddef.h>
+typedef char Pokemon_size_check[(sizeof(Pokemon) == 0xC4) ? 1 : -1];
+typedef char Pokemon_level_check[(offsetof(Pokemon, level) == 0x11) ? 1 : -1];
+typedef char Pokemon_flags_check[(offsetof(Pokemon, flags) == 0x1D) ? 1 : -1];
+typedef char Pokemon_exp_check[(offsetof(Pokemon, exp) == 0x20) ? 1 : -1];
+typedef char Pokemon_otid_check[(offsetof(Pokemon, catchTrainerRnd) == 0x24) ? 1 : -1];
+typedef char Pokemon_rnd_check[(offsetof(Pokemon, rnd) == 0x28) ? 1 : -1];
+typedef char Pokemon_eventflag_check[(offsetof(Pokemon, eventGetFlag) == 0x30) ? 1 : -1];
+typedef char Pokemon_ctname_check[(offsetof(Pokemon, catchTrainerName) == 0x38) ? 1 : -1];
+typedef char Pokemon_nickname_check[(offsetof(Pokemon, nickname) == 0x4E) ? 1 : -1];
+typedef char Pokemon_nicknameOrg_check[(offsetof(Pokemon, nicknameOrg) == 0x64) ? 1 : -1];
+typedef char Pokemon_ribbon_check[(offsetof(Pokemon, ribbon) == 0x7C) ? 1 : -1];
+typedef char Pokemon_wazas_check[(offsetof(Pokemon, wazas) == 0x80) ? 1 : -1];
+typedef char Pokemon_maxHp_check[(offsetof(Pokemon, maxHp) == 0x90) ? 1 : -1];
+typedef char Pokemon_effort_check[(offsetof(Pokemon, maxHpEffort) == 0x9C) ? 1 : -1];
+typedef char Pokemon_statusRnd_check[(offsetof(Pokemon, statusRnd) == 0xA8) ? 1 : -1];
+typedef char Pokemon_expand_check[(offsetof(Pokemon, expandStatus) == 0xAE) ? 1 : -1];
+typedef char Pokemon_darkId_check[(offsetof(Pokemon, darkPokemonDataID) == 0xBA) ? 1 : -1];
+typedef char Pokemon_combo_check[(offsetof(Pokemon, comboPartnerAll) == 0xBC) ? 1 : -1];
+
+// Prototypes of the pokemon.cpp C functions. Units that declare conflicting local prototypes can
+// define POKEMON_HPP_NO_PROTOTYPES before including this header to get only the struct definitions.
+#ifndef POKEMON_HPP_NO_PROTOTYPES
 extern "C" void pokemonSetDp(Pokemon*, f32);
 
 extern "C" void pokemonSetTokuseiFlag(Pokemon* , u32);
@@ -275,5 +298,6 @@ extern "C" u8 pokemonGetExpToLevel(u8, u32);
 static int _pokemonGetLevelToExp(u8, u8);
 extern "C" int pokemonCheckRareRnd(unsigned long, unsigned long);
 static int _pokemonCheckRare(unsigned long, unsigned long);
+#endif
 
 #endif

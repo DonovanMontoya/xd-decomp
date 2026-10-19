@@ -4,24 +4,10 @@
 #include <game/pxdvs/GSAPI/GSmath/GSvec.hpp>
 #include <game/pxdvs/app/hero/heroPokemonGet.hpp>
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
+#include <game/pxdvs/app/people/runtime.hpp>
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/hero/hero.hpp>
 struct _GSmodel;
-enum GSmodelAnimType { GS_ANIM_ONCE = 0, GS_ANIM_LOOP = 1 };
-struct tagPeopleWork {
-    u8 reserved0[0x10];
-    u32 flags;
-    u8 reserved14[8];
-    u32 resource;
-    u8 reserved20[0x28];
-    s32 motion;
-    u8 reserved4C[0xE0];
-    f32 motionBlend;
-    u8 reserved130[0x80];
-    void setAnimType(GSmodelAnimType);
-    void setAnimIndex(int);
-    void setAnimFrame(f32);
-    void setAnimRate(f32, bool);
-};
-
 struct FloorBgmMask {
     void startMECallback();
     void endMECallback();
@@ -41,25 +27,11 @@ struct glowEffect : GSeffect {
     u8 r, g, b, flag, blend;
     glowEffect();
 };
-struct Pokemon {
-    DarkPokemon* getDarkPokemon();
-    u32 getRnd() const;
-};
 struct PCBOX {
     static PCBOX* getPointer();
     Pokemon* getPokemon(s8, s8);
 };
 struct PeopleRangeInfo_t;
-struct Hero {
-    static Hero* getHeroPtr();
-    u8 getFollowerID();
-    u32 getFollowerResID();
-    u32 getHeroRnd() const;
-    s16 pokemonGet(HeroPokemonGetParam*, bool);
-    Pokemon* getPokemon(s32, bool&);
-    u8 getMeetDarkPokemonCount() const;
-    void setMeetDarkPokemonCount(u8);
-};
 struct GSlight;
 struct GSpart;
 struct ScriptDoor {
@@ -95,8 +67,6 @@ void GSthreadSwitch();
 void GSmodelSetTexAnimIndex(_GSmodel*, s32);
 void GSmodelSetTexAnimFrame(_GSmodel*, f32);
 void GSmodelSetTexAnimRate(_GSmodel*, f32);
-tagPeopleWork* peopleBiosGetWorkPtr(s32);
-_GSmodel* peopleBiosGetModelPtr(tagPeopleWork*);
 f32 peopleViewerGetPlaySpeedRate(tagPeopleWork*);
 }
 
@@ -177,7 +147,6 @@ s32 floorEventGetTresure(u8, s32, s32);
 u32 savedataGetStatus(u32, u32);
 Pokemon* heroBiosGetPokemonPtr(u32, u16);
 u8 pokemonCheckValid(Pokemon*);
-u32 pokemonGetStatus(Pokemon*, u32, u32, u32);
 u8 pokemonBiosGetDarkFlag(Pokemon*);
 f32 pokemonGetDp(Pokemon*);
 void exribbonSetEarthRibbon(Pokemon*);

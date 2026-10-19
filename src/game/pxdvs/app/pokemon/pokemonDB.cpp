@@ -1537,7 +1537,7 @@ u32 pokemon_GetExp(Pokemon* poke) {
     return poke->exp;
 }
 
-char* pokemon_GetNicknamePtr(Pokemon* poke) {
+u16* pokemon_GetNicknamePtr(Pokemon* poke) {
     if (poke == nullptr)
     {
         return nullptr;
@@ -1730,7 +1730,7 @@ u16 pokemonDB_GetBasisMaxHp(u32 id) {
 const char16* pokemonDB_GetName(u32 id) {
     PokemonData* data = pokemonDataBiosGetPtr(id);
     if (data == nullptr) return nullptr;
-    return reinterpret_cast<const char16*>(data->name);
+    return reinterpret_cast<const char16*>(data->nameMsgId);
 }
 
 }

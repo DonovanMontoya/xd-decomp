@@ -798,12 +798,12 @@ s32 fn_801CC508() {
     const u8* images = _memcardBannerImage;
     OSCalendarTime calendar;
     OSTicksToCalendarTime(OSGetTime(), &calendar);
-    u8* buffer = (u8*)_memcardStatusPtr->buf50;
+    char* buffer = (char*)_memcardStatusPtr->buf50;
     memset(buffer, 0, 0x6000);
     switch (pokecoloGetCountryCode()) {
     case 0:
-        strcpy((char*)buffer, (const char*)images + 0x3A1C);
-        strcpy((char*)buffer + 0x20, (const char*)images + 0x3A2C);
+        strcpy(buffer, (const char*)images + 0x3A1C);
+        strcpy(buffer + 0x20, (const char*)images + 0x3A2C);
         buffer[0x2F] = (calendar.year / 10) % 10 + '0';
         buffer[0x30] = calendar.year % 10 + '0';
         buffer[0x32] = ((calendar.mon + 1) / 10) % 10 + '0';
@@ -813,8 +813,8 @@ s32 fn_801CC508() {
         break;
     case 1:
     case 2:
-        strcpy((char*)buffer, (const char*)images + 0x3A44);
-        strcpy((char*)buffer + 0x20, (const char*)images + 0x3A50);
+        strcpy(buffer, (const char*)images + 0x3A44);
+        strcpy(buffer + 0x20, (const char*)images + 0x3A50);
         buffer[3] = 0xE9;
         buffer[0x32] = (calendar.year / 10) % 10 + '0';
         buffer[0x33] = calendar.year % 10 + '0';

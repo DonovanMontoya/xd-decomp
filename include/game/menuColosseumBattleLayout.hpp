@@ -1,14 +1,9 @@
 #ifndef GAME_MENUCOLOSSEUMBATTLE_LAYOUT_HPP
 #define GAME_MENUCOLOSSEUMBATTLE_LAYOUT_HPP
 #include <dolphin/types.h>
-
-struct Pokemon {
-    u8 data[0xC8];
-};
-
-struct Hero {
-    u8 data[0x978];
-};
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/hero/hero.hpp>
 
 struct CBRule {
     u8 reserved0[0x1E];

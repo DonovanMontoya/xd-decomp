@@ -444,7 +444,7 @@ void pokemonDataBiosSetBasisMaxHp(PokemonData* pdata, u16 data) {
 
 void pokemonDataBiosSetName(PokemonData* pdata, const char* data) {
     if (pdata) {
-        pdata->name = data;
+        pdata->nameMsgId = (u32)data;
     }
 }
 
@@ -1324,7 +1324,7 @@ const char* pokemonDataBiosGetName(PokemonData* pdata) {
     if (pdata == nullptr) {
         return nullptr;
     }
-    return pdata->name;
+    return (const char*)pdata->nameMsgId;
 }
 
 PokemonData* pokemonDataBiosGetPtr(u32 value) {
@@ -1880,21 +1880,21 @@ u32 pokemonBiosGetExp(Pokemon* poke) {
     return poke->exp;
 }
 
-char* pokemonBiosGetNicknameOrgPtr(Pokemon* poke) {
+u16* pokemonBiosGetNicknameOrgPtr(Pokemon* poke) {
     if (poke == nullptr) {
         return nullptr;
     }
     return &poke->nicknameOrg[0];
 }
 
-char* pokemonBiosGetNicknamePtr(Pokemon* poke) {
+u16* pokemonBiosGetNicknamePtr(Pokemon* poke) {
     if (poke == nullptr) {
         return nullptr;
     }
     return &poke->nickname[0];
 }
 
-char* pokemonBiosGetCatchTrainerNamePtr(Pokemon* poke) {
+u16* pokemonBiosGetCatchTrainerNamePtr(Pokemon* poke) {
     if (poke == nullptr) {
         return nullptr;
     }

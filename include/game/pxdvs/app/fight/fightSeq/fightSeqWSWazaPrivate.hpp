@@ -87,7 +87,7 @@ void pokemonAddDpFormPokemonDpFilterId(void*,u16,u16);
 u32 fightOutPokemon_GetMotoWazaDataId(void*);
 u8 fightOutPokemon_GetNamakeFlag(void*);
 void fightOutPokemon_SetFightoutTurnCount(void*, u16);
-s8 fightOutPokemonGetNowKaisuuJoutaiDataId(void*, u16);
+u8 fightOutPokemonGetNowKaisuuJoutaiDataId(void*, u16);
 s8 fightOutPokemonGetKaisuuJoutaiDataId(void*, u16);
 s32 fightOutPokemonGetJoutaiMigawariHp(void*);
 void* fightFloorGetValidFightSidePtr(void*, u16);

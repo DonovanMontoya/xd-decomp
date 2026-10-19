@@ -117,13 +117,14 @@ u16* GSmsgGetGSchar(u32 identifier) {
             if (bundleLanguage != language) goto nextBundle;
         }
         if (bundle->group == group) {
-            u32 middle;
-            u32 upper = bundle->count;
-            u32 lower = 0;
             MsgDirectoryEntry* directory = bundle->entries;
+            u32 lower = 0;
+            u32 upper = bundle->count;
+            u32 middle;
+            u32 candidate;
             while (lower < upper) {
                 middle = (lower + upper) >> 1;
-                u32 candidate = directory[middle].identifier;
+                candidate = directory[middle].identifier;
                 if (candidate == textID) return (u16*)((u8*)bundle + directory[middle].textOffset);
                 if (candidate < textID) lower = middle + 1;
                 else upper = middle;
@@ -930,13 +931,12 @@ void _msgDispRuby(MSG_TASK_WORK* task) {
     f32 scaleX;
     f32 scaleY;
     ++task->rubyIndex;
-    u32 numerator = task->rubyCount;
-    u32 index = task->rubyIndex;
     s32 denominator = task->rubyBaseCount;
+    u32 numerator = task->rubyCount;
     u8 previous = task->rubyPosition;
     f32 savedX = task->cursorX;
     f32 savedY = task->cursorY;
-    u8 count = (s32)(numerator * index) / denominator;
+    u8 count = (s32)(numerator * task->rubyIndex) / denominator;
     task->cursorX = task->rubyX;
     task->cursorY = task->rubyY;
     u8 remaining = count - previous;

@@ -2,8 +2,9 @@
 #define GAME_MENUCB_RULE_LAYOUT_HPP
 #include <dolphin/types.h>
 
-typedef struct Pokemon { u8 data[0xC8]; } Pokemon;
-typedef struct Hero Hero;
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/hero/hero.hpp>
 
 // One byte of per-pokemon error flags (most significant bit first).
 typedef struct MenuCBRuleFlags0 {

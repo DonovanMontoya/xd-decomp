@@ -1,15 +1,10 @@
 #ifndef GAME_MENUHOLOGRAM_LAYOUT_HPP
 #define GAME_MENUHOLOGRAM_LAYOUT_HPP
 #include <dolphin/types.h>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 
 // Partial views of the relive-hall helper types used by the hologram menu.
-class Pokemon {
-public:
-    u8 data[0xC4];
-    u16 getPokemonDataId() const;
-    bool isDarkPokemon() const;
-    u16 *getNicknamePtr();
-};
 class CMenuGlobalState {
 public:
     s32 reserved0;

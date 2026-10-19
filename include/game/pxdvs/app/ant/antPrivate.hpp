@@ -2,22 +2,14 @@
 #define PXDVS_APP_ANT_ANT_PRIVATE_HPP
 
 #include <dolphin/types.h>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 
 template <class T>
 struct PocketVec {
     T x;
     T y;
     static const PocketVec zero;
-};
-
-class Pokemon {
-public:
-    u8 reserved[0xC4];
-    bool checkValid() const;
-    u16 getPokemonDataId() const;
-    bool isDarkPokemon() const;
-    bool isRare() const;
-    f32 getDarkPoint() const;
 };
 
 class CAnt {

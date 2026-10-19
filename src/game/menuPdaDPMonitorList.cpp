@@ -1,30 +1,10 @@
+#include <game/pxdvs/app/pokemon/darkPokemon.hpp>
 #include <game/menuPdaDPMonitorListLayout.hpp>
-
-enum darkPokemonWhere {
-    DARK_POKEMON_WHERE_0,
-    DARK_POKEMON_WHERE_1
-};
 
 enum DPMSelSort {
     DPM_SEL_SORT_0,
     DPM_SEL_SORT_1,
     DPM_SEL_SORT_2
-};
-
-class DarkPokemon {
-public:
-    u16 getPokemonID() const;
-    s32 getStatus() const;
-    void getDarkPoint() const;
-    s32 getDarkPointDirect() const;
-    s32 getInitDarkPointDirect() const;
-    bool isSnach() const;
-    bool isRelive() const;
-    u16 getCatchBallID() const;
-    void getPlace(darkPokemonWhere &, u8 &) const;
-    bool isUpdate() const;
-    u8 getSnatchIndex() const;
-    void setUpdate(bool);
 };
 
 struct DpmMenuItem {

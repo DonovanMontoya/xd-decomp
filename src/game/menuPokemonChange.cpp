@@ -190,7 +190,6 @@ public:
     s32 menuTbl[8];
     Hero *hero0;
     Hero hero1;
-    u8 pad29[0x9A0 - 0x29];
     s32 currentPlayer;
     CState cstate;
     s32 menuId;
@@ -464,7 +463,7 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
         msgctrlSetValue(0x34,selected->getLevel());
         GSmsgPrint2(win->messageContext,0,0,color,0x426F); break;
     case 0x7B3:
-        msgctrlSetValue(0x37,selected->getNicknamePtr());
+        msgctrlSetValue(0x37,(u32)selected->getNicknamePtr());
         switch(pokecoloGetCountryCode()) {
         case 0: GSmsgPrint2(win->messageContext,0,0,color,0x4276); break;
         case 1: case 2: GSmsgPrint2(win->messageContext,0,0,color,0x4277); break;
@@ -1449,7 +1448,7 @@ void CMenuPokemonChange::stateFunctionExChangeMain() {
         pokemons[i] = getPokemonBySelect(selectIndex[i]);
     }
     if (pokemons[0]->getDarkPokemon() != 0) {
-        pokemons[0]->getDarkPokemon()->setPlace(DARK_POKEMON_WHERE_0, 0);
+        pokemons[0]->getDarkPokemon()->setPlace(place0, 0);
     }
     pokemonBiosCopy(&pokemon, pokemons[1]);
     pokemonBiosCopy(pokemons[1], pokemons[0]);

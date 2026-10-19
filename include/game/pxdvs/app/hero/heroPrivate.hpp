@@ -2,9 +2,9 @@
 #define HERO_PRIVATE_H
 
 #include <global.h>
-
-struct Pokemon;
-struct Item;
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/hero/hero.hpp>
 
 enum FloorStateMode { FloorStateModeNone };
 enum FloorEnterMode { FloorEnterModeNone };
@@ -23,23 +23,6 @@ struct FloorModuleInterface {
     void (*loadState)(FloorStateMode, void*, unsigned long);
     unsigned long (*getStateSize)(FloorStateMode);
     unsigned long (*getStateID)();
-};
-
-class Hero {
-public:
-    static Hero* getHeroPtr();
-    Item** getDisk();
-    void setRestertPos();
-    void setHeroStyle(u8, bool);
-    void setFollowerID(u8);
-    void setFollowerModelLevel(u8);
-    void setFollowerObjID(unsigned long);
-    void setFollowerResID(unsigned long);
-    void setFollowerGrpID(unsigned long);
-    unsigned long getFollowerGrpID();
-    unsigned long getFollowerResID();
-    unsigned long getHeroObjID(long, long);
-    void setPokemon(const Pokemon*, long);
 };
 
 extern "C" {

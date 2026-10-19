@@ -2,37 +2,8 @@
 #define FIGHT_FLOOR_DB_LAYOUT_HPP
 #include <dolphin/types.h>
 #include <libc/stddef.h>
-struct Pokemon; struct FightSide; struct FightOutPokemon; struct FightEncountData; struct FightKindData; struct FightTypeData;
-struct StockPokemon { u8 pokemon[0xc4]; u8 ballId; u8 reserved[3]; };
-struct FIGHT_FLOOR {
-    u8 reserved0[0x10];
-    u16 turnCount;
-    u16 encountDataId;
-    u8 reserved14[0xdde0];
-    void* attackPokemonPtr;
-    void* defensePokemonPtr;
-    void* escapePokemonPtr;
-    void* irekaePokemonPtr;
-    void* kizetuPokemonPtr;
-    void* tuikakoukaPokemonPtr;
-    void* tokuseiPokemonPtr;
-    void* itemPokemonPtr;
-    void* appointPokemonPtr;
-    void* appointTrainerPtr;
-    void* appointWazaPtr;
-    void* appointSidePtr;
-    void* appointItemPtr;
-    u32 attackMsgId, criticalMsgId, wazaEffectMsgId;
-    s32 appointMsgId;
-    u16 appointPokemonDataId, appointWazaDataId, appointItemDataId, appointTokuseiDataId;
-    s16 fightPokemonEntryCnt;
-    u8 reservedDE42[0x2];
-    void* fightOutPokemon[8];
-    u16 firstAttackRnd;
-    u8 stockPokemonNum;
-    u8 reservedDE67[0x1];
-    StockPokemon stockPokemon[6];
-};
+#include <game/pxdvs/app/fight/fightFloor.hpp>
+struct FightEncountData; struct FightKindData; struct FightTypeData;
 typedef char FloorDBOffset_turnCount[offsetof(FIGHT_FLOOR, turnCount) == 0x10 ? 1 : -1];
 typedef char FloorDBOffset_encountDataId[offsetof(FIGHT_FLOOR, encountDataId) == 0x12 ? 1 : -1];
 typedef char FloorDBOffset_attackPokemonPtr[offsetof(FIGHT_FLOOR, attackPokemonPtr) == 0xddf4 ? 1 : -1];

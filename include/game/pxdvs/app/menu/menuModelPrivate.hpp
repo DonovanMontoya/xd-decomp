@@ -2,13 +2,8 @@
 #define MENU_MODEL_PRIVATE_H
 
 #include <global.h>
-
-class Pokemon {
-public:
-    u16 getPokemonDataId() const;
-    u32 getRnd() const;
-    bool isDarkPokemon() const;
-};
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 
 struct MENU_COLOR {
     u8 r;

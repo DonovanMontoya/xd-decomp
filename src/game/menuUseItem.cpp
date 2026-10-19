@@ -1,13 +1,7 @@
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/hero/hero.hpp>
 #include <game/menuSubLayout.hpp>
-
-class Pokemon {
-public:
-    u16 getPokemonDataId() const;
-};
-
-struct Hero {
-    u8 getHeroStyle() const;
-};
 
 struct ItemCraneMemo {
     u16 item;

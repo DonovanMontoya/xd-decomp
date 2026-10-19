@@ -36,25 +36,6 @@ struct tagWINDOW_WORK {
     u8 alpha;
 };
 
-enum darkPokemonWhere { DARK_POKEMON_WHERE_0 };
-
-class DarkPokemon {
-public:
-    void setPlace(darkPokemonWhere, u8);
-};
-
-class Pokemon {
-public:
-    u8 reserved[0xC4];
-    DarkPokemon *getDarkPokemon();
-    u16 getHp() const;
-    u8 getLevel() const;
-    u32 getNicknamePtr();
-    void* getPokemonDataPtr() const;
-    u16 getItemDataId() const;
-    bool isDarkPokemon() const;
-};
-
 class CState {
 public:
     s32 unk0;
@@ -84,10 +65,8 @@ enum MENU_POKEMON_CB_TYPE {
     MENU_POKEMON_CB_TYPE_2
 };
 
-class Hero {
-public:
-    Pokemon *getPokemon(long);
-    static Hero *getHeroPtr();
-};
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/hero/hero.hpp>
 
 #endif

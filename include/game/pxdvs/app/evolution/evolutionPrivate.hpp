@@ -105,7 +105,7 @@ void GSmodelSetAnimType(void*, u32);
 void fadeSet(u32, f32);
 s8 fadeCheck(u32);
 void msgctrlSetValue(u32, u32);
-char* pokemonBiosGetNicknamePtr(Pokemon*);
+u16* pokemonBiosGetNicknamePtr(Pokemon*);
 u16 pokemonBiosGetPokemonWazaDataId(Pokemon*, u16);
 void pokemonBiosCopy(Pokemon*, Pokemon*);
 void pokemonWazaCreate(Pokemon*, u8, u16);

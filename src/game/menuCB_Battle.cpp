@@ -1,5 +1,6 @@
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/hero/hero.hpp>
 #include <dolphin/types.h>
-struct Hero {u8 data[0x978];};
 struct _MENUCBWORK {u8 bytes[0xB4C0];};
 extern u8 _CB[];
 static const u16 VS_TRAINER_RANK_NUMBER[40]={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};

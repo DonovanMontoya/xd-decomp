@@ -2,7 +2,6 @@
 #include <libc/stddef.h>
 struct _GSmodel;
 struct GSpart;
-enum GSmodelAnimType { PEOPLE_PART_ANIM_ONCE, PEOPLE_PART_ANIM_LOOP };
 static s32 _peoplePartAnimationStartAnimation(_GSmodel*,s8,int,f32,GSmodelAnimType);
 typedef char SpeechAnimationsOffset[offsetof(tagPeopleWork,speechAnimations)==0x190?1:-1];
 typedef char SpeechTimerOffset[offsetof(tagPeopleWork,speechTimer)==0x1ac?1:-1];
@@ -44,7 +43,7 @@ void peoplePartAnimationSpeakStart(tagPeopleWork* work){
         PeopleInfo* info=peopleInfoBiosGetPtr(work->object);
         if(!peopleBiosCheckFlag(work,0x20000) && !work->flag14D){
             for(s32 i=0;i<7;i++){
-                work->speechAnimations[i]=_peoplePartAnimationStartAnimation(model,(s8)info->unknown28[i],2,0.0f,PEOPLE_PART_ANIM_LOOP);
+                work->speechAnimations[i]=_peoplePartAnimationStartAnimation(model,(s8)info->unknown28[i],2,0.0f,GS_ANIM_LOOP);
                 if(work->speechAnimations[i]>=0)started=1;
             }
             if(started){work->flag14D=1;GSmodelSetKeepPartAnimFlag(model,0);work->speechTimer=1.5f;}
@@ -72,7 +71,7 @@ void peoplePartAnimationBlinkOnce(tagPeopleWork* work){
     if(work){
         _GSmodel* model=(_GSmodel*)work->model;
         PeopleInfo* info=peopleInfoBiosGetPtr(work->object);
-        for(s32 i=0;i<4;i++)_peoplePartAnimationStartAnimation(model,(s8)info->unknown28[7+i],1,0.0f,PEOPLE_PART_ANIM_ONCE);
+        for(s32 i=0;i<4;i++)_peoplePartAnimationStartAnimation(model,(s8)info->unknown28[7+i],1,0.0f,GS_ANIM_ONCE);
         GSmodelLinkTexAnimToAnim(model,0);GSmodelSetTexAnimIndex(model,1);GSmodelSetTexAnimType(model,0);GSmodelStartTexAnimation(model);
     }
 }

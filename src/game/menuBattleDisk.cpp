@@ -1,3 +1,5 @@
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/menuBattleDiskLayout.hpp>
 
 BDisk gBDisk;
@@ -13,9 +15,6 @@ static void drawPkmPanel(u32, tagWINDOW_WORK*, tagSPRITE_WORK*);
 struct GSvec2 {
     f32 x;
     f32 y;
-};
-struct Pokemon {
-    void* getPokemonDataPtr() const;
 };
 s32 cBattleDisk::mItemCurIdx[8] = {0x6F9, 0x6FB, 0x6FD, 0x6FF, 0x701, 0x703, 0x705, 0x707};
 s32 cBattleDisk::mContentsCurIdx[15] = {0x76F, 0x770, 0x771, 0x772, 0x773, 0x774, 0x775, 0x776,

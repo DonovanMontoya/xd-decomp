@@ -262,7 +262,8 @@ u8 fightSeqGetItemType(u16 item, void *pokemon) {
 }
 
 static s32 _fightSeqClearOneTurnCountSub(void* pokemon, u16, void* data) {
-    s8 count;
+    u8 count;
+    s8 next;
     u16 turn;
     if (*(u8*)data == 1) {
         fightOutPokemonInitJoutaiDataId(pokemon, 0x2B);
@@ -279,10 +280,11 @@ static s32 _fightSeqClearOneTurnCountSub(void* pokemon, u16, void* data) {
         if (fightOutPokemonIsJoutaiDataId(pokemon, 0x12) == 1) {
             count = fightOutPokemonGetNowKaisuuJoutaiDataId(pokemon, 0x12);
             s32 limit = (s8)fightOutPokemonGetKaisuuJoutaiDataId(pokemon, 0x12);
-            if ((s8)(count + 1) >= limit) {
+            next = (s8)count + 1;
+            if (next >= limit) {
                 fightOutPokemonInitJoutaiDataId(pokemon, 0x12);
             } else {
-                fightOutPokemonSetNowKaisuuJoutaiDataId(pokemon, 0x12, count + 1);
+                fightOutPokemonSetNowKaisuuJoutaiDataId(pokemon, 0x12, next);
             }
         }
     }

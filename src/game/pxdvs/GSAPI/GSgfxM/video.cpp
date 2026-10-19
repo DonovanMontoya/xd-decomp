@@ -1,4 +1,5 @@
 #include "graphics_round1.h"
+#include <dolphin/gx/GXVert.h>
 // This revision's VI mode uses the original 0x3c-byte GX layout.
 struct VideoMode { u32 tv; u16 width,height,xfbHeight,xOrigin,yOrigin,viWidth,viHeight; u8 pad12[2]; u32 xfbMode; u8 field,aa; u8 samples[12][2]; u8 filter[7]; u8 pad39[3]; };
 struct VideoBuffer { s32 state; void *ptr; };
@@ -14,7 +15,8 @@ struct ModeEntry { s32 id; GXRenderModeObj *ntsc,*pal,*eurgb,*mpal; };
 ABI_SIZE(ModeEntry,0x14);
 extern "C" {
 extern GXRenderModeObj GXPal264Ds,GXPal264DsAa,GXPal264Int,GXPal264IntAa,GXPal528Int,GXPal528IntDf,GXPal524IntAa,GXNtsc480ProgSoft;
-extern u8 _gcGlobalRegState[];
+struct GCRegs { u8 f0,f1,pixel,depth,f4; };
+extern GCRegs _gcGlobalRegState;
 
 
 void GSgfxSSGetViewportOffset__FPfPf(float*,float*);
@@ -65,10 +67,10 @@ void GSgfxVideoSetViewport__Fffffb(float x,float y,float right,float bottom,bool
 }
 inline void GSgfx_GCWritePixelFmt(s32 format,u8 depth) {
     static u8 pxf2hw[8]={0,1,2,3,4,4,4,5}; static u8 yuvmap[4]={0,1,2,2};
-    _gcGlobalRegState[3]=depth; _gcGlobalRegState[2]=pxf2hw[format]; if(format<4) _gcGlobalRegState[4]=0;else _gcGlobalRegState[4]=yuvmap[format-4];gsgfxState->dirty|=0x18;
+    _gcGlobalRegState.depth=depth; _gcGlobalRegState.pixel=pxf2hw[format]; if(format<4) _gcGlobalRegState.f4=0;else _gcGlobalRegState.f4=yuvmap[format-4];gsgfxState->dirty|=0x18;
 }
 void GSgfxVideoSetupNextFrame__Fv() {
-    _videoState.lastElapsed=_videoState.elapsed; _gcGlobalRegState[1]=_videoState.mode.field; _gcGlobalRegState[0]=(_videoState.mode.viHeight>=2*_videoState.mode.xfbHeight); gsgfxState->dirty|=0x1400;
+    _videoState.lastElapsed=_videoState.elapsed; _gcGlobalRegState.f1=_videoState.mode.field; _gcGlobalRegState.f0=(_videoState.mode.viHeight>=2*_videoState.mode.xfbHeight); gsgfxState->dirty|=0x1400;
     if(_videoState.mode.aa==1) GSgfx_GCWritePixelFmt(2,0);else GSgfx_GCWritePixelFmt(_videoState.pixelFormat,0);
     _videoState.field=VIGetNextField(); GSgfxVideoResetViewport__Fb(false); GSgfx_GCFlushState();
 }
@@ -99,7 +101,7 @@ s32 GSgfxVideoGetLockFrameRate() { return _videoState.lockRate; }
 void GSgfxVideoSetLockFrameActive(u8 active) { _videoState.lockActive=active; }
 void GSgfxVideoSetLockFrameRate(s32 rate) { if(_videoState.lockRate!=rate) { _videoState.lockRate=rate;_videoState.lockCount=_videoState.lockRate; } }
 void GSgfxVideoSetFilter(u8 *filter) { VideoState *state=&_videoState; if(!filter) { memcpy(state->mode.filter,_videoDefaultFilter,7);return; } memcpy(state->mode.filter,filter,7); }
-void GSgfxVideoGetClearColor(GXColor *color) { color->r=_videoState.color.r;color->g=_videoState.color.g;color->b=_videoState.color.b;color->a=_videoState.color.a; }
+void GSgfxVideoGetClearColor(GXColor *color) { VideoState *state=&_videoState; u8 r=state->color.r; u8 g=state->color.g; u8 b=state->color.b; u8 a=state->color.a; color->r=r;color->g=g;color->b=b;color->a=a; }
 void GSgfxVideoSetClearColor(GXColor *color) { _videoState.color.r=color->r;_videoState.color.g=color->g;_videoState.color.b=color->b;_videoState.color.a=color->a; }
 void (*GSgfxVideoSetVSyncCallback(void(*cb)(u32)))(u32) { void(*old)(u32)=_videoState.callback;_videoState.callback=cb;return old; }
 void GSgfxVideoSetOneShotPostCallback__FPFPv_v(void(*cb)(void*)) { _videoOneShotPostCB=cb; }
@@ -129,17 +131,17 @@ void GSgfxVideoInit__FUcUs14GSgfxVideoMode(u8 count,u16 height,s32 mode) {
 inline void writeViewport(float x,float y,float width,float height,float nearZ,float farZ,u32 field) {
     if(gsgfxState->vx!=x || gsgfxState->vy!=y || gsgfxState->vw!=width || gsgfxState->vh!=height || gsgfxState->vnear!=nearZ || gsgfxState->vfar!=farZ || gsgfxState->field!=field) {
         if(field==0) y-=0.5f;
-        *(volatile u8*)0xcc008000=0x10;
+        GXWGFifo.u8=0x10;
         float hh=height*0.5f;
-        *(volatile u16*)0xcc008000=5;
+        GXWGFifo.u16=5;
         float hw=width*0.5f;float z=farZ*16777216.0f;
-        *(volatile u16*)0xcc008000=0x101a;
-        *(volatile float*)0xcc008000=hw;
-        *(volatile float*)0xcc008000=-hh;
-        *(volatile float*)0xcc008000=-(nearZ*16777216.0f-z);
-        *(volatile float*)0xcc008000=342.0f+(x+hw);
-        *(volatile float*)0xcc008000=342.0f+(y+hh);
-        *(volatile float*)0xcc008000=z+0.0f;
+        GXWGFifo.u16=0x101a;
+        GXWGFifo.f32=hw;
+        GXWGFifo.f32=-hh;
+        GXWGFifo.f32=-(nearZ*16777216.0f-z);
+        GXWGFifo.f32=342.0f+(x+hw);
+        GXWGFifo.f32=342.0f+(y+hh);
+        GXWGFifo.f32=z+0.0f;
         gsgfxState->vx=x;gsgfxState->vy=y;gsgfxState->vw=width;gsgfxState->vh=height;gsgfxState->vnear=nearZ;gsgfxState->vfar=farZ;gsgfxState->field=field;
     }
 }

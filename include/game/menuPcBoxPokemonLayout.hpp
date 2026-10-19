@@ -1,6 +1,8 @@
 #ifndef GAME_MENUPCBOXPOKEMON_LAYOUT_HPP
 #define GAME_MENUPCBOXPOKEMON_LAYOUT_HPP
 #include <dolphin/types.h>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 
 // Partial views of the pocket-menu helper types. Every named member is tied to an
 // original load/store width.
@@ -16,49 +18,6 @@ struct PocketVec {
     T x;
     T y;
     static const PocketVec zero;
-};
-
-class DarkPokemon;
-
-enum darkPokemonWhere {
-    DARK_POKEMON_WHERE_0,
-    DARK_POKEMON_WHERE_1,
-    DARK_POKEMON_WHERE_2,
-    DARK_POKEMON_WHERE_3,
-    DARK_POKEMON_WHERE_4,
-    DARK_POKEMON_WHERE_5,
-    DARK_POKEMON_WHERE_6
-};
-
-class Pokemon {
-public:
-    u8 reserved[0xC4];
-    bool checkValid() const;
-    void setDarkPoint(f32);
-    u8 getPcboxMark() const;
-    DarkPokemon *getDarkPokemon();
-    u16 getHp() const;
-    void setPcboxMark(u8);
-    char *getNicknamePtr();
-    u16 getItemDataId() const;
-    void *getPokemonDataPtr() const;
-    u8 getLevel() const;
-    bool isDarkPokemon() const;
-};
-
-enum darkPokemonStatus {
-    DARK_POKEMON_STATUS_0,
-    DARK_POKEMON_STATUS_1,
-    DARK_POKEMON_STATUS_2,
-    DARK_POKEMON_STATUS_3
-};
-
-class DarkPokemon {
-public:
-    u16 getPokemonID() const;
-    void setStatus(darkPokemonStatus);
-    void setSnatchIndex(u8);
-    void setPlace(darkPokemonWhere, u8);
 };
 
 class CAnt {

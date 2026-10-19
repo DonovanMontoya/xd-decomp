@@ -283,7 +283,7 @@ extern "C" {
 
 s32 evolutionWazaLearn(Pokemon* pokemon, u16 waza, u8* slot, EVOLUTION_WINDOW_TYPE type, s8 (*callback)(Pokemon*, unsigned short, long), WORK* work) {
     s32 idx;
-    char* name;
+    u16* name;
     u16 wazaId;
     idx = 0;
     do {
@@ -446,7 +446,7 @@ static int evolutionDemo(WORK* work, int cancelable, Pokemon* before, Pokemon* a
     int counter;
     s32 changed;
     s32 pressed;
-    char* name;
+    u16* name;
 
     toVisible(work, 0, 1);
     name = pokemonBiosGetNicknamePtr(before);

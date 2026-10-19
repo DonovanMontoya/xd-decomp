@@ -1,3 +1,5 @@
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/menuPokemonStatusLayout.hpp>
 
 extern "C" {
@@ -97,15 +99,6 @@ void GSmsgPrint2(s32, s32, s32, u32, u32);
 void menuPlaySe(s32, s32);
 u8 menuModelComparePokemon(void*, Pokemon*);
 }
-
-struct DarkPokemon {
-    u8 isWazaNew(u8) const;
-    void setWazaNew(u8, bool);
-};
-struct Pokemon {
-    u8 isDarkPokemon() const;
-    DarkPokemon* getDarkPokemon();
-};
 
 static MenuPokemonStatus _menuStatus;
 static u8 _menuModel[0x1D8];

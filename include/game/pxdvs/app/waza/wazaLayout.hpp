@@ -72,6 +72,20 @@ typedef char WazaDataRecord_fightAttackMsgIdOffset[offsetof(WazaDataRecord, figh
 typedef char WazaDataRecord_docOffset[offsetof(WazaDataRecord, doc) == 0x2c ? 1 : -1];
 typedef char WazaDataRecord_wazawzxdataIdOffset[offsetof(WazaDataRecord, wazawzxdataId) == 0x30 ? 1 : -1];
 typedef char WazaDataRecord_typeIdOffset[offsetof(WazaDataRecord, typeId) == 0x34 ? 1 : -1];
+// Type (zokusei) DB record, 0x30 bytes each. Table pointer: zokusei_data (0x804E87CC), count zokusei_data_number.
+// matchup[defendingType] is the damage-multiplier code for this attacking type: 0x3F 1x, 0x41 2x, 0x42 0.5x, 0x43 0x.
+struct TypeRecord {
+    u8 kind;           // 0x0 (waza kind: physical/special group)
+    u8 reserved1;      // 0x1
+    u16 sprite;        // 0x2
+    u16 smallSprite;   // 0x4
+    u16 reserved6;     // 0x6
+    u32 name;          // 0x8, message id
+    u16 matchup[18];   // 0xC
+};
+typedef char TypeRecordSize[sizeof(TypeRecord) == 0x30 ? 1 : -1];
+typedef char TypeRecord_nameOffset[offsetof(TypeRecord, name) == 0x8 ? 1 : -1];
+typedef char TypeRecord_matchupOffset[offsetof(TypeRecord, matchup) == 0xC ? 1 : -1];
 struct FightWazaRecord {
     u8 wazaBanme;
     u8 reserved01[0x1];
@@ -117,11 +131,13 @@ extern "C" {
 extern WazaDataRecord* waza_data;
 extern u32* waza_data_number;
 extern WazaFunctionRecord waza_func_data[];
+extern TypeRecord* zokusei_data;
+extern u32* zokusei_data_number;
 extern u32 waza_func_data_number;
 WazaDataRecord* wazaDataBiosGetPtr(u32);
 WazaFunctionRecord* wazaFuncDataBiosGetPtr(u16);
 u16 wazaDataBiosGetWazaFuncDataId(WazaDataRecord*);
 u8 wazaCheckDarkWaza(u32);
-u8 zokuseiBiosGetWazaKind(u8);
+u8 zokuseiBiosGetWazaKind(u16);
 }
 #endif

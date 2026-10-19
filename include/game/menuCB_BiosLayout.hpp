@@ -1,10 +1,9 @@
 #ifndef GAME_MENUCB_BIOS_LAYOUT_HPP
 #define GAME_MENUCB_BIOS_LAYOUT_HPP
 #include <dolphin/types.h>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/hero/hero.hpp>
 
-typedef struct Hero {
-    u8 data[0x978];
-} Hero;
 typedef struct Pokemon Pokemon;
 
 typedef struct MenuCBBiosRule {
