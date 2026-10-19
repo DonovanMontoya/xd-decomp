@@ -650,17 +650,18 @@ static void _fadeDistBallInit() {
     _fadeEffectWork.direction = 0;
     _fadeEffectWork.frame = 1;
     FADE_EFFECT_BOUND* ball = _fadeEffectBound;
-    s32 i = 0;
-    do {
+    s32 i;
+    for (i = 0; i < 12; ++i) {
         ball->x = FADE_RANDOM(640UL);
         ball->y = FADE_RANDOM(240UL);
         ball->rotation = 0;
         ball->speed = (FADE_RANDOM(4UL) * 4) + 4;
-        s32 sign = (i % 2 == 0) ? 1 : -1;
+        s32 sign;
+        if (i % 2 == 0) { sign = 1; } else { sign = -1; }
         ball->speed *= sign;
         ball->state = 0;
-        ++ball; ++i;
-    } while (i < 12);
+        ++ball;
+    }
     GSgfxVFInit(&_fadeEffectTrainer_vf);
     GSgfxVFCreate(&_fadeEffectTrainer_vf);
     GSgfxVFSetElement(&_fadeEffectTrainer_vf, 9, 1, 4, 0);
@@ -768,23 +769,20 @@ static void _fadeEffectBoundBallInit() {
     _fadeEffectWork.secondTexture = (GStexture*)GSresGetResourceAllGroup(0x0EBD1200);
     _fadeEffectWork.direction = 0;
     _fadeEffectWork.frame = 1;
-    FADE_EFFECT_BOUND* ball = _fadeEffectBound;
-    s32 i = 0;
-    do {
+    s32 i;
+    for (i = 0; i < 16; ++i) {
         switch (i % 4) {
-        case 0: ball->x = FADE_RANDOM(320UL); ball->y = FADE_RANDOM(240UL); break;
-        case 1: ball->x = FADE_RANDOM(320UL) + 320; ball->y = FADE_RANDOM(240UL) + 240; break;
-        case 2: ball->x = FADE_RANDOM(320UL) + 320; ball->y = FADE_RANDOM(240UL); break;
-        case 3: ball->x = FADE_RANDOM(320UL); ball->y = FADE_RANDOM(240UL) + 240; break;
+        case 0: _fadeEffectBound[i].x = FADE_RANDOM(320UL); _fadeEffectBound[i].y = FADE_RANDOM(240UL); break;
+        case 1: _fadeEffectBound[i].x = FADE_RANDOM(320UL) + 320; _fadeEffectBound[i].y = FADE_RANDOM(240UL) + 240; break;
+        case 2: _fadeEffectBound[i].x = FADE_RANDOM(320UL) + 320; _fadeEffectBound[i].y = FADE_RANDOM(240UL); break;
+        case 3: _fadeEffectBound[i].x = FADE_RANDOM(320UL); _fadeEffectBound[i].y = FADE_RANDOM(240UL) + 240; break;
         }
-        ball->rotation = 0;
-        ball->speed = (FADE_RANDOM(4UL) * 3) + 3;
-        s32 sign = (i % 2 == 0) ? 1 : -1;
-        ball->speed *= sign;
-        ball->state = (FADE_RANDOM(4UL) * 3) + 3;
-        ball->state *= sign;
-        ++i; ++ball;
-    } while (i < 16);
+        _fadeEffectBound[i].rotation = 0;
+        _fadeEffectBound[i].speed = (FADE_RANDOM(4UL) * 3) + 3;
+        _fadeEffectBound[i].speed *= (i % 2 == 0) ? 1 : -1;
+        _fadeEffectBound[i].state = (FADE_RANDOM(4UL) * 3) + 3;
+        _fadeEffectBound[i].state *= (i % 2 == 0) ? 1 : -1;
+    }
     _fadeEffect_AdjustParms();
 }
 
@@ -1501,8 +1499,8 @@ extern bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 ela
 }
 
 bool fadeEffectHookFunction_dist_ball(GSgfxLayerID id, bool active, f32 elapsed, f32 duration, f32, f32, void* opaque) {
-    GSgfxLayer* layer = GSgfxLayerFindByID(id);
     GStexture* texture;
+    GSgfxLayer* layer = GSgfxLayerFindByID(id);
     if (!layer) return active;
     texture = (GStexture*)opaque;
     if (!texture) return active;
@@ -1605,7 +1603,7 @@ bool fadeEffectHookFunction_dist_ball(GSgfxLayerID id, bool active, f32 elapsed,
         layer->field1760 = (s32) (layer->field1760 | 2);
         layer->tgenFunc(0, (GSgfxTgenFunc)1, (GSgfxTgenSrc)4, 0, false, 0);
         layer->tgenFunc(1, (GSgfxTgenFunc)1, (GSgfxTgenSrc)5, 0, false, 0);
-        FL(s32, 0xEAC) = 3;
+        FL(u8, 0xEAC) = 3;
         FL_SET(0x16CC, 0x1784, 1);
         GStexture* tex0 = _fadeEffectWork.secondTexture;
         if (layer->field1740 != tex0 || layer->field17F8 != tex0 || tex0->dirty != 0) {
@@ -1616,11 +1614,11 @@ bool fadeEffectHookFunction_dist_ball(GSgfxLayerID id, bool active, f32 elapsed,
         }
         FL(s32, 0xEB0) = 0; FL(s32, 0xEB4) = 0; FL(s32, 0xEB8) = 4;
         FL_SET(0x16D0, 0x1788, 1);
-        FL(s32, 0x1170) = 8; FL(s32, 0x1174) = 0; FL(s32, 0x1178) = 0; FL(s32, 0x117C) = 0; FL(s32, 0x1180) = 1;
+        FL(s32, 0x1170) = 8; FL(s32, 0x1174) = 0; FL(s32, 0x1178) = 0; FL(u8, 0x117C) = 0; FL(s32, 0x1180) = 1;
         FL_SET(0x16DC, 0x1794, 1);
         FL(s32, 0xF70) = 9; FL(s32, 0xF74) = 0xD; FL(s32, 0xF78) = 0xC; FL(s32, 0xF7C) = 0xF;
         FL_SET(0x16D4, 0x178C, 1);
-        FL(s32, 0x12B0) = 0; FL(s32, 0x12B4) = 0; FL(s32, 0x12B8) = 0; FL(s32, 0x12BC) = 0; FL(s32, 0x12C0) = 1;
+        FL(s32, 0x12B0) = 0; FL(s32, 0x12B4) = 0; FL(s32, 0x12B8) = 0; FL(u8, 0x12BC) = 0; FL(s32, 0x12C0) = 1;
         FL_SET(0x16E0, 0x1798, 1);
         FL(s32, 0x1070) = 7; FL(s32, 0x1074) = 4; FL(s32, 0x1078) = 5; FL(s32, 0x107C) = 7;
         FL_SET(0x16D8, 0x1790, 1);
@@ -1632,11 +1630,11 @@ bool fadeEffectHookFunction_dist_ball(GSgfxLayerID id, bool active, f32 elapsed,
         }
         FL(s32, 0xEBC) = 1; FL(s32, 0xEC0) = 1; FL(s32, 0xEC4) = 4;
         FL_SET(0x16D0, 0x1788, 2);
-        FL(s32, 0x1184) = 0; FL(s32, 0x1188) = 0; FL(s32, 0x118C) = 0; FL(s32, 0x1190) = 0; FL(s32, 0x1194) = 0;
+        FL(s32, 0x1184) = 0; FL(s32, 0x1188) = 0; FL(s32, 0x118C) = 0; FL(u8, 0x1190) = 0; FL(s32, 0x1194) = 0;
         FL_SET(0x16DC, 0x1794, 2);
         FL(s32, 0xF80) = 0xF; FL(s32, 0xF84) = 8; FL(s32, 0xF88) = 2; FL(s32, 0xF8C) = 0xF;
         FL_SET(0x16D4, 0x178C, 2);
-        FL(s32, 0x12C4) = 0; FL(s32, 0x12C8) = 0; FL(s32, 0x12CC) = 0; FL(s32, 0x12D0) = 0; FL(s32, 0x12D4) = 0;
+        FL(s32, 0x12C4) = 0; FL(s32, 0x12C8) = 0; FL(s32, 0x12CC) = 0; FL(u8, 0x12D0) = 0; FL(s32, 0x12D4) = 0;
         FL_SET(0x16E0, 0x1798, 2);
         FL(s32, 0x1080) = 7; FL(s32, 0x1084) = 7; FL(s32, 0x1088) = 7; FL(s32, 0x108C) = 1;
         FL_SET(0x16D8, 0x1790, 2);
@@ -1651,56 +1649,56 @@ bool fadeEffectHookFunction_dist_ball(GSgfxLayerID id, bool active, f32 elapsed,
         }
         FL(s32, 0xEC8) = 0; FL(s32, 0xECC) = 2; FL(s32, 0xED0) = 4;
         FL_SET(0x16D0, 0x1788, 4);
-        FL(s32, 0x1198) = 0; FL(s32, 0x119C) = 0; FL(s32, 0x11A0) = 0; FL(s32, 0x11A4) = 0; FL(s32, 0x11A8) = 0;
+        FL(s32, 0x1198) = 0; FL(s32, 0x119C) = 0; FL(s32, 0x11A0) = 0; FL(u8, 0x11A4) = 0; FL(s32, 0x11A8) = 0;
         FL_SET(0x16DC, 0x1794, 4);
         FL(s32, 0xF90) = 8; FL(s32, 0xF94) = 0xF; FL(s32, 0xF98) = 0xF; FL(s32, 0xF9C) = 0;
         FL_SET(0x16D4, 0x178C, 4);
-        FL(s32, 0x12D8) = 0; FL(s32, 0x12DC) = 0; FL(s32, 0x12E0) = 0; FL(s32, 0x12E4) = 0; FL(s32, 0x12E8) = 0;
+        FL(s32, 0x12D8) = 0; FL(s32, 0x12DC) = 0; FL(s32, 0x12E0) = 0; FL(u8, 0x12E4) = 0; FL(s32, 0x12E8) = 0;
         FL_SET(0x16E0, 0x1798, 4);
         FL(s32, 0x1090) = 7; FL(s32, 0x1094) = 4; FL(s32, 0x1098) = 5; FL(s32, 0x109C) = 4;
         FL_SET(0x16D8, 0x1790, 4);
         FL(GSgfxVF*, 0x199C) = &_fadeEffectTrainer_vf;
         layer->field1998 = 0x98;
     }
-    FADE_EFFECT_BOUND* ball = _fadeEffectBound;
-    s32 i = 0;
-    do {
-        f32 angle = (f32)ball->rotation;
+    s32 i;
+    for (i = 0; i < 12; ++i) {
+        f32 angle = (f32)_fadeEffectBound[i].rotation;
         if (timeGetLastFrameTime() != 0) {
-            if ((f32)ball->speed < 0.0f) angle += 18.0f;
+            if ((f32)_fadeEffectBound[i].speed < 0.0f) angle += 18.0f;
             else angle -= 18.0f;
             if (angle <= 0.0f) angle += 360.0f;
             else if (angle >= 360.0f) angle -= 360.0f;
         }
-        ball->rotation = (s16)angle;
+        _fadeEffectBound[i].rotation = (s16)angle;
         if (timeGetLastFrameTime() != 0) {
-            f32 nx = (f32)ball->x + (f32)ball->speed;
-            if (nx < 32.0f) { nx = 32.0f; ball->speed = -ball->speed; }
-            else if (nx > 608.0f) { nx = 608.0f; ball->speed = -ball->speed; }
-            ball->x = (s16)nx;
+            f32 nx = (f32)_fadeEffectBound[i].x;
+            nx += (f32)_fadeEffectBound[i].speed;
+            if (nx < 32.0f) { nx = 32.0f; _fadeEffectBound[i].speed = -_fadeEffectBound[i].speed; }
+            else if (nx > 608.0f) { nx = 608.0f; _fadeEffectBound[i].speed = -_fadeEffectBound[i].speed; }
+            _fadeEffectBound[i].x = (s16)nx;
         }
         if (timeGetLastFrameTime() != 0) {
-            s16 vy = ball->state;
-            f32 ny = (f32)ball->y + (f32)vy;
-            if (ny < 32.0f) { ny = 32.0f; ball->state = -vy; }
+            f32 ny = (f32)_fadeEffectBound[i].y;
+            s16 vy = _fadeEffectBound[i].state;
+            ny += (f32)vy;
+            if (ny < 32.0f) { ny = 32.0f; _fadeEffectBound[i].state = -vy; }
             else if (ny > 448.0f) {
                 ny = 448.0f;
-                ball->state = (vy * -8) / 10;
-                s16 t = ball->state;
-                if ((f32)t > -1.0f && (f32)t < 1.0f) ball->state = -7;
+                _fadeEffectBound[i].state = (-vy * 8) / 10;
+                s16 t = _fadeEffectBound[i].state;
+                if ((f32)t > -1.0f && (f32)t < 1.0f) _fadeEffectBound[i].state = -7;
             } else {
-                if ((f32)vy >= 0.0f) ball->state = (s16)((f32)vy + 1.0f);
-                else ball->state = (s16)((f32)vy + 1.0f);
+                if ((f32)vy >= 0.0f) _fadeEffectBound[i].state = (s16)((f32)vy + 1.0f);
+                else _fadeEffectBound[i].state = (s16)(1.0f + (f32)vy);
             }
-            ball->y = (s16)ny;
+            _fadeEffectBound[i].y = (s16)ny;
         }
         GSvec pos;
-        pos.param2 = (f32)ball->y;
+        pos.param2 = (f32)_fadeEffectBound[i].y;
         pos.param3 = 0.0f;
-        pos.param1 = (f32)ball->x;
+        pos.param1 = (f32)_fadeEffectBound[i].x;
         _disp_dist_ball(layer, &pos, 1.0f, angle, (s32)(0.2f * (255.0f * (1.0f - progress))));
-        ++ball; ++i;
-    } while (i < 12);
+    }
     return active;
 }
 
@@ -1999,8 +1997,9 @@ static void _fadeEffectFunction_ball_FirstInit() {
 }
 
 static bool fadeEffectHookFunction_tate(GSgfxLayerID id, bool active, f32 elapsed, f32 duration, f32 elapsedSecond, f32 durationSecond, void* opaque) {
-    GStexture* texture = (GStexture*)opaque;
+    GStexture* texture;
     GSgfxLayer* layer = GSgfxLayerFindByID(id);
+    texture = (GStexture*)opaque;
     if (!layer) return active;
     if (!texture) return active;
     if (_fadeEffectFirstFlag == 1) {
@@ -2012,9 +2011,8 @@ static bool fadeEffectHookFunction_tate(GSgfxLayerID id, bool active, f32 elapse
 
 static bool fadeEffectHookFunction_yoko(GSgfxLayerID id, bool active, f32 elapsed, f32 duration, f32 elapsedSecond, f32 durationSecond, void* opaque) {
     GStexture* texture;
-    GSgfxLayer* layer;
+    GSgfxLayer* layer = GSgfxLayerFindByID(id);
     texture = (GStexture*)opaque;
-    layer = GSgfxLayerFindByID(id);
     if (!layer) return active;
     if (!texture) return active;
     if (_fadeEffectFirstFlag == 1) {
@@ -3169,11 +3167,12 @@ bool fadeEffectHookFunction_ball_second(GSgfxLayerID id, bool active, f32 elapse
     progressSecond = progressSecond * progressSecond;
     _fadeEffectSnapshotFadeFunction(layer, texture, &center, 1.0f, 0.0f, progress, progressSecond);
     _fadeEffectStartTexture(layer, _fadeEffectWork.ballTexture);
-    f32 movement[2], rotation[2];
+    f32 rotation[2], movement[2];
     movement[0] = _fadeEffectWork.rotation;
-    rotation[0] = 360.0f * (_fadeEffectWork.rotation / 471.23892f);
     movement[1] = -_fadeEffectWork.rotation;
+    rotation[0] = 360.0f * (_fadeEffectWork.rotation / 471.23892f);
     rotation[1] = -rotation[0];
+    f32 opacity = 1.0f - progress;
     f32 x;
     for (int side = 0; side < 2; ++side) {
         FADE_EFFECT_BALL* balls = _fadeEffectBall[side];
@@ -3186,18 +3185,21 @@ bool fadeEffectHookFunction_ball_second(GSgfxLayerID id, bool active, f32 elapse
                 ball->rotation = ball[-1].rotation;
             }
             if (!(x > 790.0f) && !(x < -150.0f)) {
-                alpha = (s32)((1.0f - progress) * ball->alpha);
+                alpha = (s32)(opacity * ball->alpha);
                 _dispball(layer, &ball->position, 0.5f, ball->rotation, alpha);
             }
         }
-        f32 angle = balls->rotation + rotation[side];
+        f32 angle = balls->rotation;
+        angle += rotation[side];
         if (angle <= 0.0f) angle += 360.0f;
         else if (angle >= 360.0f) angle -= 360.0f;
         if (timeGetLastFrameTime() != 0) balls->rotation = angle;
-        x = balls->position.param1 + movement[side];
+        x = balls->position.param1;
+        x += movement[side];
         if (timeGetLastFrameTime() != 0) balls->position.param1 = x;
         if (!(x > 790.0f) && !(x < -150.0f)) {
-            f32 y = balls->position.param2 - movement[side];
+            f32 y = balls->position.param2;
+            y -= movement[side];
             if (y > 405.0f) y = 405.0f;
             else if (y < 75.0f) y = 75.0f;
             balls->position.param2 = y;
@@ -3218,10 +3220,9 @@ bool fadeEffectHookFunction_ball(GSgfxLayerID id, bool active, f32 elapsed, f32 
     f32 progress = elapsed / duration;
     f32 progressSecond = elapsedSecond / durationSecond;
     if (timeGetLastFrameTime() != 0) {
-        f32 distance = _fadeEffectWork.rotation + _fadeEffectWork.rotationStep;
         ++_fadeEffectWork.frame;
-        _fadeEffectWork.rotation = distance;
-        if (distance >= _fadeEffectWork.distanceStep) _fadeEffectWork.rotation = _fadeEffectWork.distanceStep;
+        _fadeEffectWork.rotation += _fadeEffectWork.rotationStep;
+        if (_fadeEffectWork.rotation >= _fadeEffectWork.distanceStep) _fadeEffectWork.rotation = _fadeEffectWork.distanceStep;
     }
     _fadeEffectMaskFunction(layer, progress);
     if (!opaque) return active;
@@ -3231,12 +3232,12 @@ bool fadeEffectHookFunction_ball(GSgfxLayerID id, bool active, f32 elapsed, f32 
     center.param3 = 0.0f;
     _fadeEffectSnapshotFadeFunction(layer, (GStexture*)opaque, &center, 1.0f, 0.0f, progress, progressSecond);
     _fadeEffectStartTexture(layer, _fadeEffectWork.ballTexture);
-    f32 opacity = 1.0f - progress;
     f32 movement[2], rotation[2];
     movement[0] = _fadeEffectWork.rotation;
-    rotation[0] = 360.0f * (_fadeEffectWork.rotation / 804.24774f);
     movement[1] = -_fadeEffectWork.rotation;
+    rotation[0] = 360.0f * (_fadeEffectWork.rotation / 804.24774f);
     rotation[1] = -rotation[0];
+    f32 opacity = 1.0f - progress;
     for (int side = 0; side < 2; ++side) {
         FADE_EFFECT_BALL* balls = _fadeEffectBall[side];
         for (int i = 11; i > 0; --i) {

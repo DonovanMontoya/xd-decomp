@@ -393,7 +393,9 @@ void WS_IKAKU(void) {
 }
 }
 
-static s32 _fightSeqWsIkakuSub(void* pokemon, u16, void* other) {
+static s32 _fightSeqWsIkakuSub(void* arg0, u16, void* arg2) {
+    FightOutPokemon* pokemon = (FightOutPokemon*)arg0;
+    FightOutPokemon* other = (FightOutPokemon*)arg2;
     u16 tokusei = fightOutPokemonGetTokuseiDataId(other);
     if (fightOutPokemonCheckFightOut(pokemon) == 0) {
         return 1;
@@ -598,7 +600,8 @@ void WS_HUUIN(void) {
 }
 }
 
-static s32 _WsHuuinSub(void* pokemon, u16, void* arg) {
+static s32 _WsHuuinSub(void* arg0, u16, void* arg) {
+    FightOutPokemon* pokemon = (FightOutPokemon*)arg0;
     FightOutPokemon* attacker = *(FightOutPokemon**)arg;
     if (fightOutPokemonCheckFightOut(pokemon) == 0) {
         return 1;
@@ -1711,7 +1714,8 @@ void WS_HOROBINOUTA(void) {
 }
 }
 
-static s32 _fightSeqWsHorobinoutaSub(void* pokemon, u16 id, void* arg) {
+static s32 _fightSeqWsHorobinoutaSub(void* arg0, u16 id, void* arg) {
+    FightOutPokemon* pokemon = (FightOutPokemon*)arg0;
     s32* count = (s32*)arg;
     u16 tokusei;
     if (fightOutPokemonCheckFightOut(pokemon) == 0) {
@@ -2109,8 +2113,6 @@ void WS_SKETCH(void) {
     Pokemon* curPokemon;
     u16 sketchId;
     s8 slot;
-
-
 
     seq = fightSeq_GetWazaSeq();
     attacker = (FightOutPokemon*)fightTargetGetPtrAsNowFightType(0x11, 0);
@@ -2940,7 +2942,6 @@ void WS_TEXTURE(void) {
     FightOutPokemon* attacker;
     u8 i;
 
-
     seq = fightSeq_GetWazaSeq();
     attacker = (FightOutPokemon*)fightTargetGetPtrAsNowFightType(0x11, 0);
     count = fightSeqGetTextureZokuseiAry(attacker, buf);
@@ -2950,8 +2951,7 @@ jump:
         return;
     }
     rnd = HSD_Rand();
-    idx = rnd % count;
-    zokusei = buf[idx];
+    zokusei = buf[(u8)(rnd % count)];
     if (zokusei < 0) {
         goto jump;
     }
@@ -3409,7 +3409,9 @@ bool fightSeqSawaguCheck(void* pokemon) {
     return fightFloorLoopValidFightOutPokemon(0,_fightSeqSawaguCheckSub,pokemon,1)!=1;
 }
 }
-static s32 _fightSeqSawaguCheckSub(void* pokemon,u16,void* other) {
+static s32 _fightSeqSawaguCheckSub(void* arg0,u16,void* arg2) {
+    FightOutPokemon* pokemon=(FightOutPokemon*)arg0;
+    FightOutPokemon* other=(FightOutPokemon*)arg2;
     u16 ability=fightOutPokemonGetTokuseiDataId(other);
     if(fightOutPokemonCheckFightOut(pokemon)==0)return 1;
     if(fightOutPokemonIsJoutaiDataId(pokemon,0xB)==1 && ability!=0x2B){
