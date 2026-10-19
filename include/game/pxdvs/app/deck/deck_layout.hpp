@@ -37,6 +37,8 @@ struct DeckDarkPokemon {
     u16 getDeckPokemonID() const;
     u8 getWorth() const;
     u8 getSnatchRatio() const;
+    u8 getUnderTakerFlag() const;
+    u8 getRevers() const;
     u8 getPlayerLevel() const;
     u8 isScenarioPokemon() const;
 };

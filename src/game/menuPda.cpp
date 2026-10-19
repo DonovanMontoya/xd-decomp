@@ -1,4 +1,6 @@
 #include <game/menuPdaLayout.hpp>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/hero/hero.hpp>
 
 struct GSgfxVF;
 struct GStexture;
@@ -88,9 +90,6 @@ extern "C" GSgfxLayer *GSgfxLayerFindByID(u32);
 
 enum PDATOP_MENU_RES { PDATOP_MENU_RES_0 };
 
-struct Hero {
-    u8 getHeroStyle() const;
-};
 
 extern "C" {
 void *GSresGetResourceAllGroup(u32);

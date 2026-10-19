@@ -226,14 +226,14 @@ static FloorModuleInterface _floorModuleHero;
 static f32 GSvecDistanceXZ(GSvec* a, GSvec* b) {
     GSvec va;
     GSvec vb;
-    va.x = a->x;
-    va.y = a->y;
-    va.z = a->z;
-    vb.x = b->x;
-    vb.y = b->y;
-    vb.z = b->z;
-    va.y = 0.0f;
-    vb.y = 0.0f;
+    va.param1 = a->param1;
+    va.param2 = a->param2;
+    va.param3 = a->param3;
+    vb.param1 = b->param1;
+    vb.param2 = b->param2;
+    vb.param3 = b->param3;
+    va.param2 = 0.0f;
+    vb.param2 = 0.0f;
     return PSVECDistance(&va, &vb);
 }
 
@@ -286,9 +286,9 @@ static bool getLeaderLog(GSvec* out, int index) {
     if (index >= 0x3C) {
         return false;
     }
-    out->x = HeroMove.leaderLog.log[index].x;
-    out->y = HeroMove.leaderLog.log[index].y;
-    out->z = HeroMove.leaderLog.log[index].z;
+    out->param1 = HeroMove.leaderLog.log[index].param1;
+    out->param2 = HeroMove.leaderLog.log[index].param2;
+    out->param3 = HeroMove.leaderLog.log[index].param3;
     return true;
 }
 
@@ -652,22 +652,22 @@ void heroMoveAllInit() {
 }
 
 extern "C" s32 heroGetFollower() {
-    u8* people;
+    tagPeopleWork* people;
     unsigned long res;
     Hero* hero;
     hero = Hero::getHeroPtr();
     res = hero->getFollowerResID();
-    people = (u8*)peopleGet(hero->getFollowerGrpID(), res);
+    people = (tagPeopleWork*)peopleGet(hero->getFollowerGrpID(), res);
     if (people == 0) {
         return 0;
     }
-    if (people[0] == 0) {
+    if (people->used == 0) {
         return 0;
     }
-    if (people[0xD] == 0) {
+    if (people->visible == 0) {
         return 0;
     }
-    if (*(u32*)(people + 0x1C) == 0) {
+    if (people->object == 0) {
         return 0;
     }
     switch (hero->getFollowerResID()) {
@@ -856,13 +856,13 @@ s32 heroMoveCheckEvent(void* arg) {
         f32* rot = (f32*)peopleBiosGetRotPtr(people);
         GSvec start;
         GSvec dir;
-        start.x = pos->x;
-        start.y = pos->y;
-        start.z = pos->z;
-        start.y += 5.0f;
-        dir.x = 10.0f * (f32)sin(rot[1]);
-        dir.y = 0.0f;
-        dir.z = 10.0f * (f32)cos(rot[1]);
+        start.param1 = pos->param1;
+        start.param2 = pos->param2;
+        start.param3 = pos->param3;
+        start.param2 += 5.0f;
+        dir.param1 = 10.0f * (f32)sin(rot[1]);
+        dir.param2 = 0.0f;
+        dir.param3 = 10.0f * (f32)cos(rot[1]);
         PSVECAdd(&start, &dir, &dir);
         result = GScolsys2CheckGetEventID(&start, &dir, arg);
     }
@@ -1153,17 +1153,17 @@ static void initFloor() {
     if (!GSfloorIsPop()) {
         getPos(&position, (HEROMOVE_MEMBER)heroMoveGetLeader());
         getRot(&rotation, (HEROMOVE_MEMBER)heroMoveGetLeader());
-        f32 dx = sin(rotation.y);
-        f32 dz = cos(rotation.y);
+        f32 dx = sin(rotation.param2);
+        f32 dz = cos(rotation.param2);
         dx = -dx;
-        followerPosition.y = position.y;
+        followerPosition.param2 = position.param2;
         dz = -dz;
         f32 distance = 10.0f;
         for (s32 i = 0; i < 4; ++i) {
             if (heroMoveIsMember(i) && i != heroMoveGetLeader()) {
-                followerPosition.x = dx * distance + position.x;
-                followerPosition.y = position.y;
-                followerPosition.z = dz * distance + position.z;
+                followerPosition.param1 = dx * distance + position.param1;
+                followerPosition.param2 = position.param2;
+                followerPosition.param3 = dz * distance + position.param3;
                 s32 count = GScolsys2WalkGetHeight(&followerPosition, heights);
                 if (count > 0) {
                     if (count >= 2) {
@@ -1173,15 +1173,15 @@ static void initFloor() {
                         for (s32 j = 0; j < count; ++j) {
                             f32 height = heights[j].height;
                             if (highest < height) highest = height;
-                            if (!(height - followerPosition.y >= 100.0f) && closest < height) {
+                            if (!(height - followerPosition.param2 >= 100.0f) && closest < height) {
                                 closest = height;
                                 found = 1;
                             }
                         }
-                        if (found) followerPosition.y = closest;
-                        else followerPosition.y = highest;
+                        if (found) followerPosition.param2 = closest;
+                        else followerPosition.param2 = highest;
                     } else {
-                        followerPosition.y = heights[0].height;
+                        followerPosition.param2 = heights[0].height;
                     }
                 }
                 distance += 10.0f;
@@ -1274,19 +1274,19 @@ static void getStep(FOOTSTEP* step,_GSmodel* model,int* parts,FOOTWORK* work) {
     zero=0.0f;
     int* part=parts;
     for(s32 i=0;i<4;i++,part++,height++) {
-        step->positions[i].x=zero;
-        step->positions[i].y=zero;
-        step->positions[i].z=zero;
+        step->positions[i].param1=zero;
+        step->positions[i].param2=zero;
+        step->positions[i].param3=zero;
         *height=zero;
         if(*part>=0) {
             void* object=GSmodelGetPart(model,*part);
             if(object) {
                 GSpartGetTransform(object,&partPos,0,0);
                 GSpartFree(object);
-                *height=partPos.y-modelPos.y;
-                step->positions[i].x=partPos.x;
-                step->positions[i].y=partPos.y;
-                step->positions[i].z=partPos.z;
+                *height=partPos.param2-modelPos.param2;
+                step->positions[i].param1=partPos.param1;
+                step->positions[i].param2=partPos.param2;
+                step->positions[i].param3=partPos.param3;
             }
         }
     }
@@ -1308,8 +1308,8 @@ static void updateLeaderLog() {
     u8 append=0;
     getPos(&current,(HEROMOVE_MEMBER)heroMoveGetLeader());
     if(getLeaderLog(&previous,1)) {
-        f32 x=previous.x-current.x;
-        f32 z=previous.z-current.z;
+        f32 x=previous.param1-current.param1;
+        f32 z=previous.param3-current.param3;
         f32 xs=x*x,zs=z*z;
         f32 mag=xs+zs;
         if(mag>0.0f) {
@@ -1333,14 +1333,14 @@ static void updateLeaderLog() {
     } else append=1;
     if(append) {
         for(s32 i=58;i>=0;i--) {
-            HeroMove.leaderLog.log[i+1].x=HeroMove.leaderLog.log[i].x;
-            HeroMove.leaderLog.log[i+1].y=HeroMove.leaderLog.log[i].y;
-            HeroMove.leaderLog.log[i+1].z=HeroMove.leaderLog.log[i].z;
+            HeroMove.leaderLog.log[i+1].param1=HeroMove.leaderLog.log[i].param1;
+            HeroMove.leaderLog.log[i+1].param2=HeroMove.leaderLog.log[i].param2;
+            HeroMove.leaderLog.log[i+1].param3=HeroMove.leaderLog.log[i].param3;
         }
         *(s32*)&HeroMove.raw[0x84]=0;
-        HeroMove.leaderLog.log[0].x=current.x;
-        HeroMove.leaderLog.log[0].y=current.y;
-        HeroMove.leaderLog.log[0].z=current.z;
+        HeroMove.leaderLog.log[0].param1=current.param1;
+        HeroMove.leaderLog.log[0].param2=current.param2;
+        HeroMove.leaderLog.log[0].param3=current.param3;
         if(*(s32*)&HeroMove.raw[0x88]<60)(*(s32*)&HeroMove.raw[0x88])++;
     }
 }
@@ -1418,7 +1418,6 @@ static void updateLeaderMovement(HEROMOVE_MEMBER member,float* movement) {
 }
 
 extern "C" {
-void* peopleInfoBiosGetPtr(s32);
 f32 peopleInfoBiosGetColBallSize(void*);
 u8 GScolsys2HitCollision(GSvec*,GSvec*,s32);
 void PSVECScale(GSvec*,GSvec*,f32);
@@ -1430,9 +1429,9 @@ u8 heroMoveChkHinderClear(s32 member) {
     if(!heroMoveIsMember(member))return 0;
     HEROMOVE_MEMBER leader=(HEROMOVE_MEMBER)heroMoveGetLeader();
     getPos(&memberPosition,(HEROMOVE_MEMBER)member);
-    memberPosition.y+=8.5f;
+    memberPosition.param2+=8.5f;
     getPos(&leaderPosition,leader);
-    leaderPosition.y+=8.5f;
+    leaderPosition.param2+=8.5f;
     u32 object=getObjID((HEROMOVE_MEMBER)member);
     if(object==0xFFFFFFFF)return 0;
     void* info=peopleInfoBiosGetPtr(object);
@@ -1451,8 +1450,8 @@ u8 heroMoveChkHinderClear(s32 member) {
     getPos(&memberPosition,(HEROMOVE_MEMBER)member);
     getPos(&leaderPosition,leader);
     PSVECSubtract(&leaderPosition,&memberPosition,&direction);
-    f32 x=memberPosition.x-leaderPosition.x;
-    f32 z=memberPosition.z-leaderPosition.z;
+    f32 x=memberPosition.param1-leaderPosition.param1;
+    f32 z=memberPosition.param3-leaderPosition.param3;
     f32 mag,radius;
     radius=memberSize+leaderSize;
     f32 xs=x*x,zs=z*z;
@@ -1482,11 +1481,6 @@ u8 heroMoveChkHinderClear(s32 member) {
 }
 }
 
-struct tagPeopleWork {
-    u8 pad[0x14];
-    u32 group,res;
-    u8 getMoveType();
-};
 struct HeroMoveEvent {GSvec points[3]; u8 data[16];};
 extern "C" {
 void __ct__5GSvecFv(void*);
@@ -1527,25 +1521,25 @@ static u8 updateChat(HEROMOVE_MEMBER member) {
     GSinputResetLeftSmoothing(1,0,0);
     GSinputResetRightSmoothing(1,0,0);
     heroMoveInitEvent();
-    peopleGetNeckPos(person->group,person->res,&neck);
-    peopleRotateToXYZ(group,res,neck.x,neck.y,neck.z,1.0f);
-    if(peopleCheckTresure(person->group,person->res))floorEventCtrlTresure(person->group,person->res,2);
+    peopleGetNeckPos(person->group,person->resource,&neck);
+    peopleRotateToXYZ(group,res,neck.param1,neck.param2,neck.param3,1.0f);
+    if(peopleCheckTresure(person->group,person->resource))floorEventCtrlTresure(person->group,person->resource,2);
     else {
         s32 script;
         u8 moving=0;
         u8 type=person->getMoveType();
         if(type==2 || type==3)moving=1;
-        peopleBlockMoveScript(peopleGetHumanID(person->group,person->res));
-        if(moving)peopleWalkPause(person->group,person->res,1);
-        script=peopleGetTalkSctID(person->group,person->res);
+        peopleBlockMoveScript(peopleGetHumanID(person->group,person->resource));
+        if(moving)peopleWalkPause(person->group,person->resource,1);
+        script=peopleGetTalkSctID(person->group,person->resource);
         if(script) {
-            peopleWalkPauseTalkMode(person->group,person->res,1);
-            floorExecScriptRes(script,person->group,person->res);
-            peopleWalkPauseTalkMode(person->group,person->res,0);
-            peopleTalkMsgEnd(person->group,person->res);
+            peopleWalkPauseTalkMode(person->group,person->resource,1);
+            floorExecScriptRes(script,person->group,person->resource);
+            peopleWalkPauseTalkMode(person->group,person->resource,0);
+            peopleTalkMsgEnd(person->group,person->resource);
         }
-        if(moving && !peopleBiosCheckFlag(person,0x80000))peopleWalkPause(person->group,person->res,0);
-        peopleUnblockMoveScript(peopleGetHumanID(person->group,person->res));
+        if(moving && !peopleBiosCheckFlag(person,0x80000))peopleWalkPause(person->group,person->resource,0);
+        peopleUnblockMoveScript(peopleGetHumanID(person->group,person->resource));
     }
     heroMoveTermEvent();
     GSinputResetLeftSmoothing(1,0,0);
@@ -1577,18 +1571,6 @@ void peopleRotateToAngle(u32,u32,f32,f32);
 void peopleMoveAlongAngle(u32,u32,f32,f32);
 void PSVECNormalize(GSvec*,GSvec*);
 }
-struct FollowerPeople {
-    u8 pad00[0x24];
-    f32 speed;
-    u8 pad28[4];
-    f32 slowSpeed;
-    u8 pad30[0x38];
-    GSvec destination;
-    u8 pad74[0xB0];
-    s32 lockFrames;
-    u8 pad128[0x18];
-    s32 hinder;
-};
 static f32 moveParty(HEROMOVE_MEMBER member) {
     GSvec destination;
     GSvec direction;
@@ -1596,24 +1578,24 @@ static f32 moveParty(HEROMOVE_MEMBER member) {
     GSvec difference;
     GSvec added;
     s8 x,y,rx,ry;
-    FollowerPeople* current=(FollowerPeople*)_heroGetPeople(member);
+    tagPeopleWork* current=(tagPeopleWork*)_heroGetPeople(member);
     if (!current) return 0.0f;
-    if (current->lockFrames>0) {
+    if (current->attachIndex>0) {
         *(s32*)&HeroMove.raw[0x88]=0;
         return 0.0f;
     }
-    FollowerPeople* leader=(FollowerPeople*)peopleGet(0,0x64);
+    tagPeopleWork* leader=(tagPeopleWork*)peopleGet(0,0x64);
     if (!leader) return 0.0f;
     Hero* hero=Hero::getHeroPtr();
     unsigned long resource=hero->getFollowerResID();
-    FollowerPeople* follower=(FollowerPeople*)peopleGet(hero->getFollowerGrpID(),resource);
+    tagPeopleWork* follower=(tagPeopleWork*)peopleGet(hero->getFollowerGrpID(),resource);
     if (!follower) return 0.0f;
     if (peopleBiosCheckFlag(follower,0x80000000)) return 0.0f;
     GSvec* leaderPosition=(GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(leader);
     GSvec* position=(GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(follower);
     s32 followerID=heroGetFollower();
     if (!followerID) return 0.0f;
-    if (heroMoveChkHinderClear(followerID) && !follower->hinder) *(s32*)&HeroMove.raw[0x88]=0;
+    if (heroMoveChkHinderClear(followerID) && !follower->followerMotion) *(s32*)&HeroMove.raw[0x88]=0;
     if (!init$2458) { init$2458=1;radius_fix$2457=3.0f; }
     for(s32 i=0;i<*(s32*)&HeroMove.raw[0x88];i++) {
         if(PSVECDistance(position,&HeroMove.leaderLog.log[i])<radius_fix$2457) {
@@ -1621,59 +1603,59 @@ static f32 moveParty(HEROMOVE_MEMBER member) {
             break;
         }
     }
-    if(current->hinder) return 0.0f;
+    if(current->followerMotion) return 0.0f;
     s32 count=*(s32*)&HeroMove.raw[0x88];
     if(count>0) {
         GSvec* point=&HeroMove.leaderLog.log[count-1];
-        destination.x=point->x;destination.y=point->y;destination.z=point->z;
+        destination.param1=point->param1;destination.param2=point->param2;destination.param3=point->param3;
     }
     else {
         PSVECSubtract(position,leaderPosition,&difference);
-        f32 dx=difference.x,dy=difference.y,dz=difference.z;
-        direction.x=dx;direction.y=dy;direction.z=dz;
+        f32 dx=difference.param1,dy=difference.param2,dz=difference.param3;
+        direction.param1=dx;direction.param2=dy;direction.param3=dz;
         u8 zero;
         if(!(dx<0.00001f) || !(dx>-0.00001f) ||
            !(dy<0.00001f) || !(dy>-0.00001f) ||
            !(dz<0.00001f) || !(dz>-0.00001f)) zero=0;
         else zero=1;
         if(zero) {
-            direction.x=0.0f;direction.y=0.0f;direction.z=1.0f;
+            direction.param1=0.0f;direction.param2=0.0f;direction.param3=1.0f;
         }
         PSVECNormalize(&direction,&direction);
         PSVECScale(&direction,&direction,10.950001f);
         PSVECAdd(leaderPosition,&direction,&added);
-        destination.x=added.x;destination.y=added.y;destination.z=added.z;
+        destination.param1=added.param1;destination.param2=added.param2;destination.param3=added.param3;
     }
     GSvecDistanceXZ(position,&destination);
     f32 distance=GSvecDistanceXZ(position,leaderPosition);
     _getStickData(x,y,rx,ry);
     if(!init$2475) { init$2475=1;len_fix$2474=0.5f; }
     if(distance<12.0f-len_fix$2474 && !x && !y && !rx && !ry) return 0.0f;
-    follower->destination.x=destination.x;
-    follower->destination.y=destination.y;
-    follower->destination.z=destination.z;
-    f32 movementAngle=peopleVecCalcRotY(position,&follower->destination,0.0f);
+    follower->walkTarget.param1=destination.param1;
+    follower->walkTarget.param2=destination.param2;
+    follower->walkTarget.param3=destination.param3;
+    f32 movementAngle=peopleVecCalcRotY(position,&follower->walkTarget,0.0f);
     f32 facingAngle=peopleVecCalcRotY(position,leaderPosition,0.0f);
     f32 speed;
     if(distance<=12.0f) {
         PSVECSubtract(position,leaderPosition,&closeDirection);
         if(distance<0.00001f && distance>-0.00001f) {
-            closeDirection.x=0.0f;closeDirection.y=0.0f;closeDirection.z=10.950001f;
+            closeDirection.param1=0.0f;closeDirection.param2=0.0f;closeDirection.param3=10.950001f;
         } else {
-            closeDirection.y=0.0f;
+            closeDirection.param2=0.0f;
             PSVECNormalize(&closeDirection,&closeDirection);
             PSVECScale(&closeDirection,&closeDirection,10.950001f);
         }
-        PSVECAdd(leaderPosition,&closeDirection,&follower->destination);
-        follower->destination.y=GScolsys2HumanGetWalkHeight(&follower->destination);
-        movementAngle=peopleVecCalcRotY(position,&follower->destination,0.0f);
+        PSVECAdd(leaderPosition,&closeDirection,&follower->walkTarget);
+        follower->walkTarget.param2=GScolsys2HumanGetWalkHeight(&follower->walkTarget);
+        movementAngle=peopleVecCalcRotY(position,&follower->walkTarget,0.0f);
         if(distance<9.900001f) {
-            if(distance<=9.0f) speed=leader->slowSpeed;
-            else speed=leader->slowSpeed*peopleGetBlendFactor(distance,9.900001f,9.0f);
+            if(distance<=9.0f) speed=leader->unknown2C;
+            else speed=leader->unknown2C*peopleGetBlendFactor(distance,9.900001f,9.0f);
         } else speed=0.0f;
     } else if(distance<18.0f) {
-        speed=leader->speed*peopleGetBlendFactor(distance,12.0f,18.0f);
-    } else speed=leader->speed;
+        speed=leader->unknown24*peopleGetBlendFactor(distance,12.0f,18.0f);
+    } else speed=leader->unknown24;
     {
         unsigned long res=hero->getFollowerResID();
         peopleRotateToAngle(hero->getFollowerGrpID(),res,facingAngle,20.0f);

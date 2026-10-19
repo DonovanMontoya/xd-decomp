@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/people/runtime.hpp>
+#include <game/pxdvs/app/hero/hero.hpp>
 #pragma dont_inline on
 namespace GSscript { struct Tiga { int getNameToFuncId(const char*); }; }
 extern "C" {
@@ -1596,12 +1597,6 @@ bool peopleSetNeckLimitHold(u32 group, u32 resource, u8 hold) {
 }
 
 // Batch 2.
-class Hero {
-public:
-    static Hero* getHeroPtr();
-    u32 getFollowerGrpID();
-    u32 getFollowerResID();
-};
 struct FloorModuleInterface {
     void (*create)(u32, s32);
     void (*pre)(u32, s32);

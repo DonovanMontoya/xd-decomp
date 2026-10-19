@@ -1,4 +1,6 @@
 #include <game/menuWorldMapMXLayout.hpp>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/hero/hero.hpp>
 
 extern "C" {
 void menuCursorNormal(tagWINDOW_WORK *, s32);
@@ -75,12 +77,6 @@ struct WorldMapData {
     u32 msgId;
 };
 
-struct GSvec {
-    f32 x;
-    f32 y;
-    f32 z;
-};
-
 struct WorldMapCamera {
     WorldMapCamera() { unk14=0.0f; blendT=0.0f; accel=0.0f; }
     s32 cur_;
@@ -145,11 +141,6 @@ void *operator new(unsigned long);
 void *operator new[](unsigned long);
 void operator delete(void *);
 void operator delete[](void *);
-
-struct Hero {
-    u8 getFollowerID();
-    u8 getHeroStyle() const;
-};
 
 struct _GSparticleGen;
 
@@ -592,11 +583,11 @@ void WorldMap::SetCamera() {
     f32 aspect, near_, far_, fov;
     void *cam;
     f32 *cp;
-    rot.x = 0.0f;
-    rot.y = 0.0f;
-    rot.z = 0.0f;
+    rot.param1 = 0.0f;
+    rot.param2 = 0.0f;
+    rot.param3 = 0.0f;
     timeGetLastFrameSec();
-    cp = &camera->cur.x;
+    cp = &camera->cur.param1;
     cam = GSresGetResource(0, 0);
     GScameraGetMatrixPtr(cam);
     GScameraGetPerspective(cam, &fov, &aspect, &near_, &far_);
@@ -604,18 +595,18 @@ void WorldMap::SetCamera() {
     {
         f32 a = cp[6];
         f32 b = cp[7];
-        tmp.y = b;
-        tmp.x = 0.0f;
-        tmp.z = a;
+        tmp.param2 = b;
+        tmp.param1 = 0.0f;
+        tmp.param3 = a;
     }
     PSMTXRotRad(mtx, 0x59, cp[8]);
     PSMTXMultVec(mtx, &tmp, &tmp);
     PSVECAdd((GSvec *)cp, &tmp, &out);
-    rot.y = cp[8];
+    rot.param2 = cp[8];
     {
         f32 r = (f32)atan2(cp[7], cp[6]);
-        rot.z = 0.0f;
-        rot.x = -r;
+        rot.param3 = 0.0f;
+        rot.param1 = -r;
     }
     GScameraLookAt(cam, cp + 3, cp);
     cameraSetPosition(&out);
@@ -633,14 +624,14 @@ void WorldMap::ControlCursor(long) {
             cursorT = 1.0f;
             flag1C = 0;
         }
-        Blendf(&cursorBlend.x, cursorBlend.x, cursorPos.x, cursorT);
-        Blendf(&cursorBlend.y, cursorBlend.y, cursorPos.y, cursorT);
-        Blendf(&cursorBlend.z, cursorBlend.z, cursorPos.z, cursorT);
+        Blendf(&cursorBlend.param1, cursorBlend.param1, cursorPos.param1, cursorT);
+        Blendf(&cursorBlend.param2, cursorBlend.param2, cursorPos.param2, cursorT);
+        Blendf(&cursorBlend.param3, cursorBlend.param3, cursorPos.param3, cursorT);
     }
     if (unk8->flag != 0) {
         cursorTime += dt;
         cursorBob = 5.0f * (f32)sin(6.2831855f * cursorTime) + 5.0f;
-        cursorBlend.y = cursorBob;
+        cursorBlend.param2 = cursorBob;
     }
     GSmodelSetPosition(model, &cursorBlend);
 }
@@ -842,9 +833,9 @@ void WorldMap::SetCameraSpeed(f32) {
 void WorldMap::SetCameraNextWork(GSvec *pos, f32 a, f32 b, f32 c, f32 d) {
     WorldMapCamera *cam = camera;
     if (pos != 0) {
-        cam->next.x = pos->x;
-        cam->next.y = pos->y;
-        cam->next.z = pos->z;
+        cam->next.param1 = pos->param1;
+        cam->next.param2 = pos->param2;
+        cam->next.param3 = pos->param3;
     }
     if (a) {
         cam->n58 = a;
@@ -860,9 +851,9 @@ void WorldMap::SetCameraNextWork(GSvec *pos, f32 a, f32 b, f32 c, f32 d) {
 void WorldMap::SetCameraWork(GSvec *pos, f32 a, f32 b, f32 c, f32 d) {
     WorldMapCamera *cam = camera;
     if (pos != 0) {
-        cam->cur.x = pos->x;
-        cam->cur.y = pos->y;
-        cam->cur.z = pos->z;
+        cam->cur.param1 = pos->param1;
+        cam->cur.param2 = pos->param2;
+        cam->cur.param3 = pos->param3;
     }
     if (a) {
         cam->c30 = a;
@@ -881,15 +872,15 @@ long WorldMap::Blendf(f32 *out, f32 from, f32 to, f32 t) {
 }
 
 static inline void setVec(GSvec *v, f32 x, f32 y, f32 z) {
-    v->x = x;
-    v->y = y;
-    v->z = z;
+    v->param1 = x;
+    v->param2 = y;
+    v->param3 = z;
 }
 
 void WorldMap::GetCameraData(long index, GSvec *pos, f32 *a, f32 *b, f32 *c, f32 *d) {
     if ((u32)index < (u32)*worldmap_cameradata_number) {
         WorldMapCameraData *data = &worldmap_cameradata[index];
-        setVec(pos, data->pos.x, data->pos.y, data->pos.z);
+        setVec(pos, data->pos.param1, data->pos.param2, data->pos.param3);
         *a = data->a;
         *b = data->b;
         *c = data->c;
@@ -1070,10 +1061,10 @@ void WorldMap::ControlCamera(long) {
         camera->blendT = 1.0f;
     }
     cam = camera;
-    cur = &cam->cur.x;
-    Blendf(cur, *cur, cam->next.x, cam->blendT);
-    Blendf(cur + 1, cur[1], cam->next.y, camera->blendT);
-    Blendf(cur + 2, cur[2], cam->next.z, camera->blendT);
+    cur = &cam->cur.param1;
+    Blendf(cur, *cur, cam->next.param1, cam->blendT);
+    Blendf(cur + 1, cur[1], cam->next.param2, camera->blendT);
+    Blendf(cur + 2, cur[2], cam->next.param3, camera->blendT);
     Blendf(cur + 6, cur[6], cam->n58, camera->blendT);
     Blendf(cur + 7, cur[7], cam->n5C, camera->blendT);
     Blendf(cur + 9, cur[9], cam->n64, camera->blendT);
@@ -1102,9 +1093,9 @@ void WorldMap::SetCursorPosition(long index, bool reset) {
     WorldMapIconData *icon;
     SearchData(_cursor_index[index]);
     icon = (WorldMapIconData *)((u8 *)icons + _cursor_index[index] * 0x2C);
-    cursorPos.x = icon->pos.x;
-    cursorPos.y = icon->pos.y;
-    cursorPos.z = icon->pos.z;
+    cursorPos.param1 = icon->pos.param1;
+    cursorPos.param2 = icon->pos.param2;
+    cursorPos.param3 = icon->pos.param3;
     cursorIndex = index;
     if (reset) {
         flag1C = 1;
@@ -1130,9 +1121,9 @@ void WorldMap::InitCursor(long index, short state) {
     }
     SetLayerID(cursorModel, 1, &layer);
     SetCursorPosition(index, false);
-    cursorBlend.x = cursorPos.x;
-    cursorBlend.y = cursorPos.y;
-    cursorBlend.z = cursorPos.z;
+    cursorBlend.param1 = cursorPos.param1;
+    cursorBlend.param2 = cursorPos.param2;
+    cursorBlend.param3 = cursorPos.param3;
 }
 
 void WorldMap::SelectIcon(long index) {
@@ -1361,9 +1352,9 @@ void WorldMap::CalcModel2D(f32 fov,bool initial) {
     for(long i=0;i<GetDataNum();++i) {
         WorldMapIconData *icon=&icons[i];
         PSMTXMultVec(matrix,&icon->pos,&view);
-        icon->screen.x=320.0f+(factor*view.x)/view.z;
-        icon->screen.y=240.0f+(-factor*view.y)/view.z;
-        icon->screen.z=0.0f;
+        icon->screen.param1=320.0f+(factor*view.param1)/view.param3;
+        icon->screen.param2=240.0f+(-factor*view.param2)/view.param3;
+        icon->screen.param3=0.0f;
     }
     for(long i=0;i<GetDataNum();++i) {
         WorldMapIconData *icon=&icons[i];
@@ -1374,7 +1365,7 @@ void WorldMap::CalcModel2D(f32 fov,bool initial) {
                 if(GetFlagData(i)==0 || GetFlagData(j)==0) {distance=0.0f;angle=0.0f;}
                 else {
                     distance=PSVECDistance(&icon->screen,&other->screen);
-                    angle=(f32)atan2(other->screen.y-icon->screen.y,other->screen.x-icon->screen.x);
+                    angle=(f32)atan2(other->screen.param2-icon->screen.param2,other->screen.param1-icon->screen.param1);
                     if(angle<0.0f)angle+=6.2831855f;
                 }
                 icon->subs[j].a=distance;icon->subs[j].b=angle;
@@ -1530,7 +1521,7 @@ void WorldMap::moveDemo(long previous,long selected) {
     GSgfxVideoSetLockFrameRate(1);
     WorldMapIconData *to=&icons[_cursor_index[selected]];
     WorldMapIconData *from=&icons[_cursor_index[previous]];
-    f32 angle=(f32)atan2(to->screen.y-from->screen.y,to->screen.x-from->screen.x);
+    f32 angle=(f32)atan2(to->screen.param2-from->screen.param2,to->screen.param1-from->screen.param1);
     if(angle<0.0f)angle+=6.2831855f;
     if(!(angle>=1.5707964f && angle<4.712389f))variant+=2;
     WorldMapData *data=SearchData(_cursor_index[previous]);

@@ -2,10 +2,11 @@
 #define GAME_MENUORRECOLOSSEUM_LAYOUT_HPP
 #include <dolphin/types.h>
 
-struct Pokemon;
-struct Hero {
-    u8 data[0x978];
-    Hero() {}
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/hero/hero.hpp>
+// The original unit's player copy has an (empty) constructor, which makes the static need a static initializer.
+struct OrreHero : Hero {
+    OrreHero() {}
 };
 struct MenuOrrePos {
     s16 a;

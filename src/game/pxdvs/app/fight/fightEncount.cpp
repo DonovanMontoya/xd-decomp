@@ -1,4 +1,6 @@
 #include <global.h>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/hero/hero.hpp>
 class FIGHT_ENCOUNT {
 public:
     u16 field; u16 messages[4]; u8 addMode, addPlace, addID, swapMode; u16 swapDeck; u8 fightMode, trainerKind, destroyFlag, pad13; u32 roundNo; u8 pad18[4];
@@ -46,13 +48,8 @@ void FIGHT_ENCOUNT::clear() {
     destroyFlag=0; roundNo=0; ((u8*)this)[0x18]=0;
 }
 
-class Pokemon { public: u8 getLevel() const; };
-class Hero {
-public:
-    static Hero *getHeroPtr();
-    u32 getBattleResumeFloorID() const;
-    u8 getBattleResumeFloorIndex() const;
-};
+// The original callers use the resume floor id as a full word.
+extern "C" u32 getBattleResumeFloorID__4HeroCFv(const Hero *);
 extern "C" {
 FIGHT_ENCOUNT _fightEncount;
 void *heroGetStatus(void *, u32, u16);
@@ -93,7 +90,7 @@ void fightEncountAnnihilationRecovery() {
 s32 fightEncountCheckZenmetu() {
     void *data = fightEncountDataBiosGetPtr(fightGetFightEncountDataId());
     Hero *hero = Hero::getHeroPtr();
-    if (hero->getBattleResumeFloorID() == 0) return 0;
+    if (getBattleResumeFloorID__4HeroCFv(hero) == 0) return 0;
     if (fightEncountDataBiosGetZenmetuFlag(data) == 0) return 0;
     if (fightFloorIsGcHeroWin(0, fightGetFightResultId()) == 1) return 0;
     GSfsysFree(0x842);
@@ -104,8 +101,8 @@ s32 fightEncountCheckZenmetu() {
     fightEncountAnnihilationRecovery();
     peopleAllBlockMoveScript();
     u32 index = hero->getBattleResumeFloorIndex();
-    floorSetFloorChangeInfo(hero->getBattleResumeFloorID(), index);
-    floorPopAndChange(hero->getBattleResumeFloorID());
+    floorSetFloorChangeInfo(getBattleResumeFloorID__4HeroCFv(hero), index);
+    floorPopAndChange(getBattleResumeFloorID__4HeroCFv(hero));
     floorSetFadeScript(0, 0x05960008);
     floorWaitForChange();
     return 1;
@@ -224,7 +221,7 @@ u16 fightEncount(u16 id) {
         peopleAllBlockMoveScript();
         Hero *hero = Hero::getHeroPtr();
         u32 index = hero->getBattleResumeFloorIndex();
-        floorLinkWithSE(hero->getBattleResumeFloorID(),index,0);
+        floorLinkWithSE(getBattleResumeFloorID__4HeroCFv(hero),index,0);
         floorSetFadeScript(0,0x05960008);
         floorWaitForChange();
         fightFloorSetStatus(0,0,0xD,0,0);

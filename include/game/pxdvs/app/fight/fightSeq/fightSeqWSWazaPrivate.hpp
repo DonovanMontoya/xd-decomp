@@ -1,11 +1,14 @@
 #ifndef FIGHT_SEQ_WSWAZA_PRIVATE_HPP
 #define FIGHT_SEQ_WSWAZA_PRIVATE_HPP
 #include <game/pxdvs/app/fight/fightSeq/fightSeqWazaseqPrivate.hpp>
+#define POKEMON_HPP_NO_PROTOTYPES
+#define POKEMON_FIGHT_RECORDS_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemonFightRecords.hpp>
 
 struct WSFightAction { u8 data[0x38]; };
-struct WSOutPokemonSnapshot { u32 words[0x225]; };
-struct WSPokemonSnapshot { u32 words[0x31]; };
-struct WSWazaSnapshot { u32 words[0x2B]; };
+typedef FightOutPokemon WSOutPokemonSnapshot;
+typedef Pokemon WSPokemonSnapshot;
+typedef FightWaza WSWazaSnapshot;
 typedef void (*WSDamageCallback)(void*,u16,void*,void*);
 
 extern "C" {

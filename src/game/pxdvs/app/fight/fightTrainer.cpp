@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/fight/fightPokemon.hpp>
+#include <game/pxdvs/app/deck/deck_layout.hpp>
 #include <game/pxdvs/app/fight/fightPokemonConditions.hpp>
 
 struct FightTrainer;
@@ -1423,7 +1424,8 @@ void _fightTrainerCreateDeckVirtual(u16 trainerId, Hero* hero, u16 encounterId) 
     }
 }
 
-class DeckDarkPokemon { public: static DeckDarkPokemon* getDeckDarkPokemonObj(u32); u16 getDeckPokemonID() const; u32 getWorth() const; };
+// The original caller treats the worth getter as returning a full word.
+extern "C" u32 getWorth__15DeckDarkPokemonCFv(const DeckDarkPokemon*);
 extern "C" {
 u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16, Pokemon*, u32, u16, u16);
 void deckCreate(u16, u16, Pokemon*);
@@ -1571,8 +1573,8 @@ void _fightTrainer_SortUnderTakerDarkPoke(u8* list, u8 count) {
     u8 b;
     for (i = 0; i < count - 1; i++) {
         for (j = i + 1; j < count; j++) {
-            worthI = DeckDarkPokemon::getDeckDarkPokemonObj(list[i])->getWorth();
-            worthJ = DeckDarkPokemon::getDeckDarkPokemonObj(list[j])->getWorth();
+            worthI = getWorth__15DeckDarkPokemonCFv(DeckDarkPokemon::getDeckDarkPokemonObj(list[i]));
+            worthJ = getWorth__15DeckDarkPokemonCFv(DeckDarkPokemon::getDeckDarkPokemonObj(list[j]));
             escapeI = darkPokemonGetDarkPokemon(list[i])->getEscapeTime();
             escapeJ = darkPokemonGetDarkPokemon(list[j])->getEscapeTime();
             a = 0;

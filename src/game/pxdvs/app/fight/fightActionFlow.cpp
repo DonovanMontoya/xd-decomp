@@ -1,18 +1,7 @@
 #include <dolphin/types.h>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
-
-class DeckDarkPokemon {
-public:
-    u8 getWorth() const;
-    u8 getUnderTakerFlag() const;
-    static DeckDarkPokemon *getDeckDarkPokemonObj(u32);
-};
-
-class Hero {
-public:
-    static Hero *getHeroPtr();
-    u32 getFootStep() const;
-};
+#include <game/pxdvs/app/deck/deck_layout.hpp>
+#include <game/pxdvs/app/hero/hero.hpp>
 
 struct FightOutPokemon;
 struct FIGHT_FLOOR;

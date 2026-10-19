@@ -1,4 +1,7 @@
 #include <game/pxdvs/app/memcard/memcardPrivate.hpp>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/hero/hero.hpp>
 
 static u8 _memcardInitializeFlag;
 static MemcardStatus* _memcardStatusPtr;
@@ -1986,8 +1989,6 @@ extern "C" {
 s32 floorGetNextFloorID();
 void floorMakeSaveData(void**,u32*);
 void* __copy(void*,const void*,u32);
-void* getHeroPtr__4HeroFv();
-void setRestertPos__4HeroFv(void*);
 }
 
 template <unsigned N> struct MemcardWords { u32 words[N]; };
@@ -1997,7 +1998,7 @@ struct MemcardSaveBios {
     u16 flags;
     u32 values[16];
 };
-union MemcardSavePokemon { u8 bytes[0xC4]; u32 alignment; };
+typedef Pokemon MemcardSavePokemon;
 struct MemcardSaveBox {
     u32 header[4];
     u16 flags;
@@ -2078,9 +2079,9 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
             switch(section) {
             case 1:
                 if(_memcardStatusPtr->state!=8 && _memcardStatusPtr->state!=13 && _memcardStatusPtr->state!=7 && _memcard_anySaveOFF_Flag==0)
-                    setRestertPos__4HeroFv(getHeroPtr__4HeroFv());
+                    Hero::getHeroPtr()->setRestertPos();
                 header[0x3C/2]=offset;header[0x3E/2]=offset>>16;
-                memcpy(data+0xA0+offset,savedataGetStatus(0,2),0x978);
+                memcpy(data+0xA0+offset,savedataGetStatus(0,2),sizeof(Hero));
                 offset+=0x990;
                 break;
             case 2: {

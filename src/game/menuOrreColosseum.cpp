@@ -53,7 +53,7 @@ void windowDrawSprite2(s16, s16, s16, s16, u32, tagWINDOW_WORK *, u16, s32, s32)
 void *operator new(unsigned long);
 void operator delete(void *);
 
-static Hero _orreHero;
+static OrreHero _orreHero;
 static u16 _deckNumber;
 static u16 _fightresult;
 static menuOrre *pOrre;

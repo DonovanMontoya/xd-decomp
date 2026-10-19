@@ -1,4 +1,6 @@
 #include <global.h>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 struct EsaPokemon {u16 unk0,id;u32 rate,digest;};
 struct EsaList {u32 *count;EsaPokemon *pokemon;};
 struct EsaData {s32 amountFlag,appFlag,stepFlag,pokemonFlag,randomFlag,disableFlag;EsaList **list;};
@@ -19,7 +21,7 @@ static inline u32 listRate(u32 area,s32 index){EsaList *list=getList(area);if(li
 static inline u32 listDigest(u32 area,s32 index){EsaList *list=getList(area);if(list)return list->pokemon[index].digest;return 0;}
 static inline EsaData *recordAt(s32 offset){return (EsaData*)((u8*)esabadata+offset);}
 extern "C" {
-static inline void appearPokemon(u16 area,u16 id){u32 trainer;u8 pokemon[0xC4];GSflagSet(esabadata[area].pokemonFlag,id);GSflagSet(esabadata[area].stepFlag,0);switch((s32)id){case 413:case 414:trainer=heroGetStatus(0,2,0);pokemonCreate(pokemon,id,10,gamedataGetStatus(0,1));pokemonBiosSetCatchTrainerRnd(pokemon,trainer);GSflagSet(esabadata[area].randomFlag,pokemonCreateRndFit(pokemon,-1,-1,0,trainer));break;default:GSflagSet(esabadata[area].randomFlag,pokemonCreateRnd());break;}heroMoveInitEvent();heroMoveSetColision(1);GSthreadSwitch();menuScriptInfoEsa();heroMoveTermEvent();}
+static inline void appearPokemon(u16 area,u16 id){u32 trainer;Pokemon pokemon;GSflagSet(esabadata[area].pokemonFlag,id);GSflagSet(esabadata[area].stepFlag,0);switch((s32)id){case 413:case 414:trainer=heroGetStatus(0,2,0);pokemonCreate(&pokemon,id,10,gamedataGetStatus(0,1));pokemonBiosSetCatchTrainerRnd(&pokemon,trainer);GSflagSet(esabadata[area].randomFlag,pokemonCreateRndFit(&pokemon,-1,-1,0,trainer));break;default:GSflagSet(esabadata[area].randomFlag,pokemonCreateRnd());break;}heroMoveInitEvent();heroMoveSetColision(1);GSthreadSwitch();menuScriptInfoEsa();heroMoveTermEvent();}
 
 void esabaSetPokemon(u16 area,u16 id){if(id==0){GSflagSet(esabadata[area].pokemonFlag,0);GSflagSet(esabadata[area].appFlag,0);return;}appearPokemon(area,id);}
 u16 esabaGetPokemonMax(u16 area){EsaList *list=getList(area);if(list)return *list->count;return 0;}

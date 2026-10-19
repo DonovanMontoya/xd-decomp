@@ -35,10 +35,10 @@ struct tagPeopleWork {
     GSmodel* model;
     u8 state, visible, unknown0E, collisionEnabled;
     u32 flags, group, resource, object;
-    f32 unknown20;
-    f32 unknown24;
-    f32 unknown28;
-    f32 unknown2C;
+    f32 unknown20; // walk speed (units per frame); people.cpp walk-speed setup
+    f32 unknown24; // run speed; also the leader speed used by heroMove moveParty
+    f32 unknown28; // current speed (reset to unknown20)
+    f32 unknown2C; // slow-approach speed factor (1.1764706); read by heroMove moveParty and the blend in people.cpp
     f32 walkStartFrames, walkFrames, runStartFrames, runFrames;
     f32 targetRotation;
     f32 rotationProgress;
@@ -77,7 +77,7 @@ struct tagPeopleWork {
     u8 secondaryMixRegistered;
     u8 unknown10D[3];
     GSvec chestRotation;
-    s32 attachGroup, attachResource, attachIndex;
+    s32 attachGroup, attachResource, attachIndex; // attachIndex >= 0 while attached (people.cpp:1084); heroMove moveParty reads it as its lock counter
     f32 motionBlend, motionBlendStep;
     f32 chestBlend;
     f32 initialRotation;
@@ -85,7 +85,7 @@ struct tagPeopleWork {
     u8 chestHidden;
     u8 waitAnimation;
     u8 unknown13E[2];
-    s32 followerMotion;
+    s32 followerMotion; // nonzero blocks heroMove moveParty (its 'hinder' flag); 0 lets _peopleClearTargetIfFollower run
     u8 unknown144[4];
     f32 blinkTimer;
     u8 flag14C, flag14D;

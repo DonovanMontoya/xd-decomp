@@ -2,12 +2,8 @@
 #define HERO_MOVE_PRIVATE_H
 
 #include <global.h>
-
-struct GSvec {
-    f32 x;
-    f32 y;
-    f32 z;
-};
+#include <game/pxdvs/app/hero/hero.hpp>
+#include <game/pxdvs/app/people/runtime.hpp>
 
 enum HEROMOVE_MEMBER {
     HEROMOVE_MEMBER_0,
@@ -57,31 +53,7 @@ struct FOOTWORK {
     f32 d;
 };
 
-struct DarkPokemon {
-    void setReversMode(bool);
-};
-struct Pokemon {
-    u16 getHp() const;
-    u8 getCondition() const;
-    void setHp(u16);
-    void initCondition();
-    DarkPokemon* getDarkPokemon();
-};
-
 enum FootStepCounter { FOOTSTEP_COUNTER_0, FOOTSTEP_COUNTER_1, FOOTSTEP_COUNTER_2, FOOTSTEP_COUNTER_3 };
-
-class Hero {
-public:
-    static Hero* getHeroPtr();
-    u8 getFollowerID();
-    u8 getFollowerModelLevel();
-    void setFollowerID(u8);
-    void addFootStep(unsigned long);
-    void setFollowerResID(unsigned long);
-    void setFollowerGrpID(unsigned long);
-    unsigned long getFollowerGrpID();
-    unsigned long getFollowerResID();
-};
 
 struct FloorModuleInterface {
     void (*create)(unsigned int, FloorEnterMode);

@@ -120,6 +120,7 @@ struct FightOutPokemon {
     FightOutPokemonEnemy enemy[4]; // 0x864
 };
 
+#ifndef POKEMON_FIGHT_RECORDS_NO_PROTOTYPES
 extern "C" {
 void fightOutPokemon_SetFixAiDef(FightOutPokemon*, u8);
 void fightOutPokemon_SetFixAiWaza(FightOutPokemon*, u8);
@@ -306,4 +307,5 @@ void fightOutPokemon_SetWazaInitJoutaiDataId(FightOutPokemon*,u16);
 void fightOutPokemon_SetWazaJoutaiDataId(FightOutPokemon*,u16);
 u8 fightOutPokemon_GetJoutaiDataId(FightOutPokemon*,u16);
 }
+#endif // POKEMON_FIGHT_RECORDS_NO_PROTOTYPES
 #endif
