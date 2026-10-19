@@ -236,8 +236,7 @@ void floorUpdateFieldCamera() {
         case 1:
             if (_floorFieldCameraCalculatePathParams(&target, &height, &distance, &rotY, &fov) != 0) {
                 if (gCameraVarsInitialised != 0 && g_Blending != 0 && g_BlendingMaxTime > 0.0f) {
-                    u8 rate = GSgfxVideoGetVsyncRate();
-                    g_BlendingTime = g_BlendingTime + GSgfxVideoGetLastRenderTime(rate) / rate;
+                    g_BlendingTime = g_BlendingTime + GSgfxVideoGetLastRenderTime() / (f32)GSgfxVideoGetVsyncRate();
                     if (g_BlendingTime >= g_BlendingMaxTime) {
                         g_Blending = 0;
                         gCameraHeight = height;
@@ -265,7 +264,8 @@ void floorUpdateFieldCamera() {
                                 flip = 1;
                                 x = 2.0f - x;
                             }
-                            y = std::pow(1.0f - std::cosf(1.5707964f * x), gPowValue);
+                            f32 c = std::cosf(1.5707964f * x);
+                            y = std::pow(1.0f - c, gPowValue);
                             if (flip != 0) {
                                 y = 2.0f - y;
                             }
@@ -336,11 +336,12 @@ void floorFieldCameraBlend(f32 dt) {
         fov = cameraGetFov();
         switch ((int)g_updateMode) {
         case 1:
-            if (_floorFieldCameraCalculatePathParams(&target, &height, &distance, &rotY, &fov) == 0) {
-                break;
+            if (_floorFieldCameraCalculatePathParams(&target, &height, &distance, &rotY, &fov) != 0) {
+                goto apply;
             }
-            goto apply;
+            break;
         case 0:
+        default:
             if (_floorFieldCameraCalculateBlendParams(&target, &height, &distance, &rotY, &fov) == 0) {
                 return;
             }
@@ -350,10 +351,10 @@ apply:
             GSvecTransform(&off, &mtx, &off);
             GSvecAdd(&pos, &target, &ofs);
             GSvecAdd(&pos, &pos, &off);
-            rot.z = rotY;
+            rot.y = rotY;
             rot.x = -std::atan2f(height, distance);
-            rot.y = 0.0f;
-            cameraMoveTargetOfs(0, &ofs, dt, rot.x);
+            rot.z = 0.0f;
+            cameraMoveTargetOfs(0, &ofs, dt);
             cameraMoveTargetOfsAcc(0.08f);
             cameraMoveTargetPos(0, &target, dt);
             cameraMoveTargetPosAcc(0.08f);

@@ -824,14 +824,15 @@ static void _battleCameraUpdateWaza() {
         frames = __OSf32tou16(0.5f + GSgfxVideoGetLastRenderTime());
         _GSmodel *model = sequence->model;
         s32 joint;
+        WazaSequence *cam = gActiveWazaSequenceCamera;
         if (model == 0) {
             joint = 0;
-        } else if (gActiveWazaSequenceCamera != 0) {
+        } else if (cam != 0) {
             ModelRecord *record = &sequence->records[sequence->wazaIndex];
-            if ((((TemplateExpFileHeader *)record)->flags & 0x20) || wazaSequenceJointIndex(gActiveWazaSequenceCamera) == 0x10) {
+            if ((((TemplateExpFileHeader *)record)->flags & 0x20) || wazaSequenceJointIndex(cam) == 0x10) {
                 joint = GSmodelCenterNull(model);
             } else {
-                joint = record->joints[wazaSequenceJointIndex(gActiveWazaSequenceCamera)];
+                joint = record->joints[wazaSequenceJointIndex(cam)];
             }
         } else {
             joint = GSmodelCenterNull(model);
