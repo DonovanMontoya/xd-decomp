@@ -229,9 +229,10 @@ static inline s32 classifyAnimationBits(u32 bits) {
 }
 static inline s32 classifyAnimationFrame(f32 value) { return classifyAnimationBits(*(u32*)&value); }
 extern "C" void GSmodelSetAnimRate(GSmodel* m, f32 rate) {
+    f32 adjusted;
     if (!(rate < 0.0f) && classifyAnimationFrame(rate) != 1) {
     if (m->flags & 4) {
-        f32 adjusted = rate;
+        adjusted = rate;
         if (GSgfxVideoGetVsyncRate() == 50) adjusted *= 1.2f;
         if (!(m->flags & 0x80)) m->animationRate = adjusted;
         else {
@@ -419,8 +420,8 @@ static inline void HSD_JObjSetMtx(HSD_JObj* joint, Mtx mtx) {
 }
 extern "C" void modelUpdateAttachments__FP8_GSmodel(GSmodel* m) {
     if (m->attachmentMode == 0) return;
-    if (m->flags & 0x400000) return;
-    {
+    switch (m->flags & 0x400000) {
+    case 0: {
         GSpart* part;
         GSvec position, rotation, scale;
         HSD_Quaternion quaternion;
@@ -467,20 +468,22 @@ extern "C" void modelUpdateAttachments__FP8_GSmodel(GSmodel* m) {
             modelSetPos__FP8_GSmodelP5GSvec(m, &position);
             modelSetRot__FP8_GSmodelP5GSvec(m, &rotation);
             modelSetScl__FP8_GSmodelP5GSvec(m, &scale);
-            PSMTXRotRad(rotationMatrix, 'z', rotation.param3);
-            PSMTXRotRad(axisMatrix, 'y', rotation.param2);
+            PSMTXRotRad(rotationMatrix, 'Z', rotation.param3);
+            PSMTXRotRad(axisMatrix, 'Y', rotation.param2);
             PSMTXConcat(axisMatrix, rotationMatrix, rotationMatrix);
-            PSMTXRotRad(axisMatrix, 'x', rotation.param1);
+            PSMTXRotRad(axisMatrix, 'X', rotation.param1);
             PSMTXConcat(axisMatrix, rotationMatrix, rotationMatrix);
             PSMTXTrans(axisMatrix, position.param1, position.param2, position.param3);
             PSMTXConcat(axisMatrix, rotationMatrix, rotationMatrix);
-            HSD_JObjSetMtx(m->joint, rotationMatrix);
+            HSD_JObjSetMtx(m->joint, (MtxPtr)&rotationMatrix);
             break;
         }
         }
         if (m->flags & 0x40000) GSmodelDetachFromGSpart(m, 0);
         m->flags |= 0x400000;
         m->flags &= ~0x800000;
+        break;
+    }
     }
 }
 
@@ -994,6 +997,7 @@ extern "C" void GSmodelSetAnimIndex(GSmodel* m, u32 index) {
 
 extern "C" void GSmodelRemoveNull(GSmodel*);
 extern "C" void GSmodelSetAnimBlend(GSmodel* m, u32 first, u32 second) {
+    f32 rate;
     f32 zero[3];
     HSD_AObj* aobj;
     HSD_AObj* blendAObj;
@@ -1002,8 +1006,8 @@ extern "C" void GSmodelSetAnimBlend(GSmodel* m, u32 first, u32 second) {
         if ((m->flags & 0x20000) == 0x20000) GSmodelRemoveNull(m);
         u8 firstNull = GSmodelIsNullAnimation(m, first);
         u8 secondNull = GSmodelIsNullAnimation(m, second);
-        if (firstNull != 1 || secondNull != 1) {
-            f32 rate;
+        if (firstNull == 1 && secondNull == 1) return;
+        {
             if (m->flags & 0x80) rate = m->blendRate;
             else rate = m->animationRate;
             if (GSgfxVideoGetVsyncRate() == 50) rate /= 1.2f;
@@ -1021,24 +1025,27 @@ extern "C" void GSmodelSetAnimBlend(GSmodel* m, u32 first, u32 second) {
             HSD_ForeachAnim(m->joint, JOBJ_TYPE, (HSD_TypeMask)0x9b2f, (void*)_modelGetEndFrame, AOBJ_ARG_AV, &m->endFrame);
             m->blendEndFrame = 0.0f;
             HSD_ForeachAnim(m->animationBlendJoint, JOBJ_TYPE, (HSD_TypeMask)0x9b2f, (void*)_modelGetEndFrame, AOBJ_ARG_AV, &m->blendEndFrame);
+            HSD_JObj* aj = m->joint;
             aobj = 0;
-            HSD_ForeachAnim(m->joint, JOBJ_TYPE, (HSD_TypeMask)0x20, (void*)_modelGetAObjFunc__FP9_HSD_AObjPv, AOBJ_ARG_AV, &aobj);
+            HSD_ForeachAnim(aj, JOBJ_TYPE, (HSD_TypeMask)0x20, (void*)_modelGetAObjFunc__FP9_HSD_AObjPv, AOBJ_ARG_AV, &aobj);
             m->animation = aobj;
+            HSD_JObj* bj = m->animationBlendJoint;
             blendAObj = 0;
-            HSD_ForeachAnim(m->animationBlendJoint, JOBJ_TYPE, (HSD_TypeMask)0x20, (void*)_modelGetAObjFunc__FP9_HSD_AObjPv, AOBJ_ARG_AV, &blendAObj);
+            HSD_ForeachAnim(bj, JOBJ_TYPE, (HSD_TypeMask)0x20, (void*)_modelGetAObjFunc__FP9_HSD_AObjPv, AOBJ_ARG_AV, &blendAObj);
             m->blendAnimation = blendAObj;
             GSmodelSetAnimRate(m, rate);
             modelSetAnimTypeInline(m, m->animationType);
             GSmodelSetAnimFrame(m, 0.0f);
             zero[0] = 0.0f; zero[1] = 0.0f; zero[2] = 0.0f;
             HSD_JObjSetTranslate(m->joint, (GSvec*)zero);
-            HSD_JObjSetRotationX(m->joint, zero[0]);
-            HSD_JObjSetRotationY(m->joint, zero[1]);
-            HSD_JObjSetRotationZ(m->joint, zero[2]);
+            f32 rx = zero[0];
+            HSD_JObjSetRotationX(m->joint, rx);
+            f32 ry = zero[1];
+            HSD_JObjSetRotationY(m->joint, ry);
+            f32 rz = zero[2];
+            HSD_JObjSetRotationZ(m->joint, rz);
             zero[0] = 1.0f; zero[1] = 1.0f; zero[2] = 1.0f;
             HSD_JObjSetScale(m->joint, (GSvec*)zero);
-        } else {
-            return;
         }
     }
     if (m->flags & 0x2000) GSmodelSetTexAnimIndex(m, second);

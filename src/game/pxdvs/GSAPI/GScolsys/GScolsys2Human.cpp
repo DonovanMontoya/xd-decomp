@@ -198,15 +198,14 @@ extern "C" s32 GScolsys2HumanAddCurrentFloor(int *index,GSCOLSYS2_HUMAN *input) 
     s32 i=0;
     for(;i<48;i++) if(!(floor->humans[i].flags&1)) break;
     if(i>=48) return 5;
-    HumanFloor *selected=(HumanFloor *)((u8 *)floor+i*20);
-    selected->humans[0].group=input->group;
-    selected->humans[0].resource=input->resource;
+    floor->humans[i].group=input->group;
+    floor->humans[i].resource=input->resource;
     u32 resource=input->resource;
-    if(resource==101 || resource==104 || resource==105) selected->humans[0].radius=3.0f;
-    else selected->humans[0].radius=input->radius;
-    selected->humans[0].height=input->height;
-    selected->humans[0].flags=0;
-    selected->humans[0].flags|=1;
+    if(resource==101 || resource==104 || resource==105) floor->humans[i].radius=3.0f;
+    else floor->humans[i].radius=input->radius;
+    floor->humans[i].height=input->height;
+    floor->humans[i].flags=0;
+    floor->humans[i].flags|=1;
     *index=i;
     return 0;
 }
@@ -227,14 +226,12 @@ extern "C" f32 GScolsys2HumanGetWalkHeight(GSvec *input) {
             if(!(height-point.y>=10.0f) && preferred<height) {preferred=height;found=1;}
         }
         if(found) point.y=preferred;else point.y=highest;
-        f32 selectedHeight=point.y;
-        f32 original=input->y;
-        f32 difference=selectedHeight-original;
+        f32 difference=point.y-input->y;
         if((f32)__fabs(difference)>=10.0f) {
             entry=&heights[1];
             f32 candidate;
             f32 chosen=heights[0].height;
-            f64 absolute=__fabs(original-heights[0].height);
+            f64 absolute=__fabs(input->y-heights[0].height);
             f32 nearest=(f32)absolute;
             for(s32 i=1;i<count;i++,entry++) {
                 f32 delta=(f32)__fabs(input->y-entry->height);

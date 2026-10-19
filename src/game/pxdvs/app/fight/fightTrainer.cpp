@@ -455,7 +455,7 @@ FightEncountData* fightEncountDataBiosGetPtr(u32);
 u32 fightEncountDataBiosGetFightKind(FightEncountData*);
 FightKindData* fightKindDataBiosGetPtr(u8);
 u8 fightKindDataBiosGetHostEnemyMsgFlag(FightKindData*);
-u32 fightEncountDataBiosGetFightTrainerDataId(FightEncountData*, u32);
+u16 fightEncountDataBiosGetFightTrainerDataId(FightEncountData*, u32);
 FightTrainerData* fightTrainerDataBiosGetPtr(u16);
 u32 fightTrainerDB_GetName(u16);
 u32 charNameBiosSearchIndex(u16);
@@ -501,7 +501,7 @@ void fightTrainerToMenuBallStatus(FightTrainer* trainer, u8* status) {
         for (u16 i = 0; i < 6; i++) status[i] = 0;
         u16 i;
         for (i = 0; i < 6; i++) {
-            Pokemon* pokemon = reinterpret_cast<Pokemon*>(heroGetStatus(hero, 3, i));
+            Pokemon* pokemon = reinterpret_cast<Pokemon*>(((u32 (*)(Hero*, u32, u16))heroGetStatus)(hero, 3, i));
             if (!pokemonCheckValid(pokemon)) continue;
             FightPokemon* poke = fightTrainerCheckTemotiPokemonFightEntry(trainer, pokemon);
             if (poke == nullptr) continue;

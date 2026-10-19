@@ -446,14 +446,14 @@ void GSgfxRenderModuleRegister__FUcP17GSgfxRenderModulePv(u8, ModelRenderModule*
 void HSD_SetVertexBuffer(void*, u32);
 void HSD_SetNormalBuffer(void*, u32);
 void HSD_SetExpArgBuffer(void*, u32);
-static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(void*, s32);
+static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer*, s32);
 #pragma dont_inline on
 static void _modelFastRender__Fv() {
     if (_modelShadowShowDebug == 1) modelShadowRenderDebug__Fv();
     modelDistortionRender__Fv();
 }
 void GSmodelInit() {
-    ModelRenderModule module = {0, _modelPreUpdate__Ff, _modelRender__FP10GSgfxLayer14GSgfxLayerPass, _modelFastRender__Fv, _modelPostUpdate__Ff, _modelPostUpdate60fps__Fv, 0xB29A48E1};
+    ModelRenderModule module = {0, _modelPreUpdate__Ff, (void (*)(void*, s32))_modelRender__FP10GSgfxLayer14GSgfxLayerPass, _modelFastRender__Fv, _modelPostUpdate__Ff, _modelPostUpdate60fps__Fv, 0xB29A48E1};
     modelBankInit__Fv();
     modelShadowInit__Fv();
     GSgfxRenderModuleRegister__FUcP17GSgfxRenderModulePv(0x20, &module, 0);
@@ -528,10 +528,9 @@ extern u8 _invalidateVtxTex;
 extern s32 modelShadowLayerID;
 }
 template <class T> static inline T& modelLayerField(void* base, u32 offset) { return *(T*)((u8*)base + offset); }
-static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(void* layerArg, s32 pass) {
+static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer, s32 pass) {
     s32 perf;
     u8 layerId;
-    GSgfxLayer* layer;
     u16 height;
     u16 width;
     u16 halfWidth;
@@ -541,7 +540,6 @@ static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(void* layerArg, s32 pas
     u8 fogWasOn;
     GSmodel* model;
     u8 rendered;
-    layer = (GSgfxLayer*)layerArg;
     layerId = modelLayerField<s32>(layer, 0x28);
     if (_invalidateVtxTex == 1) {
         modelLayerField<u32>(layer, 4) |= 0x08000000;
@@ -626,10 +624,12 @@ static void _modelRenderModelSub__FP10GSgfxLayer14GSgfxLayerPassP8_GSmodel(GSgfx
     if (layer->kind == 0) {
         switch (pass) {
         case 0:
-            if (fog != ((model->flags >> 24) & 1)) modelSetLayerFog(layer, ((s32)model->flags & 0x1000000) == 0x1000000);
+            { u32 bit = model->flags & 0x1000000;
+            if (fog != ((model->flags >> 24) & 1)) modelSetLayerFog(layer, bit == 0x1000000); }
             break;
         case 1:
-            if (fog != ((model->flags >> 25) & 1)) modelSetLayerFog(layer, ((s32)model->flags & 0x2000000) == 0x2000000);
+            { u32 bit = model->flags & 0x2000000;
+            if (fog != ((model->flags >> 25) & 1)) modelSetLayerFog(layer, bit == 0x2000000); }
             break;
         }
         GScamera* camera = model->camera;
