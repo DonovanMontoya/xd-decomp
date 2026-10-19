@@ -200,8 +200,10 @@ s32 floorEventCtrlTresure(u32 group, u32 resourceID, u8 control) {
 }
 s32 floorEventCtrlElevator(u32 floorID, u32 index, u16 control, u32 group, u32 person) {
     FloorEventDoor *door;
+    s32 sound;
+    GSpart *part;
     _GSmodel *model;
-    s8 motion = -1;
+    s16 motion = -1;
     f32 frame = 0.0f;
     GSvec position;
     __ct__5GSvecFv(&position);
@@ -214,10 +216,10 @@ s32 floorEventCtrlElevator(u32 floorID, u32 index, u16 control, u32 group, u32 p
     switch (control) {
     case 1: case 2: case 0x81: case 0x82: {
         if (door->openMotion >= 0) _floorEventSetMotion(model, door->openMotion, frame);
-        s32 sound = control & 0x80;
+        sound = control & 0x80;
         if (sound != 0) GSsndPlayNow(0x27);
         _floorEventWaitMotion(model);
-        GSpart *part = GSmodelGetPart(model, door->partIndex);
+        part = GSmodelGetPart(model, door->partIndex);
         GSpartGetTransform(part, &position, 0, 0);
         GSpartFree(part);
         if ((control & 1) != 0) {
@@ -349,18 +351,16 @@ s32 floorEventCtrlDoor(u32 floorID, u32 index, u8 control) {
     return 0;
 }
 s32 floorEventExecScript(s8 type, u32 collisionID) {
-    s32 count;
-    u32 i;
-    FloorEventScript *event;
     u32 floorID;
-    s32 promotedType;
+    s32 count;
+    FloorEventScript *event;
+    u32 i;
     count = 0;
     EvlogSet(type, collisionID);
     floorID = GSfloorGetCurrent();
-    promotedType = type;
     for (i = 0; i < *floor_event_list_number; ++i) {
         event = &floor_event_list[i];
-        if (event->floorID == floorID && event->type == promotedType && event->collisionID == collisionID && event->scriptID != 0) {
+        if (event->floorID == floorID && event->type == type && event->collisionID == collisionID && event->scriptID != 0) {
             scriptSetEventColID(collisionID);
             floorExecScriptInteger(event->scriptID, event->parameters[0], event->parameters[1], event->parameters[2], event->parameters[3]);
             ++count;

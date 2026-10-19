@@ -26,27 +26,62 @@ static const FilterRenderModule filterModule = {0, 0, _filterRender__FP10GSgfxLa
 static FilterData filtersData;
 GSfilter* gsDefaultFilterPtr;
 static u8 gModuleInited;
-void GSfilterInitialise(u8 arg0) {
-    FilterRenderModule module;
-    s32 temp_r31;
-    u8 *temp_r3;
-    GSfilter *var_r4;
-    GSfilter *var_r7;
-    u8 var_r3;
-    u8 var_r5;
-    VFFormat *temp_r29;
-    GXColor *temp_r4;
-    GXColor *temp_r6;
+static inline GSfilter* _filterAllocate(u8 red, u8 green, u8 blue, u8 alpha) {
+    if (filtersData.allocated < filtersData.capacity) {
+        GSfilter* handle = filtersData.handles;
+        for (u8 i = 0; i < filtersData.capacity; i++, handle++) {
+            if (!handle->allocated) {
+                GXColor* output = &filtersData.colors[i];
+                output->r = red;
+                output->g = green;
+                output->b = blue;
+                output->a = alpha;
+                if (alpha && !handle->visible) {
+                    handle->visible = 1;
+                    filtersData.visible++;
+                }
+                handle->allocated = 1;
+                filtersData.allocated++;
+                return handle;
+            }
+        }
+    }
+    return 0;
+}
+static inline void _filterCopyColor(u8* output, u8* color) {
+    output[0] = color[0];
+    output[1] = color[1];
+    output[2] = color[2];
+    output[3] = color[3];
+}
+GSfilter* GSfilterCreate(void* input) {
+    u8* color = (u8*)input;
+    if (filtersData.allocated < filtersData.capacity) {
+        GSfilter* handle = filtersData.handles;
+        for (u8 i = 0; i < filtersData.capacity; i++, handle++) {
+            if (!handle->allocated) {
+                u8* output = (u8*)&filtersData.colors[i];
+                _filterCopyColor(output, color);
+                if (color[3] && !handle->visible) {
+                    handle->visible = 1;
+                    filtersData.visible++;
+                }
+                handle->allocated = 1;
+                filtersData.allocated++;
+                return handle;
+            }
+        }
+    }
+    return 0;
+}
 
+void GSfilterInitialise(u8 count) {
     memset(&filtersData, 0, 0x45C);
-    temp_r31 = arg0 * 7;
-    temp_r3 = (u8*)GSmemAlloc(temp_r31);
-    if (temp_r3 != 0) {
-        memset(temp_r3, 0, temp_r31);
-        temp_r6 = (GXColor*)(temp_r3 + arg0 * 3);
-        temp_r29 = &filtersData.format;
-        filtersData.handles = (GSfilter*)temp_r3;
-        filtersData.colors = temp_r6;
+    u8* memory = (u8*)GSmemAlloc(count * 7);
+    if (memory != 0) {
+        memset(memory, 0, count * 7);
+        filtersData.handles = (GSfilter*)memory;
+        filtersData.colors = (GXColor*)(memory + count * 3);
         filtersData.vertices[0][0] = 0;
         filtersData.vertices[0][1] = 0;
         filtersData.vertices[1][0] = 0;
@@ -55,48 +90,19 @@ void GSfilterInitialise(u8 arg0) {
         filtersData.vertices[2][1] = 0x1E0;
         filtersData.vertices[3][0] = 0x280;
         filtersData.vertices[3][1] = 0;
-        filtersData.capacity = arg0;
-        GSgfxVFInit(temp_r29);
-        GSgfxVFCreate(temp_r29);
-        GSgfxVFSetElement(temp_r29, 9, 0, 2, 0);
-        GSgfxVFSetElement(temp_r29, 0xB, 1, 5, 0);
-        GSgfxVFSetArray(temp_r29, 9, 2, filtersData.vertices, 4, 0x10);
-        var_r4 = filtersData.handles;
-        var_r5 = 0;
-loop_3:
-        if (var_r5 < arg0) {
-            var_r4->index = var_r5;
-            var_r5 += 1;
-            var_r4++;
-            goto loop_3;
+        filtersData.capacity = count;
+        GSgfxVFInit(&filtersData.format);
+        GSgfxVFCreate(&filtersData.format);
+        GSgfxVFSetElement(&filtersData.format, 9, 0, 2, 0);
+        GSgfxVFSetElement(&filtersData.format, 0xB, 1, 5, 0);
+        GSgfxVFSetArray(&filtersData.format, 9, 2, filtersData.vertices, 4, 0x10);
+        GSfilter* handle = filtersData.handles;
+        for (u8 i = 0; i < count; i++, handle++) {
+            handle->index = i;
         }
-        if ((u8) filtersData.allocated < (u8) filtersData.capacity) {
-            var_r7 = filtersData.handles;
-            var_r3 = 0;
-loop_9:
-            if (var_r3 >= (u8) filtersData.capacity) {
-                goto block_10;
-            }
-            if ((u8) var_r7->allocated == 0) {
-                temp_r4 = filtersData.colors + var_r3;
-                temp_r4->r = 0;
-                temp_r4->g = 0;
-                temp_r4->b = 0;
-                temp_r4->a = 0;
-                var_r7->allocated = 1U;
-                filtersData.allocated = (u8) (filtersData.allocated + 1);
-            } else {
-                var_r3 += 1;
-                var_r7++;
-                goto loop_9;
-            }
-        } else {
-block_10:
-            var_r7 = 0;
-        }
-        gsDefaultFilterPtr = var_r7;
-        if ((u8) gModuleInited == 0) {
-            module = filterModule;
+        gsDefaultFilterPtr = _filterAllocate(0, 0, 0, 0);
+        if (gModuleInited == 0) {
+            FilterRenderModule module = {0, 0, _filterRender__FP10GSgfxLayer14GSgfxLayerPass, 0, 0, 0, 0xB29A48E1};
             GSgfxRenderModuleRegister__FUcP17GSgfxRenderModulePv(0x9C, &module, 0);
             gModuleInited = 1;
         }
@@ -106,18 +112,17 @@ block_10:
 static void _filterRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer *arg0, s32 arg1) {
     f32 projection[4][4];
     s32 *temp_r3;
-    GXColor *var_r8;
     s32 temp_r5;
     s32 temp_r8;
     u8 temp_r30;
     u8 var_r7;
+    GXColor *var_r8;
     GSgfxMatrixStack *temp_r27;
     GSfilter *var_r29;
 
     if ((s32) arg0->field28 == 6) {
-        if (arg1 != 1) {
-            return;
-        }
+        switch (arg1) {
+        case 1:
         if (((u8) filtersData.allocated != 0) && ((u8) filtersData.visible != 0)) {
             temp_r30 = filtersData.capacity;
             var_r29 = filtersData.handles;
@@ -194,10 +199,7 @@ static void _filterRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer *arg0, s32 
             arg0->setRenderStateAndSelect((GSgfxVF*)&filtersData.format);
             arg0->field1998 = 0x80;
             arg0->beginSurface(filtersData.visible * 4);
-            var_r7 = 0;
-            var_r8 = filtersData.colors;
-loop_15:
-            if (var_r7 < temp_r30) {
+            for (var_r7 = 0, var_r8 = filtersData.colors; var_r7 < temp_r30; var_r7++, var_r29++, var_r8++) {
                 if ((u8) var_r29->visible != 0) {
                     *(volatile u8 *)0xCC008000 = 0;
                     *(volatile u32 *)0xCC008000 = *(u32*)var_r8;
@@ -208,18 +210,15 @@ loop_15:
                     *(volatile u8 *)0xCC008000 = 3;
                     *(volatile u32 *)0xCC008000 = *(u32*)var_r8;
                 }
-                var_r7 += 1;
-                var_r29++;
-                var_r8++;
-                goto loop_15;
             }
             arg0->endSurface();
+        }
         }
     }
 }
 
-void GSfilterSetColor(GSfilter* handle, const void* input) {
-    const u8* color = (const u8*)input;
+void GSfilterSetColor(GSfilter* handle, void* input) {
+    u8* color = (u8*)input;
     if (handle->allocated) {
         u8* output = (u8*)&filtersData.colors[handle->index];
         output[0] = color[0];
@@ -250,27 +249,4 @@ void GSfilterFree(GSfilter *arg0) {
     }
 }
 
-GSfilter* GSfilterCreate(const void* input) {
-    const u8* color = (const u8*)input;
-    if (filtersData.capacity > filtersData.allocated) {
-        GSfilter* handle = filtersData.handles;
-        for (u8 i = 0; i < filtersData.capacity; i++, handle++) {
-            if (!handle->allocated) {
-                u8* output = (u8*)&filtersData.colors[i];
-                output[0] = color[0];
-                output[1] = color[1];
-                output[2] = color[2];
-                output[3] = color[3];
-                if (color[3] && !handle->visible) {
-                    handle->visible = 1;
-                    filtersData.visible++;
-                }
-                handle->allocated = 1;
-                filtersData.allocated++;
-                return handle;
-            }
-        }
-    }
-    return 0;
-}
 }

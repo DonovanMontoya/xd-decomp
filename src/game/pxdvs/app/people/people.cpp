@@ -1749,8 +1749,9 @@ void _peopleExecAnimEndCallBack__FP13tagPeopleWork(tagPeopleWork* work) {
     s32 first, second;
     _GSmodelAnimCBData data;
     GSmodelGetAnimIndex(work->model, &first, &second);
+    s32 v = second;
     data.index = first;
-    if (second != -1) data.index = second;
+    if (v != -1) data.index = v;
     data.user = work;
     _peopleAnimEndCallback__FP8_GSmodelP18_GSmodelAnimCBData(work->model, &data);
 }

@@ -764,70 +764,28 @@ void GSfloorInit(s32 stackCount,s32 n1,s32 n2,s32 n3) {
     FloorManagerLayout *manager = (FloorManagerLayout *)__nw__FUl(sizeof(FloorManagerLayout));
     if (manager != 0) manager = __ct__12FloorManagerFv(manager);
     _floorManager = manager;
-    init__12FloorManagerFUlUl(manager,stackCount,n1+(n2+n3));
-}
-FloorManagerLayout *__ct__12FloorManagerFv(FloorManagerLayout *a) {
-    a->vtable = __vt__12FloorManager;
-    __ct__9AppScriptFv(&a->commonScript);
-    a->changing = 0;
-    a->modules = 0;
-    a->stackList = 0;
-    a->maxSaveSize = 0;
-    a->maxSaveFloorID = 0;
-    return a;
-}
-FloorManagerLayout *__dt__12FloorManagerFv(FloorManagerLayout *a,s16 destroy) {
-    if (a != 0) {
-        FloorModuleListLayout *modules;
-        a->vtable = __vt__12FloorManager;
-        modules = a->modules;
-        if (modules != 0) {
-            if (modules != 0) modules->vtable->destroy(modules,1);
-            a->modules=0;
-        }
-        if (a->stackList != 0) { __dt__14FloorStackListFv(a->stackList,1); a->stackList=0; }
-        __dt__9AppScriptFv(&a->commonScript,-1);
-        if (destroy>0) __dl__FPv(a);
-    }
-    return a;
-}
-void init__12FloorManagerFUlUl(FloorManagerLayout *a,u32 stackCount,u32 moduleCount) {
-    FloorModuleListLayout *modules;
-    FloorStackListLayout *list;
-    modules=a->modules;
-    if (modules != 0) { if (modules != 0) modules->vtable->destroy(modules,1); a->modules=0; }
-    if (a->stackList != 0) { __dt__14FloorStackListFv(a->stackList,1); a->stackList=0; }
-    modules=(FloorModuleListLayout *)__nw__FUl(sizeof(FloorModuleListLayout));
-    if (modules != 0) modules=__ct__15FloorModuleListFUl(modules,moduleCount);
-    a->modules=modules;
-    list=(FloorStackListLayout *)__nw__FUl(sizeof(FloorStackListLayout));
-    if (list != 0) list=__ct__14FloorStackListFUl(list,stackCount);
-    a->stackList=list;
-    changeTaskMode__12FloorManagerF9floorTask(a,0);
-    GSthreadSetName(GSthreadCreate(0,0x7d0,0x4000,1,1,_floorMainThread__Fv),"floorMainThread");
-    GSthreadSetName(GSthreadCreate(1,0x7d0,0x1000,1,1,_floorScriptThread__Fv),"scriptUpdate");
+    init__12FloorManagerFUlUl(manager,stackCount,n1+n2+n3);
 }
 __declspec(weak) FloorWriteStreamLayout *__ct__16GSBinWriteStreamFUl(FloorWriteStreamLayout *a,u32 size) {
     void *buffer=GSmemAlloc(size);
     a->buffer=buffer; a->current=buffer; a->top=buffer; a->size=size; a->ownsBuffer=1;
     return a;
 }
+/* Stripped from the DOL; its string still occupies .rodata. */
+void floorScriptLoadErrorStripped(void) {
+    GSlogWrite("Script load error.");
+}
 void *getStateData__12FloorManagerFP12StateDataPtr(FloorManagerLayout *a,FloorStateDataPtr *state) {
-    u32 maxSize;
-    void *header;
     FloorSaveHeader *current;
-    header=savedataGetStatus(0,0x16);
+    current=savedataGetStatus(0,0x16);
     if (state != 0) {
-        state->header=header;
-        current=state->header;
-        if (current->size == 0) return 0;
-        state->script=(u8 *)current + 0x20;
+        state->header=current;
+        if (state->header->size == 0) return 0;
+        state->script=(u8 *)state->header + 0x20;
         state->modules=(u8 *)state->script + state->header->scriptSize;
-        maxSize=state->header->maxSize;
-        if (a->maxSaveSize < maxSize) { a->maxSaveSize=maxSize; a->maxSaveFloorID=state->header->maxFloorID; }
-        return header;
+        if (a->maxSaveSize < state->header->maxSize) { a->maxSaveSize=state->header->maxSize; a->maxSaveFloorID=state->header->maxFloorID; }
     }
-    return header;
+    return current;
 }
 
 void scriptUpdate__12FloorManagerFv(FloorManagerLayout *a) {
@@ -838,12 +796,13 @@ void scriptUpdate__12FloorManagerFv(FloorManagerLayout *a) {
     }
 }
 s32 makeSaveData__12FloorManagerFPPUcPUl(FloorManagerLayout *a,void **data,u32 *size) {
-    FloorWriteStreamLayout stream;
-    FloorScriptLayout *script;
-    void *modules;
-    FloorSaveHeader *header;
     u8 *payload;
-    u32 scriptSize,moduleSize,total;
+    FloorWriteStreamLayout stream;
+    FloorSaveHeader *header;
+    void *modules;
+    FloorScriptLayout *script;
+    u32 scriptSize;
+    u32 moduleSize;
     if ((data==0)||(size==0)) return 0;
     script=getScriptModule__10FloorStackFv(getBottomOfStack__14FloorStackListFv(a->stackList));
     if (script==0) return 0;
@@ -852,12 +811,11 @@ s32 makeSaveData__12FloorManagerFPPUcPUl(FloorManagerLayout *a,void **data,u32 *
     makeStateData__Q28GSscript4TigaFP16GSBinWriteStream(script,&stream);
     modules=makePushState__15FloorModuleListF14FloorStateMode(a->modules,3);
     moduleSize=getPushStateSize__15FloorModuleListCFv(a->modules);
-    *size=scriptSize+moduleSize+0x20;
+    *size=0x20+scriptSize+moduleSize;
     *data=GSmemAllocClr(*size);
-    total=*size;
     payload=(u8 *)*data;
     header=(FloorSaveHeader *)payload;
-    if (a->maxSaveSize<total) { a->maxSaveSize=total; a->maxSaveFloorID=(u16)getCurrentFloorID__12FloorManagerFv(a); }
+    if (a->maxSaveSize<*size) { a->maxSaveSize=*size; a->maxSaveFloorID=(u16)getCurrentFloorID__12FloorManagerFv(a); }
     memcpy(header,"ANSW",4);
     header->size=*size; payload+=0x20;
     header->scriptSize=scriptSize; header->moduleSize=moduleSize; header->reserved=0;
@@ -877,8 +835,6 @@ s32 makeSaveData__12FloorManagerFPPUcPUl(FloorManagerLayout *a,void **data,u32 *
 
 void mainThread__12FloorManagerFv(FloorManagerLayout *arg0) {
     void *temp_r30_2;
-    s32 temp_r30;
-    s32 temp_r30_4;
     u32 temp_r30_5;
     u32 temp_r3;
     u8 temp_r30_3;
@@ -890,8 +846,7 @@ loop_1:
         GSthreadSwitch();
         goto loop_1;
     case 1:
-        temp_r30 = getObjective__14FloorStackListFv(arg0->stackList);
-        load__12FloorManagerFP11GSfloor_dd_14FloorEnterMode(arg0, getGSfloor__14FloorStackListFv(arg0->stackList), temp_r30);
+        load__12FloorManagerFP11GSfloor_dd_14FloorEnterMode(arg0, getGSfloor__14FloorStackListFv(arg0->stackList), getObjective__14FloorStackListFv(arg0->stackList));
         setUpdateState__14FloorStackListF10FloorState(arg0->stackList, 2);
         changeTaskMode__12FloorManagerF9floorTask(arg0, 2);
         goto loop_1;
@@ -936,8 +891,7 @@ loop_1:
         unload__12FloorManagerFP11GSfloor_dd_b14FloorEnterMode(arg0, getGSfloor__14FloorStackListFv(arg0->stackList), 1U, 2);
         pop__14FloorStackListFv(arg0->stackList);
         load__12FloorManagerFP11GSfloor_dd_14FloorEnterMode(arg0, getGSfloor__14FloorStackListFv(arg0->stackList), 2);
-        temp_r30_4 = getStateMode__14FloorStackListFv(arg0->stackList);
-        restorePopState__15FloorModuleListFPv14FloorStateModeb(arg0->modules, getPushState__14FloorStackListFv(arg0->stackList), temp_r30_4, 1);
+        restorePopState__15FloorModuleListFPv14FloorStateModeb(arg0->modules, getPushState__14FloorStackListFv(arg0->stackList), getStateMode__14FloorStackListFv(arg0->stackList), 1);
         clearState__14FloorStackListFv(arg0->stackList);
         setUpdateState__14FloorStackListF10FloorState(arg0->stackList, 2);
         changeTaskMode__12FloorManagerF9floorTask(arg0, 2);
@@ -976,33 +930,29 @@ void execPostFunction__12FloorManagerFP10FloorStack14FloorEnterMode(FloorManager
 
 void execPreFunction__12FloorManagerFP10FloorStack14FloorEnterMode(FloorManagerLayout *arg0, FloorStackLayout *arg1, s32 arg2) {
     FloorStateDataPtr state;
-    s32 temp_r31;
-    s32 temp_r31_2;
-    s32 var_r29;
+    FloorScriptLayout *script;
     u8 var_r30;
 
-    var_r29 = arg2;
     var_r30 = 0;
     flooSetFrameRate();
-    if ((var_r29 == 3) && (getStateData__12FloorManagerFP12StateDataPtr(arg0, &state) == 0)) {
-        var_r29 = 0;
+    if ((arg2 == 3) && (getStateData__12FloorManagerFP12StateDataPtr(arg0, &state) == 0)) {
+        arg2 = 0;
     }
-    if ((var_r29 == 2) || (var_r29 == 3)) {
-        temp_r31 = getGroupID__10FloorStackCFv(arg1);
-        executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, getFloorID__10FloorStackCFv(arg1), 2, 0, var_r29, temp_r31);
+    if ((arg2 == 2) || (arg2 == 3)) {
+        executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, getFloorID__10FloorStackCFv(arg1), 2, 0, arg2, getGroupID__10FloorStackCFv(arg1));
     } else {
-        executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, getFloorID__10FloorStackCFv(arg1), 2, 0xFF, var_r29, -1);
+        executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, getFloorID__10FloorStackCFv(arg1), 2, 0xFF, arg2, -1);
     }
     GSthreadSwitch();
     waitFloorScript__15FloorModuleListF10FloorState(arg0->modules, 2);
-    if (var_r29 == 3) {
+    if (arg2 == 3) {
         restorePopState__15FloorModuleListFPv14FloorStateModeb(arg0->modules, state.modules, 3, 0);
-        if (getScriptModule__10FloorStackFv(arg1) != 0U) {
-            var_r30 = restoreStateData__Q28GSscript4TigaFPvUl(getScriptModule__10FloorStackFv(arg1), state.script, state.header->scriptSize);
+        script = getScriptModule__10FloorStackFv(arg1);
+        if (script != 0U) {
+            var_r30 = restoreStateData__Q28GSscript4TigaFPvUl(script, state.script, state.header->scriptSize);
         }
         if (var_r30 == 0) {
-            temp_r31_2 = getGroupID__10FloorStackCFv(arg1);
-            executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, getFloorID__10FloorStackCFv(arg1), 2, 2, var_r29, temp_r31_2);
+            executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, getFloorID__10FloorStackCFv(arg1), 2, 2, arg2, getGroupID__10FloorStackCFv(arg1));
             GSthreadSwitch();
             waitFloorScript__15FloorModuleListF10FloorState(arg0->modules, 2);
             setUpdateState__10FloorStackF10FloorState(arg1, 4);
@@ -1024,7 +974,6 @@ void execPreFunction__12FloorManagerFP10FloorStack14FloorEnterMode(FloorManagerL
 }
 
 u8 update__12FloorManagerFP10FloorStack(FloorManagerLayout *arg0, FloorStackLayout *arg1) {
-    s32 temp_r31;
     s32 temp_r3;
 
     temp_r3 = getUpdateState__10FloorStackFv(arg1);
@@ -1032,32 +981,31 @@ u8 update__12FloorManagerFP10FloorStack(FloorManagerLayout *arg0, FloorStackLayo
     case 2:
         execPreFunction__12FloorManagerFP10FloorStack14FloorEnterMode(arg0, arg1, getCurrentEnterMode__12FloorManagerFv(arg0));
         clearFlag__10FloorStackFv(arg1);
-block_12:
-    default:
-        return 1U;
+        break;
     case 4:
-        temp_r31 = getCurrentEnterMode__12FloorManagerFv(arg0);
-        executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, getFloorID__10FloorStackCFv(arg1), 4, 0xFF, temp_r31, -1);
+        executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, getFloorID__10FloorStackCFv(arg1), 4, 0xFF, getCurrentEnterMode__12FloorManagerFv(arg0), -1);
         if (getUpdateState__10FloorStackFv(arg1) == 4) {
             setUpdateState__10FloorStackF10FloorState(arg1, 5);
         }
-        goto block_12;
+        break;
     case 5:
         floorSetContinueMode(0);
         executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, getFloorID__10FloorStackCFv(arg1), 4, 0, 0, -1);
-        goto block_12;
+        break;
     case 6:
         execPostFunction__12FloorManagerFP10FloorStack14FloorEnterMode(arg0, arg1, 0);
         return 0U;
     }
-
+    return 1U;
 }
 
 void unload__12FloorManagerFP11GSfloor_dd_b14FloorEnterMode(FloorManagerLayout *arg0, void *arg1, u8 arg2, s32 arg3) {
+    u32 floorID;
     if (floorCheckFightKind(arg0->nextFloorID) == 0) {
         floorCheckFade();
     }
-    executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, floorDataBiosGetFloorID(arg1), 8, 0, arg3, -1);
+    floorID = floorDataBiosGetFloorID(arg1);
+    executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, floorID, 8, 0, arg3, -1);
     if (arg2 != 0) {
         GSthreadTerminateGroup(GSfloorGetCurrentFloorGroupID());
     }
@@ -1075,13 +1023,11 @@ void unload__12FloorManagerFP11GSfloor_dd_b14FloorEnterMode(FloorManagerLayout *
 
 void load__12FloorManagerFP11GSfloor_dd_14FloorEnterMode(FloorManagerLayout *arg0, void *arg1, s32 arg2) {
     u32 temp_r30;
-    u8 temp_r31;
 
     temp_r30 = floorDataBiosGetFileGroupID(arg1);
     fn_8005C068((u8)gamedatasaveGetStatus(0, 0xB));
     executeAll__15FloorModuleListFUi10FloorState15FloorModuleType14FloorEnterModeUl(arg0->modules, floorDataBiosGetFloorID(arg1), 1, 0, arg2, -1);
-    temp_r31 = floorDataBiosGetFloorKind(arg1);
-    floorLayerConfig(floorDataBiosGetFloorID(arg1),temp_r31);
+    floorLayerConfig(floorDataBiosGetFloorID(arg1),floorDataBiosGetFloorKind(arg1));
     GSlogWrite("\n------------------>>> Floor %d loading... fsysid=[%d]\n\n", floorDataBiosGetFloorID(arg1), temp_r30);
     GSfsysReadWait(temp_r30);
     floorInitWazaSequence(floorDataBiosGetFloorID(arg1));
@@ -1092,3 +1038,44 @@ void load__12FloorManagerFP11GSfloor_dd_14FloorEnterMode(FloorManagerLayout *arg
 #ifdef __cplusplus
 }
 #endif
+FloorManagerLayout *__ct__12FloorManagerFv(FloorManagerLayout *a) {
+    a->vtable = __vt__12FloorManager;
+    __ct__9AppScriptFv(&a->commonScript);
+    a->changing = 0;
+    a->modules = 0;
+    a->stackList = 0;
+    a->maxSaveSize = 0;
+    a->maxSaveFloorID = 0;
+    return a;
+}
+FloorManagerLayout *__dt__12FloorManagerFv(FloorManagerLayout *a,s16 destroy) {
+    if (a != 0) {
+        FloorModuleListLayout *modules;
+        a->vtable = __vt__12FloorManager;
+        modules = a->modules;
+        if (modules != 0) {
+            if (modules != 0) modules->vtable->destroy(modules,1);
+            a->modules=0;
+        }
+        if (a->stackList != 0) { __dt__14FloorStackListFv(a->stackList,1); a->stackList=0; }
+        __dt__9AppScriptFv(&a->commonScript,-1);
+        if (destroy>0) __dl__FPv(a);
+    }
+    return a;
+}
+void init__12FloorManagerFUlUl(FloorManagerLayout *a,u32 stackCount,u32 moduleCount) {
+    FloorModuleListLayout *modules;
+    FloorStackListLayout *list;
+    modules=a->modules;
+    if (modules != 0) { if (modules != 0) modules->vtable->destroy(modules,1); a->modules=0; }
+    if (a->stackList != 0) { __dt__14FloorStackListFv(a->stackList,1); a->stackList=0; }
+    modules=(FloorModuleListLayout *)__nw__FUl(sizeof(FloorModuleListLayout));
+    if (modules != 0) modules=__ct__15FloorModuleListFUl(modules,moduleCount);
+    a->modules=modules;
+    list=(FloorStackListLayout *)__nw__FUl(sizeof(FloorStackListLayout));
+    if (list != 0) list=__ct__14FloorStackListFUl(list,stackCount);
+    a->stackList=list;
+    changeTaskMode__12FloorManagerF9floorTask(a,0);
+    GSthreadSetName(GSthreadCreate(0,0x7d0,0x4000,1,1,_floorMainThread__Fv),"floorMainThread");
+    GSthreadSetName(GSthreadCreate(1,0x7d0,0x1000,1,1,_floorScriptThread__Fv),"scriptUpdate");
+}
