@@ -357,11 +357,12 @@ void Load__10GSgfxLightFUc(void*,u8);
 void GSgfx_GCWriteLoadTlut(void*,s32); void GSgfx_GCWriteLoadTexObj(void*,s32);
 void GSgfx_GCWriteVtxDesc(void*); void GSgfx_GCWriteVtxAttrFmt(s32,void*);
 void GSgfx_GCWriteArray(s32,void*,u8);
+struct LayerHWView { u8 pad[0x30]; u8 hw[0xc40]; };
 void LoadHWState__10GSgfxLayerFv(void* layer) {
-    u8* hardware=static_cast<u8*>(layer)+0x30;
-    if (_layerStateLastHWState!=hardware) {
+    LayerHWView* view=static_cast<LayerHWView*>(layer);
+    if (_layerStateLastHWState!=view->hw) {
         if (_layerStateLastHWState) memcpy(_layerStateLastHWState,gsgfxState,0xc40);
-        memcpy(gsgfxState,hardware,0xc40); _layerStateLastHWState=hardware;
+        memcpy(gsgfxState,view->hw,0xc40); _layerStateLastHWState=view->hw;
     }
 }
 }
@@ -1457,6 +1458,8 @@ __declspec(weak) void GSgfx_GCSetIndTexOrder(s32 arg0, s32 arg1, s32 arg2) {
     }
 }
 
+struct LayerTevStatusView { u8 pad[0xB64]; u8 status[16]; };
+#define TEVST(i) (reinterpret_cast<LayerTevStatusView*>(gsgfxState)->status[i])
 __declspec(weak) void GSgfx_GCSetTevIndRepeat(s32 arg0) {
     s32 temp_r10;
     s32 temp_r11;
@@ -1477,7 +1480,7 @@ __declspec(weak) void GSgfx_GCSetTevIndRepeat(s32 arg0) {
     LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
     LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 1;
     layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 2;
+    TEVST(arg0) = 2;
 }
 
 __declspec(weak) void GSgfx_GCSetTevIndBumpXYZ(s32 arg0, u8 arg1, s32 arg2) {
@@ -1500,7 +1503,7 @@ __declspec(weak) void GSgfx_GCSetTevIndBumpXYZ(s32 arg0, u8 arg1, s32 arg2) {
     LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
     LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 0;
     layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 2;
+    TEVST(arg0) = 2;
 }
 
 __declspec(weak) void GSgfx_GCSetTevIndWarp(s32 arg0, u8 arg1, u8 arg2, u8 arg3, s32 arg4) {
@@ -1535,7 +1538,7 @@ __declspec(weak) void GSgfx_GCSetTevIndWarp(s32 arg0, u8 arg1, u8 arg2, u8 arg3,
     LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
     LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 0;
     layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 2;
+    TEVST(arg0) = 2;
 }
 
 __declspec(weak) void GSgfx_GCSetTevIndirect(s32 arg0, u8 arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, s32 arg6, u8 arg7, u8 arg_sp8, s32 arg_spC) {
@@ -1558,7 +1561,7 @@ __declspec(weak) void GSgfx_GCSetTevIndirect(s32 arg0, u8 arg1, s32 arg2, s32 ar
     LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = arg_sp8;
     LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = arg7;
     layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
-    layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 2;
+    TEVST(arg0) = 2;
 }
 
 __declspec(weak) void GSgfx_GCSetTevDirect(s32 arg0) {
@@ -1567,7 +1570,7 @@ __declspec(weak) void GSgfx_GCSetTevDirect(s32 arg0) {
     s32 temp_r8;
     s32 temp_r9;
 
-    if ((u8) layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) != 1) {
+    if (TEVST(arg0) != 1) {
         temp_r4 = arg0 * 4;
         temp_r10 = temp_r4 + 0x313;
         temp_r9 = temp_r4 + 0x312;
@@ -1582,8 +1585,8 @@ __declspec(weak) void GSgfx_GCSetTevDirect(s32 arg0) {
         LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
         LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 0;
         layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 2;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + arg0, 0xB64) = 1;
+        TEVST(arg0) = 2;
+        TEVST(arg0) = 1;
     }
 }
 

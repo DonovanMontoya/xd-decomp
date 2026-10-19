@@ -113,49 +113,55 @@ extern "C" s32 GSgfxProjectFast(Vec* position, Vec* output) {
     return 2;
 }
 
-extern "C" s32 GSgfxProjectFastList(Vec* positions, Vec* outputs, u32 count) {
-    if (!g_projCameraMatrix || !g_projProjectMatrix) return 0;
-    u32 projected = count;
-    s32 result = 2;
-    for (u32 i = 0; i < count; ++i, ++positions, ++outputs) {
-        Vec relative;
-        Vec direction;
-        f32 dx = g_projInvCameraMatrix[0][2];
-        f32 dy = g_projInvCameraMatrix[1][2];
-        f32 dz = g_projInvCameraMatrix[2][2];
-        direction.x = dx;
-        direction.y = dy;
-        direction.z = dz;
-        f32 x = g_projInvCameraMatrix[0][3];
-        f32 y = g_projInvCameraMatrix[1][3];
-        f32 z = g_projInvCameraMatrix[2][3];
-        relative.x = x;
-        relative.y = y;
-        relative.z = z;
-        PSVECSubtract(positions, &relative, &relative);
-        f32 depth = PSVECDotProduct(&direction, &relative);
-        f32 plane = g_projProjectMatrix[2][3];
-        s32 status;
-        if (depth <= -plane && depth >= plane) {
-            status = 1;
-        } else {
-            GXProject(positions->x, positions->y, positions->z, g_projCameraMatrix,
-                g_projProjectParams, g_projViewPort, &outputs->x, &outputs->y, &outputs->z);
-            if (depth > 0) {
-                outputs->x = -outputs->x;
-                outputs->y = -outputs->y;
-                outputs->z = -1;
+extern "C" s32 GSgfxProjectFastList(Vec* positionsIn, Vec* outputsIn, u32 count) {
+    s32 result;
+    Vec* outputs = outputsIn;
+    Vec* positions = positionsIn;
+    if (!g_projCameraMatrix || !g_projProjectMatrix) {
+        result = 0;
+    } else {
+        u32 projected = count;
+        result = 2;
+        for (u32 i = 0; i < count; ++i, ++positions, ++outputs) {
+            Vec relative;
+            Vec direction;
+            f32 dx = g_projInvCameraMatrix[0][2];
+            f32 dy = g_projInvCameraMatrix[1][2];
+            f32 dz = g_projInvCameraMatrix[2][2];
+            direction.x = dx;
+            direction.y = dy;
+            direction.z = dz;
+            f32 x = g_projInvCameraMatrix[0][3];
+            f32 y = g_projInvCameraMatrix[1][3];
+            f32 z = g_projInvCameraMatrix[2][3];
+            relative.x = x;
+            relative.y = y;
+            relative.z = z;
+            PSVECSubtract(positions, &relative, &relative);
+            f32 depth = PSVECDotProduct(&direction, &relative);
+            f32 plane = g_projProjectMatrix[2][3];
+            s32 status;
+            if (depth <= -plane && depth >= plane) {
+                status = 1;
+            } else {
+                GXProject(positions->x, positions->y, positions->z, g_projCameraMatrix,
+                    g_projProjectParams, g_projViewPort, &outputs->x, &outputs->y, &outputs->z);
+                if (depth > 0) {
+                    outputs->x = -outputs->x;
+                    outputs->y = -outputs->y;
+                    outputs->z = -1;
+                }
+                status = 2;
             }
-            status = 2;
+            if (status == 1) {
+                result = 3;
+                --projected;
+                outputs->z = 1;
+                outputs->y = 1;
+                outputs->x = 1;
+            }
         }
-        if (status == 1) {
-            result = 3;
-            --projected;
-            outputs->z = 1;
-            outputs->y = 1;
-            outputs->x = 1;
-        }
+        if (!projected) result = 1;
     }
-    if (!projected) result = 1;
     return result;
 }
