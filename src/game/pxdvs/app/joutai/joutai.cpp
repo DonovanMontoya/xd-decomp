@@ -9,7 +9,6 @@ void init__7_JOUTAIFv(Joutai*); u8 isValid__7_JOUTAIFv(Joutai*); u8 joutaiIsJout
 static Joutai *_joutaiGetTargetJoutaiPtrAsJoutaiDataId__FPvUs(void*,u16); static void _joutaiInit__FP7_JOUTAI(Joutai*);
 void writeJoutaiDataId__7_JOUTAIFUsUs(Joutai *arg0, u16 arg1, u16 arg2) {
     u8 temp_r3;
-    u8 temp_r3_2;
     u32 var_r30;
     u32 var_r31;
 
@@ -26,9 +25,9 @@ void writeJoutaiDataId__7_JOUTAIFUsUs(Joutai *arg0, u16 arg1, u16 arg2) {
         arg0->unk4 = kaisuuGetKaisuu(joutaiDataBiosGetKaisuuDataId(arg1));
         if (temp_r3 == 4) {
             var_r30 = var_r31 + 1;
-            temp_r3_2 = ((u32(*)(u16))joutaiDataBiosGetMaxCount)(arg1);
-            if (temp_r3_2 < var_r30) {
-                var_r30 = temp_r3_2;
+            u32 m = ((u32(*)(u16))joutaiDataBiosGetMaxCount)(arg1);
+            if ((u8)m < (u8)var_r30) {
+                var_r30 = m;
             }
             arg0->unk6 = var_r30;
         }

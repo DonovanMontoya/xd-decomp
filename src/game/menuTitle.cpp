@@ -1,5 +1,8 @@
 #include <game/menuSubLayout.hpp>
 
+// Retail retains the entry points used by external menu dispatch.
+#pragma force_active on
+
 #define FLASH ((void*)0x1FE03000)
 
 struct MenuTitleKeyInfo {
@@ -205,7 +208,8 @@ void menuTitleCursorAnime(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
         t = _titleCursorTimer % 60;
         sprite->color.value = -1;
         if (t < 0x1E) {
-            sprite->color.channels.alpha -= (u8)(128.0f * (f32)sin(3.14f * ((f32)t / 30.0f)));
+            f32 wave = (f32)sin(3.14f * ((f32)t / 30.0f));
+            sprite->color.channels.alpha -= (u8)(128.0f * wave);
         }
     } else {
         sprite->color.channels.alpha = 0xFF;
@@ -235,25 +239,13 @@ run:
 }
 
 static void _cursorSpriteOnOff(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
-    static const s32 ids[5] = {0x3D, 0x3E, 0x3F, 0x42, 0x43};
-    s32 index = 0;
-    s16 id = sprite->id;
-    if (id != ids[0]) {
-        index = 1;
-        if (id != ids[1]) {
-            index = 2;
-            if (id != ids[2]) {
-                index = 3;
-                if (id != ids[3]) {
-                    index = 4;
-                    if (id != ids[4]) {
-                        index = 5;
-                    }
-                }
-            }
-        }
+    s16 sel = win->pos.selected;
+    const s32 ids[5] = {0x3D, 0x3E, 0x3F, 0x42, 0x43};
+    s32 index;
+    for (index = 0; index < 5; index++) {
+        if (sprite->id == ids[index]) break;
     }
-    if (index == win->pos.selected) {
+    if (index == sel) {
         winSpriteSetDisp(sprite, 1);
     } else {
         winSpriteSetDisp(sprite, 0);

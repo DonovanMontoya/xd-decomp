@@ -6,7 +6,7 @@ struct GSmtxInitializer {
     GSmtxInitializer() {
         Mtx identity;
         PSMTXIdentity(identity);
-        memcpy(matrix.matrix, identity, 0x30);
+        matrix = *(GSmtx *)identity;
     }
 };
 GSmtxInitializer mtxIdent;

@@ -354,3 +354,4 @@ extern "C" void fightInit() {
     _floorModuleFight.getStateID=_fightGetUID;
     _floorModuleFight.getName=_fightGetModuleName;
 }
+extern "C" void __sinit_fight_cpp() {}

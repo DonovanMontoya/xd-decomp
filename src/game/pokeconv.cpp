@@ -14,9 +14,7 @@ void pokemonBiosSetFightTrainerPokemonDataId(void *, u16);
 void exribbonSetNo(s32, u8);
 }
 
-static u32 _swap32(unsigned long value) {
-    return (value >> 24) | (((value & 0x00FF0000) >> 8) | ((value << 24) | ((value & 0x0000FF00) << 8)));
-}
+static u32 _swap32(unsigned long value);
 
 extern "C" void pokeconv(void *hero, u8 *data) {
     u8 *bytes = data;
@@ -43,11 +41,16 @@ extern "C" void pokeconv(void *hero, u8 *data) {
     heroBiosSetSexDataId(hero, data[0xC]);
     heroBiosSetRnd(hero, _swap32(*(u32 *)(data + 0x10)));
     u8 *entry = data;
+    s32 k;
     for (s32 i = 0; i < 6; ++i) {
         void *pokemon = heroBiosGetPokemonPtr(hero, i);
         gbaPokemonToGC(pokemon, entry + 0x14);
         pokemonBiosSetFightTrainerPokemonDataId(pokemon, i);
         entry += 0x64;
     }
-    for (s32 i = 0; i < 0xB; ++i) exribbonSetNo(i, data[0x26C + i]);
+    for (k = 0; k < 0xB; ++k) exribbonSetNo(k, data[0x26C + k]);
+}
+
+static u32 _swap32(unsigned long value) {
+    return (value >> 24) | (((value & 0x00FF0000) >> 8) | ((value << 24) | ((value & 0x0000FF00) << 8)));
 }

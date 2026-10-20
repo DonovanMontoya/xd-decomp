@@ -31,7 +31,8 @@ s32 winMsgDraw(tagWINDOW_WORK *window, WindowSprite *sprite) {
     GSgfxLayerFindByID(layer);
     if (window->menuID == 0x53) { width=work->width; height=work->height; }
     else { width=sprite->width; height=sprite->height; }
-    spriteSetOffset(layer,window->x+sprite->x,sprite->y+(window->y+static_cast<s16>((sprite->height-4)-height)));
+    s16 offY=(sprite->height-4)-height;
+    spriteSetOffset(layer,window->x+sprite->x,sprite->y+(window->y+offY));
     spriteSetEnv(layer);
     switch (window->menuID) {
     case 42: break;
@@ -114,7 +115,7 @@ s32 winMsgCheck() {
     tagWINDOW_WORK *window=windowSearchID(_winMsgGetMenuID(_winMsgType));
     if(window==0) return -1;
     if(window->finished!=0) return 0;
-    return window->cancelled==0;
+    return (u32)__cntlzw(window->cancelled) >> 5;
 }
 void winMsgClose(bool wait) {
     if(_winMsgOpenErrWin!=0) {

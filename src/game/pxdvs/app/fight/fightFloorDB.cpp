@@ -13,7 +13,7 @@ u32 fightOutPokemonGetSoubiItemDataId(FightOutPokemon*);
 void fightFloorBiosSetAppointTokuseiDataId(FIGHT_FLOOR*, u32);
 void fightFloorBiosSetAppointItemDataId(FIGHT_FLOOR*, u32);
 void fightFloorBiosSetItemPokemonPtr(FIGHT_FLOOR*, FightOutPokemon*);
-u16 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(FightOutPokemon*, u32);
+u32 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(FightOutPokemon*, u32);
 void pokemonBiosCopy(Pokemon*, const Pokemon*);
 void* memcpy(void*, const void*, unsigned long);
 void fightFloorBiosSetAppointPokemonPtr(FIGHT_FLOOR*, FightOutPokemon*);
@@ -86,6 +86,42 @@ u32 fightFloorGetBgmSndDataId(FIGHT_FLOOR*);
 
 FIGHT_FLOOR* fightFloorBiosGetFightFloorPtr();
 FloorData* fightFloorDataBiosGetPtr(u16);
+u16 fightFloor_GetEncountDataId(FIGHT_FLOOR* floor);
+u32 fightFloorDB_GetSyoukaiWzxDataId(u16 dataId);
+u8 fightFloorDB_GetTikeiDataId(u16 dataId);
+void fightFloor_SetDefensePokemonPtr(FIGHT_FLOOR*, FightOutPokemon*);
+void fightFloor_SetAttackPokemonFightWazaTargetId(FIGHT_FLOOR*, u16);
+void fightFloor_SetStockPokemonBallID(FIGHT_FLOOR* floor, u8 index, u8 ballId) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return; }
+    if (index < 6) floor->stockPokemon[index].ballId = ballId;
+}
+
+u8 fightFloor_GetStockPokemonBallID(FIGHT_FLOOR* floor, u8 index) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    if (index >= 6) return 0;
+    return floor->stockPokemon[index].ballId;
+}
+
+void fightFloor_SetStockPokemonPtr(FIGHT_FLOOR* floor, u8 index, Pokemon* pokemon) {
+    u8 copy[0xc4];
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return; }
+    if (index < 6) {
+        pokemonBiosCopy((Pokemon*)copy, pokemon);
+        memcpy(&floor->stockPokemon[index].pokemon, copy, 0xc4);
+    }
+}
+
+Pokemon* fightFloor_GetStockPokemonPtr(FIGHT_FLOOR* floor, u8 index) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    if (index >= 6) return 0;
+    return &floor->stockPokemon[index].pokemon;
+}
+
+void fightFloor_SetStockPokemonNum(FIGHT_FLOOR* floor, u8 count) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return; }
+    floor->stockPokemonNum = count;
+}
+
 u8 fightFloor_GetStockPokemonNum(FIGHT_FLOOR* floor) {
     if (!floor) {
         floor = fightFloorBiosGetFightFloorPtr();
@@ -94,12 +130,417 @@ u8 fightFloor_GetStockPokemonNum(FIGHT_FLOOR* floor) {
     return floor->stockPokemonNum;
 }
 
+void fightFloor_SetFisstAttackRnd(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetFirstAttackRnd(floor, value);
+}
+
+void fightFloor_SetfightoutPokemonPtrAryPtr(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetFightOutPokemonPtrAryPtr(floor, value);
+}
+
+void fightFloor_SetfightPokemonEntryCnt(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetFightPokemonEntryCnt(floor, value);
+}
+
+void fightFloor_SetAppointTokuseiDataId(FIGHT_FLOOR* floor, u32 ability) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightMsgctrlSetValue(0x1c, (u32)GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(ability))));
+    fightFloorBiosSetAppointTokuseiDataId(floor, ability);
+}
+
+void fightFloor_SetAppointItemDataId(FIGHT_FLOOR* floor, u32 item) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightMsgctrlSetValue(0x29, (u32)GSmsgGetGSchar(itemDB_GetName(item)));
+    fightFloorBiosSetAppointItemDataId(floor, item);
+}
+
+void fightFloor_SetAppointPokemonWazaDataId(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetAppointWazaDataId(floor, value);
+}
+
+void fightFloor_SetAppointPokemonDataId(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetAppointPokemonDataId(floor, value);
+}
+
+void fightFloor_SetWazakoukaMsgId(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetWazakoukaMsgId(floor, value);
+}
+
+void fightFloor_SetCriticakMsgId(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetCriticalMsgId(floor, value);
+}
+
+void fightFloor_SetAttackMsgId(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetAttackMsgId(floor, value);
+}
+
+void fightFloor_SetAppointMsgPtr(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetAppointMsgId(floor, value);
+}
+
+void fightFloor_SetAppointPokemonPtr(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    if (pokemon) {
+        if (fightOutPokemonCheckValid(pokemon) == 1) {
+            fightMsgctrlSetValue(0x1e, (u32)pokemon);
+            fightMsgctrlSetValue(0x1c, (u32)GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(fightOutPokemonGetTokuseiDataId(pokemon)))));
+        } else {
+            fightMsgctrlSetValue(0x1e, 0);
+            fightMsgctrlSetValue(0x1c, 0);
+        }
+    } else {
+            fightMsgctrlSetValue(0x1e, 0);
+            fightMsgctrlSetValue(0x1c, 0);
+    }
+    fightFloorBiosSetAppointPokemonPtr(floor, pokemon);
+}
+
+void fightFloor_SetEncountFloorId(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetEncountFloorId(value);
+}
+
+void fightFloor_SetItemPokemonPtr(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    if (pokemon && fightOutPokemonCheckValid(pokemon) == 1) {
+        u32 item = fightOutPokemonGetSoubiItemDataId(pokemon);
+        fightFloor_SetAppointItemDataId(floor, item);
+    }
+    fightFloorBiosSetItemPokemonPtr(floor, pokemon);
+}
+
+void fightFloor_SetTokuseiPokemonPtr(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetTokuseiPokemonPtr(floor, value);
+}
+
+void fightFloor_SetTuikakoukaPokemonPtr(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    if (pokemon) {
+        if (fightOutPokemonCheckValid(pokemon) == 1) {
+            fightMsgctrlSetValue(0x12, (u32)pokemon);
+            fightMsgctrlSetValue(0x1d, (u32)GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(fightOutPokemonGetTokuseiDataId(pokemon)))));
+        } else {
+            fightMsgctrlSetValue(0x12, 0);
+            fightMsgctrlSetValue(0x1d, 0);
+        }
+    } else {
+            fightMsgctrlSetValue(0x12, 0);
+            fightMsgctrlSetValue(0x1d, 0);
+    }
+    fightFloorBiosSetTuikakoukaPokemonPtr(floor, pokemon);
+}
+
+void fightFloor_SetKizetuPokemonPtr(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetKizetuPokemonPtr(floor, value);
+}
+
+void fightFloor_SetIrekaePokemonPtr(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetIrekaePokemonPtr(floor, value);
+}
+
+void fightFloor_SetEscapePokemonPtr(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetEscapePokemonPtr(floor, value);
+}
+
+void fightFloor_SetDefPokemonAndAtkFightWazaTargetId(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
+    u32 type = fightFloor_GetFightType(floor);
+    u32 target;
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloor_SetDefensePokemonPtr(floor, pokemon);
+    target = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(pokemon, type);
+    ((void (*)(FIGHT_FLOOR*, u32))fightFloor_SetAttackPokemonFightWazaTargetId)(floor, target);
+}
+
+void fightFloor_SetDefensePokemonPtr(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    if (pokemon) {
+        if (fightOutPokemonCheckValid(pokemon) == 1) {
+            fightMsgctrlSetValue(0x10, (u32)pokemon);
+            fightMsgctrlSetValue(0x1b, (u32)GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(fightOutPokemonGetTokuseiDataId(pokemon)))));
+            fightMsgctrlSetValue(0x42, (u32)pokemon);
+            fightMsgctrlSetValue(0x44, (u32)pokemon);
+            fightMsgctrlSetValue(0x43, (u32)pokemon);
+        } else {
+            fightMsgctrlSetValue(0x10, 0);
+            fightMsgctrlSetValue(0x1b, 0);
+            fightMsgctrlSetValue(0x42, 0);
+            fightMsgctrlSetValue(0x44, 0);
+            fightMsgctrlSetValue(0x43, 0);
+        }
+    } else {
+            fightMsgctrlSetValue(0x10, 0);
+            fightMsgctrlSetValue(0x1b, 0);
+            fightMsgctrlSetValue(0x42, 0);
+            fightMsgctrlSetValue(0x44, 0);
+            fightMsgctrlSetValue(0x43, 0);
+    }
+    fightFloorBiosSetDefensePokemonPtr(floor, pokemon);
+}
+
+void fightFloor_SetAttackPokemonFightWazaTargetId(FIGHT_FLOOR* floor, u16 target) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightOutPokemon_SetWazaTargetId(fightFloorBiosGetAttackPokemonPtr(floor), target);
+}
+
+void fightFloor_SetAttackPokemonFightWazaJoutaiDataId(FIGHT_FLOOR* floor, u16 condition) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightOutPokemon_SetWazaJoutaiDataId(fightFloorBiosGetAttackPokemonPtr(floor), condition);
+}
+
+void fightFloor_SetAttackPokemonPtr(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    if (pokemon) {
+        if (fightOutPokemonCheckValid(pokemon) == 1) {
+            fightMsgctrlSetValue(0xf, (u32)pokemon);
+            fightMsgctrlSetValue(0x1a, (u32)GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(fightOutPokemonGetTokuseiDataId(pokemon)))));
+            fightMsgctrlSetValue(0x1f, (u32)pokemon);
+            fightMsgctrlSetValue(0x21, (u32)pokemon);
+            fightMsgctrlSetValue(0x20, (u32)pokemon);
+        } else {
+            fightMsgctrlSetValue(0xf, 0);
+            fightMsgctrlSetValue(0x1a, 0);
+            fightMsgctrlSetValue(0x1f, 0);
+            fightMsgctrlSetValue(0x21, 0);
+            fightMsgctrlSetValue(0x20, 0);
+        }
+    } else {
+            fightMsgctrlSetValue(0xf, 0);
+            fightMsgctrlSetValue(0x1a, 0);
+            fightMsgctrlSetValue(0x1f, 0);
+            fightMsgctrlSetValue(0x21, 0);
+            fightMsgctrlSetValue(0x20, 0);
+    }
+    fightFloorBiosSetAttackPokemonPtr(floor, pokemon);
+}
+
+void fightFloor_SetEncountDataId(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetEncountDataId(floor, value);
+}
+
+void fightFloor_SetTurnCount(FIGHT_FLOOR* floor, u32 value) {
+    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
+    fightFloorBiosSetTurnCount(floor, value);
+}
+
+u32 fightFloor_GetEncountFloorId(FIGHT_FLOOR* floor) { return fightFloorBiosGetEncountFloorId(floor); }
+
+FightSide* fightFloor_GetFightSidePtr(FIGHT_FLOOR* floor, u16 side) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    if (side >= 2) return 0;
+    return (FightSide*)((u8*)floor + 0x14 + side * 0x6ef0);
+}
+
+u32 fightFloor_GetFightKindRegulationFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetRegulationFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindHostEnemyMsgFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetHostEnemyMsgFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindPokemonStatusMenuSubbarFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetPokemonStatusMenuSubbarFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindDarkpokemonHypermodeFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetDarkpokemonHypermodeFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindMonohiroiFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetMonohiroiFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindDorobouFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetDorobouFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindBossFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetBossFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindKeikentihueruFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetKeikentihueruFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindDoItemSoubiTokukoutokubouupFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetDoItemSoubiTokukoutokubouupFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindDoHizukiMiyaburiFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetDoHizukiMiyaburiFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindDoCriticalAttackFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetDoCriticalAttackFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindGetInfectPokerusFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetGetInfectPokerusFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindGetFriendFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetGetFriendFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindGetNekoniKobanFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetGetNekoniKobanFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindGetOkaneFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetGetOkaneFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindOkanePoolFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetOkanePoolFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindGetExpFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetGetExpFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindDrawFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetDrawFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindNigeruFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetNigeruFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindUseItemFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetUseItemFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindDoZukanTukamaetaFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetDoZukanTukamaetaFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindDoZukanMitaFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetDoZukanMitaFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindDoBadgeCheckFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetDoBadgeCheckFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightKindBackSaveDataFlag(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightKindDataBiosGetBackSaveDataFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
+}
+
+u32 fightFloor_GetFightSideFightOutPokemonSideMax(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightTypeGetFightSideFightOutPokemonMax(fightFloor_GetFightType(floor));
+}
+
+u32 fightFloor_GetFightTypeFightoutPokemonNum(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightTypeDataBiosGetFightoutPokemonNum(fightTypeDataBiosGetPtr(fightFloor_GetFightType(floor)));
+}
+
+u32 fightFloor_GetFightTypeEntryPokemonNum(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightTypeDataBiosGetEntryPokemonNum(fightTypeDataBiosGetPtr(fightFloor_GetFightType(floor)));
+}
+
+u32 fightFloor_GetFightTypeTrainerNum(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightTypeDataBiosGetTrainerNum(fightTypeDataBiosGetPtr(fightFloor_GetFightType(floor)));
+}
+
+u32 fightFloor_GetEnvSndId(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightEncountGetEnvSndDataId(fightFloor_GetEncountDataId(floor));
+}
+
+u32 fightFloor_GetBgmSndId(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightFloorGetBgmSndDataId(floor);
+}
+
+u32 fightFloor_GetSyoukaiWzxDataId(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightFloorDB_GetSyoukaiWzxDataId(fightFloor_GetFightFloorDataId(floor));
+}
+
+u8 fightFloor_GetTikeiDataId(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightFloorDB_GetTikeiDataId(fightFloor_GetFightFloorDataId(floor));
+}
+
+u16 fightFloor_GetFightFloorDataId(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightEncountDataBiosGetFightFloorDataId(fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(floor)));
+}
+
+u32 fightFloor_GetTrainer(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightEncountDataBiosGetTrainer(fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(floor)));
+}
+
+u8 fightFloor_GetFightType(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightEncountDataBiosGetFightType(fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(floor)));
+}
+
+u8 fightFloor_GetFightKind(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightEncountDataBiosGetFightKind(fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(floor)));
+}
+
 u16 fightFloor_GetFirstAttackRnd(FIGHT_FLOOR* floor) {
     if (!floor) {
         floor = fightFloorBiosGetFightFloorPtr();
         if (!floor) return 0;
     }
     return floor->firstAttackRnd;
+}
+
+void** fightFloor_GetFightOutPokemonPtrAryPtr(FIGHT_FLOOR* floor) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return floor->fightOutPokemon;
+}
+
+void* fightFloor_GetFightOutPokemonPtrAry(FIGHT_FLOOR* floor, u16 index) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    if (index >= 8) return 0;
+    return floor->fightOutPokemon[index];
 }
 
 s16 fightFloor_GetFightPokemonEntryCnt(FIGHT_FLOOR* floor) {
@@ -239,6 +680,17 @@ u16 fightFloor_GetTurnCount(FIGHT_FLOOR* floor) {
     return floor->turnCount;
 }
 
+u32 fightFloor_GetIsJoutaiDataId(FIGHT_FLOOR* floor, u16 condition) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    return fightFloorIsJoutaiDataId(floor, condition);
+}
+
+void* fightFloor_GetJoutaiPtr(FIGHT_FLOOR* floor, u16 index) {
+    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
+    if (index >= 1) return 0;
+    return (u8*)floor + index * 0x10;
+}
+
 u32 fightFloorDB_GetEnvSndId(u16 dataId) {
     FloorData* data = fightFloorDataBiosGetPtr(dataId);
     if (data == 0) {
@@ -275,6 +727,13 @@ u8 fightFloorDB_GetTikeiDataId(u16 dataId) {
     }
 }
 
+u16 fightFloorDB_GetFightSideDataId(u16 dataId, u8 side) {
+    FloorData* data = fightFloorDataBiosGetPtr(dataId);
+    if (!data) return 0;
+    if (side >= 2) return 0;
+    return data->sides[side];
+}
+
 u16 fightFloorDB_GetFloorDataId(u16 dataId) {
     FloorData* data = fightFloorDataBiosGetPtr(dataId);
     if (data == 0) {
@@ -282,439 +741,5 @@ u16 fightFloorDB_GetFloorDataId(u16 dataId) {
     } else {
         return data->floor;
     }
-}
-
-u16 fightFloorDB_GetFightSideDataId(u16 dataId, u8 side) {
-    FloorData* data = fightFloorDataBiosGetPtr(dataId);
-    if (!data) return 0;
-    if (side >= 2) return 0;
-    return data->sides[side];
-}
-void* fightFloor_GetFightOutPokemonPtrAry(FIGHT_FLOOR* floor, u16 index) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    if (index >= 8) return 0;
-    return floor->fightOutPokemon[index];
-}
-void** fightFloor_GetFightOutPokemonPtrAryPtr(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return floor->fightOutPokemon;
-}
-void fightFloor_SetStockPokemonNum(FIGHT_FLOOR* floor, u8 count) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return; }
-    floor->stockPokemonNum = count;
-}
-Pokemon* fightFloor_GetStockPokemonPtr(FIGHT_FLOOR* floor, u8 index) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    if (index >= 6) return 0;
-    return &floor->stockPokemon[index].pokemon;
-}
-u8 fightFloor_GetStockPokemonBallID(FIGHT_FLOOR* floor, u8 index) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    if (index >= 6) return 0;
-    return floor->stockPokemon[index].ballId;
-}
-void fightFloor_SetStockPokemonBallID(FIGHT_FLOOR* floor, u8 index, u8 ballId) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return; }
-    if (index < 6) floor->stockPokemon[index].ballId = ballId;
-}
-u32 fightFloor_GetFightKindRegulationFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetRegulationFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindHostEnemyMsgFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetHostEnemyMsgFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindPokemonStatusMenuSubbarFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetPokemonStatusMenuSubbarFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindDarkpokemonHypermodeFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetDarkpokemonHypermodeFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindMonohiroiFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetMonohiroiFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindDorobouFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetDorobouFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindBossFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetBossFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindKeikentihueruFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetKeikentihueruFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindDoItemSoubiTokukoutokubouupFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetDoItemSoubiTokukoutokubouupFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindDoHizukiMiyaburiFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetDoHizukiMiyaburiFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindDoCriticalAttackFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetDoCriticalAttackFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindGetInfectPokerusFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetGetInfectPokerusFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindGetFriendFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetGetFriendFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindGetNekoniKobanFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetGetNekoniKobanFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindGetOkaneFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetGetOkaneFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindOkanePoolFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetOkanePoolFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindGetExpFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetGetExpFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindDrawFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetDrawFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindNigeruFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetNigeruFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindUseItemFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetUseItemFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindDoZukanTukamaetaFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetDoZukanTukamaetaFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindDoZukanMitaFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetDoZukanMitaFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindDoBadgeCheckFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetDoBadgeCheckFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u32 fightFloor_GetFightKindBackSaveDataFlag(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightKindDataBiosGetBackSaveDataFlag(fightKindDataBiosGetPtr(fightFloor_GetFightKind(floor)));
-}
-
-u16 fightFloor_GetFightFloorDataId(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightEncountDataBiosGetFightFloorDataId(fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(floor)));
-}
-
-u32 fightFloor_GetTrainer(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightEncountDataBiosGetTrainer(fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(floor)));
-}
-
-u8 fightFloor_GetFightType(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightEncountDataBiosGetFightType(fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(floor)));
-}
-
-u8 fightFloor_GetFightKind(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightEncountDataBiosGetFightKind(fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(floor)));
-}
-
-u32 fightFloor_GetFightTypeFightoutPokemonNum(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightTypeDataBiosGetFightoutPokemonNum(fightTypeDataBiosGetPtr(fightFloor_GetFightType(floor)));
-}
-
-u32 fightFloor_GetFightTypeEntryPokemonNum(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightTypeDataBiosGetEntryPokemonNum(fightTypeDataBiosGetPtr(fightFloor_GetFightType(floor)));
-}
-
-u32 fightFloor_GetFightTypeTrainerNum(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightTypeDataBiosGetTrainerNum(fightTypeDataBiosGetPtr(fightFloor_GetFightType(floor)));
-}
-
-u32 fightFloor_GetFightSideFightOutPokemonSideMax(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightTypeGetFightSideFightOutPokemonMax(fightFloor_GetFightType(floor));
-}
-
-u32 fightFloor_GetSyoukaiWzxDataId(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightFloorDB_GetSyoukaiWzxDataId(fightFloor_GetFightFloorDataId(floor));
-}
-
-u8 fightFloor_GetTikeiDataId(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightFloorDB_GetTikeiDataId(fightFloor_GetFightFloorDataId(floor));
-}
-
-u32 fightFloor_GetEnvSndId(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightEncountGetEnvSndDataId(fightFloor_GetEncountDataId(floor));
-}
-
-u32 fightFloor_GetBgmSndId(FIGHT_FLOOR* floor) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightFloorGetBgmSndDataId(floor);
-}
-
-void fightFloor_SetFisstAttackRnd(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetFirstAttackRnd(floor, value);
-}
-
-void fightFloor_SetfightoutPokemonPtrAryPtr(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetFightOutPokemonPtrAryPtr(floor, value);
-}
-
-void fightFloor_SetfightPokemonEntryCnt(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetFightPokemonEntryCnt(floor, value);
-}
-
-void fightFloor_SetAppointPokemonWazaDataId(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetAppointWazaDataId(floor, value);
-}
-
-void fightFloor_SetAppointPokemonDataId(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetAppointPokemonDataId(floor, value);
-}
-
-void fightFloor_SetWazakoukaMsgId(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetWazakoukaMsgId(floor, value);
-}
-
-void fightFloor_SetCriticakMsgId(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetCriticalMsgId(floor, value);
-}
-
-void fightFloor_SetAttackMsgId(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetAttackMsgId(floor, value);
-}
-
-void fightFloor_SetAppointMsgPtr(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetAppointMsgId(floor, value);
-}
-
-void fightFloor_SetEncountFloorId(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetEncountFloorId(value);
-}
-
-void fightFloor_SetTokuseiPokemonPtr(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetTokuseiPokemonPtr(floor, value);
-}
-
-void fightFloor_SetKizetuPokemonPtr(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetKizetuPokemonPtr(floor, value);
-}
-
-void fightFloor_SetIrekaePokemonPtr(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetIrekaePokemonPtr(floor, value);
-}
-
-void fightFloor_SetEscapePokemonPtr(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetEscapePokemonPtr(floor, value);
-}
-
-void fightFloor_SetEncountDataId(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetEncountDataId(floor, value);
-}
-
-void fightFloor_SetTurnCount(FIGHT_FLOOR* floor, u32 value) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloorBiosSetTurnCount(floor, value);
-}
-
-u32 fightFloor_GetEncountFloorId(FIGHT_FLOOR* floor) { return fightFloorBiosGetEncountFloorId(floor); }
-FightSide* fightFloor_GetFightSidePtr(FIGHT_FLOOR* floor, u16 side) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    if (side >= 2) return 0;
-    return (FightSide*)((u8*)floor + 0x14 + side * 0x6ef0);
-}
-u32 fightFloor_GetIsJoutaiDataId(FIGHT_FLOOR* floor, u16 condition) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    return fightFloorIsJoutaiDataId(floor, condition);
-}
-void* fightFloor_GetJoutaiPtr(FIGHT_FLOOR* floor, u16 index) {
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
-    if (index >= 1) return 0;
-    return (u8*)floor + index * 0x10;
-}
-void fightFloor_SetAttackPokemonFightWazaTargetId(FIGHT_FLOOR* floor, u16 target) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightOutPokemon_SetWazaTargetId(fightFloorBiosGetAttackPokemonPtr(floor), target);
-}
-void fightFloor_SetAttackPokemonFightWazaJoutaiDataId(FIGHT_FLOOR* floor, u16 condition) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightOutPokemon_SetWazaJoutaiDataId(fightFloorBiosGetAttackPokemonPtr(floor), condition);
-}
-void fightFloor_SetStockPokemonPtr(FIGHT_FLOOR* floor, u8 index, Pokemon* pokemon) {
-    u8 copy[0xc4];
-    if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return; }
-    if (index < 6) {
-        pokemonBiosCopy((Pokemon*)copy, pokemon);
-        memcpy(&floor->stockPokemon[index].pokemon, copy, 0xc4);
-    }
-}
-void fightFloor_SetAppointTokuseiDataId(FIGHT_FLOOR* floor, u32 ability) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightMsgctrlSetValue(0x1c, (u32)GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(ability))));
-    fightFloorBiosSetAppointTokuseiDataId(floor, ability);
-}
-void fightFloor_SetAppointItemDataId(FIGHT_FLOOR* floor, u32 item) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightMsgctrlSetValue(0x29, (u32)GSmsgGetGSchar(itemDB_GetName(item)));
-    fightFloorBiosSetAppointItemDataId(floor, item);
-}
-void fightFloor_SetItemPokemonPtr(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    if (pokemon && fightOutPokemonCheckValid(pokemon) == 1) {
-        fightFloor_SetAppointItemDataId(floor, fightOutPokemonGetSoubiItemDataId(pokemon));
-    }
-    fightFloorBiosSetItemPokemonPtr(floor, pokemon);
-}
-void fightFloor_SetAppointPokemonPtr(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    if (pokemon) {
-        if (fightOutPokemonCheckValid(pokemon) == 1) {
-            fightMsgctrlSetValue(0x1e, (u32)pokemon);
-            fightMsgctrlSetValue(0x1c, (u32)GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(fightOutPokemonGetTokuseiDataId(pokemon)))));
-        } else {
-            fightMsgctrlSetValue(0x1e, 0);
-            fightMsgctrlSetValue(0x1c, 0);
-        }
-    } else {
-            fightMsgctrlSetValue(0x1e, 0);
-            fightMsgctrlSetValue(0x1c, 0);
-    }
-    fightFloorBiosSetAppointPokemonPtr(floor, pokemon);
-}
-
-void fightFloor_SetTuikakoukaPokemonPtr(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    if (pokemon) {
-        if (fightOutPokemonCheckValid(pokemon) == 1) {
-            fightMsgctrlSetValue(0x12, (u32)pokemon);
-            fightMsgctrlSetValue(0x1d, (u32)GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(fightOutPokemonGetTokuseiDataId(pokemon)))));
-        } else {
-            fightMsgctrlSetValue(0x12, 0);
-            fightMsgctrlSetValue(0x1d, 0);
-        }
-    } else {
-            fightMsgctrlSetValue(0x12, 0);
-            fightMsgctrlSetValue(0x1d, 0);
-    }
-    fightFloorBiosSetTuikakoukaPokemonPtr(floor, pokemon);
-}
-
-void fightFloor_SetDefensePokemonPtr(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    if (pokemon) {
-        if (fightOutPokemonCheckValid(pokemon) == 1) {
-            fightMsgctrlSetValue(0x10, (u32)pokemon);
-            fightMsgctrlSetValue(0x1b, (u32)GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(fightOutPokemonGetTokuseiDataId(pokemon)))));
-            fightMsgctrlSetValue(0x42, (u32)pokemon);
-            fightMsgctrlSetValue(0x44, (u32)pokemon);
-            fightMsgctrlSetValue(0x43, (u32)pokemon);
-        } else {
-            fightMsgctrlSetValue(0x10, 0);
-            fightMsgctrlSetValue(0x1b, 0);
-            fightMsgctrlSetValue(0x42, 0);
-            fightMsgctrlSetValue(0x44, 0);
-            fightMsgctrlSetValue(0x43, 0);
-        }
-    } else {
-            fightMsgctrlSetValue(0x10, 0);
-            fightMsgctrlSetValue(0x1b, 0);
-            fightMsgctrlSetValue(0x42, 0);
-            fightMsgctrlSetValue(0x44, 0);
-            fightMsgctrlSetValue(0x43, 0);
-    }
-    fightFloorBiosSetDefensePokemonPtr(floor, pokemon);
-}
-
-void fightFloor_SetAttackPokemonPtr(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    if (pokemon) {
-        if (fightOutPokemonCheckValid(pokemon) == 1) {
-            fightMsgctrlSetValue(0xf, (u32)pokemon);
-            fightMsgctrlSetValue(0x1a, (u32)GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(fightOutPokemonGetTokuseiDataId(pokemon)))));
-            fightMsgctrlSetValue(0x1f, (u32)pokemon);
-            fightMsgctrlSetValue(0x21, (u32)pokemon);
-            fightMsgctrlSetValue(0x20, (u32)pokemon);
-        } else {
-            fightMsgctrlSetValue(0xf, 0);
-            fightMsgctrlSetValue(0x1a, 0);
-            fightMsgctrlSetValue(0x1f, 0);
-            fightMsgctrlSetValue(0x21, 0);
-            fightMsgctrlSetValue(0x20, 0);
-        }
-    } else {
-            fightMsgctrlSetValue(0xf, 0);
-            fightMsgctrlSetValue(0x1a, 0);
-            fightMsgctrlSetValue(0x1f, 0);
-            fightMsgctrlSetValue(0x21, 0);
-            fightMsgctrlSetValue(0x20, 0);
-    }
-    fightFloorBiosSetAttackPokemonPtr(floor, pokemon);
-}
-
-void fightFloor_SetDefPokemonAndAtkFightWazaTargetId(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
-    u32 type = (u8)fightFloor_GetFightType(floor);
-    if (!floor) floor = fightFloorBiosGetFightFloorPtr();
-    fightFloor_SetDefensePokemonPtr(floor, pokemon);
-    fightFloor_SetAttackPokemonFightWazaTargetId(floor, fightTargetGetTragetPtrToRelativeHostSideFightTargetId(pokemon, type));
 }
 }

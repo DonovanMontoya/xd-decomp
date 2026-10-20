@@ -21,8 +21,6 @@ struct FilterRenderModule {
     u32 reserved;
 };
 void GSgfxRenderModuleRegister__FUcP17GSgfxRenderModulePv(u8, FilterRenderModule*, void*);
-// The final reserved word is preserved from the retail registration record.
-static const FilterRenderModule filterModule = {0, 0, _filterRender__FP10GSgfxLayer14GSgfxLayerPass, 0, 0, 0, 0xB29A48E1};
 static FilterData filtersData;
 GSfilter* gsDefaultFilterPtr;
 static u8 gModuleInited;
@@ -54,26 +52,11 @@ static inline void _filterCopyColor(u8* output, u8* color) {
     output[2] = color[2];
     output[3] = color[3];
 }
-GSfilter* GSfilterCreate(void* input) {
-    u8* color = (u8*)input;
-    if (filtersData.allocated < filtersData.capacity) {
-        GSfilter* handle = filtersData.handles;
-        for (u8 i = 0; i < filtersData.capacity; i++, handle++) {
-            if (!handle->allocated) {
-                u8* output = (u8*)&filtersData.colors[i];
-                _filterCopyColor(output, color);
-                if (color[3] && !handle->visible) {
-                    handle->visible = 1;
-                    filtersData.visible++;
-                }
-                handle->allocated = 1;
-                filtersData.allocated++;
-                return handle;
-            }
-        }
-    }
-    return 0;
-}
+GSfilter* GSfilterCreate(void* input);
+void GSfilterInitialise(u8 count);
+static void _filterRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer *arg0, s32 arg1);
+void GSfilterSetColor(GSfilter* handle, void* input);
+void GSfilterFree(GSfilter *arg0);
 
 void GSfilterInitialise(u8 count) {
     memset(&filtersData, 0, 0x45C);
@@ -247,6 +230,29 @@ void GSfilterFree(GSfilter *arg0) {
         }
         filtersData.allocated = (u8) (filtersData.allocated - 1);
     }
+}
+
+GSfilter* GSfilterCreate(void* input) {
+    u8* color = (u8*)input;
+    u8 capacity = filtersData.capacity;
+    u8 allocated = filtersData.allocated;
+    if (allocated < capacity) {
+        GSfilter* handle = filtersData.handles;
+        for (u8 i = 0; i < capacity; i++, handle++) {
+            if (!handle->allocated) {
+                u8* output = (u8*)&filtersData.colors[i];
+                _filterCopyColor(output, color);
+                if (color[3] && !handle->visible) {
+                    handle->visible = 1;
+                    filtersData.visible++;
+                }
+                handle->allocated = 1;
+                filtersData.allocated++;
+                return handle;
+            }
+        }
+    }
+    return 0;
 }
 
 }

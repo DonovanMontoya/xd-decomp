@@ -67,10 +67,11 @@ void HSD_IDInsertToTable(HSD_IDTable* table, HSD_IDKey id, void* data)
 void HSD_IDRemoveByIDFromTable(HSD_IDTable* table, HSD_IDKey id)
 {
     IDEntry* entry;
-    IDEntry* previous = 0;
+    IDEntry* previous;
     if (table == 0) {
         table = &default_table;
     }
+    previous = 0;
     for (entry = table->table[id_hash(id)]; entry != 0; entry = entry->next) {
         if (entry->id == id) {
             if (previous != 0) {

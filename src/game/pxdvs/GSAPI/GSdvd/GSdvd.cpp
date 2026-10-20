@@ -83,7 +83,7 @@ s32 GSdvdGetFileInfoStatus(GSdvdWork* work) {
 }
 s32 GSdvdGetDriveStatus() { if (_initFlag == 0) { return -1; } else { return DVDGetDriveStatus(); } }
 s32 GSdvdWrite() { return -1; }
-s32 GSdvdRemove() { return 0 & ~-((_initFlag == 0) & 1); }
+s32 GSdvdRemove() { if (_initFlag == 0) { return 0; } return 0; }
 s32 GSdvdCreate() { return 0; }
 u32 GSdvdGetLength(GSdvdWork* work) { if (!_initFlag) return 0; if (work == 0) { return 0; } else { return work->info.length; } }
 s32 GSdvdClose(GSdvdWork* work) { if (!_initFlag) return 0; if (!work) return 0; _freeDvdWork(work); return DVDClose(&work->info); }

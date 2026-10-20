@@ -32,6 +32,10 @@ GSvec nullVec;
 varPool_t l_stringPool;
 varPool_t l_vectorPool;
 static char _tempString[0x100];
+struct VariantVectorStorage { f32 x, y, z; };
+static VariantVectorStorage vectorConversionStorage;
+static char addStringBuffer[0x100];
+static char multiplyStringBuffer[0x400];
 const char* tigaVariant::getTypeString(int type) {
     static const char* commType[] = {
         "type_nodef", "type_integer", "type_single", "type_string", "type_vector",
@@ -471,9 +475,8 @@ void tigaVariant::mul(tigaVariant* result, tigaVariant* other) {
         break;
     }
     case 3: {
-        static char szDest[0x400];
         char buffer[0x100];
-        szDest[0] = 0;
+        multiplyStringBuffer[0] = 0;
         char* text;
         if (primary->type == 3) text = primary->value.string; else text = primary->getCnvString(buffer);
         OPERAND_INTEGER(count, scalar)
@@ -482,9 +485,9 @@ void tigaVariant::mul(tigaVariant* result, tigaVariant* other) {
             result->value.string = "null";
             if (result->type != 1 && result->type != 2) Tiga::m_cpCurrentObject->cellMemory->dupVariant(result);
         } else {
-            for (s32 i = 0; i < count; i++) strcat(szDest, text);
+            for (s32 i = 0; i < count; i++) strcat(multiplyStringBuffer, text);
             result->type = 3;
-            result->value.string = szDest;
+            result->value.string = multiplyStringBuffer;
             if (result->type != 1 && result->type != 2) Tiga::m_cpCurrentObject->cellMemory->dupVariant(result);
         }
         break;
@@ -572,15 +575,14 @@ void tigaVariant::add(tigaVariant* result, tigaVariant* other) {
         break;
     }
     case 3: {
-        static char szDest[0x100];
         char buffer[0x100];
         char* text;
         if (type == 3) text = value.string; else text = getCnvString(buffer);
-        strcpy(szDest, text);
+        strcpy(addStringBuffer, text);
         if (other->type == 3) text = other->value.string; else text = other->getCnvString(buffer);
-        strcat(szDest, text);
+        strcat(addStringBuffer, text);
         result->type = 3;
-        result->value.string = szDest;
+        result->value.string = addStringBuffer;
         if (result->type != 1 && result->type != 2) Tiga::m_cpCurrentObject->cellMemory->dupVariant(result);
         break;
     }
@@ -611,15 +613,18 @@ char* tigaVariant::getCnvString(char* destination) {
 }
 
 GSvec* tigaVariant::getCnvVector() {
-    static GSvec vTemp;
+    static s8 initialized;
+    if (!initialized) initialized = true;
     if (type == 4) return value.vector;
     f32 scalar;
     if (type == 1) scalar = value.integer;
     else if (type == 2) scalar = value.single;
     else scalar = getCnvSingle();
     // The original writes x twice and leaves z unchanged.
-    vTemp.param1 = scalar; vTemp.param2 = scalar; vTemp.param1 = scalar;
-    return &vTemp;
+    ((GSvec*)&vectorConversionStorage)->param1 = scalar;
+    ((GSvec*)&vectorConversionStorage)->param2 = scalar;
+    ((GSvec*)&vectorConversionStorage)->param1 = scalar;
+    return (GSvec*)&vectorConversionStorage;
 }
 f32 tigaVariant::getCnvSingle() {
     if (type == 3) return atof(value.string);
@@ -636,7 +641,7 @@ tigaVariant* tigaArrayFixed::fe_get() {
     u32 index = cursor;
     if (index >= (u32)count) { _dummyValue.type = 1; _dummyValue.value.integer = 0; return &_dummyValue; }
     cursor = index + 1;
-    return (tigaVariant*)((u8*)this + cursor * 8 + 8);
+    return (tigaVariant*)((u8*)this + 8) + cursor;
 }
 void tigaArrayFixed::set(int index, const tigaVariant* source) {
     if (index < 0 || index >= count) return;
@@ -644,7 +649,7 @@ void tigaArrayFixed::set(int index, const tigaVariant* source) {
 }
 tigaVariant* tigaArrayFixed::get(int index) {
     if (index < 0 || index >= count) { _dummyValue.type = 1; _dummyValue.value.integer = 0; return &_dummyValue; }
-    return &values[index];
+    return (tigaVariant*)((u8*)this + 16) + index;
 }
 void tigaCellMemory::freeVariant(tigaVariant* v) {
     if (v->type == 3) {
@@ -710,4 +715,9 @@ static void** varPoolSearchFree(varPool_t* pool) {
     }
     return 0;
 }
+// Retained diagnostics for the array accessors stripped from the retail DOL.
+#pragma force_active on
+static const char arrayIndexError[] ATTRIBUTE_ALIGN(4) = "over index (%d)";
+static const char arrayForeachIndexError[] ATTRIBUTE_ALIGN(4) = "foreach over index (%d)";
+#pragma force_active reset
 }

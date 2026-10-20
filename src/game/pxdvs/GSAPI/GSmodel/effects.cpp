@@ -1,12 +1,12 @@
+#define DIST_FIELD(layer, type, offset) (*(type*)((u8*)(layer) + (offset)))
 #include <game/pxdvs/GSAPI/GSmodel/runtime.hpp>
 #include <game/pxdvs/GSAPI/GSpart/GSpart.hpp>
 #include <game/pxdvs/GSAPI/GStexture/GStexture.hpp>
 struct GSgfxLayer { u8 reserved00[0x28]; s32 identifier; };
 struct GSmodelVertexDescriptor { s32 attribute, type, components, format; u8 fractionalBits, reserved11; u16 stride; void* data; };
+struct DistortionMatrix { Mtx matrix; };
 struct GSparticleGenerator;
 extern "C" {
-char g_distortion_layer_name[] = "model distortion";
-static u8 g_distortion_layer_ref_count;
 GSgfxLayer* GSgfxLayerFindByName(char*);
 GSgfxLayer* GSgfxLayerFindByID(s32);
 void SetLayerVisibility__10GSgfxLayerFb(GSgfxLayer*, bool);
@@ -26,78 +26,31 @@ GSparticleGenerator* GSparticleCreateGenerator(GSparticleBank*, s32, s32);
 void GSparticleSetGeneratorPosition(GSparticleGenerator*, Vec*);
 void GSparticleSetGeneratorRotation(GSparticleGenerator*, Vec*);
 void GSparticleSetGeneratorScale(GSparticleGenerator*, Vec*, void*, void*);
-void GSmodelFreeDistortion(GSmodel* model) {
-    GSmodelRuntime* runtime = modelRuntime(model);
-    if ((model->flags & 0x80000) == 0x80000) {
-        model->flags &= ~0x80000;
-        GSgfxLayer* layer = GSgfxLayerFindByName(g_distortion_layer_name);
-        if (layer) SetLayerVisibility__10GSgfxLayerFb(layer, false);
-    }
-    runtime->distortionPart = 0; runtime->distortionMaterial = 0; runtime->distortionPolygon = 0;
-    if (runtime->distortionTexture) {
-        GSmemFree(runtime->distortionTexture); runtime->distortionTexture = 0;
-        if (g_distortion_layer_ref_count && --g_distortion_layer_ref_count == 0) {
-            GSgfxLayer* layer = GSgfxLayerFindByName(g_distortion_layer_name);
-            if (layer) Remove__16GSgfxLayerConfigF12GSgfxLayerID(layer->identifier);
-        }
-    }
-    if (runtime->distortionVertexFormat) {
-        GSgfxVFFree(runtime->distortionVertexFormat); __dl__FPv(runtime->distortionVertexFormat); runtime->distortionVertexFormat = 0;
-    }
-}
-void GSmodelCreateDistortion(GSmodel* model, u16 partIndex, u8 materialIndex, u8 strength) {
-    GSmodelRuntime* runtime = modelRuntime(model);
-    if (!runtime->distortionTexture && partIndex) {
-        GSpart* part = GSmodelGetPart(model, partIndex);
-        if (part) {
-            HSD_JObj* joint = part->joint;
-            GSmaterial* material = GSpartGetMaterial(part, materialIndex);
-            GSpartFree(part);
-            if (material && !(joint->flags & 0x4020)) {
-                HSD_DObj* object = joint->u.dobj;
-                if (object) {
-                    HSD_PObj* polygon = object->pobj;
-                    if (polygon && polygon->verts && polygon->n_display && polygon->display && (polygon->flags & 0x3000) != 0x1000) {
-                        runtime->distortionPart = partIndex; runtime->distortionMaterial = materialIndex; runtime->distortionPolygon = polygon;
-                        runtime->distortionTexture = (GStexture*)GSmemAllocClr(0x80);
-                        if (runtime->distortionTexture) {
-                            if (!strength) strength = 1;
-                            runtime->distortionStrength = strength;
-                            GSmaterialGetTexture(material, runtime->distortionTexture);
-                            GStextureSetWrap(runtime->distortionTexture, 0, 0); GStextureSetFilter(runtime->distortionTexture, 2, 2, 0);
-                            GSgfxLayer* layer = GSgfxLayerFindByName(g_distortion_layer_name);
-                            if (!layer) {
-                                s32 id = Add__16GSgfxLayerConfigFPcUlUlUl14GSgfxLayerTypebbb12GSgfxLayerID16GSgfxLayerOffset(g_distortion_layer_name, 0, 0x1400, 2, 4, false, false, false, 2, 2);
-                                layer = GSgfxLayerFindByID(id);
-                                if (layer) SetLayerVisibility__10GSgfxLayerFb(layer, false);
-                            }
-                            ++g_distortion_layer_ref_count;
-                            if (!layer) { GStextureFree(runtime->distortionTexture); runtime->distortionTexture = 0; runtime->distortionPolygon = 0; }
-                            runtime->distortionVertexFormat = (GSgfxVF*)__nw__FUl(0x440);
-                            if (runtime->distortionVertexFormat) {
-                                GSgfxVFInit(runtime->distortionVertexFormat); GSgfxVFCreate(runtime->distortionVertexFormat);
-                                GSmodelVertexDescriptor* desc = (GSmodelVertexDescriptor*)polygon->verts;
-                                s32 attribute;
-                                while ((attribute = desc->attribute) != 255) {
-                                    if (attribute >= 9 || attribute < 0) GSgfxVFSetElement(runtime->distortionVertexFormat, attribute, desc->components, desc->format, desc->fractionalBits);
-                                    if (desc->type != 1) GSgfxVFSetArray(runtime->distortionVertexFormat, desc->attribute, desc->type, desc->data, (u8)desc->stride, 0);
-                                    ++desc;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-void GSmodelEnableDistortion(GSmodel* model) {
-    GSmodelRuntime* runtime = modelRuntime(model);
-    if ((model->flags & 0x80000) != 0x80000 && runtime->distortionPolygon && runtime->distortionTexture) {
-        GSgfxLayer* layer = GSgfxLayerFindByName(g_distortion_layer_name);
-        if (layer) { SetLayerVisibility__10GSgfxLayerFb(layer, true); model->flags |= 0x80000; }
-    }
-}
+s32 GScameraGetActiveCamera();
+void GScameraGetPerspective(s32, f32*, f32*, f32*, f32*);
+void GScameraGetPosition(s32, Vec*);
+void GScameraLoadActiveCameraMatrix(s32);
+s32 GSgfxPerfbarCPUEntry(s32);
+void GSgfxVideoGetEFBSize(u16*, u16*);
+GStexture* GetFBTexture__10GSgfxLayerFv();
+u8 IsLayerVisible__10GSgfxLayerFv(GSgfxLayer*);
+void tunitFunc__10GSgfxLayerFUc14GSgfxTunitFunc(GSgfxLayer*, u8, s32);
+void tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(GSgfxLayer*, u8, s32, s32, void*, bool, void*);
+void _modelDrawDistortionSub__FP8_GSmodelP10GSgfxLayerP5GSmtxP5GSvec(GSmodel*, GSgfxLayer*, Mtx, Vec*);
+void* memset(void*, int, unsigned long);
+void pushMult__16GSgfxMatrixStackFP5GSmtx(void*, Mtx);
+void pop__16GSgfxMatrixStackFv(void*);
+void tunitIndTexMtx__10GSgfxLayerF16GSgfxIndTexMtxIDPA3_fSc(GSgfxLayer*, s32, f32 (*)[3], s8);
+void dlDrawExt__10GSgfxLayerFPUcUl(GSgfxLayer*, void*, u32);
+char g_distortion_layer_name[] = "model distortion";
+static u8 g_distortion_layer_ref_count;
+void GSmodelFreeDistortion(GSmodel* model);
+void GSmodelCreateDistortion(GSmodel* model, u16 partIndex, u8 materialIndex, u8 strength);
+void GSmodelEnableDistortion(GSmodel* model);
+void modelDustUpdate__FP8_GSmodel(GSmodel* model);
+void modelDistortionRender__Fv(void);
+void _modelDrawDistortionSub__FP8_GSmodelP10GSgfxLayerP5GSmtxP5GSvec(GSmodel* model, GSgfxLayer* layer, Mtx projection, Vec* cameraPosition);
+
 void modelDustUpdate__FP8_GSmodel(GSmodel* model) {
     GSmodelRuntime* runtime;
     GSmodelDustPart* dust;
@@ -137,23 +90,141 @@ void modelDustUpdate__FP8_GSmodel(GSmodel* model) {
         }
     }
 }
+void GSmodelEnableDistortion(GSmodel* model) {
+    GSmodelRuntime* runtime = modelRuntime(model);
+    if ((model->flags & 0x80000) != 0x80000 && runtime->distortionPolygon && runtime->distortionTexture) {
+        GSgfxLayer* layer = GSgfxLayerFindByName(g_distortion_layer_name);
+        if (layer) { SetLayerVisibility__10GSgfxLayerFb(layer, true); model->flags |= 0x80000; }
+    }
+}
+void GSmodelCreateDistortion(GSmodel* model, u16 partIndex, u8 materialIndex, u8 strength) {
+    GSmodelRuntime* runtime = modelRuntime(model);
+    GSgfxLayer* layer;
+    if (!runtime->distortionTexture && partIndex) {
+        GSpart* part = GSmodelGetPart(model, partIndex);
+        if (part) {
+            GSmaterial* material;
+            HSD_JObj* joint;
+            joint = part->joint;
+            material = GSpartGetMaterial(part, materialIndex);
+            GSpartFree(part);
+            if (material && ((u32)__cntlzw(joint->flags & 0x4020) >> 5)) {
+                HSD_DObj* object = joint->u.dobj;
+                if (object) {
+                    HSD_PObj* polygon = object->pobj;
+                    if (polygon && polygon->verts && polygon->n_display && polygon->display && (polygon->flags & 0x3000) != 0x1000) {
+                        runtime->distortionPart = partIndex; runtime->distortionMaterial = materialIndex; runtime->distortionPolygon = polygon;
+                        runtime->distortionTexture = (GStexture*)GSmemAllocClr(0x80);
+                        if (runtime->distortionTexture) {
+                            if (!strength) strength = 1;
+                            runtime->distortionStrength = strength;
+                            GSmaterialGetTexture(material, runtime->distortionTexture);
+                            GStextureSetWrap(runtime->distortionTexture, 0, 0); GStextureSetFilter(runtime->distortionTexture, 2, 2, 0);
+                            layer = GSgfxLayerFindByName(g_distortion_layer_name);
+                            if (!layer) {
+                                s32 id = Add__16GSgfxLayerConfigFPcUlUlUl14GSgfxLayerTypebbb12GSgfxLayerID16GSgfxLayerOffset(g_distortion_layer_name, 0, 0x1400, 2, 4, false, false, false, 2, 2);
+                                layer = GSgfxLayerFindByID(id);
+                                if (layer) SetLayerVisibility__10GSgfxLayerFb(layer, false);
+                            }
+                            ++g_distortion_layer_ref_count;
+                            if (!layer) { GStextureFree(runtime->distortionTexture); runtime->distortionTexture = 0; runtime->distortionPolygon = 0; }
+                            runtime->distortionVertexFormat = (GSgfxVF*)__nw__FUl(0x440);
+                            if (runtime->distortionVertexFormat) {
+                                GSgfxVFInit(runtime->distortionVertexFormat); GSgfxVFCreate(runtime->distortionVertexFormat);
+                                GSmodelVertexDescriptor* desc = (GSmodelVertexDescriptor*)polygon->verts;
+                                s32 attribute;
+                                while ((attribute = desc->attribute) != 255) {
+                                    if (attribute >= 9 || attribute < 0) GSgfxVFSetElement(runtime->distortionVertexFormat, attribute, desc->components, desc->format, desc->fractionalBits);
+                                    if (desc->type != 1) GSgfxVFSetArray(runtime->distortionVertexFormat, desc->attribute, desc->type, desc->data, (u8)desc->stride, 0);
+                                    ++desc;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+void GSmodelFreeDistortion(GSmodel* model) {
+    GSmodelRuntime* runtime = modelRuntime(model);
+    if ((model->flags & 0x80000) == 0x80000) {
+        model->flags &= ~0x80000;
+        GSgfxLayer* layer = GSgfxLayerFindByName(g_distortion_layer_name);
+        if (layer) SetLayerVisibility__10GSgfxLayerFb(layer, false);
+    }
+    runtime->distortionPart = 0; runtime->distortionMaterial = 0; runtime->distortionPolygon = 0;
+    if (runtime->distortionTexture) {
+        GSmemFree(runtime->distortionTexture); runtime->distortionTexture = 0;
+        if (g_distortion_layer_ref_count && --g_distortion_layer_ref_count == 0) {
+            GSgfxLayer* layer = GSgfxLayerFindByName(g_distortion_layer_name);
+            if (layer) Remove__16GSgfxLayerConfigF12GSgfxLayerID(layer->identifier);
+        }
+    }
+    if (runtime->distortionVertexFormat) {
+        GSgfxVFFree(runtime->distortionVertexFormat); __dl__FPv(runtime->distortionVertexFormat); runtime->distortionVertexFormat = 0;
+    }
+}
 }
 
 // The render-state cache retains independent dirty masks for both contexts.
-#define DIST_FIELD(layer, type, offset) (*(type*)((u8*)(layer) + (offset)))
 extern "C" {
 extern GSmodel* _modelTopPtr;
-s32 GScameraGetActiveCamera();
-void GScameraGetPerspective(s32, f32*, f32*, f32*, f32*);
-void GScameraGetPosition(s32, Vec*);
-void GScameraLoadActiveCameraMatrix(s32);
-s32 GSgfxPerfbarCPUEntry(s32);
-void GSgfxVideoGetEFBSize(u16*, u16*);
-GStexture* GetFBTexture__10GSgfxLayerFv();
-u8 IsLayerVisible__10GSgfxLayerFv(GSgfxLayer*);
-void tunitFunc__10GSgfxLayerFUc14GSgfxTunitFunc(GSgfxLayer*, u8, s32);
-void tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(GSgfxLayer*, u8, s32, s32, void*, bool, void*);
-void _modelDrawDistortionSub__FP8_GSmodelP10GSgfxLayerP5GSmtxP5GSvec(GSmodel*, GSgfxLayer*, Mtx, Vec*);
+void _modelDrawDistortionSub__FP8_GSmodelP10GSgfxLayerP5GSmtxP5GSvec(GSmodel* model, GSgfxLayer* layer, Mtx projection, Vec* cameraPosition) {
+    DistortionMatrix modelMatrix;
+    DistortionMatrix textureMatrix;
+    DistortionMatrix combined;
+    f32 indirect[2][3];
+    Vec position;
+    GSmodelRuntime* runtime = modelRuntime(model);
+    if ((model->flags & 0x80000) == 0x80000 && runtime->distortionVertexFormat) {
+        HSD_PObj* polygon = runtime->distortionPolygon;
+        if (polygon) {
+            GSpart* part = GSmodelGetPart(model, runtime->distortionPart);
+            if (part) {
+                GSpartGetMatrix(part, modelMatrix.matrix);
+                position.x = modelMatrix.matrix[0][3];
+                position.y = modelMatrix.matrix[1][3];
+                position.z = modelMatrix.matrix[2][3];
+                GSpartFree(part);
+                f32 distance = PSVECDistance(&position, cameraPosition);
+                if (distance < 1.0f) distance = 1.0f;
+                f32 strength = 1.0f / distance;
+                memset(indirect, 0, sizeof(indirect));
+                if (runtime->distortionStrength & 1) {
+                    if (runtime->distortionStrength & 4) indirect[0][1] = -0.5f * strength;
+                    else indirect[0][1] = 0.5f * strength;
+                }
+                if (runtime->distortionStrength & 2) {
+                    if (runtime->distortionStrength & 8) indirect[1][2] = -0.5f * strength;
+                    else indirect[1][2] = 0.5f * strength;
+                }
+                GStexture* texture = runtime->distortionTexture;
+                if (DIST_FIELD(layer, GStexture*, 0x1740) != texture || DIST_FIELD(layer, GStexture*, 0x17F8) != texture || DIST_FIELD(texture, u8, 7)) {
+                    DIST_FIELD(layer, GStexture*, 0x1740) = texture;
+                    DIST_FIELD(layer, u32, 0x173C) |= 1;
+                    DIST_FIELD(layer, GStexture*, 0x17F8) = texture;
+                    DIST_FIELD(layer, u32, 0x17F4) |= 1;
+                }
+                pushMult__16GSgfxMatrixStackFP5GSmtx(DIST_FIELD(layer, void*, 0x19A0), modelMatrix.matrix);
+                void* stack = DIST_FIELD(layer, void*, 0x19A0);
+                PSMTXConcat(projection, (f32(*)[4])((u8*)DIST_FIELD(stack, void*, 4) + 4), combined.matrix);
+                textureMatrix = combined;
+                PSMTXCopy(textureMatrix.matrix, modelMatrix.matrix);
+                tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(layer, 1, 0, 0, modelMatrix.matrix, false, 0);
+                tunitIndTexMtx__10GSgfxLayerF16GSgfxIndTexMtxIDPA3_fSc(layer, 1, indirect, 1);
+                DIST_FIELD(layer, GSgfxVF*, 0x199C) = runtime->distortionVertexFormat;
+                dlDrawExt__10GSgfxLayerFPUcUl(layer, polygon->display, polygon->n_display * 32);
+                pop__16GSgfxMatrixStackFv(DIST_FIELD(layer, void*, 0x19A0));
+            }
+        }
+    }
+}
+
+}
+
+
+extern "C" {
 #pragma opt_common_subs off
 #pragma opt_propagation off
 void modelDistortionRender__Fv(void) {
@@ -380,68 +451,9 @@ void modelDistortionRender__Fv(void) {
         }
     }
 }
-
-}
 #pragma opt_common_subs reset
 #pragma opt_propagation reset
 
-struct DistortionMatrix { Mtx matrix; };
-extern "C" {
-void* memset(void*, int, unsigned long);
-void pushMult__16GSgfxMatrixStackFP5GSmtx(void*, Mtx);
-void pop__16GSgfxMatrixStackFv(void*);
-void tunitIndTexMtx__10GSgfxLayerF16GSgfxIndTexMtxIDPA3_fSc(GSgfxLayer*, s32, f32 (*)[3], s8);
-void dlDrawExt__10GSgfxLayerFPUcUl(GSgfxLayer*, void*, u32);
-void _modelDrawDistortionSub__FP8_GSmodelP10GSgfxLayerP5GSmtxP5GSvec(GSmodel* model, GSgfxLayer* layer, Mtx projection, Vec* cameraPosition) {
-    DistortionMatrix modelMatrix;
-    DistortionMatrix textureMatrix;
-    DistortionMatrix combined;
-    f32 indirect[2][3];
-    Vec position;
-    GSmodelRuntime* runtime = modelRuntime(model);
-    if ((model->flags & 0x80000) == 0x80000 && runtime->distortionVertexFormat) {
-        HSD_PObj* polygon = runtime->distortionPolygon;
-        if (polygon) {
-            GSpart* part = GSmodelGetPart(model, runtime->distortionPart);
-            if (part) {
-                GSpartGetMatrix(part, modelMatrix.matrix);
-                position.x = modelMatrix.matrix[0][3];
-                position.y = modelMatrix.matrix[1][3];
-                position.z = modelMatrix.matrix[2][3];
-                GSpartFree(part);
-                f32 distance = PSVECDistance(&position, cameraPosition);
-                if (distance < 1.0f) distance = 1.0f;
-                f32 strength = 1.0f / distance;
-                memset(indirect, 0, sizeof(indirect));
-                if (runtime->distortionStrength & 1) {
-                    if (runtime->distortionStrength & 4) indirect[0][1] = -0.5f * strength;
-                    else indirect[0][1] = 0.5f * strength;
-                }
-                if (runtime->distortionStrength & 2) {
-                    if (runtime->distortionStrength & 8) indirect[1][2] = -0.5f * strength;
-                    else indirect[1][2] = 0.5f * strength;
-                }
-                GStexture* texture = runtime->distortionTexture;
-                if (DIST_FIELD(layer, GStexture*, 0x1740) != texture || DIST_FIELD(layer, GStexture*, 0x17F8) != texture || DIST_FIELD(texture, u8, 7)) {
-                    DIST_FIELD(layer, GStexture*, 0x1740) = texture;
-                    DIST_FIELD(layer, u32, 0x173C) |= 1;
-                    DIST_FIELD(layer, GStexture*, 0x17F8) = texture;
-                    DIST_FIELD(layer, u32, 0x17F4) |= 1;
-                }
-                pushMult__16GSgfxMatrixStackFP5GSmtx(DIST_FIELD(layer, void*, 0x19A0), modelMatrix.matrix);
-                void* stack = DIST_FIELD(layer, void*, 0x19A0);
-                PSMTXConcat(projection, (f32(*)[4])((u8*)DIST_FIELD(stack, void*, 4) + 4), combined.matrix);
-                textureMatrix = combined;
-                PSMTXCopy(textureMatrix.matrix, modelMatrix.matrix);
-                tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(layer, 1, 0, 0, modelMatrix.matrix, false, 0);
-                tunitIndTexMtx__10GSgfxLayerF16GSgfxIndTexMtxIDPA3_fSc(layer, 1, indirect, 1);
-                DIST_FIELD(layer, GSgfxVF*, 0x199C) = runtime->distortionVertexFormat;
-                dlDrawExt__10GSgfxLayerFPUcUl(layer, polygon->display, polygon->n_display * 32);
-                pop__16GSgfxMatrixStackFv(DIST_FIELD(layer, void*, 0x19A0));
-            }
-        }
-    }
-}
 }
 
 #undef DIST_FIELD

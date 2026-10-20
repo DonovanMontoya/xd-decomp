@@ -57,14 +57,14 @@ s32 GSgfxBeginBackFBCapture(GStexture *texture, BackFBCaptureCallback callback, 
 }
 void GSgfxBackFBDoFrame__FP10GSgfxLayer(GSgfxLayer *layer) {
     u32 opaque, translucent;
-    s32 pass;
-    u32 i;
     BackFBCapture *capture;
+    u32 i;
+    s32 pass;
     if (_backFBIsCapturing != 0) {
         GetFifoSize__10GSgfxLayerFPUlPUl(layer, &opaque, &translucent);
+        pass = (translucent != 0) ? 1 : 0;
         capture = gfxBackFBList;
         i = 0;
-        pass = (translucent != 0) ? 1 : 0;
         for (; i < 4; ++i, ++capture) {
             if (capture->active == 1) {
                 textureCopy__10GSgfxLayerF14GSgfxLayerPassP9GStexturebPUcbbb(layer, pass, capture->texture, 1, 0, 0, 0, 0);

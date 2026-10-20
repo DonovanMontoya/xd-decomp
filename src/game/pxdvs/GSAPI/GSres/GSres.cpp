@@ -34,8 +34,7 @@ void GSresDumpGroup(unsigned long group) {
     GSlogWrite("-----------------------------------------------\n");
     while (entry) {
         if (entry->group == group || group == ~0UL) {
-            s8 mark = ' ';
-            if (entry->allocated) mark = 'o';
+            s8 mark = entry->allocated ? 'o' : ' ';
             GSlogWrite("  %c   0x%08x  %04d  0x%08x 0x%08x\n", mark, entry->resource, entry->group, entry->identifier, entry->freeCallback);
         }
         entry = entry->next;

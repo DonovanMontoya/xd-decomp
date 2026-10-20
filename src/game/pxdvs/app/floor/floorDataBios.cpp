@@ -22,8 +22,7 @@ s32 floorDataBiosModelIDGetFogState(u32 modelID) {
     FloorRenderData *render = *table;
     if (render->noFogModelIDs[0] == modelID) return 0;
     if (render->noFogModelIDs[1] == modelID) return 0;
-    if (render->noFogModelIDs[2] == modelID) return 0;
-    return 1;
+    return render->noFogModelIDs[2] == modelID ? 0 : 1;
 }
 s32 floorDataBiosGetSecondaryRenderNum(FloorData *floor) {
     s32 count = 0;

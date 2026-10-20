@@ -27,11 +27,35 @@ static u8 _def_swap_tables[4][4];
 static u8 _cur_swap_tables[4][4];
 
 static int current_tev;
-static int num_tex_gens;
-static int prev_num_chans;
-
-static int prev_mat_invalid[2];
 static int prev_amb_invalid[2];
+static int prev_mat_invalid[2];
+static int prev_num_chans;
+static int num_tex_gens;
+
+void HSD_RenderInitAllocData(void);
+HSD_ObjAllocData* HSD_RenderGetAllocData(void);
+HSD_ObjAllocData* HSD_TevRegGetAllocData(void);
+HSD_ObjAllocData* HSD_ChanGetAllocData(void);
+void HSD_SetupChannel(HSD_Chan* ch);
+void HSD_StateSetNumChans(int num);
+void HSD_SetupChannelAll(HSD_Chan* channel);
+void HSD_StateRegisterTexGen(int coord);
+void HSD_StateSetNumTexGens(void);
+void HSD_StateInitTev(void);
+int HSD_StateGetNumTevStages(void);
+int HSD_StateAssignTev(void);
+void HSD_StateSetNumTevStages(void);
+void HSD_SetupTevStage(HSD_TevDesc* desc);
+void HSD_SetupTevStageAll(HSD_TevDesc* desc);
+int HSD_Index2TevStage(int idx);
+void HSD_SetTevRegAll(void);
+void _HSD_StateInvalidateColorChannel(void);
+void _HSD_StateInvalidateTevStage(void);
+void _HSD_StateInvalidateTevRegister(void);
+void _HSD_StateInvalidateTexCoordGen(void);
+void HSD_InitColorSwapTable(u8 idx, u8 r, u8 g, u8 b, u8 a);
+void HSD_ResetColorSwapTables(void);
+void HSD_DisableChannelLighting(GXChannelID chan);
 
 void HSD_RenderInitAllocData(void)
 {
@@ -159,6 +183,41 @@ void HSD_SetupChannel(HSD_Chan* ch)
     }
 }
 
+void HSD_DisableChannelLighting(GXChannelID chan)
+{
+    int idx = chan & 3;
+    switch (chan) {
+    case GX_COLOR0A0:
+    case GX_COLOR1A1:
+        if (prev_ch[idx].enable || prev_ch[idx + 2].enable) {
+            GXColorSrc amb;
+            GXColorSrc mat;
+            GXDiffuseFn diff;
+            GXAttnFn attn;
+            prev_ch[idx].enable = prev_ch[idx + 2].enable = 0;
+            prev_ch[idx].light_mask = prev_ch[idx + 2].light_mask = 0;
+            amb = prev_ch[idx].amb_src;
+            mat = prev_ch[idx].mat_src;
+            diff = prev_ch[idx].diff_fn;
+            attn = prev_ch[idx].attn_fn;
+            prev_ch[idx + 2].amb_src = amb;
+            prev_ch[idx + 2].mat_src = mat;
+            prev_ch[idx + 2].diff_fn = diff;
+            prev_ch[idx + 2].attn_fn = attn;
+            GXSetChanCtrl(chan, 0, amb, mat, 0, diff, attn);
+        }
+        break;
+    default:
+        if (prev_ch[idx].enable) {
+            prev_ch[idx].enable = 0;
+            prev_ch[idx].light_mask = 0;
+            GXSetChanCtrl(chan, 0, prev_ch[idx].amb_src, prev_ch[idx].mat_src,
+                           0, prev_ch[idx].diff_fn, prev_ch[idx].attn_fn);
+        }
+        break;
+    }
+}
+
 void HSD_StateSetNumChans(int num)
 {
     if (prev_num_chans != num) {
@@ -166,6 +225,8 @@ void HSD_StateSetNumChans(int num)
         prev_num_chans = num;
     }
 }
+
+static inline int HSD_TexCoordID2Num(int);
 
 void HSD_SetupChannelAll(HSD_Chan* channel)
 {
@@ -180,8 +241,6 @@ void HSD_SetupChannelAll(HSD_Chan* channel)
     }
     HSD_StateSetNumChans((u8) num);
 }
-
-static inline int HSD_TexCoordID2Num(int);
 
 void HSD_StateRegisterTexGen(int coord)
 {
@@ -218,102 +277,16 @@ void HSD_StateSetNumTevStages(void)
     current_tev = 0;
 }
 
-void HSD_SetupTevStage(HSD_TevDesc* desc)
+void HSD_InitColorSwapTable(u8 idx, u8 r, u8 g, u8 b, u8 a)
 {
-    GXSetTevOrder(desc->stage, desc->coord, desc->map, desc->color);
-    if (desc->flags == 0) {
-        GXSetTevOp(desc->stage, (GXTevMode) desc->u.tevconf.clr_op);
-        GXSetTevSwapMode(desc->stage, GX_TEV_SWAP0, GX_TEV_SWAP0);
-        return;
-    }
-    GXSetTevColorOp(desc->stage, desc->u.tevconf.clr_op,
-                    desc->u.tevconf.clr_bias, desc->u.tevconf.clr_scale,
-                    desc->u.tevconf.clr_clamp, desc->u.tevconf.clr_out_reg);
-    GXSetTevColorIn(desc->stage, desc->u.tevconf.clr_a, desc->u.tevconf.clr_b,
-                    desc->u.tevconf.clr_c, desc->u.tevconf.clr_d);
-    GXSetTevAlphaOp(desc->stage, desc->u.tevconf.alpha_op,
-                    desc->u.tevconf.alpha_bias, desc->u.tevconf.alpha_scale,
-                    desc->u.tevconf.alpha_clamp,
-                    desc->u.tevconf.alpha_out_reg);
-    GXSetTevAlphaIn(desc->stage, desc->u.tevconf.alpha_a,
-                    desc->u.tevconf.alpha_b, desc->u.tevconf.alpha_c,
-                    desc->u.tevconf.alpha_d);
-    GXSetTevSwapModeTable(desc->u.tevconf.ras_swap, desc->u.tevconf.swap_r,
-                          desc->u.tevconf.swap_g, desc->u.tevconf.swap_b,
-                          desc->u.tevconf.swap_a);
-    _cur_swap_tables[desc->u.tevconf.ras_swap][0] = desc->u.tevconf.swap_r;
-    _cur_swap_tables[desc->u.tevconf.ras_swap][1] = desc->u.tevconf.swap_g;
-    _cur_swap_tables[desc->u.tevconf.ras_swap][2] = desc->u.tevconf.swap_b;
-    _cur_swap_tables[desc->u.tevconf.ras_swap][3] = desc->u.tevconf.swap_a;
-    if (desc->u.tevconf.tex_swap != desc->u.tevconf.ras_swap) {
-        GXSetTevSwapModeTable(desc->u.tevconf.tex_swap, desc->u.tevconf.swap_r,
-                              desc->u.tevconf.swap_g, desc->u.tevconf.swap_b,
-                              desc->u.tevconf.swap_a);
-        _cur_swap_tables[desc->u.tevconf.ras_swap][0] = desc->u.tevconf.swap_r;
-        _cur_swap_tables[desc->u.tevconf.ras_swap][1] = desc->u.tevconf.swap_g;
-        _cur_swap_tables[desc->u.tevconf.ras_swap][2] = desc->u.tevconf.swap_b;
-        _cur_swap_tables[desc->u.tevconf.ras_swap][3] = desc->u.tevconf.swap_a;
-    }
-    GXSetTevSwapMode(desc->stage, desc->u.tevconf.ras_swap,
-                     desc->u.tevconf.tex_swap);
-    GXSetTevKColorSel(desc->stage, desc->u.tevconf.kcsel);
-    GXSetTevKAlphaSel(desc->stage, desc->u.tevconf.kasel);
-}
-
-void HSD_SetupTevStageAll(HSD_TevDesc* desc)
-{
-    int num = 0;
-
-    while (desc != NULL) {
-        int temp = HSD_TevStage2Num(desc->stage);
-        if (temp > num) {
-            num = temp;
-        }
-
-    GXSetTevOrder(desc->stage, desc->coord, desc->map, desc->color);
-    if (desc->flags == 0) {
-        GXSetTevOp(desc->stage, (GXTevMode) desc->u.tevconf.clr_op);
-        GXSetTevSwapMode(desc->stage, GX_TEV_SWAP0, GX_TEV_SWAP0);
-        goto stage_done;
-    }
-    GXSetTevColorOp(desc->stage, desc->u.tevconf.clr_op,
-                    desc->u.tevconf.clr_bias, desc->u.tevconf.clr_scale,
-                    desc->u.tevconf.clr_clamp, desc->u.tevconf.clr_out_reg);
-    GXSetTevColorIn(desc->stage, desc->u.tevconf.clr_a, desc->u.tevconf.clr_b,
-                    desc->u.tevconf.clr_c, desc->u.tevconf.clr_d);
-    GXSetTevAlphaOp(desc->stage, desc->u.tevconf.alpha_op,
-                    desc->u.tevconf.alpha_bias, desc->u.tevconf.alpha_scale,
-                    desc->u.tevconf.alpha_clamp,
-                    desc->u.tevconf.alpha_out_reg);
-    GXSetTevAlphaIn(desc->stage, desc->u.tevconf.alpha_a,
-                    desc->u.tevconf.alpha_b, desc->u.tevconf.alpha_c,
-                    desc->u.tevconf.alpha_d);
-    GXSetTevSwapModeTable(desc->u.tevconf.ras_swap, desc->u.tevconf.swap_r,
-                          desc->u.tevconf.swap_g, desc->u.tevconf.swap_b,
-                          desc->u.tevconf.swap_a);
-    _cur_swap_tables[desc->u.tevconf.ras_swap][0] = desc->u.tevconf.swap_r;
-    _cur_swap_tables[desc->u.tevconf.ras_swap][1] = desc->u.tevconf.swap_g;
-    _cur_swap_tables[desc->u.tevconf.ras_swap][2] = desc->u.tevconf.swap_b;
-    _cur_swap_tables[desc->u.tevconf.ras_swap][3] = desc->u.tevconf.swap_a;
-    if (desc->u.tevconf.tex_swap != desc->u.tevconf.ras_swap) {
-        GXSetTevSwapModeTable(desc->u.tevconf.tex_swap, desc->u.tevconf.swap_r,
-                              desc->u.tevconf.swap_g, desc->u.tevconf.swap_b,
-                              desc->u.tevconf.swap_a);
-        _cur_swap_tables[desc->u.tevconf.ras_swap][0] = desc->u.tevconf.swap_r;
-        _cur_swap_tables[desc->u.tevconf.ras_swap][1] = desc->u.tevconf.swap_g;
-        _cur_swap_tables[desc->u.tevconf.ras_swap][2] = desc->u.tevconf.swap_b;
-        _cur_swap_tables[desc->u.tevconf.ras_swap][3] = desc->u.tevconf.swap_a;
-    }
-    GXSetTevSwapMode(desc->stage, desc->u.tevconf.ras_swap,
-                     desc->u.tevconf.tex_swap);
-    GXSetTevKColorSel(desc->stage, desc->u.tevconf.kcsel);
-    GXSetTevKAlphaSel(desc->stage, desc->u.tevconf.kasel);
-
-stage_done:;
-        desc = desc->next;
-    }
-    current_tev = num;
-    HSD_StateSetNumTevStages();
+    _cur_swap_tables[idx][0] = r;
+    _def_swap_tables[idx][0] = r;
+    _cur_swap_tables[idx][1] = g;
+    _def_swap_tables[idx][1] = g;
+    _cur_swap_tables[idx][2] = b;
+    _def_swap_tables[idx][2] = b;
+    _cur_swap_tables[idx][3] = a;
+    _def_swap_tables[idx][3] = a;
 }
 
 
@@ -341,44 +314,16 @@ static inline int HSD_Channel2Num(int chan)
     }
 }
 
-int HSD_Index2TevStage(int idx)
+void HSD_ResetColorSwapTables(void)
 {
-    switch (idx) {
-    case 0:
-        return 0;
-    case 1:
-        return 1;
-    case 2:
-        return 2;
-    case 3:
-        return 3;
-    case 4:
-        return 4;
-    case 5:
-        return 5;
-    case 6:
-        return 6;
-    case 7:
-        return 7;
-    case 8:
-        return 8;
-    case 9:
-        return 9;
-    case 10:
-        return 10;
-    case 11:
-        return 11;
-    case 12:
-        return 12;
-    case 13:
-        return 13;
-    case 14:
-        return 14;
-    case 15:
-        return 15;
-    default:
-        HSD_ASSERT(0x350, 0);
-        return 15;
+    int i;
+    for (i = 0; i < 4; i++) {
+        int value = *(int*)_def_swap_tables[i];
+        if (value != *(int*)_cur_swap_tables[i]) {
+            GXSetTevSwapModeTable(i, _def_swap_tables[i][0], _def_swap_tables[i][1],
+                                 _def_swap_tables[i][2], _def_swap_tables[i][3]);
+            *(int*)_cur_swap_tables[i] = value;
+        }
     }
 }
 
@@ -471,34 +416,69 @@ static inline int HSD_TevStage2Num(int stage)
     }
 }
 
-void HSD_SetTevRegAll(void)
+static inline int HSD_TevRegID(u32 i)
 {
-    u32 i;
-    for (i = 0; i < 4; i++) {
-        if (TevReg[i].c != 0) {
-            GXColorS10 color = TevReg[i].a;
-            int reg;
-            switch (i) {
-            case 0:
-                reg = 1;
-                break;
-            case 1:
-                reg = 2;
-                break;
-            case 2:
-                reg = 3;
-                break;
-            case 3:
-                reg = 0;
-                break;
-            default:
-                reg = 1;
-                break;
-            }
-            GXSetTevColorS10(reg, color);
-            TevReg[i].c = 0;
-        }
+    int reg;
+    switch (i) {
+    case 0:
+        reg = 1;
+        break;
+    case 1:
+        reg = 2;
+        break;
+    case 2:
+        reg = 3;
+        break;
+    case 3:
+        reg = 0;
+        break;
+    default:
+        reg = 1;
+        break;
     }
+    return reg;
+}
+
+void HSD_SetupTevStage(HSD_TevDesc* desc)
+{
+    GXSetTevOrder(desc->stage, desc->coord, desc->map, desc->color);
+    if (desc->flags == 0) {
+        GXSetTevOp(desc->stage, (GXTevMode) desc->u.tevconf.clr_op);
+        GXSetTevSwapMode(desc->stage, GX_TEV_SWAP0, GX_TEV_SWAP0);
+        return;
+    }
+    GXSetTevColorOp(desc->stage, desc->u.tevconf.clr_op,
+                    desc->u.tevconf.clr_bias, desc->u.tevconf.clr_scale,
+                    desc->u.tevconf.clr_clamp, desc->u.tevconf.clr_out_reg);
+    GXSetTevColorIn(desc->stage, desc->u.tevconf.clr_a, desc->u.tevconf.clr_b,
+                    desc->u.tevconf.clr_c, desc->u.tevconf.clr_d);
+    GXSetTevAlphaOp(desc->stage, desc->u.tevconf.alpha_op,
+                    desc->u.tevconf.alpha_bias, desc->u.tevconf.alpha_scale,
+                    desc->u.tevconf.alpha_clamp,
+                    desc->u.tevconf.alpha_out_reg);
+    GXSetTevAlphaIn(desc->stage, desc->u.tevconf.alpha_a,
+                    desc->u.tevconf.alpha_b, desc->u.tevconf.alpha_c,
+                    desc->u.tevconf.alpha_d);
+    GXSetTevSwapModeTable(desc->u.tevconf.ras_swap, desc->u.tevconf.swap_r,
+                          desc->u.tevconf.swap_g, desc->u.tevconf.swap_b,
+                          desc->u.tevconf.swap_a);
+    _cur_swap_tables[desc->u.tevconf.ras_swap][0] = desc->u.tevconf.swap_r;
+    _cur_swap_tables[desc->u.tevconf.ras_swap][1] = desc->u.tevconf.swap_g;
+    _cur_swap_tables[desc->u.tevconf.ras_swap][2] = desc->u.tevconf.swap_b;
+    _cur_swap_tables[desc->u.tevconf.ras_swap][3] = desc->u.tevconf.swap_a;
+    if (desc->u.tevconf.tex_swap != desc->u.tevconf.ras_swap) {
+        GXSetTevSwapModeTable(desc->u.tevconf.tex_swap, desc->u.tevconf.swap_r,
+                              desc->u.tevconf.swap_g, desc->u.tevconf.swap_b,
+                              desc->u.tevconf.swap_a);
+        _cur_swap_tables[desc->u.tevconf.ras_swap][0] = desc->u.tevconf.swap_r;
+        _cur_swap_tables[desc->u.tevconf.ras_swap][1] = desc->u.tevconf.swap_g;
+        _cur_swap_tables[desc->u.tevconf.ras_swap][2] = desc->u.tevconf.swap_b;
+        _cur_swap_tables[desc->u.tevconf.ras_swap][3] = desc->u.tevconf.swap_a;
+    }
+    GXSetTevSwapMode(desc->stage, desc->u.tevconf.ras_swap,
+                     desc->u.tevconf.tex_swap);
+    GXSetTevKColorSel(desc->stage, desc->u.tevconf.kcsel);
+    GXSetTevKAlphaSel(desc->stage, desc->u.tevconf.kasel);
 }
 
 static inline int HSD_TexCoordID2Num(int id)
@@ -528,6 +508,114 @@ static inline int HSD_TexCoordID2Num(int id)
     }
 }
 
+void HSD_SetupTevStageAll(HSD_TevDesc* desc)
+{
+    int num = 0;
+
+    while (desc != NULL) {
+        int temp = HSD_TevStage2Num(desc->stage);
+        if (temp > num) {
+            num = temp;
+        }
+
+    GXSetTevOrder(desc->stage, desc->coord, desc->map, desc->color);
+    if (desc->flags == 0) {
+        GXSetTevOp(desc->stage, (GXTevMode) desc->u.tevconf.clr_op);
+        GXSetTevSwapMode(desc->stage, GX_TEV_SWAP0, GX_TEV_SWAP0);
+        goto stage_done;
+    }
+    GXSetTevColorOp(desc->stage, desc->u.tevconf.clr_op,
+                    desc->u.tevconf.clr_bias, desc->u.tevconf.clr_scale,
+                    desc->u.tevconf.clr_clamp, desc->u.tevconf.clr_out_reg);
+    GXSetTevColorIn(desc->stage, desc->u.tevconf.clr_a, desc->u.tevconf.clr_b,
+                    desc->u.tevconf.clr_c, desc->u.tevconf.clr_d);
+    GXSetTevAlphaOp(desc->stage, desc->u.tevconf.alpha_op,
+                    desc->u.tevconf.alpha_bias, desc->u.tevconf.alpha_scale,
+                    desc->u.tevconf.alpha_clamp,
+                    desc->u.tevconf.alpha_out_reg);
+    GXSetTevAlphaIn(desc->stage, desc->u.tevconf.alpha_a,
+                    desc->u.tevconf.alpha_b, desc->u.tevconf.alpha_c,
+                    desc->u.tevconf.alpha_d);
+    GXSetTevSwapModeTable(desc->u.tevconf.ras_swap, desc->u.tevconf.swap_r,
+                          desc->u.tevconf.swap_g, desc->u.tevconf.swap_b,
+                          desc->u.tevconf.swap_a);
+    _cur_swap_tables[desc->u.tevconf.ras_swap][0] = desc->u.tevconf.swap_r;
+    _cur_swap_tables[desc->u.tevconf.ras_swap][1] = desc->u.tevconf.swap_g;
+    _cur_swap_tables[desc->u.tevconf.ras_swap][2] = desc->u.tevconf.swap_b;
+    _cur_swap_tables[desc->u.tevconf.ras_swap][3] = desc->u.tevconf.swap_a;
+    if (desc->u.tevconf.tex_swap != desc->u.tevconf.ras_swap) {
+        GXSetTevSwapModeTable(desc->u.tevconf.tex_swap, desc->u.tevconf.swap_r,
+                              desc->u.tevconf.swap_g, desc->u.tevconf.swap_b,
+                              desc->u.tevconf.swap_a);
+        _cur_swap_tables[desc->u.tevconf.ras_swap][0] = desc->u.tevconf.swap_r;
+        _cur_swap_tables[desc->u.tevconf.ras_swap][1] = desc->u.tevconf.swap_g;
+        _cur_swap_tables[desc->u.tevconf.ras_swap][2] = desc->u.tevconf.swap_b;
+        _cur_swap_tables[desc->u.tevconf.ras_swap][3] = desc->u.tevconf.swap_a;
+    }
+    GXSetTevSwapMode(desc->stage, desc->u.tevconf.ras_swap,
+                     desc->u.tevconf.tex_swap);
+    GXSetTevKColorSel(desc->stage, desc->u.tevconf.kcsel);
+    GXSetTevKAlphaSel(desc->stage, desc->u.tevconf.kasel);
+
+stage_done:;
+        desc = desc->next;
+    }
+    current_tev = num;
+    HSD_StateSetNumTevStages();
+}
+
+int HSD_Index2TevStage(int idx)
+{
+    switch (idx) {
+    case 0:
+        return 0;
+    case 1:
+        return 1;
+    case 2:
+        return 2;
+    case 3:
+        return 3;
+    case 4:
+        return 4;
+    case 5:
+        return 5;
+    case 6:
+        return 6;
+    case 7:
+        return 7;
+    case 8:
+        return 8;
+    case 9:
+        return 9;
+    case 10:
+        return 10;
+    case 11:
+        return 11;
+    case 12:
+        return 12;
+    case 13:
+        return 13;
+    case 14:
+        return 14;
+    case 15:
+        return 15;
+    default:
+        HSD_ASSERT(0x350, 0);
+        return 15;
+    }
+}
+
+void HSD_SetTevRegAll(void)
+{
+    u32 i;
+    for (i = 0; i < 4; i++) {
+        if (TevReg[i].c != 0) {
+            GXSetTevColorS10(HSD_TevRegID(i), TevReg[i].a);
+            TevReg[i].c = 0;
+        }
+    }
+}
+
 void _HSD_StateInvalidateColorChannel(void)
 {
 static HSD_Chan invalid_prev_ch[4] = {
@@ -546,6 +634,7 @@ static HSD_Chan invalid_prev_ch[4] = {
     prev_num_chans = -1;
 }
 
+
 void _HSD_StateInvalidateTevStage(void)
 {
     int i;
@@ -553,7 +642,6 @@ void _HSD_StateInvalidateTevStage(void)
     GXSetNumIndStages(0);
     current_tev = 0;
 }
-
 void _HSD_StateInvalidateTevRegister(void)
 {
     int i;
@@ -561,60 +649,7 @@ void _HSD_StateInvalidateTevRegister(void)
         TevReg[i].c = 0;
     }
 }
-
 void _HSD_StateInvalidateTexCoordGen(void)
 {
     num_tex_gens = 0;
-}
-
-
-void HSD_InitColorSwapTable(u8 idx, u8 r, u8 g, u8 b, u8 a)
-{
-    _cur_swap_tables[idx][0] = r;
-    _def_swap_tables[idx][0] = r;
-    _cur_swap_tables[idx][1] = g;
-    _def_swap_tables[idx][1] = g;
-    _cur_swap_tables[idx][2] = b;
-    _def_swap_tables[idx][2] = b;
-    _cur_swap_tables[idx][3] = a;
-    _def_swap_tables[idx][3] = a;
-}
-void HSD_ResetColorSwapTables(void)
-{
-    int i;
-    for (i = 0; i < 4; i++) {
-        int value = *(int*)_def_swap_tables[i];
-        if (value != *(int*)_cur_swap_tables[i]) {
-            GXSetTevSwapModeTable(i, _def_swap_tables[i][0], _def_swap_tables[i][1],
-                                 _def_swap_tables[i][2], _def_swap_tables[i][3]);
-            *(int*)_cur_swap_tables[i] = value;
-        }
-    }
-}
-void HSD_DisableChannelLighting(GXChannelID chan)
-{
-    int idx = chan & 3;
-    switch (chan) {
-    case GX_COLOR0A0:
-    case GX_COLOR1A1:
-        if (prev_ch[idx].enable || prev_ch[idx + 2].enable) {
-            prev_ch[idx + 2].enable = prev_ch[idx].enable = 0;
-            prev_ch[idx + 2].light_mask = prev_ch[idx].light_mask = 0;
-            prev_ch[idx + 2].amb_src = prev_ch[idx].amb_src;
-            prev_ch[idx + 2].mat_src = prev_ch[idx].mat_src;
-            prev_ch[idx + 2].diff_fn = prev_ch[idx].diff_fn;
-            prev_ch[idx + 2].attn_fn = prev_ch[idx].attn_fn;
-            GXSetChanCtrl(chan, 0, prev_ch[idx].amb_src, prev_ch[idx].mat_src,
-                           0, prev_ch[idx].diff_fn, prev_ch[idx].attn_fn);
-        }
-        break;
-    default:
-        if (prev_ch[idx].enable) {
-            prev_ch[idx].enable = 0;
-            prev_ch[idx].light_mask = 0;
-            GXSetChanCtrl(chan, 0, prev_ch[idx].amb_src, prev_ch[idx].mat_src,
-                           0, prev_ch[idx].diff_fn, prev_ch[idx].attn_fn);
-        }
-        break;
-    }
 }

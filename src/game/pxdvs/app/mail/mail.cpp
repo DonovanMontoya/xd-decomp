@@ -15,40 +15,50 @@ static inline MailData *getMailData(s32 id) {
  return mailData+id;
 }
 extern "C" {
-s32 mailGetSendCntCondValue(s32) { return 0; }
-s32 mailGetSendCntCond(s32) { return 0; }
-u32 mailGetOpenFlag(s32 id) { MailData *p=getMailData(id);if(!p)return 0;return p->open; }
-s32 mailGetSendCondition(s32) { return 0; }
-s32 mailGetSendCondType(s32) { return 0; }
-s32 mailGetSendRate(s32) { return 0; }
-u32 mailGetAttachFileGroup(s32 id) { MailData *p=getMailData(id);if(!p)return 0;return p->attach; }
-u8 mailGetSortMode() { return savedataGetStatus(0,10)->sort; }
-u16 mailGetSendCnt() { return savedataGetStatus(0,10)->sent; }
-u32 mailGetNbMailData() { return *mailData_number; }
-u32 mailGetContents(s32 id) { MailData *p=getMailData(id);if(!p)return 0;return p->contents; }
-u32 mailGetSenderName(s32 id) { MailData *p=getMailData(id);if(!p)return 0;return p->sender; }
-u32 mailGetSubject(s32 id) { MailData *p=getMailData(id);if(!p)return 0;return p->subject; }
-s32 mailChkReceiveMail(s32 id) {
- Mailbox *p=savedataGetStatus(0,10);
- if(id<=0 || id>*mailData_number) return 0;
- s32 n=p->count,i;
- for(i=0;i<n;i++) if(id==p->ids[i])break;
- if(i>=n)return 0;
- return 1;
-}
-s32 mailAddMailbox(s32 id) {
- Mailbox *p=savedataGetStatus(0,10);
- if(id<=0 || id>*mailData_number)return 0;
- if(p->count>=32)return 0;
- p->ids[p->count]=id;
- p->count++;
- p=savedataGetStatus(0,10);
- u8 mask;
- s32 index;
- if(id<0 || id>=32) index=-1;
- else {mask=1<<(7-id%8);index=id/8;}
- if(index>=0)p->flags[index]&=~mask;
- return 1;
+s32 mailGetSendCntCondValue(s32);
+s32 mailGetSendCntCond(s32);
+u32 mailGetOpenFlag(s32 id);
+s32 mailGetSendCondition(s32);
+s32 mailGetSendCondType(s32);
+s32 mailGetSendRate(s32);
+u32 mailGetAttachFileGroup(s32 id);
+u8 mailGetSortMode();
+u16 mailGetSendCnt();
+u32 mailGetNbMailData();
+u32 mailGetContents(s32 id);
+u32 mailGetSenderName(s32 id);
+u32 mailGetSubject(s32 id);
+s32 mailChkReceiveMail(s32 id);
+s32 mailAddMailbox(s32 id);
+s32 mailGetNbMailInMailbox();
+s32 mailGetMailIDInMailbox(s32 index);
+s32 mailGetReceiveNumber(s32 id);
+void mailInitMailbox(Mailbox *p);
+
+s32 mailGetSendCntCondValue(s32);
+s32 mailGetSendCntCond(s32);
+u32 mailGetOpenFlag(s32 id);
+s32 mailGetSendCondition(s32);
+s32 mailGetSendCondType(s32);
+s32 mailGetSendRate(s32);
+u32 mailGetAttachFileGroup(s32 id);
+u8 mailGetSortMode();
+u16 mailGetSendCnt();
+u32 mailGetNbMailData();
+u32 mailGetContents(s32 id);
+u32 mailGetSenderName(s32 id);
+u32 mailGetSubject(s32 id);
+s32 mailChkReceiveMail(s32 id);
+s32 mailAddMailbox(s32 id);
+s32 mailGetReceiveNumber(s32 id);
+s32 mailGetMailIDInMailbox(s32 index);
+s32 mailGetNbMailInMailbox();
+void mailInitMailbox(Mailbox *p);
+
+void mailInitMailbox(Mailbox *p) {
+ memset(p,0,0x4A);p->sort=0;
+ u32 i;for(i=0;i<32;i++)p->ids[i]=0xFF;
+ mailMainInit();
 }
 s32 mailGetNbMailInMailbox() {return savedataGetStatus(0,10)->count;}
 s32 mailGetMailIDInMailbox(s32 index) {
@@ -64,9 +74,39 @@ s32 mailGetReceiveNumber(s32 id) {
  if(!found)return -1;
  return i;
 }
-void mailInitMailbox(Mailbox *p) {
- memset(p,0,0x4A);p->sort=0;
- for(s32 i=0;i<32;i++)p->ids[i]=0xFF;
- mailMainInit();
+s32 mailAddMailbox(s32 id) {
+ Mailbox *p=savedataGetStatus(0,10);
+ if(id<=0 || id>*mailData_number)return 0;
+ if(p->count>=32)return 0;
+ p->ids[p->count]=id;
+ p->count++;
+ p=savedataGetStatus(0,10);
+ u8 mask;
+ s32 index;
+ if(id<0 || id>=32) index=-1;
+ else {mask=1<<(7-id%8);index=id/8;}
+ if(index>=0)p->flags[index]&=~mask;
+ return 1;
 }
+s32 mailChkReceiveMail(s32 id) {
+ Mailbox *p=savedataGetStatus(0,10);
+ if(id<=0 || id>*mailData_number) return 0;
+ s32 n=p->count,i;
+ for(i=0;i<n;i++) if(id==p->ids[i])break;
+ if(i>=n)return 0;
+ return 1;
+}
+u32 mailGetSubject(s32 id) { MailData *p=getMailData(id);if(!p)return 0;return p->subject; }
+u32 mailGetSenderName(s32 id) { MailData *p=getMailData(id);if(!p)return 0;return p->sender; }
+u32 mailGetContents(s32 id) { MailData *p=getMailData(id);if(!p)return 0;return p->contents; }
+u32 mailGetNbMailData() { return *mailData_number; }
+u16 mailGetSendCnt() { return savedataGetStatus(0,10)->sent; }
+u8 mailGetSortMode() { return savedataGetStatus(0,10)->sort; }
+u32 mailGetAttachFileGroup(s32 id) { MailData *p=getMailData(id);if(!p)return 0;return p->attach; }
+s32 mailGetSendRate(s32) { return 0; }
+s32 mailGetSendCondType(s32) { return 0; }
+s32 mailGetSendCondition(s32) { return 0; }
+u32 mailGetOpenFlag(s32 id) { MailData *p=getMailData(id);if(!p)return 0;return p->open; }
+s32 mailGetSendCntCond(s32) { return 0; }
+s32 mailGetSendCntCondValue(s32) { return 0; }
 }

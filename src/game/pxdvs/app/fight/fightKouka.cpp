@@ -7,9 +7,9 @@ u16 fightKoukaDataBiosGetFightTargetDataId(void*);
 u16 fightKoukaDataBiosGetFightJoukenDataId(void*);
 u8 fightFloor_GetFightType(void*);
 void* fightTargetGetPtr(u16, void*, u16);
-u8 fightJoukenExec(s32, s32);
+u8 fightJoukenExec(u16, s32);
 s32 fightKoukaDoJoukenAndKouka(void*, u16, u16, u16);
-void koukaExec(u16, void*, void*, u32);
+void koukaExec(s32, void*, void*, u32);
 }
 
 extern "C" u16 fightKoukaDataGetKoukaDataId(u16 id) {
@@ -28,12 +28,13 @@ extern "C" void fightKoukaDoFightKoukaJoukenAndKouka(void* base, u16 id) {
     fightKoukaDoJoukenAndKouka(base, condition, target, effect);
 }
 extern "C" s32 fightKoukaDoJoukenAndKouka(void* base, u16 condition, u16 targetId, u16 effect) {
+    s32 ret = 0;
     u16 type = fightFloor_GetFightType(0);
     void* target = fightTargetGetPtr(targetId, base, type);
     u8 result = fightJoukenExec(condition, (s32)base);
     if (result == 1) {
         koukaExec(effect, target, base, 0);
-        return 1;
+        ret = 1;
     }
-    return 0;
+    return ret;
 }
