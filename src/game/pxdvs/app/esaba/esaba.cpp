@@ -68,35 +68,35 @@ s32 esabaPut(s32 arg0) {
 
 s32 esabaSet(s32 arg0) {
     s32 sp8;
-    s16 temp_r4;
-    s32 temp_r26;
-    s32 temp_r30;
+    s32 temp_r4;
+    u32 temp_r26;
     s32 temp_r3;
     s32 temp_r3_2;
-    s32 var_r27;
     s32 var_r28;
+    s32 var_r27;
     s32 var_r29;
     s32 var_r6;
     u16 temp_r3_3;
 
     
     
-    temp_r30 = arg0 * 0x1C;
-    temp_r3 = GSflagGet(recordAt(temp_r30)->amountFlag);
+    temp_r3 = GSflagGet(esabadata[arg0].amountFlag);
     sp8 = temp_r3;
     temp_r26 = itemQuantity__4HeroFUs(getHeroPtr__4HeroFv(),0x1FF);
     GSthreadSwitch();
+    var_r29 = 0xC92E + ((s32) (-sp8 | sp8) >> 0x1F);
     msgctrlSetValue(0x2F, sp8);
-    winMsgOpen(2, ((s32) (-sp8 | sp8) >> 0x1F) + 0xC92E, 0, 1);
+    winMsgOpen(2, var_r29, 0, 1);
     var_r6 = sp8 + temp_r26;
     if (var_r6 > 0xA) {
         var_r6 = 0xA;
     }
     if (menuPanelInputNumber(sp8,&sp8,0,var_r6,1) != 0) {
-        GSflagSet(recordAt(temp_r30)->amountFlag, (s16) sp8);
-        if ((s16) sp8 == 0) {
-            GSflagSet(recordAt(temp_r30)->appFlag, 0U);
-            GSflagSet(recordAt(temp_r30)->stepFlag, 0U);
+        var_r27 = (s16) sp8;
+        GSflagSet(esabadata[arg0].amountFlag, var_r27);
+        if (var_r27 == 0) {
+            GSflagSet(esabadata[arg0].appFlag, 0U);
+            GSflagSet(esabadata[arg0].stepFlag, 0U);
         }
         var_r27 = 0;
         var_r28 = 0;
@@ -105,16 +105,18 @@ s32 esabaSet(s32 arg0) {
             if (var_r29 > 0) {
                 heroItemDecItemDataId(0, 0x1FF, (u16) var_r29, -1);
             } else {
-                temp_r3_2 = heroItemAddItemDataId(0, 0x1FF, (u16) (var_r29 * -1), -1);
+                temp_r26 = -var_r29;
+                temp_r3_2 = heroItemAddItemDataId(0, 0x1FF, (u16) temp_r26, -1);
                 if (temp_r3_2 == 0) {
-                    var_r28 = -var_r29;
+                    var_r28 = temp_r26;
                 } else if (temp_r3_2 > 0) {
+                    temp_r26 = temp_r3_2;
                     var_r28 = -(var_r29 + temp_r3_2);
                     temp_r3_3 = pcboxAddItem(0, 0x1FF, (u16) temp_r3_2);
                     if (temp_r3_3 != 0) {
-                        var_r27 = temp_r3_2 - temp_r3_3;
+                        var_r27 = temp_r26 - temp_r3_3;
                     } else {
-                        var_r27 = temp_r3_2;
+                        var_r27 = temp_r26;
                     }
                 }
             }
@@ -135,10 +137,11 @@ s32 esabaSet(s32 arg0) {
                 winMsgOpen(2, 0xC932, 1, 1);
                 winMsgClose(1);
                 var_r29 = 0;
-                GSflagSet(recordAt(temp_r30)->amountFlag, (s16) temp_r3);
-                if ((s16) temp_r3 == 0) {
-                    GSflagSet(recordAt(temp_r30)->appFlag, 0U);
-                    GSflagSet(recordAt(temp_r30)->stepFlag, 0U);
+                var_r27 = (s16) temp_r3;
+                GSflagSet(esabadata[arg0].amountFlag, var_r27);
+                if (var_r27 == 0) {
+                    GSflagSet(esabadata[arg0].appFlag, 0U);
+                    GSflagSet(esabadata[arg0].stepFlag, 0U);
                 }
             } else {
                 if (var_r28 > 0) {
@@ -154,10 +157,11 @@ s32 esabaSet(s32 arg0) {
                 temp_r4 = (temp_r3 - var_r28) - var_r27;
                 if (temp_r4 != 0) {
                     var_r29 = -(temp_r3 - temp_r4);
-                    GSflagSet(recordAt(temp_r30)->amountFlag, (s32)temp_r4);
-                    if (temp_r4 == 0) {
-                        GSflagSet(recordAt(temp_r30)->appFlag, 0U);
-                        GSflagSet(recordAt(temp_r30)->stepFlag, 0U);
+                    var_r27 = (s16) temp_r4;
+                    GSflagSet(esabadata[arg0].amountFlag, var_r27);
+                    if (var_r27 == 0) {
+                        GSflagSet(esabadata[arg0].appFlag, 0U);
+                        GSflagSet(esabadata[arg0].stepFlag, 0U);
                     }
                 }
             }

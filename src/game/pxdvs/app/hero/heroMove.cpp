@@ -357,8 +357,7 @@ s32 heroMoveDismissMember(s32 member) {
     if (member == heroMoveGetLeader()) {
         return 0;
     }
-    HeroMoveMember* m = &HeroMove.members[member];
-    m->flags = m->flags & 0xFFFE;
+    HeroMove.members[member].flags = HeroMove.members[member].flags & 0xFFFE;
     remakeFormation();
     return 1;
 }
@@ -366,7 +365,6 @@ s32 heroMoveDismissMember(s32 member) {
 s32 heroMoveSetNeckMode(s32 member, s32 mode) {
     unsigned long group;
     unsigned long res;
-    HeroMoveMember* m;
     if (mode < 0 || mode >= 2) {
         return 0;
     }
@@ -374,8 +372,7 @@ s32 heroMoveSetNeckMode(s32 member, s32 mode) {
         return 0;
     }
     getResID(&group, &res, (HEROMOVE_MEMBER)member);
-    m = &HeroMove.members[member];
-    switch (m->neckMode) {
+    switch (HeroMove.members[member].neckMode) {
     case 1:
         peopleRemoveNeckTarget(group, res, 1.0f);
     }
@@ -383,7 +380,7 @@ s32 heroMoveSetNeckMode(s32 member, s32 mode) {
     case 1:
         peopleSetNeckTargetHero(group, res);
     }
-    m->neckMode = mode;
+    HeroMove.members[member].neckMode = mode;
     return 1;
 }
 
@@ -579,8 +576,7 @@ s32 heroMoveJoinMember(s32 member) {
         hero->setFollowerID(3);
         break;
     }
-    m = &HeroMove.members[member];
-    m->flags = m->flags | 1;
+    HeroMove.members[member].flags = HeroMove.members[member].flags | 1;
     heroMoveSetNeckMode(member, 1);
     remakeFormation();
     setDisp((HEROMOVE_MEMBER)member, true);
@@ -590,9 +586,8 @@ s32 heroMoveJoinMember(s32 member) {
 }
 
 static void _heroMoveFinalize(unsigned int, FloorEnterMode) {
-    u8 smooth = HeroMove.raw[0x3AC];
     HeroMove.raw[0x3AD] = 0;
-    if (smooth != 0) {
+    if (HeroMove.raw[0x3AC] != 0) {
         if (floorDataBiosGetFloorKind(floorDataBiosGetPtr()) == 1) {
             floorCreateThread(0x80, 0, 1, _closeHeroThread);
         }
@@ -653,11 +648,9 @@ void heroMoveAllInit() {
 
 extern "C" s32 heroGetFollower() {
     tagPeopleWork* people;
-    unsigned long res;
     Hero* hero;
     hero = Hero::getHeroPtr();
-    res = hero->getFollowerResID();
-    people = (tagPeopleWork*)peopleGet(hero->getFollowerGrpID(), res);
+    people = (tagPeopleWork*)peopleGet(hero->getFollowerGrpID(), hero->getFollowerResID());
     if (people == 0) {
         return 0;
     }
@@ -674,9 +667,9 @@ extern "C" s32 heroGetFollower() {
     case 0x65:
         return HeroMove.members[1].flags & 1;
     case 0x68:
-        return 2 & -(HeroMove.members[2].flags & 1);
+        return -(HeroMove.members[2].flags & 1) & 2;
     case 0x69:
-        return 3 & -(HeroMove.members[3].flags & 1);
+        return -(HeroMove.members[3].flags & 1) & 3;
     default:
         return 0;
     }
@@ -1150,11 +1143,13 @@ s32 GScolsys2WalkGetHeight(GSvec*, WalkHeight*);
 static void initFloor() {
     GSvec rotation, position, followerPosition;
     WalkHeight heights[8];
+    s32 k;
     if (!GSfloorIsPop()) {
         getPos(&position, (HEROMOVE_MEMBER)heroMoveGetLeader());
         getRot(&rotation, (HEROMOVE_MEMBER)heroMoveGetLeader());
-        f32 dx = sin(rotation.param2);
-        f32 dz = cos(rotation.param2);
+        f32 dz, dx;
+        dx = sin(rotation.param2);
+        dz = cos(rotation.param2);
         dx = -dx;
         followerPosition.param2 = position.param2;
         dz = -dz;
@@ -1194,10 +1189,9 @@ static void initFloor() {
     if (!GSfloorIsPop()) {
         for (s32 i = 1; i < 4; ++i) setDisp((HEROMOVE_MEMBER)i, heroMoveIsMember(i));
     }
-    u8* member = HeroMove.raw;
-    for (s32 i = 0; i < 4; ++i, member += 0x20) initFootWork((FOOTWORK*)(member + 0x14));
-    for (s32 i = 0; i < 4; ++i) {
-        if (heroMoveIsMember(i)) heroMoveSetNeckMode(i, heroMoveGetNeckMode(i));
+    for (s32 i = 0; i < 4; ++i) initFootWork((FOOTWORK*)(HeroMove.raw + i * 0x20 + 0x14));
+    for (k = 0; k < 4; ++k) {
+        if (heroMoveIsMember(k)) heroMoveSetNeckMode(k, heroMoveGetNeckMode(k));
     }
     *(s32*)&HeroMove.raw[0x10] = 300;
     *(s32*)&HeroMove.raw[0x30] = 300;
@@ -1505,10 +1499,11 @@ static u8 updateChat(HEROMOVE_MEMBER member) {
     HeroMoveEvent events[4];
     GSvec neck;
     unsigned long group,res;
-    s32 count;
     getResID(&group,&res,member);
     tagPeopleWork* person=peopleTalkCheck(group,res,0.3f,40.0f);
+    s32 script;
     if(!person) {
+        s32 count;
         __construct_array(events[0].points,__ct__5GSvecFv,0,12,3);
         __construct_array(events[1].points,__ct__5GSvecFv,0,12,3);
         __construct_array(events[2].points,__ct__5GSvecFv,0,12,3);
@@ -1525,7 +1520,6 @@ static u8 updateChat(HEROMOVE_MEMBER member) {
     peopleRotateToXYZ(group,res,neck.param1,neck.param2,neck.param3,1.0f);
     if(peopleCheckTresure(person->group,person->resource))floorEventCtrlTresure(person->group,person->resource,2);
     else {
-        s32 script;
         u8 moving=0;
         u8 type=person->getMoveType();
         if(type==2 || type==3)moving=1;
@@ -1587,8 +1581,7 @@ static f32 moveParty(HEROMOVE_MEMBER member) {
     tagPeopleWork* leader=(tagPeopleWork*)peopleGet(0,0x64);
     if (!leader) return 0.0f;
     Hero* hero=Hero::getHeroPtr();
-    unsigned long resource=hero->getFollowerResID();
-    tagPeopleWork* follower=(tagPeopleWork*)peopleGet(hero->getFollowerGrpID(),resource);
+    tagPeopleWork* follower=(tagPeopleWork*)peopleGet(hero->getFollowerGrpID(),hero->getFollowerResID());
     if (!follower) return 0.0f;
     if (peopleBiosCheckFlag(follower,0x80000000)) return 0.0f;
     GSvec* leaderPosition=(GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(leader);
@@ -1611,12 +1604,11 @@ static f32 moveParty(HEROMOVE_MEMBER member) {
     }
     else {
         PSVECSubtract(position,leaderPosition,&difference);
-        f32 dx=difference.param1,dy=difference.param2,dz=difference.param3;
-        direction.param1=dx;direction.param2=dy;direction.param3=dz;
+        direction.param1=difference.param1;direction.param2=difference.param2;direction.param3=difference.param3;
         u8 zero;
-        if(!(dx<0.00001f) || !(dx>-0.00001f) ||
-           !(dy<0.00001f) || !(dy>-0.00001f) ||
-           !(dz<0.00001f) || !(dz>-0.00001f)) zero=0;
+        if(!(direction.param1<0.00001f) || !(direction.param1>-0.00001f) ||
+           !(direction.param2<0.00001f) || !(direction.param2>-0.00001f) ||
+           !(direction.param3<0.00001f) || !(direction.param3>-0.00001f)) zero=0;
         else zero=1;
         if(zero) {
             direction.param1=0.0f;direction.param2=0.0f;direction.param3=1.0f;
@@ -1656,14 +1648,7 @@ static f32 moveParty(HEROMOVE_MEMBER member) {
     } else if(distance<18.0f) {
         speed=leader->unknown24*peopleGetBlendFactor(distance,12.0f,18.0f);
     } else speed=leader->unknown24;
-    {
-        unsigned long res=hero->getFollowerResID();
-        peopleRotateToAngle(hero->getFollowerGrpID(),res,facingAngle,20.0f);
-    }
-    {
-        unsigned long res=hero->getFollowerResID();
-        peopleMoveAlongAngle(hero->getFollowerGrpID(),res,speed,movementAngle);
-    }
-    position=peopleBiosGetPrevPosPtr(follower);
-    return GSvecDistanceXZ((GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(follower),position);
+    peopleRotateToAngle(hero->getFollowerGrpID(),hero->getFollowerResID(),facingAngle,20.0f);
+    peopleMoveAlongAngle(hero->getFollowerGrpID(),hero->getFollowerResID(),speed,movementAngle);
+    return GSvecDistanceXZ((GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(follower),peopleBiosGetPrevPosPtr(follower));
 }
