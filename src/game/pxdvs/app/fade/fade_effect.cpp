@@ -679,7 +679,7 @@ static void _fadeEffectSlideBallInit() {
     _fadeEffectWork.frame = 0;
     u8 left = FADE_RANDOM(2UL) == 0 ? 1 : 0;
     FADE_EFFECT_BOUND* ball = _fadeEffectBound;
-    s16 y = 26;
+    s32 y = 26;
     s32 i = 0;
     do {
         if (left == 1) {
@@ -1297,6 +1297,10 @@ bool fadeEffectHookFunction_tear_off(GSgfxLayerID id, bool active, f32 elapsed, 
 
 
 extern bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 elapsed, f32 duration, f32, f32, void* opaque) {
+    FadeMtx transform;
+    f32 matrix[4][4];
+    FadeMtx rotation;
+    GSvec center, point, output;
     GStexture* texture;
     GSgfxLayer* layer = GSgfxLayerFindByID(id);
     if (!layer) return active;
@@ -1309,23 +1313,24 @@ extern bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 ela
     if (_fadeEffectFirstFlag == 0 && !active) GSgfxVFFree(&_fadeEffectTrainer_vf);
     f32 progress = elapsed / duration;
     if (timeGetLastFrameTime() != 0) {
-        f32 step = _fadeEffectWork.rotationStep;
-        f32 pos = _fadeEffectWork.rotation + step;
+        f32 step, pos;
+        step = _fadeEffectWork.rotationStep;
         _fadeEffectWork.frame++;
-        _fadeEffectWork.rotation = pos;
+        _fadeEffectWork.rotation += step;
+        pos = _fadeEffectWork.rotation;
         if (step >= 0.0f) {
-            _fadeEffectWork.rotationStep = 0.5f * progress + step;
-            if (pos >= _fadeEffectWork.distanceStep) _fadeEffectWork.rotation = _fadeEffectWork.distanceStep;
+            _fadeEffectWork.rotationStep = (0.5f * progress) + step;
+            f32 limit = _fadeEffectWork.distanceStep;
+            if (pos >= limit) _fadeEffectWork.rotation = limit;
         } else {
-            _fadeEffectWork.rotationStep = -(0.5f * progress - step);
-            if (pos <= _fadeEffectWork.distanceStep) _fadeEffectWork.rotation = _fadeEffectWork.distanceStep;
+            _fadeEffectWork.rotationStep = -((0.5f * progress) - step);
+            f32 limit = _fadeEffectWork.distanceStep;
+            if (pos <= limit) _fadeEffectWork.rotation = limit;
         }
     }
-    GSvec center;
     center.param1 = 320.0f; center.param2 = 240.0f; center.param3 = 0.0f;
     _fadeEffectSnapshotFadeFunction(layer, texture, &center, 1.0f, 0.0f, progress, 0.0f);
-    center.param2 = 240.0f; center.param3 = 0.0f;
-    center.param1 = 320.0f + _fadeEffectWork.rotation;
+    center.param1 = 320.0f + _fadeEffectWork.rotation; center.param2 = 240.0f; center.param3 = 0.0f;
     _fadeEffectSnapshotFadeFunction(layer, texture, &center, 1.0f, 0.0f, progress, 0.5f);
     center.param3 = 0.0f;
     center.param1 = 320.0f - _fadeEffectWork.rotation;
@@ -1333,7 +1338,6 @@ extern bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 ela
     _fadeEffectSnapshotFadeFunction(layer, texture, &center, 1.0f, 0.0f, progress, 0.5f);
     if (GSgfxVFIsUsed(&_fadeEffectTrainer_vf)) {
         layer->setRenderStateAndSelect(&_fadeEffectTrainer_vf);
-        f32 matrix[4][4];
         FadeMatrixSlot* slot;
         u32* flags;
         GSmtx44Ortho(matrix, 0.0f, 480.0f, 0.0f, 640.0f, 0.0f, -30000.0f);
@@ -1406,7 +1410,7 @@ extern bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 ela
         layer->field1760 = (s32) (layer->field1760 | 2);
         layer->tgenFunc(0, (GSgfxTgenFunc)1, (GSgfxTgenSrc)4, 0, false, 0);
         layer->tgenFunc(1, (GSgfxTgenFunc)1, (GSgfxTgenSrc)5, 0, false, 0);
-        FL(s32, 0xEAC) = 2;
+        FL(u8, 0xEAC) = 2;
         FL_SET(0x16CC, 0x1784, 1);
         GStexture* tex0 = _fadeEffectWork.secondTexture;
         if (layer->field1740 != tex0 || layer->field17F8 != tex0 || tex0->dirty != 0) {
@@ -1417,11 +1421,11 @@ extern bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 ela
         }
         FL(s32, 0xEB0) = 0; FL(s32, 0xEB4) = 0; FL(s32, 0xEB8) = 4;
         FL_SET(0x16D0, 0x1788, 1);
-        FL(s32, 0x1170) = 8; FL(s32, 0x1174) = 0; FL(s32, 0x1178) = 0; FL(s32, 0x117C) = 0; FL(s32, 0x1180) = 1;
+        FL(s32, 0x1170) = 8; FL(s32, 0x1174) = 0; FL(s32, 0x1178) = 0; FL(u8, 0x117C) = 0; FL(s32, 0x1180) = 1;
         FL_SET(0x16DC, 0x1794, 1);
         FL(s32, 0xF70) = 9; FL(s32, 0xF74) = 0xD; FL(s32, 0xF78) = 0xC; FL(s32, 0xF7C) = 0xF;
         FL_SET(0x16D4, 0x178C, 1);
-        FL(s32, 0x12B0) = 0; FL(s32, 0x12B4) = 0; FL(s32, 0x12B8) = 0; FL(s32, 0x12BC) = 0; FL(s32, 0x12C0) = 1;
+        FL(s32, 0x12B0) = 0; FL(s32, 0x12B4) = 0; FL(s32, 0x12B8) = 0; FL(u8, 0x12BC) = 0; FL(s32, 0x12C0) = 1;
         FL_SET(0x16E0, 0x1798, 1);
         FL(s32, 0x1070) = 7; FL(s32, 0x1074) = 4; FL(s32, 0x1078) = 5; FL(s32, 0x107C) = 7;
         FL_SET(0x16D8, 0x1790, 1);
@@ -1433,22 +1437,23 @@ extern bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 ela
         }
         FL(s32, 0xEBC) = 1; FL(s32, 0xEC0) = 1; FL(s32, 0xEC4) = 4;
         FL_SET(0x16D0, 0x1788, 2);
-        FL(s32, 0x1184) = 0; FL(s32, 0x1188) = 0; FL(s32, 0x118C) = 0; FL(s32, 0x1190) = 0; FL(s32, 0x1194) = 0;
+        FL(s32, 0x1184) = 0; FL(s32, 0x1188) = 0; FL(s32, 0x118C) = 0; FL(u8, 0x1190) = 0; FL(s32, 0x1194) = 0;
         FL_SET(0x16DC, 0x1794, 2);
         FL(s32, 0xF80) = 0xF; FL(s32, 0xF84) = 8; FL(s32, 0xF88) = 2; FL(s32, 0xF8C) = 0xF;
         FL_SET(0x16D4, 0x178C, 2);
-        FL(s32, 0x12C4) = 0; FL(s32, 0x12C8) = 0; FL(s32, 0x12CC) = 0; FL(s32, 0x12D0) = 0; FL(s32, 0x12D4) = 0;
+        FL(s32, 0x12C4) = 0; FL(s32, 0x12C8) = 0; FL(s32, 0x12CC) = 0; FL(u8, 0x12D0) = 0; FL(s32, 0x12D4) = 0;
         FL_SET(0x16E0, 0x1798, 2);
         FL(s32, 0x1080) = 7; FL(s32, 0x1084) = 7; FL(s32, 0x1088) = 7; FL(s32, 0x108C) = 1;
         FL_SET(0x16D8, 0x1790, 2);
         FL(GSgfxVF*, 0x199C) = &_fadeEffectTrainer_vf;
         layer->field1998 = 0x98;
 
-        FadeMtx transform, rotation;
-        GSvec point, output;
-        s32 alpha = (s32)(255.0f * (1.0f - progress));
         center.param1 = 320.0f; center.param3 = 0.0f; center.param2 = 240.0f;
+        f32 alpha = 255.0f * (1.0f - progress);
         f32 scale = 1.0f + (f32)_fadeEffectWork.frame / 150.0f;
+        point.param1 = scale;
+        point.param2 = scale;
+        point.param3 = scale;
         PSMTXScale(transform, scale, scale, scale);
         PSMTXRotRad(rotation, 'Z', 0.0f);
         PSMTXConcat(rotation, transform, transform);
@@ -1457,37 +1462,38 @@ extern bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 ela
         PSMTXMultVec(transform, &point, &output);
         output.param1 -= 320.0f;
         output.param2 -= 240.0f;
-        f32 u0 = (320.0f - output.param1) / 640.0f;
-        f32 u1 = (320.0f + output.param1) / 640.0f;
-        f32 v0 = (240.0f - output.param2) / 480.0f;
-        f32 v1 = (240.0f + output.param2) / 480.0f;
+        f32 u0, v0, u1, v1;
+        u0 = (320.0f - output.param1) / 640.0f;
+        u1 = (320.0f + output.param1) / 640.0f;
+        v0 = (240.0f - output.param2) / 480.0f;
+        v1 = (240.0f + output.param2) / 480.0f;
         layer->beginSurface(4);
         point.param1 = -128.0f; point.param2 = -128.0f; point.param3 = 0.0f;
         PSMTXMultVec(transform, &point, &output);
         { f32 u = 0.0f; f32 v = 0.0f;
         GXPosition3f32(output.param1, output.param2, output.param3);
-        GXColor4u8(255, 255, 255, (u8)alpha);
+        GXColor4u8(255, 255, 255, alpha);
         GXTexCoord2f32(u, v);
         GXTexCoord2f32(u0, v0); }
         point.param1 = 128.0f; point.param2 = -128.0f; point.param3 = 0.0f;
         PSMTXMultVec(transform, &point, &output);
         { f32 u = 1.0f; f32 v = 0.0f;
         GXPosition3f32(output.param1, output.param2, output.param3);
-        GXColor4u8(255, 255, 255, (u8)alpha);
+        GXColor4u8(255, 255, 255, alpha);
         GXTexCoord2f32(u, v);
         GXTexCoord2f32(u1, v0); }
         point.param1 = -128.0f; point.param2 = 128.0f; point.param3 = 0.0f;
         PSMTXMultVec(transform, &point, &output);
         { f32 u = 0.0f; f32 v = 1.0f;
         GXPosition3f32(output.param1, output.param2, output.param3);
-        GXColor4u8(255, 255, 255, (u8)alpha);
+        GXColor4u8(255, 255, 255, alpha);
         GXTexCoord2f32(u, v);
         GXTexCoord2f32(u0, v1); }
         point.param1 = 128.0f; point.param2 = 128.0f; point.param3 = 0.0f;
         PSMTXMultVec(transform, &point, &output);
         { f32 u = 1.0f; f32 v = 1.0f;
         GXPosition3f32(output.param1, output.param2, output.param3);
-        GXColor4u8(255, 255, 255, (u8)alpha);
+        GXColor4u8(255, 255, 255, alpha);
         GXTexCoord2f32(u, v);
         GXTexCoord2f32(u1, v1); }
         layer->endSurface();
@@ -1688,8 +1694,9 @@ bool fadeEffectHookFunction_dist_ball(GSgfxLayerID id, bool active, f32 elapsed,
                 s16 t = _fadeEffectBound[i].state;
                 if ((f32)t > -1.0f && (f32)t < 1.0f) _fadeEffectBound[i].state = -7;
             } else {
-                if ((f32)vy >= 0.0f) _fadeEffectBound[i].state = (s16)((f32)vy + 1.0f);
-                else _fadeEffectBound[i].state = (s16)(1.0f + (f32)vy);
+                f32 one = 1.0f;
+                if ((f32)vy >= 0.0f) _fadeEffectBound[i].state = (s16)((f32)vy + one);
+                else _fadeEffectBound[i].state = (s16)((f32)vy + one);
             }
             _fadeEffectBound[i].y = (s16)ny;
         }
@@ -2581,7 +2588,7 @@ static void _fadeDistortionStripDoYoko() {
     int rows = _fadeDistortionWork.rows;
     if (!_fadeDistortionWork.points) return;
     if (!_fadeDistortionWork.uv) return;
-    bool forward = _fadeEffectWork.direction < 2;
+    bool forward = _fadeEffectWork.direction < 2 ? true : false;
     s16 step = _fadeEffectWork.direction % 2 == 0 ? 5 : -5;
     FadeGridPoint* points = _fadeDistortionWork.points;
     FadeUV* uv = _fadeDistortionWork.uv;
@@ -2612,7 +2619,7 @@ static void _fadeDistortionStripDoTate() {
     int rows = _fadeDistortionWork.rows;
     if (!_fadeDistortionWork.points) return;
     if (!_fadeDistortionWork.uv) return;
-    bool forward = _fadeEffectWork.direction % 2 == 0;
+    bool forward = _fadeEffectWork.direction % 2 == 0 ? true : false;
     s16 step = _fadeEffectWork.direction < 2 ? 5 : -5;
     FadeGridPoint* points = _fadeDistortionWork.points;
     FadeUV* uv = _fadeDistortionWork.uv;
@@ -2670,13 +2677,18 @@ static void _fadeVirtualHexaDecayRibbonUpdate() {
 }
 
 static void _fadeVirtualHexaDecayInit() {
+    f32 offset;
+    int i;
+    s16 y;
+    FadeHexaLine* line;
+    int side;
     _fadeHexaLine[0] = GSmemAllocAlign(0x1514, 32);
     _fadeHexaLine[1] = GSmemAllocAlign(0x1514, 32);
-    for (int side = 0; side < 2; ++side) {
-        s16 y = side == 0 ? 0 : 490;
-        f32 offset = side == 0 ? 0.0f : 17.320507f;
-        for (int i = 0; i < 19; ++i) {
-            FadeHexaLine* line = (FadeHexaLine*)_fadeHexaLine[side] + i;
+    for (side = 0; side < 2; ++side) {
+        y = side == 0 ? 0 : 490;
+        offset = side == 0 ? 0.0f : 17.320507f;
+        for (i = 0; i < 19; ++i) {
+            line = (FadeHexaLine*)_fadeHexaLine[side] + i;
             line->speed = 4.4f * HSD_Randf() + 0.1f;
             line->count = 2;
             line->points[0].u = 34.641014f * i + offset;
@@ -4141,12 +4153,18 @@ bool fadeEffectHookFunction_virtual_hexa_decay(GSgfxLayerID id,bool active,f32 e
 #pragma opt_common_subs off
 #pragma opt_loop_invariants off
 void _fadeVirtualHexaDecayLineDraw(GSgfxLayer* input,f32 opacity) {
-    u8 alpha;
-    s32 side,i;
-    s16 count;
-    register s32 middle;
     GSgfxLayer* layer;
     FadeHexaLine* line;
+    s32 i;
+    s32 side;
+    u8 alpha;
+    s16 u;
+    s16 v;
+    s32 index;
+    FadeHexaLine* point;
+    s32 vertex;
+    s16 count;
+    register s32 middle;
     layer=input;
     if(opacity<0.00001f)return;
     alpha=255.0f*opacity;
@@ -4169,11 +4187,8 @@ void _fadeVirtualHexaDecayLineDraw(GSgfxLayer* input,f32 opacity) {
             if(count>=2) {
                 middle=count/2;
                 layer->beginSurface(count);
-                s32 vertex;
-                s16 u,v;
-                FadeHexaLine* point=line;
+                point=line;
                 for(vertex=0;vertex<count;vertex++) {
-                    s32 index;
                     if(vertex==middle)index=1;
                     else if(vertex<count-1)index=0;
                     else index=2;
