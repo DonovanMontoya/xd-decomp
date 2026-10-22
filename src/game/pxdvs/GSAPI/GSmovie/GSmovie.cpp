@@ -215,9 +215,8 @@ extern "C" void GSgfxTokenWaitForClearAndReset(u16*);
 #pragma force_active on
 static void _movieBeforeRender(f32) {
     u8 active=0;
-    s32 offset=0;
     for(u32 i=0;i<_maxStreaming;++i) {
-        __GSmovieStreaming* movie=(__GSmovieStreaming*)((u8*)_movieStreaming+offset);
+        __GSmovieStreaming* movie=&_movieStreaming[i];
         if(movie->state && GSmoviePlayCheck(movie->handle)) {
             active=1;
             switch((s32)movie->decoder->state) {
@@ -225,15 +224,11 @@ static void _movieBeforeRender(f32) {
             case 4:break;
             }
         }
-        offset+=0x20;
     }
     if(active==1) {
-        s32 offset;
         MovieDecoder* decoder;
-        u32 i=0;
-        offset=0;
-        for(;i<_maxStreaming;) {
-            __GSmovieStreaming* movie=(__GSmovieStreaming*)((u8*)_movieStreaming+offset);
+        for(u32 i=0;i<_maxStreaming;++i) {
+            __GSmovieStreaming* movie=&_movieStreaming[i];
             if(movie->state) {
                 decoder=movie->decoder;
                 GSgfxTokenWaitForClearAndReset(&movie->token);
@@ -241,8 +236,6 @@ static void _movieBeforeRender(f32) {
                     if(decoder->textures[j].displayed==1) {decoder->textures[j].valid=decoder->textures[j].displayed=0;}
                 }
             }
-            ++i;
-            offset+=0x20;
         }
     }
 }
@@ -259,15 +252,10 @@ extern "C" void GSmovieInit() {
         u8 success;
         if(!_movieStreaming) success=0;
         else {
-            u32 i=0;
-            s32 offset=i;
-            u32 handle=i;
-            s32 state=i;
-            MovieDecoder* decoder=(MovieDecoder*)i;
-            for(;i<_maxStreaming;++i) {
-                __GSmovieStreaming* movie=(__GSmovieStreaming*)((u8*)_movieStreaming+offset);
-                movie->handle=handle;movie->state=state;movie->decoder=decoder;
-                offset+=0x20;
+            u32 i;
+            for(i=0;i<_maxStreaming;++i) {
+                __GSmovieStreaming* movie=&_movieStreaming[i];
+                movie->handle=0;movie->state=0;movie->decoder=0;
             }
             success=1;
         }
@@ -297,18 +285,16 @@ inline u8 movieFieldReady(__GSmovieStreaming *movie)
     MovieDecoder *decoder=movie->decoder;
     if(decoder->videoType&1) {
         if(VIGetNextField()==0) return 1;
-        return 0;
-    }
-    if(decoder->videoType&2) {
+    } else if(decoder->videoType&2) {
         if(VIGetNextField()==1) return 1;
-        return 0;
-    }
-    s32 rate=100.0f*decoder->frameRate;
-    if(VIGetTvFormat()==1) decoder->playbackClock.targetFrameClock=decoder->videoTicks*rate/5000;
-    else decoder->playbackClock.targetFrameClock=decoder->videoTicks*rate/5994;
-    if(decoder->playbackClock.frameClock!=decoder->playbackClock.targetFrameClock) {
-        decoder->playbackClock.frameClock=decoder->playbackClock.targetFrameClock;
-        return 1;
+    } else {
+        s32 rate=100.0f*decoder->frameRate;
+        if(VIGetTvFormat()==1) decoder->playbackClock.targetFrameClock=decoder->videoTicks*rate/5000;
+        else decoder->playbackClock.targetFrameClock=decoder->videoTicks*rate/5994;
+        if((s32)decoder->playbackClock.frameClock!=(s32)decoder->playbackClock.targetFrameClock) {
+            decoder->playbackClock.frameClock=decoder->playbackClock.targetFrameClock;
+            return 1;
+        }
     }
     return 0;
 }
@@ -326,15 +312,18 @@ void _PlayControlExec(__GSmovieStreaming *movie)
                 return;
             }
             decoder->videoTicks++;
-            u8 ready=1;
+            u8 ready;
             if(decoder->videoTicks==0) {
                 s32 field=movie->decoder->videoType;
                 if(field&1) {
                     if(VIGetNextField()==0) ready=1;
-                    else ready=0;
+                    else goto fieldBad;
                 } else if(field&2) {
                     if(VIGetNextField()==1) ready=1;
-                    else ready=0;
+                    else {
+fieldBad:
+                        ready=0;
+                    }
                 }
                 if(ready) {
                     if(decoder->hasAudio) {
@@ -461,7 +450,10 @@ inline u32 movieBufferSize(__GSmovieStreaming *movie)
     else size=0;
     u32 pixels=decoder->width*decoder->height;
     u32 uvBytes=(((pixels>>2)+31)&~31)*3;
-    size+=((decoder->maxBufferSize+31)&~31)*10+((pixels+31)&~31)*3+uvBytes+uvBytes;
+    size+=((decoder->maxBufferSize+31)&~31)*10;
+    size+=((pixels+31)&~31)*3;
+    size+=uvBytes;
+    size+=uvBytes;
     if(decoder->hasAudio) {
         size+=((decoder->maxAudioSamples*4+31)&~31)*6;
         size+=decoder->channels*((((u32)(0.5f+(f32)(decoder->sampleRate*60)/1000.0f)+31)*2)&~63);
@@ -508,9 +500,8 @@ void _movieDaemon()
 {
     u16 width,height;
     u32 i=0;
-    s32 offset=0;
-    for(;i<_maxStreaming;i++,offset+=0x20) {
-        __GSmovieStreaming *movie=(__GSmovieStreaming *)((u8 *)_movieStreaming+offset);
+    for(;i<_maxStreaming;i++) {
+        __GSmovieStreaming *movie=&_movieStreaming[i];
         if(movie->state) {
             MovieDecoder *decoder=movie->decoder;
             if(decoder->startAudio==1) {

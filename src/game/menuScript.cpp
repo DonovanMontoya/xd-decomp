@@ -55,9 +55,9 @@ void GSresFreeGroup(s32);
 void *fightEncountDataBiosGetPtr(s32);
 void fightEncountDataBiosSetDiskId(void *, u16);
 u8 GSgfxVideoGetVsyncRate(void);
-void menuCreateOffScreen(u8, f32, f32);
+void menuCreateOffScreen(f32, f32);
 void menuOffScreenCheckEnable(s32);
-void menuReleaseOffScreen(u8, f32);
+void menuReleaseOffScreen(f32);
 void *mailGetOpenFlag(s32);
 void GSflagSet(void *, s32);
 void floorSetFadeScript(s32, s32);
@@ -462,15 +462,13 @@ static u16 _checkWaza2(void);
 static void _menuScriptPdaAddFunc(pdaAddFuncDef def) {
     u8 rate;
     GSmodelAllPauseAnimation();
-    rate = GSgfxVideoGetVsyncRate();
-    menuCreateOffScreen(rate, 20.0f / rate, 50.0f);
+    menuCreateOffScreen(20.0f / GSgfxVideoGetVsyncRate(), 50.0f);
     menuOffScreenCheckEnable(1);
     _PdaAddFunc = def;
     GSfloorPush(0x38C);
     floorSetFadeScript(0, 0);
     floorWaitForChange();
-    rate = GSgfxVideoGetVsyncRate();
-    menuReleaseOffScreen(rate, 0.0f / rate);
+    menuReleaseOffScreen(0.0f / GSgfxVideoGetVsyncRate());
     GSmodelAllUnpauseAnimation();
 }
 
@@ -481,8 +479,7 @@ extern "C" void menuScriptPdaAddFunc(void) {
 static void _menuScriptReadMail(long id) {
     u8 rate;
     GSmodelAllPauseAnimation();
-    rate = GSgfxVideoGetVsyncRate();
-    menuCreateOffScreen(rate, 20.0f / rate, 50.0f);
+    menuCreateOffScreen(20.0f / GSgfxVideoGetVsyncRate(), 50.0f);
     menuOffScreenCheckEnable(1);
     _menuScriptMailID = id;
     GSfloorPush(0x393);
@@ -492,8 +489,7 @@ static void _menuScriptReadMail(long id) {
     }
     floorSetFadeScript(0, 0);
     floorWaitForChange();
-    rate = GSgfxVideoGetVsyncRate();
-    menuReleaseOffScreen(rate, 0.0f / rate);
+    menuReleaseOffScreen(0.0f / GSgfxVideoGetVsyncRate());
     GSmodelAllUnpauseAnimation();
 }
 

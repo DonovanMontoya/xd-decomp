@@ -116,9 +116,7 @@ static u8 checkHitMdl(GSvec *point,f32 radius,CCD_HITMDL_HEAD *model,GSmtx *matr
         HitPolygon *polygon=model->polygons;
         u8 hit=0;
         for(u32 i=0;i<model->count && !hit;i++,polygon++) {
-            Vec *src=polygon->vertices,*dst=triangle;
-            s32 j=0;
-            do {PSMTXMultVec(matrix->m,src,dst);j++;src++;dst++;} while(j<3);
+            for(s32 j=0;j<3;j++) PSMTXMultVec(matrix->m,&(polygon->vertices)[j],&triangle[j]);
             PSMTXMultVec(rotation->m,&polygon->normal,&normal);
             hit=faceContact(&closest,(Vec *)point,triangle,&normal,radiusSquared);
         }
@@ -133,9 +131,7 @@ static u8 checkHitMdl(GSvec *point,f32 radius,CCD_HITMDL_HEAD *model,GSmtx *matr
         u8 hit=0;
         for(u32 i=0;i<model->count && !hit;i++,polygon++) {
             if(!(polygon->edgeFlags&7)) continue;
-            Vec *src=polygon->vertices,*dst=triangle;
-            s32 j=0;
-            do {PSMTXMultVec(matrix->m,src,dst);j++;src++;dst++;} while(j<3);
+            for(s32 j=0;j<3;j++) PSMTXMultVec(matrix->m,&(polygon->vertices)[j],&triangle[j]);
             PSMTXMultVec(rotation->m,&polygon->normal,&normal);
             hit=edgeContact(&closest,(Vec *)point,triangle,&normal,polygon->edgeFlags,radiusSquared);
         }
@@ -150,9 +146,7 @@ static u8 checkHitMdl(GSvec *point,f32 radius,CCD_HITMDL_HEAD *model,GSmtx *matr
         u8 hit=0;
         for(u32 i=0;i<model->count && !hit;i++,polygon++) {
             if(!(polygon->edgeFlags&7)) continue;
-            Vec *src=polygon->vertices,*dst=triangle;
-            s32 j=0;
-            do {PSMTXMultVec(matrix->m,src,dst);j++;src++;dst++;} while(j<3);
+            for(s32 j=0;j<3;j++) PSMTXMultVec(matrix->m,&(polygon->vertices)[j],&triangle[j]);
             PSMTXMultVec(rotation->m,&polygon->normal,&normal);
             hit=vertexContact(&closest,(Vec *)point,triangle,&normal,polygon->edgeFlags,radiusSquared);
         }

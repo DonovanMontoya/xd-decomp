@@ -28,19 +28,29 @@ void WS_TOKUSEI_SET(void) {
 }
 
 void WS_SUBROUTINE_CALL(void) {
-    u8 type = fightFloor_GetFightType(0);
-    u8* seq = fightSeq_GetWazaSeq();
-    FightOutPokemon* pokemon = fightTargetGetPtrAsNowFightType(seq[1], 0);
-    u16 move = fightOutPokemon_GetUseWazaDataId(pokemon);
+    u16 move;
+    FightOutPokemon* pokemon;
+    u8* seq;
+    u8 type;
+    FightOutPokemon* defender;
+    FightOutPokemon* target;
+    FightPokemon* expPokemon;
+    FIGHT_TRAINER* trainer;
+    FightOutPokemon* out;
+    u16 id;
+    type = fightFloor_GetFightType(0);
+    seq = fightSeq_GetWazaSeq();
+    pokemon = fightTargetGetPtrAsNowFightType(seq[1], 0);
+    move = fightOutPokemon_GetUseWazaDataId(pokemon);
     switch (seq[2]) {
     case 0:
         fightOutPokemonInitJoutaiKeep(pokemon);
         break;
     case 1: {
         fightTargetGetPtrAsNowFightType(0x11, 0);
-        FightOutPokemon* defender = fightTargetGetPtrAsNowFightType(0x12, 0);
+        defender = fightTargetGetPtrAsNowFightType(0x12, 0);
         fightFloor_SetAttackPokemonPtr(0, defender);
-        FightOutPokemon* target = fightSeqGetEnemyFightSideKonoyubitomareFightOutPokemonPtr(defender);
+        target = fightSeqGetEnemyFightSideKonoyubitomareFightOutPokemonPtr(defender);
         if (target == 0) target = pokemon;
         fightFloor_SetDefPokemonAndAtkFightWazaTargetId(0, target);
         break;
@@ -49,7 +59,7 @@ void WS_SUBROUTINE_CALL(void) {
         ServerWork.flags[0] = EscapeNGCheck(fightTargetGetPtrAsNowFightType(0x11, 0));
         break;
     case 3: {
-        FightOutPokemon* target = fightSeqSelectDefensePokemonPtr(pokemon, move, type, 0, 1, 1, -1);
+        target = fightSeqSelectDefensePokemonPtr(pokemon, move, type, 0, 1, 1, -1);
         if (target != 0) fightFloor_SetDefPokemonAndAtkFightWazaTargetId(0, target);
         break;
     }
@@ -61,14 +71,14 @@ void WS_SUBROUTINE_CALL(void) {
         }
         break;
     case 6: {
-        FightPokemon* expPokemon = get_exp_fight_pokemon_ptr;
+        expPokemon = get_exp_fight_pokemon_ptr;
         if (expPokemon != 0) {
-            FIGHT_TRAINER* trainer = fightFloorGetFightPokemonPtrToFightTrainerPtr(0, expPokemon);
+            trainer = fightFloorGetFightPokemonPtrToFightTrainerPtr(0, expPokemon);
             if (trainer != 0) {
-                FightOutPokemon* out = fightTrainerCheckFightPokemonFightOut(trainer, expPokemon);
+                out = fightTrainerCheckFightPokemonFightOut(trainer, expPokemon);
                 if (out != 0) {
                     if (fightOutPokemonIsJoutaiDataId(out, 0x36) == 1) {
-                        u16 id = fightOutPokemonGetIdBuffJoutaiDataId(out, 0x36);
+                        id = fightOutPokemonGetIdBuffJoutaiDataId(out, 0x36);
                         if (pokemonSearchWazaDataId(fightOutPokemonGetPokemonPtr(out), id) < 0) {
                             fightOutPokemonInitJoutaiDataId(out, 0x36);
                         }

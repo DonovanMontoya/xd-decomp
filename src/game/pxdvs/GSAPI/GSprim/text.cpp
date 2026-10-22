@@ -28,8 +28,7 @@ extern "C" void GSprimWriteStr(f32 x, f32 y, const char* format, ...) {
     va_end(args);
     u32 length = strlen(buf);
     textState();
-    GSgfxVF* vf = GSgfxVFGetPredef(2);
-    GSprimLayer()->setRenderStateAndSelect(vf);
+    primData.layer->setRenderStateAndSelect(GSgfxVFGetPredef(2));
     GSprimLayer()->primitive = 0xa8;
     u32 count = _primRenderBuf(x, y, buf, length, false);
     GSprimLayer()->beginSurface(count * 2);
@@ -38,8 +37,7 @@ extern "C" void GSprimWriteStr(f32 x, f32 y, const char* format, ...) {
 }
 extern "C" void GSprimWriteChar(f32 x, f32 y, char character) {
     textState();
-    GSgfxVF* vf = GSgfxVFGetPredef(2);
-    GSprimLayer()->setRenderStateAndSelect(vf);
+    primData.layer->setRenderStateAndSelect(GSgfxVFGetPredef(2));
     GSprimLayer()->primitive = 0xa8;
     u32 count = _primRenderBuf(x, y, &character, 1, false);
     GSprimLayer()->beginSurface(count * 2);

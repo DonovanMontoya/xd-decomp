@@ -195,24 +195,20 @@ LayerNode* GSgfxLayerFindByID(s32 id) {
     if (id<16) return _layerIDTable[id];
     return reinterpret_cast<LayerNode*>(id);
 }
+struct LayerNamed { LayerNode* next; u8 reserved4[4]; char name[32]; };
 LayerNode* GSgfxLayerFindByName(char* name) {
     for (LayerNode* p=_layerBottom;p;p=p->next) {
-        char local[32]; char* source=reinterpret_cast<char*>(p)+8;
-        if ((s32)((u8)strlen(source)+1)<=32) memcpy(local,source,(u8)strlen(source)+1);
-        else { memcpy(local,source,31); local[31]=0; }
+        char local[32];
+        LayerNamed* n=(LayerNamed*)p;
+        if ((s32)((u8)strlen(n->name)+1)<=32) memcpy(local,n->name,(u8)strlen(n->name)+1);
+        else { memcpy(local,n->name,31); local[31]=0; }
         if (stricmp(local,name)==0) return p;
     }
     return 0;
 }
 s32 GSgfxLayerFindByName_C(char* name) {
-    LayerNode* p=_layerBottom;
-    for (;p;p=p->next) {
-        char local[32];
-        if ((s32)((u8)strlen(reinterpret_cast<char*>(p)+8)+1)<=32) memcpy(local,reinterpret_cast<char*>(p)+8,(u8)strlen(reinterpret_cast<char*>(p)+8)+1);
-        else { memcpy(local,reinterpret_cast<char*>(p)+8,31); local[31]=0; }
-        if (stricmp(local,name)==0) break;
-    }
-    return p ? p->id : -1;
+    LayerNode* p=GSgfxLayerFindByName(name);
+    if (p==0) { return -1; } else { return p->id; }
 }
 void GSgfxLayerInit__Fv() {
     _layerIDTable[0]=0; _layerIDTable[1]=0; _layerIDTable[2]=0; _layerIDTable[3]=0;

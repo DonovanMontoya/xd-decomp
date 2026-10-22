@@ -267,7 +267,7 @@ void cameraSetGScamera(GScamera* camera) {
         cameraSetHeight(height); cameraSetDistance(depth); cameraSetRotY(rotation); cameraSetFov(fov);
     }
 }
-void cameraReturn(u8 wait,f32 duration) {
+void cameraReturn(f32 duration,u8 wait) {
     GScamera* camera=GScameraGetActiveCamera();
     if(floorFieldCameraDataExist()) {
         if(pCamWork->type==3) {

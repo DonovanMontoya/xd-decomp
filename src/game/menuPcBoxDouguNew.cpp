@@ -128,6 +128,7 @@ extern "C" s32 menuPcBoxDouguNumCtrl(tagWINDOW_WORK *win) {
     return 0;
 }
 
+#pragma opt_common_subs off
 static int menuPcBoxDouguNum(int value, int limit) {
     s32 args[2];
     s32 ret;
@@ -142,6 +143,7 @@ static int menuPcBoxDouguNum(int value, int limit) {
     }
     return NumValue;
 }
+#pragma opt_common_subs reset
 
 static u8 getItemKind(u16 id) {
     return itemDataBiosGetKind(itemDataBiosGetPtr(id));

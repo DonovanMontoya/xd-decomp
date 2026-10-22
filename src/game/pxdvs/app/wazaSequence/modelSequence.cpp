@@ -1037,6 +1037,7 @@ void ModelSequence::DoAnimation(int anim, enumSectionMotionType type, bool force
     case 1:
         animType = 0;
         break;
+    case 0:
     default:
         PlayDefaultAnimation(GSMODEL_ANIM_TYPE_1, force);
         return;

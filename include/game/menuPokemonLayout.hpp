@@ -13,7 +13,7 @@ struct MENU_POKEMON_WORK {
     u8 unk3;
     s8 unk4;
     s8 unk5;
-    u8 unk6;
+    s8 unk6;
     s8 unk7;
     s8 unk8;
     u8 reserved9[3];

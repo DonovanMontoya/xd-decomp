@@ -108,7 +108,7 @@ static inline s32 _aisyouLevel(s32 r) {
     return 0x7B;
 }
 
-#define AISYOU_BODY                                                           \
+#define AISYOU_BODY(LOADS)                                                    \
     Pokemon *p[2];                                                            \
     s32 z[2][2];                                                              \
     s32 i;                                                                    \
@@ -126,8 +126,7 @@ static inline s32 _aisyouLevel(s32 r) {
     for (s32 k = 0; k < 2; k++) {                                             \
         for (s32 j = 0; j < 2; j++) {                                         \
             s32 v;                                                            \
-            s32 y = z[1][j];                                                  \
-            s32 x = z[0][k];                                                  \
+            LOADS                                                             \
             if (x == 0 && y == 0) {                                           \
                 v = 2;                                                        \
             } else {                                                          \
@@ -141,11 +140,11 @@ static inline s32 _aisyouLevel(s32 r) {
     return best;
 
 static inline s32 _aisyouInline(Pokemon *a, Pokemon *b) {
-    AISYOU_BODY
+    AISYOU_BODY(s32 y = z[1][j]; s32 x = z[0][k];)
 }
 
 s32 reliveHallPokemonToAisyou(Pokemon *a, Pokemon *b) {
-    AISYOU_BODY
+    AISYOU_BODY(s32 x = z[0][k]; s32 y = z[1][j];)
 }
 
 CReliveHall *CReliveHall::getPointer() {

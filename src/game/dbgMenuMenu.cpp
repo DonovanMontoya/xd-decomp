@@ -568,6 +568,7 @@ static void testD2Present(D2PRESENT_MODE mode) {
 
 extern "C" {
 
+#pragma opt_dead_assignments off
 s32 dbgMenuMenuTestD2Present(s32 menu) {
     DbgMenuPair table[3] = { { 0x1DF, 0 }, { 0x1E0, 1 }, { 0x1E1, 2 } };
     s32 i;
@@ -583,6 +584,7 @@ s32 dbgMenuMenuTestD2Present(s32 menu) {
                     value);
     return 0;
 }
+#pragma opt_dead_assignments reset
 
 s32 dbgMenuMenuTestWorlMapSetAllFlag(void) {
     menuWorldMapMXDebug();
@@ -714,6 +716,7 @@ s32 dbgMenuMenuTestEnableMemo(void) {
 
 }
 
+#pragma opt_common_subs off
 static void testEvolution(void) {
     Pokemon* before = (Pokemon*)heroGetStatus(0, 3, 0);
     Pokemon* after;
@@ -736,6 +739,7 @@ static void testEvolution(void) {
         }
     }
 }
+#pragma opt_common_subs reset
 
 extern "C" {
 

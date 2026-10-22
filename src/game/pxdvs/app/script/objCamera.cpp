@@ -38,7 +38,7 @@ int AppScript::cmpCamera(int method,GSscript::tigaVariant *args,GSscript::tigaVa
     case 0x2B:cameraSetRotY(F(1));break;
     case 0x2C:{void *camera=GSresGetResource(0,0);GScameraGetPerspective(camera,&fov,&aspect,&nearPlane,&farPlane);fov=F(1);cameraSetFov(fov);GScameraSetPerspective(camera,fov,aspect,nearPlane,farPlane);break;}
     case 0x2D:cameraUpdate();break;
-    case 0x2E:{f32 time=F(1);cameraReturn((bool)I(2),time);break;}
+    case 0x2E:{f32 time=F(1);cameraReturn(time,(bool)I(2));break;}
     case 0x2F:cameraSetType(0);floorFieldCameraEnable();break;
     case 0x30:floorFieldCameraDisable();cameraSetType(3);break;
     case 0x31:floorFieldCameraBlend(F(1));break;

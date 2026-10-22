@@ -28,39 +28,35 @@ u16 esabaGetPokemonMax(u16 area){EsaList *list=getList(area);if(list)return *lis
 s32 esabaGetDigestRate(u16 area){u32 station=area;u16 id=GSflagGet(esabadata[station].pokemonFlag);if(id==esabapokemondata_EX[0].id)return esabapokemondata_EX[0].digest;if(id==esabapokemondata_EX[1].id)return esabapokemondata_EX[1].digest;u16 count=esabaGetPokemonMax(station);s32 index;for(index=0;index<count;index++){if(listPokemon(station,index)==GSflagGet(esabadata[station].pokemonFlag))goto found;}index=0;found:return listDigest(station,index);}
 
 s32 esabaGetEsaItemNum(){return itemQuantity__4HeroFUs(getHeroPtr__4HeroFv(),0x1FF);}
+static inline void esabaAdjustAmount(s32 area, s32 delta) {
+    s32 current = GSflagGet(esabadata[area].amountFlag);
+    GSflagSet(esabadata[area].amountFlag, current += delta);
+    if (current == 0) {
+        GSflagSet(esabadata[area].appFlag, 0U);
+        GSflagSet(esabadata[area].stepFlag, 0U);
+    }
+}
 s32 esabaGet(s32 arg0) {
-    s32 temp_r31;
     s32 sp8;
     s32 temp_r3;
 
     temp_r3 = GSflagGet(esabadata[arg0].amountFlag);
     sp8 = temp_r3;
     if (menuPanelInputNumber(0, &sp8, 0, temp_r3, 1) != 0) {
-        temp_r31 = -sp8; temp_r31 = GSflagGet(esabadata[arg0].amountFlag) + temp_r31;
-        GSflagSet(esabadata[arg0].amountFlag, temp_r31);
-        if ((s32) temp_r31 == 0) {
-            GSflagSet(esabadata[arg0].appFlag, 0U);
-            GSflagSet(esabadata[arg0].stepFlag, 0U);
-        }
+        esabaAdjustAmount(arg0, -sp8);
         return sp8;
     }
     return 0;
 }
 
 s32 esabaPut(s32 arg0) {
-    s32 temp_r31;
     s32 sp8;
     s32 temp_r3;
 
     temp_r3 = GSflagGet(esabadata[arg0].amountFlag);
     sp8 = temp_r3;
     if (menuPanelInputNumber(0, &sp8, 0, 0xA - temp_r3, 1) != 0) {
-        temp_r31 = (s16) sp8; temp_r31 = GSflagGet(esabadata[arg0].amountFlag) + temp_r31;
-        GSflagSet(esabadata[arg0].amountFlag, temp_r31);
-        if ((s32) temp_r31 == 0) {
-            GSflagSet(esabadata[arg0].appFlag, 0U);
-            GSflagSet(esabadata[arg0].stepFlag, 0U);
-        }
+        esabaAdjustAmount(arg0, (s16) sp8);
         return sp8;
     }
     return 0;
@@ -69,12 +65,12 @@ s32 esabaPut(s32 arg0) {
 s32 esabaSet(s32 arg0) {
     s32 sp8;
     s32 temp_r4;
+    s32 var_r29;
     u32 temp_r26;
     s32 temp_r3;
     s32 temp_r3_2;
     s32 var_r28;
     s32 var_r27;
-    s32 var_r29;
     s32 var_r6;
     u16 temp_r3_3;
 
@@ -84,9 +80,10 @@ s32 esabaSet(s32 arg0) {
     sp8 = temp_r3;
     temp_r26 = itemQuantity__4HeroFUs(getHeroPtr__4HeroFv(),0x1FF);
     GSthreadSwitch();
-    var_r29 = 0xC92E + ((s32) (-sp8 | sp8) >> 0x1F);
+    s32 messageId = 0xC92E;
+    messageId += ((s32) (-sp8 | sp8) >> 0x1F);
     msgctrlSetValue(0x2F, sp8);
-    winMsgOpen(2, var_r29, 0, 1);
+    winMsgOpen(2, messageId, 0, 1);
     var_r6 = sp8 + temp_r26;
     if (var_r6 > 0xA) {
         var_r6 = 0xA;

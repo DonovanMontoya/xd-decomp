@@ -451,7 +451,7 @@ static void _menuPdaZoomIn(void) {
 static void _menPdaFadeInWait(void) {
     s32 state = 0;
     s32 run = 1;
-    while (run != 0) {
+    do {
         switch (state) {
         case 0:
             fadeSet(2, 0.5f);
@@ -468,13 +468,13 @@ static void _menPdaFadeInWait(void) {
             run = 0;
             break;
         }
-    }
+    } while (run != 0);
 }
 
 static s32 _menPdaFadeOutWait(void) {
     s32 state = 0;
     s32 run = 1;
-    while (run != 0) {
+    do {
         switch (state) {
         case 0:
             if (fadeCheck(0) == 0) {
@@ -487,7 +487,7 @@ static s32 _menPdaFadeOutWait(void) {
             run = 0;
             break;
         }
-    }
+    } while (run != 0);
     return 1;
 }
 
@@ -696,10 +696,8 @@ static s32 _SelectCursorPositionCheck(void) {
         _menuPdaStatus.unk5C = _menuPdaStatus.unk60;
         return 1;
     }
-    f32 target = _menuPdaStatus.unk60;
-    f32 cur = _menuPdaStatus.unk5C;
-    if (target != cur) {
-        f32 diff = target - cur;
+    if (_menuPdaStatus.unk60 != _menuPdaStatus.unk5C) {
+        f32 diff = _menuPdaStatus.unk60 - _menuPdaStatus.unk5C;
         f32 step;
         _menuPdaStatus.unk64 = diff;
         step = diff * dt / 0.1f;
@@ -712,18 +710,18 @@ static s32 _SelectCursorPositionCheck(void) {
                 step = -0.2f;
             }
         }
+        f32 aStep = __fabs(step);
         f32 t2 = _menuPdaStatus.unk60;
         f32 n = _menuPdaStatus.unk5C + step;
-        f32 aStep = __fabs(step);
         _menuPdaStatus.unk5C = n;
         if ((f32)__fabs(t2 - n) < aStep) {
             _menuPdaStatus.unk5C = t2;
             _menuPdaStatus.unk64 = 0.0f;
-            return 1;
+            ret = 1;
         }
-        return ret;
+    } else {
+        ret = 1;
     }
-    ret = 1;
     return ret;
 }
 
@@ -761,8 +759,8 @@ static s32 _SelectCursorCalcPositon(GSvec2 *out) {
 }
 
 extern "C" void menuPdaScript(u8 mode) {
+    s32 sp0C;
     s32 sp08;
-    s8 sp0C;
     f32 remain;
     u32 endFrame;
     sp08 = 0;

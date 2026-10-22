@@ -1151,10 +1151,7 @@ s32 menuPocket2DrawTitleLR(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
 }
 
 void menuPocket2Button(tagWINDOW_WORK *win) {
-    if (Data.swapIndex >= 0) {
-        return;
-    }
-    if (winSeqCheckMove(win->menu) != 0) {
+    if (Data.swapIndex >= 0 || winSeqCheckMove(win->menu) != 0) {
         return;
     }
     if ((windowGetKeyTrg() & 0x10) != 0) {

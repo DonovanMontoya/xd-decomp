@@ -60,18 +60,19 @@ u16 fightAi_GetWazaDataIDFromFixActWaza(FIGHT_TRAINER*,FightOutPokemon *pokemon,
 
 s16 fightAiCombo_GetAllWazaValueTable(ComboWaza *table,s16 value,FIGHT_TRAINER *trainer,FightOutPokemon **,FightOutPokemon **enemies,s8 weather){return fightAiCombo_GetAllWazaTableDefValue(trainer,enemies,table,value,weather);}
 s32 fightAiCombo_Act(FIGHT_TRAINER *trainer,FightOutPokemon **allies,u16 allyCount){
-    ComboWaza selected;
-    FightOutPokemon *enemies[8];
     void *deck;
-    u16 enemyCount;
     ComboAction action;
+    ComboWaza selected;
+    ComboDispatch *entry;
     u8 active;
+    FightOutPokemon *enemies[8];
     u8 i;
+    u16 enemyCount;
     if(!trainer)return 0;
     enemyCount=fightFloorGetFightTrainerFightOutPokemonPtrAry(0,trainer,enemies,0,1);
     for(i=0;i<4;i++){
         deck=getDeckTrainerObj__11DeckTrainerFUl(fightTrainer_GetFightTrainerDataId(trainer));
-        ComboDispatch *entry=&comboid[getComboID__11DeckTrainerCFUc(deck,i)];
+        entry=&comboid[getComboID__11DeckTrainerCFUc(deck,i)];
         action=entry->action;
         active=getComboActive__11DeckTrainerCFUc(deck,i);
         if(active && action && action(trainer,allies,allyCount,enemies,enemyCount,&selected,active)==1){fightAi_CreateAction_FromAllWazaValid(trainer,&selected);return 1;}
@@ -152,12 +153,16 @@ s16 fightAiCombo_GetValidValue(FightOutPokemon **allies,u16 allyCount,FightOutPo
 
 extern "C" {
 void ComboStatusUp(FIGHT_TRAINER *trainer,ComboWaza *table,s16 *score){
-    s16 value=*score;
-    for(u8 i=0;i<2;i++)if(table->attackers[i]){
-        for(u8 j=0;j<14;j++){
-            ComboStatusMove *entry=&statusUpWazaTbl[j];
+    ComboStatusMove *entry;
+    u8 i;
+    u8 j;
+    s16 value;
+    value=*score;
+    for(i=0;i<2;i++)if(table->attackers[i]){
+        for(j=0;j<14;j++){
+            entry=&statusUpWazaTbl[j];
             if(table->moves[i]==entry->move && table->attackers[i]){
-                u8 current=0;
+                u8 current;
                 switch(entry->stat){case 1:current=fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(trainer,table->attackers[i]);break;case 2:current=fightTrainerAiGetFightOutPokemonAbiCntPhyDef(trainer,table->attackers[i]);break;case 3:current=fightTrainerAiGetFightOutPokemonAbiCntSubayasa(trainer,table->attackers[i]);break;case 4:current=fightTrainerAiGetFightOutPokemonAbiCntSpeAtk(trainer,table->attackers[i]);break;case 5:current=fightTrainerAiGetFightOutPokemonAbiCntSpeDef(trainer,table->attackers[i]);break;case 6:current=fightTrainerAiGetFightOutPokemonAbiCntAvg(trainer,table->attackers[i]);break;case 7:current=fightTrainerAiGetFightOutPokemonAbiCntAvd(trainer,table->attackers[i]);break;}
                 if(current+entry->amount>12)value=0;
             }
@@ -221,7 +226,7 @@ void ComboStatusChangeSub(FIGHT_TRAINER *trainer,FightOutPokemon **enemies,Combo
                 if(fightTrainerAiIsFightOutPokemonJoutaiDataId(trainer,enemies[k],status)==1){blocked++;break;}
                 else for(u8 l=0;l<immuneCount;l++)if(fightAi_GetTokuseiHaveFlag(trainer,enemies[i],immune[l])>=1){blocked++;break;}
             }
-            if(blocked>=2)value=0;else if(blocked==1)value=(s16)((f64)value*0.5);
+            if(blocked>=2)value=0;else if(blocked==1)value=(s16)((f64)value/2.0);
             break;
         }
         }
@@ -232,14 +237,16 @@ void ComboStatusChange(FIGHT_TRAINER *trainer,FightOutPokemon **enemies,ComboWaz
     ComboStatusChangeSub(trainer,enemies,table,score,8);ComboStatusChangeSub(trainer,enemies,table,score,5);ComboStatusChangeSub(trainer,enemies,table,score,9);ComboStatusChangeSub(trainer,enemies,table,score,3);ComboStatusChangeSub(trainer,enemies,table,score,6);
 }
 void ComboPower(FIGHT_TRAINER *trainer,FightOutPokemon **enemies,ComboWaza *table,s16 *score){
+    u8 i;
     s16 value=*score;
-    for(u8 i=0;i<2;i++)if(table->attackers[i] && wazaIsWazaTypeId(table->moves[i],1)==1){
+    for(i=0;i<2;i++)if(table->attackers[i] && wazaIsWazaTypeId(table->moves[i],1)==1){
         switch(table->eligible[i]){
+        case 3:break;
         case 0:case 1:if(table->defenders[i] && fightAi_HitCheckWazaAboutJoutaiAndType(trainer,table->attackers[i],table->defenders[i],table->moves[i])==0)value=0;break;
         case 2:{
-            u8 blocked=0;
-            for(u8 j=0;j<2;j++)if(enemies[j] && fightAi_HitCheckWazaAboutJoutaiAndType(trainer,table->attackers[i],enemies[j],table->moves[i])==0){blocked=1;break;}
-            if(blocked>=2)value=0;else if(blocked==1)value=(s16)((f64)value*0.5);
+            u8 j;u8 blocked=0;
+            for(j=0;j<2;j++)if(enemies[j] && fightAi_HitCheckWazaAboutJoutaiAndType(trainer,table->attackers[i],enemies[j],table->moves[i])==0){blocked=1;break;}
+            if(blocked>=2)value=0;else if(blocked==1)value=(s16)((f64)value/2.0);
             break;
         }
         }

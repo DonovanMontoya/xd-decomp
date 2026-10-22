@@ -5,26 +5,31 @@ static inline u32 &layerWord(u32 offset) {return *(u32*)((u8*)g_current_layer+of
 static inline u8 byte(f32 value) {if(value<0)return 0;if(value>255)return 255;return (u8)value;}
 static inline s16 shortValue(f32 value) {if(value<-32768)return -32768;if(value>32767)return 32767;return (s16)value;}
 static inline f32 spline(ShapeSpline *s,f32 t) {if(!s||!(s->flags&3))return 1;f32 d=s->time-t;if(d<0)d=-d;return d<=0.00001f?s->value:peSplineGetValue(s,t);}
+#pragma opt_unroll_loops off
 void peParticleStripContainer::RearrangeIndices() {
  if(active) {
-  u16 output=0,ordinal=0;u16 total=count;u32 flags=definition->flags;u32 extended=(flags>>18)&1;
-  if(total>=2) {
-   u16 lastIndex;f32 step;if(flags&0x10000){lastIndex=total-1;step=1.0f/__OSu16tof32(&lastIndex);}else step=emitterFloat(owner,8);
+  u16 output=0,ordinal=0;u32 flags=definition->flags;u32 extended=(flags>>18)&1;
+  if(count>=2) {
+   f32 *parameters=(f32*)owner->emitter;f32 step;if(flags&0x10000){u16 lastIndex=count-1;step=1.0f/__OSu16tof32(&lastIndex);}else step=parameters[2];
    u32 mirror=(flags>>15)&1;u32 reverse=(flags>>17)&1;
-   u8 vertexStride=extended?12:11,indexStep=extended?8:6,dataStride=extended?0x30:0x2c;
-   GSgfxDL *list=&displayLists[swapIndex];peParticleStripNode *node=(peParticleStripNode*)nodes;
+   u8 vertexStride,indexStep,dataStride;
+   if(extended){vertexStride=12;indexStep=8;dataStride=0x30;}else{vertexStride=11;indexStep=6;dataStride=0x2c;}
+   peParticleStripNode *node=(peParticleStripNode*)nodes;GSgfxDL *list=&displayLists[swapIndex];u8 *base=renderData[swapIndex];
    while(node) {
-    node->sortIndex=output;u16 base=node->index*vertexStride;f32 *data=(f32*)(renderData[swapIndex]+node->index*dataStride);
+    f32 *data=(f32*)(base+node->index*dataStride);node->sortIndex=output;u16 first=node->index*vertexStride;
     u16 *indices=(u16*)((list->flags&1)?list->data+3:0);indices+=output;
-    if(extended) {for(u16 j=0;j<2;++j){indices[0]=base+j*3;indices[1]=base;indices[2]=base;indices[3]=base+j*2;indices+=4;}}
-    else {for(u16 j=0;j<2;++j){indices[0]=base+j*3;indices[1]=base;indices[2]=base+j*2;indices+=3;}}
-    f32 value;if(reverse){u16 flipped=count-ordinal-1;value=__OSu16tof32(&flipped);}else value=__OSu16tof32(&ordinal);
+    u16 j=0;
+    if(extended) {for(;j<2;j++){indices[0]=first+j*3;indices[1]=first;indices[2]=first;indices[3]=first+j*2;indices+=4;}}
+    else {for(;j<2;j++){indices[0]=first+j*3;indices[1]=first;indices[2]=first+j*2;indices+=3;}}
+    f32 value;if(reverse){u16 flipped=count-ordinal-1;value=__OSu16tof32(&flipped);}else{u16 current=ordinal;value=__OSu16tof32(&current);}
     if(mirror)data[9]=data[7]=-((value*step)-1.0f);else data[9]=data[7]=value*step;
     output+=indexStep;++ordinal;data[8]=definition->v0;data[10]=definition->v1;node=(peParticleStripNode*)node->next;
    }list->flags|=2;
   }
  }
 }
+#pragma opt_unroll_loops reset
+
 static inline void invalidate(peParticleStripNode *node,GSgfxDL *list,u32 flags) {
  u16 *indices=(u16*)((list->flags&1)?list->data+3:0);indices+=node->sortIndex;u16 count=2;
  while(count--){indices[0]=0xffff;indices[1]=0xffff;indices[2]=0xffff;indices+=3;if(flags&0x40000)*indices++=0xffff;}list->flags|=2;
@@ -36,26 +41,57 @@ void peParticleStripContainer::Stop() {
  }
 }
 static inline u8 visible(peParticleStripContainer *c) {
- if(!c->active)return 0;u32 flags=c->definition->flags;if(c->count<2||g_render_pass!=1)return 0;
- switch(layerWord(0x28)){case 0:return (flags&0x100000)!=0;case 2:return (flags&0x200000)||!(flags&0x1f00040);case 4:return(flags&0x40)!=0;case 1:return(flags&0x400000)!=0;case 3:return(flags&0x800000)!=0;case 5:return(flags&0x1000000)!=0;default:return 0;}
+ if(!c->active)return 0;
+ u32 flags=c->definition->flags;
+ if(c->count<2)return 0;
+ if(g_render_pass!=1)return 0;
+ switch(layerWord(0x28)){
+ case 0:if(flags&0x100000)return 1;break;
+ case 2:if(flags&0x200000)return 1;if(!(flags&0x1f00040))return 1;break;
+ case 4:if(flags&0x40)return 1;break;
+ case 1:if(flags&0x400000)return 1;break;
+ case 3:if(flags&0x800000)return 1;break;
+ case 5:if(flags&0x1000000)return 1;break;
+ default:return 0;}
+ return 0;
+}
+struct StripKColor {u8 r,g,b,a;};
+static inline void stripSetTevKColor(u32 id,StripKColor color) {
+ u8* layer=(u8*)g_current_layer;
+ *(u32*)(layer+0x14f4+id*4)=*(u32*)&color;*(u32*)(layer+0x16f8)|=1<<id;*(u32*)(layer+0x16a8)|=0x10;*(u32*)(layer+0x17b0)|=1<<id;*(u32*)(layer+0x1760)|=0x10;
+}
+static inline void stripSetupTexture(u8 unit,void* texture,u32 flags) {
+ s32 magFilter=0;if(flags&0x20)magFilter=2;
+ s32 wrapS=0;s32 wrapT=(flags>>8)&3;
+ s32 minFilter=0;if(flags&0x10)minFilter=2;
+ particleEngineSetupTexture(unit,texture,wrapS,wrapT,minFilter,magFilter);
 }
 void peParticleStripContainer::Render() {
  if(active&&visible(this)) {
   ResolveMultipleSwap();u32 flags=definition->flags;u32 extended=(flags>>18)&1;
-  layerWord(0xd8c)=0;layerWord(0x16b8)|=2;layerWord(0x16a8)|=2;layerWord(0x1770)|=2;layerWord(0x1760)|=2;particleEngineSetupBlendMode(flags&7);
+  {u8* layer=(u8*)g_current_layer;*(u32*)(layer+0xd8c)=0;*(u32*)(layer+0x16b8)|=2;*(u32*)(layer+0x16a8)|=2;*(u32*)(layer+0x1770)|=2;*(u32*)(layer+0x1760)|=2;}
+  particleEngineSetupBlendMode(flags&7);
   GSgfxDL *list=&displayLists[swapIndex];u8 *data=renderData[swapIndex];GSgfxVF *format=(list->flags&1)?(GSgfxVF*)list->reserved:0;
-  GSgfxVFSetArray(format,9,3,data,4,renderBytes);GSgfxVFSetArray(format,11,3,data+0x18,4,renderBytes);if(extended)GSgfxVFSetArray(format,12,3,data+0x2c,4,renderBytes);GSgfxVFSetArray(format,13,3,data+0x1c,4,renderBytes);
+  if(extended) {
+   GSgfxVFSetArray(format,9,3,data,4,renderBytes);GSgfxVFSetArray(format,11,3,data+0x18,4,renderBytes);GSgfxVFSetArray(format,12,3,data+0x2c,4,renderBytes);GSgfxVFSetArray(format,13,3,data+0x1c,4,renderBytes);
+  } else {
+   GSgfxVFSetArray(format,9,3,data,4,renderBytes);GSgfxVFSetArray(format,11,3,data+0x18,4,renderBytes);GSgfxVFSetArray(format,13,3,data+0x1c,4,renderBytes);
+  }
   if(flags&0x400) {
-   u16 current=frame;StripAnimation *animation=(StripAnimation*)definition->texture;
+   StripAnimation *animation=(StripAnimation*)definition->texture;u16 current=frame;
    if(flags&0x1000) {
-    f32 span=(f32)(s16)animation->count;u32 blend=(flags>>13)&1;particleEngineSetupTevStages(0,extended,blend);if(blend)span-=1.0f;
-    f32 duration=emitterFloat(owner,0x28),time;
-    if(flags&0x4000000)time=span*(duration-remaining)/definition->frameRate;else time=definition->frameRate*(span*(1.0f-remaining/duration));
-    f32 value=fmod(time+(f32)(s16)current,span);current=(u16)shortValue(value)%(u16)animation->count;
-    if(blend){u8 fraction=byte(255.0f*(value-(f32)(s16)current));u32 color=(fraction<<24)|(fraction<<16)|(fraction<<8)|fraction;layerWord(0x14f4)=color;layerWord(0x16f8)|=1;layerWord(0x16a8)|=0x10;layerWord(0x17b0)|=1;layerWord(0x1760)|=0x10;particleEngineSetupTexture(1,animation->textures[current+1],0,(flags>>8)&3,(flags&0x10)?2:0,(flags&0x20)?2:0);}
+    u16 count=animation->count;f32 span=__OSu16tof32(&count);u32 blend=(flags>>13)&1;particleEngineSetupTevStages(0,extended,blend);if(blend)span-=1.0f;
+    f32 time;
+    if(flags&0x4000000)time=span*(emitterFloat(owner,0x28)-remaining)/definition->frameRate;else time=definition->frameRate*(span*(1.0f-remaining/emitterFloat(owner,0x28)));
+    u16 frame0=current;f32 value=fmod(time+__OSu16tof32(&frame0),span);current=__OSf32tou16(value)%(u16)animation->count;
+    if(blend){
+     u16 whole=current;u8 fraction=__OSf32tou8(255.0f*(value-__OSu16tof32(&whole)));
+     StripKColor color;color.a=fraction;color.b=fraction;color.g=fraction;color.r=fraction;stripSetTevKColor(0,color);
+     stripSetupTexture(1,animation->textures[current+1],flags);
+    }
    }else particleEngineSetupTevStages(0,extended,0);
-   particleEngineSetupTexture(0,animation->textures[current],0,(flags>>8)&3,(flags&0x10)?2:0,(flags&0x20)?2:0);
-  }else{particleEngineSetupTevStages(0,extended,0);particleEngineSetupTexture(0,definition->texture,0,(flags>>8)&3,(flags&0x10)?2:0,(flags&0x20)?2:0);}
+   stripSetupTexture(0,animation->textures[current],flags);
+  }else{particleEngineSetupTevStages(0,extended,0);stripSetupTexture(0,definition->texture,flags);}
   dlDraw__10GSgfxLayerFP7GSgfxDL(g_current_layer,&displayLists[swapIndex]);MarkForSwap();
  }
 }

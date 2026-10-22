@@ -144,30 +144,31 @@ extern "C" void floorLayerConfig(u32 floorId, u8 rawType) {
         }
         ++current;
     }
-    if ((s32)rawType != 4) {
-        if ((s32)rawType < 4) {
-            switch ((s32)rawType) {
-            case 1: {
-                Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(g_map_layer_config);
-                void* first = GSgfxLayerFindByID(0);
-                SetPassRedirect__10GSgfxLayerF14GSgfxLayerPassbP10GSgfxLayer14GSgfxLayerPass16GSgfxLayerOffset(
-                    first, 1, true, GSgfxLayerFindByID(2), 0, 2);
-                break;
-            }
-            }
-        } else if ((s32)rawType != 7) {
-            if ((s32)rawType < 7) {
-                Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(g_menu_layer_config);
-                _menu_extra_layer_id = GSgfxLayerFindByName_C((char*)"menu extra");
-            } else {
-                Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(g_empty_layer_config);
-            }
-        } else {
+    switch (rawType) {
+        case 5:
+        case 6:
+            Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(g_menu_layer_config);
+            _menu_extra_layer_id = GSgfxLayerFindByName_C((char*)"menu extra");
+            break;
+        case 7:
             Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(g_menu_layer_config);
             _menu_extra_layer_id = GSgfxLayerFindByName_C((char*)"menu");
-        }
-    } else {
-        Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(g_fight_layer_config);
+            break;
+        case 1:
+            Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(g_map_layer_config);
+            {
+                void* first = GSgfxLayerFindByID(0);
+                void* second = GSgfxLayerFindByID(2);
+                SetPassRedirect__10GSgfxLayerF14GSgfxLayerPassbP10GSgfxLayer14GSgfxLayerPass16GSgfxLayerOffset(first, 1, true, second, 0, 2);
+            }
+            break;
+        case 2:
+        case 4:
+            Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(g_fight_layer_config);
+            break;
+        default:
+            Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(g_empty_layer_config);
+            break;
     }
     dbgMenuSetLayerID(GSgfxLayerFindByName_C((char*)"debug menu"));
 }

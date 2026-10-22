@@ -789,14 +789,14 @@ config.libs = [
             Object(NonMatching, "musyx/runtime/stream.c"),
             Object(NonMatching, "musyx/runtime/synthdata.c"),
             Object(NonMatching, "musyx/runtime/synthmacros.c", src_dir="src" if config.version == "GXXE01" else None, extra_cflags=["-DMUSY_FILTER_LEGACY_OPCODE_ORDER=1"] if config.version == "GXXE01" else []),
-            Object(MatchingFor("GXXE01"), "musyx/runtime/synthvoice.c"),
+            Object(MatchingFor("GXXE01"), "musyx/runtime/synthvoice.c", src_dir="src" if config.version == "GXXE01" else None),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/synth_ac.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/synth_dbtab.c"),
-            Object(MatchingFor("GXXE01"), "musyx/runtime/synth_adsr.c"),
+            Object(MatchingFor("GXXE01"), "musyx/runtime/synth_adsr.c", src_dir="src" if config.version == "GXXE01" else None),
             Object(NonMatching, "musyx/runtime/synth_vsamples.c"),
-            Object(MatchingFor("GXXE01"), "musyx/runtime/s_data.c"),
+            Object(MatchingFor("GXXE01"), "musyx/runtime/s_data.c", src_dir="src" if config.version == "GXXE01" else None),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/hw_dspctrl.c"),
-            Object(MatchingFor("GXXE01"), "musyx/runtime/hw_volconv.c"),
+            Object(MatchingFor("GXXE01"), "musyx/runtime/hw_volconv.c", src_dir="src" if config.version == "GXXE01" else None),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/snd3d.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/snd_init.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/snd_math.c"),
@@ -808,7 +808,7 @@ config.libs = [
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/hw_dolphin.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/hw_memory.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/StdReverb/reverb_fx.c"),
-            Object(MatchingFor("GXXE01"), "musyx/runtime/StdReverb/reverb.c"),
+            Object(MatchingFor("GXXE01"), "musyx/runtime/StdReverb/reverb.c", src_dir="src" if config.version == "GXXE01" else None),
         ]
     ),
     {
@@ -959,7 +959,7 @@ config.libs = [
             Object(NonMatching, "game/pokecolo.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pokeconv.cpp", extra_cflags=["-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/wazaconv.cpp", extra_cflags=["-opt nopeephole"]),
-            Object(NonMatching, "game/floorLayerConfig.cpp"),
+            Object(NonMatching, "game/floorLayerConfig.cpp", extra_cflags=["-opt nopeephole", "-str reuse,nopool,readonly"]),
         ]
     },
     {
@@ -1002,7 +1002,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSmodel/shadow.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/bank.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
 
-            Object(NonMatching, "game/pxdvs/GSAPI/GSpart/GSpart.cpp"),
+            Object(NonMatching, "game/pxdvs/GSAPI/GSpart/GSpart.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSscratch/GSscratch.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GStexture/GStexture.cpp", extra_cflags=["-O4", "-inline deferred,auto"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSthread/GSthread.cpp", extra_cflags=["-inline off", "-str reuse,nopool,readonly"]),
@@ -1032,7 +1032,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSparticle/peNode.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peBank.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peEmitter.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peModel.cpp"),
+            Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peModel.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peContainer.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peDistortion.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peParticleStrip.cpp"),
@@ -1043,7 +1043,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSeffect/GSeffect.cpp"),
 
             # GSsnd
-            Object(NonMatching, "game/pxdvs/GSAPI/GSsnd/GSsnd.cpp"),
+            Object(NonMatching, "game/pxdvs/GSAPI/GSsnd/GSsnd.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSsnd/sndStream.cpp"),
 
             Object(NonMatching, "game/pxdvs/GSAPI/GSdvd/GSdvd.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
@@ -1102,7 +1102,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/GSgfx.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/layer.cpp", extra_cflags=["-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/render.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/perfbar.cpp"),
+            Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/perfbar.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/token.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/project.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/halt.cpp"),
@@ -1314,7 +1314,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/app/fight/fightSide.cpp", cflags=cflags_xd_app_fight),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightSideDB.cpp"),
             Object(NonMatching, "game/pxdvs/app/fight/fightTrainer.cpp", cflags=cflags_xd_app_fight),
-            Object(NonMatching, "game/pxdvs/app/fight/fightTrainerBios.cpp", cflags=cflags_xd_app_fight),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightTrainerBios.cpp", cflags=cflags_xd_app_fight),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightTrainerDB.cpp", cflags=cflags_xd_app_fight),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightTrainerEnemy.cpp", cflags=cflags_xd_app_fight),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightItemBios.cpp"),
@@ -1393,7 +1393,7 @@ config.libs = [
             # flashmenu
             Object(NonMatching, "game/pxdvs/app/flashmenu/flashmenu.cpp", extra_cflags=["-opt nopeephole"]),
             Object(NonMatching, "game/pxdvs/app/flashmenu/flashcalc.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
-            Object(NonMatching, "game/pxdvs/app/flashmenu/vecGraph.cpp", extra_cflags=["-opt nopeephole"]),
+            Object(NonMatching, "game/pxdvs/app/flashmenu/vecGraph.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/flashmenu/flashsystem.cpp", extra_cflags=["-inline auto,deferred", "-opt nopeephole"]),
 
             # deck

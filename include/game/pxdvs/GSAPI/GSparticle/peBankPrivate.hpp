@@ -6,6 +6,7 @@ struct ParticleBankState {
     ParticleBankFile* file; peEmitterNode node; ParticleBankFile* data;
     f32 transform[10]; u32 flags, rendered; u16 token, maxParams; u8 bound[0x20]; void* camera; ParticleBankState* next;
     ParticleBankState() { node.transformParent = 0; node.next = 0; node.previous = 0; node.emitter = 0; node.containers = 0; }
+    ~ParticleBankState() {}
 };
 extern "C" {
 extern ParticleBankState* g_currentBank;

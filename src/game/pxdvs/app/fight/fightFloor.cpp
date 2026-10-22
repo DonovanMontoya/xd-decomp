@@ -796,22 +796,32 @@ static FightOutPokemon* _fightFloorLoopValidFightOutPokemonSub(FIGHT_FLOOR* floo
 }
 extern "C" {
 u8 fightFloorLoopValidFightOutPokemon(FIGHT_FLOOR* floor, FightFloorCallback callback, void* context, u8 useArray) {
-    u8 success = 1;
-    u16 type = fightFloor_GetFightType(floor);
-    u16 trainers = fightFloor_GetFightTypeTrainerNum(floor);
-    u16 pokemonCount = fightFloor_GetFightTypeFightoutPokemonNum(floor);
+    u8 success;
+    u16 trainer;
+    u16 pokemon;
+    u16 side;
+    u16 type;
+    u16 trainers;
+    u16 pokemonCount;
+    u16 i;
+    FightOutPokemon* record;
+    FightOutPokemon* arrayPokemon;
+    success = 1;
+    type = fightFloor_GetFightType(floor);
+    trainers = fightFloor_GetFightTypeTrainerNum(floor);
+    pokemonCount = fightFloor_GetFightTypeFightoutPokemonNum(floor);
     if (useArray == 1) {
-        for (u16 i = 0; i < 8; i++) {
-            FightOutPokemon* pokemon = fightFloor_GetFightOutPokemonPtrAry(floor, i);
-            if (pokemon != nullptr && fightOutPokemonCheckValid(pokemon)) {
-                if (callback(pokemon, type, context) == 0) { success = 0; goto done; }
+        for (i = 0; i < 8; i++) {
+            arrayPokemon = fightFloor_GetFightOutPokemonPtrAry(floor, i);
+            if (arrayPokemon != nullptr && fightOutPokemonCheckValid(arrayPokemon)) {
+                if (callback(arrayPokemon, type, context) == 0) { success = 0; goto done; }
             }
         }
     } else {
-        for (u16 pokemon = 0; static_cast<u32>(pokemon) < pokemonCount; pokemon++) {
-            for (u16 trainer = 0; static_cast<u32>(trainer) < trainers; trainer++) {
-                for (u16 side = 0; side < 2; side++) {
-                    FightOutPokemon* record = _fightFloorLoopValidFightOutPokemonSub(floor, side, trainer, pokemon);
+        for (pokemon = 0; static_cast<u32>(pokemon) < pokemonCount; pokemon++) {
+            for (trainer = 0; static_cast<u32>(trainer) < trainers; trainer++) {
+                for (side = 0; side < 2; side++) {
+                    record = _fightFloorLoopValidFightOutPokemonSub(floor, side, trainer, pokemon);
                     if (record != nullptr) {
                         if (callback(record, type, context) == 0) { success = 0; goto done; }
                     }
@@ -1574,8 +1584,8 @@ void fightFloorSortFightOutPokemonPtrArySub(FIGHT_FLOOR* floor, FightOutPokemon*
     s32 last = bound - 1;
     u16 i;
     u16 j;
-    for (i = 0; static_cast<int>(i) < last; i++) {
-        for (j = i + 1; static_cast<u32>(j) < bound; j++) {
+    for (i = 0; i < last; i++) {
+        for (j = i + 1; j < bound; j++) {
             if (output[i] == nullptr && output[j] == nullptr) continue;
             if (output[i] == nullptr) {
                 FightOutPokemon* temp = output[i];
@@ -1713,7 +1723,7 @@ u8 fightFloorCmpfightOutPokemonNimbleness(FIGHT_FLOOR* floor, FightOutPokemon* f
     }
     if (firstSpeed > secondSpeed) return 1;
     if (firstSpeed < secondSpeed) return 0;
-    if (HSD_Rand() & 1) return 1;
+    switch (HSD_Rand() & 1) { case 0: break; default: return 1; }
     return 0;
 }
 }

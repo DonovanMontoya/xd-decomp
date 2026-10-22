@@ -560,9 +560,9 @@ void _menuClose__10menuPdaDPMFl(DpmWork *arg0, s32 arg1) {
 }
 
 DpmPokemon *GetPokemonPointer__10menuPdaDPMFl(DpmWork *arg0, s32 arg1) {
-    s32 temp_r30;
-    s32 temp_r31;
     DpmDarkPokemon *temp_r31_2;
+    s32 temp_r31;
+    s32 temp_r30;
 
     temp_r31 = menuPdaDPMListGetPokemonID(arg1);
     pokemonCreate(&arg0->pokemon, temp_r31, 0xA, gamedataGetStatus(0, 1));

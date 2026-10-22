@@ -104,9 +104,9 @@ static void _vtrTexDispFunc() {
     struct Color {u8 r,g,b,a;};
     Color border={255,0,0,255};
     Color color={255,255,255,255};
-    if(_vtrEnabled) {
-    if(!_vtrTexDisp) return;
+    if(!_vtrEnabled || !_vtrTexDisp) return;
     if(!_vtrTex) return;
+    {
     GSgfxLayer* layer=GSgfxLayerFindByID(7);
     if(layer) {
         GSprimSetup2DRender__FP10GSgfxLayer(layer);

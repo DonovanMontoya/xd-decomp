@@ -104,10 +104,6 @@ s32 _searchwaza__FP5MWAZAlPUsll(MWAZA *arg0, s32 arg1, u16 *arg2, s32 arg3, s32 
     }
 }
 
-void fn_802A4BF0(void) {
-
-}
-
 s32 _fillTmplate__FPUsP9MEWPOINTS(u16 *arg0, MEWPOINTS *arg1) {
     s16 temp_r4;
     s32 var_r0;
@@ -760,51 +756,40 @@ void _question_4__FP9MEWPOINTS(MEWPOINTS *arg0) {
 
 void _question_3__FP9MEWPOINTS(MEWPOINTS *arg0) {
     s32 answers[2];
-    s32 temp_r3;
-    u32 temp_ret;
-    u32 temp_r29;
-    u32 var_r28;
-    u32 var_r30;
-    void *temp_r4;
-
     s32 interlude[5]={0xC727,0xC728,0xC729,0xC72A,0xC72C};
-    temp_ret = (u32)HSD_Rand();
-    winMsgOpenFieldWithSE(interlude[temp_ret % 5], 1, 0, 1);
+    s32 choice;
+    u32 first;
+    u32 second;
+    u32 picked;
+    winMsgOpenFieldWithSE(interlude[(u32)HSD_Rand() % 5], 1, 0, 1);
     winMsgOpenFieldWithSE(0xC704, 1, 0, 1);
-    temp_r29 = (u32)HSD_Rand() & 3;
-    var_r28 = temp_r29;
-loop_2:
-    if (var_r28 == temp_r29) {
-        var_r28 = (u32)HSD_Rand() & 3;
-        goto loop_2;
-    }
-    answers[0] = mewans3[temp_r29];
-    answers[1] = mewans3[var_r28];
+    first = (u32)HSD_Rand() & 3;
+    second = first;
+    while (second == first) second = (u32)HSD_Rand() & 3;
+    answers[0] = mewans3[first];
+    answers[1] = mewans3[second];
     do {
-        temp_r3 = menuSubOpenSelect3(0, &answers[0], 2, 0x34, 0xD1, 0, 2, 1, 0);
-    } while (temp_r3 < 0);
-    var_r30 = var_r28;
-    if (temp_r3 == 0) {
-        var_r30 = temp_r29;
-    }
+        choice = menuSubOpenSelect3(0, &answers[0], 2, 0x34, 0xD1, 0, 2, 1, 0);
+    } while (choice < 0);
+    picked = (choice == 0) ? first : second;
     winMsgClose(1);
-    switch ((s32) var_r30) {                        /* irregular */
+    switch ((s32)picked) {
     case 0:
-        arg0->unk2 = (s16) (arg0->unk2 + 2);
-        return;
+        arg0->unk2 += 2;
+        break;
     case 1:
-        arg0->unk2 = (s16) ((s16) ((u32)HSD_Rand() % 3) + arg0->unk2 + 1);
-        return;
+        arg0->unk2 = (s16)(HSD_Rand() % 3) + arg0->unk2 + 1;
+        break;
     case 2:
-        arg0->unk4 = (s16) ((s16) ((u32)HSD_Rand() % 3) + arg0->unk4 + 1);
-        return;
+        arg0->unk4 = (s16)(HSD_Rand() % 3) + arg0->unk4 + 1;
+        break;
     case 3:
-        if ((u32) ((u32)HSD_Rand() % 10) < 5U) {
-            arg0->unk2 = (s16) (arg0->unk2 - 2);
-            return;
+        if ((u32)HSD_Rand() % 10 < 5) {
+            arg0->unk2 -= 2;
+        } else {
+            arg0->unk4 = (s16)(HSD_Rand() % 5) + arg0->unk4 - 1;
         }
-        arg0->unk4 = (s16) (((s16) ((u32)HSD_Rand() % 5) + arg0->unk4) - 1);
-        return;
+        break;
     }
 }
 

@@ -47,9 +47,9 @@ void psSetGeneratorAngleRadiusScale(PSGenerator *arg0, PSVec *arg1, u8 arg2) {
     f32 temp_f1_2;
     f32 temp_f1_3;
     f32 temp_f3;
-    u16 temp_r6;
+    s32 temp_r0;
     u32 temp_r7;
-    u8 temp_r0;
+    s32 temp_r6;
 
     temp_f3 = arg1->x;
     temp_r7 = arg0->type & 0xF;
@@ -170,8 +170,8 @@ void psLinkChildGensToJObj(PSGenerator *arg0, PSJObj *arg1) {
 }
 
 s32 psGetParticleChildCount(PSGenerator *arg0) {
-    PSGenerator *var_r6;
     s32 var_r5;
+    PSGenerator *var_r6;
 
     var_r6 = activeGenerator;
     var_r5 = 0;
@@ -201,8 +201,8 @@ void psKillGeneratorChild(PSGenerator *arg0) {
     PSGenerator *temp_r4;
     PSJObj *temp_r3;
     PSParticle *temp_r29;
-    PSParticle *var_r27;
     PSParticle *var_r28;
+    PSParticle *var_r27;
     s32 temp_r30;
     u16 temp_r26;
     u32 temp_r4_2;
@@ -240,8 +240,8 @@ void psKillFamily(u16 arg0, s32 arg1) {
     PSGenerator *temp_r4;
     PSJObj *temp_r3;
     PSParticle *temp_r27;
-    PSParticle *var_r25;
     PSParticle *var_r26;
+    PSParticle *var_r25;
     s32 temp_r29;
     u32 temp_r4_2;
 
@@ -294,9 +294,9 @@ void psDeletePntJObjwithParticle(PSParticle *arg0) {
 void psKillAllParticle(void) {
     PSGenerator *temp_r4;
     PSJObj *temp_r3;
-    PSParticle *temp_r27;
-    PSParticle *var_r28;
     PSParticle *var_r29;
+    PSParticle *var_r28;
+    PSParticle *temp_r27;
     PSParticle *var_r30;
     s32 temp_r30;
     s32 var_r26;
@@ -436,7 +436,7 @@ PSParticle* psGenerateParticle(s32 link,s32 bank,s32 reserved,u32 kind,s32 tex,u
     return psGenerateParticle0(NULL,link,bank,kind,reserved,kind,tex,commands,x,y,z,vx,vy,vz,size,gravity,life,friction,palettes,gp,1);
 }
 PSParticle* psGenerateParticleID0(PSParticle* parent,s32 link,s32 bank,s32 id,s32 interpret) {
-    PSCmd* cmd; PSTex* tex; u16 flags;
+    PSCmd* cmd; PSTex* tex; s32 flags;
     if (link >= 8) return NULL;
     if (bank >= 64) return NULL;
     if (id >= psNumCmdList[bank]) return NULL;

@@ -9,7 +9,7 @@ u8 cameraMoveEndCheck(u8);void cameraMoveFov(u8,f32,f32);void cameraMoveFovAcc(f
 void cameraMovePositionAcc(f32);void cameraMovePositionXYZ(u8,f32,f32,f32,f32);
 void cameraMoveRotationAcc(f32);void cameraMoveRotationXYZ(s32,f32,f32,f32,f32);
 void cameraMoveTarget(u8,u32,u32,f32);void cameraMoveTargetPosAcc(f32);void cameraMoveTargetXYZ(u8,f32,f32,f32,f32);
-void cameraPauseAnime();void cameraPlayAnime(u32,u32,u8,f32);void cameraResumeAnime();void cameraReturn(u8,f32);
+void cameraPauseAnime();void cameraPlayAnime(u32,u32,u8,f32);void cameraResumeAnime();void cameraReturn(f32,u8);
 void cameraSetAnimeRate(f32);void cameraSetDistance(f32);void cameraSetFloorDefault(f32,f32,f32);void cameraSetFov(f32);void cameraSetHeight(f32);
 void cameraSetPartTargetOffset(GSvec *);void cameraSetPosition(GSvec *);void cameraSetRotY(f32);void cameraSetRotationXYZ(f32,f32,f32);
 void cameraSetTarget(u32,u32);void cameraSetTargetExt(u32,u32,s32);void cameraSetTargetOfsXYZ(f32,f32,f32);void cameraSetTargetPosXYZ(f32,f32,f32);

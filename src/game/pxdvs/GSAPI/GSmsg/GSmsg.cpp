@@ -92,7 +92,6 @@ s32 GScharCmp(const u16* left, const u16* right) {
 u32 GSmsgGetCharLength(const u16* text) { return _msgGetLength(text); }
 s32 GScharMakeFromSJIS(u16* destination, char* source) { return SJIStoGSchar(destination, source); }
 s32 GSmsgSetCtrlFunc(void* controls) { _pMw->controls = (MsgControl*)controls; return 0; }
-void fn_80108D80() {}
 s32 fn_8010B208(const MsgBundle* bundle) {
     if (!bundle) return 1;
     if (bundle->country[0] == 'J' && bundle->country[1] == 'P') return 2;

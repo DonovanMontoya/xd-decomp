@@ -16,10 +16,7 @@ static u8 getMdlEventList(GSvec *start, GSvec *end, GSvec *direction, CCD_CHECKM
         if (j < count) continue;
         PSMTXMultVec(rotation->m, &entry->normal, &normal);
         if (PSVECDotProduct(&normal, (Vec *)direction) >= 0.0f) continue;
-        GSvec *src = entry->vertices;
-        Vec *dst = triangle;
-        s32 k = 0;
-        do { PSMTXMultVec(matrix->m, (Vec *)src, dst); k++; src++; dst++; } while (k<3);
+        for (s32 k = 0; k < 3; k++) PSMTXMultVec(matrix->m, (Vec *)&entry->vertices[k], &triangle[k]);
         u8 hit;
         if (!GScolsys2UtilGetCpPlaneLine(&crossing,&rate,&normal,triangle,(Vec *)start,(Vec *)end)) hit=0;
         else if (rate<0.0f || rate>1.0f) hit=0;

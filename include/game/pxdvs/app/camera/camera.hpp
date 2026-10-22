@@ -70,7 +70,7 @@ void cameraPlayAnime(u32,u32,u8,f32);
 void cameraMoveStop();
 s32 cameraMoveEndCheckSpecial(u8);
 s32 cameraMoveEndCheck(u8);
-void cameraReturn(u8,f32);
+void cameraReturn(f32,u8);
 void cameraMoveFovAcc(f32);
 void cameraMoveRotationAcc(f32);
 void cameraMovePositionAcc(f32);

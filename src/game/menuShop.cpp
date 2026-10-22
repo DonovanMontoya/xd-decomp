@@ -132,8 +132,8 @@ void GSfloorPush(s32, void *);
 void GSfloorPop(void);
 void floorSetFadeScript(s32, s32);
 void floorWaitForChange(void);
-void menuCreateOffScreen(u8, f32, f32);
-void menuReleaseOffScreen(u8, f32);
+void menuCreateOffScreen(f32, f32);
+void menuReleaseOffScreen(f32);
 u8 savedataGetBattleDiskSellOut(s32);
 void savedataSetBattleDiskSellOut(s32);
 s32 menuOpenCustom(s32, s32, void *, s32, s32, s32, ...);
@@ -1336,15 +1336,13 @@ void menuShopMain(void) {
 void menuShopOpen(s32 shop) {
     u8 rate;
     mailMainReceiveTerminate();
-    rate = GSgfxVideoGetVsyncRate();
-    menuCreateOffScreen(rate, 20.0f / (f32)rate, 50.0f);
+    menuCreateOffScreen(20.0f / GSgfxVideoGetVsyncRate(), 50.0f);
     ShopWork.id = shop;
     ShopWork.pop = 1;
     GSfloorPush(0x3A4, &ShopWork);
     floorSetFadeScript(0, 0);
     floorWaitForChange();
-    rate = GSgfxVideoGetVsyncRate();
-    menuReleaseOffScreen(rate, 20.0f / (f32)rate);
+    menuReleaseOffScreen(20.0f / GSgfxVideoGetVsyncRate());
 }
 
 static s32 _getIsBattleDiskShopAllSelWithAllSellOutYet__Fv(void) {

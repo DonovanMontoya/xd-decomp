@@ -664,9 +664,10 @@ void WorldMap::RenderMoveDemoModel() {
 
 void WorldMap::ControlPad(tagWINDOW_WORK *win) {
     u16 key = (windowGetKeyInfo(), windowGetKeyRepeat());
-    s32 dir = -1;
     s16 cursor;
+    s32 dir;
     cursor = _cursor_index[unk8->cursor];
+    dir = -1;
     if (fadeCheck(0) == 0 && flag1C != 1 && unk8->flag48 != 1) {
         GetModelID(cursor);
         if (key == 8) {
@@ -1075,7 +1076,7 @@ s8 WorldMap::GetPadIndex3(f32 angle, long index, f32 range) {
     u8 hit = 0;
     s8 result = -1;
     f32 center;
-    center = 3.1415927f * (f32)index * 0.25f;
+    center = 3.1415927f * (f32)index / 4.0f;
     if ((f32)index == 0.0f) {
         if (angle >= upper || angle < range) {
             hit = 1;
@@ -1352,8 +1353,10 @@ void WorldMap::CalcModel2D(f32 fov,bool initial) {
     for(long i=0;i<GetDataNum();++i) {
         WorldMapIconData *icon=&icons[i];
         PSMTXMultVec(matrix,&icon->pos,&view);
-        icon->screen.param1=320.0f+(factor*view.param1)/view.param3;
-        icon->screen.param2=240.0f+(-factor*view.param2)/view.param3;
+        f32 sx=320.0f+(factor*view.param1)/view.param3;
+        f32 sy=240.0f+(-factor*view.param2)/view.param3;
+        icon->screen.param1=sx;
+        icon->screen.param2=sy;
         icon->screen.param3=0.0f;
     }
     for(long i=0;i<GetDataNum();++i) {

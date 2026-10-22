@@ -1846,6 +1846,14 @@ bool ModelEntry::Update(f32 dt) {
     return true;
 }
 
+static inline f32 maxFrameCount(f32 second, f32 first) {
+    if (first >= second) {
+        return first;
+    } else {
+        return second;
+    }
+}
+
 ModelEntry::ModelEntry(WazaSequence *waza, u8 **data) : SequenceEntry(SEQENTRY_MODEL, waza, data) {
     ModelBlock *b = (ModelBlock *)*data;
     s32 res = wazaSequenceSysGetResID();
@@ -1892,11 +1900,7 @@ ModelEntry::ModelEntry(WazaSequence *waza, u8 **data) : SequenceEntry(SEQENTRY_M
         if (model != 0) {
             GSmodelGetFrameCount(model, &first, &second);
         }
-        f32 frames = first;
-        if (frames >= second) {
-        } else {
-            frames = second;
-        }
+        f32 frames = maxFrameCount(second, first);
         times[field8 - 1] = (f32)(s32)frames / (f32)GSgfxVideoGetVsyncRate();
     }
 }

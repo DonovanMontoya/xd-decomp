@@ -64,7 +64,7 @@ HSD_PObj* HSD_PObjLoadDesc(HSD_PObjDesc* pobjdesc);
 static inline void HSD_PObjRemove(HSD_PObj* pobj);
 void HSD_PObjRemoveAll(HSD_PObj* pobj);
 static inline HSD_PObjInfo* HSD_PObjGetDefaultClass(void);
-static inline void HSD_PObjSetDefaultClass(HSD_PObjInfo* info);
+void HSD_PObjSetDefaultClass(HSD_PObjInfo* info);
 static inline HSD_PObj* HSD_PObjAlloc(void);
 static inline void HSD_PObjFree(HSD_PObj* pobj);
 static inline void resolveEnvelope(HSD_SList* list, HSD_EnvelopeDesc** edesc_p);
@@ -419,7 +419,8 @@ static inline HSD_PObjInfo* HSD_PObjGetDefaultClass(void)
     return default_class ? default_class : &hsdPObj;
 }
 
-static inline void HSD_PObjSetDefaultClass(HSD_PObjInfo* info)
+// Stripped from the retail DOL; its assertion string remains in .rodata.
+void HSD_PObjSetDefaultClass(HSD_PObjInfo* info)
 {
     if (info != NULL) {
         if (!(hsdIsDescendantOf(info, &hsdPObj))) __assert("pobj.c", 644, "hsdIsDescendantOf(info, &hsdPObj)");
@@ -1383,6 +1384,9 @@ void HSD_PObjCountVertices(HSD_PObj* pobj, unsigned int* vertices, unsigned int*
     unsigned int nv=0, np=0;
     for (; pobj; pobj=pobj->next) {
         HSD_VtxDescList* desc;
+        int offset;
+        int length;
+        unsigned char* dl;
         int stride=0, width;
         for (desc=pobj->verts; desc->attr!=GX_VA_NULL; desc++) {
             switch(desc->attr_type) {
@@ -1416,9 +1420,10 @@ void HSD_PObjCountVertices(HSD_PObj* pobj, unsigned int* vertices, unsigned int*
                 break;
             }
         }
-        if (pobj->display) {
-            int offset=0, length=pobj->n_display<<5;
-            unsigned char* dl=pobj->display;
+        dl=pobj->display;
+        length=pobj->n_display<<5;
+        if (dl) {
+            offset=0;
             while(offset<length) {
                 int primitive=dl[offset++] & GX_OPCODE_MASK;
                 if (primitive) {

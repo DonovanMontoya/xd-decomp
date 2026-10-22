@@ -77,6 +77,7 @@ static sysvarsFuncEntry _sysvarsFuncList[] = {
     {0, 0, 0, 0}
 };
 
+#pragma peephole on
 extern "C" void sysvarsShowDebug() {
     struct Color { u8 r, g, b, a; };
     Color background = {0, 0, 0, 255};
@@ -111,6 +112,7 @@ extern "C" void sysvarsShowDebug() {
     } while (frames-- != 0);
     GSgfxGPUSetMode(2);
 }
+#pragma peephole reset
 
 extern "C" void sysvarsReadSettings(int *argc, char ***argv) {
     if (*argc >= 2) {

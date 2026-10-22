@@ -10,3 +10,9 @@ u8 darkpokemonScenarioPokemonIterate(darkpokemonIterateListener *listener){if(!l
 void DarkPokemon::setPlace(darkPokemonWhere p,u8 s){placeFlags.place=p;placeIndex=0;if(p==place1){if(s<=6)placeIndex=s;}else if(p==place2)placeIndex=s;else if(p==place3)placeIndex=s;}
 f32 DarkPokemon::getDarkPoint() const{return darkPoint;}
 void DarkPokemon::setDarkPoint(f32 f){s32 point=f;f32 limited;if((f32)point<65535.0f)limited=point;else limited=65535.0f;darkPoint=limited;}
+extern "C" {
+u32 darkPokemonGetMeetNum(){class openDarkPokeInfo:public darkpokemonIterateListener{public:u32 count;u8 exec(unsigned long,DeckDarkPokemon*,DarkPokemon *dark){if(dark->getStatus()>0)count++;return 1;}}info;info.count=0;darkpokemonScenarioPokemonIterate(&info);return info.count;}
+u32 darkPokemonGetSnatchSuccessNum(){class openDarkPokeInfo:public darkpokemonIterateListener{public:u32 count;u8 exec(unsigned long,DeckDarkPokemon*,DarkPokemon *dark){if(dark->isSnach())count++;return 1;}}info;info.count=0;darkpokemonScenarioPokemonIterate(&info);return info.count;}
+u32 darkPokemonGetReliveNum(){class openDarkPokeInfo:public darkpokemonIterateListener{public:u32 count;u8 exec(unsigned long,DeckDarkPokemon*,DarkPokemon *dark){if(dark->isRelive())count++;return 1;}}info;info.count=0;darkpokemonScenarioPokemonIterate(&info);return info.count;}
+u8 darkpokemonCheckUnderTaker(){class openDarkPokeInfo:public darkpokemonIterateListener{public:u32 count;u8 exec(unsigned long,DeckDarkPokemon *deck,DarkPokemon *dark){if(dark->getStatus()==darkStatus2&&!dark->isSnach()&&deck->getWorth()&&dark->getCatchFloorId()!=0xb5)count++;return 1;}}info;info.count=0;darkpokemonScenarioPokemonIterate(&info);return info.count!=0;}
+}

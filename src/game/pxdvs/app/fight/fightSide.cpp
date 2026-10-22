@@ -39,21 +39,28 @@ s32 fightSideCheckWriteJoutaiDataId(void* side,u32 id){if(joutaiDataBiosGetStatu
 s32 fightSideIsJoutaiDataId(void* side,u32 id){if(joutaiDataBiosGetStatus(id)!=6)return 0;return joutaiIsJoutaiDataId(side,id);}
 void fightSideInitJoutaiDataId(void* side,u32 id){if(joutaiDataBiosGetStatus(id)==6)joutaiInitJoutaiDataId(side,id);}
 s32 fightSideGetHikaeFightPokemonNum(void* side,u16 trainerCount,u32 maxPokemon,u32 mode){
+    void* trainer;
+    u16 i;
     s32 count=0;
-    for(u16 i=0;i<trainerCount;i++){
-        void* trainer=fightSide_GetFightTrainerPtr(side,i);
+    for(i=0;i<trainerCount;i++){
+        trainer=fightSide_GetFightTrainerPtr(side,i);
         if(fightTrainerCheckValid(trainer))count+=fightTrainerGetHikaeFightPokemonNum(trainer,maxPokemon,mode);
     }
     return count;
 }
 s32 fightSideGetNokoriFightPokemonNum(void* side,u16 trainerCount,u16 pokemonCount){return fightSideGetFightPokemonNum(side,trainerCount,pokemonCount,1);}
 s32 fightSideGetFightPokemonNum(void* side,u16 trainerCount,u16 pokemonCount,u8 requireLive){
-    s32 count=0;
-    for(u16 i=0;i<trainerCount;i++){
-        void* trainer=fightSide_GetFightTrainerPtr(side,i);
+    void* trainer;
+    u16 i;
+    void* pokemon;
+    u16 j;
+    s32 count;
+    count=0;
+    for(i=0;i<trainerCount;i++){
+        trainer=fightSide_GetFightTrainerPtr(side,i);
         if(fightTrainerCheckValid(trainer)){
-            for(u16 j=0;j<pokemonCount;j++){
-                void* pokemon=fightTrainerGetValidFightPokemonPtr(trainer,j);
+            for(j=0;j<pokemonCount;j++){
+                pokemon=fightTrainerGetValidFightPokemonPtr(trainer,j);
                 if(pokemon && (requireLive!=1 || fightPokemonCheckFightOut(pokemon)))++count;
             }
         }
@@ -61,26 +68,38 @@ s32 fightSideGetFightPokemonNum(void* side,u16 trainerCount,u16 pokemonCount,u8 
     return count;
 }
 u32 fightSideGetFightPokemonMaxHp(void* side,u16 trainerCount,u16 pokemonCount){
-    u32 total=0;
-    for(u16 i=0;i<trainerCount;i++){
-        void* trainer=fightSide_GetFightTrainerPtr(side,i);
+    void* trainer;
+    void* fightPokemon;
+    void* pokemon;
+    u16 i;
+    u16 j;
+    u32 total;
+    total=0;
+    for(i=0;i<trainerCount;i++){
+        trainer=fightSide_GetFightTrainerPtr(side,i);
         if(fightTrainerCheckValid(trainer)){
-            for(u16 j=0;j<pokemonCount;j++){
-                void* fightPokemon=fightTrainerGetValidFightPokemonPtr(trainer,j);
-                if(fightPokemon){void* pokemon=fightPokemonGetPokemonPtr(fightPokemon);if(pokemon && fightPokemonCheckFightOut(fightPokemon))total+=pokemon_GetMaxHp(pokemon);}
+            for(j=0;j<pokemonCount;j++){
+                fightPokemon=fightTrainerGetValidFightPokemonPtr(trainer,j);
+                if(fightPokemon){pokemon=fightPokemonGetPokemonPtr(fightPokemon);if(pokemon && fightPokemonCheckFightOut(fightPokemon))total+=pokemon_GetMaxHp(pokemon);}
             }
         }
     }
     return total;
 }
 u32 fightSideGetFightPokemonNokoriHp(void* side,u16 trainerCount,u16 pokemonCount){
-    u32 total=0;
-    for(u16 i=0;i<trainerCount;i++){
-        void* trainer=fightSide_GetFightTrainerPtr(side,i);
+    void* trainer;
+    void* fightPokemon;
+    void* pokemon;
+    u16 i;
+    u16 j;
+    u32 total;
+    total=0;
+    for(i=0;i<trainerCount;i++){
+        trainer=fightSide_GetFightTrainerPtr(side,i);
         if(fightTrainerCheckValid(trainer)){
-            for(u16 j=0;j<pokemonCount;j++){
-                void* fightPokemon=fightTrainerGetValidFightPokemonPtr(trainer,j);
-                if(fightPokemon){void* pokemon=fightPokemonGetPokemonPtr(fightPokemon);if(pokemon && fightPokemonCheckFightOut(fightPokemon))total+=pokemon_GetHp(pokemon);}
+            for(j=0;j<pokemonCount;j++){
+                fightPokemon=fightTrainerGetValidFightPokemonPtr(trainer,j);
+                if(fightPokemon){pokemon=fightPokemonGetPokemonPtr(fightPokemon);if(pokemon && fightPokemonCheckFightOut(fightPokemon))total+=pokemon_GetHp(pokemon);}
             }
         }
     }
@@ -88,8 +107,9 @@ u32 fightSideGetFightPokemonNokoriHp(void* side,u16 trainerCount,u16 pokemonCoun
 }
 void* fightSideGetValidFightTrainerPtr(void* side,u16 index){void* trainer=fightSide_GetFightTrainerPtr(side,index);void* result;if(fightTrainerCheckValid(trainer)==0){result=0;}else{result=trainer;}return result;}
 s32 fightSideGetDoFightTrainerCount(void* side){
+    u8 i;
     s32 count=0;
-    for(u8 i=0;i<2;i++)if(fightTrainerCheckDoFight(fightSide_GetFightTrainerPtr(side,i)))++count;
+    for(i=0;i<2;i++)if(fightTrainerCheckDoFight(fightSide_GetFightTrainerPtr(side,i)))++count;
     return count;
 }
 bool fightSideCheckValid(void* side){if(!side)return 0;if(fightGetFightResultId()==1)return 0;return fightSide_GetFightSideDataId(side)!=0;}
@@ -111,11 +131,15 @@ void* fightOutPokemon_GetMotoFightPokemonPtr(void*);
 s16 fightPokemon_GetEntryId(void*);
 void fightTrainer_SetEnemyPokemonRegist(void*,s16);
 void fightSideRegistFightSideEnemyPokemonFightAll(void* side,void* enemy,u32,u16 trainerCount,u16 pokemonCount){
-    for(u16 i=0;i<trainerCount;i++){
-        void* trainer=fightSide_GetFightTrainerPtr(side,i);
+    void* trainer;
+    void* pokemon;
+    u16 i;
+    u16 j;
+    for(i=0;i<trainerCount;i++){
+        trainer=fightSide_GetFightTrainerPtr(side,i);
         if(fightTrainerCheckValid(trainer)){
-            for(u16 j=0;j<pokemonCount;j++){
-                void* pokemon=fightTrainer_GetFightoutPokemonPtr(trainer,j);
+            for(j=0;j<pokemonCount;j++){
+                pokemon=fightTrainer_GetFightoutPokemonPtr(trainer,j);
                 if(fightOutPokemonCheckFightOut(pokemon)){
                     s16 id=fightPokemon_GetEntryId(fightOutPokemon_GetMotoFightPokemonPtr(pokemon));
                     if(id>=0)fightTrainer_SetEnemyPokemonRegist(enemy,id);
@@ -125,18 +149,19 @@ void fightSideRegistFightSideEnemyPokemonFightAll(void* side,void* enemy,u32,u16
     }
 }
 void fightSideGetFightTrainerGridParam(u16 side,u16 trainerCount,u16 trainer,u8* reversed,s8* offset){
-    if(!reversed || !offset)return;
+    if(!reversed)return;
+    if(!offset)return;
     *reversed=fightSideDB_GetYrot(side)!=0;
     *offset=0;
-    switch(trainerCount){
-    case 1:break;
-    case 2:
+    if(trainerCount==1){
+    }else if(trainerCount==2){
         if(*reversed==1){
-            switch(trainer){case 0:*offset=1;break;case 1:*offset=-1;break;}
+            if(trainer==0)*offset=1;
+            else if(trainer==1)*offset=-1;
         }else{
-            switch(trainer){case 0:*offset=-1;break;case 1:*offset=1;break;}
+            if(trainer==0)*offset=-1;
+            else if(trainer==1)*offset=1;
         }
-        break;
     }
 }
 void* fightSideDataBiosGetPtr(u16);

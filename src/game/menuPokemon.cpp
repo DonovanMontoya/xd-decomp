@@ -50,10 +50,10 @@ Pokemon *fightTrainerGetValidFightPokemonPtr(FIGHT_TRAINER *, u16);
 Pokemon *heroBiosGetPokemonPtr(Hero *, u16);
 Hero *menuCBBios_GetRegisteredHero(void);
 void menuCloseCustom(s32, s32, s32);
-void menuCreateOffScreen(u8, f32, f32);
+void menuCreateOffScreen(f32, f32);
 u8 menuGetOffScreenFlag(void);
 void menuOffScreenSetPriority(s32);
-void menuReleaseOffScreen(u8, f32);
+void menuReleaseOffScreen(f32);
 u8 pokemonCheckValid(Pokemon *);
 void msgctrlSetValue(s32, void *);
 s32 itemDataBiosGetPtr(u16);
@@ -206,45 +206,44 @@ static s32 _menuPokemonOpen(u8 mode, u8 a, u8 b, u16 c, FIGHT_TRAINER *trainer, 
     _menuPokemon.unk19 = 1;
     _menuPokemon.unk24 = 0;
     switch (mode) {
+    case 2:
     case 4:
         _menuPokemon.unkC = 1;
-        break;
-    case 2:
-        _menuPokemon.unkC = 0;
         break;
     case 3:
     default:
         _menuPokemon.unkC = 0;
         break;
     }
-    if ((s32)_menuPokemon.unk0 != 2) {
-        if ((s32)_menuPokemon.unk0 < 2) {
-            if ((s32)_menuPokemon.unk0 < 1) {
-                goto offscreen;
-            }
-            _menuPokemon.unk2 = 1;
-            _menuPokemon.unk3 = 0;
-        } else if ((s32)_menuPokemon.unk0 < 9 && (s32)_menuPokemon.unk0 < 6) {
-            menuOffScreenSetPriority(0);
-            _menuPokemon.unk2 = 0;
-            _menuPokemon.unk3 = 0;
-        } else {
-            goto offscreen;
-        }
-    } else {
+    switch (_menuPokemon.unk0) {
+    case 3:
+    case 4:
+    case 5:
+        menuOffScreenSetPriority(0);
+        _menuPokemon.unk2 = 0;
+        _menuPokemon.unk3 = 0;
+        break;
+    case 1:
+        _menuPokemon.unk2 = 1;
+        _menuPokemon.unk3 = 0;
+        break;
+    case 2:
         _menuPokemon.unk2 = 1;
         _menuPokemon.unk3 = 1;
         if (c == 0) {
             _menuPokemon.unk19 = 0;
         }
-    offscreen: {
-        u8 rate = GSgfxVideoGetVsyncRate();
-        menuCreateOffScreen(rate, 20.0f / (f32)rate, 50.0f);
+    case 6:
+    case 7:
+    case 8:
+    default: {
+        menuCreateOffScreen(20.0f / GSgfxVideoGetVsyncRate(), 50.0f);
         while (menuGetOffScreenFlag() == 0) {
             GSthreadSwitch();
         }
         _menuPokemon.unk2 = 1;
         _menuPokemon.unk3 = 2;
+        break;
     }
     }
     if (_menuPokemon.unk2 == 1) {
@@ -254,16 +253,17 @@ static s32 _menuPokemonOpen(u8 mode, u8 a, u8 b, u16 c, FIGHT_TRAINER *trainer, 
         }
         floorWaitForChange();
         if (_menuPokemon.unk3 == 2) {
-            u8 rate = GSgfxVideoGetVsyncRate();
-            menuReleaseOffScreen(rate, 20.0f / (f32)rate);
+            menuReleaseOffScreen(20.0f / GSgfxVideoGetVsyncRate());
         }
     } else {
         _menuPokemonSub(mode, c, trainer);
     }
-    if ((s32)_menuPokemon.unk0 < 6) {
-        if ((s32)_menuPokemon.unk0 >= 3) {
-            menuOffScreenSetPriority(1);
-        }
+    switch (_menuPokemon.unk0) {
+    case 3:
+    case 4:
+    case 5:
+        menuOffScreenSetPriority(1);
+        break;
     }
     _menuPokemon.unk4 = 1;
     return _menuPokemon.unk20;
@@ -752,19 +752,16 @@ s32 menuPokemonCtrl(tagWINDOW_WORK *window)
         if (window->unk2 == 0) {
             s32 off;
             MENU_POKEMON_STATUS_TBL *entry = tbl;
-            s32 k = 0;
-            off = 0;
-            do {
+            s32 k;
+            for (k = 0, off = 0; k < 6; off += 8, entry++, k++) {
                 MenuInfoEntry *e = (MenuInfoEntry *)((u8 *)&menu_info[(s8)_menuPokemon.unk4] + off);
                 menuItemBiosSetXY(window->unk4, e->a, e->b, e->c);
                 e = (MenuInfoEntry *)((u8 *)&menu_info[(s8)_menuPokemon.unk4] + off);
                 menuDataBiosSetXY(e->id, e->b, e->c);
                 menuOpenCustom(*(s16 *)((u8 *)&menu_info[(s8)_menuPokemon.unk4] + off), 0x4C, 0, 0, 0, 2, entry, k);
                 _menuPokemonMovePanel(k, 0);
-                off += 8;
-                entry++;
-                k++;
-            } while (k < 6);
+            }
+
             winSeqSetMenu(window->unk4, 1);
             window->unk2 = 1;
         }

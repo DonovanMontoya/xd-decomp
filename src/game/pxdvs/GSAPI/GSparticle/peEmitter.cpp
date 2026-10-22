@@ -167,7 +167,8 @@ void peEmitterNode::Init(_peEmitter* definition) {
             switch (resource->kind) {
             case 0: {
                 _peEmitter* child = (_peEmitter*)data;
-                if (child->resources) container = new peEmitterContainer(this, (_peEmitter*)data, maximum);
+                if (child->resources) container = new peEmitterContainer(this, child, maximum);
+
                 break;
             }
             case 1:

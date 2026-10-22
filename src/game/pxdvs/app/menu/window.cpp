@@ -7,7 +7,7 @@ void GSmemFree(void *);
 void GSlogWrite(const char *,...);
 void *GSthreadGetCurrentThread();
 MenuData *menuDataBiosGetPtr(s32);
-MENU_ITEM_dd_ *menuItemBiosGetPtr(s32,s16);
+MENU_ITEM_dd_ *menuItemBiosGetPtr(s32,s32);
 s32 menuItemBiosGetLayerID(s32);
 MenuSpriteData *menuSpriteBiosGetPtr(s32);
 MenuSpriteValue *menuSpriteBiosGetValPtr(MenuSpriteData *);
@@ -131,11 +131,14 @@ void windowDrawSprite3(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK
     }
 }
 MENU_ITEM_dd_ *windowGetCursorToItem(tagWINDOW_WORK *window) {
-    MENU_ITEM_dd_ *item=menuItemBiosGetPtr(window->menuID,menuDataBiosGetPtr(window->menuID)->firstItem);
+    struct ItemFlagBits { u8 selectable:1; u8 last:1; u8 rest:6; };
+    MenuData *data=menuDataBiosGetPtr(window->menuID);
+    MENU_ITEM_dd_ *item=menuItemBiosGetPtr(window->menuID,data->firstItem);
     s32 index=0;
     for(;;) {
-        if((((u32)item->flags>>7)&1)!=0) { if(window->cursorIndex==index)return item;++index; }
-        if((((u32)item->flags>>6)&1)!=0)break;
+        if(((ItemFlagBits*)&item->flags)->selectable) { if(window->cursorIndex==index)return item;++index; }
+        if(((ItemFlagBits*)&item->flags)->last)break;
+
         item=menuItemBiosGetPtr(window->menuID,item->nextItem);
     }
     return 0;

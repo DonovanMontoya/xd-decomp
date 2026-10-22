@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/wazaSequence/wazaSequenceSysPrivate.hpp>
+#include <dolphin/os/OSFastCast.h>
 
 Sequence* g_Sequences;
 WazaSequence* g_LastStartedWaza;
@@ -1033,4 +1034,50 @@ u16 wazaSequenceSysGetResourceID(ModelSequence* seq, u16 waza, u16 kind, u8 vari
         }
     }
     return waza_wzx_data[waza][(u16)(kind - 1)];
+}
+
+
+f32 wazaSequenceSysNullGetWazaTime(WazaSequence* sequence, u8 event) {
+    u16 duration;
+    switch (sequence->index) {
+    case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+    case 12: case 13: case 14: case 15:
+        duration = 4;
+        break;
+    case 8: case 10:
+        duration = 3;
+        break;
+    case 9:
+        duration = 5;
+        break;
+    case 0: case 11: case 16:
+    default:
+        duration = 2;
+        break;
+    }
+    f32 time = sequence->startOffset;
+    s32 kind = event;
+    if (kind == -1) {
+        return 0.0f;
+    }
+    if (event == 0) {
+        return time;
+    }
+    if (event == 3 || event == 4) {
+        u16 offset = duration - 1;
+        return time + __OSu16tof32(&offset);
+    }
+    if (event == 1) {
+        return 1.0f + time;
+    }
+    if (event == 2) {
+        if (duration > 2) {
+            u16 offset = duration - 2;
+            return time + __OSu16tof32(&offset);
+        } else {
+            u16 offset = duration - 1;
+            return time + __OSu16tof32(&offset);
+        }
+    }
+    return 0.0f;
 }

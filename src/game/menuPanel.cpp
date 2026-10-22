@@ -7,12 +7,12 @@ extern "C" {void menuClose(s32);void menuCloseSync(s32,s32);s32 menuOpenCustom(s
 extern "C" void menuPaneInputNumberClose(){menuClose(0xB9);menuCloseSync(0xB9,1);}
 static s32 _menuPanelInputNumber(short,short,long initial,long*,long min,long max,bool close){_inputnumberarg.current=initial;_inputnumberarg.max=max;_inputnumberarg.min=min;_inputnumberarg.original=initial;s32 result=menuOpenCustom(0xB9,windowGetActiveID(),0,0,1,1,&_inputnumberarg);if(result>=0)result=_inputnumberarg.current;if(close)menuPaneInputNumberClose();return result;}
 extern "C" s32 menuPanelInputNumber(s32 initial,s32 *result,s32 min,s32 max,bool close){s32 value=_menuPanelInputNumber(0,0,initial,result,min,max,close);if(value>=0){*result=value;return 1;}*result=initial;return 0;}
-extern "C" void menuPanelInputNumberHook(tagWINDOW_WORK *w,tagSPRITE_WORK *s){InputNumberArg *p=(InputNumberArg*)w->parameters[0];switch(s->id){case 0x504:msgctrlSetValue(0x34,p->current/10);return;case 0x503:msgctrlSetValue(0x34,p->current%10);return;case 0x511:{s32 num=esabaGetEsaItemNum();msgctrlSetValue(0x34,num+(u32)(p->original-p->current));return;}}}
+extern "C" void menuPanelInputNumberHook(tagWINDOW_WORK *w,tagSPRITE_WORK *s){InputNumberArg *p=(InputNumberArg*)w->parameters[0];switch(s->id){case 0x504:msgctrlSetValue(0x34,p->current/10);return;case 0x503:msgctrlSetValue(0x34,p->current%10);return;case 0x511:{msgctrlSetValue(0x34,p->original-p->current+esabaGetEsaItemNum());return;}}}
 extern "C" void menuPanelInputNumberCursor(tagWINDOW_WORK *w){windowGetKeyInfo();InputNumberArg *p=(InputNumberArg*)w->parameters[0];u16 keys=windowGetKeyRepeat();if(keys&1){if(p->current<p->max)p->current++;}else if(keys&2){if(p->current>p->min)p->current--;}}
 extern "C" void menuPanelInputNumberCtrl(tagWINDOW_WORK *w){switch(w->phase){case 0:if(!w->step){winSeqSetMenu(w->menu,0x24);w->step=1;}return;case 3:if(!w->step){winSeqSetMenu(w->menu,0x17B);w->step=1;}break;}}
-extern "C" s32 menuPanelCursorSelect(tagWINDOW_WORK *w){u16 trigger=windowGetKeyInfo()[3];u32 keys=trigger|windowGetKeyRepeat();s8 count=windowGetParam(w,2);s8 visible=menuDataBiosGetDispMax(w->menu);u32 less=visible<count;if(less)count=visible;if(!less)visible=count;struct S {s16 first,selected;}; S next={w->first,w->selected}; S old={w->first,w->selected};if(keys&1)next.selected--;else if(keys&2)next.selected++;if(next.selected<0){next.first+=next.selected;next.selected=0;if(next.first<0){next.selected=(s8)(visible-1);next.first=(s8)(count-visible);}}else if(next.selected>=visible){s8 end=visible-1;next.first+=next.selected-end;next.selected=end;if(next.first+end>=count){next.first=0;next.selected=0;}}s32 cursor=next.first,previous=old.first;if(menuCursorCmp(&previous,&cursor,next.first))menuSubCursorAnimeStart();w->first=next.first;w->selected=next.selected;w->value=next.first+next.selected;return 0;}
+extern "C" s32 menuPanelCursorSelect(tagWINDOW_WORK *w){u32 keys=windowGetKeyInfo()[3];keys|=windowGetKeyRepeat();s8 count=windowGetParam(w,2);s8 visible=menuDataBiosGetDispMax(w->menu);u32 less=visible<count;if(less)count=visible;if(!less)visible=count;struct S {s16 first,selected;}; S next,old;u16 pad=keys;next.first=w->first;next.selected=w->selected;old.first=w->first;old.selected=w->selected;if(pad&1)next.selected--;else if(pad&2)next.selected++;if(next.selected<0){next.first+=next.selected;next.selected=0;if(next.first<0){next.selected=(s8)(visible-1);next.first=(s8)(count-visible);}}else if(next.selected>=visible){s8 end=visible-1;next.first+=next.selected-end;next.selected=end;if(next.first+end>=count){next.first=0;next.selected=0;}}s32 previous=*(s32*)&old;s32 cursor=*(s32*)&next;if(menuCursorCmp(&previous,&cursor,cursor))menuSubCursorAnimeStart();w->first=next.first;w->selected=next.selected;w->value=next.first+next.selected;return 0;}
 
-extern "C" s32 menuPanelCtrlSelect2(tagWINDOW_WORK *w){menuSubCursorAnimeMain();switch(w->phase){case 5:break;case 0:if(!w->step){s32 size;void *source=(void*)windowGetParam(w,1);s32 count=windowGetParam(w,2);void *dest=windowAllocMemory(w,size=count*4);if(dest)memcpy(dest,source,size);s32 enabled=windowGetParam(w,5)!=0;if((u8)enabled==0)menuSetStatus(w->menu,8);winSeqSetMenu(w->menu,0x24);w->step=1;}break;case 3:if(!w->step){winSeqSetMenu(w->menu,0x17B);w->step=1;}break;}return 0;}
+extern "C" s32 menuPanelCtrlSelect2(tagWINDOW_WORK *w){menuSubCursorAnimeMain();switch(w->phase){case 5:break;case 0:if(!w->step){s32 size;void *source=(void*)windowGetParam(w,1);s32 count=windowGetParam(w,2);void *dest=windowAllocMemory(w,size=count*4);if(dest)memcpy(dest,source,size);u8 enabled=(u32)(windowGetParam(w,5)!=0);if(enabled==0)menuSetStatus(w->menu,8);winSeqSetMenu(w->menu,0x24);w->step=1;}break;case 3:if(!w->step){winSeqSetMenu(w->menu,0x17B);w->step=1;}break;}return 0;}
 extern "C" s32 menuPanelCtrlSelect(tagWINDOW_WORK *w){menuSubCursorAnimeMain();switch(w->phase){case 5:break;case 0:if(!w->step){s32 size;void *source=(void*)windowGetParam(w,1);s32 count=windowGetParam(w,2);void *dest=windowAllocMemory(w,size=count*4);if(dest)memcpy(dest,source,size);winSeqSetMenu(w->menu,0x24);w->step=1;}break;case 3:if(!w->step){winSeqSetMenu(w->menu,0x17B);w->step=1;}break;}return 0;}
 extern "C" s32 menuPanelCtrlLvUp(tagWINDOW_WORK *w){u8 open=0;switch(w->phase){case 5:break;case 0:if(!w->step)open=1;if(winSeqIsCheck(w->menu,0x2C)==1)open=1;if(open){winSeqSetMenu(w->menu,0x28);w->step=1;}break;case 3:if(!w->step){winSeqSetMenu(w->menu,0x2C);w->step=1;}break;}return 0;}
 extern "C" {u32 GSmsgGetRect(u32);void GSmsgPrint2(s32,s32,s32,u32,u32);}
@@ -95,17 +95,25 @@ s32 menuPanelDrawSelect(tagWINDOW_WORK* window) {
 }
 
 extern "C" s32 menuPanelCursorSelect2(tagWINDOW_WORK* window) {
-    s8 count,visible;
+    struct Pair {s16 first,selected;};
+    s8 count;
+    s8 visible;
     u32 keys;
+    u8 wrap;
+    Pair next, old;
+    s32 previous;
+    s32 cursor;
+    s8 end;
     keys = windowGetKeyInfo()[3];
     keys = keys | windowGetKeyRepeat();
     count = windowGetParam(window,2);
     visible = windowGetParam(window,3);
-    u8 wrap = windowGetParam(window,4) != 0;
+    wrap = (u32)(windowGetParam(window,4) != 0);
     if (count < visible) visible = count;
-    struct Pair {s16 first,selected;};
-    Pair next = {window->first,window->selected};
-    Pair old = {window->first,window->selected};
+    next.first = window->first;
+    next.selected = window->selected;
+    old.first = window->first;
+    old.selected = window->selected;
 
     if ((u16)keys & 1) next.selected--;
     else if ((u16)keys & 2) next.selected++;
@@ -122,7 +130,7 @@ extern "C" s32 menuPanelCursorSelect2(tagWINDOW_WORK* window) {
             next.first = 0;
         }
     } else if (next.selected >= visible) {
-        s8 end = visible - 1;
+        end = visible - 1;
         next.first += next.selected - end;
         next.selected = end;
         if (wrap) {
@@ -136,9 +144,9 @@ extern "C" s32 menuPanelCursorSelect2(tagWINDOW_WORK* window) {
         }
     }
 
-    s32 cursor = next.first;
-    s32 previous = old.first;
-    if (menuCursorCmp(&previous,&cursor,next.first)) menuSubCursorAnimeStart();
+    previous = *(s32*)&old;
+    cursor = *(s32*)&next;
+    if (menuCursorCmp(&previous,&cursor,cursor)) menuSubCursorAnimeStart();
     window->first = next.first;
     window->selected = next.selected;
     return 0;

@@ -1,4 +1,5 @@
 #include <global.h>
+#pragma peephole off
 extern "C" {
 static u8 script_model_num;
 u32 floorGetCurrentGroupID();
@@ -9,9 +10,9 @@ void* peopleSearchID(u32);
 void* peopleBiosGetModelPtr(void*);
 void peopleClose(u32,u32,u32);
 void peopleSetDisp(u32,u32,u8);
-void peopleSetMotionForce(u32,u32,u32,s32,u8);
+void peopleSetMotionForce(u32,u32,u32,s32,bool);
 void peopleStopMotion(u32,u32);
-u8 peopleWaitSyncMotion(u32,u32,u8);
+u32 peopleWaitSyncMotion(u32,u32,u8);
 void peopleDetach(u32,u32,u32);
 void peopleAttach(u32,u32,u32,u32,u32);
 void GSmodelSetForceUseFractionalFramesFlag(void*,u32);
@@ -48,7 +49,8 @@ void scriptModelPartPaticle(u32 model,u32 particle,u32 part){
 void scriptModelDeleteParticle(u32 id,u32 mode){GSparticleDestroyAllGenerators(GSresGetResource(floorGetCurrentGroupID(),id),mode);}
 void scriptModelSetParticle(u32 id,u32 particle){
     void* model=GSresGetResource(floorGetCurrentGroupID(),id);
-    GSmodelLinkToGSparticleBank(model,GSresGetResource(floorGetCurrentGroupID(),particle));
+    void* bank=GSresGetResource(floorGetCurrentGroupID(),particle);
+    GSmodelLinkToGSparticleBank(model,bank);
     GSmodelSetGSparticleLinkAttachMode(model,4);
 }
 s32 scriptModelDetach(u32 id){
@@ -62,20 +64,21 @@ s32 scriptModelDetach(u32 id){
     return 1;
 }
 s32 scriptModelAttach(u32 id,u32 parent,u32 part){
+    void *model,*parentModel,*joint;
     u32 group=floorGetCurrentGroupID();
     if(peopleGetHumanID(group,id))peopleAttach(group,id,group,parent,part);
     else{
-        void* model=GSresGetResource(group,id);
+        model=GSresGetResource(group,id);
         if(!model)return 0;
-        void* parentModel=GSresGetResource(group,parent);
+        parentModel=GSresGetResource(group,parent);
         if(!parentModel)return 0;
-        void* joint=GSmodelGetPart(parentModel,part);
+        joint=GSmodelGetPart(parentModel,part);
         GSmodelAttachToGSpart(model,joint,7,0,1);
         GSpartFree(joint);
     }
     return 1;
 }
-u8 scriptModelWaitMotion(u32 id,u32 wait){
+u8 scriptModelWaitMotion(u32 id,s32 wait){
     u32 group=floorGetCurrentGroupID();
     if(peopleGetHumanID(group,id))return peopleWaitSyncMotion(group,id,wait!=0);
     void* model=GSresGetResource(group,id);
@@ -94,15 +97,15 @@ void scriptModelStopMotion(u32 id){
 s32 scriptModelSetEndedMotion(u32 id,u32 index,u8 loop){
     void* model=GSresGetResource(floorGetCurrentGroupID(),id);
     if(!model)return 0;
-    while(!GSmodelHasAnimationEnded(model))GSthreadSwitch();
+    for(;;){if(GSmodelHasAnimationEnded(model))break;GSthreadSwitch();}
     GSmodelSetAnimIndex(model,index);GSmodelSetAnimFrame(model,0.0f);GSmodelSetAnimRate(model,0.5f);
     GSmodelSetTexAnimIndex(model,index);GSmodelSetTexAnimFrame(model,0.0f);GSmodelSetTexAnimRate(model,0.5f);
     if(loop)GSmodelSetAnimType(model,1);else GSmodelSetAnimType(model,0);
     GSmodelStartAnimation(model);return 1;
 }
-void scriptModelSetMotionRate(u32 id,u32 index,s32 frame,f32 rate,u32 loop){
+void scriptModelSetMotionRate(u32 id,u32 index,s32 frame,f32 rate,s32 loop){
     u32 group=floorGetCurrentGroupID();
-    if(peopleGetHumanID(group,id))peopleSetMotionForce(group,id,index,frame,loop!=0);
+    if(peopleGetHumanID(group,id))peopleSetMotionForce(group,id,index,frame,loop);
     else{
         void* model=GSresGetResource(group,id);
         if(model){
@@ -113,9 +116,9 @@ void scriptModelSetMotionRate(u32 id,u32 index,s32 frame,f32 rate,u32 loop){
         }
     }
 }
-void scriptModelSetMotion(u32 id,u32 index,s32 frame,u32 loop){
+void scriptModelSetMotion(u32 id,u32 index,s32 frame,s32 loop){
     u32 group=floorGetCurrentGroupID();
-    if(peopleGetHumanID(group,id))peopleSetMotionForce(group,id,index,frame,loop!=0);
+    if(peopleGetHumanID(group,id))peopleSetMotionForce(group,id,index,frame,loop);
     else{
         void* model=GSresGetResource(group,id);
         if(model){
@@ -133,8 +136,7 @@ void scriptModelSetDisp(u32 id,u32 show){
 }
 void scriptModelClose(u32 id){peopleClose(floorGetCurrentGroupID(),id,0);}
 u32 scriptModelOpen(u32 object){
-    u32 id=(s8)script_model_num|0x7ffe0000;
-    ++script_model_num;
+    u32 id=(s8)script_model_num++|0x7ffe0000;
     u32 person=peopleOpen(floorGetCurrentGroupID(),id,object);
     if(!person)return 0;
     GSmodelSetBoundCheck(peopleBiosGetModelPtr(peopleSearchID(person)),0);

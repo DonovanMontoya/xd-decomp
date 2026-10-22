@@ -107,8 +107,7 @@ void menuSubDrawMsgWindow2(GSgfxLayerID layer, long x, long y, long w, long h, u
         long hw;
         long hh;
 
-        menuSpriteBiosGetPtr(0xB3);
-        corner = menuSpriteBiosGetValPtr(0);
+        corner = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0xB3));
         color = alpha | ~0xFF;
         hw = corner->width / 2;
         hh = corner->height / 2;
@@ -120,18 +119,15 @@ void menuSubDrawMsgWindow2(GSgfxLayerID layer, long x, long y, long w, long h, u
         windowDrawSprite2(right, top, corner->width, corner->height, color, 0, 0xB3, 1, layer);
         windowDrawSprite2(left, bottom, corner->width, corner->height, color, 0, 0xB3, 2, layer);
         windowDrawSprite2(right, bottom, corner->width, corner->height, color, 0, 0xB3, 3, layer);
-        menuSpriteBiosGetPtr(0xB2);
-        edge = menuSpriteBiosGetValPtr(0);
+        edge = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0xB2));
         edgeW = (right - left) - corner->width;
         windowDrawSprite2(left + corner->width, top, edgeW, edge->height, color, 0, 0xB2, 0, layer);
         windowDrawSprite2(left + corner->width, bottom, edgeW, edge->height, color, 0, 0xB2, 2, layer);
-        menuSpriteBiosGetPtr(0xB1);
-        side = menuSpriteBiosGetValPtr(0);
+        side = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0xB1));
         sideH = (bottom - top) - corner->height;
         windowDrawSprite2(left, top + corner->height, side->width, sideH, color, 0, 0xB1, 0, layer);
         windowDrawSprite2(right, top + corner->height, side->width, sideH, color, 0, 0xB1, 1, layer);
-        menuSpriteBiosGetPtr(0xB0);
-        menuSpriteBiosGetValPtr(0);
+        menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0xB0));
         windowDrawSprite2(left + corner->width, top + corner->height, edgeW, sideH, color, 0, 0xB0, 0, layer);
     }
 }
@@ -151,12 +147,10 @@ void menuSubDrawNormalWindow2(GSgfxLayerID layer, long x, long y, long w, long h
         short edgeW;
         short sideH;
 
-        menuSpriteBiosGetPtr(0x69);
-        corner = menuSpriteBiosGetValPtr(0);
+        corner = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x69));
         left = (x - corner->width / 2) - 10;
         right = ((x + w) - corner->width / 2) + 10;
-        menuSpriteBiosGetPtr(0x67);
-        bottomCorner = menuSpriteBiosGetValPtr(0);
+        bottomCorner = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x67));
         color = alpha | ~0xFF;
         top = (y - corner->height / 2) - 10;
         bottom = ((y + h) - corner->height / 2) + 10;
@@ -164,20 +158,16 @@ void menuSubDrawNormalWindow2(GSgfxLayerID layer, long x, long y, long w, long h
         windowDrawSprite2(right, top, corner->width, corner->height, color, 0, 0x69, 1, layer);
         windowDrawSprite2(left, bottom, bottomCorner->width, bottomCorner->height, color, 0, 0x67, 0, layer);
         windowDrawSprite2(right, bottom, bottomCorner->width, bottomCorner->height, color, 0, 0x67, 1, layer);
-        menuSpriteBiosGetPtr(0x66);
-        edge = menuSpriteBiosGetValPtr(0);
+        edge = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x66));
         edgeW = (right - left) - corner->width;
         windowDrawSprite2(left + corner->width, top, edgeW, edge->height, color, 0, 0x66, 0, layer);
-        menuSpriteBiosGetPtr(0x65);
-        bottomEdge = menuSpriteBiosGetValPtr(0);
+        bottomEdge = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x65));
         windowDrawSprite2(left + corner->width, bottom, edgeW, bottomEdge->height, color, 0, 0x65, 0, layer);
-        menuSpriteBiosGetPtr(0x68);
-        side = menuSpriteBiosGetValPtr(0);
+        side = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x68));
         sideH = (bottom - top) - corner->height;
         windowDrawSprite2(left, top + corner->height, side->width, sideH, color, 0, 0x68, 0, layer);
         windowDrawSprite2(right, top + corner->height, side->width, sideH, color, 0, 0x68, 1, layer);
-        menuSpriteBiosGetPtr(0x64);
-        menuSpriteBiosGetValPtr(0);
+        menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x64));
         windowDrawSprite2(left + corner->width, top + corner->height, edgeW, sideH, color, 0, 0x64, 0, layer);
     }
 }

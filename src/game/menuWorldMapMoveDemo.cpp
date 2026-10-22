@@ -8,4 +8,6 @@ WorldMapMoveDemo *pMoveDemo;
 extern "C" void menuWorldMapMoveDemoExit(){if(pMoveDemo){delete pMoveDemo;pMoveDemo=0;}}
 extern "C" void menuWorldMapMoveDemoMain(){if(pMoveDemo)pMoveDemo->Main();}
 extern "C" void menuWorldMapMoveDemoInit(){pMoveDemo=new WorldMapMoveDemo;}
+#pragma opt_dead_assignments off
 void WorldMapMoveDemo::Main(){s32 group=floorGetCurrentGroupID();SetModel(group,0x1B4A0400,false);MoveAnimation*animation=&_animeTable[(u16)(HSD_Rand()%15)];cameraPlayAnime(group,animation->camera,0,0.0f);SetMotion(0x1B4A1000,animation->motion,0.0f,false);f32 end=GetAnimeFrameCount(0x1B4A1000,animation->motion);u32 modelId=0x1B4A1000;end-=30.0f;for(;;){if(end<GetAnimeFrame(modelId))break;GSthreadSwitch();}GSfloorPop();}
+#pragma opt_dead_assignments reset

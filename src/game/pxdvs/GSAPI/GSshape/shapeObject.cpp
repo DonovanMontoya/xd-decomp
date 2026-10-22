@@ -29,12 +29,18 @@ void GsShapeObject::FreeDisplayListShape() {
 void GsShapeObject::SetVertexColorSpecify(const tagGScol4ub& value,bool) {
     tagGScol4ub* colors=(tagGScol4ub*)vertexArrays[1];
     if(colors) {
-        int columns=entry->segmentsU+1;
-        int rows=entry->segmentsV+1;
-        for(int row=0;row<rows;row++) {
-            for(int column=0;column<columns;column++) {
-                colors->r=value.r; colors->g=value.g; colors->b=value.b; colors->a=value.a;
-                colors++;
+        int column;
+        int row;
+        int columns;
+        int rows;
+        tagGScol4ub* out;
+        columns=entry->segmentsU+1;
+        rows=entry->segmentsV+1;
+        out=colors;
+        for(row=0;row<rows;row++) {
+            for(column=0;column<columns;column++) {
+                out->r=value.r; out->g=value.g; out->b=value.b; out->a=value.a;
+                out++;
             }
         }
     }
@@ -561,10 +567,7 @@ extern "C" void GSgfxVFSetArray(void*, s32, s32, void*, u8, u32);
 extern "C" void dlDraw__10GSgfxLayerFP7GSgfxDL(GSgfxLayer*, void*);
 extern "C" void beginSurface__10GSgfxLayerFUs(GSgfxLayer*, u16);
 extern "C" void endSurface__10GSgfxLayerFv(GSgfxLayer*);
-struct ShapeAttributeTable { u32 value[4]; };
-static const ShapeAttributeTable kShapeAttributes = {{13, 14, 15, 16}};
 extern "C" void DrawShapeGfx__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject* self, GSgfxLayer* layer, s16, u8) {
-    ShapeAttributeTable attributes = kShapeAttributes;
     u16 vertexCount;
     u16 textureCount;
     u16 columns;
@@ -573,6 +576,7 @@ extern "C" void DrawShapeGfx__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject* se
     columns = self->entry->segmentsU + 1;
     textureCount = self->entry->textureCount;
     vertexCount = self->entry->vertexCount;
+    u32 attributes[4] = {13, 14, 15, 16};
     if (self->vertexArrays[0] == 0) {
         ready = false;
         goto done;
@@ -591,7 +595,7 @@ extern "C" void DrawShapeGfx__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject* se
     }
     for (i = 0; i < self->entry->textureCount; ++i) {
         if (self->vertexArrays[2 + i] != 0) {
-            GSgfxVFSetArray(self->vertexFormat, attributes.value[i], 3, self->vertexArrays[2 + i], 8, vertexCount * 8);
+            GSgfxVFSetArray(self->vertexFormat, attributes[i], 3, self->vertexArrays[2 + i], 8, vertexCount * 8);
         } else {
             ready = false;
             goto done;

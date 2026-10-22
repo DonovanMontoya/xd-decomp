@@ -32,11 +32,8 @@ static s32 getMdlEventListPass(GSvec *start,GSvec *end,CCD_THRUMDL_HEAD *model,G
         if(duplicate<count) continue;
         PSMTXMultVec(rotation->m,&polygon->normal,&normal);
         if(PSVECDotProduct(&normal,&direction)>=0.0f) continue;
-        Vec *src;
-        Vec *dst;
-        dst=triangle;src=(Vec *)polygon;
-        s32 j=0;
-        do { PSMTXMultVec(matrix->m,src,dst);j++;dst++;src++; } while(j<3);
+        s32 j;
+        for(j=0;j<3;j++) PSMTXMultVec(matrix->m,&((Vec *)polygon)[j],&triangle[j]);
         if(segmentContact(&crossing,&rate,&normal,triangle,start,end)) {
             count++;
             copyEvent(output,triangle,&normal,polygon->eventID);
@@ -231,9 +228,7 @@ static s32 getMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THRUMDL_
         if(duplicate<count) continue;
             PSMTXMultVec(rotation->m,&polygon->normal,&normal);
             if(PSVECDotProduct(&normal,(Vec *)direction)>=0.0f) continue;
-            Vec *dst=triangle,*src=polygon->vertices;
-            s32 j=0;
-            do {PSMTXMultVec(matrix->m,src,dst);j++;src++;dst++;} while(j<3);
+            for(s32 j=0;j<3;j++) PSMTXMultVec(matrix->m,&(polygon->vertices)[j],&triangle[j]);
             if(faceContact((Vec *)point,triangle,&normal,radiusSquared)) {
                 copyEvent(output,triangle,&normal,polygon->eventID);
                 output++;count++;
@@ -251,9 +246,7 @@ static s32 getMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THRUMDL_
         if(duplicate<count) continue;
             PSMTXMultVec(rotation->m,&polygon->normal,&normal);
             if(PSVECDotProduct(&normal,(Vec *)direction)>=0.0f) continue;
-            Vec *dst=triangle,*src=polygon->vertices;
-            s32 j=0;
-            do {PSMTXMultVec(matrix->m,src,dst);j++;src++;dst++;} while(j<3);
+            for(s32 j=0;j<3;j++) PSMTXMultVec(matrix->m,&(polygon->vertices)[j],&triangle[j]);
             if(edgeContact((Vec *)point,triangle,&normal,polygon->edgeFlags,radiusSquared)) {
                 copyEvent(output,triangle,&normal,polygon->eventID);
                 output++;count++;
@@ -271,9 +264,7 @@ static s32 getMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THRUMDL_
         if(duplicate<count) continue;
             PSMTXMultVec(rotation->m,&polygon->normal,&normal);
             if(PSVECDotProduct(&normal,(Vec *)direction)>=0.0f) continue;
-            Vec *dst=triangle,*src=polygon->vertices;
-            s32 j=0;
-            do {PSMTXMultVec(matrix->m,src,dst);j++;src++;dst++;} while(j<3);
+            for(s32 j=0;j<3;j++) PSMTXMultVec(matrix->m,&(polygon->vertices)[j],&triangle[j]);
             if(vertexContact((Vec *)point,triangle,&normal,polygon->edgeFlags,radiusSquared)) {
                 copyEvent(output,triangle,&normal,polygon->eventID);
                 output++;count++;

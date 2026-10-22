@@ -59,12 +59,13 @@ s32 _fsysInitCache(u32 cacheSize, u32 entryCount) {
     if (!_fsysCACHEManage) return 0;
     _fsysARQTrans = (GSfsysARQTransfer*)_fsysDoMalloc(_fsysARQTransSize * sizeof(GSfsysARQTransfer));
     if (!_fsysARQTrans) return 0;
-    for (u32 i = 0; i < _fsysCACHEManageSize; ++i) {
+    u32 i;
+    for (i = 0; i < _fsysCACHEManageSize; ++i) {
         _fsysCACHEManage[i].inUse = 0;
         _fsysCACHEManage[i].persistent = 0;
         _fsysCACHEManage[i].locked = 0;
     }
-    for (u32 i = 0; i < _fsysARQTransSize; ++i) _fsysARQTrans[i].inUse = 0;
+    for (i = 0; i < _fsysARQTransSize; ++i) _fsysARQTrans[i].inUse = 0;
     return 1;
 }
 s32 _fsysGetFreeCacheHeapSize() { return 0xa00000 - _fsysCACHEFreeBytes; }

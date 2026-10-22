@@ -186,8 +186,8 @@ extern "C" void fadeFluidSetShock(FluidVec *point,f32 strength) {
 static void _fadeFluidSetShockSub(unsigned long x,unsigned long y,f32 strength) {
     if (x<=_fadeFluidWork.width && y<=_fadeFluidWork.height) {
         u8 *base=(u8 *)_fadeFluidWork.vertices[_fadeFluidSw];
-        u32 offset=(x+y*(_fadeFluidWork.width+1))*12+8;
-        *(f32 *)(base+offset)-=strength;
+        f32 *value=(f32 *)(base+(x+y*(_fadeFluidWork.width+1))*12+8);
+        *value-=strength;
     }
 }
 extern "C" void fadeFluidEvaluate() {

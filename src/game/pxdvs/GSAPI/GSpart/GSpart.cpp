@@ -138,11 +138,27 @@ u32 GSpartGetJObjIndex(HSD_JObj* root, HSD_JObj* joint) {
     return _partFoundIndex;
 }
 #pragma dont_inline reset
+static inline u8 partJObjMtxIsDirty(HSD_JObj* jobj) {
+    u8 result;
+    if (!jobj) __assert("jobj.h", 605, "jobj");
+    result = 0;
+    if (!(jobj->flags & (1 << 23)) && (jobj->flags & (1 << 6))) result = 1;
+    return result;
+}
+static inline void partJObjSetupMatrix(HSD_JObj* jobj) {
+    if (!jobj || !partJObjMtxIsDirty(jobj)) return;
+    HSD_JObjSetupMatrixSub(jobj);
+}
+static inline float (*partJObjGetMtxPtr(HSD_JObj* jobj))[4] {
+    if (!jobj) __assert("jobj.h", 1148, "jobj");
+    partJObjSetupMatrix(jobj);
+    return jobj->mtx;
+}
 void GSpartGetMatrix(GSpart* part, Mtx matrix) {
     HSD_JObj* joint = part->joint;
     if (matrix) {
         GSmodelUpdate(part->model);
-        PSMTXCopy(HSD_JObjGetMtxPtr(joint), matrix);
+        PSMTXCopy(partJObjGetMtxPtr(joint), matrix);
     }
 }
 static inline HSD_JObj* partGetParent(HSD_JObj* joint) { return joint ? joint->parent : 0; }
@@ -161,7 +177,7 @@ void GSpartGetTransform(GSpart* part, Vec* position, Vec* rotation, Vec* scale) 
     u32 count = 0;
     GSmodelUpdate(part->model);
     if (!GSmodelIsBlending(part->model)) {
-        HSD_JObjSetupMatrix(joint);
+        partJObjSetupMatrix(joint);
         x = joint->mtx[0][3];
         y = joint->mtx[1][3];
         z = joint->mtx[2][3];
@@ -350,6 +366,7 @@ static void _partFindJObjCB__FP9_HSD_JObjPPvi(HSD_JObj* joint, void**, s32) {
         ++_partFindCurIdx;
     }
 }
+#pragma opt_dead_assignments off
 static void _partFindIndexCB__FP9_HSD_JObjPPvi(HSD_JObj* joint, void**, s32) {
     if (_partFound != 1) {
         if (_partToFindJObj == joint) {
@@ -360,6 +377,7 @@ static void _partFindIndexCB__FP9_HSD_JObjPPvi(HSD_JObj* joint, void**, s32) {
         ++_partFindCurIdx;
     }
 }
+#pragma opt_dead_assignments reset
 }
 
 extern "C" {

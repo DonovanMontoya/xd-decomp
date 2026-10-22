@@ -43,14 +43,14 @@ peShapeContainer::~peShapeContainer(){g_particle_debug_stats.node-=0x24;g_partic
 peShapeContainer::peShapeContainer(peEmitterNode* emitter,_peShape* data,u16 maximum):peContainer(emitter,0x9c,maximum){shape=data;g_particle_debug_stats.node+=0x24;g_particle_debug_stats.total+=0x24;}
 
 inline void GSgfxLayer::tunitKRegSel(u8 arg1,GSgfxTunitKReg arg2) {
-    u32 temp_r6;
-    u32 temp_r6_2;
-    u32 temp_r6_3;
-    u32 temp_r6_4;
-    ParticleLayerState *temp_r5;
-    ParticleLayerState *temp_r5_2;
     ParticleLayerState *temp_r5_3;
     ParticleLayerState *temp_r5_4;
+    u32 temp_r6_4;
+    ParticleLayerState *temp_r5;
+    u32 temp_r6;
+    ParticleLayerState *temp_r5_2;
+    u32 temp_r6_3;
+    u32 temp_r6_2;
 
     switch (arg2) {                                 /* irregular */
     case 0:

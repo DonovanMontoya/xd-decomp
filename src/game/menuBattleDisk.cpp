@@ -74,16 +74,16 @@ void GSmsgPrint2(s32, s32, s32, u32, s32);
 void windowDrawSprite2(s16, s16, s16, s16, u32, tagWINDOW_WORK*, s32, s32, s32);
 s32 winSpriteGetLayerID(tagWINDOW_WORK*, tagSPRITE_WORK*);
 u8 winSeqCheckMove(s32);
-u32 GSgfxVideoGetVsyncRate(void);
+u8 GSgfxVideoGetVsyncRate(void);
 void floorSetFadeScript(s32, s32);
 void floorWaitForChange(void);
 void fightFreeResourceID(s32, s32);
 void menuClose(s32);
-void menuCreateOffScreen(u8, f32, f32);
+void menuCreateOffScreen(f32, f32);
 void menuOffScreenFadeSync(s32);
 void menuOffScreenSetPriority(s32);
 s32 menuOpenCustom(s32, s32, ...);
-void menuReleaseOffScreen(u8, f32);
+void menuReleaseOffScreen(f32);
 s32 windowGetActiveID(void);
 }
 
@@ -860,15 +860,13 @@ void menuBattleDiskOpenDoc(u8 id) {
 s32 menuBattleDiskOpenDocPush(u8 id) {
     gBDisk.selectedID = id;
     gBDisk.mode = 2;
-    u8 rate = GSgfxVideoGetVsyncRate();
-    menuCreateOffScreen(rate, 8.0f / (f32)rate, 50.0f);
+    menuCreateOffScreen(8.0f / GSgfxVideoGetVsyncRate(), 50.0f);
     menuOffScreenSetPriority(0);
     menuOffScreenFadeSync(1);
     GSfloorPush(0x38D);
     floorSetFadeScript(0, 0);
     floorWaitForChange();
-    rate = GSgfxVideoGetVsyncRate();
-    menuReleaseOffScreen(rate, 8.0f / (f32)rate);
+    menuReleaseOffScreen(8.0f / GSgfxVideoGetVsyncRate());
     gBDisk.mode = 1;
     return gBDisk.field24;
 }
@@ -890,13 +888,11 @@ void menuBattleDiskOpenFight(void) {
 
 void menuBattleDiskOpen(void) {
     gBDisk.mode = 0;
-    u8 rate = GSgfxVideoGetVsyncRate();
-    menuCreateOffScreen(rate, 20.0f / (f32)rate, 50.0f);
+    menuCreateOffScreen(20.0f / GSgfxVideoGetVsyncRate(), 50.0f);
     GSfloorPush(0x389);
     floorSetFadeScript(0, 0);
     floorWaitForChange();
-    rate = GSgfxVideoGetVsyncRate();
-    menuReleaseOffScreen(rate, 20.0f / (f32)rate);
+    menuReleaseOffScreen(20.0f / GSgfxVideoGetVsyncRate());
 }
 
 void spriteSetScissor(s32,s32,s32,s16,s16);

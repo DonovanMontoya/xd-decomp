@@ -440,14 +440,15 @@ int CMenuPokemonLeave::temochiPokemonLiveQuantity(bool skipCursor) {
 }
 
 void CMenuPokemonLeave::temochiPokemonDelShift(int slot) {
-    Pokemon *next;
+    int i = slot;
     Pokemon *cur;
-    for (; slot < 5; slot++) {
-        cur = temochiPokemonGetPointer(slot);
-        next = temochiPokemonGetPointer(slot + 1);
+    Pokemon *next;
+    for (; i < 5; i++) {
+        cur = temochiPokemonGetPointer(i);
+        next = temochiPokemonGetPointer(i + 1);
         if (cur != 0) {
             if (next == 0) {
-                temochiPokemonDel(slot);
+                temochiPokemonDel(i);
             } else {
                 memcpy(cur, next, 0xC4);
             }
@@ -1283,7 +1284,7 @@ void CMenuPokemonLeave::markingMenuItemCallBack(tagWINDOW_WORK *win, tagSPRITE_W
     }
     if (idx != -1) {
         s32 v = windowGetValue(0x86);
-        winSpriteSetDisp(sp, !(idx - v));
+        winSpriteSetDisp(sp, (u32)__cntlzw(idx - v) >> 5);
     } else {
         switch (id) {
         case 0x45B:

@@ -388,7 +388,7 @@ s32 pokemonGetCountAsJoutaiDataId(Pokemon* poke, u16 id)
 
 void pokemonWriteJoutaiDataId(Pokemon* poke, u16 id)
 {
-    u32 count;
+    u8 count;
     u16 status;
     if (poke) {
         status = joutaiDataBiosGetStatus(id);
@@ -398,12 +398,8 @@ void pokemonWriteJoutaiDataId(Pokemon* poke, u16 id)
             if (id == 4) count = poke->getConditionCount();
             poke->initCondition();
             poke->setCondition(id);
-            if (id == 8) poke->setConditionTurn(kaisuuGetKaisuu(joutaiDataBiosGetKaisuuDataId(id)));
-            if (id == 4) {
-                s32 n = (u8)count + 1;
-                if ((u8)joutaiDataBiosGetMaxCount(id) < n) n = (u8)joutaiDataBiosGetMaxCount(id);
-                poke->setConditionCount(n);
-            }
+            if (id == 8) poke->setConditionTurn(((u32 (*)(u8))kaisuuGetKaisuu)(((u32 (*)(u16))joutaiDataBiosGetKaisuuDataId)(id)));
+            if (id == 4) poke->setConditionCount((u8)joutaiDataBiosGetMaxCount(id) < (u8)count + 1 ? (u8)joutaiDataBiosGetMaxCount(id) : (u8)count + 1);
         }
     }
 }
@@ -585,7 +581,7 @@ s8 pokemonCheckSexKotei(Pokemon* poke)
 {
     s32 ratio;
     if (!poke) return 2;
-    ratio = pokemonDB_GetSexRatio(pokemon_GetPokemonDataId(poke));
+    ratio = ((u8 (*)(u32))pokemonDB_GetSexRatio)(((u32 (*)(Pokemon*))pokemon_GetPokemonDataId)(poke));
     if (ratio == sexGetPokemonSexRaitoKotei(0)) return 0;
     if (ratio == sexGetPokemonSexRaitoKotei(1)) return 1;
     if (ratio == sexGetPokemonSexRaitoKotei(2)) return 2;
@@ -661,8 +657,8 @@ u16 pokemonGetOboeWazaDataId(Pokemon* poke, u8 level, u8* counter)
 
 s8 pokemonSearchWazaDataId(Pokemon* poke, u16 dataId)
 {
-    s8 index;
     u32 id;
+    s8 index;
     s8 i;
     if (!poke) return -1;
     id = dataId;
@@ -980,10 +976,10 @@ void pokemonGetMezamerupower(Pokemon* poke, u16* power, u16* type)
     u8 spa = pokemon_GetSpeAtkRnd(poke);
     u8 spd = pokemon_GetSpeDefRnd(poke);
     u8 spe = pokemon_GetNimblenessRnd(poke);
-    u8 powerBits = ((hp >> 1) & 1) | (atk & 2) | (((def >> 1) & 1) << 2) | (((spe >> 1) & 1) << 3) | (((spa >> 1) & 1) << 4) | (((spd >> 1) & 1) << 5);
     u8 typeBits = (hp & 1) | ((atk & 1) << 1) | ((def & 1) << 2) | ((spe & 1) << 3) | ((spa & 1) << 4) | ((spd & 1) << 5);
-    u16 kind = (u8)(typeBits * 15 / 63 + 1);
+    u8 powerBits = ((hp >> 1) & 1) | (atk & 2) | (((def >> 1) & 1) << 2) | (((spe >> 1) & 1) << 3) | (((spa >> 1) & 1) << 4) | (((spd >> 1) & 1) << 5);
     u16 value = powerBits * 40 / 63 + 30;
+    u16 kind = (u8)(typeBits * 15 / 63 + 1);
     if (kind >= 9) kind = kind + 1;
     if (power) *power = value;
     if (type) *type = kind;

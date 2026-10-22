@@ -1448,7 +1448,7 @@ extern bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 ela
         FL(GSgfxVF*, 0x199C) = &_fadeEffectTrainer_vf;
         layer->field1998 = 0x98;
 
-        center.param1 = 320.0f; center.param3 = 0.0f; center.param2 = 240.0f;
+        center.param1 = 320.0f; center.param2 = 240.0f; center.param3 = 0.0f;
         f32 alpha = 255.0f * (1.0f - progress);
         f32 scale = 1.0f + (f32)_fadeEffectWork.frame / 150.0f;
         point.param1 = scale;
@@ -1472,28 +1472,40 @@ extern bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 ela
         PSMTXMultVec(transform, &point, &output);
         { f32 u = 0.0f; f32 v = 0.0f;
         GXPosition3f32(output.param1, output.param2, output.param3);
-        GXColor4u8(255, 255, 255, alpha);
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = alpha;
         GXTexCoord2f32(u, v);
         GXTexCoord2f32(u0, v0); }
         point.param1 = 128.0f; point.param2 = -128.0f; point.param3 = 0.0f;
         PSMTXMultVec(transform, &point, &output);
         { f32 u = 1.0f; f32 v = 0.0f;
         GXPosition3f32(output.param1, output.param2, output.param3);
-        GXColor4u8(255, 255, 255, alpha);
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = alpha;
         GXTexCoord2f32(u, v);
         GXTexCoord2f32(u1, v0); }
         point.param1 = -128.0f; point.param2 = 128.0f; point.param3 = 0.0f;
         PSMTXMultVec(transform, &point, &output);
         { f32 u = 0.0f; f32 v = 1.0f;
         GXPosition3f32(output.param1, output.param2, output.param3);
-        GXColor4u8(255, 255, 255, alpha);
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = alpha;
         GXTexCoord2f32(u, v);
         GXTexCoord2f32(u0, v1); }
         point.param1 = 128.0f; point.param2 = 128.0f; point.param3 = 0.0f;
         PSMTXMultVec(transform, &point, &output);
         { f32 u = 1.0f; f32 v = 1.0f;
         GXPosition3f32(output.param1, output.param2, output.param3);
-        GXColor4u8(255, 255, 255, alpha);
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = 255;
+        GXWGFifo.u8 = alpha;
         GXTexCoord2f32(u, v);
         GXTexCoord2f32(u1, v1); }
         layer->endSurface();
@@ -2499,8 +2511,10 @@ static void _fadeDistortionDoAverage(unsigned long range) {
             for (x = 0; x < columns; ++x) {
                 f32 su = FADE_UPDATE_RANDOM(2) == 0 ? 1.0f : -1.0f;
                 f32 sv = FADE_UPDATE_RANDOM(2) == 0 ? 1.0f : -1.0f;
-                f32 ru = su * (f32)FADE_UPDATE_RANDOM(range);
-                coord->u = ru / 1000.0f + du * x;
+                u32 random = FADE_UPDATE_RANDOM(range);
+                f32 floatX = x;
+                f32 ru = su * (f32)random;
+                coord->u = ru / 1000.0f + du * floatX;
                 coord->v = dv * y + (sv * (f32)FADE_UPDATE_RANDOM(range)) / 1000.0f;
                 ++uv; ++coord;
             }
@@ -2769,16 +2783,19 @@ bool fadeEffectHookFunction_distortion_yoko(GSgfxLayerID id, bool active, f32 el
     f32 progress = elapsed / duration;
     f32 progressSecond = elapsedSecond / durationSecond;
     if (timeGetLastFrameTime() != 0) {
-        f32 step = _fadeEffectWork.rotationStep;
-        f32 pos = _fadeEffectWork.rotation + step;
+        f32 step, pos;
+        step = _fadeEffectWork.rotationStep;
         ++_fadeEffectWork.frame;
-        _fadeEffectWork.rotation = pos;
+        _fadeEffectWork.rotation += step;
+        pos = _fadeEffectWork.rotation;
         if (step >= 0.0f) {
             _fadeEffectWork.rotationStep = 0.5f * progress + step;
-            if (pos >= _fadeEffectWork.distanceStep) _fadeEffectWork.rotation = _fadeEffectWork.distanceStep;
+            f32 limit = _fadeEffectWork.distanceStep;
+            if (pos >= limit) _fadeEffectWork.rotation = limit;
         } else {
             _fadeEffectWork.rotationStep = -(0.5f * progress - step);
-            if (pos <= _fadeEffectWork.distanceStep) _fadeEffectWork.rotation = _fadeEffectWork.distanceStep;
+            f32 limit = _fadeEffectWork.distanceStep;
+            if (pos <= limit) _fadeEffectWork.rotation = limit;
         }
         _fadeDistortionDoAverage(10);
         GSgfxBeginBackFBCapture(texture, _myBackFB, 0);
@@ -2795,17 +2812,23 @@ bool fadeEffectHookFunction_distortion_yoko(GSgfxLayerID id, bool active, f32 el
     FadeGridPoint* points = _fadeDistortionWork.points;
     FadeUV* uv = _fadeDistortionWork.uv;
     if (!points || !uv) return false;
-    s8 alpha = (s32)(255.0f * (1.0f - fadeSqrt(progress)));
+    u8 alpha = 255.0f * (1.0f - fadeSqrt(progress));
     for (int x = 1; x < rows; ++x) {
         layer->beginSurface(columns * 2);
         for (int y = 0; y < columns; ++y) {
             int index = x * columns + y;
             GXPosition2s16(points[index].x, points[index].y);
-            GXColor4u8(255, 255, 255, alpha);
+            *(u8*)0xCC008000 = 255;
+            *(u8*)0xCC008000 = 255;
+            *(u8*)0xCC008000 = 255;
+            *(u8*)0xCC008000 = alpha;
             GXTexCoord2f32(uv[index].u, uv[index].v);
             index = (x - 1) * columns + y;
             GXPosition2s16(points[index].x, points[index].y);
-            GXColor4u8(255, 255, 255, alpha);
+            *(u8*)0xCC008000 = 255;
+            *(u8*)0xCC008000 = 255;
+            *(u8*)0xCC008000 = 255;
+            *(u8*)0xCC008000 = alpha;
             GXTexCoord2f32(uv[index].u, uv[index].v);
         }
         layer->endSurface();
@@ -2814,8 +2837,8 @@ bool fadeEffectHookFunction_distortion_yoko(GSgfxLayerID id, bool active, f32 el
     switch (_fadeEffectWork.direction) {
     case 1:
     case 2:
-        center.param2 = 240.0f;
         center.param1 = 320.0f + _fadeEffectWork.rotation;
+        center.param2 = 240.0f;
         break;
     case 3:
         break;
@@ -2828,7 +2851,8 @@ bool fadeEffectHookFunction_distortion_yoko(GSgfxLayerID id, bool active, f32 el
     center.param3 = 0.0f;
     f32 sign = _fadeEffectWork.state != 0 ? 3.0f : -3.0f;
     f32 remaining = 1.0f - progress;
-    _fadeEffectSnapshotFadeFunction(layer, texture, &center, 1.0f, sign * (remaining * (1.0f - progressSecond)), progress, 0.5f);
+    sign *= remaining * (1.0f - progressSecond);
+    _fadeEffectSnapshotFadeFunction(layer, texture, &center, 1.0f, sign, progress, 0.5f);
     return active;
 }
 

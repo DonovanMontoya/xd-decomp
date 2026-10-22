@@ -338,8 +338,7 @@ s32 itemAddItemDataIdAry(ITEM *ary, u16 count, u16 id, u16 num, s16 idx, u16 max
             }
         }
     } else {
-        ITEM *p = ary + idx;
-        rem = itemAddNum(p, id, num, max);
+        rem = itemAddNum(ary + idx, id, num, max);
     }
     if (needSort == 1) {
         _itemSortAry(ary, count, sortType);
@@ -366,7 +365,6 @@ s32 itemGetQuantityInAry(ITEM *ary, u16 count, u16 id) {
 }
 
 ITEM *itemSearchItemDataIdAry(ITEM *ary, u16 count, u16 id, u8 mode, u16 num) {
-    ITEM *p;
     u16 i;
     if (ary == 0) {
         return 0;
@@ -379,16 +377,13 @@ ITEM *itemSearchItemDataIdAry(ITEM *ary, u16 count, u16 id, u8 mode, u16 num) {
             if (!itemValid(ary + i)) {
                 return ary + i;
             }
-        } else {
-            p = ary + i;
-            if (itemIsSame(p, id)) {
-                if (mode == 1) {
-                    if (item_GetNum(p) < num) {
-                        return ary + i;
-                    }
-                } else {
+        } else if (itemIsSame(ary + i, id)) {
+            if (mode == 1) {
+                if (item_GetNum(ary + i) < num) {
                     return ary + i;
                 }
+            } else {
+                return ary + i;
             }
         }
     }
@@ -404,16 +399,13 @@ static void _itemSortAry(ITEM *ary, u16 count, u8 type) {
             s32 cnt;
             s32 j;
             s32 i;
-            ITEM *q;
             cnt = count;
             p = ary;
             n = cnt - 1;
             for (i = 0; i < n; p++, i++) {
                 if (!itemValid(p)) {
-                    j = i + 1;
-                    q = ary + j;
-                    for (; j < cnt; q++, j++) {
-                        if (itemValid(q) == 1) {
+                    for (j = i + 1; j < cnt; j++) {
+                        if (itemValid(ary + j) == 1) {
                             itemReplace(p, ary + j);
                             break;
                         }
@@ -423,7 +415,6 @@ static void _itemSortAry(ITEM *ary, u16 count, u8 type) {
         }
         if (type == 1) {
             ITEM *p;
-            ITEM *q;
             s32 n;
             s32 cnt;
             s32 i;
@@ -433,14 +424,12 @@ static void _itemSortAry(ITEM *ary, u16 count, u8 type) {
             n = cnt - 1;
             for (i = 0; i < n; p++, i++) {
                 if (itemValid(p)) {
-                    j = i + 1;
-                    q = ary + j;
-                    for (; j < cnt; q++, j++) {
-                        if (itemValid(q)) {
+                    for (j = i + 1; j < cnt; j++) {
+                        if (itemValid(ary + j)) {
                             u16 a = item_GetItemDataId(p);
-                            u16 b = item_GetItemDataId(q);
+                            u16 b = item_GetItemDataId(ary + j);
                             if (a > b) {
-                                itemReplace(p, q);
+                                itemReplace(p, ary + j);
                             }
                         }
                     }

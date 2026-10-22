@@ -11,7 +11,9 @@ struct GSvec {
 
 class WazaSequence {
 public:
-    u8 pad00[0x10];
+    u8 pad00[4];
+    f32 startOffset;            // 0x04
+    u8 pad08[8];
     u16 resId;                  // 0x10
     u8 pad12;
     u8 index;                   // 0x13

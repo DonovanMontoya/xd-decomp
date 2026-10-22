@@ -249,9 +249,8 @@ public:
     bool isPokemonLookAbleStatus(long);
     inline Pokemon *getPokemonBySelect(long selected) {
         int side = 0;
-        long index = selected;
-        if (index >= getQuantityHeroPokemon(PLAYER_0)) {
-            index -= getQuantityHeroPokemon(PLAYER_0);
+        if (selected >= getQuantityHeroPokemon(PLAYER_0)) {
+            selected -= getQuantityHeroPokemon(PLAYER_0);
             side = 1;
         }
         Hero *hero;
@@ -260,7 +259,7 @@ public:
         } else {
             hero = &hero1;
         }
-        return hero->getPokemon(index);
+        return hero->getPokemon(selected);
     }
     void loop();
     void init();
@@ -783,6 +782,8 @@ void CMenuPokemonChange::_pokemonChangeEvolutionEffect(Pokemon *pokemon, MENU_PO
 }
 
 void CMenuPokemonChange::stateFunctionConfirmExChange() {
+    long i;
+    CMenuPokemonChange *m;
     u8 ready0;
     u8 ready1;
     u32 key0;
@@ -836,16 +837,18 @@ void CMenuPokemonChange::stateFunctionConfirmExChange() {
         cstate.unk4 = 7;
         memset(cstate.saved, 0, 0x40);
     } else {
-        memcpy(saveData, savedataGetStatus(0, 0), 0x27FD0);
+        void *src = savedataGetStatus(0, 0);
+        memcpy(saveData, src, 0x27FD0);
         cstate.unk4 = 0x12;
         memset(cstate.saved, 0, 0x40);
     }
 done:
     bgDrawFadeOut();
-    long i;
+    m = this;
     for (i = 0; i < 2; i++) {
-        menuModelFree(&models[i]);
-        menuModelTerm(&models[i]);
+        menuModelFree(&m->models[0]);
+        menuModelTerm(&m->models[0]);
+        m = (CMenuPokemonChange *)((u8 *)m + sizeof(MENU_MODEL));
     }
     menuSetEnablePort(1);
 }
@@ -1092,16 +1095,19 @@ void CMenuPokemonChange::stateFunctionError(Pokemon *p, u32 msg) {
 }
 
 void CMenuPokemonChange::stateFunctionCheckNext() {
-    long i;
     s8 answer;
+    long i;
+    CMenuPokemonChange *m;
     winMsgOpen(2, 0xC4A1, 0, 0);
     answer = menuSubOpenYesNo(0, -1, -1, 0);
     winMsgClose(1);
     _menuWait(0.5f);
     bgDrawFadeOut();
+    m = this;
     for (i = 0; i < 2; i++) {
-        menuModelFree(&models[i]);
-        menuModelTerm(&models[i]);
+        menuModelFree(&m->models[0]);
+        menuModelTerm(&m->models[0]);
+        m = (CMenuPokemonChange *)((u8 *)m + sizeof(MENU_MODEL));
     }
     if (answer == 0) {
         cstate.unk4 = 6;
@@ -1597,7 +1603,8 @@ extern "C" void menuPokemonChange(void) {
         group = GSfloorGetCurrentFloorGroupID();
         winMsgOpenWithSE(3, 0xC48E, 1, 0, 2);
         if (menuSubOpenYesNoField() == 0) {
-            gamedatasaveSetStatus(0, 5, floorGetNextFloorID());
+            s32 nextFloor = floorGetNextFloorID();
+            gamedatasaveSetStatus(0, 5, nextFloor);
             s32 result = memcardTaskCall(4, 2, 0);
             winMsgClose(1);
             if (result == 4) {
@@ -1660,6 +1667,7 @@ u32 HSD_Rand();
 }
 namespace {
 void CMenuPokemonChange::stateFunctionSaveReport() {
+    CMenuPokemonChange *m;
     u8 unlocked,success;
     success=0;unlocked=0;
     winMsgOpen(2,0xC49D,1,1);
@@ -1691,7 +1699,8 @@ void CMenuPokemonChange::stateFunctionSaveReport() {
         GSsndPlayNow(0x13);
         winMsgOpen(2,0xC49E,1,0);
         winMsgClose(1);
-        for(index=0;index<2;index++) {menuModelFree(&models[index]);menuModelTerm(&models[index]);}
+        m=this;
+        for(index=0;index<2;index++) {menuModelFree(&m->models[0]);menuModelTerm(&m->models[0]);m=(CMenuPokemonChange *)((u8 *)m+sizeof(MENU_MODEL));}
         cstate.unk4=3;
         memset(cstate.saved,0,0x40);
         return;
@@ -1699,7 +1708,7 @@ void CMenuPokemonChange::stateFunctionSaveReport() {
     u32 low=HSD_Rand();
     u32 high=HSD_Rand()<<16;
     u32 combined=high|low;
-    s32 wait=combined%60;
+    u32 wait=combined%60;
     u32 frames=wait;
     while(frames--)GSthreadSwitch();
     winMsgOpen(2,0xC4A0,1,0);

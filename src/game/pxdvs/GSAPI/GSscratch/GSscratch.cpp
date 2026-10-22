@@ -11,6 +11,7 @@ static u32 _entriesQueued;
 static u8* _scratchPadBase;
 static u8 _scratchInvalid;
 
+#pragma dont_inline on
 extern "C" void GSscratchSetValid() {
     if (_scratchInvalid) {
         s32 i = 31;
@@ -22,6 +23,8 @@ extern "C" void GSscratchSetValid() {
         _scratchInvalid = 0;
     }
 }
+#pragma dont_inline reset
+#pragma dont_inline on
 extern "C" void GSscratchSetInvalid() {
     if (_scratchInvalid != 1) {
         s32 i = 31;
@@ -33,6 +36,7 @@ extern "C" void GSscratchSetInvalid() {
         _scratchInvalid = 1;
     }
 }
+#pragma dont_inline reset
 extern "C" u8 GSscratchIsPtr(void* pointer) {
     return ((u32)pointer & 0xf0000000) == ((u32)_scratchPadBase & 0xf0000000);
 }

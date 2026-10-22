@@ -1832,7 +1832,9 @@ loop_1:
             if (gbaCommandIsConnected(2) == 0) {
                 var_r6_2 = 0x2B;
             } else {
-                var_r3_28 = CARDWriteAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50 + 0x26000, 0x2000, (_memcardStatusPtr->index * 0x28000) + 0x6000 + 0x26000, 0);
+                s32 offset = (_memcardStatusPtr->index * 0x28000) + 0x6000;
+                offset += 0x26000;
+                var_r3_28 = CARDWriteAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50 + 0x26000, 0x2000, offset, 0);
                 if (var_r3_28 == 0) {
                     var_r3_28 = CARDGetResultCode(_memcardStatusPtr->param);
                 }

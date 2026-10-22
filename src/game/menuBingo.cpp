@@ -3857,7 +3857,7 @@ loop_791:
 }
 
 #pragma pop
-static inline u8 bingoNoClearedPanel(BingoState *state) {
+static inline u32 bingoNoClearedPanel(BingoState *state) {
     u32 count = 0;
     u32 i = count;
     for (; i < 16; i++) {
@@ -3957,7 +3957,7 @@ block_38:
             var_r0 = bingoNoClearedPanel(&gBingo);
         }
     }
-    if ((var_r0 == 0) && (var_r5_2 = &gBingo, (((u8) gBingo.cells[var_r31].unk2 == 0) != 0))) {
+    if (((u8)var_r0 == 0) && (var_r5_2 = &gBingo, (((u8) gBingo.cells[var_r31].unk2 == 0) != 0))) {
         temp_r3_3=bingoCountClearedFrom(0,var_r5_2);
         if(temp_r3_3)var_r0_2=0;else var_r0_2=1;
         if (var_r0_2 != 0) {

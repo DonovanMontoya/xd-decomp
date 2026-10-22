@@ -46,13 +46,17 @@ void GSmodelSetGroundPlane(GSmodel* model, f32 height, u8 enable) {
 }
 void GSmodelSetMarukageTexture(GStexture* texture) { _modelShadowMarukageTex = texture; GStextureSetFilter(texture, 2, 2, 0); }
 void GSmodelSetShadowDistLimits(f32 nearDistance, f32 farDistance) { _modelShadowMarukageDist = nearDistance; _modelShadowOffDist = farDistance; }
+static inline u8 shadowHasTexture(HSD_Shadow* shadow) {
+    if(!shadow)return 0;
+    if(!shadow->texture)return 0;
+    if(!shadow->texture->imagedesc)return 0;
+    if(!*(void**)shadow->texture->imagedesc)return 0;
+    return 1;
+}
 void GSmodelFreeAllShadowTextures() {
-    GSmodelShadowReceiver* receiver = _modelShadowReceiveList;
-    for (u32 i = 0; i < 5; ++i, ++receiver) {
-        HSD_Shadow* shadow = receiver->shadow;
-        u8 hasTexture = 0;
-        if (shadow && shadow->texture && shadow->texture->imagedesc && *(void**)shadow->texture->imagedesc) hasTexture = 1;
-        if (hasTexture) { GSgfxRenderWaitForDrawComplete__Fv(); HSD_ShadowFreeTexture(receiver->shadow); }
+    for (u32 i = 0; i < 5; ++i) {
+        GSmodelShadowReceiver* receiver = &_modelShadowReceiveList[i];
+        if (shadowHasTexture(receiver->shadow)) { GSgfxRenderWaitForDrawComplete__Fv(); HSD_ShadowFreeTexture(receiver->shadow); }
         HSD_ShadowSetActive(receiver->shadow, 0); receiver->active = 0;
     }
 }
@@ -115,15 +119,18 @@ static void _modelShadowSetShadowFlag__FP9_HSD_JObjPPvi(HSD_JObj* joint, void** 
         }
     }
 }
+static inline u8 shadowHasReceiver(GSmodelShadowReceiver* receiver, GSmodel* model) {
+    for (u32 i = 0; i < 5; ++i) if (receiver[i].model == model) return 1;
+    return 0;
+}
 void modelShadowPrepare__FP8_GSmodelb(GSmodel* model, bool enable) {
-    u8 found = 0;
-    for (u32 i = 0; i < 5; ++i) if (_modelShadowReceiveList[i].model == model) { found = 1; break; }
-    if (found) {
+    GSmodelShadowReceiver* receiver = _modelShadowReceiveList;
+    if (shadowHasReceiver(receiver, model)) {
         HSD_JObj* joint = modelGetRenderJObj__FP8_GSmodel(model);
         if (!enable) HSD_JObjWalkTree(joint, _modelShadowSetShadowFlag__FP9_HSD_JObjPPvi, (void**)0);
         else HSD_JObjWalkTree(joint, _modelShadowSetShadowFlag__FP9_HSD_JObjPPvi, (void**)1);
-        GSmodelShadowReceiver* receiver = _modelShadowReceiveList;
-        for (u32 i = 0; i < 5; ++i, ++receiver) if (receiver->active && receiver->model == model) HSD_ShadowSetActive(receiver->shadow, enable);
+        u8 flag = enable;
+        for (u32 i = 0; i < 5; ++i, ++receiver) if (receiver->active && receiver->model == model) HSD_ShadowSetActive(receiver->shadow, flag);
     }
 }
 void modelShadowFreeModelList__FP8_GSmodel(GSmodel* model) {
@@ -136,28 +143,29 @@ void modelShadowFreeModelList__FP8_GSmodel(GSmodel* model) {
 void modelShadowInit__Fv() {
     _modelShadowIntensity = 128; _modelShadowXsize = 384; _modelShadowYsize = 384;
     _modelShadowCutoffDist = 0.0f; _modelShadowBoundExpansion = 0.0f;
-    GSmodelShadowReceiver* receiver = _modelShadowReceiveList;
-    for (u32 i = 0; i < 5; ++i, ++receiver) {
+    for (u32 i = 0; i < 5; ++i) {
+        GSmodelShadowReceiver* receiver = &_modelShadowReceiveList[i];
         receiver->active = 0; receiver->shadow = HSD_ShadowAlloc(); HSD_ShadowSetActive(receiver->shadow, 0);
         receiver->model = 0; receiver->token = 0;
     }
 }
 double ceil(double);
+static inline f32 shadowLargestExtent(const Vec& size) {
+    f32 largest=size.x;
+    if(size.y>largest)largest=size.y;
+    if(size.z>largest)largest=size.z;
+    return largest;
+}
 static GSmodelShadowReceiver* _modelShadowFindValidReceiveModel__FP8_GSmodelP8_GSmodelP7GSlightP7GSbound(GSmodel* model, GSmodel* surface, GSlight* light, GSbound* bound) {
     Vec surfacePos, otherPos, size;
-    GSmodelShadowReceiver* receiver;
     u32 i;
-    receiver = _modelShadowReceiveList;
-    for (i = 0; i < 5; ++i, ++receiver) {
+    for (i = 0; i < 5; ++i) {
+        GSmodelShadowReceiver* receiver = &_modelShadowReceiveList[i];
         if (receiver->model == model && receiver->light == light) {
             if (bound) {
                 GSboundGetSize(bound, &size, 1, 1);
-                f32 largest;
                 u32 extent;
-                largest = size.x;
-                if (largest < size.y) largest = size.y;
-                if (largest < size.z) largest = size.z;
-                extent = (u32)(f32)ceil(largest);
+                extent = (u32)(f32)ceil(shadowLargestExtent(size));
                 if ((extent < receiver->sizeMin && extent < receiver->sizeMax / 3) ||
                     (extent > receiver->sizeMax && extent > receiver->sizeMin * 3)) continue;
             }
@@ -216,6 +224,15 @@ void GSgfxProjectSetupParameters();
 void GSboundGetShadowVolume(GSbound*,GSbound*,Vec*,f32);
 static u8 _modelShadowAddAsNewReceiver__FP8_GSmodelP8_GSmodelP7GSlightP7GSbound(GSmodel*,GSmodel*,GSlight*,GSbound*);
 }
+static inline s32 shadowFindSurface(GSmodelShadowReceiver* receiver,GSmodel* model) {
+    s32 index;
+    for(index=0;index<16;index++)if(receiver->surfaces[index]==model)return index;
+    return -1;
+}
+static inline GSmodelShadowReceiver* shadowFindFreeReceiver(GSmodelShadowReceiver* receiver) {
+    for(u32 i=0;i<5;i++,receiver++)if(!receiver->model)return receiver;
+    return 0;
+}
 static inline u8 shadowAssignReceiver(GSmodel* surface,GSmodel* model,GSlight* light,GSbound* bound) {
     Vec size;
     if(!light)return 1;
@@ -224,19 +241,14 @@ static inline u8 shadowAssignReceiver(GSmodel* surface,GSmodel* model,GSlight* l
     GSmodelShadowReceiver* receiver=_modelShadowFindValidReceiveModel__FP8_GSmodelP8_GSmodelP7GSlightP7GSbound(surface,model,light,bound);
     if(receiver) {
         s32 index;
-        for(index=0;index<16;index++)if(receiver->surfaces[index]==model)break;
-        if(index==16)index=-1;
+        index=shadowFindSurface(receiver,model);
         if(index!=-1)return 1;
-        for(index=0;index<16;index++)if(receiver->surfaces[index]==0)break;
-        if(index==16)index=-1;
+        index=shadowFindSurface(receiver,0);
         if(index==-1)return _modelShadowAddAsNewReceiver__FP8_GSmodelP8_GSmodelP7GSlightP7GSbound(surface,model,light,bound);
         if(index<0)return 0;
         receiver->surfaces[index]=model;
         GSboundGetSize(bound,&size,1,1);
-        f32 largest=size.x;
-        if(size.y>largest)largest=size.y;
-        if(size.z>largest)largest=size.z;
-        u32 extent=(u32)(f32)ceil(largest);
+        u32 extent=(u32)(f32)ceil(shadowLargestExtent(size));
         if(extent<receiver->sizeMin)receiver->sizeMin=extent;
         if(extent>receiver->sizeMax)receiver->sizeMax=extent;
         return 1;
@@ -246,16 +258,18 @@ static inline u8 shadowAssignReceiver(GSmodel* surface,GSmodel* model,GSlight* l
 extern "C" void modelShadowUpdate__Fv() {
     GSbound shadowBound;
     Vec lightPosition,modelPosition;
+    GSmodel* model;
     GSgfxProjectSetupParameters();
-    GSmodelShadowReceiver* receiver=_modelShadowReceiveList;
-    for(s32 i=0;i<5;i++,receiver++) {
+    for(s32 i=0;i<5;i++) {
+        GSmodelShadowReceiver* receiver=&_modelShadowReceiveList[i];
         receiver->active=0;receiver->model=0;receiver->token=0;
-        for(s32 j=0;j<16;j++)receiver->surfaces[j]=0;
+        for(u32 j=0;j<16;j++)receiver->surfaces[j]=0;
     }
     _modelShadowActiveCount=0;
-    for(GSmodel* model=_modelTopPtr;model;model=model->next) {
+    for(model=_modelTopPtr;model;model=model->next) {
         GSmodelRuntime* runtime=modelRuntime(model);
-        if(runtime->shadowSurfaceCount) {
+        u32 surfaceCount=runtime->shadowSurfaceCount;
+        if(surfaceCount) {
             model->flags&=~0x08000000;
             u32 flags=model->flags;
             if(flags&2) {
@@ -278,7 +292,7 @@ extern "C" void modelShadowUpdate__Fv() {
                         GScamera* camera=model->camera;
                         if(!camera)camera=GScameraGetActiveCamera();
                         f32 height;
-                        if(!camera)height=0;else height=camera->position.y;
+                        if(camera==0){height=0.0f;}else{height=camera->position.y;}
                         if(height<20.0f+model->position.param2) {model->flags|=0x08000000;continue;}
                     }
                     f32 distance=GSmodelGetDistanceFromCamera(model);
@@ -301,23 +315,24 @@ extern "C" void modelShadowUpdate__Fv() {
 
 extern "C" {
 static u8 _modelShadowAddAsNewReceiver__FP8_GSmodelP8_GSmodelP7GSlightP7GSbound(GSmodel* surface,GSmodel* model,GSlight* light,GSbound* bound) {
-    Vec existingSize,newSize;
+    Vec newSize,existingSize;
     GSmodelShadowReceiver* list=_modelShadowReceiveList;
-    GSmodelShadowReceiver* receiver=list;
-    u32 i;
-    for(i=0;i<5;i++,receiver++)if(!receiver->model)break;
-    if(i==5)receiver=0;
+    GSmodelShadowReceiver* receiver=shadowFindFreeReceiver(list);
     if(!receiver) {
         receiver=_modelShadowFindValidReceiveModel__FP8_GSmodelP8_GSmodelP7GSlightP7GSbound(surface,model,light,0);
         if(receiver)for(s32 j=0;j<16;j++)if(receiver->surfaces[j] && (receiver->surfaces[j]->flags&0x40000000)) {receiver=0;break;}
         if(!receiver) {
-            u8 found=0;
-            for(u32 index=0;index<5;index++,list++) {
+            u32 index;
+            GSmodel* candidate;
+            u8 found;
+            s32 j;
+            found=0;
+            for(index=0;index<5;index++,list++) {
                 receiver=list;
                 if(list->model==surface) {
                     found=1;
-                    for(s32 j=0;j<16;j++) {
-                        GSmodel* candidate=list->surfaces[index];
+                    for(j=0;j<16;j++) {
+                        candidate=list->surfaces[index];
                         if(candidate && (candidate->flags&0x40000000)) {found=0;break;}
                     }
                     if(found)break;
@@ -326,30 +341,20 @@ static u8 _modelShadowAddAsNewReceiver__FP8_GSmodelP8_GSmodelP7GSlightP7GSbound(
             if(!found)return 0;
         }
         s32 index;
-        GSmodel** entry=receiver->surfaces;
-        for(index=0;index<16;index++,entry++)if(*entry==model)break;
-        if(index==16)index=-1;
+        index=shadowFindSurface(receiver,model);
         if(index!=-1)return 1;
-        entry=receiver->surfaces;
-        for(index=0;index<16;index++,entry++)if(!*entry)break;
-        if(index==16)index=-1;
+        index=shadowFindSurface(receiver,0);
         if(index<0)return 0;
         receiver->surfaces[index]=model;
         GSboundGetSize(bound,&existingSize,1,1);
-        f32 largest=existingSize.x;
-        if(existingSize.y>largest)largest=existingSize.y;
-        if(existingSize.z>largest)largest=existingSize.z;
-        u32 extent=(u32)(f32)ceil(largest);
+        u32 extent=(u32)(f32)ceil(shadowLargestExtent(existingSize));
         if(extent<receiver->sizeMin)receiver->sizeMin=extent;
         if(extent>receiver->sizeMax)receiver->sizeMax=extent;
         return 1;
     }
     receiver->model=surface;receiver->light=light;
     GSboundGetSize(bound,&newSize,1,1);
-    f32 largest=newSize.x;
-    if(newSize.y>largest)largest=newSize.y;
-    if(newSize.z>largest)largest=newSize.z;
-    u32 extent=(u32)(f32)ceil(largest);
+    u32 extent=(u32)(f32)ceil(shadowLargestExtent(newSize));
     receiver->sizeMax=extent;receiver->sizeMin=extent;receiver->surfaces[0]=model;
     return 1;
 }
@@ -375,13 +380,6 @@ void GSlogWrite(const char*,...);
 void __assert(const char*,s32,const char*);
 void GSboundGetShadowSize(Vec*,GSbound*,Vec*,Vec*,Vec*);
 }
-static inline u8 shadowHasTexture(HSD_Shadow* shadow) {
-    if(!shadow)return 0;
-    if(!shadow->texture)return 0;
-    if(!shadow->texture->imagedesc)return 0;
-    if(!*(void**)shadow->texture->imagedesc)return 0;
-    return 1;
-}
 static inline void shadowSetClipping(GSgfxLayer* layer) {
     *(s32*)((u8*)layer+0xd90)=0;
     layer->cullDirty|=4;layer->dirty|=2;layer->savedCullDirty|=4;layer->savedDirty|=2;
@@ -389,8 +387,12 @@ static inline void shadowSetClipping(GSgfxLayer* layer) {
 static inline s32 shadowFloatClass(f32 value) {
     union {f32 value;u32 bits;} number;number.value=value;
     switch(number.bits&0x7f800000) {
-    case 0x7f800000:return (number.bits&0x7fffff)?1:2;
-    case 0:return (number.bits&0x7fffff)?5:3;
+    case 0x7f800000:
+        if(number.bits&0x7fffff)return 1;
+        return 2;
+    case 0:
+        if(number.bits&0x7fffff)return 5;
+        return 3;
     default:return 4;
     }
 }
@@ -399,8 +401,8 @@ extern "C" void modelShadowRender__FP10GSgfxLayer(GSgfxLayer* layer) {
     GSbound volume;
     Vec interest,eye,center,up,extent,size,position;
     GSmodelShadowReceiver* receiver=_modelShadowReceiveList;
-    GSmodelShadowReceiver* wait=receiver;
-    for(u32 i=0;i<5;i++,wait++) {
+    for(u32 i=0;i<5;i++) {
+        GSmodelShadowReceiver* wait=&_modelShadowReceiveList[i];
         if(wait->model) {
             GSgfxTokenWaitForClearAndReset(&wait->token);
             GSmodel* model=wait->model;
@@ -415,7 +417,7 @@ extern "C" void modelShadowRender__FP10GSgfxLayer(GSgfxLayer* layer) {
                 if(shadowHasTexture(receiver->shadow)) {GSgfxRenderWaitForDrawComplete__Fv();HSD_ShadowFreeTexture(receiver->shadow);}
                 receiver->active=0;
             }else if(model->flags&1) {
-                s32 count=0;
+                u32 count=0;
                 GSmodelShadowReceiver* current=receiver;
                 interest.x=0;interest.y=0;interest.z=0;
                 for(u32 j=0;j<16;j++) {
@@ -429,8 +431,10 @@ extern "C" void modelShadowRender__FP10GSgfxLayer(GSgfxLayer* layer) {
                 if(count==0)receiver->active=0;
                 else {
                     s32 type=receiver->light->object->flags&3;
-                    if(type==1)HSD_CObjSetProjectionType(receiver->shadow->camera,3);
-                    else if(type>=1 && type<4)HSD_CObjSetProjectionType(receiver->shadow->camera,2);
+                    switch(type) {
+                    case 1:HSD_CObjSetProjectionType(receiver->shadow->camera,3);break;
+                    case 2:case 3:HSD_CObjSetProjectionType(receiver->shadow->camera,2);break;
+                    }
                     if((f32)count!=0.0f)PSVECScale(&interest,&interest,1.0f/count);
                     HSD_CObjSetInterest(receiver->shadow->camera,(HSD_Vec3*)&interest);
                     HSD_ShadowCopyLightPos(receiver->shadow,receiver->light->object,30.0f);
@@ -443,18 +447,16 @@ extern "C" void modelShadowRender__FP10GSgfxLayer(GSgfxLayer* layer) {
                         for(HSD_SList* object=receiver->shadow->objects;object;object=object->next) {
                             GSmodel* caster=GSmodelSearchModelList((HSD_JObj*)object->data);
                             if(caster) {
-                                GSbound* bound=(GSbound*)caster->boundStorage;
-                                GSboundGetWorldPosition(bound,&center);
-                                if((u8)GSboundHasAnimData(bound)==0) {
-                                    GSboundGetSize(bound,&size,1,1);
-                                    f32 largest=size.x;if(size.y>largest)largest=size.y;if(size.z>largest)largest=size.z;
-                                    f32 edge=_modelShadowBoundExpansion+(f32)(u32)(f32)ceil(largest);
+                                GSboundGetWorldPosition((GSbound*)caster->boundStorage,&center);
+                                if((u8)GSboundHasAnimData((GSbound*)caster->boundStorage)==0) {
+                                    GSboundGetSize((GSbound*)caster->boundStorage,&size,1,1);
+                                    f32 edge=_modelShadowBoundExpansion+(f32)(u32)(f32)ceil(shadowLargestExtent(size));
                                     if(edge>0.1f)HSD_ViewingRectAddRect(&viewing,(HSD_Vec3*)&center,-edge,-edge,edge,edge);
                                 }else {
                                     f32 ground;
                                     if(caster->animationFlags&4) {GSmodelGetPosition(caster,(GSvec*)&position);ground=position.y;}
                                     else ground=modelRuntime(caster)->groundPlane;
-                                    GSboundGetShadowVolume(&volume,bound,&eye,ground);
+                                    GSboundGetShadowVolume(&volume,(GSbound*)caster->boundStorage,&eye,ground);
                                     GSboundGetShadowSize(&extent,&volume,&eye,&interest,&up);PSVECScale(&extent,&extent,0.5f);
                                     HSD_ViewingRectAddRect(&viewing,(HSD_Vec3*)&center,extent.z,-extent.z,-extent.x,extent.x);
                                 }
@@ -561,14 +563,14 @@ extern "C" void modelShadowRenderDebug__Fv() {
     if(layer->blendIndex!=0) {layer->blendIndex=0;layer->currentBlend=&layer->blendRecords[layer->blendIndex];}
     layer->blendMode=0;layer->blendSource=1;layer->blendDestination=1;layer->logicOperation=5;shadowPixelState(layer,1);
     layer->setRenderStateAndSelect(GSgfxVFGetPredef(0));
-    receiver=_modelShadowReceiveList;
     i=0;
     shadowDepthState(layer,1,3);
     shadowAlphaState(layer,7,0,0,7,0,1);
     shadowColorState(layer,1,0,0);
     layer->primitiveType=0xa8;layer->lineWidth=9;layer->lineOffset=0;
     layer->lineDirty|=4;layer->dirty|=1;layer->savedLineDirty|=4;layer->savedDirty|=1;
-    for(;i<5;i++,receiver++) {
+    for(;i<5;i++) {
+        receiver=&_modelShadowReceiveList[i];
         if(receiver->model && (receiver->model->flags&1)) {
             j=0;
             surface=(GSmodel**)receiver;

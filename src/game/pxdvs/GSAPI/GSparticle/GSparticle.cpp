@@ -289,8 +289,10 @@ static void _particleRender(GSgfxLayer *layer, GSgfxLayerPass pass) {
     GSgfxCamX *cam = (GSgfxCamX *)GScameraGetActiveCamera();
     s32 type = 1;
     u32 wasOn = layer->flag16A7 != 0;
-    if (cam != 0) {
-        if (GScameraIsValid((u32)cam)) {
+    if (cam == 0 || !GScameraIsValid((u32)cam)) {
+        return;
+    }
+    {
         s32 perf = GSgfxPerfbarCPUEntry(0xff00ff);
         if (_invalidateVtx != 0) {
             layer->flags4 |= 0x8000000;
@@ -328,7 +330,7 @@ static void _particleRender(GSgfxLayer *layer, GSgfxLayerPass pass) {
                 psDispParticles(type, 1, 0);
                 psDispParticles(type, 2, 0);
                 layer->InvalidateState();
-                for (i = 0, p = g_particle_cameras; i < (u32)g_particle_cameras_count; i++, p++) {
+                for (i = 0, p = g_particle_cameras; i < (u32)g_particle_cameras_count; p++, i++) {
                     c = (GSgfxCamX *)*p;
                     if (GScameraIsValid((u32)c)) {
                         any = 1;
@@ -372,7 +374,6 @@ static void _particleRender(GSgfxLayer *layer, GSgfxLayerPass pass) {
             layer->f1760 |= 0x40;
         }
         GSgfxPerfbarCPUEntry(perf);
-        }
     }
 }
 
@@ -948,6 +949,11 @@ extern "C" void GSparticleDestroyGenerator(_GSparticleGen *g, u8 flag) {
 
 static void _particleBankDestroyOldestGenerator(_GSparticleBank *bank);
 
+static inline void peBankSetCamera(peBankX *b, void *camera) {
+    if (b != 0) {
+        b->camera = camera;
+    }
+}
 extern "C" _GSparticleGen *GSparticleCreateGenerator(_GSparticleBank *bank, u32 id, u8 flag) {
     _GSparticleGen *g;
     if (bank->reserved0 == 0) {
@@ -970,9 +976,7 @@ extern "C" _GSparticleGen *GSparticleCreateGenerator(_GSparticleBank *bank, u32 
         if (g->isBank == 0) {
             return 0;
         }
-        if (b != 0) {
-            b->camera = bank->camera;
-        }
+        peBankSetCamera(b, bank->camera);
         peBankStart(b);
         g->bank = b;
         _invalidateVtx = 1;

@@ -646,7 +646,7 @@ extern "C" u8 fightOutPokemonCheckFightActionWazaSelect(FightOutPokemon* poke, u
             if (static_cast<u16>(encoreMove) != static_cast<u16>(move)) fightOutPokemonInitJoutaiDataId(poke, 0x2a);
             FightTarget* target = fightSeqSelectDefensePokemonPtr(poke, move, fightType, nullptr, 1, 1, -1);
             u32 targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, fightType);
-            fightOutPokemonCreateFightActionAttackWaza(poke, 0, 0x13, 0, &fight_action_data_waza, move, targetId, static_cast<s8>(index), 1);
+            ((void (*)(FightOutPokemon*, u32, u32, u32, FightActionData*, u16, u32, s8, u8))fightOutPokemonCreateFightActionAttackWaza)(poke, 0, 0x13, 0, &fight_action_data_waza, move, targetId, index, 1);
         }
         return 2;
     }
@@ -1054,9 +1054,7 @@ void fightPokemonInitJoutaiDataId(FightPokemon* poke, u16 condition) {
 void fightOutPokemonCopyJoutaiDataId(FightOutPokemon* target, FightOutPokemon* source, u16 condition) {
     if (joutaiDataBiosGetStatus(condition) == 0x7c || joutaiDataBiosGetStatus(condition) == 0xc8 ||
         joutaiDataBiosGetStatus(condition) == 0xcd) {
-        FightPokemon* sourceRecord = fightOutPokemon_GetFightPokemonPtr(source);
-        FightPokemon* targetRecord = fightOutPokemon_GetFightPokemonPtr(target);
-        fightPokemonCopyJoutaiDataId(targetRecord, sourceRecord, condition);
+        fightPokemonCopyJoutaiDataId(fightOutPokemon_GetFightPokemonPtr(target), fightOutPokemon_GetFightPokemonPtr(source), condition);
     } else if (joutaiDataBiosGetStatus(condition) == 0xd8) {
         joutaiCopy(target, source, condition);
     }
@@ -1064,9 +1062,7 @@ void fightOutPokemonCopyJoutaiDataId(FightOutPokemon* target, FightOutPokemon* s
 
 void fightPokemonCopyJoutaiDataId(FightPokemon* target, FightPokemon* source, u16 condition) {
     if (joutaiDataBiosGetStatus(condition) == 0x7c || joutaiDataBiosGetStatus(condition) == 0xc8) {
-        Pokemon* sourceRecord = fightPokemonGetPokemonPtr(source);
-        Pokemon* targetRecord = fightPokemonGetPokemonPtr(target);
-        pokemonCopyJoutaiDataId(targetRecord, sourceRecord, condition);
+        pokemonCopyJoutaiDataId(fightPokemonGetPokemonPtr(target), fightPokemonGetPokemonPtr(source), condition);
     } else if (joutaiDataBiosGetStatus(condition) == 0xcd) {
         joutaiCopy(target, source, condition);
     }
@@ -2131,7 +2127,7 @@ void fightOutPokemonLoadWazaEffect(FightOutPokemon* poke, u16 move, u32 slot, u8
     u32 effect = wazaDB_GetWazawzxdataId(move);
     ModelSequence* sequence = static_cast<ModelSequence*>(fightOutPokemon_GetSequencePtr(poke));
     if (sequence != nullptr) {
-        Sequence_LoadWaza(sequence, effect, static_cast<u8>(slot), variation);
+        ((void (*)(void*, u16, u8, u8))Sequence_LoadWaza)(sequence, effect, slot, variation);
         ModelSequence* model;
         if (sequence->type == 1) model = sequence;
         else model = nullptr;
