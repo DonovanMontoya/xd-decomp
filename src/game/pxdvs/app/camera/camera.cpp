@@ -153,7 +153,12 @@ void cameraMovePositionXYZ(u32 mode,f32 x,f32 y,f32 z,f32 duration) {
     pCamWork->moving=1; pCamWork->positionAnimation.start(&pCamWork->position,&position,duration);
 }
 void cameraMovePosition(u32 mode,const GSvec* position,f32 duration) {
-    if(duration < 1e-7f && duration > -1e-7f) { cameraSetPosition(position); return; }
+    if(duration < 1e-7f && duration > -1e-7f) {
+        volatile f32* target=(volatile f32*)&pCamWork->position;
+        const volatile f32* source=(const volatile f32*)position;
+        target[0]=source[0]; target[1]=source[1]; target[2]=source[2];
+        return;
+    }
     pCamWork->moving=1; pCamWork->positionAnimation.start(&pCamWork->position,position,duration);
 }
 void cameraMoveTargetXYZ(u32 mode,f32 x,f32 y,f32 z,f32 duration) {
@@ -163,7 +168,12 @@ void cameraMoveTargetXYZ(u32 mode,f32 x,f32 y,f32 z,f32 duration) {
 }
 void cameraMoveTargetOfs(u32 mode,const GSvec* position,f32 duration) { pCamWork->moving=1; pCamWork->offsetAnimation.start(&pCamWork->targetOffset,position,duration); }
 void cameraMoveTargetPos(u32 mode,const GSvec* position,f32 duration) {
-    if(duration < 1e-7f && duration > -1e-7f) { cameraSetTargetPos(position); return; }
+    if(duration < 1e-7f && duration > -1e-7f) {
+        volatile f32* target=(volatile f32*)&pCamWork->targetPosition;
+        const volatile f32* source=(const volatile f32*)position;
+        target[0]=source[0]; target[1]=source[1]; target[2]=source[2];
+        return;
+    }
     pCamWork->moving=1; pCamWork->targetAnimation.start(&pCamWork->targetPosition,position,duration);
 }
 void cameraMoveTarget(u32 mode,u32 group,u32 id,f32 duration) {
@@ -175,7 +185,13 @@ void cameraMoveTarget(u32 mode,u32 group,u32 id,f32 duration) {
     pCamWork->moving=1; pCamWork->targetAnimation.start(&pCamWork->targetPosition,&position,duration);
 }
 void cameraGetRotation(GSvec* out) { copyVector(out,&pCamWork->rotation); }
-void cameraSetRotation(const GSvec* value) { GScamera* camera=(GScamera*)GSresGetResource(0,0); CameraWork* work=pCamWork; work->rotation.param1=value->param1; work->rotation.param2=value->param2; work->rotation.param3=value->param3; GScameraSetRotation(camera,vec(value)); }
+void cameraSetRotation(const GSvec* value) {
+    GScamera* camera=(GScamera*)GSresGetResource(0,0);
+    volatile f32* target=(volatile f32*)&pCamWork->rotation;
+    const volatile f32* source=(const volatile f32*)value;
+    target[0]=source[0]; target[1]=source[1]; target[2]=source[2];
+    GScameraSetRotation(camera,vec(value));
+}
 void cameraGetPosition(GSvec* out) { copyVector(out,&pCamWork->position); }
 #pragma scheduling off
 void cameraSetPosition(const GSvec* value) { CameraWork* work=pCamWork; work->position.param1=value->param1; work->position.param2=value->param2; work->position.param3=value->param3; }
@@ -351,8 +367,40 @@ template<class T> u8 CameraAnimation<T>::updateAcceleration(f32 delta) {
 }
 template<class T> void CameraAnimation<T>::setAcceleration(f32 amount) { acceleration=amount; accelerating=1; accelerateOut=1; accelerateIn=1; }
 template<class T> const T* CameraAnimation<T>::getCurrentPos() const { return &currentPosition; }
-#pragma fp_contract off
+// Scalar interpolation rounds its multiply separately from the final addition.
 #pragma dont_inline on
+template<> u8 CameraAnimation<f32>::updateAcceleration(f32 delta) {
+    if(!moving) return 0;
+    if(firstUpdate) {
+        if(!accelerateIn && accelerateOut) {
+            f32 braking=0.0f;
+            f32 frame;
+            speed=1.0f;
+            frame=1.0f/(f32)GSgfxVideoGetVsyncRate();
+            if(GSgfxVideoGetLockFrameRate()==1) frame*=2.0f;
+            for(f32 amount=0.0f; amount<1.0f; amount+=acceleration) braking+=frame*amount;
+            brakeTime=duration-braking; phase=1;
+        }
+        firstUpdate=0;
+    }
+    elapsed+=delta*speed;
+    f32 end, time; time=elapsed; end=duration;
+    if(time>=end) { currentPosition=endPosition; elapsed=0.0f; moving=0; accelerating=0; return 1; }
+#pragma fp_contract off
+    f32 to=*(volatile f32*)&endPosition, from=*(volatile f32*)&startPosition;
+    f32 fraction=time/end;
+    f32 difference=to-from;
+    difference=difference*fraction;
+    currentPosition=difference+from;
+#pragma fp_contract on
+    switch(phase) {
+    case 0: speed+=acceleration; if(speed>=1.0f) { phase=1; brakeTime=duration-elapsed; } break;
+    case 1: if(accelerateOut && elapsed>=brakeTime) phase=2; break;
+    case 2: speed-=acceleration; if(speed<acceleration) speed=acceleration; break;
+    }
+    return 1;
+}
+#pragma fp_contract off
 template<> u8 CameraAnimation<f32>::update(f32 delta) {
     if(!moving) return 0;
     if(accelerating) return updateAcceleration(delta);
@@ -360,11 +408,11 @@ template<> u8 CameraAnimation<f32>::update(f32 delta) {
     elapsed+=delta;
     f32 end, time; time=elapsed; end=duration;
     if(time>=end) { currentPosition=endPosition; elapsed=0.0f; moving=0; accelerating=0; return 1; }
-    f32 to=endPosition, from=startPosition;
+    f32 to=*(volatile f32*)&endPosition, from=*(volatile f32*)&startPosition;
     f32 fraction=time/end;
     f32 difference=to-from;
-    f32 scaled=difference*fraction;
-    currentPosition=scaled+from;
+    difference=difference*fraction;
+    currentPosition=difference+from;
     return 1;
 }
 #pragma dont_inline off

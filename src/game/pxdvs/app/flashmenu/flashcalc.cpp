@@ -15,16 +15,19 @@ extern "C" void flcalcBezier3(FlashPoint *arg0, FlashCurve *arg1, f32 farg0) {
 extern "C" void flcalcConvFlashMatrix(FlashMatrix*out,FlashFixedMatrix*in){f32 a=in->unk0,b=in->unk4,c=in->unk8,d=in->unkC,e=in->unk10,f=in->unk14;out->unk0=a/65536.0f;out->unk4=b/65536.0f;out->unk8=c/65536.0f;out->unkC=d/65536.0f;out->unk10=e/20.0f;out->unk14=f/20.0f;}
 
 extern "C" s32 flcalcBlendColor(u32 arg0, u32 arg1, f32 farg0) {
-    f32 temp_f28;
-    f32 temp_f29;
-    f32 temp_f30;
-    f32 temp_f3;
+    f32 alpha;
+    f32 green;
+    f32 blue;
+    f32 red;
 
-    temp_f3 = (f32) (arg0 >> 0x18U);
-    temp_f30 = (f32)(arg0&0xFFU);
-    temp_f29 = (f32) ((arg0 & 0xFF0000U)>>16);
-    temp_f28 = (f32) ((arg0 & 0xFF00U)>>8);
-    return ((u32) ((farg0 * ((f32) ((arg1 & 0xFF00U)>>8) - temp_f28)) + temp_f28) << 8) | (((u32) ((farg0 * ((f32) ((arg1 & 0xFF0000U)>>16) - temp_f29)) + temp_f29) << 0x10) | ((u32) ((farg0 * ((f32)(arg1&0xFFU) - temp_f30)) + temp_f30) | ((u32) ((farg0 * ((f32) (arg1 >> 0x18U) - temp_f3)) + temp_f3) << 0x18)));
+    alpha = (f32)(arg0 & 0xFFU);
+    red = (f32)(arg0 >> 0x18U);
+    green = (f32)((arg0 >> 16U) & 255U);
+    blue = (f32)((arg0 >> 8U) & 255U);
+    return ((u32)(farg0 * ((f32)((arg1 >> 8) & 255) - blue) + blue) << 8) |
+           (((u32)(farg0 * ((f32)((arg1 >> 16) & 255) - green) + green) << 16) |
+            ((u32)(farg0 * ((f32)(arg1 & 255) - alpha) + alpha) |
+             ((u32)(farg0 * ((f32)(arg1 >> 24) - red) + red) << 24)));
 }
 
 extern "C" s32 flcalcBlend(s32 arg0, s32 arg1, f32 farg0) {

@@ -1,3 +1,4 @@
+#pragma dollar_identifiers on
 /* XD primitive and pixel-engine state cache and material channels. */
 #include "game/maximum/GSAPI/baselib/state.h"
 #include "game/maximum/GSAPI/baselib/tev.h"
@@ -51,22 +52,33 @@ static struct matstate_t {
     f32 shininess;
 } matstate;
 
+static HSD_Chan ch$941 = { NULL, GX_COLOR1, 0, {0}, {255,255,255,255},
+                              1, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_NONE, GX_AF_SPEC, NULL };
+static HSD_Chan ch$952 = { NULL, GX_COLOR0, 0, {0}, {255,255,255,255},
+                              1, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_CLAMP, GX_AF_SPOT, NULL };
+static HSD_Chan ch_a$953 = { NULL, GX_ALPHA0, 0, {0}, {0},
+                                1, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_CLAMP, GX_AF_SPOT, NULL };
+static HSD_Chan ch_vtx_a$954 = { NULL, GX_ALPHA0, 0, {0}, {0},
+                                    0, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_CLAMP, GX_AF_SPOT, NULL };
+static GXColor dark_matter$955 = {0,0,0,255};
+static HSD_Chan ch$971 = { NULL, GX_COLOR0, 0, {0}, {255,255,255,255},
+                              0, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE, GX_AF_NONE, NULL };
+static HSD_Chan ch_a$972 = { NULL, GX_ALPHA0, 0, {0}, {0,0,0,255},
+                                0, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE, GX_AF_NONE, NULL };
+
 void HSD_SetupChannelMode(u32 rendermode)
 {
-    int use_specular = 0;
-    int use_vertex_alpha = 0;
-    int diffuse = rendermode & RENDER_DIFFUSE_BITS;
-    int alpha;
+    int diffuse, alpha;
+    int use_specular = 0, use_vertex_alpha = 0;
+    diffuse = rendermode & RENDER_DIFFUSE_BITS;
     if (diffuse == 0) diffuse = RENDER_DIFFUSE_MAT;
     alpha = rendermode & RENDER_ALPHA_BITS;
     if (alpha == 0) alpha = diffuse << RENDER_ALPHA_SHIFT;
     if (rendermode & RENDER_SPECULAR) {
-        static HSD_Chan ch = { NULL, GX_COLOR1, 0, {0}, {255,255,255,255},
-                              1, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_NONE, GX_AF_SPEC, NULL };
         int i;
         int max;
-        ch.light_mask = HSD_LObjGetLightMaskSpecular();
-        HSD_SetupChannel(&ch);
+        ch$941.light_mask = HSD_LObjGetLightMaskSpecular();
+        HSD_SetupChannel(&ch$941);
         use_specular = 1;
         max = HSD_LObjGetNbActive();
         for (i = 0; i < max; i++) {
@@ -78,50 +90,44 @@ void HSD_SetupChannelMode(u32 rendermode)
         }
     }
     if (rendermode & RENDER_DIFFUSE) {
-        static HSD_Chan ch = { NULL, GX_COLOR0, 0, {0}, {255,255,255,255},
-                              1, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_CLAMP, GX_AF_SPOT, NULL };
-        static HSD_Chan ch_a = { NULL, GX_ALPHA0, 0, {0}, {0},
-                                1, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_CLAMP, GX_AF_SPOT, NULL };
-        static HSD_Chan ch_vtx_a = { NULL, GX_ALPHA0, 0, {0}, {0},
-                                    0, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_CLAMP, GX_AF_SPOT, NULL };
-        static GXColor dark_matter = {0,0,0,255};
-        HSD_LObj* ambient = HSD_LObjGetActiveByID(GX_LIGHT_NULL);
+        HSD_LObj* ambient = HSD_LObjGetActiveByID((GXLightID)256);
         u8 amb_alpha;
         if (ambient != NULL && (ambient->flags & 4)) {
-            HSD_MulColor(&matstate.ambient, (GXColor*)&ambient->color, &ch.amb_color);
+            HSD_MulColor(&matstate.ambient, (GXColor*)&ambient->color, &ch$952.amb_color);
         } else {
-            ch.amb_color = dark_matter;
+            ch$952.amb_color = dark_matter$955;
         }
-        ch.mat_src = (diffuse & RENDER_DIFFUSE_VTX) ? GX_SRC_VTX : GX_SRC_REG;
-        ch.light_mask = HSD_LObjGetLightMaskDiffuse();
-        HSD_SetupChannel(&ch);
+        ch$952.mat_src = (diffuse & RENDER_DIFFUSE_VTX) ? GX_SRC_VTX : GX_SRC_REG;
+        ch$952.light_mask = HSD_LObjGetLightMaskDiffuse();
+        HSD_SetupChannel(&ch$952);
         if (alpha & RENDER_ALPHA_VTX) {
-            ch_a.chan = GX_ALPHA1;
-            HSD_SetupChannel(&ch_vtx_a);
+            ch_a$953.chan = GX_ALPHA1;
             use_vertex_alpha = 1;
+            HSD_SetupChannel(&ch_vtx_a$954);
         } else {
-            ch_a.chan = GX_ALPHA0;
+            ch_a$953.chan = GX_ALPHA0;
         }
-        ch_a.light_mask = HSD_LObjGetLightMaskAlpha();
-        amb_alpha = ambient != NULL && (ambient->flags & 0x10) ? ((GXColor*)&ambient->color)->a : 0;
-        if (ch_a.light_mask != 0) {
-            ch_a.enable = 1;
-            ch_a.mat_color.a = 255;
-            ch_a.amb_color.a = amb_alpha;
+        ch_a$953.light_mask = HSD_LObjGetLightMaskAlpha();
+        if (ambient != NULL && (ambient->flags & 0x10)) {
+            amb_alpha = ((GXColor*)&ambient->color)->a;
         } else {
-            ch_a.enable = 0;
-            ch_a.mat_color.a = amb_alpha;
+            amb_alpha = 0;
         }
-        HSD_SetupChannel(&ch_a);
+        if (ch_a$953.light_mask != 0) {
+            ch_a$953.enable = 1;
+            ch_a$953.mat_color.a = 255;
+            ch_a$953.amb_color.a = amb_alpha;
+        } else {
+            ch_a$953.enable = 0;
+            ch_a$953.mat_color.a = amb_alpha;
+        }
+        HSD_SetupChannel(&ch_a$953);
     } else {
-        static HSD_Chan ch = { NULL, GX_COLOR0, 0, {0}, {255,255,255,255},
-                              0, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE, GX_AF_NONE, NULL };
-        static HSD_Chan ch_a = { NULL, GX_ALPHA0, 0, {0}, {0,0,0,255},
-                                0, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE, GX_AF_NONE, NULL };
-        ch.mat_src = (diffuse & RENDER_DIFFUSE_VTX) ? GX_SRC_VTX : GX_SRC_REG;
-        HSD_SetupChannel(&ch);
-        ch_a.mat_src = (alpha & RENDER_ALPHA_VTX) ? GX_SRC_VTX : GX_SRC_REG;
-        HSD_SetupChannel(&ch_a);
+
+        ch$971.mat_src = (diffuse & RENDER_DIFFUSE_VTX) ? GX_SRC_VTX : GX_SRC_REG;
+        HSD_SetupChannel(&ch$971);
+        ch_a$972.mat_src = (alpha & RENDER_ALPHA_VTX) ? GX_SRC_VTX : GX_SRC_REG;
+        HSD_SetupChannel(&ch_a$972);
     }
     if (use_specular) {
         if (!use_vertex_alpha) HSD_DisableChannelLighting(GX_ALPHA1);
@@ -361,12 +367,10 @@ static void _HSD_StateInvalidateRenderMode(void)
     state_dither = -1;
 }
 
-void HSD_StateInvalidate(int mask)
-{
 static struct invalidate_funcs_t {
     int mask;
     void (*func)(void);
-} invalidate_funcs[] = {
+} invalidate_funcs$319[] = {
     { HSD_STATE_PRIMITIVE, _HSD_StateInvalidatePrimitive },
     { HSD_STATE_VTX_ATTR, _HSD_StateInvalidateVtxAttr },
     { HSD_STATE_COLOR_CHANNEL, _HSD_StateInvalidateColorChannel },
@@ -377,11 +381,13 @@ static struct invalidate_funcs_t {
     { HSD_STATE_NONE }
 };
 
+void HSD_StateInvalidate(int mask)
+{
 
     int i;
-    for (i = 0; invalidate_funcs[i].mask != HSD_STATE_NONE; i++) {
-        if (mask & invalidate_funcs[i].mask) {
-            invalidate_funcs[i].func();
+    for (i = 0; invalidate_funcs$319[i].mask != HSD_STATE_NONE; i++) {
+        if (mask & invalidate_funcs$319[i].mask) {
+            invalidate_funcs$319[i].func();
         }
     }
 }

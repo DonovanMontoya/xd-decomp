@@ -3717,18 +3717,18 @@ void WS_JIBAKU_INIT(void) {
         }
     } else if (seq[1] == 0) {
         fight_seq_banme_max = 8;
-        found = 0;
+        cur = 0;
         fight_seq_banme_buff = 0;
         while (fight_seq_banme_buff < fight_seq_banme_max) {
-            cur = (FightOutPokemon*)fightFloor_GetFightOutPokemonFromDefaultSortData();
-            if (cur != 0 && fightOutPokemonCheckFightOut(cur) != 0) {
-                found = cur;
+            found = (FightOutPokemon*)fightFloor_GetFightOutPokemonFromDefaultSortData();
+            if (found != 0 && fightOutPokemonCheckFightOut(found) != 0) {
+                cur = found;
                 break;
             }
             fight_seq_banme_buff++;
         }
-        if (found != 0) {
-            fightFloor_SetDefPokemonAndAtkFightWazaTargetId(0, found);
+        if (cur != 0) {
+            fightFloor_SetDefPokemonAndAtkFightWazaTargetId(0, cur);
         }
         fightSeq_NextWazaSeq(2);
     }

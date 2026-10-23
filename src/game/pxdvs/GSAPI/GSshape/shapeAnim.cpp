@@ -15,22 +15,31 @@ bool GsKeyObject::GetGradationParameter(u8* type, tagGScol4ub* out, const tagGsF
     }
     return true;
 }
+static inline f32* keyFrameTwist(const tagGsFilePrimKeyFrame* key) { return key->twist; }
+static inline f32* keyFrameDeformU(const tagGsFilePrimKeyFrame* key) { return key->deformU; }
+static inline f32* keyFrameDeformV(const tagGsFilePrimKeyFrame* key) { return key->deformV; }
 bool GsKeyObject::GetTwistParameter(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
-    u16 count=a->twistCount;
-    f32 *first=a->twist, *second=b->twist;
-    for(u32 i=0;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
+    f32 *first=keyFrameTwist(a);
+    f32 *second=keyFrameTwist(b);
+    u32 i=0;
+    u32 count=a->twistCount;
+    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
     return true;
 }
 bool GsKeyObject::GetDeformParameterU(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
-    u16 count=a->deformCountU;
-    f32 *first=a->deformU, *second=b->deformU;
-    for(u32 i=0;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
+    f32 *first=keyFrameDeformU(a);
+    f32 *second=keyFrameDeformU(b);
+    u32 i=0;
+    u32 count=a->deformCountU;
+    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
     return true;
 }
 bool GsKeyObject::GetDeformParameterV(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
-    u16 count=a->deformCountV;
-    f32 *first=a->deformV, *second=b->deformV;
-    for(u32 i=0;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
+    f32 *first=keyFrameDeformV(a);
+    f32 *second=keyFrameDeformV(b);
+    u32 i=0;
+    u32 count=a->deformCountV;
+    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
     return true;
 }
 bool GsKeyObject::GetLinearParameterU(f32* out, const tagGsFilePrimKeyFrame* a) {

@@ -162,6 +162,7 @@ s16 fightTrainerAiSelectIrekaeDasuFightPokemon(void *trainer,void *target,u8 sel
 s32 fightTrainerAiGetFightPokemonIrekaeModosuValue(void *trainer,void *pokemon,void *target) {
     void *enemies[8];
     u16 moves[8];
+    u16 i;u16 move;u16 j;void *enemy;
     fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(trainer));
     s32 value=0;
     fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0,pokemon);
@@ -170,12 +171,12 @@ s32 fightTrainerAiGetFightPokemonIrekaeModosuValue(void *trainer,void *pokemon,v
     u16 count=fightFloorGetFightTrainerFightOutPokemonPtrAry(0,trainer,enemies,0,1);
     u8 knockout=0;
     u8 canHit=0;
-    for(u16 i=0;i<count;i++){
-        void *enemy=enemies[i];
+    for(i=0;i<count;i++){
+        enemy=enemies[i];
         if(enemy){
             u16 hp=fightTrainerAiGetFightOutPokemonNowHp(trainer,enemy);
-            for(u16 j=0;j<moveCount;j++){
-                u16 move=moves[j];
+            for(j=0;j<moveCount;j++){
+                move=moves[j];
                 if(move&&move!=0x176){
                     u8 hit=fightTrainerAiWazaDoWazaHitFunc(trainer,pokemon,move,enemy);
                     if(hit==1)canHit=1;
@@ -192,11 +193,11 @@ s32 fightTrainerAiGetFightPokemonIrekaeModosuValue(void *trainer,void *pokemon,v
     if(fightTrainerAiIsFightOutPokemonAllAbiCntHikui(trainer,pokemon)==1)value=fightTrainerAiAddValueByAddsubDataId(value,trainer,5);
     if(canHit==0)value=fightTrainerAiAddValueByAddsubDataId(value,trainer,6);
     if(knockout==1)value=fightTrainerAiAddValueByAddsubDataId(value,trainer,7);
-    if(fightTrainerAiIsFightOutPokemonNokoriHpHikui(trainer,pokemon)==1){for(u16 i=0;i<count;i++)if(enemies[i]&&fightTrainerAiGetFightOutPokemonBasisSubayasa(trainer,enemies[i])>speed)value=fightTrainerAiAddValueByAddsubDataId(value,trainer,8);}
+    if(fightTrainerAiIsFightOutPokemonNokoriHpHikui(trainer,pokemon)==1){for(i=0;i<count;i++)if(enemies[i]&&fightTrainerAiGetFightOutPokemonBasisSubayasa(trainer,enemies[i])>speed)value=fightTrainerAiAddValueByAddsubDataId(value,trainer,8);}
     u32 status=fightTrainerAiGetFightOutPokemonIrekaeJoutaiBadJoutaiAddsbuDataId(trainer,pokemon);
     if((u16)status)value=fightTrainerAiAddValueByAddsubDataId(value,trainer,status);
-    for(u16 i=0;i<count;i++){
-        void *enemy=enemies[i];
+    for(i=0;i<count;i++){
+        enemy=enemies[i];
         if(enemy&&fightTrainerAiIsFightOutPokemonJoutaiDataId(trainer,enemy,0x22)==1){
             s32 damage=fightTrainerAiWazaDoWazaDamageFunc(trainer,pokemon,fightOutPokemon_GetMotoWazaDataId(enemy),enemy,0);
             if(damage>=(s32)fightOutPokemonNowHpWaruValue(pokemon,1))value=fightTrainerAiAddValueByAddsubDataId(value,trainer,0x1A);
