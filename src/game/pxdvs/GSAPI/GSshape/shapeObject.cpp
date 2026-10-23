@@ -176,22 +176,25 @@ s32 rows=entry->segmentsV;
     }
 }
 bool GsShapeObject::DeformTextureCoord(u32 texture,bool deform,const f32* u,const f32* v,bool twistEnabled,const f32* twist) {
-    GsShapePair* out=(GsShapePair*)vertexArrays[texture+2];
-    if(!out) return false;
-    const GsShapePair* original=entry->textureCoords;
-    int columns=entry->segmentsU+1;
-    f32 offset=0.0f;
-    for(int row=0;row<entry->segmentsV+1;row++,v++,twist++) {
+    int row; int column; int columns; f32 offset; int rows; const GsShapePair* original; GsShapePair* out;
+    if(!vertexArrays[texture+2]) return false;
+    out=(GsShapePair*)vertexArrays[texture+2];
+    original=entry->textureCoords;
+    columns=entry->segmentsU+1;
+    rows=entry->segmentsV+1;
+    offset=0.0f;
+    for(row=0;row<rows;row++) {
         if(twistEnabled==1) offset=*twist;
         if(deform==1) {
-            for(int column=0;column<columns;column++,out++) {
-                out->u=offset+u[column]; out->v=*v;
+            for(column=0;column<columns;column++) {
+                out->u=offset+u[column]; out->v=*v; out++;
             }
         } else {
-            for(int column=0;column<columns;column++,out++,original++) {
-                out->u=original->u+offset; out->v=original->v;
+            for(column=0;column<columns;column++) {
+                out->u=original->u+offset; out->v=original->v; out++; original++;
             }
         }
+        twist++; v++;
     }
     return true;
 }
@@ -202,28 +205,25 @@ extern "C" double tan(double);
 bool GsShapeObject::DeformVertexCoord(bool deform,const f32* u,const f32* v,bool radius,f32 radiusU,f32 radiusV,bool angle,f32 angleU,f32 angleV,bool twistEnabled,const f32* twist) {
     switch(entry->geometryType) {
     case 30: {
-        Vec* out=(Vec*)vertexArrays[0];
+        int rows,columns; Vec* out;
+        f32 bottom,left,height,width,shear; int row,column;
+        out=(Vec*)vertexArrays[0];
         if(!out) return false;
-        f32 width=entry->width, height=entry->height;
-        f32 left=0.5f*-width, bottom=0.5f*-height;
-        f32 shear=0.0f;
-        int columns=entry->segmentsU+1, rows=entry->segmentsV+1;
-        if(!angle) angleU=entry->shearAngle;
-        if((f32)fabs(angleU)>0.00001f) shear=entry->height*(f32)tan(0.017453292f*angleU);
-        for(int row=0;row<rows;row++,twist++,v++) {
-            f32 z=twistEnabled?*twist:0.0f;
-            f32 vertical=deform?*v:(f32)row/(f32)(rows-1);
+        width=entry->width; height=entry->height;
+        left=0.5f*-width; bottom=0.5f*-height;
+        shear=0.0f;
+        columns=entry->segmentsU+1; rows=entry->segmentsV+1;
+        f32 shearAngle=angle?angleU:entry->shearAngle;
+        if((f32)fabs(shearAngle)>0.00001f) shear=entry->height*(f32)tan(0.017453292f*shearAngle);
+        const f32* tw=twist;const f32* vp=v;
+        for(row=0;row<rows;tw++,vp++,row++) {
+            f32 z;if(twistEnabled)z=*tw;else z=0.0f;
+            f32 vertical=deform?*vp:(f32)row/(f32)(rows-1);
             f32 shift=shear*vertical;
             f32 y=height*vertical+bottom;
-            const f32* horizontal=u;
-            if(deform) {
-                for(int column=0;column<columns;column++,horizontal++,out++) {
-                    out->x=width*(*horizontal)+left+shift; out->y=y; out->z=z;
-                }
-            } else {
-                for(int column=0;column<columns;column++,out++) {
-                    out->x=width*((f32)column/(f32)(columns-1))+left+shift; out->y=y; out->z=z;
-                }
+            for(column=0;column<columns;column++,out++) {
+                f32 horizontal=deform?u[column]:(f32)column/(f32)(columns-1);
+                f32 x=width*horizontal+left;out->x=x+shift; out->y=y; out->z=z;
             }
         }
         return true;
@@ -245,54 +245,56 @@ static inline void shapeFastSinCos(f32& angle,f32& cosine) {
         reduced=angle-6.2831855f*(f32)(int)(angle/6.2831855f);
         if(reduced<-3.1415927f) reduced+=6.2831855f;
     }
-    f32 folded;
-    if(reduced<-1.5707964f) folded=-3.1415927f-reduced;
-    else if(reduced<=1.5707964f) folded=reduced;
-    else folded=3.1415927f-reduced;
-    f32 doubled=2.0f*folded;
+    f32 doubled=2.0f*(reduced<-1.5707964f?-3.1415927f-reduced:(reduced<=1.5707964f?reduced:3.1415927f-reduced));
     f32 square=doubled*doubled;
-    (*(int*)&reduced)&=0x7fffffff;
+    f32 magnitude=reduced;
+    (*(int*)&magnitude)&=0x7fffffff;
     angle=doubled*(0.5f+square*(-0.020833334f+square*(0.00026041668f+-0.0000015500992f*square)));
     cosine=1.0f+square*(-0.125f+square*(0.0026041667f+-0.00002170139f*square));
-    if(reduced>1.5707964f) cosine=-cosine;
+    if(magnitude>1.5707964f) cosine=-cosine;
 }
 static inline f32 shapeEntryLength(const tagGsFilePrimObjectEntry* e) { return *(const f32*)((const u8*)e+0xC8); }
 bool GsShapeObject::DeformVertexCoordCylinderEx(bool deform,const f32* u,const f32* v,bool radius,f32 radiusU,f32 radiusV,bool angle,f32 angleU,bool twistEnabled,const f32* twist) {
-    Vec* out=(Vec*)vertexArrays[0];
-    if(!out) return false;
-    int columns=entry->segmentsU+1;
-    int rows=entry->segmentsV+1;
-    if(angle) {} else angleU=entry->shearAngle;
+    f32 ring,z,start,sweep,length,radiusDelta,current,sine,scale;
+    const f32* horizontal; const f32* tw; const f32* vp; int column,row,columns,rows; Vec* out;
+    Vec* buffer=(Vec*)vertexArrays[0];
+    if(!buffer) return false;
+    out=buffer;
+    columns=entry->segmentsU+1;
+    rows=entry->segmentsV+1;
+    angleU=angle?angleU:entry->shearAngle;
     if(angleU<0.00001f) angleU=0.0f;
     if(angleU>360.0f) angleU=360.0f;
-    f32 start;
     if(angleU<0.00001f) start=0.0f;
     else start=0.5f*(360.0f-angleU);
-    f32 sweep=angleU*0.017453292f;
-    start=(start+90.0f)*0.017453292f;
+    sweep=angleU;
+    start+=90.0f;
+    sweep*=0.017453292f;
+    start*=0.017453292f;
     if(!radius) { radiusU=entry->width; radiusV=entry->height; }
-    f32 radiusDelta=radiusU-radiusV;
-    f32 length=shapeEntryLength(entry);
-    f32 scale;
-    for(int row=0;row<rows;row++,twist++,v++) {
-        if(twistEnabled==1) scale=1.0f+*twist;
+    radiusDelta=radiusU-radiusV;
+    length=*(const f32*)((const u8*)entry+0xC8);
+    tw=twist; vp=v;
+    for(row=0;row<rows;tw++,vp++,row++) {
+        if(twistEnabled==1) scale=1.0f+*tw;
         f32 vertical;
-        if(deform) vertical=*v;
+        if(deform) vertical=*vp;
         else vertical=(f32)row/(f32)(rows-1);
-        f32 ring=radiusDelta*vertical+radiusV;
-        f32 z=length*vertical;
-        const f32* horizontal=u;
-        for(int column=0;column<columns;column++,horizontal++) {
+        ring=radiusDelta*vertical+radiusV;
+        z=length*vertical;
+        horizontal=u;
+        for(column=0;column<columns;horizontal++,column++) {
             f32 across;
             if(deform) across=*horizontal;
             else across=(f32)column/(f32)(columns-1);
-            f32 current=ring;
-            f32 sine=sweep*across+start;
-            if(twistEnabled==1) current=ring*scale;
+            current=ring;
+            sine=sweep*across+start;
+            if(twistEnabled==1) current*=scale;
             f32 cosine;
             if(column==0 || column==columns-1) {
                 f32 theta=sine;
-                sine=(f32)sin(theta);
+                f32 result=(f32)sin(theta);
+                sine=result;
                 cosine=(f32)cos(theta);
             } else {
                 shapeFastSinCos(sine,cosine);
