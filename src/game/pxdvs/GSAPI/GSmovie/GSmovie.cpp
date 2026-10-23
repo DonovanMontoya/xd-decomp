@@ -299,6 +299,18 @@ inline u8 movieFieldReady(__GSmovieStreaming *movie)
     return 0;
 }
 
+static inline u8 movieInitialFieldReady(__GSmovieStreaming *movie) {
+    s32 field = movie->decoder->videoType;
+    if (field & 1) {
+        if (VIGetNextField() == 0) return 1;
+    } else if (field & 2) {
+        if (VIGetNextField() == 1) return 1;
+    } else {
+        return 1;
+    }
+    return 0;
+}
+
 void _PlayControlExec(__GSmovieStreaming *movie)
 {
     THPTextureSet *texture;
@@ -314,17 +326,7 @@ void _PlayControlExec(__GSmovieStreaming *movie)
             decoder->videoTicks++;
             u8 ready;
             if(decoder->videoTicks==0) {
-                s32 field=movie->decoder->videoType;
-                if(field&1) {
-                    if(VIGetNextField()==0) ready=1;
-                    else goto fieldBad;
-                } else if(field&2) {
-                    if(VIGetNextField()==1) ready=1;
-                    else {
-fieldBad:
-                        ready=0;
-                    }
-                }
+                ready=movieInitialFieldReady(movie);
                 if(ready) {
                     if(decoder->hasAudio) {
                         if(decoder->lastAudioFrame-decoder->playedAudioFrame<=1) {
@@ -364,7 +366,8 @@ fieldBad:
             }
             if(!(decoder->loop&1)) {
                 if(decoder->hasAudio) {
-                    if(decoder->playedAudioFrame+decoder->currentFrame==decoder->frames && decoder->currentAudio==0) {
+                    u32 frame = decoder->playedAudioFrame + decoder->currentFrame;
+                    if(frame==decoder->frames && decoder->currentAudio==0) {
                         decoder->nextState=3;
                         decoder->state=3;
                     }

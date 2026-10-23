@@ -45,7 +45,8 @@ static Pokemon* _toolentryTaisenGetEntryPokemonPtr(long idx, long slot) {
 
 static u8 _toolentryTaisenGetPokemonFlag(long idx, long slot) {
     u8 valid = pokemonCheckValid(heroBiosGetPokemonPtr((Hero*)((u8*)menuCBBios_GetTrainerImmediately(idx) + 0x9A4), slot));
-    return valid != 0;
+    if (valid != 0) return 1;
+    else return 0;
 }
 
 extern "C" {

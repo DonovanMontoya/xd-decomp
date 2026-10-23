@@ -21,12 +21,16 @@ extern "C" u16 fightKoukaDataGetFightTargetDataId(u16 id) {
 extern "C" u16 fightKoukaDataGetFightJoukenDataId(u16 id) {
     return fightKoukaDataBiosGetFightJoukenDataId(fightKoukaDataBiosGetPtr(id));
 }
+#pragma push
+#pragma dont_inline on
+#pragma optimize_for_size on
 extern "C" void fightKoukaDoFightKoukaJoukenAndKouka(void* base, u16 id) {
     u16 condition = fightKoukaDataGetFightJoukenDataId(id);
     u16 target = fightKoukaDataGetFightTargetDataId(id);
     u16 effect = fightKoukaDataGetKoukaDataId(id);
     fightKoukaDoJoukenAndKouka(base, condition, target, effect);
 }
+#pragma pop
 extern "C" s32 fightKoukaDoJoukenAndKouka(void* base, u16 condition, u16 targetId, u16 effect) {
     s32 ret = 0;
     u16 type = fightFloor_GetFightType(0);

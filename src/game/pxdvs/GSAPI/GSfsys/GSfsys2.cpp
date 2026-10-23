@@ -253,6 +253,7 @@ s32 _fsysGetFilename(FsysWork* work, char* output) {
     sprintf(output, "%s.fsys", group->name);
     return 1;
 }
+#pragma opt_propagation off
 FsysWork* _fsysGetWork(u32 group, u8 activeOnly) {
     FsysWork* work;
     FsysWork* base = _fsysWork;
@@ -272,6 +273,7 @@ FsysWork* _fsysGetWork(u32 group, u8 activeOnly) {
     }
     return 0;
 }
+#pragma opt_propagation reset
 u32 _fsysID2Index(FsysWork* work, u32 id) {
     if (id == 0xffff) return 0xffff;
     GSfsysHeader* header = _fsysGetHeader((GSfsysRequest*)work);
@@ -694,6 +696,7 @@ void* GSfsysOSLinkPreFunc(u32 group, u32 identifier, u32 bytes) {
     if (resource == 0) resource = 0;
     return resource;
 }
+#pragma opt_propagation off
 void* GSfsysOSLinkPostFunc(u32 group, u32 identifier) {
     OSModuleHeader* module = (OSModuleHeader*)GSresGetResource(group, identifier);
     if (!module) return 0;
@@ -704,6 +707,7 @@ void* GSfsysOSLinkPostFunc(u32 group, u32 identifier) {
     if (module->prolog) ((void (*)())module->prolog)();
     return module;
 }
+#pragma opt_propagation reset
 void GSfsysDaemonBackground() {
     FsysBackgroundWork* entry = _fsysBGWorkRoot;
     while (entry) {
@@ -906,6 +910,8 @@ void _fsysForegroundTask(FsysWork* work) {
             _fsysWorkSetTaskStatus(work, 12);
         }
         break;
+    case 0:
+    case 1:
     case 12:
     case -999:
         break;

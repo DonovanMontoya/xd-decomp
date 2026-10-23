@@ -1032,6 +1032,7 @@ struct FightFloorTrainerOutPokemonSearch {
     s32 ally;
     s32 fightOutOnly;
 };
+#pragma opt_dead_assignments off
 static u8 _fightFloorGetFightTrainerFightPokemonPtrArySub(void* object, u16 type, void* context) {
     FightFloorTrainerPokemonSearch* search;
     void* target;
@@ -1060,6 +1061,7 @@ static u8 _fightFloorGetFightTrainerFightPokemonPtrArySub(void* object, u16 type
     }
     return 1;
 }
+#pragma opt_dead_assignments reset
 static u8 _fightFloorGetFightTrainerFightOutPokemonPtrArySub(void* object, u16 type, void* context) {
     FightFloorTrainerOutPokemonSearch* search = static_cast<FightFloorTrainerOutPokemonSearch*>(context);
     FightOutPokemon* pokemon = static_cast<FightOutPokemon*>(object);

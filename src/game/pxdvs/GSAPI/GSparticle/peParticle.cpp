@@ -203,51 +203,6 @@ static inline void setupParticleTexture(u8 unit,void* texture,u32 flags) {
     s32 minFilter=0;if(flags&0x80)minFilter=2;
     particleEngineSetupTexture(unit,texture,wrapS,wrapT,minFilter,magFilter);
 }
-void peParticleNode::Render(_peParticle* definition,GSgfxDL* list,char* data) {
-    u32 flags=definition->flags;
-    ParticleAnimation* animation=(ParticleAnimation*)definition->texture;
-    u32 extended=(flags>>25)&1;
-    u16 current=texture;
-    if(data!=0&&(list->flags&1)==1) {
-        if(flags&0x400000) {
-            u16 count=animation->count;
-            f32 span=__OSu16tof32(&count);
-            u32 blend=(flags>>23)&1;
-            if(blend)span-=1.0f;
-            f32 time;
-            if(flags&0x1000000)time=span*(life-this->time)/definition->frameDuration;
-            else time=definition->frameDuration*(span*(1.0f-this->time/life));
-            u16 frame=current;
-            f32 value=fmod(time+__OSu16tof32(&frame),span);
-            current=__OSf32tou16(value)%(u16)animation->count;
-            if(blend) {
-                u16 whole=current;
-                u8 fraction=__OSf32tou8(255.0f*(value-__OSu16tof32(&whole)));
-                ParticleKColor color;
-                color.a=fraction;color.b=fraction;color.g=fraction;color.r=fraction;
-                setTevKColor(0,color);
-                if(extended) {
-                    ParticleKColor source=((ParticleRenderData*)(data+index*sizeof(ParticleRenderData)))->color;
-                    color.r=source.r;color.g=source.g;color.b=source.b;color.a=source.a;
-                    setTevKColor(1,color);
-                }
-                setupParticleTexture(1,animation->textures[current+1],flags);
-            }
-        }
-        setupParticleTexture(0,animation->textures[current],flags);
-        beginSurface__10GSgfxLayerFUs(g_current_layer,4);
-        u16 vertex=sortIndex*4;
-        u16* vertices=(list->flags&1)?(u16*)(list->data+(vertex*list->stride)+3):0;
-        u16 n=4;
-        volatile u16* pipe=(volatile u16*)0xcc008000;
-        if(extended) {
-            while(n--){*pipe=vertices[0];*pipe=vertices[1];*pipe=vertices[2];*pipe=vertices[3];vertices+=4;}
-        } else {
-            while(n--){*pipe=vertices[0];*pipe=vertices[1];*pipe=vertices[2];vertices+=3;}
-        }
-        endSurface__10GSgfxLayerFv(g_current_layer);
-    }
-}
 void peParticleNode::Start(peEmitterNode* emitter,_peParticle* definition,GSgfxDL* list,_EmitParams* params) {
     u32 flags=definition->flags;
     u32 extended=(flags>>25)&1;
@@ -303,4 +258,89 @@ peParticleContainer::peParticleContainer(peEmitterNode* emitter,_peParticle* def
     u16 slot=0;
     while(node){node->index=slot;node->sortIndex=slot;if(sorted)sorted[slot]=node;node=(peParticleNode*)node->next;++slot;}
     g_particle_debug_stats.node+=0x7c;g_particle_debug_stats.total+=0x7c;
+}
+
+#include <dolphin/gx/GXVert.h>
+extern "C" double fmod(double, double);
+extern "C" void beginSurface__10GSgfxLayerFUs(GSgfxLayer*, u16);
+extern "C" void endSurface__10GSgfxLayerFv(GSgfxLayer*);
+struct ParticleColor {
+    union { struct { u8 r,g,b,a; } channels; u32 word; };
+    ParticleColor() {}
+};
+static inline void particleSetKColor(u8 index, ParticleColor color) {
+    u8* layer=(u8*)g_current_layer;
+    *(ParticleColor*)(layer+0x14f4+index*4)=color;
+    *(u32*)(layer+0x16f8)|=1<<index;
+    *(u32*)(layer+0x16a8)|=0x10;
+    *(u32*)(layer+0x17b0)|=1<<index;
+    *(u32*)(layer+0x1760)|=0x10;
+}
+static inline s32 particleWrap(u32 flags,u32 mask) { s32 mode=0; if(flags&mask)mode=2; return mode; }
+static inline void particleSetupFrameTexture(u8 unit,void* image,s32 filterS,s32 filterT,u32 flags,s32 wrapT) {
+    s32 wrapS=0;
+    if(flags&0x80)wrapS=2;
+    particleEngineSetupTexture(unit,image,filterS,filterT,wrapS,wrapT);
+}
+static inline ParticleColor particleRenderColor(char* data,u16 index) {
+    data+=index*0x38;
+    return *(ParticleColor*)(data+0x34);
+}
+void peParticleNode::Render(_peParticle* definition,GSgfxDL* list,char* data) {
+    u32 flags=definition->flags;
+    u32* animation=(u32*)definition->texture;
+    u32 extended=(flags>>25)&1;
+    u16 current=texture;
+    if(data && (list->flags&1)==1) {
+        if(flags&0x400000) {
+            u16 count=*animation;
+            f32 limit=__OSu16tof32(&count);
+            u32 blend=(flags>>23)&1;
+            if(blend)limit-=1.0f;
+            f32 frame;
+            if(flags&0x1000000)frame=limit*(life-time)/definition->frameDuration;
+            else frame=definition->frameDuration*(limit*(1.0f-time/life));
+            u16 initial=current;
+            f32 value=fmod(frame+__OSu16tof32(&initial),limit);
+            current=__OSf32tou16(value)%(u16)*animation;
+            if(blend) {
+                u16 whole=current;
+                f32 remainder=value;
+                remainder-=__OSu16tof32(&whole);
+                u8 fraction=__OSf32tou8(255.0f*remainder);
+                ParticleColor color;
+                color.channels.r=color.channels.g=color.channels.b=color.channels.a=fraction;
+                particleSetKColor(0,color);
+                if(extended) {
+                    ParticleColor next=particleRenderColor(data,index);
+                    color.channels.r=next.channels.r;
+                    color.channels.g=next.channels.g;
+                    color.channels.b=next.channels.b;
+                    color.channels.a=next.channels.a;
+                    particleSetKColor(1,color);
+                }
+                void* image=(void*)animation[current+2];
+                s32 wrapT=particleWrap(flags,0x100);
+                particleSetupFrameTexture(1,image,(flags>>12)&3,(flags>>14)&3,flags,wrapT);
+            }
+        }
+        void* image=(void*)animation[current+1];
+        s32 wrapT=particleWrap(flags,0x100);
+        particleSetupFrameTexture(0,image,(flags>>12)&3,(flags>>14)&3,flags,wrapT);
+        beginSurface__10GSgfxLayerFUs(g_current_layer,4);
+        u16 vertex=(sortIndex*4)&0xfffc;
+        u16* indices=(list->flags&1)?(u16*)(list->data+vertex*list->stride+3):0;
+        u16 remaining=4;
+        volatile PPCWGPipe* fifo=&GXWGFifo;
+        if(extended) {
+            for(;remaining--;) {
+                fifo->u16=indices[0];fifo->u16=indices[1];fifo->u16=indices[2];fifo->u16=indices[3];indices+=4;
+            }
+        } else {
+            for(;remaining--;) {
+                fifo->u16=indices[0];fifo->u16=indices[1];fifo->u16=indices[2];indices+=3;
+            }
+        }
+        endSurface__10GSgfxLayerFv(g_current_layer);
+    }
 }

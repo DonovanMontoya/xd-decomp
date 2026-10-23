@@ -585,7 +585,7 @@ f32 _wazaSequenceCameraSelectDuration(u8 mode, f32 *chance, f32 length) {
 }
 
 void _wazaSequenceCameraSelectMotion(ModelSequence *sequence, WazaSequence *waza, wazaSequenceCameraParams *params) {
-    u8 useRight, useLeft, useBack, useFront;
+    u32 useFront, useBack, useLeft, useRight;
     u32 flags;
     u32 front, back, left, right;
     s32 count = 0;
@@ -623,10 +623,10 @@ void _wazaSequenceCameraSelectMotion(ModelSequence *sequence, WazaSequence *waza
         return;
     }
     f32 share = 1.0f / (f32)count;
-    useRight = right;
-    useLeft = left;
-    useBack = back;
-    useFront = front;
+    useFront = (u8)front;
+    useBack = (u8)back;
+    useLeft = (u8)left;
+    useRight = (u8)right;
     for (;;) {
         f32 roll = HSD_Randf();
         f32 threshold = share;

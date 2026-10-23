@@ -1,4 +1,6 @@
 #include <game/pxdvs/GSAPI/GScolsys/GScolsys2WalkPrivate.hpp>
+#pragma opt_lifetimes off
+#pragma opt_propagation off
 extern "C" s32 GScolsys2WalkGetLayer(GSvec *point,u8 *layer,u8 *floor) {
     WalkHeight heights[8];
     s32 count=GScolsys2WalkGetHeight(point,heights);
@@ -18,6 +20,8 @@ extern "C" s32 GScolsys2WalkGetLayer(GSvec *point,u8 *layer,u8 *floor) {
     *floor=heights[chosen].floor;
     return 1;
 }
+#pragma opt_propagation reset
+#pragma opt_lifetimes reset
 #pragma dont_inline on
 static u8 getCpPolyVec(GSvec *out,GSvec *point,GSvec *triangle,GSvec *normal) {
     GSvec minimum,maximum;

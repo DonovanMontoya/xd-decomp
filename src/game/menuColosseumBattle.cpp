@@ -1,5 +1,7 @@
 #include <game/menuColosseumBattleLayout.hpp>
 
+#pragma force_active on
+
 class CReliveStage {
 public:
     Pokemon* getDancerPointer(long);
@@ -158,7 +160,7 @@ static s32 _colosseumbattlemenu_teamselect(long);
 static s32 _colosseumbattlemenu_playerdecide(long);
 static s32 _menuCB_SaveRule(void);
 
-_MENUCBTRAINER::_MENUCBTRAINER() {}
+inline _MENUCBTRAINER::_MENUCBTRAINER() {}
 
 extern "C" {
 
@@ -693,10 +695,10 @@ static s32 _gbac_connect_job(long) {
     case 0:
     case 1:
         if (_CB.orgTrainers[0].unk4 == 0) {
-            sp[2] = 0;
             mode = 0;
             sp[0] = &_menuCB_Temp->heroes[0];
             sp[1] = &_menuCB_Temp->heroes[1];
+            sp[2] = 0;
             sp[3] = 0;
         } else {
             sp[0] = 0;

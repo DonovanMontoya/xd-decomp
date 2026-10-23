@@ -232,7 +232,7 @@ static inline void textureInitHardware(GStexture* texture) {
         case 0x30: format = (GXTexFmt)GX_TF_C14X2; break;
         default: format = (GXTexFmt)-1; break;
         }
-        switch (texture->format) {
+        switch (((volatile GStexture*)texture)->format) {
         case 0: entries = 16; break;
         case 1: entries = 256; break;
         case 0x30: entries = 1024; break;
@@ -288,10 +288,10 @@ extern "C" s32 GStextureCreateFromMemory(GStexture* texture, u16 width, u16 heig
     default: return 0;
     }
     texture->mipCount = mipLevels + 1;
-    s32 pixelCount = width * height;
     s32 i = 0;
     texture->inUse = 1;
     texture->dirty = 1;
+    s32 pixelCount = width * height;
     texture->format = format;
     texture->tlutFormat = tlutFormat;
     texture->wrapS = 0;
@@ -316,7 +316,22 @@ extern "C" s32 GStextureCreateFromMemory(GStexture* texture, u16 width, u16 heig
             return 0;
         }
     }
-    textureSetMipImages(texture, (u32)(texture->bitsPerPixel * pixelCount) >> 3, tlutFormat);
+    size = (u32)(texture->bitsPerPixel * pixelCount) >> 3;
+    for (i = 1; i < 8; ++i) {
+        if (i < texture->mipCount) {
+            texture->images[i] = (u8*)texture->images[i - 1] + size;
+            size >>= 1;
+        } else {
+            texture->images[i] = 0;
+        }
+    }
+    switch (tlutFormat) {
+    case 1: case 2: case 3:
+        texture->palette = (u8*)texture->images[texture->mipCount - 1] + size;
+        break;
+    default: texture->palette = 0; break;
+    }
+
     textureInitHardware(texture);
     DCStoreRange(texture->images[0], texture->imageSize);
     return 1;

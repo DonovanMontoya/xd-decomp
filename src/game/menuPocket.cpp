@@ -325,6 +325,7 @@ u32 _getItemInstMsg(u32 item) {
 
 namespace {
 
+#pragma opt_dead_assignments off
 u16 _getItemIDFromMenuPos(int tab, int pos) {
     u16 count;
     u32 *ary;
@@ -343,6 +344,7 @@ u16 _getItemIDFromMenuPos(int tab, int pos) {
     }
     return 0;
 }
+#pragma opt_dead_assignments reset
 
 u16 _getItemNumFromMenuPos(int tab, int pos) {
     u16 count;

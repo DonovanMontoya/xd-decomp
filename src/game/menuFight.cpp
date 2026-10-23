@@ -296,13 +296,12 @@ static u16 _menuFightGetRightStickInfo(long player, bool edge) {
     s8 y;
     s8 x;
     f32 ang;
-    int idx;
     if (player != 0) {
-        idx = 1;
+        player = 1;
     } else {
-        idx = 0;
+        player = 0;
     }
-    if (idx == 0) {
+    if (player == 0) {
         y = GSinputGetRightStickYData(1, 0);
         x = GSinputGetRightStickXData(1, 0);
     } else {
@@ -324,14 +323,14 @@ static u16 _menuFightGetRightStickInfo(long player, bool edge) {
             }
         }
         if (edge) {
-            if (key == oldKeyInfo[idx]) {
+            if (key == oldKeyInfo[player]) {
                 key = 0;
             } else {
-                oldKeyInfo[idx] = key;
+                oldKeyInfo[player] = key;
             }
         }
     } else {
-        oldKeyInfo[idx] = 0;
+        oldKeyInfo[player] = 0;
     }
     return key;
 }
@@ -2008,7 +2007,7 @@ extern "C" void menuFightDrawWaza(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite
 
 extern "C" void menuFightDrawSecretPokemonStatus(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) {
     Pokemon *pokemon;
-    u16 type;
+    u8 type;
     void *data;
     s32 index = -1;
     FIGHT_TRAINER *trainer = (FIGHT_TRAINER *)windowGetParam(window, 0);
@@ -2733,7 +2732,6 @@ s32 menuFightWazaCtrl(tagWINDOW_WORK *arg0) {
     u8 temp_r0;
     void *temp_r3;
     FightWazaWork *temp_r3_2;
-    void *temp_r3_3;
     void *temp_r3_4;
 
     temp_r0 = arg0->phase;
@@ -2747,9 +2745,9 @@ s32 menuFightWazaCtrl(tagWINDOW_WORK *arg0) {
         temp_r3_2->reserved1 = 0;
         temp_r3_2->saved = -1;
     } else if ((s8) temp_r0 == 3) {
-        temp_r3_3 = windowGetAllocPtr(arg0);
-        if (temp_r3_3 != NULL) {
-            memcpy((void*)windowGetParam(arg0, 0), temp_r3_3, 0x48);
+        temp_r3 = windowGetAllocPtr(arg0);
+        if (temp_r3 != NULL) {
+            memcpy((void*)windowGetParam(arg0, 0), temp_r3, 0x48);
         }
     }
     temp_r3_4 = windowGetAllocPtr(arg0);

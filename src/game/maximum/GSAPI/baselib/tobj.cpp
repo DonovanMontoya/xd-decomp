@@ -827,6 +827,7 @@ HSD_TObj* _HSD_TObjGetCurrentByType(HSD_TObj* from, u32 mapping)
     return NULL;
 }
 
+#pragma opt_common_subs off
 static void MakeTextureMtx(HSD_TObj* tobj)
 {
     HSD_Vec3 scale;
@@ -863,6 +864,7 @@ static void MakeTextureMtx(HSD_TObj* tobj)
     PSMTXScale(m, scale.x, scale.y, scale.z);
     PSMTXConcat(m, TOBJ_EXT(tobj)->mtx, TOBJ_EXT(tobj)->mtx);
 }
+#pragma opt_common_subs reset
 
 static void TObjSetupMtx(HSD_TObj* tobj)
 {

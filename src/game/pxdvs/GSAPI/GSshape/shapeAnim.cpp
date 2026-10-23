@@ -5,7 +5,7 @@ bool GsKeyObject::GetGradationParameter(u8* type, tagGScol4ub* out, const tagGsF
     *type=a->gradationType;
     tagGScol4ub *first, *second;
     u32 count;
-    if(a->gradationType==0) { first=a->gradationU; second=b->gradationU; count=a->gradationCountU; }
+    if(((volatile tagGsFilePrimKeyFrame*)a)->gradationType==0) { first=a->gradationU; second=b->gradationU; count=a->gradationCountU; }
     else { first=a->gradationV; second=b->gradationV; count=a->gradationCountV; }
     for(u32 i=0;i<count;i++) {
         out[i].r=(1.0f-t)*first[i].r+t*second[i].r;
@@ -34,15 +34,17 @@ bool GsKeyObject::GetDeformParameterV(f32* out, const tagGsFilePrimKeyFrame* a, 
     return true;
 }
 bool GsKeyObject::GetLinearParameterU(f32* out, const tagGsFilePrimKeyFrame* a) {
+    u32 i=0;
     u32 count=a->deformCountU;
     f32 denominator=(u32)(count-1);
-    for(u32 i=0;i<count;i++) out[i]=(f32)i/denominator;
+    for(;i<count;i++) out[i]=(f32)i/denominator;
     return true;
 }
 bool GsKeyObject::GetLinearParameterV(f32* out, const tagGsFilePrimKeyFrame* a) {
+    u32 i=0;
     u32 count=a->deformCountV;
     f32 denominator=(u32)(count-1);
-    for(u32 i=0;i<count;i++) out[i]=(f32)i/denominator;
+    for(;i<count;i++) out[i]=(f32)i/denominator;
     return true;
 }
 bool GsKeyObject::GetFrameInterval(u32 frame, tagGsFilePrimKeyFrame*& a, tagGsFilePrimKeyFrame*& b, f32& t) {

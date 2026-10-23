@@ -183,6 +183,7 @@ extern "C" void fadeFluidSetShock(FluidVec *point,f32 strength) {
     _fadeFluidSetShockSub(x,y+1,strength);
     _fadeFluidSetShockSub(x+1,y+1,strength);
 }
+#pragma opt_dead_assignments off
 static void _fadeFluidSetShockSub(unsigned long x,unsigned long y,f32 strength) {
     if (x<=_fadeFluidWork.width && y<=_fadeFluidWork.height) {
         u8 *base=(u8 *)_fadeFluidWork.vertices[_fadeFluidSw];
@@ -190,6 +191,7 @@ static void _fadeFluidSetShockSub(unsigned long x,unsigned long y,f32 strength) 
         *value-=strength;
     }
 }
+#pragma opt_dead_assignments reset
 extern "C" void fadeFluidEvaluate() {
     f32 a=_fadeFluidWork.a,b=_fadeFluidWork.b,c=_fadeFluidWork.c;
     u32 stride=_fadeFluidWork.width+1;

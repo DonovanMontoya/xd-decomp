@@ -165,6 +165,7 @@ void logInt2Str(int value,char* text) {
     *out=0;
     logStrRev(text);
 }
+#pragma opt_propagation off
 int logStr2Int(char* text) {
     int value=0;
     while(*text) {
@@ -176,6 +177,7 @@ int logStr2Int(char* text) {
     }
     return value;
 }
+#pragma opt_propagation reset
 void logStrRev(char* text) {
     u32 length=strlen(text);
     char* end=(char*)(length+(u32)text);

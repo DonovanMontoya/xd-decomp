@@ -758,8 +758,13 @@ static s32 _SelectCursorCalcPositon(GSvec2 *out) {
     return n;
 }
 
+struct PdaTitleParams {
+    u8 field0, field1, field2;
+    s32 *title, *time;
+};
+
 extern "C" void menuPdaScript(u8 mode) {
-    s32 sp0C;
+    PdaTitleParams titleParams;
     s32 sp08;
     f32 remain;
     u32 endFrame;
@@ -784,7 +789,7 @@ extern "C" void menuPdaScript(u8 mode) {
     _menuPdaStatus.subres = 0;
     _menuPdaSetMenuItemScript(mode);
     menuOpen(0xA8, 0);
-    menuOpenCustom(0x6C, windowGetActiveID(), 0, 0, 0, 1, &sp0C);
+    menuOpenCustom(0x6C, windowGetActiveID(), 0, 0, 0, 1, &titleParams);
     menuOpenCustom(0x107, windowGetActiveID(), &sp08, 0, 0, 0);
     while (FlashSystemGetNowFrame(0x1FBD3000) < endFrame) {
         GSthreadSwitch();
@@ -1023,7 +1028,7 @@ void menuPdaSearcher();
 void menuOffScreenSetDisp(s32);
 void menuPda()
 {
-    struct { u8 a,b,c; s32 *title,*time; } args;
+    PdaTitleParams args;
     s32 selected = 0;
     scriptLightSetDisp(0x17CF1600,0);
     scriptLightSetDisp(0x17CF1601,0);
@@ -1041,7 +1046,7 @@ void menuPda()
     _SelectCursorCalcAngle(_cursor_index[0]);
     _menuPdaStatus.unk5C = _menuPdaStatus.unk60;
     args.title = &TitleMsgID;
-    args.a = 0; args.b = -1; args.c = 0;
+    args.field0 = 0; args.field1 = -1; args.field2 = 0;
     args.time = &LineAnimTime;
     menuOpenCustom(0x6C,windowGetActiveID(),0,0,0,1,&args);
     while (_menuPdaStatus.unk41 == 0) {

@@ -681,8 +681,40 @@ void peopleMoveNeckTarget(u32 group, u32 resource, u32 targetGroup, u32 targetRe
 void peopleMoveNeckTargetHero(u32 group, u32 resource, f32 rate) { peopleMoveNeckTarget(group, resource, 0, 100, rate); }
 f64 sin(f64);
 f64 cos(f64);
-inline f32 sqrtf(f32);
+#pragma dont_inline reset
+inline s32 __fpclassifyf(f32 value) {
+    union { f32 value; u32 bits; } number;
+    number.value = value;
+    switch (number.bits & 0x7f800000) {
+    case 0x7f800000:
+        if (number.bits & 0x7fffff) return 1;
+        return 2;
+    case 0:
+        if (number.bits & 0x7fffff) return 5;
+        return 3;
+    default: return 4;
+    }
+}
+f64 __frsqrte(f64);
+extern u32 __float_nan[];
+inline f32 sqrtf(f32 x) {
+    if (x > 0.0f) {
+        f64 dmag = x;
+        f64 t = __frsqrte(dmag);
+        t = 0.5 * t * (3.0 - t * t * dmag);
+        t = 0.5 * t * (3.0 - t * t * dmag);
+        t = 0.5 * t * (3.0 - t * t * dmag);
+        return (f32)(dmag * t);
+    } else if (x < 0.0) {
+        return *(f32*)__float_nan;
+    } else if (__fpclassifyf(x) == 1) {
+        return *(f32*)__float_nan;
+    }
+    return x;
+}
+
 void peopleMoveNeckAngleWorld(u32 group, u32 resource, f32 yaw, f32 pitch, f32 rate) {
+    f32 x, z, angle, y;
     PeopleNeckInfo info;
     tagPeopleWork* work = peopleGet(group, resource);
     if (work) {
@@ -693,16 +725,16 @@ void peopleMoveNeckAngleWorld(u32 group, u32 resource, f32 yaw, f32 pitch, f32 r
             f32 diff = adjustPIPI__Ff(yaw - rotation->param2);
             if (diff < info.left) diff = info.left;
             if (diff > info.right) diff = info.right;
-            yaw = adjust2PI__Ff(diff + rotation->param2);
-            f32 x = 1000000.0f * (f32)sin(yaw) + info.position.param1;
-            f32 z = 1000000.0f * (f32)cos(yaw) + info.position.param3;
-            f32 y = info.position.param2 - 1000000.0f * (f32)sin(pitch);
+            angle = adjust2PI__Ff(diff + rotation->param2);
+            x = 1000000.0f * (f32)sin(angle) + info.position.param1;
+            z = 1000000.0f * (f32)cos(angle) + info.position.param3;
+            y = info.position.param2 - 1000000.0f * (f32)sin(pitch);
             work->neckTargetPosition.param1 = x;
             work->neckTargetPosition.param2 = y;
             work->neckTargetPosition.param3 = z;
             work->neckEnabled = 3;
             f32 first = _peopleGetNearAngle__Ff(pitch - info.rotation.param1);
-            f32 second = _peopleGetNearAngle__Ff(yaw - info.rotation.param2);
+            f32 second = _peopleGetNearAngle__Ff(angle - info.rotation.param2);
             sqrtf(first * first + second * second);
             work->neckUpdating = 1;
             work->neckUnknownC3 = 0;
@@ -751,6 +783,7 @@ void peopleMoveNeckAngle(u32 group, u32 resource, f32 yaw, f32 pitch, f32 rate) 
         }
     }
 }
+#pragma dont_inline on
 void fn_8029CD20(u32 group, u32 resource, u32 targetGroup, u32 targetResource, f32 rate) {
     PeopleNeckInfo info;
     tagPeopleWork* work = peopleGet(group, resource);
@@ -1229,8 +1262,10 @@ void peopleRotateToTarget(u32 group, u32 resource, u32 targetGroup, u32 targetRe
             PSVECSubtract(&target, peopleBiosGetPosPtr(work), &difference);
             difference.param2 = 0.0f;
             f32 angle;
-            if (!(PSVECMag(&difference) < 0.00001f) || !(PSVECMag(&difference) > -0.00001f))
-                angle = atan2(difference.param1, difference.param3);
+            if (!(PSVECMag(&difference) < 0.00001f) || !(PSVECMag(&difference) > -0.00001f)) {
+                f32 result = atan2(difference.param1, difference.param3);
+                angle = result;
+            }
             else { peopleBiosGetRot(work, &rotation); angle = rotation.param2; }
             if (rate < 0.00001f && rate > -0.00001f) {
                 peopleSetRotXYZ(group, resource, 0.0f, 57.29578f * angle, 0.0f);
@@ -1251,8 +1286,10 @@ void peopleWalkTo(u32 group, u32 resource, u8 rotate, GSvec* target) {
         PSVECSubtract(&work->walkTarget, peopleBiosGetPosPtr(work), &difference);
         difference.param2 = 0.0f;
         f32 angle;
-        if (!(PSVECMag(&difference) < 0.00001f) || !(PSVECMag(&difference) > -0.00001f))
-            angle = atan2(difference.param1, difference.param3);
+        if (!(PSVECMag(&difference) < 0.00001f) || !(PSVECMag(&difference) > -0.00001f)) {
+            f32 result = atan2(difference.param1, difference.param3);
+            angle = result;
+        }
         else { peopleBiosGetRot(work, &rotation); angle = rotation.param2; }
         work->walkTarget.param2 = GScolsys2HumanGetWalkHeight(&work->walkTarget);
         _peopleSetMoveAnimation(work);
@@ -2062,7 +2099,6 @@ s32 peopleStartRotRandom(u32 group, u32 resource, f32 centre, f32 range) {
 void peopleFallAppear(u32 group, u32 resource, f32 height) {
     GSvec position;
     s32 count = 0;
-    s32 previous;
     tagPeopleWork* work = peopleGet(group, resource);
     if (work) {
         peopleGetPos(group, resource, &position);
@@ -2071,9 +2107,8 @@ void peopleFallAppear(u32 group, u32 resource, f32 height) {
         soundOpenPlay(0x5A2, 0, 0x7F);
         peopleSetMotionType(work, 7);
         for (;;) {
-            previous = count;
             count++;
-            position.param2 = position.param2 - ((f32)count * (0.4f * (f32)count) / 2.0f - (f32)previous * (0.4f * (f32)previous) / 2.0f);
+            position.param2 = position.param2 - ((f32)count * (0.4f * (f32)count) / 2.0f - (f32)(count - 1) * (0.4f * (f32)(count - 1)) / 2.0f);
             peopleSetPos(group, resource, &position);
             if (position.param2 <= 0.0f) {
                 position.param2 = 0.0f;
@@ -2101,36 +2136,6 @@ static u8 m_bPeopleOpenWithModel = 1;
 static f32 m_hero_idling_time;
 static f32 m_hero_next_special_idling_time;
 #pragma dont_inline reset
-inline s32 __fpclassifyf(f32 value) {
-    union { f32 value; u32 bits; } number;
-    number.value = value;
-    switch (number.bits & 0x7f800000) {
-    case 0x7f800000:
-        if (number.bits & 0x7fffff) return 1;
-        return 2;
-    case 0:
-        if (number.bits & 0x7fffff) return 5;
-        return 3;
-    default: return 4;
-    }
-}
-f64 __frsqrte(f64);
-extern u32 __float_nan[];
-inline f32 sqrtf(f32 x) {
-    if (x > 0.0f) {
-        f64 dmag = x;
-        f64 t = __frsqrte(dmag);
-        t = 0.5 * t * (3.0 - t * t * dmag);
-        t = 0.5 * t * (3.0 - t * t * dmag);
-        t = 0.5 * t * (3.0 - t * t * dmag);
-        return (f32)(dmag * t);
-    } else if (x < 0.0) {
-        return *(f32*)__float_nan;
-    } else if (__fpclassifyf(x) == 1) {
-        return *(f32*)__float_nan;
-    }
-    return x;
-}
 u8 isWalkStartMotion__13tagPeopleWorkCFv(tagPeopleWork*);
 u8 gimmickBoxOnBox(tagPeopleWork*, GSvec*, GSvec*);
 u32 _peopleAdjustPosition__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork*, GSvec*, GSvec*);
@@ -2372,6 +2377,7 @@ u8 peopleSetInfo(tagPeopleWork* work, u32 group, u32 resource, u32 object) {
     f32 firstFrames, secondFrames;
     f32 frames;
     PeopleCharacterInfo* character;
+    bool useShadow;
     s32 shadow;
     void* light;
     u32 lightId;
@@ -2410,7 +2416,8 @@ u8 peopleSetInfo(tagPeopleWork* work, u32 group, u32 resource, u32 object) {
     }
     if (work->model) {
         floorDataBiosGetCurrentPtr();
-        shadow = heroIsPlayerPeople(group, resource) != 1;
+        useShadow = heroIsPlayerPeople(group, resource) != 1;
+        shadow = useShadow;
         lightId = floorDataBiosGetShadowLightID(floorDataBiosGetCurrentPtr());
         if (lightId) light = GSresGetResource(floorGetCurrentGroupID(), lightId);
         else light = shadowLight[shadow];

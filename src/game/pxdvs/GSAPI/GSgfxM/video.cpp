@@ -112,10 +112,12 @@ u8 GSgfxVideoSetMode(s32 mode,s32 frame,bool interlace,s32 filter,bool progressi
     VISetBlack(1);VIConfigure((GXRenderModeObj*)&_videoState.mode);VIFlush();VIWaitForRetrace();VIWaitForRetrace();VISetBlack(0);VIFlush();return 1;
 }
 void GSgfxVideoShutdown__Fv() { VISetPreRetraceCallback(0);VISetPostRetraceCallback(0);VISetBlack(1);VIFlush();VIWaitForRetrace(); }
+#pragma opt_common_subs off
 void GSgfxVideoSecondInit__Fv() {
     void *ptr=_videoState.displayed->ptr; CopyParams p;copyParams(p); GSgfx_GCWriteCopyFilter(_videoState.mode.aa,_videoState.mode.samples,1,_videoState.mode.filter);GSgfx_GCWriteCopyDisp(&p,ptr,1,1,1);
     ptr=_videoState.displayed->ptr; CopyParams q;copyParams(q); GSgfx_GCWriteCopyFilter(_videoState.mode.aa,_videoState.mode.samples,1,_videoState.mode.filter);GSgfx_GCWriteCopyDisp(&q,ptr,1,1,1);GXDrawDone();VISetBlack(0);VIFlush();
 }
+#pragma opt_common_subs reset
 void GSgfxVideoInit__FUcUs14GSgfxVideoMode(u8 count,u16 height,s32 mode) {
     if(count==0 || count>3 || height>528) return;
     VIInit();_videoState.count=count;_videoState.requestedHeight=height;_videoState.callback=0;_videoState.vsync=0;_videoOneShotPostCB=0;

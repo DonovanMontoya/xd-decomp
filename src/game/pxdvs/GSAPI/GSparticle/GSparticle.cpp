@@ -52,7 +52,7 @@ struct psWrap {
 struct _GSparticleGen {
     u8 isBank;
     u8 f1;
-    u8 f2;
+    bool f2;
     u8 pad3;
     s32 f4;
     s32 part;
@@ -330,8 +330,8 @@ static void _particleRender(GSgfxLayer *layer, GSgfxLayerPass pass) {
                 psDispParticles(type, 1, 0);
                 psDispParticles(type, 2, 0);
                 layer->InvalidateState();
-                for (i = 0, p = g_particle_cameras; i < (u32)g_particle_cameras_count; p++, i++) {
-                    c = (GSgfxCamX *)*p;
+                for (i=0;i<(u32)g_particle_cameras_count;i++) {
+                    c=(GSgfxCamX*)g_particle_cameras[i];
                     if (GScameraIsValid((u32)c)) {
                         any = 1;
                         GScameraLoadProjection(c, layer);
@@ -955,7 +955,10 @@ static inline void peBankSetCamera(peBankX *b, void *camera) {
     }
 }
 extern "C" _GSparticleGen *GSparticleCreateGenerator(_GSparticleBank *bank, u32 id, u8 flag) {
-    _GSparticleGen *g;
+    s32 bankIndex;
+    s32 psIndex;
+    peBankX* b;
+    _GSparticleGen* g;
     if (bank->reserved0 == 0) {
         return 0;
     }
@@ -963,16 +966,16 @@ extern "C" _GSparticleGen *GSparticleCreateGenerator(_GSparticleBank *bank, u32 
         return 0;
     }
     if (bank->loaded != 0) {
-        peBankX *b;
-        s32 idx = _findFreeGenerator(bank);
-        if (idx < 0) {
+
+        bankIndex = _findFreeGenerator(bank);
+        if (bankIndex < 0) {
             return 0;
         }
         b = peBankCreate(bank->file);
         if (b == 0) {
             return 0;
         }
-        g = &bank->gens[idx];
+        g = &bank->gens[bankIndex];
         if (g->isBank == 0) {
             return 0;
         }
@@ -981,12 +984,12 @@ extern "C" _GSparticleGen *GSparticleCreateGenerator(_GSparticleBank *bank, u32 
         g->bank = b;
         _invalidateVtx = 1;
     } else {
-        s32 idx = _findFreeGenerator(bank);
+        psIndex = _findFreeGenerator(bank);
         psWrap *w;
-        if (idx < 0) {
+        if (psIndex < 0) {
             _particleBankDestroyOldestGenerator(bank);
-            idx = _findFreeGenerator(bank);
-            if (idx < 0) {
+            psIndex = _findFreeGenerator(bank);
+            if (psIndex < 0) {
                 return 0;
             }
         }
@@ -1011,7 +1014,7 @@ extern "C" _GSparticleGen *GSparticleCreateGenerator(_GSparticleBank *bank, u32 
         } else {
             w->isFinite = 0;
         }
-        g = &bank->gens[idx];
+        g = &bank->gens[psIndex];
         if (g->isBank != 0) {
             return 0;
         }
@@ -1028,14 +1031,20 @@ extern "C" _GSparticleGen *GSparticleCreateGenerator(_GSparticleBank *bank, u32 
 }
 
 static void _particleBankDestroyOldestGenerator(_GSparticleBank *bank) {
-    _GSparticleGen *gens = bank->gens;
-    _GSparticleGen *g = gens;
     s32 i;
-    u32 best = -1;
-    s32 oldest = -1;
+    _GSparticleGen* g;
+    _GSparticleGen* gens;
+    peBankX* currentBank;
+    u32 best;
+    s32 oldest;
+    gens=bank->gens;
+    g=gens;
+    best=-1;
+    oldest=-1;
     for (i = 0; i < bank->count; i++, g++) {
-        if (g->bank != 0) {
-            u32 t = g->bank->birth;
+        currentBank=g->bank;
+        if (currentBank != 0) {
+            u32 t = currentBank->birth;
             if (t < best) {
                 best = t;
                 oldest = i;
@@ -1266,9 +1275,9 @@ void GSpartGetTransform(s32, void*, void*, void*);
 void GSvecTransformQuat(void*, void*, void*);
 void PSVECAdd(void*, void*, void*);
 static inline void clampParticleScale(f32* field) {
-    f32 bound;
-    f32 magnitude;
     f32 value = *field;
+    f32 magnitude;
+    f32 bound;
     if (value > 0.0f) magnitude = value;
     else magnitude = -value;
     bound = 0.00001f;
@@ -1277,6 +1286,7 @@ static inline void clampParticleScale(f32* field) {
         *field = bound;
     }
 }
+#pragma opt_common_subs off
 #pragma opt_loop_invariants off
 static void _particleUpdateAttachment(_GSparticleGen *arg0) {
     VecX3 position;
@@ -1650,10 +1660,11 @@ static void _particleUpdateAttachment(_GSparticleGen *arg0) {
                 break;
             }
         }
-        PARTICLE_FIELD(arg0, u8, 0x2) = (u8) (PARTICLE_FIELD(arg0, f32, 0x1) == 0);
+        arg0->f2 = arg0->f1 == 0;
     }
 }
 
 }
 #pragma opt_loop_invariants reset
+#pragma opt_common_subs reset
 #undef PARTICLE_FIELD

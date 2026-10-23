@@ -29,7 +29,7 @@ u32 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(FightTarget*, u8);
 FightTarget* fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(u32, u16);
 extern FightActionData fight_action_data_waza;
 FightActionBuff* fightOutPokemonCreateFightActionAttackWaza(FightOutPokemon*, u32, u32, u32,
-    FightActionData*, u16, u32, s32, u8);
+    FightActionData*, u32, u32, s32, u8);
 u8 fightWazaCheckValid(FightWaza*);
 u32 fightWaza_GetUseWazaDataId(FightWaza*);
 s32 fightWaza_GetWazaBanme(FightWaza*);

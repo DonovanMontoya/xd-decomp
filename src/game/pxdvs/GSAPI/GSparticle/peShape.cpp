@@ -526,7 +526,7 @@ void peShapeNode::Start(peEmitterNode* emitter,_peShape* shape,_EmitParams* para
     peNode::Start(emitter,params);
     flips=0;
     PSVECScale(&shape->scaleRange,&scale,HSD_Randf());
-    baseScale.x=scale.x;baseScale.y=scale.y;baseScale.z=scale.z;
+    f32 sy=scale.y,sz=scale.z,sx=scale.x;baseScale.x=sx;baseScale.y=sy;baseScale.z=sz;
     PSVECAdd(&baseScale,&shape->scale,&baseScale);
     randomRotation.x=0.0f;randomRotation.y=0.0f;randomRotation.z=0.0f;randomRotation.w=1.0f;
     worldPosition.x=0.0f;worldPosition.y=0.0f;worldPosition.z=0.0f;
@@ -535,7 +535,7 @@ void peShapeNode::Start(peEmitterNode* emitter,_peShape* shape,_EmitParams* para
     if(!(emitter->emitter->flags&0x400)) {
         EulerToQuat(&shape->rotation,&localRotation);
         if(flags&0x1c7000) {
-            if(flags&0x1000)randomAngles.x=6.2831855f*HSD_Randf();else randomAngles.x=0.0f;
+            if(flags&0x1000){f32 random=HSD_Randf();randomAngles.x=6.2831855f*random;}else randomAngles.x=0.0f;
             if(flags&0x2000)randomAngles.y=6.2831855f*HSD_Randf();else randomAngles.y=0.0f;
             if(flags&0x4000)randomAngles.z=6.2831855f*HSD_Randf();else randomAngles.z=0.0f;
             if((flags&0x40000) && HSD_Randf()<0.5f)flips|=1;

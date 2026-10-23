@@ -1027,6 +1027,7 @@ bool CMenuPokemonChange::isPokemonLookAbleStatus(long index) {
     return true;
 }
 
+#pragma opt_common_subs off
 bool CMenuPokemonChange::pokmonSelectCheck(enumPlayerIndex player) {
     Pokemon *p = getPokemonBySelect(selectIndex[player]);
     long state;
@@ -1044,6 +1045,7 @@ bool CMenuPokemonChange::pokmonSelectCheck(enumPlayerIndex player) {
     }
     return false;
 }
+#pragma opt_common_subs reset
 
 bool CMenuPokemonChange::pokemonExchangeCheck(enumPlayerIndex player) {
     long index = selectIndex[player];
@@ -1666,6 +1668,8 @@ void memcardFinalizeTask();
 u32 HSD_Rand();
 }
 namespace {
+#pragma push
+#pragma opt_dead_assignments off
 void CMenuPokemonChange::stateFunctionSaveReport() {
     CMenuPokemonChange *m;
     u8 unlocked,success;
@@ -1716,6 +1720,7 @@ void CMenuPokemonChange::stateFunctionSaveReport() {
     cstate.unk4=0x17;
     memset(cstate.saved,0,0x40);
 }
+#pragma pop
 }
 
 namespace {

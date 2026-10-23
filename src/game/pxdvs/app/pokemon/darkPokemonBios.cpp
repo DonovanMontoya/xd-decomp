@@ -32,7 +32,7 @@ extern s32 darkPokemonBiosGetInitDarkPoint(u16);
 u16* darkPokemonListBiosGetDPList(u16);
 extern u32 darkPokemonList[]; extern u32 darkPokemonList_number;
 u16* darkPokemonListBiosGetDPList(u16 i){if(i>=darkPokemonList_number)return 0;return (u16*)darkPokemonList+i;}
-u16 darkPokemonListBiosGetPokemonID(u16 id){u16* (*getList)(u32)=(u16*(*)(u32))darkPokemonListBiosGetDPList;u16* p=getList(id);if(p!=0)return *p;return 0;}
+u16 darkPokemonListBiosGetPokemonID(u32 id){u16* (*getList)(u32)=(u16*(*)(u32))darkPokemonListBiosGetDPList;u16* p=getList(id);if(p!=0)return *p;return 0;}
 s32 darkpokemonBiosGetScenarioNum(void){u16 i;s32 n=0;for(i=0;i<deckGetDarkPokemonSize();i++){u32 p=deckGetDeckDarkPokemon(i);if(p!=0&&isScenarioPokemon__15DeckDarkPokemonCFv(p)!=0)n++;}return n;}
 u16 darkPokemonBiosGetSteps(u16 i){u32 p=darkPokemonGetDarkPokemon(i);if(p==0)return 0;return getWalkCount__11DarkPokemonCFv(p);}
 void darkPokemonBiosSetSteps(u16 i,u16 v){u32 p=darkPokemonGetDarkPokemon(i);if(p!=0)setWalkCount__11DarkPokemonFUl(p,v);}

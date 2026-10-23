@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/wazaSequence/wazaSequenceEntryPrivate.hpp>
+#include <dolphin/os/OSFastCast.h>
 
 extern "C" {
 void GSsndFreeEmitter(u32);
@@ -322,6 +323,55 @@ void SoundEntry::Stop(bool force) {
             }
             GSsndClose(handle);
         }
+    }
+}
+
+static inline u32 sequenceEventOffset(u8 index,u8 event) { return index*0xD0+0xC+event*4; }
+
+void SequenceEntry::Link() {
+    SequenceEntry* before=waza->entries;
+    if(linkId) {
+        SequenceEntry* linked=waza->GetEntryFromID(linkId);
+        if(linked) {
+            startTime=linked->startTime;
+            startTime+=linked->times[endIndex];
+            goto timed;
+        }
+    }
+    {
+        ModelSequence* model=waza->GetModel();
+        if(model) {
+            startTime=*(f32*)((u32)model->records+sequenceEventOffset(waza->index,endIndex));
+        }
+        else {
+            u8 index=endIndex;
+            startTime=__OSu8tof32(&index);
+        }
+    }
+ timed:
+    startTime-=times[startIndex];
+    time=startTime;
+    if(before) {
+        if(before->startTime>startTime || (dataType==SEQENTRY_EVENT && before->startTime==startTime)) {
+            next=before;
+            previous=0;
+            before->previous=this;
+            waza->entries=this;
+        } else {
+            SequenceEntry* entry;
+            while((entry=before->next)!=0) {
+                if(entry->startTime>startTime || (dataType==SEQENTRY_EVENT && before->startTime==startTime))break;
+                before=entry;
+            }
+            next=entry;
+            if(next)next->previous=this;
+            before->next=this;
+            previous=before;
+        }
+    } else {
+        waza->entries=this;
+        next=0;
+        previous=0;
     }
 }
 

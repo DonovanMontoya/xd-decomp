@@ -76,7 +76,7 @@ static u32 _getCursor__Fv(void);
 static u32 _getSenderName__Fl(s32 index);
 static u32 _getSubject__Fl(s32 index);
 static u16 _getMailID__Fl(s32 index);
-u16 pdaMailGetMailID(s32 arg0);
+u32 pdaMailGetMailID(s32 arg0);
 void menuPdaMailListSortExit(void) {
     if (_sortwork != 0) {
         if (_sortwork != 0) {
@@ -539,9 +539,9 @@ static u32 _getSenderName__Fl(s32 index) { return mailGetSenderName(_getMailID__
 
 static u32 _getSubject__Fl(s32 index) { return mailGetSubject(_getMailID__Fl(index)); }
 
-static u16 _getMailID__Fl(s32 index) { return pdaMailGetMailID(index); }
+static u16 _getMailID__Fl(s32 index) { return ((u16 (*)(s32))pdaMailGetMailID)(index); }
 
-u16 pdaMailGetMailID(s32 arg0) {
+u32 pdaMailGetMailID(s32 arg0) {
     if ((arg0 < 0) || (arg0 >= mailGetNbMailInMailbox())) {
         return -1U;
     }

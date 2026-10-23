@@ -97,7 +97,7 @@ static u8 checkCollisionHeadToHead(GSCOLSYS2_HUMAN *other,GSCOLSYS2_HUMAN *self,
         if(type==1) distance=__float_nan[0];
     }
     radius=other->radius+self->radius;
-    unadjusted=gimmickBoxFixDistanceForPushBox(&radius,work,dx,dz)==0;
+    unadjusted=!gimmickBoxFixDistanceForPushBox(&radius,work,dx,dz);
     if(gimmickBoxIsBox(work)) {
         heroMoveGetHeroPos(&hero);
         f32 height=position->y+other->height-hero.y;

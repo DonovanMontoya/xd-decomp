@@ -1022,7 +1022,9 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubItem(FIGHT_TRAINER* trainer,Fig
         else{
             menuFightSetSeqOut__Fv();fightMenuCloseInfoMenu(1);
             u32 rate=GSgfxVideoGetVsyncRate();
-            menuCreateOffScreen(rate,8.0f/(f32)rate,50.0f);
+            f32 duration=(f32)rate;
+            duration=8.0f/duration;
+            menuCreateOffScreen(rate,duration,50.0f);
             menuOffScreenFadeSync(1);
             item=fightFloorIsNowEncountSnatchOnly(0)!=0?menuPocket2Open(6,&selected,trainer):menuPocket2Open(1,&selected,trainer);
             fightMainWaitFrameEffect(10);{u8 slot=menuPocket2GetLastSlotID();lastSlot=slot;}

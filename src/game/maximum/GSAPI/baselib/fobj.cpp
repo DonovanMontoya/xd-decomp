@@ -165,7 +165,7 @@ static inline int parseWait(unsigned char** adp)
 static inline unsigned int FObjLoadWait(HSD_FObj* fobj)
 {
     unsigned int st = HSD_FObjGetState(fobj);
-    HSD_ASSERT(0x171, st == FOBJ_LOAD_WAIT);
+    if (st != FOBJ_LOAD_WAIT) __assert("fobj.c", 0x171, "st == FOBJ_LOAD_WAIT");
 
     if ((unsigned) (fobj->ad - fobj->ad_head) >= fobj->length) {
         return 6;
@@ -396,6 +396,7 @@ static unsigned int FObjLoadData(HSD_FObj* fobj)
     }
 }
 
+#pragma opt_propagation off
 void HSD_FObjInterpretAnim(HSD_FObj* fobj, void* obj,
                            HSD_ObjUpdateFunc obj_update, float rate)
 {
@@ -403,7 +404,10 @@ void HSD_FObjInterpretAnim(HSD_FObj* fobj, void* obj,
     unsigned int state;
 
     fterm = 0.0F;
-    state = fobj != 0 ? HSD_FObjGetState(fobj) : 0;
+    {
+        unsigned int initialState = fobj != 0 ? HSD_FObjGetState(fobj) : 0;
+        state = initialState;
+    }
     if (state != 0 && !(fobj->time += rate, (fobj->time < 0.0))) {
         for (;;) {
             switch (state) {
@@ -440,12 +444,7 @@ void HSD_FObjInterpretAnim(HSD_FObj* fobj, void* obj,
                     break;
                 }
                 FObjUpdateAnim(fobj, obj, obj_update);
-                state =
-#ifdef MUST_MATCH
-                    state =
-#endif
-                        5;
-                HSD_FObjSetState(fobj, state);
+                HSD_FObjSetState(fobj, 5);
                 return;
             }
             case 5: {
@@ -463,6 +462,8 @@ void HSD_FObjInterpretAnim(HSD_FObj* fobj, void* obj,
         }
     }
 }
+
+#pragma opt_propagation reset
 
 void HSD_FObjInterpretAnimAll(void* fobj, void* obj,
                               HSD_ObjUpdateFunc obj_update, float rate)

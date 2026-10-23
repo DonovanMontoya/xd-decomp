@@ -16,7 +16,9 @@ s32 tagPeopleWork::getRunMotion(){if(motions.run>=0){s32 a=motions.run;if(!GSmod
 s32 tagPeopleWork::getWalkMotion(){if(motions.walk>=0){s32 a=motions.walk;if(!GSmodelIsNullAnimation(model,a))return a;}s32 b=motions.run;if(b>=0 && !GSmodelIsNullAnimation(model,b))return b;return 3;}
 void tagPeopleWork::setAnimType(GSmodelAnimType type){if(model)GSmodelSetAnimType(model,type);}
 void tagPeopleWork::setAnimFrame(f32 frame){if(model){if(frame<0.0f)frame=0.0f;GSmodelSetAnimFrame(model,frame);}}
+#pragma opt_common_subs off
 void tagPeopleWork::setAnimBlend(int a,int b){if(model && !GSmodelIsNullAnimation(model,a)){if(GSmodelIsNullAnimation(model,b))setAnimIndex(a);else GSmodelSetAnimBlend(model,a,b);}}
+#pragma opt_common_subs reset
 void tagPeopleWork::setAnimIndex(int i){if(model)GSmodelSetAnimIndex(model,i);}
 void tagPeopleWork::setAnimRate(f32 rate,bool viewer){if(model && !checkFlags(0x8000)){if(viewer)rate*=peopleViewerGetPlaySpeedRate(this);GSmodelSetAnimRate(model,rate);}}
 u8 tagPeopleWork::isAnimLast() const {u8 r=0;if(model==0)return r;return GSmodelHasAnimationEnded(model);}

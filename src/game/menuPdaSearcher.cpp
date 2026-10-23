@@ -48,9 +48,29 @@ static f32 _maxscale[2]={0.5f,1.5f};static f32 _startangle;
 extern "C" {f32 GSlerpGetLinearInterpolationFloat(f32,f32,f32);s32 winSpriteGetLayerID(tagWINDOW_WORK*,tagSPRITE_WORK*);GSgfxLayer *GSgfxLayerFindByID(s32);void *menuSpriteBiosGetPtr(u32);MenuSpriteValue *menuSpriteBiosGetValPtr(void*);SearchTexture *GSresGetResourceAllGroup(u32);u16 GStextureGetXsize(SearchTexture*);u16 GStextureGetYsize(SearchTexture*);void *menuItemBiosGetPtr(s32,s16);GSgfxVF *GSgfxVFGetPredef(u32);f64 sin(f64);}
 union SearchFifo {s16 position;u8 color;f32 texture;};
 static void _animCursor(tagWINDOW_WORK *w,tagSPRITE_WORK *s,u16 index){
- f32 coordinates[4][3];_updateTimer(index);f32 progress=_esaTimer[index]/6.2831855f;f32 alpha=255.0f*(1.0f-progress);if(alpha>=255.0f)alpha=255.0f;s->color.channels.alpha=(w->alpha*(u8)(s32)alpha)/255;
- f32 scale=GSlerpGetLinearInterpolationFloat(_maxscale[0],_maxscale[1],progress);GSgfxLayer *layer=GSgfxLayerFindByID(winSpriteGetLayerID(w,s));MenuSpriteValue *sprite=menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x2DE));SearchTexture *texture=GSresGetResourceAllGroup(sprite->resource);u16 textureWidth=GStextureGetXsize(texture);u16 textureHeight=GStextureGetYsize(texture);f32 angle=_startangle;f32 radius=scale*(sprite->width/2);menuItemBiosGetPtr(w->menu,s->id);
- f32 centerX=sprite->width/2,centerY=sprite->height/2;coordinates[0][0]=coordinates[3][0]=(f32)sprite->x/(f32)textureWidth;coordinates[1][0]=coordinates[2][0]=(f32)(sprite->x+sprite->width)/(f32)textureWidth;coordinates[0][1]=coordinates[1][1]=(f32)sprite->y/(f32)textureHeight;coordinates[2][1]=coordinates[3][1]=(f32)(sprite->y+sprite->height)/(f32)textureHeight;
+    f32 scale, sine, centerX, angle, radius, centerY;
+    f32 coordinates[4][3];
+    _updateTimer(index);
+    f32 progress = _esaTimer[index] / 6.2831855f;
+    f32 alpha = 1.0f - progress;
+    alpha = 255.0f * alpha;
+    if (alpha >= 255.0f) alpha = 255.0f;
+    s->color.channels.alpha = (w->alpha * (u8)(s32)alpha) / 255;
+    scale = GSlerpGetLinearInterpolationFloat(_maxscale[0], _maxscale[1], progress);
+    GSgfxLayer *layer = GSgfxLayerFindByID(winSpriteGetLayerID(w, s));
+    MenuSpriteValue *sprite = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x2DE));
+    SearchTexture *texture = GSresGetResourceAllGroup(sprite->resource);
+    u16 textureWidth = GStextureGetXsize(texture);
+    u16 textureHeight = GStextureGetYsize(texture);
+    angle = _startangle;
+    radius = scale * (sprite->width / 2);
+    menuItemBiosGetPtr(w->menu, s->id);
+    centerX = sprite->width / 2;
+    centerY = sprite->height / 2;
+    coordinates[0][0] = coordinates[3][0] = (f32)sprite->x / (f32)textureWidth;
+    coordinates[1][0] = coordinates[2][0] = (f32)(sprite->x + sprite->width) / (f32)textureWidth;
+    coordinates[0][1] = coordinates[1][1] = (f32)sprite->y / (f32)textureHeight;
+    coordinates[2][1] = coordinates[3][1] = (f32)(sprite->y + sprite->height) / (f32)textureHeight;
     layer->colorUpdate = 1;
     layer->alphaUpdate = 0;
     layer->depthBeforeTexture = 0;
@@ -145,4 +165,23 @@ static void _animCursor(tagWINDOW_WORK *w,tagSPRITE_WORK *s,u16 index){
         layer->savedTextureDirty = (s32) (layer->savedTextureDirty | 1);
     }
 
- layer->beginSurface(4);f32 *uv=coordinates[0];for(s32 i=0;i<4;i++){f32 sine=(f32)sin(angle);f32 cosine=(f32)cos(angle);f32 u=uv[0],v=uv[1];angle+=1.5707964f;uv+=3;volatile SearchFifo *fifo=(volatile SearchFifo*)0xCC008000;fifo->position=(s16)(radius*sine+centerX);fifo->position=(s16)(radius*cosine+centerY);fifo->color=255;fifo->color=255;fifo->color=255;fifo->color=s->color.channels.alpha;fifo->texture=u;fifo->texture=v;}layer->endSurface();}
+    layer->beginSurface(4);
+    f32 *uv = coordinates[0];
+    for (s32 i = 0; i < 4; i++) {
+        sine = (f32)sin(angle);
+        f32 cosine = (f32)cos(angle);
+        angle += 1.5707964f;
+        volatile SearchFifo *fifo = (volatile SearchFifo*)0xCC008000;
+        fifo->position = (s16)(radius * sine + centerX);
+        fifo->position = (s16)(radius * cosine + centerY);
+        u8 alpha = s->color.channels.alpha;
+        fifo->color = 255;
+        fifo->color = 255;
+        fifo->color = 255;
+        fifo->color = alpha;
+        fifo->texture = uv[0];
+        fifo->texture = uv[1];
+        uv += 3;
+    }
+    layer->endSurface();
+}

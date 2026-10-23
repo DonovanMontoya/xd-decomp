@@ -20,7 +20,7 @@ static void _sndStreamPrepareGetDataCallback_Exec(GSsndStream*, GSsndStream*, GS
 static void _sndStreamARAMUpdate(GSsndStream*, GSsndStreamBufferState*);
 u32 _sndStreamNibble_HeaderOFF2ON(u32 samples) { f64 value = samples; value *= 8.0 / 7.0; return (u32)value; }
 u32 _sndStreamNibble_HeaderON2OFF(u32 nibbles) { f64 value = nibbles; value *= 0.875; return (u32)value; }
-static u32 _sndStreamNibble_GetHeaderPos(u16 nibbles) { f64 value = nibbles; value *= 0.5; return (u32)value & ~7U; }
+static u32 _sndStreamNibble_GetHeaderPos(u32 nibbles) { f64 value = nibbles; value *= 0.5; return (u32)value & ~7U; }
 void _sndStreamPrepareGetData(GSsndStream* stream) {
     BOOL interrupts = OSDisableInterrupts();
     GSsndStream* first;
@@ -126,6 +126,7 @@ void _sndStreamGetDataCallback_START(u8, u8, GSsndStream* stream) {
         break;
     }
 }
+#pragma opt_propagation off
 void _sndStreamGetDataCallback_ACTIVATE(u8, u8, GSsndStream* stream) {
     GSsndStream *second;
     GSsndStream* activeStream = stream;
@@ -147,6 +148,7 @@ void _sndStreamGetDataCallback_ACTIVATE(u8, u8, GSsndStream* stream) {
         break;
     }
 }
+#pragma opt_propagation reset
 static void _sndStreamPrepareGetDataCallback(u8, u8 half_, GSsndStream* userData) {
     u32 half = half_;
     GSsndStream* stream = userData;

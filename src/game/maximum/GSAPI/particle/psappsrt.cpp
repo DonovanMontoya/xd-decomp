@@ -140,7 +140,7 @@ static PSAppSRT* psNewAppSRT(s8 arg1, u16 temp_r31) {
     return temp_r3_2;
 }
 
-void psAddGeneratorAppSRT(PSGenerator *gp, s8 status) { gp->appsrt = psNewAppSRT(status, gp->id); }
+PSAppSRT* psAddGeneratorAppSRT(PSGenerator *gp, s8 status) { return gp->appsrt = psNewAppSRT(status, gp->id); }
 
 void psRemoveAppSRT(void) {
     PSAppSRT *temp_r31;

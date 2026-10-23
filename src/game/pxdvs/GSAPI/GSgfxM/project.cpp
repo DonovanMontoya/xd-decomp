@@ -113,6 +113,7 @@ extern "C" s32 GSgfxProjectFast(Vec* position, Vec* output) {
     return 2;
 }
 
+#pragma opt_dead_assignments off
 extern "C" s32 GSgfxProjectFastList(Vec* positionsIn, Vec* outputsIn, u32 count) {
     s32 result;
     Vec* outputs = outputsIn;
@@ -165,3 +166,4 @@ extern "C" s32 GSgfxProjectFastList(Vec* positionsIn, Vec* outputsIn, u32 count)
     }
     return result;
 }
+#pragma opt_dead_assignments reset

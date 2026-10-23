@@ -179,7 +179,8 @@ void GSboundGetShadowSize(Vec* result, GSbound* bound, Vec* from, Vec* to, Vec* 
     for (s32 i = 0; i < 4; ++i, ++corner) {
         f32 b;
         PSMTXMultVec(rotation, corner, corner);
-        a = absDot(corner, &up);
+        if (PSVECDotProduct(corner, &up) > 0.0f) { a = PSVECDotProduct(corner, &up); }
+        else { a = PSVECDotProduct(corner, &up); a = -a; }
         b = absDot(corner, &right);
         if (a > maxA) maxA = a;
         if (b > maxB) maxB = b;

@@ -210,6 +210,7 @@ s32 GSgfxLayerFindByName_C(char* name) {
     LayerNode* p=GSgfxLayerFindByName(name);
     if (p==0) { return -1; } else { return p->id; }
 }
+#pragma scheduling off
 void GSgfxLayerInit__Fv() {
     _layerIDTable[0]=0; _layerIDTable[1]=0; _layerIDTable[2]=0; _layerIDTable[3]=0;
     _layerIDTable[4]=0; _layerIDTable[5]=0; _layerIDTable[6]=0; _layerIDTable[7]=0;
@@ -217,6 +218,7 @@ void GSgfxLayerInit__Fv() {
     _layerIDTable[12]=0; _layerIDTable[13]=0; _layerIDTable[14]=0;
     _layerBottom=0; _layerIDTable[15]=0; gsgfx_layer_inPrimitive=0;
 }
+#pragma scheduling reset
 void SetPriority__10GSgfxLayerF16GSgfxLayerOffsetP10GSgfxLayer(void* object,s32 offset,void* relative) {
     LayerNode* layer=static_cast<LayerNode*>(object); LayerNode* other=static_cast<LayerNode*>(relative);
     LayerNode* p;
@@ -296,14 +298,17 @@ void BuildRenderList__10GSgfxLayerFv(void* layer) {
 #pragma inline_max_size(800)
 static void updateLayerFifoUsage(u8* f) {
     u8* write;
+    u8* base;
     u32 used;
-    if (!layerField<u8*>(f,0x88)) used=0;
+    u8* start=layerField<u8*>(f,0x88);
+    if (!start) used=0;
     else {
         write=layerField<u8*>(f,0x20);
-        if (write>=layerField<u8*>(f,0x88)) { used=write-layerField<u8*>(f,0x88); used+=layerField<u16>(f,0xac)*layerField<u32>(f,4); }
+        if (write>=start) { used=write-start; used+=layerField<u16>(f,0xac)*layerField<u32>(f,4); }
         else {
-            u8* base=layerField<u8*>(f,0);
-            used=(base+layerField<u32>(f,4)-layerField<u8*>(f,0x88))+(write-base);
+            base=layerField<u8*>(f,0);
+            used=base+layerField<u32>(f,4)-start;
+            used+=write-base;
             if (layerField<u16>(f,0xac)==0) {
                 GSlogWrite("fifo wrap check flag failure!\n");
                 GSlogWrite("ptr  =%08X, size =%08X\n",layerField<u8*>(f,0),layerField<u32>(f,4));
@@ -324,10 +329,63 @@ static inline u8 fifoIsFull(u8* f) {
     else {
         u8* write=layerField<u8*>(f,0x20); u8* read=layerField<u8*>(f,0x1c); u32 count;
         if (write>=read) count=write-read;
-        else count=(layerField<u8*>(f,0xc)-read)+(write-layerField<u8*>(f,8));
+        else { count=layerField<u8*>(f,0xc)-read; count+=write-layerField<u8*>(f,8); }
         full=count>=layerField<u32>(f,0x14);
     }
     return full;
+}
+static inline u8 sdkFifoIsFull(u8* f) {
+    u8 full;
+    if (layerField<u32>(f,0x4c)==1) full=0;
+    else {
+        u8* write=layerField<u8*>(f,0x18); u8* read=layerField<u8*>(f,0x14); u32 count;
+        if (write>=read) count=write-read;
+        else { count=layerField<u8*>(f,0x4)-read; count+=write-layerField<u8*>(f,0x0); }
+        full=count>=layerField<u32>(f,0xc);
+    }
+    return full;
+}
+static void updateMarkedLayerFifoUsage(u8* f) {
+    u32 used;
+    u8* write;
+    u8* base;
+    u8* start=layerField<u8*>(f,0x88);
+    if (!start) used=0;
+    else {
+        write=layerField<u8*>(f,0x20);
+        if (write>=start) { used=write-start; used+=layerField<u16>(f,0xac)*layerField<u32>(f,4); }
+        else {
+            base=layerField<u8*>(f,0);
+            used=base+layerField<u32>(f,4)-start;
+            used+=write-base;
+            if (layerField<u16>(f,0xac)==0) {
+                GSlogWrite("fifo wrap check flag failure!\n");
+                GSlogWrite("ptr  =%08X, size =%08X\n",layerField<u8*>(f,0),layerField<u32>(f,4));
+                GSlogWrite("start=%08X, write=%08X\n",layerField<u8*>(f,0x88),write);
+                GSlogWrite("reg  =%08X\n",*(volatile u32*)0xcc003014);
+                ++layerField<u16>(f,0xac);
+            }
+            used+=(layerField<u16>(f,0xac)-1)*layerField<u32>(f,4);
+        }
+    }
+    layerField<u32>(f,0xb4)=used;
+    if (layerField<u32>(f,0xb4)>layerField<u32>(f,0xb8)) layerField<u32>(f,0xb8)=layerField<u32>(f,0xb4);
+    if (layerField<u32>(f,0xb4)>=layerField<u32>(f,4)) layerField<u16>(f,0xae)=1;
+}
+static void updateMarkedLayerFifo(void* fifo,u32& wrapped) {
+    u8* f=static_cast<u8*>(fifo);
+    GXFifoObj* sdkFifo=reinterpret_cast<GXFifoObj*>(f+8);
+    GXSaveCPUFifo(sdkFifo);
+    volatile u32 status=*(volatile u32*)0xcc003014;
+    wrapped=(status>>26)&1;
+    if (wrapped==1) { GXSetCPUFifo(sdk(GSgfxGPUGetImmediateFifo__Fv())); GXSetCPUFifo(sdkFifo); }
+    if (wrapped==1) ++layerField<u16>(f,0xac);
+    updateMarkedLayerFifoUsage(f);
+    GXResetWriteGatherPipe(); GSgfxRenderWaitData wait; GSgfxRenderWaitInit__FP19GSgfxRenderWaitData(&wait);
+    while (sdkFifoIsFull(reinterpret_cast<u8*>(sdkFifo))==1) {
+        GSgfxRenderWaitTick__FP19GSgfxRenderWaitData(&wait);
+    }
+    GSgfxRenderWaitExit__FP19GSgfxRenderWaitData(&wait);
 }
 static void updateLayerFifo(void* fifo) {
     u8* f=static_cast<u8*>(fifo);
@@ -371,13 +429,22 @@ void EffectDistortion__10GSgfxLayerFv(void*);
 void EffectTextureCopy__10GSgfxLayerFP9GStexturebPUcbbb(void*,void*,bool,u8*,bool,bool,bool);
 void EffectScreenClear__10GSgfxLayerFbbb(void*,bool,bool,bool);
 void MarkAndInvalidate__10GSgfxLayerFv(void* layer) {
-    for (s32 i=0;i<2;i++) {
-        u8* fifo=static_cast<u8*>(layer)+0x1818+i*0xbc;
+    u32 wrapped;
+    {
+        u8* fifo=static_cast<u8*>(layer)+0x1818;
         if (layerField<void*>(fifo,0)) {
-            if (reinterpret_cast<GXFifoObj*>(fifo+8)==GXGetCPUFifo()) updateLayerFifo(fifo);
+            if (reinterpret_cast<GXFifoObj*>(fifo+8)==GXGetCPUFifo()) updateMarkedLayerFifo(fifo,wrapped);
             layerField<void*>(fifo,0x88)=layerField<void*>(fifo,0x20);
         }
     }
+    {
+        u8* fifo=static_cast<u8*>(layer)+0x18d4;
+        if (layerField<void*>(fifo,0)) {
+            if (reinterpret_cast<GXFifoObj*>(fifo+8)==GXGetCPUFifo()) updateMarkedLayerFifo(fifo,wrapped);
+            layerField<void*>(fifo,0x88)=layerField<void*>(fifo,0x20);
+        }
+    }
+
     layerField<u32>(layer,0x18c8)=layerField<u32>(layer,0x18cc);
     layerField<u32>(layer,0x1984)=layerField<u32>(layer,0x1988);
     layerField<u16>(layer,0x18c4)=0; layerField<u16>(layer,0x18c6)=0;
@@ -458,23 +525,37 @@ void PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(void* layer,s32 pass) {
         InvalidateState__10GSgfxLayerFv(layer);
     }
 }
+static inline void getWantClearFlags(void* layer, bool* color, bool* alpha, bool* depth) {
+    if (color) *color = (layerField<u32>(layer,4) >> 6) & 1;
+    if (alpha) *alpha = (layerField<u32>(layer,4) >> 7) & 1;
+    if (depth) *depth = (layerField<u32>(layer,4) >> 8) & 1;
+}
+static inline void getNextClearFlags(void* layer, bool* color, bool* alpha, bool* depth) {
+    LayerNode* next = layerField<LayerNode*>(layer,0);
+    bool c, a, d;
+    if (!next) { c = false; a = false; d = false; }
+    else {
+        bool wc, wa, wd;
+        getWantClearFlags(next, &wc, &wa, &wd);
+        c = (u8)((layerField<u32>(layer,4) & 8) || wc) != 0;
+        a = (u8)((layerField<u32>(layer,4) & 0x10) || wa) != 0;
+        d = (u8)((layerField<u32>(layer,4) & 0x20) || wd) != 0;
+    }
+    if (color) *color = c;
+    if (alpha) *alpha = a;
+    if (depth) *depth = d;
+}
 void Prerender__10GSgfxLayerFv(void* layer) {
     PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(layer,0);
     PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(layer,1);
-    LayerNode* next=layerField<LayerNode*>(layer,0);
-    u8 color,alpha,depth;
-    if (!next) { color=0; alpha=0; depth=0; }
-    else {
-        u32 want=layerField<u32>(next,4); u32 flags=layerField<u32>(layer,4);
-        color=((flags&8) || ((want>>6)&1))!=0;
-        alpha=((flags&0x10) || ((want>>7)&1))!=0;
-        depth=((flags&0x20) || ((want>>8)&1))!=0;
-    }
+    bool color,alpha,depth;
+    getNextClearFlags(layer, &color, &alpha, &depth);
     if (layerField<void*>(layer,0x18d4)) selectLayerPass(static_cast<GraphicsLayerState*>(layer),1);
     else selectLayerPass(static_cast<GraphicsLayerState*>(layer),0);
     if (layerField<u32>(layer,4)&1) switch (layerField<s32>(layer,0x2c)) {
-    case 4: break;
     case 1: EffectDistortion__10GSgfxLayerFv(layer); break;
+    case 0: break;
+    case 4: break;
     }
     if (layerField<u32>(layer,4)&0x200) switch (layerField<s32>(layer,0x19a8)) {
     case 0: EffectTextureCopy__10GSgfxLayerFP9GStexturebPUcbbb(layer,layerField<void*>(layer,0x19a4),0,0,color,alpha,depth); return;

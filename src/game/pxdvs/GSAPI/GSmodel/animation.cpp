@@ -998,6 +998,7 @@ extern "C" void GSmodelSetAnimIndex(GSmodel* m, u32 index) {
 extern "C" void GSmodelRemoveNull(GSmodel*);
 extern "C" void GSmodelSetAnimBlend(GSmodel* m, u32 first, u32 second) {
     f32 rate;
+    f32 adjusted;
     f32 zero[3];
     HSD_AObj* aobj;
     HSD_AObj* blendAObj;
@@ -1033,7 +1034,20 @@ extern "C" void GSmodelSetAnimBlend(GSmodel* m, u32 first, u32 second) {
             blendAObj = 0;
             HSD_ForeachAnim(bj, JOBJ_TYPE, (HSD_TypeMask)0x20, (void*)_modelGetAObjFunc__FP9_HSD_AObjPv, AOBJ_ARG_AV, &blendAObj);
             m->blendAnimation = blendAObj;
-            GSmodelSetAnimRate(m, rate);
+            if (!(rate < 0.0f) && classifyAnimationFrame(rate) != 1) {
+                if (m->flags & 4) {
+                    adjusted = rate;
+                    if (GSgfxVideoGetVsyncRate() == 50) adjusted *= 1.2f;
+                    if (!(m->flags & 0x80)) m->animationRate = adjusted;
+                    else {
+                        f32 firstLength = 1.0f + m->endFrame;
+                        f32 secondLength = 1.0f + m->blendEndFrame;
+                        m->blendRate = adjusted;
+                        m->animationRate = adjusted * (firstLength / secondLength);
+                    }
+                }
+                if (m->flags & 0x2000) GSmodelSetTexAnimRate(m, rate);
+            }
             modelSetAnimTypeInline(m, m->animationType);
             GSmodelSetAnimFrame(m, 0.0f);
             zero[0] = 0.0f; zero[1] = 0.0f; zero[2] = 0.0f;

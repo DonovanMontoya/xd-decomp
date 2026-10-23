@@ -4,6 +4,26 @@ PSParticle* activeParticle[16];
 static PSParticle* freeParticle;
 static s32 sortDirty[16];
 static PSParticle* activeParticleXLU[16];
+
+
+void _psListDelete(PSParticle *arg0, PSParticle *arg1) {
+    sortDirty[arg0->link] = 1;
+    if (arg1 == NULL) {
+        if ((PSParticle *) activeParticle[arg0->link] != arg0) {
+            __assert("pslist.c", 0x88, "activeParticle[pp->linkNo] == pp");
+        }
+        activeParticle[arg0->link] = arg0->next;
+    } else {
+        if ((PSParticle *) arg1->next != arg0) {
+            __assert("pslist.c", 0x8B, "parent->next == pp");
+        }
+        arg1->next = arg0->next;
+    }
+    arg0->next = freeParticle;
+    freeParticle = arg0;
+    numActiveParticles -= 1;
+}
+
 PSParticle *_psListGetFirst(s32 arg0) {
     s32 var_r0;
 
@@ -15,27 +35,6 @@ PSParticle *_psListGetFirst(s32 arg0) {
         __assert("pslist.c", 0x98, "linkNo >= 0 && linkNo < PS_NUM_LINK");
     }
     return activeParticle[arg0];
-}
-
-void _psListDelete(PSParticle *arg0, PSParticle *arg1) {
-    const char *temp_r5;
-
-    temp_r5 = "pslist.c";
-    sortDirty[arg0->link] = 1;
-    if (arg1 == NULL) {
-        if ((PSParticle *) activeParticle[arg0->link] != arg0) {
-            __assert(temp_r5, 0x88, "activeParticle[pp->linkNo] == pp");
-        }
-        activeParticle[arg0->link] = arg0->next;
-    } else {
-        if ((PSParticle *) arg1->next != arg0) {
-            __assert(temp_r5, 0x8B, "parent->next == pp");
-        }
-        arg1->next = arg0->next;
-    }
-    arg0->next = freeParticle;
-    freeParticle = arg0;
-    numActiveParticles -= 1;
 }
 
 PSParticle *_psListNew(PSParticle *arg0, s32 arg1) {
@@ -70,47 +69,32 @@ PSParticle *_psListNew(PSParticle *arg0, s32 arg1) {
 }
 
 void _psListClear(void) {
-    PSParticle **var_r28;
-    PSParticle **var_r29;
-    PSParticle **var_r30;
-    PSParticle *temp_r27;
-    PSParticle *temp_r27_2;
-    PSParticle *var_r3;
-    PSParticle *var_r3_2;
-    s32 var_r26;
-
-    var_r3 = freeParticle;
-while (var_r3 != NULL) {
-        temp_r27_2 = var_r3->next;
-        HSD_Free(var_r3);
-        var_r3 = temp_r27_2;
-}
-    var_r29 = activeParticle;
+    PSParticle* node = freeParticle;
+    PSParticle* next;
+    s32 i;
+    while (node != NULL) {
+        next = node->next;
+        HSD_Free(node);
+        node = next;
+    }
     freeParticle = NULL;
-    var_r28 = (PSParticle**)sortDirty;
-    var_r30 = activeParticleXLU;
-    var_r26 = 0;
-    do {
-        var_r3_2 = *var_r29;
-while (var_r3_2 != NULL) {
-            temp_r27_2 = var_r3_2->next;
-            HSD_Free(var_r3_2);
-            var_r3_2 = temp_r27_2;
-}
-        var_r26 += 1;
-        *var_r29 = NULL;
-        var_r29 += 1;
-        *var_r28 = NULL;
-        var_r28 += 1;
-        *var_r30 = NULL;
-        var_r30 += 1;
-    } while (var_r26 < 0x10);
+    for (i = 0; i < 16; i++) {
+        node = activeParticle[i];
+        while (node != NULL) {
+            next = node->next;
+            HSD_Free(node);
+            node = next;
+        }
+        activeParticle[i] = NULL;
+        sortDirty[i] = 0;
+        activeParticleXLU[i] = NULL;
+    }
 }
 
 s32 _psLinkInit(s32 count) {
-    s32 i; PSParticle* pp;
-    for (i = 0; i < 16; i++) {
-        activeParticle[i] = NULL; sortDirty[i] = 0; activeParticleXLU[i] = NULL;
+    s32 i; u32 j; PSParticle* pp;
+    for (j = 0; j < 16; j++) {
+        activeParticle[j] = NULL; sortDirty[j] = 0; activeParticleXLU[j] = NULL;
     }
     freeParticle = NULL;
     for (i = count - 1; i >= 0; i--) {
