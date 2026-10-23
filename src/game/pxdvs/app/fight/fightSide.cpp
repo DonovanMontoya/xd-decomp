@@ -158,6 +158,7 @@ void fightSideGetFightTrainerGridParam(u16 side,u16 trainerCount,u16 trainer,u8*
         if(*reversed==1){
             if(trainer==0)*offset=1;
             else if(trainer==1)*offset=-1;
+            else return;
         }else{
             if(trainer==0)*offset=-1;
             else if(trainer==1)*offset=1;

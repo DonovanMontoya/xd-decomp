@@ -1458,15 +1458,16 @@ void menuCBGCEntryTypeIndex(void) {
 
 void menuCBReliveHallCursolInit(void) {
     s32 temp_r30;
-    s8 var_r29;
+    s32 var_r29;
 
+    s32 stage = _CB.unkB0EC;
     if ((s32) _CB.unkB0F8 <= 4) {
-        temp_r30 = (_CB.unkB0EC * 0x10000) & 0xFFFF0000;
+        temp_r30 = (stage * 0x10000) & 0xFFFF0000;
         if (menuCBPokemonCheck(6U, _CB.unkB0F8 | temp_r30) == 0) {
             var_r29 = 0;
 loop_3:
             if (menuCBPokemonCheck(6U, var_r29 | temp_r30) != 0) {
-                _CB.unkB0F8 = (s32) var_r29;
+                _CB.unkB0F8 = (s8) var_r29;
             } else {
                 var_r29 += 1;
                 if ((u32) var_r29 < 5U) {

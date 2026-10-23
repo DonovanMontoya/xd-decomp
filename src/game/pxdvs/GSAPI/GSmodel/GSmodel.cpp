@@ -392,9 +392,9 @@ static GSmodel* _modelLoad__FP18_HSD_SceneModelSetP10_HSD_JointP17GSboundAnimHea
     GSboundCreate((GSbound*)model->boundStorage, bound);
     GSboundSetDataPtr((GSbound*)model->boundStorage, 1, model);
     GSmodelRecalculateBound(model);
-    u32 i;
     u32 partCount;
     GSpart* part;
+    u32 i;
     u32 materialCount = 0;
     GSmaterial* material;
     partCount = GSmodelGetPartCount(model);
@@ -408,12 +408,12 @@ static GSmodel* _modelLoad__FP18_HSD_SceneModelSetP10_HSD_JointP17GSboundAnimHea
         if (material) {
             model->materials = material;
             model->materialCount = materialCount;
-            for (u32 i=0; i<partCount; ++i) {
-                GSpart* part = GSmodelGetPart(model, i);
+            for (u32 partIndex=0; partIndex<partCount; ++partIndex) {
+                GSpart* part = GSmodelGetPart(model, partIndex);
                 u32 count = GSpartGetMaterialCount(part);
-                for (u32 n=0; n<count; ++n, ++material) {
+                for (i=0; i<count; ++i, ++material) {
                     modelMaterialInit__FP10GSmaterial(material);
-                    GSpartInitMaterial(material, part, n);
+                    GSpartInitMaterial(material, part, i);
                 }
                 GSpartFree(part);
             }

@@ -1,3 +1,4 @@
+#pragma dollar_identifiers on
 /* XD texture animation and descriptor lifecycle. */
 #include "game/maximum/GSAPI/baselib/tobj.h"
 typedef char tobj_repeat_s_offset_check[(unsigned long)&((HSD_TObj*)0)->repeat_s == 0x48 ? 1 : -1];
@@ -126,6 +127,10 @@ static inline void TObjSetupTevModulateShadow(HSD_TObj* shadow);
 static inline void SetupEmbossBumpTev(HSD_TObj* bump);
 void HSD_TObjSetupVolatileTev(HSD_TObj* tobj, u32 rendermode);
 static inline int DifferentTluts(HSD_Tlut* t0, HSD_Tlut* t1);
+static HSD_TexLODDesc default_lod$1465 = {
+            GX_LIN_MIP_LIN, 0.0F, GX_FALSE, GX_FALSE, GX_ANISO_1,
+        };
+
 void HSD_TObjSetup(HSD_TObj* tobj);
 static inline GXTexGenSrc HSD_TexCoordID2TexGenSrc(GXTexCoordID coord);
 
@@ -834,7 +839,6 @@ static void MakeTextureMtx(HSD_TObj* tobj)
     HSD_Mtx m;
     HSD_Vec3 trans;
     HSD_Quaternion rot;
-
 
     { int valid = 0;
       if (tobj->repeat_s && tobj->repeat_t) valid = 1;
@@ -1548,9 +1552,7 @@ void HSD_TObjSetup(HSD_TObj* tobj)
     }
 
     for (; tobj; tobj = tobj->next) {
-        static HSD_TexLODDesc default_lod = {
-            GX_LIN_MIP_LIN, 0.0F, GX_FALSE, GX_FALSE, GX_ANISO_1,
-        };
+
         HSD_TexLODDesc* lod;
         HSD_ImageDesc* imagedesc = tobj->imagedesc;
         GXTexFilter min_filter;
@@ -1563,7 +1565,7 @@ void HSD_TObjSetup(HSD_TObj* tobj)
         HSD_ASSERT(1713, imagedesc);
         HSD_ASSERT(1714, imagedesc->image_ptr);
 
-        lod = tobj->lod != NULL ? tobj->lod : &default_lod;
+        lod = tobj->lod != NULL ? tobj->lod : &default_lod$1465;
         min_filter = lod->minFilt;
 
         switch ((GXTexFmt)imagedesc->format) {
@@ -1619,7 +1621,7 @@ void HSD_TObjSetup(HSD_TObj* tobj)
         case GX_TF_RGBA8:
         case GX_TF_CMPR:
             GXInitTexObj(&texobj, imagedesc->image_ptr, imagedesc->width,
-                         imagedesc->height, imagedesc->format, tobj->wrap_s,
+                         imagedesc->height, ((volatile HSD_ImageDesc*)imagedesc)->format, tobj->wrap_s,
                          tobj->wrap_t, imagedesc->mipmap ? GX_TRUE : GX_FALSE);
             break;
 

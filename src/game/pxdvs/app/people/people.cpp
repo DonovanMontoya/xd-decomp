@@ -1244,7 +1244,10 @@ void peopleRotateToXYZ(u32 group, u32 resource, f32 x, f32 y, f32 z, f32 rate) {
         difference.param2 = 0.0f;
         f32 angle;
         if (!(PSVECMag(&difference) < 0.00001f) || !(PSVECMag(&difference) > -0.00001f))
-            angle = atan2(difference.param1, difference.param3);
+        {
+            f32 result = atan2(difference.param1, difference.param3);
+            angle = result;
+        }
         else { peopleBiosGetRot(work, &rotation); angle = rotation.param2; }
         peopleRotateToAngle(group, resource, angle, rate);
     }
@@ -1900,12 +1903,15 @@ void _peoplePostUpdateShadows__Fv() {
             tagPeopleWork* work = peopleBiosGetWorkPtr(index);
             if (work->used) {
                 GSmodel* model = peopleBiosGetModelPtr(work);
-                if (model && work->visible && GSmodelGetVisibility(model) && ((heroIsPlayerPeople(work->group, work->resource) != 1) == i)) {
-                    GSvec* position = peopleBiosGetPosPtr(work);
-                    target.param1 = position->param1;
-                    target.param2 = position->param2;
-                    target.param3 = position->param3;
-                    break;
+                if (model && work->visible && GSmodelGetVisibility(model)) {
+                    s32 player = heroIsPlayerPeople(work->group, work->resource) != 1;
+                    if (player == i) {
+                        GSvec* position = peopleBiosGetPosPtr(work);
+                        target.param1 = position->param1;
+                        target.param2 = position->param2;
+                        target.param3 = position->param3;
+                        break;
+                    }
                 }
             }
         }
@@ -2139,6 +2145,10 @@ static f32 m_hero_next_special_idling_time;
 u8 isWalkStartMotion__13tagPeopleWorkCFv(tagPeopleWork*);
 u8 gimmickBoxOnBox(tagPeopleWork*, GSvec*, GSvec*);
 u32 _peopleAdjustPosition__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork*, GSvec*, GSvec*);
+#pragma dollar_identifiers on
+// Keep the retail static identities independent of preceding local declarations.
+static f32 d0_fix$1767;
+static u8 init$1768;
 s32 peopleMoveAlongAngle(u32 group, u32 resource, f32 speed, f32 angle) {
     f32 move;
     GSvec position;
@@ -2152,7 +2162,10 @@ s32 peopleMoveAlongAngle(u32 group, u32 resource, f32 speed, f32 angle) {
         return 1;
     }
     peopleBiosGetPos(work, &position);
-    static f32 d0_fix = 1.0f;
+    if ((s8)init$1768 == 0) {
+        init$1768 = 1;
+        d0_fix$1767 = 1.0f;
+    }
     f32 step = speed * (30.0f * (f32)timeGetLastFrameTime() / (f32)GSgfxVideoGetVsyncRate());
     f32 playRate = peopleViewerGetPlaySpeedRate(work);
     work->unknown160 = speed;

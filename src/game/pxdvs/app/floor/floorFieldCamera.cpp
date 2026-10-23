@@ -251,29 +251,28 @@ void floorUpdateFieldCamera() {
                             gCameraRotY = t * (rotY - gCameraInitRotY) + gCameraInitRotY;
                             gCameraFOV = t * (fov - gCameraInitFOV) + gCameraInitFOV;
                         } else if (gPowValue < 0.19999f) {
-                            f32 t2 = t * t;
-                            gCameraHeight += t2 * (height - gCameraHeight);
-                            gCameraDistance += t2 * (distance - gCameraDistance);
-                            gCameraRotY += t2 * (rotY - gCameraRotY);
-                            gCameraFOV += t2 * (fov - gCameraFOV);
+                            t = t * t;
+                            gCameraHeight += t * (height - gCameraHeight);
+                            gCameraDistance += t * (distance - gCameraDistance);
+                            gCameraRotY += t * (rotY - gCameraRotY);
+                            gCameraFOV += t * (fov - gCameraFOV);
                         } else {
                             u8 flip = 0;
-                            f32 x = t * 2.0f;
-                            f32 y;
-                            if (x > 1.0f) {
+                            t *= 2.0f;
+                            if (t > 1.0f) {
                                 flip = 1;
-                                x = 2.0f - x;
+                                t = 2.0f - t;
                             }
-                            f32 c = std::cosf(1.5707964f * x);
-                            y = std::pow(1.0f - c, gPowValue);
+                            f32 c = std::cosf(1.5707964f * t);
+                            t = std::pow(1.0f - c, gPowValue);
                             if (flip != 0) {
-                                y = 2.0f - y;
+                                t = 2.0f - t;
                             }
-                            y = y * 0.5f;
-                            gCameraHeight = y * (height - gCameraInitHeight) + gCameraInitHeight;
-                            gCameraDistance = y * (distance - gCameraInitDistance) + gCameraInitDistance;
-                            gCameraRotY = y * (rotY - gCameraInitRotY) + gCameraInitRotY;
-                            gCameraFOV = y * (fov - gCameraInitFOV) + gCameraInitFOV;
+                            t *= 0.5f;
+                            gCameraHeight = t * (height - gCameraInitHeight) + gCameraInitHeight;
+                            gCameraDistance = t * (distance - gCameraInitDistance) + gCameraInitDistance;
+                            gCameraRotY = t * (rotY - gCameraInitRotY) + gCameraInitRotY;
+                            gCameraFOV = t * (fov - gCameraInitFOV) + gCameraInitFOV;
                         }
                     }
                 } else {

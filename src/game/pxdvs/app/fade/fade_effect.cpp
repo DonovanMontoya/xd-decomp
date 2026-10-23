@@ -866,10 +866,7 @@ static void _fadeEffectFunction_trainer_FirstInit(GStexture* arg0) {
 #define FL_SET(a, b, v) \
     FL(s32, a) |= (v); FL(s32, 0x16A8) |= 8; FL(s32, b) |= (v); FL(s32, 0x1760) |= 8
 
-#define FADE_LAYER_SETUP_IMPL(SlotType) \
-    f32 matrix[4][4]; \
-    u32* flags; \
-    SlotType slot; \
+#define FADE_LAYER_SETUP_STATE \
     GSmtx44Ortho(matrix, 0.0f, 480.0f, 0.0f, 640.0f, 0.0f, -30000.0f); \
     layer->fieldD54 = 1; \
     layer->fieldD58 = matrix[0][0]; \
@@ -938,6 +935,12 @@ static void _fadeEffectFunction_trainer_FirstInit(GStexture* arg0) {
     layer->field16A8 = (s32) (layer->field16A8 | 2); \
     layer->field1770 = (s32) (layer->field1770 | 2); \
     layer->field1760 = (s32) (layer->field1760 | 2);
+
+#define FADE_LAYER_SETUP_IMPL(SlotType) \
+    f32 matrix[4][4]; \
+    u32* flags; \
+    SlotType slot; \
+    FADE_LAYER_SETUP_STATE
 
 #define FADE_LAYER_SETUP FADE_LAYER_SETUP_IMPL(FadeMatrixSlot*)
 
@@ -4179,11 +4182,12 @@ bool fadeEffectHookFunction_virtual_hexa_decay(GSgfxLayerID id,bool active,f32 e
 #pragma opt_common_subs off
 #pragma opt_loop_invariants off
 void _fadeVirtualHexaDecayLineDraw(GSgfxLayer* input,f32 opacity) {
+    FadeMatrixSlot* slot;
     GSgfxLayer* layer;
     FadeHexaLine* line;
-    s32 i;
-    s32 side;
     u8 alpha;
+    s32 side;
+    s32 i;
     s16 u;
     s16 v;
     s32 index;
@@ -4194,7 +4198,9 @@ void _fadeVirtualHexaDecayLineDraw(GSgfxLayer* input,f32 opacity) {
     layer=input;
     if(opacity<0.00001f)return;
     alpha=255.0f*opacity;
-    FADE_LAYER_SETUP
+    f32 matrix[4][4];
+    u32* flags;
+    FADE_LAYER_SETUP_STATE
     layer->field1998=0xB0;
     layer->setRenderStateAndSelect(GSgfxVFBuildTemp(0,3,0,0,1,5,0,0,0));
     u8 red[3]={50,200,0};

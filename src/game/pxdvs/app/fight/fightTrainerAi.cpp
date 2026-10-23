@@ -316,7 +316,7 @@ void fightAi_InitAllWazaValidSub(AiWazaCandidate *);
 void fightAi_InitAllWazaValid(void);
 void fightAi_CreateAction_FromAllWazaValid(FIGHT_TRAINER *, AiWazaCandidate *);
 s32 fightAi_CreateFightActionAttckIrekae(FightOutPokemon *, s32);
-s32 fightAi_CreateFightActionAttckWaza(FightOutPokemon *, FightOutPokemon *, u16, s16);
+s32 fightAi_CreateFightActionAttckWaza(FightOutPokemon *, FightOutPokemon *, u32, s16);
 void fightOutPokemonCreateFightAction(FightOutPokemon *, u32, u32, void *, void *, s16);
 void fightOutPokemonCreateFightActionAttackWaza(FightOutPokemon *, u32, u32, void *, void *, u16, u32, s8, u32);
 FightOutPokemon * fightSeqSelectDefensePokemonPtr(FightOutPokemon *, u16, u8, void *, u8, u8, s16);
@@ -1825,37 +1825,18 @@ s32 fightAi_CreateFightActionAttckIrekae(FightOutPokemon *arg0, s32 arg1) {
     return 1;
 }
 
-s32 fightAi_CreateFightActionAttckWaza(FightOutPokemon *arg0, FightOutPokemon *arg1, u16 arg2, s16 arg3) {
-    s32 sp8;
-    s32 temp_r3;
-    FightOutPokemon *temp_r3_2;
-    u32 temp_r3_3;
-    FightOutPokemon *var_r28;
-
-    var_r28 = arg1;
-    temp_r3 = (u8) (fightFloor_GetFightType(NULL));
-    if (arg0 == NULL) {
-        return 0;
-    }
-    if (var_r28 == NULL) {
-        return 0;
-    }
-    if (arg2 == 0) {
-        return 0;
-    }
-    if (arg3 < 0) {
-        return 0;
-    }
-    temp_r3_2 = fightSeqSelectDefensePokemonPtr(arg0, arg2, temp_r3, (void *)&fightTrainerAiWazaSelectDefensePokemon, 1U, 0U, -1);
-    if (temp_r3_2 != NULL) {
-        var_r28 = temp_r3_2;
-    }
-    if (var_r28 == NULL) {
-        return 0;
-    }
-    temp_r3_3 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(var_r28, temp_r3);
-    sp8 = 0;
-    fightOutPokemonCreateFightActionAttackWaza(arg0, 0U, 0x13U, NULL, &fight_action_data_waza, arg2, temp_r3_3, (s8) arg3, 0U);
+s32 fightAi_CreateFightActionAttckWaza(FightOutPokemon *attacker, FightOutPokemon *defender, u32 move, s16 slot) {
+    u32 rawType=((u32 (*)(void*))fightFloor_GetFightType)(NULL);
+    if(!attacker)return 0;
+    if(!defender)return 0;
+    if((u16)move==0)return 0;
+    if(slot<0)return 0;
+    u8 type=rawType;
+    FightOutPokemon* selected=((FightOutPokemon* (*)(FightOutPokemon*,u32,u8,void*,u8,u8,s16))fightSeqSelectDefensePokemonPtr)(attacker,move,type,(void*)&fightTrainerAiWazaSelectDefensePokemon,1,0,-1);
+    if(selected)defender=selected;
+    if(!defender)return 0;
+    u32 target=fightTargetGetTragetPtrToRelativeHostSideFightTargetId(defender,type);
+    fightOutPokemonCreateFightActionAttackWaza(attacker,0,0x13,0,fight_action_data_waza,(u16)move,target,(s8)slot,0);
     return 1;
 }
 

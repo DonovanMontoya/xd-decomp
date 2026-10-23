@@ -949,8 +949,8 @@ bool ParticleEntry::Update(f32 dt) {
         seq->GetPosition(position);
         seq->GetRotation(rotation);
         seq->GetScale(scale);
+        bool a = (field34 & 0x20) != 0;
         u32 flags = field34;
-        u8 a = (flags >> 5) & 1;
         s32 b = (flags >> 9) & 1;
         GSparticleSetGeneratorPosition(generator, position);
         GSparticleSetGeneratorRotation(generator, rotation);

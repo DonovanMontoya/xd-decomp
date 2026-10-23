@@ -23,11 +23,10 @@ extern "C" s32 menuMewWazaDraw(tagWINDOW_WORK *arg0,tagSPRITE_WORK *arg1) {
     temp_r7 = arg0->x;
     temp_r6 = arg1->x;
     temp_r27 = arg1->width;
-    s32 baseY=arg1->y;
-    s32 clipped=temp_r28-4;
-    s16 offset=clipped-temp_r28;
-    s32 translatedY=baseY+offset;
-    spriteSetOffset(temp_r30, (s16) (temp_r7 + temp_r6), (s16) (arg0->y + translatedY));
+    s32 clipped = temp_r28 - 4;
+    s16 offset = clipped - temp_r28;
+    s32 baseY = arg1->y;
+    spriteSetOffset(temp_r30, temp_r7 + temp_r6, arg0->y + baseY + offset);
     spriteSetEnv(temp_r30);
     temp_r0 = arg1->id;
     switch (temp_r0) {                              /* switch 1; irregular */
