@@ -6799,20 +6799,20 @@ noChange:
 }
 
 void makeRandomSheet__6cBingoFv(BingoState *arg0) {
-    u8 order[16] = {0,1,2,3,7,11,15,14,13,12,8,4,5,6,10,9};
-    s32 var_r30;
-    s32 var_r30b;
     s32 var_r31_2;
-    BingoState *var_r31;
-    f32 temp_f1;
-    f32 temp_f28;
-    s32 temp_r0_2;
-    s32 temp_r3;
     u8 temp_r4;
-    u8 temp_r4_2;
     u8 temp_r5;
     u8 temp_r6;
+    f32 temp_f28;
     u8 temp_r7;
+    s32 var_r30;
+    s32 temp_r3;
+    BingoState *var_r31;
+    s32 temp_r0_2;
+    s32 var_r30b;
+    u8 temp_r4_2;
+    u8 order[16] = {0,1,2,3,7,11,15,14,13,12,8,4,5,6,10,9};
+    f32 temp_f1;
 
     for (var_r30 = 0; var_r30 < 16; var_r30++) {
         arg0->backup[var_r30].unk0 = arg0->cells[var_r30].unk0;

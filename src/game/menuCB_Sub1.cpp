@@ -1717,13 +1717,15 @@ void menuCB_RuleMessageTblDisp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg
     GSmsgPrint2(arg0->unk1C, x, 0, ((*(u32 *)&arg1->unk64) & 0xFFFFFF00) | arg0->unk93, fn_8007E634(0x4276));
 }
 
+typedef struct MenuSubRuleView { u8 reserved0[0x9C78]; u8 *rule; } MenuSubRuleView;
 void menuCB_RuleItemFlagDisp(MenuSubWindow *arg0, MenuSubSprite *arg1) {
-    s16 var_r30;
-    s32 temp_r31;
     s32 var_r26;
+    s32 var_r27;
+    s32 temp_r31;
+    s16 var_r30;
+    MenuSubItem *temp_r7;
     s32 var_r29;
     MenuSubItem *temp_r27;
-    MenuSubItem *temp_r7;
 
     temp_r31 = winSpriteGetLayerID(arg0,arg1);
     temp_r27 = menuItemBiosGetPtr(arg0->unk4, 0x3AB);
@@ -1740,29 +1742,27 @@ void menuCB_RuleItemFlagDisp(MenuSubWindow *arg0, MenuSubSprite *arg1) {
         var_r29 = 0x3E;
     }
     spriteSetScissor(temp_r31, temp_r27->unk6 - temp_r7->unk6, temp_r27->unk8 - temp_r7->unk8, temp_r7->unkA, temp_r7->unkC);
-    while (var_r26 <= var_r29) {
-        if (var_r26 == 0x3E) {
+    for (var_r27 = var_r26; var_r27 <= var_r29; ++var_r27, var_r30 += 0x18) {
+        if (var_r27 == 0x3E) {
             GSmsgPrint2(arg0->unk1C, 0, var_r30, arg0->unk93 | ~0xFF, 1);
-        } else if ((u8) *((u8 *)_CB.unk9C78 + (var_r26 + 0x52)) != 0) {
+        } else if (((MenuSubRuleView *)&_CB)->rule[var_r27 + 0x52] != 0) {
             GSmsgPrint2(arg0->unk1C, 0, var_r30, arg0->unk93 | 0xFF3F0000, 0x43E4);
         } else {
             GSmsgPrint2(arg0->unk1C, 0, var_r30, arg0->unk93 | ~0xFF, 0x43E3);
         }
-        var_r26 += 1;
-        var_r30 += 0x18;
     }
     spriteClearScissor(temp_r31);
 }
 
 void menuCB_RuleItemNameEntry(MenuSubWindow *arg0, MenuSubSprite *arg1) {
-    s16 var_r30;
-    s32 temp_r31;
     s32 var_r26;
-    s32 var_r27;
-    s32 var_r29;
+    MenuSubItem *temp_r7;
+    s32 temp_r31;
     u32 temp_r3;
     MenuSubItem *temp_r27;
-    MenuSubItem *temp_r7;
+    s32 var_r27;
+    s16 var_r30;
+    s32 var_r29;
 
     temp_r31 = winSpriteGetLayerID(arg0,arg1);
     temp_r27 = menuItemBiosGetPtr(arg0->unk4, 0x3AC);
