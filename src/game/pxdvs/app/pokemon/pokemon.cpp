@@ -855,6 +855,7 @@ void pokemonSetSequenceStatus(Pokemon* poke, void* sequence)
 
 u32 pokemonCreateSequence(void* fightPokemon)
 {
+    void* seq;
     Pokemon* poke = fightPokemonGetPokemonPtr(fightPokemon);
     u32 rnd = pokemon_GetRnd(poke);
     u32 id = pokemon_GetPokemonDataId(poke);
@@ -871,8 +872,9 @@ u32 pokemonCreateSequence(void* fightPokemon)
         if (pokemonIsDarkPokemon(poke) == 1) id = 0x1A1;
         break;
     }
-    pokemonSetSequenceStatus(poke, (void*)(id = Sequence_LoadPokemon(id, rnd, pokemonCheckRare(poke))));
-    return id;
+    seq = (void*)Sequence_LoadPokemon(id, rnd, pokemonCheckRare(poke));
+    pokemonSetSequenceStatus(poke, seq);
+    return (u32)seq;
 }
 
 s32 pokemonSetWazaStatus(Pokemon* poke, u16 wazaId, u8 force)

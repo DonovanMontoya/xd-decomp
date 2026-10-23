@@ -1577,10 +1577,8 @@ void _fightTrainer_SortUnderTakerDarkPoke(u8* list, u8 count) {
             worthJ = getWorth__15DeckDarkPokemonCFv(DeckDarkPokemon::getDeckDarkPokemonObj(list[j]));
             escapeI = darkPokemonGetDarkPokemon(list[i])->getEscapeTime();
             escapeJ = darkPokemonGetDarkPokemon(list[j])->getEscapeTime();
-            a = 0;
-            if (((worthI << 16) & 0xFF0000) || escapeI != 0) a = 1;
-            b = 0;
-            if (((worthJ << 16) & 0xFF0000) || escapeJ != 0) b = 1;
+            a = ((worthI << 16) & 0xFF0000) || escapeI != 0;
+            b = ((worthJ << 16) & 0xFF0000) || escapeJ != 0;
             if (a > b) {
                 tmp = list[i];
                 list[i] = list[j];

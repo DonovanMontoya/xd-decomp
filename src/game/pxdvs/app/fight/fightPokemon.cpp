@@ -557,13 +557,16 @@ extern "C" void fightOutPokemonDamageEffect(FightOutPokemon* poke) {
 #include <game/pxdvs/app/fight/fightPokemonActions.hpp>
 
 extern "C" u8 fightOutPokemonCheckCanOutOkWazaBanme(FightOutPokemon* poke, u16 index, u8 clearKeep, u16* choiceMove) {
-    u8 result = 0;
-    u16 power;
-    u32 move;
+    u16 disabled;
     Pokemon* pokemon;
+    u32 move;
+    u16 power;
     u32 pp;
     u32 item;
     u32 lastMove;
+    u8 result;
+    u32 lockedMove;
+    result = 0;
     if (poke == nullptr) return 6;
     pokemon = fightOutPokemonGetPokemonPtr(poke);
     move = pokemon_GetPokemonWazaDataId(pokemon, index);
@@ -572,7 +575,7 @@ extern "C" u8 fightOutPokemonCheckCanOutOkWazaBanme(FightOutPokemon* poke, u16 i
     item = fightOutPokemonGetSoubiItemSoubiDataId(poke);
     lastMove = fightOutPokemon_GetLastSelectWazaDataId(poke);
     if (fightOutPokemonIsJoutaiDataId(poke, 0x29) == 1) {
-        u16 disabled = fightOutPokemonGetIdBuffJoutaiDataId(poke, 0x29);
+        disabled = fightOutPokemonGetIdBuffJoutaiDataId(poke, 0x29);
         if (disabled != 0 && disabled == static_cast<u16>(move) && disabled != 0x176) result = 1;
     }
     if (fightOutPokemonIsJoutaiDataId(poke, 0x1b) == 1 &&
@@ -583,12 +586,11 @@ extern "C" u8 fightOutPokemonCheckCanOutOkWazaBanme(FightOutPokemon* poke, u16 i
     if (fightOutPokemonIsJoutaiDataId(poke, 0x30) == 1 && power == 0) result = 3;
     if (fightFloorCheckHuuinWazaFightOutPokemon(nullptr, poke, move) == 1) result = 4;
     if (static_cast<u16>(item) == 0x1d) {
-        u32 lockedMove;
         if (fightOutPokemonIsJoutaiDataId(poke, 0x36) == 1)
             lockedMove = fightOutPokemonGetIdBuffJoutaiDataId(poke, 0x36);
         else lockedMove = 0;
-        u16 locked = lockedMove;
-        if (locked != 0 && locked != 0x176 && locked != 0xffff && locked != static_cast<u16>(move)) result = 5;
+        disabled = lockedMove;
+        if (disabled != 0 && disabled != 0x176 && disabled != 0xffff && disabled != static_cast<u16>(move)) result = 5;
         if (choiceMove != nullptr) *choiceMove = lockedMove;
     }
     if (pokemonWazaCheckValid(pokemon, index) == 0 || static_cast<u8>(pp) == 0) result = 6;
