@@ -2132,9 +2132,10 @@ void CMenuReliveHall::drawDancerHitEffect() {
 }
 
 void CMenuReliveHall::dancerMoveAnimationOne(SPokemonView &view, f32 rate) {
-    f32 movement = rate * dirSubHalf(view.targetAngle, view.startAngle);
-    view.unk4 = movement + view.startAngle;
-    f32 delta = dirSubHalf(view.targetFacing, view.startFacing);
+    f32 delta = dirSubHalf(view.targetAngle, view.startAngle);
+    f32 movement = rate * delta;
+    view.unk4 = view.startAngle + movement;
+    delta = dirSubHalf(view.targetFacing, view.startFacing);
     f32 magnitude;
     if (delta < 0.0f) magnitude = -delta;
     else magnitude = delta;
@@ -2143,7 +2144,7 @@ void CMenuReliveHall::dancerMoveAnimationOne(SPokemonView &view, f32 rate) {
         return;
     }
     movement = rate * delta;
-    view.facing = movement + view.startFacing;
+    view.facing = view.startFacing + movement;
 }
 
 SPokemonView *CMenuReliveHall::getPokemonViewByClockwizePositionWithCatch(int position) {

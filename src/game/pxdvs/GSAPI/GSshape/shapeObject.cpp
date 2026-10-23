@@ -165,8 +165,9 @@ void GsShapeObject::MakeShapeGfxDL() {
 void GsShapeObject::MakeDisplayListShape() {
     displayList=GSmemAlloc(16);
     if(displayList) {
-        u16 indices=entry->segmentsV*((entry->segmentsU+1)*2);
-        u16 rows=entry->segmentsV;
+s32 rows=entry->segmentsV;
+        u32 columns=entry->segmentsU+1;
+        u16 indices=rows*(columns*2);
         memset(displayList,0,16);
         GSgfxDLBegin(displayList,vertexFormat,rows,indices);
         MakeShapeGfxDL();
@@ -1172,6 +1173,7 @@ static inline bool shapeBillboardFull(GsShapeObject* self,f32 x,f32 y,f32 depth)
     }
     return false;
 }
+#pragma opt_common_subs off
 extern "C" void MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(GsShapeObject* self,GSmtx* source,f32 depth) {
     f32 x=source->matrix[0][3];
     f32 y=source->matrix[1][3];
@@ -1193,4 +1195,5 @@ extern "C" void MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(GsShapeObject* sel
         break;
     }
 }
+#pragma opt_common_subs reset
 #undef BB_MATRIX

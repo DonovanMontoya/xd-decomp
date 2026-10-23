@@ -333,9 +333,8 @@ void threadExecutePass(u32 groupId, u8 groupOnly) {
                     _nextThread = 0;
                     GSthreadTerminate(dead);
                 }
-                next = threadFindNext(cur, groupId, groupOnly);
-                _nextThread = next;
-                cur = next;
+                _nextThread = threadFindNext(cur, groupId, groupOnly);
+                cur = _nextThread;
                 if (cur != 0) {
                     stack = cur->stack;
                     regState = cur->regState;

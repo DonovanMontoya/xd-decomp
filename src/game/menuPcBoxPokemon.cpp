@@ -949,6 +949,7 @@ bool CMenuPokemonLeave::cursorMoveUp(long &pos) {
     return true;
 }
 
+#pragma opt_common_subs off
 void CMenuPokemonLeave::stateMainProc() {
     u8 *work = baseAnim.saved;
     u8 *animWork = anim.saved;
@@ -1065,6 +1066,7 @@ void CMenuPokemonLeave::stateMainProc() {
         updateAll();
     } while (baseAnim.sub == -1);
 }
+#pragma opt_common_subs reset
 
 void CMenuPokemonLeave::actionExecByMsgID(u32 msg) {
     switch (msg) {

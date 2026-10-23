@@ -692,8 +692,8 @@ void TigaThread::makeStateData(GSBinWriteStream* stream) {
     }
     stream->writeU32(stackCount2);
     for (i = 0; i < stackCount2; i++) {
-        s32* slot = stackArea2 + i;
-        stream->writeU32(((u32)slot - (u32)stackBase3C) >> 2);
+        codeOffset = ((u32)(stackArea2 + i) - (u32)stackBase3C) >> 2;
+        stream->writeU32(codeOffset);
     }
     stream->writeU8(timerIndex);
     stream->writeFloat(timerLimit);

@@ -22,10 +22,10 @@ u8 peopleLineCheck(u32 arg0, u32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg
     Resource *temp_r3_4;
     f32 temp_f1;
     f32 var_f1;
-    f32 var_f28;
     f32 radius;
-    f32 var_f29;
     f32 var_f31;
+    f32 var_f29;
+    f32 var_f28;
     tagPeopleWork *temp_r3;
 
     temp_r3 = peopleGet(arg0, arg1);

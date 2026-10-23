@@ -2039,6 +2039,7 @@ void menuTool_tunaidePokemonSelect1_Button(MenuDBWindow *arg0) {
 }
 
 void menuTool_tunaidePokemonSelect1_Ctrl(MenuDBWindow *arg0) {
+    s32* state;
     s32 temp_r3_2;
     u16 temp_r3;
     u16 var_r30;
@@ -2051,11 +2052,12 @@ void menuTool_tunaidePokemonSelect1_Ctrl(MenuDBWindow *arg0) {
         return;
     }
     menuCBPokemonEntryButtonTask_20041006();
-    if (((s32) _CB.unkB108 < 1) && (pauseIsPause() == 0)) {
+    state = &_CB.unkB108;
+    if (((s32) *state < 1) && (pauseIsPause() == 0)) {
         if ((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) {
             var_r30 = menuCBPokemonEntryPokemonNumMin(0);
             if ((toolentryTaisengetEtnryPokemonOrderNum(0) >= (s32) var_r30) && (toolentryTaisenGetHomePlace(0) == 0)) {
-                _CB.unkB108 = 1;
+                *state = 1;
                 return;
             }
         }
@@ -2066,7 +2068,7 @@ void menuTool_tunaidePokemonSelect1_Ctrl(MenuDBWindow *arg0) {
                 var_r30 = temp_r3;
             }
             if ((s32) var_r30 == toolentryTaisengetEtnryPokemonOrderNum(0)) {
-                _CB.unkB108 = 1;
+                *state = 1;
                 return;
             }
             goto block_13;
@@ -5826,19 +5828,20 @@ void menuTool_tunaide00_Button(MenuDBWindow *arg0) {
 }
 
 void menuTool_tunaide00_Ctrl(MenuDBWindow *arg0) {
+    s32 battleField;
     menuCB_DispEffect(arg0);
     menuSetStatus(arg0->unk4, 0x10);
     if (((s32) _CB.unkB114 == 0) && ((s32) _CB.unkB10C < 2) && (pauseIsPause() == 0)) {
-        if ((s32) _CB.unkB144 != -1) {
-            if ((s32) _CB.unkB14C == 0xFF) {
-                _CB.unkB144 = -1;
+        if ((s32) (*(volatile MenuDBState *)&_CB).unkB144 != -1) {
+            if ((s32) (*(volatile MenuDBState *)&_CB).unkB14C == 0xFF) {
+                (*(volatile MenuDBState *)&_CB).unkB144 = -1;
                 goto block_8;
             }
-            _CB.unkB148 -= 0x28;
-            _CB.unkB14C += 0x28;
-            if ((s32) _CB.unkB14C >= 0xFF) {
-                _CB.unkB14C = 0xFF;
-                _CB.unkB148 = 0xF;
+            (*(volatile MenuDBState *)&_CB).unkB148 -= 0x28;
+            (*(volatile MenuDBState *)&_CB).unkB14C += 0x28;
+            if ((s32) (*(volatile MenuDBState *)&_CB).unkB14C >= 0xFF) {
+                (*(volatile MenuDBState *)&_CB).unkB14C = 0xFF;
+                (*(volatile MenuDBState *)&_CB).unkB148 = 0xF;
             }
         } else {
 block_8:
@@ -5869,9 +5872,10 @@ block_8:
                     break;
                 case 2:                             /* switch 1 */
                     if ((s32) (windowGetKeyRepeat() & 1) != 0) {
-                        _CB.unkB000 = _CB.unkAFFC;
-                        if ((s32) _CB.unkAFFC != 0) {
-                            _CB.unkAFFC -= 1;
+                        *(volatile s32 *)&_CB.unkB000 = *(volatile s32 *)&_CB.unkAFFC;
+                        battleField = *(volatile s32 *)&_CB.unkAFFC;
+                        if (battleField != 0) {
+                            _CB.unkAFFC = battleField - 1;
                         }
                         if ((s32) _CB.unkB000 != (s32) _CB.unkAFFC) {
                             _CB.unkB114 = 1;
@@ -5879,9 +5883,10 @@ block_8:
                         }
                     }
                     if (((s32) (windowGetKeyRepeat() & 2) != 0) && ((s32) _CB.unkB114 == 0)) {
-                        _CB.unkB000 = _CB.unkAFFC;
-                        if ((s32) _CB.unkAFFC != 6) {
-                            _CB.unkAFFC += 1;
+                        *(volatile s32 *)&_CB.unkB000 = *(volatile s32 *)&_CB.unkAFFC;
+                        battleField = *(volatile s32 *)&_CB.unkAFFC;
+                        if (battleField != 6) {
+                            _CB.unkAFFC = battleField + 1;
                         }
                         if ((s32) _CB.unkB000 != (s32) _CB.unkAFFC) {
                             _CB.unkB114 = 3;
@@ -5933,7 +5938,9 @@ block_8:
                         break;
                     }
                     _CB.unkB10C = 0;
+                    return;
                 }
+                return;
             } else if ((s32) _CB.unkB064 == 0) {
                 if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                     menuCB_SE_Play(0x12);
@@ -5942,29 +5949,30 @@ block_8:
                 }
                 if ((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) {
                     menuCB_SE_Play(0x11);
-                    switch ((s32) _CB.unkAFE4) {    /* switch 3; irregular */
-                    case 4:                         /* switch 3 */
+                    if (_CB.unkAFE4 == 4) {
                         _CB.unkB064 = 2;
                         return;
-                    case 5:                         /* switch 3 */
+                    }
+                    if (_CB.unkAFE4 == 5) {
                         _CB.unkB064 = 1;
                         return;
+                    }
+                    switch ((s32) _CB.unkAFE4) {
                     case 0:                         /* switch 3 */
                         _CB.unkB074 = _CB.unkAFF4;
-                    default:                        /* switch 3 */
-block_86:
-                        _CB.unkB10C = 1;
-                        return;
+                        break;
                     case 1:                         /* switch 3 */
                         _CB.unkB078 = _CB.unkAFF8;
-                        goto block_86;
+                        break;
                     case 2:                         /* switch 3 */
                         _CB.unkB07C = _CB.unkAFFC;
-                        goto block_86;
+                        break;
                     case 3:                         /* switch 3 */
                         _CB.unkB084 = _CB.unkB004;
-                        goto block_86;
+                        break;
                     }
+                    _CB.unkB10C = 1;
+                    return;
                 } else if ((s32) (windowGetKeyRepeat() & 1) != 0) {
                     _menuCB_TunaideSub_Page_Chenge_Init__Fv();
                     if ((s32) _CB.unkAFE4 == 0) {
@@ -5988,7 +5996,10 @@ block_86:
                 } else if ((s32) (windowGetKeyRepeat() & 8) != 0) {
                     _menuCB_TunaideSub_Page_Chenge_Init__Fv();
                     switch ((s32) _CB.unkAFE4) {    /* switch 4; irregular */
-                    default:                        /* switch 4 */
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:                         /* switch 4 */
                         _CB.unkAFE4 = 4;
                         return;
                     case 4:                         /* switch 4 */
@@ -6001,7 +6012,10 @@ block_86:
                 } else if ((s32) (windowGetKeyRepeat() & 4) != 0) {
                     _menuCB_TunaideSub_Page_Chenge_Init__Fv();
                     switch ((s32) _CB.unkAFE4) {    /* switch 5; irregular */
-                    default:                        /* switch 5 */
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:                         /* switch 5 */
                         _CB.unkAFE4 = 5;
                         return;
                     case 4:                         /* switch 5 */

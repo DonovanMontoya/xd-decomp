@@ -77,7 +77,6 @@ static void order_dag(int num, u32* dep, u32* full_dep, HSD_TExpDag* list, int d
     HSD_TExpDag* dag;
     u32 blocked;
     u32 full_bits;
-    u32 dep_bits;
     int score;
     int i;
 
@@ -95,8 +94,7 @@ static void order_dag(int num, u32* dep, u32* full_dep, HSD_TExpDag* list, int d
         }
     } else {
         {
-            dep_bits = dep[idx];
-            blocked = ready_set | dep_bits;
+            blocked = ready_set | dep[idx];
             full_bits = 0;
             for (i = 0; i < num; i++) {
                 if (blocked & (1 << i)) {
@@ -106,7 +104,7 @@ static void order_dag(int num, u32* dep, u32* full_dep, HSD_TExpDag* list, int d
         }
         dag = &list[idx];
         ready_set = blocked & ~full_bits;
-        if (dag->nb_dep == 1 && (ready_set & dep_bits)) {
+        if (dag->nb_dep == 1 && (ready_set & dep[idx])) {
             sp8 = order;
             spC = min;
             sp10 = min_order;
@@ -129,16 +127,12 @@ static void order_dag(int num, u32* dep, u32* full_dep, HSD_TExpDag* list, int d
 static void CalcDistance(HSD_TExp** tevs, int* dist, HSD_TExp* tev, int num,
                   int depth)
 {
-    HSD_TExp** p;
-    int idx;
     int i;
 
-    p = tevs;
-    idx = 0;
     for (i = 0; i < num; i++) {
-        if (*p == tev) {
-            if (dist[idx] < depth) {
-                dist[idx] = depth;
+        if (tevs[i] == tev) {
+            if (dist[i] < depth) {
+                dist[i] = depth;
                 for (i = 0; i < 4; i++) {
                     if (tev->tev.c_in[i].type == 1) {
                         CalcDistance(tevs, dist, tev->tev.c_in[i].exp, num,
@@ -152,8 +146,6 @@ static void CalcDistance(HSD_TExp** tevs, int* dist, HSD_TExp* tev, int num,
             }
             return;
         }
-        p++;
-        idx++;
     }
 }
 
@@ -165,7 +157,6 @@ int HSD_TExpMakeDag(HSD_TExp* root, HSD_TExpDag* list)
     int sp14[32];
     int n;
     int j;
-    HSD_TExp** base;
     int i;
     int k;
     int l;
@@ -175,9 +166,8 @@ int HSD_TExpMakeDag(HSD_TExp* root, HSD_TExpDag* list)
 
     HSD_ASSERT(0xEE, HSD_TExpGetType(root) == HSD_TE_TEV);
 
-    base = sp94;
     n = 0;
-    base[n++] = root;
+    sp94[n++] = root;
     for (j = 0; j < n; j++) {
         HSD_TExp* tmp;
         HSD_ASSERT(0xF6, j<HSD_TEXP_MAX_NUM);
@@ -185,7 +175,7 @@ int HSD_TExpMakeDag(HSD_TExp* root, HSD_TExpDag* list)
         for (i = 0; i < 4; i++) {
             if (tmp->tev.c_in[i].type == HSD_TE_TEV) {
                 for (k = 0; k < n; k++) {
-                    if (base[k] == tmp->tev.c_in[i].exp) {
+                    if (sp94[k] == tmp->tev.c_in[i].exp) {
                         break;
                     }
                 }
@@ -198,7 +188,7 @@ int HSD_TExpMakeDag(HSD_TExp* root, HSD_TExpDag* list)
         for (i = 0; i < 4; i++) {
             if (tmp->tev.a_in[i].type == HSD_TE_TEV) {
                 for (k = 0; k < n; k++) {
-                    if (base[k] == tmp->tev.a_in[i].exp) {
+                    if (sp94[k] == tmp->tev.a_in[i].exp) {
                         break;
                     }
                 }
@@ -215,19 +205,19 @@ int HSD_TExpMakeDag(HSD_TExp* root, HSD_TExpDag* list)
     }
 
     CalcDistance(&sp94[0], &sp14[0], sp94[0], num, 0);
-    for (idx = 0; idx < num; idx++) {
-        for (j = idx + 1; j < num; j++) {
-            if (sp14[j - 1] > sp14[j]) {
+    for (j = 0; j < num; j++) {
+        for (idx = j + 1; idx < num; idx++) {
+            if (sp14[idx - 1] > sp14[idx]) {
                 {
-                    HSD_TExp* tmp = sp94[j - 1];
-                    sp94[j - 1] = sp94[j];
-                    sp94[j] = tmp;
+                    HSD_TExp* tmp = sp94[idx - 1];
+                    sp94[idx - 1] = sp94[idx];
+                    sp94[idx] = tmp;
                 }
 
                 {
-                    int tmp = sp14[j - 1];
-                    sp14[j - 1] = sp14[j];
-                    sp14[j] = tmp;
+                    int tmp = sp14[idx - 1];
+                    sp14[idx - 1] = sp14[idx];
+                    sp14[idx] = tmp;
                 }
             }
         }

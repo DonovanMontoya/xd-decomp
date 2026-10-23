@@ -59,12 +59,13 @@ void push__16GSgfxMatrixStackFP5GSmtx(void*,void*);
 void pop__16GSgfxMatrixStackFv(void*);
 void GSboundDraw__FP7GSboundP10GSgfxLayer(void*,ParticleLayer*);
 }
+#pragma opt_dead_assignments off
 extern "C" void peBankRender(ParticleBankState* bank) {
     if (!bank) return;
     if (!(bank->flags & 1)) return;
     if (!(bank->flags & 4)) return;
     if (!(bank->flags & 8)) return;
-    u32 mask = 1 << g_current_layer->kind;
+    u32 kind=g_current_layer->kind;u32 mask=1<<kind;
     if (g_render_pass == 1) mask <<= 16;
     if (bank->rendered & mask) return;
     g_currentBank = bank;
@@ -80,6 +81,7 @@ extern "C" void peBankRender(ParticleBankState* bank) {
         pop__16GSgfxMatrixStackFv(*(void**)((u8*)g_current_layer + 0x19a0));
     }
 }
+#pragma opt_dead_assignments reset
 
 struct _gpdHeader { u32 magic, version; u16 reserved08, count; u8 references, reserved0d[3]; };
 struct _gpdResourceItem { u8 reserved00, flags; u16 reserved02; s32 kind; void* data; };

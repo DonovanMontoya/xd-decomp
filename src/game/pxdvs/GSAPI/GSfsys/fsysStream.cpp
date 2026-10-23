@@ -47,6 +47,7 @@ static void _fsysStreamGetDataCallback(void* request) {
     if(trans->callback) trans->callback(handle->state,trans->param1,trans->param2);
     trans->callback=0;
 }
+#pragma opt_propagation off
 void _fsysStreamFreeCacheAll(FsysStreamHandle* handle) {
     if(handle && handle->state==4) {
         s32 interrupts=OSDisableInterrupts();
@@ -63,6 +64,7 @@ void _fsysStreamFreeCacheAll(FsysStreamHandle* handle) {
         OSRestoreInterrupts(interrupts);
     }
 }
+#pragma opt_propagation reset
 u32 _fsysStreamGetMinimumCacheSize() { return _fsysBlockByteSize; }
 u32 _fsysStreamGetNormalCacheSize() { return _fsysBlockByteSize*4; }
 u32 _fsysStreamGetCacheSize() { return _fsysBlockByteSize*8; }

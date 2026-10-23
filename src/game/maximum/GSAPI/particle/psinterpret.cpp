@@ -418,23 +418,19 @@ static void psApplyVelocityLocalRotation(PSParticle *arg0) {
     PSGenerator *temp_r5;
 
     temp_r5 = arg0->generator;
-    if (temp_r5 != NULL) {
-        if (!(temp_r5->transformFlags & 4)) {
-            return;
-        }
-        vec8.x = arg0->velocity.x;
-        vec8.y = arg0->velocity.y;
-        vec8.z = arg0->velocity.z;
-        PSMTXRotRad((f32 (*)[4]) &sp74[0], 0x58, temp_r5->rotation.x);
-        PSMTXRotRad((f32 (*)[4]) &sp44[0], 0x59, arg0->generator->rotation.y);
-        PSMTXRotRad((f32 (*)[4]) &sp14[0], 0x5A, arg0->generator->rotation.z);
-        PSMTXConcat((f32 (*)[4]) &sp44[0], (f32 (*)[4]) &sp74[0], (f32 (*)[4]) &sp74[0]);
-        PSMTXConcat((f32 (*)[4]) &sp14[0], (f32 (*)[4]) &sp74[0], (f32 (*)[4]) &sp74[0]);
-        PSMTXMultVec((f32 (*)[4]) &sp74[0], (PSVec *) &vec8.x, (PSVec *) &vec8.x);
-        arg0->velocity.x = vec8.x;
-        arg0->velocity.y = vec8.y;
-        arg0->velocity.z = vec8.z;
-    }
+    if (temp_r5 == NULL || !(temp_r5->transformFlags & 4)) return;
+    vec8.x = arg0->velocity.x;
+    vec8.y = arg0->velocity.y;
+    vec8.z = arg0->velocity.z;
+    PSMTXRotRad((f32 (*)[4]) &sp74[0], 0x58, temp_r5->rotation.x);
+    PSMTXRotRad((f32 (*)[4]) &sp44[0], 0x59, arg0->generator->rotation.y);
+    PSMTXRotRad((f32 (*)[4]) &sp14[0], 0x5A, arg0->generator->rotation.z);
+    PSMTXConcat((f32 (*)[4]) &sp44[0], (f32 (*)[4]) &sp74[0], (f32 (*)[4]) &sp74[0]);
+    PSMTXConcat((f32 (*)[4]) &sp14[0], (f32 (*)[4]) &sp74[0], (f32 (*)[4]) &sp74[0]);
+    PSMTXMultVec((f32 (*)[4]) &sp74[0], (PSVec *) &vec8.x, (PSVec *) &vec8.x);
+    arg0->velocity.x = vec8.x;
+    arg0->velocity.y = vec8.y;
+    arg0->velocity.z = vec8.z;
 }
 
 static void psApplyOffsetLocalRotation(PSParticle *arg0, PSVec *arg1) {
@@ -443,46 +439,42 @@ static void psApplyOffsetLocalRotation(PSParticle *arg0, PSVec *arg1) {
     u16 temp_r3;
 
     temp_r4 = arg0->generator;
-    if (temp_r4 != NULL) {
-        temp_r3 = temp_r4->transformFlags;
-        if (!(temp_r3 & 8)) {
-            return;
-        }
-        if (temp_r3 & 0x10) {
-            PSMTXIdentity((f32 (*)[4]) &sp8[0]);
-        } else {
-            PSMTXScale((f32 (*)[4]) &sp8[0], temp_r4->scale.x, temp_r4->scale.y, temp_r4->scale.z);
-        }
-        PSMTXRotRad((f32 (*)[4]) &sp98[0], 0x58, arg0->generator->rotation.x);
-        PSMTXRotRad((f32 (*)[4]) &sp68[0], 0x59, arg0->generator->rotation.y);
-        PSMTXRotRad((f32 (*)[4]) &sp38[0], 0x5A, arg0->generator->rotation.z);
-        PSMTXConcat((f32 (*)[4]) &sp68[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
-        PSMTXConcat((f32 (*)[4]) &sp38[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
-        PSMTXConcat((f32 (*)[4]) &sp8[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
-        PSMTXMultVec((f32 (*)[4]) &sp98[0], arg1, arg1);
+    if (temp_r4 == NULL || !(temp_r4->transformFlags & 8)) return;
+    temp_r3 = temp_r4->transformFlags;
+    if (temp_r3 & 0x10) {
+        PSMTXIdentity((f32 (*)[4]) &sp8[0]);
+    } else {
+        PSMTXScale((f32 (*)[4]) &sp8[0], temp_r4->scale.x, temp_r4->scale.y, temp_r4->scale.z);
     }
+    PSMTXRotRad((f32 (*)[4]) &sp98[0], 0x58, arg0->generator->rotation.x);
+    PSMTXRotRad((f32 (*)[4]) &sp68[0], 0x59, arg0->generator->rotation.y);
+    PSMTXRotRad((f32 (*)[4]) &sp38[0], 0x5A, arg0->generator->rotation.z);
+    PSMTXConcat((f32 (*)[4]) &sp68[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
+    PSMTXConcat((f32 (*)[4]) &sp38[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
+    PSMTXConcat((f32 (*)[4]) &sp8[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
+    PSMTXMultVec((f32 (*)[4]) &sp98[0], arg1, arg1);
 }
 
 static void psCopyGeneratorData(PSGenerator *arg0, PSGenerator *arg1) {
-    if ((arg1 != NULL) && (arg0 != NULL)) {
-        if (arg1->kind & 0x20000000) {
-            arg0->kind |= 0x20000000;
-        }
-        arg0->rotation.x = arg1->rotation.x;
-        arg0->rotation.y = arg1->rotation.y;
-        arg0->rotation.z = arg1->rotation.z;
-        arg0->scale.x = arg1->scale.x;
-        arg0->scale.y = arg1->scale.y;
-        arg0->scale.z = arg1->scale.z;
-        arg0->transformFlags = arg1->transformFlags;
-        arg0->transformFlags &= 0xFFFFFFFD;
-        arg0->jobj = arg1->jobj;
-        if (arg1->transformFlags & 0x1000) {
-            psSetGeneratorAngleRadiusScale(arg0, &arg1->nodeScale, 1U);
-            return;
-        }
-        psSetGeneratorAngleRadiusScale(arg0, &arg1->nodeScale, 0U);
+    if (arg1 == NULL || arg0 == NULL) return;
+    if (arg1->kind & 0x20000000) {
+        arg0->kind |= 0x20000000;
     }
+    arg0->rotation.x = arg1->rotation.x;
+    arg0->rotation.y = arg1->rotation.y;
+    arg0->rotation.z = arg1->rotation.z;
+    arg0->scale.x = arg1->scale.x;
+    arg0->scale.y = arg1->scale.y;
+    arg0->scale.z = arg1->scale.z;
+    arg0->transformFlags = arg1->transformFlags;
+    arg0->transformFlags &= 0xFFFFFFFD;
+    arg0->jobj = arg1->jobj;
+    if (arg1->transformFlags & 0x1000) {
+        psSetGeneratorAngleRadiusScale(arg0, &arg1->nodeScale, 1U);
+        return;
+    }
+    psSetGeneratorAngleRadiusScale(arg0, &arg1->nodeScale, 0U);
+
 }
 
 __declspec(weak) PSParticle *_psListGetNext(PSParticle *arg0) {
@@ -506,25 +498,17 @@ __declspec(weak) s32 U8ClampAdd(u8 arg0, f32 farg0) {
     return (s32) var_f1;
 }
 
-static void HSD_JObjSetupMatrix(PSJObj *arg0) {
-    s32 temp_cr0_eq;
+static inline s32 HSD_JObjMtxIsDirty(PSJObj* arg0) {
     s32 var_r3;
-    u32 temp_r4;
+    if (arg0 == NULL) __assert("jobj.h", 0x25D, "jobj");
+    var_r3 = 0;
+    if (!(arg0->flags & 0x800000) && (arg0->flags & 0x40)) var_r3 = 1;
+    return var_r3;
+}
 
-    if (arg0 != NULL) {
-        if (arg0 == NULL) {
-            __assert("jobj.h", 0x25D, "jobj");
-        }
-        temp_r4 = arg0->flags;
-        var_r3 = 0;
-        if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
-            var_r3 = 1;
-        }
-        if (var_r3 == 0) {
-            return;
-        }
-        HSD_JObjSetupMatrixSub(arg0);
-    }
+static void HSD_JObjSetupMatrix(PSJObj *arg0) {
+    if (arg0 == NULL || !HSD_JObjMtxIsDirty(arg0)) return;
+    HSD_JObjSetupMatrixSub(arg0);
 }
 
 static void HSD_JObjAddTx(PSJObj *arg0, f32 farg0) {

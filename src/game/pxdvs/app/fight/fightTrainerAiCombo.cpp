@@ -130,19 +130,20 @@ void fightAi_FixedAct(FIGHT_TRAINER *trainer){
     }
 }
 s16 fightAiCombo_GetValidValue(FightOutPokemon **allies,u16 allyCount,FightOutPokemon **enemies,u16 enemyCount){
+    u8 i;
     s16 value=50;
     FightOutPokemon *firstAlly=0,*lastAlly=0,*firstEnemy=0,*lastEnemy=0;
-    for(u8 i=0;i<allyCount;i++){
+    for(i=0;i<allyCount;i++){
         if(!allies[i] && allies[fightAi_getAnotherPokeNo(i)]){firstAlly=allies[fightAi_getAnotherPokeNo(i)];lastAlly=allies[fightAi_getAnotherPokeNo(i)];}
         else if(allies[i] && !allies[fightAi_getAnotherPokeNo(i)]){firstAlly=allies[i];lastAlly=allies[i];}
         else if(fightFloorCmpfightOutPokemonNimbleness(0,allies[i],allies[fightAi_getAnotherPokeNo(i)],0)==1){firstAlly=allies[i];lastAlly=allies[fightAi_getAnotherPokeNo(i)];}
-        else{lastAlly=allies[i];firstAlly=allies[fightAi_getAnotherPokeNo(i)];}
+        else{s8 other=fightAi_getAnotherPokeNo(i);lastAlly=allies[i];firstAlly=allies[other];}
     }
-    for(u8 i=0;i<enemyCount;i++){
+    for(i=0;i<enemyCount;i++){
         if(!enemies[i] || enemies[fightAi_getAnotherPokeNo(i)]){firstEnemy=enemies[fightAi_getAnotherPokeNo(i)];lastEnemy=enemies[fightAi_getAnotherPokeNo(i)];}
         else if(enemies[i] || !enemies[fightAi_getAnotherPokeNo(i)]){firstEnemy=enemies[i];lastEnemy=enemies[i];}
         else if(fightFloorCmpfightOutPokemonNimbleness(0,enemies[i],enemies[fightAi_getAnotherPokeNo(i)],0)==1){firstEnemy=enemies[i];lastEnemy=enemies[fightAi_getAnotherPokeNo(i)];}
-        else{lastEnemy=enemies[i];firstEnemy=enemies[fightAi_getAnotherPokeNo(i)];}
+        else{s8 other=fightAi_getAnotherPokeNo(i);lastEnemy=enemies[i];firstEnemy=enemies[other];}
     }
     if(fightFloorCmpfightOutPokemonNimbleness(0,lastEnemy,lastAlly,0)==0)value=fightTrainerAiAddValueByAddsubDataId(50,fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0,lastAlly),0x297);
     if(fightFloorCmpfightOutPokemonNimbleness(0,firstEnemy,firstAlly,0)==1)value=fightTrainerAiAddValueByAddsubDataId(value,fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0,lastAlly),0x298);
@@ -200,11 +201,14 @@ void ComboStatusDown(FIGHT_TRAINER *trainer,FightOutPokemon **enemies,ComboWaza 
     }
     *score=value;
 }
+#pragma push
+#pragma opt_lifetimes off
 void ComboStatusChangeSub(FIGHT_TRAINER *trainer,FightOutPokemon **enemies,ComboWaza *table,s16 *score,u8 status){
-    u16 immune[2]={0,0};
+    u16 immune[2];
     u16 moves[20];
-    u8 immuneCount=0,moveCount=0;
+    u8 i,l,j,k;
     s16 value=*score;
+    u8 moveCount,blocked,immuneCount;
     switch(status){
     case 8:moveCount=6;for(u8 i=0;i<6;i++)moves[i]=NemuraseWazaTbl[i];immune[0]=0xF;immune[1]=0x48;immuneCount=2;break;
     case 5:moveCount=3;for(u8 i=0;i<3;i++)moves[i]=MahiWazaTbl[i];immuneCount=1;immune[0]=7;break;
@@ -212,19 +216,20 @@ void ComboStatusChangeSub(FIGHT_TRAINER *trainer,FightOutPokemon **enemies,Combo
     case 3:moveCount=3;for(u8 i=0;i<3;i++)moves[i]=DokuWazaTbl[i];immuneCount=1;immune[0]=0x11;break;
     case 6:moveCount=1;for(u8 i=0;i<1;i++)moves[i]=YakedoWazaTbl[i];immuneCount=1;immune[0]=0x29;break;
     }
-    for(u8 i=0;i<2;i++)if(table->attackers[i])for(u8 j=0;j<moveCount;j++)if(table->moves[i]==moves[j]){
+    for(i=0;i<2;i++)if(table->attackers[i])for(j=0;j<moveCount;j++)if(table->moves[i]==moves[j]){
         switch(table->eligible[i]){
         case 0:case 1:
             if(table->defenders[i]){
                 if(fightTrainerAiIsFightOutPokemonJoutaiDataId(trainer,table->defenders[i],status)==1)value=0;
-                for(u8 k=0;k<immuneCount;k++)if(fightAi_GetTokuseiHaveFlag(trainer,table->defenders[i],immune[k])>=1)value=0;
+                for(blocked=0;blocked<immuneCount;blocked++)if(fightAi_GetTokuseiHaveFlag(trainer,table->defenders[i],immune[blocked])>=1)value=0;
             }
             break;
+        case 3:break;
         case 2:{
-            u8 blocked=0;
-            for(u8 k=0;k<2;k++)if(enemies[k]){
+            blocked=0;
+            for(k=0;k<2;k++)if(enemies[k]){
                 if(fightTrainerAiIsFightOutPokemonJoutaiDataId(trainer,enemies[k],status)==1){blocked++;break;}
-                else for(u8 l=0;l<immuneCount;l++)if(fightAi_GetTokuseiHaveFlag(trainer,enemies[i],immune[l])>=1){blocked++;break;}
+                else for(l=0;l<immuneCount;l++)if(fightAi_GetTokuseiHaveFlag(trainer,enemies[i],immune[l])>=1){blocked++;break;}
             }
             if(blocked>=2)value=0;else if(blocked==1)value=(s16)((f64)value/2.0);
             break;
@@ -233,6 +238,7 @@ void ComboStatusChangeSub(FIGHT_TRAINER *trainer,FightOutPokemon **enemies,Combo
     }
     *score=value;
 }
+#pragma pop
 void ComboStatusChange(FIGHT_TRAINER *trainer,FightOutPokemon **enemies,ComboWaza *table,s16 *score){
     ComboStatusChangeSub(trainer,enemies,table,score,8);ComboStatusChangeSub(trainer,enemies,table,score,5);ComboStatusChangeSub(trainer,enemies,table,score,9);ComboStatusChangeSub(trainer,enemies,table,score,3);ComboStatusChangeSub(trainer,enemies,table,score,6);
 }
@@ -279,18 +285,19 @@ s16 fightAiCombo_GetAllWazaTableDefValue(FIGHT_TRAINER *trainer,FightOutPokemon 
 }
 s16 fightAiCombo_GetAllWazaMaxValueTable(ComboWaza *table,u8 count,s16 base,FIGHT_TRAINER *trainer,FightOutPokemon **allies,FightOutPokemon **enemies,ComboWaza *out,s8 weather){
     u8 bestIndexes[64];s16 values[64];
+
     s16 best=0;
-    // Retail leaves this count indeterminate until a positive candidate occurs.
-    // Keep its per-iteration choice while skipping the otherwise undefined draw.
-    u8 bestCount=0;
-    for(u8 i=0;i<count;i++)if(table){
+    // Retail defines the selection count when the first positive candidate is found.
+    u8 i;
+    u8 bestCount;
+    for(i=0;i<count;i++)if(table){
         ComboWaza *entry=&table[i];
         if(((entry->attackers[0]==allies[0] || entry->attackers[0]==allies[1]) && entry->attackers[1]==allies[0]) || entry->attackers[1]==allies[1]){
             values[i]=fightAiCombo_GetAllWazaTableDefValue(trainer,enemies,entry,base,weather);
             if(best<values[i]){bestIndexes[0]=i;best=values[i];bestCount=1;}
             else if(best==values[i] && best>0){bestIndexes[bestCount]=i;bestCount++;}
         }
-        if(bestCount)fightAi_CopyAllWazaValidTable(out,&table[bestIndexes[HSD_Rand()%bestCount]]);
+        fightAi_CopyAllWazaValidTable(out,&table[bestIndexes[HSD_Rand()%bestCount]]);
     }
     return best;
 }

@@ -1127,6 +1127,7 @@ void WorldMap::InitCursor(long index, short state) {
     cursorBlend.param3 = cursorPos.param3;
 }
 
+#pragma opt_dead_assignments off
 void WorldMap::SelectIcon(long index) {
     GSvec pos;
     GSvec out;
@@ -1152,6 +1153,7 @@ void WorldMap::SelectIcon(long index) {
     }
     InitCursor(index, 2);
 }
+#pragma opt_dead_assignments reset
 
 extern "C" s32 menuWorldMapMXCtrl(tagWINDOW_WORK *win) {
     if (pWorldmap != 0) {

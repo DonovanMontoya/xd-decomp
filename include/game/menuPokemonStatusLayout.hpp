@@ -49,7 +49,7 @@ struct tagSPRITE_WORK {
 // State of the status screen (static _menuStatus, 0x48 bytes).
 struct RIBBON_WORK {
     s32 count;              // 0x00
-    s8 slots[36];           // 0x04 (9 columns x 4 rows)
+    s8 slots[9][4];         // 0x04 (9 columns x 4 rows)
 };
 
 typedef Pokemon* (*MenuPokemonStatusCb)(Pokemon*, MENU_POKEMON_CB_TYPE, long);

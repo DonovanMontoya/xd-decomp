@@ -446,8 +446,8 @@ static u8 _floorFieldCameraCalculatePathParams(GSvec* target, float* height, flo
     GSvec2 delta;
     GSvec2 tpos;
     FieldCameraEntry* e;
-    FieldCameraEntry* cur;
     u16 i;
+    FieldCameraEntry* cur;
     GSvec2Set(&tpos, target->x, target->z);
     cur = &gFieldCameraList[g_currentIndex];
     *height = cur->height;

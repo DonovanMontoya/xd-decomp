@@ -553,7 +553,6 @@ static inline void shadowDebugCenter(GSmodel* model,Vec* center) {
 }
 extern "C" void modelShadowRenderDebug__Fv() {
     Vec light,center,intersection;
-    GSmodel** surface;
     GSmodelShadowReceiver* receiver;
     u32 i,j;
     GSgfxLayer* layer;
@@ -573,9 +572,8 @@ extern "C" void modelShadowRenderDebug__Fv() {
         receiver=&_modelShadowReceiveList[i];
         if(receiver->model && (receiver->model->flags&1)) {
             j=0;
-            surface=(GSmodel**)receiver;
-            for(;j<16;j++,surface++) {
-                model=surface[2];
+            for(;j<16;j++) {
+                model=receiver->surfaces[j];
                 if(model && (model->flags&1)) {
                     GSlightGetPosition(modelRuntime(model)->shadowLight,(HSD_Vec3*)&light);
                     GSboundGetWorldPosition((GSbound*)model->boundStorage,&center);

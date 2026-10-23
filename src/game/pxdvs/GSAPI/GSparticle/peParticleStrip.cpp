@@ -31,8 +31,8 @@ void peParticleStripContainer::RearrangeIndices() {
 #pragma opt_unroll_loops reset
 
 static inline void invalidate(peParticleStripNode *node,GSgfxDL *list,u32 flags) {
- u16 *indices=(u16*)((list->flags&1)?list->data+3:0);indices+=node->sortIndex;u16 count=2;
- while(count--){indices[0]=0xffff;indices[1]=0xffff;indices[2]=0xffff;indices+=3;if(flags&0x40000)*indices++=0xffff;}list->flags|=2;
+ u8 extended=(flags>>18)&1;u16 *indices=(u16*)((list->flags&1)?list->data+3:0);indices+=node->sortIndex;u16 count=2;
+ while(count--){indices[0]=0xffff;indices[1]=0xffff;indices[2]=0xffff;indices+=3;if(extended)*indices++=0xffff;}list->flags|=2;
 }
 void peParticleStripContainer::Stop() {
  if(active){PreUpdate();active=0;u32 flags=definition->flags;
@@ -95,23 +95,32 @@ void peParticleStripContainer::Render() {
   dlDraw__10GSgfxLayerFP7GSgfxDL(g_current_layer,&displayLists[swapIndex]);MarkForSwap();
  }
 }
+static inline u8 stripUpdateNode(peParticleStripNode* node,peEmitterNode* emitter,_peParticleStrip* d,GSgfxDL* list,u8* data,f32 dt) {
+ if(!data)return 0;
+ if((list->flags&1)!=1)return 0;
+ if(!node->peNode::Update(emitter,dt))return 0;
+ node->UpdateRenderData(emitter,d,(char*)data,1.0f-node->time/node->life);
+ return 1;
+}
 void peParticleStripContainer::Update(f32 dt) {
  if(active){peParticleStripNode *node=(peParticleStripNode*)nodes;
-  while(node){peParticleStripNode *next=(peParticleStripNode*)node->next;_peParticleStrip *d=definition;u8 *data=renderData[swapIndex];peEmitterNode *emitter=owner;u8 alive;
-   if(!data||(displayLists[swapIndex].flags&1)!=1||!node->peNode::Update(emitter,dt))alive=0;
-   else{node->UpdateRenderData(emitter,d,(char*)data,1.0f-node->time/node->life);alive=1;}
-   if(!alive){invalidate(node,&displayLists[swapIndex],definition->flags);RemoveNode(node);}node=next;
+  while(node){peParticleStripNode *next=(peParticleStripNode*)node->next;
+   if(!stripUpdateNode(node,owner,definition,&displayLists[swapIndex],renderData[swapIndex],dt)){invalidate(node,&displayLists[swapIndex],definition->flags);RemoveNode(node);}node=next;
   }remaining-=dt;RearrangeIndices();
  }
 }
-u16 peParticleStripContainer::Emit(u16 requested) {
- if(!active)return 0;u16 left=CreateNodes(requested);u16 result=left;u16 created=left;_EmitParams *params=g_emitParams;peParticleStripNode *node=(peParticleStripNode*)nodes;
- while(left){peParticleStripNode *next=(peParticleStripNode*)node->next;u16 ordinal=(*(u16*)((u8*)owner+0x4a)+created)-left;_peParticleStrip *d=definition;GSgfxDL *list=&displayLists[swapIndex];f32 progress=emitterFloat(owner,8)*__OSu16tof32(&ordinal);
-  if((list->flags&1)==1){node->peNode::Start(owner,params);
-   if(d->flags&0x2000000){Vec segment;PSVECScale(&d->direction,&segment,10.0f*(progress*d->speedRange+d->speedMin));node->segment=segment;}
-   else{Vec segment;PSVECScale(&d->direction,&segment,10.0f*(d->speedRange*HSD_Randf()+d->speedMin));node->segment=segment;}
+static inline void stripStartNode(peParticleStripNode* node,peEmitterNode* emitter,_peParticleStrip* d,GSgfxDL* list,_EmitParams* params,f32 progress) {
+ if((list->flags&1)==1){node->peNode::Start(emitter,params);
+   Vec randomSegment;Vec segment;if(d->flags&0x2000000){PSVECScale(&d->direction,&segment,10.0f*(progress*d->speedRange+d->speedMin));f32 y=segment.y,z=segment.z,x=segment.x;node->segment.x=x;node->segment.y=y;node->segment.z=z;}
+   else{f32 random=HSD_Randf();PSVECScale(&d->direction,&randomSegment,10.0f*(d->speedRange*random+d->speedMin));f32 y=randomSegment.y,z=randomSegment.z,x=randomSegment.x;node->segment.x=x;node->segment.y=y;node->segment.z=z;}
    list->flags|=2;
-  }node=next;--left;++params;
+ }
+}
+u16 peParticleStripContainer::Emit(u16 requested) {
+ if(!active)return 0;u16 left=CreateNodes(requested);_EmitParams *params=g_emitParams;peParticleStripNode *node=(peParticleStripNode*)nodes;peParticleStripNode *next;u16 result=left;u16 created=left;
+ while(left){next=(peParticleStripNode*)node->next;u16 ordinal=(*(u16*)((u8*)owner+0x4a)+created)-left;
+  stripStartNode(node,owner,definition,&displayLists[swapIndex],params,emitterFloat(owner,8)*__OSu16tof32(&ordinal));
+  node=next;--left;++params;
  }return result;
 }
 void peParticleStripContainer::Start() {

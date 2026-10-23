@@ -253,6 +253,7 @@ u8 pokemonIsDarkPokemon(Pokemon* poke)
     return pokemon_GetDarkFlag(poke);
 }
 
+#pragma opt_common_subs off
 void pokemonSetDarkPokemonStatus(Pokemon* poke, u16 darkId)
 {
     u8 index;
@@ -272,6 +273,7 @@ void pokemonSetDarkPokemonStatus(Pokemon* poke, u16 darkId)
         if (dark) dark->setDarkPokemonID(darkId);
     }
 }
+#pragma opt_common_subs reset
 
 bool pokemonDataCheckValid(void* unused, u16 id)
 {
@@ -1162,6 +1164,7 @@ void pokemonToMenuPokemonStatus(Pokemon* poke, void* fightPokemon, PokemonMenuSt
     out->itemId = pokemon_GetItemDataId(poke);
 }
 
+#pragma opt_common_subs off
 void pokemonToMenuWazaStatus(Pokemon* poke, PokemonMenuWazaStatus* out)
 {
     u8 index;
@@ -1191,6 +1194,7 @@ void pokemonToMenuWazaStatus(Pokemon* poke, PokemonMenuWazaStatus* out)
         }
     }
 }
+#pragma opt_common_subs reset
 
 } // extern "C" (new functions)
 

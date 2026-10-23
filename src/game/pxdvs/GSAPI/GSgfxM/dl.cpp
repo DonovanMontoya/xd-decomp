@@ -12,6 +12,7 @@ static s32 _dlPrimType = 0x90;
 static DLDisplayList *_dlCurPtr;
 u8 gsgfx_dl_buildingDList;
 
+#pragma opt_propagation off
 void GSgfxParseDisplayList(DLInputDescriptor *descriptors, u8 *data, u32 size, DLParseCallbacks *callbacks, void *argument) {
     s32 primitive;
     u8 *end = data + size;
@@ -39,13 +40,16 @@ void GSgfxParseDisplayList(DLInputDescriptor *descriptors, u8 *data, u32 size, D
         }
     }
 }
+#pragma opt_propagation reset
 void GSgfxDLEndSurface(void) {}
+#pragma opt_propagation off
 void GSgfxDLBeginSurface(u16 count) {
     u32 primitive = _dlPrimType;
     u32 index = _dlCurPtr->format->index;
     GXWGFifo.u8 = primitive | index;
     GXWGFifo.u16 = count;
 }
+#pragma opt_propagation reset
 void GSgfxDLPrimitiveType(s32 primitive) { _dlPrimType = primitive; }
 void GSgfxDLEnd(void) {
     u32 size = GXEndDisplayList();
@@ -54,12 +58,13 @@ void GSgfxDLEnd(void) {
     gsgfx_dl_buildingDList = 0;
     _dlCurPtr = 0;
 }
+#pragma opt_propagation off
 void GSgfxDLBegin(DLDisplayList *list, DLVertexFormat *format, u16 surfaces, u16 vertices) {
     list->stride = _dlCalculateStride__FP7GSgfxVF(format);
     u32 surfaceBytes = surfaces << 5;
     u32 vertexBytes = vertices * list->stride;
-    vertexBytes += 0x5f;
-    list->size = (surfaceBytes + vertexBytes) & ~31;
+    u32 paddedVertexBytes = vertexBytes + 0x5f;
+    list->size = (surfaceBytes + paddedVertexBytes) & ~31;
     list->data = static_cast<u8 *>(GSmemAllocAlign(list->size, 32));
     memset(list->data, 0, list->size);
     DCFlushRange(list->data, list->size);
@@ -70,6 +75,8 @@ void GSgfxDLBegin(DLDisplayList *list, DLVertexFormat *format, u16 surfaces, u16
     gsgfx_dl_buildingDList = 1;
     _dlCurPtr = list;
 }
+#pragma opt_propagation reset
+
 void GSgfxDLFree(DLDisplayList *list) {
     if (list->flags & 1) {
         GSmemFree(list->data);

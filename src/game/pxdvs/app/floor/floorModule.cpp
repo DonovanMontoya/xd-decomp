@@ -290,6 +290,7 @@ bool FloorModuleEntry::isScriptRunning(FloorState s) {
     }
 }
 
+#pragma opt_common_subs off
 void FloorModuleEntry::exec(FloorState s, unsigned int a, FloorEnterMode mode) {
     FloorData *data = floorDataBiosGetPtr(a);
     if (data) {
@@ -307,6 +308,7 @@ void FloorModuleEntry::exec(FloorState s, unsigned int a, FloorEnterMode mode) {
         }
     }
 }
+#pragma opt_common_subs reset
 
 void FloorModuleEntry::terminate() {
     switch (type) {

@@ -670,7 +670,7 @@ extern "C" u8 fightOutPokemonCheckFightActionSelect(FightOutPokemon* poke, u8 cr
                 s32 index = fightWaza_GetWazaBanme(keep);
                 FightTarget* target = fightSeqSelectDefensePokemonPtr(poke, move, fightType, _fightOutPokemonCheckFightActionSelectSub, 1, 0, -1);
                 u32 targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, fightType);
-                fightOutPokemonCreateFightActionAttackWaza(poke, 0, 0x13, 0, &fight_action_data_waza, move, targetId, index, 1);
+                ((FightActionBuff* (*)(FightOutPokemon*, u32, u32, u32, FightActionData*, u16, u32, s32, u8))fightOutPokemonCreateFightActionAttackWaza)(poke, 0, 0x13, 0, &fight_action_data_waza, move, targetId, index, 1);
             }
         }
         return 0;
@@ -1537,9 +1537,11 @@ u8 fightOutPokemonGetFightOutPokemonEnemyOumuWazaDataIdAry(FightOutPokemon* poke
     for (u8 i = 0; i < 4; i++) {
         if (moves != nullptr) moves[i] = 0;
     }
+    u8 i;
+    FightOutPokemonEnemy* enemy;
     u8 count = 0;
-    for (u8 i = 0; i < 4; i++) {
-        FightOutPokemonEnemy* enemy = &enemies[i];
+    for (i = 0; i < 4; i++) {
+        enemy = &enemies[i];
         if (fightOutPokemonEnemyCheckValid(enemy) != 0) {
             u32 move = fightOutPokemonEnemyBiosGetOumuWazaDataId(enemy);
             if (static_cast<u16>(move) != 0 && static_cast<u16>(move) != 0x176) {
@@ -2086,7 +2088,7 @@ FightActionBuff* fightOutPokemonCreateFightActionUseItem(FightOutPokemon* poke, 
 }
 
 FightActionBuff* fightOutPokemonCreateFightActionAttackWaza(FightOutPokemon* poke, u32 kind,
-    u32 priority, u32 speed, FightActionData* data, u16 moveId, u32 target, s32 slot, u8 value) {
+    u32 priority, u32 speed, FightActionData* data, u32 moveId, u32 target, s32 slot, u8 value) {
     u16 move = moveId;
     FightWaza* waza = fightOutPokemon_GetFightWazaPtr(poke);
     if (waza == nullptr) return nullptr;
@@ -2109,7 +2111,8 @@ void fightOutPokemonCreate(FightOutPokemon* poke, FightPokemon* source, void* se
         u32 species = pokemon_GetPokemonDataId(pokemon);
         for (u16 i = 0; i < 2; i++)
             fightOutPokemonSetZokuseiDataId(poke, i, pokemonDB_GetZokuseiDataId(species, i));
-        fightOutPokemonSetTokuseiDataId(poke, pokemonGetTokuseiDataId(pokemon));
+        u32 ability = pokemonGetTokuseiDataId(pokemon);
+        fightOutPokemonSetTokuseiDataId(poke, ability);
     }
 }
 }

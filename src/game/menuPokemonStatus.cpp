@@ -295,7 +295,7 @@ extern "C" void menuPokemonStatusDrawRibbon(tagWINDOW_WORK* win, tagSPRITE_WORK*
     case 0x25A:
         if (_menuStatus.mode == 6) {
             s8 cursor = _menuStatus.unk1A;
-            i = _menuStatus.ribbon.slots[(cursor % 9) * 4 + cursor / 9];
+            i = _menuStatus.ribbon.slots[cursor % 9][cursor / 9];
             if (i < 0 && getRibbonCnt() <= i) {
                 break;
             }
@@ -364,7 +364,7 @@ extern "C" void menuPokemonStatusDrawRibbon(tagWINDOW_WORK* win, tagSPRITE_WORK*
         if (n > 0x18) {
             n += 2;
         }
-        if (_menuStatus.ribbon.slots[(n % 9) * 4 + n / 9] >= 0) {
+        if (_menuStatus.ribbon.slots[n % 9][n / 9] >= 0) {
             winSpriteSetDisp(spr, 1);
         } else {
             winSpriteSetDisp(spr, 0);
@@ -374,8 +374,8 @@ extern "C" void menuPokemonStatusDrawRibbon(tagWINDOW_WORK* win, tagSPRITE_WORK*
     case 0x229: {
         s8 cursor = _menuStatus.unk1A;
         if (cursor >= 0) {
-            i = cursor % 9;
-            windowDrawSprite(i * 30, (cursor / 9) * 52, win, 0x366, 0, winSpriteGetLayerID(win, spr));
+            id = cursor % 9;
+            windowDrawSprite(id * 30, (cursor / 9) * 52, win, 0x366, 0, winSpriteGetLayerID(win, spr));
         }
         break;
     }
@@ -413,7 +413,7 @@ void _menuPokemonStatusMakeRibbon(Pokemon* pokemon, RIBBON_WORK* ribbon) {
     s32 r;
     for (r = 0; r < 4; r++) {
         for (j = 0; j < 9; j++) {
-            ribbon->slots[j * 4 + r] = -1;
+            ribbon->slots[j][r] = -1;
         }
     }
     pos = 0;
@@ -425,7 +425,7 @@ void _menuPokemonStatusMakeRibbon(Pokemon* pokemon, RIBBON_WORK* ribbon) {
         if (n != 0) {
             for (j = 0; j < n; j++) {
                 s8 v = j + ribbon_mapping_tbl[i].base;
-                ribbon->slots[(pos % 9) * 4 + pos / 9] = v;
+                ribbon->slots[pos % 9][pos / 9] = v;
                 pos++;
             }
         } else {
@@ -441,7 +441,7 @@ void _menuPokemonStatusMakeRibbon(Pokemon* pokemon, RIBBON_WORK* ribbon) {
         if (n != 0) {
             for (j = 0; j < n; j++) {
                 s8 v = j + exribbon_mapping_tbl[i].base;
-                ribbon->slots[pos * 4 + 3] = v;
+                ribbon->slots[pos][3] = v;
                 pos++;
             }
         } else {
@@ -451,7 +451,7 @@ void _menuPokemonStatusMakeRibbon(Pokemon* pokemon, RIBBON_WORK* ribbon) {
     count = 0;
     for (r = 0; r < 4; r++) {
         for (j = 0; j < 9; j++) {
-            if (ribbon->slots[j * 4 + r] >= 0) {
+            if (ribbon->slots[j][r] >= 0) {
                 count++;
             }
         }
@@ -1776,7 +1776,7 @@ extern "C" void menuPokemonStatusCursor(tagWINDOW_WORK* win) {
             while (r-- > 0) {
                 c = col;
                 do {
-                    if (_menuStatus.ribbon.slots[c * 4 + r] >= 0) {
+                    if (_menuStatus.ribbon.slots[c][r] >= 0) {
                         row = r;
                         col = c;
                         r = -1;
@@ -1789,7 +1789,7 @@ extern "C" void menuPokemonStatusCursor(tagWINDOW_WORK* win) {
             while (++r < 4) {
                 c = col;
                 do {
-                    if (_menuStatus.ribbon.slots[c * 4 + r] >= 0) {
+                    if (_menuStatus.ribbon.slots[c][r] >= 0) {
                         row = r;
                         col = c;
                         r = 5;
@@ -1802,7 +1802,7 @@ extern "C" void menuPokemonStatusCursor(tagWINDOW_WORK* win) {
             for (r = row; r < 4; r++) {
                 c = (r == row) ? col + 1 : 0;
                 for (; c < 9; c++) {
-                    if (_menuStatus.ribbon.slots[c * 4 + r] >= 0) {
+                    if (_menuStatus.ribbon.slots[c][r] >= 0) {
                         col = c;
                         row = r;
                         found = 1;
@@ -1818,7 +1818,7 @@ extern "C" void menuPokemonStatusCursor(tagWINDOW_WORK* win) {
             for (r = row; r >= 0; r--) {
                 c = (r == row) ? col - 1 : 8;
                 for (; c >= 0; c--) {
-                    if (_menuStatus.ribbon.slots[c * 4 + r] >= 0) {
+                    if (_menuStatus.ribbon.slots[c][r] >= 0) {
                         col = c;
                         row = r;
                         found = 1;
@@ -1883,7 +1883,7 @@ extern "C" void menuPokemonStatusButton(tagWINDOW_WORK* win) {
             if (_menuStatus.ribbon.count > 0) {
                 s8 i;
                 for (i = 0; i < 36; i++) {
-                    if (_menuStatus.ribbon.slots[(i % 9) * 4 + i / 9] >= 0) {
+                    if (_menuStatus.ribbon.slots[i % 9][i / 9] >= 0) {
                         break;
                     }
                 }

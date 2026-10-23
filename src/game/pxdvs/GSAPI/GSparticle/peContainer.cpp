@@ -12,6 +12,7 @@ void peRenderContainer::MarkForSwap() {
         if((displayLists[1].flags&1)==1){swapIndex^=1;swapped=1;}
     }
 }
+#pragma opt_dead_assignments off
 void peRenderContainer::PreUpdate() {
     if(active && (displayLists[0].flags&1)==1) {
         if(tokens[swapIndex]) {GSgfxTokenWaitForClear(tokens[swapIndex]);tokens[swapIndex]=0;}
@@ -25,6 +26,7 @@ void peRenderContainer::PreUpdate() {
         }
     }
 }
+#pragma opt_dead_assignments reset
 void peContainer::MoveNode(peNode* node,peNode* after) {
     peNode* next=node->next;peNode* previous=node->previous;
     if(next)next->previous=previous;if(previous)previous->next=next;else nodes=next;

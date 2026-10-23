@@ -450,6 +450,7 @@ jump:
 }
 
 extern "C" {
+#pragma opt_dead_assignments off
 void WS_NEKONOTE(void) {
     u16 buf[0x18];
     s32 count;
@@ -478,6 +479,7 @@ void WS_NEKONOTE(void) {
     }
     fightSeq_JumpWazaSeq(*(u8**)(seq + 1));
 }
+#pragma opt_dead_assignments reset
 }
 
 extern "C" {
@@ -3073,26 +3075,27 @@ void WS_RENZOKU_NUM_INIT(void) {
 }
 
 extern "C" {
+#pragma opt_lifetimes off
 void WS_RENZOKU(void) {
-    u8 var_r4;
-    u8 temp_r4;
-    FightWaza *temp_r31;
+    u8 count;
+    FightWaza *waza;
 
-    temp_r31 = fightOutPokemon_GetFightWazaPtr(fightTargetGetPtrAsNowFightType(0x11, 0));
-    temp_r4 = fightSeq_GetWazaSeq()[1];
-    if (temp_r4 != 0) {
-        fightWaza_SetKaisuu(temp_r31, temp_r4);
+    waza = fightOutPokemon_GetFightWazaPtr(fightTargetGetPtrAsNowFightType(0x11, 0));
+    count = fightSeq_GetWazaSeq()[1];
+    if (count != 0) {
+        fightWaza_SetKaisuu(waza, count);
     } else {
-        var_r4 = HSD_Rand() % 4;
-        if (var_r4 < 2) {
-            var_r4 = var_r4 + 2;
+        count = HSD_Rand() % 4;
+        if (count < 2) {
+            count = count + 2;
         } else {
-            var_r4 = HSD_Rand() % 4 + 2;
+            count = HSD_Rand() % 4 + 2;
         }
-        fightWaza_SetKaisuu(temp_r31, var_r4);
+        fightWaza_SetKaisuu(waza, count);
     }
     fightSeq_NextWazaSeq(2);
 }
+#pragma opt_lifetimes reset
 }
 
 extern "C" {

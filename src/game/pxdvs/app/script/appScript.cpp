@@ -1039,6 +1039,7 @@ int AppScript::getExtendVariable(tigaVariant* var, int id, int) {
 }
 
 int AppScript::execExtendGlobalFunction(int cmd, tigaVariant* args, tigaVariant* result) {
+    s32 a;
     GSresID rid;
     switch (cmd) {
     case 0x81: {
@@ -1084,7 +1085,7 @@ int AppScript::execExtendGlobalFunction(int cmd, tigaVariant* args, tigaVariant*
         appScriptSetInt(result, scriptGetRandom(appScriptGetInt(&args[0])));
         break;
     case 0x8A: {
-        s32 a = appScriptGetInt(&args[0]);
+        a = appScriptGetInt(&args[0]);
         darkPokemonBiosSetInfomation(a, appScriptGetInt(&args[1]));
         break;
     }
@@ -1107,7 +1108,7 @@ int AppScript::execExtendGlobalFunction(int cmd, tigaVariant* args, tigaVariant*
         appScriptSetInt(result, floorGetHumanColision());
         break;
     case 0x93: {
-        s32 a = appScriptGetInt(&args[0]);
+        a = appScriptGetInt(&args[0]);
         peopleSetTresureSearchDistance(a, appScriptGetFloat(&args[1]));
         break;
     }
@@ -1138,33 +1139,32 @@ int AppScript::execExtendGlobalFunction(int cmd, tigaVariant* args, tigaVariant*
         appScriptSetInt(result, wazaDB_GetHidenFlag(appScriptGetInt(&args[0])));
         break;
     case 0x99: {
-        GSvec* a = appScriptGetVec(&args[1]);
-        appScriptSetFloat(result, PSVECDistance(appScriptGetVec(&args[0]), a));
+        a = (s32)appScriptGetVec(&args[1]);
+        appScriptSetFloat(result, PSVECDistance(appScriptGetVec(&args[0]), (GSvec*)a));
         break;
     }
     case 0x9A: {
         if (args->type == 0x23) {
-            GSresID* r;
             if (args->type == 0x23) {
-                r = (GSresID*)args->value.pointer;
+                args = (tigaVariant*)args->value.pointer;
             } else {
-                tigaErrMessage("resource not access");
-                r = 0;
+                tigaErrMessage("people not access");
+                args = 0;
             }
-            GSresFreeResource(floorGetCurrentGroupID(), r->id);
+            GSresFreeResource(floorGetCurrentGroupID(), ((GSresID*)args)->id);
         } else if (args->type == 1) {
-            s32 id = appScriptGetInt(args);
-            GSresFreeResource(floorGetCurrentGroupID(), id);
+            args = (tigaVariant*)appScriptGetInt(args);
+            GSresFreeResource(floorGetCurrentGroupID(), (s32)args);
         }
         break;
     }
     case 0x9B: {
         f32 scale = appScriptGetFloat(&args[0]);
-        s32 a = appScriptGetInt(&args[1]);
+        a = appScriptGetInt(&args[1]);
         s32 b = appScriptGetInt(&args[2]);
         s32 c = appScriptGetInt(&args[3]);
         s32 d = appScriptGetInt(&args[4]);
-        scriptGlowStart(a, b != 0, c != 0, d != 0, appScriptGetInt(&args[5]), scale);
+        scriptGlowStart(a, (bool)b, c != 0, d != 0, appScriptGetInt(&args[5]), scale);
         break;
     }
     case 0x9C:
@@ -1175,7 +1175,7 @@ int AppScript::execExtendGlobalFunction(int cmd, tigaVariant* args, tigaVariant*
         f32 visible = appScriptGetFloat(&args[1]);
         f32 x = appScriptGetFloat(&args[2]);
         f32 y = appScriptGetFloat(&args[3]);
-        scriptSetLensFlare(id, visible != 0.0f, x, y, appScriptGetFloat(&args[4]));
+        scriptSetLensFlare(id, (bool)visible, x, y, appScriptGetFloat(&args[4]));
         break;
     }
     case 0x9E: {

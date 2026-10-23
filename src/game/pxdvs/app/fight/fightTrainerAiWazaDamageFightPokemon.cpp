@@ -1057,6 +1057,7 @@ s32 fightTrainerAiWazaDamageFightPokemon169(FIGHT_TRAINER *arg0, FightOutPokemon
     return var_r31;
 }
 
+#pragma opt_propagation off
 s32 fightTrainerAiWazaDamageFightPokemon162(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     s16 var_r31;
     s16 var_r0;
@@ -1072,6 +1073,7 @@ s32 fightTrainerAiWazaDamageFightPokemon162(FIGHT_TRAINER *arg0, FightOutPokemon
     var_r31 = 1 << var_r0;
     return -((s32) fightTrainerAiGetFightOutPokemonMaxHp(arg0, arg1) / var_r31);
 }
+#pragma opt_propagation reset
 
 s32 fightTrainerAiWazaDamageFightPokemon161(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     s16 var_r31;
@@ -1278,9 +1280,11 @@ s32 fightTrainerAiWazaDamageFightPokemon032(FIGHT_TRAINER *arg0, FightOutPokemon
 
 s32 fightTrainerAiWazaDamageFightPokemon189(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     s32 attackerHp = (u16)fightTrainerAiGetFightOutPokemonNowHp(trainer, attacker);
-    u16 defenderHp = pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(defender));
-    s32 difference = defenderHp - attackerHp;
-    return difference > 0 ? difference : 0;
+    s32 defenderHp = (u16)pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(defender));
+    if (attackerHp >= defenderHp) {
+        return 0;
+    }
+    return defenderHp - attackerHp;
 }
 s32 fightTrainerAiWazaDamageFightPokemon101(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     u16 hp = pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(defender));

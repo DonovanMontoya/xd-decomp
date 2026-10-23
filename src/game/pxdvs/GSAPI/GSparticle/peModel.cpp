@@ -100,8 +100,8 @@ void peModelContainer::Update(f32 time) {
   if(active&&(model->flags&0x10000)&&count>=2) {
    peModelNode *sorting=(peModelNode*)nodes->next;
    while(sorting) {
-    peModelNode *before=sorting,*previous=(peModelNode*)sorting->previous;
-    while(previous&&previous->depth<sorting->depth){before=previous;previous=(peModelNode*)previous->previous;}
+    f32 depth=sorting->depth;peModelNode *before=sorting,*previous=(peModelNode*)sorting->previous;
+    while(previous&&previous->depth<depth){before=previous;previous=(peModelNode*)previous->previous;}
     peModelNode *next=(peModelNode*)sorting->next;
     if(before!=sorting)MoveNode(sorting,before);
     sorting=next;
@@ -124,17 +124,44 @@ static inline f32 modelSpline(ShapeSpline *spline,f32 progress) {
  if(difference<=0.00001f)return spline->value;
  return peSplineGetValue(spline,progress);
 }
+static inline s32 modelFloatClass(f32 x) {
+    union {f32 value;s32 bits;} v;v.value=x;
+    s32 result;
+    switch(v.bits&0x7f800000) {
+    case 0x7f800000:if(v.bits&0x7fffff)result=1;else result=2;break;
+    case 0:if(v.bits&0x7fffff)result=5;else result=3;break;
+    default:result=4;break;
+    }
+    return result;
+}
+extern "C" f32 __float_nan[];
 u8 peModelNode::Update(peEmitterNode *emitter,_peModel *model,f32 delta) {
+ ShapeTransform local;
+ Mtx matrix;
+ Vec angles;
+ Quaternion flipped;
+ Vec direction;
+ Quaternion step;
+ Vec copy,distance,rotation;
+ Quaternion combined;
  u32 flags=model->flags;
  if(!peNode::Update(emitter,delta))return 0;
  if((flags&8)&&(life-time>=model->duration))return 0;
  u32 emitterFlags=emitter->emitter->flags;
  f32 progress=1.0f-time/life;
- Vec angles;
+
  if(emitterFlags&0x400) {
-  Vec direction=velocity;
-  if(emitterFlags&0x40){Mtx matrix;PSMTXQuat(matrix,(Quaternion*)((u8*)transform+12));PSMTXMultVecSR(matrix,&direction,&direction);}
-  f32 horizontal=sqrtf(direction.x*direction.x+direction.z*direction.z);
+  direction.x=velocity.x;direction.y=velocity.y;direction.z=velocity.z;
+  if(emitterFlags&0x40){PSMTXQuat(matrix,(Quaternion*)((u8*)transform+12));PSMTXMultVecSR(matrix,&direction,&direction);}
+  f32 horizontal=direction.x*direction.x+direction.z*direction.z;
+  if(horizontal>0.0f) {
+   f64 guess=__frsqrte(horizontal);
+   guess=0.5*guess*(3.0-(f64)horizontal*(guess*guess));
+   guess=0.5*guess*(3.0-(f64)horizontal*(guess*guess));
+   guess=0.5*guess*(3.0-(f64)horizontal*(guess*guess));
+   horizontal=(f32)((f64)horizontal*guess);
+  } else if((f64)horizontal<0.0)horizontal=__float_nan[0];
+  else if(modelFloatClass(horizontal)==1)horizontal=__float_nan[0];
   angles.x=(f32)atan2(-direction.y,horizontal);angles.y=(f32)atan2(direction.x,direction.z);angles.z=0.0f;
   EulerToQuat(&angles,&localRotation);
  } else if(flags&0x20) {
@@ -143,35 +170,35 @@ u8 peModelNode::Update(peEmitterNode *emitter,_peModel *model,f32 delta) {
   angles.z=model->rotation.z*modelSpline(model->rotationSpline[2],progress);
   EulerToQuat(&angles,&localRotation);
  } else {
-  Vec rotation;Quaternion step;PSVECScale(&angularSpeed,&rotation,delta);angles=rotation;
+  PSVECScale(&angularSpeed,&rotation,delta);angles=rotation;
   EulerToQuat(&angles,&step);PSQUATMultiply(&localRotation,&step,&localRotation);
  }
- Quaternion flipped;
- flipped.x=(flips&1)?-localRotation.x:localRotation.x;
- flipped.y=(flips&2)?-localRotation.y:localRotation.y;
- flipped.z=(flips&4)?-localRotation.z:localRotation.z;flipped.w=localRotation.w;
+
+ if(flips&1)flipped.x=-localRotation.x;else flipped.x=localRotation.x;
+ if(flips&2)flipped.y=-localRotation.y;else flipped.y=localRotation.y;
+ if(flips&4)flipped.z=-localRotation.z;else flipped.z=localRotation.z;flipped.w=localRotation.w;
  angles.x=baseScale.x*modelSpline(model->scaleSpline[0],progress);
  angles.y=baseScale.y*modelSpline(model->scaleSpline[1],progress);
  angles.z=baseScale.z*modelSpline(model->scaleSpline[2],progress);
- ShapeTransform local;local.position=position;PSQUATMultiply(&randomRotation,&flipped,&local.rotation);local.scale=angles;
+ local.position=position;PSQUATMultiply(&randomRotation,&flipped,&combined);local.rotation=combined;local.scale=angles;
  peNodeTransformsConcat((ShapeTransform*)&worldPosition,transform,&local,0);
- Vec distance;PSVECSubtract(&worldPosition,&g_CameraPosition,&distance);Vec copy=distance;depth=PSVECDotProduct(&g_CameraLookDir,&copy);
+ PSVECSubtract(&worldPosition,&g_CameraPosition,&distance);copy.x=distance.x;copy.y=distance.y;copy.z=distance.z;depth=PSVECDotProduct(&g_CameraLookDir,&copy);
  return 1;
 }
 void peModelNode::Start(peEmitterNode *emitter,_peModel *model,_EmitParams *params) {
  Vec randomAngles,scale;u32 flags=model->flags;
  peNode::Start(emitter,params);flips=0;
  PSVECScale(&model->scaleRange,&scale,HSD_Randf());
- baseScale.x=scale.x;baseScale.y=scale.y;baseScale.z=scale.z;PSVECAdd(&baseScale,&model->scale,&baseScale);
+ f32 sy=scale.y,sz=scale.z,sx=scale.x;baseScale.x=sx;baseScale.y=sy;baseScale.z=sz;PSVECAdd(&baseScale,&model->scale,&baseScale);
  randomRotation.x=0.0f;randomRotation.y=0.0f;randomRotation.z=0.0f;randomRotation.w=1.0f;
  worldPosition.x=0.0f;worldPosition.y=0.0f;worldPosition.z=0.0f;
  worldRotation.x=0.0f;worldRotation.y=0.0f;worldRotation.z=0.0f;worldRotation.w=1.0f;worldScale=unitScaleVector;
  if(!(emitter->emitter->flags&0x400)) {
   EulerToQuat(&model->rotation,&localRotation);
   if(flags&0xe380) {
-   randomAngles.x=(flags&0x80)?6.2831855f*HSD_Randf():0.0f;
-   randomAngles.y=(flags&0x100)?6.2831855f*HSD_Randf():0.0f;
-   randomAngles.z=(flags&0x200)?6.2831855f*HSD_Randf():0.0f;
+   if(flags&0x80){f32 random=HSD_Randf();randomAngles.x=6.2831855f*random;}else {randomAngles.x=0.0f;}
+   if(flags&0x100)randomAngles.y=6.2831855f*HSD_Randf();else randomAngles.y=0.0f;
+   if(flags&0x200)randomAngles.z=6.2831855f*HSD_Randf();else randomAngles.z=0.0f;
    if((flags&0x2000)&&HSD_Randf()<0.5f)flips|=1;
    if((flags&0x4000)&&HSD_Randf()<0.5f)flips|=2;
    if((flags&0x8000)&&HSD_Randf()<0.5f)flips|=4;

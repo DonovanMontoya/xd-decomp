@@ -392,6 +392,7 @@ void* GSmemAllocClr(u32);
 static const char* _cameraGetModuleName__Fv() { return "camera"; }
 static s32 _cameraGetUID__Fv() { return 17; }
 static s32 _cameraGetStateSize__F14FloorStateMode(s32 mode) { if(mode==1 || mode==2) return 0x274; return 0; }
+#pragma opt_propagation off
 static void _cameraRestoreStateData__F14FloorStateModePvUl(s32 mode,void* data,u32 size) {
     if(mode==1 || mode==2) {
         memcpy(pCamWork,data,sizeof(CameraWork));
@@ -405,6 +406,7 @@ static void _cameraRestoreStateData__F14FloorStateModePvUl(s32 mode,void* data,u
         GScameraSetActiveCamera(camera);
     }
 }
+#pragma opt_propagation reset
 static void _cameraMakeStateData__F14FloorStateModePvUl(s32 mode,void* data,u32 size) {
     if(mode==1 || mode==2) {
         void* destination=data;

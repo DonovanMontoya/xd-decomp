@@ -265,6 +265,7 @@ static s32 _memcardMergeDataPack(void) {
         data = lo + data;                                 \
     }
 
+#pragma opt_dead_assignments off
 static void* _memcardGetMultiSaveDataToSTRUCT(void* base, long index) {
     u32 data = (u32)base + 0xA0;
     switch (index) {
@@ -328,23 +329,35 @@ static void* _memcardGetMultiSaveDataToSTRUCT(void* base, long index) {
     }
     return (void*)data;
 }
+#pragma opt_dead_assignments reset
 
+#pragma push
+#pragma opt_propagation off
 static s32 _memcardExamineDataPack(void) {
     u8 valid;
     u8* pack = (u8*)_memcardStatusPtr->buf50;
     s32 sum;
     valid = _memcard_Decryption(pack + 8);
     if (valid) {
-        sum = pack[0] + pack[1] + pack[2] + pack[3] + pack[4] + pack[5] + pack[6] + pack[7];
+        void* data = pack + 8;
+        sum = pack[0] + pack[1];
+        sum += pack[2];
+        sum += pack[3];
+        sum += pack[4];
+        sum += pack[5];
+        sum += pack[6];
+        sum += pack[7];
+        u8 checked;
         if (*(u16*)(pack + 0x20) == 0x88) {
-            if (sum == gamedatasaveGetStatus(_memcardGetMultiSaveDataToSTRUCT(pack + 8, 1), 0xD)) {
-                valid = 1;
+            if (sum == gamedatasaveGetStatus(_memcardGetMultiSaveDataToSTRUCT(data, 1), 0xD)) {
+                checked = 1;
             } else {
-                valid = 0;
+                checked = 0;
             }
         } else {
-            valid = 1;
+            checked = 1;
         }
+        valid = checked;
     }
     if (valid) {
         _memcardGetMultiSaveDataToSTRUCT(pack + 8, 1);
@@ -355,16 +368,19 @@ static s32 _memcardExamineDataPack(void) {
             if (_memcardStatusPtr->limit > _memcardStatusPtr->unk2C) {
                 _memcardStatusPtr->unk2C = _memcardStatusPtr->limit;
                 _memcardStatusPtr->msg = 5;
-                if (_memcardStatusPtr->state < 3 && _memcardStatusPtr->state >= 1) {
+                switch (_memcardStatusPtr->state) {
+                case 1: case 2:
                     _memcardStoreSaveData_multi(pack + 8);
                     _memcardStatusPtr->nextTask = 0x25;
-                } else {
+                    break;
+                default:
                     _memcardStatusPtr->nextTask = 0x24;
                 }
                 return 0x30;
             }
         }
-        if (_memcardStatusPtr->state < 4 && _memcardStatusPtr->state >= 1) {
+        switch (_memcardStatusPtr->state) {
+        case 1: case 2: case 3: {
             s32 next;
             _memcardStoreSaveData_multi(pack + 8);
             _memcardStatusPtr->msg = 0xC;
@@ -375,11 +391,14 @@ static s32 _memcardExamineDataPack(void) {
             }
             return next;
         }
+        }
         return 0x24;
     }
-    *(s32*)(pack + _memcardStatusPtr->index * 0x200 + 0x28004) = 0;
+    s32* block = (s32*)(_memcardStatusPtr->index * 0x200 + 0x28000 + _memcardStatusPtr->buf50);
+    block[1] = 0;
     return 0x1F;
 }
+#pragma pop
 
 
 extern "C" {

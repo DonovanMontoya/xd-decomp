@@ -46,10 +46,11 @@ extern "C" void GSprimDraw2DTexQuad(f32 x0, f32 y0, f32 x1, f32 y1, GStexture* t
     selectFormat(6);
     GSprimLayer()->setTexture(texture);
     beginQuad();
-    GXPosition2f32(x0, y0); color(*tint); GXTexCoord2f32(0.0f, 0.0f);
-    GXPosition2f32(x1, y0); color(*tint); GXTexCoord2f32(1.0f, 0.0f);
-    GXPosition2f32(x0, y1); color(*tint); GXTexCoord2f32(0.0f, 1.0f);
-    GXPosition2f32(x1, y1); color(*tint); GXTexCoord2f32(1.0f, 1.0f);
+    f32 zero = 0.0f, one = 1.0f;
+    GXPosition2f32(x0, y0); color(*tint); GXTexCoord2f32(zero, zero);
+    GXPosition2f32(x1, y0); color(*tint); GXTexCoord2f32(one, zero);
+    GXPosition2f32(x0, y1); color(*tint); GXTexCoord2f32(zero, one);
+    GXPosition2f32(x1, y1); color(*tint); GXTexCoord2f32(one, one);
     GSprimLayer()->endSurface();
 }
 extern "C" void GSprimDraw2DQuad4V(const GSvec2* vertices, const GXColor* tint) {
@@ -61,14 +62,17 @@ extern "C" void GSprimDraw2DQuad4V(const GSvec2* vertices, const GXColor* tint) 
     position(vertices[3]); color(*tint);
     GSprimLayer()->endSurface();
 }
+static inline void quadWHVertices(f32 x, f32 y, f32 width, f32 height, GXColor a, GXColor b, GXColor c, GXColor d) {
+    GXPosition2f32(x, y); GXColor1u32(*(u32*)&a);
+    GXPosition2f32(x + width, y); GXColor1u32(*(u32*)&b);
+    GXPosition2f32(x, y + height); GXColor1u32(*(u32*)&c);
+    GXPosition2f32(x + width, y + height); GXColor1u32(*(u32*)&d);
+}
 extern "C" void GSprimDraw2DQuadWH(f32 x, f32 y, f32 width, f32 height, const GXColor* tint) {
     GXColor copy = *tint;
     selectFormat(2);
     beginQuad();
-    GXPosition2f32(x, y); color(copy);
-    GXPosition2f32(x + width, y); color(copy);
-    GXPosition2f32(x, y + height); color(copy);
-    GXPosition2f32(x + width, y + height); color(copy);
+    quadWHVertices(x, y, width, height, copy, copy, copy, copy);
     GSprimLayer()->endSurface();
 }
 extern "C" void GSprimDraw2DQuad(f32 x0, f32 y0, f32 x1, f32 y1, const GXColor* tint) {
@@ -80,14 +84,17 @@ extern "C" void GSprimDraw2DQuad(f32 x0, f32 y0, f32 x1, f32 y1, const GXColor* 
     GXPosition2f32(x1, y1); color(*tint);
     GSprimLayer()->endSurface();
 }
+static inline void lineVertices(GXColor a, GXColor b, f32 x0, f32 y0, f32 x1, f32 y1) {
+    GXPosition2f32(x0, y0); color(a);
+    GXPosition2f32(x1, y1); color(b);
+}
 extern "C" void GSprimDraw2DVLine(f32 x, f32 y0, f32 y1, const GXColor* tint) {
     GXColor second = *tint, first = *tint;
     lineState();
     selectFormat(2);
     GSprimLayer()->primitive = 0xa8;
     GSprimLayer()->beginSurface(2);
-    GXPosition2f32(x, y0); color(first);
-    GXPosition2f32(x, y1); color(second);
+    lineVertices(first, second, x, y0, x, y1);
     GSprimLayer()->endSurface();
 }
 extern "C" void GSprimDraw2DHLine(f32 x0, f32 x1, f32 y, const GXColor* tint) {
@@ -96,8 +103,7 @@ extern "C" void GSprimDraw2DHLine(f32 x0, f32 x1, f32 y, const GXColor* tint) {
     selectFormat(2);
     GSprimLayer()->primitive = 0xa8;
     GSprimLayer()->beginSurface(2);
-    GXPosition2f32(x0, y); color(first);
-    GXPosition2f32(x1, y); color(second);
+    lineVertices(first, second, x0, y, x1, y);
     GSprimLayer()->endSurface();
 }
 extern "C" void GSprimDraw2DLine(f32 x0, f32 y0, f32 x1, f32 y1, const GXColor* first, const GXColor* second) {
@@ -116,8 +122,10 @@ extern "C" void GSprimDraw2DPixelListC(const GSprimPixel* vertices, u32 count, c
     GSprimLayer()->primitive = 0xb8;
     GSprimLayer()->beginSurface(count);
     while (count--) {
-        GXPosition2s16(vertices->x, vertices->y);
-        GXColor1u32(*(const u32*)colors++);
+        s16 y = ((const volatile GSprimPixel*)vertices)->y;
+        s16 x = ((const volatile GSprimPixel*)vertices)->x;
+        GXPosition2s16(x, y);
+        GXColor1u32(*(const volatile u32*)colors++);
         ++vertices;
     }
     GSprimLayer()->endSurface();

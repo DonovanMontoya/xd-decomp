@@ -866,10 +866,10 @@ static void _fadeEffectFunction_trainer_FirstInit(GStexture* arg0) {
 #define FL_SET(a, b, v) \
     FL(s32, a) |= (v); FL(s32, 0x16A8) |= 8; FL(s32, b) |= (v); FL(s32, 0x1760) |= 8
 
-#define FADE_LAYER_SETUP \
+#define FADE_LAYER_SETUP_IMPL(SlotType) \
     f32 matrix[4][4]; \
     u32* flags; \
-    FadeMatrixSlot* slot; \
+    SlotType slot; \
     GSmtx44Ortho(matrix, 0.0f, 480.0f, 0.0f, 640.0f, 0.0f, -30000.0f); \
     layer->fieldD54 = 1; \
     layer->fieldD58 = matrix[0][0]; \
@@ -879,8 +879,8 @@ static void _fadeEffectFunction_trainer_FirstInit(GStexture* arg0) {
     layer->fieldD68 = matrix[2][2]; \
     layer->fieldD6C = matrix[2][3]; \
     slot = layer->field19A0; \
-    memcpy(slot->state->matrix, mtxIdent, 0x30); \
-    flags = &slot->state->flags; \
+    memcpy(((FadeMatrixSlot*)slot)->state->matrix, mtxIdent, 0x30); \
+    flags = &((FadeMatrixSlot*)slot)->state->flags; \
     *flags |= 1; \
     layer->field1684 = 0.0f; \
     layer->field1688 = 30000.0f; \
@@ -938,6 +938,8 @@ static void _fadeEffectFunction_trainer_FirstInit(GStexture* arg0) {
     layer->field16A8 = (s32) (layer->field16A8 | 2); \
     layer->field1770 = (s32) (layer->field1770 | 2); \
     layer->field1760 = (s32) (layer->field1760 | 2);
+
+#define FADE_LAYER_SETUP FADE_LAYER_SETUP_IMPL(FadeMatrixSlot*)
 
 #define FADE_LAYER_BIND_TEXTURE(tex) \
     if (((void *) layer->field1740 != (tex)) || ((void *) layer->field17F8 != (tex)) || ((u8) (tex)->dirty != 0)) { \
@@ -1037,8 +1039,9 @@ bool fadeEffectHookFunction_slide_ball(GSgfxLayerID id, bool active, f32 elapsed
 }
 
 bool fadeEffectHookFunction_bound_ball(GSgfxLayerID id, bool active, f32 elapsed, f32 duration, f32 elapsedSecond, f32 durationSecond, void* opaque) {
-    GSgfxLayer* layer;
     GStexture* texture;
+    FADE_EFFECT_BOUND* ball;
+    GSgfxLayer* layer;
     GSvec center;
     GSvec ballCenter;
     layer = GSgfxLayerFindByID(id);
@@ -1061,9 +1064,9 @@ bool fadeEffectHookFunction_bound_ball(GSgfxLayerID id, bool active, f32 elapsed
     center.param1 = 320.0f - _fadeEffectWork.frame;
     _fadeEffectSnapshotFadeFunction(layer, texture, &center, 1.0f, 0.0f, progress, 0.5f);
     _fadeEffectStartTexture(layer, _fadeEffectWork.ballTexture);
-    FADE_EFFECT_BOUND* ball = _fadeEffectBound;
-    s32 i = 0;
-    do {
+    s32 i;
+    for(i=0;i<16;i++) {
+        ball = &_fadeEffectBound[i];
         f32 rot = ball->rotation;
         if (timeGetLastFrameTime() != 0) {
             if (ball->speed > 0) rot += 18.0f;
@@ -1072,41 +1075,40 @@ bool fadeEffectHookFunction_bound_ball(GSgfxLayerID id, bool active, f32 elapsed
             else if (rot >= 360.0f) rot -= 360.0f;
         }
         ball->rotation = (s16)rot;
-        f32 px = ball->x;
+        f32 position = ball->x;
         if (timeGetLastFrameTime() != 0) {
-            px += ball->speed;
-            if (px < 32.0f) {
-                px = 32.0f;
+            position += ball->speed;
+            if (position < 32.0f) {
+                position = 32.0f;
                 ball->speed = -ball->speed;
-            } else if (px > 608.0f) {
-                px = 608.0f;
+            } else if (position > 608.0f) {
+                position = 608.0f;
                 ball->speed = -ball->speed;
             }
         }
-        ball->x = (s16)px;
-        f32 py = ball->y;
+        ball->x = (s16)position;
+        position = ball->y;
         if (timeGetLastFrameTime() != 0) {
-            py += ball->state;
-            if (py < 32.0f) {
-                py = 32.0f;
+            position += ball->state;
+            if (position < 32.0f) {
+                position = 32.0f;
                 ball->state = -ball->state;
-            } else if (py > 448.0f) {
+            } else if (position > 448.0f) {
                 ball->state = -ball->state;
-                py = 448.0f;
+                position = 448.0f;
                 if (ball->state < 0.5f) ball->state = -13;
-            } else if (ball->state >= 0) {
-                ball->state = ball->state + 0.5f;
+            } else if ((f32)ball->state >= 0.0f) {
+                ball->state += 0.5f;
             } else {
                 ball->state = ball->state - 0.5f;
             }
         }
-        ball->y = (s16)py;
+        ball->y = (s16)position;
         ballCenter.param3 = 0.0f;
         ballCenter.param2 = ball->y;
         ballCenter.param1 = ball->x;
         _disp_bound_ball(layer, &ballCenter, 1.0f, rot, (s32)(255.0f * (1.0f - progress) * (1.0f - progressSecond)));
-        ++ball; ++i;
-    } while (i < 16);
+    }
     _fadeEffectEnd(layer);
     return active;
 }
@@ -2803,7 +2805,7 @@ bool fadeEffectHookFunction_distortion_yoko(GSgfxLayerID id, bool active, f32 el
         GSgfxEndBackFBCapture(texture);
     }
     _fadeEffectMaskFunction(layer, progress);
-    FADE_LAYER_SETUP
+    FADE_LAYER_SETUP_IMPL(void*)
     layer->field1998 = 0x98;
     layer->setRenderStateAndSelect(GSgfxVFBuildTemp(0, 3, 0, 0, 1, 5, 1, 1, 4));
     FADE_LAYER_BIND_TEXTURE(texture)

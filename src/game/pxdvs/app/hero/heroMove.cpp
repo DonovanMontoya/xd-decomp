@@ -404,6 +404,7 @@ void heroMoveSetColision(u8 enable) {
     } while (i < 4);
 }
 
+#pragma optimization_level 3
 void heroMoveTermEvent() {
     unsigned long group;
     unsigned long res;
@@ -420,6 +421,7 @@ void heroMoveTermEvent() {
     ((AnalogStickEmu*)&HeroMove.raw[0x654])->init();
     peopleRemoveNeckTarget(0, 0x64, 1.0f);
 }
+#pragma optimization_level reset
 
 void heroMoveInitEvent() {
     unsigned long group;

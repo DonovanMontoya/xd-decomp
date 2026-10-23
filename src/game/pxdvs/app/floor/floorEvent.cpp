@@ -210,7 +210,7 @@ s32 floorEventCtrlElevator(u32 floorID, u32 index, u16 control, u32 group, u32 p
     if (index >= *floor_door_list_number) return -1;
     door = &floor_door_list[index];
     if (door->resourceID == 0) return -1;
-    model = floorGetResource(floorID);
+    model = floorGetResource(floorID, door->resourceID);
     if (model == 0) return -1;
     u32 modelGroup = floorDataBiosGetGroupID(floorDataBiosGetPtr(floorID));
     switch (control) {
@@ -266,7 +266,7 @@ s32 floorEventCtrlElevator(u32 floorID, u32 index, u16 control, u32 group, u32 p
     return static_cast<s32>(100.0f * ((2.0f * frame) / static_cast<f32>(GSgfxVideoGetVsyncRate())));
 }
 s32 floorEventCtrlDoor(u32 floorID, u32 index, u8 control) {
-    s8 motion = -1;
+    s16 motion = -1;
     u32 soundID = 0;
     f32 frame = 0.0f;
     if (index >= *floor_door_list_number) return -1;
@@ -287,7 +287,7 @@ s32 floorEventCtrlDoor(u32 floorID, u32 index, u8 control) {
         break;
     }
     if (door->resourceID == 0) return -1;
-    _GSmodel *model = floorGetResource(floorID);
+    _GSmodel *model = floorGetResource(floorID, door->resourceID);
     if (model == 0) return -1;
     switch (control) {
     case 0:
@@ -333,11 +333,11 @@ s32 floorEventCtrlDoor(u32 floorID, u32 index, u8 control) {
     if (soundID != 0) GSsndPlayNow(soundID);
     switch (control) {
     case 1: break;
-    case 2: {
-        u32 heroFlags = peopleGetFlags(0, 0x64);
-        u32 partnerFlags = peopleGetFlags(0, 0x65);
-        u32 secondFlags = peopleGetFlags(0, 0x69);
-        u32 thirdFlags = peopleGetFlags(0, 0x68);
+    case 0: case 2: {
+        s32 heroFlags = peopleGetFlags(0, 0x64);
+        s32 partnerFlags = peopleGetFlags(0, 0x65);
+        s32 secondFlags = peopleGetFlags(0, 0x69);
+        s32 thirdFlags = peopleGetFlags(0, 0x68);
         heroMoveInitEvent();
         _floorEventWaitMotion(model);
         heroMoveTermEvent();

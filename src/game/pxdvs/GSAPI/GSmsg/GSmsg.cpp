@@ -106,9 +106,12 @@ s32 fn_8010B208(const MsgBundle* bundle) {
 #pragma dont_inline off
 u16* GSmsgGetGSchar(u32 identifier) {
     if (!identifier) return 0;
-    u32 group = identifier >> 20;
-    u32 textID = identifier & 0xfffff;
-    MsgBundle* bundle = _pMw->bundles;
+    MsgBundle* bundle;
+    u32 textID;
+    u32 group;
+    bundle = _pMw->bundles;
+    group = identifier >> 20;
+    textID = identifier & 0xfffff;
     while (bundle) {
         if (identifier < 60000) {
             s32 language = pokecoloGetLanguage();
@@ -435,19 +438,22 @@ struct MsgSound { u16 category, soundID; };
 extern MsgSound* message_se;
 extern u32* message_se_number;
 void GSsndStopNow(u32);
+static inline u32 msgGetSound(MsgTask* task) {
+    u32 result = 0;
+    MsgSound* sounds = message_se;
+    if (!sounds) return result;
+    for (u32 i = 0; i < *message_se_number; ++i) {
+        if (task->soundClass == sounds[i].category) {
+            result = sounds[i].soundID;
+            break;
+        }
+    }
+    return result;
+}
 void GSmsgKill(u32 identifier) {
     MsgTask* task = _msgFindTask(identifier);
     if (task) {
-        u32 sound = 0;
-        if (message_se) {
-            MsgSound* entry = message_se;
-            for (u32 i = 0; i < *message_se_number; ++i, ++entry) {
-                if (task->soundClass == entry->category) {
-                    sound = message_se[i].soundID;
-                    break;
-                }
-            }
-        }
+        u32 sound = msgGetSound(task);
         if (sound) GSsndStopNow(sound);
         task->state = 0;
     }

@@ -4028,85 +4028,93 @@ s32 fightTrainerAiWazaValueMarukunaru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     return temp_r3;
 }
 
+#pragma push
+#pragma opt_lifetimes off
 s32 fightTrainerAiWazaValueMeisou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
     s32 spC;
     s32 sp8;
-    s32 temp_r31;
-    u8 temp_r8;
-    u8 temp_r8_2;
+    s32 value;
+    u8 abilityCount;
 
-    temp_r8_2 = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
     sp8 = 0x252;
     spC = 0x253;
     sp10 = fightTrainerAiIsFightOutPokemonSpeAtkCntTakai;
-    temp_r31 = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8_2, 0x250U, 0x251U, sp8, spC, sp10);
-    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
+    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x250U, 0x251U, sp8, spC, sp10);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
     sp8 = 0x252;
     spC = 0;
     sp10 = fightTrainerAiIsFightOutPokemonSpeDefCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, temp_r31, temp_r8, 0x250U, 0U, sp8, spC, sp10);
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x250U, 0U, sp8, spC, sp10);
 }
+#pragma pop
 
+#pragma push
+#pragma opt_lifetimes off
 s32 fightTrainerAiWazaValueRyuunomai(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
     s32 spC;
     s32 sp8;
-    s32 temp_r31;
-    u8 temp_r8;
-    u8 temp_r8_2;
+    s32 value;
+    u8 abilityCount;
 
-    temp_r8_2 = fightTrainerAiGetFightOutPokemonAbiCntSubayasa(arg0, arg1);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSubayasa(arg0, arg1);
     sp8 = 0x24E;
     spC = 0x24F;
     sp10 = fightTrainerAiIsFightOutPokemonPhyAtkCntTakai;
-    temp_r31 = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8_2, 0x24CU, 0x24DU, sp8, spC, sp10);
-    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntSubayasa(arg0, arg1);
+    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x24CU, 0x24DU, sp8, spC, sp10);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSubayasa(arg0, arg1);
     sp8 = 0x24E;
     spC = 0;
     sp10 = fightTrainerAiIsFightOutPokemonNimblenessCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, temp_r31, temp_r8, 0x24CU, 0U, sp8, spC, sp10);
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x24CU, 0U, sp8, spC, sp10);
 }
+#pragma pop
 
+#pragma push
+#pragma opt_lifetimes off
 s32 fightTrainerAiWazaValueBirudoAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
     s32 spC;
     s32 sp8;
-    s32 temp_r31;
-    u8 temp_r8;
-    u8 temp_r8_2;
+    s32 value;
+    u8 abilityCount;
 
-    temp_r8_2 = fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(arg0, arg1);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(arg0, arg1);
     sp8 = 0x24A;
     spC = 0x24B;
     sp10 = fightTrainerAiIsFightOutPokemonPhyAtkCntTakai;
-    temp_r31 = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8_2, 0x248U, 0x249U, sp8, spC, sp10);
-    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(arg0, arg1);
+    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x248U, 0x249U, sp8, spC, sp10);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(arg0, arg1);
     sp8 = 0x24A;
     spC = 0;
     sp10 = fightTrainerAiIsFightOutPokemonPhyDefCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, temp_r31, temp_r8, 0x248U, 0U, sp8, spC, sp10);
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x248U, 0U, sp8, spC, sp10);
 }
+#pragma pop
 
+#pragma push
+#pragma opt_lifetimes off
 s32 fightTrainerAiWazaValueKosumopawaa(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
     s32 spC;
     s32 sp8;
-    s32 temp_r31;
-    u8 temp_r8;
-    u8 temp_r8_2;
+    s32 value;
+    u8 abilityCount;
 
-    temp_r8_2 = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
     sp8 = 0x246;
     spC = 0x247;
     sp10 = fightTrainerAiIsFightOutPokemonPhyDefCntTakai;
-    temp_r31 = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8_2, 0x244U, 0x245U, sp8, spC, sp10);
-    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
+    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x244U, 0x245U, sp8, spC, sp10);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
     sp8 = 0x246;
     spC = 0;
     sp10 = fightTrainerAiIsFightOutPokemonSpeDefCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, temp_r31, temp_r8, 0x244U, 0U, sp8, spC, sp10);
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x244U, 0U, sp8, spC, sp10);
 }
+#pragma pop
 
 s32 fightTrainerAiWazaValueKaihirituAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
@@ -4343,16 +4351,14 @@ block_60:
 s32 fightTrainerAiWazaValueMigawari(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u16 sp8[8];
     s32 temp_r0;
-    s32 temp_r28_2;
     s32 var_r26;
     u16 temp_r0_2;
     u16 temp_r30;
     u16 temp_r31;
     u32 temp_r27;
-    u32 temp_r28;
+    s32 temp_r28;
     u32 temp_r29;
     u8 var_r22;
-    u8 var_r29;
     u8 var_r5;
 
     var_r26 = 0;
@@ -4367,8 +4373,9 @@ s32 fightTrainerAiWazaValueMigawari(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, 
     var_r22 = 0;
     while (var_r22 < 4U) {
         if (fightAi_GetTokuseiHaveFlag(arg0, arg1, *(u16 *)((u8 *)moukakeiTbl + ((var_r22 * 2) & 0x1FE))) == 1) {
+            u16 threshold = fightOutPokemonMaxHpWaruValue(arg1, 3U);
             temp_r0 = (u16) temp_r28 - (u16) temp_r29;
-            if ((temp_r0 <= (s32)(u16) fightOutPokemonMaxHpWaruValue(arg1, 3U)) && (temp_r0 > 0)) {
+            if ((temp_r0 <= threshold) && (temp_r0 > 0)) {
                 var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x215U);
             }
         } else {
@@ -4378,21 +4385,21 @@ s32 fightTrainerAiWazaValueMigawari(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, 
 
         break;
     }
-    temp_r28_2 = (u16) temp_r28 - (u16) temp_r29;
-    if ((temp_r28_2 <= (s32) ((s32) ((u16) temp_r27 * 0x14) / 100)) && (temp_r28_2 > 0)) {
-        var_r29 = 0;
-        while ((s32) var_r29 < (s32) temp_r31) {
-            temp_r0_2 = *(u16 *)((u8 *)sp8 + ((var_r29 * 2) & 0x1FE));
+    temp_r28 = (u16) temp_r28 - (u16) temp_r29;
+    if ((temp_r28 <= (s32) ((s32) ((u16) temp_r27 * 0x14) / 100)) && (temp_r28 > 0)) {
+        temp_r29 = 0;
+        while ((s32) (u8)temp_r29 < (s32) temp_r31) {
+            temp_r0_2 = *(u16 *)((u8 *)sp8 + (((u8)temp_r29 * 2) & 0x1FE));
             if ((temp_r0_2 == 0xAF) || (temp_r0_2 == 0xB3)) {
                 var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x216U);
             }
-            var_r29 += 1;
+            temp_r29 += 1;
             continue;
 
             break;
         }
     }
-    if ((temp_r28_2 <= (s32)(u16) fightOutPokemonMaxHpWaruValue(arg1, 4U)) && (temp_r28_2 > 0)) {
+    if ((temp_r28 <= (s32)(u16) fightOutPokemonMaxHpWaruValue(arg1, 4U)) && (temp_r28 > 0)) {
         var_r5 = 0;
         while (var_r5 < 7U) {
             if (temp_r30 == (u16) *(u16 *)((u8 *)statusUpKinomiTbl + ((var_r5 * 2) & 0x1FE))) {

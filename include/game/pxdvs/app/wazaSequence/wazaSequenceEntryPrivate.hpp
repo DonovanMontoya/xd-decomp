@@ -43,6 +43,12 @@ public:
 
 enum enumNullJointName { NULL_JOINT_0 };
 
+struct SequenceModelRecord {
+    u8 pad00[0xC];
+    f32 times[16];
+    u8 pad4c[0xD0-0x4C];
+};
+
 class ModelSequence : public SequenceBase {
 public:
     void Sleep();
@@ -60,6 +66,8 @@ public:
     u8 field58;                     // 0x58
     u8 pad59[0x94 - 0x59];
     u32 model;                      // 0x94
+    void* particleBank;              // 0x98
+    SequenceModelRecord* records;    // 0x9C
 };
 
 struct SequenceEntryData {
@@ -104,8 +112,8 @@ public:
     s32 state;                      // 0x18
     f32 startTime;                  // 0x1C
     f32 time;                       // 0x20
-    EntryOwned *owned;              // 0x24
-    u32 field28;                    // 0x28
+    union { EntryOwned *owned; SequenceEntry* next; }; // 0x24
+    union { u32 field28; SequenceEntry* previous; }; // 0x28
     WazaSequence *waza;             // 0x2C
 };
 
@@ -265,6 +273,10 @@ public:
 class WazaSequence {
 public:
     SequenceEntry *GetEntryFromID(u8);
+    ModelSequence* GetModel() {
+        if(sequence->type==1)return (ModelSequence*)sequence;
+        return 0;
+    }
 
     f32 clock;                      // 0x0
     u8 pad04[4];
@@ -275,7 +287,7 @@ public:
     u8 done;                        // 0x15
     u8 pad16[6];
     u32 field1c;                    // 0x1C
-    SequenceEntry **entries;        // 0x20
+    SequenceEntry *entries;        // 0x20
     SequenceBase *sequence;         // 0x24
 };
 

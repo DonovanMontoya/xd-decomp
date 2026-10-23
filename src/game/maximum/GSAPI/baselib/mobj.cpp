@@ -529,6 +529,7 @@ void HSD_MObjAnim(HSD_MObj* mobj)
     HSD_TObjAnimAll(mobj->tobj);
 }
 
+#pragma opt_dead_assignments off
 static void MObjUpdateFunc(void* obj, enum_t type, HSD_ObjData* val)
 {
     HSD_MObj* mobj = obj;
@@ -585,6 +586,7 @@ static void MObjUpdateFunc(void* obj, enum_t type, HSD_ObjData* val)
         break;
     }
 }
+#pragma opt_dead_assignments reset
 
 void HSD_MObjReqAnimByFlags(HSD_MObj* mobj, f32 startframe, u32 flags)
 {

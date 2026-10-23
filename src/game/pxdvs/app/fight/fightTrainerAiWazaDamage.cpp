@@ -423,13 +423,12 @@ static void _fightTrainerAiWazaDamage190SubPre__FP13FIGHT_TRAINERUsP15FightOutPo
 }
 
 s32 fightTrainerAiWazaDamage189(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 temp_r3_2;
-    u16 temp_r31;
-    u16 temp_r3;
-
-    temp_r31 = fightTrainerAiGetFightOutPokemonNowHp(arg0, arg1);
-    temp_r3 = fightTrainerAiGetFightOutPokemonNowHp(arg0, arg3);
-    return temp_r3 > temp_r31 ? temp_r3 - temp_r31 : 0;
+    s32 attackerHp = (u16)fightTrainerAiGetFightOutPokemonNowHp(arg0, arg1);
+    s32 defenderHp = (u16)fightTrainerAiGetFightOutPokemonNowHp(arg0, arg3);
+    if (attackerHp >= defenderHp) {
+        return 0;
+    }
+    return defenderHp - attackerHp;
 }
 
 s32 fightTrainerAiWazaDamage188(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
@@ -554,6 +553,7 @@ s32 fightTrainerAiWazaDamage164(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 
     return 0;
 }
 
+#pragma opt_propagation off
 s32 fightTrainerAiWazaDamage162(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s16 var_r31;
     s16 var_r0;
@@ -572,6 +572,7 @@ s32 fightTrainerAiWazaDamage162(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 
     hp = fightTrainerAiGetFightOutPokemonMaxHp(arg0, arg1);
     return -(hp / divisor);
 }
+#pragma opt_propagation reset
 
 s32 fightTrainerAiWazaDamage161(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s16 var_r31;

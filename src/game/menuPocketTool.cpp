@@ -617,12 +617,13 @@ void CMetaMenu::localWindowRemove(long id) {
 }
 
 void CMetaMenu::localWindowDrawAll(long first, long last) {
-    for (; first <= last; first++) {
-        if (windows[first] != 0) {
-            if (windowFuncs[first] != 0) {
-                windowFuncs[first](this, windows[first]);
+    u32 i = first;
+    for (; (long)i <= last; i++) {
+        if (windows[i] != 0) {
+            if (windowFuncs[i] != 0) {
+                windowFuncs[i](this, windows[i]);
             } else {
-                menuPtWindowWorkDraw(windows[first]);
+                menuPtWindowWorkDraw(windows[i]);
             }
         }
     }
@@ -715,7 +716,7 @@ void menuPtWindowWorkDraw(tagWINDOW_WORK *win) {
     if (win != 0) {
         menuLayer = floorGetMenuLayerID();
         layer = win->layer;
-        spriteSetOffset(layer, win->x, win->y);
+        spriteSetOffset(win->layer, win->x, win->y);
         spriteClearScissor(layer);
         spriteSetEnv(layer);
         spriteSetOffset(menuLayer, win->x, win->y);
@@ -1108,10 +1109,9 @@ extern "C" {static PocketVec<f32> xy$2179[4],st$2180[4];}
 void menuPtSpriteDrawAndRollScale(u16 id,u32 packedColor,f32 x,f32 y,f32 rotation,f32 scale) {
     MenuSpriteValue* data=menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(id));
     void* texture=GSresGetResourceAllGroup(data->resource);
+    GSgfxColAu8 color={0,0,0,0};
+    color.r=packedColor>>24;color.g=packedColor>>16;color.b=packedColor>>8;color.a=packedColor;
     f32 left=data->x,top=data->y,width=data->width,height=data->height;
-    GSgfxColAu8 color={255,255,255,255};
-    u8 green=packedColor>>16,blue=packedColor>>8,red=packedColor>>24,alpha=packedColor;
-    color.r=red;color.g=green;color.b=blue;color.a=alpha;
     st$2180[0].x=st$2180[1].x=left/GStextureGetXsize(texture);
     st$2180[2].x=st$2180[3].x=(left+width)/GStextureGetXsize(texture);
     st$2180[1].y=st$2180[2].y=top/GStextureGetYsize(texture);

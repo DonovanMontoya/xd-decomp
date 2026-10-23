@@ -545,12 +545,11 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
                 (*(unsigned long long*)&result) >>= 1;
                 exponent++;
             }
-            unsigned int shift;
             short fraction;
             fraction = (*(short*)&result) & 0xF;
             (*(short*)&result) = fraction;
-            shift = (intdigits - 1) * 4;
-            exponent += shift;
+            intdigits = (intdigits - 1) * 4;
+            exponent += intdigits;
             fraction |= (exponent + 1023) << 4;
             (*(short*)&result) = fraction;
             *chars_scanned = spaces + sign_detected + NibbleIndex + 1 + exp_digits;
@@ -570,7 +569,7 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
 }
 
 extern "C" double atof(const char* str) {
-    double value, abs_value;
+    long double value, abs_value;
     int overflow, count;
     __InStrCtrl isc;
     isc.NextChar = (char*)str;

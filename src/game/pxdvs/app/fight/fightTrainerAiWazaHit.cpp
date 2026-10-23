@@ -2355,7 +2355,7 @@ s32 _fightTrainerAiWazaHitCheck(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 
             }
         }
     }
-    temp_r24_2 = (u32) (var_r6 - var_r7) >> 0x1FU;
+    temp_r24_2 = var_r6 < var_r7;
     if ((arg4 == 0xFFFFU) || (arg4 == 0xFFFEU)) {
         if ((arg4 == 0xFFFFU) && (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1DU) == 1) && ((u16) temp_r30 == fightOutPokemonGetUserFightTargetIdJoutaiDataId(arg3, 0x1DU))) {
             return -1;
@@ -2374,8 +2374,11 @@ s32 _fightTrainerAiWazaHitCheck(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 
     if (fightTrainerAiCheckGuard(arg0, arg3, arg2) == 1) {
         return 0;
     }
-    if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1DU) == 1) && (fightOutPokemonGetUserFightTargetIdJoutaiDataId(arg3, 0x1DU) == (u16) temp_r30)) {
-        return -1;
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1DU) == 1) {
+        u16 target = fightOutPokemonGetUserFightTargetIdJoutaiDataId(arg3, 0x1DU);
+        if (target == (u16)temp_r30) {
+            return -1;
+        }
     }
     if (temp_r24_2 == 1) {
         if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1FU) == 1) && ((u16) temp_r31 != 0x92) && ((u16) temp_r31 != 0x95) && ((u16) temp_r31 != 0x98) && ((u16) temp_r31 != 0xCF)) {

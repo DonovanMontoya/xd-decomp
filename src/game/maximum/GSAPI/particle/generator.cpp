@@ -152,6 +152,7 @@ while (var_r29 != NULL) {
 }
 }
 
+#pragma optimization_level 2
 void psKillGenerator(PSGenerator *arg0) {
     PSGenerator *temp_r0;
     PSGenerator *var_r4;
@@ -177,6 +178,7 @@ void psKillGenerator(PSGenerator *arg0) {
         var_r4 = var_r4->next;
     }
 }
+#pragma optimization_level reset
 
 void psInitGenerator(s32 count) {
     PSGenerator* gp; s32 i;

@@ -1348,6 +1348,7 @@ void _menuCB2DPokemonNewSet2__FUlUlUlUc(u32 arg0, s32 arg1, u32 arg2, u8 arg3) {
     }
 }
 
+#pragma opt_common_subs off
 void _menuCB2DPokemonNewSet__FUc(u8 arg0) {
     if (arg0 == 2) {
         _menuCB2DPokemonNewSet2__FUlUlUlUc(4U, 0, 6U, arg0);
@@ -1410,6 +1411,7 @@ void _menuCB2DPokemonNewSet__FUc(u8 arg0) {
         break;
     }
 }
+#pragma opt_common_subs reset
 
 void _menuCB_errorMsgDisp2__FUl(s32 arg0) {
     winMsgOpen(2, arg0, 1, 0);

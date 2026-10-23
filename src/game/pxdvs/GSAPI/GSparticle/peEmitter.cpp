@@ -244,7 +244,10 @@ void peEmitterNode::Start(peEmitterNode* parent, _peEmitter* definition, _EmitPa
     if (!(definitionFlags & 2) && (!parent || (parent->emitter->flags & 0x400) != 0x400)) {
         if ((definitionFlags & 0x80) != 0x80) EulerToQuat(&definition->euler, &localRotation);
         if (definitionFlags & 0x700038) {
-            if (definitionFlags & 8) angles.x = 6.2831855f * HSD_Randf();
+            if (definitionFlags & 8) {
+                f32 random = HSD_Randf();
+                angles.x = 6.2831855f * random;
+            }
             else angles.x = 0.0f;
             if (definitionFlags & 0x10) angles.y = 6.2831855f * HSD_Randf();
             else angles.y = 0.0f;
@@ -341,7 +344,6 @@ static inline void emitterCopy(Vec* destination,const Vec* source) {
     x=source->x;
     destination->x=x;destination->y=y;destination->z=z;
 }
-static inline f32 emitterRandomAngle() { f32 turns=2.0f*HSD_Randf(); return 3.1415927f*turns; }
 static inline f32 emitterAbs(f32 value) { if(value<0.0f)value=-value;return value; }
 void peEmitterNode::GetPositionParameter(GSvec* position,GSvec* direction,_pePositionFunction* function,f32 time) {
     Mtx matrix4,matrix3,matrix2,matrix1;
@@ -354,7 +356,7 @@ void peEmitterNode::GetPositionParameter(GSvec* position,GSvec* direction,_pePos
         if((emitterAbs(function->radius)>0.00001f || emitterAbs(function->radiusRange)>0.00001f) && PSVECSquareMag(((Vec*)direction))>0.00001f) {
             f32 angle;
             if(function->flags&0x80)angle=3.1415927f*(2.0f*(function->rate*time));
-            else angle=emitterRandomAngle();
+            else { f32 random=HSD_Randf(); angle=3.1415927f*(2.0f*random); }
             C_QUATRotAxisRad(&rotation,((Vec*)direction),angle);
             PSMTXQuat(matrix3,&rotation);
             PSMTXMultVecSR(matrix3,&function->direction,&rotated);
@@ -388,7 +390,7 @@ void peEmitterNode::GetPositionParameter(GSvec* position,GSvec* direction,_pePos
         PSMTXMultVecSR(matrix2,&function->origin,&cone);
         emitterCopy(((Vec*)direction),&cone);
         if(function->flags&0x80)angle=3.1415927f*(2.0f*(function->direction.z*time));
-        else angle=emitterRandomAngle();
+        else { f32 random=HSD_Randf(); angle=3.1415927f*(2.0f*random); }
         C_QUATRotAxisRad(&rotation,&function->origin,angle);
         PSMTXQuat(matrix4,&rotation);
         PSMTXMultVecSR(matrix4,((Vec*)direction),((Vec*)direction));
@@ -403,7 +405,7 @@ void peEmitterNode::GetPositionParameter(GSvec* position,GSvec* direction,_pePos
         ((Vec*)direction)->x=function->range.x;((Vec*)direction)->y=function->range.y;((Vec*)direction)->z=function->range.z;
         f32 angle;
         if(function->flags&0x80)angle=3.1415927f*(2.0f*(function->direction.z*time));
-        else angle=emitterRandomAngle();
+        else { f32 random=HSD_Randf(); angle=3.1415927f*(2.0f*random); }
         C_QUATRotAxisRad(&rotation,((Vec*)direction),angle);
         PSMTXQuat(matrix1,&rotation);
         PSMTXMultVecSR(matrix1,&function->axis,&ring);
@@ -427,33 +429,61 @@ void peEmitterNode::GetPositionParameter(GSvec* position,GSvec* direction,_pePos
 #define EM_V(def, off) ((Vec *)((u8 *)(def) + (off)))
 #define EP_V(p, off) ((Vec *)((u8 *)(p) + (off)))
 #define EP_F(p, off) (*(f32 *)((u8 *)(p) + (off)))
-void peEmitterNode::CreateParameters(u16 count_, f32 interval) {
+// Keep each transform temporary distinct and preserve the scalar copy order.
+static inline void emitterCopyVecXYZ(Vec* out,const Vec* in) {f32 x=in->x,y=in->y,z=in->z;out->x=x;out->y=y;out->z=z;}
+static inline void emitterCopyVec(Vec* out,const Vec* in) {f32 z,y,x;y=in->y;z=in->z;x=in->x;out->x=x;out->y=y;out->z=z;}
+static inline void emitterCopyQuat(Quaternion* out,const Quaternion* in) {f32 x=in->x,y=in->y,z=in->z,w=in->w;out->x=x;out->y=y;out->z=z;out->w=w;}
+#pragma opt_common_subs off
+#pragma opt_loop_invariants off
+static inline void emitterCopyLerpQuat(Quaternion* out,const Quaternion* in) {f32 w,z,y,x;y=in->y;z=in->z;w=in->w;x=in->x;out->x=x;out->y=y;out->z=z;out->w=w;}
+void peEmitterNode::CreateParameters(u16 remaining, f32 interval) {
+    Mtx inverseMatrix0,inverseMatrix1,inverseMatrix2,inverseMatrix3,matrix2,matrix0;
+    Vec position;
+    Quaternion rotation,inverseCopy0,inverseCopy1,inverseCopy2,inverseCopy3;
+    Vec drift,lerped;
+    Quaternion quat;
+    Vec scaleLerped,rotated,scaled;
+    Quaternion inverse0,inverse1,inverse2,inverse3;
+    Vec delta,scaleDelta;
     _peEmitter *def = emitter;
-    u16 remaining = count_;
-    f32 timeStep = EM_F(def, 8);
-    s16 total = this->count + remaining;
-    u32 local = (def->flags >> 6) & 1;
+    _EmitParams *params;
+    u32 local;
+    _pePositionFunction* positionFunction;
+
+    u16 existingCount;
+    u32 definitionFlags;
+    f32 timeStep;
+    u16 total;
+    existingCount=this->count;
+    definitionFlags=def->flags;
+    timeStep=EM_F(def,8);
+    total=existingCount+remaining;
+    local=(definitionFlags>>6)&1;
+    f32 time = timeStep * __OSu16tof32(&total);
     u16 countCopy = remaining;
-    f32 time = timeStep * __OSu16tof32(&countCopy);
-    f32 offset = 0.0f;
-    f32 inverseTotal = 1.0f / __OSs16tof32(&total);
-    _EmitParams *params = g_emitParams;
-    f32 blend = 1.0f;
-    f32 offsetStep = interval * inverseTotal;
+    f32 inverseTotal;
+    f32 blend;
+    f32 offset;
+    f32 offsetStep;
+    inverseTotal=1.0f/__OSu16tof32(&countCopy);
+    positionFunction=(_pePositionFunction*)EM_V(def,0x34);
+    blend=1.0f;
+    offset=0.0f;
+    params=g_emitParams;
+    offsetStep=interval*inverseTotal;
     while (remaining--) {
-        Vec position;
-        GetPositionParameter((GSvec *)EP_V(params, 8), (GSvec *)&position, (_pePositionFunction *)EM_V(def, 0x34), time);
+
+        GetPositionParameter((GSvec *)EP_V(params, 8), (GSvec *)&position, positionFunction, time);
         switch (EM_H(def, 0x74) & 2) {
         case 0: {
-            Quaternion rotation;
-            Mtx matrix;
-            Vec rotated;
+
             C_QUATRotAxisRad(&rotation, EM_V(def, 0x84), EM_F(def, 0x9c) * HSD_Randf() + EM_F(def, 0x98));
-            PSMTXQuat(matrix, &rotation);
-            PSMTXMultVecSR(matrix, EM_V(def, 0x78), &rotated);
-            *EP_V(params, 0x14) = rotated;
-            Mtx matrix2;
-            f32 turns = 2.0f * HSD_Randf();
+            PSMTXQuat(matrix0, &rotation);
+            PSMTXMultVecSR(matrix0, EM_V(def, 0x78), &rotated);
+            emitterCopyVec(EP_V(params,0x14),&rotated);
+
+            f32 random=HSD_Randf();
+            f32 turns=2.0f*random;
             C_QUATRotAxisRad(&rotation, EM_V(def, 0x78), 3.1415927f * turns);
             PSMTXQuat(matrix2, &rotation);
             PSMTXMultVecSR(matrix2, EP_V(params, 0x14), EP_V(params, 0x14));
@@ -464,12 +494,12 @@ void peEmitterNode::CreateParameters(u16 count_, f32 interval) {
             break;
         }
         case 2: {
-            Vec scaled;
+
             f32 speed;
             if (EM_H(def, 0x74) & 0x20) speed = time * EM_F(def, 0x7c) + EM_F(def, 0x78);
             else speed = EM_F(def, 0x7c) * HSD_Randf() + EM_F(def, 0x78);
             PSVECScale(&position, &scaled, speed);
-            *EP_V(params, 0x14) = scaled;
+            emitterCopyVec(EP_V(params,0x14),&scaled);
             break;
         }
         default: {
@@ -479,75 +509,64 @@ void peEmitterNode::CreateParameters(u16 count_, f32 interval) {
             break;
         }
         }
-        Vec drift;
+
         PSVECScale(EP_V(params, 0x14), &drift, offset);
-        position = drift;
+        emitterCopyVecXYZ(&position,&drift);
         PSVECAdd(EP_V(params, 8), &position, EP_V(params, 8));
-        _peEmitter *e1 = emitter;
-        EP_F(params, 0) = (EM_F(e1, 0x24) * HSD_Randf() + EM_F(e1, 0x20)) - offset;
-        _peEmitter *e2 = emitter;
-        EP_F(params, 4) = EM_F(e2, 0x30) * HSD_Randf() + EM_F(e2, 0x2c);
+
+        EP_F(params, 0) = (EM_F(emitter, 0x24) * HSD_Randf() + EM_F(emitter, 0x20)) - offset;
+
+        EP_F(params, 4) = EM_F(emitter, 0x30) * HSD_Randf() + EM_F(emitter, 0x2c);
         if (local) {
-            Vec delta, lerped, scaleDelta, scaleLerped;
-            Quaternion quat;
+
             PSVECSubtract(&world.position, &previousWorld.position, &delta);
-            lerped = delta;
+            emitterCopyVecXYZ(&lerped,&delta);
             PSVECScale(&lerped, &lerped, blend);
             PSVECAdd(&lerped, &previousWorld.position, &lerped);
-            *EP_V(params, 0x20) = lerped;
+            emitterCopyVec(EP_V(params,0x20),&lerped);
             C_QUATLerp(&previousWorld.rotation, &world.rotation, &quat, blend);
-            *(Quaternion *)EP_V(params, 0x2c) = quat;
+            emitterCopyLerpQuat((Quaternion*)EP_V(params,0x2c),&quat);
             PSVECSubtract(&world.scale, &previousWorld.scale, &scaleDelta);
-            scaleLerped = scaleDelta;
+            emitterCopyVecXYZ(&scaleLerped,&scaleDelta);
             PSVECScale(&scaleLerped, &scaleLerped, blend);
             PSVECAdd(&scaleLerped, &previousWorld.scale, &scaleLerped);
-            *EP_V(params, 0x3c) = scaleLerped;
-            if (EM_H(def, 0x34) & 0x100) {
-                Quaternion inverse, inverseCopy;
-                Mtx matrix;
+            emitterCopyVec(EP_V(params,0x3c),&scaleLerped);
+            if ((*(u16*)positionFunction) & 0x100) {
+
                 PSVECSubtract(EP_V(params, 8), EP_V(params, 0x20), EP_V(params, 8));
-                PSQUATInverse((Quaternion *)EP_V(params, 0x2c), &inverse);
-                inverseCopy = inverse;
-                PSMTXQuat(matrix, &inverseCopy);
-                PSMTXMultVecSR(matrix, EP_V(params, 8), EP_V(params, 8));
-                f32 sx = EP_F(params, 0x3c);
-                if (sx != 0.0f) EP_F(params, 8) = EP_F(params, 8) / sx;
-                f32 sy = EP_F(params, 0x40);
-                if (sy != 0.0f) EP_F(params, 0xc) = EP_F(params, 0xc) / sy;
-                f32 sz = EP_F(params, 0x44);
-                if (sz != 0.0f) EP_F(params, 0x10) = EP_F(params, 0x10) / sz;
+                PSQUATInverse((Quaternion *)EP_V(params, 0x2c), &inverse0);
+                emitterCopyQuat(&inverseCopy0,&inverse0);
+                PSMTXQuat(inverseMatrix0, &inverseCopy0);
+                PSMTXMultVecSR(inverseMatrix0, EP_V(params, 8), EP_V(params, 8));
+                if(0.0f != EP_F(params, 0x3c)) EP_F(params,8) = EP_F(params,8) / EP_F(params, 0x3c);
+                if(0.0f != EP_F(params, 0x40)) EP_F(params,0xc) = EP_F(params,0xc) / EP_F(params, 0x40);
+                if(0.0f != EP_F(params, 0x44)) EP_F(params,0x10) = EP_F(params,0x10) / EP_F(params, 0x44);
             }
             if (EM_H(def, 0x74) & 0x10) {
-                Quaternion inverse, inverseCopy;
-                Mtx matrix;
-                PSQUATInverse((Quaternion *)EP_V(params, 0x2c), &inverse);
-                inverseCopy = inverse;
-                PSMTXQuat(matrix, &inverseCopy);
-                PSMTXMultVecSR(matrix, EP_V(params, 0x14), EP_V(params, 0x14));
+
+                PSQUATInverse((Quaternion *)EP_V(params, 0x2c), &inverse1);
+                emitterCopyQuat(&inverseCopy1,&inverse1);
+                PSMTXQuat(inverseMatrix1, &inverseCopy1);
+                PSMTXMultVecSR(inverseMatrix1, EP_V(params, 0x14), EP_V(params, 0x14));
             }
         } else {
-            if (EM_H(def, 0x34) & 0x100) {
-                Quaternion inverse, inverseCopy;
-                Mtx matrix;
+            if ((*(u16*)positionFunction) & 0x100) {
+
                 PSVECSubtract(EP_V(params, 8), &world.position, EP_V(params, 8));
-                PSQUATInverse(&world.rotation, &inverse);
-                inverseCopy = inverse;
-                PSMTXQuat(matrix, &inverseCopy);
-                PSMTXMultVecSR(matrix, EP_V(params, 8), EP_V(params, 8));
-                f32 sx = world.scale.x;
-                if (sx != 0.0f) EP_F(params, 8) = EP_F(params, 8) / sx;
-                f32 sy = world.scale.y;
-                if (sy != 0.0f) EP_F(params, 0xc) = EP_F(params, 0xc) / sy;
-                f32 sz = world.scale.z;
-                if (sz != 0.0f) EP_F(params, 0x10) = EP_F(params, 0x10) / sz;
+                PSQUATInverse(&world.rotation, &inverse2);
+                emitterCopyQuat(&inverseCopy2,&inverse2);
+                PSMTXQuat(inverseMatrix2, &inverseCopy2);
+                PSMTXMultVecSR(inverseMatrix2, EP_V(params, 8), EP_V(params, 8));
+                if(0.0f != world.scale.x) EP_F(params,8) = EP_F(params,8) / world.scale.x;
+                if(0.0f != world.scale.y) EP_F(params,0xc) = EP_F(params,0xc) / world.scale.y;
+                if(0.0f != world.scale.z) EP_F(params,0x10) = EP_F(params,0x10) / world.scale.z;
             }
             if (EM_H(def, 0x74) & 0x10) {
-                Quaternion inverse, inverseCopy;
-                Mtx matrix;
-                PSQUATInverse(&world.rotation, &inverse);
-                inverseCopy = inverse;
-                PSMTXQuat(matrix, &inverseCopy);
-                PSMTXMultVecSR(matrix, EP_V(params, 0x14), EP_V(params, 0x14));
+
+                PSQUATInverse(&world.rotation, &inverse3);
+                emitterCopyQuat(&inverseCopy3,&inverse3);
+                PSMTXQuat(inverseMatrix3, &inverseCopy3);
+                PSMTXMultVecSR(inverseMatrix3, EP_V(params, 0x14), EP_V(params, 0x14));
             }
         }
         time -= timeStep;
@@ -555,4 +574,147 @@ void peEmitterNode::CreateParameters(u16 count_, f32 interval) {
         blend -= inverseTotal;
         offset += offsetStep;
     }
+}
+#pragma opt_common_subs reset
+#pragma opt_loop_invariants reset
+
+struct EmitterSpline {u8 flags;u8 reserved01[3];f32 value,time;};
+struct EmitterColor {u8 r,g,b,a;};
+extern "C" {
+u8 Update__6peNodeFP13peEmitterNodef(peEmitterNode*,peEmitterNode*,f32);
+void peColorSplineGetValue(EmitterColor*,void*,f32);
+f32 peSplineGetValue(EmitterSpline*,f32);
+extern f32 __float_nan[];
+extern u16 g_maxEmitParams;
+f64 atan2(f64,f64);
+}
+static inline s32 emitterFloatClass(f32 x) {
+    union {f32 value;s32 bits;} v;v.value=x;
+    s32 result;
+    switch(v.bits&0x7f800000) {
+    case 0x7f800000:if(v.bits&0x7fffff)result=1;else result=2;break;
+    case 0:if(v.bits&0x7fffff)result=5;else result=3;break;
+    default:result=4;break;
+    }
+    return result;
+}
+#define EM_SPLINE(def, off) (*(EmitterSpline **)((u8 *)(def) + (off)))
+static inline f32 emitterSpline(EmitterSpline* spline,f32 progress) {
+    if(!spline || !(spline->flags&3))return 1.0f;
+    f32 difference=spline->time-progress;
+    if(difference<0.0f)difference=-difference;
+    if(difference<=0.00001f)return spline->value;
+    return peSplineGetValue(spline,progress);
+}
+static inline f32 emitterColorChannel(u8 value) {return __OSu8tof32(&value);}
+static inline u16 emitterEmitCount(peEmitterNode* node,f32 delta,f32 progress) {
+    if(node->flags&0x40)return 0;
+    if(!(node->flags&8) && node->lastLoop<node->emitter->startTime)return 0;
+    node->flags|=8;
+    if((node->flags&0x10) && node->lastLoop>node->emitter->startTime+node->emitter->endTime)return 0;
+    node->flags|=0x10;
+    f32 random=HSD_Randf();
+    _peEmitter* definition=node->emitter;
+    f32 rate=EM_F(definition,0x10)*random+EM_F(definition,0xC);
+    rate*=emitterSpline(EM_SPLINE(definition,0x14),progress);
+    if(node->emitter->endTime<=0.00001f) {
+        node->field34=0.0f;
+        return __OSf32tou16(rate);
+    }
+    rate*=delta;
+    rate+=node->field34;
+    u16 count=__OSf32tou16(rate);
+    u16 whole=count;
+    node->field34=rate-__OSu16tof32(&whole);
+    if(count==0 && node->count==0) {
+        count=1;
+        node->field34=0.0f;
+    }
+    return count;
+}
+bool peEmitterNode::Update(peEmitterNode* parent,_peEmitter* definition,f32 delta) {
+    Mtx matrix;
+    Vec angles,velocity;
+    Quaternion rotation;
+    EmitterColor color;
+    u32 definitionFlags=definition->flags;
+    if(!Update__6peNodeFP13peEmitterNodef(this,parent,delta)) {
+        if(!parent && (definitionFlags&1)) {
+            if(flags&0x40)return false;
+            life+=definition->endTime;
+            lastLoop-=definition->duration-definition->startTime;
+            count=0;
+        } else return false;
+        flags&=~0x20;
+    }
+    f32 progress;
+    if(flags&0x20)progress=1.0f-life/time;
+    else progress=1.0f;
+    peColorSplineGetValue(&color,*(void**)((u8*)definition+0x130),progress);
+    EM_F(this,0x38)=0.00390625f*(2.0f*emitterColorChannel(color.r));
+    EM_F(this,0x3c)=0.00390625f*(2.0f*emitterColorChannel(color.g));
+    EM_F(this,0x40)=0.00390625f*(2.0f*emitterColorChannel(color.b));
+    field44=emitterSpline(EM_SPLINE(definition,0x134),progress);
+    if(parent) {
+        EM_F(this,0x38)*=EM_F(parent,0x38);
+        EM_F(this,0x3c)*=EM_F(parent,0x3c);
+        EM_F(this,0x40)*=EM_F(parent,0x40);
+        field44*=parent->field44;
+    }
+    if(!(definitionFlags&2)) {
+        if(parent && (parent->emitter->flags&0x400)!=0) {
+            velocity.x=EM_F(this,0x14);velocity.y=EM_F(this,0x18);velocity.z=EM_F(this,0x1c);
+            if(parent->emitter->flags&0x40) {
+                PSMTXQuat(matrix,&((EmitterTransforms*)transformParent)->rotation);
+                PSMTXMultVecSR(matrix,&velocity,&velocity);
+            }
+            f32 horizontal=velocity.x*velocity.x+velocity.z*velocity.z;
+            if(horizontal>0.0f) {
+                f64 guess=__frsqrte(horizontal);
+                guess=0.5*guess*(3.0-(f64)horizontal*(guess*guess));
+                guess=0.5*guess*(3.0-(f64)horizontal*(guess*guess));
+                guess=0.5*guess*(3.0-(f64)horizontal*(guess*guess));
+                horizontal=(f32)((f64)horizontal*guess);
+            } else if((f64)horizontal<0.0)horizontal=__float_nan[0];
+            else if(emitterFloatClass(horizontal)==1)horizontal=__float_nan[0];
+            angles.x=atan2(-velocity.y,horizontal);
+            angles.y=atan2(velocity.x,velocity.z);
+            angles.z=0.0f;
+            EulerToQuat(&angles,&localRotation);
+        } else if(definitionFlags&0x80) {
+            angles.x=EM_F(definition,0xdc)*emitterSpline(EM_SPLINE(definition,0xe8),progress);
+            angles.y=EM_F(definition,0xe0)*emitterSpline(EM_SPLINE(definition,0xec),progress);
+            angles.z=EM_F(definition,0xe4)*emitterSpline(EM_SPLINE(definition,0xf0),progress);
+            EulerToQuat(&angles,&localRotation);
+        } else {
+            angles.x=delta*(randomOffset.x*emitterSpline(EM_SPLINE(definition,0x10c),progress));
+            angles.y=delta*(randomOffset.y*emitterSpline(EM_SPLINE(definition,0x110),progress));
+            angles.z=delta*(randomOffset.z*emitterSpline(EM_SPLINE(definition,0x114),progress));
+            EulerToQuat(&angles,&rotation);
+            PSQUATMultiply(&localRotation,&rotation,&localRotation);
+        }
+    }
+    scale.x=spin.x*emitterSpline(EM_SPLINE(definition,0x124),progress);
+    scale.y=spin.y*emitterSpline(EM_SPLINE(definition,0x128),progress);
+    scale.z=spin.z*emitterSpline(EM_SPLINE(definition,0x12c),progress);
+    offset.x=EM_F(definition,0xc4)*emitterSpline(EM_SPLINE(definition,0xd0),progress);
+    offset.y=EM_F(definition,0xc8)*emitterSpline(EM_SPLINE(definition,0xd4),progress);
+    offset.z=EM_F(definition,0xcc)*emitterSpline(EM_SPLINE(definition,0xd8),progress);
+    EM_F(this,0x9c)=EM_F(definition,0xac)*emitterSpline(EM_SPLINE(definition,0xb8),progress);
+    EM_F(this,0xa0)=EM_F(definition,0xb0)*emitterSpline(EM_SPLINE(definition,0xbc),progress);
+    EM_F(this,0xa4)=EM_F(definition,0xb4)*emitterSpline(EM_SPLINE(definition,0xc0),progress);
+    CreateWorldParams();
+    peContainer* container=containers;
+    while(container) {container->PreUpdate();container=container->next;}
+    u16 emitted=emitterEmitCount(this,delta,progress);
+    if(emitted) {
+        if(emitted>g_maxEmitParams)emitted=g_maxEmitParams;
+        CreateParameters(emitted,definition->endTime>0.00001f?delta:0.0f);
+        container=containers;
+        while(container) {count+=container->Emit(emitted);container=container->next;}
+    }
+    container=containers;
+    while(container) {container->Update(delta);container=container->next;}
+    lastLoop+=delta;
+    return true;
 }
