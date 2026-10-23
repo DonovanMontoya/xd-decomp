@@ -10,7 +10,8 @@ bool GsShapeObject::CreateShapeDrawBuffer(s16 instance) {
     if(instance<0 || instance>=256) return false;
     drawBuffers[instance]=(u8*)GSmemAlloc(entry->vertexCount*(entry->textureCount*8+16)*2);
     if(!drawBuffers[instance]) return false;
-    u16 count=entry->vertexCount;
+    u32 count=entry->vertexCount;
+    int texture;
     for(int buffer=0;buffer<2;buffer++) {
         u32 offset=0;
         if(buffer!=0) offset=count*(entry->textureCount*8+16);
@@ -18,8 +19,8 @@ bool GsShapeObject::CreateShapeDrawBuffer(s16 instance) {
         memcpy(vertices,entry->vertices,count*12);
         u8* colors=vertices+count*12;
         memcpy(colors,entry->colors,count*4);
-        for(int texture=0;texture<entry->textureCount;texture++)
-            memcpy(colors+count*(texture*8+4),entry->textureCoords,count*8);
+        for(texture=0;texture<entry->textureCount;texture++)
+            memcpy(colors+count*(texture*8u+4),entry->textureCoords,count*8);
     }
     return true;
 }
