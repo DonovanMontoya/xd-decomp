@@ -2916,20 +2916,26 @@ void fightAi_AllWazaValid_DelComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
 }
 
 void fightAi_CreateAction_FromAllWazaValid(FIGHT_TRAINER *trainer, AiWazaCandidate *entry) {
-    s32 fightType = (u8)fightFloor_GetFightType(0);
+    s32 fightType;
     u8 i;
+    FightOutPokemon *attacker;
+    u16 move;
+    u32 target;
+    FightOutPokemon *selected;
+    FightOutPokemon *defender;
+    s8 slot;
+    fightType = (u8)fightFloor_GetFightType(0);
     for (i = 0; i < 2; i++) {
-        FightOutPokemon *attacker = entry->attackers[i];
-        u16 move = entry->moves[i];
-        u8 slot = entry->slots[i];
-        FightOutPokemon *defender = entry->defenders[i];
+        attacker = entry->attackers[i];
+        move = entry->moves[i];
+        slot = entry->slots[i];
+        defender = entry->defenders[i];
         if (attacker && defender && fightActionCheckValid(fightOutPokemon_GetFightActionBuffPtr(attacker)) != 1) {
-            FightOutPokemon *selected = fightSeqSelectDefensePokemonPtr(attacker, move, fightType, (void *)&fightTrainerAiWazaSelectDefensePokemon, 1, 0, -1);
+            selected = fightSeqSelectDefensePokemonPtr(attacker, move, fightType, (void *)&fightTrainerAiWazaSelectDefensePokemon, 1, 0, -1);
             if (selected) defender = selected;
-            if (defender) {
-                u32 target = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(defender, fightType);
-                fightOutPokemonCreateFightActionAttackWaza(attacker, 0, 0x13, 0, fight_action_data_waza, move, target, (s8)slot, 0);
-            }
+            if (!defender) return;
+            target = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(defender, fightType);
+            fightOutPokemonCreateFightActionAttackWaza(attacker, 0, 0x13, 0, fight_action_data_waza, move, target, slot, 0);
         }
     }
 }

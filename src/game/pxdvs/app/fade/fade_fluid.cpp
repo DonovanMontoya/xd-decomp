@@ -227,10 +227,10 @@ extern "C" void fadeFluidCalcParms(f32 delta) {
     speed=_fadeFluidWork.speed;
     spacing=_fadeFluidWork.spacing;
     damping=_fadeFluidWork.damping*delta;
-    inverse=1.0f/(2.0f+damping);
     ratio=(delta*(delta*(speed*speed)))/(spacing*spacing);
-    _fadeFluidWork.b=inverse*(damping-2.0f);
+    inverse=1.0f/(2.0f+damping);
     _fadeFluidWork.a=-((8.0f*ratio)-4.0f)*inverse;
+    _fadeFluidWork.b=inverse*(damping-2.0f);
     _fadeFluidWork.c=2.0f*ratio*inverse;
 }
 

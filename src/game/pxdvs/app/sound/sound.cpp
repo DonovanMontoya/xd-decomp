@@ -39,7 +39,7 @@ static s32 _soundOpenPlay(u32 id,s32 a,s32 b,s32 bgm){if(id==0 || id>=*snd_data_
 static void _soundFadeout(u32 time,s32 bgm,s32 wait){u32 id;if(bgm)id=soundGetBGMID();else id=soundGetEnvID();if(id!=0xFFFFFFFF && _soundCheckActive(id)==1){GSsndSetOriginalVolume(id,time,0);if(wait)_soundWait(time);}}
 static void _soundCloseFastFadeout(u32 id){if(_soundCheckActive(id)==1){GSsndSetOriginalVolume(id,50,0);_soundWait(50);GSsndClose(id);}}
 static u8 _soundCheckActive(u32 id){s32 s=GSsndGetStatus(id);if(s!=0 && s>=0 && s<4)return 1;return 0;}
-static void _soundWait(u32 ms){f32 rate;f32 elapsed=0.0f;while(elapsed<(f32)ms/1000.0f){GSthreadSwitch();rate=GSgfxVideoGetVsyncRate();elapsed+=GSgfxVideoGetLastRenderTime()/rate;}}
+static void _soundWait(u32 ms){f32 elapsed=0.0f;while(elapsed<(f32)ms/1000.0f){GSthreadSwitch();elapsed+=GSgfxVideoGetLastRenderTime()/(f32)GSgfxVideoGetVsyncRate();}}
 void soundInitBGM(){GSfsysReadWait(0x99);}
 void soundInit(){soundPlayID=0;soundPlayEnvID=0;}
 }

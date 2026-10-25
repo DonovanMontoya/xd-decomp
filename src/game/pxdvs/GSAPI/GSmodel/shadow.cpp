@@ -108,10 +108,10 @@ void GSmodelSetShadowFlags(GSmodel* model, u32 flags) {
 static inline bool _jointCanShadow(HSD_JObj* joint) {
     return !(joint->flags & 0x4020);
 }
+static inline u32 _modelShadowJointEnabled(HSD_JObj* j) { if (j->flags & 0x4020) return 0; return 1; }
 static void _modelShadowSetShadowFlag__FP9_HSD_JObjPPvi(HSD_JObj* joint, void** context, s32) {
     bool on = context != 0;
-    u32 ok = !(joint->flags & 0x4020);
-    if (!ok) return;
+    if (!_modelShadowJointEnabled(joint)) return;
     for (HSD_DObj* object = joint->u.dobj; object; object = object->next) {
         if (object->mobj) {
             if (on) object->mobj->rendermode |= 0x4000000;

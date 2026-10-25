@@ -140,10 +140,13 @@ extern "C" static void _fsysAddCacheManage(GSfsysCache* entry) { _fsysAddTAG(ent
 #pragma dont_inline on
 extern "C" {
 GSfsysCache* _fsysGetNewCacheManage(u32 group, u32 identifier, u8 persistent, u8 locked, u32 freshness) {
-    GSfsysCache* result = 0;
-    BOOL interrupts = OSDisableInterrupts();
+    BOOL interrupts;
     GSfsysCache* entry;
-    u32 index = _fsysCACHEManageIndex;
+    u32 index;
+    GSfsysCache* result;
+    result = 0;
+    interrupts = OSDisableInterrupts();
+    index = _fsysCACHEManageIndex;
     while (!result) {
         entry = &_fsysCACHEManage[index];
         if (!entry->inUse) {
@@ -164,8 +167,8 @@ GSfsysCache* _fsysGetNewCacheManage(u32 group, u32 identifier, u8 persistent, u8
         ++index;
         if (index >= _fsysCACHEManageSize) index = 0;
         if (index == _fsysCACHEManageIndex) {
-            // The original exhausted-pool path returns the saved interrupt state.
-            return (GSfsysCache*)interrupts;
+            // Exhausted pool: release-build assert shape, returns without a value.
+            if (index == _fsysCACHEManageIndex) return;
         }
     }
     _fsysCACHEManageIndex = index;
@@ -183,10 +186,13 @@ GSfsysARQTransfer* _fsysArq2ArqTrans(u32 request) {
 }
 static void _fsysDelARQTrans(GSfsysARQTransfer* transfer) { _fsysDelTAG(transfer, &_fsysARQTransRoot); }
 static GSfsysARQTransfer* _fsysGetNewArq() {
-    GSfsysARQTransfer* result = 0;
+    BOOL interrupts;
     GSfsysARQTransfer* transfer;
-    u32 index = _fsysARQTransIndex;
-    BOOL interrupts = OSDisableInterrupts();
+    u32 index;
+    GSfsysARQTransfer* result;
+    result = 0;
+    interrupts = OSDisableInterrupts();
+    index = _fsysARQTransIndex;
     while (!result) {
         transfer = &_fsysARQTrans[index];
         if (!transfer->inUse) {

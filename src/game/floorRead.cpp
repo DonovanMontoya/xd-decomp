@@ -409,7 +409,7 @@ static _HSD_SceneDesc *_makeArchiveHeader(u32 group, u32 id, u32 extra) {
     GSresUnlockResource(group, id);
     void *res = GSresGetResource(group, id);
     u8 *data = (u8 *)res;
-    HSD_ArchiveParse(res, data + 0x60, extra);
+    HSD_ArchiveParse(data, (u8 *)res + 0x60, extra);
     return (_HSD_SceneDesc *)HSD_ArchiveGetPublicAddress(data, "scene_data");
 }
 

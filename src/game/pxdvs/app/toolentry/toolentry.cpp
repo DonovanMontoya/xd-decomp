@@ -245,12 +245,18 @@ void toolentryTaisenFreePokemonData() {
 }
 
 void toolentryTaisenEntryPokemon(s32 idx) {
-    s32 num = toolentryTaisenGetEntryPokemonNum(idx);
-    Hero* entryHero = _toolentryTaisenGetEntryHeroPtr(idx);
-    Hero* hero = _toolentryTaisenGetHeroPtr(idx);
+    s32 num;
+    Hero* entryHero;
+    Hero* hero;
+    s32 i;
+    s32 order;
+    Pokemon* src;
+    Pokemon* dst;
+    num = toolentryTaisenGetEntryPokemonNum(idx);
+    entryHero = _toolentryTaisenGetEntryHeroPtr(idx);
+    hero = _toolentryTaisenGetHeroPtr(idx);
     *entryHero = *hero;
-    for (s32 i = 0; i < 6; i++) {
-        s32 order;
+    for (i = 0; i < 6; i++) {
         pokemonInit(_toolentryTaisenGetEntryPokemonPtr(idx, i));
         order = toolentryTaisenGetEtnryPokemonOrder(idx, i);
         if (order == 0xF || order == -1) {
@@ -258,16 +264,16 @@ void toolentryTaisenEntryPokemon(s32 idx) {
                 num = i;
             }
         } else {
-            Pokemon* src = _toolentryTaisenGetPokemonPtr(idx, i);
-            Pokemon* dst = _toolentryTaisenGetEntryPokemonPtr(idx, i);
+            src = _toolentryTaisenGetPokemonPtr(idx, i);
+            dst = _toolentryTaisenGetEntryPokemonPtr(idx, i);
             if (dst && src) {
                 *dst = *src;
             }
         }
     }
-    for (s32 k = 0; k < num; k++) {
-        Pokemon* src = _toolentryTaisenGetPokemonPtr(idx, toolentryTaisenGetEtnryPokemonOrder(idx, k));
-        Pokemon* dst = _toolentryTaisenGetEntryPokemonPtr(idx, k);
+    for (i = 0; i < num; i++) {
+        src = _toolentryTaisenGetPokemonPtr(idx, toolentryTaisenGetEtnryPokemonOrder(idx, i));
+        dst = _toolentryTaisenGetEntryPokemonPtr(idx, i);
         if (dst && src) {
             *dst = *src;
         }
