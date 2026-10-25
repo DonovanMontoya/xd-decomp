@@ -3047,16 +3047,20 @@ jump:
 }
 
 static u8 _fightSeqHukitobashiCheck(FightOutPokemon* attacker, FightOutPokemon* defender, u32 jump) {
-    u8 atkLevel;
-    u8 defLevel;
-    atkLevel = figthOutPokemonGetLevel(attacker);
-    defLevel = figthOutPokemonGetLevel(defender);
-    if (atkLevel >= defLevel) {
+    u32 atkLevel;
+    u32 defLevel;
+    u32 r;
+    s32 sum;
+    atkLevel = WIDE_GET_LEVEL(attacker);
+    defLevel = WIDE_GET_LEVEL(defender);
+    if ((u8)atkLevel >= (u8)defLevel) {
 fail:
         fightSeq_JumpWazaSeq(WAZA_Hukitobashi);
         return 1;
     }
-    if ((u16)((((atkLevel + defLevel) * (u8)HSD_Rand()) >> 8) + 1) > ((defLevel >> 2) & 0x3f)) {
+    r = HSD_Rand();
+    sum = (u8)atkLevel + (u8)defLevel;
+    if ((u16)(((sum * (u8)r) >> 8) + 1) > (s32)((defLevel >> 2) & 0x3f)) {
         goto fail;
     }
     fightSeq_JumpWazaSeq((u8*)jump);

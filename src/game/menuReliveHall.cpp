@@ -153,7 +153,7 @@ public:
     s32 count;
     u8 positions[0x2800][4];
     u8 colors[0x2800][4];
-    u8 sw[0x2800];
+    bool sw[0x2800];
     u32 *bitTable;
     s32 angleIndex[361];
     void draw();
@@ -632,16 +632,10 @@ void SCircle::setFade(u8 fade) {
 void SCircle::setSwPrime(int start, int end, bool on) {
     int i = angleIndex[start];
     int last = angleIndex[end];
-    if (on) {
-        for (; i < last; i++) {
-            sw[i] = on;
-            colors[i][3] = dots[i].alpha;
-        }
-    } else {
-        for (; i < last; i++) {
-            sw[i] = on;
-            colors[i][3] = 0;
-        }
+    for (; i < last; i++) {
+        sw[i] = on;
+        if (on) colors[i][3] = dots[i].alpha;
+        else colors[i][3] = 0;
     }
 }
 
@@ -1802,11 +1796,12 @@ f32 CMenuReliveHall::starTimeFromBorn(f32 &x, f32 &y, f32 direction) {
 
 void CMenuReliveHall::drawStarLightOne(long aisyou, f32 x, f32 y, long index) {
     f32 master;
-    unsigned long step = index + calcAnimationTimeRate0toX(0.32f, 10);
-    GSgfxColAu8 color = relivehallAisyou2ColorTbl[aisyou];
-    f32 scale = _aisyou2ScaleTbl[aisyou];
-    color.a = blurAlphaTbl[index] * effectAlpha / 255;
+    long t = calcAnimationTimeRate0toX(0.32f, 10);
+    unsigned long step = t + index;
     master = starMasterScaleTbl[step % 10];
+    f32 scale = _aisyou2ScaleTbl[aisyou];
+    GSgfxColAu8 color = relivehallAisyou2ColorTbl[aisyou];
+    color.a = blurAlphaTbl[index] * effectAlpha / 255;
     menuPtSpriteDrawAndRollScale(0x140, GSgfxColAu8To32(color), x, y, 0.0f, master * (scale * blurScaleTbl[index]));
 }
 
@@ -2050,20 +2045,21 @@ void CMenuReliveHall::drawVisitorStarLight(long aisyou, SPokemonView *view) {
 }
 
 void CMenuReliveHall::stateDirChangeWinDraw(long window) {
-    s8 partner;
     u32 color;
+    long partner;
+    u8 alpha;
     int i;
     menuPtWindowWorkDraw(window);
     partner = stage->partner;
-    color = rate01ToAlphaFrom50((f32)sin(3.1415927f * calcAnimationTimeRate0to1(0.5f))) | ~0xFF;
+    alpha = rate01ToAlphaFrom50((f32)sin(3.1415927f * calcAnimationTimeRate0to1(0.5f)));
+    color = alpha | ~0xFF;
     for (i = 0; i < stage->getDancerQuantity(); i++) {
         PocketVec<short> position = views[i].getPosition();
         f32 dir = xyxy2dir(position, circlePosition);
         if (i == partner) {
             menuPtSpriteDrawArrow(0x13F, color, dir, 0);
         }
-        GSgfxColAu8 arrow = positionToAisyouColor(6, i);
-        menuPtSpriteDrawArrow(0x183, GSgfxColAu8To32(arrow), dir, -12);
+        menuPtSpriteDrawArrow(0x183, GSgfxColAu8To32(positionToAisyouColor(6, i)), dir, -12);
     }
 }
 
@@ -2099,9 +2095,9 @@ void CMenuReliveHall::drawMarkers(bool back) {
 void CMenuReliveHall::drawStarHitEffect(f32 x, f32 y, f32 time) {
     if (time < 0.5f) {
         f32 rate = time / 0.5f;
-        u8 alpha = (u8)(s32)(255.0f * (1.0f - rate));
-        alpha = effectAlpha * alpha / 255;
-        u32 color = alpha | ~0xff;
+        u8 alpha = 255.0f * (1.0f - rate);
+        alpha = alpha * effectAlpha / 255;
+        u32 color = (alpha & 0xff) | ~0xff;
         menuPtSpriteDrawAndRollScale(0x297, color, x, y, 0.0f, 0.5f + rate);
     }
 }
@@ -2248,19 +2244,22 @@ void CMenuReliveHall::animationDataReset() {
     memset(&hitEffect, 0, sizeof(hitEffect));
 }
 
+inline f32 cosf(f32 x) { return cos(x); }
+inline f32 sinf(f32 x) { return sin(x); }
+
 void _antZokuseiDraw(SPokemonView &view) {
     if (view.hidden == 0) {
         u16 sprite[2];
         PocketVec<short> first = view.getPosition();
-        int x = (s32)(81.0f * (f32)sin(view.facing) + first.x);
+        int x = (s32)(81.0f * sinf(view.facing) + first.x);
         PocketVec<short> second = view.getPosition();
-        int y = (s32)(81.0f * -(f32)cos(view.facing) + second.y);
-        for (u16 i = 0; i < 2; i++) sprite[i] = zokuseiGetPokemonSpriteID(view.getPokemon()->getPokemonDataPtr(), i);
+        int y = (s32)(81.0f * (-cosf(view.facing)) + second.y);
+        for (int i = 0; i < 2; i++) sprite[i] = zokuseiGetPokemonSpriteID(view.getPokemon()->getPokemonDataPtr(), i);
         if (sprite[0] == sprite[1]) {
             menuPtSpriteDraw(sprite[0], x - 36, y - 9);
             return;
         }
-        u16 drawX = x - 36;
+        int drawX = x - 36;
         menuPtSpriteDraw(sprite[0], drawX, y - 20);
         menuPtSpriteDraw(sprite[1], drawX, y + 2);
     }

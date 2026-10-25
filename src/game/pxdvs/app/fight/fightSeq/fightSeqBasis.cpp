@@ -363,7 +363,7 @@ u8 wazaDB_GetRangeId(u16);
 u16 wazaDB_GetSeqId(u16);
 u8 wazaDB_GetYokodori(u16);
 u8 wazaDB_GetZokuseiDataId(u16);
-u8 wazaSequenceSysLastWazaIsImpactPoint(s32);
+u8 wazaSequenceSysLastWazaIsImpactPoint(u32);
 u8 waza_GetZokuseiKindData(u16);
 u8 zokuseiBiosGetWazaKind(u32);
 u16 zokuseiGetWazaJoutai(u16, u16);
@@ -3452,19 +3452,16 @@ void WS_DAMAGE_LOSS(void) {
 }
 
 void fightSeqDamageLoss(u8 arg0, u8 arg1) {
-    FightOutPokemon *temp_r3;
-    u16 temp_r31;
-    u32 temp_r30;
-    FightWaza *temp_r3_2;
     FightOutPokemon *temp_r3_3;
-    u16 temp_r3_4;
-    u32 temp_r3_5;
     u16 temp_r28;
-    u16 temp_r27;
-    u32 var_r25;
     u32 temp_r23;
-    u32 temp_r0;
+    u16 temp_r27;
+    u16 temp_r31;
+    FightWaza *temp_r3_2;
     u16 temp_r0_2;
+    FightOutPokemon *temp_r3;
+    u32 var_r25;
+    u32 temp_r30;
 
     temp_r3 = fightTargetGetPtrAsNowFightType(0x11U, NULL);
     temp_r28 = fightOutPokemon_GetUseWazaDataId(temp_r3);
@@ -3476,12 +3473,10 @@ void fightSeqDamageLoss(u8 arg0, u8 arg1) {
     temp_r30 = figthOutPokemonGetSoubiItemBuff(temp_r3_3);
     temp_r31 = pokemon_GetHp(fightOutPokemonGetPokemonPtr(temp_r3_3));
     if (arg1 == 1) {
-        temp_r3_4 = HSD_Rand();
-        temp_r3_5 = temp_r3_4 >> 0x1FU;
-        temp_r0 = (temp_r3_4 << 0x1C) - temp_r3_5;
-        temp_r0_2 = 0x64 - (((temp_r0 << 4) | (temp_r0 >> 0x1CU)) + temp_r3_5);
+        temp_r0_2 = 0x64 - (HSD_Rand() % 16);
         if ((s32) var_r25 != 0) {
-            var_r25 = (u32) ((s32) (var_r25 * temp_r0_2) / 100);
+            var_r25 *= temp_r0_2;
+            var_r25 = (s32)var_r25 / 100;
             if (var_r25 == 0) {
                 var_r25 = 1;
             }
@@ -4687,15 +4682,15 @@ FightOutPokemon *fightSeqGetEnemyFightSideKonoyubitomareFightOutPokemonPtr(Fight
 }
 
 extern "C" void WS_EFFECT_WAIT(void) {
-    u8 *seq;
-    void *trainerSequence;
-    u32 mode;
-    FightWaza *waza;
+    FightOutPokemon *defender;
     FightOutPokemon *attacker;
     u16 move;
-    FIGHT_TRAINER *trainer;
-    FightOutPokemon *defender;
     void *defenderSequence;
+    FIGHT_TRAINER *trainer;
+    FightWaza *waza;
+    u32 mode;
+    u8 *seq;
+    void *trainerSequence;
     seq=fightSeq_GetWazaSeq();
     attacker=fightTargetGetPtrAsNowFightType(0x11,0);
     if(!seq)seq=0;
@@ -4706,10 +4701,8 @@ extern "C" void WS_EFFECT_WAIT(void) {
     trainer=fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0,defender);
     trainerSequence=fightTrainer_GetSequencePtr(trainer);
     defenderSequence=fightOutPokemon_GetSequencePtr(defender);
-    // Retail skips the r26 mode load on the suppressed-effect path, then tests
-    // that indeterminate register below. Decode the operand on both paths here.
-    mode=seq[1];
     if(!(ServerStatusFlag&0x80)||move==0x90||move==0xA4){
+        mode=seq[1];
         for(;;){if(wazaSequenceSysLastWazaIsImpactPoint(mode)==1)break;GSthreadSwitch();}
         if(mode==0 && (s32)fightWaza_GetDamage(waza)>0 && fightWazaIsHit(waza)==1 && trainer!=fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0,attacker) && trainerSequence){
             if(*((u8*)trainerSequence+0x61))*((void**)((u8*)trainerSequence+0x78))=defenderSequence;

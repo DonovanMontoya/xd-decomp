@@ -1693,28 +1693,26 @@ u8 fightAi_AppointWazaKoukaFlag(FightOutPokemon *arg0, FightOutPokemon *arg1, u1
                 return 0x3FU;
             }
             break;
-        case 0x3F:                                  /* switch 1 */
-            switch ((s32) temp_r3) {                /* switch 3; irregular */
-            case 0x3F:                              /* switch 3 */
-                return 0x3FU;
-            case 0x41:                              /* switch 3 */
-                return 0x41U;
-            case 0x42:                              /* switch 3 */
+        case 0x3F:
+            switch ((s32) temp_r3) {
+            case 0x42:
                 return 0x42U;
+            case 0x3F:
+                return 0x3FU;
+            case 0x41:
+                return 0x41U;
             }
             break;
-        case 0x41:                                  /* switch 1 */
-            switch ((s32) temp_r3) {                /* switch 4; irregular */
-            case 0x41:                              /* switch 4 */
-            case 0x3F:                              /* switch 4 */
-                return 0x41U;
-            case 0x42:                              /* switch 4 */
+        case 0x41:
+            switch ((s32) temp_r3) {
+            case 0x42:
                 return 0x3FU;
+            case 0x41:
+            case 0x3F:
+                return 0x41U;
             }
             break;
         }
-    } else {
-        return 0U;
     }
     return 0U;
 }
