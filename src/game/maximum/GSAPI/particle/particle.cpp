@@ -432,7 +432,7 @@ PSParticle* psGenerateParticle0(PSParticle* arg0,s32 arg1,s32 arg2,s32 reserved0
     return temp_r3;
 }
 
-PSParticle* psGenerateParticle(s32 link,s32 bank,s32 reserved,u32 kind,s32 tex,u8* commands,f32 x,f32 y,f32 z,f32 vx,f32 vy,f32 vz,f32 size,f32 gravity,s32 life,f32 friction,s32 palettes,PSGenerator* gp) {
+PSParticle* psGenerateParticle(s32 link,s32 bank,s32 reserved,u32 kind,s32 tex,u8* commands,s32 life,f32 x,f32 y,f32 z,f32 vx,f32 vy,f32 vz,f32 size,f32 gravity,f32 friction,s32 palettes,PSGenerator* gp) {
     return psGenerateParticle0(NULL,link,bank,kind,reserved,kind,tex,commands,x,y,z,vx,vy,vz,size,gravity,life,friction,palettes,gp,1);
 }
 PSParticle* psGenerateParticleID0(PSParticle* parent,s32 link,s32 bank,s32 id,s32 interpret) {

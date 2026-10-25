@@ -1079,7 +1079,7 @@ loop_215:
             PSMTXMultVec((f32 (*)[4]) &transform[0][0], (PSVec *) &velocity.x, (PSVec *) &velocity.x);
             sp8 = arg0->friction;
             spC = arg0;
-            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, (s32) arg0->particleLife, sp8, 0, spC);
+            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, (s32) arg0->particleLife, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, sp8, 0, spC);
             break;
         case 1:                                     /* switch 2 */
             temp_f1_14 = HSD_Randf();
@@ -1093,7 +1093,7 @@ loop_215:
             PSMTXMultVec((f32 (*)[4]) &transform[0][0], (PSVec *) &baseVelocity.x, (PSVec *) &velocity.x);
             sp8 = arg0->friction;
             spC = arg0;
-            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, (s32) arg0->particleLife, sp8, 0, spC);
+            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, (s32) arg0->particleLife, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, sp8, 0, spC);
             break;
         case 2:                                     /* switch 2 */
             if (arg0->radius < 0.0f) {
@@ -1110,7 +1110,7 @@ loop_215:
             var_f31 = var_f4;
             sp8 = var_f23;
             spC = arg0;
-            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind | 4, (s32) arg0->texGroup, arg0->commands, 0.0f, 0.0f, 0.0f, var_f4, var_f1, 0.0f, arg0->size, var_f25, (s32) arg0->particleLife, sp8, 0, spC);
+            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind | 4, (s32) arg0->texGroup, arg0->commands, (s32) arg0->particleLife, 0.0f, 0.0f, 0.0f, var_f4, var_f1, 0.0f, arg0->size, var_f25, sp8, 0, spC);
             break;
         case 5:                                     /* switch 2 */
             position.x = HSD_Randf();
@@ -1285,7 +1285,7 @@ loop_215:
             PSMTXMultVec((f32 (*)[4]) &transform[0][0], (PSVec *) &velocity.x, (PSVec *) &velocity.x);
             sp8 = arg0->friction;
             spC = arg0;
-            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, (s32) arg0->particleLife, sp8, 0, spC);
+            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, (s32) arg0->particleLife, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, sp8, 0, spC);
             break;
         case 8:                                     /* switch 2 */
             if (arg0->param3 == 0.0f) {
@@ -1325,7 +1325,7 @@ loop_215:
             position.z = (var_f22_2 * position.z) + arg0->position.z;
             sp8 = arg0->friction;
             spC = arg0;
-            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, (s32) arg0->particleLife, sp8, 0, spC);
+            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, (s32) arg0->particleLife, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, sp8, 0, spC);
             break;
         default:                                    /* switch 2 */
             if (((void (*)(PSGenerator *, f32 (*)[4])) psExtExecGenFunc) != NULL) {
