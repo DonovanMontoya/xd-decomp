@@ -19,10 +19,10 @@ extern "C" {
 extern ComboDispatch comboid[];
 extern ComboStatusMove statusUpWazaTbl[],statusDownWazaTbl[];
 extern u16 NemuraseWazaTbl[],MahiWazaTbl[],KonranWazaTbl[],DokuWazaTbl[],YakedoWazaTbl[];
-u16 HSD_Rand();u16 fightFloor_GetEncountDataId(void*);u32 fightFloor_GetFightType(void*);u8 fightFloor_GetTurnCount(void*);u8 fightFloorIsNowEncountVirtualBattle(void*);
-void *fightEncountDataBiosGetPtr(u16);u16 fightEncountDataBiosGetDiskId(void*);u16 fightEncountDataBiosGetFightTrainerDataId(void*,u8);u16 deckDataVirtualDB_GetEnemyDeck__FUs(u16);
+u16 HSD_Rand();u16 fightFloor_GetEncountDataId(void*);u32 fightFloor_GetFightType(void*);u32 fightFloor_GetTurnCount(void*);u8 fightFloorIsNowEncountVirtualBattle(void*);
+void *fightEncountDataBiosGetPtr(u16);u16 fightEncountDataBiosGetDiskId(void*);u16 fightEncountDataBiosGetFightTrainerDataId(void*,u8);u32 deckDataVirtualDB_GetEnemyDeck__FUs(u16);
 void *getDeckTrainerObj__11DeckTrainerFUl(u32);u8 getFixedActionID__11DeckTrainerCFv(void*);u16 getComboID__11DeckTrainerCFUc(void*,u8);u8 getComboActive__11DeckTrainerCFUc(void*,u8);
-u16 fightTrainer_GetFightTrainerDataId(FIGHT_TRAINER*);FightOutPokemon *fightTrainer_GetFightoutPokemonPtr(FIGHT_TRAINER*,u8);
+u16 fightTrainer_GetFightTrainerDataId(FIGHT_TRAINER*);FightOutPokemon *fightTrainer_GetFightoutPokemonPtr(FIGHT_TRAINER*,u16);
 u8 fightOutPokemon_GetFixAiWaza(FightOutPokemon*);void fightOutPokemon_SetFixAiWaza(FightOutPokemon*,u8);void fightOutPokemon_SetFixAiDef(FightOutPokemon*,u8);
 Pokemon *fightOutPokemonGetPokemonPtr(FightOutPokemon*);u16 pokemon_GetPokemonWazaDataId(Pokemon*,u16);u16 pokemon_GetHp(Pokemon*);u8 fightOutPokemonIsHinsi(FightOutPokemon*);
 FightOutPokemon *fightTargetGetPtr(u16,FightOutPokemon*,u16);u16 fightFloorGetFightTrainerFightOutPokemonPtrAry(void*,FIGHT_TRAINER*,FightOutPokemon**,u8,u8);

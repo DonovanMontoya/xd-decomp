@@ -39,7 +39,7 @@ FixedActionShell fixAiShell[]={
 {0,{0,0,0},{fixAct_v09_1,0}}
 };
 void fightAi_FixedActIrekaeInit(FightOutPokemon *pokemon){
-    void *deck=getDeckTrainerObj__11DeckTrainerFUl(deckDataVirtualDB_GetEnemyDeck__FUs(fightEncountDataBiosGetDiskId(fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(0)))));
+    void *deck=getDeckTrainerObj__11DeckTrainerFUl((u16)deckDataVirtualDB_GetEnemyDeck__FUs(fightEncountDataBiosGetDiskId(fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(0)))));
     if(fixAiShell[getFixedActionID__11DeckTrainerCFv(deck)].reset==0)fightOutPokemon_SetFixAiWaza(pokemon,6);
 }
 bool fightAi_FixedActCheck(FIGHT_TRAINER *trainer,FightOutPokemon *attacker,u16 move,FightOutPokemon *defender){
@@ -92,39 +92,54 @@ s32 fightAiCombo_ActContinue(FIGHT_TRAINER *trainer,FightOutPokemon *pokemon){
 }
 }
 
+static inline u16 virtualDeckId(void *encounter){return deckDataVirtualDB_GetEnemyDeck__FUs(fightEncountDataBiosGetDiskId(encounter));}
 extern "C" {
 void fightAi_FixedAct(FIGHT_TRAINER *trainer){
-    u8 turn=fightFloor_GetTurnCount(0);
-    u8 lengths[2]={0,0};
-    void *encounter=fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(0));
+    u8 target;
+    void *encounter;
     u16 deckId;
-    if(fightFloorIsNowEncountVirtualBattle(0)==1)deckId=deckDataVirtualDB_GetEnemyDeck__FUs(fightEncountDataBiosGetDiskId(encounter));
+    s32 position;
+    u8 *sequence;
+    u8 i;
+    u8 turn;
+    turn=fightFloor_GetTurnCount(0);
+    u8 lengths[2]={0,0};
+    encounter=fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(0));
+    if(fightFloorIsNowEncountVirtualBattle(0)==1)deckId=virtualDeckId(encounter);
     else deckId=fightEncountDataBiosGetFightTrainerDataId(encounter,1);
     void *deck=getDeckTrainerObj__11DeckTrainerFUl(deckId);
-    FixedActionShell *shell=&fixAiShell[getFixedActionID__11DeckTrainerCFv(deck)];
+    u8 id=getFixedActionID__11DeckTrainerCFv(deck);
     u8 *sequences[2]={0,0};
-    sequences[0]=shell->sequence[0];sequences[1]=shell->sequence[1];
+    sequences[0]=fixAiShell[id].sequence[0];sequences[1]=fixAiShell[id].sequence[1];
     for(u8 i=0;i<2;i++)if(sequences[i])for(u8 j=0;j<10;j++){
-        u8 command=sequences[i][j];lengths[i]++;if(command==6 || command==7)break;
+        u8 command;lengths[i]++;command=sequences[i][j];if(command==6)break;if(command==7)break;
     }
-    s32 position=(turn-1)*2;
-    for(u8 i=0;i<2;i++){
+    position=(turn-1)*2;
+    for(i=0;i<2;i++){
         FightOutPokemon *pokemon=fightTrainer_GetFightoutPokemonPtr(trainer,i);
         if(fightOutPokemon_GetFixAiWaza(pokemon)!=6){
             fightOutPokemon_SetFixAiDef(pokemon,0);
-            u8 *sequence=sequences[i];
+            sequence=sequences[i];
             if(sequence){
                 s32 limit=lengths[i]-1;
                 u8 index;
                 if(position<limit)index=position;
-                else if(position==limit){
+                else if(limit==position){
                     index=position;
-                    if(sequence[index]==6){fightOutPokemon_SetFixAiWaza(pokemon,6);continue;}
-                    if(sequence[index]==7)index=position%limit;
+                    u8 c=sequence[index];
+                    if(c==6){fightOutPokemon_SetFixAiWaza(pokemon,6);continue;}
+                    if(c==7)index=position%limit;
                 }else index=position%limit;
-                u8 move=sequence[index],target=sequence[index+1];
-                if(move<6){if(move!=0)fightOutPokemon_SetFixAiWaza(pokemon,move);else fightOutPokemon_SetFixAiWaza(pokemon,6);}
-                if(target!=0){if(target<6)fightOutPokemon_SetFixAiDef(pokemon,target);}else fightOutPokemon_SetFixAiWaza(pokemon,6);
+                u8 move=sequence[index];target=sequence[index+1];
+                switch(move){
+                case 0:fightOutPokemon_SetFixAiWaza(pokemon,6);break;
+                case 1:case 2:case 3:case 4:case 5:fightOutPokemon_SetFixAiWaza(pokemon,move);break;
+                case 6:case 7:break;
+                }
+                switch(target){
+                case 0:fightOutPokemon_SetFixAiWaza(pokemon,6);break;
+                case 1:case 2:case 3:case 4:case 5:fightOutPokemon_SetFixAiDef(pokemon,target);break;
+                }
             }
         }
     }
