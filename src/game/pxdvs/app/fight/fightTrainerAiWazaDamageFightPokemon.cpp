@@ -30,7 +30,7 @@ u8 fightSeqGetJitabataIryoku(u16, u16);
 u16 fightSeqGetKetaguriIryoku(u16);
 u16 fightSeqGetOngaesiIryoku(u8);
 u16 fightSeqGetYatuatariIryoku(u8);
-s32 fightSeqWazaDamageCalcHikaePokemon(FightOutPokemon *, FightPokemon *, FightSide *, u16, u16, s32);
+s32 fightSeqWazaDamageCalcHikaePokemon(FightOutPokemon *, FightPokemon *, FightSide *, u16, u16, u16);
 FightSide * fightTargetGetPtrAsNowFightType(u8, void*);
 u8 fightTrainerAiGetFightFloorNowTenkouDataId(FIGHT_TRAINER *, void *, u8);
 u16 fightTrainerAiGetWazaIryoku(FIGHT_TRAINER *, u16);
@@ -1114,8 +1114,8 @@ s32 fightTrainerAiWazaDamageFightPokemon154(FIGHT_TRAINER *arg0, FightOutPokemon
 
 s32 fightTrainerAiWazaDamageFightPokemon148(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     s32 var_r31;
-    u16 temp_r30;
     u32 temp_r31;
+    u16 temp_r30;
 
     temp_r30 = ((u32 (*)(FIGHT_TRAINER *, u16)) fightTrainerAiGetWazaIryoku)(arg0, arg2);
     temp_r31 = ((u32 (*)(FIGHT_TRAINER *, u16, FightOutPokemon *)) fightTrainerAiGetWazaZokuseiDataId)(arg0, arg2, arg1);

@@ -1,4 +1,5 @@
-/* XD polygon loading, shape blending, display decoding, and matrix setup. */
+/* XD polygon loading, shape blending, display decoding, and matrix setup.
+ * Deferred compilation emits retained functions in reverse source order. */
 #include "game/maximum/GSAPI/baselib/pobj.h"
 #include "game/maximum/GSAPI/baselib/displayfunc.h"
 #include "game/maximum/GSAPI/baselib/state.h"
@@ -122,6 +123,9 @@ static struct mtx_mark_t {
     void* obj;
     unsigned int mark;
 } mtx_mark[2];
+
+void* HSD_SetVertexBuffer(void* buffer, unsigned int size) { void* old=vertex_buffer; vertex_buffer_size=size; vertex_buffer=buffer; return old; }
+void* HSD_SetNormalBuffer(void* buffer, unsigned int size) { void* old=normal_buffer; normal_buffer_size=size; normal_buffer=buffer; return old; }
 
 static inline unsigned int HSD_PObjGetFlags(HSD_PObj* pobj)
 {
@@ -324,13 +328,19 @@ static inline void HSD_ShapeSetRemove(HSD_ShapeSet* shape_set)
     HSD_ShapeSetFree(shape_set);
 }
 
+static inline HSD_ShapeSet* HSD_ShapeSetAlloc(void)
+{
+    HSD_ShapeSet* shape_set = hsdAllocMemPiece(sizeof(HSD_ShapeSetDesc) + sizeof(float));
+    if (!(shape_set)) __assert("pobj.c", 481, "shape_set");
+    memset(shape_set, 0, sizeof(HSD_ShapeSetDesc) + sizeof(float));
+    return shape_set;
+}
+
 static inline HSD_ShapeSet* loadShapeSetDesc(HSD_ShapeSetDesc* sdesc)
 {
     int i;
 
-    HSD_ShapeSet* shape_set = hsdAllocMemPiece(sizeof(HSD_ShapeSetDesc) + sizeof(float));
-    if (!(shape_set)) __assert("pobj.c", 481, "shape_set");
-    memset(shape_set, 0, sizeof(HSD_ShapeSetDesc) + sizeof(float));
+    HSD_ShapeSet* shape_set = HSD_ShapeSetAlloc();
     shape_set->flags = sdesc->flags;
     shape_set->nb_shape = sdesc->nb_shape;
     shape_set->nb_vertex_index = sdesc->nb_vertex_index;
@@ -419,7 +429,8 @@ static inline HSD_PObjInfo* HSD_PObjGetDefaultClass(void)
     return default_class ? default_class : &hsdPObj;
 }
 
-// Stripped from the retail DOL; its assertion string remains in .rodata.
+// Stripped by the linker in retail; keep this definition here so its
+// assertion string retains its original position in .rodata.
 void HSD_PObjSetDefaultClass(HSD_PObjInfo* info)
 {
     if (info != NULL) {
@@ -496,6 +507,73 @@ void HSD_PObjResolveRefsAll(HSD_PObj* pobj, HSD_PObjDesc* pdesc)
     {
         HSD_PObjResolveRefs(pobj, pdesc);
     }
+}
+
+/* Count display-list vertices and polygons using the configured attribute width. */
+void HSD_PObjCountVertices(HSD_PObj* pobj, unsigned int* vertices, unsigned int* polygons)
+{
+    unsigned int nv=0, np=0;
+    for (; pobj; pobj=pobj->next) {
+        HSD_VtxDescList* desc;
+        int offset;
+        int length;
+        unsigned char* dl;
+        int stride=0, width;
+        for (desc=pobj->verts; desc->attr!=GX_VA_NULL; desc++) {
+            switch(desc->attr_type) {
+            case GX_INDEX8: stride++; break;
+            case GX_INDEX16: stride+=2; break;
+            case GX_DIRECT:
+                if (desc->attr==GX_VA_CLR0 || desc->attr==GX_VA_CLR1) {
+                    switch(desc->comp_type) {
+                    case GX_RGB565: case GX_RGBA4: width=2; break;
+                    case GX_RGB8: case GX_RGBA6: width=3; break;
+                    case GX_RGBX8: case GX_RGBA8: width=4; break;
+                    }
+                } else {
+                    switch(desc->comp_type) {
+                    case GX_U8: case GX_S8: width=1; break;
+                    case GX_U16: case GX_S16: width=2; break;
+                    case GX_F32: width=4; break;
+                    default: goto next_pobj;
+                    }
+                }
+                switch(desc->attr) {
+                case GX_VA_PNMTXIDX: stride++; break;
+                case GX_VA_POS: if (desc->comp_cnt==GX_POS_XY) stride+=2*width; else stride+=3*width; break;
+                case GX_VA_NRM: if (desc->comp_cnt==GX_NRM_XYZ) stride+=3*width; break;
+                case GX_VA_CLR0: case GX_VA_CLR1: stride+=width; break;
+                case GX_VA_TEX0: case GX_VA_TEX1: case GX_VA_TEX2: case GX_VA_TEX3:
+                case GX_VA_TEX4: case GX_VA_TEX5: case GX_VA_TEX6: case GX_VA_TEX7:
+                    if (desc->comp_cnt==GX_TEX_S) stride+=width; else stride+=2*width; break;
+                default: goto next_pobj;
+                }
+                break;
+            }
+        }
+        dl=pobj->display;
+        length=pobj->n_display<<5;
+        if (dl) {
+            offset=0;
+            while(offset<length) {
+                int primitive=dl[offset++] & GX_OPCODE_MASK;
+                if (primitive) {
+                    unsigned int count=(unsigned short)dl[offset];
+                    count=(count<<8)+dl[offset+1];
+                    nv+=count;
+                    offset+=count*stride+2;
+                    switch(primitive) {
+                    case GX_TRIANGLES: np+=count/3; break;
+                    case GX_TRIANGLESTRIP: case GX_TRIANGLEFAN: np+=count-2; break;
+                    case GX_QUADS: np+=count/2; break;
+                    }
+                }
+            }
+        }
+next_pobj:;
+    }
+    if(vertices) *vertices=nv;
+    if(polygons) *polygons=np;
 }
 
 void HSD_ClearVtxDesc(void)
@@ -1373,74 +1451,4 @@ static void PObjInfoInit(void)
     HSD_POBJ_INFO(&hsdPObj)->setup_mtx = PObjSetupMtx;
     HSD_POBJ_INFO(&hsdPObj)->load = PObjLoad;
     HSD_POBJ_INFO(&hsdPObj)->update = PObjUpdateFunc;
-}
-
-void* HSD_SetNormalBuffer(void* buffer, unsigned int size) { void* old=normal_buffer; normal_buffer_size=size; normal_buffer=buffer; return old; }
-void* HSD_SetVertexBuffer(void* buffer, unsigned int size) { void* old=vertex_buffer; vertex_buffer_size=size; vertex_buffer=buffer; return old; }
-
-/* Count display-list vertices and polygons using the configured attribute width. */
-void HSD_PObjCountVertices(HSD_PObj* pobj, unsigned int* vertices, unsigned int* polygons)
-{
-    unsigned int nv=0, np=0;
-    for (; pobj; pobj=pobj->next) {
-        HSD_VtxDescList* desc;
-        int offset;
-        int length;
-        unsigned char* dl;
-        int stride=0, width;
-        for (desc=pobj->verts; desc->attr!=GX_VA_NULL; desc++) {
-            switch(desc->attr_type) {
-            case GX_INDEX8: stride++; break;
-            case GX_INDEX16: stride+=2; break;
-            case GX_DIRECT:
-                if (desc->attr==GX_VA_CLR0 || desc->attr==GX_VA_CLR1) {
-                    switch(desc->comp_type) {
-                    case GX_RGB565: case GX_RGBA4: width=2; break;
-                    case GX_RGB8: case GX_RGBA6: width=3; break;
-                    case GX_RGBX8: case GX_RGBA8: width=4; break;
-                    }
-                } else {
-                    switch(desc->comp_type) {
-                    case GX_U8: case GX_S8: width=1; break;
-                    case GX_U16: case GX_S16: width=2; break;
-                    case GX_F32: width=4; break;
-                    default: goto next_pobj;
-                    }
-                }
-                switch(desc->attr) {
-                case GX_VA_PNMTXIDX: stride++; break;
-                case GX_VA_POS: if (desc->comp_cnt==GX_POS_XY) stride+=2*width; else stride+=3*width; break;
-                case GX_VA_NRM: if (desc->comp_cnt==GX_NRM_XYZ) stride+=3*width; break;
-                case GX_VA_CLR0: case GX_VA_CLR1: stride+=width; break;
-                case GX_VA_TEX0: case GX_VA_TEX1: case GX_VA_TEX2: case GX_VA_TEX3:
-                case GX_VA_TEX4: case GX_VA_TEX5: case GX_VA_TEX6: case GX_VA_TEX7:
-                    if (desc->comp_cnt==GX_TEX_S) stride+=width; else stride+=2*width; break;
-                default: goto next_pobj;
-                }
-                break;
-            }
-        }
-        dl=pobj->display;
-        length=pobj->n_display<<5;
-        if (dl) {
-            offset=0;
-            while(offset<length) {
-                int primitive=dl[offset++] & GX_OPCODE_MASK;
-                if (primitive) {
-                    unsigned int count=(unsigned short)dl[offset];
-                    count=(count<<8)+dl[offset+1];
-                    nv+=count;
-                    offset+=count*stride+2;
-                    switch(primitive) {
-                    case GX_TRIANGLES: np+=count/3; break;
-                    case GX_TRIANGLESTRIP: case GX_TRIANGLEFAN: np+=count-2; break;
-                    case GX_QUADS: np+=count/2; break;
-                    }
-                }
-            }
-        }
-next_pobj:;
-    }
-    if(vertices) *vertices=nv;
-    if(polygons) *polygons=np;
 }

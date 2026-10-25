@@ -214,8 +214,8 @@ static u32 loadSequence(Pokemon* pokemon, int step) {
     const StepSeqEntry* entry;
     int i;
     u32 seq;
-    u32 rnd;
     u16 pkx;
+    u32 rnd;
 
     pkx = getPkxID(pokemon);
     if (pkx == 0xFFFF) {
@@ -226,7 +226,8 @@ static u32 loadSequence(Pokemon* pokemon, int step) {
     if (seq == 0) {
         return 0;
     }
-    for (i = 0, entry = StepSeqTbl; i < 5; i++, entry++) {
+    for (i = 0; i < 5; i++) {
+        entry = &StepSeqTbl[i];
         if (step == entry->useAfter && Sequence_LoadWaza(seq, entry->seq, 4, 0) == 0) {
             break;
         }
@@ -266,7 +267,7 @@ static void toVisible(WORK* work, int after, int visible) {
 }
 
 static int loadAll(WORK* work, Pokemon* before, Pokemon* after) {
-    void* group = GSresGetResourceAllGroup(0x0FB31000, 0x0FB30000);
+    void* group = GSresGetResourceAllGroup(0x0FB31000);
     if (group != 0) {
         GSmodelSetForceUseFractionalFramesFlag(group, 1);
         GSmodelSetSkipFractionalFramesFlag(group, 1);
@@ -285,6 +286,8 @@ s32 evolutionWazaLearn(Pokemon* pokemon, u16 waza, u8* slot, EVOLUTION_WINDOW_TY
     s32 idx;
     u16* name;
     u16 wazaId;
+    long arg;
+    arg = (long)work;
     idx = 0;
     do {
         if (pokemonBiosGetPokemonWazaDataId(pokemon, idx) == 0) {
@@ -300,7 +303,7 @@ s32 evolutionWazaLearn(Pokemon* pokemon, u16 waza, u8* slot, EVOLUTION_WINDOW_TY
         while (1) {
             if (dispMsgYesNo(0xC36A, type) == 0) {
                 if (callback != 0) {
-                    idx = callback(pokemon, waza, (long)work);
+                    idx = callback(pokemon, waza, arg);
                 } else {
                     idx = 0;
                 }
@@ -540,10 +543,10 @@ static int evolutionDemo(WORK* work, int cancelable, Pokemon* before, Pokemon* a
 static int evolution__Main(WORK* work, int cancelable, Pokemon* before, Pokemon* after, unsigned short* wazaIds, long wazaCount, unsigned char* wazaSlots) {
     Pokemon copy;
     u8 slot;
-    int i;
     int result;
+    void* cbWork;
+    int i;
     u16 waza;
-    WORK* cbWork;
 
     stopSound(work);
     result = evolutionDemo(work, cancelable, before, after);
@@ -555,7 +558,7 @@ static int evolution__Main(WORK* work, int cancelable, Pokemon* before, Pokemon*
     cbWork = work;
     for (i = 0; i < wazaCount; i++) {
         waza = *wazaIds;
-        if (evolutionWazaLearn(&copy, waza, &slot, EVOLUTION_WINDOW_FIELD, cbWazaForget, cbWork) != 0) {
+        if (evolutionWazaLearn(&copy, waza, &slot, EVOLUTION_WINDOW_FIELD, cbWazaForget, (WORK*)cbWork) != 0) {
             pokemonWazaCreate(&copy, slot, waza);
         } else {
             slot = -1;

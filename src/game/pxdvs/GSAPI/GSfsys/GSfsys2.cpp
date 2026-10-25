@@ -27,13 +27,13 @@ void _fsysQueExec();
 u8 _fsysQueExecSub(FsysQueue*);
 s32 _fsysExec(u32, u32, s32, u8, u32, u32, u32);
 s32 _fsysReadStreamingExec(u32, u32, u32);
-s32 _fsysWait(u32, u8);
+s32 _fsysWait(s32, u8);
 u32 GSfsysRead(u32);
 u32 GSfsysReadID(u32, u32);
 u32 GSfsysReadIDEX(u32, u32, u32, u32, u32);
 u32 GSfsysPreRead(u32);
 u8 GSfsysCancel(u32);
-s32 GSfsysGetStatus(u32);
+s32 GSfsysGetStatus(s32);
 FsysWork* _fsysGetWork(u32, u8);
 u32 _fsysID2Index(FsysWork*, u32);
 void _fsysFreeStatus(u32);
@@ -138,7 +138,12 @@ u8 GSfsysInit2(u32 blocks, u32 cacheBytes, u32 cacheEntries) {
     _initFlag = 1;
     return 1;
 }
-u8 GSfsysInit(u32 dvdEntries) { GSdvdInit(dvdEntries); return GSfsysInit2(0, 0, 0); }
+s32 GSfsysInit(u32 dvdEntries) {
+    u8 result;
+    GSdvdInit(dvdEntries);
+    if ((result = GSfsysInit2(0, 0, 0)) == 0) return result;
+    return result;
+}
 u32 GSfsysGetInvalidID() { return 0xffff; }
 u32 GSfsysStreamGetCacheSize() { return _fsysStreamGetCacheSize(); }
 s32 GSfsysGetDriveStatus() { if (_initFlag == 0) { return -1; } else { return GSdvdGetDriveStatus(); } }
@@ -164,7 +169,7 @@ s32 GSfsysStreamMoviePreFunc(u32 group, u32 resource) {
     GSmovieStreamPostFunc(group, work->secondaryResourceID);
     return 0;
 }
-void GSfsysFreeCache(u32 group) {
+void GSfsysFreeCache(s32 group) {
     if (_initFlag) {
         do {} while (_fsysMemFreeCacheGroup(group) != 0);
     }
@@ -298,7 +303,7 @@ void _fsysFreeStatus(u32 group) {
     FsysWork* work = _fsysGetWork(group, 0);
     if (work) work->status = 1;
 }
-s32 _fsysWait(u32 group, u8 allowPreread) {
+s32 _fsysWait(s32 group, u8 allowPreread) {
     if (!_initFlag) return 0;
     for (;;) {
         s32 status = GSfsysGetStatus(group);
@@ -327,7 +332,7 @@ s32 _fsysGetActiveTask(s32 mode) {
     return count;
 }
 
-s32 GSfsysGetStatus(u32 groupId) {
+s32 GSfsysGetStatus(s32 groupId) {
     if (!_initFlag) return -2;
     TocGroup* group = _fsysGetGROUP(groupId);
     if (!group) return -1;
@@ -662,7 +667,7 @@ u8 _fsysCloseFile(FsysWork* work, u8 cancelled) {
 FsysWork* _fsysInfo2Work(void* dvd) {
     FsysWork* work;
     u32 i;
-    u32 j;
+    s32 j;
     for (i = 0; i < _fsysWorkMax; ++i) {
         work = _fsysWork + i;
         switch (work->status) { case -999: case 0: case 1: case 12: continue; }
@@ -763,7 +768,7 @@ u8 _fsysCheckExpandCompleteAll(FsysWork* work) {
             return _fsysCheckExpandComplete(work, _fsysID2Index(work, work->resourceID));
         }
     } else {
-        for (u32 i = 0; i < header->fileCount; ++i)
+        for (s32 i = 0; i < header->fileCount; ++i)
             if (_fsysCheckExpandComplete(work, i) == 0) complete = 0;
     }
     return complete;

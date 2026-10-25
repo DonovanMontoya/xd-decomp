@@ -181,8 +181,8 @@ typedef struct MenuDBState {
     s32 unkB1DC;
     s32 unkB1E0;
     u8 reservedB1E4[0x2BC];
-    s32 unkB4A0;
-    u8 reservedB4A4[0x4B5C];
+    u8 unkB4A0;
+    u8 reservedB4A1[0x4B5F];
 } MenuDBState;
 extern MenuDBState _CB;
 typedef struct MenuDBGBA {

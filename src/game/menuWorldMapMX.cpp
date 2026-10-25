@@ -322,8 +322,9 @@ extern s32 *worldmap_cameradata_number;
 extern WorldMapMsgData *worldmapXD_msgdata;
 extern WorldMapCameraData *worldmap_cameradata;
 extern WorldMapFlagEtc *flag_etc;
-extern f32 _v0;
-extern u8 _cameraDebug;
+static f32 _v0;
+static u8 _cameraDebug;
+static u8 _mojiOn;
 f32 GSlerpGetLinearInterpolationFloat(f32, f32, f32);
 struct GSvec;
 void PSVECAdd(const GSvec *, const GSvec *, GSvec *);
@@ -569,7 +570,7 @@ s32 WorldMap::Ctrl(tagWINDOW_WORK *win) {
     case 2:
         MainControl(cursor);
         break;
-    case 4:
+    case 3:
         break;
     }
     return 0;
@@ -819,7 +820,7 @@ void WorldMap::setNullModel() {
     unk8->modelA = a;
     unk8->modelB = b;
     SetModel(gid, a, 0);
-    GSgfxLayerID layer = { 2 };
+    GSgfxLayerID layer = { 0 };
     SetLayerID(unk8->modelB, 1, &layer);
     GSmodelSetBoundCheck(GSresGetResourceAllGroup(unk8->modelB), 0);
 }
@@ -1319,7 +1320,7 @@ u32 WorldMap::readScooter() {
     unk8->res64=(void *)archive;unk8->model68=model;
     SetMotion(model,8,0.0f,true);
     if(unk8->modelB!=0 && unk8->model68!=0)ModelAttach(unk8->model68,unk8->modelB,*(s16 *)((u8 *)unk8->modelPair+0xA),(GSattachMode)7);
-    GSgfxLayerID layer={1};
+    GSgfxLayerID layer={0};
     SetLayerID(unk8->model68,1,&layer);
     if(unk8->scooterType>=4) {
         unk8->ids78[0]=0x213E1400;unk8->ids78[1]=0x213D1400;unk8->ids78[2]=0x213D1400;
@@ -1386,12 +1387,13 @@ static f32 _checkAngleAdd=0.08726646f;
 void WorldMap::CheckPadIndex(bool) {
     f32 range=_checkAngleStart;
     f32 step=_checkAngleAdd;
-    for(long i=0;i<GetDataNum();++i) {
+    long i;
+    for(i=0;i<GetDataNum();++i) {
         WorldMapIconData *icon=&icons[i];
         for(long k=0;k<8;++k)icon->nbr[k]=-1;
     }
     do {
-        for(long i=0;i<GetDataNum();++i) {
+        for(i=0;i<GetDataNum();++i) {
             s32 distances[8];
             s8 neighbors[8];
             memset(distances,0,0x20);
@@ -1400,13 +1402,13 @@ void WorldMap::CheckPadIndex(bool) {
             for(long j=0;j<GetDataNum();++j) {
                 if(i!=j && GetFlagData(i)!=0 && GetFlagData(j)!=0) {
                     for(long direction=0;direction<8;++direction) {
-                        long slot=GetPadIndex3(icon->subs[j].b,direction,range);
+                        s8 slot=GetPadIndex3(icon->subs[j].b,direction,range);
                         if(slot>=0 && icon->nbr[slot]<0) {
                             f32 distance=icon->subs[j].a;
                             if(distance<CURSOR_DISTANCE_MAX) {
                                 s32 nearest=distances[slot];
                                 if(nearest==0) {neighbors[slot]=j;distances[slot]=distance;}
-                                else if(nearest>(s32)distance) {neighbors[slot]=j;distances[slot]=distance;}
+                                else if(nearest>(s32)distance) {neighbors[slot]=j;distances[slot]=icon->subs[j].a;}
                             }
                         }
                     }
@@ -1418,8 +1420,7 @@ void WorldMap::CheckPadIndex(bool) {
     }while(range<=_checkAngle);
 }
 extern "C" {
-extern u8 _mojiOn;
-u8 menuItemBiosGetSelectFlag(u32);
+u8 menuItemBiosGetSelectFlag(s32,s32);
 void winSpriteSetDisp(tagSPRITE_WORK *,u8);
 }
 void WorldMap::CallBackFunc(tagWINDOW_WORK *win,tagSPRITE_WORK *sprite) {
@@ -1436,7 +1437,7 @@ void WorldMap::CallBackFunc(tagWINDOW_WORK *win,tagSPRITE_WORK *sprite) {
     case 0x147:case 0x148:case 0x149:case 0x14A:case 0x14B:case 0x14C:case 0x14D:case 0x14E:
     case 0x14F:case 0x150:case 0x151:case 0x152:case 0x153:case 0x154:case 0x5E1:case 0x38C:case 0x38D:case 0x38E:
         if(_mojiOn!=0) {
-            if(menuItemBiosGetSelectFlag(0x54)!=0) {
+            if(menuItemBiosGetSelectFlag(0x54,item)!=0) {
                 u32 ids[18]={0x147,0x148,0x149,0x14A,0x14B,0x14C,0x14D,0x14E,0x14F,0x150,0x151,0x152,0x153,0x154,0x5E1,0x38C,0x38D,0x38E};
                 long i;
                 long found=-1;

@@ -48,20 +48,21 @@ static void _menuDrawReliveMeterSubDpValue(long maximum,long current,long x,long
         if(count>5)count=5;
         color.r=134;color.g=0;color.b=225;color.a=alpha;
         for(s32 i=0,used=0,offset=0;i<count;i++,used+=20,offset+=segment+gap) {
+            s32 left=offset+1;
             color.r=134;color.g=0;color.b=225;color.a=alpha;
             if(count==i+1) {
                 percent-=used;
-                meterRect(layer,offset+1+x,y+1,offset+1+x+segment*percent/20,y+h+1,color);
+                meterRect(layer,left+x,y+1,left+x+segment*percent/20,y+h+1,color);
                 color.r=174;color.g=54;color.b=225;color.a=alpha;
-                meterLine(layer,offset+1+x,y+2,offset+1+x+segment*percent/20,y+2,color);
+                meterLine(layer,left+x,y+2,left+x+segment*percent/20,y+2,color);
                 color.r=108;color.g=0;color.b=181;color.a=alpha;
-                meterLine(layer,offset+1+x,y+h+1,offset+1+x+segment*percent/20,y+h+1,color);
+                meterLine(layer,left+x,y+h+1,left+x+segment*percent/20,y+h+1,color);
             } else {
-                meterRect(layer,offset+1+x,y+1,offset+1+x+segment,y+h+1,color);
+                meterRect(layer,left+x,y+1,left+x+segment,y+h+1,color);
                 color.r=174;color.g=54;color.b=225;color.a=alpha;
-                meterLine(layer,offset+1+x,y+2,offset+1+x+segment,y+2,color);
+                meterLine(layer,left+x,y+2,left+x+segment,y+2,color);
                 color.r=108;color.g=0;color.b=181;color.a=alpha;
-                meterLine(layer,offset+1+x,y+h+1,offset+1+x+segment,y+h+1,color);
+                meterLine(layer,left+x,y+h+1,left+x+segment,y+h+1,color);
             }
         }
         return;
@@ -71,12 +72,13 @@ static void _menuDrawReliveMeterSubDpValue(long maximum,long current,long x,long
     if(fade>=max_alpha)fade=max_alpha;
     u16 intensity=(u16)(s32)fade*alpha/255;
     for(s32 i=0,offset=0;i<5;i++,offset+=segment+gap) {
+        s32 left=offset+1;
         color.a=intensity;
-        meterRect(layer,offset+1+x,y+1,offset+1+x+segment,y+h+1,color);
+        meterRect(layer,left+x,y+1,left+x+segment,y+h+1,color);
         color.a=intensity*75/100;
-        meterLine(layer,offset+1+x,y+1,offset+1+x+segment,y+1,color);
-        meterLine(layer,offset+2+x,y+1,offset+2+x,y+h+1,color);
-        meterLine(layer,offset+1+segment+x,y+1,offset+1+segment+x,y+h+1,color);
-        meterLine(layer,offset+1+x,y+h+1,offset+1+x+segment,y+h+1,color);
+        meterLine(layer,left+x,y+1,left+x+segment,y+1,color);
+        meterLine(layer,left+1+x,y+1,left+1+x,y+h+1,color);
+        meterLine(layer,left+segment+x,y+1,left+segment+x,y+h+1,color);
+        meterLine(layer,left+x,y+h+1,left+x+segment,y+h+1,color);
     }
 }

@@ -2,6 +2,7 @@
 #define NULL ((void*)0)
 #include "game/maximum/GSAPI/baselib/math_support.h"
 f64 __fabs(f64);
+static inline f32 generatorAtan2(f32 y, f32 x) { return (f32)atan2(y, x); }
 PSGenerator *activeGenerator,*freeGenerator,*lastGP;
 void* standbyGenerator;
 PSCamera* psCamera;
@@ -613,22 +614,22 @@ PSGenerator *psCreateGeneratorID(s32 arg0, s32 arg1, s32 arg2) {
 
 f32 generateParticle(PSGenerator *arg0) {
     f32 sp8;
-    f32 bits10;
-    f32 bits14;
     f32 bits18;
-    PSVec direction;
-    PSVec cameraRight;
-    PSVec cameraUp;
-    PSVec cameraForward;
-    PSVec velocity;
-    PSVec offset;
-    PSVec position;
+    f32 bits14;
+    f32 bits10;
     PSVec baseVelocity;
-    f32 directionMatrix[3][4];
-    f32 rotationZ[3][4];
-    f32 rotationY[3][4];
-    f32 rotationX[3][4];
+    PSVec position;
+    PSVec offset;
+    PSVec velocity;
+    PSVec cameraForward;
+    PSVec cameraUp;
+    PSVec cameraRight;
+    PSVec direction;
     f32 transform[3][4];
+    f32 rotationX[3][4];
+    f32 rotationY[3][4];
+    f32 rotationZ[3][4];
+    f32 directionMatrix[3][4];
     PSGenerator *spC;
     PSWObj *temp_r5;
     f32 temp_f0;
@@ -858,7 +859,7 @@ f32 generateParticle(PSGenerator *arg0) {
                 var_f20 = -1.5707964f;
             }
         } else {
-            var_f20 = (f32) atan2((f64) direction.y, (f64) direction.z);
+            var_f20 = generatorAtan2(direction.y, direction.z);
         }
         temp_f22 = (f32) sin((f64) var_f20);
         temp_f24 = (f32) cos((f64) var_f20);
@@ -870,7 +871,7 @@ f32 generateParticle(PSGenerator *arg0) {
                 var_f21 = -1.5707964f;
             }
         } else {
-            var_f21 = (f32) atan2((f64) direction.x, (f64) temp_f2_2);
+            var_f21 = generatorAtan2(direction.x, temp_f2_2);
         }
         temp_f20 = (f32) sin((f64) var_f21);
         temp_f5 = (f32) cos((f64) var_f21);
@@ -897,10 +898,11 @@ f32 generateParticle(PSGenerator *arg0) {
                 var_f25 = -1.5707964f;
             }
         } else {
-            var_f25 = (f32) atan2((f64) transform[1][2], (f64) transform[2][2]);
+            var_f25 = generatorAtan2(transform[1][2], transform[2][2]);
         }
         temp_f20_2 = (f32) cos((f64) var_f25);
-        temp_f2_3 = (transform[1][2] * (f32) sin((f64) var_f25)) + (transform[2][2] * temp_f20_2);
+        temp_f1 = (f32) sin((f64) var_f25);
+        temp_f2_3 = (transform[1][2] * temp_f1) + (transform[2][2] * temp_f20_2);
         if (__fabs(temp_f2_3) < __float_min[0]) {
             if (transform[0][2] >= 0.0f) {
                 var_f23 = 1.5707964f;
@@ -908,44 +910,37 @@ f32 generateParticle(PSGenerator *arg0) {
                 var_f23 = -1.5707964f;
             }
         } else {
-            var_f23 = (f32) atan2((f64) transform[0][2], (f64) temp_f2_3);
+            var_f23 = generatorAtan2(transform[0][2], temp_f2_3);
         }
     }
     if (arg0->angle < 0.0f) {
-        temp_r0 = arg0->type & 0xF;
-        if (temp_r0 != 5) {
-            if (temp_r0 < 5) {
-                if (temp_r0 != 0) {
-                    if (temp_r0 >= 0) {
-                        if (temp_r0 < 3) {
-                            goto block_63;
-                        }
-                        goto block_61;
-                    }
-                    goto block_63;
-                }
-block_61:
-                temp_f20_3 = arg0->param1;
-                temp_f0_2 = (arg0->param2 - temp_f20_3) / (f32) (s32) arg0->count;
-                var_f30 = temp_f0_2;
-                var_f31 = (temp_f0_2 * HSD_Randf()) + temp_f20_3;
-            } else if (temp_r0 < 8) {
-                temp_f20_4 = arg0->param1;
-                temp_f0_3 = (arg0->param2 - temp_f20_4) / (f32) (s32) arg0->count;
-                var_f30 = temp_f0_3;
-                var_f31 = (temp_f0_3 * HSD_Randf()) + temp_f20_4;
-            } else {
-                goto block_63;
-            }
-        } else {
-block_63:
+        switch (arg0->type & 0xF) {
+        case 0:
+        case 3:
+        case 4:
+            temp_f20_3 = arg0->param1;
+            temp_f1 = HSD_Randf();
+            temp_f0_2 = (arg0->param2 - temp_f20_3) / (f32) (s32) arg0->count;
+            var_f30 = temp_f0_2;
+            var_f31 = (temp_f0_2 * temp_f1) + temp_f20_3;
+            break;
+        case 6:
+        case 7:
+            temp_f20_4 = arg0->param1;
+            temp_f1 = HSD_Randf();
+            temp_f0_3 = (arg0->param2 - temp_f20_4) / (f32) (s32) arg0->count;
+            var_f30 = temp_f0_3;
+            var_f31 = (temp_f0_3 * temp_f1) + temp_f20_4;
+            break;
+        default:
             var_f31 = (f32) (2.0 * (3.141592653589793 * HSD_Randf()));
             var_f30 = (f32) (6.283185307179586 / (f64) (s32) arg0->count);
+            break;
         }
     }
+    goto generation_test;
 loop_215:
-    temp_f1 = arg0->count;
-    if (temp_f1 >= 1.0f) {
+    {
         temp_r0_2 = arg0->type & 0xF;
         switch (temp_r0_2) {                        /* switch 2 */
         case 0:                                     /* switch 2 */
@@ -1249,7 +1244,7 @@ loop_215:
             temp_f2_10 = arg0->axisZX;
             temp_f1_17 = arg0->axisZY;
             temp_f3_2 = arg0->axisZZ;
-            var_f4_3 = (temp_f3_2 * temp_f3_2) + ((temp_f2_10 * temp_f2_10) + (temp_f1_17 * temp_f1_17));
+            var_f4_3 = (f32)(temp_f3_2 * temp_f3_2) + ((f32)(temp_f2_10 * temp_f2_10) + (f32)(temp_f1_17 * temp_f1_17));
             if (var_f4_3 > 0.0f) {
                 temp_f1_18 = __frsqrte(var_f4_3);
                 temp_f1_19 = 0.5 * temp_f1_18 * -(((f64) var_f4_3 * (temp_f1_18 * temp_f1_18)) - 3.0);
@@ -1298,8 +1293,8 @@ loop_215:
             } else {
                 var_f0_11 = arg0->param3 * HSD_Randf();
             }
-            temp_f21_2 = arg0->radius;
             temp_f19 = (f32) (2.0 * (3.141592653589793 * HSD_Randf()));
+            temp_f21_2 = arg0->radius;
             if (temp_f21_2 < 0.0f) {
                 var_f22_2 = -temp_f21_2;
             } else {
@@ -1339,7 +1334,9 @@ loop_215:
             break;
         }
         arg0->count -= 1.0f;
-        goto loop_215;
     }
+generation_test:
+    temp_f1 = arg0->count;
+    if (temp_f1 >= 1.0f) goto loop_215;
     return temp_f1;
 }

@@ -8,11 +8,12 @@
 #include "game/maximum/GSAPI/baselib/tev.h"
 #include "game/maximum/GSAPI/baselib/mobj.h"
 #include "game/maximum/GSAPI/baselib/pobj.h"
+static inline f64 shadow_fabs(f64 x) { return __fabs(x); }
 #define HSD_ASSERT(line,expr) ((expr)?(void)0:__assert("shadow.c",line,#expr))
 double atan2(double,double);
 static inline int normalize_check(Vec3* src,Vec3* dst) {
     if(!src || !dst) return -1;
-    if(__fabs(src->x)<=__float_min[0] && __fabs(src->y)<=__float_min[0] && __fabs(src->z)<=__float_min[0]) return -1;
+    if(shadow_fabs(src->x)<=__float_min[0] && shadow_fabs(src->y)<=__float_min[0] && shadow_fabs(src->z)<=__float_min[0]) return -1;
     VECNormalize((Vec*)src,(Vec*)dst); return 0;
 }
 void GSmemFree(void*);
@@ -346,15 +347,15 @@ void HSD_ShadowSetViewingRect(HSD_Shadow* shadow, float top, float bottom,
     case PROJ_PERSPECTIVE: {
         float width, height;
 
-        if (__fabs(top) > __fabs(bottom)) {
-            width = __fabs(top);
+        if (shadow_fabs(top) > shadow_fabs(bottom)) {
+            width = shadow_fabs(top);
         } else {
-            width = __fabs(bottom);
+            width = shadow_fabs(bottom);
         }
-        if (__fabs(left) > __fabs(right)) {
-            height = __fabs(left);
+        if (shadow_fabs(left) > shadow_fabs(right)) {
+            height = shadow_fabs(left);
         } else {
-            height = __fabs(right);
+            height = shadow_fabs(right);
         }
         HSD_CObjSetAspect(cobj, height / (width+__float_epsilon[0]));
         HSD_CObjSetFov(cobj, 57.295779513f * (float)atan2(width, distance));

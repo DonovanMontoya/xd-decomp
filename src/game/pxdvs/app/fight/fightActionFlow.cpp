@@ -54,7 +54,7 @@ u32 fightFloorDB_GetFightSideDataId(u32, u32);
 void fightSideCreate(void *, u32);
 u32 fightFloor_GetEnvSndId(void *);
 u8 soundOpenPlayFadeOutIn(s32, s32, s32, u8);
-void fightMainWaitFrame(s16);
+void fightMainWaitFrame(u32);
 void *fightOutPokemon_GetSequencePtr(FightOutPokemon *);
 void fightSeqFightOutPokemonDarkCheckAppear(FightOutPokemon *, u8);
 void fightFloor_SetAttackPokemonPtr(void *, void *);
@@ -179,8 +179,8 @@ u32 fightTrainer_GetFightTrainerDataId(void *);
 u32 fightFloor_GetSyoukaiWzxDataId(void *);
 u16 fightFloor_GetEncountDataId(void *);
 u32 fightEncountDataBiosGetSyoukaiWzxDataId(void *);
-u32 fightTrainerDB_GetSyoukaiWzxDataId(u32);
-u32 fightTrainerDB_GetSerihuMsgId(u32, u32);
+u16 fightTrainerDB_GetSyoukaiWzxDataId(u32);
+u16 fightTrainerDB_GetSerihuMsgId(u32, u32);
 u8 fightKind_CheckFightKind(u32);
 u8 fightFloorIsNowEncountVirtualBattle(void *);
 u8 fightFloorIsNowEncountOpeningVirtualBattle(void *);
@@ -502,6 +502,14 @@ extern "C" s32 fightActionFlowAllFightTrainerSelectFightAction(void) {
     return 1;
 }
 
+static inline void *_owGetDef(void *w, u8 t) {
+    return fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(fightWaza_GetTargetDataId(w), t);
+}
+
+static inline void *_owGetAttacker(void *a) {
+    return fightActionBiosGetActorFightTargetPtr(a);
+}
+
 extern "C" s32 fightActionFlowFightOutPokemonOutWaza(void *actor) {
     u16 moto;
     void *waza;
@@ -513,12 +521,12 @@ extern "C" s32 fightActionFlowFightOutPokemonOutWaza(void *actor) {
     void *def;
 
     type = fightFloor_GetFightType(0);
-    attacker = fightActionBiosGetActorFightTargetPtr(actor);
+    attacker = _owGetAttacker(actor);
     waza = fightOutPokemon_GetFightWazaPtr(attacker);
     if (!fightWazaCheckValid(waza)) {
         return 0;
     }
-    def = fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(fightWaza_GetTargetDataId(waza), type);
+    def = _owGetDef(waza, type);
     fightFloor_SetAttackPokemonPtr(0, attacker);
     fightFloor_SetDefensePokemonPtr(0, def);
     pk = fightOutPokemonGetPokemonPtr(attacker);
@@ -567,16 +575,16 @@ u8 _fight_kaisi_pre_trainer_intr_wzx_data_id_num = 5;
 u16 _fight_kaisi_pre_trainer_intr_wzx_data_id;
 
 extern "C" void fightActionFlowKaisiPreSubLoad(void) {
-    u16 w3;
-    void *seqB;
-    u32 trainerId;
-    u32 w2;
+    u16 eid;
     void *t0;
-    u32 w1;
+    u32 w3;
+    u32 w2;
     void *t1;
     void *seqA;
-    u16 msg;
-    u16 eid;
+    u32 msg;
+    void *seqB;
+    u32 w1;
+    u32 trainerId;
     fightFloor_GetFightFloorDataId(0);
     t0 = fightTargetGetPtrAsNowFightType(0xB, 0);
     seqA = fightTrainer_GetSequencePtr(t0);
@@ -630,72 +638,87 @@ extern "C" void fightActionFlowKaisiPreSubLoad(void) {
             Sequence_LoadWaza(seqB, 0x5F, 4, 0);
         }
         if (fightFloor_GetFightKindHostEnemyMsgFlag(0) == 1) {
-            ((u32 (*)(void *, u32, s32, s32))Sequence_LoadWaza)(seqB, w3, 4, 0);
+            Sequence_LoadWaza(seqB, w3, 4, 0);
         }
     }
 }
 
 extern "C" s32 fightActionFlowSyuuryouPost(void) {
-    u32 num = (u8)fightFloor_GetFightTypeTrainerNum(0);
+    u32 side2;
+    void *sp2;
+    u32 j2;
+    void *tr2;
+    void *h3;
+    u32 evoB;
+    void *save;
+    u16 evo;
+    void *gc;
+    void *tr;
+    u16 evoA;
+    void *h2;
+    void *h;
+    u32 i;
+    void *pk;
+    void *h4;
+    u32 j;
+    u32 base;
+    u32 num;
+    u32 side;
+    void *sidep;
+    void *sp;
+    void *hero;
+    num = (u8)fightFloor_GetFightTypeTrainerNum(0);
     if (fightGetFightResultId() == 1) {
         return 1;
     }
-    {
-        void *gc = fightFloorGetGcHeroFightTrainerPtr(0);
-        if (gc != 0) {
-            void *hero = fightTrainer_GetHeroPtr(gc);
-            if (hero != 0) {
-                fightTrainerBackFightPokemonToTemotiPokemon(gc, 0);
-                if (fightFloorIsGcHeroWin(0, fightGetFightResultId()) == 1) {
-                    if (fightFloor_GetFightKindGetExpFlag(0) == 1 && fightTrainerCheckCanGetExp(gc) == 1) {
-                        u32 i;
-                        for (i = 0; (u16)i < 6; i++) {
-                            void *pk = heroGetStatus(hero, 3, i);
-                            if (pokemonCheckFightOut(pk) && pokemonIsDarkPokemon(pk) != 1) {
-                                void *fp = fightTrainerCheckTemotiPokemonFightEntry(gc, pk);
-                                if (fp != 0 && fightPokemonCheckFightOut(fp) && fightPokemon_GetLevelUpFlag(fp)) {
-                                    u32 evoB;
-                                    u16 evoA;
-                                    u16 evo = pokemonEvolutionCheck(pk, 0, 0, &evoA, (u16 *)&evoB);
-                                    if (evo != 0) {
-                                        pokemonEvolutionAll(pk, evo, evoA, (u16 *)&evoB, hero, 1, 1, 0);
-                                        fightMainWaitFrameEffect(10);
-                                    }
+    gc = fightFloorGetGcHeroFightTrainerPtr(0);
+    if (gc != 0) {
+        hero = fightTrainer_GetHeroPtr(gc);
+        if (hero != 0) {
+            fightTrainerBackFightPokemonToTemotiPokemon(gc, 0);
+            if (fightFloorIsGcHeroWin(0, fightGetFightResultId()) == 1) {
+                if (fightFloor_GetFightKindGetExpFlag(0) == 1 && fightTrainerCheckCanGetExp(gc) == 1) {
+                    for (i = 0; (u16)i < 6; i++) {
+                        pk = heroGetStatus(hero, 3, i);
+                        if (pokemonCheckFightOut(pk) && pokemonIsDarkPokemon(pk) != 1) {
+                            sp = fightTrainerCheckTemotiPokemonFightEntry(gc, pk);
+                            if (sp != 0 && fightPokemonCheckFightOut(sp) && fightPokemon_GetLevelUpFlag(sp)) {
+                                evo = pokemonEvolutionCheck(pk, 0, 0, &evoA, (u16 *)&evoB);
+                                if (evo != 0) {
+                                    pokemonEvolutionAll(pk, evo, evoA, (u16 *)&evoB, hero, 1, 1, 0);
+                                    fightMainWaitFrameEffect(10);
                                 }
                             }
                         }
                     }
-                    if (fightFloor_GetFightKindMonohiroiFlag(0) == 1) {
-                        heroCheckSetMonohiroiAllTemotiPokemon(hero);
-                    }
-                    fightFloor_GetFightKindGetInfectPokerusFlag(0);
                 }
-                if (fightFloor_GetFightKindBackSaveDataFlag(0) == 1) {
-                    void *save = savedataGetStatus(0, 2);
-                    if (save != 0) {
-                        u8 cnt = heroBiosGetMeetDarkPokemonCount(save);
-                        heroBiosCopy(save, hero);
-                        heroBiosSetMeetDarkPokemonCount(save, cnt);
-                    }
+                if (fightFloor_GetFightKindMonohiroiFlag(0) == 1) {
+                    heroCheckSetMonohiroiAllTemotiPokemon(hero);
+                }
+                fightFloor_GetFightKindGetInfectPokerusFlag(0);
+            }
+            if (fightFloor_GetFightKindBackSaveDataFlag(0) == 1) {
+                save = savedataGetStatus(0, 2);
+                if (save != 0) {
+                    u8 cnt = heroBiosGetMeetDarkPokemonCount(save);
+                    heroBiosCopy(save, hero);
+                    heroBiosSetMeetDarkPokemonCount(save, cnt);
                 }
             }
         }
     }
     if (menuCBBios_CurrentlyWorkingToolBattle() == 1) {
-        u32 side;
         for (side = 0; (u16)side < 2; side++) {
-            void *sp = fightFloorGetValidFightSidePtr(0, side);
-            if (sp != 0) {
-                u32 j;
-                u32 base = (u16)side * num;
+            sidep = fightFloorGetValidFightSidePtr(0, side);
+            if (sidep != 0) {
+                base = (u16)side * num;
                 for (j = 0; (u16)j < num; j++) {
-                    void *tr = fightSideGetValidFightTrainerPtrU32(sp, j);
+                    tr = fightSideGetValidFightTrainerPtrU32(sidep, j);
                     if (tr != 0) {
-                        void *h;
                         fightTrainerBackFightPokemonToTemotiPokemon(tr, 0);
                         h = menuCBBios_GetHeroImmediately(j + base);
                         if (h != 0) {
-                            void *h2 = fightTrainer_GetHeroPtr(tr);
+                            h2 = fightTrainer_GetHeroPtr(tr);
                             if (h2 != 0) {
                                 heroBiosCopy(h, h2);
                             }
@@ -706,28 +729,23 @@ extern "C" s32 fightActionFlowSyuuryouPost(void) {
         }
     }
     if ((u8)fightFloor_GetFightKind(0) == 6 || (u8)fightFloor_GetFightKind(0) == 7) {
-        u32 side;
-        for (side = 0; (u16)side < 2; side++) {
-            void *sp = fightFloorGetValidFightSidePtr(0, side);
-            if (sp != 0) {
-                u32 j;
-                for (j = 0; (u16)j < num; j++) {
-                    void *tr = fightSideGetValidFightTrainerPtrU32(sp, j);
-                    if (tr != 0) {
+        for (side2 = 0; (u16)side2 < 2; side2++) {
+            sp2 = fightFloorGetValidFightSidePtr(0, side2);
+            if (sp2 != 0) {
+                for (j2 = 0; (u16)j2 < num; j2++) {
+                    tr2 = fightSideGetValidFightTrainerPtrU32(sp2, j2);
+                    if (tr2 != 0) {
                         if ((u8)fightFloor_GetFightKind(0) == 6 || (u8)fightFloor_GetFightKind(0) == 7) {
-                            if (!fightTrainerIsGcHero(tr)) {
+                            if (!fightTrainerIsGcHero(tr2)) {
                                 continue;
                             }
                         }
-                        {
-                            void *h;
-                            fightTrainerBackFightPokemonToTemotiPokemon(tr, 0);
-                            h = fightGetMenuCtrlHero();
-                            if (h != 0) {
-                                void *h2 = fightTrainer_GetHeroPtr(tr);
-                                if (h2 != 0) {
-                                    heroBiosCopy(h, h2);
-                                }
+                        fightTrainerBackFightPokemonToTemotiPokemon(tr2, 0);
+                        h3 = fightGetMenuCtrlHero();
+                        if (h3 != 0) {
+                            h4 = fightTrainer_GetHeroPtr(tr2);
+                            if (h4 != 0) {
+                                heroBiosCopy(h3, h4);
                             }
                         }
                     }
@@ -803,7 +821,7 @@ extern "C" {
 u32 fightActionDataBiosGetBuff(void *);
 u8 fightFloor_GetFightTypeFightoutPokemonNum(void *);
 u8 fightSideCheckValid(void *);
-u8 fightSideGetDoFightTrainerCount(void *);
+s32 fightSideGetDoFightTrainerCount(void *);
 u8 fightTrainerGetDoFightOutFightOutPokemonCount(void *);
 void *fightTrainer_GetFightPokemonPtr(void *, u16);
 void menuFaceLoadFightPokemon(void *, s32, s32);
@@ -931,7 +949,7 @@ extern "C" s32 fightActionFlowKaisiNyuujouPokemon(void *actor) {
         for (u16 i = 0; i < trainerCount; ++i) {
             void *current = fightSideGetValidFightTrainerPtr(side, i);
             if (current != 0) {
-                u16 intro = fightTrainerDB_GetSyoukaiWzxDataId(fightTrainer_GetFightTrainerDataId(current));
+                u32 intro = fightTrainerDB_GetSyoukaiWzxDataId(fightTrainer_GetFightTrainerDataId(current));
                 u8 count = fightTrainerGetDoFightOutFightOutPokemonCount(current);
                 u16 j;
                 for (j = 0; j < outCount; ++j) {
@@ -1024,41 +1042,56 @@ void fightPokemonGetFriendFormPokemonFriendFilterId(void *,u32);
 void fightSideGetFightTrainerGridParam(u32,u8,u8,u8 *,u8 *);
 void battleGridAddTrainer(void *,u8,u8);
 
+static inline u16 getDisk(){return fightEncountDataBiosGetDiskId(fightEncountDataBiosGetPtr(fightGetFightEncountDataId()));}
+static inline void *getFightPokemon(void *t,u16 m){return fightTrainer_GetFightPokemonPtr(t,m);}
 s32 fightActionFlowKaisiNyuujouTrainer(void *actor) {
     u32 hero[0x978/4];
-    u8 gridX,gridY;
-    void *trainer;
-    u8 i;
-    s8 made;
-    void *side;
-    u32 entryCount;
-    u32 trainerCount;
-    void *party;
-    u32 outCount;
+    u8 gridX;
     void *data;
-    u32 sideId;
+    int i;
+    u8 idx;
+    void *sequence;
+    int j;
+    void *trainer;
+    u16 target;
+    u32 trainerId;
+    u8 gridY;
+    u8 sideCount;
     u8 type;
-    u16 target=fightActionDataBiosGetBuff(fightActionBiosGetFightActionDataPtr(actor));
+    s32 offset;
+    u32 trainerCount;
+    u32 sideId;
+    u32 entryCount;
+    u32 outCount;
+    u8 enemy;
+    s32 input;
+    void *side;
+    void *party;
+    void *seq;
+    s8 made;
+    u8 index;
+    target=fightActionDataBiosGetBuff(fightActionBiosGetFightActionDataPtr(actor));
     data=fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(0));
     type=fightFloor_GetFightType(0);
     trainerCount=(u8)fightFloor_GetFightTypeTrainerNum(0);
-    entryCount=(u8)fightFloor_GetFightTypeEntryPokemonNum(0);
-    outCount=(u8)fightFloor_GetFightTypeFightoutPokemonNum(0);
+    entryCount=fightFloor_GetFightTypeEntryPokemonNum(0);
+    outCount=fightFloor_GetFightTypeFightoutPokemonNum(0);
     side=fightTargetGetPtr(target,0,type);
     if(!fightSideCheckValid(side))return 0;
-    u8 enemy=target!=4;
+    if(target!=4)enemy=1;else enemy=0;
     sideId=fightSide_GetFightSideDataId(side);
-    s32 offset=enemy*trainerCount;
-    for(i=0;i<(s32)trainerCount;++i) {
+    offset=enemy*trainerCount;
+    for(i=0;(u8)i<(s32)trainerCount;++i) {
         trainer=fightSide_GetFightTrainerPtr(side,i);
-        u8 index=i+offset;
-        u32 trainerId=fightEncountDataBiosGetFightTrainerDataId(data,index);
-        s32 input=fightEncountDataBiosGetGSInputDevice(data,index);
+        index=(u8)i+offset;
+        trainerId=fightEncountDataBiosGetFightTrainerDataId(data,index);
+        input=fightEncountDataBiosGetGSInputDevice(data,index);
         if(fightTrainerCheckTrainerDataIdValid(trainerId,input)) {
             if(menuCBBios_CurrentlyWorkingToolBattle()==1)heroBiosCopy(hero,menuCBBios_GetHeroImmediately(index));
             else if(((u8)fightFloor_GetFightKind(0)==6 || (u8)fightFloor_GetFightKind(0)==7) && fightTrainerDB_GetKindDataId(trainerId)==1)heroBiosCopy(hero,fightGetMenuCtrlHero());
             else fightTrainerCreateFightTrainerDataIdToHero(trainerId,input,hero,0);
-            fightTrainerCreate(trainer,hero,trainerId,input,fightTrainerCreateSequence(trainerId));
+            seq=fightTrainerCreateSequence(trainerId);
+            fightTrainerCreate(trainer,hero,trainerId,input,seq);
             party=fightTrainer_GetHeroPtr(trainer);
             if(fightTrainerCheckValid(trainer)) {
                 fightTrainerSortFightTrainerDataIdToHeroTemotiPokemon(trainer,entryCount,outCount);
@@ -1086,13 +1119,13 @@ s32 fightActionFlowKaisiNyuujouTrainer(void *actor) {
                     Pokemon *pokemon=(Pokemon *)heroGetStatus(party,3,slot);
                     if(pokemonCheckValid(pokemon) && !fightTrainerCheckTemotiPokemonFightEntry(trainer,pokemon)) {
                         if(fightFloorIsNowEncountVirtualBattle(0)==1 || fightFloorIsNowEncountOpeningVirtualBattle(0)==1) {
-                            u16 disk=fightEncountDataBiosGetDiskId(fightEncountDataBiosGetPtr(fightGetFightEncountDataId()));
+                            u16 disk=getDisk();
                             u8 condition;
                             if(fightTargetIsHostSide(trainer,fightFloor_GetFightType(0))==1)condition=deckDataVirtualDB_GetAllyJoutai(disk,slot);
                             else condition=deckDataVirtualDB_GetEnemyJoutai(disk,slot);
                             pokemon->setCondition(condition);
                         }
-                        void *fightPokemon=fightTrainer_GetFightPokemonPtr(trainer,made);
+                        void *fightPokemon=getFightPokemon(trainer,made);
                         fightPokemonCreate(trainer,fightPokemon,pokemon,fightFloorGetFightPokemonEntryCntInc(0));
                         if(fightFloor_GetFightKindGetFriendFlag(0)==1 && fightFloor_GetFightKindBossFlag(0)==1 && fightTrainerIsGcHero(trainer)==1)fightPokemonGetFriendFormPokemonFriendFilterId(fightPokemon,3);
                         ++made;
@@ -1101,13 +1134,14 @@ s32 fightActionFlowKaisiNyuujouTrainer(void *actor) {
             }
         }
     }
-    u8 sideCount=fightSideGetDoFightTrainerCount(side);
-    for(u8 i=0;i<(s32)trainerCount;++i) {
-        void *trainer=fightSideGetValidFightTrainerPtr(side,i);
+    sideCount=fightSideGetDoFightTrainerCount(side);
+    for(j=0;(u8)j<(s32)trainerCount;++j) {
+        idx=j;
+        trainer=fightSideGetValidFightTrainerPtr(side,idx);
         if(trainer!=0) {
-            void *sequence=fightTrainer_GetSequencePtr(trainer);
+            sequence=fightTrainer_GetSequencePtr(trainer);
             if(sequence!=0) {
-                fightSideGetFightTrainerGridParam(sideId,sideCount,i,&gridX,&gridY);
+                fightSideGetFightTrainerGridParam(sideId,sideCount,idx,&gridX,&gridY);
                 battleGridAddTrainer(sequence,gridX,gridY);
                 battleGridUpdate();
                 Sequence_SetVisibility(sequence,1);
@@ -1120,7 +1154,7 @@ s32 fightActionFlowKaisiNyuujouTrainer(void *actor) {
 }
 
 extern "C" {
-s32 GSmsgGetLength(u16);
+u32 GSmsgGetLength(u32);
 void GSsndPlayVolume(u32,u32,u32,u32);
 void WazaSequence_Start(u32,u32);
 void WazaSequence_Stop(u32);
@@ -1130,32 +1164,50 @@ void fadeSet(s32,f32);
 void fightMainSetAllDispFlag(u8);
 u32 fightFloor_GetBgmSndId(void *);
 void soundOpenPlay(u32,u32,u32);
-void fightMenuOpenTrainerMsg(u16);
+void fightMenuOpenTrainerMsg(u32);
 void *fightOutPokemonGetNamePtr(void *);
 u16 fightOutPokemonGetVoiceSndId(void *);
 u32 fightOutPokemon_GetKanseiSndId(void *);
 extern u8 WildPokemonCatchFlag;
 
 s32 fightActionFlowKaisiPre() {
-    bool canceled=false;
-    u8 virtualCanceled=0;
-    fightFloor_GetFightFloorDataId(0);
-    void *host=fightTargetGetPtrAsNowFightType(0xB,0);
-    void *hostSequence=fightTrainer_GetSequencePtr(host);
-    void *enemy=fightTargetGetPtrAsNowFightType(9,host);
-    void *enemySequence=fightTrainer_GetSequencePtr(enemy);
-    u32 trainerId=fightTrainer_GetFightTrainerDataId(enemy);
-    u16 stageIntro=fightFloor_GetSyoukaiWzxDataId(0);
-    u16 encounter=fightFloor_GetEncountDataId(0);
-    void *data=fightEncountDataBiosGetPtr(encounter);
-    u16 disk=fightEncountDataBiosGetDiskId(data);
-    u16 encounterIntro=fightEncountDataBiosGetSyoukaiWzxDataId(data);
-    u16 trainerIntro=fightTrainerDB_GetSyoukaiWzxDataId(trainerId);
-    if(trainerIntro==0)trainerIntro=0x5F;
-    u16 greeting=fightTrainerDB_GetSerihuMsgId(trainerId,0);
-    s32 greetingFrames=GSmsgGetLength(greeting)*5;
-    if(fightKind_CheckFightKind(0xA))greeting=0;
+    u32 encounterIntro;
+    u16 encounter;
+    u32 trainerIntro;
+    u8 i;
+    void *host;
+    void *hostSequence;
+    u32 message;
     void *pokemonSequence;
+    void *enemy;
+    u32 stageIntro;
+    void *data;
+    u8 virtualCanceled;
+    u32 greeting;
+    void *pokemon;
+    s32 greetingFrames;
+    u32 trainerId;
+    void *enemySequence;
+    bool canceled;
+    u16 disk;
+    canceled=false;
+    virtualCanceled=0;
+    fightFloor_GetFightFloorDataId(0);
+    host=fightTargetGetPtrAsNowFightType(0xB,0);
+    hostSequence=fightTrainer_GetSequencePtr(host);
+    enemy=fightTargetGetPtrAsNowFightType(9,host);
+    enemySequence=fightTrainer_GetSequencePtr(enemy);
+    trainerId=fightTrainer_GetFightTrainerDataId(enemy);
+    stageIntro=fightFloor_GetSyoukaiWzxDataId(0);
+    encounter=((u32 (*)(void *))fightFloor_GetEncountDataId)(0);
+    data=fightEncountDataBiosGetPtr(encounter);
+    disk=fightEncountDataBiosGetDiskId(data);
+    encounterIntro=fightEncountDataBiosGetSyoukaiWzxDataId(data);
+    trainerIntro=fightTrainerDB_GetSyoukaiWzxDataId(trainerId);
+    if(trainerIntro==0)trainerIntro=0x5F;
+    greeting=fightTrainerDB_GetSerihuMsgId(trainerId,0);
+    greetingFrames=GSmsgGetLength(greeting)*5;
+    if(fightKind_CheckFightKind(0xA))greeting=0;
     if(fightFloorIsNowEncountOpeningVirtualBattle(0)!=1) {
         if(fightFloorIsNowEncountVirtualBattle(0)==1) {
             Sequence_SetVisibility(enemySequence,0);
@@ -1231,17 +1283,20 @@ s32 fightActionFlowKaisiPre() {
                 }
                 if(encounterIntro!=0) {
                     handle=Sequence_GetWaza(enemySequence,encounterIntro,4);
-                    while(_fightActionFlowKaisiPreSubCheckCancel(&canceled)!=1 && WazaSequence_IsActive(handle))GSthreadSwitch();
+                    for(;;) {
+                        if(_fightActionFlowKaisiPreSubCheckCancel(&canceled)==1)break;
+                        if(!WazaSequence_IsActive(handle))break;
+                        GSthreadSwitch();
+                    }
                 }
             }
         stageIntroFinished:
             if(fightFloorIsNowEncountHostEnemyPokemonKime(0)==1 && fightTargetIsHostSide(enemy,fightFloor_GetFightType(0))==0) {
-                u32 message;
                 if((u8)fightFloor_GetFightKind(0)==0xC) {message=0x4FF6;WildPokemonCatchFlag=0;}
                 else message=0x4FFD;
                 if(encounter==0xD9 || encounter==0x191)message=0;
-                for(u8 i=0;i<2;++i) {
-                    void *pokemon=fightTrainerGetValidFightOutPokemonPtr(enemy,i);
+                for(i=0;i<2;++i) {
+                    pokemon=fightTrainerGetValidFightOutPokemonPtr(enemy,i);
                     if(pokemon!=0) {
                         pokemonSequence=fightOutPokemon_GetSequencePtr((FightOutPokemon *)pokemon);
                         if(pokemonSequence!=0) {
@@ -1297,7 +1352,7 @@ s32 fightActionFlowKaisiPre() {
             if(greeting!=0)WazaSequence_Free(Sequence_GetWaza(enemySequence,0x5F,4));
             if(fightFloor_GetFightKindHostEnemyMsgFlag(0)==1 && trainerIntro==0x5F)WazaSequence_Free(Sequence_GetWaza(enemySequence,trainerIntro,4));
             if(fightFloorIsNowEncountHostEnemyPokemonKime(0)==1 && fightTargetIsHostSide(enemy,fightFloor_GetFightType(0))==0) {
-                for(u8 i=0;i<2;++i)WazaSequence_Free(Sequence_GetWaza(pokemonSequence,0x9F,4));
+                for(i=0;i<2;++i)WazaSequence_Free(Sequence_GetWaza(pokemonSequence,0x9F,4));
             }
         }
     }

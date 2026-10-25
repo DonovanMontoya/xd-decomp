@@ -265,13 +265,14 @@ void menuSubAnimAlpha(void) {
 
 static s32 _animAlpha(void) {
     f32 rate = 6.2831855f / _cursorSec;
-    f32 t = rate * menuGetTotalTime();
+    f32 t = menuGetTotalTime();
+    t *= rate;
     f32 range = _max_alpha - _min_alpha;
     f32 v;
     f32 c;
     _cursorTimer = t;
     c = (f32)cos(t);
-    v = (range * ((1.0f + c) * 0.5f));
+    v = (range * ((1.0f + c) / 2.0f));
     v += _min_alpha;
     if (v > 255.0f) {
         v = 255.0f;

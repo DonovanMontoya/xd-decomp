@@ -43,7 +43,7 @@ void menuCloseCustom(s32, s32, s32);
 void fadeSet(s32, f32);
 void fadeCheck(s32);
 void GSfloorPop(void);
-void GSfloorPush(s32, void *);
+void GSfloorPush(s32);
 void floorSetFadeScript(s32, s32);
 void floorWaitForChange(void);
 u8 winSeqCheckMove(s32);
@@ -92,7 +92,7 @@ struct PocketScriptWork {
     PocketScriptEntry entries[8];
     s32 count;
 };
-static PocketScriptWork menuPocketWork;
+PocketScriptWork menuPocketWork;
 
 void menuPtPlaySe(u32);
 
@@ -546,7 +546,7 @@ int _execSell(int tab, u16 item, int index) {
     return 1;
 }
 
-int _execGive(int tab, u16 item, int index) {
+u8 _execGive(int tab, u16 item, int index) {
     if (itemDataBiosGetImportant(itemDataBiosGetPtr(item)) != 0) {
         msgctrlSetValue(0x2D, item);
         _infoBeep(0xC37A);
@@ -751,38 +751,41 @@ int _execActionMenu(int tab, u16 item, int index, u16 *used) {
 int _afterDecideItem(int mode, int tab, u16 item, int index, u16 *used) {
     u16 cologne = 0;
     int result;
+    int ret = mode;
     switch (mode) {
-    default:
+    case 0:
+    case 1:
+    case 6:
         result = _execActionMenu(tab, item, index, &cologne);
         if (result == 2) {
-            mode = 1;
+            ret = 1;
         } else if (mode == 0) {
-            mode = 0;
+            ret = 0;
         } else if (result == 0) {
-            mode = 1;
+            ret = 1;
         } else {
-            mode = 0;
+            ret = 0;
         }
         break;
     case 5:
     case 2:
         if (_execGive(tab, item, index) != 0) {
-            mode = 1;
+            ret = 1;
         } else {
-            mode = 0;
+            ret = 0;
         }
         break;
     case 3:
         _execSell(tab, item, index);
-        mode = 0;
+        ret = 0;
         break;
     case 4:
         _execDeposit(tab, item, index);
-        mode = 0;
+        ret = 0;
         break;
     }
     *used = cologne;
-    return mode;
+    return ret;
 }
 
 u8 _IsSortAble(tagWINDOW_WORK *win) {
@@ -967,7 +970,6 @@ u16 _menuPocketLoop() {
     int result;
     s32 *param;
     int i;
-    const PocketTab *tab;
     memset(cursorState, 0, 4);
     if (Data.mode == 6) {
         cursorState[1] = 1;
@@ -978,12 +980,12 @@ u16 _menuPocketLoop() {
     }
     param = params;
     params[0] = cursorState[1];
-    for (tab = TabTbl, i = 0; i < 5; i++, tab++) {
-        *(u32 *)&cursor = cursorBiosGetPos(tab->cursorId);
+    for (i = 0; i < 5; i++) {
+        *(u32 *)&cursor = cursorBiosGetPos(TabTbl[i].cursorId);
         if (cursor.first + cursor.selected >= _getNbItemSlot(i) + 1) {
             static CURSOR czero = { 0, 0 };
             CURSOR zero = czero;
-            cursorBiosSetPos(tab->cursorId, (s32 *)&zero);
+            cursorBiosSetPos(TabTbl[i].cursorId, (s32 *)&zero);
         }
     }
     if (Data.resizeInit == 0) {
@@ -1003,11 +1005,10 @@ u16 _menuPocketLoop() {
             item = used;
         }
         switch (result) {
+        case 0:
+            break;
         case 1:
             goto done;
-        case 0:
-        case 2:
-            break;
         }
     }
 done:
@@ -1330,7 +1331,7 @@ s32 menuPocket2PrintItemList(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
             }
             off = Data.tabScroll + (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
         }
-        *(u32 *)&cursor2 = cursorBiosGetPos(((const PocketTab *)((u8 *)TabTbl + idx * 32))->cursorId);
+        *(u32 *)&cursor2 = cursorBiosGetPos(TabTbl[(u32)idx].cursorId);
         _printItemList((GSgfxLayerID)winSpriteGetLayerID(win, spr), (s32)off, idx, cursor2);
     }
     spriteClearScissor(winSpriteGetLayerID(win, spr));
@@ -1389,13 +1390,11 @@ s32 menuPocket2DrawNumMenuCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
     if (i >= 4) {
         return 0;
     }
-    s16 sel = win->selected;
-    if (sel < 0 || !(sel < MenuPocket2Num[i].count)) {
+    if (win->selected < 0 || !(win->selected < MenuPocket2Num[i].count)) {
         return 0;
     }
-    s16 id = spr->id;
-    const s32 *p = MenuPocket2Num[i].items + sel * 3;
-    if (p[1] == id || p[2] == id) {
+    const s32 *p = MenuPocket2Num[i].items + win->selected * 3;
+    if (p[1] == (s16)spr->id || p[2] == (s16)spr->id) {
         spr->color.channels.alpha = 0xFF;
     } else {
         spr->color.channels.alpha = 0;
@@ -1855,13 +1854,14 @@ s32 menuPocket2GetItemScript(u16 id) {
 void menuPocket2AddItemScript(u16 id, u32 value) {
     PocketScriptEntry *p;
     s32 i;
-    for (p = menuPocketWork.entries, i = 0; i < 8; i++, p++) {
+    for (i = 0; i < 8; i++) {
+        p = &menuPocketWork.entries[i];
         if (p->id == id && p->value == value) {
             return;
         }
     }
     if (menuPocketWork.count < 7) {
-        menuPocketWork.entries[menuPocketWork.count].id = id;
+        menuPocketWork.entries[menuPocketWork.count].id = (u16)id;
         menuPocketWork.entries[menuPocketWork.count].value = value;
         menuPocketWork.count++;
     }
@@ -1939,7 +1939,7 @@ u16 menuPocket2Open(s32 mode, s32 *slot, s32 arg) {
         Data.pokemonSlot = -1;
     }
     Data.floorPop = 1;
-    GSfloorPush(0x38F, &Data);
+    GSfloorPush(0x38F);
     floorSetFadeScript(0, 0);
     floorWaitForChange();
     if (Data.result == 0) {

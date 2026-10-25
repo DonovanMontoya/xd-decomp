@@ -5,7 +5,7 @@ extern "C" GSgfxVF g_vertex_format,g_ext_vertex_format;
 extern "C" void DCFlushRange(void*,u32);
 static inline void invalidateParticle(peParticleNode* node,u32 flags,GSgfxDL* list) {
     u16* indices;
-    u32 extended=(flags>>25)&1;
+    bool extended=(flags&0x2000000)!=0;
     indices=0;
     node->live=0;
     u16 vertex=node->sortIndex*4;
@@ -230,9 +230,9 @@ void peParticleNode::Start(peEmitterNode* emitter,_peParticle* definition,GSgfxD
         u16* indices=(list->flags&1)?(u16*)(list->data+(slot*list->stride)+3):0;
         u16 i=0;
         if(extended) {
-            for(;i<4;++i){s16 uv=i*2;indices[0]=vertex+i*3;indices[1]=vertex;indices[2]=vertex;indices[3]=uv;indices+=4;}
+            for(;i<4;++i){u16 uv=i*2;indices[0]=vertex+i*3;indices[1]=vertex;indices[2]=vertex;indices[3]=uv;indices+=4;}
         } else {
-            for(;i<4;++i){s16 uv=i*2;indices[0]=vertex+i*3;indices[1]=vertex;indices[2]=uv;indices+=3;}
+            for(;i<4;++i){u16 uv=i*2;indices[0]=vertex+i*3;indices[1]=vertex;indices[2]=uv;indices+=3;}
         }
         list->flags|=2;
     }
@@ -343,4 +343,191 @@ void peParticleNode::Render(_peParticle* definition,GSgfxDL* list,char* data) {
         }
         endSurface__10GSgfxLayerFv(g_current_layer);
     }
+}
+
+extern "C" {
+extern Vec g_CameraPosition,g_CameraUpDir,g_CameraSideDir,g_CameraLookDir,xAxisVector,yAxisVector,zAxisVector;
+extern void* g_currentBound;
+extern f32 __float_nan[];
+f64 atan2(f64,f64);
+void EulerToQuat(Vec*,Quaternion*);
+void GSboundAddPoint(void*,f32,f32,f32);
+}
+struct ParticleTransform {Vec position;Quaternion rotation;Vec scale;};
+
+struct ParticleData {Vec vertices[4];u32 color,extraColor;};
+extern "C" void peColorSplineGetValue(ParticleColor*,void*,f32);
+static inline s32 particleFloatClass(f32 x) {
+    union {f32 value;s32 bits;} v;v.value=x;
+    s32 result;
+    switch(v.bits&0x7f800000) {
+    case 0x7f800000:if(v.bits&0x7fffff)result=1;else result=2;break;
+    case 0:if(v.bits&0x7fffff)result=5;else result=3;break;
+    default:result=4;break;
+    }
+    return result;
+}
+static inline f32 particleSpline(ParticleSpline* spline,f32 progress) {
+    if(!spline || !(spline->flags&3))return 1.0f;
+    f32 difference=spline->time-progress;
+    if(difference<0.0f)difference=-difference;
+    if(difference<=0.00001f)return spline->value;
+    return peSplineGetValue(spline,progress);
+}
+void peParticleNode::UpdateRenderData(peEmitterNode* emitter,_peParticle* definition,char* data,f32 progress) {
+    Mtx m438,m408,m3d8,m3a8,m378,m348,m318,m2e8,m2b8,m288,m258,m228,m1f8,m1c8,m198;
+    Vec right,up,normal,offset,work,center;
+    Quaternion orientation,basis;
+    Vec angles;
+    Quaternion inverseRight,inverseUp;
+    Vec scaledUp,cameraWork,cameraDelta,toCamera,crossRight,crossUp,rotatedRight,rotatedUp,crossNormal,localRight,localUp,scaledRight,scaledUpResult,corner1,corner2,corner3;
+    Quaternion inverseRightResult,inverseUpResult;
+    ParticleColor color;
+    u32 flags=definition->flags;
+    u32 extended=(flags>>25)&1;
+    f32 baseAngle;
+    f32 redValue,greenValue,blueValue,alphaValue;
+    ParticleTransform* transform=(ParticleTransform*)this->transform;
+f32 cx=position.x*transform->scale.x;
+f32 cy=position.y*transform->scale.y;
+f32 cz=position.z*transform->scale.z;
+center.x=cx;center.y=cy;center.z=cz;
+    PSMTXQuat(m438,&transform->rotation);
+    PSMTXMultVecSR(m438,&center,&center);
+    PSVECAdd(&center,&((ParticleTransform*)this->transform)->position,&center);
+
+    if(flags&0x200) {
+        if(flags&0x20000) {
+            PSVECSubtract(&g_CameraPosition,&center,&toCamera);
+            normal=toCamera;
+            PSVECNormalize(&normal,&normal);
+            PSVECCrossProduct(&normal,&g_CameraUpDir,&crossRight);
+            right=crossRight;
+            PSVECNormalize(&right,&right);
+            if(flags&0x400) {
+                normal.y=0.0f;PSVECNormalize(&normal,&normal);
+                up.x=0.0f;up.y=1.0f;up.z=0.0f;
+            } else {PSVECCrossProduct(&right,&normal,&crossUp);up=crossUp;}
+        } else {
+            if(flags&0x400)up=yAxisVector;else up=g_CameraUpDir;
+            right=g_CameraSideDir;
+        }
+        baseAngle=definition->yaw;
+    } else {
+        C_QUATRotAxisRad(&orientation,&yAxisVector,definition->yaw);
+        C_QUATRotAxisRad(&basis,&zAxisVector,definition->roll);
+        PSQUATMultiply(&basis,&orientation,&basis);
+        PSMTXQuat(m228,&basis);PSMTXMultVecSR(m228,&xAxisVector,&rotatedRight);right=rotatedRight;
+        PSMTXQuat(m1f8,&basis);PSMTXMultVecSR(m1f8,&yAxisVector,&rotatedUp);up=rotatedUp;
+        if(emitter->emitter->flags&0x400) {
+            f32 vx=velocity.x; f32 vy=velocity.y; f32 vz=velocity.z;
+            f32 horizontal=vx*vx+vz*vz;
+            if(horizontal>0.0f) {
+                f64 guess=__frsqrte(horizontal);
+                guess=0.5*guess*(3.0-(f64)horizontal*(guess*guess));
+                guess=0.5*guess*(3.0-(f64)horizontal*(guess*guess));
+                guess=0.5*guess*(3.0-(f64)horizontal*(guess*guess));
+                horizontal=(f32)((f64)horizontal*guess);
+            } else if((f64)horizontal<0.0)horizontal=__float_nan[0];
+            else if(particleFloatClass(horizontal)==1)horizontal=__float_nan[0];
+            angles.x=atan2(-vy,horizontal);
+            angles.y=atan2(vx,vz);angles.z=0.0f;
+            EulerToQuat(&angles,&orientation);
+            PSMTXQuat(m408,&orientation);PSMTXMultVecSR(m408,&right,&right);
+            PSMTXQuat(m3d8,&orientation);PSMTXMultVecSR(m3d8,&up,&up);
+        }
+        PSMTXQuat(m3a8,&((ParticleTransform*)this->transform)->rotation);PSMTXMultVecSR(m3a8,&right,&right);
+        PSMTXQuat(m378,&((ParticleTransform*)this->transform)->rotation);PSMTXMultVecSR(m378,&up,&up);
+        baseAngle=0.0f;
+    }
+    PSVECCrossProduct(&up,&right,&crossNormal);normal=crossNormal;
+
+    if(reserved35&1)baseAngle-=(this->rotation+angle);
+    else baseAngle+=(this->rotation+angle);
+    u32 rotateBefore=flags&0x10;
+    if(rotateBefore) {
+        f32 magnitude;if(baseAngle<0.0f)magnitude=-baseAngle;else magnitude=baseAngle;
+        if(magnitude>0.00001f) {
+            C_QUATRotAxisRad(&orientation,&normal,baseAngle);
+            PSMTXQuat(m348,&orientation);PSMTXMultVecSR(m348,&up,&up);
+            PSMTXQuat(m318,&orientation);PSMTXMultVecSR(m318,&right,&right);
+        }
+    }
+    PSQUATInverse(&((ParticleTransform*)this->transform)->rotation,&inverseRightResult);
+    inverseRight=inverseRightResult;
+    PSMTXQuat(m1c8,&inverseRight);PSMTXMultVecSR(m1c8,&right,&localRight);work=localRight;
+    transform=(ParticleTransform*)this->transform;
+    work.x*=transform->scale.x;work.y*=transform->scale.y;work.z*=transform->scale.z;
+    PSMTXQuat(m2e8,&transform->rotation);PSMTXMultVecSR(m2e8,&work,&work);
+    PSVECScale(&right,&right,PSVECDotProduct(&right,&work));
+    PSQUATInverse(&((ParticleTransform*)this->transform)->rotation,&inverseUpResult);
+    inverseUp=inverseUpResult;
+    PSMTXQuat(m198,&inverseUp);PSMTXMultVecSR(m198,&up,&localUp);work=localUp;
+    transform=(ParticleTransform*)this->transform;
+    work.x*=transform->scale.x;work.y*=transform->scale.y;work.z*=transform->scale.z;
+    PSMTXQuat(m2b8,&transform->rotation);PSMTXMultVecSR(m2b8,&work,&work);
+    PSVECScale(&up,&up,PSVECDotProduct(&up,&work));
+    PSVECScale(&right,&right,width*particleSpline(definition->widthSpline,progress));
+    PSVECScale(&up,&up,height*particleSpline(definition->heightSpline,progress));
+    if(!rotateBefore) {
+        f32 magnitude;if(baseAngle<0.0f)magnitude=-baseAngle;else magnitude=baseAngle;
+        if(magnitude>0.00001f) {
+            C_QUATRotAxisRad(&orientation,&normal,baseAngle);
+            PSMTXQuat(m288,&orientation);PSMTXMultVecSR(m288,&up,&up);
+            PSMTXQuat(m258,&orientation);PSMTXMultVecSR(m258,&right,&right);
+        }
+    }
+    bool offsetEnabled=(flags&0x40000)!=0;
+    if(offsetEnabled) {
+        PSVECScale(&right,&scaledRight,definition->offsetX);offset=scaledRight;
+        PSVECScale(&up,&scaledUpResult,definition->offsetY);scaledUp=scaledUpResult;
+        PSVECAdd(&offset,&scaledUp,&offset);
+    }
+    ParticleData* output;
+    if(extended)output=(ParticleData*)(data+index*0x38);
+    else output=(ParticleData*)(data+index*0x34);
+    PSVECSubtract(&center,&g_CameraPosition,&cameraDelta);
+    cameraWork=cameraDelta;
+    depth=PSVECDotProduct(&g_CameraLookDir,&cameraWork);
+    // Keep the original z-component read ahead of the x/y stores.
+    f32 nz = -((volatile Vec*)&right)->z;
+    f32 nx = -right.x;
+    f32 ny = -right.y;
+    work.x = nx;
+    work.y = ny;
+    work.z = nz;
+    PSVECSubtract(&work,&up,&work);
+    if(offsetEnabled)PSVECAdd(&work,&offset,&work);
+    PSVECAdd(&work,&center,&work);
+    output->vertices[0].x=work.x;output->vertices[0].y=work.y;output->vertices[0].z=work.z;
+    if(g_currentBound)GSboundAddPoint(g_currentBound,work.x,work.y,work.z);
+    PSVECSubtract(&right,&up,&corner1);work=corner1;
+    if(offsetEnabled)PSVECAdd(&work,&offset,&work);
+    PSVECAdd(&work,&center,&work);
+    output->vertices[1].x=work.x;output->vertices[1].y=work.y;output->vertices[1].z=work.z;
+    if(g_currentBound)GSboundAddPoint(g_currentBound,work.x,work.y,work.z);
+    PSVECAdd(&right,&up,&corner2);work=corner2;
+    if(offsetEnabled)PSVECAdd(&work,&offset,&work);
+    PSVECAdd(&work,&center,&work);
+    output->vertices[2].x=work.x;output->vertices[2].y=work.y;output->vertices[2].z=work.z;
+    if(g_currentBound)GSboundAddPoint(g_currentBound,work.x,work.y,work.z);
+    PSVECSubtract(&up,&right,&corner3);work=corner3;
+    if(offsetEnabled)PSVECAdd(&work,&offset,&work);
+    PSVECAdd(&work,&center,&work);
+    output->vertices[3].x=work.x;output->vertices[3].y=work.y;output->vertices[3].z=work.z;
+    if(g_currentBound)GSboundAddPoint(g_currentBound,work.x,work.y,work.z);
+    peColorSplineGetValue(&color,definition->colorSpline,progress);
+    u8 red=color.channels.r;
+    redValue=emitter->color[0]*__OSu8tof32(&red);
+    OSf32tou8(&redValue,&color.channels.r);
+    u8 green=color.channels.g;
+    greenValue=emitter->color[1]*__OSu8tof32(&green);
+    OSf32tou8(&greenValue,&color.channels.g);
+    u8 blue=color.channels.b;
+    blueValue=emitter->color[2]*__OSu8tof32(&blue);
+    OSf32tou8(&blueValue,&color.channels.b);
+    alphaValue=(255.0f*emitter->color[3])*particleSpline(definition->alphaSpline,progress);
+    color.channels.a=__OSf32tou8(alphaValue);
+    output->color=*(u32*)&color;
+    if(extended) {peColorSplineGetValue(&color,definition->extraColorSpline,progress);output->extraColor=*(u32*)&color;}
 }

@@ -50,10 +50,10 @@ found:
                 break;
             }
         }
-        idx = i;
-        PokeDanceEntry *e = &_pokeDance.entries[idx];
+        PokeDanceEntry *e = &_pokeDance.entries[i];
         memset(e, 0, sizeof(PokeDanceEntry));
         e->id = id;
+        idx = i;
     }
     return idx;
 }
@@ -110,9 +110,13 @@ void CAnt::drawAndUpdateWithOffset(PocketVec<short> offset){
     u32 id;
     if(unk0){draw(offset);antUpdate(this,id);}
 }
-void CAnt::drawAndUpdate(PocketVec<short> position){
+void CAnt::drawAndUpdate(PocketVec<short> newPosition) {
     u32 id;
-    if(unk0){x=position.x;y=position.y;draw(PocketVec<short>::zero);antUpdate(this,id);}
+    if (unk0) {
+        position = newPosition;
+        draw(PocketVec<short>::zero);
+        antUpdate(this, id);
+    }
 }
 void CAnt::drawAndUpdate(){
     u32 id;
@@ -163,34 +167,37 @@ static inline void pokeDanceRegister(u32 id) {
     {0x1E553200, 0x1E563200},\
     {0x1E6F3200, 0x1E703200}
 
-#define ANT_INIT_BY_POKEMON_BODY(self, pk) \
-    memset(self, 0, 0x34); \
-    (self)->unkC = 1.0f; \
-    (self)->unk10 = 0xFF; \
-    if ((pk)->checkValid()) { \
-        u16 dataId = (pk)->getPokemonDataId(); \
-        if (dataId == 0xC9) { \
-            AnnonBody tbl[28] = { ANT_ANNON_TABLE }; \
-            s32 k = pokemonGetAnnonKatati(pokemonGetStatus(pk, 0, 0x6F, 0)); \
-            u32 body; \
-            if (pokemonCheckRare(pk)) { \
-                body = tbl[(u8)k].rare; \
-            } else { \
-                body = tbl[(u8)k].normal; \
-            } \
-            (self)->unk0 = body; \
-        } else if (dataId == 0xF9 && (pk)->isDarkPokemon()) { \
-            (self)->unk0 = 0x20083200; \
-        } else { \
-            u32 rare = (pk)->isRare(); \
-            (self)->unk0 = pokemonDB_GetPokebodyId(dataId, rare); \
-        } \
-        u32 body = (self)->unk0; \
-        if (body != 0 && (self)->unk4 == 0) { \
-            (self)->unk4 = (u32)pokeDanceUse(body); \
-        } \
+static inline void antInitByPokemon(CAnt *self, Pokemon *pk) {
+    u16 dataId;
+    s32 k;
+    u32 body;
+    bool rare;
+    memset(self, 0, 0x34);
+    self->unkC = 1.0f;
+    self->unk10 = 0xFF;
+    if (pk->checkValid()) {
+        dataId = pk->getPokemonDataId();
+        if (dataId == 0xC9) {
+            AnnonBody tbl[28] = { ANT_ANNON_TABLE };
+            k = pokemonGetAnnonKatati(pokemonGetStatus(pk, 0, 0x6F, 0));
+            if (pokemonCheckRare(pk)) {
+                body = tbl[(u8)k].rare;
+            } else {
+                body = tbl[(u8)k].normal;
+            }
+            self->unk0 = body;
+        } else if (dataId == 0xF9 && pk->isDarkPokemon()) {
+            self->unk0 = 0x20083200;
+        } else {
+            rare = pk->isRare();
+            self->unk0 = pokemonDB_GetPokebodyId(dataId, rare);
+        }
+        body = self->unk0;
+        if (body != 0 && self->unk4 == 0) {
+            self->unk4 = (u32)pokeDanceUse(body);
+        }
     }
-
+}
 
 void CAnt::init() {
     memset(this, 0, 0x34);
@@ -199,11 +206,11 @@ void CAnt::init() {
 }
 
 void CAnt::initByPokemon(Pokemon *pk) {
-    ANT_INIT_BY_POKEMON_BODY(this, pk)
+    antInitByPokemon(this, pk);
 }
 
 void CAnt::initByPokemonAndSetColorAnimationInAny(Pokemon *pk) {
-    ANT_INIT_BY_POKEMON_BODY(this, pk)
+    antInitByPokemon(this, pk);
     if (pk->isDarkPokemon()) {
         if (pk->getDarkPoint() > 0.0f) {
             unk30 = 1;
@@ -214,7 +221,7 @@ void CAnt::initByPokemonAndSetColorAnimationInAny(Pokemon *pk) {
 }
 
 void CAnt::initByPokemonAndSetColorAnimationInReliveHallVisitor(Pokemon *pk) {
-    ANT_INIT_BY_POKEMON_BODY(this, pk)
+    antInitByPokemon(this, pk);
     if (pk->isDarkPokemon()) {
         if (pk->getDarkPoint() > 0.0f) {
             unk30 = 1;
@@ -240,19 +247,16 @@ void CAnt::systemUsecountReset() {
 
 static inline void pokeDanceRelease() {
     u32 kept;
-    s32 off;
     u32 i;
     _pokeDance.entries[_pokeDance.loading].useCount = 2;
-    kept = 0;off = 0;
+    kept = 0;
     for (i = 0; i < 0xF0; i++) {
         PokeDanceEntry *src = &_pokeDance.entries[i];
         if (src->id == 0) {
             break;
         }
         if (src->useCount != 0) {
-            kept++;
-            PokeDanceEntry *dst = (PokeDanceEntry *)((u8 *)_pokeDance.entries + off);
-            off += 0xC;
+            PokeDanceEntry *dst = &_pokeDance.entries[kept++];
             dst->id = src->id;
             dst->resource = src->resource;
             dst->useCount = src->useCount;
@@ -282,7 +286,7 @@ void CAnt::systemUnUseResourceRelease() {
 
 void CAnt::allRequestCancel() {
     PokeDanceEntry *entry = _pokeDance.entries;
-    for (s32 i = 0; i < 0xF0; i++, entry++) {
+    for (s32 i = 0; i < 0xF0; entry++, i++) {
         if (i != _pokeDance.loading && entry->id != 0 && entry->resource == 0) {
             entry->useCount = 0;
         }
@@ -375,14 +379,19 @@ void GSgfxVertex2s16(s16,s16);void GSgfxColor4u8(u8,u8,u8,u8);void GSgfxTexCoord
 void windowDrawSprite(s16,s16,void*,u16,s32,s32);
 extern u16 menuRelivehallPcBoxDefaultPokemonSprite;
 }
+static GSgfxColAu8 colorWhite={255,255,255,255};
+static GSgfxColAu8 colorPurple={60,12,255,255};
+static GSgfxColAu8 colorNone={0,0,0,0};
 namespace {
-GSgfxColAu8 colorWhite={255,255,255,255};
-GSgfxColAu8 colorPurple={60,12,255,255};
-GSgfxColAu8 colorNone={0,0,0,0};
 void dispTexture(GStexture *texture,f32 x,f32 y,int tx,int ty,int width,int height,GSgfxColAu8 color,f32 scale,u8 alpha){
-    u8 r,g,b,a;
-    s16 left,top;
-    s32 x2,y2;
+    s32 y2;
+    u8 r;
+    u8 g;
+    s16 left;
+    u8 b;
+    s32 x2;
+    u8 a;
+    s16 top;
     u16 textureWidth=GStextureGetXsize(texture);
     u16 textureHeight=GStextureGetYsize(texture);
     f32 u=(f32)tx/textureWidth;
@@ -390,12 +399,12 @@ void dispTexture(GStexture *texture,f32 x,f32 y,int tx,int ty,int width,int heig
     f32 right=u+(f32)width/textureWidth;
     f32 bottom=v+(f32)height/textureHeight;
     if(scale!=1.0f){
-        s32 halfWidth=width/2;
-        s32 halfHeight=height/2;
+        x+=width/2;
+        y+=height/2;
         width=(s32)(width*scale);
         height=(s32)(height*scale);
-        x=(x+halfWidth)-width/2;
-        y=(y+halfHeight)-height/2;
+        x-=width/2;
+        y-=height/2;
     }
     GSgfxVFBuildTemp(0,3,0,0,1,5,1,1,4);
     GSgfxSetupRenderAndSelect();
@@ -427,7 +436,7 @@ void dispTexture(GStexture *texture,f32 x,f32 y,int tx,int ty,int width,int heig
 void CAnt::draw(PocketVec<short> offset){
     u32 id;
     if(unk0==0||unk14==1)return;
-    PocketVec<short> position={x,y};position.x+=offset.x;position.y+=offset.y;
+    PocketVec<short> position=this->position;position.x+=offset.x;position.y+=offset.y;
     if(!antResource(this,id)){
         windowDrawSprite(position.x-24,position.y-24,0,menuRelivehallPcBoxDefaultPokemonSprite,0,7);return;
     }

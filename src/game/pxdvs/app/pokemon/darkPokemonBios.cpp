@@ -4,7 +4,7 @@ extern u32 darkPokemonGetDarkPokemon(u32);
 extern u32 deckGetDeckDarkPokemon(u32);
 extern u32 deckGetDarkPokemonSize(void);
 extern u16 fightFloorGetStatus(u32,u32,u32,u32);
-extern u16 getCatchFloorId__11DarkPokemonCFv(u32);
+extern u32 getCatchFloorId__11DarkPokemonCFv(u32);
 extern s32 getDarkWaza__15DeckDarkPokemonCFSc(u32,s32);
 extern s32 getInitDarkPoint__15DeckDarkPokemonCFv(u32);
 extern s32 getMeetDarkPokemonCount__4HeroCFv(u32);
@@ -42,7 +42,7 @@ void darkPokemonBiosSetRnd(u16 i,s32 v){u32 p=darkPokemonGetDarkPokemon(i);if(p!
 s8 darkPokemonBiosGetStatusRnd(u16 i,u8 n){u32 p=darkPokemonGetDarkPokemon(i);if(p!=0)return getStatusRnd__11DarkPokemonCFUc(p,n);return 0;}
 void darkPokemonBiosSetStatusRnd(u16 i,u8 n,u8 v){u32 p=darkPokemonGetDarkPokemon(i);if(p!=0)setStatusRnd__11DarkPokemonFUcUc(p,n,v);}
 s32 darkPokemonBiosGetFightFlag(u16 i){u32 p=darkPokemonGetDarkPokemon(i);if(p!=0&&getStatus__11DarkPokemonCFv(p)>=1)return 1;return 0;}
-void darkPokemonBiosSetFightFlag(u16 i){u32 p=darkPokemonGetDarkPokemon(i);if(p){u16 floor=fightFloorGetStatus(0,0,0x4a,0);u16 catchId=getCatchFloorId__11DarkPokemonCFv(p);if(getStatus__11DarkPokemonCFv(p)==0&&catchId!=0xb5){s32 player=savedataGetStatus(0,2);s32 count=getMeetDarkPokemonCount__4HeroCFv((u32)player);setMeetDarkPokemonCount__4HeroFUc(player,(u8)(count+1));setSnatchIndex__11DarkPokemonFUc(p,count);addStatus__11DarkPokemonF17darkPokemonStatus(p,1);setCatchFloorId__11DarkPokemonFUs(p,floor);setUpdate__11DarkPokemonFb(p,1);}if(catchId==0xb5){addStatus__11DarkPokemonF17darkPokemonStatus(p,1);setCatchFloorId__11DarkPokemonFUs(p,floor);setUpdate__11DarkPokemonFb(p,1);}}}
+void darkPokemonBiosSetFightFlag(u16 i){u16 floor;u16 catchId;u32 p;u32 player;s32 count;p=darkPokemonGetDarkPokemon(i);if(p){floor=fightFloorGetStatus(0,0,0x4a,0);catchId=getCatchFloorId__11DarkPokemonCFv(p);if(getStatus__11DarkPokemonCFv(p)==0&&catchId!=0xb5){player=savedataGetStatus(0,2);count=getMeetDarkPokemonCount__4HeroCFv(player);setMeetDarkPokemonCount__4HeroFUc(player,(u8)(count+1));setSnatchIndex__11DarkPokemonFUc(p,count);addStatus__11DarkPokemonF17darkPokemonStatus(p,1);setCatchFloorId__11DarkPokemonFUs(p,floor);setUpdate__11DarkPokemonFb(p,1);}if(catchId==0xb5){addStatus__11DarkPokemonF17darkPokemonStatus(p,1);setCatchFloorId__11DarkPokemonFUs(p,floor);setUpdate__11DarkPokemonFb(p,1);}}}
 s32 darkPokemonBiosGetSnatchSuccessFlag(u16 i){u32 p=darkPokemonGetDarkPokemon(i);if(p!=0&&getStatus__11DarkPokemonCFv(p)>=3)return 1;return 0;}
 s32 darkPokemonBiosGetReliveFlag(u16 i){u32 p=darkPokemonGetDarkPokemon(i);if(p!=0&&getStatus__11DarkPokemonCFv(p)==4)return 1;return 0;}
 void darkPokemonBiosSetReliveFlag(u16 i){u32 p=darkPokemonGetDarkPokemon(i);if(p!=0)setStatus__11DarkPokemonF17darkPokemonStatus(p,4);}
@@ -51,6 +51,6 @@ void darkPokemonBiosSetInformationFlag(u16 i,s32 v){u32 p=darkPokemonGetDarkPoke
 s32 darkPokemonBiosGetTemotiDarkWaza(u16 i,s8 w){u32 p=deckGetDeckDarkPokemon(i);if(p!=0)return getDarkWaza__15DeckDarkPokemonCFSc(p,w);return 0;}
 s32 darkPokemonBiosGetLevel(u16 i){u32 p=deckGetDeckDarkPokemon(i);if(p!=0)return getPlayerLevel__15DeckDarkPokemonCFv(p);return 0;}
 s32 darkPokemonBiosGetHokakuritu(u16 i){u32 p=deckGetDeckDarkPokemon(i);if(p!=0)return getSnatchRatio__15DeckDarkPokemonCFv(p);return 0;}
-u16 darkPokemonBiosGetDarkPoint(u16 id){return (u16)((s32(*)(u32))darkPokemonBiosGetInitDarkPoint)(id);}
+s32 darkPokemonBiosGetDarkPoint(s32 id){return ((s32(*)(s32))darkPokemonBiosGetInitDarkPoint)(id);}
 s32 darkPokemonBiosGetInitDarkPoint(u16 i){u32 p=deckGetDeckDarkPokemon(i);if(p!=0)return getInitDarkPoint__15DeckDarkPokemonCFv(p);return 0;}
 }

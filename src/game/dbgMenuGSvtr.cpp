@@ -26,8 +26,9 @@ extern "C" {
 
 void dbgMenuGSvtrCaptureUpdate(void) {
     u32 changed = GSinputButtonsChanged(1);
+    u32 pressed = GSinputButtonsPressed(1);
 
-    if (GSinputButtonsPressed(1) & changed & 0x10) {
+    if (pressed & changed & 0x10) {
         switch (_vtrIsCapturing) {
         case 0:
             if (_vtrWantCapture != 0) {

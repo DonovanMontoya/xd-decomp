@@ -101,7 +101,7 @@ void menuFightCloseTotalTimer();
 void menuFightCloseWaza(u32);
 u32 menuFightGetKeyWaitMenuId(FIGHT_TRAINER*, u16);
 void menuFightOpenCountDown();
-s32 menuFightOpenGBAIrekae(u32, FIGHT_TRAINER*, u16, u16);
+s32 menuFightOpenGBAIrekae(u32, FIGHT_TRAINER*, u32, u16);
 s32 menuFightOpenGBAMain(u32, FIGHT_TRAINER*, u16, u16);
 s32 menuFightOpenPokemon(FIGHT_TRAINER*, FightOutPokemon*, u16, u8, u8);
 s32 menuFightOpenTarget(void*, u32, u32);

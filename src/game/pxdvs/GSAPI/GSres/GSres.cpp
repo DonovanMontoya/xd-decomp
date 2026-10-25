@@ -159,7 +159,7 @@ static _resEntry* resFreeResource(_resEntry* entry, bool releaseEntry) {
     entry->resource = 0;
     _resEntry* next = entry->next;
     if (releaseEntry) {
-        if (entry->previous) entry->previous->next = next;
+        if (entry->previous) entry->previous->next = entry->next;
         else _resStructList = next;
         if (next) next->previous = entry->previous;
         _resEntryAllocator->freeCell(entry);

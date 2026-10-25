@@ -241,11 +241,12 @@ void GSboundCreate(GSbound* bound, GSboundData* data) {
     bound->bounds.animated.index = 0;
     bound->bounds.animated.frame = 0.0f;
     bound->bounds.animated.animations = (GSboundAnimation**)GSmemAlloc(bound->bounds.animated.data->animationCount * 4);
-    GSboundAnimation* animation = (GSboundAnimation*)(bound->bounds.animated.data + 1);
-    for (s32 i = 0; i < bound->bounds.animated.data->animationCount; ++i) {
-        bound->bounds.animated.animations[i] = animation;
-        animation = (GSboundAnimation*)((u8*)animation + animation->frameCount * sizeof(GSboundFrame));
-        animation = (GSboundAnimation*)((u8*)animation + 4);
+    s32 i;
+    u8* cursor = (u8*)(bound->bounds.animated.data + 1);
+    for (i = 0; i < bound->bounds.animated.data->animationCount; ++i) {
+        bound->bounds.animated.animations[i] = (GSboundAnimation*)cursor;
+        cursor += ((GSboundAnimation*)cursor)->frameCount * sizeof(GSboundFrame);
+        cursor += 4;
     }
     bound->flags |= 8;
 }
@@ -257,7 +258,7 @@ void GSboundGetSize(GSbound* bound, Vec* size, u8 scale, u8 rotate) {
     Vec minimum, maximum, corner;
     Quaternion quaternion;
     Vec difference;
-    f32 extentX, extentY, extentZ;
+    Vec saved;
     GSboundGetMinMax(bound, &minimum, &maximum, scale, 0, 0, 0);
     PSVECSubtract(&maximum, &minimum, &difference);
     f32 dx = difference.x, dy = difference.y, dz = difference.z;
@@ -276,9 +277,10 @@ void GSboundGetSize(GSbound* bound, Vec* size, u8 scale, u8 rotate) {
             PSMTXCopy(bound->transform.matrix, matrix);
             matrix[0][3] = 0.0f; matrix[1][3] = 0.0f; matrix[2][3] = 0.0f;
             MtxPtr source = bound->transform.matrix;
-            f32 x = PSVECMag((Vec*)source[0]);
-            f32 y = PSVECMag((Vec*)source[1]);
-            PSMTXScale(inverseScale, x, y, PSVECMag((Vec*)source[2]));
+            Vec lengths;
+            lengths.x = PSVECMag((Vec*)source[0]);
+            lengths.y = PSVECMag((Vec*)source[1]);
+            PSMTXScale(inverseScale, lengths.x, lengths.y, PSVECMag((Vec*)source[2]));
             PSMTXInverse(inverseScale, inverseScale);
             PSMTXConcat(inverseScale, matrix, matrix);
             break;
@@ -286,11 +288,11 @@ void GSboundGetSize(GSbound* bound, Vec* size, u8 scale, u8 rotate) {
         case 3: PSMTXQuat(matrix, &bound->transform.transform->rotation); break;
         default: return;
         }
-        extentX = size->x; extentY = size->y; extentZ = size->z;
+        saved.x = size->x; saved.y = size->y; saved.z = size->z;
         PSMTXMultVec(matrix, size, size);
         f32* component = &corner.x;
         for (s32 i = 0; i < 3; ++i, ++component) {
-            corner.x = extentX; corner.y = extentY; corner.z = extentZ;
+            corner.x = saved.x; corner.y = saved.y; corner.z = saved.z;
             *component *= -1.0f;
             PSMTXMultVec(matrix, &corner, &corner);
             if (corner.x < 0.0f) corner.x = -corner.x;
@@ -630,20 +632,20 @@ void GSboundDraw(GSbound* bound,GSgfxLayer* layer) {
 extern "C" void GSboundGetShadowVolume(GSbound* output,GSbound* bound,Vec* light,f32 plane) {
     Vec corners[8];
     Mtx matrix,modelRotation,transformRotation;
-    Vec maximum,minimum,temp,center;
+    Vec limits[2],temp,center;
     Quaternion quaternion;
     Vec sumCopy,transformCopy,scaleCopy,halfCenter,transformed,difference,projection,sum,scaled;
     memset(output,0,sizeof(GSbound));output->flags|=1;
-    GSboundGetMinMax(bound,&minimum,&maximum,0,0,0,0);
-    corners[0].x=minimum.x;corners[0].y=minimum.y;corners[0].z=minimum.z;
-    corners[1].x=minimum.x;corners[1].y=minimum.y;corners[1].z=maximum.z;
-    corners[2].x=minimum.x;corners[2].y=maximum.y;corners[2].z=minimum.z;
-    corners[3].x=minimum.x;corners[3].y=maximum.y;corners[3].z=maximum.z;
-    corners[4].x=maximum.x;corners[4].y=minimum.y;corners[4].z=minimum.z;
-    corners[5].x=maximum.x;corners[5].y=minimum.y;corners[5].z=maximum.z;
-    corners[6].x=maximum.x;corners[6].y=maximum.y;corners[6].z=minimum.z;
-    corners[7].x=maximum.x;corners[7].y=maximum.y;corners[7].z=maximum.z;
-    PSVECAdd(&minimum,&maximum,&sum);sumCopy=sum;PSVECScale(&sumCopy,&halfCenter,0.5f);center=halfCenter;
+    GSboundGetMinMax(bound,&limits[0],&limits[1],0,0,0,0);
+    corners[0].x=limits[0].x;corners[0].y=limits[0].y;corners[0].z=limits[0].z;
+    corners[1].x=limits[0].x;corners[1].y=limits[0].y;corners[1].z=limits[1].z;
+    corners[2].x=limits[0].x;corners[2].y=limits[1].y;corners[2].z=limits[0].z;
+    corners[3].x=limits[0].x;corners[3].y=limits[1].y;corners[3].z=limits[1].z;
+    corners[4].x=limits[1].x;corners[4].y=limits[0].y;corners[4].z=limits[0].z;
+    corners[5].x=limits[1].x;corners[5].y=limits[0].y;corners[5].z=limits[1].z;
+    corners[6].x=limits[1].x;corners[6].y=limits[1].y;corners[6].z=limits[0].z;
+    corners[7].x=limits[1].x;corners[7].y=limits[1].y;corners[7].z=limits[1].z;
+    PSVECAdd(&limits[0],&limits[1],&sum);sumCopy=sum;PSVECScale(&sumCopy,&halfCenter,0.5f);center=halfCenter;
     switch(bound->transformType) {
     case 1:
         GSmodelGetScale(bound->transform.model,(GSvec*)&temp);PSMTXScale(matrix,temp.x,temp.y,temp.z);
@@ -665,8 +667,10 @@ extern "C" void GSboundGetShadowVolume(GSbound* output,GSbound* bound,Vec* light
             PSVECSubtract(corner,&center,corner);PSMTXMultVec(matrix,corner,corner);
             PSMTXMultVecSR(matrix,&center,&transformed);transformCopy=transformed;PSVECAdd(corner,&transformCopy,corner);
             PSVECSubtract(corner,light,&difference);temp=difference;
-            if(!(difference.y<0.00001f) || !(difference.y>-0.00001f)) {
-                PSVECScale(&temp,&scaled,distance/(difference.y-plane));scaleCopy=scaled;
+            f32 height = temp.y;
+            f32 denominator=height-plane;
+            if(!(height<0.00001f) || !(height>-0.00001f)) {
+                PSVECScale(&temp,&scaled,distance/denominator);scaleCopy=scaled;
                 PSVECSubtract(light,&scaleCopy,&projection);*corner=projection;
                 GSboundAddPoint(output,corner->x,corner->y,corner->z);
             }

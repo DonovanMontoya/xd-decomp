@@ -369,19 +369,18 @@ static void getLogMsgField(unsigned short* buf, int len, ITEMUSE2POKEMON_LOG1* l
         {29, 0xC360, -1},
         {23, 0xC361, -1},
     };
-    s16 a;
-    s16 b;
-    s32 msg;
-    s32 group;
-    FieldMsg* tp;
-    LogEntry* lp;
-    s32 i;
-    s32 j;
-    s32 key;
-    s32 i2;
-    s32 j2;
-    FieldMsg* tp2;
     LogEntry* lp2;
+    FieldMsg* tp2;
+    s32 j;
+    s32 key2;
+    s16 a;
+    LogEntry* lp;
+    s16 b;
+    FieldMsg* tp;
+    s32 msg;
+    s32 i;
+    s32 group;
+    s32 key;
     if (count <= 0) {
         GSmsgMakeGScharStr(buf, len + 1, 0xC374);
         return;
@@ -402,28 +401,28 @@ static void getLogMsgField(unsigned short* buf, int len, ITEMUSE2POKEMON_LOG1* l
         GSmsgMakeGScharStr(buf, len + 1, 0xC374);
         return;
     }
-    group = table[i].group;
-    lp = &log->e[j];
     msg = table[i].msg;
-    a = lp->a;
-    b = lp->b;
+    a = log->e[j].a;
+    b = log->e[j].b;
+    group = table[i].group;
     if (group >= 0) {
-        i2 = i + 1;
-        tp2 = &table[i2];
-        for (; i2 < 21; tp2++, i2++) {
+        i++;
+        tp2 = &table[i];
+        for (; i < 21; tp2++, i++) {
             if (tp2->group >= 0 && group != tp2->group) {
+                key2 = tp2->key;
                 lp2 = log->e;
-                for (j2 = 0; j2 < count; lp2++, j2++) {
-                    if (tp2->key == lp2->key) {
+                for (j = 0; j < count; lp2++, j++) {
+                    if (key2 == lp2->key) {
                         break;
                     }
                 }
-                if (j2 < count) {
+                if (j < count) {
                     break;
                 }
             }
         }
-        if (i2 < 21) {
+        if (i < 21) {
             msg = 0xC359;
         }
     }
@@ -493,10 +492,10 @@ s32 menuUseItemEventMirraboradar(u32 item, s32* out) {
 }
 
 s32 menuUseItemEventCraneMemo(u32 item, s32* out) {
-    ItemCraneMemo* memo;
     s32 i;
     *out = 0;
-    for (i = 0, memo = item_crane_memo; i < item_crane_memo_number; memo++, i++) {
+    for (i = 0; i < item_crane_memo_number; i++) {
+        ItemCraneMemo* memo = &item_crane_memo[i];
         if (memo->item == item) {
             dispMsg(memo->msg);
             return 2;
@@ -848,15 +847,14 @@ s32 menuUseItemPPRecovery(u32 item, s32* out) {
 }
 
 s32 menuUseItemBattleBall(u32 item, s32* out) {
-    s32 total;
-    u8 stock;
-    s32 i;
     Hero* hero;
     s32 ball;
     Pokemon* pokemon;
     u32 slot;
-    s32 box;
-    s8 boxes;
+    s32 total;
+    u8 stock;
+    s32 i;
+    s32 boxes;
     u8 kind;
     total = 0;
     stock = fightFloor_GetStockPokemonNum(0);
@@ -869,10 +867,10 @@ s32 menuUseItemBattleBall(u32 item, s32* out) {
         i++;
     } while (i < 6);
     boxes = pcboxGetNbPokemonBox();
-    box = 0;
-    while (box < boxes) {
-        s8 empty = pcboxGetPokemonBoxNbEmptySlot(0, box);
-        box++;
+    i = 0;
+    while (i < boxes) {
+        s8 empty = pcboxGetPokemonBoxNbEmptySlot(0, i);
+        i++;
         total += empty;
     }
     if (total < stock + 1) {
@@ -987,7 +985,8 @@ s32 menuUseItemWPointUp(u32 item, s32* out) {
     s32 menu;
     s16 count;
     s32 selected;
-    u32 flag;
+    s32 flag;
+    u16 waza;
     flag = 0;
     for (;;) {
         menu = menuPocket2OpenPokemonMenu(item, 1);
@@ -1012,8 +1011,8 @@ s32 menuUseItemWPointUp(u32 item, s32* out) {
             dispMsg(0xC372);
             count = 0;
         } else {
-            flag = pokemonBiosGetPokemonWazaDataId(pokemon, selected);
-            if ((u16)flag > 0x163 && (u16)flag < 0x176) {
+            waza = pokemonBiosGetPokemonWazaDataId(pokemon, selected);
+            if (waza > 0x163 && waza < 0x176) {
                 dispMsg(0xC374);
                 count = 0;
             } else {
@@ -1023,7 +1022,7 @@ s32 menuUseItemWPointUp(u32 item, s32* out) {
                     menuPokemonUpdate();
                 }
                 msgctrlSetValue(0x4D, (s32)msg);
-                msgctrlSetValue(0x39, (u16)flag);
+                msgctrlSetValue(0x39, waza);
                 getLogMsgField(msg, 0x40, &log, count, pokemon);
                 dispMsg(0x4289);
             }

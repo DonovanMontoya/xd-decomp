@@ -133,7 +133,7 @@ void pokemonInit(MenuSubPokemon *); void insertDancer__12CReliveStageFR7Pokemonl
 void menuCBRule_ErrorFlagSetPokemonGetTiming(void *,MenuSubPokemon *,u32); void menuCBRule_ErrorFlagSet(void *,s32); void menuCBRule_ErrorFlagSetOkPushTiming(void *);
 u8 GSinputIsConnected(s32); u8 gbaCommandIsConnected(s32); s32 menuCB_GetDisconnectedGBA(void);
 void menuCBPokemonEntryPokemonFaceFree(void); void menuCBBattleStartSetStatus(s32); void heroBiosCopy(void *, const void *); void menuCBPokemonEntryLoadTex(void);
-void menuOpenCustom(s32,s32,void *,s32,s32,s32); s32 windowGetActiveID(void);
+void menuOpenCustom(s32,s32,void *,u32,u8,s32,...); s32 windowGetActiveID(void);
 s32 heroBiosGetRnd(void *); int sprintf(char *,const char *,...); void GScharMakeFromSJIS(u16 *, const char *);
 void _menuCBGCDelPokemon__Fv(void);
 u8 menuCBGCEntry_ErrorDisp__FUlUl(u32 arg0, u32 arg1);
@@ -1159,7 +1159,7 @@ void _menuCBPokemonName__FP14tagWINDOW_WORKUlUlUlb(MenuSubWindow *arg0, u32 arg1
     u16 *var_r28;
     MenuSubPokemon *temp_r3;
     u32 var_r3;
-    u8 var_r0;
+    s32 var_r0;
     u8 var_r26;
 
     temp_r3 = menuCBPokemonPtrGet__FUlUl(arg1, arg2);
@@ -1189,56 +1189,54 @@ block_8:
                 GSmsgPrint2(arg0->unk1C, 0, 0, arg0->unk93 | ~0xFF, 0x4277);
                 break;
             }
-            if (pokemonBiosGetTamagoFlag(temp_r3) != 1) {
-                if (var_r26 != 0) {
-                    return;
-                }
-                if (arg4 != 0) {
-                    var_r0 = (u8)menuSubGetPokemonSexForDisp(temp_r3);
-                } else {
-                    var_r0 = menuSubGetPokemonSexForFightDisp(temp_r3);
-                }
-                switch ((s32) var_r0) {
-                case 0:
-                    var_r3 = 0x9C5U;
-                    break;
-                case 1:
-                    var_r3 = 0x9C6U;
-                    break;
-                case 2:
-        default:
-                    var_r3 = 0U;
-                    break;
-                }
-                if (var_r3 != 0U) {
-                    msgctrlSetValue(0x37, GSmsgGetGSchar(var_r3));
-                    temp_r3_2 = pokecoloGetCountryCode();
-                    switch (temp_r3_2) {
+            if (pokemonBiosGetTamagoFlag(temp_r3) == 1 || var_r26 != 0) {
+                return;
+            }
+            if (arg4 != 0) {
+                var_r0 = (s32)menuSubGetPokemonSexForDisp(temp_r3);
+            } else {
+                var_r0 = menuSubGetPokemonSexForFightDisp(temp_r3);
+            }
+            switch (var_r0) {
+            case 0:
+                var_r3 = 0x9C5U;
+                break;
+            case 1:
+                var_r3 = 0x9C6U;
+                break;
+            case 2:
+    default:
+                var_r3 = 0U;
+                break;
+            }
+            if (var_r3 != 0U) {
+                msgctrlSetValue(0x37, GSmsgGetGSchar(var_r3));
+                temp_r3_2 = pokecoloGetCountryCode();
+                switch (temp_r3_2) {
 case 0: {
-                        switch (arg3) {
-                        case 0:
-                            GSmsgPrint2(arg0->unk1C, 0x46, 0, arg0->unk93 | ~0xFF, 0x4278);
-                            return;
-                        case 1:
-                            GSmsgPrint2(arg0->unk1C, 0x5A, 0, arg0->unk93 | ~0xFF, 0x4276);
-                            return;
-                        }
+                    switch (arg3) {
+                    case 0:
+                        GSmsgPrint2(arg0->unk1C, 0x46, 0, arg0->unk93 | ~0xFF, 0x4278);
+                        return;
+                    case 1:
+                        GSmsgPrint2(arg0->unk1C, 0x5A, 0, arg0->unk93 | ~0xFF, 0x4276);
+                        return;
+                    }
 
 } break;
 case 1:
 case 2: {
-                            switch (arg3) {
-                            case 0:
-                                GSmsgPrint2(arg0->unk1C, 0x5A, 0, arg0->unk93 | ~0xFF, 0x4278);
-                                return;
-                            case 1:
-                                GSmsgPrint2(arg0->unk1C, 0x6E, 0, arg0->unk93 | ~0xFF, 0x4276);
-                                break;
-                            }
+                        switch (arg3) {
+                        case 0:
+                            GSmsgPrint2(arg0->unk1C, 0x5A, 0, arg0->unk93 | ~0xFF, 0x4278);
+                            return;
+                        case 1:
+                            GSmsgPrint2(arg0->unk1C, 0x6E, 0, arg0->unk93 | ~0xFF, 0x4276);
+                            break;
+                        }
 
 } break;
 }
-                }
             }
         }
     }
@@ -1605,27 +1603,18 @@ s32 menuCBBattleBANextMenu(MenuSubWindow *arg0) {
 
 s32 menuCB_BattleBA_PokemonEntryNum(void) {
     s32 counts[2];
-    s32 var_r28;
-    s32 var_r29;
-    s32 *var_r30;
+    u32 side;
+    s32 slot;
 
-    var_r30 = counts;
-    var_r29 = 0;
-    do {
-        *var_r30 = 0;
-        var_r28 = 0;
-loop_2:
-        if (menuCBPokemonGetDataId(var_r29, var_r28) != 0) {
-            *var_r30 += 1;
+    for (side = 0; (s32)side < 2; side++) {
+        counts[side] = 0;
+        for (slot = 0; slot < 6; slot++) {
+            if (menuCBPokemonGetDataId(side, slot) != 0) {
+                counts[side]++;
+            }
         }
-        var_r28 += 1;
-        if (var_r28 < 6) {
-            goto loop_2;
-        }
-        var_r30 += 1;
-        var_r29 += 1;
-    } while (var_r29 < 2);
-    if ((counts[0] >= 4) || (counts[1] >= 4)) {
+    }
+    if (counts[0] >= 4 || counts[1] >= 4) {
         return 1;
     }
     return 0;
@@ -2095,11 +2084,11 @@ void menuCBBattleBABatuMark(MenuSubSprite *arg0, s32 arg1, s32 arg2) {
 void menuCBBattleEndSetPokemonHP(void) {
     MenuSubPokemon *pokemon;
     f32 total;
-    s32 i;
+    u32 i;
     s32 j;
 
     total = 0.0f;
-    for (i = 0; i < 4; i++) {
+    for (i = 0; (s32)i < 4; i++) {
         for (j = 0; j < 6; j++) {
             pokemon = toolentryTaisenGetEntryPokemonPtr(i, j);
             if (pokemon != NULL) {
@@ -2362,7 +2351,6 @@ s32 menuCB_GCEntry_SubWindow_Disp(void) {
                 winMsgClose(0);
                 return 6;
             }
-            break;
         case 3:
             return 6;
         }
@@ -2375,7 +2363,8 @@ s32 menuCB_GCEntry_SubWindow_Disp(void) {
             var_r7 = submenu1_y[var_r4];
             break;
         case 0:
-        case 4:
+        case 2:
+        case 3:
             break;
         }
         if (_CB.unkB100 == 6) {
@@ -2895,16 +2884,14 @@ void menuCB_Trainer_Error_Disp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg
 }
 
 void menuCB_Pokemon_ErrorDisp(MenuSubWindow *arg0, s32 arg1) {
-    u8 *temp_r31;
     u8 *temp_r29;
 
     _CB.unkB0D8 = (s32) (s8) arg1;
     menuCBPokemonEntryPokemonFaceFree();
     menuCBBattleStartSetStatus(0);
     temp_r29 = (u8 *)&_CB + 0x9CE4;
-    temp_r31 = (u8 *)&_CB + (arg1 * 0x1320) + 0x9BC;
-    heroBiosCopy(temp_r29, temp_r31);
-    heroBiosCopy(temp_r31, arg0);
+    heroBiosCopy(temp_r29, (u8 *)&_CB + (arg1 * 0x1320) + 0x9BC);
+    heroBiosCopy((u8 *)&_CB + (arg1 * 0x1320) + 0x9BC, arg0);
     menuCBPokemonEntryLoadTex();
     menuCBpokemonFaceReadWait();
     _CB.unkB088 = 0;
@@ -2936,7 +2923,7 @@ loop_13:
         _CB.unkB08C = 0;
         _CB.unkB00C = 0;
 loop_16:
-        menuOpenCustom(0xA7, windowGetActiveID(), (u8 *)&_CB + 0xB00C, 0, 1, 0);
+        menuOpenCustom(0xA7, windowGetActiveID(), &_CB.unkB00C, 0, 1, 0);
         if (((s32) _CB.unkB00C != (s32) _CB.unkB0E4) && ((s32) _CB.unkB08C != 1)) {
             _menuCB_errorMsgDisp__FUl(err_msgID2[_CB.unkB00C]);
             goto loop_16;
@@ -2947,7 +2934,7 @@ loop_16:
     menuCB_SE_Play(0x15);
     menuCloseCustom(0xA6, 0, 1);
     menuCBPokemonEntryPokemonFaceFree();
-    heroBiosCopy(temp_r31, temp_r29);
+    heroBiosCopy((u8 *)&_CB + (arg1 * 0x1320) + 0x9BC, temp_r29);
 }
 
 #pragma pool_strings off
@@ -2997,7 +2984,7 @@ void menuCBBattleStartDispTrainerFaceSub(MenuSubWindow*window,MenuSubSprite*spri
         endSurface__10GSgfxLayerFv(layer);
     }
 }
-f32 _f_menuCB_circleAnimationTime;
+static f32 _f_menuCB_circleAnimationTime;
 f32 timeGetLastFrameSec(void);double fmod(double,double);
 typedef struct MenuSubSpriteValue{u8 reserved0[4];s16 width,height;}MenuSubSpriteValue;
 MenuSubSpriteValue*menuSpriteBiosGetValPtr(void*);

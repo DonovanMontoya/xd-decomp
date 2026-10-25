@@ -33,7 +33,6 @@ u8 pokemonDB_GetTokuseiDataId(u16, u8);
 u8 fightFloor_GetFightKindDoCriticalAttackFlag(s32);
 u8 fightWazaCriticalDataBiosGetBunbo(void*);
 void* fightWazaCriticalDataBiosGetPtr(u16);
-extern void (*WazaSequenceTbl[])(void);
 void SCA_EndCheck(void);
 void SCA_End(void);
 void fightSeqTurnCheck(void);

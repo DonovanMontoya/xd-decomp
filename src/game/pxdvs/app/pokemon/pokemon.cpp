@@ -78,17 +78,17 @@ u32 pokemonGetWazaCount(Pokemon* poke)
     return count;
 }
 
-void pokemonWazaForget(Pokemon* poke, u16 index)
+void pokemonWazaForget(Pokemon* poke, s32 index)
 {
     s32 next;
     u16 i;
-    pokemonWazaInit(poke, index);
+    ((void (*)(Pokemon*, u16))pokemonWazaInit)(poke, index);
     for (i = index; i < 3; i++) {
         next = i + 1;
         if (!pokemonWazaCheckValid(poke, next)) break;
         pokemonWazaCopy(poke, i, next);
     }
-    pokemonWazaInit(poke, i);
+    ((void (*)(Pokemon*, u16))pokemonWazaInit)(poke, i);
 }
 
 void pokemonWazaCopy(Pokemon* poke, u16 dst, u16 src)
@@ -338,12 +338,10 @@ u8 pokemonIsHpMantan(Pokemon* poke)
 
 void pokemonCopyJoutaiDataId(Pokemon* dst, Pokemon* src, u16 id)
 {
-    if (dst) {
-        if (!src) return;
-        u16 status = joutaiDataBiosGetStatus(id);
-        if (status == 200) dst->setReversMode(src->isReversMode());
-        else if (status == 0x7c) dst->copyCondition(src);
-    }
+    if (dst == 0 || src == 0) return;
+    u16 status = joutaiDataBiosGetStatus(id);
+    if (status == 200) dst->setReversMode(src->isReversMode());
+    else if (status == 0x7c) dst->copyCondition(src);
 }
 
 void pokemonSetKaisuuJoutaiDataId(Pokemon* poke, u16 id, u32 kaisuu)
@@ -485,10 +483,13 @@ u8 pokemonGetAnnonKatati(u32 rnd)
 u8 pokemonIsNokoriHpFollowing(Pokemon* poke, u16 divisor)
 {
     u16 hp;
+    u16 maxHp;
     if (divisor == 0) return 0;
     if (!poke) return 0;
     hp = pokemon_GetHp(poke);
-    return pokemon_GetMaxHp(poke) / divisor >= hp;
+    maxHp = pokemon_GetMaxHp(poke);
+    if (hp <= maxHp / divisor) return 1;
+    return 0;
 }
 
 u8 pokemonIsJoutaiKaragenki(Pokemon* poke)
@@ -637,10 +638,10 @@ u32 pokemonGetOboeWazaDataBanme(Pokemon* poke, u8 level)
 
 s32 pokemonOboeWaza(Pokemon* poke, u8 level, u8 slot, u8* counter)
 {
-    u32 waza;
+    u16 waza;
     if (!poke) return -2;
     waza = pokemonGetOboeWazaDataId(poke, level, counter);
-    if ((u16)waza == 0) return -3;
+    if (waza == 0) return -3;
     return pokemonSetWazaStatus(poke, waza, slot);
 }
 
@@ -659,14 +660,12 @@ u16 pokemonGetOboeWazaDataId(Pokemon* poke, u8 level, u8* counter)
 
 s8 pokemonSearchWazaDataId(Pokemon* poke, u16 dataId)
 {
-    u32 id;
     s8 index;
     s8 i;
     if (!poke) return -1;
-    id = dataId;
     for (i = 0; (s8)i < 4; i++) {
         index = i;
-        if (pokemonWazaCheckValid(poke, index) && id == pokemon_GetPokemonWazaDataId(poke, index)) return i;
+        if (pokemonWazaCheckValid(poke, index) && dataId == pokemon_GetPokemonWazaDataId(poke, index)) return i;
     }
     return -1;
 }
@@ -989,34 +988,34 @@ void pokemonGetMezamerupower(Pokemon* poke, u16* power, u16* type)
     if (type) *type = kind;
 }
 
-void pokemonCreate(Pokemon* poke, u32 id, u8 level, void* attest)
+void pokemonCreate(Pokemon* poke, u16 id, u8 level, void* attest)
 {
     u16 rnd;
     u32 limit;
     u32 i;
     u8 counter;
-    if (poke && ((bool(*)(void*, u32))pokemonDataCheckValid)(0, id) && attest) {
+    if (poke && pokemonDataCheckValid(0, id) && attest) {
         pokemonInit((u32)poke);
         pokemon_SetPokemonDataId(poke, id);
         pokemon_SetRnd(poke, pokemonCreateRnd());
         gamedataAttestBiosCopy(pokemon_GetAttest(poke), attest);
         pokemon_SetNicknamePtr(poke, GSmsgGetGSchar(pokemonDB_GetName(id)));
         pokemon_SetLevel(poke, level);
-        rnd = HSD_Rand();
-        pokemon_SetMaxHpRnd(poke, rnd & 0x1F);
+        pokemon_SetMaxHpRnd(poke, (rnd = HSD_Rand()) & 0x1F);
         pokemon_SetPhyAtkRnd(poke, (rnd >> 5) & 0x1F);
         pokemon_SetPhyDefRnd(poke, (rnd >> 10) & 0x1F);
-        rnd = HSD_Rand();
-        pokemon_SetNimblenessRnd(poke, rnd & 0x1F);
+        pokemon_SetNimblenessRnd(poke, (rnd = HSD_Rand()) & 0x1F);
         pokemon_SetSpeAtkRnd(poke, (rnd >> 5) & 0x1F);
         pokemon_SetSpeDefRnd(poke, (rnd >> 10) & 0x1F);
-        pokemon_SetExp(poke, pokemonGetNowLevelToExp(poke));
+        u32 exp = pokemonGetNowLevelToExp(poke);
+        pokemon_SetExp(poke, exp);
         pokemon_SetFriend(poke, pokemonDB_GetInitFriend(id));
         if (HSD_Rand() & 1) pokemonSetTokuseiFlag(poke, 1);
         limit = level;
         for (i = 1; i <= limit; i++) {
             counter = 0;
-            while ((s8)pokemonOboeWaza(poke, i, 1, &counter) != -3) {
+            for (;;) {
+                if ((s8)pokemonOboeWaza(poke, i, 1, &counter) == -3) break;
                 counter++;
             }
         }

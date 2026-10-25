@@ -13,7 +13,7 @@ typedef char GSsndListenerSizeCheck[sizeof(GSsndListener) == 0xd0 ? 1 : -1];
 typedef char GSsndStreamSizeCheck[sizeof(GSsndStream) == 0x100 ? 1 : -1];
 extern "C" {
 void GSsndUpdateSettingsReverbHI(u32);
-void GSsndSetVolume(u8, u16, u32, u32);
+void GSsndSetVolume(u32, u16, u32, u32);
 void GSsndQuit();
 s32 GSsndOpenWaveDVD(u32, u32, u32, u32, u32, u32, u32);
 s32 GSsndInit(u32, u32, u32, u32, u32);

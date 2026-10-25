@@ -335,7 +335,7 @@ void printItemList(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
             item = getItemIDFromMenuPos(index);
             msg = getItemNameMsg(item);
             if (msg != 0) {
-                if (deckDataVirtualDB_GetFlagData(item - 0x215) != 0) {
+                if (deckDataVirtualDB_GetFlagData((u16)item - 0x215) != 0) {
                     diskUsedMarkDisplay(win, sprite, drawY);
                 }
                 GSmsgPrint2(winSpriteGetLayerID(win, sprite), 0, drawY, -1, msg);

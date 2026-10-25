@@ -162,12 +162,7 @@ void HSD_SetupPEMode(u32 flags, HSD_PEDesc* pe)
     HSD_StateSetColorUpdate(1);
     HSD_StateSetAlphaUpdate(0);
     HSD_StateSetDstAlpha(0, 0U);
-    if (flags & 0x40000000) {
-        var_r3 = 1;
-    } else {
-        var_r3 = 0;
-    }
-    HSD_StateSetBlendMode(var_r3, 4U, 5U, 0xFU);
+    HSD_StateSetBlendMode((flags & 0x40000000) ? 1 : 0, 4U, 5U, 0xFU);
     var_r3_2 = (flags & 0x20000000) ? GX_FALSE : GX_TRUE;
     HSD_StateSetZMode(1, (flags & 0x08000000) ? 7 : 3, var_r3_2);
     if (!(flags & 0x20000000) && (flags & 0x40000000)) {
@@ -204,13 +199,24 @@ void HSD_SetupRenderModeWithCustomPE(u32 rendermode, HSD_PEDesc* pe)
     HSD_SetupChannelMode(rendermode);
 }
 
+static inline f32 HSD_ClampF(f32 x, f32 lo, f32 hi)
+{
+    if (x <= lo) {
+        return lo;
+    }
+    if (x >= hi) {
+        return hi;
+    }
+    return x;
+}
+
 void HSD_SetMaterialColor(GXColor ambient, GXColor diffuse, GXColor specular,
                           f32 alpha)
 {
     matstate.ambient = ambient;
     matstate.diffuse = diffuse;
     matstate.specular = specular;
-    matstate.alpha = 255.0f * (alpha <= 0.0f ? 0.0f : alpha >= 1.0f ? 1.0f : alpha);
+    matstate.alpha = 255.0f * HSD_ClampF(alpha, 0.0f, 1.0f);
 }
 
 void HSD_SetMaterialShininess(f32 shininess)
@@ -250,16 +256,16 @@ static inline void HSD_StateSetBlendMode(int type, int src_factor, int dst_facto
 
 static inline void HSD_StateSetZMode(u32 arg0, int arg1, u32 arg2)
 {
-    arg0 = arg0 ? GX_TRUE : GX_FALSE;
-    arg2 = arg2 ? GX_TRUE : GX_FALSE;
+    u8 enable = arg0 ? GX_TRUE : GX_FALSE;
+    u8 update = arg2 ? GX_TRUE : GX_FALSE;
 
-    if (state_z_enable != arg0 || state_z_func != arg1 ||
-        state_z_update != arg2)
+    if (state_z_enable != enable || state_z_func != arg1 ||
+        state_z_update != update)
     {
-        GXSetZMode(arg0, arg1, arg2);
-        state_z_enable = arg0;
+        GXSetZMode(enable, arg1, update);
+        state_z_enable = enable;
         state_z_func = arg1;
-        state_z_update = arg2;
+        state_z_update = update;
     }
 }
 
@@ -289,47 +295,47 @@ static inline void HSD_StateSetAlphaCompare(int arg0, u8 arg1, int arg2, int arg
 
 static inline void HSD_StateSetColorUpdate(u32 arg0)
 {
-    arg0 = arg0 ? GX_TRUE : GX_FALSE;
-    if (state_color_update != arg0) {
-        GXSetColorUpdate(arg0);
-        state_color_update = arg0;
+    u8 enable = arg0 ? GX_TRUE : GX_FALSE;
+    if (state_color_update != enable) {
+        GXSetColorUpdate(enable);
+        state_color_update = enable;
     }
 }
 
 static inline void HSD_StateSetAlphaUpdate(u32 arg0)
 {
-    arg0 = arg0 ? GX_TRUE : GX_FALSE;
-    if (state_alpha_update != arg0) {
-        GXSetAlphaUpdate(arg0);
-        state_alpha_update = arg0;
+    u8 enable = arg0 ? GX_TRUE : GX_FALSE;
+    if (state_alpha_update != enable) {
+        GXSetAlphaUpdate(enable);
+        state_alpha_update = enable;
     }
 }
 
 static inline void HSD_StateSetDstAlpha(u32 arg0, u8 arg1)
 {
-    arg0 = arg0 ? GX_TRUE : GX_FALSE;
-    if (state_enable_dst_alpha != arg0 || state_dst_alpha != arg1) {
-        GXSetDstAlpha(arg0, arg1);
-        state_enable_dst_alpha = arg0;
+    u8 enable = arg0 ? GX_TRUE : GX_FALSE;
+    if (state_enable_dst_alpha != enable || state_dst_alpha != arg1) {
+        GXSetDstAlpha(enable, arg1);
+        state_enable_dst_alpha = enable;
         state_dst_alpha = arg1;
     }
 }
 
 static inline void HSD_StateSetZCompLoc(u32 arg0)
 {
-    arg0 = arg0 ? GX_TRUE : GX_FALSE;
-    if (state_before_tex != arg0) {
-        GXSetZCompLoc(arg0);
-        state_before_tex = (u8) arg0;
+    u8 enable = arg0 ? GX_TRUE : GX_FALSE;
+    if (state_before_tex != enable) {
+        GXSetZCompLoc(enable);
+        state_before_tex = (u8) enable;
     }
 }
 
 static inline void HSD_StateSetDither(u32 arg0)
 {
-    arg0 = arg0 ? GX_TRUE : GX_FALSE;
-    if (state_dither != arg0) {
-        GXSetDither(arg0);
-        state_dither = arg0;
+    u8 enable = arg0 ? GX_TRUE : GX_FALSE;
+    if (state_dither != enable) {
+        GXSetDither(enable);
+        state_dither = enable;
     }
 }
 

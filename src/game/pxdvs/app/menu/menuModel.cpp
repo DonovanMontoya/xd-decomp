@@ -81,7 +81,7 @@ u8 _modeloff;
 static s32 _menuModelRef;
 static u8 _litonoff[3] = {1, 1, 1};
 static s32 _waitframe = 3;
-u8 _checkLarge;
+static u8 _checkLarge;
 
 extern "C" void _menuModelMakeLoadInfo__FP15MENU_MODEL_LOADP7PokemonUs(MENU_MODEL_LOAD *, Pokemon *, u16, u8);
 #define _menuModelMakeLoadInfo _menuModelMakeLoadInfo__FP15MENU_MODEL_LOADP7PokemonUs
@@ -889,8 +889,8 @@ static s32 _menuModelAdjustCamera(MENU_MODEL* m,bool) {
     MENU_COLOR color;
     f32 sizeRatio;
     f32 size;
-    u32 bound;
     u32 model;
+    u32 bound;
     u32 partHandle;
     static MenuModelVector upVec(0.0f,1.0f,0.0f);
     static MenuModelVector target(0.0f,0.0f,0.0f);
@@ -929,9 +929,11 @@ static s32 _menuModelAdjustCamera(MENU_MODEL* m,bool) {
     f32 displayScale;
     if(m->sizeW>m->sizeH) displayScale=1.0f; else displayScale=1.0f;
     if(m->boundSize[0]>m->boundSize[1]) size=m->boundSize[0];else size=m->boundSize[1];
-    camera.x=0.0f;camera.y=0.0f;
     f32 tangent=(f32)tan((0.017453292f*fov)/2.0f);
-    camera.z=(((0.8f*(size/sizeRatio)/tangent)*scale)/displayScale)/m->zoom;
+    f32 distance=size/sizeRatio;
+    f32 baseDistance=0.8f*distance/tangent;
+    camera.z=((baseDistance*scale)/displayScale)/m->zoom;
+    camera.x=0.0f;camera.y=0.0f;
     PSMTXRotRad(rot,'X',m->angle[0]);
     PSMTXRotRad(rotY,'Y',-m->angle[1]);
     PSMTXConcat(rotY,rot,rot);
@@ -964,8 +966,8 @@ static s32 _menuModelAdjustCamera2(MENU_MODEL* a,MENU_MODEL* b) {
     f32 scale;
     s32 angle;
     MENU_COLOR color;
-    f32 sizeRatio,width,height,displayScale;
-    u32 bound,modelA,modelB;
+    f32 width,height,sizeRatio,displayScale;
+    u32 modelA; u32 bound; u32 modelB;
     static MenuModelVector upVec(0.0f,1.0f,0.0f);
     static MenuModelVector target(0.0f,0.0f,0.0f);
     if(!a) return 0;
@@ -1002,8 +1004,9 @@ static s32 _menuModelAdjustCamera2(MENU_MODEL* a,MENU_MODEL* b) {
     }
     width=a->boundSize[0]+b->boundSize[0];
     height=a->boundSize[1];
-    if(!(height>=b->boundSize[1])) height=b->boundSize[1];
-    f32 shift=width*0.5f-b->boundSize[0];
+    if(height>=b->boundSize[1]) {} else height=b->boundSize[1];
+    f32 negatedB=-b->boundSize[0];
+    f32 shift=width*0.5f+negatedB;
     GSmodelGetPosition(modelA,&positionA);
     positionA.y=0.0f;positionA.z=0.0f;
     positionA.x=-(a->boundSize[0]*0.5f)+shift;
@@ -1021,11 +1024,12 @@ static s32 _menuModelAdjustCamera2(MENU_MODEL* a,MENU_MODEL* b) {
     case 0x4e:case 0x82:case 0x90:case 0x96:case 0xd0:case 0xf3:case 0xfa:displayScale=_disp_scale;break;
     default:displayScale=1.0f;break;
     }
-    if(!(width>height)) width=height;
-    camera.x=0.0f;camera.y=0.0f;
+    if(width>height) {} else width=height;
     f32 tangent=(f32)tan((0.017453292f*fov)/2.0f);
-    f32 zoom=a->zoom;
-    camera.z=(((0.8f*(width/sizeRatio)/tangent)*scale)/displayScale)/zoom;
+    f32 distance=width/sizeRatio;
+    f32 baseDistance=0.8f*distance/tangent;
+    camera.z=((baseDistance*scale)/displayScale)/a->zoom;
+    camera.x=0.0f;camera.y=0.0f;
     target.y=0.75f*height;
     PSMTXRotRad(rot,'X',a->camRot[0]);
     PSMTXRotRad(rotY,'Y',-a->camRot[1]);

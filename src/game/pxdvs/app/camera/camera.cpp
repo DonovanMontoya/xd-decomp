@@ -455,10 +455,11 @@ static void _cameraRestoreStateData__F14FloorStateModePvUl(s32 mode,void* data,u
     }
 }
 #pragma opt_propagation reset
+#pragma opt_propagation off
 static void _cameraMakeStateData__F14FloorStateModePvUl(s32 mode,void* data,u32 size) {
     if(mode==1 || mode==2) {
-        void* destination=data;
         GScamera* camera;
+        void* destination=data;
         CameraWork* work;
         camera=(GScamera*)GSresGetResource(0,0);
         work=pCamWork;
@@ -467,6 +468,7 @@ static void _cameraMakeStateData__F14FloorStateModePvUl(s32 mode,void* data,u32 
         GScameraPushState(camera,(GScameraState*)((u8*)destination+sizeof(CameraWork)));
     }
 }
+#pragma opt_propagation reset
 void cameraInit() {
     GSvec offset,up,position;
     offset.param1=0.0f; offset.param2=0.0f; offset.param3=14.0f;
@@ -494,16 +496,21 @@ void cameraInit() {
 }
 }
 
-#include <game/pxdvs/GSAPI/GSinput/GSinput.hpp>
 #include <game/maximum/GSAPI/baselib/quatlib.h>
 extern "C" {
+u8 GSinputGetRightStickYData(s32, s32);
+u8 GSinputGetRightStickXData(s32, s32);
+u8 GSinputGetLeftStickYData(s32, s32);
+u8 GSinputGetLeftStickXData(s32, s32);
+s32 GSinputButtonsChanged(s32);
+u32 GSinputButtonsPressed(s32);
 f32 GSgfxVideoGetLastRenderTime();
 f32 timeGetLastFrameSec();
 u8 dbgMenuIsOpen();
 u8 floorFieldCameraGetEnabled();
 u8 menuIsCheck(s32);
 void menuClose(s32);
-void menuOpenCustom(s32,s32,s32,s32,u8,s32);
+s32 menuOpenCustom(s32,s32,s32*,u32,u8,s32,...);
 void menuSetPosition(s32,s32,s32);
 }
 extern "C" f32 __float_nan[];
@@ -529,6 +536,33 @@ static inline f32 cameraSqrt(f32 value) {
         value=(f32)(value*guess);
     } else if(value<0.0) return __float_nan[0];
     else if(cameraFloatClass(value)==1) return __float_nan[0];
+    return value;
+}
+static inline f32 cameraSqrtFlat(f32 value) {
+    if(value>0.0f) {
+        f64 guess=__frsqrte(value);
+        guess=0.5*guess*(3.0-guess*guess*value);
+        guess=0.5*guess*(3.0-guess*guess*value);
+        guess=0.5*guess*(3.0-guess*guess*value);
+        value=(f32)(value*guess);
+    } else if(value<0.0) return __float_nan[0];
+    else {
+        s32 cls;
+        union { f32 value; u32 bits; } number;
+        number.value=value;
+        switch(number.bits & 0x7f800000) {
+        case 0x7f800000:
+            if(number.bits & 0x7fffff) cls=1;
+            else cls=2;
+            break;
+        case 0:
+            if(number.bits & 0x7fffff) cls=5;
+            else cls=3;
+            break;
+        default: cls=4; break;
+        }
+        if(cls==1) return __float_nan[0];
+    }
     return value;
 }
 static inline void cameraApplyLockedY(Vec* target) {
@@ -615,24 +649,32 @@ static void _cameraPadRotateUpdate__FP9_GScamera(GScamera* camera) {
     }
 }
 static void _cameraPadMoveUpdate__FP9_GScamera(GScamera* camera) {
-    f32 render=GSgfxVideoGetLastRenderTime(), divisor=64.0f;
+    f32 ry;
+    f32 x;
+    f32 rx;
+    f32 y;
+    f32 divisor;
+    f32 render;
+    render=GSgfxVideoGetLastRenderTime();
+    divisor=64.0f;
     if(!dbgMenuIsOpen()) {
         u32 changed=GSinputButtonsChanged(1);
-        if(GSinputButtonsPressed(1)&changed&0x400) {
+        u32 pressed=GSinputButtonsPressed(1);
+        if(pressed&changed&0x400) {
             if(menuIsCheck(6)) menuClose(6);
             else { menuOpenCustom(6,0,0,0,1,0); menuSetPosition(6,20,260); }
         }
         Mtx matrix,yMatrix,zMatrix;
         PSMTXRotRad(matrix,'X',pCamWork->rotation.param1); PSMTXRotRad(yMatrix,'Y',pCamWork->rotation.param2); PSMTXConcat(yMatrix,matrix,matrix);
         PSMTXRotRad(zMatrix,'Z',pCamWork->rotation.param3); PSMTXConcat(zMatrix,matrix,matrix);
-        f32 x=render*(f32)(s8)GSinputGetLeftStickXData(1,0), y=render*(f32)(s8)GSinputGetLeftStickYData(1,0);
-        f32 rx=render*(f32)(s8)GSinputGetRightStickXData(1,0), ry=render*(f32)(s8)GSinputGetRightStickYData(1,0);
-        if(GSinputButtonsPressed(1)&0x40) divisor=64.0f*4.0f;
-        Vec local,world;
-        if(GSinputButtonsPressed(1)&0x800) { local.z=0.0f; local.x=x/divisor; local.y=-y/divisor; }
+        x=render*(f32)(s8)GSinputGetLeftStickXData(1,0); y=render*(f32)(s8)GSinputGetLeftStickYData(1,0);
+        rx=render*(f32)(s8)GSinputGetRightStickXData(1,0); ry=render*(f32)(s8)GSinputGetRightStickYData(1,0);
+        if(GSinputButtonsPressed(1)&0x40) divisor*=4.0f;
+        Vec world,local;
+        if(GSinputButtonsPressed(1)&0x800) { local.x=x/divisor; local.y=-y/divisor; local.z=0.0f; }
         else { local.y=0.0f; local.x=x/divisor; local.z=y/divisor; }
         PSMTXMultVec(matrix,&local,&world); PSVECAdd(vec(&pCamWork->position),&world,vec(&pCamWork->position));
-        if(GSinputButtonsPressed(1)&0x20) cameraSetFov(ry/divisor+pCamWork->fov);
+        if(GSinputButtonsPressed(1)&0x20) { f32 add=ry/divisor; f32 fov=add+pCamWork->fov; cameraSetFov(fov); }
         else pCamWork->rotation.param1-=ry/(32.0f*divisor);
         pCamWork->rotation.param2-=rx/(32.0f*divisor);
         GScameraSetPosition(camera,vec(&pCamWork->position)); GScameraSetRotation(camera,vec(&pCamWork->rotation)); cameraApplyFov(camera);
@@ -657,18 +699,18 @@ void cameraUpdate() {
         case 1:
         case 5:
             if(floorFieldCameraDataExist() && floorFieldCameraGetEnabled()) {
-                PSVECAdd(vec(&pCamWork->targetPosition),vec(&pCamWork->targetOffset),&distance);
-                PSVECSubtract(vec(&pCamWork->position),&distance,&distance);
+                PSVECAdd((Vec*)&pCamWork->targetPosition,(Vec*)&pCamWork->targetOffset,&distance);
+                PSVECSubtract((Vec*)&pCamWork->position,&distance,&distance);
                 pCamWork->height=distance.y;
-                pCamWork->distance=cameraSqrt(distance.x*distance.x+distance.z*distance.z);
+                pCamWork->distance=cameraSqrtFlat(distance.x*distance.x+distance.z*distance.z);
             }
             break;
         case 6:
             break;
         case 7: {
-            PSVECSubtract(vec(&pCamWork->position),vec(&pCamWork->targetPosition),&distance);
+            PSVECSubtract((Vec*)&pCamWork->position,(Vec*)&pCamWork->targetPosition,&distance);
             pCamWork->height=distance.y;
-            pCamWork->distance=cameraSqrt(distance.x*distance.x+distance.z*distance.z);
+            pCamWork->distance=cameraSqrtFlat(distance.x*distance.x+distance.z*distance.z);
             if(!pCamWork->rotationAnimation.isMove() && !(pCamWork->flags&0x20)) pCamWork->rotation.param2=(f32)atan2(distance.x,distance.z);
             break;
         }
@@ -693,22 +735,22 @@ void cameraUpdate() {
     switch(pCamWork->type) {
     case 0: {
         Vec distance,displacement,target;
-        displacement.y=pCamWork->height; displacement.x=0.0f; displacement.z=pCamWork->distance;
+        f32 h=pCamWork->height, d=pCamWork->distance; displacement.y=h; displacement.x=0.0f; displacement.z=d;
         Mtx matrix;
         PSMTXRotRad(matrix,'Y',pCamWork->rotation.param2); PSMTXMultVec(matrix,&displacement,&displacement);
-        PSVECAdd(vec(&pCamWork->targetPosition),vec(&pCamWork->targetOffset),&target); PSVECAdd(&target,&displacement,vec(&pCamWork->position));
-        PSVECSubtract(vec(&pCamWork->position),&target,&distance);
+        PSVECAdd((Vec*)&pCamWork->targetPosition,(Vec*)&pCamWork->targetOffset,&target); PSVECAdd(&target,&displacement,(Vec*)&pCamWork->position);
+        PSVECSubtract((Vec*)&pCamWork->position,&target,&distance);
         if(distance.x<0.00001f && distance.x>-0.00001f && distance.z<0.00001f && distance.z>-0.00001f) pCamWork->position.param3+=1.0f;
         cameraApplyLockedY(&target);
-        GScameraSetPosition(camera,vec(&pCamWork->position)); GScameraLookAt(camera,vec(&gUpVec),&target);
+        GScameraSetPosition(camera,(Vec*)&pCamWork->position); GScameraLookAt(camera,vec(&gUpVec),&target);
         pCamWork->rotation.param1=-(f32)atan2(pCamWork->height,pCamWork->distance);
         cameraApplyFov(camera); break;
     }
     case 1: case 2: {
         Vec distance,target;
-        PSVECAdd(vec(&pCamWork->targetPosition),vec(&pCamWork->targetOffset),&target); cameraApplyLockedY(&target);
-        GScameraSetPosition(camera,vec(&pCamWork->position)); GScameraLookAt(camera,vec(&gUpVec),&target);
-        PSVECSubtract(vec(&pCamWork->position),&target,&distance);
+        PSVECAdd((Vec*)&pCamWork->targetPosition,(Vec*)&pCamWork->targetOffset,&target); cameraApplyLockedY(&target);
+        GScameraSetPosition(camera,(Vec*)&pCamWork->position); GScameraLookAt(camera,vec(&gUpVec),&target);
+        PSVECSubtract((Vec*)&pCamWork->position,&target,&distance);
         pCamWork->height=distance.y; pCamWork->distance=cameraSqrt(distance.x*distance.x+distance.z*distance.z);
         pCamWork->rotation.param2=(f32)atan2(distance.x,distance.z); pCamWork->rotation.param1=-(f32)atan2(pCamWork->height,pCamWork->distance);
         cameraApplyFov(camera); break;
@@ -717,20 +759,20 @@ void cameraUpdate() {
     case 5: _cameraPadRotateUpdate__FP9_GScamera(camera); break;
     case 3: {
         Vec up,target;
-        GScameraSetPosition(camera,vec(&pCamWork->position)); GScameraSetRotation(camera,vec(&pCamWork->rotation)); GScameraGetLookAt(camera,&up,&target);
-        PSVECSubtract(&target,vec(&pCamWork->targetOffset),vec(&pCamWork->targetPosition)); cameraApplyFov(camera); break;
+        GScameraSetPosition(camera,(Vec*)&pCamWork->position); GScameraSetRotation(camera,(Vec*)&pCamWork->rotation); GScameraGetLookAt(camera,&up,&target);
+        PSVECSubtract(&target,(Vec*)&pCamWork->targetOffset,(Vec*)&pCamWork->targetPosition); cameraApplyFov(camera); break;
     }
     case 8: _cameraOffsetAnimeUpdate__FP9_GScamera(camera); GScameraLoadActiveCameraMatrix(-1); return;
     case 7: {
         Vec displacement,target;
-        displacement.y=pCamWork->height; displacement.x=0.0f; displacement.z=pCamWork->distance;
+        f32 h=pCamWork->height, d=pCamWork->distance; displacement.y=h; displacement.x=0.0f; displacement.z=d;
         Mtx matrix;
         PSMTXRotRad(matrix,'Y',pCamWork->rotation.param2); PSMTXMultVec(matrix,&displacement,&displacement);
-        PSVECAdd(vec(&pCamWork->targetPosition),&displacement,vec(&pCamWork->position));
-        PSVECAdd(vec(&pCamWork->targetPosition),vec(&pCamWork->targetOffset),&target);
+        PSVECAdd((Vec*)&pCamWork->targetPosition,&displacement,(Vec*)&pCamWork->position);
+        PSVECAdd((Vec*)&pCamWork->targetPosition,(Vec*)&pCamWork->targetOffset,&target);
         PSMTXRotRad(matrix,'Z',pCamWork->offsetRotation.param3); PSMTXMultVec(matrix,vec(&gUpVec),&displacement);
-        PSVECAdd(&target,vec(&pCamWork->offsetPosition),&target); cameraApplyLockedY(&target);
-        GScameraSetPosition(camera,vec(&pCamWork->position)); GScameraLookAt(camera,&displacement,&target);
+        PSVECAdd(&target,(Vec*)&pCamWork->offsetPosition,&target); cameraApplyLockedY(&target);
+        GScameraSetPosition(camera,(Vec*)&pCamWork->position); GScameraLookAt(camera,&displacement,&target);
         pCamWork->rotation.param1=-(f32)atan2(pCamWork->height,pCamWork->distance); cameraApplyFov(camera); break;
     }
     }

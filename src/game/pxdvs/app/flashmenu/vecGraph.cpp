@@ -167,16 +167,16 @@ static void SpriteDisp(GStexture *, FLASHMATRIXF *, FLASHMATRIX *, GSvec2 *, VEC
 static _SHAPERECORD *SpriteCode(u32 id, _SHAPERECORD *rec, u16 index, FLASHMATRIXF *m, FLASHMATRIX *fm, long x, long y,
                                 VEC_GRAPH_DATA *vg, FLASHCXFORM *cx) {
     GSvec2 pts[4];
+    GSvec2 *q;
+    u8 more = 1;
     _SHAPERECORD *last = 0;
     s32 n = 0;
-    u8 more = 1;
     do {
         if (rec->type == 2) {
             x += rec->move->x;
             y += rec->move->y;
             last = rec;
-            GSvec2 *q = (GSvec2 *)((u8 *)pts + n * 8);
-            n++;
+            q = &pts[n++];
             q->x = (f32)x / 20.0f;
             q->y = (f32)y / 20.0f;
             rec = rec->next;
@@ -205,23 +205,19 @@ static void SpriteDisp(GStexture *tex, FLASHMATRIXF *m, FLASHMATRIX *fm, GSvec2 
         col.a = (cx->v[0] * 0xff) >> 8;
         col.r = (cx->v[2] * 0xff) >> 8;
         col.g = (cx->v[4] * 0xff) >> 8;
-        s32 aa = cx->v[1];
-        s32 ar = cx->v[3];
-        s32 ag = cx->v[5];
-        s32 ab = cx->v[7];
-        add.a = aa;
         col.b = (cx->v[6] * 0xff) >> 8;
-        add.r = ar;
-        add.g = ag;
-        add.b = ab;
-        if (((s16)aa | (s16)ar | (s16)ag | (s16)ab) == 0) {
+        add.a = cx->v[1];
+        add.r = cx->v[3];
+        add.g = cx->v[5];
+        add.b = cx->v[7];
+        if (((s16)add.a | (s16)add.r | (s16)add.g | (s16)add.b) == 0) {
             GXColor c = col;
             GSprimDraw2DTexQuad4V(pos, uv, tex, &c);
             return;
         }
         {
-            GXColor c = col;
             GXColorS10 a = add;
+            GXColor c = col;
             GSprimDraw2DTexQuad4VCA(pos, uv, tex, &c, &a);
         }
     }
@@ -649,41 +645,6 @@ static void vecExec(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines,_SHAPER
     if(!sprite)SBscan();
 }
 
-static inline void vecGradientPalette(VEC_GRAPH_DATA* data) {
-    u32 oldColor;
-    memcpy(&oldColor,&((VecGradient*)data->gradient)->stops[0].color,4);
-    s32 position=0;
-    for(s32 stop=0;stop<((VecGradient*)data->gradient)->count;++stop) {
-        s32 length=((VecGradient*)data->gradient)->stops[stop].ratio-position;
-        u8* previous=(u8*)&oldColor;
-        u8* next=(u8*)&((VecGradient*)data->gradient)->stops[stop].color;
-        f32 d0=(__OSu8tof32(&next[0])-(f32)previous[0])/(f32)length;
-        f32 d1=(__OSu8tof32(&next[1])-(f32)previous[1])/(f32)length;
-        f32 d2=(__OSu8tof32(&next[2])-(f32)previous[2])/(f32)length;
-        f32 d3=(__OSu8tof32(&next[3])-(f32)previous[3])/(f32)length;
-        for(s32 i=0;i<length;++i) {
-            u8 components[4];
-            components[0]=(u8)(s32)(d0*(f32)i+(f32)previous[0]);
-            components[1]=(u8)(s32)(d1*(f32)i+(f32)previous[1]);
-            components[2]=(u8)(s32)(d2*(f32)i+(f32)previous[2]);
-            components[3]=(u8)(s32)(d3*(f32)i+(f32)previous[3]);
-            u32 interpolated=((u32)components[0]<<24)|((u32)components[1]<<16)|((u32)components[2]<<8)|components[3];
-            ((u32*)data->reserved64)[position+i]=flcalcMultiTransformColor(data->colorTransform,interpolated);
-        }
-        memcpy(&oldColor,&((VecGradient*)data->gradient)->stops[stop].color,4);
-        position+=length;
-    }
-    memcpy(&oldColor,&((u32*)data->reserved64)[position-1],4);
-    for(;position<256;++position)memcpy(&((u32*)data->reserved64)[position],&oldColor,4);
-}
-static inline void vecGradientStops(VEC_GRAPH_DATA* data) {
-    if(data->scale==0.0f)data->scale=1.0f;
-    for(s16 i=0;i<((VecGradient*)data->gradient)->count;++i) {
-        f32 distance=(f32)(((VecGradient*)data->gradient)->stops[i].ratio-128);
-        getCrossPoint(i,data->originX+(s16)(distance*data->scale+128.0f),-256,512,data->originX+128,128,data);
-    }
-    vecGradientPalette(data);
-}
 static void calcVecRect(VEC_RECT* rect,VEC_GRAPH_DATA* data,long style) {
     data->centerX=(data->maxX+data->minX)/2;
     data->centerY=(data->maxY+data->minY)/2;
@@ -694,15 +655,56 @@ static void calcVecRect(VEC_RECT* rect,VEC_GRAPH_DATA* data,long style) {
         if(style) {
             switch(fill->type) {
             case 0:data->color=flcalcMultiTransformColor(data->colorTransform,fill->color);data->gradient=0;return;
-            case 16:data->gradient=&fill->gradient;vecGradientStops(data);return;
+            case 16: {
+                    data->gradient=&fill->gradient;
+                    if(data->scale==0.0f)data->scale=1.0f;
+                    for(s16 i=0;i<((VecGradient*)data->gradient)->count;++i) {
+                        f32 distance=(f32)(((VecGradient*)data->gradient)->stops[i].ratio-128);
+                        getCrossPoint(i,data->originX+(s16)(distance*data->scale+128.0f),-256,512,data->originX+128,128,data);
+                    }
+
+                    u32 oldColor;
+                    memcpy(&oldColor,&((VecGradient*)data->gradient)->stops[0].color,4);
+                    s32 position=0;
+                    for(s32 stop=0;stop<((VecGradient*)data->gradient)->count;++stop) {
+                        s32 length=((VecGradient*)data->gradient)->stops[stop].ratio-position;
+                        if(length!=0) {
+                            u8* previous=(u8*)&oldColor;
+                            u8* next=(u8*)&((VecGradient*)data->gradient)->stops[stop].color;
+                            f32 n0=__OSu8tof32(&next[0]);
+                            f32 n1=__OSu8tof32(&next[1]);
+                            f32 n2=__OSu8tof32(&next[2]);
+                            f32 n3=__OSu8tof32(&next[3]);
+                            f32 d0=(n0-(f32)previous[0])/(f32)length;
+                            f32 d1=(n1-(f32)previous[1])/(f32)length;
+                            f32 d2=(n2-(f32)previous[2])/(f32)length;
+                            f32 d3=(n3-(f32)previous[3])/(f32)length;
+                            for(s32 i=0;i<length;++i) {
+                                u8 components[4];
+                                components[0]=(u8)(s32)(d0*(f32)i+(f32)previous[0]);
+                                components[1]=(u8)(s32)(d1*(f32)i+(f32)previous[1]);
+                                components[2]=(u8)(s32)(d2*(f32)i+(f32)previous[2]);
+                                components[3]=(u8)(s32)(d3*(f32)i+(f32)previous[3]);
+                                u32 interpolated=((u32)components[0]<<24)|((u32)components[1]<<16)|((u32)components[2]<<8)|components[3];
+                                ((u32*)data->reserved64)[position+i]=flcalcMultiTransformColor(data->colorTransform,interpolated);
+                            }
+                        }
+                        memcpy(&oldColor,&((VecGradient*)data->gradient)->stops[stop].color,4);
+                        position+=length;
+                    }
+                    memcpy(&oldColor,&((u32*)data->reserved64)[position-1],4);
+                    for(;position<256;++position)memcpy(&((u32*)data->reserved64)[position],&oldColor,4);
+
+                    return;
+                }
             }
             return;
         }
-        s32 first=fill->matrix.m[0];
+        f32 first=(f32)fill->matrix.m[0];
         f32 second=(f32)fill->matrix.m[1];
         data->originX=fill->matrix.m[4]/20-data->centerX;
-        f32 magnitude=vecSqrt((f32)first*(f32)first+second*second);
-        data->originY=fill->matrix.m[5]/20-data->centerY;
+        data->originY=((VecFillStyle*)data->fillStyles)[style].matrix.m[5]/20-data->centerY;
+        f32 magnitude=vecSqrt(first*first+second*second);
         data->angle=(f32)acos((f32)first/magnitude);
         if(second<0.0f)data->angle=-data->angle;
         if(data->width-1)data->scale=(1638.4f*(magnitude/65536.0f))/(f32)(data->width-1);
@@ -711,7 +713,48 @@ static void calcVecRect(VEC_RECT* rect,VEC_GRAPH_DATA* data,long style) {
         data->inverseSin=(f32)sin(-data->angle);data->inverseCos=(f32)cos(-data->angle);
         switch(fill->type) {
         case 0:data->color=flcalcMultiTransformColor(data->colorTransform,fill->color);data->gradient=0;break;
-        case 16:data->gradient=&fill->gradient;vecGradientStops(data);break;
+        case 16: {
+                data->gradient=&fill->gradient;
+                if(data->scale==0.0f)data->scale=1.0f;
+                for(s16 i=0;i<((VecGradient*)data->gradient)->count;++i) {
+                    f32 distance=(f32)(((VecGradient*)data->gradient)->stops[i].ratio-128);
+                    getCrossPoint(i,data->originX+(s16)(distance*data->scale+128.0f),-256,512,data->originX+128,128,data);
+                }
+
+                u32 oldColor;
+                memcpy(&oldColor,&((VecGradient*)data->gradient)->stops[0].color,4);
+                s32 position=0;
+                for(s32 stop=0;stop<((VecGradient*)data->gradient)->count;++stop) {
+                    s32 length=((VecGradient*)data->gradient)->stops[stop].ratio-position;
+                    if(length!=0) {
+                        u8* previous=(u8*)&oldColor;
+                        u8* next=(u8*)&((VecGradient*)data->gradient)->stops[stop].color;
+                        f32 n0=__OSu8tof32(&next[0]);
+                        f32 n1=__OSu8tof32(&next[1]);
+                        f32 n2=__OSu8tof32(&next[2]);
+                        f32 n3=__OSu8tof32(&next[3]);
+                        f32 d0=(n0-(f32)previous[0])/(f32)length;
+                        f32 d1=(n1-(f32)previous[1])/(f32)length;
+                        f32 d2=(n2-(f32)previous[2])/(f32)length;
+                        f32 d3=(n3-(f32)previous[3])/(f32)length;
+                        for(s32 i=0;i<length;++i) {
+                            u8 components[4];
+                            components[0]=(u8)(s32)(d0*(f32)i+(f32)previous[0]);
+                            components[1]=(u8)(s32)(d1*(f32)i+(f32)previous[1]);
+                            components[2]=(u8)(s32)(d2*(f32)i+(f32)previous[2]);
+                            components[3]=(u8)(s32)(d3*(f32)i+(f32)previous[3]);
+                            u32 interpolated=((u32)components[0]<<24)|((u32)components[1]<<16)|((u32)components[2]<<8)|components[3];
+                            ((u32*)data->reserved64)[position+i]=flcalcMultiTransformColor(data->colorTransform,interpolated);
+                        }
+                    }
+                    memcpy(&oldColor,&((VecGradient*)data->gradient)->stops[stop].color,4);
+                    position+=length;
+                }
+                memcpy(&oldColor,&((u32*)data->reserved64)[position-1],4);
+                for(;position<256;++position)memcpy(&((u32*)data->reserved64)[position],&oldColor,4);
+
+                break;
+            }
         }
     }else {
         data->originY=0;data->originX=0;data->scale=0.0f;data->angle=0.0f;

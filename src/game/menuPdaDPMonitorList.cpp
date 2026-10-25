@@ -734,16 +734,14 @@ void menuPdaDPMList::Cursor(tagWINDOW_WORK* win) {
         else if(keys&8) {if(total-1!=cursor.selected+cursor.first)GSsndPlayNow(0x453);cursor.selected+=visible;}
         else if(keys&4) {if(cursor.selected+cursor.first!=0)GSsndPlayNow(0x453);cursor.selected-=visible;}
         if(cursor.selected<0) {
-            s16 selected=cursor.selected;
+            cursor.first+=cursor.selected;
             cursor.selected=0;
-            cursor.first+=selected;
             if(cursor.first<0) {cursor.first=0;cursor.selected=0;}
         } else if(cursor.selected>=visible) {
             s32 last=visible-1;
-            cursor.first+=cursor.selected-last;
-            s8 lastByte=last;
-            cursor.selected=lastByte;
-            if(cursor.first+lastByte>=total) {cursor.selected=lastByte;cursor.first=(s8)(total-visible);}
+            cursor.first+=cursor.selected-(visible-1);
+            cursor.selected=(s8)last;
+            if(cursor.first+cursor.selected>=total) {cursor.selected=(s8)last;cursor.first=(s8)(total-visible);}
         }
     }
     _setCursor(cursor);

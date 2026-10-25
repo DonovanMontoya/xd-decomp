@@ -914,7 +914,7 @@ bool CMenuPokemonLeave::cursorMoveDown(long &pos) {
     if (cur >= 1 && cur <= 2) {
         pos = 0;
     } else if (pos >= 0x22) {
-        if ((cur - 10) % 6 <= 2) {
+        if ((pos - 10) % 6 <= 2) {
             pos = 1;
         } else {
             pos = 2;

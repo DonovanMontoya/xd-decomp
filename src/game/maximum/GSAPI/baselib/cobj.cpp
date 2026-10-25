@@ -184,9 +184,14 @@ static inline f32 vec_get_x(Vec3* v)
     return v->x;
 }
 
+static inline f64 cobj_fabs(f64 x)
+{
+    return __fabs(x);
+}
+
 static inline f64 vec_get_abs_y(Vec3* v)
 {
-    return (f32)fabs(v->y);
+    return (f32)cobj_fabs(v->y);
 }
 
 static inline f32 cobj_get_up_x(Vec3* up)
@@ -594,19 +599,18 @@ static float upvec2roll(HSD_CObj* cobj, Vec3* up)
     f32 dot;
 
     if (!HSD_CObjGetEyeVector(cobj, &eye)) {
-        dot = 0.0f;
-    } else {
+        return 0.0f;
+    }
+    {
         f64 absolute = __fabs(VECDotProduct(up, &eye));
         dot = 1.0f - (f32) absolute;
         if (dot < FLT_MIN) {
-            dot = 0.0f;
-        } else {
-            C_MTXLookAt(vmtx, &orig$1007, &uy$1008, &eye);
-            PSMTXMultVecSR(vmtx, up, &v);
-            dot = cobjRollAngle(-v.x, v.y);
+            return 0.0f;
         }
+        C_MTXLookAt(vmtx, &orig$1007, &uy$1008, &eye);
+        PSMTXMultVecSR(vmtx, up, &v);
+        return cobjRollAngle(-v.x, v.y);
     }
-    return dot;
 }
 
 float HSD_CObjGetEyeDistance(HSD_CObj* cobj)

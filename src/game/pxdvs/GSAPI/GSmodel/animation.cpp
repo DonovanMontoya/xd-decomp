@@ -314,7 +314,34 @@ static inline void modelSetAnimTypeInline(GSmodel* m, s32 type) {
     }
     if (m->flags & 0x2000) GSmodelSetTexAnimType(m, type);
 }
-extern "C" void GSmodelSetAnimType(GSmodel* m, s32 type) { modelSetAnimTypeInline(m, type); }
+extern "C" void GSmodelSetAnimType(GSmodel* m, s32 type) {
+    HSD_JObj* joint;
+    HSD_JObj* blend;
+    if (m->flags & 4) {
+        joint = m->joint;
+        blend = m->animationBlendJoint;
+        if ((m->flags & 0x20000) == 0x20000) joint = joint->child;
+        m->animationType = type; m->blendType = type;
+        if (m->flags & 0x80000000) {
+            modelFreezePartAnimations(m);
+        }
+        switch (m->animationType) {
+        case 0:
+            HSD_ForeachAnim(joint, JOBJ_TYPE, (HSD_TypeMask)0x9b2f, (void*)_modelSetLoopFlag__FP9_HSD_AObjUl, AOBJ_ARG_AU, 0);
+            if (m->flags & 0x80) HSD_ForeachAnim(blend, JOBJ_TYPE, (HSD_TypeMask)0x9b2f, (void*)_modelSetLoopFlag__FP9_HSD_AObjUl, AOBJ_ARG_AU, 0);
+            break;
+        case 1:
+            HSD_ForeachAnim(joint, JOBJ_TYPE, (HSD_TypeMask)0x9b2f, (void*)_modelSetLoopFlag__FP9_HSD_AObjUl, AOBJ_ARG_AU, 1);
+            if (m->flags & 0x80) HSD_ForeachAnim(blend, JOBJ_TYPE, (HSD_TypeMask)0x9b2f, (void*)_modelSetLoopFlag__FP9_HSD_AObjUl, AOBJ_ARG_AU, 1);
+            break;
+        }
+        if (m->flags & 0x80000000) {
+            modelUnfreezePartAnimations(m);
+        }
+    }
+    if (m->flags & 0x2000) GSmodelSetTexAnimType(m, type);
+}
+
 extern "C" void modelCalculatePartMix__FP5GSvecP5GSvecUl(GSvec* out, GSvec* value, u32 mode) {
     switch (mode & 0xff) {
     case 0: break;

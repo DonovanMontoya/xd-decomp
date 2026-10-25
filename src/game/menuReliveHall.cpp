@@ -1139,7 +1139,7 @@ void CMenuReliveHall::actionPut() {
     f32 face[4];
     int idx;
     int slot;
-    int at;
+    long at;
     hallTempo = getTempo(false);
     menuPtPlaySe(0x45E);
     slot = -1;
@@ -1165,10 +1165,11 @@ void CMenuReliveHall::actionPut() {
         if (n != 0 && part >= slot) part++;
         stage->partner = part;
         cursor->setPositionIndex(at);
-        for (int i = 0; i < n + 1; i++) {
+        for (int i = 0, j = 0; i < n + 1; i++) {
             if (i != slot) {
-                pos[i] = views[i].unk4;
-                face[i] = views[i].facing;
+                pos[i] = views[j].unk4;
+                face[i] = views[j].facing;
+                j++;
             } else {
                 pos[i] = views[idx].unk4;
                 face[i] = 0.0f;
@@ -1184,8 +1185,7 @@ void CMenuReliveHall::actionPut() {
     if (slot != -1) {
         dancerMoveAnimationKick(pos, face, false, -1.0f);
         SPokemonView *v = &views[cursor->index];
-        v->startFacing = v->targetFacing;
-        v->facing = v->targetFacing;
+        v->facing = v->startFacing = v->targetFacing;
     } else {
         animationFlag = 4;
         memset(animationWork, 0, 0x40);
@@ -1589,12 +1589,12 @@ f32 CMenuReliveHall::calcStarDir(int a, int b) {
 void relivehallDraw9StageInfo(int);
 
 void relivehallDraw9StageInfo(int selected) {
-    int x = 0;
-    s16 *stageOffset = lbl_8032E568;
+    int i;
     MENU_ITEM_dd_ *item;
-    for (int i = 0; i < 9; i++) {
+    for (i = 0; i < 9; i++) {
         if (i != selected) {
-            int offset = x + *stageOffset;
+            int offset = i * 66;
+            offset += lbl_8032E568[i];
             CReliveStage *stage = CReliveHall::getPointer()->getStage(i);
             Pokemon *visitor = CReliveHall::getPointer()->getStage(i)->getVisitorPointer();
             if (visitor != 0) {
@@ -1610,8 +1610,6 @@ void relivehallDraw9StageInfo(int selected) {
                 menuPtItemDrawOffsetXWColor(item, offset, (s32)(item->width * relivehallTempoToRate(tempo)), color);
             }
         }
-        x += 66;
-        stageOffset++;
     }
 }
 
@@ -1820,14 +1818,14 @@ void CMenuReliveHall::drawDancerStarLight() {
         int index;
         for (index = 0; index < quantity; index++) {
             f32 base = calcStarDir(index, quantity);
-            int j = 0;
-            do {
-                f32 angle = -(0.06981317f * (f32)j - base);
-                f32 s = (f32)sin(angle);
-                f32 c = (f32)cos(angle);
+            int j;
+            for(j=0;j<6;j++) {
+                f32 s, c, angle;
+                angle = -(0.06981317f * (f32)j - base);
+                s = (f32)sin(angle);
+                c = (f32)cos(angle);
                 drawStarLightOne(getDirToAisyou(angle), 90.0f * s + 320.0f, 90.0f * -c + 280.0f, j);
-                j++;
-            } while (j < 6);
+            }
         }
     }
 }
@@ -2033,20 +2031,22 @@ void CMenuReliveHall::stateDirChangeProc() {
 }
 
 void CMenuReliveHall::drawVisitorStarLight(long aisyou, SPokemonView *view) {
-    f32 radius = 90.0f * calcAnimationTimeRate0to1(1.5f);
+    f32 s, radius, dir, d;
+    radius = 90.0f * calcAnimationTimeRate0to1(1.5f);
     PocketVec<short> position = view->getPosition();
-    f32 dir = xyxy2dir(position, circlePosition);
-    int k = 0;
-    int j = 0;
-    do {
-        f32 d = radius - (f32)k;
+    dir = xyxy2dir(position, circlePosition);
+    int k, j;
+    j = 0;
+    k = 0;
+    for(;j<6;j++) {
+        d = radius - (f32)k;
         if (!(d < 0.0f)) {
-            f32 s = (f32)sin(dir);
-            drawStarLightOne(aisyou, d * s + 320.0f, d * -(f32)cos(dir) + 280.0f, j);
+            s = (f32)sin(dir);
+            f32 c = (f32)cos(dir);
+            drawStarLightOne(aisyou, d * s + 320.0f, d * -c + 280.0f, j);
         }
-        j++;
         k += 5;
-    } while (j < 6);
+    }
 }
 
 void CMenuReliveHall::stateDirChangeWinDraw(long window) {
@@ -2107,13 +2107,10 @@ void CMenuReliveHall::drawStarHitEffect(f32 x, f32 y, f32 time) {
 }
 
 void CMenuReliveHall::drawVisitorHitEffect() {
-    if (dancerPositionQuantityWithCatch() != 0) {
-        if (getVisitorWithCatch() == 0) {
-            return;
-        } else if (stage->partner != -1) {
+    if (dancerPositionQuantityWithCatch() == 0 || getVisitorWithCatch() == 0) return;
+    if (stage->partner != -1) {
             f32 time = calcAnimationTimeRate0to1(1.5f);
             drawStarHitEffect(320.0f, 280.0f, 1.5f * time);
-        }
     }
 }
 

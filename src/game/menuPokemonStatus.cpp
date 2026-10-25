@@ -80,12 +80,12 @@ u8 menuSubGetPokemonSexForDisp(Pokemon*);
 u32 GSmsgGetRect(u32);
 u8 wazaDB_GetCompatible(u32);
 u16 zokuseiBiosGetWazaJoutai(u16, u16);
-u8 pokemonWazaGetMaxPP(Pokemon*, u8);
+u8 pokemonWazaGetMaxPP(Pokemon*, u16);
 void GSmsgPrintRight(s32, s32, s32, s32, s32, u32, u32);
 u8 pokemonGetDarkPokemonLevel(Pokemon*);
 void* pokemonSeikakuDataBiosGetPtr(u32);
 u32 pokemonSeikakuDataBiosGetName(void*);
-u32 floorGetPlaceName(u16);
+u32 floorGetPlaceName(u32);
 u8 fightKind_CheckFightKind(s32);
 u32 pokemonGetLevelToExp(Pokemon*, u8);
 u16 pokemonGetTokuseiDataId(Pokemon*);
@@ -543,7 +543,7 @@ extern "C" void menuPokemonStatusClose(void) {
 }
 
 static s32 _menuPokemonStatusChangeSubMenu(CURSOR cursor) {
-    static const s32 sub_menu_id[4] = {0x5F, 0x60, 0x62, 0x63};
+    static s32 sub_menu_id[4] = {0x5F, 0x60, 0x62, 0x63};
     u32 i;
     s32 id = 0;
     if (_menuStatus.pokemon == 0) {
@@ -753,7 +753,7 @@ static inline void _drawWazaSprite(tagWINDOW_WORK* win, tagSPRITE_WORK* spr, s32
 }
 
 extern "C" void menuPokemonStatusDrawWaza(tagWINDOW_WORK* win, tagSPRITE_WORK* spr) {
-    s32 j;
+    u32 j;
     Pokemon* pokemon;
     s32 w = 0;
     u32 color;
@@ -794,9 +794,13 @@ extern "C" void menuPokemonStatusDrawWaza(tagWINDOW_WORK* win, tagSPRITE_WORK* s
     case 0x203:
     case 0x204:
         if (_menuStatus.wazaId == 0) {
-            switch (spr->id) {
-            case 0x204:
+            if (spr->id == 0x204) {
                 return;
+            }
+            switch (spr->id) {
+            case 0x203:
+                j = 0;
+                break;
             case 0x202:
                 j = 1;
                 break;
@@ -805,9 +809,6 @@ extern "C" void menuPokemonStatusDrawWaza(tagWINDOW_WORK* win, tagSPRITE_WORK* s
                 break;
             case 0x200:
                 j = 3;
-                break;
-            case 0x203:
-                j = 0;
                 break;
             }
         } else {
@@ -815,30 +816,30 @@ extern "C" void menuPokemonStatusDrawWaza(tagWINDOW_WORK* win, tagSPRITE_WORK* s
                 windowDrawSprite(7, 0x14, win, 0xF8, 0, winSpriteGetLayerID(win, spr));
             }
             switch (spr->id) {
-            case 0x202:
-                j = 2;
-                break;
             case 0x204:
                 j = 0;
                 break;
             case 0x203:
                 j = 1;
                 break;
-            case 0x200:
-                j = 4;
+            case 0x202:
+                j = 2;
                 break;
             case 0x201:
                 j = 3;
+                break;
+            case 0x200:
+                j = 4;
                 break;
             }
         }
         w = _menuPokemonStatusGetWazaDataID(pokemon, j);
         switch (NotDarkWaza((u16)w)) {
-        case 0x176:
-            w = 0x7B;
-            break;
         case 0:
             w = 0;
+            break;
+        case 0x176:
+            w = 0x7B;
             break;
         default:
             w = (u16)_menuPokemonStatusGetZokuseiSpriteID(wazaGetStatus(0, w, 3, 0));
@@ -858,9 +859,13 @@ extern "C" void menuPokemonStatusDrawWaza(tagWINDOW_WORK* win, tagSPRITE_WORK* s
     case 0x252:
     case 0x253:
         if (_menuStatus.wazaId == 0) {
-            switch (spr->id) {
-            case 0x253:
+            if (spr->id == 0x253) {
                 return;
+            }
+            switch (spr->id) {
+            case 0x252:
+                j = 0;
+                break;
             case 0x251:
                 j = 1;
                 break;
@@ -869,27 +874,24 @@ extern "C" void menuPokemonStatusDrawWaza(tagWINDOW_WORK* win, tagSPRITE_WORK* s
                 break;
             case 0x24F:
                 j = 3;
-                break;
-            case 0x252:
-                j = 0;
                 break;
             }
         } else {
             switch (spr->id) {
-            case 0x251:
-                j = 2;
-                break;
             case 0x253:
                 j = 0;
                 break;
             case 0x252:
                 j = 1;
                 break;
-            case 0x24F:
-                j = 4;
+            case 0x251:
+                j = 2;
                 break;
             case 0x250:
                 j = 3;
+                break;
+            case 0x24F:
+                j = 4;
                 break;
             }
         }
@@ -911,38 +913,39 @@ extern "C" void menuPokemonStatusDrawWaza(tagWINDOW_WORK* win, tagSPRITE_WORK* s
     case 0x258: {
         s16 off;
         if (_menuStatus.wazaId == 0) {
-            switch (spr->id) {
-            case 0x258:
+            if (spr->id == 0x258) {
                 return;
+            }
+            switch (spr->id) {
+            case 0x257:
+                j = 0;
+                break;
             case 0x256:
                 j = 1;
-                break;
-            case 0x254:
-                j = 3;
                 break;
             case 0x255:
                 j = 2;
                 break;
-            case 0x257:
-                j = 0;
+            case 0x254:
+                j = 3;
                 break;
             }
         } else {
             switch (spr->id) {
-            case 0x256:
-                j = 2;
-                break;
-            case 0x254:
-                j = 4;
-                break;
-            case 0x255:
-                j = 3;
-                break;
             case 0x258:
                 j = 0;
                 break;
             case 0x257:
                 j = 1;
+                break;
+            case 0x256:
+                j = 2;
+                break;
+            case 0x255:
+                j = 3;
+                break;
+            case 0x254:
+                j = 4;
                 break;
             }
         }
@@ -1091,10 +1094,18 @@ extern "C" void menuPokemonStatusDrawWaza(tagWINDOW_WORK* win, tagSPRITE_WORK* s
             break;
         }
         case 4:
-            _drawWazaSprite(win, spr, w == 7 ? 0x35E : 0x35D);
+            if (w == 7) {
+                _drawWazaSprite(win, spr, 0x35E);
+            } else {
+                _drawWazaSprite(win, spr, 0x35D);
+            }
             break;
         case 5:
-            _drawWazaSprite(win, spr, w == 12 ? 0x35E : 0x35D);
+            if (w == 12) {
+                _drawWazaSprite(win, spr, 0x35E);
+            } else {
+                _drawWazaSprite(win, spr, 0x35D);
+            }
             break;
         case 6:
             if (w == 3 || w == 8) {
@@ -1104,13 +1115,25 @@ extern "C" void menuPokemonStatusDrawWaza(tagWINDOW_WORK* win, tagSPRITE_WORK* s
             }
             break;
         case 7:
-            _drawWazaSprite(win, spr, w == 4 ? 0x35E : 0x35D);
+            if (w == 4) {
+                _drawWazaSprite(win, spr, 0x35E);
+            } else {
+                _drawWazaSprite(win, spr, 0x35D);
+            }
             break;
         case 8:
-            _drawWazaSprite(win, spr, w == 2 ? 0x35E : 0x35D);
+            if (w == 2) {
+                _drawWazaSprite(win, spr, 0x35E);
+            } else {
+                _drawWazaSprite(win, spr, 0x35D);
+            }
             break;
         case 9:
-            _drawWazaSprite(win, spr, w == 0 ? 0x35E : 0x35D);
+            if (w == 0) {
+                _drawWazaSprite(win, spr, 0x35E);
+            } else {
+                _drawWazaSprite(win, spr, 0x35D);
+            }
             break;
         case 10:
         case 11:
@@ -1118,10 +1141,18 @@ extern "C" void menuPokemonStatusDrawWaza(tagWINDOW_WORK* win, tagSPRITE_WORK* s
             _drawWazaSprite(win, spr, 0x376);
             break;
         case 12:
-            _drawWazaSprite(win, spr, w == 0x11 ? 0x35E : 0x35D);
+            if (w == 0x11) {
+                _drawWazaSprite(win, spr, 0x35E);
+            } else {
+                _drawWazaSprite(win, spr, 0x35D);
+            }
             break;
         case 13:
-            _drawWazaSprite(win, spr, w == 10 ? 0x35E : 0x35D);
+            if (w == 10) {
+                _drawWazaSprite(win, spr, 0x35E);
+            } else {
+                _drawWazaSprite(win, spr, 0x35D);
+            }
             break;
         case 15:
             _drawWazaSprite(win, spr, 0x35D);
@@ -1134,13 +1165,13 @@ extern "C" void menuPokemonStatusDrawWaza(tagWINDOW_WORK* win, tagSPRITE_WORK* s
 extern "C" void menuPokemonStatusDrawStatus(tagWINDOW_WORK* win, tagSPRITE_WORK* spr) {
     Pokemon* pokemon;
     u32 color;
-    s32 v;
+    u32 v;
     MenuPokemonStatus* st = &_menuStatus;
     pokemon = st->pokemon;
     if (pokemon == 0) {
         return;
     }
-    v = (s32)pokemonDataBiosGetPtr(pokemonGetStatus(pokemon, 0, 0x6E, 0));
+    v = (u32)pokemonDataBiosGetPtr(pokemonGetStatus(pokemon, 0, 0x6E, 0));
     if (v == 0) {
         return;
     }
@@ -1174,47 +1205,51 @@ extern "C" void menuPokemonStatusDrawStatus(tagWINDOW_WORK* win, tagSPRITE_WORK*
     case 0x25C: {
         u32 place;
         u32 pl;
-        u8 lv;
+        s32 lv;
         if (pokemonGetDarkPokemonLevel(pokemon) < 3) {
             v = 0x945;
         } else {
             v = pokemonSeikakuDataBiosGetName(pokemonSeikakuDataBiosGetPtr((u8)pokemonGetStatus(pokemon, 0, 0xBF, 0)));
         }
         msgctrlSetValue(0x55, v);
-        if (v == 0xC96 || v == 0xC86) {
+        switch (v) {
+        case 0xC96:
+        case 0xC86:
             msgctrlSetValue(0x56, 1);
-        } else {
+            break;
+        default:
             msgctrlSetValue(0x56, 0x3AEC);
+            break;
         }
-        lv = pokemonGetStatus(pokemon, 0, 0x72, 0);
+        lv = (u8)pokemonGetStatus(pokemon, 0, 0x72, 0);
         if (lv == 0) {
             lv = 5;
         }
         msgctrlSetValue(0x34, lv);
         if (_menuPokemonStatusCheckOya(pokemon) != 0) {
-            u16 id = pokemonGetStatus(pokemon, 0, 0x6E, 0);
+            s32 id = (u16)pokemonGetStatus(pokemon, 0, 0x6E, 0);
             if (id < 0xC4) {
-                if (id >= 0x89) {
-                    v = 0x3AE1;
-                } else if (id >= 0x85) {
-                    v = 0x3AF7;
-                } else {
-                    v = 0x3AE1;
-                }
+                if (id >= 0x89) goto normalMessage;
+                if (id >= 0x85) goto specialMessage;
+                goto normalMessage;
             } else if (id >= 0xC6) {
-                v = 0x3AE1;
-            } else {
-                v = 0x3AF7;
+                goto normalMessage;
             }
+        specialMessage:
+            v = 0x3AF7;
+            goto printMessage;
+        normalMessage:
+            v = 0x3AE1;
         } else {
             v = 0x3AE1;
         }
+    printMessage:
         GSmsgPrintRect(winSpriteGetLayerID(win, spr), 0, 0, spr->x, spr->y, color, v);
         v = 0x3AFA;
         pl = pokemonGetStatus(pokemon, 0, 0x71, 0);
         place = floorGetPlaceName(pl);
         if (_menuPokemonStatusCheckOya(pokemon) != 0) {
-            u16 id = pokemonGetStatus(pokemon, 0, 0x6E, 0);
+            s32 id = (u16)pokemonGetStatus(pokemon, 0, 0x6E, 0);
             if (id < 0xC4) {
                 if (id >= 0x89) {
                     goto placeName;
@@ -1298,7 +1333,6 @@ extern "C" void menuPokemonStatusDrawStatus(tagWINDOW_WORK* win, tagSPRITE_WORK*
         break;
     case 0x846: {
         u32 need = pokemonGetLevelToExp(pokemon, (u8)(((u8)pokemonGetStatus(pokemon, 0, 0x7A, 0)) + 1));
-        u32 v;
         if (need == 0) {
             v = 0;
         } else {
@@ -1352,7 +1386,7 @@ extern "C" void menuPokemonStatusDrawStatus(tagWINDOW_WORK* win, tagSPRITE_WORK*
         if (pokemonIsDarkPokemon(pokemon) == 1) {
             GSmsgPrint2(winSpriteGetLayerID(win, spr), w, 0, color, 0x3AD4);
         } else {
-            u32 v = (u16)pokemonGetStatus(pokemon, 0, 0x75, 0);
+            v = (u16)pokemonGetStatus(pokemon, 0, 0x75, 0);
             u32 div = 10000;
             s32 x = w;
             s32 i;

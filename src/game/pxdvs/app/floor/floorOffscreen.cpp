@@ -46,7 +46,8 @@ bool floorMoviePlay(u32 movie,u32 mode,bool looping,u32 target,u16 width,u16 hei
     return true;
 }
 void floorOffscreenPlayWait(){
-    if(_offData){if(_offMdl)return;GSmoviePlayWait(_offData->source);}
+    if(_offData==0||_offMdl!=0)return;
+    GSmoviePlayWait(_offData->source);
 }
 void* floorGetActiveOffscreenTexture(){return _offTex;}
 bool floorSetOffscreenIndex(s32 index){
@@ -77,7 +78,7 @@ bool floorSetOffscreenIndex(s32 index){
     return true;
 }
 void floorReleaseOffscreen(){_floorFreeOffscreenData();_offRootDataPtr=0;_offRootDataCnt=0;}
-void floorUpdateOffscreen(){if(_offData){if(!_offMdl)return;GSmodelForceAnimTransformUpdate(_offMdl);}}
+void floorUpdateOffscreen(){if(!_offData||!_offMdl)return;GSmodelForceAnimTransformUpdate(_offMdl);}
 void floorInitOffscreen(FloorOffscreenRoot* root){
     if(root->data){
         _offRootDataPtr=(*root->data)->records;

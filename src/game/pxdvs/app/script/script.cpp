@@ -1,6 +1,6 @@
 #include <game/pxdvs/app/script/scriptPrivate.hpp>
 
-extern "C" u8 scriptPeopleInsideCheck(GSvec*, GSvec*, GSvec*, f32);
+extern "C" u8 scriptPeopleInsideCheck(GSvec*, GSvec*, f32, GSvec*);
 static s32 _fnDistanceSortFunc(const void*, const void*);
 static u8 _checkCrossPeople(GSvec*, GSvec*, GSvec*, GSvec*);
 static u32 _searchPeopleColiInfo(GSvec*, f32, PeopleRangeInfo_t*, int, GSvec*);
@@ -163,13 +163,13 @@ u8 scriptHizukiAway(u32 group, u32 resource) {
     f32 radius = peopleInfoBiosGetColBallSize(info);
     radius += 1.0f;
     radius = 1.0f + radius;
-    if (!scriptPeopleInsideCheck(&heroPos, &personPos, &followerPos, radius)) return 0;
+    if (!scriptPeopleInsideCheck(&heroPos, &personPos, radius, &followerPos)) return 0;
     _searchPeopleColiInfo(&heroPos, 8.0f, infos, 8, &followerPos);
     qsort(infos, 8, sizeof(PeopleRangeInfo_t), _fnDistanceSortFunc);
     for (i = 0; i < 8; ++i) {
         if (infos[i].hit == 1) continue;
-        if (!scriptPeopleInsideCheck(&heroPos, &personPos, &infos[i].position, 4.0f) &&
-            !scriptPeopleInsideCheck(&followerPos, &infos[i].position, &heroPos, 4.0f) &&
+        if (!scriptPeopleInsideCheck(&heroPos, &personPos, 4.0f, &infos[i].position) &&
+            !scriptPeopleInsideCheck(&followerPos, &infos[i].position, 4.0f, &heroPos) &&
             !_checkCrossPeople(&heroPos, &personPos, &followerPos, &infos[i].position)) {
             u8 reached;
             peopleInitEvent(followerGroup, followerResource);
@@ -185,7 +185,7 @@ u8 scriptHizukiAway(u32 group, u32 resource) {
                     for (j = 0; j < 8; ++j, ++found) {
                         if (found->index == target) break;
                     }
-                    if (found->hit == 0 && !scriptPeopleInsideCheck(&heroPos, &personPos, &found->position, 4.0f)) {
+                    if (found->hit == 0 && !scriptPeopleInsideCheck(&heroPos, &personPos, 4.0f, &found->position)) {
                         peopleWalkTo(followerGroup, followerResource, 1, &found->position);
                         reached = _peopleMoveCheckTime(0, hero->getFollowerResID(), 3.0f);
                     }
@@ -204,9 +204,9 @@ u8 scriptHizukiAway(u32 group, u32 resource) {
     qsort(infos, 8, sizeof(PeopleRangeInfo_t), _fnDistanceSortFunc);
     for (i = 0; i < 8; ++i) {
         if (infos[i].hit == 1) continue;
-        if (!scriptPeopleInsideCheck(&followerPos, &infos[i].position, &heroPos, 4.0f) &&
+        if (!scriptPeopleInsideCheck(&followerPos, &infos[i].position, 4.0f, &heroPos) &&
             !_checkCrossPeople(&heroPos, &personPos, &followerPos, &infos[i].position) &&
-            !scriptPeopleInsideCheck(&heroPos, &personPos, &infos[i].position, 4.0f)) {
+            !scriptPeopleInsideCheck(&heroPos, &personPos, 4.0f, &infos[i].position)) {
             peopleInitEvent(followerGroup, followerResource);
             peopleWalkTo(followerGroup, followerResource, 1, &infos[i].position);
             if (!_peopleMoveCheckTime(0, hero->getFollowerResID(), 3.0f)) {
@@ -221,7 +221,7 @@ u8 scriptHizukiAway(u32 group, u32 resource) {
     return 0;
 }
 
-u8 scriptPeopleInsideCheck(GSvec* from, GSvec* to, GSvec* point, f32 radius) {
+u8 scriptPeopleInsideCheck(GSvec* from, GSvec* to, f32 radius, GSvec* point) {
     GSvec target;
     GSvec middle;
     target.param1 = point->param1;
@@ -244,14 +244,14 @@ static s32 _fnDistanceSortFunc(const void* a, const void* b) {
 }
 
 static u8 _checkCrossPeople(GSvec* a, GSvec* b, GSvec* c, GSvec* d) {
-    GSvec p2;
-    GSvec p1;
-    GSvec p0;
-    GSvec v2;
-    GSvec v1;
+    GSvec points[3];
+    GSvec &p0 = points[0], &p1 = points[1], &p2 = points[2];
+    GSvec vectors[2];
+    GSvec &v1 = vectors[0];
     GSvec out;
     GSvec v3;
     f32 t;
+    GSvec* pp2 = &p2;
     p0.param1 = a->param1;
     p0.param2 = a->param2;
     p0.param3 = a->param3;
@@ -264,8 +264,7 @@ static u8 _checkCrossPeople(GSvec* a, GSvec* b, GSvec* c, GSvec* d) {
     p2.param2 = 1.0f;
     PSVECSubtract(&p0, &p1, &v1);
     PSVECNormalize(&v1, &v1);
-    GSvec* pv2 = &v2;
-    GSvec* pp2 = &p2;
+    GSvec* pv2 = &vectors[1];
     PSVECSubtract(&p0, pp2, pv2);
     PSVECNormalize(pv2, pv2);
     PSVECCrossProduct(&v1, pv2, &v3);

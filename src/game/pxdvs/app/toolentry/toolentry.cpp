@@ -396,7 +396,8 @@ void toolentryDebugPokemonDelete() {
 static long _toolentryTrainerFaceIDGet(unsigned long id) {
     long i;
     for (i = 0; i < *trainer_face_data_number; i++) {
-        if (trainer_face_data[i].trainerId == (u16)id) {
+        u16 trainerId = trainer_face_data[i].trainerId;
+        if (trainerId == (u16)id) {
             return i;
         }
     }

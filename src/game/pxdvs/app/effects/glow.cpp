@@ -130,13 +130,14 @@ void glowEffect::_render(GSgfxLayer *arg1, GSgfxLayerPass arg2) {
             }
             arg1->unk1998 = 0x80;
             temp_r0 = mode;
-            if ((s32) temp_r0 != 1) {
-                if ((s32) temp_r0 < 1) {
-
-                }
-                _renderOffset(arg1);
-            } else {
+            switch (temp_r0) {
+            case 1:
                 _renderScale(arg1);
+                break;
+            case 0:
+            default:
+                _renderOffset(arg1);
+                break;
             }
             token = arg1->tokenMark();
         }

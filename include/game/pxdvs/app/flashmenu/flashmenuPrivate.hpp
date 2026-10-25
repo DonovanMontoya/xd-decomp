@@ -37,7 +37,7 @@ struct FlashHeader {
 };
 
 struct FlashItem {
-    s16 frame;
+    u16 frame;
     u8 reserved2[2];
     FLASHMATRIX matrix;
     f32 depth;
@@ -50,7 +50,8 @@ struct FlashItem {
 };
 
 struct FlashLayer {
-    u32 reserved0;
+    u16 reserved0;
+    u16 reserved2;
     FlashItem *items;
 };
 
@@ -60,6 +61,12 @@ struct FlashMenuLabel {
     char *name;
     FlashMenuLabel *next;
     FlashMenuLabel() : name(0), next(0) {}
+};
+
+struct FlashDataPointer {
+    u8 type;
+    u8 padding[3];
+    void *data;
 };
 
 struct FlashMenuTextureSlot {
@@ -88,7 +95,7 @@ public:
     u32 endFrame;
     u32 totalFrames;
     u32 field34;
-    void *memory;
+    FlashDataPointer *memory;
     FlashItem *items;
     FlashLayer *layers;
     u32 playFrame;

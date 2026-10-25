@@ -95,13 +95,7 @@ NullSequence* New_NullSequence();
 
 extern Sequence* g_Sequences;
 extern WazaSequence* g_LastStartedWaza;
-extern u32 g_SleepParticle;
-extern u32 g_IceParticle;
-extern s32 _resource_id_count;
 extern s8 g_EnableModelLayerChange;
-extern u32 _modelShadowLight;
-extern s32 _modelShadowCount;
-extern u32 _modelShadowList[];
 extern u32 waza_resource_data[];
 struct PokemonWazaEntry {
     u8 variant;
@@ -157,7 +151,7 @@ void GSsndUpdateListenerParam(u32, GSvec*, GSvec*, GSvec*);
 f32 GSgfxVideoGetLastRenderTime(u8);
 u32 GSgfxVideoGetVsyncRate();
 s32 floorDataBiosGetCurrentPtr();
-s32 floorDataBiosGetGroupID();
+u32 floorDataBiosGetGroupID(s32);
 u8 floorDataBiosGetFloorKind(s32);
 u32 floorDataBiosGetShadowReciveNum(s32);
 s32 floorDataBiosGetShadowReciveID(s32, u32);

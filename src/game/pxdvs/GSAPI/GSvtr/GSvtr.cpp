@@ -96,8 +96,8 @@ struct GSgfxLayer {
 extern "C" {
 GSgfxLayer* GSgfxLayerFindByID(u32);
 void GSprimSetup2DRender__FP10GSgfxLayer(GSgfxLayer*);
-void GSprimDraw2DQuad(const void*,f32,f32,f32,f32);
-void GSprimDraw2DTexQuad(void*,const void*,f32,f32,f32,f32);
+void GSprimDraw2DQuad(f32,f32,f32,f32,const void*);
+void GSprimDraw2DTexQuad(f32,f32,f32,f32,void*,const void*);
 void GSprint(s32,s32,s32,s32,const char*,...);
 }
 static void _vtrTexDispFunc() {
@@ -113,8 +113,8 @@ static void _vtrTexDispFunc() {
         if(layer->shaderIndex!=1) { layer->shaderIndex=1; layer->shader=&layer->shaders[layer->shaderIndex]; }
         layer->blendMode=1; layer->blendSource=1; layer->blendDestination=0; layer->blendLogic=5;
         layer->pixelDirty|=1; layer->dirty|=0x40; layer->savedPixelDirty|=1; layer->savedDirty|=0x40;
-        if(_vtrTexDispBorder) { Color c=border; GSprimDraw2DQuad(&c,6,24,634,68); }
-        Color c=color; GSprimDraw2DTexQuad(_vtrTex,&c,12,28,628,64);
+        if(_vtrTexDispBorder) { Color c=border; GSprimDraw2DQuad(6,24,634,68,&c); }
+        Color c=color; GSprimDraw2DTexQuad(12,28,628,64,_vtrTex,&c);
         switch(_vtrState) {
         case 0: GSprint(layer->id,560,44,-1,"???"); break;
         case 1: GSprint(layer->id,560,44,-1,"Pause"); break;

@@ -25,7 +25,7 @@ static inline void appearPokemon(u16 area,u16 id){u32 trainer;Pokemon pokemon;GS
 
 void esabaSetPokemon(u16 area,u16 id){if(id==0){GSflagSet(esabadata[area].pokemonFlag,0);GSflagSet(esabadata[area].appFlag,0);return;}appearPokemon(area,id);}
 u16 esabaGetPokemonMax(u16 area){EsaList *list=getList(area);if(list)return *list->count;return 0;}
-s32 esabaGetDigestRate(u16 area){u32 station=area;u16 id=GSflagGet(esabadata[station].pokemonFlag);if(id==esabapokemondata_EX[0].id)return esabapokemondata_EX[0].digest;if(id==esabapokemondata_EX[1].id)return esabapokemondata_EX[1].digest;u16 count=esabaGetPokemonMax(station);s32 index;for(index=0;index<count;index++){if(listPokemon(station,index)==GSflagGet(esabadata[station].pokemonFlag))goto found;}index=0;found:return listDigest(station,index);}
+s32 esabaGetDigestRate(u16 area){u16 station=area;u16 id=GSflagGet(esabadata[station].pokemonFlag);if(id==esabapokemondata_EX[0].id)return esabapokemondata_EX[0].digest;if(id==esabapokemondata_EX[1].id)return esabapokemondata_EX[1].digest;u16 count=esabaGetPokemonMax(area);s32 index;for(index=0;index<count;index++){if(listPokemon(station,index)==GSflagGet(esabadata[station].pokemonFlag))goto found;}index=0;found:return listDigest(station,index);}
 
 s32 esabaGetEsaItemNum(){return itemQuantity__4HeroFUs(getHeroPtr__4HeroFv(),0x1FF);}
 static inline void esabaAdjustAmount(s32 area, s32 delta) {

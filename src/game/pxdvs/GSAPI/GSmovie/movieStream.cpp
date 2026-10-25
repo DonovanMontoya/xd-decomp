@@ -116,7 +116,8 @@ static s32 _VideoDecode(__GSmovieStreaming* movie,THPReadBuffer* read,THPTexture
             break;
         default: break;
         }
-        data+=*sizes++;
+        data+=*sizes;
+        sizes++;
     }
     if(movie->reading==1) { movie->ready=1; movie->reading=0; }
     return remaining;

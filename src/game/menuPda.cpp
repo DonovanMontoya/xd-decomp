@@ -710,11 +710,11 @@ static s32 _SelectCursorPositionCheck(void) {
                 step = -0.2f;
             }
         }
-        f32 aStep = __fabs(step);
+        double aStep = __fabs(step);
         f32 t2 = _menuPdaStatus.unk60;
         f32 n = _menuPdaStatus.unk5C + step;
         _menuPdaStatus.unk5C = n;
-        if ((f32)__fabs(t2 - n) < aStep) {
+        if ((f32)__fabs(t2 - n) < (f32)aStep) {
             _menuPdaStatus.unk5C = t2;
             _menuPdaStatus.unk64 = 0.0f;
             ret = 1;
@@ -854,6 +854,7 @@ extern "C" s32 menuPdaCursorCtrl(tagWINDOW_WORK *win) {
     stepY = 0xC;
     key = windowGetKeyRepeat();
     left = key & 1;
+    PdaStatus *status = &_menuPdaStatus;
     right = key & 2;
     for (;;) {
         count = 0;
@@ -870,10 +871,10 @@ extern "C" s32 menuPdaCursorCtrl(tagWINDOW_WORK *win) {
             }
             if (win->pos.selected > 0) {
                 win->pos.selected--;
-                _menuPdaStatus.unk68 = 0;
+                status->unk68 = 0;
             } else {
                 win->pos.selected = count - 1;
-                _menuPdaStatus.unk68 = 1;
+                status->unk68 = 1;
             }
         } else if (right != 0) {
             for (;;) {
@@ -887,10 +888,10 @@ extern "C" s32 menuPdaCursorCtrl(tagWINDOW_WORK *win) {
             }
             if (win->pos.selected < count - 1) {
                 win->pos.selected++;
-                _menuPdaStatus.unk68 = 0;
+                status->unk68 = 0;
             } else {
                 win->pos.selected = 0;
-                _menuPdaStatus.unk68 = 1;
+                status->unk68 = 1;
             }
         }
         if (win->prevSelected == win->pos.selected) {

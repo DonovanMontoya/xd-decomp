@@ -123,8 +123,8 @@ void dbgMenuFlagInfoDraw(DbgMenuWindow* window) {
 }
 
 void dbgMenuFlagInfoCursor(DbgMenuWindow* window) {
-    u16 trigger = windowGetKeyInfo()->trigger;
-    u16 hold = windowGetKeyInfo()->hold;
+    u16 trigger = (u32)windowGetKeyInfo()->trigger;
+    u16 hold = (u32)windowGetKeyInfo()->hold;
     s16 total = flag_data_number->count;
     s16 dispMax;
     DbgFlagCursor cursor;
@@ -142,21 +142,19 @@ void dbgMenuFlagInfoCursor(DbgMenuWindow* window) {
     if (trigger & 4) {
         cursor.sel -= menuDataBiosGetDispMax(window->menu) - 1;
     } else if (trigger & 8) {
-        cursor.sel = menuDataBiosGetDispMax(window->menu) + cursor.sel - 1;
+        cursor.sel += menuDataBiosGetDispMax(window->menu) - 1;
     }
     if (cursor.sel < 0) {
-        cursor.sel = 0;
         cursor.base += cursor.sel;
-        cursor.base = cursor.base;
+        cursor.sel = 0;
         if (cursor.base < 0) {
-            cursor.sel = dispMax - 1;
-            cursor.base = total - dispMax;
+            cursor.sel = (s16)(dispMax - 1);
+            cursor.base = (s16)(total - dispMax);
         }
     } else if (cursor.sel >= dispMax) {
-        s16 last = dispMax - 1;
-        cursor.base += cursor.sel - last;
-        cursor.sel = last;
-        if (cursor.base + last >= total) {
+        cursor.base += cursor.sel - (dispMax - 1);
+        cursor.sel = (s16)(dispMax - 1);
+        if (cursor.base + cursor.sel >= total) {
             cursor.base = 0;
             cursor.sel = 0;
         }
@@ -199,8 +197,8 @@ static u16 _dbgMenuFlagGetID(s32 index) {
 }
 
 void dbgMenuFlagCursor(DbgMenuWindow* window) {
-    u16 trigger = windowGetKeyInfo()->trigger;
-    s8 total = _dbgMenuFlagGetMenuNum(window, 0);
+    u16 trigger = (u32)windowGetKeyInfo()->trigger;
+    s32 total = _dbgMenuFlagGetMenuNum(window, 0);
     s8 dispMax;
     DbgFlagCursor cursor;
 
@@ -217,26 +215,25 @@ void dbgMenuFlagCursor(DbgMenuWindow* window) {
     if (trigger & 4) {
         cursor.sel -= dispMax - 1;
     } else if (trigger & 8) {
-        cursor.sel = dispMax + cursor.sel - 1;
+        cursor.sel += dispMax - 1;
     }
     if (cursor.sel < 0) {
-        cursor.sel = 0;
         cursor.base += cursor.sel;
+        cursor.sel = 0;
         if (cursor.base < 0) {
-            cursor.sel = dispMax - 1;
-            cursor.base = total - dispMax;
+            cursor.sel = (s8)(dispMax - 1);
+            cursor.base = (s8)(total - dispMax);
         }
     } else if (cursor.sel >= dispMax) {
-        s8 last = dispMax - 1;
-        cursor.base += cursor.sel - last;
-        cursor.sel = last;
-        if (cursor.base + last >= total) {
+        cursor.base += cursor.sel - (dispMax - 1);
+        cursor.sel = (s8)(dispMax - 1);
+        if (cursor.base + cursor.sel >= total) {
             cursor.base = 0;
             cursor.sel = 0;
         }
     }
     window->cursor = cursor;
-    window->result = cursor.base + (cursor.sel + 1);
+    window->result = cursor.base + cursor.sel + 1;
 }
 
 s32 dbgMenuFlagCheck(void) {

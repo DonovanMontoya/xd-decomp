@@ -550,63 +550,31 @@ void peShapeNode::Start(peEmitterNode* emitter,_peShape* shape,_EmitParams* para
     if(flags&0x20000)angularSpeed.z*=HSD_Randf();
 }
 
+struct ShapeColor {u8 r,g,b,a;};
+static inline void shapeSetKColor(ShapeColor color) {
+    ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+    state->unk14F4=*(u32*)&color;
+    state->unk16F8|=1;state->unk16A8|=0x10;
+    state->unk17B0|=1;state->unk1760|=0x10;
+}
+static inline void shapeSetChannelColor(u8 channel,ShapeColor ambient,ShapeColor material) {
+    ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+    ((u32*)&state->unkE9C)[channel]=*(u32*)&ambient;
+    ((u32*)&state->unkEA4)[channel]=*(u32*)&material;
+    u32 bit=1<<channel;
+    state->unk16C4|=bit;state->unk16C8|=bit;state->unk16A8|=4;
+    state->unk177C|=bit;state->unk1780|=bit;state->unk1760|=4;
+}
 void peShapeNode::Render(_peShape* shape) {
     Mtx sp50;
     Mtx sp20;
-    s32 sp1C;
-    s32 sp18;
-    s32 sp14;
-    s32 sp10;
-    s32 spC;
-    s32 sp8;
-    s32 temp_r31;
-    s32 temp_r3;
-    s32 temp_r4;
-    s32 temp_r4_2;
-    s32 temp_r5;
+    u32 temp_r31=shape->flags;
     u32 temp_r0;
-
-    temp_r31 = shape->flags;
-    temp_r4 = color;
-    sp1C = 0;
-    { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-    state->unk14F4 = temp_r4;
-    sp18 = temp_r4;
-    state->unk16F8 = (s32) (state->unk16F8 | 1);
-    state->unk16A8 = (s32) (state->unk16A8 | 0x10);
-    state->unk17B0 = (s32) (state->unk17B0 | 1);
-    state->unk1760 = (s32) (state->unk1760 | 0x10);
-    }
-    if (temp_r31 & 0x200) {
-        temp_r5 = color;
-        temp_r4_2 = shape->ambient;
-        sp10 = temp_r5;
-        { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-        state->unkE9C = temp_r4_2;
-        state->unkEA4 = temp_r5;
-        sp14 = temp_r4_2;
-        state->unk16C4 = (s32) (state->unk16C4 | 1);
-        state->unk16C8 = (s32) (state->unk16C8 | 1);
-        state->unk16A8 = (s32) (state->unk16A8 | 4);
-        state->unk177C = (s32) (state->unk177C | 1);
-        state->unk1780 = (s32) (state->unk1780 | 1);
-        state->unk1760 = (s32) (state->unk1760 | 4);
-        }
-        if (temp_r31 & 0x400) {
-            temp_r3 = color;
-            sp8 = temp_r3;
-            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-            state->unkEA0 = (s32) 0;
-            state->unkEA8 = temp_r3;
-            spC = 0;
-            state->unk16C4 = (s32) (state->unk16C4 | 2);
-            state->unk16C8 = (s32) (state->unk16C8 | 2);
-            state->unk16A8 = (s32) (state->unk16A8 | 4);
-            state->unk177C = (s32) (state->unk177C | 2);
-            state->unk1780 = (s32) (state->unk1780 | 2);
-            state->unk1760 = (s32) (state->unk1760 | 4);
-            }
-        }
+    ShapeColor black={0,0,0,0};
+    shapeSetKColor(*(ShapeColor*)&color);
+    if(temp_r31&0x200) {
+        shapeSetChannelColor(0,*(ShapeColor*)&shape->ambient,*(ShapeColor*)&color);
+        if(temp_r31&0x400)shapeSetChannelColor(1,black,*(ShapeColor*)&color);
     }
     PSMTXQuat(sp20, &worldRotation);
     PSMTXScale(sp50, worldScale.x, worldScale.y, worldScale.z);

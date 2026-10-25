@@ -28,16 +28,15 @@ void WS_TOKUSEI_SET(void) {
 }
 
 void WS_SUBROUTINE_CALL(void) {
-    u16 move;
+    u16 id;
     FightOutPokemon* pokemon;
+    FightOutPokemon* target;
+    u16 move;
+    FightOutPokemon* out;
+    FIGHT_TRAINER* trainer;
     u8* seq;
     u8 type;
-    FightOutPokemon* defender;
-    FightOutPokemon* target;
     FightPokemon* expPokemon;
-    FIGHT_TRAINER* trainer;
-    FightOutPokemon* out;
-    u16 id;
     type = fightFloor_GetFightType(0);
     seq = fightSeq_GetWazaSeq();
     pokemon = fightTargetGetPtrAsNowFightType(seq[1], 0);
@@ -48,9 +47,9 @@ void WS_SUBROUTINE_CALL(void) {
         break;
     case 1: {
         fightTargetGetPtrAsNowFightType(0x11, 0);
-        defender = fightTargetGetPtrAsNowFightType(0x12, 0);
-        fightFloor_SetAttackPokemonPtr(0, defender);
-        target = fightSeqGetEnemyFightSideKonoyubitomareFightOutPokemonPtr(defender);
+        out = fightTargetGetPtrAsNowFightType(0x12, 0);
+        fightFloor_SetAttackPokemonPtr(0, out);
+        target = fightSeqGetEnemyFightSideKonoyubitomareFightOutPokemonPtr(out);
         if (target == 0) target = pokemon;
         fightFloor_SetDefPokemonAndAtkFightWazaTargetId(0, target);
         break;
@@ -71,8 +70,7 @@ void WS_SUBROUTINE_CALL(void) {
         }
         break;
     case 6: {
-        expPokemon = get_exp_fight_pokemon_ptr;
-        if (expPokemon != 0) {
+        if ((expPokemon = get_exp_fight_pokemon_ptr) != 0) {
             trainer = fightFloorGetFightPokemonPtrToFightTrainerPtr(0, expPokemon);
             if (trainer != 0) {
                 out = fightTrainerCheckFightPokemonFightOut(trainer, expPokemon);

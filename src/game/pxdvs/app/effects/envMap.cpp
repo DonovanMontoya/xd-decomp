@@ -1,7 +1,7 @@
 #include <game/pxdvs/app/wazaSequence/wazaeffectsPrivate.hpp>
 #include <game/pxdvs/GSAPI/GSmodel/GSmodel.hpp>
 
-void Stop__8GSeffectFv(GSeffect*);
+extern "C" void Stop__8GSeffectFv(GSeffect*);
 
 bool envMapEffect::_start() {
     if (model == 0) return false;

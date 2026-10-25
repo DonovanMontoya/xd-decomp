@@ -98,7 +98,7 @@ void Sequence_SetVisibility(u32, s32);
 void WazaSequence_Start(u32, u32);
 u8 WazaSequence_IsActive(u32);
 void WazaSequence_Free(u32);
-void* GSresGetResourceAllGroup(u32, u32);
+void* GSresGetResourceAllGroup(u32);
 void GSmodelSetForceUseFractionalFramesFlag(void*, u32);
 void GSmodelSetSkipFractionalFramesFlag(void*, u32);
 void GSmodelSetAnimType(void*, u32);

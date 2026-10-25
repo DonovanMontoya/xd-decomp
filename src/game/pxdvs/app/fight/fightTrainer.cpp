@@ -451,7 +451,7 @@ struct FightTrainerData;
 struct FightTarget;
 struct FightActionData;
 extern "C" {
-FightEncountData* fightEncountDataBiosGetPtr(u32);
+FightEncountData* fightEncountDataBiosGetPtr(u16);
 u32 fightEncountDataBiosGetFightKind(FightEncountData*);
 FightKindData* fightKindDataBiosGetPtr(u8);
 u8 fightKindDataBiosGetHostEnemyMsgFlag(FightKindData*);
@@ -478,7 +478,7 @@ void GSthreadSwitch();
 u32 pokemon_GetCatchBallId(Pokemon*);
 u32 itemBallDB_GetThrowWzxDataId(u8);
 
-void fightTrainerSetNameHearFlag(u32 encounterId) {
+void fightTrainerSetNameHearFlag(u16 encounterId) {
     FightEncountData* encounter = fightEncountDataBiosGetPtr(encounterId);
     FightKindData* kind = fightKindDataBiosGetPtr(fightEncountDataBiosGetFightKind(encounter));
     if (kind != nullptr && fightKindDataBiosGetHostEnemyMsgFlag(kind)) {
@@ -1215,8 +1215,8 @@ void pokemon_SetCatchTrainerRnd(Pokemon*, u32);
 void pokemon_SetLevel(Pokemon*, u32);
 void pokemon_SetExp(Pokemon*, u32);
 u32 pokemonGetLevelToExp(Pokemon*, u32);
-u32 fightGetFightEncountDataId();
-u32 fightEncountDataBiosGetDiskId(FightEncountData*);
+u16 fightGetFightEncountDataId();
+u16 fightEncountDataBiosGetDiskId(FightEncountData*);
 u32 fightTrainerDB_GetSexDataId(u16);
 u32 savedataGetStatus(u32, u32);
 s32 heroItemAddItemDataId(Hero*, u32, u8, s32);
@@ -1374,39 +1374,57 @@ u32 deckDataVirtualDB_GetPokemonNum(u16);
 u8 _fightTrainerCreateDeckPokemon(Hero*, u16, u16, u16, Pokemon*, u8, u16);
 
 void _fightTrainerCreateDeckNormal(u16 trainerId, Hero* hero, u16 encounterId) {
-    u8 caught = 0;
-    FIGHT_ENCOUNT* encounter = fightEncountGetStrObj();
-    u8 swapMode = encounter->getSwapMode();
-    u16 swapDeck = encounter->getSwapDeckNO();
-    for (u8 i = 0; i < 6; i++) {
+    u16 deck;
+    u8 j;
+    u8 caught;
+    u16 darkId;
+    u16 ball;
+    u32 swapDeck;
+    u8 swapMode;
+    DarkPokemon* dark;
+    Pokemon pokemon;
+    u8 i;
+    u16 dataId;
+    FIGHT_ENCOUNT* encounter;
+    caught = 0;
+    encounter = fightEncountGetStrObj();
+    swapMode = encounter->getSwapMode();
+    swapDeck = encounter->getSwapDeckNO();
+    for (i = 0; i < 6; i++) {
         fightTrainerDB_GetTemotiPokemonId(trainerId, i);
-        DarkPokemon* dark = darkPokemonGetDarkPokemon(static_cast<u16>(DeckTrainer::getDeckTrainerObj(trainerId)->getDarkPokemonDataID(i)));
+        dark = darkPokemonGetDarkPokemon(static_cast<u16>(DeckTrainer::getDeckTrainerObj(trainerId)->getDarkPokemonDataID(i)));
         if (dark != nullptr && dark->getStatus() >= 2) {
             caught = 1;
             break;
         }
     }
-    Pokemon pokemon;
-    for (u8 i = 0; ; i++) {
-        u16 dataId;
-        u16 darkId;
+    deck = swapDeck;
+    for (j = 0; ; j++) {
         if (swapMode == 2 && caught == 1) {
-            dataId = fightTrainerDB_GetTemotiPokemonId(static_cast<u16>(swapDeck), i);
-            darkId = DeckTrainer::getDeckTrainerObj(static_cast<u16>(swapDeck))->getDarkPokemonDataID(i);
+            dataId = fightTrainerDB_GetTemotiPokemonId(deck, j);
+            darkId = DeckTrainer::getDeckTrainerObj(deck)->getDarkPokemonDataID(j);
         } else {
-            dataId = fightTrainerDB_GetTemotiPokemonId(trainerId, i);
-            darkId = DeckTrainer::getDeckTrainerObj(trainerId)->getDarkPokemonDataID(i);
+            dataId = fightTrainerDB_GetTemotiPokemonId(trainerId, j);
+            darkId = DeckTrainer::getDeckTrainerObj(trainerId)->getDarkPokemonDataID(j);
         }
-        u16 ball = fightTrainerPokemonDB_GetItemBallId(dataId);
-        if (!_fightTrainerCreateDeckPokemon(hero, dataId, darkId, ball, &pokemon, i, encounterId)) break;
+        ball = fightTrainerPokemonDB_GetItemBallId(dataId);
+        if (!_fightTrainerCreateDeckPokemon(hero, dataId, darkId, ball, &pokemon, j, encounterId)) break;
     }
 }
 
 void _fightTrainerCreateDeckVirtual(u16 trainerId, Hero* hero, u16 encounterId) {
+    u32 deck;
+    Pokemon pokemon;
+    u8 i;
+    u16 id;
+    u16 dataId;
+    u16 ball;
+    FightEncountData* encounter;
+    u16 darkId;
+    u16 disk;
     if (encounterId == 0) encounterId = fightGetFightEncountDataId();
-    FightEncountData* encounter = fightEncountDataBiosGetPtr(encounterId);
-    u16 disk = fightEncountDataBiosGetDiskId(encounter);
-    u16 deck;
+    encounter = fightEncountDataBiosGetPtr(encounterId);
+    disk = fightEncountDataBiosGetDiskId(encounter);
     if (_fightTrainerGetHeroKind(trainerId) == 0) {
         deck = deckDataVirtualDB_GetAllyDeck(disk);
         fightEncountDataBiosSetFightTrainerDataId(encounter, 0, deck);
@@ -1415,11 +1433,11 @@ void _fightTrainerCreateDeckVirtual(u16 trainerId, Hero* hero, u16 encounterId) 
         fightEncountDataBiosSetFightTrainerDataId(encounter, 1, deck);
     }
     fightEncountDataBiosSetPokemon(encounter, deckDataVirtualDB_GetPokemonNum(disk));
-    Pokemon pokemon;
-    for (u8 i = 0; ; i++) {
-        u16 dataId = fightTrainerDB_GetTemotiPokemonId(deck, i);
-        u16 darkId = DeckTrainer::getDeckTrainerObj(static_cast<u16>(deck))->getDarkPokemonDataID(i);
-        u16 ball = fightTrainerPokemonDB_GetItemBallId(dataId);
+    id = deck;
+    for (i = 0; ; i++) {
+        dataId = fightTrainerDB_GetTemotiPokemonId(id, i);
+        darkId = DeckTrainer::getDeckTrainerObj(id)->getDarkPokemonDataID(i);
+        ball = fightTrainerPokemonDB_GetItemBallId(dataId);
         if (!_fightTrainerCreateDeckPokemon(hero, dataId, darkId, ball, &pokemon, i, encounterId)) break;
     }
 }

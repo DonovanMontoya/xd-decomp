@@ -47,23 +47,31 @@ void GsShapeObject::SetVertexColorSpecify(const tagGScol4ub& value,bool) {
     }
 }
 void GsShapeObject::SetVertexColorAlpha(int mode,int shape,f32 alpha,bool) {
-    tagGScol4ub* out=(tagGScol4ub*)vertexArrays[1];
-    if(!out) return;
-    const tagGScol4ub* colors=entry->colors;
-    int columns=entry->segmentsU+1,rows=entry->segmentsV+1;
+    void* array=vertexArrays[1];
+    if(!array) return;
+    int column;
+    int row;
+    int columns;
+    int rows;
+    const tagGScol4ub* colors;
+    tagGScol4ub* out;
+    columns=entry->segmentsU+1;
+    rows=entry->segmentsV+1;
+    colors=entry->colors;
+    out=(tagGScol4ub*)array;
     if(mode==0) {
         if(shape!=5) {
             u8 value=255.0f*alpha;
-            for(int row=0;row<rows;row++) {
-                for(int column=0;column<columns;column++) {
+            for(row=0;row<rows;row++) {
+                for(column=0;column<columns;column++) {
                     out->r=colors->r; out->g=colors->g; out->b=colors->b; out->a=value;
                     colors++; out++;
                 }
             }
             return;
         }
-        for(int row=0;row<rows;row++) {
-            for(int column=0;column<columns;column++) {
+        for(row=0;row<rows;row++) {
+            for(column=0;column<columns;column++) {
                 out->r=colors->r*alpha; out->g=colors->g*alpha; out->b=colors->b*alpha; out->a=255;
                 colors++; out++;
             }
@@ -71,16 +79,16 @@ void GsShapeObject::SetVertexColorAlpha(int mode,int shape,f32 alpha,bool) {
         return;
     }
     if(shape!=5) {
-        for(int row=0;row<rows;row++) {
-            for(int column=0;column<columns;column++) {
+        for(row=0;row<rows;row++) {
+            for(column=0;column<columns;column++) {
                 out->r=colors->r; out->g=colors->g; out->b=colors->b; out->a=colors->a*alpha;
                 colors++; out++;
             }
         }
         return;
     }
-    for(int row=0;row<rows;row++) {
-        for(int column=0;column<columns;column++) {
+    for(row=0;row<rows;row++) {
+        for(column=0;column<columns;column++) {
             u8 value=colors->a;
             f32 factor=(value/255.0f)*alpha;
             out->r=colors->r*factor; out->g=colors->g*factor; out->b=colors->b*factor; out->a=value;
@@ -89,39 +97,31 @@ void GsShapeObject::SetVertexColorAlpha(int mode,int shape,f32 alpha,bool) {
     }
 }
 void GsShapeObject::SetVertexColorGradation(u8 axis,const tagGScol4ub* colors,int shape,f32 alpha,bool) {
-    tagGScol4ub* out=(tagGScol4ub*)vertexArrays[1];
-    if(!out) return;
+    void* array=vertexArrays[1];
+    if(!array) return;
+    tagGScol4ub* out=(tagGScol4ub*)array;
     int columns=entry->segmentsU+1,rows=entry->segmentsV+1;
     if(shape==2 || shape==4) {
-        const tagGScol4ub* rowColor=colors;
-        for(int row=0;row<rows;row++,rowColor++) {
+        for(int row=0;row<rows;row++) {
             const tagGScol4ub* columnColor=colors;
-            if(axis==0) {
-                for(int column=0;column<columns;column++,columnColor++,out++) {
-                    out->r=columnColor->r; out->g=columnColor->g; out->b=columnColor->b; out->a=alpha*columnColor->a;
-                }
-            } else {
-                for(int column=0;column<columns;column++,out++) {
-                    out->r=rowColor->r; out->g=rowColor->g; out->b=rowColor->b; out->a=alpha*rowColor->a;
-                }
+            for(int column=0;column<columns;column++,columnColor++,out++) {
+                if(axis==0) { out->r=columnColor->r; out->g=columnColor->g; out->b=columnColor->b; out->a=alpha*columnColor->a; }
+                else { out->r=colors[row].r; out->g=colors[row].g; out->b=colors[row].b; out->a=alpha*colors[row].a; }
             }
         }
         return;
     }
-    const tagGScol4ub* rowColor=colors;
-    for(int row=0;row<rows;row++,rowColor++) {
+    for(int row=0;row<rows;row++) {
         const tagGScol4ub* columnColor=colors;
-        if(axis==0) {
-            for(int column=0;column<columns;column++,columnColor++,out++) {
+        for(int column=0;column<columns;column++,columnColor++,out++) {
+            if(axis==0) {
                 out->r=alpha*(columnColor->r*(columnColor->a/255.0f));
                 out->g=alpha*(columnColor->g*(columnColor->a/255.0f));
                 out->b=alpha*(columnColor->b*(columnColor->a/255.0f)); out->a=columnColor->a;
-            }
-        } else {
-            for(int column=0;column<columns;column++,out++) {
-                out->r=alpha*(rowColor->r*(rowColor->a/255.0f));
-                out->g=alpha*(rowColor->g*(rowColor->a/255.0f));
-                out->b=alpha*(rowColor->b*(rowColor->a/255.0f)); out->a=rowColor->a;
+            } else {
+                out->r=alpha*(colors[row].r*(colors[row].a/255.0f));
+                out->g=alpha*(colors[row].g*(colors[row].a/255.0f));
+                out->b=alpha*(colors[row].b*(colors[row].a/255.0f)); out->a=colors[row].a;
             }
         }
     }
@@ -721,12 +721,11 @@ extern "C" void CallDisplayListShape__13GsShapeObjectFP10GSgfxLayersUc(GsShapeOb
 }
 
 #pragma dont_inline off
-static inline u32 &shapeStateWord(GSgfxLayer *layer,u32 offset) { return *(u32*)((u8*)layer+offset); }
 static inline void shapeKColorSelect(GSgfxLayer *layer,u8 stage,u32 value) {
- shapeStateWord(layer,0x1504+stage*4)=value;shapeStateWord(layer,0x16fc)|=1<<stage;layer->dirty|=0x10;shapeStateWord(layer,0x17b4)|=1<<stage;layer->savedDirty|=0x10;
+ layer->konstColors[stage]=value;layer->konstColorDirty|=1<<stage;layer->dirty|=0x10;layer->savedKonstColorDirty|=1<<stage;layer->savedDirty|=0x10;
 }
 static inline void shapeKAlphaSelect(GSgfxLayer *layer,u8 stage,u32 value) {
- shapeStateWord(layer,0x1544+stage*4)=value;shapeStateWord(layer,0x1700)|=1<<stage;layer->dirty|=0x10;shapeStateWord(layer,0x17b8)|=1<<stage;layer->savedDirty|=0x10;
+ layer->konstAlphas[stage]=value;layer->konstAlphaDirty|=1<<stage;layer->dirty|=0x10;layer->savedKonstAlphaDirty|=1<<stage;layer->savedDirty|=0x10;
 }
 #pragma dont_inline on
 extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(GsShapeObject *self,GSgfxLayer *layer,GsShapeTexture *textures,GStexture *refract) {
@@ -734,27 +733,35 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
  u8 stage=0,textureIndex=0,count=self->entry->textureCount;
  int var_r5_2,var_r5_3,var_r5_4,var_r5_5,var_r6_2,var_r6_3,var_r6_4,var_r7,var_r7_2,var_r7_3,var_r8,var_r8_10,var_r8_11,var_r8_12,var_r8_13,var_r8_14,var_r8_2,var_r8_3,var_r8_4,var_r8_5,var_r8_6,var_r8_7,var_r8_8,var_r8_9;
  while(textureIndex<count) {
+  u32 index=textureIndex;
   ShapeTextureBinding *binding=(ShapeTextureBinding*)self->entry->textures[textureIndex];
   GsShapeTexture *texture=&textures[binding->index];
-  GStextureSetFilter(texture->texture,binding->minFilter?2:1,binding->magFilter?2:1,binding->minFilter?2:1);
+  int filter, minFilter, magFilter;
+  filter=1;
+  if(binding->minFilter) filter=2;
+  magFilter=1;
+  if(binding->magFilter) magFilter=2;
+  minFilter=1;
+  if(binding->minFilter) minFilter=2;
+  GStextureSetFilter(texture->texture,minFilter,magFilter,filter);
   GStextureSetWrap(texture->texture,binding->wrapS,binding->wrapT);
   GStexture *selected=texture->texture;if(textureIndex==0&&refract)selected=refract;
   if(self->entry->shapeType==10&&textureIndex==0&&self->entry->textureCount>=2) {
-   layer->texSelect(textureIndex,selected);
-   layer->tunitMapping(stage,textureIndex,textureIndex,0);
+   layer->texSelect(index,selected);
+   layer->tunitMapping(stage,index,index,0);
    layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15);
    layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
    layer->tunitAlphaArg(stage,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7);
    layer->tunitAlphaOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
-   u8 next=stage+1;
-   layer->tunitMapping(next,textureIndex,textureIndex,0);
+   int next=stage+1;
+   layer->tunitMapping(next,index,index,0);
    layer->tunitColorArg(next,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15);
    layer->tunitColorOp(next,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
    layer->tunitAlphaArg(next,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7);
    layer->tunitAlphaOp(next,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
    stage+=2;
    if(texture->entry->colorRange==1) {
-    layer->tunitMapping(stage,textureIndex,textureIndex,0);
+    layer->tunitMapping(stage,index,index,0);
     layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15);
     layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
     layer->tunitAlphaArg(stage,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7);
@@ -763,20 +770,20 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
    }
   } else if(textureIndex<2) {
    if(texture->entry->colorRange) {
-    u8 middle=stage+1,mixStage=stage+2;
-    shapeKColorSelect(layer,stage,colorRegisters[textureIndex*2]);shapeKAlphaSelect(layer,stage,alphaRegisters[textureIndex*2]);
-    shapeKColorSelect(layer,middle,colorRegisters[textureIndex*2+1]);shapeKAlphaSelect(layer,middle,alphaRegisters[textureIndex*2+1]);shapeKAlphaSelect(layer,mixStage,alphaRegisters[1]);
-    layer->texSelect(textureIndex,selected);layer->tunitMapping(stage,textureIndex,textureIndex,0);
+    int middle=stage+1,mixStage=stage+2;
+    shapeKColorSelect(layer,stage,colorRegisters[index*2]);shapeKAlphaSelect(layer,stage,alphaRegisters[index*2]);
+    shapeKColorSelect(layer,middle,colorRegisters[index*2+1]);shapeKAlphaSelect(layer,middle,alphaRegisters[index*2+1]);shapeKAlphaSelect(layer,mixStage,alphaRegisters[1]);
+    layer->texSelect(index,selected);layer->tunitMapping(stage,index,index,0);
     layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)14);
     layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)1);
     layer->tunitAlphaArg(stage,(GSgfxTunitAArg)7,(GSgfxTunitAArg)6,(GSgfxTunitAArg)4,(GSgfxTunitAArg)7);
     layer->tunitAlphaOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)1);
-    layer->tunitMapping(middle,textureIndex,textureIndex,0);
+    layer->tunitMapping(middle,index,index,0);
     layer->tunitColorArg(middle,(GSgfxTunitCArg)14,(GSgfxTunitCArg)2,(GSgfxTunitCArg)8,(GSgfxTunitCArg)15);
     layer->tunitColorOp(middle,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)2);
     layer->tunitAlphaArg(middle,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)1);
     layer->tunitAlphaOp(middle,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)2);
-    layer->tunitMapping(mixStage,textureIndex,textureIndex,0);
+    layer->tunitMapping(mixStage,index,index,0);
     switch(binding->blend) {
 
                 case 0:
@@ -872,14 +879,14 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
 
     }stage+=3;
    } else {
-    u8 mixStage=stage+1;
-    shapeKColorSelect(layer,stage,colorRegisters[textureIndex*2]);shapeKAlphaSelect(layer,stage,alphaRegisters[textureIndex*2]);shapeKAlphaSelect(layer,mixStage,alphaRegisters[1]);
-    layer->texSelect(textureIndex,selected);layer->tunitMapping(stage,textureIndex,textureIndex,0);
+    int mixStage=stage+1;
+    shapeKColorSelect(layer,stage,colorRegisters[index*2]);shapeKAlphaSelect(layer,stage,alphaRegisters[index*2]);shapeKAlphaSelect(layer,mixStage,alphaRegisters[1]);
+    layer->texSelect(index,selected);layer->tunitMapping(stage,index,index,0);
     layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)14,(GSgfxTunitCArg)8,(GSgfxTunitCArg)15);
     layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)1);
     layer->tunitAlphaArg(stage,(GSgfxTunitAArg)7,(GSgfxTunitAArg)6,(GSgfxTunitAArg)4,(GSgfxTunitAArg)7);
     layer->tunitAlphaOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)1);
-    layer->tunitMapping(mixStage,textureIndex,textureIndex,0);
+    layer->tunitMapping(mixStage,index,index,0);
     switch(binding->blend) {
 
                 case 0:
@@ -976,7 +983,7 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
     }stage+=2;
    }
   } else {
-   layer->texSelect(textureIndex,selected);layer->tunitMapping(stage,textureIndex,textureIndex,0);
+   layer->texSelect(index,selected);layer->tunitMapping(stage,index,index,0);
    switch(binding->blend) {
 
             case 0:
@@ -1024,8 +1031,8 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
 
    }++stage;
   }
-  if(textureIndex==count-1) {
-   layer->tunitMapping(stage,textureIndex,textureIndex,0);
+  if(index==count-1) {
+   layer->tunitMapping(stage,index,index,0);
    layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)10,(GSgfxTunitCArg)0,(GSgfxTunitCArg)15);
    layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
    layer->tunitAlphaArg(stage,(GSgfxTunitAArg)7,(GSgfxTunitAArg)5,(GSgfxTunitAArg)0,(GSgfxTunitAArg)7);

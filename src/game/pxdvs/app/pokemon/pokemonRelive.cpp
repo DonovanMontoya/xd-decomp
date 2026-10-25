@@ -107,27 +107,26 @@ static u8 _expRecover__FP7PokemonUl(void *arg0, u32 arg1) {
     s16 temp_r31;
     s16 temp_r30;
     s16 temp_r29;
-    s16 temp_r28;
-    s16 temp_r27;
-    s16 temp_r26;
-
     u8 sp9;
-    u8 sp8;
-    s16 temp_r10;
-    s16 temp_r3_2;
     s16 temp_r5;
     s16 temp_r6;
-    s16 temp_r7_2;
+    s16 temp_r3_2;
     s16 temp_r8;
     s16 temp_r9;
-    u16 temp_r3_3;
-    u32 temp_r21;
-    u32 temp_r7;
     u32 temp_r24;
+    s16 temp_r28;
+    s16 temp_r27;
+    u32 temp_r21;
+    s16 temp_r26;
+    s16 temp_r7_2;
+    u8 sp8;
+    u32 var_r25;
+    u16 temp_r3_3;
+    s16 temp_r10;
     u8 temp_r24_2;
     u8 temp_r3;
+    u32 temp_r7;
     u8 var_r23;
-    u32 var_r25;
 
     var_r25 = arg1;
     var_r23 = 0;
@@ -554,8 +553,8 @@ void reliveMain(void) {
     reliveCeremonyAll__FlP7PokemonUl(0, mParameter, 0);
     fadeSetToBlackOutIfNotBlack(0.5f);
     fadeCheck(1);
-    mParameter = 0;
     pParameter.unk4=-1;
+    mParameter = 0;
     GSfloorPop();
     floorSetFadeScript(0, 0);
     floorWaitForChange();

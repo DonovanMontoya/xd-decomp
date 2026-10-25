@@ -19,8 +19,8 @@ u8 bingo_bios::mStaticBall; u8 bingo_bios::mStaticIdx[2]; u8 bingo_bios::mStatic
 u8 bingo_bios::isClearPlus(u32 i){if(i>=*bingo_data_number)return 0;s32* p=savedataGetStatus(0,0x1b);return (u8)((p[1]&(1<<i))!=0);}
 void bingo_bios::setClear(u32 i){if(i<*bingo_data_number){s32* p=savedataGetStatus(0,0x1b);*p|=1<<(i*2);}}
 void bingo_bios::setSelect(u32 i){s32* p=savedataGetStatus(0,0x1b);*p|=2<<(i*2);}
-u8 bingo_bios::isSelect(u32 i){if(i>=*bingo_data_number)return 0;return (u8)((*savedataGetStatus(0,0x1b)&(2<<(i*2)))!=0);}
-u8 bingo_bios::isClear(u32 i){if(i>=*bingo_data_number)return 0;return (u8)((*savedataGetStatus(0,0x1b)&(1<<(i*2)))!=0);}
+u8 bingo_bios::isSelect(u32 i){if(i>=*bingo_data_number)return 0;s32* p=savedataGetStatus(0,0x1b);return (u8)((*p&(2<<(i*2)))!=0);}
+u8 bingo_bios::isClear(u32 i){if(i>=*bingo_data_number)return 0;s32* p=savedataGetStatus(0,0x1b);return (u8)((*p&(1<<(i*2)))!=0);}
 u16 bingo_bios::getScore(BINGO_DATA_dd_* p,u8 i){if(i>=10)return 0;return p->scoreLayout.scores[i];}
 u8 bingo_bios::getGridPos(BINGO_DATA_dd_* p,u32 i){if(i>=3)return 0;return p->raw[0xb1+i*2];}
 u8 bingo_bios::getGridGrid(BINGO_DATA_dd_* p,u32 i){if(i>=3)return 0;return p->raw[0xb0+i*2];}
@@ -53,7 +53,7 @@ s32 bingo_bios::getClearLv(){
     s32 levels[4]={0,1,2,3};
     u32 counts[4]={3,6,9,0};
     counts[3]=*bingo_data_number;
-    for(;(u32)index<counts[3];index++){
+    for(index=0;(u32)index<counts[3];index++){
         if((*state & (1<<(index*2))) && index!=10){
             if(highest<index)highest=index;
             cleared++;
@@ -65,9 +65,9 @@ s32 bingo_bios::getClearLv(){
     else if(highest<9)tier=2;
     else tier=3;
     if(cleared==counts[tier])advance=1;
-    s32 result=tier+advance;
-    for(u32 i=0;i<counts[result];i++){
+    tier+=advance;
+    for(s32 i=0;(u32)i<counts[tier];i++){
         if(i!=10)*state|=2<<(i*2);
     }
-    return levels[result];
+    return levels[tier];
 }

@@ -12,7 +12,9 @@ static u32 _errorState;
 static s32 _GappHandle;
 static GSdvdWork* _dvdWork;
 static u32 _maxDvdWork;
+#pragma explicit_zero_data on
 static u32 _DvdServerAddr = 0, _ReportServerAddr = 0, _GCClientAddr = 0, _Netmask = 0, _Gateway = 0;
+#pragma explicit_zero_data reset
 static u32 _errorMsg_CoverOpen = 1, _errorMsg_NoDisc = 1, _errorMsg_WrongDisc = 1, _errorMsg_Retry = 1, _errorMsg_FatalError = 1;
 static const char* _diskid_gameName = "GXXJ";
 static const char* _diskid_company = "01";
@@ -33,17 +35,12 @@ static void _freeDvdWork(GSdvdWork*);
 static GSdvdWork* _info2work(DVDFileInfo*);
 static void _AsyncCallback(s32, DVDFileInfo*);
 static void _AsyncReadCallback(s32, DVDFileInfo*);
+static void _gsdvdError_MsgOpen(u32);
+static void _errorTask_State_None(s32);
+static s32 _SOInetAtoN(const char*, u32*);
+static void _initDvdWork();
+static void* _dvdDoMalloc(u32);
 s32 GSdvdFstRefresh() { return 0; }
-static void _gsdvdError_MsgOpen(u32 message) { if (message != 1) winMsgOpenError(message, 1, 1); }
-static void _errorTask_State_None(s32 drive) {
-    switch (drive) {
-    case -1: _errorState = 9; break;
-    case 5: _errorState = 1; break;
-    case 4: _errorState = 3; break;
-    case 6: _errorState = 5; break;
-    case 11: _errorState = 7; break;
-    }
-}
 static void _gsdvdErrorTask() {
     s32 drive = GSdvdGetDriveStatus();
     switch (_errorState) {
@@ -61,6 +58,16 @@ static void _gsdvdErrorTask() {
     case 8: if (drive != 11) { winMsgCloseError(1); _errorState = 0; } break;
     case 9: GSgfxResetDisable(); _gsdvdError_MsgOpen(_errorMsg_FatalError); _errorState = 10; break;
     case 10: break;
+    }
+}
+static void _gsdvdError_MsgOpen(u32 message) { if (message != 1) winMsgOpenError(message, 1, 1); }
+static void _errorTask_State_None(s32 drive) {
+    switch (drive) {
+    case -1: _errorState = 9; break;
+    case 5: _errorState = 1; break;
+    case 4: _errorState = 3; break;
+    case 6: _errorState = 5; break;
+    case 11: _errorState = 7; break;
     }
 }
 void GSdvdSetErrorMsg(u32 cover, u32 noDisc, u32 wrong, u32 retry, u32 fatal) {
@@ -84,7 +91,7 @@ s32 GSdvdGetFileInfoStatus(GSdvdWork* work) {
 s32 GSdvdGetDriveStatus() { if (_initFlag == 0) { return -1; } else { return DVDGetDriveStatus(); } }
 s32 GSdvdWrite() { return -1; }
 s32 GSdvdRemove() { if (_initFlag == 0) { return 0; } return 0; }
-s32 GSdvdCreate() { return 0; }
+GSdvdWork* GSdvdCreate(const char*) { if (!_initFlag) return 0; return 0; }
 u32 GSdvdGetLength(GSdvdWork* work) { if (!_initFlag) return 0; if (work == 0) { return 0; } else { return work->info.length; } }
 s32 GSdvdClose(GSdvdWork* work) { if (!_initFlag) return 0; if (!work) return 0; _freeDvdWork(work); return DVDClose(&work->info); }
 u8 GSdvdReadAsync(GSdvdWork* work, void* buffer, s32 length, s32 offset, GSdvdCallback callback) {
@@ -113,8 +120,6 @@ GSdvdWork* GSdvdOpen(const char* path) {
     if (!DVDOpen(path, &work->info)) { _freeDvdWork(work); return 0; }
     return work;
 }
-// Network address conversion is disabled in the original release.
-static s32 _SOInetAtoN(const char*, u32*) { return 0; }
 void GSdvdSetGCClient(const char* address, const char* mask, const char* gateway, u8 apply) {
     _SOInetAtoN(address, &_GCClientAddr); _SOInetAtoN(mask, &_Netmask); _SOInetAtoN(gateway, &_Gateway);
     _GCClientON = 1;
@@ -125,8 +130,6 @@ void GSdvdSetReportServer(const char* address, u16 port, u8 apply) {
     if (apply == 1) GSlogSetIP(&_ReportServerAddr, port);
 }
 void GSdvdSetDVDServer(const char* address, u16 port) { _SOInetAtoN(address, &_DvdServerAddr); _DvdServerPort = port; _DvdServerON = 1; }
-static void _initDvdWork() { for (u32 i = 0; i < _maxDvdWork; ++i) _dvdWork[i].inUse = 0; }
-static void* _dvdDoMalloc(u32 size) { return GSmemAllocAlign(size, 32); }
 s32 GSdvdInit(u32 count) {
     if (_initFlag == 1) return 0;
     _maxDvdWork = count; _dvdWork = (GSdvdWork*)_dvdDoMalloc(count * sizeof(GSdvdWork));
@@ -156,6 +159,8 @@ static GSdvdWork* _info2work(DVDFileInfo* info) {
     }
     return 0;
 }
+// Network address conversion is disabled in the original release.
+static s32 _SOInetAtoN(const char*, u32*) { return 0; }
 static void _freeDvdWork(GSdvdWork* work) { BOOL interrupts = OSDisableInterrupts(); work->inUse = 0; OSRestoreInterrupts(interrupts); }
 static GSdvdWork* _getNewDvdWork() {
     BOOL interrupts = OSDisableInterrupts();
@@ -165,5 +170,7 @@ static GSdvdWork* _getNewDvdWork() {
     }
     OSRestoreInterrupts(interrupts); return result;
 }
+static void _initDvdWork() { for (u32 i = 0; i < _maxDvdWork; ++i) _dvdWork[i].inUse = 0; }
+static void* _dvdDoMalloc(u32 size) { return GSmemAllocAlign(size, 32); }
 #pragma dont_inline reset
 }

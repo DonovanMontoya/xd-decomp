@@ -21,7 +21,15 @@ static u32 _perfDisplayList;
 static u32 _perfDListSize;
 static u8 _perfFullStarted;
 static s16 _perfDListToken;
-static GXColor _perfDrawColor;
+extern "C" inline GXColor GSgfxPerfColorToGSgfxCol(u32 packed)
+{
+    static GXColor c;
+    c.b = (u8)packed;
+    c.g = (u8)(packed >> 8);
+    c.r = (u8)(packed >> 16);
+    c.a = 255;
+    return c;
+}
 
 extern "C" {
 void GSprimSetRenderLayer__FP10GSgfxLayer(GSgfxLayer *);
@@ -45,6 +53,22 @@ s16 tokenMark__10GSgfxLayerFv(GSgfxLayer *);
 void PERFPreDraw(void);
 void PERFPostDraw(void);
 void GXCallDisplayList(void *, u32);
+}
+
+// Snapshot colors before calling the pointer-based primitive API.
+static inline void DrawPerfQuadWH(f32 x, f32 y, f32 w, f32 h, GXColor color)
+{
+    GSprimDraw2DQuadWH(x, y, w, h, &color);
+}
+
+static inline void DrawPerfHLine(f32 x0, f32 x1, f32 y, GXColor color)
+{
+    GSprimDraw2DHLine(x0, x1, y, &color);
+}
+
+static inline void DrawPerfVLine(f32 x, f32 y0, f32 y1, GXColor color)
+{
+    GSprimDraw2DVLine(x, y0, y1, &color);
 }
 
 extern "C" {
@@ -233,19 +257,21 @@ void GSgfxPerfbarRender__FP10GSgfxLayer(GSgfxLayer *layer)
     u32 *last = (u32 *)_perfLastFrame;
     f32 cpu = *(f32 *)(_perfLastFrame + 8) + *(f32 *)(_perfLastFrame + 0x2220);
     *(f32 *)(_perfLastFrame + 8) = cpu;
-    if (cpu > _perfPeakCPU || --_perfPeakCPUTimer < 0) {
+    if (cpu > _perfPeakCPU || _perfPeakCPUTimer-- < 0) {
         _perfPeakCPU = cpu;
         _perfPeakCPUTimer = 60;
     }
-    f32 gpu = *(f32 *)(_perfLastFrame + 0x2018);
-    if (gpu > _perfPeakGPU || --_perfPeakGPUTimer < 0) {
-        _perfPeakGPU = gpu;
-        _perfPeakGPUTimer = 60;
+    {
+        f32 gpu = *(f32 *)(_perfLastFrame + 0x2018);
+        if (gpu > _perfPeakGPU || _perfPeakGPUTimer-- < 0) {
+            _perfPeakGPU = gpu;
+            _perfPeakGPUTimer = 60;
+        }
     }
-    if (--_perfUpdateCount < 0) {
+    if (_perfUpdateCount-- < 0) {
         f64 updateTime = GSgfxVideoGetLastRenderTime();
-        _perfUpdateTime = (f32)updateTime;
-        if (_perfUpdateTime > *(f32 *)__float_epsilon) {
+        _perfUpdateTime = updateTime;
+        if ((f32)updateTime > *(f32 *)__float_epsilon) {
             _perfUpdateFPS = 0.1f + (f32)GSgfxVideoGetVsyncRate() / _perfUpdateTime;
             if (_perfUpdateFPS > 60.0f) _perfUpdateFPS = 60.0f;
         } else {
@@ -328,8 +354,8 @@ void GSgfxPerfbarRender__FP10GSgfxLayer(GSgfxLayer *layer)
     layer->unk16A8 |= 2;
     layer->unk1770 |= 4;
     layer->unk1760 |= 2;
-    GXColor background = {0x20, 0x20, 0x20, 0xC0};
-    GSprimDraw2DQuadWH(10.0f, 420.0f, 620.0f, 40.0f, &background);
+    GXColor background = *(GXColor *)&_perfBkgnd;
+    DrawPerfQuadWH(10.0f, 420.0f, 620.0f, 40.0f, background);
 
     f32 x = 20.0f;
     for (s32 i = 0; i < _perfFrameCount; ++i) {
@@ -337,53 +363,42 @@ void GSgfxPerfbarRender__FP10GSgfxLayer(GSgfxLayer *layer)
         if ((u32)i < (u32)(GSgfxVideoGetLockFrameRate() + 1)) rgb = 0x00FF00;
         else if (i >= 3) rgb = 0xFF0000;
         else rgb = 0xFFFF00;
-        _perfDrawColor.r = (u8)(rgb >> 16);
-        _perfDrawColor.g = (u8)(rgb >> 8);
-        _perfDrawColor.b = (u8)rgb;
-        _perfDrawColor.a = 0xFF;
+        GXColor temp = GSgfxPerfColorToGSgfxCol(rgb);
+        GXColor color;
+        color.r = temp.r;
+        color.g = temp.g;
+        color.b = temp.b;
+        color.a = temp.a;
         f32 nextX = x + _perfPixelSkip;
-        GSprimDraw2DHLine(x, nextX, 455.0f, &_perfDrawColor);
-        GSprimDraw2DVLine(x, 450.0f, 455.0f, &_perfDrawColor);
-        GSprimDraw2DVLine(nextX, 450.0f, 455.0f, &_perfDrawColor);
+        DrawPerfHLine(x, nextX, 455.0f, color);
+        DrawPerfVLine(x, 450.0f, 455.0f, color);
+        DrawPerfVLine(nextX, 450.0f, 455.0f, color);
         x = nextX;
     }
 
     f32 peak = *(f32 *)(_perfLastFrame + 8);
-    if (gpu > peak) peak = gpu;
-    _perfDrawColor.r = 0; _perfDrawColor.g = 0x80; _perfDrawColor.b = 0x80; _perfDrawColor.a = 0xFF;
-    GSprimDraw2DQuadWH(446.0f, _perfPixelSkip * (f32)(s32)(0.9999f + peak), 5.0f, _perfPixelSkip, &_perfDrawColor);
-    _perfDrawColor.r = 0; _perfDrawColor.g = 0xFF; _perfDrawColor.b = 0xFF; _perfDrawColor.a = 0xFF;
-    GSprimDraw2DQuadWH(420.0f, 446.0f, _perfPixelSkip * gpu, 5.0f, &_perfDrawColor);
+    if (*(f32 *)(_perfLastFrame + 0x2018) > peak) peak = *(f32 *)(_perfLastFrame + 0x2018);
+    DrawPerfQuadWH(20.0f, 446.0f, _perfPixelSkip * (f32)(s32)(0.9999f + peak), 5.0f, GSgfxPerfColorToGSgfxCol(0x008080));
+    DrawPerfQuadWH(20.0f, 446.0f, _perfPixelSkip * *(f32 *)(_perfLastFrame + 0x2018), 5.0f, GSgfxPerfColorToGSgfxCol(0x00FFFF));
 
     f32 prior = _perfPixelSkip * *(f32 *)(_perfLastFrame + 0x2020);
-    u32 count = last[0x201C / 4];
-    for (u32 i = 1; i < count && i < 0x40; ++i) {
+    for (u32 i = 1; i < last[0x201C / 4]; ++i) {
         f32 at = _perfPixelSkip * *(f32 *)(_perfLastFrame + 0x2020 + i * 4);
         if ((s32)(at - prior) >= 1) {
-            u32 color = *(u32 *)(_perfLastFrame + 0x2120 + i * 4);
-            _perfDrawColor.r = (u8)(color >> 16);
-            _perfDrawColor.g = (u8)(color >> 8);
-            _perfDrawColor.b = (u8)color;
-            _perfDrawColor.a = 0xFF;
-            GSprimDraw2DQuadWH(20.0f + prior, 446.0f, at - prior, 5.0f, &_perfDrawColor);
+            u32 color = *(u32 *)(_perfLastFrame + 0x211C + i * 4);
+            DrawPerfQuadWH(20.0f + prior, 446.0f, at - prior, 5.0f, GSgfxPerfColorToGSgfxCol(color));
         }
         prior = at;
         if (at > 640.0f) break;
     }
 
-    _perfDrawColor.r = 0xFF; _perfDrawColor.g = 0xFF; _perfDrawColor.b = 0xFF; _perfDrawColor.a = 0xFF;
-    GSprimDraw2DQuadWH(420.0f, 440.0f, _perfPixelSkip * *(f32 *)(_perfLastFrame + 8), 5.0f, &_perfDrawColor);
+    DrawPerfQuadWH(20.0f, 440.0f, _perfPixelSkip * *(f32 *)(_perfLastFrame + 8), 5.0f, GSgfxPerfColorToGSgfxCol(0xFFFFFF));
     prior = _perfPixelSkip * *(f32 *)(_perfLastFrame + 16);
-    count = last[3];
-    for (u32 i = 1; i < count && i < 0x400; ++i) {
+    for (u32 i = 1; i < last[3]; ++i) {
         f32 at = _perfPixelSkip * *(f32 *)(_perfLastFrame + 16 + i * 4);
         if ((s32)(at - prior) >= 1) {
-            u32 color = *(u32 *)(_perfLastFrame + 0x1010 + i * 4);
-            _perfDrawColor.r = (u8)(color >> 16);
-            _perfDrawColor.g = (u8)(color >> 8);
-            _perfDrawColor.b = (u8)color;
-            _perfDrawColor.a = 0xFF;
-            GSprimDraw2DQuadWH(20.0f + prior, 444.0f, at - prior, 5.0f, &_perfDrawColor);
+            u32 color = *(u32 *)(_perfLastFrame + 0x100C + i * 4);
+            DrawPerfQuadWH(20.0f + prior, 440.0f, at - prior, 5.0f, GSgfxPerfColorToGSgfxCol(color));
         }
         prior = at;
         if (at > 640.0f) break;
@@ -394,9 +409,9 @@ void GSgfxPerfbarRender__FP10GSgfxLayer(GSgfxLayer *layer)
     if (bp == -1 && cp == -1) {
         GSprimWriteStr(30.0f, 425.0f,
             "|00ff00CUR: |ffffff%2.3f |00ffff%2.3f  |00ff00PK: |ffffff%2.3f |00ffff%2.3f  |00ff00VUPD: |ffffff%1.3f  |ffff00%2.1f FPS",
-            *(f32 *)(_perfLastFrame + 8), gpu, _perfPeakCPU, _perfPeakGPU, _perfUpdateTime, _perfUpdateFPS);
+            *(f32 *)(_perfLastFrame + 8), *(f32 *)(_perfLastFrame + 0x2018), _perfPeakCPU, _perfPeakGPU, _perfUpdateTime, _perfUpdateFPS);
     } else {
-        u32 ticks = *(volatile u32 *)0x800000F8 / 500000;
+        u32 ticks = *(volatile u32 *)0x800000F8 / 4 / 125000;
         GSprimWriteStr(30.0f, 425.0f, "|ffffff%d    |ffff00%d", (u32)(bp * 8) / ticks, (u32)(cp * 8) / ticks);
     }
     if (_perfRenderMode == 2 && _perfDListSize != 0) {
@@ -410,8 +425,8 @@ void GSgfxPerfbarRender__FP10GSgfxLayer(GSgfxLayer *layer)
     }
     s64 endTime = OSGetTime();
     f32 drawTime = __cvt_sll_flt(endTime - startTime) / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
-    *(f32 *)(_perfLastFrame + 0x2220) = drawTime;
     *(f32 *)(_perfCurFrame + 0x2220) = drawTime;
+    *(f32 *)(_perfLastFrame + 0x2220) = drawTime;
 }
 
 }

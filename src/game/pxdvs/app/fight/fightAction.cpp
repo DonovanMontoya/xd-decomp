@@ -101,8 +101,8 @@ FIGHT_ACTION* fightActionFifoIn(FIGHT_ACTION* action) {
     u32 index = _fight_action_fifo_tail;
     FIGHT_ACTION* queued;
     if (((index + 1) & 31) != _fight_action_fifo_head) {
+        _fight_action_fifo[_fight_action_fifo_tail] = *action;
         queued = &_fight_action_fifo[index];
-        *queued = *action;
         ++_fight_action_fifo_tail;
         _fight_action_fifo_tail &= 31;
     } else return 0;

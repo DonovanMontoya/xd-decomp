@@ -28,12 +28,18 @@ extern "C" void GSvecMakeFromQuat(Vec* result, const Quaternion* quat) {
     result->z = atan((2.0f * (w * x + y * z)) / (zz + (ww - xx - yy)));
 }
 extern "C" void GSvecTransformQuat(Vec* result, const Quaternion* quat, const Vec* vector) {
-    const f32 x = quat->x, y = quat->y, z = quat->z, w = quat->w;
-    const f32 vx = vector->x, vy = vector->y, vz = vector->z;
-    const f32 dot = vx * x + vy * y + vz * z;
+    f32 vx = vector->x;
+    f32 dot;
+    f32 z = quat->z;
+    f32 w = quat->w;
+    f32 vy = vector->y;
+    f32 vz = vector->z;
+    f32 x = quat->x;
+    f32 y = quat->y;
     const f32 ix = vx * w + y * vz - vy * z;
     const f32 iy = vy * w + z * vx - vz * x;
     const f32 iz = vz * w + x * vy - vx * y;
+    dot = vx * x + y * vy + vz * z;
     result->x = ix * w + x * dot + y * iz - iy * z;
     result->y = iy * w + y * dot + z * ix - iz * x;
     result->z = iz * w + z * dot + x * iy - ix * y;

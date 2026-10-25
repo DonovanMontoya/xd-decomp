@@ -36,7 +36,7 @@ void menuOffScreenDraw() {
         }
         if (_menuOffScreenDisp != 0 && _menuOffScreenEnable != 0) {
             _menuOffScreenCurrRate=(_menuOffScreenCnt/_menuOffScreenTime)*(_menuOffScreenEndRate-_menuOffScreenStartRate)+_menuOffScreenStartRate;
-            s32 alpha=static_cast<s32>(255.0f-(255.0f*_menuOffScreenCurrRate)/100.0f);
+            u8 alpha=255.0f-(255.0f*_menuOffScreenCurrRate)/100.0f;
             s32 layerID;
             if (_menuOffScreenPrio != 0) layerID=7; else layerID=0;
             GSgfxLayer *layer=GSgfxLayerFindByID(layerID);
@@ -81,10 +81,11 @@ void menuOffScreenDraw() {
                     layer->savedTextures[0]=tex;layer->savedTextureDirty|=1;
                 }
                 layer->beginSurface(4);
-                GXPosition2s16(0,0);GXColor4u8(alpha,alpha,alpha,255);GXTexCoord2f32(0.0f,0.0f);
-                GXPosition2s16(640,0);GXColor4u8(alpha,alpha,alpha,255);GXTexCoord2f32(1.0f,0.0f);
-                GXPosition2s16(0,480);GXColor4u8(alpha,alpha,alpha,255);GXTexCoord2f32(0.0f,1.0f);
-                GXPosition2s16(640,480);GXColor4u8(alpha,alpha,alpha,255);GXTexCoord2f32(1.0f,1.0f);
+                f32 u0=0.0f;f32 u1=1.0f;
+                GXPosition2s16(0,0);*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=255;GXTexCoord2f32(u0,u0);
+                GXPosition2s16(640,0);*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=255;GXTexCoord2f32(u1,u0);
+                GXPosition2s16(0,480);*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=255;GXTexCoord2f32(u0,u1);
+                GXPosition2s16(640,480);*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=alpha;*(u8*)0xcc008000=255;GXTexCoord2f32(u1,u1);
                 layer->endSurface();
             }
         }

@@ -59,35 +59,11 @@ s32 PCBOX::setPokemon(Pokemon* src, s8 box, s8 slot) {
     return ok != 0;
 }
 
-s8 PCBOX::getPokemonBoxNbEmptySlot(s8 box) {
-    PCBOX* self = this;
+static inline s32 countUsedPokemonSlot(PCBOX* self, s8 box) {
     int used = 0;
     s8 slot;
     if (self == 0) {
-        self = getPointer();
-    }
-    if (box < 0 || box >= 8) {
-        used = -1;
-    } else {
-        for (slot = 0; slot < 30; slot++) {
-            Pokemon* p = pokemonSlot(self, box, slot);
-            if (p != 0 && pokemonCheckValid(p) != 0) {
-                used++;
-            }
-        }
-    }
-    if ((s8)used < 0) {
-        return -1;
-    }
-    return 30 - used;
-}
-
-s32 PCBOX::getPokemonBoxNbUsedSlot(s8 box) {
-    PCBOX* self = this;
-    int used = 0;
-    s8 slot;
-    if (self == 0) {
-        self = getPointer();
+        self = PCBOX::getPointer();
     }
     if (box < 0 || box >= 8) {
         used = -1;
@@ -100,6 +76,21 @@ s32 PCBOX::getPokemonBoxNbUsedSlot(s8 box) {
         }
     }
     return used;
+}
+
+s8 PCBOX::getPokemonBoxNbEmptySlot(s8 box) {
+    s32 used = countUsedPokemonSlot(this, box);
+    s8 result;
+    if ((s8)used < 0) {
+        result = -1;
+    } else {
+        result = 30 - used;
+    }
+    return result;
+}
+
+s32 PCBOX::getPokemonBoxNbUsedSlot(s8 box) {
+    return countUsedPokemonSlot(this, box);
 }
 
 s32 PCBOX::delPokemon(s8 box, s8 slot) {
@@ -133,14 +124,21 @@ static inline void initBoxes(PCBOX* self) {
 }
 
 void PCBOX::init() {
+    s32 i;
     PCBOX* self = this;
     if (self == 0) {
         self = getPointer();
     }
-    initBoxes(self);
+    for (i = 0; i < 8; i++) {
+        msgctrlSetValue(0x34, i + 1);
+        GSmsgMakeGScharStr(&self->boxes[i], 9, 0x3B39);
+        pokemonInitAry((u32)self->boxes[i].pokemon, 0x1E);
+    }
+    itemInitAry(self->items, 0xEB);
+    self->lastItemSlot = 0;
 }
 
-PCBOXItem* PCBOX::getItem(s16 idx) {
+inline PCBOXItem* PCBOX::getItem(s16 idx) {
     PCBOX* self = this;
     if (self == 0) {
         self = getPointer();
@@ -186,7 +184,11 @@ void pcboxInit(PCBOX* pcbox) {
 
 
 s8 pcboxGetPokemonBoxNbEmptySlot(PCBOX* pcbox, s8 box) {
-    return pcbox->getPokemonBoxNbEmptySlot(box);
+    s32 used = countUsedPokemonSlot(pcbox, box);
+    if ((s8)used < 0) {
+        return -1;
+    }
+    return 30 - used;
 }
 
 
@@ -247,32 +249,39 @@ void pcboxDebugPokemonSetup() {
 
 }
 
-s16 PCBOX::searchItem(u16 id) {
+inline s16 PCBOX::searchItem(u16 id) {
     s32 i;
     for (i = 0; i < 0xEB; ++i) {
         if (itemCheckValid(&items[i]) && (s32)id == (s32)itemGetStatus(&items[i], 0, 0x1B, 0)) break;
     }
-    s16 result = -1;
+    s16 result;
     if (i < 0xEB) result = i;
+    else result = -1;
     return result;
 }
 
-extern "C" {
-u16 pcboxAddItem(PCBOX* box, u16 id, u16 count) {
-    PCBOX* self = box;
+static inline u16 addItem(PCBOX* self, u16 id, u16 count) {
     if (!self) self = PCBOX::getPointer();
     if (!count) return count;
     if (!itemDataBiosGetPtr(id)) return count;
     return (u16)itemAddItemDataIdAry(self->items, 0xEB, id, count, self->searchItem(id), 999, 0, 0);
 }
-u16 pcboxDelItem(PCBOX* box, u16 id, u16 count) {
-    PCBOX* self = box;
+
+static inline u16 delItem(PCBOX* self, u16 id, u16 count) {
     if (!self) self = PCBOX::getPointer();
     if (!count) return count;
     if (!itemDataBiosGetPtr(id)) return count;
     s16 slot = self->searchItem(id);
     if (slot < 0) return count;
     return (u16)itemDecItemDataIdAry(self->items, 0xEB, id, count, slot, 999, 0);
+}
+
+extern "C" {
+u16 pcboxAddItem(PCBOX* box, u16 id, u16 count) {
+    return addItem(box, id, count);
+}
+u16 pcboxDelItem(PCBOX* box, u16 id, u16 count) {
+    return delItem(box, id, count);
 }
 s32 pcboxSwapItemSlot(PCBOX* self, s16 a, s16 b) {
     PCBOXItem* first = self->getItem(a);
@@ -311,9 +320,7 @@ static inline u16 itemCount(PCBOX* self, s16 slot) {
     return itemGetStatus(item, 0, 0x1C, 0);
 }
 
-extern "C" {
-u32 pcboxGetItemCapacity(PCBOX* box, u16 id) {
-    PCBOX* self = box;
+static inline u32 getItemCapacity(PCBOX* self, u16 id) {
     if (!self) self = PCBOX::getPointer();
     if (!itemDataBiosGetPtr(id)) return 0;
     s16 slot = self->searchItem(id);
@@ -324,6 +331,11 @@ u32 pcboxGetItemCapacity(PCBOX* box, u16 id) {
         if ((u16)count > 999) count = 0;
     } else count = 0;
     return (u16)(999 - count);
+}
+
+extern "C" {
+u32 pcboxGetItemCapacity(PCBOX* box, u16 id) {
+    return getItemCapacity(box, id);
 }
 void pcboxSetStatus() {}
 u32 pcboxGetStatus() { return 0; }

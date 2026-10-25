@@ -35,7 +35,7 @@ GSmemCell* GSmemHeapDesc::createNewCell() {
     if (cell) {
         head = spare;
         current = head;
-        next = current->next;
+        next = (current = head)->next;
         spare = next;
         if (spare) spare->prev = 0;
     }

@@ -138,7 +138,7 @@ void pokemonInitJoutai(s32);
 void pokemonInitJoutaiDataId(s32, s32);
 u8 pokemonIsDarkPokemon(s32);
 void pokemonSetCatchStatus(s32, s32, s32, s32, s32, s32, s32 *);
-void pokemonSetCountAsJoutaiDataId(s32, u16, u32);
+void pokemonSetCountAsJoutaiDataId(s32, u16, s16);
 void pokemonSetDarkPokemonStatus(s32, u16);
 void pokemonSetKaisuuJoutaiDataId(s32, u16, s8);
 void pokemonSetNowKaisuuJoutaiDataId(s32, u16, s8);
@@ -200,7 +200,6 @@ s32 dbgMenuPokemonEditSub(s32 arg0, u8 arg1, s8 *arg2, s8 *arg3, s8 *arg4, s8 *a
     s32 temp_r3_22;
     s32 temp_r3_26;
     s32 temp_r3_27;
-    s32 temp_r3_4;
     s32 temp_r3_6;
     s32 temp_r3_7;
     s32 temp_r3_8;
@@ -241,8 +240,7 @@ s32 dbgMenuPokemonEditSub(s32 arg0, u8 arg1, s8 *arg2, s8 *arg3, s8 *arg4, s8 *a
     s32 var_r7_7;
     s32 var_r7_8;
     s32 var_r7_9;
-    s8 temp_r0;
-    s8 temp_r20;
+    s32 temp_r0;
     u16 temp_r27;
     u32 temp_r3_11;
     u32 temp_r3_12;
@@ -252,10 +250,6 @@ s32 dbgMenuPokemonEditSub(s32 arg0, u8 arg1, s8 *arg2, s8 *arg3, s8 *arg4, s8 *a
     u32 temp_r3_16;
     u32 temp_r3_17;
     u32 temp_r3_18;
-    u16 temp_r3_23;
-    u16 temp_r3_24;
-    u16 temp_r3_25;
-    u16 temp_r3_2;
     s32 var_r20;
     u32 temp_r3_19;
     u32 temp_r3_21;
@@ -265,9 +259,10 @@ s32 dbgMenuPokemonEditSub(s32 arg0, u8 arg1, s8 *arg2, s8 *arg3, s8 *arg4, s8 *a
     u8 var_r29;
     u32 temp_r29;
     s32 var_r4;
+    s32 i;
+    u32 personality;
+    s32 count;
 
-    u16 *var_r21;
-    u16 *var_r21_2;
     if (arg2 != 0) {
         *arg2 = 0;
     }
@@ -328,15 +323,15 @@ loop_11:
             }
             break;
         case 0x18:
-            var_r7 = pokemonGetStatus(arg0, 0, 0x7A, 0);
-            var_r7 += temp_r22;
-            if (var_r7 <= 0) {
-                var_r7 = 1;
+            editValue = pokemonGetStatus(arg0, 0, 0x7A, 0);
+            editValue += temp_r22;
+            if (editValue <= 0) {
+                editValue = 1;
             }
-            if (var_r7 > 0x64) {
-                var_r7 = 0x64;
+            if (editValue > 0x64) {
+                editValue = 0x64;
             }
-            pokemonSetStatus(arg0, 0, 0x7A, 0, var_r7);
+            pokemonSetStatus(arg0, 0, 0x7A, 0, editValue);
             var_r29 = 1;
             if (arg3 != 0) {
                 *arg3 = 1;
@@ -345,26 +340,26 @@ loop_11:
         case 0x1A:
             temp_r3_6 = pokemonGetStatus(arg0, 0, 0x79, 0);
             if ((u32) (temp_r22 + 0x10000) == 1U) {
-                editValue = 1;
+                var_r20 = 1;
                 goto block_43;
             }
             if (temp_r22 == 65535) {
-                editValue = 0x1E8480;
+                var_r20 = 0x1E8480;
                 goto block_43;
             }
             if (menuSubOpenNumberInput(temp_r3_6, &number, 1, 0x32, 0x32, 0) == 0) {
                 menuSubCloseNumberInput();
             } else {
-                editValue = number;
+                var_r20 = number;
                 menuSubCloseNumberInput();
-                if (editValue <= 0) {
-                    editValue = 1;
+                if (var_r20 <= 0) {
+                    var_r20 = 1;
                 }
-                if (editValue > 0x1E8480) {
-                    editValue = 0x1E8480;
+                if (var_r20 > 0x1E8480) {
+                    var_r20 = 0x1E8480;
                 }
 block_43:
-                pokemonSetStatus(arg0, 0, 0x79, 0, editValue);
+                pokemonSetStatus(arg0, 0, 0x79, 0, var_r20);
                 var_r29 = 1;
                 if (arg3 != 0) {
                     *arg3 = 1;
@@ -372,15 +367,15 @@ block_43:
             }
             break;
         case 0x1C:
-            editValue = pokemonGetStatus(arg0, 0, 0x83, 0);
-            editValue += temp_r22;
-            if (editValue < 0) {
-                editValue = 0;
+            var_r20 = pokemonGetStatus(arg0, 0, 0x83, 0);
+            var_r20 += temp_r22;
+            if (var_r20 < 0) {
+                var_r20 = 0;
             }
-            if (editValue > (s32)pokemonGetStatus(arg0, 0, 0x87, 0)) {
-                editValue = pokemonGetStatus(arg0, 0, 0x87, 0);
+            if (var_r20 > (s32)pokemonGetStatus(arg0, 0, 0x87, 0)) {
+                var_r20 = pokemonGetStatus(arg0, 0, 0x87, 0);
             }
-            pokemonSetStatus(arg0, 0, 0x83, 0, editValue);
+            pokemonSetStatus(arg0, 0, 0x83, 0, var_r20);
             if (arg3 != 0) {
                 *arg3 = 1;
             }
@@ -873,7 +868,8 @@ block_272:
             if ((u32) editValue >= (u32) sex_data_number) {
                 editValue = sex_data_number - 1;
             }
-            pokemonSetStatus(arg0, 0, 0x6F, 0, pokemonCreateRndFit(arg0, editValue, pokemonGetStatus(arg0, 0, 0xBF, 0), pokemonCheckRare(arg0), pokemonGetStatus(arg0, 0, 0x75, 0)));
+            personality = pokemonCreateRndFit(arg0, editValue, pokemonGetStatus(arg0, 0, 0xBF, 0), pokemonCheckRare(arg0), pokemonGetStatus(arg0, 0, 0x75, 0));
+            pokemonSetStatus(arg0, 0, 0x6F, 0, personality);
             var_r29 = 1;
             if (arg2 != 0) {
                 *arg2 = 1;
@@ -883,7 +879,7 @@ block_272:
             }
             break;
         case 0x4C:
-            editValue = pokemonGetStatus(arg0, 0, 0xBF, 0);
+            editValue = (u8)pokemonGetStatus(arg0, 0, 0xBF, 0);
             editValue += temp_r22;
             if (editValue < 0) {
                 editValue = 0;
@@ -964,11 +960,11 @@ block_306:
             pokemonSetStatus(arg0, 0, 0xB5, 0, var_r7_20);
             break;
         case 0x55:
-            temp_r3_23 = pokemonGetJoutaiDataId(arg0);
-            if ((s32) temp_r3_23 == 0) {
+            editValue = pokemonGetJoutaiDataId(arg0);
+            if (editValue == 0) {
                 editValue = temp_r22 + 2;
             } else {
-                editValue = temp_r3_23 + temp_r22;
+                editValue += temp_r22;
             }
             if (editValue < 3) {
                 editValue = 0;
@@ -985,33 +981,34 @@ block_306:
             }
             break;
         case 0x56:
-            temp_r3_24 = pokemonGetJoutaiDataId(arg0);
-            if ((s32) temp_r3_24 != 0) {
-                temp_r20 = pokemonGetKaisuuJoutaiDataId(arg0, temp_r3_24);
-                if ((s32) temp_r3_24 != 4) {
-                    if (temp_r20 >= 0) {
-                        var_r20 = temp_r20 + temp_r22;
-                        if (var_r20 < 0) {
-                            var_r20 = 0;
+            editValue = pokemonGetJoutaiDataId(arg0);
+            if (editValue != 0) {
+                count = pokemonGetKaisuuJoutaiDataId(arg0, editValue);
+                if (editValue != 4) {
+                    if (count >= 0) {
+                        count += temp_r22;
+                        if (count < 0) {
+                            count = 0;
                         }
-                        if (var_r20 > 0x10) {
-                            var_r20 = 0x10;
+                        if (count > 0x10) {
+                            count = 0x10;
                         }
-                        pokemonSetKaisuuJoutaiDataId(arg0, temp_r3_24, var_r20);
-                        if (pokemonGetNowKaisuuJoutaiDataId(arg0, temp_r3_24) > var_r20) {
-                            pokemonSetNowKaisuuJoutaiDataId(arg0, temp_r3_24, var_r20);
+                        pokemonSetKaisuuJoutaiDataId(arg0, editValue, count);
+                        if (pokemonGetNowKaisuuJoutaiDataId(arg0, editValue) > count) {
+                            pokemonSetNowKaisuuJoutaiDataId(arg0, editValue, count);
                         }
                         goto block_346;
                     }
                 } else {
-                    var_r20 = pokemonGetCountAsJoutaiDataId(arg0, temp_r3_24) + temp_r22;
-                    if (var_r20 < 0) {
-                        var_r20 = 0;
+                    count = pokemonGetCountAsJoutaiDataId(arg0, editValue);
+                    count += temp_r22;
+                    if (count < 0) {
+                        count = 0;
                     }
-                    if (var_r20 > (s32) joutaiDataBiosGetMaxCount(temp_r3_24)) {
-                        var_r20 = (s16) joutaiDataBiosGetMaxCount(temp_r3_24);
+                    if (count > joutaiDataBiosGetMaxCount(editValue)) {
+                        count = joutaiDataBiosGetMaxCount(editValue);
                     }
-                    pokemonSetCountAsJoutaiDataId(arg0, temp_r3_24, var_r20);
+                    pokemonSetCountAsJoutaiDataId(arg0, editValue, count);
 block_346:
                     if (arg3 != 0) {
                         *arg3 = 1;
@@ -1020,18 +1017,19 @@ block_346:
             }
             break;
         case 0x57:
-            temp_r3_25 = pokemonGetJoutaiDataId(arg0);
-            if ((s32) temp_r3_25 != 0) {
-                temp_r0 = pokemonGetKaisuuJoutaiDataId(arg0, temp_r3_25);
-                if (((s32) temp_r3_25 != 4) && (temp_r0 >= 0)) {
-                    var_r20 = pokemonGetNowKaisuuJoutaiDataId(arg0, temp_r3_25) + temp_r22;
-                    if (var_r20 < 0) {
-                        var_r20 = 0;
+            editValue = pokemonGetJoutaiDataId(arg0);
+            if (editValue != 0) {
+                temp_r0 = pokemonGetKaisuuJoutaiDataId(arg0, editValue);
+                if ((editValue != 4) && (temp_r0 >= 0)) {
+                    i = pokemonGetNowKaisuuJoutaiDataId(arg0, editValue);
+                    i += temp_r22;
+                    if (i < 0) {
+                        i = 0;
                     }
-                    if (var_r20 > pokemonGetKaisuuJoutaiDataId(arg0, temp_r3_25)) {
-                        var_r20 = pokemonGetKaisuuJoutaiDataId(arg0, temp_r3_25);
+                    if (i > pokemonGetKaisuuJoutaiDataId(arg0, editValue)) {
+                        i = pokemonGetKaisuuJoutaiDataId(arg0, editValue);
                     }
-                    pokemonSetNowKaisuuJoutaiDataId(arg0, temp_r3_25, var_r20);
+                    pokemonSetNowKaisuuJoutaiDataId(arg0, editValue, i);
                     if (arg3 != 0) {
                         *arg3 = 1;
                     }
@@ -1058,7 +1056,7 @@ block_346:
             }
             break;
         case 0x5B:
-            if (pokemonGetStatus(arg0, 0, 0xC3, 0) != 0) {
+            if ((u16)pokemonGetStatus(arg0, 0, 0xC3, 0) != 0) {
                 temp_r3_26 = pokemonGetStatus(arg0, 0, 0xC5, 0);
                 if ((u32) (temp_r22 + 0x10000) == 1U) {
                     editValue = -1;
@@ -1100,7 +1098,7 @@ block_377:
             }
             break;
         case 0x5F:
-            if (pokemonGetStatus(arg0, 0, 0xC3, 0) != 0) {
+            if ((u16)pokemonGetStatus(arg0, 0, 0xC3, 0) != 0) {
                 temp_r3_27 = pokemonGetStatus(arg0, 0, 0xC6, 0);
                 if ((u32) (temp_r22 + 0x10000) == 1U) {
                     editValue = 0;
@@ -1127,7 +1125,7 @@ block_396:
             }
             break;
         case 0x61:
-            if (pokemonGetStatus(arg0, 0, 0xC3, 0) != 0) {
+            if ((u16)pokemonGetStatus(arg0, 0, 0xC3, 0) != 0) {
                 var_r7_21 = pokemonGetStatus(arg0, 0, 0xC7, 0);
                 var_r7_21 += temp_r22;
                 if (var_r7_21 < 0) {
@@ -1181,7 +1179,7 @@ block_396:
             }
             break;
         case 0x6E:
-            var_r7_23 = pokemonGetStatus(arg0, 0, (s32) gRibbonStat[gRibbonNum], 0);
+            var_r7_23 = pokemonGetStatus(arg0, 0, gRibbonStat[gRibbonNum], 0);
             var_r7_23 += temp_r22;
             if (var_r7_23 < 0) {
                 var_r7_23 = 0;
@@ -1219,23 +1217,16 @@ block_396:
 finish:
         menuCloseCustom(0x55, 0, 1);
         menuCloseCustom(0xD, 0, 1);
-        temp_r3_2 = pokemonBiosGetPokemonDataId(arg0);
-        if ((s32) temp_r3_2 != 0x19A) {
-            if ((s32) temp_r3_2 < 0x19A) {
-                if ((s32) temp_r3_2 != 0x97) {
-
-                } else {
-                    goto block_442;
-                }
-            }
-        } else {
-block_442:
+        switch (pokemonBiosGetPokemonDataId(arg0)) {
+        case 0x97:
+        case 0x19A:
             temp_r3_3 = pokemonGetStatus(arg0, 0, 0x73, 0);
             if ((temp_r3_3 == 4) || (temp_r3_3 == 0)) {
                 pokemonBiosSetEventGetFlag(arg0, 1);
             } else {
                 pokemonBiosSetEventGetFlag(arg0, 0);
             }
+            break;
         }
         if (pokemonCheckValid(arg0) == 0) {
             pokemonInit(arg0);
@@ -1244,35 +1235,25 @@ block_442:
                 pokemonDoItemSoubi(arg0, 0U, 0);
             }
             if ((temp_r27 != 0) && (arg1 == 1)) {
-                temp_r3_4 = pokemonGetStatus(arg0, 0, 0x6E, 0);
-                fightTrainerSetStatus(0, temp_r27, 0x15, 0U, temp_r3_4);
-                fightTrainerSetStatus(0, temp_r27, 0xE, 0U, pokemonGetStatus(0, (s32) (u16) temp_r3_4, 1, 0));
+                editValue = pokemonGetStatus(arg0, 0, 0x6E, 0);
+                fightTrainerSetStatus(0, temp_r27, 0x15, 0U, editValue);
+                fightTrainerSetStatus(0, temp_r27, 0xE, 0U, pokemonGetStatus(0, (s32) (u16) editValue, 1, 0));
                 fightTrainerSetStatus(0, temp_r27, 0x11, 0U, pokemonGetStatus(arg0, 0, 0x7A, 0));
-                var_r21 = &individual[0];
-                var_r20 = 0;
-                do {
-                    fightTrainerSetStatus(0, temp_r27, 0xF, var_r20, pokemonGetStatus(arg0, 0, (s32) *var_r21, 0));
-                    var_r21 += 1;
-                    var_r20 += 1;
-                } while ((s32) var_r20 < 6);
-                var_r21_2 = &effort[0];
-                var_r20 = 0;
-                do {
-                    fightTrainerSetStatus(0, temp_r27, 0x10, var_r20, pokemonGetStatus(arg0, 0, (s32) *var_r21_2, 0));
-                    var_r21_2 += 1;
-                    var_r20 += 1;
-                } while ((s32) var_r20 < 6);
+                for (i = 0; i < 6; i++) {
+                    fightTrainerSetStatus(0, temp_r27, 0xF, i, pokemonGetStatus(arg0, 0, individual[i], 0));
+                }
+                for (i = 0; i < 6; i++) {
+                    fightTrainerSetStatus(0, temp_r27, 0x10, i, pokemonGetStatus(arg0, 0, effort[i], 0));
+                }
                 fightTrainerSetStatus(0, temp_r27, 0x14, 0U, (u8) pokemonGetStatus(arg0, 0, 0xB7, 0));
                 fightTrainerSetStatus(0, temp_r27, 0x16, 0U, (s32) pokemonGetSoubiItemDataId(arg0));
                 fightTrainerSetStatus(0, temp_r27, 0x19, 0U, pokemonGetStatus(arg0, 0, 0x99, 0));
                 fightTrainerSetStatus(0, temp_r27, 0x1A, 0U, pokemonGetStatus(arg0, 0, 0xBA, 0));
                 fightTrainerSetStatus(0, temp_r27, 0x1B, 0U, pokemonGetStatus(arg0, 0, 0xBF, 0));
-                var_r20 = 0;
-                do {
-                    fightTrainerSetStatus(0, temp_r27, 0x17, var_r20, pokemonGetStatus(arg0, 0, 0x7F, (s32) var_r20));
-                    fightTrainerSetStatus(0, temp_r27, 0x18, var_r20, pokemonGetStatus(arg0, 0, 0x81, (s32) var_r20));
-                    var_r20 += 1;
-                } while ((s32) var_r20 < 4);
+                for (i = 0; i < 4; i++) {
+                    fightTrainerSetStatus(0, temp_r27, 0x17, i, pokemonGetStatus(arg0, 0, 0x7F, i));
+                    fightTrainerSetStatus(0, temp_r27, 0x18, i, pokemonGetStatus(arg0, 0, 0x81, i));
+                }
                 fightTrainerSetStatus(0, temp_r27, 0x13, 0U, pokemonGetStatus(arg0, 0, 0xC3, 0));
             }
         }

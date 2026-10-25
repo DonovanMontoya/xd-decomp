@@ -746,25 +746,17 @@ extern "C" void GSparticleSetGeneratorRotation(_GSparticleGen *g, f32 *rot) {
 }
 
 extern "C" void GSparticleBankSetCamera(_GSparticleBank *bank, void *cam) {
-    if (bank != 0) {
-        switch (bank->reserved0) {
-        case 0:
-            break;
-        default: {
-            _GSparticleGen *g;
-            u8 n;
-            bank->camera = cam;
-            n = bank->count;
-            g = bank->gens;
-            while (n--) {
-                if (g->bank != 0) {
-                    GSparticleGeneratorSetCamera(g, cam);
-                }
-                g++;
-            }
-            break;
+    _GSparticleGen *g;
+    u8 n;
+    if (bank == 0 || bank->reserved0 == 0) return;
+    bank->camera = cam;
+    n = bank->count;
+    g = bank->gens;
+    while (n--) {
+        if (g->bank != 0) {
+            GSparticleGeneratorSetCamera(g, cam);
         }
-        }
+        g++;
     }
 }
 

@@ -4,7 +4,7 @@
 struct VideoMode { u32 tv; u16 width,height,xfbHeight,xOrigin,yOrigin,viWidth,viHeight; u8 pad12[2]; u32 xfbMode; u8 field,aa; u8 samples[12][2]; u8 filter[7]; u8 pad39[3]; };
 struct VideoBuffer { s32 state; void *ptr; };
 struct Viewport { float x,y,width,height,nearZ,farZ; };
-struct VideoState { VideoMode mode; VideoBuffer buffers[3]; VideoBuffer *displayed; volatile u8 count; u8 rate,field,pad5b; volatile u16 requestedHeight;u16 maxHeight; s32 vsync,system; void(*callback)(u32); s32 missed,presented; float elapsed,lastElapsed; u8 pad7c[4]; s64 lastTime; volatile s32 lockRate; u8 lockCount,lockActive; u8 pad8e[2]; s32 copyMode,pixelFormat; float yScale; GXColor color; u32 depth; u8 padA4[4]; };
+struct VideoState { VideoMode mode; VideoBuffer buffers[3]; VideoBuffer * volatile displayed; volatile u8 count; u8 rate,field,pad5b; volatile u16 requestedHeight;u16 maxHeight; s32 vsync,system; void(*callback)(u32); s32 missed,presented; float elapsed,lastElapsed; u8 pad7c[4]; s64 lastTime; volatile s32 lockRate; volatile u8 lockCount; u8 lockActive; u8 pad8e[2]; s32 copyMode,pixelFormat; float yScale; volatile GXColor color; u32 depth; u8 padA4[4]; };
 #pragma pack(push,1)
 struct CopyParams { u16 x,y,width,height,stride; u8 padA[2]; s32 format,unused,mode; float scale; u8 clear; u32 color; u8 pad21[3]; u32 depth; };
 #pragma pack(pop)
@@ -41,7 +41,7 @@ static ModeEntry _videoModeList[]={
 };
 static VideoState _videoState; static Viewport _viewport; static u8 _videoDefaultFilter[7]={8,8,10,12,10,8,8}; static void(*_videoOneShotPostCB)(void*);
 inline VideoBuffer *findPointer(void *ptr) { VideoState *scan=&_videoState; s32 i=0;while(i<_videoState.count) {if(scan->buffers[0].ptr==ptr) return &_videoState.buffers[i];scan=(VideoState*)((u8*)scan+8);i++;}return 0; }
-inline VideoBuffer *findState(s32 state) { VideoState *scan=&_videoState;s32 i=0;while(i<_videoState.count) {if(scan->buffers[0].state==state) return &_videoState.buffers[i];scan=(VideoState*)((u8*)scan+8);i++;}return 0; }
+inline VideoBuffer *findState(s32 state) { VideoState *base=&_videoState;VideoState *scan=base;s32 i=0;while(i<base->count) {if(scan->buffers[0].state==state) return &_videoState.buffers[i];scan=(VideoState*)((u8*)scan+8);i++;}return 0; }
 inline VideoBuffer *freeBuffer(bool wait) {
     if(_videoState.count==3) { findState(4); }
     if(_videoState.count==1) return 0;

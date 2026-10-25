@@ -916,7 +916,48 @@ block_56:
 }
 
 __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5, f32 farg6, f32 farg7, f32 arg_sp8, f32 arg_spC, f32 arg_sp10, f32 arg_sp14) {
-    union { f64 alignment; u8 bytes[316]; } stack;
+    f32 radialAngleNoSRT;
+    f32 radialXNoSRT;
+    f32 radialAngle;
+    f32 radialX;
+    f32 widthClassify;
+    f32 distanceClassify;
+    s16 trailNearZ;
+    s16 trailNearY;
+    s16 trailNearX;
+    s16 trailCrossZ;
+    s16 trailCrossY;
+    s16 trailCrossX;
+    s16 trailPlusZ;
+    s16 trailPlusY;
+    s16 trailPlusX;
+    s16 trailFarZ;
+    s16 trailFarY;
+    s16 trailFarX;
+    s16 trailCustomZ;
+    s16 trailCustomY;
+    s16 trailCustomX;
+    s16 billboardMinusZ;
+    s16 billboardMinusY;
+    s16 billboardMinusX;
+    s16 billboardCrossZ;
+    s16 billboardCrossY;
+    s16 billboardCrossX;
+    s16 billboardPlusZ;
+    s16 billboardPlusY;
+    s16 billboardPlusX;
+    s16 billboardFarZ;
+    s16 billboardFarY;
+    s16 billboardFarX;
+    s16 customZ;
+    s16 customY;
+    s16 customX;
+    f32 directionZ;
+    f32 directionY;
+    f32 directionX;
+    PSMtx appMtx;
+    PSVec position;
+    GXColor color;
     f64 saved390;
     PSAppSRT *temp_r6;
     PSGenerator *temp_r27;
@@ -1023,9 +1064,9 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
     u8 var_ctr;
     u8 var_ctr_2;
 
-    (*(f32*)(stack.bytes+0x8)) = farg3;
-    (*(f32*)(stack.bytes+0xC)) = farg4;
-    (*(f32*)(stack.bytes+0x10)) = farg5;
+    directionX = farg3;
+    directionY = farg4;
+    directionZ = farg5;
     if ((s32) currentMtx != 0) {
         currentMtx = 0;
         GXSetCurrentMtx(0U);
@@ -1046,7 +1087,7 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                     temp_f14 = (f32) cos((f64) arg0->friction);
                     temp_f21 = arg0->velocity.z - temp_r27->param1;
                     var_f22 = temp_r27->radius;
-                    (*(f32*)(stack.bytes+0x12C)) = arg0->velocity.x - temp_r27->gravity;
+                    radialAngle = arg0->velocity.x - temp_r27->gravity;
                     if (var_f22 < 0.0f) {
                         var_f22 = -var_f22;
                     }
@@ -1055,23 +1096,23 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                         var_f1 = -var_f1;
                     }
                     temp_f22 = ((temp_f21 * (f32) tan((f64) var_f1)) + var_f22) * arg0->velocity.y;
-                    temp_f0 = temp_f22 * (f32) cos((f64) (*(f32*)(stack.bytes+0x12C)));
-                    (*(f32*)(stack.bytes+0x128)) = temp_f0;
+                    temp_f0 = temp_f22 * (f32) cos((f64) radialAngle);
+                    radialX = temp_f0;
                     temp_f5 = -temp_f0;
-                    temp_f8 = temp_f22 * (f32) sin((f64) (*(f32*)(stack.bytes+0x12C)));
-                    var_f15 = temp_r27->position.x + (((*(f32*)(stack.bytes+0x128)) * temp_f14) + (temp_f21 * temp_f16));
+                    temp_f8 = temp_f22 * (f32) sin((f64) radialAngle);
+                    var_f15 = temp_r27->position.x + ((radialX * temp_f14) + (temp_f21 * temp_f16));
                     var_f14 = temp_r27->position.y + ((temp_f14 * (temp_f21 * temp_f17)) + ((temp_f16 * (temp_f5 * temp_f17)) + (temp_f8 * temp_f15)));
                     var_f16 = temp_r27->position.z + ((temp_f14 * (temp_f21 * temp_f15)) + ((temp_f16 * (temp_f5 * temp_f15)) - (temp_f8 * temp_f17)));
                 }
                 temp_r6 = arg0->appsrt;
-                HSD_MtxSRT((f32 (*)[4]) &((f32*)(stack.bytes+0xA4))[0], &temp_r6->scale, &temp_r6->rotation, &temp_r6->translate, 0);
-                (*(f32*)(stack.bytes+0x98)) = var_f15;
-                (*(f32*)(stack.bytes+0x9C)) = var_f14;
-                (*(f32*)(stack.bytes+0xA0)) = var_f16;
-                PSMTXMultVec((f32 (*)[4]) &((f32*)(stack.bytes+0xA4))[0], (PSVec *) &(*(f32*)(stack.bytes+0x98)), (PSVec *) &(*(f32*)(stack.bytes+0x98)));
-                var_f14_2 = (*(f32*)(stack.bytes+0x98));
-                var_f15_2 = (*(f32*)(stack.bytes+0x9C));
-                var_f16_2 = (*(f32*)(stack.bytes+0xA0));
+                HSD_MtxSRT(appMtx, &temp_r6->scale, &temp_r6->rotation, &temp_r6->translate, 0);
+                position.x = var_f15;
+                position.y = var_f14;
+                position.z = var_f16;
+                PSMTXMultVec(appMtx, &position, &position);
+                var_f14_2 = position.x;
+                var_f15_2 = position.y;
+                var_f16_2 = position.z;
             } else {
                 temp_r27_2 = arg0->generator;
                 if (temp_r27_2 == NULL) {
@@ -1085,7 +1126,7 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                     temp_f17_2 = (f32) cos((f64) arg0->friction);
                     temp_f22_2 = arg0->velocity.z - temp_r27_2->param1;
                     var_f21 = temp_r27_2->radius;
-                    (*(f32*)(stack.bytes+0x134)) = arg0->velocity.x - temp_r27_2->gravity;
+                    radialAngleNoSRT = arg0->velocity.x - temp_r27_2->gravity;
                     if (var_f21 < 0.0f) {
                         var_f21 = -var_f21;
                     }
@@ -1094,19 +1135,19 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                         var_f1_2 = -var_f1_2;
                     }
                     temp_f21_2 = ((temp_f22_2 * (f32) tan((f64) var_f1_2)) + var_f21) * arg0->velocity.y;
-                    temp_f0_2 = temp_f21_2 * (f32) cos((f64) (*(f32*)(stack.bytes+0x134)));
-                    (*(f32*)(stack.bytes+0x130)) = temp_f0_2;
+                    temp_f0_2 = temp_f21_2 * (f32) cos((f64) radialAngleNoSRT);
+                    radialXNoSRT = temp_f0_2;
                     temp_f5_2 = -temp_f0_2;
-                    temp_f8_2 = temp_f21_2 * (f32) sin((f64) (*(f32*)(stack.bytes+0x134)));
-                    var_f14_2 = temp_r27_2->position.x + (((*(f32*)(stack.bytes+0x130)) * temp_f17_2) + (temp_f22_2 * temp_f15_2));
+                    temp_f8_2 = temp_f21_2 * (f32) sin((f64) radialAngleNoSRT);
+                    var_f14_2 = temp_r27_2->position.x + ((radialXNoSRT * temp_f17_2) + (temp_f22_2 * temp_f15_2));
                     var_f15_2 = temp_r27_2->position.y + ((temp_f17_2 * (temp_f22_2 * temp_f14_2)) + ((temp_f15_2 * (temp_f5_2 * temp_f14_2)) + (temp_f8_2 * temp_f16_2)));
                     var_f16_2 = temp_r27_2->position.z + ((temp_f17_2 * (temp_f22_2 * temp_f16_2)) + ((temp_f15_2 * (temp_f5_2 * temp_f16_2)) - (temp_f8_2 * temp_f14_2)));
                 }
             }
         } else {
-            var_f14_2 = farg0 - (*(f32*)(stack.bytes+0x8));
-            var_f15_2 = farg1 - (*(f32*)(stack.bytes+0xC));
-            var_f16_2 = farg2 - (*(f32*)(stack.bytes+0x10));
+            var_f14_2 = farg0 - directionX;
+            var_f15_2 = farg1 - directionY;
+            var_f16_2 = farg2 - directionZ;
         }
         temp_r0 = arg0->kind;
         temp_r4 = temp_r0 & 0x80000080;
@@ -1120,20 +1161,20 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                 temp_r11 = (s32) (arg0->primRemain << 0x10) / (s32) temp_r5;
                 temp_r12 = arg0->primTarget[2];
                 temp_r27_3 = arg0->primTarget[3];
-                (*(s8*)(stack.bytes+0x94)) = (s8) ((s32) ((temp_r6_2 << 0x10) + (temp_r11 * (arg0->primColor[0] - temp_r6_2))) >> 0x10);
-                (*(u8*)(stack.bytes+0x95)) = (u8) ((s32) ((temp_r7 << 0x10) + (temp_r11 * (arg0->primColor[1] - temp_r7))) >> 0x10);
-                (*(u8*)(stack.bytes+0x96)) = (u8) ((s32) ((temp_r12 << 0x10) + (temp_r11 * (arg0->primColor[2] - temp_r12))) >> 0x10);
-                (*(u8*)(stack.bytes+0x97)) = (u8) ((s32) ((temp_r27_3 << 0x10) + (temp_r11 * (arg0->primColor[3] - temp_r27_3))) >> 0x10);
+                color.r = (s8) ((s32) ((temp_r6_2 << 0x10) + (temp_r11 * (arg0->primColor[0] - temp_r6_2))) >> 0x10);
+                color.g = (u8) ((s32) ((temp_r7 << 0x10) + (temp_r11 * (arg0->primColor[1] - temp_r7))) >> 0x10);
+                color.b = (u8) ((s32) ((temp_r12 << 0x10) + (temp_r11 * (arg0->primColor[2] - temp_r12))) >> 0x10);
+                color.a = (u8) ((s32) ((temp_r27_3 << 0x10) + (temp_r11 * (arg0->primColor[3] - temp_r27_3))) >> 0x10);
             } else {
-                *(u32*)&(*(s8*)(stack.bytes+0x94)) = (s32) *(u32*)arg0->primColor;
+                *(u32*)&color.r = (s32) *(u32*)arg0->primColor;
             }
             break;
         case 0x80:                                  /* switch 1 */
         case 0x80000080:                            /* switch 1 */
-            (*(u8*)(stack.bytes+0x97)) = 0xFF;
-            (*(u8*)(stack.bytes+0x96)) = 0xFF;
-            (*(u8*)(stack.bytes+0x95)) = 0xFF;
-            (*(s8*)(stack.bytes+0x94)) = 0xFF;
+            color.a = 0xFF;
+            color.b = 0xFF;
+            color.g = 0xFF;
+            color.r = 0xFF;
             break;
         }
         if (arg1 == NULL) {
@@ -1152,78 +1193,69 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                 GXBegin(GX_QUADS, GX_VTXFMT3, 4U);
             }
             temp_f0_3 = var_f16_2 - arg_sp8;
-            (*(f32*)(stack.bytes+0x124)) = temp_f0_3;
             temp_f0_4 = (f32) temp_f0_3;
-            (*(f32*)(stack.bytes+0x88)) = temp_f0_4;
+            trailNearZ = PS_FIXED6(temp_f0_4);
             saved390 = (f64) (var_f15_2 - farg7);
 
-            (*(f32*)(stack.bytes+0x120)) = (f32) saved390;
             temp_f0_5 = (f32) saved390;
-            (*(f32*)(stack.bytes+0x84)) = temp_f0_5;
+            trailNearY = PS_FIXED6(temp_f0_5);
             saved390 = (f64) (var_f14_2 - farg6);
-            (*(f32*)(stack.bytes+0x11C)) = (f32) saved390;
             temp_f0_6 = (f32) saved390;
-            (*(f32*)(stack.bytes+0x80)) = temp_f0_6;
+            trailNearX = PS_FIXED6(temp_f0_6);
             saved390 = (f64) temp_f0_6;
-            *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_6);
-            *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_5);
-            *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_4);
-            temp_r0_2 = (((((*(u8*)(stack.bytes+0x95)) * 0x10) & 0xF00 & ~0xF000) | (((u8) (*(s8*)(stack.bytes+0x94)) << 8) & 0xF000)) & ~0xF0) | ((*(u8*)(stack.bytes+0x96)) & 0xF0);
-            *(volatile s16 *)0xCC008000 = (temp_r0_2 & ~0xF) | (((u32) (s32) ((f32) (*(u8*)(stack.bytes+0x97)) * arg0->textureScale) >> 4U) & 0xF);
+            *(volatile s16 *)0xCC008000 = trailNearX;
+            *(volatile s16 *)0xCC008000 = trailNearY;
+            *(volatile s16 *)0xCC008000 = trailNearZ;
+            temp_r0_2 = ((((color.g * 0x10) & 0xF00 & ~0xF000) | (((u8) color.r << 8) & 0xF000)) & ~0xF0) | (color.b & 0xF0);
+            *(volatile s16 *)0xCC008000 = (temp_r0_2 & ~0xF) | (((u32) (s32) ((f32) color.a * arg0->textureScale) >> 4U) & 0xF);
             temp_r5_2 = arg0->kind;
             if (temp_r5_2 & 0x400) {
                 *(volatile u8 *)0xCC008000 = (s8) ((temp_r5_2 >> 0x10U) & 0xC);
             }
             temp_f0_7 = farg2 - arg_sp14;
-            (*(f32*)(stack.bytes+0x118)) = temp_f0_7;
             temp_f0_8 = (f32) temp_f0_7;
-            (*(f32*)(stack.bytes+0x7C)) = temp_f0_8;
+            trailCrossZ = PS_FIXED6(temp_f0_8);
             saved390 = (f64) (farg1 - arg_sp10);
-            (*(f32*)(stack.bytes+0x114)) = (f32) saved390;
             temp_f0_9 = (f32) saved390;
-            (*(f32*)(stack.bytes+0x78)) = temp_f0_9;
+            trailCrossY = PS_FIXED6(temp_f0_9);
             saved390 = (f64) (farg0 - arg_spC);
-            (*(f32*)(stack.bytes+0x110)) = (f32) saved390;
             temp_f0_10 = (f32) saved390;
-            (*(f32*)(stack.bytes+0x74)) = temp_f0_10;
-            temp_r8 = (((*(u8*)(stack.bytes+0x97)) >> 4U) & 0xF) | temp_r0_2;
+            trailCrossX = PS_FIXED6(temp_f0_10);
+            temp_r8 = ((color.a >> 4U) & 0xF) | temp_r0_2;
             saved390 = (f64) temp_f0_10;
-            *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_10);
-            *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_9);
-            *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_8);
+            *(volatile s16 *)0xCC008000 = trailCrossX;
+            *(volatile s16 *)0xCC008000 = trailCrossY;
+            *(volatile s16 *)0xCC008000 = trailCrossZ;
             *(volatile s16 *)0xCC008000 = temp_r8;
             temp_r6_3 = arg0->kind;
             if (temp_r6_3 & 0x400) {
                 *(volatile u8 *)0xCC008000 = (s8) (((temp_r6_3 >> 0x10U) & 0xC) + 1);
             }
             temp_f0_11 = farg2 + arg_sp8;
-            (*(f32*)(stack.bytes+0x10C)) = temp_f0_11;
             temp_f0_12 = (f32) temp_f0_11;
-            (*(f32*)(stack.bytes+0x70)) = temp_f0_12;
+            trailPlusZ = PS_FIXED6(temp_f0_12);
             saved390 = (f64) (farg1 + farg7);
-            (*(f32*)(stack.bytes+0x108)) = (f32) saved390;
             temp_f0_13 = (f32) saved390;
-            (*(f32*)(stack.bytes+0x6C)) = temp_f0_13;
+            trailPlusY = PS_FIXED6(temp_f0_13);
             saved390 = (f64) (farg0 + farg6);
-            (*(f32*)(stack.bytes+0x104)) = (f32) saved390;
             temp_f0_14 = (f32) saved390;
-            (*(f32*)(stack.bytes+0x68)) = temp_f0_14;
+            trailPlusX = PS_FIXED6(temp_f0_14);
             saved390 = (f64) temp_f0_14;
-            *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_14);
-            *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_13);
-            *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_12);
+            *(volatile s16 *)0xCC008000 = trailPlusX;
+            *(volatile s16 *)0xCC008000 = trailPlusY;
+            *(volatile s16 *)0xCC008000 = trailPlusZ;
             *(volatile s16 *)0xCC008000 = temp_r8;
             temp_r6_4 = arg0->kind;
             if (temp_r6_4 & 0x400) {
                 *(volatile u8 *)0xCC008000 = (s8) (((temp_r6_4 >> 0x10U) & 0xC) + 2);
             }
-            (*(f32*)(stack.bytes+0x64)) = var_f16_2 + arg_sp14;
-            (*(f32*)(stack.bytes+0x60)) = var_f15_2 + arg_sp10;
-            (*(f32*)(stack.bytes+0x5C)) = var_f14_2 + arg_spC;
-            *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x5C)));
-            *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x60)));
-            *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x64)));
-            *(volatile s16 *)0xCC008000 = (s16) ((((u32) (s32) ((f32) (*(u8*)(stack.bytes+0x97)) * arg0->textureScale) >> 4U) & 0xF) | temp_r0_2);
+            trailFarZ = PS_FIXED6(var_f16_2 + arg_sp14);
+            trailFarY = PS_FIXED6(var_f15_2 + arg_sp10);
+            trailFarX = PS_FIXED6(var_f14_2 + arg_spC);
+            *(volatile s16 *)0xCC008000 = trailFarX;
+            *(volatile s16 *)0xCC008000 = trailFarY;
+            *(volatile s16 *)0xCC008000 = trailFarZ;
+            *(volatile s16 *)0xCC008000 = (s16) ((((u32) (s32) ((f32) color.a * arg0->textureScale) >> 4U) & 0xF) | temp_r0_2);
             temp_r3_2 = arg0->kind;
             if (temp_r3_2 & 0x400) {
                 *(volatile u8 *)0xCC008000 = (s8) (((temp_r3_2 >> 0x10U) & 0xC) + 3);
@@ -1239,18 +1271,18 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
             } else if (var_f0 < 0.0) {
                 var_f0 = __float_nan[0];
             } else {
-                (*(f32*)(stack.bytes+0x90)) = var_f0;
-                temp_r3_3 = *(s32*)&(*(f32*)(stack.bytes+0x90)) & 0x7F800000;
+                widthClassify = var_f0;
+                temp_r3_3 = *(s32*)&widthClassify & 0x7F800000;
                 switch (temp_r3_3) {                /* switch 2; irregular */
                 case 0x7F800000:                    /* switch 2 */
-                    if (*(s32*)&(*(f32*)(stack.bytes+0x90)) & 0x7FFFFF) {
+                    if (*(s32*)&widthClassify & 0x7FFFFF) {
                         var_r0 = 1;
                     } else {
                         var_r0 = 2;
                     }
                     break;
                 case 0x0:                           /* switch 2 */
-                    if (*(s32*)&(*(f32*)(stack.bytes+0x90)) & 0x7FFFFF) {
+                    if (*(s32*)&widthClassify & 0x7FFFFF) {
                         var_r0 = 5;
                     } else {
                         var_r0 = 3;
@@ -1277,18 +1309,18 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                 } else if (var_f5 < 0.0) {
                     var_f5 = __float_nan[0];
                 } else {
-                    (*(f32*)(stack.bytes+0x8C)) = var_f5;
-                    temp_r3_4 = *(s32*)&(*(f32*)(stack.bytes+0x8C)) & 0x7F800000;
+                    distanceClassify = var_f5;
+                    temp_r3_4 = *(s32*)&distanceClassify & 0x7F800000;
                     switch (temp_r3_4) {            /* switch 3; irregular */
                     case 0x7F800000:                /* switch 3 */
-                        if (*(s32*)&(*(f32*)(stack.bytes+0x8C)) & 0x7FFFFF) {
+                        if (*(s32*)&distanceClassify & 0x7FFFFF) {
                             var_r0_2 = 1;
                         } else {
                             var_r0_2 = 2;
                         }
                         break;
                     case 0x0:                       /* switch 3 */
-                        if (*(s32*)&(*(f32*)(stack.bytes+0x8C)) & 0x7FFFFF) {
+                        if (*(s32*)&distanceClassify & 0x7FFFFF) {
                             var_r0_2 = 5;
                         } else {
                             var_r0_2 = 3;
@@ -1349,16 +1381,16 @@ loop_99:
                             if (temp_r3_5 & 0x80000) {
                                 var_f2 = 1.0f - var_f2;
                             }
-                            (*(f32*)(stack.bytes+0x58)) = (arg_sp14 * var_f1_3 * temp_f4_2) + ((arg_sp8 * temp_f3_2) + farg2);
+                            trailCustomZ = PS_FIXED6((arg_sp14 * var_f1_3 * temp_f4_2) + ((arg_sp8 * temp_f3_2) + farg2));
                             saved390 = (f64) ((farg7 * temp_f3_2) + farg1);
 
-                            (*(f32*)(stack.bytes+0x54)) = (arg_sp10 * var_f1_3 * temp_f4_2) + (f32) saved390;
+                            trailCustomY = PS_FIXED6((arg_sp10 * var_f1_3 * temp_f4_2) + (f32) saved390);
                             saved390 = (f64) ((farg6 * temp_f3_2) + farg0);
-                            (*(f32*)(stack.bytes+0x50)) = (arg_spC * var_f1_3 * temp_f4_2) + (f32) saved390;
-                            *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x50)));
-                            *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x54)));
-                            *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x58)));
-                            *(volatile s16 *)0xCC008000 = (s16) ((((u32) var_r5 >> 4U) & 0xF) | ((((((*(u8*)(stack.bytes+0x95)) * 0x10) & 0xF00 & ~0xF000) | (((u8) (*(s8*)(stack.bytes+0x94)) << 8) & 0xF000)) & ~0xF0) | ((*(u8*)(stack.bytes+0x96)) & 0xF0)));
+                            trailCustomX = PS_FIXED6((arg_spC * var_f1_3 * temp_f4_2) + (f32) saved390);
+                            *(volatile s16 *)0xCC008000 = trailCustomX;
+                            *(volatile s16 *)0xCC008000 = trailCustomY;
+                            *(volatile s16 *)0xCC008000 = trailCustomZ;
+                            *(volatile s16 *)0xCC008000 = (s16) ((((u32) var_r5 >> 4U) & 0xF) | (((((color.g * 0x10) & 0xF00 & ~0xF000) | (((u8) color.r << 8) & 0xF000)) & ~0xF0) | (color.b & 0xF0)));
                             if (arg0->kind & 0x400) {
                                 *(volatile f32 *)0xCC008000 = var_f1_4;
                                 *(volatile f32 *)0xCC008000 = var_f2;
@@ -1385,52 +1417,49 @@ loop_99:
             GXBegin(GX_QUADS, GX_VTXFMT1, 4U);
         }
         temp_f0_15 = farg2 - arg_sp8;
-        (*(f32*)(stack.bytes+0x100)) = temp_f0_15;
         temp_f0_16 = (f32) temp_f0_15;
-        (*(f32*)(stack.bytes+0x4C)) = temp_f0_16;
+        billboardMinusZ = PS_FIXED6(temp_f0_16);
         saved390 = (f64) (farg1 - farg7);
 
-        (*(f32*)(stack.bytes+0xFC)) = (f32) saved390;
         temp_f0_17 = (f32) saved390;
-        (*(f32*)(stack.bytes+0x48)) = temp_f0_17;
+        billboardMinusY = PS_FIXED6(temp_f0_17);
         saved390 = (f64) (farg0 - farg6);
-        (*(f32*)(stack.bytes+0xF8)) = (f32) saved390;
         temp_f0_18 = (f32) saved390;
-        (*(f32*)(stack.bytes+0x44)) = temp_f0_18;
+        billboardMinusX = PS_FIXED6(temp_f0_18);
         saved390 = (f64) temp_f0_18;
-        *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_18);
-        *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_17);
-        *(volatile s16 *)0xCC008000 = PS_FIXED6(temp_f0_16);
+        *(volatile s16 *)0xCC008000 = billboardMinusX;
+        *(volatile s16 *)0xCC008000 = billboardMinusY;
+        *(volatile s16 *)0xCC008000 = billboardMinusZ;
         temp_r4_2 = arg0->kind;
         if (temp_r4_2 & 0x400) {
             *(volatile u8 *)0xCC008000 = (s8) ((temp_r4_2 >> 0x10U) & 0xC);
         }
-        (*(f32*)(stack.bytes+0x40)) = farg2 - arg_sp14;
-        (*(f32*)(stack.bytes+0x3C)) = farg1 - arg_sp10;
-        (*(f32*)(stack.bytes+0x38)) = farg0 - arg_spC;
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x38)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x3C)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x40)));
+        billboardCrossZ = PS_FIXED6(farg2 - arg_sp14);
+        billboardCrossY = PS_FIXED6(farg1 - arg_sp10);
+        billboardCrossX = PS_FIXED6(farg0 - arg_spC);
+        *(volatile s16 *)0xCC008000 = billboardCrossX;
+        *(volatile s16 *)0xCC008000 = billboardCrossY;
+        *(volatile s16 *)0xCC008000 = billboardCrossZ;
         temp_r3_6 = arg0->kind;
         if (temp_r3_6 & 0x400) {
             *(volatile u8 *)0xCC008000 = (s8) (((temp_r3_6 >> 0x10U) & 0xC) + 1);
         }
-        (*(f32*)(stack.bytes+0x34)) = farg2 + arg_sp8;
-        (*(f32*)(stack.bytes+0x30)) = farg1 + farg7;
-        (*(f32*)(stack.bytes+0x2C)) = farg0 + farg6;
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x2C)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x30)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x34)));
+        billboardPlusZ = PS_FIXED6(farg2 + arg_sp8);
+        billboardPlusY = PS_FIXED6(farg1 + farg7);
+        billboardPlusX = PS_FIXED6(farg0 + farg6);
+        *(volatile s16 *)0xCC008000 = billboardPlusX;
+        *(volatile s16 *)0xCC008000 = billboardPlusY;
+        *(volatile s16 *)0xCC008000 = billboardPlusZ;
         temp_r3_7 = arg0->kind;
         if (temp_r3_7 & 0x400) {
             *(volatile u8 *)0xCC008000 = (s8) (((temp_r3_7 >> 0x10U) & 0xC) + 2);
         }
-        (*(f32*)(stack.bytes+0x28)) = farg2 + arg_sp14;
-        (*(f32*)(stack.bytes+0x24)) = farg1 + arg_sp10;
-        (*(f32*)(stack.bytes+0x20)) = farg0 + arg_spC;
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x20)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x24)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x28)));
+        billboardFarZ = PS_FIXED6(farg2 + arg_sp14);
+        billboardFarY = PS_FIXED6(farg1 + arg_sp10);
+        billboardFarX = PS_FIXED6(farg0 + arg_spC);
+        *(volatile s16 *)0xCC008000 = billboardFarX;
+        *(volatile s16 *)0xCC008000 = billboardFarY;
+        *(volatile s16 *)0xCC008000 = billboardFarZ;
         temp_r3_8 = arg0->kind;
         if (temp_r3_8 & 0x400) {
             *(volatile u8 *)0xCC008000 = (s8) (((temp_r3_8 >> 0x10U) & 0xC) + 3);
@@ -1470,15 +1499,15 @@ loop_126:
                     if (temp_r3_9 & 0x80000) {
                         var_f2_2 = 1.0f - var_f2_2;
                     }
-                    (*(f32*)(stack.bytes+0x1C)) = (arg_sp14 * temp_f4_3) + ((arg_sp8 * temp_f3_3) + farg2);
+                    customZ = PS_FIXED6((arg_sp14 * temp_f4_3) + ((arg_sp8 * temp_f3_3) + farg2));
                     saved390 = (f64) ((farg7 * temp_f3_3) + farg1);
 
-                    (*(f32*)(stack.bytes+0x18)) = (arg_sp10 * temp_f4_3) + (f32) saved390;
+                    customY = PS_FIXED6((arg_sp10 * temp_f4_3) + (f32) saved390);
                     saved390 = (f64) ((farg6 * temp_f3_3) + farg0);
-                    (*(f32*)(stack.bytes+0x14)) = (arg_spC * temp_f4_3) + (f32) saved390;
-                    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x14)));
-                    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x18)));
-                    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x1C)));
+                    customX = PS_FIXED6((arg_spC * temp_f4_3) + (f32) saved390);
+                    *(volatile s16 *)0xCC008000 = customX;
+                    *(volatile s16 *)0xCC008000 = customY;
+                    *(volatile s16 *)0xCC008000 = customZ;
                     if (arg0->kind & 0x400) {
                         *(volatile f32 *)0xCC008000 = var_f1_5;
                         *(volatile f32 *)0xCC008000 = var_f2_2;
@@ -1759,7 +1788,21 @@ block_38:
 }
 
 static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3) {
-    union { f64 alignment; u8 bytes[260]; } stack;
+    f32 *epsilon;
+    s32 link;
+    u32 prevZMode;
+    s32 prevAlphaMode;
+    u8 prevAlpha1, prevAlpha2;
+    s32 firstParticle;
+    s32 localIdentity[12];
+    f32 textureMtx[3][4];
+    GXTexObj textureObj;
+    u16 paletteEntries;
+    u32 paletteName, paletteFormat;
+    GXTlutObj paletteObj;
+    PSParticle *opaque, *translucent;
+    s32 chanMat, chanAmb, colorPrim, colorEnv, colorMat;
+    s16 pointX, pointY, pointZ;
     PSParticle *var_r25;
     PSTex *temp_r3_8;
     enum _GXAttnFn var_r17;
@@ -1828,424 +1871,420 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
     void *var_r24;
     void *var_r4_3;
 
-    (*(s32*)(stack.bytes+0xF0)) = 0;
-    (*(u8*)(stack.bytes+0xED)) = 0;
-    (*(u8*)(stack.bytes+0xEC)) = 0xFF;
+    prevAlphaMode = 0;
+    prevAlpha1 = 0;
+    prevAlpha2 = 0xFF;
     temp_r29 = vmtx;
     temp_r28 = (f32 (*)[4])prj;
-    (*(s32*)(stack.bytes+0xE8)) = 1;
+    firstParticle = 1;
     temp_r27 = pvmtx;
     temp_r26 = rvmtx;
-    (*(u32*)(stack.bytes+0x10)) = arg0;
     var_r23 = 0;
-    (*(s32*)(stack.bytes+0x14)) = arg1;
-    (*(u32*)(stack.bytes+0x18)) = arg3;
-    (*(s32*)(stack.bytes+0xF8)) = 0;
+    link = 0;
     do {
-        if ((*(u32*)(stack.bytes+0x10)) & (1 << (*(s32*)(stack.bytes+0xF8)))) {
-            particleSort((*(s32*)(stack.bytes+0xF8)), &(*(PSParticle **)(stack.bytes+0x40)), &(*(PSParticle **)(stack.bytes+0x3C)));
-            switch ((*(s32*)(stack.bytes+0x14))) {                         /* switch 1; irregular */
-            case 1:                                 /* switch 1 */
-                var_r25 = (*(PSParticle **)(stack.bytes+0x40));
-block_8:
-                (*(f32 **)(stack.bytes+0xFC)) = __float_epsilon;
-loop_138:
-                if (var_r25 != NULL) {
-                    if (((u32) (*(s32*)(stack.bytes+0x14)) != 1U) || (var_r25->kind & 8)) {
-                        if (!(var_r25->size < *(*(f32 **)(stack.bytes+0xFC))) && ((arg2 == NULL) || ((u16) var_r25->id == (u16) arg2->id)) && ((u32) var_r25->generator->camera == (*(u32*)(stack.bytes+0x18))) && !(var_r25->kind & 0x20000000)) {
-                            if ((*(s32*)(stack.bytes+0xE8)) != 0) {
-                                var_r24 = NULL;
-                                prevPointSize = -1;
-                                prevLineWidth = -1;
-                                prevChanCtrl = -1;
-                                psSetupTevInvalidState();
-                                var_r16 &= 0xFEFFFFFF;
-                                (*(u32*)(stack.bytes+0xF4)) = -1U;
-                                var_r14 = -1U;
-                                HSD_FogSet(NULL);
-                                prevChanMat.g = 0xFF;
-                                prevChanMat.b = 0xFF;
-                                prevChanMat.a = 0xFF;
-                                prevChanMat.r = 0xFF;
-                                prevChanAmb.b = 0xFF;
-                                prevChanAmb.g = 0xFF;
-                                prevChanAmb.r = 0xFF;
-                                prevChanAmb.a = 0xFF;
-                                *(u32*)&(*(s32*)(stack.bytes+0x38)) = (s32) *(u32*)&prevChanMat;
-                                GXSetChanMatColor(GX_COLOR0A0, *(GXColor*)&(*(s32*)(stack.bytes+0x38)));
-                                *(u32*)&(*(s32*)(stack.bytes+0x34)) = (s32) *(u32*)&prevChanAmb;
-                                GXSetChanAmbColor(GX_COLOR0A0, *(GXColor*)&(*(s32*)(stack.bytes+0x34)));
-                                psSetupTevInvalidState();
-                                psSetupTevCommon();
-                                prevColorPrim.g = 0xFF;
-                                prevColorPrim.b = 0xFF;
-                                prevColorPrim.a = 0xFF;
-                                prevColorEnv.g = 0;
-                                prevColorPrim.r = 0xFF;
-                                prevColorEnv.b = 0;
-                                prevColorEnv.a = 0;
-                                prevColorMat.g = 0xFF;
-                                prevColorMat.b = 0xFF;
-                                prevColorEnv.r = 0;
-                                prevColorMat.r = 0xFF;
-                                prevColorMat.a = 0xFF;
-                                *(u32*)&(*(s32*)(stack.bytes+0x30)) = (s32) *(u32*)&prevColorPrim;
-                                GXSetTevColor(GX_TEVREG0, *(GXColor*)&(*(s32*)(stack.bytes+0x30)));
-                                *(u32*)&(*(s32*)(stack.bytes+0x2C)) = (s32) *(u32*)&prevColorEnv;
-                                GXSetTevColor(GX_TEVREG1, *(GXColor*)&(*(s32*)(stack.bytes+0x2C)));
-                                *(u32*)&(*(s32*)(stack.bytes+0x28)) = (s32) *(u32*)&prevColorMat;
-                                GXSetTevColor(GX_TEVREG2, *(GXColor*)&(*(s32*)(stack.bytes+0x28)));
-                                prevBlendMode = -1;
-                                GXSetZCompLoc(0U);
-                                HSD_CObjGetViewingMtx(HSD_CObjGetCurrent());
-                                PSMTXInverse(vmtx, rvmtx);
-                                if (prj[0] == 0.0f) {
-                                    temp_f2 = temp_r28[0][2];
-                                    temp_f0 = (*(f32*)((u8*)temp_r29+0x20));
-                                    temp_f3 = (*(f32*)((u8*)temp_r29+0x24));
-                                    temp_f7 = temp_r28[1][0];
-                                    temp_f12 = (*(f32*)((u8*)temp_r29+0x28));
-                                    temp_f10 = (*(f32*)((u8*)temp_r29+0x2C));
-                                    temp_f27 = temp_r28[0][1];
-                                    temp_f8 = temp_r28[0][3];
-                                    pvmtx[0][0] = (f32) ((temp_f27 * vmtx[0][0]) + (temp_f2 * temp_f0));
-                                    temp_r27[0][1] = (temp_f27 * (*(f32*)((u8*)temp_r29+0x4))) + (temp_f2 * temp_f3);
-                                    temp_r27[0][2] = (temp_f27 * (*(f32*)((u8*)temp_r29+0x8))) + (temp_f2 * temp_f12);
-                                    temp_r27[0][3] = (temp_f27 * (*(f32*)((u8*)temp_r29+0xC))) + (temp_f2 * temp_f10);
-                                    temp_r27[1][0] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x10))) + (temp_f7 * temp_f0);
-                                    temp_r27[1][1] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x14))) + (temp_f7 * temp_f3);
-                                    temp_r27[1][2] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x18))) + (temp_f7 * temp_f12);
-                                    temp_r27[1][3] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x1C))) + (temp_f7 * temp_f10);
-                                } else {
-                                    temp_f4 = temp_r28[0][1];
-                                    temp_f3_2 = temp_r28[0][2];
-                                    temp_f5 = temp_r28[0][3];
-                                    temp_f4_2 = temp_r28[1][0];
-                                    pvmtx[0][0] = (f32) ((temp_f4 * vmtx[0][0]) + temp_f3_2);
-                                    temp_r27[0][1] = (temp_f4 * (*(f32*)((u8*)temp_r29+0x4))) + temp_f3_2;
-                                    temp_r27[0][2] = (temp_f4 * (*(f32*)((u8*)temp_r29+0x8))) + temp_f3_2;
-                                    temp_r27[0][3] = (temp_f4 * (*(f32*)((u8*)temp_r29+0xC))) + temp_f3_2;
-                                    temp_r27[1][0] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x10))) + temp_f4_2;
-                                    temp_r27[1][1] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x14))) + temp_f4_2;
-                                    temp_r27[1][2] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x18))) + temp_f4_2;
-                                    temp_r27[1][3] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x1C))) + temp_f4_2;
-                                }
-                                temp_f0_2 = (*(f32*)((u8*)temp_r26+0x4));
-                                temp_f3_3 = (*(f32*)((u8*)temp_r26+0x10));
-                                temp_f1 = (*(f32*)((u8*)temp_r26+0x14));
-                                temp_f2_2 = (*(f32*)((u8*)temp_r26+0x20));
-                                temp_f0_3 = (*(f32*)((u8*)temp_r26+0x24));
-                                rx0 = rvmtx[0][0] + temp_f0_2;
-                                rx1 = rvmtx[0][0] - temp_f0_2;
-                                ry0 = temp_f3_3 + temp_f1;
-                                ry1 = temp_f3_3 - temp_f1;
-                                rz0 = temp_f2_2 + temp_f0_3;
-                                rz1 = temp_f2_2 - temp_f0_3;
-                                GXLoadPosMtxImm(vmtx, 0U);
-                                (*(s32*)(stack.bytes+0xB0)) = ((const s32*)identityMtx)[0];
-                                (*(s32*)(stack.bytes+0xB4)) = ((const s32*)identityMtx)[1];
-                                (*(s32*)(stack.bytes+0xB8)) = ((const s32*)identityMtx)[2];
-                                (*(s32*)(stack.bytes+0xBC)) = ((const s32*)identityMtx)[3];
-                                (*(s32*)(stack.bytes+0xC0)) = ((const s32*)identityMtx)[4];
-                                (*(s32*)(stack.bytes+0xC4)) = ((const s32*)identityMtx)[5];
-                                (*(s32*)(stack.bytes+0xC8)) = ((const s32*)identityMtx)[6];
-                                (*(s32*)(stack.bytes+0xCC)) = ((const s32*)identityMtx)[7];
-                                (*(s32*)(stack.bytes+0xD0)) = ((const s32*)identityMtx)[8];
-                                (*(s32*)(stack.bytes+0xD4)) = ((const s32*)identityMtx)[9];
-                                (*(s32*)(stack.bytes+0xD8)) = ((const s32*)identityMtx)[10];
-                                (*(s32*)(stack.bytes+0xDC)) = ((const s32*)identityMtx)[11];
-                                GXLoadPosMtxImm((f32 (*)[4]) &(*(s32*)(stack.bytes+0xB0)), 3U);
-                                currentMtx = 3;
-                                if (3 != 0) {
-                                    currentMtx = 0;
-                                    GXSetCurrentMtx(0U);
-                                }
-                                GXEnableTexOffsets(GX_TEXCOORD0, 1U, 1U);
-                                HSD_MtxGetRotationMtx(rvmtx, rvmtxRot, 0x7A, 0x78);
-                                GXSetCullMode(GX_CULL_BACK);
-                                GXSetArray(GX_VA_TEX0, billboard_tex0_u8, 2U);
-                                GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                                GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGB565, 0U);
-                                GXSetVtxAttrFmt(GX_VTXFMT1, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                                GXSetVtxAttrFmt(GX_VTXFMT2, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                                GXSetVtxAttrFmt(GX_VTXFMT2, GX_VA_CLR0, GX_TEX_ST, GX_RGBA4, 0U);
-                                GXSetVtxAttrFmt(GX_VTXFMT2, GX_VA_TEX0, GX_TEX_ST, GX_RGB565, 0U);
-                                GXSetVtxAttrFmt(GX_VTXFMT3, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                                GXSetVtxAttrFmt(GX_VTXFMT3, GX_VA_CLR0, GX_TEX_ST, GX_RGBA4, 0U);
-                                GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                                GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
-                                GXSetVtxAttrFmt(GX_VTXFMT5, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                                GXSetVtxAttrFmt(GX_VTXFMT5, GX_VA_CLR0, GX_TEX_ST, GX_RGBA4, 0U);
-                                GXSetVtxAttrFmt(GX_VTXFMT5, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
-                                (*(s32*)(stack.bytes+0xE8)) = 0;
-                            }
-                            temp_r3_2 = ((u32) var_r25->kind >> 0x16U) & 3;
-                            if ((s32) prevBlendMode != temp_r3_2) {
-                                prevBlendMode = temp_r3_2;
-                                switch (temp_r3_2) { /* switch 2; irregular */
-                                case 0:             /* switch 2 */
-                                    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
-                                    break;
-                                case 1:             /* switch 2 */
-                                    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_CLEAR);
-                                    break;
-                                case 2:             /* switch 2 */
-                                    GXSetBlendMode(GX_BM_SUBTRACT, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
-                                    break;
-                                case 3:             /* switch 2 */
-                                    GXSetBlendMode(GX_BM_BLEND, GX_BL_DSTCLR, GX_BL_ZERO, GX_LO_CLEAR);
-                                    break;
-                                default:            /* switch 2 */
-                                    OSReport("Particle:setBlendMode:Unknown mode\n");
-                                    break;
-                                }
-                            }
-                            temp_r4 = var_r25->alphaCount;
-                            if (temp_r4 != 0) {
-                                temp_r5 = var_r25->alpha1Target;
-                                temp_r7 = (s32) (var_r25->alphaRemain << 0x10) / (s32) temp_r4;
-                                temp_r6 = var_r25->alpha2Target;
-                                var_r4 = (u8) ((s32) ((temp_r5 << 0x10) + (temp_r7 * (var_r25->alpha1 - temp_r5))) >> 0x10);
-                                var_r7 = (u8) ((s32) ((temp_r6 << 0x10) + (temp_r7 * (var_r25->alpha2 - temp_r6))) >> 0x10);
-                            } else {
-                                var_r4 = var_r25->alpha1;
-                                var_r7 = var_r25->alpha2;
-                            }
-                            temp_r6_2 = var_r25->alphaMode;
-                            if (((*(s32*)(stack.bytes+0xF0)) != (s32) temp_r6_2) || ((*(u8*)(stack.bytes+0xED)) != var_r4) || ((*(u8*)(stack.bytes+0xEC)) != var_r7)) {
-                                (*(s32*)(stack.bytes+0xF0)) = (s32) temp_r6_2;
-                                (*(u8*)(stack.bytes+0xED)) = var_r4;
-                                (*(u8*)(stack.bytes+0xEC)) = var_r7;
-                                GXSetAlphaCompare((temp_r6_2 >> 3U) & 7, var_r4, (temp_r6_2 >> 6U) & 3, temp_r6_2 & 7, var_r7);
-                            }
-                            psSetupTev(var_r25);
-                            temp_r3_3 = var_r25->kind & 0x80100000;
-                            if (temp_r3_3 != (u32) prevChanCtrl) {
-                                prevChanCtrl = (s32) temp_r3_3;
-                                GXSetNumChans(1U);
-                                if ((s32) prevChanCtrl != 0x80100000) {
-                                    if ((s32) prevChanCtrl < 0x80100000) {
-                                        if ((s32) prevChanCtrl < 0x80000001) {
-                                            var_r17 = GX_AF_NONE;
-                                            if (HSD_LObjGetLightMaskAttnFunc() != 0) {
-                                                var_r17 = GX_AF_SPOT;
-                                            }
-                                            GXSetChanCtrl(GX_COLOR0, 1U, GX_SRC_REG, GX_SRC_REG, HSD_LObjGetLightMaskDiffuse(), GX_DF_NONE, var_r17);
-                                            GXSetChanCtrl(GX_ALPHA0, 0U, GX_SRC_REG, GX_SRC_REG, 0U, GX_DF_NONE, GX_AF_NONE);
-                                        } else {
-                                            goto block_57;
-                                        }
-                                    } else if ((s32) prevChanCtrl != 0x100000) {
-block_57:
-                                        GXSetChanCtrl(GX_COLOR0A0, 0U, GX_SRC_REG, GX_SRC_REG, 0U, GX_DF_NONE, GX_AF_NONE);
-                                    } else {
-                                        GXSetChanCtrl(GX_COLOR0A0, 0U, GX_SRC_VTX, GX_SRC_VTX, 0U, GX_DF_NONE, GX_AF_NONE);
-                                    }
-                                } else {
-                                    var_r17_2 = GX_AF_NONE;
+        if (arg0 & (1 << link)) {
+            particleSort(link, &opaque, &translucent);
+            switch (arg1) {                         /* switch 1; irregular */
+            case 1:
+                var_r25 = opaque;
+                break;
+            case 2:
+                var_r25 = translucent;
+                break;
+            default:
+                goto nextLink;
+            }
+            epsilon = __float_epsilon;
+            while (var_r25 != NULL) {
+                if ((u32) arg1 == 1U && !(var_r25->kind & 8)) break;
+                if (!(var_r25->size < *epsilon) && ((arg2 == NULL) || ((u16) var_r25->id == (u16) arg2->id)) && ((u32) var_r25->generator->camera == arg3) && !(var_r25->kind & 0x20000000)) {
+                    if (firstParticle != 0) {
+                        var_r24 = NULL;
+                        prevPointSize = -1;
+                        prevLineWidth = -1;
+                        prevChanCtrl = -1;
+                        psSetupTevInvalidState();
+                        var_r16 &= 0xFEFFFFFF;
+                        prevZMode = -1U;
+                        var_r14 = -1U;
+                        HSD_FogSet(NULL);
+                        prevChanMat.g = 0xFF;
+                        prevChanMat.b = 0xFF;
+                        prevChanMat.a = 0xFF;
+                        prevChanMat.r = 0xFF;
+                        prevChanAmb.b = 0xFF;
+                        prevChanAmb.g = 0xFF;
+                        prevChanAmb.r = 0xFF;
+                        prevChanAmb.a = 0xFF;
+                        *(u32*)&chanMat = (s32) *(u32*)&prevChanMat;
+                        GXSetChanMatColor(GX_COLOR0A0, *(GXColor*)&chanMat);
+                        *(u32*)&chanAmb = (s32) *(u32*)&prevChanAmb;
+                        GXSetChanAmbColor(GX_COLOR0A0, *(GXColor*)&chanAmb);
+                        psSetupTevInvalidState();
+                        psSetupTevCommon();
+                        prevColorPrim.g = 0xFF;
+                        prevColorPrim.b = 0xFF;
+                        prevColorPrim.a = 0xFF;
+                        prevColorEnv.g = 0;
+                        prevColorPrim.r = 0xFF;
+                        prevColorEnv.b = 0;
+                        prevColorEnv.a = 0;
+                        prevColorMat.g = 0xFF;
+                        prevColorMat.b = 0xFF;
+                        prevColorEnv.r = 0;
+                        prevColorMat.r = 0xFF;
+                        prevColorMat.a = 0xFF;
+                        *(u32*)&colorPrim = (s32) *(u32*)&prevColorPrim;
+                        GXSetTevColor(GX_TEVREG0, *(GXColor*)&colorPrim);
+                        *(u32*)&colorEnv = (s32) *(u32*)&prevColorEnv;
+                        GXSetTevColor(GX_TEVREG1, *(GXColor*)&colorEnv);
+                        *(u32*)&colorMat = (s32) *(u32*)&prevColorMat;
+                        GXSetTevColor(GX_TEVREG2, *(GXColor*)&colorMat);
+                        prevBlendMode = -1;
+                        GXSetZCompLoc(0U);
+                        HSD_CObjGetViewingMtx(HSD_CObjGetCurrent());
+                        PSMTXInverse(vmtx, rvmtx);
+                        if (prj[0] == 0.0f) {
+                            temp_f2 = temp_r28[0][2];
+                            temp_f0 = (*(f32*)((u8*)temp_r29+0x20));
+                            temp_f3 = (*(f32*)((u8*)temp_r29+0x24));
+                            temp_f7 = temp_r28[1][0];
+                            temp_f12 = (*(f32*)((u8*)temp_r29+0x28));
+                            temp_f10 = (*(f32*)((u8*)temp_r29+0x2C));
+                            temp_f27 = temp_r28[0][1];
+                            temp_f8 = temp_r28[0][3];
+                            pvmtx[0][0] = (f32) ((temp_f27 * vmtx[0][0]) + (temp_f2 * temp_f0));
+                            temp_r27[0][1] = (temp_f27 * (*(f32*)((u8*)temp_r29+0x4))) + (temp_f2 * temp_f3);
+                            temp_r27[0][2] = (temp_f27 * (*(f32*)((u8*)temp_r29+0x8))) + (temp_f2 * temp_f12);
+                            temp_r27[0][3] = (temp_f27 * (*(f32*)((u8*)temp_r29+0xC))) + (temp_f2 * temp_f10);
+                            temp_r27[1][0] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x10))) + (temp_f7 * temp_f0);
+                            temp_r27[1][1] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x14))) + (temp_f7 * temp_f3);
+                            temp_r27[1][2] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x18))) + (temp_f7 * temp_f12);
+                            temp_r27[1][3] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x1C))) + (temp_f7 * temp_f10);
+                        } else {
+                            temp_f4 = temp_r28[0][1];
+                            temp_f3_2 = temp_r28[0][2];
+                            temp_f5 = temp_r28[0][3];
+                            temp_f4_2 = temp_r28[1][0];
+                            pvmtx[0][0] = (f32) ((temp_f4 * vmtx[0][0]) + temp_f3_2);
+                            temp_r27[0][1] = (temp_f4 * (*(f32*)((u8*)temp_r29+0x4))) + temp_f3_2;
+                            temp_r27[0][2] = (temp_f4 * (*(f32*)((u8*)temp_r29+0x8))) + temp_f3_2;
+                            temp_r27[0][3] = (temp_f4 * (*(f32*)((u8*)temp_r29+0xC))) + temp_f3_2;
+                            temp_r27[1][0] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x10))) + temp_f4_2;
+                            temp_r27[1][1] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x14))) + temp_f4_2;
+                            temp_r27[1][2] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x18))) + temp_f4_2;
+                            temp_r27[1][3] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x1C))) + temp_f4_2;
+                        }
+                        temp_f0_2 = (*(f32*)((u8*)temp_r26+0x4));
+                        temp_f3_3 = (*(f32*)((u8*)temp_r26+0x10));
+                        temp_f1 = (*(f32*)((u8*)temp_r26+0x14));
+                        temp_f2_2 = (*(f32*)((u8*)temp_r26+0x20));
+                        temp_f0_3 = (*(f32*)((u8*)temp_r26+0x24));
+                        rx0 = rvmtx[0][0] + temp_f0_2;
+                        rx1 = rvmtx[0][0] - temp_f0_2;
+                        ry0 = temp_f3_3 + temp_f1;
+                        ry1 = temp_f3_3 - temp_f1;
+                        rz0 = temp_f2_2 + temp_f0_3;
+                        rz1 = temp_f2_2 - temp_f0_3;
+                        GXLoadPosMtxImm(vmtx, 0U);
+                        localIdentity[0] = ((const s32*)identityMtx)[0];
+                        localIdentity[1] = ((const s32*)identityMtx)[1];
+                        localIdentity[2] = ((const s32*)identityMtx)[2];
+                        localIdentity[3] = ((const s32*)identityMtx)[3];
+                        localIdentity[4] = ((const s32*)identityMtx)[4];
+                        localIdentity[5] = ((const s32*)identityMtx)[5];
+                        localIdentity[6] = ((const s32*)identityMtx)[6];
+                        localIdentity[7] = ((const s32*)identityMtx)[7];
+                        localIdentity[8] = ((const s32*)identityMtx)[8];
+                        localIdentity[9] = ((const s32*)identityMtx)[9];
+                        localIdentity[10] = ((const s32*)identityMtx)[10];
+                        localIdentity[11] = ((const s32*)identityMtx)[11];
+                        GXLoadPosMtxImm((f32 (*)[4]) &localIdentity[0], 3U);
+                        currentMtx = 3;
+                        if (3 != 0) {
+                            currentMtx = 0;
+                            GXSetCurrentMtx(0U);
+                        }
+                        GXEnableTexOffsets(GX_TEXCOORD0, 1U, 1U);
+                        HSD_MtxGetRotationMtx(rvmtx, rvmtxRot, 0x7A, 0x78);
+                        GXSetCullMode(GX_CULL_BACK);
+                        GXSetArray(GX_VA_TEX0, billboard_tex0_u8, 2U);
+                        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
+                        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGB565, 0U);
+                        GXSetVtxAttrFmt(GX_VTXFMT1, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
+                        GXSetVtxAttrFmt(GX_VTXFMT2, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
+                        GXSetVtxAttrFmt(GX_VTXFMT2, GX_VA_CLR0, GX_TEX_ST, GX_RGBA4, 0U);
+                        GXSetVtxAttrFmt(GX_VTXFMT2, GX_VA_TEX0, GX_TEX_ST, GX_RGB565, 0U);
+                        GXSetVtxAttrFmt(GX_VTXFMT3, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
+                        GXSetVtxAttrFmt(GX_VTXFMT3, GX_VA_CLR0, GX_TEX_ST, GX_RGBA4, 0U);
+                        GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
+                        GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
+                        GXSetVtxAttrFmt(GX_VTXFMT5, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
+                        GXSetVtxAttrFmt(GX_VTXFMT5, GX_VA_CLR0, GX_TEX_ST, GX_RGBA4, 0U);
+                        GXSetVtxAttrFmt(GX_VTXFMT5, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
+                        firstParticle = 0;
+                    }
+                    temp_r3_2 = ((u32) var_r25->kind >> 0x16U) & 3;
+                    if ((s32) prevBlendMode != temp_r3_2) {
+                        prevBlendMode = temp_r3_2;
+                        switch (temp_r3_2) { /* switch 2; irregular */
+                        case 0:             /* switch 2 */
+                            GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+                            break;
+                        case 1:             /* switch 2 */
+                            GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_CLEAR);
+                            break;
+                        case 2:             /* switch 2 */
+                            GXSetBlendMode(GX_BM_SUBTRACT, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+                            break;
+                        case 3:             /* switch 2 */
+                            GXSetBlendMode(GX_BM_BLEND, GX_BL_DSTCLR, GX_BL_ZERO, GX_LO_CLEAR);
+                            break;
+                        default:            /* switch 2 */
+                            OSReport("Particle:setBlendMode:Unknown mode\n");
+                            break;
+                        }
+                    }
+                    temp_r4 = var_r25->alphaCount;
+                    if (temp_r4 != 0) {
+                        temp_r5 = var_r25->alpha1Target;
+                        temp_r7 = (s32) (var_r25->alphaRemain << 0x10) / (s32) temp_r4;
+                        temp_r6 = var_r25->alpha2Target;
+                        var_r4 = (u8) ((s32) ((temp_r5 << 0x10) + (temp_r7 * (var_r25->alpha1 - temp_r5))) >> 0x10);
+                        var_r7 = (u8) ((s32) ((temp_r6 << 0x10) + (temp_r7 * (var_r25->alpha2 - temp_r6))) >> 0x10);
+                    } else {
+                        var_r4 = var_r25->alpha1;
+                        var_r7 = var_r25->alpha2;
+                    }
+                    temp_r6_2 = var_r25->alphaMode;
+                    if ((prevAlphaMode != (s32) temp_r6_2) || (prevAlpha1 != var_r4) || (prevAlpha2 != var_r7)) {
+                        prevAlphaMode = (s32) temp_r6_2;
+                        prevAlpha1 = var_r4;
+                        prevAlpha2 = var_r7;
+                        GXSetAlphaCompare((temp_r6_2 >> 3U) & 7, var_r4, (temp_r6_2 >> 6U) & 3, temp_r6_2 & 7, var_r7);
+                    }
+                    psSetupTev(var_r25);
+                    temp_r3_3 = var_r25->kind & 0x80100000;
+                    if (temp_r3_3 != (u32) prevChanCtrl) {
+                        prevChanCtrl = (s32) temp_r3_3;
+                        GXSetNumChans(1U);
+                        if ((s32) prevChanCtrl != 0x80100000) {
+                            if ((s32) prevChanCtrl < 0x80100000) {
+                                if ((s32) prevChanCtrl < 0x80000001) {
+                                    var_r17 = GX_AF_NONE;
                                     if (HSD_LObjGetLightMaskAttnFunc() != 0) {
-                                        var_r17_2 = GX_AF_SPOT;
+                                        var_r17 = GX_AF_SPOT;
                                     }
-                                    GXSetChanCtrl(GX_COLOR0, 1U, GX_SRC_REG, GX_SRC_REG, HSD_LObjGetLightMaskDiffuse(), GX_DF_NONE, var_r17_2);
-                                    GXSetChanCtrl(GX_ALPHA0, 0U, GX_SRC_VTX, GX_SRC_VTX, 0U, GX_DF_NONE, GX_AF_NONE);
-                                }
-                            }
-                            setupChanReg(var_r25);
-                            setupTevReg(var_r25);
-                            temp_r4_2 = var_r25->kind;
-                            temp_r3_4 = temp_r4_2 & 0x10000008;
-                            if (temp_r3_4 != (*(u32*)(stack.bytes+0xF4))) {
-                                (*(u32*)(stack.bytes+0xF4)) = temp_r3_4;
-                                if (temp_r3_4 & 8) {
-                                    GXSetZMode(((temp_r4_2 >> 0x1CU) & 1) ^ 1, GX_LEQUAL, 1U);
+                                    GXSetChanCtrl(GX_COLOR0, 1U, GX_SRC_REG, GX_SRC_REG, HSD_LObjGetLightMaskDiffuse(), GX_DF_NONE, var_r17);
+                                    GXSetChanCtrl(GX_ALPHA0, 0U, GX_SRC_REG, GX_SRC_REG, 0U, GX_DF_NONE, GX_AF_NONE);
                                 } else {
-                                    GXSetZMode(((temp_r4_2 >> 0x1CU) & 1) ^ 1, GX_LEQUAL, 0U);
+                                    goto block_57;
                                 }
-                            }
-                            temp_r3_5 = var_r25->kind;
-                            if ((temp_r3_5 ^ var_r16) & 0x01000000) {
-                                if (temp_r3_5 & 0x01000000) {
-                                    HSD_FogSet(particleFog);
-                                } else {
-                                    HSD_FogSet(NULL);
-                                }
-                            }
-                            temp_r3_6 = (u32**)psFormGroupArray[var_r25->bank];
-                            if ((temp_r3_6 != NULL) && (temp_r4_3 = temp_r3_6[var_r25->texGroup], temp_r4_3 != NULL) && ((u8*)temp_r4_3 + 4 != NULL)) {
-                                var_r22 = (u32*)temp_r4_3[var_r25->pose + 1];
+                            } else if ((s32) prevChanCtrl != 0x100000) {
+block_57:
+                                GXSetChanCtrl(GX_COLOR0A0, 0U, GX_SRC_REG, GX_SRC_REG, 0U, GX_DF_NONE, GX_AF_NONE);
                             } else {
-                                var_r22 = NULL;
+                                GXSetChanCtrl(GX_COLOR0A0, 0U, GX_SRC_VTX, GX_SRC_VTX, 0U, GX_DF_NONE, GX_AF_NONE);
                             }
-                            temp_r3_7 = var_r25->kind;
-                            if (temp_r3_7 & 0x400) {
-                                if (temp_r3_7 & 0x20) {
-                                    var_f1 = 2.0f;
-                                    var_r17_3 = GX_MIRROR;
-                                } else {
-                                    var_f1 = 1.0f;
-                                    var_r17_3 = GX_CLAMP;
-                                }
-                                if (temp_r3_7 & 0x40) {
-                                    var_f2 = 2.0f;
-                                    var_r16_2 = GX_MIRROR;
-                                } else {
-                                    var_f2 = 1.0f;
-                                    var_r16_2 = GX_CLAMP;
-                                }
-                                temp_r0 = temp_r3_7 & 0x60;
-                                if (temp_r0 != var_r14) {
-                                    var_r14 = temp_r0;
-                                    var_r24 = NULL;
-                                    PSMTXScale((f32 (*)[4]) &((f32*)(stack.bytes+0x80))[0], var_f1, var_f2, 1.0f);
-                                    if (var_r25->kind & 0x40) {
-                                        (*(f32*)(stack.bytes+0x9C)) = 1.0f;
-                                    }
-                                    GXLoadTexMtxImm((f32 (*)[4]) &((f32*)(stack.bytes+0x80))[0], 0x1EU, GX_MTX2x4);
-                                    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1EU, 0U, 0x7DU);
-                                }
-                                temp_r3_8 = psTexGroupArray[var_r25->bank][var_r25->texGroup];
-                                if (temp_r3_8 != NULL) {
-                                    var_r21 = temp_r3_8->format;
-                                    var_r4_2 = temp_r3_8->textures;
-                                    var_r20 = temp_r3_8->width;
-                                    var_r19 = temp_r3_8->height;
-                                } else {
-                                    var_r21 = 0;
-                                    var_r19 = 0;
-                                    var_r20 = 0;
-                                    var_r4_2 = NULL;
-                                }
-                                if (var_r4_2 != NULL) {
-                                    var_r18 = var_r4_2[var_r25->pose];
-                                } else {
-                                    var_r18 = NULL;
-                                }
-                                if ((((s32) var_r21 == 8) || ((s32) var_r21 == 9)) && (var_r4_2 != NULL)) {
-                                    temp_r4_4 = &var_r4_2[temp_r3_8->count];
-                                    if (temp_r4_4 != NULL) {
-                                        temp_r0_2 = var_r25->palette;
-                                        if (temp_r0_2 != 0xFF) {
-                                            var_r4_3 = temp_r4_4[temp_r0_2 & 0xFF];
-                                        } else if (!(var_r25->kind & 0x10)) {
-                                            var_r4_3 = temp_r4_4[var_r25->pose];
-                                        } else {
-                                            var_r4_3 = *temp_r4_4;
-                                        }
-                                        if (var_r4_3 != NULL) {
-                                            (*(u32*)(stack.bytes+0x58)) = 0;
-                                            var_r0 = 0x100;
-                                            (*(u32*)(stack.bytes+0x54)) = temp_r3_8->paletteFormat;
-                                            if ((s32) var_r21 == 8) {
-                                                var_r0 = 0x10;
-                                            }
-                                            (*(u16*)(stack.bytes+0x5C)) = var_r0;
-                                            GXInitTlutObj(&(*(GXTlutObj*)(stack.bytes+0x44)), var_r4_3, (enum _GXTlutFmt) (*(u32*)(stack.bytes+0x54)), var_r0);
-                                            GXLoadTlut(&(*(GXTlutObj*)(stack.bytes+0x44)), (*(u32*)(stack.bytes+0x58)));
-                                        }
-                                        var_r24 = NULL;
-                                    }
-                                }
-                                if ((var_r24 != var_r18) && (var_r18 != NULL)) {
-                                    var_r24 = var_r18;
-                                    if ((s32) var_r21 < 0xA) {
-                                        if ((s32) var_r21 != 7) {
-                                            if ((s32) var_r21 < 7) {
-                                                if ((s32) var_r21 < 0) {
-                                                    goto block_113;
-                                                }
-                                                goto block_112;
-                                            }
-                                            (*(s32*)(stack.bytes+0x8)) = 0;
-                                            GXInitTexObjCI(&(*(GXTexObj*)(stack.bytes+0x60)), var_r18, (u16) var_r20, (u16) var_r19, (enum _GXCITexFmt) var_r21, var_r17_3, var_r16_2, 0U, 0);
-                                        } else {
-                                            goto block_113;
-                                        }
-                                    } else if ((s32) var_r21 != 0xE) {
-block_113:
-                                        __assert("psdisp.c", 0x7AD, "0");
-                                    } else {
-block_112:
-                                        GXInitTexObj(&(*(GXTexObj*)(stack.bytes+0x60)), var_r18, (u16) var_r20, (u16) var_r19, (enum _GXTexFmt) var_r21, var_r17_3, var_r16_2, 0U);
-                                    }
-                                    temp_r0_3 = var_r25->kind;
-                                    var_r23 = temp_r0_3 & 0x200;
-                                    GXInitTexObjLOD(&(*(GXTexObj*)(stack.bytes+0x60)), var_r23 == 0, ((temp_r0_3 >> 9U) & 1) ^ 1, 0.0f, 0.0f, 0.0f, 0U, 0U, GX_ANISO_1);
-                                    GXLoadTexObj(&(*(GXTexObj*)(stack.bytes+0x60)), GX_TEXMAP0);
-                                }
-                                temp_r3_9 = var_r25->kind & 0x200;
-                                if (var_r23 != temp_r3_9) {
-                                    temp_r4_5 = temp_r3_9 == 0;
-                                    var_r23 = temp_r3_9;
-                                    GXInitTexObjLOD(&(*(GXTexObj*)(stack.bytes+0x60)), temp_r4_5, temp_r4_5, 0.0f, 0.0f, 0.0f, 0U, 0U, GX_ANISO_1);
-                                    GXLoadTexObj(&(*(GXTexObj*)(stack.bytes+0x60)), GX_TEXMAP0);
-                                }
+                        } else {
+                            var_r17_2 = GX_AF_NONE;
+                            if (HSD_LObjGetLightMaskAttnFunc() != 0) {
+                                var_r17_2 = GX_AF_SPOT;
                             }
-                            temp_r3_10 = var_r25->kind;
-                            if (temp_r3_10 & 0x40000000) {
-                                if ((PSAppSRT *) var_r25->appsrt != NULL) {
-                                    psDispSubAPPSRTPoint(var_r25);
-                                } else if (temp_r3_10 & 0x100000) {
-                                    var_r25 = psDispSubPointTrail(var_r25);
+                            GXSetChanCtrl(GX_COLOR0, 1U, GX_SRC_REG, GX_SRC_REG, HSD_LObjGetLightMaskDiffuse(), GX_DF_NONE, var_r17_2);
+                            GXSetChanCtrl(GX_ALPHA0, 0U, GX_SRC_VTX, GX_SRC_VTX, 0U, GX_DF_NONE, GX_AF_NONE);
+                        }
+                    }
+                    setupChanReg(var_r25);
+                    setupTevReg(var_r25);
+                    temp_r4_2 = var_r25->kind;
+                    temp_r3_4 = temp_r4_2 & 0x10000008;
+                    if (temp_r3_4 != prevZMode) {
+                        prevZMode = temp_r3_4;
+                        if (temp_r3_4 & 8) {
+                            GXSetZMode(((temp_r4_2 >> 0x1CU) & 1) ^ 1, GX_LEQUAL, 1U);
+                        } else {
+                            GXSetZMode(((temp_r4_2 >> 0x1CU) & 1) ^ 1, GX_LEQUAL, 0U);
+                        }
+                    }
+                    temp_r3_5 = var_r25->kind;
+                    if ((temp_r3_5 ^ var_r16) & 0x01000000) {
+                        if (temp_r3_5 & 0x01000000) {
+                            HSD_FogSet(particleFog);
+                        } else {
+                            HSD_FogSet(NULL);
+                        }
+                    }
+                    temp_r3_6 = (u32**)psFormGroupArray[var_r25->bank];
+                    if ((temp_r3_6 != NULL) && (temp_r4_3 = temp_r3_6[var_r25->texGroup], temp_r4_3 != NULL) && ((u8*)temp_r4_3 + 4 != NULL)) {
+                        var_r22 = (u32*)temp_r4_3[var_r25->pose + 1];
+                    } else {
+                        var_r22 = NULL;
+                    }
+                    temp_r3_7 = var_r25->kind;
+                    if (temp_r3_7 & 0x400) {
+                        if (temp_r3_7 & 0x20) {
+                            var_f1 = 2.0f;
+                            var_r17_3 = GX_MIRROR;
+                        } else {
+                            var_f1 = 1.0f;
+                            var_r17_3 = GX_CLAMP;
+                        }
+                        if (temp_r3_7 & 0x40) {
+                            var_f2 = 2.0f;
+                            var_r16_2 = GX_MIRROR;
+                        } else {
+                            var_f2 = 1.0f;
+                            var_r16_2 = GX_CLAMP;
+                        }
+                        temp_r0 = temp_r3_7 & 0x60;
+                        if (temp_r0 != var_r14) {
+                            var_r14 = temp_r0;
+                            var_r24 = NULL;
+                            PSMTXScale(textureMtx, var_f1, var_f2, 1.0f);
+                            if (var_r25->kind & 0x40) {
+                                textureMtx[1][3] = 1.0f;
+                            }
+                            GXLoadTexMtxImm(textureMtx, 0x1EU, GX_MTX2x4);
+                            GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1EU, 0U, 0x7DU);
+                        }
+                        temp_r3_8 = psTexGroupArray[var_r25->bank][var_r25->texGroup];
+                        if (temp_r3_8 != NULL) {
+                            var_r21 = temp_r3_8->format;
+                            var_r4_2 = temp_r3_8->textures;
+                            var_r20 = temp_r3_8->width;
+                            var_r19 = temp_r3_8->height;
+                        } else {
+                            var_r21 = 0;
+                            var_r19 = 0;
+                            var_r20 = 0;
+                            var_r4_2 = NULL;
+                        }
+                        if (var_r4_2 != NULL) {
+                            var_r18 = var_r4_2[var_r25->pose];
+                        } else {
+                            var_r18 = NULL;
+                        }
+                        if ((((s32) var_r21 == 8) || ((s32) var_r21 == 9)) && (var_r4_2 != NULL)) {
+                            temp_r4_4 = &var_r4_2[temp_r3_8->count];
+                            if (temp_r4_4 != NULL) {
+                                temp_r0_2 = var_r25->palette;
+                                if (temp_r0_2 != 0xFF) {
+                                    var_r4_3 = temp_r4_4[temp_r0_2 & 0xFF];
+                                } else if (!(var_r25->kind & 0x10)) {
+                                    var_r4_3 = temp_r4_4[var_r25->pose];
                                 } else {
-                                    if ((s32) currentMtx != 0) {
-                                        currentMtx = 0;
-                                        GXSetCurrentMtx(0U);
-                                    }
-                                    temp_f1_2 = var_r25->size;
-                                    if (temp_f1_2 > 42.5) {
-                                        var_f0 = 255.0f;
-                                    } else {
-                                        var_f0 = 6.0f * temp_f1_2;
-                                    }
-                                    temp_r3_11 = (s32) var_f0;
-                                    if ((s32) prevPointSize != (s32) (u8) temp_r3_11) {
-                                        prevPointSize = (s32) (u8) temp_r3_11;
-                                        GXSetPointSize((u8) temp_r3_11, GX_TO_ONE);
-                                    }
-                                    if (var_r25->kind & 0x400) {
-                                        GXClearVtxDesc();
-                                        GXInvalidateVtxCache();
-                                        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-                                        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX8);
-                                        GXBegin(GX_POINTS, GX_VTXFMT0, 1U);
-                                    } else {
-                                        GXClearVtxDesc();
-                                        GXInvalidateVtxCache();
-                                        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-                                        GXBegin(GX_POINTS, GX_VTXFMT1, 1U);
-                                    }
-                                    (*(f32*)(stack.bytes+0x24)) = var_r25->position.z;
-
-                                    (*(f32*)(stack.bytes+0x20)) = var_r25->position.y;
-                                    (*(f32*)(stack.bytes+0x1C)) = var_r25->position.x;
-                                    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x1C)));
-                                    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x20)));
-                                    *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x24)));
-                                    if (var_r25->kind & 0x400) {
-                                        *(volatile u8 *)0xCC008000 = 1;
-                                    }
+                                    var_r4_3 = *temp_r4_4;
                                 }
-                            } else if ((PSAppSRT *) var_r25->appsrt != NULL) {
-                                psDispSubAppSRT(var_r25, var_r22);
-                            } else {
-                                psDispSub(var_r25, var_r22);
+                                if (var_r4_3 != NULL) {
+                                    paletteName = 0;
+                                    var_r0 = 0x100;
+                                    paletteFormat = temp_r3_8->paletteFormat;
+                                    if ((s32) var_r21 == 8) {
+                                        var_r0 = 0x10;
+                                    }
+                                    paletteEntries = var_r0;
+                                    GXInitTlutObj(&paletteObj, var_r4_3, (enum _GXTlutFmt) paletteFormat, var_r0);
+                                    GXLoadTlut(&paletteObj, paletteName);
+                                }
+                                var_r24 = NULL;
                             }
                         }
-                        var_r16 = var_r25->kind;
-                        var_r25 = var_r25->next;
-                        goto loop_138;
+                        if ((var_r24 != var_r18) && (var_r18 != NULL)) {
+                            var_r24 = var_r18;
+                            if ((s32) var_r21 < 0xA) {
+                                if ((s32) var_r21 != 7) {
+                                    if ((s32) var_r21 < 7) {
+                                        if ((s32) var_r21 < 0) {
+                                            goto block_113;
+                                        }
+                                        goto block_112;
+                                    }
+
+                                    GXInitTexObjCI(&textureObj, var_r18, (u16) var_r20, (u16) var_r19, (enum _GXCITexFmt) var_r21, var_r17_3, var_r16_2, 0U, 0);
+                                } else {
+                                    goto block_113;
+                                }
+                            } else if ((s32) var_r21 != 0xE) {
+block_113:
+                                __assert("psdisp.c", 0x7AD, "0");
+                            } else {
+block_112:
+                                GXInitTexObj(&textureObj, var_r18, (u16) var_r20, (u16) var_r19, (enum _GXTexFmt) var_r21, var_r17_3, var_r16_2, 0U);
+                            }
+                            temp_r0_3 = var_r25->kind;
+                            var_r23 = temp_r0_3 & 0x200;
+                            GXInitTexObjLOD(&textureObj, var_r23 == 0, ((temp_r0_3 >> 9U) & 1) ^ 1, 0.0f, 0.0f, 0.0f, 0U, 0U, GX_ANISO_1);
+                            GXLoadTexObj(&textureObj, GX_TEXMAP0);
+                        }
+                        temp_r3_9 = var_r25->kind & 0x200;
+                        if (var_r23 != temp_r3_9) {
+                            temp_r4_5 = temp_r3_9 == 0;
+                            var_r23 = temp_r3_9;
+                            GXInitTexObjLOD(&textureObj, temp_r4_5, temp_r4_5, 0.0f, 0.0f, 0.0f, 0U, 0U, GX_ANISO_1);
+                            GXLoadTexObj(&textureObj, GX_TEXMAP0);
+                        }
+                    }
+                    temp_r3_10 = var_r25->kind;
+                    if (temp_r3_10 & 0x40000000) {
+                        if ((PSAppSRT *) var_r25->appsrt != NULL) {
+                            psDispSubAPPSRTPoint(var_r25);
+                        } else if (temp_r3_10 & 0x100000) {
+                            var_r25 = psDispSubPointTrail(var_r25);
+                        } else {
+                            if ((s32) currentMtx != 0) {
+                                currentMtx = 0;
+                                GXSetCurrentMtx(0U);
+                            }
+                            temp_f1_2 = var_r25->size;
+                            if (temp_f1_2 > 42.5) {
+                                var_f0 = 255.0f;
+                            } else {
+                                var_f0 = 6.0f * temp_f1_2;
+                            }
+                            temp_r3_11 = (s32) var_f0;
+                            if ((s32) prevPointSize != (s32) (u8) temp_r3_11) {
+                                prevPointSize = (s32) (u8) temp_r3_11;
+                                GXSetPointSize((u8) temp_r3_11, GX_TO_ONE);
+                            }
+                            if (var_r25->kind & 0x400) {
+                                GXClearVtxDesc();
+                                GXInvalidateVtxCache();
+                                GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+                                GXSetVtxDesc(GX_VA_TEX0, GX_INDEX8);
+                                GXBegin(GX_POINTS, GX_VTXFMT0, 1U);
+                            } else {
+                                GXClearVtxDesc();
+                                GXInvalidateVtxCache();
+                                GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+                                GXBegin(GX_POINTS, GX_VTXFMT1, 1U);
+                            }
+                            pointZ = PS_FIXED6(var_r25->position.z);
+
+                            pointY = PS_FIXED6(var_r25->position.y);
+                            pointX = PS_FIXED6(var_r25->position.x);
+                            *(volatile s16 *)0xCC008000 = pointX;
+                            *(volatile s16 *)0xCC008000 = pointY;
+                            *(volatile s16 *)0xCC008000 = pointZ;
+                            if (var_r25->kind & 0x400) {
+                                *(volatile u8 *)0xCC008000 = 1;
+                            }
+                        }
+                    } else if ((PSAppSRT *) var_r25->appsrt != NULL) {
+                        psDispSubAppSRT(var_r25, var_r22);
+                    } else {
+                        psDispSub(var_r25, var_r22);
                     }
                 }
-                break;
-            case 2:                                 /* switch 1 */
-                var_r25 = (*(PSParticle **)(stack.bytes+0x3C));
-                goto block_8;
+                var_r16 = var_r25->kind;
+                var_r25 = var_r25->next;
             }
         }
-        temp_r3 = (*(s32*)(stack.bytes+0xF8)) + 1;
-        (*(s32*)(stack.bytes+0xF8)) = temp_r3;
+nextLink:
+        temp_r3 = link + 1;
+        link = temp_r3;
     } while (temp_r3 < 0x10);
-    if ((*(s32*)(stack.bytes+0xE8)) == 0) {
+    if (firstParticle == 0) {
         HSD_StateInvalidate(-1U);
     }
 }

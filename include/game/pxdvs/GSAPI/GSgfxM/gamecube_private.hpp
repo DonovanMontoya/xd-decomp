@@ -145,14 +145,19 @@ struct GCCopyTextureInfo {
 typedef char GCCopyTextureInfoSizeCheck[sizeof(GCCopyTextureInfo) == 0x18 ? 1 : -1];
 struct GCCopyDisplayInfo {
     u16 x, y, width, height;
-    u32 stride;
-    u32 clamp, gamma, fieldMode;
+    u16 stride;
+    u8 paddingA[2];
+    GXFBClamp clamp;
+    GXGamma gamma;
+    GXCopyMode fieldMode;
     f32 scale;
     u8 clear, red, green, blue, alpha;
     u8 padding21[3];
     u32 depth;
 };
 typedef char GCCopyDisplayInfoSizeCheck[sizeof(GCCopyDisplayInfo) == 0x28 ? 1 : -1];
+typedef char GCCopyDisplayInfoStrideOffsetCheck[offsetof(GCCopyDisplayInfo, stride) == 0x8 ? 1 : -1];
+typedef char GCCopyDisplayInfoScaleOffsetCheck[offsetof(GCCopyDisplayInfo, scale) == 0x18 ? 1 : -1];
 struct GCVertexAttributeFormat { s32 attribute, count, type; u8 fraction; u8 padding[3]; };
 struct GCVertexDescriptor { s32 attribute, type; };
 struct GCGlobalRegisterState {

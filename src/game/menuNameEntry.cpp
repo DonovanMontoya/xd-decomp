@@ -68,7 +68,7 @@ GStexture *menuModelRender(MENU_MODEL *);
 GSgfxVF *GSgfxVFBuildTemp(u32,u32,u32,u32,u32,u32,u32,u32,u32);
 s32 GScharCmp(u16 *, u16 *);
 void menuTitleBattleSelectFree(void);
-void dbgMenuSetEnable(s32, s32 *, s32 *, s32 *, s32 *, s32 *, f32 *, s32 *);
+void dbgMenuSetEnable(u8);
 void GSfloorPop(void);
 struct MenuItemInfo {
     u8 reserved0[0xA];
@@ -138,7 +138,7 @@ static const ModeDataT ModeData[7] = {
     { 0x3B12, 10, 0, 0 },
     { 0x3C33, 10, 0, 0 },
 };
-static const u32 DakuHanTbl[2] = { 0, 0x3B1B };
+extern const u32 DakuHanTbl[2] = { 0, 0x3B1B };
 static s32 Sheet;
 static s32 SheetCurX;
 static s32 SheetCurY;
@@ -871,19 +871,18 @@ static void ballMain(void)
 extern "C" {
 s32 menuNameEntryBackCtrl(tagWINDOW_WORK *window)
 {
-    int k;
     int i;
     switch (window->unk1) {
     case 0:
         if (window->unk2 == 0) {
-            k = 0;
             for (i = 0; i < 30; i++) {
                 BallWork[i].active = 0;
             }
+            i = 0;
             do {
                 ballMain();
-                k++;
-            } while (k < 600);
+                i++;
+            } while (i < 600);
             window->unk2 = 1;
         }
         break;
@@ -1186,9 +1185,8 @@ static u16 exchangeDakuon(u16 ch, DAKUON_MODE mode)
     if (cur == mode) {
         return ch;
     }
-    switch (cur) {
-    case 1: ch = p[-1]; break;
-    default: break;
+    if (cur == DAKUON_VOICED || cur == DAKUON_VOICED) {
+        ch = p[-1];
     }
     if (mode == 0) {
         return ch;
@@ -1371,9 +1369,10 @@ static s32 menuNameEntryDrawNameText(tagWINDOW_WORK *window, tagSPRITE_WORK *spr
 static s32 inputName(u16 *dst, u16 *backup, int mode, int idx, int flag)
 {
     NAME_ENTRY_ARG arg;
-    s32 done = 0;
-    s32 ok;
+    NAME_ENTRY_ARG *pargs;
     u16 *chosen;
+    s32 ok;
+    s32 done = 0;
     GScharCpy(arg.name, backup);
     *dst = 0;
     arg.unk18 = dst;
@@ -1394,10 +1393,10 @@ static s32 inputName(u16 *dst, u16 *backup, int mode, int idx, int flag)
     arg.unk40 = &DefNamePokemonCurPosX;
     arg.unk44 = &DefNameBoxCurPosX;
     arg.unk48 = &DefNameTrainerCurPosX;
-    dbgMenuSetEnable(0, &DefNameBoxCurPosX, &DefNamePokemonCurPosX, &DefSheetCurPosY, &DefSheetCurPosX, &NameCurX,
-                     &SheetCurAnimTime, &SheetCurY);
+    dbgMenuSetEnable(0);
+    pargs = &arg;
     while (done == 0) {
-        menuOpenCustom(0x66, windowGetActiveID(), 0, 0, 1, 1, &arg);
+        menuOpenCustom(0x66, windowGetActiveID(), 0, 0, 1, 1, pargs);
         if (chkValidName(arg.unk18) != 0) {
             chosen = arg.unk18;
         } else {
@@ -1413,7 +1412,7 @@ static s32 inputName(u16 *dst, u16 *backup, int mode, int idx, int flag)
             done = 1;
         }
     }
-    dbgMenuSetEnable(1, 0, 0, 0, 0, 0, 0, 0);
+    dbgMenuSetEnable(1);
     menuClose(0x66);
     menuCloseSync(0x66, 1);
     if (ok != 0) {

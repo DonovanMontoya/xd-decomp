@@ -76,7 +76,7 @@ struct GSgfxLayer {
  void endSurface();
 };
 
-struct LensElement { u16 flags, texture; f32 divisor, scale; u8 color[4]; };
+struct LensElement { u8 flags, reserved; u16 texture; f32 divisor, scale; u8 color[4]; };
 struct LensHeader { u32 magic; u16 textureCount, elementCount; u32 flags, outerRadius, fadeStart, fadePeak; f32 frontTint, backTint, scaleFactor, minDistance, sampleRadius; };
 struct LensTextureRecord { u16 index, reserved; u32 data; };
 struct LensFlareWork {

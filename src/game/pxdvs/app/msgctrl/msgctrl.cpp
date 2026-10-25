@@ -586,8 +586,11 @@ s32 msgctrlPalette(MsgCtx* c) {
         u32 index = *c->cursor;
         u32 color = c->color;
         if (index >= *msg_palette_number) index = 0;
-        u8* entry = msg_palette + (u8)index * 4;
-        c->color = ((color >> 24) * entry[0] / 255 << 24) | (((color >> 16) & 0xFF) * entry[1] / 255 << 16) | (((color >> 8) & 0xFF) * entry[2] / 255 << 8) | ((color & 0xFF) * entry[3] / 255);
+        u8 r = msg_palette[(u8)index * 4 + 0];
+        u8 g = msg_palette[(u8)index * 4 + 1];
+        u8 b = msg_palette[(u8)index * 4 + 2];
+        u8 a = msg_palette[(u8)index * 4 + 3];
+        c->color = ((color >> 24) * r / 255 << 24) | (((color >> 16) & 0xFF) * g / 255 << 16) | (((color >> 8) & 0xFF) * b / 255 << 8) | ((color & 0xFF) * a / 255);
         GSmsgSetColor(c);
         c->color = color;
     }

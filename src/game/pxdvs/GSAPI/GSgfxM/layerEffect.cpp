@@ -75,10 +75,7 @@ void GSgfxLayer::EffectTextureCopy(GStexture *arg1, bool arg2, u8 *arg3, bool ar
         GSgfxVideoGetEFBSize(&width, &height);
         width=arg1->width<width?arg1->width:width;
         height=arg1->height<height?arg1->height:height;
-        clear = 0;
-        if ((arg4 != 0) || (arg5 != 0) || (arg6 != 0)) {
-            clear = 1;
-        }
+        clear = arg4 || arg5 || arg6;
         if (clear == 1) {
             savedDepthCompare = this->depthCompare;
             savedColorUpdate = this->colorUpdate != 0;

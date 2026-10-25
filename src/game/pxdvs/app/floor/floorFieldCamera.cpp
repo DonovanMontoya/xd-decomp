@@ -1,23 +1,23 @@
 #include <game/pxdvs/app/floor/floorFieldCameraPrivate.hpp>
 
 namespace std {
-inline float powf(float x, float y);
-inline float pow(float x, float y);
-inline float cosf(float x);
-inline float sinf(float x);
-inline float atan2f(float y, float x);
-inline float sqrtf(float x);
+__declspec(weak) float powf(float x, float y);
+__declspec(weak) float pow(float x, float y);
+__declspec(weak) float cosf(float x);
+__declspec(weak) float sinf(float x);
+__declspec(weak) float atan2f(float y, float x);
+__declspec(weak) float sqrtf(float x);
 }
 
 extern "C" {
-inline void GSvecAdd(GSvec* dst, GSvec* a, GSvec* b);
-inline void GSvecTransform(GSvec* dst, GSmtx* m, GSvec* v);
-inline f32 GSvecSquareDistance(GSvec* a, GSvec* b);
-inline f32 GSvec2Length(GSvec2* v);
-inline void GSvec2Rot(GSvec2* dst, GSvec2* src, f32 angle);
-inline void GSvec2Sub(GSvec2* dst, GSvec2* a, GSvec2* b);
-inline void GSvec2Set(GSvec2* v, f32 x, f32 y);
-inline void GSmtxMakeYRotation(GSmtx* m, f32 angle);
+__declspec(weak) void GSvecAdd(GSvec* dst, GSvec* a, GSvec* b);
+__declspec(weak) void GSvecTransform(GSvec* dst, GSmtx* m, GSvec* v);
+__declspec(weak) f32 GSvecSquareDistance(GSvec* a, GSvec* b);
+__declspec(weak) f32 GSvec2Length(GSvec2* v);
+__declspec(weak) void GSvec2Rot(GSvec2* dst, GSvec2* src, f32 angle);
+__declspec(weak) void GSvec2Sub(GSvec2* dst, GSvec2* a, GSvec2* b);
+__declspec(weak) void GSvec2Set(GSvec2* v, f32 x, f32 y);
+__declspec(weak) void GSmtxMakeYRotation(GSmtx* m, f32 angle);
 }
 
 static FloorModuleInterface _fieldCameraModule;
@@ -84,12 +84,10 @@ static void _fieldCameraExitFloor(unsigned int, FloorEnterMode mode) {
 
 static void _fieldCameraEnterFloor(unsigned int, FloorEnterMode mode) {
     GSfloor_dd_* floor = floorDataBiosGetPtr();
-    if (floor != 0) {
-        if (mode != 0 && mode != 1) {
-        } else {
-            floorInitFieldCamera(floor);
-        }
+    if (floor == 0 || (mode != 0 && mode != 1)) {
+        return;
     }
+    floorInitFieldCamera(floor);
 }
 
 static const char* _fieldCameraGetModuleName() {
@@ -558,17 +556,17 @@ static void _floorFieldCameraDetectMode() {
     g_updateMode = 1;
 }
 
-u32 GSBinWriteStream::getWriteSize() const {
+__declspec(weak) u32 GSBinWriteStream::getWriteSize() const {
     return cur - start;
 }
 
-inline void GSBinWriteStream::writeFloat(f32 v) {
+__declspec(weak) void GSBinWriteStream::writeFloat(f32 v) {
     union { f32 f; u32 u; } c;
     c.f = v;
     writeU32(c.u);
 }
 
-inline void GSBinWriteStream::writeU32(u32 v) {
+__declspec(weak) void GSBinWriteStream::writeU32(u32 v) {
     if (writing == 0) {
         cur += 4;
         return;
@@ -579,7 +577,7 @@ inline void GSBinWriteStream::writeU32(u32 v) {
     *cur++ = v;
 }
 
-inline void GSBinWriteStream::writeBool(bool v) {
+__declspec(weak) void GSBinWriteStream::writeBool(bool v) {
     int b;
     if (v) {
         b = 1;
@@ -589,11 +587,11 @@ inline void GSBinWriteStream::writeBool(bool v) {
     writeS8(b);
 }
 
-inline void GSBinWriteStream::writeS8(s8 v) {
+__declspec(weak) void GSBinWriteStream::writeS8(s8 v) {
     writeU8(v);
 }
 
-inline void GSBinWriteStream::writeU8(u8 v) {
+__declspec(weak) void GSBinWriteStream::writeU8(u8 v) {
     if (writing == 0) {
         cur++;
         return;
@@ -601,25 +599,25 @@ inline void GSBinWriteStream::writeU8(u8 v) {
     *cur++ = v;
 }
 
-inline void GSBinWriteStream::writeU16(u16 v) {
+__declspec(weak) void GSBinWriteStream::writeU16(u16 v) {
     if (writing == 0) {
         cur += 2;
         return;
     }
-    *cur++ = (v >> 8) & 0xFF;
-    *cur++ = v & 0xFF;
+    *cur++ = (u8)(v >> 8);
+    *cur++ = (u8)(v & 0xFF);
 }
 
-inline GSBinWriteSizeStream::~GSBinWriteSizeStream() {
+__declspec(weak) GSBinWriteSizeStream::~GSBinWriteSizeStream() {
 }
 
-inline GSBinWriteStream::~GSBinWriteStream() {
+__declspec(weak) GSBinWriteStream::~GSBinWriteStream() {
     if (buffer != 0) {
         GSmemFree(buffer);
     }
 }
 
-inline GSBinWriteSizeStream::GSBinWriteSizeStream() {
+__declspec(weak) GSBinWriteSizeStream::GSBinWriteSizeStream() {
     cur = 0;
     buffer = 0;
     start = 0;
@@ -627,7 +625,7 @@ inline GSBinWriteSizeStream::GSBinWriteSizeStream() {
     writing = 0;
 }
 
-inline GSBinWriteStream::GSBinWriteStream() {
+__declspec(weak) GSBinWriteStream::GSBinWriteStream() {
     cur = 0;
     buffer = 0;
     start = 0;
@@ -635,39 +633,39 @@ inline GSBinWriteStream::GSBinWriteStream() {
     writing = 0;
 }
 
-inline f32 GSBinReadStream::readFloat() {
+__declspec(weak) f32 GSBinReadStream::readFloat() {
     union { f32 f; u32 u; } c;
     c.u = readU32();
     return c.f;
 }
 
-inline u32 GSBinReadStream::readU32() {
+__declspec(weak) u32 GSBinReadStream::readU32() {
     u32 v = (cur[0] << 24) | (cur[1] << 16) | (cur[2] << 8) | cur[3];
     cur += 4;
     return v;
 }
 
-inline bool GSBinReadStream::readBool() {
+__declspec(weak) bool GSBinReadStream::readBool() {
     return readU8() != 0;
 }
 
-inline u8 GSBinReadStream::readU8() {
+__declspec(weak) u8 GSBinReadStream::readU8() {
     return *cur++;
 }
 
-inline u16 GSBinReadStream::readU16() {
+__declspec(weak) u16 GSBinReadStream::readU16() {
     u16 v = (cur[0] << 8) | cur[1];
     cur += 2;
     return v;
 }
 
-inline GSBinReadStream::GSBinReadStream(void* data, u32 sz) {
+__declspec(weak) GSBinReadStream::GSBinReadStream(void* data, u32 sz) {
     cur = (u8*)data;
     start = (u8*)data;
     size = sz;
 }
 
-inline GSBinWriteStream::GSBinWriteStream(void* data, u32 sz) {
+__declspec(weak) GSBinWriteStream::GSBinWriteStream(void* data, u32 sz) {
     buffer = 0;
     cur = (u8*)data;
     start = (u8*)data;
@@ -676,22 +674,69 @@ inline GSBinWriteStream::GSBinWriteStream(void* data, u32 sz) {
 }
 
 namespace std {
-inline float pow(float x, float y) {
+__declspec(weak) float pow(float x, float y) {
     return powf(x, y);
 }
-inline float powf(float x, float y) {
+__declspec(weak) float powf(float x, float y) {
     return (float)::pow(x, y);
 }
-inline float cosf(float x) {
+__declspec(weak) float cosf(float x) {
     return (float)::cos(x);
 }
-inline float atan2f(float y, float x) {
+__declspec(weak) float atan2f(float y, float x) {
     return (float)::atan2(y, x);
 }
-inline float sinf(float x) {
+__declspec(weak) float sinf(float x) {
     return (float)::sin(x);
 }
-inline float sqrtf(float x) {
+
+}
+
+extern "C" {
+
+__declspec(weak) void GSvecAdd(GSvec* dst, GSvec* a, GSvec* b) {
+    PSVECAdd(a, b, dst);
+}
+
+__declspec(weak) void GSvecTransform(GSvec* dst, GSmtx* m, GSvec* v) {
+    PSMTXMultVec(m, v, dst);
+}
+
+__declspec(weak) f32 GSvecSquareDistance(GSvec* a, GSvec* b) {
+    return PSVECSquareDistance(a, b);
+}
+
+__declspec(weak) f32 GSvec2Length(GSvec2* v) {
+    return std::sqrtf(v->x * v->x + v->y * v->y);
+}
+
+__declspec(weak) void GSvec2Rot(GSvec2* dst, GSvec2* src, f32 angle) {
+    f32 c = std::cosf(angle);
+    f32 s = std::sinf(angle);
+    f32 x = src->x * c + src->y * s;
+    f32 y = -src->x * s + src->y * c;
+    dst->x = x;
+    dst->y = y;
+}
+
+__declspec(weak) void GSvec2Sub(GSvec2* dst, GSvec2* a, GSvec2* b) {
+    dst->x = a->x - b->x;
+    dst->y = a->y - b->y;
+}
+
+__declspec(weak) void GSvec2Set(GSvec2* v, f32 x, f32 y) {
+    v->x = x;
+    v->y = y;
+}
+
+__declspec(weak) void GSmtxMakeYRotation(GSmtx* m, f32 angle) {
+    PSMTXRotRad(m, 'Y', angle);
+}
+
+}
+
+namespace std {
+__declspec(weak) float sqrtf(float x) {
     if (x > 0.0f) {
         double dmag = x;
         double t = __frsqrte(dmag);
@@ -706,47 +751,4 @@ inline float sqrtf(float x) {
     }
     return x;
 }
-}
-
-extern "C" {
-
-inline void GSvecAdd(GSvec* dst, GSvec* a, GSvec* b) {
-    PSVECAdd(a, b, dst);
-}
-
-inline void GSvecTransform(GSvec* dst, GSmtx* m, GSvec* v) {
-    PSMTXMultVec(m, v, dst);
-}
-
-inline f32 GSvecSquareDistance(GSvec* a, GSvec* b) {
-    return PSVECSquareDistance(a, b);
-}
-
-inline f32 GSvec2Length(GSvec2* v) {
-    return std::sqrtf(v->x * v->x + v->y * v->y);
-}
-
-inline void GSvec2Rot(GSvec2* dst, GSvec2* src, f32 angle) {
-    f32 c = std::cosf(angle);
-    f32 s = std::sinf(angle);
-    f32 sy = src->y;
-    f32 sx = src->x;
-    dst->x = sx * c + sy * s;
-    dst->y = -sx * s + sy * c;
-}
-
-inline void GSvec2Sub(GSvec2* dst, GSvec2* a, GSvec2* b) {
-    dst->x = a->x - b->x;
-    dst->y = a->y - b->y;
-}
-
-inline void GSvec2Set(GSvec2* v, f32 x, f32 y) {
-    v->x = x;
-    v->y = y;
-}
-
-inline void GSmtxMakeYRotation(GSmtx* m, f32 angle) {
-    PSMTXRotRad(m, 'Y', angle);
-}
-
 }

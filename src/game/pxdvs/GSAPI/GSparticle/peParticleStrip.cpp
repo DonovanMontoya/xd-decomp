@@ -110,10 +110,23 @@ void peParticleStripContainer::Update(f32 dt) {
  }
 }
 static inline void stripStartNode(peParticleStripNode* node,peEmitterNode* emitter,_peParticleStrip* d,GSgfxDL* list,_EmitParams* params,f32 progress) {
- if((list->flags&1)==1){node->peNode::Start(emitter,params);
-   Vec randomSegment;Vec segment;if(d->flags&0x2000000){PSVECScale(&d->direction,&segment,10.0f*(progress*d->speedRange+d->speedMin));f32 y=segment.y,z=segment.z,x=segment.x;node->segment.x=x;node->segment.y=y;node->segment.z=z;}
-   else{f32 random=HSD_Randf();PSVECScale(&d->direction,&randomSegment,10.0f*(d->speedRange*random+d->speedMin));f32 y=randomSegment.y,z=randomSegment.z,x=randomSegment.x;node->segment.x=x;node->segment.y=y;node->segment.z=z;}
-   list->flags|=2;
+ if((list->flags&1)==1) {
+  node->peNode::Start(emitter,params);
+  Vec randomSegment;
+  Vec segment;
+  if(d->flags&0x2000000) {
+   PSVECScale(&d->direction,&segment,10.0f*(progress*d->speedRange+d->speedMin));
+   f32 z,y,x;
+   y=segment.y;z=segment.z;x=segment.x;
+   node->segment.x=x;node->segment.y=y;node->segment.z=z;
+  } else {
+   f32 random=HSD_Randf();
+   PSVECScale(&d->direction,&randomSegment,10.0f*(d->speedRange*random+d->speedMin));
+   f32 z,y,x;
+   y=randomSegment.y;z=randomSegment.z;x=randomSegment.x;
+   node->segment.x=x;node->segment.y=y;node->segment.z=z;
+  }
+  list->flags|=2;
  }
 }
 u16 peParticleStripContainer::Emit(u16 requested) {
@@ -123,9 +136,12 @@ u16 peParticleStripContainer::Emit(u16 requested) {
   node=next;--left;++params;
  }return result;
 }
+static inline f32 stripRandomFrame(u16 frames) {
+ return __OSu16tof32(&frames)*HSD_Randf();
+}
 void peParticleStripContainer::Start() {
  if(!active){active=1;u32 flags=definition->flags;InitSwap();if(flags&0x400000)SetLayerVisibility((GSgfxLayerID)1,true);if(flags&0x800000)SetLayerVisibility((GSgfxLayerID)3,true);if(flags&0x1000000)SetLayerVisibility((GSgfxLayerID)5,true);
-  if((flags&0xc00)==0xc00){u16 frames;frames=((StripAnimation*)definition->texture)->count;f32 scaled=__OSu16tof32(&frames)*HSD_Randf();frame=__OSf32tou8(scaled);}else frame=0;remaining=emitterFloat(owner,0x28);
+  if((flags&0xc00)==0xc00){frame=__OSf32tou8(stripRandomFrame(((StripAnimation*)definition->texture)->count));}else frame=0;remaining=emitterFloat(owner,0x28);
  }
 }
 peParticleStripContainer::~peParticleStripContainer(){g_particle_debug_stats.node-=0x60;g_particle_debug_stats.total-=0x60;}

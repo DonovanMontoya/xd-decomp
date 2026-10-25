@@ -1,5 +1,5 @@
 #include <game/pxdvs/GSAPI/GScolsys/GScolsys2CheckPrivate.hpp>
-static u8 getMdlEventList(GSvec *start, GSvec *end, GSvec *direction, CCD_CHECKMDL_HEAD *model, GSmtx *matrix, GSmtx *rotation, CCDCheckEvent *events) {
+static bool getMdlEventList(GSvec *start, GSvec *end, GSvec *direction, CCD_CHECKMDL_HEAD *model, GSmtx *matrix, GSmtx *rotation, CCDCheckEvent *events) {
     Vec triangle[3];
     Vec normal, crossing;
     f32 rate;

@@ -385,17 +385,10 @@ static inline u32 bankRelocate(u32 value,const char* base) {
 }
 #define BANK_WORD(offset) definition[(offset)/4]
 #define BANK_FLOAT(offset) (*(f32*)((u8*)definition+(offset)))
-static inline _gpdResourceItem* bankFindResource(_gpdHeader* header,_gpdResourceItem* items,u32 id) {
-    u32 remaining=header->count;
-    while(remaining) {
-        if(id==items->reserved00)break;
-        ++items;--remaining;
-    }
-    if(!remaining)return 0;
-    return items;
-}
 struct BankSceneModel {void* joint;void** animation;void** material;void** shape;};
 struct BankScene {BankSceneModel*** models;};
+// Keep field addresses local to each conversion, as in the original code.
+#pragma opt_common_subs off
 bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData* records,const char* base) {
     HSD_Archive archive;
     if(header->magic!=0x01f056da || header->version!=0x30002)return false;
@@ -425,7 +418,11 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
                 u32* texture=(u32*)item->data;
                 u32 count=*texture++;
                 for(u32 i=0;i<count;++i,++texture) {
-                    *texture=bankRelocate(*texture,(const char*)item->data);
+                    u32 value=*texture;
+                    u8 relative=0;
+                    if(value && value<0x80000000)relative=1;
+                    if(relative)value+=(u32)item->data;
+                    *texture=value;
                     *texture=(u32)GStextureLoad((void*)*texture);
                 }
                 item->flags|=0x40;
@@ -451,143 +448,193 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
         records->data=(void*)bankRelocate((u32)records->data,base);
         records->next=(_particleData*)bankRelocate((u32)records->next,base);
         u32* definition=(u32*)records->data;
-        if(definition) {
-            switch(records->kind) {
-            case 0:
-                BANK_WORD(0x138)=bankRelocate(BANK_WORD(0x138),base);
-                BANK_WORD(0x14)=bankRelocate(BANK_WORD(0x14),base);
-                BANK_WORD(0x130)=bankRelocate(BANK_WORD(0x130),base);
-                BANK_WORD(0x134)=bankRelocate(BANK_WORD(0x134),base);
-                BANK_WORD(0xb8)=bankRelocate(BANK_WORD(0xb8),base);
-                BANK_WORD(0xbc)=bankRelocate(BANK_WORD(0xbc),base);
-                BANK_WORD(0xc0)=bankRelocate(BANK_WORD(0xc0),base);
-                BANK_WORD(0xd0)=bankRelocate(BANK_WORD(0xd0),base);
-                BANK_WORD(0xd4)=bankRelocate(BANK_WORD(0xd4),base);
-                BANK_WORD(0xd8)=bankRelocate(BANK_WORD(0xd8),base);
-                BANK_WORD(0xe8)=bankRelocate(BANK_WORD(0xe8),base);
-                BANK_WORD(0xec)=bankRelocate(BANK_WORD(0xec),base);
-                BANK_WORD(0xf0)=bankRelocate(BANK_WORD(0xf0),base);
-                BANK_WORD(0x10c)=bankRelocate(BANK_WORD(0x10c),base);
-                BANK_WORD(0x110)=bankRelocate(BANK_WORD(0x110),base);
-                BANK_WORD(0x114)=bankRelocate(BANK_WORD(0x114),base);
-                BANK_WORD(0x124)=bankRelocate(BANK_WORD(0x124),base);
-                BANK_WORD(0x128)=bankRelocate(BANK_WORD(0x128),base);
-                BANK_WORD(0x12c)=bankRelocate(BANK_WORD(0x12c),base);
-                break;
-            case 1: {
-                _gpdResourceItem* resource=bankFindResource(header,items,BANK_WORD(0x54));
-                if(resource) {
-                    if(resource->kind==2)BANK_WORD(0)|=0x100000;
-                    else BANK_WORD(0)&=~0x100000;
-                    BANK_WORD(0x54)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
-                } else BANK_WORD(0x54)=0;
-                BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
-                BANK_WORD(0x14)=bankRelocate(BANK_WORD(0x14),base);
-                BANK_WORD(0x18)=bankRelocate(BANK_WORD(0x18),base);
-                BANK_WORD(0x38)=bankRelocate(BANK_WORD(0x38),base);
-                BANK_WORD(0x3c)=bankRelocate(BANK_WORD(0x3c),base);
-                if(!BANK_WORD(0x3c))BANK_WORD(0)&=~0x2000000;
-                BANK_WORD(0x40)=bankRelocate(BANK_WORD(0x40),base);
-                if(!(BANK_WORD(0)&8)) {
-                    *(s16*)((u8*)definition+0x44)=(s16)(1024.0f*BANK_FLOAT(0x44));
-                    *(s16*)((u8*)definition+0x46)=(s16)(1024.0f*BANK_FLOAT(0x48));
-                    *(s16*)((u8*)definition+0x48)=(s16)(1024.0f*BANK_FLOAT(0x4c));
-                    *(s16*)((u8*)definition+0x4a)=(s16)(1024.0f*BANK_FLOAT(0x50));
-                    BANK_FLOAT(0x50)=0.0f;BANK_FLOAT(0x4c)=0.0f;
-                    BANK_WORD(0)|=8;
+        if(!definition) {
+            ++records;
+            --recordCount;
+            continue;
+        }
+        switch(records->kind) {
+        case 0:
+            BANK_WORD(0x138)=bankRelocate(BANK_WORD(0x138),base);
+            BANK_WORD(0x14)=bankRelocate(BANK_WORD(0x14),base);
+            BANK_WORD(0x130)=bankRelocate(BANK_WORD(0x130),base);
+            BANK_WORD(0x134)=bankRelocate(BANK_WORD(0x134),base);
+            BANK_WORD(0xb8)=bankRelocate(BANK_WORD(0xb8),base);
+            BANK_WORD(0xbc)=bankRelocate(BANK_WORD(0xbc),base);
+            BANK_WORD(0xc0)=bankRelocate(BANK_WORD(0xc0),base);
+            BANK_WORD(0xd0)=bankRelocate(BANK_WORD(0xd0),base);
+            BANK_WORD(0xd4)=bankRelocate(BANK_WORD(0xd4),base);
+            BANK_WORD(0xd8)=bankRelocate(BANK_WORD(0xd8),base);
+            BANK_WORD(0xe8)=bankRelocate(BANK_WORD(0xe8),base);
+            BANK_WORD(0xec)=bankRelocate(BANK_WORD(0xec),base);
+            BANK_WORD(0xf0)=bankRelocate(BANK_WORD(0xf0),base);
+            BANK_WORD(0x10c)=bankRelocate(BANK_WORD(0x10c),base);
+            BANK_WORD(0x110)=bankRelocate(BANK_WORD(0x110),base);
+            BANK_WORD(0x114)=bankRelocate(BANK_WORD(0x114),base);
+            BANK_WORD(0x124)=bankRelocate(BANK_WORD(0x124),base);
+            BANK_WORD(0x128)=bankRelocate(BANK_WORD(0x128),base);
+            BANK_WORD(0x12c)=bankRelocate(BANK_WORD(0x12c),base);
+            break;
+        case 1: {
+            u32 remaining=header->count;
+            _gpdResourceItem* resource=items;
+            while(remaining) {
+                if((s32)BANK_WORD(0x54)==resource->reserved00) {
+                    if(resource->kind==2) {
+                        BANK_WORD(0)|=0x100000;
+                        BANK_WORD(0x54)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+                        break;
+                    } else {
+                        BANK_WORD(0)&=~0x100000;
+                        BANK_WORD(0x54)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+                        break;
+                    }
                 }
-                break;
+                ++resource;--remaining;
             }
-            case 6: {
-                _gpdResourceItem* resource=bankFindResource(header,items,BANK_WORD(0x1c));
-                if(resource) {
+            if(!remaining)BANK_WORD(0x54)=0;
+            BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
+            BANK_WORD(0x14)=bankRelocate(BANK_WORD(0x14),base);
+            BANK_WORD(0x18)=bankRelocate(BANK_WORD(0x18),base);
+            BANK_WORD(0x38)=bankRelocate(BANK_WORD(0x38),base);
+            BANK_WORD(0x3c)=bankRelocate(BANK_WORD(0x3c),base);
+            if(!BANK_WORD(0x3c))BANK_WORD(0)&=~0x2000000;
+            BANK_WORD(0x40)=bankRelocate(BANK_WORD(0x40),base);
+            if(!(BANK_WORD(0)&8)) {
+                // Read each float pair before overwriting it with packed s16 values.
+                f32 x=BANK_FLOAT(0x44),y=BANK_FLOAT(0x48);
+                *(s16*)((u8*)definition+0x44)=(s16)(1024.0f*x);
+                *(s16*)((u8*)definition+0x46)=(s16)(1024.0f*y);
+                f32 z=BANK_FLOAT(0x4c),w=BANK_FLOAT(0x50);
+                *(s16*)((u8*)definition+0x48)=(s16)(1024.0f*z);
+                *(s16*)((u8*)definition+0x4a)=(s16)(1024.0f*w);
+                BANK_FLOAT(0x50)=0.0f;BANK_FLOAT(0x4c)=0.0f;
+                BANK_WORD(0)|=8;
+            }
+            break;
+        }
+        case 6: {
+            u32 remaining=header->count;
+            _gpdResourceItem* resource=items;
+            while(remaining) {
+                if((s32)BANK_WORD(0x1c)==resource->reserved00) {
                     if(resource->kind==2) {
                         BANK_WORD(0)|=0x400;
                         if(BANK_WORD(0)&0x2000)BANK_WORD(0)&=~0x40000;
-                    } else BANK_WORD(0)&=~0x400;
-                    BANK_WORD(0x1c)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
-                } else BANK_WORD(0x1c)=0;
-                BANK_WORD(8)=bankRelocate(BANK_WORD(8),base);
-                BANK_WORD(12)=bankRelocate(BANK_WORD(12),base);
-                if(!BANK_WORD(12))BANK_WORD(0)&=~0x40000;
-                BANK_WORD(16)=bankRelocate(BANK_WORD(16),base);
-                break;
-            }
-            case 3: {
-                _gpdResourceItem* resource=bankFindResource(header,items,BANK_WORD(0x60));
-                BANK_WORD(0x60)=resource && (resource->flags&0x40)==0x40?(u32)resource->data:0;
-                BANK_WORD(0x30)=bankRelocate(BANK_WORD(0x30),base);
-                BANK_WORD(0x14)=bankRelocate(BANK_WORD(0x14),base);
-                BANK_WORD(0x18)=bankRelocate(BANK_WORD(0x18),base);
-                BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
-                break;
-            }
-            case 2: {
-                _gpdResourceItem* resource=bankFindResource(header,items,BANK_WORD(0x4c));
-                if(!resource)BANK_WORD(0x4c)=0;
-                else if((BANK_WORD(0)&0x40) && resource->kind==3)BANK_WORD(0x4c)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
-                else if(resource->kind==1) {
-                    BankSceneModel*** scene=(BankSceneModel***)((resource->flags&0x40)==0x40?resource->data:0);
-                    if(scene) {
-                        BankSceneModel* model=**scene;
-                        void* joint=HSD_JObjLoadJoint(model->joint);
-                        if(joint) {
-                            BANK_WORD(0x4c)=(u32)joint;
-                            void* animation=0;void* material=0;void* shape=0;
-                            BANK_FLOAT(0x54)=0.0f;BANK_FLOAT(0x50)=0.0f;
-                            if(model->animation)animation=*model->animation;
-                            if(model->material)material=*model->material;
-                            if(model->shape)shape=*model->shape;
-                            HSD_JObjAddAnimAll(joint,animation,material,shape);
-                            if(BANK_WORD(0)&4)HSD_ForeachAnim(joint,6,0xffff,(void*)HSD_AObjSetFlags,3,0x20000000);
-                            else HSD_ForeachAnim(joint,6,0xffff,(void*)HSD_AObjClearFlags,3,0x20000000);
-                            HSD_ForeachAnim(joint,6,0xffff,(void*)HSD_AObjSetRate,1,0.0);
-                            HSD_ForeachAnim(joint,6,0xffff,(void*)_modelGetEndFrame,2,(u8*)definition+0x50);
-                            HSD_JObjReqAnimAll(joint,0.0f);HSD_JObjAnimAll(joint);
-                            BANK_FLOAT(0x50)/=60.0f;
-                        } else BANK_WORD(0x4c)=0;
+                        BANK_WORD(0x1c)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+                        break;
+                    } else {
+                        BANK_WORD(0)&=~0x400;
+                        BANK_WORD(0x1c)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+                        break;
                     }
-                } else BANK_WORD(0x4c)=0;
-                BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
-                BANK_WORD(0x38)=bankRelocate(BANK_WORD(0x38),base);
-                BANK_WORD(0x3c)=bankRelocate(BANK_WORD(0x3c),base);
-                BANK_WORD(0x40)=bankRelocate(BANK_WORD(0x40),base);
-                BANK_WORD(0x44)=bankRelocate(BANK_WORD(0x44),base);
-                BANK_WORD(0x48)=bankRelocate(BANK_WORD(0x48),base);
-                break;
-            }
-            case 4: {
-                _gpdResourceItem* resource=bankFindResource(header,items,BANK_WORD(0x74));
-                BANK_WORD(0x74)=resource && (resource->flags&0x40)==0x40?(u32)resource->data:0;
-                BANK_WORD(0x4c)=bankRelocate(BANK_WORD(0x4c),base);
-                BANK_WORD(0x50)=bankRelocate(BANK_WORD(0x50),base);
-                BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
-                BANK_WORD(0x38)=bankRelocate(BANK_WORD(0x38),base);
-                BANK_WORD(0x3c)=bankRelocate(BANK_WORD(0x3c),base);
-                BANK_WORD(0x40)=bankRelocate(BANK_WORD(0x40),base);
-                BANK_WORD(0x44)=bankRelocate(BANK_WORD(0x44),base);
-                BANK_WORD(0x48)=bankRelocate(BANK_WORD(0x48),base);
-                if(BANK_WORD(0)&0x200) {
-                    void* light=__nw__FUl(128);
-                    if(light)light=__ct__10GSgfxLightFv(light);
-                    if(light) {
-                        g_particle_debug_stats[1]+=128;g_particle_debug_stats[5]+=128;
-                        MakeDiff__10GSgfxLightFP11GSgfxColAu8P5GSvecb(light,(u8*)definition+0x6c,&zeroVector,false);
-                        BANK_WORD(0x78)=(u32)light;
-                        if(BANK_WORD(0)&0x400) {
-                            void* specular=__nw__FUl(128);
-                            if(specular)specular=__ct__10GSgfxLightFv(specular);
-                            if(specular) {
-                                g_particle_debug_stats[1]+=128;g_particle_debug_stats[5]+=128;
-                                MakeSpec__10GSgfxLightFP11GSgfxColAu8P5GSvecfP5GSvec(specular,(u8*)definition+0x6c,&zAxisVector,BANK_FLOAT(0x70),0);
-                                BANK_WORD(0x7c)=(u32)specular;
-                            } else BANK_WORD(0)&=~0x400;
-                        }
-                    } else BANK_WORD(0)&=~0x600;
                 }
-                break;
+                ++resource;--remaining;
             }
+            if(!remaining)BANK_WORD(0x1c)=0;
+            BANK_WORD(8)=bankRelocate(BANK_WORD(8),base);
+            BANK_WORD(12)=bankRelocate(BANK_WORD(12),base);
+            if(!BANK_WORD(12))BANK_WORD(0)&=~0x40000;
+            BANK_WORD(16)=bankRelocate(BANK_WORD(16),base);
+            break;
+        }
+        case 3: {
+            u32 remaining=header->count;
+            _gpdResourceItem* resource=items;
+            while(remaining) {
+                if((s32)BANK_WORD(0x60)==resource->reserved00) {
+                    BANK_WORD(0x60)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+                    break;
+                }
+                ++resource;--remaining;
             }
+            if(!remaining)BANK_WORD(0x60)=0;
+            BANK_WORD(0x30)=bankRelocate(BANK_WORD(0x30),base);
+            BANK_WORD(0x14)=bankRelocate(BANK_WORD(0x14),base);
+            BANK_WORD(0x18)=bankRelocate(BANK_WORD(0x18),base);
+            BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
+            break;
+        }
+        case 2: {
+            u32 remaining=header->count;
+            _gpdResourceItem* resource=items;
+            while(remaining) {
+                if((s32)BANK_WORD(0x4c)==resource->reserved00) {
+                    if((BANK_WORD(0)&0x40) && resource->kind==3)BANK_WORD(0x4c)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+                    else if(resource->kind==1) {
+                        BankSceneModel*** scene=(BankSceneModel***)((resource->flags&0x40)==0x40?resource->data:0);
+                        if(scene) {
+                            BankSceneModel* model=**scene;
+                            void* joint=HSD_JObjLoadJoint(model->joint);
+                            if(joint) {
+                                BANK_WORD(0x4c)=(u32)joint;
+                                void* animation=0;void* material=0;void* shape=0;
+                                BANK_FLOAT(0x54)=0.0f;BANK_FLOAT(0x50)=0.0f;
+                                if(model->animation)animation=*model->animation;
+                                if(model->material)material=*model->material;
+                                if(model->shape)shape=*model->shape;
+                                HSD_JObjAddAnimAll(joint,animation,material,shape);
+                                if(BANK_WORD(0)&4)HSD_ForeachAnim(joint,6,0xffff,(void*)HSD_AObjSetFlags,3,0x20000000);
+                                else HSD_ForeachAnim(joint,6,0xffff,(void*)HSD_AObjClearFlags,3,0x20000000);
+                                HSD_ForeachAnim(joint,6,0xffff,(void*)HSD_AObjSetRate,1,0.0);
+                                HSD_ForeachAnim(joint,6,0xffff,(void*)_modelGetEndFrame,2,(u8*)definition+0x50);
+                                HSD_JObjReqAnimAll(joint,0.0f);HSD_JObjAnimAll(joint);
+                                BANK_FLOAT(0x50)/=60.0f;
+                            } else BANK_WORD(0x4c)=0;
+                        }
+                    } else BANK_WORD(0x4c)=0;
+                    break;
+                }
+                ++resource;--remaining;
+            }
+            if(!remaining)BANK_WORD(0x4c)=0;
+            BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
+            BANK_WORD(0x38)=bankRelocate(BANK_WORD(0x38),base);
+            BANK_WORD(0x3c)=bankRelocate(BANK_WORD(0x3c),base);
+            BANK_WORD(0x40)=bankRelocate(BANK_WORD(0x40),base);
+            BANK_WORD(0x44)=bankRelocate(BANK_WORD(0x44),base);
+            BANK_WORD(0x48)=bankRelocate(BANK_WORD(0x48),base);
+            break;
+        }
+        case 4: {
+            u32 remaining=header->count;
+            _gpdResourceItem* resource=items;
+            while(remaining) {
+                if((s32)BANK_WORD(0x74)==resource->reserved00) {
+                    BANK_WORD(0x74)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+                    break;
+                }
+                ++resource;--remaining;
+            }
+            if(!remaining)BANK_WORD(0x74)=0;
+            BANK_WORD(0x4c)=bankRelocate(BANK_WORD(0x4c),base);
+            BANK_WORD(0x50)=bankRelocate(BANK_WORD(0x50),base);
+            BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
+            BANK_WORD(0x38)=bankRelocate(BANK_WORD(0x38),base);
+            BANK_WORD(0x3c)=bankRelocate(BANK_WORD(0x3c),base);
+            BANK_WORD(0x40)=bankRelocate(BANK_WORD(0x40),base);
+            BANK_WORD(0x44)=bankRelocate(BANK_WORD(0x44),base);
+            BANK_WORD(0x48)=bankRelocate(BANK_WORD(0x48),base);
+            if(BANK_WORD(0)&0x200) {
+                void* light=__nw__FUl(128);
+                if(light)light=__ct__10GSgfxLightFv(light);
+                if(light) {
+                    g_particle_debug_stats[1]+=128;g_particle_debug_stats[5]+=128;
+                    MakeDiff__10GSgfxLightFP11GSgfxColAu8P5GSvecb(light,(u8*)definition+0x6c,&zeroVector,false);
+                    BANK_WORD(0x78)=(u32)light;
+                    if(BANK_WORD(0)&0x400) {
+                        void* specular=__nw__FUl(128);
+                        if(specular)specular=__ct__10GSgfxLightFv(specular);
+                        if(specular) {
+                            g_particle_debug_stats[1]+=128;g_particle_debug_stats[5]+=128;
+                            MakeSpec__10GSgfxLightFP11GSgfxColAu8P5GSvecfP5GSvec(specular,(u8*)definition+0x6c,&zAxisVector,BANK_FLOAT(0x70),0);
+                            BANK_WORD(0x7c)=(u32)specular;
+                        } else BANK_WORD(0)&=~0x400;
+                    }
+                } else BANK_WORD(0)&=~0x600;
+            }
+            break;
+        }
         }
         ++records;--recordCount;
     }
@@ -595,3 +642,5 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
 }
 #undef BANK_WORD
 #undef BANK_FLOAT
+
+#pragma opt_common_subs reset

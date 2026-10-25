@@ -117,21 +117,21 @@ void tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(Graph
 }
 struct LayerChannelView { u8 pad[0xdbc]; LayerChannel channels[8]; };
 void cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(GraphicsLayerState* layer,u8 unit,s32 alpha,s32 ambient,s32 material,u32 count,void** lights,s32 attenuation,s32 diffuse) {
-    u32 idx=unit; s32 alphaUnit=unit+2; u8 enabled=0;
+    u32 idx=unit; s32 alphaUnit=unit+2; u8 enabled=0; u32 i;
     if (lights && count) enabled=1;
     if (!enabled) { attenuation=2; diffuse=0; } else if (!attenuation) diffuse=0;
     if (alpha==0 || alpha==2) {
         ((LayerChannelView*)layer)->channels[idx].enabled=enabled; ((LayerChannelView*)layer)->channels[idx].ambient=ambient; ((LayerChannelView*)layer)->channels[idx].material=material;
         ((LayerChannelView*)layer)->channels[idx].mask=0; ((LayerChannelView*)layer)->channels[idx].diffuse=diffuse; ((LayerChannelView*)layer)->channels[idx].attenuation=attenuation;
-        if (enabled) for (u32 i=0;i<8;i++) { if (i<count) ((LayerChannelView*)layer)->channels[idx].lights[i]=lights[i]; else ((LayerChannelView*)layer)->channels[idx].lights[i]=0; }
-        else memset(((LayerChannelView*)layer)->channels[idx].lights,0,0x20);
+        if (enabled) for (i=0;i<8;i++) { if (i<count) ((LayerChannelView*)layer)->channels[idx].lights[i]=lights[i]; else ((LayerChannelView*)layer)->channels[idx].lights[i]=0; }
+        else memset(((LayerChannelView*)layer)->channels[unit].lights,0,0x20);
         layerField<u32>(layer,0x16c0)|=1<<idx; layerField<u32>(layer,0x1778)|=1<<idx;
     }
     if (alpha==1 || alpha==2) {
         ((LayerChannelView*)layer)->channels[alphaUnit].enabled=enabled; ((LayerChannelView*)layer)->channels[alphaUnit].ambient=ambient; ((LayerChannelView*)layer)->channels[alphaUnit].material=material;
         ((LayerChannelView*)layer)->channels[alphaUnit].mask=0; ((LayerChannelView*)layer)->channels[alphaUnit].diffuse=diffuse; ((LayerChannelView*)layer)->channels[alphaUnit].attenuation=attenuation;
         // Both branches write the light list for the color unit in the original.
-        if (enabled) for (u32 i=0;i<8;i++) { if (i<count) ((LayerChannelView*)layer)->channels[idx].lights[i]=lights[i]; else ((LayerChannelView*)layer)->channels[idx].lights[i]=0; }
+        if (enabled) for (i=0;i<8;i++) { if (i<count) ((LayerChannelView*)layer)->channels[idx].lights[i]=lights[i]; else ((LayerChannelView*)layer)->channels[idx].lights[i]=0; }
         else memset(((LayerChannelView*)layer)->channels[idx].lights,0,0x20);
         layerField<u32>(layer,0x16c0)|=1<<alphaUnit; layerField<u32>(layer,0x1778)|=1<<alphaUnit;
     }

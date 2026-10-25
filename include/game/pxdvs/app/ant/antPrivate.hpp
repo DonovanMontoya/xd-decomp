@@ -10,17 +10,22 @@ struct PocketVec {
     T x;
     T y;
     static const PocketVec zero;
+
+    PocketVec& operator=(PocketVec other) {
+        x = other.x;
+        y = other.y;
+        return *this;
+    }
 };
 
 class CAnt {
 public:
     u32 unk0;
     u32 unk4;
-    s16 x;
-    s16 y;
+    PocketVec<short> position;
     f32 unkC;
     u8 unk10;
-    u32 unk14;
+    s32 unk14;
     s16 unk18;
     s16 unk1A;
     f32 unk1C;

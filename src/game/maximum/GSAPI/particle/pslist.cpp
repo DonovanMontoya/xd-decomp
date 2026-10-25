@@ -110,16 +110,17 @@ PSParticle* particleSort(s32 link, PSParticle** edgeOut, PSParticle** xluOut) {
     struct Bucket { PSParticle* head; PSParticle* tail; } buckets[16];
     PSParticle* current = activeParticle[link];
     PSParticle* next;
-    PSParticle* edge = NULL;
-    PSParticle* xlu = NULL;
-    PSParticle** edgeTail = NULL;
-    PSParticle** xluTail = NULL;
+    PSParticle* edge;
+    PSParticle* xlu;
+    PSParticle** edgeTail;
+    PSParticle** xluTail;
     PSParticle* head;
     s32 bucket, i;
     u32 kind;
     if (!sortDirty[link]) {
         if (current == NULL) { *edgeOut=NULL; *xluOut=NULL; return NULL; }
-        *edgeOut = (current->kind & 8) ? current : NULL;
+        if (current->kind & 8) *edgeOut = current;
+        else *edgeOut = NULL;
         *xluOut = activeParticleXLU[link];
         return current;
     }
@@ -141,6 +142,7 @@ PSParticle* particleSort(s32 link, PSParticle** edgeOut, PSParticle** xluOut) {
         current = next; next = next->next;
     }
     buckets[bucket].tail = current;
+    edgeTail = NULL; edge = NULL; xluTail = NULL; xlu = NULL;
     for (i=0;i<8;i++) {
         if (buckets[i].head != NULL) {
             if (edge == NULL) edge = buckets[i].head;

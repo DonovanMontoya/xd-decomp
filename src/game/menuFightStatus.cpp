@@ -1,7 +1,7 @@
 #include <game/menuFightStatusPrivate.hpp>
 #include <libc/string.h>
 struct MENU_POKEMON_STATUS {u8 pad0[0x16];u8 special,pad17;s16 maxHP,hp;u32 maxEXP,exp;union {u8 pad24[12];struct {u16 condition,face;u8 sex,side,pad2A[3],dark,pad2E[2];} details;};};
-struct StatusTween {s16 hp,frames,timer,levelUp;u32 exp;s16 expFrames,expTimer;};
+struct StatusTween {s16 hp,frames,timer;u16 levelUp;u32 exp;s16 expFrames,expTimer;};
 static f32 menuStatusOldTime,menuStatusTime;
 extern "C" {tagWINDOW_WORK *windowSearchID(s32);StatusTween *windowGetFreeWork(tagWINDOW_WORK*);MENU_POKEMON_STATUS *windowGetAllocPtr(tagWINDOW_WORK*);MENU_POKEMON_STATUS *windowAllocMemory(tagWINDOW_WORK*,s32);void GSthreadSwitch();void GSsndPlayNow(u32);void GSsndStopNow(u32);f32 timeGetLastFrameSec();u8 fightKind_CheckFightKind(s32);s32 menuFightGetStatus();void menuFightSetStatus(s32);void menuFightSetSeq();void *menuSeqBiosGetPtr(s32);}
 static void menuUpdateStatusTime(){f32 time=timeGetLastFrameSec();if(time!=menuStatusOldTime){menuStatusOldTime=time;menuStatusTime+=time;}}
@@ -21,9 +21,13 @@ extern "C" {u16 *GSmsgGetGSchar(u32);void msgctrlSetValue(s32,u32);u32 GSmsgGetR
 static s32 menuFightDrawDarkPanel(tagWINDOW_WORK *w,tagSPRITE_WORK *s,Pokemon *pokemon,MENU_POKEMON_STATUS*){if(pokemon && pokemon->isDarkPokemon()){msgctrlSetValue(0x37,(u32)GSmsgGetGSchar(0x4443));s16 width=GSmsgGetRect(0x4278)>>16;GSmsgPrint2(winSpriteGetLayerID(w,s),(s16)(s->width-width),0,w->alpha|0xFFFFFF00,0x4278);msgctrlSetValue(0x5F,deckGetDeckDarkPokemon(pokemon->getDarkPokemon()->getDarkPokemonID())->getPlayerLevel());s16 x=(s->width-width)-(GSmsgGetRect(0x4272)>>16);GSmsgPrint2(winSpriteGetLayerID(w,s),x,1,w->alpha|0xFFFFFF00,0x4272);return 1;}return 0;}
 
 #include <dolphin/gx.h>
+struct GSgfxVF;
 struct GSgfxLayer {
-    u8 reserved[0x1998];u32 primitive;
-    void setRenderStateAndSelect(void*);
+    u8 reserved[0xD34];u8 blendType;u8 reservedD35[3];u32 blendValue;
+    u8 reservedD3C[0x16A8-0xD3C];u32 dirty;u32 pixelDirty;
+    u8 reserved16B0[0x1760-0x16B0];u32 savedDirty;u32 savedPixelDirty;
+    u8 reserved1768[0x1998-0x1768];u32 primitive;
+    void setRenderStateAndSelect(GSgfxVF*);
     void beginSurface(u16);
     void endSurface();
 };
@@ -40,14 +44,13 @@ u8 fightTrainerIsGcHero(void*);
 Pokemon* fightOutPokemonGetPokemonPtr(void*);
 void windowDrawSprite2(s16,s16,s16,s16,u32,tagWINDOW_WORK*,u16,s32,s32);
 GSgfxLayer* GSgfxLayerFindByID(s32);
-void* GSgfxVFBuildTemp(s32,s32,u8,u8,s32,s32,s32,s32,s32);
-void* GSgfxVFGetPredef(s32);
+GSgfxVF* GSgfxVFBuildTemp(s32,s32,u8,u8,s32,s32,s32,s32,s32);
+GSgfxVF* GSgfxVFGetPredef(s32);
 u16 gamedataBiosGetFlag(s32,s32,s32);
 s32 menuCloseSync(s32,s32);
 s32 menuGetCursorItemID(s32);
 double sin(double);
 }
-static inline u32& statusLayerWord(GSgfxLayer* layer,u32 offset){return *(u32*)((u8*)layer+offset);}
 extern "C" void menuFightDrawParam(tagWINDOW_WORK* w,tagSPRITE_WORK* s){
     static f32 cFlash=0.0f;
     MENU_POKEMON_STATUS* status=windowGetAllocPtr(w);
@@ -78,18 +81,29 @@ extern "C" void menuFightDrawParam(tagWINDOW_WORK* w,tagSPRITE_WORK* s){
         if(status->details.dark==0){
             if(menuCBBios_CurrentlyWorkingToolBattle()==0&&status->details.side!=0){
                 void* trainer=fightSideGetValidFightTrainerPtr(fightFloorGetValidFightSidePtr(fightFloorGetNowPtr(),0),0);
-                void* pokemon[2];
+                void* pokemon[6];
                 fightFloorGetFightTrainerFightOutPokemonPtrAry(fightFloorGetNowPtr(),trainer,pokemon,0,0);
-                switch(w->menu){
-                case 0x37:
-                    if(fightTrainerIsGcHero(trainer)==0){fightFloorGetFightTrainerFightOutPokemonPtrAry(fightFloorGetNowPtr(),trainer,pokemon,1,0);if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[0]),status)==0)goto drawLevel;}else goto drawLevel;break;
-                case 0x40:
-                    if(fightTrainerIsGcHero(trainer)==0){if((s32)fightFloorGetFightTrainerFightOutPokemonPtrAry(fightFloorGetNowPtr(),trainer,pokemon,1,0)==1){if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[0]),status)==0)goto drawLevel;}else if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[1]),status)==0)goto drawLevel;}else goto drawLevel;break;
-                case 0x38:
-                    fightFloorGetFightTrainerFightOutPokemonPtrAry(fightFloorGetNowPtr(),trainer,pokemon,0,0);if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[0]),status)==0)goto drawLevel;break;
-                case 0x41:
-                    if((s32)fightFloorGetFightTrainerFightOutPokemonPtrAry(fightFloorGetNowPtr(),trainer,pokemon,0,0)==1){if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[0]),status)==0)goto drawLevel;}else if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[1]),status)==0)goto drawLevel;break;
-                }
+                if(w->menu==0x37){
+                    if(fightTrainerIsGcHero(trainer)!=0)goto drawLevel;
+                    fightFloorGetFightTrainerFightOutPokemonPtrAry(fightFloorGetNowPtr(),trainer,pokemon,1,0);
+                    if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[0]),status))break;
+                    goto drawLevel;
+                }else if(w->menu==0x40){
+                    if(fightTrainerIsGcHero(trainer)!=0)goto drawLevel;
+                    if((s32)fightFloorGetFightTrainerFightOutPokemonPtrAry(fightFloorGetNowPtr(),trainer,pokemon,1,0)==1){
+                        if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[0]),status))break;
+                    }else if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[1]),status))break;
+                    goto drawLevel;
+                }else if(w->menu==0x38){
+                    fightFloorGetFightTrainerFightOutPokemonPtrAry(fightFloorGetNowPtr(),trainer,pokemon,0,0);
+                    if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[0]),status))break;
+                    goto drawLevel;
+                }else if(w->menu==0x41){
+                    if((s32)fightFloorGetFightTrainerFightOutPokemonPtrAry(fightFloorGetNowPtr(),trainer,pokemon,0,0)==1){
+                        if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[0]),status))break;
+                    }else if(menuFightDrawDarkPanel(w,s,fightOutPokemonGetPokemonPtr(pokemon[1]),status))break;
+                    goto drawLevel;
+                }else goto drawLevel;
             }else{
 drawLevel:
                 msgctrlSetValue(0x5F,status->pad17);s16 width=GSmsgGetRect(0x4272)>>16;
@@ -99,7 +113,7 @@ drawLevel:
     case 0xE7:case 0xF3:{
         msgctrlSetValue(0x37,(u32)status);GSmsgPrint2(winSpriteGetLayerID(w,s),0,1,color,0x4279);
         s16 x=(GSmsgGetRect(0x4279)>>16)+4;u32 message;
-        switch(status->details.sex){case 0:message=0x9C5;break;case 1:message=0x9C6;break;default:message=0;break;}
+        switch(status->details.sex){case 0:message=0x9C5;break;case 1:message=0x9C6;break;case 2:default:message=0;break;}
         if(message){msgctrlSetValue(0x37,(u32)GSmsgGetGSchar(message));GSmsgPrint2(winSpriteGetLayerID(w,s),x,0,color,0x4278);}break;
     }
     case 0xEB:case 0xF8:windowDrawSprite2(0,0,s->width,s->height,color,w,status->details.condition,0,winSpriteGetLayerID(w,s));break;
@@ -131,13 +145,14 @@ drawLevel:
         if(tween->expFrames)exp=((f32)tween->expTimer/(f32)tween->expFrames)*(f32)(status->exp-tween->exp)+(f32)tween->exp;else exp=status->exp;
         s32 maximum=status->maxEXP;if(exp>maximum)exp=maximum;
         if(maximum>0){
-            s16 width=(maximum+exp*s->width-1)/maximum;
+            s32 scaled=maximum+exp*s->width;
+            s16 width=(scaled-1)/maximum;
             if(width){cFlash=0.0f;windowDrawSprite2(0,0,width,s->height,color,w,0x92,0,winSpriteGetLayerID(w,s));}
             else if(tween->levelUp){
                 windowDrawSprite2(0,0,s->width,s->height,color,w,0x92,0,winSpriteGetLayerID(w,s));
-                GSgfxLayer* layer=GSgfxLayerFindByID(winSpriteGetLayerID(w,s));layer->primitive=0x80;
-                statusLayerWord(layer,0xD34)=6;statusLayerWord(layer,0xD38)=0;statusLayerWord(layer,0x16AC)|=4;statusLayerWord(layer,0x16A8)|=1;statusLayerWord(layer,0x1764)|=4;statusLayerWord(layer,0x1760)|=1;
-                s8 flash=255.0f-254.0f*cFlash;
+                GSgfxLayer* layer=GSgfxLayerFindByID(winSpriteGetLayerID(w,s));u8 flash=255.0f-254.0f*cFlash;
+                layer->primitive=0x80;
+                layer->blendType=6;layer->blendValue=0;layer->pixelDirty|=4;layer->dirty|=1;layer->savedPixelDirty|=4;layer->savedDirty|=1;
                 layer->setRenderStateAndSelect(GSgfxVFGetPredef(3));layer->beginSurface(4);
                 GXWGFifo.s16=0;GXWGFifo.s16=0;GXWGFifo.u8=flash;GXWGFifo.u8=flash;GXWGFifo.u8=flash;GXWGFifo.u8=flash;
                 GXWGFifo.s16=s->width;GXWGFifo.s16=0;GXWGFifo.u8=flash;GXWGFifo.u8=flash;GXWGFifo.u8=flash;GXWGFifo.u8=flash;

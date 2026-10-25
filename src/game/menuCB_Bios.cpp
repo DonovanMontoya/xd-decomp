@@ -19,9 +19,9 @@ MenuCBBiosRule *menuCB_OreRule(void);
 void menuCB_InitMenu(s32);
 _TOOL_SAVEDATA *savedataGetStatus(s32, s32);
 
-extern s32 toolbattle_mode_flag;
-static s32 staControlerMap[4] = { 1, 2, 3, 4 };
+static const s32 staControlerMap[4] = { 1, 2, 3, 4 };
 static u8 stbCB_Lock;
+static s32 toolbattle_mode_flag;
 u16 *GSmsgGetGSchar(s32);
 u16 menuCBRule_RegulationItemID(s32);
 extern u32 itemtoolbattle_number;

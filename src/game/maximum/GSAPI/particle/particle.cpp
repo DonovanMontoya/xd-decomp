@@ -633,7 +633,7 @@ void psInitDataBankLocate(s32 *cmdBank, s32 *texBank, s32 *formBank) {
             }
             {
                 u32 fmt = tg->format;
-                if (fmt != 8 && (fmt - 9) > 1) {
+                if (fmt != 8 && fmt != 9 && fmt != 10) {
                     continue;
                 }
             }

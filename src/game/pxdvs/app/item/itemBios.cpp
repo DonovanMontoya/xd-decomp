@@ -5,7 +5,8 @@ extern u8 item_param[]; extern u32 item_param_number;
 extern u8 taste_data[]; extern u32 taste_data_number;
 extern u8 item_soubi_data[]; extern u32 item_soubi_data_number;
 extern u8 item_ball_data[]; extern u32 item_ball_data_number;
-extern u8 item_waza_machine_no[]; extern u32 item_waza_machine_no_number;
+struct WazaMachineNoRecord { u32 no; u32 wazaId; };
+extern WazaMachineNoRecord item_waza_machine_no[]; extern u32 item_waza_machine_no_number;
 extern u16 *item_data_index; extern u32 *item_data_index_number;
 extern u8 *item_data_prime; extern u32 *item_data_prime_number;
 #define ITEM_FIELD(T, P, O) (*((T *)((u8 *)(P) + (O))))
@@ -437,14 +438,12 @@ s32 itemParamGetRecoverType(void *arg0) {
 #pragma peephole reset
 #pragma always_inline reset
 
-void *itemParamGetPtr(u32 arg0) {
-    u32 count = item_param_number;
-    u8 *table = item_param;
-    u32 index = (u8)arg0;
-    void *result = table + ((arg0 * 16) & 0xff0);
-    if (index < count) return result;
-    return NULL;
+#pragma peephole on
+void *itemParamGetPtr(u8 id) {
+    if (id >= item_param_number) return 0;
+    return &((ItemParamRecord *)item_param)[id];
 }
+#pragma peephole reset
 
 
 struct TasteAisyouRec { u8 pad[4]; u8 a[25]; };
@@ -466,14 +465,12 @@ s32 tasteDataGetNigateMsgDataId(s32 *arg0) {
     return *arg0;
 }
 
-void *tasteDataGetPtr(u32 arg0) {
-    u32 count = taste_data_number;
-    u8 *table = taste_data;
-    u32 index = (u16)arg0;
-    void *result = table + ((arg0 * 32) & 0x1fffe0);
-    if (index < count) return result;
-    return NULL;
+#pragma peephole on
+void *tasteDataGetPtr(u16 id) {
+    if (id >= taste_data_number) return 0;
+    return &((TasteDataRecord *)taste_data)[id];
 }
+#pragma peephole reset
 
 
 u16 itemSoubiDataBiosGetFightKoukaDataId(u16 *arg0) {
@@ -483,14 +480,12 @@ u16 itemSoubiDataBiosGetFightKoukaDataId(u16 *arg0) {
     return *arg0;
 }
 
-void *itemSoubiDataBiosGetPtr(u32 arg0) {
-    u32 count = item_soubi_data_number;
-    u8 *table = item_soubi_data;
-    u32 index = (u16)arg0;
-    void *result = table + ((arg0 * 2) & 0x1fffe);
-    if (index < count) return result;
-    return NULL;
+#pragma peephole on
+void *itemSoubiDataBiosGetPtr(u16 id) {
+    if (id >= item_soubi_data_number) return 0;
+    return &((ItemSoubiDataRecord *)item_soubi_data)[id];
 }
+#pragma peephole reset
 
 
 void itemBiosSetNum(void *arg0, s16 arg1) {
@@ -695,12 +690,12 @@ u16 itemBallDataBiosGetFightKoukaDataId(u16 *arg0) {
     return *arg0;
 }
 
-void *itemBallDataBiosGetPtr(u32 arg0) {
-    u8 *table = item_ball_data;
-    void *result = table + ((arg0 * 64) & 0x3fffc0);
-    if ((u16)arg0 < item_ball_data_number) return result;
-    return NULL;
+#pragma peephole on
+void *itemBallDataBiosGetPtr(u16 id) {
+    if (id >= item_ball_data_number) return 0;
+    return &((ItemBallDataRecord *)item_ball_data)[id];
 }
+#pragma peephole reset
 
 
 s32 itemDataBiosGetBattleUseFunc(void *arg0) {
@@ -774,12 +769,14 @@ u8 itemDataBiosGetHidenMachineNo(void *arg0) {
 }
 
 
-u16 itemDataBiosGetWazaIDByWazaMachineNo(u32 arg0) {
-    if ((u8)arg0 >= (u32) item_waza_machine_no_number) {
-        return 0U;
+#pragma peephole on
+u16 itemDataBiosGetWazaIDByWazaMachineNo(u8 no) {
+    if (no >= item_waza_machine_no_number) {
+        return 0;
     }
-    return (u16)ITEM_FIELD(u32, ((arg0 * 8) & 0x7F8) + item_waza_machine_no, 4);
+    return item_waza_machine_no[no].wazaId;
 }
+#pragma peephole reset
 
 
 u8 itemDataBiosGetWazaMachineNo(void *arg0) {
@@ -901,17 +898,19 @@ s32 itemDataBiosGetName(void *arg0) {
 }
 
 
-s32 itemDataBiosGetPtr(u16 arg0) {
-    u16 temp_r3;
+#pragma peephole on
+s32 itemDataBiosGetPtr(u16 id) {
+    u16 index;
 
-    if (arg0 >= (u32) *item_data_index_number) {
+    if (id >= *item_data_index_number) {
         return 0;
     }
-    temp_r3 = *(u16 *)((u8 *)item_data_index + ((arg0 * 2) & 0x1FFFE));
-    if (temp_r3 >= (u32) *item_data_prime_number) {
+    index = item_data_index[id];
+    if (index >= *item_data_prime_number) {
         return 0;
     }
-    return (s32)(item_data_prime + (temp_r3 * 0x28));
+    return (s32)&((ItemDataRecord *)item_data_prime)[index];
 }
+#pragma peephole reset
 
 }

@@ -36,7 +36,7 @@ void heroBiosSetBadge01Flag(HeroBiosLayout* p,u8 v){if(p)p->badges[0]=v;}
 u8 heroBiosGetSexDataId(HeroBiosLayout* p){if(p==0){return 0;}else{return p->sex;}}
 void heroBiosSetSexDataId(HeroBiosLayout* p,u8 v){if(p)p->sex=v;}
 void heroBiosSetRnd(HeroBiosLayout* p,u32 v){if(p)p->rnd=v;}
-void heroBiosSetNamePtr(HeroBiosLayout* p,const void* name){if(p!=0){if(name!=0)GScharLenCpy(p,name,0xb);}}
+void heroBiosSetNamePtr(HeroBiosLayout* p,const void* name){if(p==0||name==0)return;GScharLenCpy(p,name,0xb);}
 void* heroBiosGetHizukiItemPtr(HeroBiosLayout* p,u16 i){if(p==0){return 0;}if(i>=10){return 0;}return (u8*)p+0x8fa+i*4;}
 void* heroBiosGetItemKoronPtr(HeroBiosLayout* p,u16 i){if(p==0){return 0;}if(i>=3){return 0;}return (u8*)p+0x7e4+i*4;}
 void* heroBiosGetItemSeedPtr(HeroBiosLayout* p,u16 i){if(p==0){return 0;}if(i>=46){return 0;}return (u8*)p+0x72c+i*4;}

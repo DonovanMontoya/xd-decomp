@@ -12,7 +12,8 @@ void PSMTXMultVec(Mtx,Vec3*,Vec3*); void PSMTXMultVecSR(Mtx,Vec3*,Vec3*);
 #define MTXMultVec PSMTXMultVec
 #define VECNormalize PSVECNormalize
 double __fabs(double);
-static inline int vec_normalize_check(Vec3* src,Vec3* dst) { if (!src || !dst) return -1; if (__fabs(src->x)<=__float_min[0] && __fabs(src->y)<=__float_min[0] && __fabs(src->z)<=__float_min[0]) return -1; PSVECNormalize(src,dst); return 0; }
+static inline f64 lobj_fabs(f64 x) { return __fabs(x); }
+static inline int vec_normalize_check(Vec3* src,Vec3* dst) { if (!src || !dst) return -1; if (lobj_fabs(src->x)<=__float_min[0] && lobj_fabs(src->y)<=__float_min[0] && lobj_fabs(src->z)<=__float_min[0]) return -1; PSVECNormalize(src,dst); return 0; }
 static inline int ref_DEC(HSD_LObj* o) { int ret; if ((ret = (o->parent.ref_count == 0xffff))) return ret; return o->parent.ref_count-- == 0; }
 static inline void ref_INC(HSD_LObj* o) { if (o) { ++o->parent.ref_count; if (o->parent.ref_count == 0xffff) __assert("object.h",93,"HSD_OBJ(o)->ref_count != HSD_OBJ_NOREF"); } }
 static inline int WObjRefDec(HSD_WObj* o) { int ret; if ((ret = (o->parent.ref_count == 0xffff))) return ret; return o->parent.ref_count-- == 0; }
@@ -181,7 +182,7 @@ static inline void setup_spec_lightobj(HSD_LObj* lobj, Mtx mtx, s32 spec_id)
         case 1:
             HSD_LObjGetLightVector(lobj, &lobj->lvec);
             PSMTXMultVecSR(mtx, &lobj->lvec, &lobj->lvec);
-            if (vec_normalize_check(&lobj->lvec, &lobj->lvec)) { lobj->lvec.x=0.0F; lobj->lvec.y=0.0F; lobj->lvec.z=-1.0F; }
+            PSVECNormalize(&lobj->lvec, &lobj->lvec);
             break;
         default:
             HSD_ASSERT(704, 0);
@@ -226,8 +227,9 @@ static inline void setup_point_lightobj(HSD_LObj* lobj, Mtx mtx)
         f32 ref_br = LOBJ_EXT(lobj)->u.spot.ref_br;
         f32 ref_dist = LOBJ_EXT(lobj)->u.spot.ref_dist;
         s32 dist_func = LOBJ_EXT(lobj)->u.spot.dist_func;
-        if (ref_dist < __float_epsilon[0]) ref_dist=__float_epsilon[0];
-        if (ref_br < __float_epsilon[0]) ref_br=__float_epsilon[0];
+        f32 epsilon = __float_epsilon[0];
+        if (ref_dist < epsilon) ref_dist = epsilon;
+        if (ref_br < epsilon) ref_br = epsilon;
         GXInitLightDistAttn(&LOBJ_EXT(lobj)->lightobj, ref_dist, ref_br, dist_func);
         GXInitLightSpot(&LOBJ_EXT(lobj)->lightobj, 0.0F, 0);
         GXInitLightDistAttn(&LOBJ_EXT(lobj)->spec_lightobj, ref_dist, ref_br, dist_func);
@@ -258,8 +260,9 @@ static inline void setup_spot_lightobj(HSD_LObj* lobj, Mtx mtx)
         s32 spot_func = LOBJ_EXT(lobj)->u.spot.spot_func;
         s32 dist_func = LOBJ_EXT(lobj)->u.spot.dist_func;
 
-        if (ref_dist < __float_epsilon[0]) ref_dist=__float_epsilon[0];
-        if (ref_br < __float_epsilon[0]) ref_br=__float_epsilon[0];
+        f32 epsilon = __float_epsilon[0];
+        if (ref_dist < epsilon) ref_dist = epsilon;
+        if (ref_br < epsilon) ref_br = epsilon;
         GXInitLightDistAttn(&LOBJ_EXT(lobj)->lightobj, ref_dist, ref_br, dist_func);
         GXInitLightDistAttn(&LOBJ_EXT(lobj)->spec_lightobj, ref_dist, ref_br, dist_func);
         GXInitLightSpot(&LOBJ_EXT(lobj)->lightobj, cutoff, spot_func);
@@ -282,7 +285,8 @@ static inline void HSD_LObjAddCurrent(HSD_LObj* lobj)
         }
         ref_INC(lobj);
         for (p = &current_lights; *p != NULL; p = &(*p)->next) {
-            if (HSD_LObjGetPriority((*p)->data) > HSD_LObjGetPriority(lobj)) {
+            u8 priority = HSD_LObjGetPriority(lobj);
+            if (HSD_LObjGetPriority((*p)->data) > priority) {
                 break;
             }
         }
@@ -706,6 +710,9 @@ void HSD_LObjDeleteCurrentAll(HSD_LObj* lobj)
 
 void HSD_LObjAddCurrentAll(HSD_LObj* lobj) { for (; lobj; lobj = lobj->next) HSD_LObjAddCurrent(lobj); }
 
+// Keep the original repeated hardware-light address calculations.
+#pragma push
+#pragma opt_common_subs off
 void HSD_LObjSetupInit(HSD_CObj* cobj)
 {
     MtxPtr vmtx;
@@ -770,8 +777,8 @@ void HSD_LObjSetupInit(HSD_CObj* cobj)
             HSD_LObj* lobj = list->data;
             if (!lobj) continue;
 
-            if (HSD_LObjGetType(lobj) == LOBJ_AMBIENT &&
-                !(lobj->flags & LOBJ_HIDDEN) && (lobj->flags & (LOBJ_DIFFUSE | LOBJ_ALPHA)))
+            if (!(lobj->flags & LOBJ_HIDDEN) &&
+                HSD_LObjGetType(lobj) == LOBJ_AMBIENT && (lobj->flags & (LOBJ_DIFFUSE | LOBJ_ALPHA)))
             {
                 HSD_LObjSetActive(lobj);
                 break;
@@ -795,6 +802,7 @@ void HSD_LObjSetupInit(HSD_CObj* cobj)
         HSD_LObjSetup(lobj, LOBJ_EXT(lobj)->color, lobj->shininess);
     }
 }
+#pragma pop
 
 void HSD_LObjSetupSpecularInit(Mtx pmtx)
 {

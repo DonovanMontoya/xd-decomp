@@ -58,9 +58,8 @@ void menuIntUnderTakerHook(tagWINDOW_WORK *arg0, tagSPRITE_WORK *arg1) {
 static u8 _menuIntGetAlpha2(void) {
     s32 var_r31;
 
-    f32 wave = 1.0f + (f32)cos((6.2831855f * _menuIntFrameCount2) / 1.5f);
-    f32 alpha = wave * 0.5f;
-    var_r31 = (s32)(300.0f * alpha);
+    f32 c = (f32)cos((6.2831855f * _menuIntFrameCount2) / 1.5f);
+    var_r31 = (s32)(300.0f * ((1.0f + c) / 2.0f));
     if ((u16) var_r31 > 0xFFU) {
         var_r31 = 0xFF;
     }
@@ -140,9 +139,8 @@ void menuIntHook(tagWINDOW_WORK *arg0, tagSPRITE_WORK *arg1) {
 static u8 _menuIntGetAlpha(void) {
     s32 var_r31;
 
-    f32 wave = 1.0f + (f32)cos((6.2831855f * _menuIntFrameCount) / 1.5f);
-    f32 alpha = wave * 0.5f;
-    var_r31 = (s32)(300.0f * alpha);
+    f32 c = (f32)cos((6.2831855f * _menuIntFrameCount) / 1.5f);
+    var_r31 = (s32)(300.0f * ((1.0f + c) / 2.0f));
     if ((u16) var_r31 > 0xFFU) {
         var_r31 = 0xFF;
     }

@@ -115,7 +115,7 @@ void *floorOpenObject(u32);
 void GSmodelSetAnimRate(void *, f32);
 void *peopleInfoBiosGetPtr(u32);
 s8 peopleInfoBiosGetNeckIndex(void *);
-void GSpartRegisterAnimMix(GSpart *, s32, s32, void (*)(GSpart *, GSpartMixType, void *, GSvec *), void *);
+void GSpartRegisterAnimMix(GSpart *, s32, s32, f32 (*)(GSpart *, GSpartMixType, void *, GSvec *), void *);
 u32 Sequence_CreateNull();
 void Sequence_SetRotation(u32, f32 *);
 }
@@ -166,10 +166,11 @@ void thisNew()
     pMenuHologram = p;
 }
 
-void _getNeckRotationCB(GSpart *, GSpartMixType, void *, GSvec *out)
+f32 _getNeckRotationCB(GSpart *, GSpartMixType, void *, GSvec *out)
 {
     static GSvec neckRotVec(-0.7853982f, 0.0f, 0.0f);
     *out = neckRotVec;
+    return 1.0f;
 }
 
 inline s32 ModelSlot::getAnimIndex()
@@ -878,7 +879,7 @@ void CMenuHologram::stageAllModelLoad()
     for (s32 i = 0; i < count; i++) {
         s32 index = i + 3;
         ModelSlot *slot = modelPokemonLoad(index);
-        GSpart *part = GSmodelGetPart(slots[1].model, ((u8 *)relivehall_data)[6 + plateIndexTbl[st][count][(count + i - stage->firstDancer) % count + 1]]);
+        GSpart *part = GSmodelGetPart(slots[1].model, ((u8 *)relivehall_data)[6 + plateIndexTbl[st][count][(count + (i - stage->firstDancer)) % count + 1]]);
         GSmodelAttachToGSpart(slot->model, part, 7, 0, 1);
         GSpartFree(part);
         modelPokemonSetScale(index);
@@ -899,10 +900,10 @@ void CMenuHologram::stageAllModelLoad()
         GSmaterialSetModulate(material, &color);
         GSmaterialEnableExtension(material, 1);
     }
-    for (s8 i = 0; i < count; i++) {
+    for (s32 i = 0; i < count; i++) {
         Pokemon *next = stage->getDancerPointer((i + 1) % count);
         GSgfxColAu8 color = pokemonToAisyouColor(stage->getDancerPointer(i), next);
-        void *material = materials + (((u8 *)relivehall_data)[6 + colorLineIndexTbl[st][count][(count + i - stage->firstDancer) % count + 1]] - 1) * 0x34;
+        void *material = materials + (((u8 *)relivehall_data)[6 + colorLineIndexTbl[st][count][(count + (i - stage->firstDancer)) % count + 1]] - 1) * 0x34;
         GSmaterialSetModulate(material, &color);
         GSmaterialEnableExtension(material, 1);
     }
@@ -1087,12 +1088,11 @@ void CMenuHologram::modelVisitorSetYPosition(long index)
         y = -20.0f;
         break;
     case 0x14C:
+        y = 0.0f;
         break;
     case 0x169:
         break;
     case 0x16A:
-        break;
-    case 0x16B:
         break;
     case 0x15:
         y = -2.0f;
@@ -1116,6 +1116,7 @@ void CMenuHologram::modelVisitorSetYPosition(long index)
         y = -6.5f;
         break;
     case 0x52:
+        y = 0.0f;
         break;
     case 0x15D:
         y = -6.5f;

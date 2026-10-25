@@ -95,11 +95,11 @@ static void modifyDirGenBase(PSParticle *arg0, f32 farg0, f32 farg1, f32 farg2, 
         var_f24_2 = particleAtan2(temp_f25, temp_f2);
     }
     temp_f28_2 = (f32) sin((f64) var_f24_2);
-    temp_f2_2 = arg0->velocity.x;
     temp_f27_2 = (f32) cos((f64) var_f24_2);
+    temp_f2_2 = arg0->velocity.x;
     temp_f0 = arg0->velocity.y;
     temp_f3 = arg0->velocity.z;
-    var_f31 = (temp_f3 * temp_f3) + ((temp_f2_2 * temp_f2_2) + (temp_f0 * temp_f0));
+    var_f31 = (f32)(temp_f3 * temp_f3) + ((f32)(temp_f2_2 * temp_f2_2) + (f32)(temp_f0 * temp_f0));
     if (var_f31 > 0.0f) {
         temp_f1 = __frsqrte(var_f31);
         temp_f1_2 = 0.5 * temp_f1 * -(((f64) var_f31 * (temp_f1 * temp_f1)) - 3.0);
@@ -283,11 +283,11 @@ static void setVelToJObj(PSParticle *arg0, PSJObj *arg1) {
                 HSD_JObjSetupMatrixSub(arg1);
             }
         }
-        temp_f1 = arg0->velocity.x;
-        temp_f0 = arg0->velocity.y;
-        temp_f2 = arg0->velocity.z;
+        temp_f1 = (f32)(arg0->velocity.x * arg0->velocity.x);
+        temp_f0 = (f32)(arg0->velocity.y * arg0->velocity.y);
+        temp_f2 = (f32)(arg0->velocity.z * arg0->velocity.z);
         temp_f1_2 = arg1->matrix[0][3] - arg0->position.x;
-        var_f0 = (temp_f2 * temp_f2) + ((temp_f1 * temp_f1) + (temp_f0 * temp_f0));
+        var_f0 = temp_f2 + (temp_f1 + temp_f0);
         temp_f2_2 = arg1->matrix[1][3] - arg0->position.y;
         temp_f3 = arg1->matrix[2][3] - arg0->position.z;
         if (var_f0 > 0.0f) {
@@ -1153,7 +1153,7 @@ loop_30:
                 goto block_427;
             case 0xF1:                              /* switch 2 */
                 temp_r5 = arg0->bank;
-                temp_r3_12 = (u32*)ptclref[temp_r5 & 0xFF];
+                temp_r3_12 = (u32*)ptclref[(u8)temp_r5];
                 var_r6 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
                 var_r30 += 2;
                 if (temp_r3_12 != 0U) {
@@ -1208,7 +1208,7 @@ loop_30:
                             temp_r5_2 = temp_r3_16->appsrt;
                             temp_r4_5 = arg0->appsrt;
                             if (temp_r5_2 != temp_r4_5) {
-                                M2C_STRUCT_COPY(temp_r5_2, temp_r4_5, 0xC);
+                                temp_r5_2->translate = temp_r4_5->translate;
                             }
                         }
                     } else {
@@ -1279,7 +1279,7 @@ loop_30:
                             temp_r5_4 = temp_r3_20->appsrt;
                             temp_r4_7 = arg0->appsrt;
                             if (temp_r5_4 != temp_r4_7) {
-                                M2C_STRUCT_COPY(temp_r5_4, temp_r4_7, 0xC);
+                                temp_r5_4->translate = temp_r4_7->translate;
                             }
                         }
                     } else {
@@ -1325,7 +1325,7 @@ loop_30:
                 goto block_427;
             case 0xF0:                              /* switch 2 */
                 temp_r4_8 = arg0->bank;
-                temp_r3_24 = (u32*)ptclref[temp_r4_8 & 0xFF];
+                temp_r3_24 = (u32*)ptclref[(u8)temp_r4_8];
                 temp_r27_2 = var_r30[0x2];
                 var_r5 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
                 var_r30 += 3;
@@ -1355,7 +1355,7 @@ loop_30:
                             temp_r5_5 = temp_r3_25->appsrt;
                             temp_r4_10 = arg0->appsrt;
                             if (temp_r5_5 != temp_r4_10) {
-                                M2C_STRUCT_COPY(temp_r5_5, temp_r4_10, 0xC);
+                                temp_r5_5->translate = temp_r4_10->translate;
                             }
                         }
                     } else {
@@ -1466,9 +1466,9 @@ loop_30:
                 temp_r27_4 = (var_r30[0x2] << 8) & 0xFF00;
                 temp_r26_6 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
                 var_r30 += 4;
-                temp_r5_7 = arg0->bank;
-                temp_r3_30 = (u32*)ptclref[temp_r5_7 & 0xFF];
                 var_r26_2 = temp_r26_6 + (s32) ((f32) (temp_r27_4 + temp_r0_10) * HSD_Randf());
+                temp_r5_7 = arg0->bank;
+                temp_r3_30 = (u32*)ptclref[(u8)temp_r5_7];
                 if (temp_r3_30 != 0U) {
                     var_r26_2 = temp_r3_30[var_r26_2];
                 }
@@ -1539,9 +1539,13 @@ loop_30:
                     temp_f3_4 = arg0->position.y;
                     temp_f6 = arg0->position.x;
                     temp_f7 = arg0->position.z;
-                    arg0->position.x = temp_r4_14->matrix[0][3] + ((temp_r4_14->matrix[0][2] * temp_f7) + ((temp_r4_14->matrix[0][0] * temp_f6) + (temp_r4_14->matrix[0][1] * temp_f3_4)));
-                    arg0->position.y = temp_r4_14->matrix[1][3] + ((temp_r4_14->matrix[1][2] * temp_f7) + ((temp_r4_14->matrix[1][0] * temp_f6) + (temp_r4_14->matrix[1][1] * temp_f3_4)));
-                    arg0->position.z = temp_r4_14->matrix[2][3] + ((temp_r4_14->matrix[2][2] * temp_f7) + ((temp_r4_14->matrix[2][0] * temp_f6) + (temp_r4_14->matrix[2][1] * temp_f3_4)));
+                    {
+                        PSVec transformed;
+                        transformed.x = temp_r4_14->matrix[0][3] + ((temp_r4_14->matrix[0][2] * temp_f7) + ((temp_r4_14->matrix[0][0] * temp_f6) + (temp_r4_14->matrix[0][1] * temp_f3_4)));
+                        transformed.y = temp_r4_14->matrix[1][3] + ((temp_r4_14->matrix[1][2] * temp_f7) + ((temp_r4_14->matrix[1][0] * temp_f6) + (temp_r4_14->matrix[1][1] * temp_f3_4)));
+                        transformed.z = temp_r4_14->matrix[2][3] + ((temp_r4_14->matrix[2][2] * temp_f7) + ((temp_r4_14->matrix[2][0] * temp_f6) + (temp_r4_14->matrix[2][1] * temp_f3_4)));
+                        arg0->position = transformed;
+                    }
                     psRemoveParticleAppSRT(arg0);
                 }
                 goto block_427;
@@ -1590,8 +1594,8 @@ loop_30:
                 goto block_427;
             case 0xB8:                              /* switch 2 */
                 temp_r26_7 = var_r30[0x0] + arg0->pointOffset;
-                temp_r4_17 = arg0->generator;
                 var_r30 = getFloat(getFloat(var_r30 + 1, &sp14), &sp10);
+                temp_r4_17 = arg0->generator;
                 if ((temp_r4_17 != NULL) && (temp_r4_17->transformFlags & 0x100)) {
                     temp_f2 = (temp_r4_17->scale.z + (temp_r4_17->scale.x + temp_r4_17->scale.y)) / 3.0f;
                     sp14 *= temp_f2;
@@ -1638,7 +1642,7 @@ loop_30:
                 goto block_427;
             case 0xF2:                              /* switch 2 */
                 temp_r5_10 = arg0->bank;
-                temp_r3_37 = (u32*)ptclref[temp_r5_10 & 0xFF];
+                temp_r3_37 = (u32*)ptclref[(u8)temp_r5_10];
                 var_r6_2 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
                 var_r30 += 2;
                 if (temp_r3_37 != 0U) {
@@ -1696,9 +1700,10 @@ loop_30:
                 temp_f1_4 = (f32) ((s8) var_r30[0x2] * 2) * HSD_Randf();
                 sp14 = temp_f1_4;
                 arg0->primTarget[2] = U8ClampAdd(arg0->primTarget[2], temp_f1_4);
+                temp_f1_5 = HSD_Randf();
                 temp_r3_40 = var_r30[0x3];
                 var_r30 += 4;
-                temp_f1_5 = (f32) ((s8) temp_r3_40 * 2) * HSD_Randf();
+                temp_f1_5 = (f32) ((s8) temp_r3_40 * 2) * temp_f1_5;
                 sp14 = temp_f1_5;
                 arg0->primTarget[3] = U8ClampAdd(arg0->primTarget[3], temp_f1_5);
                 temp_r0_14 = arg0->primCount;
@@ -1730,9 +1735,10 @@ loop_30:
                 temp_f1_8 = (f32) ((s8) var_r30[0x2] * 2) * HSD_Randf();
                 sp14 = temp_f1_8;
                 arg0->envTarget[2] = U8ClampAdd(arg0->envTarget[2], temp_f1_8);
+                temp_f1_9 = HSD_Randf();
                 temp_r3_41 = var_r30[0x3];
                 var_r30 += 4;
-                temp_f1_9 = (f32) ((s8) temp_r3_41 * 2) * HSD_Randf();
+                temp_f1_9 = (f32) ((s8) temp_r3_41 * 2) * temp_f1_9;
                 sp14 = temp_f1_9;
                 arg0->envTarget[3] = U8ClampAdd(arg0->envTarget[3], temp_f1_9);
                 temp_r0_16 = arg0->envCount;
@@ -1754,8 +1760,8 @@ loop_30:
                 }
                 goto block_427;
             case 0xBD:                              /* switch 2 */
-                temp_r4_25 = arg0->generator;
                 var_r30 = getFloat(getFloat(var_r30, &sp14), &sp10);
+                temp_r4_25 = arg0->generator;
                 if ((temp_r4_25 != NULL) && (temp_r4_25->transformFlags & 0x200)) {
                     temp_f2_2 = (temp_r4_25->scale.z + (temp_r4_25->scale.x + temp_r4_25->scale.y)) / 3.0f;
                     sp14 *= temp_f2_2;
@@ -1765,7 +1771,7 @@ loop_30:
                 temp_f1_10 = arg0->velocity.x;
                 temp_f0 = arg0->velocity.y;
                 temp_f2_3 = arg0->velocity.z;
-                temp_f1_11 = sqrtf((temp_f2_3 * temp_f2_3) + ((temp_f1_10 * temp_f1_10) + (temp_f0 * temp_f0)));
+                temp_f1_11 = sqrtf((f32)(temp_f2_3 * temp_f2_3) + ((f32)(temp_f1_10 * temp_f1_10) + (f32)(temp_f0 * temp_f0)));
                 temp_f2_4 = (f32) temp_f1_11;
                 sp10 = (f32) temp_f1_11;
                 if (temp_f2_4 > 1e-10f) {
@@ -1912,9 +1918,10 @@ loop_30:
                 sp14 = temp_f1_15;
                 arg0->primTarget[2] = U8ClampAdd(arg0->primTarget[2], temp_f1_15);
                 arg0->envTarget[2] = U8ClampAdd(arg0->envTarget[2], temp_f1_15);
+                temp_f1_16 = HSD_Randf();
                 temp_r3_44 = var_r30[0x3];
                 var_r30 += 4;
-                temp_f1_16 = (f32) ((s8) temp_r3_44 * 2) * HSD_Randf();
+                temp_f1_16 = (f32) ((s8) temp_r3_44 * 2) * temp_f1_16;
                 sp14 = temp_f1_16;
                 arg0->primTarget[3] = U8ClampAdd(arg0->primTarget[3], temp_f1_16);
                 arg0->envTarget[3] = U8ClampAdd(arg0->envTarget[3], temp_f1_16);
@@ -2003,9 +2010,10 @@ loop_30:
                         var_r30 += 1;
                         var_f0 = ((f32) temp_r3_48 * (f32) (s32) ((f32) (temp_r27_5 + 1) * HSD_Randf())) / (f32) temp_r27_5;
                     } else {
+                        var_f0 = HSD_Randf();
                         temp_r3_49 = *var_r30;
                         var_r30 += 1;
-                        var_f0 = (f32) ((s8) temp_r3_49 * 2) * HSD_Randf();
+                        var_f0 = (f32) ((s8) temp_r3_49 * 2) * var_f0;
                     }
                     sp14 = var_f0;
                     if (temp_r26_8 & 0x10) {
@@ -2240,11 +2248,11 @@ command_done:
         temp_f31 = cosf(arg0->friction);
         arg0->velocity.z += temp_r26_11->param1;
         var_f27 = temp_r26_11->radius;
-        if (var_f27 < 0.0) {
+        if (var_f27 < 0.0f) {
             var_f27 = -var_f27;
         }
         var_f1_2 = temp_r26_11->angle;
-        if (var_f1_2 < 0.0) {
+        if (var_f1_2 < 0.0f) {
             var_f1_2 = -var_f1_2;
         }
         temp_f27 = (arg0->velocity.z * tanf(var_f1_2)) + var_f27;

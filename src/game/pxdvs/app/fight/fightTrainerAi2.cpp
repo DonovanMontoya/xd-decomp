@@ -45,9 +45,10 @@ u16 fightTrainerAiCheckHorobinouta(FIGHT_TRAINER* trainer) {
     return context.value;
 }
 static s32 _fightTrainerAiCheckHorobinoutaSub(FightOutPokemon* pokemon,u32 type,void* data) {
+    unsigned int targetType=type;
     FIGHT_TRAINER* trainer=((AiCheckContext*)data)->trainer;
     if(fightOutPokemonCheckFightOut(pokemon)==0)return 1;
-    if(fightTrainerIsAllyFightTargetPtr(trainer,pokemon,type)==1)return 1;
+    if(fightTrainerIsAllyFightTargetPtr(trainer,pokemon,targetType)==1)return 1;
     if(fightTrainerAiIsFightOutPokemonJoutaiDataId(trainer,pokemon,30)!=1 && fightTrainerAiIsFightOutPokemonTokuseiDataId(trainer,pokemon,43)!=1)++((AiCheckContext*)data)->value;
     return 1;
 }

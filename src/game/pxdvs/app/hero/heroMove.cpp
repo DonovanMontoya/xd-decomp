@@ -276,7 +276,8 @@ static void updateMotion(HEROMOVE_MEMBER member, f32 rate) {
 }
 
 static void actionFriendSet(Pokemon* pokemon, u16 level) {
-    pokemonGetFriendFormPokemonFriendFilterId(pokemon, getEquipItemEffect(pokemonBiosGetItemDataId(pokemon)), level);
+    u32 effect = getEquipItemEffect(pokemonBiosGetItemDataId(pokemon));
+    pokemonGetFriendFormPokemonFriendFilterId(pokemon, effect, level);
 }
 
 static bool getLeaderLog(GSvec* out, int index) {
@@ -478,9 +479,9 @@ void heroMovePoolCounter(s32 kind, s32 amount) {
 }
 
 extern "C" void heroMoveCallStepCallback(s32 a, s32 b) {
-    HeroMoveSlot* p = (HeroMoveSlot*)&HeroMove;
-    s32 i = 0;
-    do {
+    s32 i;
+    for (i = 0; i < 8; i++) {
+        HeroMoveSlot* p = (HeroMoveSlot*)&HeroMove + i;
         HeroMoveSlot* e = &p[0x6C];
         if (e != 0) {
             u32 fn = e->fn;
@@ -488,9 +489,7 @@ extern "C" void heroMoveCallStepCallback(s32 a, s32 b) {
                 ((void (*)(s32, s32, s32))fn)(e->arg, a, b);
             }
         }
-        i++;
-        p++;
-    } while (i < 8);
+    }
 }
 
 extern "C" u8 heroMoveCallStepCallbackAll() {
@@ -587,10 +586,10 @@ s32 heroMoveJoinMember(s32 member) {
 
 }
 
-static void _heroMoveFinalize(unsigned int, FloorEnterMode) {
+static void _heroMoveFinalize(unsigned int floorId, FloorEnterMode) {
     HeroMove.raw[0x3AD] = 0;
     if (HeroMove.raw[0x3AC] != 0) {
-        if (floorDataBiosGetFloorKind(floorDataBiosGetPtr()) == 1) {
+        if (floorDataBiosGetFloorKind(floorDataBiosGetPtr(floorId)) == 1) {
             floorCreateThread(0x80, 0, 1, _closeHeroThread);
         }
     }
@@ -669,9 +668,9 @@ extern "C" s32 heroGetFollower() {
     case 0x65:
         return HeroMove.members[1].flags & 1;
     case 0x68:
-        return -(HeroMove.members[2].flags & 1) & 2;
+        return (HeroMove.members[2].flags & 1) ? 2 : 0;
     case 0x69:
-        return -(HeroMove.members[3].flags & 1) & 3;
+        return (HeroMove.members[3].flags & 1) ? 3 : 0;
     default:
         return 0;
     }
@@ -711,17 +710,16 @@ static void proc1Step(f32 dt) {
 }
 
 static f32 moveLeaderPosition(HEROMOVE_MEMBER member) {
+    f32 dist;
     GSvec prev;
     GSvec cur;
     GSvec delta;
     float move;
     unsigned long group;
     unsigned long res;
-    u8 rate = GSgfxVideoGetVsyncRate();
-    f32 rateF = (f32)rate;
-    f32 frameTime = (f32)timeGetLastFrameTime(rate);
+    f32 rateF = (u8)GSgfxVideoGetVsyncRate();
+    f32 frameTime = (f32)timeGetLastFrameTime();
     f32 step = (30.0f * frameTime) / rateF;
-    f32 dist;
     getPos(&prev, member);
     updateLeaderMovement(member, &move);
     getPos(&cur, member);
@@ -1471,7 +1469,7 @@ u8 heroMoveChkHinderClear(s32 member) {
         }
     if(mag<=0.0f)return 1;
     if(mag<=radius)return 1;
-    PSVECScale(&direction,&scaled,(mag-radius-1.0f)/mag);
+    PSVECScale(&direction,&scaled,(mag-radius-0.010000001f)/mag);
     PSVECAdd(&memberPosition,&scaled,&leaderPosition);
     return GScolsys2HumanCollision(collision,&memberPosition,&leaderPosition,0)!=6;
 }

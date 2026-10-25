@@ -577,11 +577,14 @@ static void _floorFsysFree(u32 id) {
         break;
     case 1:
         while (GSfsysGetStatus(id) == 1) GSthreadSwitch();
+        goto freeGroup;
     case 0:
-        GSresFreeGroup(id);
-        GSfsysFree(id);
-        break;
+        goto freeGroup;
     }
+    return;
+freeGroup:
+    GSresFreeGroup(id);
+    GSfsysFree(id);
 }
 
 extern "C" {

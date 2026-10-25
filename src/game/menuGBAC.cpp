@@ -3,11 +3,11 @@ struct Hero;
 enum _MENU_GBAC_TYPE {GBAType0,GBAType1,GBAType2,GBAType3};
 enum _GBA_PHASE {GBAPhase0};enum _GBA_WAIT_FLAG {GBAWait0};
 struct _GBA_Connect_WORK {s32 phase[4];u8 pad10[0x11];s8 channel;u8 pad22[2];u32 flags,result;s32 type;u8 kind[4];u8 pad34[0x14];u8 enabled[4];};
-static u16 GBA_ROM_VERSION_FLAG[4];
+static u16 GBA_ROM_VERSION_FLAG[4] = {0, 0, 0, 0};
 static u8 _menu_ports[4]={1,2,4,8};
 static s8 chans[4]={1,2,3,0};
 static u16 gba_player_number[4]={1,2,3,0};
-static _GBA_Connect_WORK gbaConectGBA_Connect_WORK;
+_GBA_Connect_WORK gbaConectGBA_Connect_WORK;
 static s8 _mes_flag_type;
 extern u8 _CB[];
 extern "C" {void AGB_FileBuffAlloc();void AGB_FileBuffFree();void AGB_Terminate(s32);s32 AGB_IsComplete(s32);s32 AGB_GetStatus(s32);u32 gba_SIProbe(s32);f32 GSgfxVideoGetLastRenderTime();u8 GSgfxVideoGetVsyncRate();u8 GSinputIsConnected(s32);void GSsndPlayNow(u32);void GSthreadSwitch();u8 gamedataAttestBiosGetLangareaId();void *gamedataBiosGetGamedataAtttestPtr();u8 gbaCommandIsConnected(s32);void gbaCommandSetKeyState(s32,s32);s8 menuCB_MessageDispCheck();void menuCB_MessageDispOff();void menuCB_MessageDispOn(u32,s32);void menuCB_SE_Play(s32);void menuCloseCustom(s32,s32,s32);s32 menuGetEnablePort();u8 menuIsCheck(s32);s32 menuOpen(s32,s32);u8 menuSetEnablePort(u8);void msgctrlSetValue(s32,s32);void winMsgClose(s32);void *savedataBiosGetGamedataPtr();void *savedataBiosGetNowSavedataPtr();u16 *windowGetKeyInfo();}
@@ -23,7 +23,7 @@ static u8 _poweroff(_GBA_Connect_WORK *w,_GBA_PHASE phase){menuSetEnablePort(men
 static u8 _error(_GBA_Connect_WORK *w,unsigned long message,_GBA_PHASE phase){if(_showDisconnected(w))return (w->flags&8)!=0;w->phase[w->channel]=phase;_message(message,w->channel);if(!(w->flags&8))_waitAction(w,(_GBA_WAIT_FLAG)1);else if(_waitAction(w,(_GBA_WAIT_FLAG)7))return 1;AGB_Terminate(w->channel);return 0;}
 extern "C" {
 u16 menuGBACGetRomVer(u16 port){if(port>3)return 0;return GBA_ROM_VERSION_FLAG[port];}
-void menuGBACSetRomVer(u16 version,u16 port){if((s32)port<4 && (s32)port>=0)GBA_ROM_VERSION_FLAG[port]=version;else{GBA_ROM_VERSION_FLAG[3]=0;GBA_ROM_VERSION_FLAG[2]=0;GBA_ROM_VERSION_FLAG[1]=0;GBA_ROM_VERSION_FLAG[0]=0;}if(port==0xFFFF){gbaCommandSetKeyState(1,0);gbaCommandSetKeyState(2,0);gbaCommandSetKeyState(3,0);gbaCommandSetKeyState(4,0);}}
+void menuGBACSetRomVer(u16 version,u16 port){switch(port){case 0:case 1:case 2:case 3:GBA_ROM_VERSION_FLAG[port]=version;break;default:GBA_ROM_VERSION_FLAG[3]=0;GBA_ROM_VERSION_FLAG[2]=0;GBA_ROM_VERSION_FLAG[1]=0;GBA_ROM_VERSION_FLAG[0]=0;break;}if(port==0xFFFF){gbaCommandSetKeyState(1,0);gbaCommandSetKeyState(2,0);gbaCommandSetKeyState(3,0);gbaCommandSetKeyState(4,0);}}
 s32 openMenuGBA(_MENU_GBAC_TYPE type,u32 flags,Hero **heroes){u8 oldPort=menuSetEnablePort(1);AGB_FileBuffAlloc();u8 result=_mainFlow(type,flags,heroes);winMsgClose(0);if(menuIsCheck(0xB0)){menuCB_MessageDispOff();menuCB_SE_Play(0x15);menuCloseCustom(0xB0,0,1);}menuSetEnablePort(oldPort);for(s32 i=0;i<3;i++)AGB_Terminate(i);AGB_FileBuffFree();if(result)return 0;return -1;}
 u8 fn_8004FB00(){u8 result=255;if(savedataBiosGetNowSavedataPtr() && savedataBiosGetGamedataPtr() && gamedataBiosGetGamedataAtttestPtr()){result=gamedataAttestBiosGetLangareaId();if(result==8)result=2;}return result;}
 }
@@ -63,7 +63,7 @@ static char *gba_bin_name$2220[2] = { "maxbtl.bin", "maxcng.bin" };
 }
 static inline void gbacSetHostKind(_GBA_Connect_WORK* work, u8 kind) {
     work->kind[0] = kind;
-    if (work->kind[0] != 0) { work->kind[0] = 3; work->enabled[0] = 1; }
+    if (kind != 0) { work->kind[0] = 3; work->enabled[0] = 1; }
 }
 static u8 _mainFlow(_MENU_GBAC_TYPE arg0, unsigned long arg1, Hero **arg2) {
     u8 *sp988;
@@ -237,50 +237,33 @@ block_68:
             if (temp_r22 != 0) {
                 temp_r0_2 = (spC >> 0xAU) & 0xF;
                 var_r4 = 1;
-                if (temp_r0_2 != 5) {
-                    if (temp_r0_2 < 5) {
-                        if (temp_r0_2 < 3) {
-                            if (temp_r0_2 < 1) {
-                                goto block_91;
-                            }
-                            if ((u32) (spC & 0x4000) == 0) {
-                                var_r4 = 0;
-                            }
-                            if (var_r4 == 0) {
-                                if (_error(var_r17, 0x4445, (_GBA_PHASE)6) == 0) {
-                                    return 0;
-                                }
-                                goto loop_34;
-                            }
-                            goto block_93;
-                        }
-                        if ((u32) (spC & 8) == 0) {
-                            var_r4 = 0;
-                        }
-                        if (var_r4 == 0) {
-                            if (_error(var_r17, 0x4446, (_GBA_PHASE)6) == 0) {
-                                return 0;
-                            }
-                            goto loop_34;
-                        }
-                        goto block_93;
+                switch (temp_r0_2) {
+                case 1: case 2:
+                    if (!(spC & 0x4000)) var_r4 = 0;
+                    if (!var_r4) {
+                        if (!_error(var_r17, 0x4445, (_GBA_PHASE)6)) return 0;
+                        goto loop_34;
                     }
-block_91:
-                    if (_error(var_r17, 0x4421, (_GBA_PHASE)6) == 0) {
-                        return 0;
+                    break;
+                case 3: case 4:
+                    if (!(spC & 8)) var_r4 = 0;
+                    if (!var_r4) {
+                        if (!_error(var_r17, 0x4446, (_GBA_PHASE)6)) return 0;
+                        goto loop_34;
                     }
+                    break;
+                case 5:
+                    if (!(spC & 0x4000)) var_r4 = 0;
+                    if (!var_r4) {
+                        if (!_error(var_r17, 0x4447, (_GBA_PHASE)6)) return 0;
+                        goto loop_34;
+                    }
+                    break;
+                default:
+                    if (!_error(var_r17, 0x4421, (_GBA_PHASE)6)) return 0;
                     goto loop_34;
                 }
-                if ((u32) (spC & 0x4000) == 0) {
-                    var_r4 = 0;
-                }
-                if (var_r4 == 0) {
-                    if (_error(var_r17, 0x4447, (_GBA_PHASE)6) == 0) {
-                        return 0;
-                    }
-                    goto loop_34;
-                }
-                goto block_93;
+
             }
 block_93:
             if (temp_r23 != 0) {
@@ -314,19 +297,10 @@ block_93:
                     var_r17->phase[3] = temp_r3_5;
                     var_r17->phase[(s8)temp_r16] = 6;
                     GSthreadSwitch();
-                    var_r3 = (u8*)chans;
-                    var_ctr = var_r19;
-                    if (var_r19 > 0) {
-loop_104:
-                        if ((s32) var_r17->phase[(s8)*var_r3] == 7) {
+                    for (s32 i = 0; i < var_r19; ++i) {
+                        if (var_r17->phase[chans[i]] == 7) {
                             return _poweroff(var_r17, (_GBA_PHASE)6);
                         }
-                        var_r3 += 1;
-                        var_ctr -= 1;
-                        if (var_ctr == 0) {
-                            goto block_107;
-                        }
-                        goto loop_104;
                     }
 block_107:
                     _message_type2(0x4425, (s8) temp_r16);
@@ -353,19 +327,7 @@ block_108:
                     }
                     return _poweroff(var_r17, (_GBA_PHASE)6);
                 }
-            default:                                /* switch 3 */
-block_130:
-                var_r17->channel = (u8) sp988[1];
-                if (_waitAction(var_r17, (_GBA_WAIT_FLAG)7) == 0) {
-                    return _poweroff(var_r17, (_GBA_PHASE)6);
-                }
-                var_r27 += 1;
-                var_r19 += 1;
-                sp988 = &sp988[1];
-                if ((u32) var_r19 >= 4U) {
-                    return 1;
-                }
-                goto loop_26;
+                goto block_130;
             case 2:                                 /* switch 3 */
                 if ((s8) temp_r16 == 3) {
                     if (_waitAction(var_r17, (_GBA_WAIT_FLAG)3) != 0) {
@@ -382,6 +344,19 @@ block_130:
                     return _poweroff(var_r17, (_GBA_PHASE)6);
                 }
                 goto block_130;
+            default:                                /* switch 3 */
+block_130:
+                var_r17->channel = (u8) sp988[1];
+                if (_waitAction(var_r17, (_GBA_WAIT_FLAG)7) == 0) {
+                    return _poweroff(var_r17, (_GBA_PHASE)6);
+                }
+                var_r27 += 1;
+                var_r19 += 1;
+                sp988 = &sp988[1];
+                if ((u32) var_r19 >= 4U) {
+                    return 1;
+                }
+                goto loop_26;
             }
         } else {
             return _poweroff(var_r17, (_GBA_PHASE)6);
