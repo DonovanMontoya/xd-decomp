@@ -1804,10 +1804,10 @@ void CMenuPokemonLeave::drawBoxArea(int box, f32 t) {
     tagSPRITE_WORK *spr;
     MENU_SPRITE_dd_ *ms;
     tagWINDOW_WORK *w;
-    s32 x;
+    s16 x;
     w = windowSearchID(0x82);
     tagSPRITE_WORK *sp = menuPtSpriteWorkGetByItemID(w, 0x3E5, 0);
-    w->x = x = (s32)(sp->width * t);
+    w->x = x = sp->width * t;
     ms = menuSpriteBiosGetPtr(box + 0x325);
     for (spr = w->items; spr != 0; spr = spr->next) {
         MENU_ITEM_dd_ *item = menuPtItemGetBySpriteWork(w, spr);
