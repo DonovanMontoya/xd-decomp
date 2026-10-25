@@ -948,8 +948,9 @@ void CMenuReliveHall::actionChange() {
     if (c->pokemon.checkValid()) p2 = &c->pokemon;
     else p2 = 0;
     Pokemon tmp = *p2;
+    isDancer = false;
     int idx = cursor->index;
-    isDancer = isDancerSlot(idx);
+    if (idx >= 0 && idx <= 5) isDancer = true;
     if (isDancer) stage->exchangeDancer(tmp, idx);
     else stage->exchangeVisitor(tmp);
     cursor->setPokemon(&tmp);
@@ -1195,22 +1196,26 @@ void CMenuReliveHall::actionPickup() {
     hallTempo = getTempo(false);
     menuPtPlaySe(0x45D);
     u8 moved = 0;
+    bool dancer = false;
     int idx = cursor->index;
     f32 oldPos = views[idx].unk4;
-    if (isDancerSlot(idx)) {
+    if (idx >= 0 && idx <= 5) dancer = true;
+    if (dancer) {
         moved = 1;
         int n = stage->getDancerQuantity();
         stage->pickupDancer(dancerTmp, cursor->index);
         cursor->setPokemon(&dancerTmp);
-        u8 t = stage->partner;
-        int part = t;
-        if ((s8)t > cursor->index) part = t - 1;
-        if ((s8)part >= stage->getDancerQuantity()) part = 0;
+        s8 t = stage->partner;
+        s8 part = t;
+        if (t > cursor->index) part--;
+        if (part >= stage->getDancerQuantity()) part = 0;
         stage->partner = part;
+        f32 *fp = face;
+        f32 *pp = pos;
         for (int i = 0; i < n; i++) {
             if (i != cursor->index) {
-                face[i] = views[i].facing;
-                pos[i] = views[i].unk4;
+                *fp++ = views[i].facing;
+                *pp++ = views[i].unk4;
             }
         }
     } else if (idx == 6) {
@@ -1218,15 +1223,15 @@ void CMenuReliveHall::actionPickup() {
         stage->pickupVisitor(visitorTmp);
         cursor->setPokemon(&visitorTmp);
     }
-    int ci = cursor->index;
-    if (isDancerSlot(ci)) {
+    idx = cursor->index;
+    if (isDancerSlot(idx)) {
         int slot;
-        if (stage->getDancerQuantity() == 3 && ci == 0) {
+        if (stage->getDancerQuantity() == 3 && idx == 0) {
             slot = 5;
         } else {
-            int t = ci - 1;
-            if (t < 0) t = 0;
-            slot = t + stage->getDancerQuantity();
+            slot = idx - 1;
+            if (slot < 0) slot = 0;
+            slot += stage->getDancerQuantity();
         }
         cursor->setPositionIndex(slot);
     }
@@ -2211,15 +2216,7 @@ void CMenuReliveHall::makeCursorPositionTbl(PocketVec<short> *positions) {
             positions[i].y = position.y;
         }
     }
-    dark = 0;
-    if (cursor->isCatchPokemon()) {
-        CMenuPokemonCursor *c = cursor;
-        Pokemon *p;
-        if (c->pokemon.checkValid()) p = &c->pokemon;
-        else p = 0;
-        if (!p->isDarkPokemon()) dark = 1;
-    }
-    if (dark || (!cursor->isCatchPokemon() && stage->getVisitorPointer() == 0)) {
+    if (catchNotDarkB() || (!cursor->isCatchPokemon() && stage->getVisitorPointer() == 0)) {
         positions[6].x = -1;
         positions[6].y = -1;
     }
@@ -2409,10 +2406,14 @@ void CMenuReliveHall::drawStagePokemon() {
 }
 
 
+static inline void stateRequest(CState *s, s32 next) {
+    s->unk4 = next;
+    memset(s->saved, 0, 0x40);
+}
+
 bool CMenuReliveHall::animationProcessButtonInterrupt() {
     if (animationState != 0) {
-        animationFlag = 0;
-        memset(animationWork, 0, 0x40);
+        stateRequest((CState *)&animationState, 0);
         animationStateUpdate();
     }
     return false;
