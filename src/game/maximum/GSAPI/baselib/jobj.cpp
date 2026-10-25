@@ -707,11 +707,11 @@ static inline HSD_JObj* jobj_get_effector_checked(HSD_JObj* eff)
 
 void HSD_JObjCheckDepend(HSD_JObj* jobj)
 {
-    if (jobj == NULL) {
+    if (jobj == NULL || HSD_JObjMtxIsDirty(jobj)) {
         return;
     }
 
-    if (!HSD_JObjMtxIsDirty(jobj)) {
+    {
         if ((jobj->flags & JOBJ_USER_DEF_MTX)) {
             if (!(jobj->flags & JOBJ_MTX_INDEP_PARENT) &&
                 jobj->parent != NULL && HSD_JObjMtxIsDirty(jobj->parent))

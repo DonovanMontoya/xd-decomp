@@ -166,18 +166,18 @@ s32 menuPdaMailListCursorXD(PdaMailWindow *arg0) {
         }
         selected = cursor.pos.selected;
         if (selected < 0) {
+            cursor.pos.first += cursor.pos.selected;
             cursor.pos.selected = 0;
-            cursor.pos.first += selected;
             if (cursor.pos.first < 0) {
                 cursor.pos.first = 0;
                 cursor.pos.selected = 0;
             }
         } else if (selected >= visible) {
-            s8 last = visible - 1;
-            cursor.pos.selected = last;
-            cursor.pos.first += selected - (visible - 1);
-            if (cursor.pos.first + last >= count) {
-                cursor.pos.selected = last;
+            s32 last = visible - 1;
+            cursor.pos.first += cursor.pos.selected - (visible - 1);
+            cursor.pos.selected = (s8)last;
+            if (cursor.pos.first + cursor.pos.selected >= count) {
+                cursor.pos.selected = (s8)last;
                 cursor.pos.first = (s8)(count - visible);
             }
         }
@@ -239,39 +239,33 @@ s32 menuPdaMailListCallBack(PdaMailWindow *arg0, PdaMailSprite *arg1) {
 static void _pdaMailListDownCursor__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
                                                                         PdaMailSprite *arg1) {
     PdaMailCursor cursor;
+    s32 count;
     cursor.packed = _getCursor__Fv();
-    menuPdaSubCheckUpDownCursor(arg0, arg1, &cursor, mailGetNbMailInMailbox(), 5, 0);
+    count = mailGetNbMailInMailbox();
+    menuPdaSubCheckUpDownCursor(arg0, arg1, &cursor, count, 5, 0);
 }
 
 static void _pdaMailListUpCursor__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
                                                                       PdaMailSprite *arg1) {
     PdaMailCursor cursor;
+    s32 count;
     cursor.packed = _getCursor__Fv();
-    menuPdaSubCheckUpDownCursor(arg0, arg1, &cursor, mailGetNbMailInMailbox(), 5, 1);
+    count = mailGetNbMailInMailbox();
+    menuPdaSubCheckUpDownCursor(arg0, arg1, &cursor, count, 5, 1);
 }
 
 static void _pdaMailListCursor__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
                                                                     PdaMailSprite *arg1) {
     s32 ids[5] = {0x81, 0x82, 0x83, 0x84, 0x85};
-    s32 id0 = ids[0], id1 = ids[1], id2 = ids[2], id3 = ids[3], id4 = ids[4];
+    s32 index;
     s32 selected;
-    s32 index = 0;
+    s32 count = mailGetNbMailInMailbox();
     selected = arg0->selected;
-    if (mailGetNbMailInMailbox() == 0)
+    if (count == 0)
         selected = 0;
-    if (arg1->id != id0) {
-        index = 1;
-        if (arg1->id != id1) {
-            index = 2;
-            if (arg1->id != id2) {
-                index = 3;
-                if (arg1->id != id3) {
-                    index = 4;
-                    if (arg1->id != id4)
-                        index = 5;
-                }
-            }
-        }
+    for (index = 0; index < 5; index++) {
+        if (arg1->id == ids[index])
+            break;
     }
     arg1->alpha = _menuPdaMailAlpha[index];
     if (selected == index) {

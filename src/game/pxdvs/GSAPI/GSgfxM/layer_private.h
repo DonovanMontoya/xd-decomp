@@ -29,6 +29,14 @@ void GXDrawSphere1(u8); void GXDrawSphere(u8,u8); void GXDrawTorus(float,u8,u8);
 void GXDrawOctahedron(); void GXDrawIcosahedron(); void GXDrawDodeca(); void GXDrawCylinder(u8); void GXDrawCube();
 }
 struct LayerNode { LayerNode* next; u8 reserved4[0x24]; s32 id; };
+// LayerConfig allocates 0x1a14 bytes for the layer, including four render callbacks.
+class GSgfxLayer : public LayerNode {
+public:
+    ~GSgfxLayer();
+private:
+    u8 reserved2C[0x1a14-sizeof(LayerNode)];
+};
+ABI_SIZE(GSgfxLayer,0x1a14);
 struct LayerConfigData { s32 id; char* name; s32 type; u8 clearColor,clearAlpha,clearDepth,visible; u32 opaqueSize,translucentSize,matrixCount; };
 ABI_OFF(LayerNode,id,0x28); ABI_SIZE(LayerConfigData,0x1c);
 extern "C" {

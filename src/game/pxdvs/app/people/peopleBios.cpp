@@ -79,8 +79,8 @@ void peopleBiosPopData(void* buffer, u32 size) {
     u8* cursor;
     memset(_pPeopleWorkTop, 0, _people_num * sizeof(tagPeopleWork));
     if (((u32*)buffer)[0] == size) {
-        count = ((u32*)buffer)[1];
-        if (count <= 64) {
+        if (((u32*)buffer)[1] <= 64) {
+            count = ((u32*)buffer)[1];
             size = count;
             cursor = (u8*)buffer + 8;
             index = 0;
@@ -98,45 +98,46 @@ void peopleBiosPopData(void* buffer, u32 size) {
                 }
                 else cursor += 0x220;
             }
-            u8* secondCursor = (u8*)buffer + 8;
+            cursor = (u8*)buffer;
+            cursor += 8;
             index = 0;
             while (count--) {
-                tagPeopleWork* secondWork = restored[index++];
-                GSmodel* model = secondWork->model;
-                peopleBiosSetDispFlag(secondWork, secondWork->visible);
-                peopleBiosSetCollision(secondWork, secondWork->collisionEnabled);
-                peopleSetMotionType(secondWork, secondWork->motionType);
-                GSmodelPopState(model, (GSmodelState*)(secondCursor + 0x1B4));
-                if (secondWork->attachGroup != -1 && secondWork->attachResource != -1) {
-                    peopleDoAttach(model, secondWork->attachGroup, secondWork->attachResource, secondWork->attachIndex, 0);
+                work = restored[index++];
+                GSmodel* model = work->model;
+                peopleBiosSetDispFlag(work, work->visible);
+                peopleBiosSetCollision(work, work->collisionEnabled);
+                peopleSetMotionType(work, work->motionType);
+                GSmodelPopState(model, (GSmodelState*)(cursor + 0x1B4));
+                if (work->attachGroup != -1 && work->attachResource != -1) {
+                    peopleDoAttach(model, work->attachGroup, work->attachResource, work->attachIndex, 0);
                     GSvec* pos = GSmodelGetPositionPtr(model);
-                    GSvec* saved = (GSvec*)(secondCursor + 0x184);
+                    GSvec* saved = (GSvec*)(cursor + 0x184);
                     pos->param1 = saved->param1;
                     pos->param2 = saved->param2;
                     pos->param3 = saved->param3;
                     GSvec* rot = GSmodelGetRotationPtr(model);
-                    saved = (GSvec*)(secondCursor + 0x190);
+                    saved = (GSvec*)(cursor + 0x190);
                     rot->param1 = saved->param1;
                     rot->param2 = saved->param2;
                     rot->param3 = saved->param3;
-                    GSmodelSetPosition(model, (GSvec*)(secondCursor + 0x19C));
-                    GSmodelSetRotation(model, (GSvec*)(secondCursor + 0x1A8));
+                    GSmodelSetPosition(model, (GSvec*)(cursor + 0x19C));
+                    GSmodelSetRotation(model, (GSvec*)(cursor + 0x1A8));
                 }
-                secondWork->animationMixRegistered = 0;
-                secondWork->secondaryMixRegistered = 0;
-                _peopleRegisterAnimMix(secondWork);
-                if (secondWork->animationBlend) GSmodelEnableAnimBlend(secondWork->model);
-                if (secondWork->neckEnabled) {
-                    for (s32 step = 0; step < 60; ++step) _peopleDoNeckUpdate(secondWork);
+                work->animationMixRegistered = 0;
+                work->secondaryMixRegistered = 0;
+                _peopleRegisterAnimMix(work);
+                if (work->animationBlend) GSmodelEnableAnimBlend(work->model);
+                if (work->neckEnabled) {
+                    for (s32 step = 0; step < 60; ++step) _peopleDoNeckUpdate(work);
                 }
-                if (secondWork->walkPointCount && secondWork->walkPoints) {
-                    u8* points = secondCursor + 0x220;
-                    secondWork->walkPoints = (GSvec*)GSmemAlloc(secondWork->walkPointCount * sizeof(GSvec));
-                    if (secondWork->walkPoints) memcpy(secondWork->walkPoints, points, secondWork->walkPointCount * sizeof(GSvec));
-                    else { secondWork->walkPointCount = 0; secondWork->walkPointIndex = 0; }
-                    points += secondWork->walkPointCount * sizeof(GSvec);
-                    secondCursor = points;
-                } else secondCursor += 0x220;
+                if (work->walkPointCount && work->walkPoints) {
+                    u8* points = cursor + 0x220;
+                    work->walkPoints = (GSvec*)GSmemAlloc(work->walkPointCount * sizeof(GSvec));
+                    if (work->walkPoints) memcpy(work->walkPoints, points, work->walkPointCount * sizeof(GSvec));
+                    else { work->walkPointCount = 0; work->walkPointIndex = 0; }
+                    points += work->walkPointCount * sizeof(GSvec);
+                    cursor = points;
+                } else cursor += 0x220;
             }
             gimmickBoxPop();
         }

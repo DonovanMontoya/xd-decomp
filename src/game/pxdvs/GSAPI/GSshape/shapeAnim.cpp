@@ -15,22 +15,31 @@ bool GsKeyObject::GetGradationParameter(u8* type, tagGScol4ub* out, const tagGsF
     }
     return true;
 }
+static inline f32* keyFrameTwist(const tagGsFilePrimKeyFrame* key) { return key->twist; }
+static inline f32* keyFrameDeformU(const tagGsFilePrimKeyFrame* key) { return key->deformU; }
+static inline f32* keyFrameDeformV(const tagGsFilePrimKeyFrame* key) { return key->deformV; }
 bool GsKeyObject::GetTwistParameter(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
-    u16 count=a->twistCount;
-    f32 *first=a->twist, *second=b->twist;
-    for(u32 i=0;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
+    f32 *first=keyFrameTwist(a);
+    f32 *second=keyFrameTwist(b);
+    u32 i=0;
+    u32 count=a->twistCount;
+    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
     return true;
 }
 bool GsKeyObject::GetDeformParameterU(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
-    u16 count=a->deformCountU;
-    f32 *first=a->deformU, *second=b->deformU;
-    for(u32 i=0;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
+    f32 *first=keyFrameDeformU(a);
+    f32 *second=keyFrameDeformU(b);
+    u32 i=0;
+    u32 count=a->deformCountU;
+    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
     return true;
 }
 bool GsKeyObject::GetDeformParameterV(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
-    u16 count=a->deformCountV;
-    f32 *first=a->deformV, *second=b->deformV;
-    for(u32 i=0;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
+    f32 *first=keyFrameDeformV(a);
+    f32 *second=keyFrameDeformV(b);
+    u32 i=0;
+    u32 count=a->deformCountV;
+    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
     return true;
 }
 bool GsKeyObject::GetLinearParameterU(f32* out, const tagGsFilePrimKeyFrame* a) {
@@ -125,7 +134,7 @@ GsShapePair GsKeyObject::GetTextureScale(const tagGsFilePrimKeyFrame* a, const t
     const f32 *first=&a->textureScale[texture].u, *second=&b->textureScale[texture].u;
     f32 inverse=1.0f-t;
     for(int i=0;i<2;i++) {
-        if(((const u8 (*)[2])a->textureScaleCurveCount)[texture][i]) out[i]=entry->textureScaleScale*shapeCurve(((GsShapeCurvePoint* const (*)[2])a->textureScaleCurves)[texture][i],((const u8 (*)[2])a->textureScaleCurveCount)[texture][i],t);
+        if(a->textureScaleCurveCounts[texture][i]) out[i]=entry->textureScaleScale*shapeCurve(a->textureScaleCurveList[texture][i],a->textureScaleCurveCounts[texture][i],t);
         else out[i]=inverse*first[i]+t*second[i];
     }
     return value;
@@ -135,7 +144,7 @@ GsShapePair GsKeyObject::GetTextureOffset(const tagGsFilePrimKeyFrame* a, const 
     const f32 *first=&a->textureOffset[texture].u, *second=&b->textureOffset[texture].u;
     f32 inverse=1.0f-t;
     for(int i=0;i<2;i++) {
-        if(((const u8 (*)[2])a->textureOffsetCurveCount)[texture][i]) out[i]=entry->textureOffsetScale*shapeCurve(((GsShapeCurvePoint* const (*)[2])a->textureOffsetCurves)[texture][i],((const u8 (*)[2])a->textureOffsetCurveCount)[texture][i],t);
+        if(a->textureOffsetCurveCounts[texture][i]) out[i]=entry->textureOffsetScale*shapeCurve(a->textureOffsetCurveList[texture][i],a->textureOffsetCurveCounts[texture][i],t);
         else out[i]=inverse*first[i]+t*second[i];
     }
     return value;
@@ -150,8 +159,8 @@ tagGScol4ub GsKeyObject::GetTextureColor(const tagGsFilePrimKeyFrame* a, const t
     const u8* first=&a->textureColor[texture].r;
     const u8* second=&b->textureColor[texture].r;
     for(int i=0;i<4;i++) {
-        if(((const u8 (*)[4])a->textureColorCurveCount)[texture][i]) {
-            values[i]=255.0f*shapeCurve(((GsShapeCurvePoint* const (*)[4])a->textureColorCurves)[texture][i],((const u8 (*)[4])a->textureColorCurveCount)[texture][i],t);
+        if(a->textureColorCurveCounts[texture][i]) {
+            values[i]=255.0f*shapeCurve(a->textureColorCurveList[texture][i],a->textureColorCurveCounts[texture][i],t);
             if(values[i]<0.0f) values[i]=0.0f;
             else if(values[i]>255.0f) values[i]=255.0f;
         } else values[i]=(1.0f-t)*first[i]+t*second[i];
@@ -169,8 +178,8 @@ tagGScol4ub GsKeyObject::GetTextureColorLow(const tagGsFilePrimKeyFrame* a, cons
     const u8* first=&a->textureColorLow[texture].r;
     const u8* second=&b->textureColorLow[texture].r;
     for(int i=0;i<4;i++) {
-        if(((const u8 (*)[4])a->textureColorLowCurveCount)[texture][i]) {
-            values[i]=255.0f*shapeCurve(((GsShapeCurvePoint* const (*)[4])a->textureColorLowCurves)[texture][i],((const u8 (*)[4])a->textureColorLowCurveCount)[texture][i],t);
+        if(a->textureColorLowCurveCounts[texture][i]) {
+            values[i]=255.0f*shapeCurve(a->textureColorLowCurveList[texture][i],a->textureColorLowCurveCounts[texture][i],t);
             if(values[i]<0.0f) values[i]=0.0f;
             else if(values[i]>255.0f) values[i]=255.0f;
         } else values[i]=(1.0f-t)*first[i]+t*second[i];

@@ -139,8 +139,8 @@ void* GStextureLockImage(GStexture* texture, u8 level) {
     return texture->images[level];
 }
 void GStextureSetFilter(GStexture* texture, s32 minFilter, s32 magFilter, s32 mipFilter) {
-    s32 filter = minFilter;
-    texture->minFilter = filter;
+    s32 filter;
+    texture->minFilter = minFilter;
     texture->magFilter = magFilter;
     texture->mipFilter = mipFilter;
     switch (texture->mipFilter) {
@@ -152,10 +152,10 @@ void GStextureSetFilter(GStexture* texture, s32 minFilter, s32 magFilter, s32 mi
     texture->dirty = 1;
 }
 void GStextureSetWrap(GStexture* texture, s32 wrapS, s32 wrapT) {
-    s32 s = wrapS;
-    s32 t = wrapT;
-    texture->wrapS = s;
-    texture->wrapT = t;
+    s32 s;
+    s32 t;
+    texture->wrapS = wrapS;
+    texture->wrapT = wrapT;
     switch (texture->wrapS) {
     case 0: s = GX_CLAMP; break;
     case 1: s = GX_REPEAT; break;
@@ -422,7 +422,7 @@ extern "C" GStexture* GStextureLoad(void* serialized) {
     for (s32 i = 0; i < texture->mipCount; ++i) {
         texture->images[i] = (u8*)texture + (u32)texture->images[i];
     }
-    for (s32 i = texture->mipCount; i < 8; ++i) texture->images[i] = 0;
+    for (int i = (int)texture->mipCount; i < 8; ++i) texture->images[i] = 0;
     if (texture->palette) texture->palette = (u8*)texture + (u32)texture->palette;
     textureInitHardware(texture);
     GStextureSetWrap(texture, texture->wrapS, texture->wrapT);

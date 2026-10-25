@@ -35,7 +35,7 @@ extern "C" {
 static u8 _sndCheckEmitter(GSsndEmitter*);
 static void _sndFreeEmitter(GSsndEmitter*);
 static void _sndFreeListener(GSsndListener*);
-static u8 _sndGetProperVolume(GSsndDescriptor*, u32);
+static u32 _sndGetProperVolume(GSsndDescriptor*, u32);
 static s32 _sndSetVolume(GSsndDescriptor*, u16, u8);
 static void _sndStreamVolume(u8, u32, u32, u8);
 s32 GSsndCheckEnv(u32 id) {
@@ -54,27 +54,21 @@ s32 GSsndCheckSE(u32 id) {
     return snd_data[id].bits.effect;
 }
 void GSsndSetPushVolumeID(u32 id, u8* volume) {
-    if (_initFlag && id != ~0U) {
-        if (id < *snd_data_number) {
-            GSsndWork* work = snd_data[id].work;
-            if (work && volume && *volume < 3) {
-                work->volumeDepth = *volume;
-                for (s32 i = 0; i < *volume; ++i) work->savedVolume[i] = volume[i + 1];
-            }
-        }
+    if (!_initFlag || id == ~0U || id >= *snd_data_number) return;
+    GSsndDescriptor* descriptor = &snd_data[id];
+    GSsndWork* work = descriptor->work;
+    if (work && volume && *volume < 3) {
+        work->volumeDepth = *volume;
+        for (s32 i = 0; i < *volume; ++i) work->savedVolume[i] = volume[i + 1];
     }
 }
 void GSsndGetPushVolumeID(u32 id, u8* volume) {
-    if (_initFlag && id != ~0U) {
-        if (id >= *snd_data_number) {
-            return;
-        } else {
-            GSsndWork* work = snd_data[id].work;
-            if (work && volume && work->volumeDepth < 3) {
-                *volume = work->volumeDepth;
-                for (s32 i = 0; i < *volume; ++i) volume[i + 1] = work->savedVolume[i];
-            }
-        }
+    if (!_initFlag || id == ~0U || id >= *snd_data_number) return;
+    GSsndDescriptor* descriptor = &snd_data[id];
+    GSsndWork* work = descriptor->work;
+    if (work && volume && work->volumeDepth < 3) {
+        *volume = work->volumeDepth;
+        for (s32 i = 0; i < *volume; ++i) volume[i + 1] = work->savedVolume[i];
     }
 }
 u8 GSsndGetVolume(u32 id) {
@@ -176,13 +170,12 @@ static u8 _sndCheckEmitter(GSsndEmitter* emitter) {
     if ((u32)sndFXCheck(voice) == ~0U) { sndFXKeyOff(voice); return 0; }
     return 1;
 }
-static u8 _sndGetProperVolume(GSsndDescriptor* descriptor, u32 value) {
-    u8 volume = value;
-    if (volume == 255) {
+static u32 _sndGetProperVolume(GSsndDescriptor* descriptor, u32 volume) {
+    if ((u8)volume == 255) {
         if ((u32)((descriptor->flags >> 5) & 1) == 1U) volume = 100;
         else volume = 127;
     }
-    if (volume > 127) volume = 127;
+    if ((u8)volume > 127) volume = 127;
     return volume;
 }
 static s32 _sndSetVolume(GSsndDescriptor* descriptor, u16 time, u8 volume) {
@@ -365,7 +358,7 @@ static u8 _sndStreamGetValid(u32);
 static s32 _sndClose(u32, u8);
 static s32 _sndStopSTREAM(GSsndDescriptor*);
 static s32 _sndStopSE(GSsndDescriptor*);
-static s32 _sndStopBGM(GSsndDescriptor*, u32);
+static s32 _sndStopBGM(GSsndDescriptor*, u32, u32);
 static void _sndCheckSndWorkALL();
 s32 GSsndGetStatus(u32 id) {
     if (!_initFlag) return 0;
@@ -434,7 +427,7 @@ s32 GSsndStop(u32 id, u32 time, u32 reserved) {
     u8 flags = descriptor->flags;
     if ((u32)((flags >> 6) & 1) == 1U) return _sndStopSTREAM(descriptor);
     if ((u32)((flags >> 5) & 1) == 1U) return _sndStopSE(descriptor);
-    return _sndStopBGM(descriptor, time);
+    return _sndStopBGM(descriptor, time, reserved);
 }
 s32 GSsndOpen(u32 id, u32 context, u32 options) {
     if (!_initFlag) return 0;
@@ -473,10 +466,10 @@ static s32 _sndStreamGetSndID(u32 id) {
     return stream->soundID;
 }
 static void _sndStreamVolume(u8 volume, u32 time, u32 id, u8 action) {
+    GSsndStream *first, *second;
     BOOL interrupts = OSDisableInterrupts();
     GSsndStream* stream = _sndGetStream(id);
     if (!stream) { OSRestoreInterrupts(interrupts); return; }
-    GSsndStream *first, *second;
     if (stream->first) { first = stream->first; second = stream; }
     else { first = stream; second = stream->second; }
     if (first->paused == 1 && action == 0) { _sndStreamCtrl(first, 0); _sndStreamCtrl(second, 0); }
@@ -495,7 +488,8 @@ static void _sndStreamVolume(u8 volume, u32 time, u32 id, u8 action) {
 }
 static s32 _sndStopSTREAM(GSsndDescriptor* descriptor) {
     GSsndWork* work = descriptor->work;
-    if (!work || work->voice == ~0U) return 0;
+    if (!work) return 0;
+    if (work->voice == ~0U) return 0;
     GSfsysCancel(work->voice);
     work->voice = ~0U;
     GSsndStream* stream = _sndGetStream(snd_file[descriptor->file].identifier);
@@ -511,19 +505,20 @@ static s32 _sndStopSTREAM(GSsndDescriptor* descriptor) {
 }
 static s32 _sndStopSE(GSsndDescriptor* descriptor) {
     GSsndWork* work = descriptor->work;
-    if (!work || work->voice == ~0U) return 0;
+    if (!work) return 0;
+    if (work->voice == ~0U) return 0;
     s32 result;
     if ((u32)sndFXCheck(work->voice) != ~0U) result = sndFXKeyOff(work->voice);
     else result = 0;
     work->voice = ~0U;
     return result;
 }
-static s32 _sndStopBGM(GSsndDescriptor* descriptor, u32 time) {
+static s32 _sndStopBGM(GSsndDescriptor* descriptor, u32 time, u32 reserved) {
     GSsndWork* work = descriptor->work;
     if (!work) return 0;
     if (descriptor->bits.opened != 1U) return 0;
     if (work->voice == ~0U) return 0;
-    sndSeqVolume(0, time, work->voice, 1);
+    sndSeqVolume(0, (u16)time, work->voice, 1);
     work->voice = ~0U;
     return 1;
 }
@@ -562,7 +557,7 @@ extern "C" {
 u32 sndFXStartEx(u16, u8, u8, u32);
 u32 sndSeqPlayEx(u32, u16, void*, GSsndSequenceParameters*, u32);
 extern u32* snd_file_number;
-static s32 _sndPlaySTREAM(GSsndDescriptor*, u32, u16, u8, u32);
+static s32 _sndPlaySTREAM(GSsndDescriptor*, u32, u16, u32, u32);
 #pragma dont_inline on
 static s32 _sndPlaySE(GSsndDescriptor*, u32, u8);
 static s32 _sndPlayBGM(GSsndDescriptor*, u32, u16, u8, u32);
@@ -573,9 +568,9 @@ s32 GSsndPlay(u32 id, u16 time, u32 flags) { return _sndPlay(id, time, 127, flag
 u32 GSsndPopVolumeALL(u16 time, u32 music, u32 effects) {
     s32 id;
     for (id = 0; id < _maxSoundID; ++id) {
-        u8 flags = snd_data[id].flags;
-        if ((u32)((flags >> 3) & 1) == 1U) {
-            if ((u32)((flags >> 5) & 1) == 1U) {
+        GSsndDescriptor* descriptor = &snd_data[id];
+        if (descriptor->bits.opened == 1U) {
+            if (descriptor->bits.effect == 1U) {
                 if (effects == 0) continue;
             } else {
                 if (music == 0) continue;
@@ -588,9 +583,9 @@ u32 GSsndPopVolumeALL(u16 time, u32 music, u32 effects) {
 u32 GSsndPushVolumeALL(u8 volume, u16 time, u32 music, u32 effects) {
     s32 id;
     for (id = 0; id < _maxSoundID; ++id) {
-        u8 flags = snd_data[id].flags;
-        if ((u32)((flags >> 3) & 1) == 1U) {
-            if ((u32)((flags >> 5) & 1) == 1U) {
+        GSsndDescriptor* descriptor = &snd_data[id];
+        if (descriptor->bits.opened == 1U) {
+            if (descriptor->bits.effect == 1U) {
                 if (effects == 0) continue;
             } else {
                 if (music == 0) continue;
@@ -604,11 +599,11 @@ static s32 _sndPlay(u32 id, u16 time, u32 volume, u32 flags) {
     if (!_initFlag) return 0;
     if (id == ~0U || id >= *snd_data_number) return 0;
     GSsndDescriptor* descriptor = &snd_data[id];
-    u8 properVolume = _sndGetProperVolume(descriptor, volume);
+    volume = _sndGetProperVolume(descriptor, volume);
     u8 soundFlags = descriptor->flags;
-    if ((u32)((soundFlags >> 6) & 1) == 1U) return _sndPlaySTREAM(descriptor, id, time, properVolume, flags);
-    if ((u32)((soundFlags >> 5) & 1) == 1U) return _sndPlaySE(descriptor, id, properVolume);
-    return _sndPlayBGM(descriptor, id, time, properVolume, flags);
+    if ((u32)((soundFlags >> 6) & 1) == 1U) return _sndPlaySTREAM(descriptor, id, time, volume, flags);
+    if ((u32)((soundFlags >> 5) & 1) == 1U) return ((s32 (*)(GSsndDescriptor*, u32, u32))_sndPlaySE)(descriptor, id, volume);
+    return ((s32 (*)(GSsndDescriptor*, u32, u16, u32, u32))_sndPlayBGM)(descriptor, id, time, volume, flags);
 }
 static s32 _sndPlaySE(GSsndDescriptor* descriptor, u32 id, u8 volume) {
     if (descriptor->bits.opened != 1U) GSsndOpen(id, 0, 0);
@@ -651,8 +646,8 @@ static s32 _sndPlayBGM(GSsndDescriptor* descriptor, u32 id, u16 time, u8 volume,
 }
 static u32 _sndDesc2Id(u32 voice) {
     s32 id;
-    GSsndDescriptor* descriptor;
-    for (id = 0, descriptor = snd_data; id < _maxSoundID; ++descriptor, ++id) {
+    for (id = 0; id < _maxSoundID; ++id) {
+        GSsndDescriptor* descriptor = &snd_data[id];
         GSsndWork* work = descriptor->work;
         if (work && !descriptor->bits.streaming && work->voice == voice) return id;
     }
@@ -683,8 +678,8 @@ void GSsndUpdateSettingsReverbHI(u32 id) {
     }
 }
 static void _sndSetReverbParm(u32 id) {
-    _revH.disabled = 0;
     GSsndReverbParameters* parameters = &snd_rev_data[id];
+    _revH.disabled = 0;
     _revH.parameters.coloration = parameters->coloration;
     _revH.parameters.mix = parameters->mix;
     _revH.parameters.time = parameters->time;
@@ -704,23 +699,26 @@ static s32 _sndSetVolumeWork(u32 id, u8 volume) {
     if (work) work->volume = volume & 127;
     return 1;
 }
-void GSsndSetVolume(u8 volume, u16 time, u32 music, u32 effects) {
+void GSsndSetVolume(u32 volume, u16 time, u32 music, u32 effects) {
     if (!_initFlag) return;
     s32 group;
+    GSsndDescriptor* descriptor;
+    s32 id;
     if (music == 1 && effects == 1) group = 255;
     else if (music == 1 && effects != 1) group = 253;
     else if (music != 1 && effects == 1) group = 254;
     else return;
-    for (u32 id = 0; id < _maxSoundID; ++id) {
-        GSsndDescriptor* descriptor = &snd_data[id];
+    for (id = 0; id < _maxSoundID; ++id) {
+        descriptor = &snd_data[id];
         u8 flags = descriptor->flags;
         if ((u32)((flags >> 3) & 1) == 1U) {
             switch (group) {
             case 253: if ((u32)((flags >> 5) & 1) == 1U) continue; break;
             case 254: if (!((flags >> 5) & 1)) continue; break;
+            case 255: break;
             }
             _sndSetVolumeWork(id, volume);
-            if (descriptor->bits.streaming == 1U) _sndSetVolume(descriptor, time, volume);
+            if (descriptor->bits.streaming == 1U) ((s32 (*)(GSsndDescriptor*, u16, u32))_sndSetVolume)(descriptor, time, volume);
         }
     }
     sndVolume(volume, time, group);
@@ -764,7 +762,7 @@ s32 GSsndIsPlayingStream(u32 id) {
     }
     return id;
 }
-static s32 _sndPlaySTREAM(GSsndDescriptor* descriptor, u32 id, u16 time, u8 volume, u32 flags) {
+static s32 _sndPlaySTREAM(GSsndDescriptor* descriptor, u32 id, u16 time, u32 volume, u32 flags) {
     GSsndStream *first, *second;
     GSsndWork* work;
     u32 identifier, secondaryID, resource;

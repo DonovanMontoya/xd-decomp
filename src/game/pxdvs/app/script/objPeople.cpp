@@ -1,41 +1,5 @@
 #pragma dollar_identifiers on
 #include <game/pxdvs/app/script/objPeoplePrivate.hpp>
-extern "C" {
-__declspec(weak) void setRpVec__Q28GSscript4TigaFPC5GSvec(GSscript::Tiga *script,const GSvec *vector) {
-    AppScriptWork *work=(AppScriptWork *)script->workBuffer;
-    work->vec.param1=vector->param1;
-    work->vec.param2=vector->param2;
-    work->vec.param3=vector->param3;
-    work=(AppScriptWork *)script->workBuffer;
-    work->ret.value.vector=&work->vec;
-    ((AppScriptWork *)script->workBuffer)->ret.type=4;
-}
-__declspec(weak) GSscript::tigaArrayFixed *getArray__Q28GSscript11tigaVariantFv(GSscript::tigaVariant *value) {
-    if (value->type==7) return (GSscript::tigaArrayFixed *)value->value.pointer;
-    GSscript::tigaErrMessage("pokemon not access");
-    return 0;
-}
-__declspec(weak) GSvec *getVector__Q28GSscript11tigaVariantFv(GSscript::tigaVariant *value) {
-    if (value->type==4) return value->value.vector;
-    return value->getCnvVector();
-}
-__declspec(weak) f32 getSingle__Q28GSscript11tigaVariantFv(GSscript::tigaVariant *value) {
-    if(value->type==1)return (f32)value->value.integer;
-    if(value->type==2)return value->value.single;
-    return value->getCnvSingle();
-}
-__declspec(weak) s32 getInteger__Q28GSscript11tigaVariantFv(GSscript::tigaVariant *value) {
-    if(value->type==1)return value->value.integer;
-    if(value->type==2)return (s32)value->value.single;
-    return value->getCnvInteger();
-}
-__declspec(weak) GSresID *getPeople__Q28GSscript11tigaVariantFv(GSscript::tigaVariant *value) {
-    if (value->type==0x23) return (GSresID *)value->value.pointer;
-    GSscript::tigaErrMessage("people not access");
-    return 0;
-}
-}
-
 static u8 _pokeRareCol[9][8]={
  {0,1,2,3,0x75,0x9D,0x62,255},{1,2,2,3,0x77,0x80,0x9D,255},
  {2,1,2,3,127,127,127,255},{1,2,0,3,0x4E,0xB0,0x28,255},
@@ -75,7 +39,7 @@ int AppScript::cmpPeople(int method,GSscript::tigaVariant *args,GSscript::tigaVa
     case 0x18:peopleClose(P,1);break;
     case 0x19:c=F(4);b=F(3);e=F(2);R(peopleRectCheck(P,F(1),e,b,c));break;
     case 0x1A:{GSvec *a=V(1),*b=V(2);R(peopleRectCheck(P,a->param1,a->param3,b->param1,b->param3));break;}
-    case 0x1B:{bool mode=(bool)I(6);f32 b,c,d,e;e=F(5);d=F(4);c=F(3);b=F(2);R(peopleLineCheck(P,mode,F(1),b,c,d,e));break;}
+    case 0x1B:{bool mode=(bool)I(6);d=F(5);e=F(4);b=F(3);c=F(2);R(peopleLineCheck(P,mode,F(1),c,b,e,d));break;}
     case 0x1C:{GSvec *a=V(1),*b=V(2);R(peopleLineCheck(P,(bool)I(3),a->param1,a->param3,b->param1,b->param3,0.0f));break;}
     case 0x1D:peopleSetPosXYZ(P,F(1),F(2),F(3));break;
     case 0x1E:{GSvec *v=V(1);peopleSetPosXYZ(P,v->param1,v->param2,v->param3);break;}
@@ -343,13 +307,13 @@ int AppScript::cmpPeople(int method,GSscript::tigaVariant *args,GSscript::tigaVa
     case 0x64:R(peopleStartWalkListStrict(P,I(1)));break;
     case 0x66:peopleWalkPauseTalkMode(P,(bool)I(1));break;
     case 0x67:model=GSresGetResource(P);GSmodelSetAnimRate(model,F(1));break;
-    case 0x68:mode=I(2);peopleSetWalkSpeed(P,mode,F(1));break;
+    case 0x68:peopleSetWalkSpeed(P,F(1),I(2));break;
     case 0x69:model=GSresGetResource(P);((void (*)(void *, bool))GSmodelSetBoundCheck)(model,I(1)==0);break;
     case 0x6A:scriptSetEndedMotion(P,I(1),(bool)I(2));break;
     case 0x6B:scriptModelPartPaticle(person->id,I(1),I(2));break;
     case 0x6C:model=GSresGetResource(P);GSmodelSetScale(model,V(1));break;
     case 0x6D:GSmodelRecalculateBound(GSresGetResource(P));break;
-    case 0x6E:peopleGetPos(P,(GSvec *)&Vector$2133);mode=(s32)V(3);R(scriptPeopleInsideCheck((GSvec *)&Vector$2133,V(1),(GSvec *)mode,F(2)));break;
+    case 0x6E:peopleGetPos(P,(GSvec *)&Vector$2133);R(scriptPeopleInsideCheck((GSvec *)&Vector$2133,V(1),F(2),V(3)));break;
     case 0x6F:{s32 index=I(1);model=GSresGetResource(floorGetCurrentGroupID(),person->id);void *part=GSmodelGetPart(model,index);GSpartGetTransform(part,&Vector$2133.param1,0,0);GSpartFree(part);setRpVec__Q28GSscript4TigaFPC5GSvec(this,(GSvec *)&Vector$2133);break;}
     case 0x70:{model=GSresGetResource(P);if(model){s32 index=I(1);u8 *col=_pokeRareCol[index];GSmodelEnableColorSwap(model,col);GSmodelEnableModulation(model,&col[4]);}break;}
     case 0x71:{PersonScriptWork *p=peopleGet(P);p->field54=0;break;}
@@ -364,3 +328,39 @@ int AppScript::cmpPeople(int method,GSscript::tigaVariant *args,GSscript::tigaVa
 #undef A
 #undef P
 #undef R
+
+extern "C" {
+__declspec(weak) void setRpVec__Q28GSscript4TigaFPC5GSvec(GSscript::Tiga *script,const GSvec *vector) {
+    AppScriptWork *work=(AppScriptWork *)script->workBuffer;
+    work->vec.param1=vector->param1;
+    work->vec.param2=vector->param2;
+    work->vec.param3=vector->param3;
+    work=(AppScriptWork *)script->workBuffer;
+    work->ret.value.vector=&work->vec;
+    ((AppScriptWork *)script->workBuffer)->ret.type=4;
+}
+__declspec(weak) GSscript::tigaArrayFixed *getArray__Q28GSscript11tigaVariantFv(GSscript::tigaVariant *value) {
+    if (value->type==7) return (GSscript::tigaArrayFixed *)value->value.pointer;
+    GSscript::tigaErrMessage("pokemon not access");
+    return 0;
+}
+__declspec(weak) GSvec *getVector__Q28GSscript11tigaVariantFv(GSscript::tigaVariant *value) {
+    if (value->type==4) return value->value.vector;
+    return value->getCnvVector();
+}
+__declspec(weak) f32 getSingle__Q28GSscript11tigaVariantFv(GSscript::tigaVariant *value) {
+    if(value->type==1)return (f32)value->value.integer;
+    if(value->type==2)return value->value.single;
+    return value->getCnvSingle();
+}
+__declspec(weak) s32 getInteger__Q28GSscript11tigaVariantFv(GSscript::tigaVariant *value) {
+    if(value->type==1)return value->value.integer;
+    if(value->type==2)return (s32)value->value.single;
+    return value->getCnvInteger();
+}
+__declspec(weak) GSresID *getPeople__Q28GSscript11tigaVariantFv(GSscript::tigaVariant *value) {
+    if (value->type==0x23) return (GSresID *)value->value.pointer;
+    GSscript::tigaErrMessage("people not access");
+    return 0;
+}
+}

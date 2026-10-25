@@ -171,7 +171,7 @@ u8 pokemon_GetSpeDefRnd(Pokemon*);
 u8 pokemon_GetNimblenessRnd(Pokemon*);
 void gamedataAttestBiosCopy(void*, void*);
 u16* GSmsgGetGSchar(const char*);
-u16 pokemonDB_GetInitFriend(u32);
+u32 pokemonDB_GetInitFriend(u16);
 u32 pokemonCreateRnd();
 u8 pokemonGetSex(Pokemon*);
 u8 pokemonGetSeikakuAsRnd(u32);

@@ -1,4 +1,6 @@
 #include <game/pxdvs/app/effects/blurPrivate.hpp>
+#include <dolphin/os/OSFastCast.h>
+#include <dolphin/gx/GXVert.h>
 void operator delete(void*);
 u8 blurEffectRenderFBCallback(GStexture*,unsigned long,void*);
 extern "C" {void GScameraLoadActiveCameraMatrix(s32);void GSgfxBeginBackFBCapture(GStexture*,u8(*)(GStexture*,unsigned long,void*),void*);void GSgfxEndBackFBCapture(GStexture*);void GSgfxTokenWaitForClear(u16);GSgfxVF*GSgfxVFGetPredef(u32);void GSmodelAdvanceAnimation(GSmodel*,f32);void GSmodelDrawModel(GSmodel*,GSgfxLayer*,GSgfxLayerPass);void GSmodelForceAnimTransformUpdate(GSmodel*);f32 GSmodelGetAnimFrame(GSmodel*);f32 GSmodelGetAnimRate(GSmodel*);_GSparticleBank*GSmodelGetLinkedGSparticleBank(GSmodel*);void GSmodelInitMaterialAlpha(GSmodel*);u8 GSmodelIsAnimating(GSmodel*);void GSmodelResetMaterialAlpha(GSmodel*);void GSmodelResetPEdescr(GSmodel*);void GSmodelResetRenderFlags(GSmodel*);void GSmodelSetAnimFrame(GSmodel*,f32);void GSmodelSetMaterialAlpha(GSmodel*,f32);void GSmodelSetPEdescr(GSmodel*,void*);void GSmodelSetRenderFlags(GSmodel*,u32);void GSmtx44Ortho(f32*,f32,f32,f32,f32,f32,f32);void GSparticleActivateBank(_GSparticleBank*);void GSparticleDisactivateBank(_GSparticleBank*);void GSparticleSetBankVisibility(_GSparticleBank*,u8);GStexture*GStextureCreate(u16,u16,s32,s32,s32);void GStextureFree(GStexture*);void*memcpy(void*,const void*,u32);extern f32 mtxIdent[12];}
@@ -8,13 +10,14 @@ void blurEffect::_render(GSgfxLayer*layer,GSgfxLayerPass pass){static u8 pedesc[
 bool blurEffect::_start(){if(framebuffer){if(!texture)return false;ready=0;GSgfxBeginBackFBCapture(texture,blurEffectRenderFBCallback,this);}return true;}
 blurEffect::blurEffect(bool fb){model=0;texture=0;token=0;ready=0;framebuffer=fb;amount=0;if(fb)texture=GStextureCreate(0,0,0x44,0,0);}
 void blurEffect::RenderFB(GSgfxLayer*arg1) {
-    f32 matrix[16];f32 alphaValue=255.0f*amount;u8 alpha;if(alphaValue<0.0f)alpha=0;else if(alphaValue>255.0f)alpha=255;else alpha=(u8)alphaValue;
+    f32 matrix[16];u8 alpha;
     BlurMatrix*temp_r3;
     s32 temp_r5;
     BlurMatrixChain*temp_r28;
     GStexture*temp_r3_2;
 
     if ((u8) ready != 0) {
+        alpha=__OSf32tou8(255.0f*amount);
         GSmtx44Ortho(matrix, 0.0f, 480.0f, 0.0f, 640.0f, 0.0f, -30000.0f);
         arg1->unkD54 = 1;
         arg1->unkD58 = matrix[0];
@@ -84,42 +87,22 @@ void blurEffect::RenderFB(GSgfxLayer*arg1) {
         }
         arg1->unk1998 = 0x98;
         arg1->beginSurface(4);
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = alpha;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 640.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = alpha;
-        *(volatile f32 *)0xCC008000 = 1.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 480.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = alpha;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 1.0f;
-        *(volatile f32 *)0xCC008000 = 640.0f;
-        *(volatile f32 *)0xCC008000 = 480.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = 0xFF;
-        *(volatile u8 *)0xCC008000 = alpha;
-        *(volatile f32 *)0xCC008000 = 1.0f;
-        *(volatile f32 *)0xCC008000 = 1.0f;
+        f32 zero = 0.0f;
+        f32 width = 640.0f;
+        f32 height = 480.0f;
+        f32 one = 1.0f;
+        GXPosition3f32(zero, zero, zero);
+        GXColor4u8(0xFF, 0xFF, 0xFF, alpha);
+        GXTexCoord2f32(zero, zero);
+        GXPosition3f32(width, zero, zero);
+        GXColor4u8(0xFF, 0xFF, 0xFF, alpha);
+        GXTexCoord2f32(one, zero);
+        GXPosition3f32(zero, height, zero);
+        GXColor4u8(0xFF, 0xFF, 0xFF, alpha);
+        GXTexCoord2f32(zero, one);
+        GXPosition3f32(width, height, zero);
+        GXColor4u8(0xFF, 0xFF, 0xFF, alpha);
+        GXTexCoord2f32(one, one);
         arg1->endSurface();
         token = arg1->tokenMark();
     }

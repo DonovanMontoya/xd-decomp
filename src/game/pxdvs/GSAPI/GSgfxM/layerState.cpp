@@ -109,47 +109,20 @@ void setRenderState__10GSgfxLayerFbUcb(void *arg0, u8 arg1, u8 arg2, u8 arg3) {
 }
 
 void ResetVertexFormat__10GSgfxLayerFP7GSgfxVF(void *arg0, u32 arg1) {
-    s32 var_ctr;
-    u8 *temp_r5;
-    u8 *var_r6;
-
-    var_r6 = static_cast<u8*>(arg0) + 0x16A8;
-    if (arg1 == (u32) layerField<u32>(arg0, 0x199C)) {
-        layerField<u32>(arg0, 0x199C) = 0U;
+    LayerPassVertexFormats *pass = reinterpret_cast<LayerPassVertexFormats *>(static_cast<u8 *>(arg0) + 0x16A8);
+    if (arg1 == layerField<u32>(arg0, 0x199C)) {
+        layerField<u32>(arg0, 0x199C) = 0;
     }
-    var_ctr = 2;
-    do {
-        if ((u32) layerField<u32>(var_r6, 0x88) == arg1) {
-            layerField<u32>(var_r6, 0x88) = 0U;
+    for (s32 i = 0; i < 2; i++, pass++) {
+        if (pass->format == arg1) {
+            pass->format = 0;
         }
-        if ((u32) layerField<u32>(var_r6, 0x68) == arg1) {
-            layerField<u32>(var_r6, 0x68) = 0U;
+        for (s32 j = 0; j < 8; j++) {
+            if (pass->formats[j] == arg1) {
+                pass->formats[j] = 0;
+            }
         }
-        if ((u32) layerField<u32>(var_r6, 0x6C) == arg1) {
-            layerField<u32>(var_r6, 0x6C) = 0U;
-        }
-        temp_r5 = var_r6 + 8;
-        if ((u32) layerField<u32>(var_r6, 0x70) == arg1) {
-            layerField<u32>(temp_r5, 0x68) = 0;
-        }
-        if ((u32) layerField<u32>(temp_r5, 0x6C) == arg1) {
-            layerField<u32>(temp_r5, 0x6C) = 0U;
-        }
-        if ((u32) layerField<u32>(temp_r5, 0x70) == arg1) {
-            layerField<u32>(temp_r5, 0x70) = 0U;
-        }
-        if ((u32) layerField<u32>(temp_r5, 0x74) == arg1) {
-            layerField<u32>(temp_r5, 0x74) = 0U;
-        }
-        if ((u32) layerField<u32>(temp_r5, 0x78) == arg1) {
-            layerField<u32>(temp_r5, 0x78) = 0U;
-        }
-        if ((u32) layerField<u32>(temp_r5, 0x7C) == arg1) {
-            layerField<u32>(temp_r5, 0x7C) = 0U;
-        }
-        var_r6 += 0xB8;
-        var_ctr -= 1;
-    } while (var_ctr != 0);
+    }
 }
 
 void renderState_NL_VC_T__10GSgfxLayerFUc(void *arg0, u8 arg1) {
@@ -183,15 +156,12 @@ void renderState_NL_VC_T__10GSgfxLayerFUc(void *arg0, u8 arg1) {
     sp8 = 0;
     cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(arg0,0,2,0,1,0,0,2,0);
     var_r30 = 0;
-loop_2:
-    if (var_r30 < arg1) {
+    while (var_r30 < arg1) {
         tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(arg0, var_r30, 1, var_r30 + 4, 0, 0, 0);
         var_r30 += 1;
-        goto loop_2;
     }
     var_r29 = 0;
-loop_8:
-    if (var_r29 < arg1) {
+    while (var_r29 < arg1) {
         temp_r31 = 1 << var_r29;
         layerField<s32>(arg0,var_r29*0x24+0x1420) = 0;
         temp_r5 = static_cast<u8*>(arg0) + (var_r29 * 0xC);
@@ -219,7 +189,6 @@ loop_8:
         layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 0x20);
         layerField<u32>(arg0, 0x17BC) = (s32) (layerField<u32>(arg0, 0x17BC) | temp_r31);
         layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x20);
-        goto loop_8;
     }
 }
 
@@ -251,15 +220,12 @@ void renderState_NL_NVC_T__10GSgfxLayerFUc(void *arg0, u8 arg1) {
     layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 0x80);
     layerField<u32>(arg0, 0x17A4) = (s32) (layerField<u32>(arg0, 0x17A4) | 1);
     layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x80);
-loop_2:
-    if (var_r29 < arg1) {
+    while (var_r29 < arg1) {
         tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(arg0, var_r29, 1, var_r29 + 4, 0, 0, 0);
         var_r29 += 1;
-        goto loop_2;
     }
     var_r29_2 = 0;
-loop_8:
-    if (var_r29_2 < arg1) {
+    while (var_r29_2 < arg1) {
         temp_r31 = 1 << var_r29_2;
         layerField<s32>(arg0,var_r29_2*0x24+0x1420) = 0;
         temp_r5 = static_cast<u8*>(arg0) + (var_r29_2 * 0xC);
@@ -287,7 +253,6 @@ loop_8:
         layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 0x20);
         layerField<u32>(arg0, 0x17BC) = (s32) (layerField<u32>(arg0, 0x17BC) | temp_r31);
         layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x20);
-        goto loop_8;
     }
 }
 
@@ -480,21 +445,21 @@ __declspec(weak) void GSgfx_GCSetFogRangeAdj(u8 arg0, u16 arg1, u8 *arg2);
 __declspec(weak) void GSgfx_GCSetAlphaCompare(s32 arg0, u8 arg1, s32 arg2, s32 arg3, u8 arg4);
 __declspec(weak) void GSgfx_GCSetBlendMode(s32 arg0, s32 arg1, s32 arg2, s32 arg3);
 __declspec(weak) void GSgfx_GCSetTevSwapModeTable(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4);
-__declspec(weak) void GSgfx_GCSetTevKColor(s32 arg0, u32 *arg1);
+__declspec(weak) void GSgfx_GCSetTevKColor(s32 arg0, GXColor arg1);
 __declspec(weak) void GSgfx_GCSetIndTexCoordScale(s32 arg0, s32 arg1, s32 arg2);
 __declspec(weak) void GSgfx_GCSetIndTexOrder(s32 arg0, s32 arg1, s32 arg2);
 __declspec(weak) void GSgfx_GCSetTevIndRepeat(s32 arg0);
-__declspec(weak) void GSgfx_GCSetTevIndBumpXYZ(s32 arg0, u8 arg1, s32 arg2);
-__declspec(weak) void GSgfx_GCSetTevIndWarp(s32 arg0, u8 arg1, u8 arg2, u8 arg3, s32 arg4);
-__declspec(weak) void GSgfx_GCSetTevIndirect(s32 arg0, u8 arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, s32 arg6, u8 arg7, u8 arg_sp8, s32 arg_spC);
+__declspec(weak) void GSgfx_GCSetTevIndBumpXYZ(s32 arg0, s32 arg1, s32 arg2);
+__declspec(weak) void GSgfx_GCSetTevIndWarp(s32 arg0, s32 arg1, u8 arg2, u8 arg3, s32 arg4);
+__declspec(weak) void GSgfx_GCSetTevIndirect(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, s32 arg6, u8 arg7, u8 arg_sp8, s32 arg_spC);
 __declspec(weak) void GSgfx_GCSetTevDirect(s32 arg0);
 __declspec(weak) void GSgfx_GCSetTevAlphaOp(s32 arg0, s32 arg1, s32 arg2, s32 arg3, u8 arg4, s32 arg5);
 __declspec(weak) void GSgfx_GCSetTevColorOp(s32 arg0, s32 arg1, s32 arg2, s32 arg3, u8 arg4, s32 arg5);
 __declspec(weak) void GSgfx_GCSetTevAlphaIn(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4);
 __declspec(weak) void GSgfx_GCSetTevColorIn(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4);
 __declspec(weak) void GSgfx_GCSetTevOrder(s32 arg0, s32 arg1, s32 arg2, s32 arg3);
-__declspec(weak) void GSgfx_GCSetMatColor(s32 arg0, u32 *arg1);
-__declspec(weak) void GSgfx_GCSetAmbColor(s32 arg0, u32 *arg1);
+__declspec(weak) void GSgfx_GCSetMatColor(s32 arg0, GXColor arg1);
+__declspec(weak) void GSgfx_GCSetAmbColor(s32 arg0, GXColor arg1);
 __declspec(weak) void GSgfx_GCSetChanCtrl(s32 arg0, u8 arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, s32 arg6);
 __declspec(weak) void GSgfx_GCSetScissor(u16 arg0, u16 arg1, u16 arg2, u16 arg3, s32 arg4, s32 arg5);
 __declspec(weak) void GSgfx_GCSetProjection(s32 arg0, u8 *arg1);
@@ -633,7 +598,7 @@ void SetupGPUState__10GSgfxLayerFv(void *arg0) {
             if (LAYER_STATE_FIELD(s32, temp_r30, 0x4) & 1) {
                 temp_r4 = LAYER_STATE_FIELD(u8, arg0, 0xC70);
                 if ((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0x3F8) != temp_r4) {
-                    LAYER_STATE_FIELD(u8, gsgfxState, 0x33) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x33) & ~0xF) | (temp_r4 & 0xF));
+                    LAYER_STATE_FIELD(LayerGenModeCounts, gsgfxState, 0x33).textures = temp_r4;
                     LAYER_STATE_FIELD(s32, gsgfxState, 0x0) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x0) | 0x02000000 | 1);
                     LAYER_STATE_FIELD(u8, gsgfxState, 0x3F8) = temp_r4;
                 }
@@ -642,8 +607,7 @@ void SetupGPUState__10GSgfxLayerFv(void *arg0) {
                 var_r29 = temp_r31;
                 var_r28 = 0;
                 var_r27 = 0;
-loop_17:
-                if (var_r28 < (s32) LAYER_STATE_FIELD(u8, arg0, 0xC70)) {
+                while (var_r28 < (s32) LAYER_STATE_FIELD(u8, arg0, 0xC70)) {
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x8) & (1 << var_r28)) {
                         temp_r3 = LAYER_STATE_FIELD(u8*, var_r29, 0x18);
                         if (temp_r3 != NULL) {
@@ -657,7 +621,6 @@ loop_17:
                     var_r29 += 0x18;
                     var_r28 += 1;
                     var_r27 += 0x14;
-                    goto loop_17;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0x8) = 0U;
             }
@@ -680,8 +643,7 @@ loop_17:
                 var_r4 = 0;
                 var_r5 = 0;
                 var_r6 = 0;
-loop_34:
-                if (var_r4 < (s32) LAYER_STATE_FIELD(u8, arg0, 0xC70)) {
+                while (var_r4 < (s32) LAYER_STATE_FIELD(u8, arg0, 0xC70)) {
                     if ((LAYER_STATE_FIELD(s32, temp_r30, 0xC) & (1 << var_r4)) && ((temp_r12 = LAYER_STATE_FIELD(u8, var_r3, 0xD4), temp_r7 = reinterpret_cast<u8*>(gsgfxState) + var_r6, temp_r24 = LAYER_STATE_FIELD(u8, var_r3, 0xD5), (((u8) LAYER_STATE_FIELD(u8, temp_r7, 0x40C) == temp_r12) == 0)) || ((u8) LAYER_STATE_FIELD(u8, temp_r7, 0x40D) != temp_r24))) {
                         temp_r11 = var_r5 + 0x1AD;
                         LAYER_STATE_FIELD(u8, reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) = (LAYER_STATE_FIELD(u8, reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) & ~4) | ((temp_r12 << 2) & 4);
@@ -694,7 +656,6 @@ loop_34:
                     var_r4 += 1;
                     var_r5 += 4;
                     var_r6 += 2;
-                    goto loop_34;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0xC) = 0U;
             }
@@ -707,7 +668,7 @@ loop_34:
             if (LAYER_STATE_FIELD(s32, temp_r30, 0x10) & 8) {
                 temp_r4_2 = LAYER_STATE_FIELD(u8, temp_r31, 0x118);
                 if ((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0x438) != temp_r4_2) {
-                    LAYER_STATE_FIELD(u8, gsgfxState, 0x31) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x31) & ~8) | ((temp_r4_2 << 3) & 8));
+                    LAYER_STATE_FIELD(LayerRasterEnable, gsgfxState, 0x31).enabled = temp_r4_2;
                     LAYER_STATE_FIELD(s32, gsgfxState, 0x0) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x0) | 1);
                     LAYER_STATE_FIELD(u8, gsgfxState, 0x438) = temp_r4_2;
                 }
@@ -715,7 +676,7 @@ loop_34:
             if (LAYER_STATE_FIELD(s32, temp_r30, 0x10) & 2) {
                 temp_r4_3 = LAYER_STATE_FIELD(s32, temp_r31, 0x11C);
                 if ((s32) LAYER_STATE_FIELD(s32, gsgfxState, 0x43C) != temp_r4_3) {
-                    LAYER_STATE_FIELD(u8, gsgfxState, 0x32) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x32) & ~0xC0) | ((*(layerCullMode + temp_r4_3) << 6) & 0xC0));
+                    LAYER_STATE_FIELD(LayerGenModeStages, gsgfxState, 0x32).cull = layerCullMode[temp_r4_3];
                     LAYER_STATE_FIELD(s32, gsgfxState, 0x0) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x0) | 1);
                     LAYER_STATE_FIELD(s32, gsgfxState, 0x43C) = temp_r4_3;
                 }
@@ -740,7 +701,7 @@ loop_34:
             if (LAYER_STATE_FIELD(s32, temp_r30, 0x14) & 1) {
                 temp_r4_5 = LAYER_STATE_FIELD(u8, temp_r31, 0x148);
                 if ((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0x454) != temp_r4_5) {
-                    LAYER_STATE_FIELD(u8, gsgfxState, 0x33) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x33) & ~0x30) | ((temp_r4_5 << 4) & 0x30));
+                    LAYER_STATE_FIELD(LayerGenModeCounts, gsgfxState, 0x33).channels = temp_r4_5;
                     LAYER_STATE_FIELD(s32, gsgfxState, 0x0) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x0) | 0x01000000 | 1);
                     LAYER_STATE_FIELD(u8, gsgfxState, 0x454) = temp_r4_5;
                 }
@@ -754,21 +715,16 @@ loop_34:
                             temp_r8 = LAYER_STATE_FIELD(s32, var_r24, 0x160);
                             var_r6_2 = reinterpret_cast<u8**>(var_r24 + 0x164);
                             var_r7 = 0;
-loop_71:
-                            temp_r4_6 = *var_r6_2;
-                            if (temp_r4_6 != NULL) {
+                            while ((temp_r4_6 = *var_r6_2) != NULL) {
                                 var_r5_2 = 0;
-loop_69:
-                                if (var_r5_2 < 8U) {
+                                while (var_r5_2 < 8U) {
                                     temp_r0_2 = LAYER_STATE_FIELD(s32, temp_r4_6, 0x4);
                                     if ((temp_r8 == temp_r0_2) || ((temp_r8 == 2) && (temp_r0_2 == 1))) {
                                         var_r7 |= 1 << LAYER_STATE_FIELD(u8, temp_r4_6, 0x7C);
                                     }
                                     var_r5_2 += 1;
-                                    goto loop_69;
                                 }
                                 ++var_r6_2;
-                                goto loop_71;
                             }
                             LAYER_STATE_FIELD(s32, var_r24, 0x158) = var_r7;
                         } else {
@@ -784,30 +740,24 @@ loop_69:
             if ((u32) LAYER_STATE_FIELD(u32, temp_r30, 0x1C) != 0) {
                 var_r25_2 = temp_r31;
                 var_r26 = 0;
-loop_82:
-                if (var_r26 < (s32) LAYER_STATE_FIELD(s32, temp_r31, 0x148)) {
+                while (var_r26 < (s32) LAYER_STATE_FIELD(u8, temp_r31, 0x148)) {
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x1C) & (1 << var_r26)) {
-                        sp30 = LAYER_STATE_FIELD(s32, var_r25_2, 0x22C);
-                        GSgfx_GCSetAmbColor(var_r26 + 4, &sp30);
+                        GSgfx_GCSetAmbColor(var_r26 + 4, LAYER_STATE_FIELD(GXColor, var_r25_2, 0x22C));
                     }
                     var_r25_2 += 4;
                     var_r26 += 1;
-                    goto loop_82;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0x1C) = 0U;
             }
             if ((u32) LAYER_STATE_FIELD(u32, temp_r30, 0x20) != 0) {
                 var_r25_3 = temp_r31;
                 var_r26_2 = 0;
-loop_89:
-                if (var_r26_2 < (s32) LAYER_STATE_FIELD(s32, temp_r31, 0x148)) {
+                while (var_r26_2 < (s32) LAYER_STATE_FIELD(u8, temp_r31, 0x148)) {
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x20) & (1 << var_r26_2)) {
-                        sp2C = LAYER_STATE_FIELD(s32, var_r25_3, 0x234);
-                        GSgfx_GCSetMatColor(var_r26_2 + 4, &sp2C);
+                        GSgfx_GCSetMatColor(var_r26_2 + 4, LAYER_STATE_FIELD(GXColor, var_r25_3, 0x234));
                     }
                     var_r25_3 += 4;
                     var_r26_2 += 1;
-                    goto loop_89;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0x20) = 0U;
             }
@@ -817,7 +767,7 @@ loop_89:
             if (LAYER_STATE_FIELD(s32, temp_r30, 0x24) & 1) {
                 temp_r4_7 = LAYER_STATE_FIELD(u8, temp_r31, 0x23C);
                 if ((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0x58C) != temp_r4_7) {
-                    LAYER_STATE_FIELD(u8, gsgfxState, 0x32) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x32) & ~0x3C) | (((temp_r4_7 - 1) << 2) & 0x3C));
+                    LAYER_STATE_FIELD(LayerGenModeStages, gsgfxState, 0x32).stages = temp_r4_7 - 1;
                     LAYER_STATE_FIELD(s32, gsgfxState, 0x0) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x0) | 1);
                     LAYER_STATE_FIELD(u8, gsgfxState, 0x58C) = temp_r4_7;
                 }
@@ -825,70 +775,60 @@ loop_89:
             if ((u32) LAYER_STATE_FIELD(u32, temp_r30, 0x28) != 0) {
                 var_r25_4 = temp_r31;
                 var_r26_3 = 0;
-loop_101:
-                if (var_r26_3 < (s32) LAYER_STATE_FIELD(s32, temp_r31, 0x23C)) {
+                while (var_r26_3 < (s32) LAYER_STATE_FIELD(u8, temp_r31, 0x23C)) {
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x28) & (1 << var_r26_3)) {
                         GSgfx_GCSetTevOrder(var_r26_3, LAYER_STATE_FIELD(s32, var_r25_4, 0x240), LAYER_STATE_FIELD(s32, var_r25_4, 0x244), LAYER_STATE_FIELD(s32, var_r25_4, 0x248));
                     }
                     var_r25_4 += 0xC;
                     var_r26_3 += 1;
-                    goto loop_101;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0x28) = 0U;
             }
             if ((u32) LAYER_STATE_FIELD(u32, temp_r30, 0x2C) != 0) {
                 var_r25_5 = temp_r31;
                 var_r26_4 = 0;
-loop_108:
-                if (var_r26_4 < (s32) LAYER_STATE_FIELD(s32, temp_r31, 0x23C)) {
+                while (var_r26_4 < (s32) LAYER_STATE_FIELD(u8, temp_r31, 0x23C)) {
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x2C) & (1 << var_r26_4)) {
                         GSgfx_GCSetTevColorIn(var_r26_4, LAYER_STATE_FIELD(s32, var_r25_5, 0x300), LAYER_STATE_FIELD(s32, var_r25_5, 0x304), LAYER_STATE_FIELD(s32, var_r25_5, 0x308), LAYER_STATE_FIELD(s32, var_r25_5, 0x30C));
                     }
                     var_r25_5 += 0x10;
                     var_r26_4 += 1;
-                    goto loop_108;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0x2C) = 0U;
             }
             if ((u32) LAYER_STATE_FIELD(u32, temp_r30, 0x30) != 0) {
                 var_r25_6 = temp_r31;
                 var_r26_5 = 0;
-loop_115:
-                if (var_r26_5 < (s32) LAYER_STATE_FIELD(s32, temp_r31, 0x23C)) {
+                while (var_r26_5 < (s32) LAYER_STATE_FIELD(u8, temp_r31, 0x23C)) {
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x30) & (1 << var_r26_5)) {
                         GSgfx_GCSetTevAlphaIn(var_r26_5, LAYER_STATE_FIELD(s32, var_r25_6, 0x400), LAYER_STATE_FIELD(s32, var_r25_6, 0x404), LAYER_STATE_FIELD(s32, var_r25_6, 0x408), LAYER_STATE_FIELD(s32, var_r25_6, 0x40C));
                     }
                     var_r25_6 += 0x10;
                     var_r26_5 += 1;
-                    goto loop_115;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0x30) = 0U;
             }
             if ((u32) LAYER_STATE_FIELD(u32, temp_r30, 0x34) != 0) {
                 var_r25_7 = temp_r31;
                 var_r26_6 = 0;
-loop_122:
-                if (var_r26_6 < (s32) LAYER_STATE_FIELD(s32, temp_r31, 0x23C)) {
+                while (var_r26_6 < (s32) LAYER_STATE_FIELD(u8, temp_r31, 0x23C)) {
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x34) & (1 << var_r26_6)) {
                         GSgfx_GCSetTevColorOp(var_r26_6, LAYER_STATE_FIELD(s32, var_r25_7, 0x500), LAYER_STATE_FIELD(s32, var_r25_7, 0x504), LAYER_STATE_FIELD(s32, var_r25_7, 0x508), LAYER_STATE_FIELD(u8, var_r25_7, 0x50C), LAYER_STATE_FIELD(s32, var_r25_7, 0x510));
                     }
                     var_r25_7 += 0x14;
                     var_r26_6 += 1;
-                    goto loop_122;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0x34) = 0U;
             }
             if ((u32) LAYER_STATE_FIELD(u32, temp_r30, 0x38) != 0) {
                 var_r25_8 = temp_r31;
                 var_r26_7 = 0;
-loop_129:
-                if (var_r26_7 < (s32) LAYER_STATE_FIELD(s32, temp_r31, 0x23C)) {
+                while (var_r26_7 < (s32) LAYER_STATE_FIELD(u8, temp_r31, 0x23C)) {
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x38) & (1 << var_r26_7)) {
                         GSgfx_GCSetTevAlphaOp(var_r26_7, LAYER_STATE_FIELD(s32, var_r25_8, 0x640), LAYER_STATE_FIELD(s32, var_r25_8, 0x644), LAYER_STATE_FIELD(s32, var_r25_8, 0x648), LAYER_STATE_FIELD(u8, var_r25_8, 0x64C), LAYER_STATE_FIELD(s32, var_r25_8, 0x650));
                     }
                     var_r25_8 += 0x14;
                     var_r26_7 += 1;
-                    goto loop_129;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0x38) = 0U;
             }
@@ -1015,7 +955,7 @@ loop_129:
                 do {
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x50) & (1 << var_r26_10)) {
                         sp28 = LAYER_STATE_FIELD(s32, var_r25_11, 0x884);
-                        GSgfx_GCSetTevKColor(var_r26_10, &sp28);
+                        GSgfx_GCSetTevKColor(var_r26_10, *reinterpret_cast<GXColor*>(&sp28));
                     }
                     var_r26_10 += 1;
                     var_r25_11 += 4;
@@ -1026,8 +966,7 @@ loop_129:
                 var_r3_3 = temp_r31;
                 var_r4_3 = 0;
                 var_r5_4 = 0;
-loop_187:
-                if (var_r4_3 < (s32) LAYER_STATE_FIELD(s32, temp_r31, 0x23C)) {
+                while (var_r4_3 < (s32) LAYER_STATE_FIELD(u8, temp_r31, 0x23C)) {
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x54) & (1 << var_r4_3)) {
                         temp_r9_2 = LAYER_STATE_FIELD(s32, var_r3_3, 0x894);
                         if ((s32) LAYER_STATE_FIELD(u32, reinterpret_cast<u8*>(gsgfxState) + (var_r5_4 + 0xA24), 0) != temp_r9_2) {
@@ -1046,7 +985,6 @@ loop_187:
                     var_r3_3 += 4;
                     var_r4_3 += 1;
                     var_r5_4 += 4;
-                    goto loop_187;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0x54) = 0U;
             }
@@ -1054,8 +992,7 @@ loop_187:
                 var_r3_4 = temp_r31;
                 var_r4_4 = 0;
                 var_r5_5 = 0;
-loop_198:
-                if (var_r4_4 < (s32) LAYER_STATE_FIELD(s32, temp_r31, 0x23C)) {
+                while (var_r4_4 < (s32) LAYER_STATE_FIELD(u8, temp_r31, 0x23C)) {
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x58) & (1 << var_r4_4)) {
                         temp_r9_3 = LAYER_STATE_FIELD(s32, var_r3_4, 0x8D4);
                         if ((s32) LAYER_STATE_FIELD(u32, reinterpret_cast<u8*>(gsgfxState) + (var_r5_5 + 0xA64), 0) != temp_r9_3) {
@@ -1074,7 +1011,6 @@ loop_198:
                     var_r3_4 += 4;
                     var_r4_4 += 1;
                     var_r5_5 += 4;
-                    goto loop_198;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0x58) = 0U;
             }
@@ -1085,8 +1021,7 @@ loop_198:
                 var_r4_5 = 0;
                 var_r5_6 = 0;
                 var_r6_3 = 0;
-loop_208:
-                if (var_r4_5 < (s32) LAYER_STATE_FIELD(s32, temp_r31, 0x23C)) {
+                while (var_r4_5 < (s32) LAYER_STATE_FIELD(u8, temp_r31, 0x23C)) {
                     if ((LAYER_STATE_FIELD(s32, temp_r30, 0x5C) & (1 << var_r4_5)) && ((temp_r24_2 = LAYER_STATE_FIELD(s32, var_r3_5, 0x914), temp_r7_4 = reinterpret_cast<u8*>(gsgfxState) + var_r6_3, temp_r25 = LAYER_STATE_FIELD(s32, var_r3_5, 0x918), (((s32) LAYER_STATE_FIELD(s32, temp_r7_4, 0xAA4) == temp_r24_2) == 0)) || ((s32) LAYER_STATE_FIELD(s32, temp_r7_4, 0xAA8) != temp_r25))) {
                         temp_r12_3 = var_r5_6 + 0x267;
                         LAYER_STATE_FIELD(u8, reinterpret_cast<u8*>(gsgfxState) + temp_r12_3, 0) = (LAYER_STATE_FIELD(u8, reinterpret_cast<u8*>(gsgfxState) + temp_r12_3, 0) & ~3) | (temp_r24_2 & 3);
@@ -1099,7 +1034,6 @@ loop_208:
                     var_r4_5 += 1;
                     var_r5_6 += 4;
                     var_r6_3 += 8;
-                    goto loop_208;
                 }
                 LAYER_STATE_FIELD(s32, temp_r30, 0x5C) = 0U;
             }
@@ -1137,21 +1071,21 @@ loop_208:
             if (LAYER_STATE_FIELD(s32, temp_r30, 0x64) & 4) {
                 temp_r4_10 = LAYER_STATE_FIELD(u8, temp_r31, 0x9E6);
                 if ((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0xBC4) != temp_r4_10) {
-                    LAYER_STATE_FIELD(u8, gsgfxState, 0x3B) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x3B) & ~8) | ((temp_r4_10 << 3) & 8));
+                    LAYER_STATE_FIELD(LayerColorUpdate, gsgfxState, 0x3B).color = temp_r4_10;
                     LAYER_STATE_FIELD(s32, gsgfxState, 0x0) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x0) | 4);
                     LAYER_STATE_FIELD(u8, gsgfxState, 0xBC4) = temp_r4_10;
                 }
                 temp_r4_11 = LAYER_STATE_FIELD(u8, temp_r31, 0x9E7);
                 if ((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0xBC5) != temp_r4_11) {
-                    LAYER_STATE_FIELD(u8, gsgfxState, 0x3B) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x3B) & ~0x10) | ((temp_r4_11 << 4) & 0x10));
+                    LAYER_STATE_FIELD(LayerColorUpdate, gsgfxState, 0x3B).alpha = temp_r4_11;
                     LAYER_STATE_FIELD(s32, gsgfxState, 0x0) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x0) | 4);
                     LAYER_STATE_FIELD(u8, gsgfxState, 0xBC5) = temp_r4_11;
                 }
                 temp_r5_4 = LAYER_STATE_FIELD(u8, temp_r31, 0x9E8);
                 if (((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0xBE4) != var_r28_3) || ((s32) LAYER_STATE_FIELD(s32, gsgfxState, 0xBE8) != var_r29_3) || ((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0xBEC) != temp_r5_4)) {
-                    LAYER_STATE_FIELD(u8, gsgfxState, 0x37) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x37) & ~1) | (var_r28_3 & 1));
-                    LAYER_STATE_FIELD(u8, gsgfxState, 0x37) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x37) & ~0xE) | ((var_r29_3 << 1) & 0xE));
-                    LAYER_STATE_FIELD(u8, gsgfxState, 0x37) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x37) & ~0x10) | ((temp_r5_4 << 4) & 0x10));
+                    LAYER_STATE_FIELD(LayerZMode, gsgfxState, 0x37).enabled = var_r28_3;
+                    LAYER_STATE_FIELD(LayerZMode, gsgfxState, 0x37).compare = var_r29_3;
+                    LAYER_STATE_FIELD(LayerZMode, gsgfxState, 0x37).update = temp_r5_4;
                     LAYER_STATE_FIELD(s32, gsgfxState, 0x0) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x0) | 2);
                     LAYER_STATE_FIELD(u8, gsgfxState, 0xBE4) = var_r28_3;
                     LAYER_STATE_FIELD(s32, gsgfxState, 0xBE8) = var_r29_3;
@@ -1159,9 +1093,9 @@ loop_208:
                 }
             }
             if ((LAYER_STATE_FIELD(s32, temp_r30, 0x64) & 8) && ((temp_r5_5 = LAYER_STATE_FIELD(u8, temp_r31, 0x9E8), (((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0xBE4) == var_r28_3) == 0)) || ((s32) LAYER_STATE_FIELD(s32, gsgfxState, 0xBE8) != var_r29_3) || ((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0xBEC) != temp_r5_5))) {
-                LAYER_STATE_FIELD(u8, gsgfxState, 0x37) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x37) & ~1) | (var_r28_3 & 1));
-                LAYER_STATE_FIELD(u8, gsgfxState, 0x37) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x37) & ~0xE) | ((var_r29_3 << 1) & 0xE));
-                LAYER_STATE_FIELD(u8, gsgfxState, 0x37) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x37) & ~0x10) | ((temp_r5_5 << 4) & 0x10));
+                LAYER_STATE_FIELD(LayerZMode, gsgfxState, 0x37).enabled = var_r28_3;
+                LAYER_STATE_FIELD(LayerZMode, gsgfxState, 0x37).compare = var_r29_3;
+                LAYER_STATE_FIELD(LayerZMode, gsgfxState, 0x37).update = temp_r5_5;
                 LAYER_STATE_FIELD(s32, gsgfxState, 0x0) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x0) | 2);
                 LAYER_STATE_FIELD(u8, gsgfxState, 0xBE4) = var_r28_3;
                 LAYER_STATE_FIELD(s32, gsgfxState, 0xBE8) = var_r29_3;
@@ -1179,7 +1113,7 @@ loop_208:
             if (LAYER_STATE_FIELD(s32, temp_r30, 0x64) & 0x20) {
                 temp_r4_13 = LAYER_STATE_FIELD(u8, temp_r31, 0xA04);
                 if ((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0xBF1) != temp_r4_13) {
-                    LAYER_STATE_FIELD(u8, gsgfxState, 0x3B) = (u8) ((LAYER_STATE_FIELD(u8, gsgfxState, 0x3B) & ~4) | ((temp_r4_13 << 2) & 4));
+                    LAYER_STATE_FIELD(LayerColorUpdate, gsgfxState, 0x3B).dither = temp_r4_13;
                     LAYER_STATE_FIELD(s32, gsgfxState, 0x0) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x0) | 4);
                     LAYER_STATE_FIELD(u8, gsgfxState, 0xBF1) = temp_r4_13;
                 }
@@ -1253,51 +1187,50 @@ loop_208:
     }
 }
 
-__declspec(weak) void GSgfx_GCSetFogRangeAdj(u8 arg0, u16 arg1, u8 *arg2) {
-    u8 var_r7;
-
-    if ((arg0 != (u8) layerField<u8>(gsgfxState, 0xC0D)) || (arg1 != (u16) layerField<u16>(gsgfxState, 0xC0E))) {
-        var_r7 = 1;
-    } else {
-        var_r7 = 0;
-        if ((u32) layerField<u32>(gsgfxState, 0xC10) != (u32) layerField<u32>(arg2, 0x0)) {
-            var_r7 = 1;
-        } else if ((u32) layerField<u32>(gsgfxState, 0xC14) != (u32) layerField<u32>(arg2, 0x4)) {
-            var_r7 = 1;
-        } else if ((u32) layerField<u32>(gsgfxState, 0xC18) != (u32) layerField<u32>(arg2, 0x8)) {
-            var_r7 = 1;
-        } else if ((u32) layerField<u32>(gsgfxState, 0xC1C) != (u32) layerField<u32>(arg2, 0xC)) {
-            var_r7 = 1;
-        } else if ((u32) layerField<u32>(gsgfxState, 0xC20) != (u32) layerField<u32>(arg2, 0x10)) {
-            var_r7 = 1;
-        }
-    }
-    if (var_r7 == 1) {
-        layerField<u8>(gsgfxState, 0x2FA) = (u8) ((layerField<u8>(gsgfxState, 0x2FA) & ~4) | ((arg0 << 2) & 4));
-        layerField<u16>(gsgfxState, 0x2FA) = (s16) (((u16) layerField<u16>(gsgfxState, 0x2FA) & ~0x3FF) | ((u16) (arg1 + 0x156) & 0x3FF));
-        layerField<s32>(gsgfxState, 0x0) = (s32) (layerField<s32>(gsgfxState, 0x0) | 0x40000);
-        layerField<u8>(gsgfxState, 0xC0D) = arg0;
-        layerField<u16>(gsgfxState, 0xC0E) = arg1;
-        if (arg0 == 1) {
-            layerField<u16>(gsgfxState, 0x2FE) = (u16) ((layerField<u16>(gsgfxState, 0x2FE) & ~0xFFF) | ((u16) layerField<u16>(arg2, 0x0) & 0xFFF));
-            layerField<u32>(gsgfxState, 0x2FC) = (s32) ((layerField<u32>(gsgfxState, 0x2FC) & ~0xFFF000) | ((layerField<u16>(arg2, 0x2) << 0xC) & 0xFFF000));
-            layerField<u16>(gsgfxState, 0x302) = (u16) ((layerField<u16>(gsgfxState, 0x302) & ~0xFFF) | ((u16) layerField<u16>(arg2, 0x4) & 0xFFF));
-            layerField<u32>(gsgfxState, 0x300) = (s32) ((layerField<u32>(gsgfxState, 0x300) & ~0xFFF000) | ((layerField<u16>(arg2, 0x6) << 0xC) & 0xFFF000));
-            layerField<u16>(gsgfxState, 0x306) = (u16) ((layerField<u16>(gsgfxState, 0x306) & ~0xFFF) | ((u16) layerField<u16>(arg2, 0x8) & 0xFFF));
-            layerField<u32>(gsgfxState, 0x304) = (s32) ((layerField<u32>(gsgfxState, 0x304) & ~0xFFF000) | ((layerField<u16>(arg2, 0xA) << 0xC) & 0xFFF000));
-            layerField<u16>(gsgfxState, 0x30A) = (u16) ((layerField<u16>(gsgfxState, 0x30A) & ~0xFFF) | ((u16) layerField<u16>(arg2, 0xC) & 0xFFF));
-            layerField<u32>(gsgfxState, 0x308) = (s32) ((layerField<u32>(gsgfxState, 0x308) & ~0xFFF000) | ((layerField<u16>(arg2, 0xE) << 0xC) & 0xFFF000));
-            layerField<u16>(gsgfxState, 0x30E) = (u16) ((layerField<u16>(gsgfxState, 0x30E) & ~0xFFF) | ((u16) layerField<u16>(arg2, 0x10) & 0xFFF));
-            layerField<u32>(gsgfxState, 0x30C) = (s32) ((layerField<u32>(gsgfxState, 0x30C) & ~0xFFF000) | ((layerField<u16>(arg2, 0x12) << 0xC) & 0xFFF000));
-            layerField<s32>(gsgfxState, 0x0) = (s32) (layerField<s32>(gsgfxState, 0x0) | 0x80000);
-            layerField<s32>(gsgfxState, 0xC10) = (u32) layerField<u32>(arg2, 0x0);
-            layerField<s32>(gsgfxState, 0xC14) = (u32) layerField<u32>(arg2, 0x4);
-            layerField<s32>(gsgfxState, 0xC18) = (u32) layerField<u32>(arg2, 0x8);
-            layerField<s32>(gsgfxState, 0xC1C) = (u32) layerField<u32>(arg2, 0xC);
-            layerField<s32>(gsgfxState, 0xC20) = (u32) layerField<u32>(arg2, 0x10);
-        }
+struct LayerFogRangeRegister { u32 address:8, reserved:13, enable:1, center:10; };
+struct LayerFogRangeKRegister { u32 address:8, high:12, low:12; };
+struct LayerFogRangeRegisters { u8 reserved[0x2f8]; LayerFogRangeRegister range; LayerFogRangeKRegister k[5]; };
+struct LayerFogRangeTable { u32 v[5]; };
+struct LayerFogRangeCache { u8 reserved[0xc0d]; u8 enable; u16 center; LayerFogRangeTable table; };
+#define LAYER_FOG_RANGE (reinterpret_cast<LayerFogRangeRegisters*>(gsgfxState))
+#define LAYER_FOG_RANGE_CACHE (reinterpret_cast<LayerFogRangeCache*>(gsgfxState))
+inline void GSgfx_GCWriteFogRangeAdj(u8 enable, u16 center, GXFogAdjTable *table) {
+    LAYER_FOG_RANGE->range.enable = enable;
+    LAYER_FOG_RANGE->range.center = (u16)(center + 342);
+    layerField<s32>(gsgfxState, 0x0) |= 0x40000;
+    LAYER_FOG_RANGE_CACHE->enable = enable;
+    LAYER_FOG_RANGE_CACHE->center = center;
+    if (enable == 1) {
+        LAYER_FOG_RANGE->k[0].low = table->r[0];
+        LAYER_FOG_RANGE->k[0].high = table->r[1];
+        LAYER_FOG_RANGE->k[1].low = table->r[2];
+        LAYER_FOG_RANGE->k[1].high = table->r[3];
+        LAYER_FOG_RANGE->k[2].low = table->r[4];
+        LAYER_FOG_RANGE->k[2].high = table->r[5];
+        LAYER_FOG_RANGE->k[3].low = table->r[6];
+        LAYER_FOG_RANGE->k[3].high = table->r[7];
+        LAYER_FOG_RANGE->k[4].low = table->r[8];
+        LAYER_FOG_RANGE->k[4].high = table->r[9];
+        layerField<s32>(gsgfxState, 0x0) |= 0x80000;
+        LayerFogRangeTable *c = &LAYER_FOG_RANGE_CACHE->table;
+        LayerFogRangeTable *t = reinterpret_cast<LayerFogRangeTable*>(table);
+        c->v[0] = t->v[0]; c->v[1] = t->v[1]; c->v[2] = t->v[2]; c->v[3] = t->v[3]; c->v[4] = t->v[4];
     }
 }
+__declspec(weak) void GSgfx_GCSetFogRangeAdj(u8 arg0, u16 arg1, u8 *arg2) {
+    LayerFogRangeTable *p = reinterpret_cast<LayerFogRangeTable*>(arg2);
+    u8 changed;
+    if (LAYER_FOG_RANGE_CACHE->enable != arg0 || LAYER_FOG_RANGE_CACHE->center != arg1) changed = 1;
+    else {
+        changed = 0;
+        for (s32 i = 0; i < 5; i++) {
+            if (LAYER_FOG_RANGE_CACHE->table.v[i] != p->v[i]) { changed = 1; break; }
+        }
+    }
+    if (changed == 1)
+        GSgfx_GCWriteFogRangeAdj(arg0, arg1, reinterpret_cast<GXFogAdjTable*>(arg2));
+}
+
 
 __declspec(weak) void GSgfx_GCSetAlphaCompare(s32 arg0, u8 arg1, s32 arg2, s32 arg3, u8 arg4) {
     if (((s32) reinterpret_cast<LayerAlphaCompareCache*>(gsgfxState)->compare0 != arg0) || ((u8) reinterpret_cast<LayerAlphaCompareCache*>(gsgfxState)->reference0 != arg1) || ((s32) reinterpret_cast<LayerAlphaCompareCache*>(gsgfxState)->operation != arg2) || ((s32) reinterpret_cast<LayerAlphaCompareCache*>(gsgfxState)->compare1 != arg3) || ((u8) reinterpret_cast<LayerAlphaCompareCache*>(gsgfxState)->reference1 != arg4)) {
@@ -1338,503 +1271,328 @@ __declspec(weak) void GSgfx_GCSetBlendMode(s32 arg0, s32 arg1, s32 arg2, s32 arg
 }
 
 __declspec(weak) void GSgfx_GCSetTevSwapModeTable(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4) {
-    s32 temp_r0;
-    s32 temp_r12;
-    s32 temp_r27;
-    s32 temp_r28;
-    s32 temp_r29;
-    u8 *temp_r8;
-
-    temp_r8 = reinterpret_cast<u8*>(gsgfxState) + (arg0 * 0x10);
-    if (((s32) reinterpret_cast<LayerSwapTableCache*>(temp_r8)->red != arg1) || ((s32) reinterpret_cast<LayerSwapTableCache*>(temp_r8)->green != arg2) || ((s32) reinterpret_cast<LayerSwapTableCache*>(temp_r8)->blue != arg3) || ((s32) reinterpret_cast<LayerSwapTableCache*>(temp_r8)->alpha != arg4)) {
-        temp_r27 = arg0 * 2;
-        temp_r29 = (arg0 * 8) + 0x207;
-        temp_r28 = temp_r27 + 1;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r29, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r29, 0) & ~3) | (arg1 & 3);
-        temp_r12 = (temp_r28 * 4) + 0x207;
-        temp_r0 = arg0 * 0x10;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r29, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r29, 0) & ~0xC) | ((arg2 << 2) & 0xC);
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r12, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r12, 0) & ~3) | (arg3 & 3);
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r12, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r12, 0) & ~0xC) | ((arg4 << 2) & 0xC);
-        layerField<s32>(gsgfxState, 0x18) = (s32) (layerField<s32>(gsgfxState, 0x18) | (1 << temp_r27));
-        layerField<s32>(gsgfxState, 0x18) = (s32) (layerField<s32>(gsgfxState, 0x18) | (1 << temp_r28));
-        reinterpret_cast<LayerSwapTableCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r0)->red = arg1;
-        reinterpret_cast<LayerSwapTableCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r0)->green = arg2;
-        reinterpret_cast<LayerSwapTableCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r0)->blue = arg3;
-        reinterpret_cast<LayerSwapTableCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r0)->alpha = arg4;
+    u8 *cached = reinterpret_cast<u8*>(gsgfxState) + arg0 * sizeof(LayerSwapTable);
+    if (reinterpret_cast<LayerSwapTableCache*>(cached)->red != arg1 || reinterpret_cast<LayerSwapTableCache*>(cached)->green != arg2 || reinterpret_cast<LayerSwapTableCache*>(cached)->blue != arg3 || reinterpret_cast<LayerSwapTableCache*>(cached)->alpha != arg4) {
+        s32 b;
+        s32 a;
+        a = arg0 * 2;
+        b = a + 1;
+        LAYER_TEV_KSEL_STATE->ksel[a].fields.swap0 = arg1;
+        LAYER_TEV_KSEL_STATE->ksel[a].fields.swap1 = arg2;
+        LAYER_TEV_KSEL_STATE->ksel[b].fields.swap0 = arg3;
+        LAYER_TEV_KSEL_STATE->ksel[b].fields.swap1 = arg4;
+        layerField<s32>(gsgfxState, 0x18) |= 1 << a;
+        layerField<s32>(gsgfxState, 0x18) |= 1 << b;
+        layerSwapTableCache()[arg0].red = arg1;
+        layerSwapTableCache()[arg0].green = arg2;
+        layerSwapTableCache()[arg0].blue = arg3;
+        layerSwapTableCache()[arg0].alpha = arg4;
     }
 }
 
-__declspec(weak) void GSgfx_GCSetTevKColor(s32 arg0, u32 *arg1) {
-    u32 sp8;
-    s32 temp_r10;
-    s32 temp_r12;
-    s32 temp_r4;
-    s32 temp_r6;
-    s32 temp_r6_2;
-    s32 temp_r7;
-    s32 temp_r8;
-    u32 temp_r30;
 
-    temp_r6 = arg0 * 5;
-    if (((u32) layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + (temp_r6 + 0xA11), 0) != (u32) *arg1) || ((u8) layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r6, 0xA10) == 1)) {
-        temp_r30 = *arg1;
-        temp_r12 = arg0 * 4;
-        temp_r6_2 = temp_r12 + 0x2C6;
-        sp8 = temp_r30;
-        temp_r4 = arg0 * 5;
-        temp_r10 = temp_r12 + 0x2C4;
-        temp_r8 = temp_r12 + 0x2D6;
-        layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r6_2, 0) = (layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r6_2, 0) & ~0x7FF) | (layerField<u8>(&sp8,0) & 0x7FF);
-        temp_r7 = temp_r12 + 0x2D4;
-        layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = (layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~0x7FF000) | ((layerField<u8>(&sp8,3) << 0xC) & 0x7FF000);
-        layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) = (layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) & ~0x7FF) | (layerField<u8>(&sp8,2) & 0x7FF);
-        layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) = (layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) & ~0x7FF000) | ((layerField<u8>(&sp8,1) << 0xC) & 0x7FF000);
-        layerField<s32>(gsgfxState, 0x28) = (s32) (layerField<s32>(gsgfxState, 0x28) | (1 << arg0));
-        layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + (temp_r4 + 0xA11), 0) = temp_r30;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r4, 0xA10) = 0;
-    }
+struct LayerColor4 { u8 r, g, b, a; };
+struct LayerChanColorCache { u8 dirty; LayerColor4 color; };
+#define LAYER_AMB_CACHE (reinterpret_cast<LayerChanColorCache*>(reinterpret_cast<u8*>(gsgfxState) + 0x4b8))
+#define LAYER_MAT_CACHE (reinterpret_cast<LayerChanColorCache*>(reinterpret_cast<u8*>(gsgfxState) + 0x4c2))
+#define LAYER_GC_FIELD(type, offset) (*reinterpret_cast<type*>(reinterpret_cast<u8*>(gsgfxState) + offset))
+#define LAYER_KCOLOR_CACHE (reinterpret_cast<LayerChanColorCache*>(reinterpret_cast<u8*>(gsgfxState) + 0xa10))
+struct LayerTevKColorRegister { u32 address:8, bank:1, high:11, reserved:1, low:11; };
+struct LayerTevKColorRegisters { u8 reserved[0x2c4]; LayerTevKColorRegister ra[4]; LayerTevKColorRegister bg[4]; };
+inline void GSgfx_GCWriteTevKColor(s32 id, LayerColor4 color) {
+    reinterpret_cast<LayerTevKColorRegisters*>(gsgfxState)->ra[id].low = color.r;
+    reinterpret_cast<LayerTevKColorRegisters*>(gsgfxState)->ra[id].high = color.a;
+    reinterpret_cast<LayerTevKColorRegisters*>(gsgfxState)->bg[id].low = color.b;
+    reinterpret_cast<LayerTevKColorRegisters*>(gsgfxState)->bg[id].high = color.g;
+    layerField<s32>(gsgfxState, 0x28) |= 1 << id;
+    LAYER_GC_FIELD(u32, (u32)id * 5 + 0xa11) = *(u32*)&color;
+    LAYER_KCOLOR_CACHE[(u32)id].dirty = 0;
+}
+__declspec(weak) void GSgfx_GCSetTevKColor(s32 arg0, GXColor arg1) {
+    if (LAYER_GC_FIELD(u32, 0xa11 + arg0 * 5) != *reinterpret_cast<u32*>(&arg1) || LAYER_KCOLOR_CACHE[arg0].dirty == 1)
+        GSgfx_GCWriteTevKColor(arg0, *reinterpret_cast<LayerColor4*>(&arg1));
 }
 
+
+inline void GSgfx_GCWriteIndTexCoordScale(s32 stage, s32 scaleS, s32 scaleT) {
+    s32 reg = stage >> 1;
+    if (stage & 1) {
+        LAYER_IND_STATE->scale[reg].fields.s1 = scaleS;
+        LAYER_IND_STATE->scale[reg].fields.t1 = scaleT;
+    } else {
+        LAYER_IND_STATE->scale[reg].fields.s0 = scaleS;
+        LAYER_IND_STATE->scale[reg].fields.t1 = scaleT;
+    }
+    layerField<s32>(gsgfxState, 0x8) |= 1 << reg;
+    layerIndScaleCache()[(u32)stage].s = scaleS;
+    layerIndScaleCache()[(u32)stage].t = scaleT;
+}
 __declspec(weak) void GSgfx_GCSetIndTexCoordScale(s32 arg0, s32 arg1, s32 arg2) {
-    s32 temp_r11;
-    s32 temp_r6_2;
-    s32 temp_r7;
-    s32 temp_r7_2;
-    s32 temp_r8;
-    s32 temp_r9;
-    u8 *temp_r6;
-
-    temp_r6 = reinterpret_cast<u8*>(gsgfxState) + (arg0 * 8);
-    if (((s32) reinterpret_cast<LayerIndScaleCache*>(temp_r6)->s != arg1) || ((s32) reinterpret_cast<LayerIndScaleCache*>(temp_r6)->t != arg2)) {
-        temp_r9 = arg0 >> 1;
-        if (arg0 & 1) {
-            temp_r8 = (temp_r9 * 4) + 0x7E;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) & ~0xF) | (arg1 & 0xF);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) & ~0xF0) | ((arg2 << 4) & 0xF0);
-        } else {
-            temp_r11 = temp_r9 * 4;
-            temp_r7 = temp_r11 + 0x7F;
-            temp_r6_2 = temp_r11 + 0x7E;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r7, 0) & ~0xF) | (arg1 & 0xF);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r6_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r6_2, 0) & ~0xF0) | ((arg2 << 4) & 0xF0);
-        }
-        temp_r7_2 = arg0 * 8;
-        layerField<s32>(gsgfxState, 0x8) = (s32) (layerField<s32>(gsgfxState, 0x8) | (1 << temp_r9));
-        reinterpret_cast<LayerIndScaleCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r7_2)->s = arg1;
-        reinterpret_cast<LayerIndScaleCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r7_2)->t = arg2;
-    }
+    if (reinterpret_cast<LayerIndCache*>(gsgfxState)->scale[arg0].s != arg1 || reinterpret_cast<LayerIndCache*>(gsgfxState)->scale[arg0].t != arg2)
+        GSgfx_GCWriteIndTexCoordScale(arg0, arg1, arg2);
 }
+
 
 __declspec(weak) void GSgfx_GCSetIndTexOrder(s32 arg0, s32 arg1, s32 arg2) {
-    s32 temp_r7;
-    u8 *temp_r6;
-
-    temp_r6 = reinterpret_cast<u8*>(gsgfxState) + (arg0 * 8);
-    if (((s32) reinterpret_cast<LayerIndOrderCache*>(temp_r6)->coordinate != arg1) || ((s32) reinterpret_cast<LayerIndOrderCache*>(temp_r6)->map != arg2)) {
-        switch (arg0) {                             /* irregular */
+    u8 *cached = reinterpret_cast<u8*>(gsgfxState) + arg0 * sizeof(LayerIndOrder);
+    if (reinterpret_cast<LayerIndOrderCache*>(cached)->coordinate != arg1 || reinterpret_cast<LayerIndOrderCache*>(cached)->map != arg2) {
+        switch (arg0) {
         case 0:
-            layerField<u8>(gsgfxState, 0x7B) = (u8) ((layerField<u8>(gsgfxState, 0x7B) & ~7) | (arg2 & 7));
-            layerField<u8>(gsgfxState, 0x7B) = (u8) ((layerField<u8>(gsgfxState, 0x7B) & ~0x38) | ((arg1 << 3) & 0x38));
+            LAYER_IND_STATE->order.fields.map0 = arg2;
+            LAYER_IND_STATE->order.fields.coordinate0 = arg1;
             break;
         case 1:
-            layerField<u16>(gsgfxState, 0x7A) = (u16) ((layerField<u16>(gsgfxState, 0x7A) & ~0x1C0) | ((arg2 << 6) & 0x1C0));
-            layerField<u8>(gsgfxState, 0x7A) = (s8) (((u8) layerField<u8>(gsgfxState, 0x7A) & ~0xE) | ((arg1 << 1) & 0xE));
+            LAYER_IND_STATE->order.fields.map1 = arg2;
+            LAYER_IND_STATE->order.fields.coordinate1 = arg1;
             break;
         case 2:
-            layerField<u8>(gsgfxState, 0x7A) = (s8) (((u8) layerField<u8>(gsgfxState, 0x7A) & ~0x70) | ((arg2 << 4) & 0x70));
-            layerField<u32>(gsgfxState, 0x78) = (s32) ((layerField<u32>(gsgfxState, 0x78) & ~0x38000) | ((arg1 << 0xF) & 0x38000));
+            LAYER_IND_STATE->order.fields.map2 = arg2;
+            LAYER_IND_STATE->order.fields.coordinate2 = arg1;
             break;
         case 3:
-            layerField<u8>(gsgfxState, 0x79) = (u8) ((layerField<u8>(gsgfxState, 0x79) & ~0x1C) | ((arg2 << 2) & 0x1C));
-            layerField<u8>(gsgfxState, 0x79) = (u8) ((layerField<u8>(gsgfxState, 0x79) & ~0xE0) | ((arg1 << 5) & 0xE0));
+            LAYER_IND_STATE->order.fields.map3 = arg2;
+            LAYER_IND_STATE->order.fields.coordinate3 = arg1;
             break;
         }
-        temp_r7 = arg0 * 8;
-        layerField<s32>(gsgfxState, 0x0) = (s32) (layerField<s32>(gsgfxState, 0x0) | 0x2000);
-        layerField<s32>(gsgfxState, 0xC) = (s32) (layerField<s32>(gsgfxState, 0xC) | (1 << arg1));
-        reinterpret_cast<LayerIndOrderCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r7)->coordinate = arg1;
-        reinterpret_cast<LayerIndOrderCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r7)->map = arg2;
+        layerField<s32>(gsgfxState, 0x0) |= 0x2000;
+        layerField<s32>(gsgfxState, 0xC) |= 1 << arg1;
+        layerIndOrderCache()[arg0].coordinate = arg1;
+        layerIndOrderCache()[arg0].map = arg2;
     }
 }
+
 
 struct LayerTevStatusView { u8 pad[0xB64]; u8 status[16]; };
-#define TEVST(i) (reinterpret_cast<LayerTevStatusView*>(gsgfxState)->status[i])
+inline u8 *layerTevIndirectMode() { return reinterpret_cast<LayerTevStatusView*>(gsgfxState)->status; }
+#define TEVST(i) (layerTevIndirectMode()[i])
+
+static inline void layerSetTevIndirect(s32 stage, s32 indStage, GXIndTexFormat format, GXIndTexBiasSel bias, GXIndTexMtxID matrix, GXIndTexWrap wrapS, GXIndTexWrap wrapT, u8 addPrevious, u8 useOriginalLod, s32 alpha) {
+    LAYER_INDIRECT_STATE->indirect[stage].fields.stage = indStage;
+    LAYER_INDIRECT_STATE->indirect[stage].fields.format = format;
+    LAYER_INDIRECT_STATE->indirect[stage].fields.bias = bias;
+    LAYER_INDIRECT_STATE->indirect[stage].fields.alpha = alpha;
+    LAYER_INDIRECT_STATE->indirect[stage].fields.matrix = matrix;
+    LAYER_INDIRECT_STATE->indirect[stage].fields.wrapS = wrapS;
+    LAYER_INDIRECT_STATE->indirect[stage].fields.wrapT = wrapT;
+    LAYER_INDIRECT_STATE->indirect[stage].fields.useOriginalLod = useOriginalLod;
+    LAYER_INDIRECT_STATE->indirect[stage].fields.addPrevious = addPrevious;
+    layerField<s32>(gsgfxState, 0x2C) |= 1 << stage;
+    TEVST(stage) = 2;
+}
 __declspec(weak) void GSgfx_GCSetTevIndRepeat(s32 arg0) {
-    s32 temp_r10;
-    s32 temp_r11;
-    s32 temp_r5;
-    s32 temp_r8;
-
-    temp_r5 = arg0 * 4;
-    temp_r11 = temp_r5 + 0x313;
-    temp_r10 = temp_r5 + 0x312;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.stage = 0;
-    temp_r8 = temp_r5 + 0x311;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.format = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.bias = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.alpha = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.matrix = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapS = 6;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapT = 6;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 1;
-    layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
-    TEVST(arg0) = 2;
+    layerSetTevIndirect(arg0, 0, GX_ITF_8, GX_ITB_NONE, GX_ITM_OFF, GX_ITW_0, GX_ITW_0, 1, 0, 0);
 }
 
-__declspec(weak) void GSgfx_GCSetTevIndBumpXYZ(s32 arg0, u8 arg1, s32 arg2) {
-    s32 temp_r12;
-    s32 temp_r31;
-    s32 temp_r7;
-    s32 temp_r9;
 
-    temp_r31 = arg0 * 4;
-    temp_r12 = temp_r31 + 0x313;
-    temp_r9 = temp_r31 + 0x312;
-    temp_r7 = temp_r31 + 0x311;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.stage = arg1;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.format = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.bias = 7;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.alpha = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.matrix = arg2;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapS = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapT = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 0;
-    layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
-    TEVST(arg0) = 2;
+__declspec(weak) void GSgfx_GCSetTevIndBumpXYZ(s32 arg0, s32 arg1, s32 arg2) {
+    layerSetTevIndirect(arg0, arg1, GX_ITF_8, GX_ITB_STU, (GXIndTexMtxID)arg2, GX_ITW_OFF, GX_ITW_OFF, 0, 0, 0);
 }
 
-__declspec(weak) void GSgfx_GCSetTevIndWarp(s32 arg0, u8 arg1, u8 arg2, u8 arg3, s32 arg4) {
-    s32 temp_r10;
-    s32 temp_r31;
-    s32 temp_r5;
-    s32 temp_r6;
-    s32 temp_r7;
-    s32 var_r12;
-    s32 var_r8;
 
-    var_r12 = 0;
-    if (arg3 != 0) {
-        var_r12 = 6;
-    }
-    temp_r31 = arg0 * 4;
-    temp_r6 = temp_r31 + 0x313;
-    var_r8 = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.stage = arg1;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.format = 0;
-    if (arg2 != 0) {
-        var_r8 = 7;
-    }
-    temp_r5 = temp_r31 + 0x313;
-    temp_r10 = temp_r31 + 0x312;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.bias = var_r8;
-    temp_r7 = temp_r31 + 0x311;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.alpha = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.matrix = arg4;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapS = var_r12;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapT = var_r12;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 0;
-    layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
-    TEVST(arg0) = 2;
+__declspec(weak) void GSgfx_GCSetTevIndWarp(s32 arg0, s32 arg1, u8 arg2, u8 arg3, s32 arg4) {
+    GXIndTexWrap wrap = arg3 ? GX_ITW_0 : GX_ITW_OFF;
+    layerSetTevIndirect(arg0, arg1, GX_ITF_8, arg2 ? GX_ITB_STU : GX_ITB_NONE, (GXIndTexMtxID)arg4, wrap, wrap, 0, 0, 0);
 }
 
-__declspec(weak) void GSgfx_GCSetTevIndirect(s32 arg0, u8 arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, s32 arg6, u8 arg7, u8 arg_sp8, s32 arg_spC) {
-    s32 temp_r26;
-    s32 temp_r27;
-    s32 temp_r31;
-    s32 temp_r7;
 
-    temp_r26 = arg0 * 4;
-    temp_r27 = temp_r26 + 0x313;
-    temp_r31 = temp_r26 + 0x312;
-    temp_r7 = temp_r26 + 0x311;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.stage = arg1;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.format = arg2;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.bias = arg3;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.alpha = arg_spC;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.matrix = arg4;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapS = arg5;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapT = arg6;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = arg_sp8;
-    LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = arg7;
-    layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
-    TEVST(arg0) = 2;
+__declspec(weak) void GSgfx_GCSetTevIndirect(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, s32 arg6, u8 arg7, u8 arg_sp8, s32 arg_spC) {
+    layerSetTevIndirect(arg0, arg1, (GXIndTexFormat)arg2, (GXIndTexBiasSel)arg3, (GXIndTexMtxID)arg4, (GXIndTexWrap)arg5, (GXIndTexWrap)arg6, arg7, arg_sp8, arg_spC);
 }
+
 
 __declspec(weak) void GSgfx_GCSetTevDirect(s32 arg0) {
-    s32 temp_r10;
-    s32 temp_r4;
-    s32 temp_r8;
-    s32 temp_r9;
-
     if (TEVST(arg0) != 1) {
-        temp_r4 = arg0 * 4;
-        temp_r10 = temp_r4 + 0x313;
-        temp_r9 = temp_r4 + 0x312;
-        temp_r8 = temp_r4 + 0x311;
-        LAYER_INDIRECT_STATE->indirect[arg0].fields.stage = 0;
-        LAYER_INDIRECT_STATE->indirect[arg0].fields.format = 0;
-        LAYER_INDIRECT_STATE->indirect[arg0].fields.bias = 0;
-        LAYER_INDIRECT_STATE->indirect[arg0].fields.alpha = 0;
-        LAYER_INDIRECT_STATE->indirect[arg0].fields.matrix = 0;
-        LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapS = 0;
-        LAYER_INDIRECT_STATE->indirect[arg0].fields.wrapT = 0;
-        LAYER_INDIRECT_STATE->indirect[arg0].fields.useOriginalLod = 0;
-        LAYER_INDIRECT_STATE->indirect[arg0].fields.addPrevious = 0;
-        layerField<s32>(gsgfxState, 0x2C) = (s32) (layerField<s32>(gsgfxState, 0x2C) | (1 << arg0));
-        TEVST(arg0) = 2;
+        layerSetTevIndirect(arg0, 0, GX_ITF_8, GX_ITB_NONE, GX_ITM_OFF, GX_ITW_OFF, GX_ITW_OFF, 0, 0, 0);
         TEVST(arg0) = 1;
     }
 }
 
-__declspec(weak) void GSgfx_GCSetTevAlphaOp(s32 arg0, s32 arg1, s32 arg2, s32 arg3, u8 arg4, s32 arg5) {
-    s32 temp_r11;
-    s32 temp_r31;
-    s32 temp_r31_2;
-    u8 *temp_r10;
 
-    temp_r10 = reinterpret_cast<u8*>(gsgfxState) + (arg0 * 0x14);
-    if (((s32) reinterpret_cast<LayerTevAlphaOperationCache*>(temp_r10)->operation != arg1) || ((s32) reinterpret_cast<LayerTevAlphaOperationCache*>(temp_r10)->bias != arg2) || ((s32) reinterpret_cast<LayerTevAlphaOperationCache*>(temp_r10)->scale != arg3) || ((u8) reinterpret_cast<LayerTevAlphaOperationCache*>(temp_r10)->clamp != arg4) || ((s32) reinterpret_cast<LayerTevAlphaOperationCache*>(temp_r10)->output != arg5)) {
+__declspec(weak) void GSgfx_GCSetTevAlphaOp(s32 arg0, s32 arg1, s32 arg2, s32 arg3, u8 arg4, s32 arg5) {
+    u8 *cached = reinterpret_cast<u8*>(gsgfxState) + arg0 * sizeof(LayerTevOperation);
+    if (reinterpret_cast<LayerTevAlphaOperationCache*>(cached)->operation != arg1 || reinterpret_cast<LayerTevAlphaOperationCache*>(cached)->bias != arg2 || reinterpret_cast<LayerTevAlphaOperationCache*>(cached)->scale != arg3 || reinterpret_cast<LayerTevAlphaOperationCache*>(cached)->clamp != arg4 || reinterpret_cast<LayerTevAlphaOperationCache*>(cached)->output != arg5) {
         if (arg1 <= 1) {
-            temp_r31 = (arg0 * 4) + 0x265;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~3) | (arg2 & 3);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~4) | ((arg1 << 2) & 4);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~8) | ((arg4 << 3) & 8);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0x30) | ((arg3 << 4) & 0x30);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0xC0) | ((arg5 << 6) & 0xC0);
+            LAYER_TEV_STATE->alpha[arg0].fields.bias = arg2;
+            LAYER_TEV_STATE->alpha[arg0].fields.sub = arg1;
+            LAYER_TEV_STATE->alpha[arg0].fields.clamp = arg4;
+            LAYER_TEV_STATE->alpha[arg0].fields.shift = arg3;
+            LAYER_TEV_STATE->alpha[arg0].fields.dest = arg5;
         } else {
-            temp_r31_2 = (arg0 * 4) + 0x265;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) | 3;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) & ~4) | ((arg1 << 2) & 4);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) & ~8) | ((arg4 << 3) & 8);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) & ~0x30) | ((arg1 << 3) & 0x30);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) & ~0xC0) | ((arg5 << 6) & 0xC0);
+            LAYER_TEV_STATE->alpha[arg0].fields.bias = 3;
+            LAYER_TEV_STATE->alpha[arg0].fields.sub = arg1;
+            LAYER_TEV_STATE->alpha[arg0].fields.clamp = arg4;
+            LAYER_TEV_STATE->alpha[arg0].fields.shift = (arg1 >> 1) & 3;
+            LAYER_TEV_STATE->alpha[arg0].fields.dest = arg5;
         }
-        temp_r11 = arg0 * 0x14;
-        layerField<s32>(gsgfxState, 0x20) = (s32) (layerField<s32>(gsgfxState, 0x20) | (1 << arg0));
-        reinterpret_cast<LayerTevAlphaOperationCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r11)->operation = arg1;
-        reinterpret_cast<LayerTevAlphaOperationCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r11)->bias = arg2;
-        reinterpret_cast<LayerTevAlphaOperationCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r11)->scale = arg3;
-        reinterpret_cast<LayerTevAlphaOperationCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r11)->clamp = arg4;
-        reinterpret_cast<LayerTevAlphaOperationCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r11)->output = arg5;
+        layerField<s32>(gsgfxState, 0x20) |= 1 << arg0;
+        layerTevAlphaOpCache()[arg0].operation = arg1;
+        layerTevAlphaOpCache()[arg0].bias = arg2;
+        layerTevAlphaOpCache()[arg0].scale = arg3;
+        layerTevAlphaOpCache()[arg0].clamp = arg4;
+        layerTevAlphaOpCache()[arg0].output = arg5;
     }
 }
+
 
 __declspec(weak) void GSgfx_GCSetTevColorOp(s32 arg0, s32 arg1, s32 arg2, s32 arg3, u8 arg4, s32 arg5) {
-    s32 temp_r11;
-    s32 temp_r31;
-    s32 temp_r31_2;
-    u8 *temp_r10;
-
-    temp_r10 = reinterpret_cast<u8*>(gsgfxState) + (arg0 * 0x14);
-    if (((s32) reinterpret_cast<LayerTevColorOperationCache*>(temp_r10)->operation != arg1) || ((s32) reinterpret_cast<LayerTevColorOperationCache*>(temp_r10)->bias != arg2) || ((s32) reinterpret_cast<LayerTevColorOperationCache*>(temp_r10)->scale != arg3) || ((u8) reinterpret_cast<LayerTevColorOperationCache*>(temp_r10)->clamp != arg4) || ((s32) reinterpret_cast<LayerTevColorOperationCache*>(temp_r10)->output != arg5)) {
+    u8 *cached = reinterpret_cast<u8*>(gsgfxState) + arg0 * sizeof(LayerTevOperation);
+    if (reinterpret_cast<LayerTevColorOperationCache*>(cached)->operation != arg1 || reinterpret_cast<LayerTevColorOperationCache*>(cached)->bias != arg2 || reinterpret_cast<LayerTevColorOperationCache*>(cached)->scale != arg3 || reinterpret_cast<LayerTevColorOperationCache*>(cached)->clamp != arg4 || reinterpret_cast<LayerTevColorOperationCache*>(cached)->output != arg5) {
         if (arg1 <= 1) {
-            temp_r31 = (arg0 * 4) + 0x225;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~3) | (arg2 & 3);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~4) | ((arg1 << 2) & 4);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~8) | ((arg4 << 3) & 8);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0x30) | ((arg3 << 4) & 0x30);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0xC0) | ((arg5 << 6) & 0xC0);
+            LAYER_TEV_STATE->color[arg0].fields.bias = arg2;
+            LAYER_TEV_STATE->color[arg0].fields.sub = arg1;
+            LAYER_TEV_STATE->color[arg0].fields.clamp = arg4;
+            LAYER_TEV_STATE->color[arg0].fields.shift = arg3;
+            LAYER_TEV_STATE->color[arg0].fields.dest = arg5;
         } else {
-            temp_r31_2 = (arg0 * 4) + 0x225;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) = layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) | 3;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) & ~4) | ((arg1 << 2) & 4);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) & ~8) | ((arg4 << 3) & 8);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) & ~0x30) | ((arg1 << 3) & 0x30);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31_2, 0) & ~0xC0) | ((arg5 << 6) & 0xC0);
+            LAYER_TEV_STATE->color[arg0].fields.bias = 3;
+            LAYER_TEV_STATE->color[arg0].fields.sub = arg1;
+            LAYER_TEV_STATE->color[arg0].fields.clamp = arg4;
+            LAYER_TEV_STATE->color[arg0].fields.shift = (arg1 >> 1) & 3;
+            LAYER_TEV_STATE->color[arg0].fields.dest = arg5;
         }
-        temp_r11 = arg0 * 0x14;
-        layerField<s32>(gsgfxState, 0x1C) = (s32) (layerField<s32>(gsgfxState, 0x1C) | (1 << arg0));
-        reinterpret_cast<LayerTevColorOperationCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r11)->operation = arg1;
-        reinterpret_cast<LayerTevColorOperationCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r11)->bias = arg2;
-        reinterpret_cast<LayerTevColorOperationCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r11)->scale = arg3;
-        reinterpret_cast<LayerTevColorOperationCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r11)->clamp = arg4;
-        reinterpret_cast<LayerTevColorOperationCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r11)->output = arg5;
+        layerField<s32>(gsgfxState, 0x1C) |= 1 << arg0;
+        layerTevColorOpCache()[arg0].operation = arg1;
+        layerTevColorOpCache()[arg0].bias = arg2;
+        layerTevColorOpCache()[arg0].scale = arg3;
+        layerTevColorOpCache()[arg0].clamp = arg4;
+        layerTevColorOpCache()[arg0].output = arg5;
     }
 }
+
 
 __declspec(weak) void GSgfx_GCSetTevAlphaIn(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4) {
-    s32 temp_r30;
-    s32 temp_r30_2;
-    s32 temp_r31;
-    s32 temp_r8_2;
-    u8 *temp_r8;
-
-    temp_r8 = reinterpret_cast<u8*>(gsgfxState) + (arg0 * 0x10);
-    if (((s32) reinterpret_cast<LayerTevAlphaInputCache*>(temp_r8)->a != arg1) || ((s32) reinterpret_cast<LayerTevAlphaInputCache*>(temp_r8)->b != arg2) || ((s32) reinterpret_cast<LayerTevAlphaInputCache*>(temp_r8)->c != arg3) || ((s32) reinterpret_cast<LayerTevAlphaInputCache*>(temp_r8)->d != arg4)) {
-        temp_r30 = arg0 * 4;
-        temp_r31 = temp_r30 + 0x266;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0xE0) | ((arg1 << 5) & 0xE0);
-        temp_r8_2 = temp_r30 + 0x267;
-        temp_r30_2 = arg0 * 0x10;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0x1C) | ((arg2 << 2) & 0x1C);
-        layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0x380) | ((arg3 << 7) & 0x380);
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8_2, 0) & ~0x70) | ((arg4 << 4) & 0x70);
-        layerField<s32>(gsgfxState, 0x20) = (s32) (layerField<s32>(gsgfxState, 0x20) | (1 << arg0));
-        reinterpret_cast<LayerTevAlphaInputCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r30_2)->a = arg1;
-        reinterpret_cast<LayerTevAlphaInputCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r30_2)->b = arg2;
-        reinterpret_cast<LayerTevAlphaInputCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r30_2)->c = arg3;
-        reinterpret_cast<LayerTevAlphaInputCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r30_2)->d = arg4;
+    u8 *cached = reinterpret_cast<u8*>(gsgfxState) + arg0 * sizeof(LayerTevInput);
+    if (reinterpret_cast<LayerTevAlphaInputCache*>(cached)->a != arg1 || reinterpret_cast<LayerTevAlphaInputCache*>(cached)->b != arg2 || reinterpret_cast<LayerTevAlphaInputCache*>(cached)->c != arg3 || reinterpret_cast<LayerTevAlphaInputCache*>(cached)->d != arg4) {
+        LAYER_TEV_STATE->alpha[arg0].fields.a = arg1;
+        LAYER_TEV_STATE->alpha[arg0].fields.b = arg2;
+        LAYER_TEV_STATE->alpha[arg0].fields.c = arg3;
+        LAYER_TEV_STATE->alpha[arg0].fields.d = arg4;
+        layerField<s32>(gsgfxState, 0x20) |= 1 << arg0;
+        layerTevAlphaInCache()[arg0].a = arg1;
+        layerTevAlphaInCache()[arg0].b = arg2;
+        layerTevAlphaInCache()[arg0].c = arg3;
+        layerTevAlphaInCache()[arg0].d = arg4;
     }
 }
+
 
 __declspec(weak) void GSgfx_GCSetTevColorIn(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4) {
-    s32 temp_r10;
-    s32 temp_r10_2;
-    s32 temp_r30;
-    s32 temp_r31;
-    u8 *temp_r8;
-
-    temp_r8 = reinterpret_cast<u8*>(gsgfxState) + (arg0 * 0x10);
-    if (((s32) reinterpret_cast<LayerTevColorInputCache*>(temp_r8)->a != arg1) || ((s32) reinterpret_cast<LayerTevColorInputCache*>(temp_r8)->b != arg2) || ((s32) reinterpret_cast<LayerTevColorInputCache*>(temp_r8)->c != arg3) || ((s32) reinterpret_cast<LayerTevColorInputCache*>(temp_r8)->d != arg4)) {
-        temp_r10 = arg0 * 4;
-        temp_r31 = temp_r10 + 0x226;
-        temp_r30 = arg0 * 0x10;
-        temp_r10_2 = temp_r10 + 0x227;
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0xF0) | ((arg1 << 4) & 0xF0);
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r31, 0) & ~0xF) | (arg2 & 0xF);
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10_2, 0) & ~0xF0) | ((arg3 << 4) & 0xF0);
-        layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10_2, 0) & ~0xF) | (arg4 & 0xF);
-        layerField<s32>(gsgfxState, 0x1C) = (s32) (layerField<s32>(gsgfxState, 0x1C) | (1 << arg0));
-        reinterpret_cast<LayerTevColorInputCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r30)->a = arg1;
-        reinterpret_cast<LayerTevColorInputCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r30)->b = arg2;
-        reinterpret_cast<LayerTevColorInputCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r30)->c = arg3;
-        reinterpret_cast<LayerTevColorInputCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r30)->d = arg4;
+    u8 *cached = reinterpret_cast<u8*>(gsgfxState) + arg0 * sizeof(LayerTevInput);
+    if (reinterpret_cast<LayerTevColorInputCache*>(cached)->a != arg1 || reinterpret_cast<LayerTevColorInputCache*>(cached)->b != arg2 || reinterpret_cast<LayerTevColorInputCache*>(cached)->c != arg3 || reinterpret_cast<LayerTevColorInputCache*>(cached)->d != arg4) {
+        LAYER_TEV_STATE->color[arg0].fields.a = arg1;
+        LAYER_TEV_STATE->color[arg0].fields.b = arg2;
+        LAYER_TEV_STATE->color[arg0].fields.c = arg3;
+        LAYER_TEV_STATE->color[arg0].fields.d = arg4;
+        layerField<s32>(gsgfxState, 0x1C) |= 1 << arg0;
+        layerTevColorInCache()[arg0].a = arg1;
+        layerTevColorInCache()[arg0].b = arg2;
+        layerTevColorInCache()[arg0].c = arg3;
+        layerTevColorInCache()[arg0].d = arg4;
     }
 }
 
+
+struct LayerTevOrderRegister { u32 address:8, reserved1:2, channel1:3, enabled1:1, coordinate1:3, texture1:3, reserved0:2, channel0:3, enabled0:1, coordinate0:3, texture0:3; };
+struct LayerTevOrderRegisters { u8 reserved[0x58]; LayerTevOrderRegister order[8]; };
+struct LayerTevOrderArgs { s32 coordinate, map, color; };
+#define LAYER_TEV_ORDER (reinterpret_cast<LayerTevOrderRegisters*>(gsgfxState))
+struct LayerTevOrderArgCache { u8 reserved[0x4cc]; LayerTevOrderArgs stage[16]; };
+#define LAYER_TEV_ORDER_CACHE (reinterpret_cast<LayerTevOrderArgCache*>(gsgfxState))
+#define LAYER_TEV_ORDER_ARGS (reinterpret_cast<LayerTevOrderArgs*>(reinterpret_cast<u8*>(gsgfxState) + 0x4cc))
+inline void GSgfx_GCWriteTevOrder(s32 stage, s32 coord, s32 map, s32 color) {
+    static u8 c2r[16] = {0, 1, 0, 1, 0, 1, 7, 5, 6, 0, 0, 0, 0, 0, 0, 7};
+    s32 reg = stage >> 1;
+    if (stage & 1) {
+        LAYER_TEV_ORDER->order[reg].texture1 = map & 7;
+        LAYER_TEV_ORDER->order[reg].coordinate1 = coord & 7;
+        LAYER_TEV_ORDER->order[reg].enabled1 = map != 255 && !(map & 0x100);
+        LAYER_TEV_ORDER->order[reg].channel1 = c2r[color & 15];
+    } else {
+        LAYER_TEV_ORDER->order[reg].texture0 = map & 7;
+        LAYER_TEV_ORDER->order[reg].coordinate0 = coord & 7;
+        LAYER_TEV_ORDER->order[reg].enabled0 = map != 255 && !(map & 0x100);
+        LAYER_TEV_ORDER->order[reg].channel0 = c2r[color & 15];
+    }
+    layerField<s32>(gsgfxState, 0x4) |= 1 << reg;
+    if (coord != 255) layerField<s32>(gsgfxState, 0xC) |= 1 << coord;
+    LAYER_TEV_ORDER_ARGS[(u32)stage].coordinate = coord;
+    LAYER_TEV_ORDER_ARGS[(u32)stage].map = map;
+    LAYER_TEV_ORDER_ARGS[(u32)stage].color = color;
+}
 __declspec(weak) void GSgfx_GCSetTevOrder(s32 arg0, s32 arg1, s32 arg2, s32 arg3) {
-    s32 temp_r0;
-    s32 temp_r10;
-    s32 temp_r11;
-    s32 temp_r31;
-    s32 temp_r31_2;
-    s32 temp_r7_2;
-    s32 temp_r8;
-    s32 temp_r8_2;
-    s32 temp_r9;
-    s32 temp_r9_2;
-    u8 var_r8;
-    u8 var_r8_2;
-    u8 *temp_r7;
-
-    temp_r7 = reinterpret_cast<u8*>(gsgfxState) + (arg0 * 0xC);
-    if (((s32) reinterpret_cast<LayerTevOrderCache*>(temp_r7)->coordinate != arg1) || ((s32) reinterpret_cast<LayerTevOrderCache*>(temp_r7)->map != arg2) || ((s32) reinterpret_cast<LayerTevOrderCache*>(temp_r7)->color != arg3)) {
-        temp_r0 = arg0 >> 1;
-        if (arg0 & 1) {
-            temp_r31 = temp_r0 * 4;
-            temp_r8 = temp_r31 + 0x5A;
-            temp_r9 = temp_r31 + 0x58;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r8, 0) & ~0x70) | ((arg2 << 4) & 0x70);
-            var_r8 = 0;
-            layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) = (layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) & ~0x38000) | ((arg1 << 0xF) & 0x38000);
-            if ((arg2 != 0xFF) && !(arg2 & 0x100)) {
-                var_r8 = 1;
-            }
-            temp_r10 = temp_r31 + 0x59;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~4) | ((var_r8 << 2) & 4);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~0x38) | ((*(layerTevColorChannel + (arg3 & 0xF)) << 3) & 0x38);
-        } else {
-            temp_r31_2 = temp_r0 * 4;
-            temp_r11 = temp_r31_2 + 0x5B;
-            var_r8_2 = 0;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) & ~7) | (arg2 & 7);
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r11, 0) & ~0x38) | ((arg1 << 3) & 0x38);
-            if ((arg2 != 0xFF) && !(arg2 & 0x100)) {
-                var_r8_2 = 1;
-            }
-            temp_r9_2 = temp_r31_2 + 0x5B;
-            layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r9_2, 0) = (layerField<u8>(reinterpret_cast<u8*>(gsgfxState) + temp_r9_2, 0) & ~0x40) | ((var_r8_2 << 6) & 0x40);
-            temp_r8_2 = temp_r31_2 + 0x5A;
-            layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r8_2, 0) = (layerField<u16>(reinterpret_cast<u8*>(gsgfxState) + temp_r8_2, 0) & ~0x380) | ((*(layerTevColorChannel + (arg3 & 0xF)) << 7) & 0x380);
-        }
-        layerField<s32>(gsgfxState, 0x4) = (s32) (layerField<s32>(gsgfxState, 0x4) | (1 << temp_r0));
-        if (arg1 != 0xFF) {
-            layerField<s32>(gsgfxState, 0xC) = (s32) (layerField<s32>(gsgfxState, 0xC) | (1 << arg1));
-        }
-        temp_r7_2 = arg0 * 0xC;
-        reinterpret_cast<LayerTevOrderCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r7_2)->coordinate = arg1;
-        reinterpret_cast<LayerTevOrderCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r7_2)->map = arg2;
-        reinterpret_cast<LayerTevOrderCache*>(reinterpret_cast<u8*>(gsgfxState) + temp_r7_2)->color = arg3;
-    }
+    if (LAYER_TEV_ORDER_CACHE->stage[arg0].coordinate != arg1 || LAYER_TEV_ORDER_CACHE->stage[arg0].map != arg2 || LAYER_TEV_ORDER_CACHE->stage[arg0].color != arg3)
+        GSgfx_GCWriteTevOrder(arg0, arg1, arg2, arg3);
 }
 
-__declspec(weak) void GSgfx_GCSetMatColor(s32 arg0, u32 *arg1) {
-    u32 sp8;
-    s32 off;
-    s32 index;
-    off = (arg0 - 4) * 5;
-    u8 *st = reinterpret_cast<u8*>(gsgfxState);
-    index = off + 0x4c3;
-    if (layerField<u32>(st, index) != *arg1 || reinterpret_cast<LayerMatDirtyRow*>(st + off)->dirty == 1) {
-        u32 color = *arg1;
-        sp8 = color;
-        *(volatile u8*)0xCC008000 = 0x10;
-        *(volatile u16*)0xCC008000 = 0;
-        *(volatile u16*)0xCC008000 = (s16) ((arg0 & 1) + 0x100c);
-        *(volatile u32*)0xCC008000 = (layerField<u8>(&sp8,0) << 24) | (layerField<u8>(&sp8,1) << 16) | (layerField<u8>(&sp8,2) << 8) | layerField<u8>(&sp8,3);
-        layerField<u32>(st, index) = color;
-        reinterpret_cast<LayerMatDirtyRow*>(reinterpret_cast<u8*>(gsgfxState) + off)->dirty = 0;
-    }
+inline void GSgfx_GCWriteMatColor(s32 chan, LayerColor4 color) {
+    s32 idx = chan - 4;
+    GXWGFifo.u8 = 0x10;
+    GXWGFifo.u16 = 0;
+    GXWGFifo.u16 = 0x100c + (chan & 1);
+    GXWGFifo.u32 = (color.r << 24) | (color.g << 16) | (color.b << 8) | color.a;
+    LAYER_GC_FIELD(u32, idx * 5 + 0x4c3) = *(u32*)&color;
+    LAYER_MAT_CACHE[idx].dirty = 0;
+}
+inline void GSgfx_GCWriteAmbColor(s32 chan, LayerColor4 color) {
+    s32 idx = chan - 4;
+    GXWGFifo.u8 = 0x10;
+    GXWGFifo.u16 = 0;
+    GXWGFifo.u16 = 0x100a + (chan & 1);
+    GXWGFifo.u32 = (color.r << 24) | (color.g << 16) | (color.b << 8) | color.a;
+    LAYER_GC_FIELD(u32, idx * 5 + 0x4b9) = *(u32*)&color;
+    LAYER_AMB_CACHE[idx].dirty = 0;
+}
+__declspec(weak) void GSgfx_GCSetMatColor(s32 arg0, GXColor arg1) {
+    s32 idx = arg0 - 4;
+    if (LAYER_GC_FIELD(u32, 0x4c3 + idx * 5) != *reinterpret_cast<u32*>(&arg1) || LAYER_MAT_CACHE[idx].dirty == 1)
+        GSgfx_GCWriteMatColor(arg0, *reinterpret_cast<LayerColor4*>(&arg1));
 }
 
-__declspec(weak) void GSgfx_GCSetAmbColor(s32 arg0, u32 *arg1) {
-    u32 sp8;
-    s32 off;
-    s32 index;
-    u32 c0 = *arg1;
-    off = (arg0 - 4) * 5;
-    index = off + 0x4b9;
-    if (c0 != layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + index, 0) || reinterpret_cast<LayerAmbDirtyRow*>(reinterpret_cast<u8*>(gsgfxState) + off)->dirty == 1) {
-        u32 color = *arg1;
-        sp8 = color;
-        *(volatile u8*)0xCC008000 = 0x10;
-        *(volatile u16*)0xCC008000 = 0;
-        *(volatile u16*)0xCC008000 = (s16) ((arg0 & 1) + 0x100a);
-        *(volatile u32*)0xCC008000 = (layerField<u8>(&sp8,0) << 24) | (layerField<u8>(&sp8,1) << 16) | (layerField<u8>(&sp8,2) << 8) | layerField<u8>(&sp8,3);
-        layerField<u32>(reinterpret_cast<u8*>(gsgfxState) + index, 0) = color;
-        reinterpret_cast<LayerAmbDirtyRow*>(reinterpret_cast<u8*>(gsgfxState) + off)->dirty = 0;
-    }
+
+__declspec(weak) void GSgfx_GCSetAmbColor(s32 arg0, GXColor arg1) {
+    s32 idx = arg0 - 4;
+    if (LAYER_GC_FIELD(u32, 0x4b9 + idx * 5) != *reinterpret_cast<u32*>(&arg1) || LAYER_AMB_CACHE[idx].dirty == 1)
+        GSgfx_GCWriteAmbColor(arg0, *reinterpret_cast<LayerColor4*>(&arg1));
 }
 
+
+struct LayerChanCtrlArgs { u8 enable; u8 pad[3]; s32 ambient, material, lights, diffuse, attenuation; };
+struct LayerChanCtrlCache { u8 reserved[0x458]; LayerChanCtrlArgs chan[4]; };
+#define LAYER_CHAN_CTRL_CACHE (reinterpret_cast<LayerChanCtrlCache*>(gsgfxState))
+#define LAYER_CHAN_CTRL_ARGS (reinterpret_cast<LayerChanCtrlArgs*>(reinterpret_cast<u8*>(gsgfxState) + 0x458))
+inline void GSgfx_GCWriteChanCtrl(s32 chan, u8 enable, s32 ambient, s32 material, s32 lights, s32 diffuse, s32 attenuation) {
+    s32 diffuseFunction = diffuse;
+    if (attenuation == 0) diffuseFunction = 0;
+    GXWGFifo.u8 = 0x10; GXWGFifo.u16 = 0; GXWGFifo.u16 = 0x100e + (chan & 3);
+    GXWGFifo.u32 = ((lights << 7) & 0x7800) | ((((u32)(-attenuation | attenuation) >> 21) & 0x400) |
+        ((((u32)((2 - attenuation) | (attenuation - 2)) >> 22) & 0x200) |
+        ((ambient << 6) | (((lights * 4) & 0x3c) | (material | ((enable * 2) & 0x1fe))) | (diffuseFunction << 7))));
+    LAYER_CHAN_CTRL_ARGS[(u32)chan].enable = enable;
+    LAYER_CHAN_CTRL_ARGS[(u32)chan].ambient = ambient;
+    LAYER_CHAN_CTRL_ARGS[(u32)chan].material = material;
+    LAYER_CHAN_CTRL_ARGS[(u32)chan].lights = lights;
+    LAYER_CHAN_CTRL_ARGS[(u32)chan].diffuse = diffuse;
+    LAYER_CHAN_CTRL_ARGS[(u32)chan].attenuation = attenuation;
+}
 __declspec(weak) void GSgfx_GCSetChanCtrl(s32 arg0, u8 arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, s32 arg6) {
-    s32 temp_r12;
-    s32 temp_r12_2;
-    s32 var_r27;
-    u8 *temp_r10;
-    u8 *temp_r11;
-
-    temp_r12 = arg0 * 0x18;
-    temp_r11 = reinterpret_cast<u8*>(gsgfxState) + 0x458;
-    if (((u8) layerField<u8>(temp_r11 + temp_r12, 0) != arg1) || (temp_r10 = reinterpret_cast<u8*>(gsgfxState) + temp_r12, (((s32) layerField<s32>(temp_r10, 0x45C) == arg2) == 0)) || (arg3 != (s32) layerField<s32>(temp_r10, 0x460)) || (arg4 != (s32) layerField<s32>(temp_r10, 0x464)) || (arg5 != (s32) layerField<s32>(temp_r10, 0x468)) || (arg6 != (s32) layerField<s32>(temp_r10, 0x46C))) {
-        var_r27 = arg5;
-        if (arg6 == 0) {
-            var_r27 = 0;
-        }
-        *(volatile u8*)0xCC008000 = 0x10;
-        *(volatile u16*)0xCC008000 = 0;
-        *(volatile u16*)0xCC008000 = (s16) ((arg0 & 3) + 0x100E);
-        temp_r12_2 = arg0 * 0x18;
-        *(volatile u32*)0xCC008000 = (s32) (((arg4 << 7) & 0x7800) | ((((u32) (-arg6 | arg6) >> 0x15U) & 0x400) | ((((u32) ((2 - arg6) | (arg6 - 2)) >> 0x16U) & 0x200) | ((arg2 << 6) | (((arg4 * 4) & 0x3C) | (arg3 | ((arg1 * 2) & 0x1FE))) | (var_r27 << 7)))));
-        layerField<u8>(temp_r11 + temp_r12_2, 0) = arg1;
-        layerField<s32>(reinterpret_cast<u8*>(gsgfxState) + temp_r12_2, 0x45C) = arg2;
-        layerField<s32>(reinterpret_cast<u8*>(gsgfxState) + temp_r12_2, 0x460) = arg3;
-        layerField<s32>(reinterpret_cast<u8*>(gsgfxState) + temp_r12_2, 0x464) = arg4;
-        layerField<s32>(reinterpret_cast<u8*>(gsgfxState) + temp_r12_2, 0x468) = arg5;
-        layerField<s32>(reinterpret_cast<u8*>(gsgfxState) + temp_r12_2, 0x46C) = arg6;
-    }
+    if (LAYER_CHAN_CTRL_ARGS[arg0].enable != arg1 || LAYER_CHAN_CTRL_CACHE->chan[arg0].ambient != arg2 || LAYER_CHAN_CTRL_CACHE->chan[arg0].material != arg3 ||
+        LAYER_CHAN_CTRL_CACHE->chan[arg0].lights != arg4 || LAYER_CHAN_CTRL_CACHE->chan[arg0].diffuse != arg5 || LAYER_CHAN_CTRL_CACHE->chan[arg0].attenuation != arg6)
+        GSgfx_GCWriteChanCtrl(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
+struct LayerScissorRegister { u32 address:8, x:12, y:12; };
+#define LAYER_SC(off) (*reinterpret_cast<LayerScissorRegister*>(reinterpret_cast<u8*>(gsgfxState) + (off)))
+inline void GSgfx_GCWriteScissor(u32 left, u32 top, u32 wd, u32 ht) {
+    LAYER_SC(0x4C).x = left;
+    LAYER_SC(0x4C).y = top;
+    LAYER_SC(0x50).x = LAYER_SC(0x4C).x + wd - 1;
+    LAYER_SC(0x50).y = LAYER_SC(0x4C).y + ht - 1;
+    layerField<s32>(gsgfxState, 0x0) |= 0x4000;
+}
 __declspec(weak) void GSgfx_GCSetScissor(u16 arg0, u16 arg1, u16 arg2, u16 arg3, s32 arg4, s32 arg5) {
-    if (((u16) reinterpret_cast<LayerScissorCache*>(gsgfxState)->x != arg0) || ((u16) reinterpret_cast<LayerScissorCache*>(gsgfxState)->y != arg1) || ((u16) reinterpret_cast<LayerScissorCache*>(gsgfxState)->width != arg2) || ((u16) reinterpret_cast<LayerScissorCache*>(gsgfxState)->height != arg3) || ((s32) reinterpret_cast<LayerScissorCache*>(gsgfxState)->offsetX != arg4) || ((s32) reinterpret_cast<LayerScissorCache*>(gsgfxState)->offsetY != arg5)) {
-        layerField<u32>(gsgfxState, 0x4C) = (u32) ((layerField<u32>(gsgfxState, 0x4C) & ~0xFFF000) | (((arg0 + (arg4 + 0x156)) << 0xC) & 0xFFF000));
-        layerField<u16>(gsgfxState, 0x4E) = (u16) ((layerField<u16>(gsgfxState, 0x4E) & ~0xFFF) | ((u16) (arg1 + (arg5 + 0x156)) & 0xFFF));
-        layerField<u32>(gsgfxState, 0x50) = (s32) ((layerField<u32>(gsgfxState, 0x50) & ~0xFFF000) | ((((((u32) layerField<u32>(gsgfxState, 0x4C) >> 0xCU) & 0xFFF) + (arg2 - 1)) << 0xC) & 0xFFF000));
-        layerField<u16>(gsgfxState, 0x52) = (u16) ((layerField<u16>(gsgfxState, 0x52) & ~0xFFF) | (((layerField<u16>(gsgfxState, 0x4E) & 0xFFF) + (arg3 - 1)) & 0xFFF));
-        layerField<s32>(gsgfxState, 0x0) = (s32) (layerField<s32>(gsgfxState, 0x0) | 0x4000);
+    LayerScissorCache *c = reinterpret_cast<LayerScissorCache*>(gsgfxState);
+    if (c->x != arg0 || c->y != arg1 || c->width != arg2 || c->height != arg3 || c->offsetX != arg4 || c->offsetY != arg5) {
+        GSgfx_GCWriteScissor(arg0 + arg4 + 342, arg1 + arg5 + 342, arg2, arg3);
         reinterpret_cast<LayerScissorCache*>(gsgfxState)->x = arg0;
         reinterpret_cast<LayerScissorCache*>(gsgfxState)->y = arg1;
         reinterpret_cast<LayerScissorCache*>(gsgfxState)->width = arg2;
@@ -1849,12 +1607,16 @@ struct ProjCache { s32 type; ProjArgs args; };
 #define PROJ_CACHE (*reinterpret_cast<ProjCache*>(reinterpret_cast<u8*>(gsgfxState) + 0x41C))
 __declspec(weak) void GSgfx_GCSetProjection(s32 arg0, u8 *arg1) {
     ProjArgs *p = reinterpret_cast<ProjArgs*>(arg1);
+    u32 *cached;
+    u32 *input;
     u8 changed;
     if (PROJ_CACHE.type != arg0) changed = 1;
     else {
         changed = 0;
-        for (s32 i = 0; i < 6; i++) {
-            if (PROJ_CACHE.args.v[i] != p->v[i]) { changed = 1; break; }
+        cached=PROJ_CACHE.args.v;
+        input=p->v;
+        for (s32 i=0;i<6;i++,cached++,input++) {
+            if (*cached != *input) { changed=1; break; }
         }
     }
     if (changed == 1) {

@@ -62,6 +62,24 @@ static s16 _loadFaceCount;
 static Pokemon *_GetTemochiPokemonPtr(u16 index);
 
 extern "C" {
+void FlashSystemSetPlayFrameLabel(u32,const char *,const char *);
+void FlashSystemSetNowFrame(u32,u32);
+u32 FlashSystemGetFrameFromLabel(u32,const char *);
+}
+
+static inline void _setNowFrameLabel(s32 index)
+{
+    const char *labels[5]={"1_start","1_end","2_end","3_end","4_end"};
+    FlashSystemSetNowFrame(0x1F5A3000,FlashSystemGetFrameFromLabel(0x1F5A3000,labels[index]));
+}
+
+static inline void _setPlayFrameLabel(u32 id, s16 index)
+{
+    const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
+    FlashSystemSetPlayFrameLabel(id,labels[index][0],labels[index][1]);
+}
+
+extern "C" {
 void menuOrreExit(void)
 {
     if (pOrre != 0) {
@@ -497,8 +515,7 @@ void menuOrre::ControlCursor(tagWINDOW_WORK *window,tagSPRITE_WORK *sprite) {
             s32 frame=unk10%60;
             sprite->color.value=0xFFFFFFFF;
             if(frame<30) {
-                s32 alpha=sprite->color.channels.alpha-(s32)(128.0f*(f32)sin(3.14f*((f32)frame/30.0f)));
-                sprite->color.channels.alpha=alpha;
+                sprite->color.channels.alpha-=(u8)(128.0f*(f32)sin(3.14f*((f32)frame/30.0f)));
             }
         } else sprite->color.channels.alpha=255;
         winSpriteSetDisp(sprite,1);
@@ -522,10 +539,7 @@ void menuOrre::Ctrl(tagWINDOW_WORK *window) {
                     u16 random=HSD_Rand();
                     f32 delay=50.0f+(f32)(random%50);
                     unk18=delay/100.0f;
-                    ++unk16;
-                    const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
-                    const char **pair=labels[(s16)unk16];
-                    FlashSystemSetPlayFrameLabel(0x1F5B3000,pair[0],pair[1]);
+                    _setPlayFrameLabel(0x1F5B3000,++unk16);
                 }
             }
         }
@@ -541,9 +555,7 @@ void menuFaceLoad(u32,s32 (*)(void *),void *);
 void menuOpen(s32,s32);
 void GSthreadSwitch();
 u8 FlashSystemIsLastFrame(u32);
-s32 menuOpenCustom(s32,s32,s32 *,s32,s32,s32);
-void FlashSystemSetNowFrame(u32,u32,u32);
-u32 FlashSystemGetFrameFromLabel(u32,const char *);
+s32 menuOpenCustom(s32,s32,...);
 void menuClose(s32);
 void menuCloseSync(s32,s32);
 void fadeSet(s32,f32);
@@ -555,51 +567,75 @@ void fightSetMenuCtrlHero(Hero *);
 u16 fightEncount(u16);
 void GSfloorPop();
 }
+static inline bool _checkSelected(menuOrre *orre, u16 id)
+{
+    for (u16 i = 0; i < 4; ++i) {
+        if (orre->slots[i] == (s16)id) return true;
+    }
+    return false;
+}
+static inline u8 _addSelectedPokemon(menuOrre *orre, u16 id)
+{
+    u8 full = 0;
+    orre->slots[orre->unk4++] = id;
+    if (orre->unk4 >= 4) full = 1;
+    _setPlayFrameLabel(0x1F5A3000, orre->unk4);
+    return full;
+}
+
+static inline u8 _removeLastSelectedPokemon(menuOrre *orre)
+{
+    u8 removed;
+    if (orre->unk4 != 0) {
+        --orre->unk4;
+        orre->slots[orre->unk4] = -1;
+        _setNowFrameLabel(orre->unk4);
+        _setPlayFrameLabel(0x1F5A3000, orre->unk4);
+        removed = 1;
+    } else removed = 0;
+    return removed;
+}
+
+static inline Hero *_clearBattlePokemon()
+{
+    Hero *hero = fightGetMenuCtrlHero();
+    for (u16 i = 0; i < 6; ++i) {
+        pokemonInit(heroBiosGetPokemonPtr(hero, i));
+    }
+    return hero;
+}
+
 void menuOrre::Main() {
     _loadFaceCount=0;
     u8 battle=1;
     menuFaceLoad(0,_loadPokemonCallBack,&_loadFaceCount);menuOpen(0xFF,0);
     do {GSthreadSwitch();}while(FlashSystemIsLastFrame(0x1F5C3000)==0);
-    {
-        const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
-        FlashSystemSetPlayFrameLabel(0x1F5B3000,labels[0][0],labels[0][1]);
-    }
+    _setPlayFrameLabel(0x1F5B3000,0);
     for(;;) {
         unk18=1.0f;
         u8 selecting=1;
-        {
-            const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
-            FlashSystemSetPlayFrameLabel(0x1F5A3000,labels[0][0],labels[0][1]);
-        }
+        _setPlayFrameLabel(0x1F5A3000,0);
         do {
             s32 cursor=unkE;
             if(menuOpenCustom(0xFD,windowGetActiveID(),&cursor,0,1,0)>=0) {
-                u8 selected=0;
-                for(u16 i=0;i<4;++i)if(slots[i]==(s16)unkE) {selected=1;break;}
+                bool selected=_checkSelected(this,unkE);
                 switch(SelectPokemon(unkE,selected)) {
                 case 0:
                     if(selected!=0) {
                         u8 removed;
+                        u16 id=unkE;
                         if(unk4!=0) {
                             u16 i=0;
-                            for(;i<4;++i)if(slots[i]==unkE)break;
+                            for(;i<4;++i)if(slots[i]==id)break;
                             --unk4;
                             for(;i<3;++i)slots[i]=slots[i+1];
-                            {
-                                const char *labels[5]={"1_start","1_end","2_end","3_end","4_end"};
-                                FlashSystemSetNowFrame(0x1F5A3000,FlashSystemGetFrameFromLabel(0x1F5A3000,labels[unk4]),0x1F5A0000);
-                            }
-                            const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
-                            FlashSystemSetPlayFrameLabel(0x1F5A3000,labels[unk4][0],labels[unk4][1]);
+                            _setNowFrameLabel(unk4);
+                            _setPlayFrameLabel(0x1F5A3000,unk4);
                             removed=1;
                         } else removed=0;
                         battle=removed;
                     } else {
-                        u8 full=0;
-                        slots[unk4++]=unkE;
-                        if(unk4>=4)full=1;
-                        const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
-                        FlashSystemSetPlayFrameLabel(0x1F5A3000,labels[unk4][0],labels[unk4][1]);
+                        u8 full = _addSelectedPokemon(this, unkE);
                         if(full==1)selecting=0;
                     }
                     break;
@@ -607,19 +643,11 @@ void menuOrre::Main() {
                     menuPokemonStatusOpenFromPokemonChange(GetTemochiPokemonPtr(unkE),_PokemonStatusDisp_CallBack,(long)&unkE);
                     fadeSet(2,0.5f);
                     break;
+                case 2:
+                    break;
                 }
             } else {
-                u8 removed;
-                if(unk4!=0) {
-                    slots[--unk4]=-1;
-                    {
-                        const char *labels[5]={"1_start","1_end","2_end","3_end","4_end"};
-                        FlashSystemSetNowFrame(0x1F5A3000,FlashSystemGetFrameFromLabel(0x1F5A3000,labels[unk4]),0x1F5A0000);
-                    }
-                    const char *labels[5][2]={{"1_start","1_start"},{"1_start","1_end"},{"1_start","2_end"},{"1_start","3_end"},{"1_start","4_end"}};
-                    FlashSystemSetPlayFrameLabel(0x1F5A3000,labels[unk4][0],labels[unk4][1]);
-                    removed=1;
-                } else removed=0;
+                u8 removed = _removeLastSelectedPokemon(this);
                 battle=removed;
                 if(removed==0)selecting=0;
             }
@@ -647,11 +675,9 @@ void menuOrre::Main() {
             u32 end=FlashSystemGetEndFrame(0x1F5B3000);
             if(FlashSystemGetNowFrame(0x1F5B3000)>=end)finished=1;else finished=0;
         }while(finished==0);
-        Hero *hero=fightGetMenuCtrlHero();
-        for(u16 i=0;i<6;++i)pokemonInit(heroBiosGetPokemonPtr(hero,i));
+        Hero *hero = _clearBattlePokemon();
         for(u16 i=0;i<4;++i) {
-            Pokemon *pokemon=GetTemochiPokemonPtr(slots[i]);
-            pokemonBiosCopy(heroBiosGetPokemonPtr(hero,i),pokemon);
+            pokemonBiosCopy(heroBiosGetPokemonPtr(hero,i),GetTemochiPokemonPtr(slots[i]));
         }
         fightSetMenuCtrlHero(fightGetMenuCtrlHero());
         _fightresult=fightEncount(deckNumber);

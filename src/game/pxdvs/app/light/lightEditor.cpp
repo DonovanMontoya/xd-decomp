@@ -76,22 +76,29 @@ void lightEditorStripped(f32* a, f32* b) {
 }
 
 void LightEditor::editDirection(GSlight* light) {
-    f32 dt = GSgfxVideoGetLastRenderTime();
-    f32 scale = 1000.0f;
-    u32 trig = GSinputButtonsChanged(1);
-    trig = GSinputButtonsPressed(1) & trig;
+    f32 dt;
+    f32 lx;
+    f32 ly;
+    f32 scale;
+    f32 angles[2];
+    dt = GSgfxVideoGetLastRenderTime();
+    scale = 1000.0f;
+    u32 changed = GSinputButtonsChanged(1);
+    u32 trig = GSinputButtonsPressed(1);
+    trig &= changed;
     s32 max = peopleBiosGetMaxNum();
+    s32 i;
     s32 idx = mUnk4;
     LightVec pos;
     LightVec dir;
-    LightVec up;
     LightVec right;
-    LightMtx rot;
+    LightVec up;
+    LightMtx result;
     LightMtx rotCopy;
     LightMtx yaw;
-    LightMtx result;
+    LightMtx rot;
     if (trig & 0x20) {
-        for (s32 i = 0; i < max; i++) {
+        for (i = 0; i < max; i++) {
             idx++;
             if (idx >= max) {
                 idx = 0;
@@ -105,15 +112,15 @@ void LightEditor::editDirection(GSlight* light) {
     GSlightGetPosition(light, &pos);
     dir.x = pos.x; dir.y = pos.y; dir.z = pos.z;
     PSVECNormalize(&dir, &dir);
-    f32 lx = dt * GSinputGetLeftStickXData(1, 0);
-    f32 ly = dt * GSinputGetLeftStickYData(1, 0);
+    lx = dt * GSinputGetLeftStickXData(1, 0);
+    ly = dt * GSinputGetLeftStickYData(1, 0);
     GSinputGetRightStickXData(1, 0);
     GSinputGetRightStickYData(1, 0);
     if (!(GSinputButtonsPressed(1) & 0x40)) {
         scale *= 4.0f;
     }
-    f32 yawAmt = lx / scale;
-    f32 pitchAmt = ly / scale;
+    angles[0] = lx / scale;
+    angles[1] = ly / scale;
     dir.x = pos.x; dir.y = pos.y; dir.z = pos.z;
     PSVECNormalize(&dir, &dir);
     up.x = 0.0f;
@@ -131,10 +138,10 @@ void LightEditor::editDirection(GSlight* light) {
         }
     }
     PSVECCrossProduct(&dir, &up, &right);
-    PSMTXRotAxisRad(&rot, &right, -pitchAmt);
+    PSMTXRotAxisRad(&rot, &right, -angles[1]);
     *(LightMtxBits*)&rotCopy = *(LightMtxBits*)&rot;
     PSMTXCopy(&rotCopy, &result);
-    PSMTXRotRad(&yaw, 'Y', yawAmt);
+    PSMTXRotRad(&yaw, 'Y', angles[0]);
     PSMTXConcat(&yaw, &result, &result);
     PSMTXMultVec(&result, &pos, &pos);
     GSlightSetPosition(light, &pos);
@@ -252,24 +259,25 @@ void LightEditor::editType(GSlight* light) {
     }
 }
 
+#pragma opt_common_subs off
+#pragma opt_loop_invariants off
 void LightEditor::editCommand() {
     LightColor color;
-    LightVec target;
-    LightVec pos;
+    struct {LightVec target,pos;GSstreamFileOutput out;} state;
     bool isShadow;
     const char* name;
     bool hasVec;
     int i;
-    GSstreamFileOutput out;
+
     u32 changed = GSinputButtonsChanged(1);
     u32 pressed = GSinputButtonsPressed(1);
     if (!(pressed & changed & 0x100)) {
         return;
     }
-    if (!out.open("lightinfo.txt")) {
+    if (!state.out.open("lightinfo.txt")) {
         return;
     }
-    out.writePrintf("//type, color, pos/dir\n");
+    state.out.writePrintf("//type, color, pos/dir\n");
     for (i = 0; i < lightGetLightSize(); i++) {
         GSlight* light = lightGetLight(i);
         isShadow = (GSlight*)GSresGetResourceAllGroup(floorDataBiosGetShadowLightID(floorDataBiosGetCurrentPtr())) == light;
@@ -281,21 +289,23 @@ void LightEditor::editCommand() {
         case 3: name = "Spt"; hasVec = true; break;
         default: name = "???"; break;
         }
-        GSlightGetPosition(light, &pos);
-        GSlightGetTarget(light, &target);
+        GSlightGetPosition(light, &state.pos);
+        GSlightGetTarget(light, &state.target);
         GSlightGetColor(light, &color);
-        out.writePrintf("%s: ", name);
-        out.writePrintf("(%d,%d,%d) ", color.r, color.b, color.g);
+        state.out.writePrintf("%s: ", name);
+        state.out.writePrintf("(%d,%d,%d) ", color.r, color.b, color.g);
         if (hasVec) {
-            out.writePrintf("(%.2f,%.2f,%.2f)", pos.x, pos.y, pos.z);
+            state.out.writePrintf("(%.2f,%.2f,%.2f)", state.pos.x, state.pos.y, state.pos.z);
         }
         if (isShadow) {
-            out.writePrintf("\t// shadow light");
+            state.out.writePrintf("\t// shadow light");
         }
-        out.writePrintf("\n");
+        state.out.writePrintf("\n");
     }
 }
 
+#pragma opt_common_subs reset
+#pragma opt_loop_invariants reset
 // Stripped from the DOL; its strings still occupy .sdata2.
 void lightEditorSave() {
     GSprint(0, 0, 0, 0, "save");
@@ -424,16 +434,19 @@ void LightEditor::dispLightModel(GSlight* light, bool selected) {
 }
 
 void LightEditor::dispInfo(GSlight* light, long x, long y, bool selected) {
+    bool isShadow;
+    s32 l2;
+    bool hasVec = false;
+    s32 color;
+
     LightVec pos;
     LightVec tgt;
     LightColor col;
     const char* name;
-    bool isShadow;
-    bool hasVec = false;
+
     isShadow = (GSlight*)GSresGetResourceAllGroup(floorDataBiosGetShadowLightID(floorDataBiosGetCurrentPtr())) == light;
-    s32 layer;
-    s32 color;
-    layer = dbgMenuGetLayerID();
+
+    const s32 layer = dbgMenuGetLayerID();
     if (layer != -1) {
         color = selected ? -0x7f01 : -1;
         GSlightGetActive(light);
@@ -448,7 +461,7 @@ void LightEditor::dispInfo(GSlight* light, long x, long y, bool selected) {
         case 3: name = "Spt"; hasVec = true; break;
         default: name = "???"; break;
         }
-        s32 l2 = layer;
+        l2 = layer;
         GSprint(layer, x, y, mUnk1 == 0 ? color : -1, "%s:", name);
         bool on = false;
         if (mUnk2 == 0 && mUnk1 == 1) { on = true; }
@@ -481,7 +494,7 @@ void LightEditor::dispInfo(GSlight* light, long x, long y, bool selected) {
 void GSprimSetup3DRender(GSgfxLayer*);
 
 void LightEditor::editUpdate() {
-    s32 i;
+    s32 indices[1];
     GSgfxVideoGetLastRenderTime();
     s32 rep = GSinputButtonsRepeat(1);
     if (rep & 0x1000) {
@@ -595,12 +608,12 @@ void LightEditor::editUpdate() {
     if (gl != 0) {
         GSprimSetup3DRender(gl);
     }
-    for (i = 0; i < n; i++) {
-        dispLightModel(lightGetLight(i), mUnk0 == i);
+    for (indices[0] = 0; indices[0] < n; indices[0]++) {
+        dispLightModel(lightGetLight(indices[0]), mUnk0 == indices[0]);
     }
     s32 y = 30;
-    for (i = 0; i < n; i++) {
-        dispInfo(lightGetLight(i), 20, y, mUnk0 == i);
+    for (indices[0] = 0; indices[0] < n; indices[0]++) {
+        dispInfo(lightGetLight(indices[0]), 20, y, mUnk0 == indices[0]);
         y += 13;
     }
     if (rep != -1) {

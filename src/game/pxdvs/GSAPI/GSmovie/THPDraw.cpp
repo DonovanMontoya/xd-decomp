@@ -9,10 +9,7 @@ GSgfxLayer* thpLayer;
 }
 union THPColorS10 { GXColorS10 color; u32 words[2]; };
 union THPColor { GXColor color; u32 packed; };
-static const THPColorS10 yuvOffset = {{-90, 0, -114, 135}};
-static const THPColor yuvKonst0 = {{0, 0, 226, 88}};
-static const THPColor yuvKonst1 = {{179, 0, 0, 182}};
-static const THPColor yuvKonst2 = {{255, 0, 255, 128}};
+#define THP_CLAMP_S10(v) ((((v) > -0x400 ? (v) : -0x400) < 0x3FF) ? ((v) > -0x400 ? (v) : -0x400) : 0x3FF)
 template <unsigned Slot>
 static inline void bindTexture(GSgfxLayer* layer, GStexture* texture) {
     GStexture** textures = &layer->field1740;
@@ -57,24 +54,16 @@ void THPGXYuv2RgbDraw(void* arg0, void* arg1, void* arg2, u16 arg3, u16 arg4, s1
     thpLayer->tokenMark();
 }
 
+}
+static inline void thpLoadIdentity(GSgfxMatrixStack* stack) {
+    memcpy(stack->current->matrix, &mtxIdent, 0x30);
+    *(s32*)&stack->current->flags |= 1;
+}
+extern "C" {
 void THPGXYuv2RgbSetup(void) {
-    THPColor spC;
-    THPColor sp10;
-    THPColor sp14;
-    THPColorS10 offset;
     f32 projection[4][4];
     u16 spA;
     u16 sp8;
-    s32 var_r0;
-    s32 var_r0_2;
-    s32 var_r0_3;
-    s32 var_r0_4;
-    s32 var_r0_5;
-    s32 var_r0_6;
-    s32 var_r0_7;
-    s32 var_r0_8;
-    s32 *temp_r3;
-    GSgfxMatrixStack *temp_r30;
     GSgfxLayer *temp_r30_2;
     GSgfxLayer *temp_r31;
 
@@ -88,10 +77,7 @@ void THPGXYuv2RgbSetup(void) {
     temp_r31->fieldD64 = projection[1][3];
     temp_r31->fieldD68 = projection[2][2];
     temp_r31->fieldD6C = projection[2][3];
-    temp_r30 = temp_r31->field19A0;
-    memcpy(temp_r30->current->matrix, &mtxIdent, 0x30);
-    temp_r3 = (s32*)&temp_r30->current->flags;
-    *temp_r3 |= 1;
+    thpLoadIdentity(temp_r31->field19A0);
     temp_r31->field1684 = 0.0f;
     temp_r31->field1688 = 30000.0f;
     if ((u8) temp_r31->field16A7 != 0) {
@@ -166,11 +152,14 @@ void THPGXYuv2RgbSetup(void) {
     layer->field1764 = (s32) (layer->field1764 | 1);
     layer->field1760 = (s32) (layer->field1760 | 1);
     }
+    thpLayer->tgenFunc(0, THPTexture2x4, THPTextureCoordinate0, 0, false, 0);
+    thpLayer->tgenFunc(1, THPTexture2x4, THPTextureCoordinate0, 0, false, 0);
     {
         GSgfxLayer* layer = thpLayer;
-    layer->tgenFunc(0, THPTexture2x4, THPTextureCoordinate0, 0, false, 0);
-    layer->tgenFunc(1, THPTexture2x4, THPTextureCoordinate0, 0, false, 0);
-    layer->field4 = (s32) (layer->field4 | 0x10000000);
+        layer->field4 = (s32) (layer->field4 | 0x10000000);
+    }
+    {
+        GSgfxLayer* layer = thpLayer;
     layer->fieldEAC = 4;
     layer->field16CC = (s32) (layer->field16CC | 1);
     layer->field16A8 = (s32) (layer->field16A8 | 8);
@@ -233,9 +222,9 @@ void THPGXYuv2RgbSetup(void) {
     layer->field1798 = (s32) (layer->field1798 | 1);
     layer->field1760 = (s32) (layer->field1760 | 8);
     }
+    thpLayer->tunitKRegSel(0, (GSgfxTunitKReg)0);
     {
         GSgfxLayer* layer = thpLayer;
-    layer->tunitKRegSel(0, (GSgfxTunitKReg)0);
     layer->field1584 = 0;
     layer->field1588 = 0;
     layer->field1704 = (s32) (layer->field1704 | 1);
@@ -299,9 +288,9 @@ void THPGXYuv2RgbSetup(void) {
     layer->field1798 = (s32) (layer->field1798 | 2);
     layer->field1760 = (s32) (layer->field1760 | 8);
     }
+    thpLayer->tunitKRegSel(1, (GSgfxTunitKReg)1);
     {
         GSgfxLayer* layer = thpLayer;
-    layer->tunitKRegSel(1, (GSgfxTunitKReg)1);
     layer->field158C = 0;
     layer->field1590 = 0;
     layer->field1704 = (s32) (layer->field1704 | 2);
@@ -447,93 +436,41 @@ void THPGXYuv2RgbSetup(void) {
     layer->field17B4 = (s32) (layer->field17B4 | 8);
     layer->field1760 = (s32) (layer->field1760 | 0x10);
     }
-    offset = yuvOffset;
-    var_r0 = offset.color.r;
     {
+        GXColorS10 tevOffset = {-90, 0, -114, 135};
         GSgfxLayer* layer = thpLayer;
     layer->field13FC = 1;
-    if (var_r0 > -0x400) {
-
-    } else {
-        var_r0 = -0x400;
-    }
-    if (var_r0 < 0x3FF) {
-        var_r0_2 = offset.color.r;
-        if (var_r0_2 > -0x400) {
-
-        } else {
-            var_r0_2 = -0x400;
-        }
-    } else {
-        var_r0_2 = 0x3FF;
-    }
-    layer->field1400 = var_r0_2;
-    var_r0_3 = -0x400;
-    if (offset.color.g > -0x400) {
-        var_r0_3 = offset.color.g;
-    }
-    if (var_r0_3 < 0x3FF) {
-        var_r0_4 = -0x400;
-        if (offset.color.g > -0x400) {
-            var_r0_4 = offset.color.g;
-        }
-    } else {
-        var_r0_4 = 0x3FF;
-    }
-    layer->field1402 = var_r0_4;
-    var_r0_5 = -0x400;
-    if (offset.color.b > -0x400) {
-        var_r0_5 = offset.color.b;
-    }
-    if (var_r0_5 < 0x3FF) {
-        var_r0_6 = -0x400;
-        if (offset.color.b > -0x400) {
-            var_r0_6 = offset.color.b;
-        }
-    } else {
-        var_r0_6 = 0x3FF;
-    }
-    layer->field1404 = var_r0_6;
-    var_r0_7 = -0x400;
-    if (offset.color.a > -0x400) {
-        var_r0_7 = offset.color.a;
-    }
-    if (var_r0_7 < 0x3FF) {
-        var_r0_8 = -0x400;
-        if (offset.color.a > -0x400) {
-            var_r0_8 = offset.color.a;
-        }
-    } else {
-        var_r0_8 = 0x3FF;
-    }
-    layer->field1406 = var_r0_8;
+    layer->field1400 = THP_CLAMP_S10(tevOffset.r);
+    layer->field1402 = THP_CLAMP_S10(tevOffset.g);
+    layer->field1404 = THP_CLAMP_S10(tevOffset.b);
+    layer->field1406 = THP_CLAMP_S10(tevOffset.a);
     layer->field16E4 = (s32) (layer->field16E4 | 2);
     layer->field16A8 = (s32) (layer->field16A8 | 8);
     layer->field179C = (s32) (layer->field179C | 2);
     layer->field1760 = (s32) (layer->field1760 | 8);
     }
-    sp14 = yuvKonst0;
     {
+        THPColor konst = {{0, 0, 226, 88}};
         GSgfxLayer* layer = thpLayer;
-    layer->field14F4 = sp14.packed;
+    layer->field14F4 = konst.packed;
     layer->field16F8 = (s32) (layer->field16F8 | 1);
     layer->field16A8 = (s32) (layer->field16A8 | 0x10);
     layer->field17B0 = (s32) (layer->field17B0 | 1);
     layer->field1760 = (s32) (layer->field1760 | 0x10);
     }
-    sp10 = yuvKonst1;
     {
+        THPColor konst = {{179, 0, 0, 182}};
         GSgfxLayer* layer = thpLayer;
-    layer->field14F8 = sp10.packed;
+    layer->field14F8 = konst.packed;
     layer->field16F8 = (s32) (layer->field16F8 | 2);
     layer->field16A8 = (s32) (layer->field16A8 | 0x10);
     layer->field17B0 = (s32) (layer->field17B0 | 2);
     layer->field1760 = (s32) (layer->field1760 | 0x10);
     }
-    spC = yuvKonst2;
     {
+        THPColor konst = {{255, 0, 255, 128}};
         GSgfxLayer* layer = thpLayer;
-    layer->field14FC = spC.packed;
+    layer->field14FC = konst.packed;
     layer->field16F8 = (s32) (layer->field16F8 | 4);
     layer->field16A8 = (s32) (layer->field16A8 | 0x10);
     layer->field17B0 = (s32) (layer->field17B0 | 4);

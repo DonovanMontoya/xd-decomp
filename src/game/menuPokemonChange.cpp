@@ -71,7 +71,7 @@ void windowCheckCursor(s32, s32);
 s32 windowGetValue(s32);
 s32 menuGetLastError(void);
 void menuClose(s32);
-u8 heroGetStatus(Hero *, s32, s32);
+u32 heroGetStatus(Hero *, s32, s32);
 void memoDataSet(s32, Pokemon *);
 void pokemonBiosSetFriend(Pokemon *, s32);
 void pokemonBiosCopy(Pokemon *, Pokemon *);
@@ -90,7 +90,7 @@ void GSsndPlayNow(u32);
 void winMsgOpen(s32, s32, s32, s32);
 void fadeCheck(s32);
 void *memset(void *, int, u32);
-void menuFaceLoad(s32, Pokemon *(*)(void *));
+void menuFaceLoad(Pokemon *, Pokemon *(*)(void *), void *);
 void menuCursorNormal(tagWINDOW_WORK *, s32);
 u32 pokemonGetStatus(Pokemon *, s32, s32, s32);
 u32 GSmsgGetCharLength(u16 *);
@@ -703,9 +703,9 @@ void CMenuPokemonChange::requestPokemonFaceLoad() {
         u32 index;
     } stPokemonListFace;
     int count = 0;
-    int side;
+    enumPlayerIndex side;
     int i;
-    for (side = 0; side < 2; side++) {
+    for (side = PLAYER_0; side < 2; side = (enumPlayerIndex)(side + 1)) {
         for (i = 0; i < 6; i++) {
             Hero *hero;
             if (side == 0) {
@@ -714,23 +714,23 @@ void CMenuPokemonChange::requestPokemonFaceLoad() {
                 hero = &hero1;
             }
             Pokemon *pokemon = hero->getPokemon(i);
-            if (_isPokemonValid(pokemon, (enumPlayerIndex)side)) {
+            if (_isPokemonValid(pokemon, side)) {
                 stPokemonListFace.list[count++] = pokemon;
             }
         }
     }
     stPokemonListFace.list[count] = 0;
     stPokemonListFace.index = 0;
-    menuFaceLoad(0, pokemonChangeRequestPokemonFaceLoadCallBack);
+    menuFaceLoad(0, pokemonChangeRequestPokemonFaceLoadCallBack, &stPokemonListFace);
 }
 
 Pokemon *CMenuPokemonChange::pokemonStatusCallback(Pokemon *, MENU_POKEMON_CB_TYPE type, enumPlayerIndex) {
     getQuantityAllPokemon();
     long idx = lookIndex;
     if (type == MENU_POKEMON_CB_TYPE_1) {
-        idx = pokemonStatusSearch(idx, -1);
+        idx = pokemonStatusSearch(lookIndex, -1);
     } else if (type == MENU_POKEMON_CB_TYPE_2) {
-        idx = pokemonStatusSearch(idx, 1);
+        idx = pokemonStatusSearch(lookIndex, 1);
     }
     lookIndex = idx;
     return getPokemonBySelect(lookIndex);
@@ -1016,7 +1016,8 @@ void CMenuPokemonChange::main() {
 }
 
 bool CMenuPokemonChange::isPokemonLookAbleStatus(long index) {
-    Pokemon *p = getPokemonBySelect(index);
+    int selected = index;
+    Pokemon *p = getPokemonBySelect(selected);
     long state;
     state = _getPokemonState(p, index >= getQuantityHeroPokemon(PLAYER_0) ? PLAYER_1 : PLAYER_0);
     switch (state) {
@@ -1053,16 +1054,22 @@ bool CMenuPokemonChange::pokemonExchangeCheck(enumPlayerIndex player) {
     long state = _getPokemonState(p, player);
     Hero *hero;
     switch (state) {
-    case 4:
-        stateFunctionError(p, 0xC496);
-        return false;
+    case 0:
+    case 1:
+    case 2:
+        break;
     case 3:
         stateFunctionError(p, 0xC497);
+        return false;
+    case 4:
+        stateFunctionError(p, 0xC496);
         return false;
     case 5:
     case 6:
         stateFunctionError(p, 0xC4AB);
         return false;
+    case 7:
+        break;
     }
     if (player == PLAYER_0) {
         hero = hero0;
@@ -1424,8 +1431,8 @@ void CMenuPokemonChange::bgDrawFadeOut() {
 }
 
 void CMenuPokemonChange::stateFunctionExChangeOK() {
-    u8 id0;
-    u8 id1;
+    u32 id0;
+    u32 id1;
     u32 nick0;
     u32 nick1;
     pokemonBiosSetFriend(getPokemonBySelect(selectIndex[0]), 0x46);
@@ -1489,8 +1496,8 @@ void CMenuPokemonChange::stateFunctionExChangeStart() {
     MenuItemSimple *item;
     long i;
     long j;
-    u8 id0;
-    u8 id1;
+    u32 id0;
+    u32 id1;
     u32 nick0;
     u32 nick1;
     item = menuPtItemGetByMenuIdAndItemId(0xDE, 0x652, 0);
@@ -1860,9 +1867,11 @@ s8 menuFaceSearchEnable(u32);
 }
 namespace {
 void CMenuPokemonChange::stateFunctionEvolution() {
-    POKEMON_EVOLUTION_INFO info0,info1;
+    POKEMON_EVOLUTION_INFO info0;
+    POKEMON_EVOLUTION_INFO info1;
     s32 auxiliary;
-    u16 species0,species1;
+    u16 species0;
+    u16 species1;
     u8 evolution=0;
     exchangeSeed=0;
     species0=pokemonEvolutionCheck(getPokemonBySelect(selectIndex[0]),2,0,&auxiliary,&info0);
@@ -1893,7 +1902,7 @@ void CMenuPokemonChange::stateFunctionEvolution() {
         _pokemonChangeFadeIn(0.3f);
         for(s32 i=0;i<2;i++) {
             Pokemon* pokemon=getPokemonBySelect(selectIndex[i]);
-            menuFaceLoad(0,0);
+            menuFaceLoad(pokemon,0,0);
             while(menuFaceSearchEnable(menuFaceGetID(pokemon))==0)GSthreadSwitch();
         }
     }

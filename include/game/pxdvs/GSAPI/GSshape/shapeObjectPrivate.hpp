@@ -25,7 +25,9 @@ struct GSgfxLayer {
     u32 alphaArgs[16][4];
     GSgfxTunitOpState colorOps[16];
     GSgfxTunitOpState alphaOps[16];
-    u8 reserved13f0[0x1644 - 0x13f0];
+    u8 reserved13f0[0x1504 - 0x13f0];
+    u32 konstColors[16], konstAlphas[16];
+    u8 reserved1584[0x1644 - 0x1584];
     u32 blendMode, blendSource, blendDestination, blendLogic;
     u8 reserved1654[2];
     u8 colorUpdate, alphaUpdate, destinationAlpha;
@@ -39,7 +41,9 @@ struct GSgfxLayer {
     u32 transformDirty;
     u8 reserved16bc[0x16d0 - 0x16bc];
     u32 mappingDirty, colorArgDirty, alphaArgDirty, colorOpDirty, alphaOpDirty;
-    u8 reserved16e4[0x170c - 0x16e4];
+    u8 reserved16e4[0x16fc - 0x16e4];
+    u32 konstColorDirty, konstAlphaDirty;
+    u8 reserved1704[0x170c - 0x1704];
     u32 pixelDirty;
     u8 reserved1710[0x173c - 0x1710];
     u32 textureDirty;
@@ -49,7 +53,9 @@ struct GSgfxLayer {
     u32 savedTransformDirty;
     u8 reserved1774[0x1788 - 0x1774];
     u32 savedMappingDirty, savedColorArgDirty, savedAlphaArgDirty, savedColorOpDirty, savedAlphaOpDirty;
-    u8 reserved179c[0x17c4 - 0x179c];
+    u8 reserved179c[0x17b4 - 0x179c];
+    u32 savedKonstColorDirty, savedKonstAlphaDirty;
+    u8 reserved17bc[0x17c4 - 0x17bc];
     u32 savedPixelDirty;
     u8 reserved17c8[0x17f4 - 0x17c8];
     u32 savedTextureDirty;
@@ -81,6 +87,10 @@ struct GSgfxLayer {
     void tunitColorArg(u8, GSgfxTunitCArg, GSgfxTunitCArg, GSgfxTunitCArg, GSgfxTunitCArg);
     void tunitAlphaArg(u8, GSgfxTunitAArg, GSgfxTunitAArg, GSgfxTunitAArg, GSgfxTunitAArg);
 };
+typedef char GSgfxLayerKonstColorOffsetCheck[offsetof(GSgfxLayer, konstColors) == 0x1504 ? 1 : -1];
+typedef char GSgfxLayerKonstAlphaOffsetCheck[offsetof(GSgfxLayer, konstAlphas) == 0x1544 ? 1 : -1];
+typedef char GSgfxLayerKonstDirtyOffsetCheck[offsetof(GSgfxLayer, konstColorDirty) == 0x16fc ? 1 : -1];
+typedef char GSgfxLayerSavedKonstDirtyOffsetCheck[offsetof(GSgfxLayer, savedKonstColorDirty) == 0x17b4 ? 1 : -1];
 typedef char GSgfxLayerTunitOpOffsetCheck[offsetof(GSgfxLayer, alphaOps) == 0x12b0 ? 1 : -1];
 typedef char GSgfxLayerShaderOffsetCheck[offsetof(GSgfxLayer, shaders) == 0x1818 ? 1 : -1];
 typedef char GSgfxLayerShaderIndexOffsetCheck[offsetof(GSgfxLayer, shaderIndex) == 0x1994 ? 1 : -1];

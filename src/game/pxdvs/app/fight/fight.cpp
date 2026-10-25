@@ -318,6 +318,7 @@ static void _fightUpdate(unsigned int,FloorEnterMode) {
     u8 menuIds[4]={0x37,0x38,0x40,0x41};
     u8 menu;
     s32 next;
+    u8* work;
     for(u8 i=0;i<4;++i) {
         menu=menuIds[i];
         s8 count=fightFloor_GetStatusMenuCnt(menu);
@@ -331,10 +332,11 @@ static void _fightUpdate(unsigned int,FloorEnterMode) {
             }
         }
     }
-    if(ServerWork.messageState==2) {
+    work=(u8*)&ServerWork;
+    if(work[7]==2) {
         if(msgFrame--<=0) {
             fightMenuCloseMsg();
-            ServerWork.messageState=0;
+            work[7]=0;
         }
     }
 }

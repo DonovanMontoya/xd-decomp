@@ -33,7 +33,8 @@ struct GSgfxLayer {
     u8 alphaUpdate;
     u8 depthBeforeTexture;
     u8 reserved1659[0x3];
-    s32 depthEnable;
+    u8 depthEnable;
+    u8 depthEnablePad[3];
     s32 depthCompare;
     s32 alphaCompare0;
     s32 alphaCombine;

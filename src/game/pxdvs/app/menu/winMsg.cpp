@@ -16,7 +16,7 @@ s32 menuOpenCustom(s32,s32,void *,s32,bool,s32,...);
 void winMsgClose(bool);
 s32 winMsgCheck();
 void winMsgOpen(s8,void *,bool,bool);
-u8 _winMsgOpenErrWin;
+static u8 _winMsgOpenErrWin;
 static s8 _winMsgType = -1;
 static s16 menuPos = -2;
 }
@@ -32,7 +32,7 @@ s32 winMsgDraw(tagWINDOW_WORK *window, WindowSprite *sprite) {
     if (window->menuID == 0x53) { width=work->width; height=work->height; }
     else { width=sprite->width; height=sprite->height; }
     s16 offY=(sprite->height-4)-height;
-    spriteSetOffset(layer,window->x+sprite->x,sprite->y+(window->y+offY));
+    spriteSetOffset(layer,window->x+sprite->x,window->y+sprite->y+offY);
     spriteSetEnv(layer);
     switch (window->menuID) {
     case 42: break;

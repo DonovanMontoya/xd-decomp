@@ -20,21 +20,21 @@ s32 cBattleDisk::mItemCurIdx[8] = {0x6F9, 0x6FB, 0x6FD, 0x6FF, 0x701, 0x703, 0x7
 s32 cBattleDisk::mContentsCurIdx[15] = {0x76F, 0x770, 0x771, 0x772, 0x773, 0x774, 0x775, 0x776,
                                         0x777, 0x778, 0x7B6, 0x7B7, 0x7B8, 0x7B9, 0x7BA};
 
-static s16 sRect[14][4] = {
-    {216, 6, 42, 42},
-    {0, 0, -264, 54},
-    {19, 7, 133, 18},
-    {30, 29, 95, 18},
-    {126, 29, 80, 18},
-    {154, 7, 19, 18},
-    {9, 29, 20, 15},
-    {6, 6, 42, 42},
-    {0, 0, 264, 54},
-    {64, 7, 133, 18},
-    {75, 29, 95, 18},
-    {171, 29, 80, 18},
-    {199, 7, 19, 18},
-    {54, 29, 20, 15}
+static s16 sRect[56] = {
+    216, 6, 42, 42,
+    0, 0, -264, 54,
+    19, 7, 133, 18,
+    30, 29, 95, 18,
+    126, 29, 80, 18,
+    154, 7, 19, 18,
+    9, 29, 20, 15,
+    6, 6, 42, 42,
+    0, 0, 264, 54,
+    64, 7, 133, 18,
+    75, 29, 95, 18,
+    171, 29, 80, 18,
+    199, 7, 19, 18,
+    54, 29, 20, 15
 };
 
 extern "C" {
@@ -456,33 +456,33 @@ static void drawPkmPanel(u32 id, tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
         s32 sex;
         s32 level;
         s32 hp;
-        pos.x = (f32)(shift + sRect[base][0]);
-        pos.y = (f32)sRect[base][1];
+        pos.x = (f32)(shift + sRect[(base) * 4 + 0]);
+        pos.y = (f32)sRect[(base) * 4 + 1];
         pokemon = heroBiosGetPokemonPtr(hero, index);
         if (pokemon != 0) {
             sex = pokemonGetStatus(pokemon, 0, 0x77, 0);
             level = pokemonGetStatus(pokemon, 0, 0x83, 0);
             hp = pokemonGetStatus(pokemon, 0, 0x7A, 0);
             dispFace(id, &pos, win, sprite, pokemon);
-            windowDrawSprite2(shift + sRect[base + 1][0], sRect[base + 1][1], sRect[base + 1][2], sRect[base + 1][3],
+            windowDrawSprite2(shift + sRect[(base + 1) * 4 + 0], sRect[(base + 1) * 4 + 1], sRect[(base + 1) * 4 + 2], sRect[(base + 1) * 4 + 3],
                               win->alpha | ~0xFF, win, 0x2FC, 0, layer);
             msgctrlSetValue(0x37, sex);
-            GSmsgPrintRect(layer, shift + sRect[base + 2][0], sRect[base + 2][1], sprite->x, sprite->y,
+            GSmsgPrintRect(layer, shift + sRect[(base + 2) * 4 + 0], sRect[(base + 2) * 4 + 1], sprite->x, sprite->y,
                            win->alpha | ~0xFF, 0x4277);
             msgctrlSetValue(0x37, GSmsgGetGSchar(0x42D4));
-            GSmsgPrintRect(layer, shift + sRect[base + 3][0], sRect[base + 3][1], sprite->x, sprite->y,
+            GSmsgPrintRect(layer, shift + sRect[(base + 3) * 4 + 0], sRect[(base + 3) * 4 + 1], sprite->x, sprite->y,
                            win->alpha | ~0xFF, 0x4276);
             msgctrlSetValue(0x34, hp);
-            GSmsgPrintRect(layer, shift + (sRect[base + 3][0] + 0x18), sRect[base + 3][1], sprite->x, sprite->y,
+            GSmsgPrintRect(layer, shift + (sRect[(base + 3) * 4 + 0] + 0x18), sRect[(base + 3) * 4 + 1], sprite->x, sprite->y,
                            win->alpha | ~0xFF, 0x426F);
             msgctrlSetValue(0x37, GSmsgGetGSchar(0x42D5));
-            GSmsgPrintRect(layer, shift + sRect[base + 4][0], sRect[base + 4][1], sprite->x, sprite->y,
+            GSmsgPrintRect(layer, shift + sRect[(base + 4) * 4 + 0], sRect[(base + 4) * 4 + 1], sprite->x, sprite->y,
                            win->alpha | ~0xFF, 0x4276);
             msgctrlSetValue(0x34, level);
-            GSmsgPrintRect(layer, shift + (sRect[base + 4][0] + 0x1C), sRect[base + 4][1], sprite->x, sprite->y,
+            GSmsgPrintRect(layer, shift + (sRect[(base + 4) * 4 + 0] + 0x1C), sRect[(base + 4) * 4 + 1], sprite->x, sprite->y,
                            win->alpha | ~0xFF, 0x426F);
             {
-                s32 msg;
+                u32 msg;
                 switch (menuSubGetPokemonSexForDisp(pokemon)) {
                 case 0:
                     msg = 0x9C5;
@@ -490,18 +490,19 @@ static void drawPkmPanel(u32 id, tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
                 case 1:
                     msg = 0x9C6;
                     break;
+                case 2:
                 default:
                     msg = 0;
                     break;
                 }
                 if (msg != 0) {
                     msgctrlSetValue(0x37, GSmsgGetGSchar(msg));
-                    GSmsgPrint2(layer, shift + sRect[base + 5][0], sRect[base + 5][1], win->alpha | ~0xFF, 0x4276);
+                    GSmsgPrint2(layer, shift + sRect[(base + 5) * 4 + 0], sRect[(base + 5) * 4 + 1], win->alpha | ~0xFF, 0x4276);
                 }
             }
             if (pokemonGetSoubiItemDataId(pokemon) != 0) {
-                windowDrawSprite2(shift + sRect[base + 6][0], sRect[base + 6][1], sRect[base + 6][2],
-                                  sRect[base + 6][3], win->alpha | ~0xFF, win, 0x14B, 0, layer);
+                windowDrawSprite2(shift + sRect[(base + 6) * 4 + 0], sRect[(base + 6) * 4 + 1], sRect[(base + 6) * 4 + 2],
+                                  sRect[(base + 6) * 4 + 3], win->alpha | ~0xFF, win, 0x14B, 0, layer);
             }
         }
     }
@@ -552,8 +553,8 @@ s32 menuBdisk_selectL_Btn(tagWINDOW_WORK* win) {
     s16 scroll;
     u16 key;
     key = windowGetKeyRepeat();
-    gBDisk.unk12 = win->cursor;
     scroll = gBDisk.scroll;
+    gBDisk.unk12 = win->cursor;
     if (key & 2) {
         if (gBDisk.unk10 == gBDisk.unkE && win->cursor == 7 && gBDisk.scroll < gBDisk.count - 8) {
             gBDisk.scroll++;
@@ -948,27 +949,34 @@ s32 BattleDiskItemDraw(tagWINDOW_WORK *win,tagSPRITE_WORK *spr) {
     return 0;
 }
 
-u16 wazaGetStatus(s32,u16,s32,s32);
-u16 zokuseiBiosGetSpriteID(u16);
-u16 zokuseiGetPokemonSpriteID(void*,u16);
-u8 pokemonDataBiosGetZokuseiDataId(void*,u16);
+s32 wazaGetStatus(s32,u16,s32,s32);
+s32 zokuseiBiosGetSpriteID(u16);
+s32 zokuseiGetPokemonSpriteID(void*,u16);
+s32 pokemonDataBiosGetZokuseiDataId(void*,u16);
 void windowDrawSprite(s32,s32,tagWINDOW_WORK*,s32,s32,s32);
 s32 BattleDiskStatus(tagWINDOW_WORK *win,tagSPRITE_WORK *spr) {
-    u16 index=0;
-    s32 layer=winSpriteGetLayerID(win,spr);
-    Hero *hero=&gBDisk.heroes[0];
-    u32 count=heroGetPokeomCount(hero);
-    s16 slot=gBDisk.unk14;
-    if((u32)slot>=count){hero=&gBDisk.heroes[1];slot-=count;}
-    s16 id=spr->id;
-    Pokemon *pokemon=hero->getPokemon(slot);
-    switch(id) {
+    s32 moveLayer;
+    Hero *hero;
+    s32 index;
+    s32 layer;
+    u32 count;
+    Hero *h;
+    s32 slot;
+    Pokemon *pokemon;
+    index=0;
+    layer=winSpriteGetLayerID(win,spr);
+    hero=&gBDisk.heroes[0];
+    count=heroGetPokeomCount(hero);
+    slot=gBDisk.unk14;
+    if((u32)slot<count){h=hero;}else{h=&gBDisk.heroes[1];slot-=count;}
+    pokemon=h->getPokemon(slot);
+    switch(spr->id) {
     case 0x791:
         msgctrlSetValue(0x37,pokemonGetStatus(pokemon,0,0x77,0));
         GSmsgPrintRect(layer,0,0,spr->x,spr->y,win->alpha|~0xFF,0x4277);break;
     case 0x792:{
         u32 msg;
-        switch(menuSubGetPokemonSexForDisp(pokemon)){case 0:msg=0x9C5;break;case 1:msg=0x9C6;break;default:msg=0;break;}
+        switch(menuSubGetPokemonSexForDisp(pokemon)){case 0:msg=0x9C5;break;case 1:msg=0x9C6;break;case 2:default:msg=0;break;}
         if(msg){msgctrlSetValue(0x37,GSmsgGetGSchar(msg));GSmsgPrint2(layer,0,0,win->alpha|~0xFF,0x4276);}break;
     }
     case 0x793:
@@ -983,7 +991,7 @@ s32 BattleDiskStatus(tagWINDOW_WORK *win,tagSPRITE_WORK *spr) {
     }
     case 0x78C:{
         u8 type=pokemonDataBiosGetZokuseiDataId(pokemon->getPokemonDataPtr(),0);
-        if(type!=pokemonDataBiosGetZokuseiDataId(pokemon->getPokemonDataPtr(),1)){
+        if(type!=(u8)pokemonDataBiosGetZokuseiDataId(pokemon->getPokemonDataPtr(),1)){
             u16 sprite=zokuseiGetPokemonSpriteID(pokemon->getPokemonDataPtr(),1);
             windowDrawSprite(0,0,win,sprite,0,winSpriteGetLayerID(win,spr));
         }break;
@@ -993,15 +1001,15 @@ s32 BattleDiskStatus(tagWINDOW_WORK *win,tagSPRITE_WORK *spr) {
     case 0x78E:index++;
     case 0x78D:{
         s32 move=pokemonGetStatus(pokemon,0,0x7F,index);
-        switch(move){case 0:break;case 0x176:windowDrawSprite(0,0,win,0x7B,0,winSpriteGetLayerID(win,spr));break;
-        default:{s32 moveLayer=winSpriteGetLayerID(win,spr);windowDrawSprite(0,0,win,zokuseiBiosGetSpriteID(wazaGetStatus(0,move,3,0)),0,moveLayer);break;}}
+        switch(move){case 0:case 0x164:case 0x165:case 0x166:case 0x167:case 0x168:case 0x169:case 0x16A:case 0x16B:case 0x16C:case 0x16D:case 0x16E:case 0x16F:case 0x170:case 0x171:case 0x172:case 0x173:case 0x174:case 0x175:break;case 0x176:windowDrawSprite(0,0,win,0x7B,0,winSpriteGetLayerID(win,spr));break;
+        default:{moveLayer=winSpriteGetLayerID(win,spr);windowDrawSprite(0,0,win,zokuseiBiosGetSpriteID(wazaGetStatus(0,move,3,0)),0,moveLayer);break;}}
         break;
     }
     case 0x797:index=1;
     case 0x796:index++;
     case 0x795:index++;
     case 0x794:{
-        u16 move=pokemonGetStatus(pokemon,0,0x7F,index);
+        u32 move=pokemonGetStatus(pokemon,0,0x7F,index);
         if(move&&wazaGetStatus(0,move,1,0)){
             msgctrlSetValue(0x37,GSmsgGetGSchar(wazaGetStatus(0,move,1,0)));
             GSmsgPrintRect(winSpriteGetLayerID(win,spr),0,0,spr->x,spr->y,win->alpha|~0xFF,0x4277);
@@ -1035,10 +1043,11 @@ s32 BattleDiskStatus(tagWINDOW_WORK *win,tagSPRITE_WORK *spr) {
 }
 
 s32 heroBiosGetNamePtr(Hero*);
-u16 FlashSystemGetNowFrame(u32);
-u16 FlashSystemGetEndFrame(u32,void*);
+u32 FlashSystemGetNowFrame(u32);
+u32 FlashSystemGetEndFrame(u32);
 s32 BattleDiskBorADraw(tagWINDOW_WORK *win,tagSPRITE_WORK *spr) {
-    u16 index=0;
+    u32 index=0;
+    Hero *hero;
     GSvec2 pos;pos.x=0.0f;pos.y=0.0f;
     switch(spr->id) {
     case 0x738:index=1;
@@ -1047,7 +1056,7 @@ s32 BattleDiskBorADraw(tagWINDOW_WORK *win,tagSPRITE_WORK *spr) {
     case 0x735:index++;
     case 0x734:index++;
     case 0x733:{
-        Hero *hero=&gBDisk.heroes[0];
+        hero=&gBDisk.heroes[0];
         if(heroGetPokeomCount(hero)>index)dispFace(index,&pos,win,spr,heroBiosGetPokemonPtr(hero,index));break;
     }
     case 0x744:index=1;
@@ -1056,7 +1065,7 @@ s32 BattleDiskBorADraw(tagWINDOW_WORK *win,tagSPRITE_WORK *spr) {
     case 0x741:index++;
     case 0x740:index++;
     case 0x73F:{
-        Hero *hero=&gBDisk.heroes[1];
+        hero=&gBDisk.heroes[1];
         if(heroGetPokeomCount(hero)>index)dispFace(index,&pos,win,spr,heroBiosGetPokemonPtr(hero,index));break;
     }
     case 0x73E:index=1;
@@ -1077,7 +1086,7 @@ s32 BattleDiskBorADraw(tagWINDOW_WORK *win,tagSPRITE_WORK *spr) {
         if(index<heroGetPokeomCount(&gBDisk.heroes[1]))winSpriteSetDisp(spr,1);break;
     case 0x74B:
         spr->value4C=0;
-        switch(gBDisk.result){case 0:case 1:break;case 2:case 3:spr->value4C=deckDataVirtualDB_GetExplanetion2(gBDisk.selectedID);break;}break;
+        switch(gBDisk.result){case 2:case 3:spr->value4C=deckDataVirtualDB_GetExplanetion2(gBDisk.selectedID);break;}break;
     case 0x74C:
         spr->value4C=0;
         switch(gBDisk.result){case 2:case 3:spr->value4C=itemDataBiosGetName(itemDataBiosGetPtr(gBDisk.selectedID+0x215));break;default:spr->value4C=deckDataVirtualDB_GetTitle(gBDisk.selectedID);break;}break;
@@ -1094,17 +1103,17 @@ s32 BattleDiskBorADraw(tagWINDOW_WORK *win,tagSPRITE_WORK *spr) {
         case 2:
             windowDrawSprite(0,0,win,0x314,0,winSpriteGetLayerID(win,spr));
             gBDisk.currentFrame=FlashSystemGetNowFrame(0x1F333000);
-            gBDisk.endFrame=FlashSystemGetEndFrame(0x1F333000,&gBDisk);break;
+            gBDisk.endFrame=FlashSystemGetEndFrame(0x1F333000);break;
         case 3:case 4:case 7:
             windowDrawSprite(0,0,win,0x315,0,winSpriteGetLayerID(win,spr));
             gBDisk.currentFrame=FlashSystemGetNowFrame(0x1F343000);
-            gBDisk.endFrame=FlashSystemGetEndFrame(0x1F343000,&gBDisk);break;
+            gBDisk.endFrame=FlashSystemGetEndFrame(0x1F343000);break;
         default:
             windowDrawSprite(0,0,win,0x316,0,winSpriteGetLayerID(win,spr));
             gBDisk.currentFrame=FlashSystemGetNowFrame(0x1F353000);
-            gBDisk.endFrame=FlashSystemGetEndFrame(0x1F353000,&gBDisk);break;
+            gBDisk.endFrame=FlashSystemGetEndFrame(0x1F353000);break;
         }
-    default:
+    case 0x877:case 0x878:case 0x879:case 0x87A:case 0x87B:case 0x87C:case 0x87D:case 0x87E:
         switch(gBDisk.result){case 2:case 3:case 4:case 7:winSpriteSetDisp(spr,0);break;default:winSpriteSetDisp(spr,1);break;}break;
     }
     return 0;

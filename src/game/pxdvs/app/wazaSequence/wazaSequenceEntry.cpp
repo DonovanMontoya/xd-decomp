@@ -29,7 +29,7 @@ void GSmodelGetFrameCount(u32, f32 *, f32 *);
 u8 GSgfxVideoGetVsyncRate();
 void HSD_ArchiveParse(void *, void *, u32);
 u8 GSmodelIsAnimating(u32);
-u8 GSmodelHasAnimationEnded(u32);
+bool GSmodelHasAnimationEnded(u32);
 void PSVECScale(f32 *, f32 *, f32);
 u8 GSparticleIsGeneratorAlive(u32);
 void GSparticleSetGeneratorPosition(u32, f32 *);
@@ -307,8 +307,8 @@ bool SoundEntry::Update(f32 dt) {
         }
         return false;
     }
-    u32 status = GSsndGetStatus(handle) - 2;
-    return status <= 1;
+    s32 status = GSsndGetStatus(handle);
+    return status == 2 || status == 3;
 }
 
 void SoundEntry::Stop(bool force) {
@@ -326,8 +326,6 @@ void SoundEntry::Stop(bool force) {
     }
 }
 
-static inline u32 sequenceEventOffset(u8 index,u8 event) { return index*0xD0+0xC+event*4; }
-
 void SequenceEntry::Link() {
     SequenceEntry* before=waza->entries;
     if(linkId) {
@@ -341,7 +339,7 @@ void SequenceEntry::Link() {
     {
         ModelSequence* model=waza->GetModel();
         if(model) {
-            startTime=*(f32*)((u32)model->records+sequenceEventOffset(waza->index,endIndex));
+            startTime=((f32*)((u8*)model->records+waza->index*0xD0+0xC))[endIndex];
         }
         else {
             u8 index=endIndex;
@@ -949,8 +947,8 @@ bool ParticleEntry::Update(f32 dt) {
         seq->GetPosition(position);
         seq->GetRotation(rotation);
         seq->GetScale(scale);
+        bool a = (field34 & 0x20) != 0;
         u32 flags = field34;
-        u8 a = (flags >> 5) & 1;
         s32 b = (flags >> 9) & 1;
         GSparticleSetGeneratorPosition(generator, position);
         GSparticleSetGeneratorRotation(generator, rotation);
@@ -1338,13 +1336,10 @@ bool EffectEntry::Start() {
             }
         }
         u8 *c = (u8 *)table + index * 16;
-        useAlpha = false;
         fe->color[0] = c[0];
         fe->color[1] = c[1];
         fe->color[2] = c[2];
-        if (fe->modulation == 0 || fe->pe != 0) {
-            useAlpha = true;
-        }
+        useAlpha = fe->modulation == 0 || fe->pe != 0;
         fe->color[3] = useAlpha ? c[3] : 255;
         break;
     }
@@ -1431,16 +1426,14 @@ void EffectEntry::End() {
     if (active == 0) {
         return;
     }
-    if (table == 0) {
+    if (table == 0 || count == 0) {
         return;
     }
-    if (count != 0) {
-        zero = 0.0f;
-        while (table[index].time < zero) {
-            index++;
-            if (index >= count) {
-                break;
-            }
+    zero = 0.0f;
+    while (table[index].time < zero) {
+        index++;
+        if (index >= count) {
+            break;
         }
     }
 }
@@ -1483,7 +1476,7 @@ EffectEntry::EffectEntry(WazaSequence *waza, u8 **data) : SequenceEntry(SEQENTRY
         count = 0;
         break;
     }
-    if (times[field8 - 1] < 0.0f) {
+    if (times[field8 - 1] < 0.00001f) {
         times[field8 - 1] = *(f32 *)&header[1];
     }
 }
@@ -1557,7 +1550,7 @@ bool ModelEntry::Start() {
     f32 pos[3];
     f32 tmp[3];
     s32 mode;
-    ModelSequence *ms;
+    ModelSequence *ms = 0;
     if (model == 0) {
         return false;
     }
@@ -1762,7 +1755,8 @@ bool ModelEntry::Start() {
             animIndex = -1;
         }
     }
-    if (animIndex != texAnimIndex && texAnimIndex >= 0) {
+    s32 textureIndex;
+    if (animIndex != (textureIndex = texAnimIndex) && textureIndex >= 0) {
         if (GSmodelCanTexAnimate(model)) {
             GSmodelSetTexAnimIndex(model, texAnimIndex);
             GSmodelSetTexAnimType(model, texAnimMode);
@@ -1839,7 +1833,7 @@ bool ModelEntry::Update(f32 dt) {
     f32 position[3];
     f32 rotation[3];
     f32 scale[3];
-    u8 ended;
+    bool ended;
     time += dt;
     if (model == 0) {
         return false;
@@ -1869,8 +1863,9 @@ bool ModelEntry::Update(f32 dt) {
             break;
         }
     }
-    if (animIndex != texAnimIndex && texAnimIndex >= 0) {
-        u8 texEnded;
+    s32 textureIndex;
+    if (animIndex != (textureIndex = texAnimIndex) && textureIndex >= 0) {
+        bool texEnded;
         switch (texAnimMode) {
         case 1:
             texEnded = startTime + times[field8 - 1] >= waza->clock;
@@ -1880,7 +1875,7 @@ bool ModelEntry::Update(f32 dt) {
             texEnded = GSmodelHasTexAnimationEnded(model);
             break;
         }
-        u8 both = 0;
+        bool both = 0;
         if (ended != 0 && texEnded != 0) {
             both = 1;
         }

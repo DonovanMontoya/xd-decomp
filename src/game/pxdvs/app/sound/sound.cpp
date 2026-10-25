@@ -4,7 +4,7 @@ struct SoundWaveData {u32 pad,a,b,c,d,path;};
 typedef char SoundDataSize[sizeof(SoundData)==12?1:-1];
 extern SoundData *snd_data;extern u32 *snd_data_number;
 extern SoundWaveData *snd_wave_data;extern u32 *snd_wave_data_number;
-u32 soundPlayEnvID,soundPlayID;
+static u32 soundPlayEnvID,soundPlayID;
 extern "C" {
 void GSfsysReadWait(u32);f32 GSgfxVideoGetLastRenderTime();u8 GSgfxVideoGetVsyncRate();void GSlogWrite(const char*,...);u8 GSsndCheckEnv(u32);u8 GSsndCheckSE(u32);u8 GSsndCheckStream(u32);s32 GSsndClose(u32);void GSsndContinue(u32,u32,u32);s32 GSsndCreateEmitter(u32,f32 *);s32 GSsndCreateListener(f32 *);s32 GSsndGetStatus(u32);u32 GSsndGetVolume(u32);void GSsndOpenWaveDVD(u32,u32,u32,u32,u32,u32,u32);void GSsndPause(u32,u32,u32);s32 GSsndPlayVolume(u32,s32,s32,u32);void GSsndSetOriginalVolume(u32,u32,u32);void GSsndStop(u32,u32,u32);void GSthreadSwitch();
 static u8 _soundCheckActive(u32);static void _soundCloseFastFadeout(u32);static void _soundFadeout(u32,s32,s32);static s32 _soundOpenPlay(u32,s32,s32,s32);static void _soundWait(u32);

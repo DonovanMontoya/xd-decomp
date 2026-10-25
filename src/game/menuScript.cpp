@@ -497,13 +497,15 @@ extern "C" void menuScriptReadMail(void) {
     ((void (*)(void))_menuScriptReadMail)();
 }
 
-extern "C" void menuScriptInfoRelive(Pokemon *p, u8 first) {
+extern "C" void menuScriptInfoRelive(void *arg, u8 first) {
+    Pokemon *p = (Pokemon *)arg;
     u16 dark = pokemonBiosGetDarkpokemonDataId(p);
     _menuScriptWork = 2;
     menuOpenCustom(0x97, windowGetActiveID(), 0, 0, 1, 1, &_menuScriptWork);
     menuCloseCustom(0x97, 0, 1);
     if (p != 0) {
-        msgctrlSetValue(0x32, (u32)pokemonBiosGetNicknamePtr(p));
+        void *name = pokemonBiosGetNicknamePtr(p);
+        msgctrlSetValue(0x32, (u32)name);
         if (first != 0) {
             winMsgOpen(3, 0x3E81, 1, 1);
         } else {
@@ -618,12 +620,9 @@ extern "C" s32 menuScriptWazaMeijin(void) {
 
 static void _getWazaData(u16 id, WAZAOSHIEDEF *out) {
     void *data;
-    WAZAOSHIEDEF *w = out;
+    WAZAOSHIEDEF *w;
     data = wazaDataBiosGetPtr(id);
-    if (w != 0) {
-    } else {
-        w = &_wazawork;
-    }
+    if (out != 0) w = out; else w = &_wazawork;
     w->id = id;
     w->name = wazaDataBiosGetName(data);
     w->pp = wazaDataBiosGetPp(data);
@@ -834,8 +833,8 @@ extern "C" s32 menuScriptWazaOshieCursor(tagWINDOW_WORK *win) {
         }
         sel = c.selected;
         if (sel < 0) {
+            c.first += sel;
             c.selected = 0;
-            c.first = c.first + sel;
             if (c.first < 0) {
                 c.first = 0;
                 c.selected = 0;
@@ -900,9 +899,8 @@ windowGetKeyInfo();
         sel = c.selected;
         if (sel < 0) {
             c.selected = 0;
-            s16 nf = c.first + sel;
-            c.first = nf;
-            if (nf < 0) {
+            c.first += sel;
+            if (c.first < 0) {
                 c.first = 0;
                 c.selected = 0;
             }

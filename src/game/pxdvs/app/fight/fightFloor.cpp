@@ -796,16 +796,16 @@ static FightOutPokemon* _fightFloorLoopValidFightOutPokemonSub(FIGHT_FLOOR* floo
 }
 extern "C" {
 u8 fightFloorLoopValidFightOutPokemon(FIGHT_FLOOR* floor, FightFloorCallback callback, void* context, u8 useArray) {
-    u8 success;
     u16 trainer;
     u16 pokemon;
     u16 side;
     u16 type;
     u16 trainers;
+    FightOutPokemon* arrayPokemon;
     u16 pokemonCount;
     u16 i;
     FightOutPokemon* record;
-    FightOutPokemon* arrayPokemon;
+    u8 success;
     success = 1;
     type = fightFloor_GetFightType(floor);
     trainers = fightFloor_GetFightTypeTrainerNum(floor);
@@ -1376,6 +1376,7 @@ void fightFloorSetMenuFightAction(FIGHT_FLOOR* floor, FightOutPokemon* pokemon, 
     if (static_cast<u8>(fightFloor_GetFightKindNigeruFlag(floor)) == 1) menu->escapeDisabled = 0;
     else menu->escapeDisabled = 1;
 }
+void fightFloorSetShadow() {}
 u8 fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(FIGHT_FLOOR* floor, void* target, u8 ally, u8 fightOutOnly, u32 move, u32 mode) {
     FightOutPokemon* output[8];
     u32 count;
@@ -1456,10 +1457,8 @@ s32 fightFloorGetEnemyFightSideManyDamageHpRate(FIGHT_FLOOR*, FightOutPokemon* p
 }
 s32 fightFloorGetEnemyFightSideLittleNokoriHpRate(FIGHT_FLOOR* floor, FightOutPokemon* pokemon) {
     s32 minimum;
-    u32 bound;
     u32 count;
     u32 hp;
-    FightOutPokemon** array;
     u16 i;
     FightOutPokemon* target;
     u32 maxHp;
@@ -1478,10 +1477,8 @@ s32 fightFloorGetEnemyFightSideLittleNokoriHpRate(FIGHT_FLOOR* floor, FightOutPo
             break;
         }
     }
-    array = output;
-    bound = static_cast<u16>(count);
-    for (i = 0; i < bound; i++) {
-        target = array[i];
+    for (i = 0; i < static_cast<u16>(count); i++) {
+        target = output[i];
         if (target != nullptr) {
             hp = fightOutPokemonNowHpWaruValue(target, 1);
             maxHp = fightOutPokemonMaxHpWaruValue(target, 1);
@@ -1743,20 +1740,23 @@ void GSthreadSwitch();
 u8 GSthreadIsRunning(GSThread*);
 void GSthreadClose(GSThread*);
 void fightFloorLoopValidFightTrainer(FIGHT_FLOOR* floor, FightFloorCallback callback, void* context, u8 concurrent) {
+    u16 side;
+    u16 threadType;
     u32 trainers;
+    u16 i;
     u16 type;
-    type = static_cast<u8>(fightFloor_GetFightType(nullptr));
-    trainers = fightFloor_GetFightTypeTrainerNum(nullptr);
+    FightSide* sidePtr;
+    u16 trainer;
     GSThread* threads[4];
-    for (u16 i = 0; i < 4; i++) threads[i] = nullptr;
+    u16 count;
+    u32 ai;
+    FightTrainer* record;
+    type = fightFloor_GetFightType(nullptr);
+    trainers = fightFloor_GetFightTypeTrainerNum(nullptr);
+    for (i = 0; i < 4; i++) threads[i] = nullptr;
     if (concurrent == 1) {
-        u16 threadType = type;
-        u16 side;
-        FightSide* sidePtr;
-        u16 trainer;
-        u16 count = 0;
-        FightTrainer* record;
-        u32 ai;
+        threadType = type;
+        count = 0;
         for (side = 0; side < 2; side++) {
             sidePtr = fightFloorGetValidFightSidePtr(floor, side);
             if (sidePtr == nullptr) continue;
@@ -1774,7 +1774,6 @@ void fightFloorLoopValidFightTrainer(FIGHT_FLOOR* floor, FightFloorCallback call
                 }
             }
         }
-        u16 i;
         do {
             GSthreadSwitch();
             if (static_cast<u16>(fightGetFightResultId()) == 4 || static_cast<u16>(fightGetFightResultId()) == 5) return;
@@ -1789,25 +1788,25 @@ void fightFloorLoopValidFightTrainer(FIGHT_FLOOR* floor, FightFloorCallback call
             }
         }
     } else {
-        for (u16 side = 0; side < 2; side++) {
-            FightSide* sidePtr = fightFloorGetValidFightSidePtr(floor, side);
+        for (side = 0; side < 2; side++) {
+            sidePtr = fightFloorGetValidFightSidePtr(floor, side);
             if (sidePtr == nullptr) continue;
-            for (u16 trainer = 0; trainer < trainers; trainer++) {
-                FightTrainer* record = fightSideGetValidFightTrainerPtr(sidePtr, trainer);
+            for (trainer = 0; trainer < trainers; trainer++) {
+                record = fightSideGetValidFightTrainerPtr(sidePtr, trainer);
                 if (record == nullptr) continue;
-                u32 ai = fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(record));
+                ai = fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(record));
                 fightTrainer_GetControllerId(record);
                 if (static_cast<u16>(ai) == 0) callback(record, type, context);
             }
         }
     }
-    for (u16 side = 0; side < 2; side++) {
-        FightSide* sidePtr = fightFloorGetValidFightSidePtr(floor, side);
+    for (side = 0; side < 2; side++) {
+        sidePtr = fightFloorGetValidFightSidePtr(floor, side);
         if (sidePtr == nullptr) continue;
-        for (u16 trainer = 0; trainer < trainers; trainer++) {
-            FightTrainer* record = fightSideGetValidFightTrainerPtr(sidePtr, trainer);
+        for (trainer = 0; trainer < trainers; trainer++) {
+            record = fightSideGetValidFightTrainerPtr(sidePtr, trainer);
             if (record == nullptr) continue;
-            u32 ai = fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(record));
+            ai = fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(record));
             fightTrainer_GetControllerId(record);
             if (static_cast<u16>(ai) != 0) callback(record, type, context);
         }
@@ -1821,3 +1820,24 @@ extern "C" u32 fightFloorCreateFightOutPokemonPtrAry(FIGHT_FLOOR* floor) {
     if (output == nullptr) return 0;
     return _fightFloorCreateFightOutPokemonPtrAry(floor, output, false, 0, nullptr);
 }
+
+// Storage view of the battle state for the fight_floor definition (full layout: fightFloor.hpp, which can't be
+// included here because pokemonFightRecords.hpp declares the fightOutPokemon getters with other widths).
+struct FIGHT_TRAINER {
+    FIGHT_TRAINER() {}
+    u8 data[0x3744];
+};
+
+struct FIGHT_SIDE {
+    u8 header[0x64];
+    FIGHT_TRAINER trainer[2];
+    u8 makibisiCheckFlag[4];
+};
+
+struct FIGHT_FLOOR {
+    u8 header[0x14];
+    FIGHT_SIDE side[2];
+    u8 rest[0xE318 - 0x14 - 2 * 0x6EF0];
+};
+
+FIGHT_FLOOR fight_floor;

@@ -4,7 +4,7 @@
 #include <game/pxdvs/GSAPI/GSScript/tiga.hpp>
 
 struct PeopleSavedState {
-    u8 state, visible, unknown0E, collisionEnabled;
+    bool state, visible, unknown0E, collisionEnabled;
     u32 flags, group, resource, object;
     f32 unknown20;
     f32 unknown24;
@@ -62,7 +62,7 @@ struct PeopleSavedState {
     u8 animationBlend;
     u8 manualAnimation;
     u8 unknown156[6];
-    u8 running;
+    bool running;
     u8 slowDown;
     u8 unknown15E[2];
     f32 unknown160;
@@ -97,7 +97,7 @@ void peopleClose(u32,u32,u8);
 void peopleOpen(u32,u32,u32);
 void peopleAddCollision(u32,u32);
 tagPeopleWork* peopleGet(u32,u32);
-void peopleSetDisp(u32,u32,u8);
+void peopleSetDisp(u32,u32,bool);
 void heroMoveTermEvent();
 void gimmickBoxPop();
 void GSlogWrite(const char*,...);

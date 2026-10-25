@@ -582,11 +582,12 @@ extern "C" s16 fightMenuFightTrainerGcHeroSelectIrekaeFightPokemon(FIGHT_TRAINER
 }
 
 extern "C" s16 fightMenuFightTrainerAgbHeroSelectIrekaeFightPokemon(FIGHT_TRAINER* t, u16 type, s32 arg2, FightOutPokemon* poke) {
-    void* status;
-    u32 n;
-    u16 i;
-    s32 act;
     s16 ret;
+    s32 act;
+    u16 i;
+    void* status;
+    s32 gba;
+    u16 n;
     status = fightTrainerGetStatus(t, 0, 0x4b, 0);
     n = fightTypeDataBiosGetFightoutPokemonNum(fightTypeDataBiosGetPtr(type));
     for (i = 0; i < n; i++) {
@@ -612,21 +613,21 @@ extern "C" s16 fightMenuFightTrainerAgbHeroSelectIrekaeFightPokemon(FIGHT_TRAINE
     if (fightFloorIsUseFightTimerAll(0) == 1) {
         menuFightOpenTotalTimer();
     }
-    status = (void*)menuFightOpenGBAIrekae((u32)status, t, i, type);
-    act = gbaCommandGetAction((s32)status);
+    gba = menuFightOpenGBAIrekae((u32)status, t, i, type);
+    act = gbaCommandGetAction(gba);
     if (fightGetFightResultId() == 1) {
         goto retm2;
     }
     if (act == 2) {
-        ret = pokemonGetStatus(fightTrainerGetStatus(t, 0, 0x45, gbaCommandGetGBAChangePokemon((s32)status)), 0, 0xce, 0);
+        ret = pokemonGetStatus(fightTrainerGetStatus(t, 0, 0x45, gbaCommandGetGBAChangePokemon(gba)), 0, 0xce, 0);
     } else if (act == 4) {
-        goto timeout;
+    timeout:
+        ret = fightTrainerTimeOutSelectIrekaeFightPokemon(t, poke, type);
     } else if (act == 5) {
     retm2:
         ret = -2;
     } else {
-    timeout:
-        ret = fightTrainerTimeOutSelectIrekaeFightPokemon(t, poke, type);
+        goto timeout;
     }
     if (fightFloorIsNowEncountTuusinTaisen(0)) {
         if (menuIsCheck(fightMenuGetFightTrainerPtrToKeyWaitMenuId(t, type))) {

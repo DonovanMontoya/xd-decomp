@@ -15,16 +15,13 @@ static MenuCBStack _CBC;
 s32 menuCB_MessageDispCheck(u32 id){return winMsgCheck(id);}
 void menuCB_MessageDispOff(){winMsgClose(0);}
 void menuCB_MessageDispOn(u32 message,u32 flags){winMsgOpen(7,message,flags,0);}
-s32 menuCB_GetDisconnectedGBA(){
-    _MENUCBWORK* work;
-    u32 i=0;
-    work=&_CB;
-    do {
-        s32 gba=work->orgTrainers[0].unk24;
-        if(gba!=0 && menuCBTrainerBios_GetHomePlace(&work->orgTrainers[0])!=0 && !gbaCommandIsConnected(gba))return gba;
-        work=(_MENUCBWORK*)((u8*)work+sizeof(MenuCBBiosTrainer));
-        ++i;
-    }while(i<4);
+s32 menuCB_GetDisconnectedGBA() {
+    for (u32 i = 0; i < 4; i++) {
+        s32 gba = _CB.orgTrainers[i].unk24;
+        if (gba != 0 && menuCBTrainerBios_GetHomePlace(&_CB.orgTrainers[i]) != 0 && !gbaCommandIsConnected(gba)) {
+            return gba;
+        }
+    }
     return 0;
 }
 void menuCB_SetSprite(MenuCBSprite* sprite,void* data){

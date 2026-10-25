@@ -7,7 +7,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-MenuDBCursor _ruleCursol;
+static MenuDBCursor _ruleCursol;
 static MenuDBFieldAnime field_anime;
 // The 0x7c named buffer and its following 0x14-byte padding form the 0x90-byte rule copy.
 static MenuDBRule _ruleTempBuff_DB;
@@ -88,8 +88,8 @@ static const u32 GCEntryStatusDispPosition[0x26] = {
 static const u32 MENU_ITEM_TOOL_TUNAIDE00_SETUMEI_2_Tbl[2] = { 0x4371, 0x4372 }; /* const */
 static const u32 MENU_ITEM_TOOL_TUNAIDE01_BATTLE_A_Tbl[2] = { 0x436F, 0x4370 }; /* const */
 
-s32 _ruleCursol2;
-s32 tunaide02_last_kakunin_flag;
+static s32 _ruleCursol2;
+static s32 tunaide02_last_kakunin_flag;
 
 void menuTool_tunaideGCEntry03_1_Ctrl(MenuDBWindow *arg0) {
     menuCB_MenuDispCheckONorOFF(arg0, _CB.unkB150 != 0);
@@ -2849,6 +2849,7 @@ void menuTool_tunaideGCEntry00_Button(MenuDBWindow *arg0) {
 }
 
 void menuTool_tunaideGCEntry00_Ctrl(MenuDBWindow *arg0) {
+    s32 stageIndex;
     s32 temp_r28;
     s32 temp_r29;
     s32 var_r29;
@@ -3057,87 +3058,87 @@ block_95:
                         }
                         break;
                     case 2:                         /* switch 3 */
-                        if ((u32) _CB.unkB0F8 <= 0x25U) {
-                            switch (_CB.unkB0F8) {  /* switch 6 */
-                            case 37:                /* switch 6 */
-                                if (var_r29 != 4) {
-                                    if (var_r29 < 4) {
-                                        if (var_r29 < 2) {
-                                            if (var_r29 < 0) {
-
-                                            } else if (menuCBPokemonCheck(6, ((_CB.unkB0EC * 0x10000) & 0xFFFF0000) | 4) != 0) {
-                                                _CB.unkB0F8 = 4;
-                                            } else if (var_r29 == 1) {
-                                                _CB.unkB0F8 = 0;
-                                            }
-                                        } else {
-                                            _CB.unkB0F8 = 1;
-                                        }
-                                    }
-                                } else {
-                                    _CB.unkB0F8 = 2;
-                                }
-                                break;
-                            case 36:                /* switch 6 */
-                                switch (var_r29) {  /* switch 7; irregular */
-                                default:            /* switch 7 */
-                                    if (menuCBPokemonCheck(6, ((_CB.unkB0EC * 0x10000) & 0xFFFF0000) | 4) != 0) {
-                                        _CB.unkB0F8 = 4;
-                                    } else if (var_r29 == 1) {
-                                        _CB.unkB0F8 = 0;
-                                    }
-                                    break;
-                                case 2:             /* switch 7 */
-                                    _CB.unkB0F8 = 1;
-                                    break;
-                                case 3:             /* switch 7 */
-                                    _CB.unkB0F8 = 2;
-                                    break;
-                                case 4:             /* switch 7 */
-                                    _CB.unkB0F8 = 3;
-                                    break;
-                                }
-                                break;
-                            case 1:                 /* switch 6 */
+                        stageIndex = _CB.unkB0EC;
+                        switch (_CB.unkB0F8) {  /* switch 6 */
+                        case 37:                /* switch 6 */
+                            if (var_r29 != 4) {
                                 if (var_r29 < 4) {
                                     if (var_r29 < 2) {
+                                        if (var_r29 < 0) {
 
-                                    } else if (menuCBPokemonCheck(6, ((_CB.unkB0EC * 0x10000) & 0xFFFF0000) | 4) != 0) {
-                                        _CB.unkB0F8 = 4;
+                                        } else if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
+                                            _CB.unkB0F8 = 4;
+                                        } else if (var_r29 == 1) {
+                                            _CB.unkB0F8 = 0;
+                                        }
                                     } else {
-                                        _CB.unkB0F8 = 0;
+                                        _CB.unkB0F8 = 1;
                                     }
                                 }
-                                break;
-                            case 2:                 /* switch 6 */
-                                if (menuCBPokemonCheck(6, ((_CB.unkB0EC * 0x10000) & 0xFFFF0000) | 4) != 0) {
+                            } else {
+                                _CB.unkB0F8 = 2;
+                            }
+                            break;
+                        case 36:                /* switch 6 */
+                            switch (var_r29) {  /* switch 7; irregular */
+                            case 0:
+                            case 1:
+                                if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
                                     _CB.unkB0F8 = 4;
-                                } else if (var_r29 == 3) {
-                                    _CB.unkB0F8 = 0;
-                                } else {
-                                    _CB.unkB0F8 = 1;
-                                }
-                                break;
-                            case 3:                 /* switch 6 */
-                                if (menuCBPokemonCheck(6, ((_CB.unkB0EC * 0x10000) & 0xFFFF0000) | 4) != 0) {
-                                    _CB.unkB0F8 = 4;
-                                } else {
+                                } else if (var_r29 == 1) {
                                     _CB.unkB0F8 = 0;
                                 }
                                 break;
-                            case 4:                 /* switch 6 */
-                                if ((var_r29 != 0) && (var_r29 >= 0) && (var_r29 < 5)) {
-                                    _CB.unkB0F8 = 0;
-                                }
+                            case 2:             /* switch 7 */
+                                _CB.unkB0F8 = 1;
                                 break;
-                            case 31:                /* switch 6 */
-                            case 32:                /* switch 6 */
-                            case 33:                /* switch 6 */
-                            case 34:                /* switch 6 */
-                            case 35:                /* switch 6 */
-                                _CB.unkB0F8 -= 1;
+                            case 3:             /* switch 7 */
+                                _CB.unkB0F8 = 2;
+                                break;
+                            case 4:             /* switch 7 */
+                                _CB.unkB0F8 = 3;
                                 break;
                             }
+                            break;
+                        case 1:                 /* switch 6 */
+                            if (var_r29 < 4) {
+                                if (var_r29 < 2) {
+
+                                } else if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
+                                    _CB.unkB0F8 = 4;
+                                } else {
+                                    _CB.unkB0F8 = 0;
+                                }
+                            }
+                            break;
+                        case 2:                 /* switch 6 */
+                            if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
+                                _CB.unkB0F8 = 4;
+                            } else if (var_r29 == 3) {
+                                _CB.unkB0F8 = 0;
+                            } else {
+                                _CB.unkB0F8 = 1;
+                            }
+                            break;
+                        case 3:                 /* switch 6 */
+                            if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
+                                _CB.unkB0F8 = 4;
+                            } else {
+                                _CB.unkB0F8 = 0;
+                            }
+                            break;
+                        case 4:                 /* switch 6 */
+                            if ((var_r29 != 0) && (var_r29 >= 0) && (var_r29 < 5)) {
+                                _CB.unkB0F8 = 0;
+                            }
+                            break;
+                        case 31:                /* switch 6 */
+                        case 32:                /* switch 6 */
+                        case 33:                /* switch 6 */
+                        case 34:                /* switch 6 */
+                        case 35:                /* switch 6 */
+                            _CB.unkB0F8 -= 1;
+                            break;
                         }
                         break;
                     }
@@ -3154,7 +3155,39 @@ block_95:
                         case 5:                     /* switch 9 */
                             _CB.unkB0F8 = 0x25;
                             break;
-                        default:                    /* switch 9 */
+                        case 0:
+                        case 2:
+                        case 3:
+                        case 4:
+                        case 6:
+                        case 7:
+                        case 8:
+                        case 9:
+                        case 10:
+                        case 11:
+                        case 12:
+                        case 13:
+                        case 14:
+                        case 15:
+                        case 16:
+                        case 17:
+                        case 18:
+                        case 19:
+                        case 20:
+                        case 21:
+                        case 22:
+                        case 23:
+                        case 24:
+                        case 25:
+                        case 26:
+                        case 27:
+                        case 28:
+                        case 29:
+                        case 30:
+                        case 31:
+                        case 32:
+                        case 33:
+                        case 34:
                             _CB.unkB0F8 += 1;
                             break;
                         }
@@ -3179,9 +3212,10 @@ block_173:
                         }
                         break;
                     case 2:                         /* switch 8 */
+                        stageIndex = _CB.unkB0EC;
                         switch ((s32) _CB.unkB0F8) { /* switch 10; irregular */
                         case 0:                     /* switch 10 */
-                            if (menuCBPokemonCheck(6, ((_CB.unkB0EC * 0x10000) & 0xFFFF0000) | 4) != 0) {
+                            if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
                                 _CB.unkB0F8 = 4;
                             } else {
                                 switch (var_r29) {  /* switch 11; irregular */
@@ -3209,7 +3243,7 @@ block_173:
                                         _CB.unkB0F8 = 0x25;
                                     }
                                 }
-                            } else if (menuCBPokemonCheck(6, ((_CB.unkB0EC * 0x10000) & 0xFFFF0000) | 4) != 0) {
+                            } else if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
                                 _CB.unkB0F8 = 4;
                             } else {
                                 _CB.unkB0F8 = 2;
@@ -3244,7 +3278,11 @@ block_173:
                                 break;
                             }
                             break;
-                        default:                    /* switch 10 */
+                        case 30:
+                        case 31:
+                        case 32:
+                        case 33:
+                        case 34:
                             _CB.unkB0F8 += 1;
                             break;
                         }
@@ -3257,40 +3295,38 @@ block_173:
                 if ((s32) (windowGetKeyRepeat() & 4) != 0) {
                     switch ((s32) _CB.unkB0F0) {    /* switch 14; irregular */
                     case 0:                         /* switch 14 */
-                        if ((u32) _CB.unkB0F8 <= 0x25U) {
-                            switch (_CB.unkB0F8) {  /* switch 15 */
-                            case 37:                /* switch 15 */
-                                _CB.unkB0F8 = 0x24;
-                                break;
-                            case 30:                /* switch 15 */
-                                _CB.unkB0F8 = 2;
-                                break;
-                            case 31:                /* switch 15 */
-                                _CB.unkB0F8 = 3;
-                                break;
-                            case 32:                /* switch 15 */
-                                _CB.unkB0F8 = 4;
-                                break;
-                            case 33:                /* switch 15 */
-                                _CB.unkB0F8 = 5;
-                                break;
-                            case 34:                /* switch 15 */
-                            case 35:                /* switch 15 */
-                                _CB.unkB0F8 = 0x25;
-                                break;
-                            case 2:                 /* switch 15 */
-                                _CB.unkB0F8 = 0;
-                                break;
-                            case 3:                 /* switch 15 */
-                                _CB.unkB0F8 = 0;
-                                break;
-                            case 4:                 /* switch 15 */
-                                _CB.unkB0F8 = 1;
-                                break;
-                            case 5:                 /* switch 15 */
-                                _CB.unkB0F8 = 1;
-                                break;
-                            }
+                        switch (_CB.unkB0F8) {  /* switch 15 */
+                        case 37:                /* switch 15 */
+                            _CB.unkB0F8 = 0x24;
+                            break;
+                        case 30:                /* switch 15 */
+                            _CB.unkB0F8 = 2;
+                            break;
+                        case 31:                /* switch 15 */
+                            _CB.unkB0F8 = 3;
+                            break;
+                        case 32:                /* switch 15 */
+                            _CB.unkB0F8 = 4;
+                            break;
+                        case 33:                /* switch 15 */
+                            _CB.unkB0F8 = 5;
+                            break;
+                        case 34:                /* switch 15 */
+                        case 35:                /* switch 15 */
+                            _CB.unkB0F8 = 0x25;
+                            break;
+                        case 2:                 /* switch 15 */
+                            _CB.unkB0F8 = 0;
+                            break;
+                        case 3:                 /* switch 15 */
+                            _CB.unkB0F8 = 0;
+                            break;
+                        case 4:                 /* switch 15 */
+                            _CB.unkB0F8 = 1;
+                            break;
+                        case 5:                 /* switch 15 */
+                            _CB.unkB0F8 = 1;
+                            break;
                         }
                         break;
                     case 1:                         /* switch 14 */
@@ -3347,6 +3383,7 @@ block_173:
                         }
                         break;
                     case 2:                         /* switch 14 */
+                        stageIndex = _CB.unkB0EC;
                         switch ((s32) _CB.unkB0F8) { /* switch 17; irregular */
                         case 1:                     /* switch 17 */
                             switch (var_r29) {      /* switch 18; irregular */
@@ -3378,8 +3415,13 @@ block_173:
                         case 37:                    /* switch 17 */
                             _CB.unkB0F8 = 0x24;
                             break;
-                        default:                    /* switch 17 */
-                            if (menuCBPokemonCheck(6, ((_CB.unkB0EC * 0x10000) & 0xFFFF0000) | 4) != 0) {
+                        case 30:
+                        case 31:
+                        case 32:
+                        case 33:
+                        case 34:
+                        case 35:
+                            if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
                                 _CB.unkB0F8 = 4;
                             } else {
                                 _CB.unkB0F8 = 0x25;
@@ -3394,33 +3436,31 @@ block_173:
                 } else if ((s32) (windowGetKeyRepeat() & 8) != 0) {
                     switch ((s32) _CB.unkB0F0) {    /* switch 20; irregular */
                     case 0:                         /* switch 20 */
-                        if ((u32) _CB.unkB0F8 <= 0x25U) {
-                            switch (_CB.unkB0F8) {  /* switch 21 */
-                            case 0:                 /* switch 21 */
-                                _CB.unkB0F8 = 2;
-                                break;
-                            case 1:                 /* switch 21 */
-                                _CB.unkB0F8 = 4;
-                                break;
-                            case 2:                 /* switch 21 */
-                                _CB.unkB0F8 = 0x1E;
-                                break;
-                            case 3:                 /* switch 21 */
-                                _CB.unkB0F8 = 0x1F;
-                                break;
-                            case 4:                 /* switch 21 */
-                                _CB.unkB0F8 = 0x20;
-                                break;
-                            case 5:                 /* switch 21 */
-                                _CB.unkB0F8 = 0x21;
-                                break;
-                            case 37:                /* switch 21 */
-                                _CB.unkB0F8 = 0x22;
-                                break;
-                            case 36:                /* switch 21 */
-                                _CB.unkB0F8 = 0x25;
-                                break;
-                            }
+                        switch (_CB.unkB0F8) {  /* switch 21 */
+                        case 0:                 /* switch 21 */
+                            _CB.unkB0F8 = 2;
+                            break;
+                        case 1:                 /* switch 21 */
+                            _CB.unkB0F8 = 4;
+                            break;
+                        case 2:                 /* switch 21 */
+                            _CB.unkB0F8 = 0x1E;
+                            break;
+                        case 3:                 /* switch 21 */
+                            _CB.unkB0F8 = 0x1F;
+                            break;
+                        case 4:                 /* switch 21 */
+                            _CB.unkB0F8 = 0x20;
+                            break;
+                        case 5:                 /* switch 21 */
+                            _CB.unkB0F8 = 0x21;
+                            break;
+                        case 37:                /* switch 21 */
+                            _CB.unkB0F8 = 0x22;
+                            break;
+                        case 36:                /* switch 21 */
+                            _CB.unkB0F8 = 0x25;
+                            break;
                         }
                         break;
                     case 1:                         /* switch 20 */
@@ -3446,7 +3486,37 @@ block_173:
                         case 36:                    /* switch 22 */
                             _CB.unkB0F8 = 0x25;
                             break;
-                        default:                    /* switch 22 */
+                        case 0:
+                        case 1:
+                        case 2:
+                        case 3:
+                        case 4:
+                        case 6:
+                        case 7:
+                        case 8:
+                        case 9:
+                        case 10:
+                        case 12:
+                        case 13:
+                        case 14:
+                        case 15:
+                        case 16:
+                        case 18:
+                        case 19:
+                        case 20:
+                        case 21:
+                        case 22:
+                        case 24:
+                        case 25:
+                        case 26:
+                        case 27:
+                        case 28:
+                        case 30:
+                        case 31:
+                        case 32:
+                        case 33:
+                        case 34:
+                        case 35:
                             _CB.unkB0F8 += 1;
                             break;
                         }
@@ -7610,8 +7680,6 @@ void menuTool_tunaide02_Button(MenuDBWindow *arg0) {
 
 void menuCB_Tunaide01_3_Disp(MenuDBWindow *arg0, MenuDBSprite *arg1) {
     s16 temp_r0;
-    s16 temp_r3;
-    s16 temp_r3_2;
 
     temp_r0 = arg1->unk6;
     switch (temp_r0) {                              /* switch 1; irregular */
@@ -7666,9 +7734,8 @@ void menuCB_Tunaide01_3_Disp(MenuDBWindow *arg0, MenuDBSprite *arg1) {
             _CB.unkB114 = 4;
             return;
         case 2:                                     /* switch 2 */
-            temp_r3 = field_anime.unk6 + 0xF;
-            field_anime.unk6 = temp_r3;
-            if (temp_r3 >= 0xA7) {
+            field_anime.unk6 += 0xF;
+            if (field_anime.unk6 >= 0xA7) {
                 field_anime.unk6 = 0;
                 _CB.unkB114 = 0;
                 winSpriteSetDisp(arg1, 1);
@@ -7679,9 +7746,8 @@ void menuCB_Tunaide01_3_Disp(MenuDBWindow *arg0, MenuDBSprite *arg1) {
             field_anime.unk1E = (s16) (0xA7 - field_anime.unk6);
             return;
         case 4:                                     /* switch 2 */
-            temp_r3_2 = field_anime.unk6 + 0xF;
-            field_anime.unk6 = temp_r3_2;
-            if (temp_r3_2 >= 0xA7) {
+            field_anime.unk6 += 0xF;
+            if (field_anime.unk6 >= 0xA7) {
                 field_anime.unk6 = 0;
                 _CB.unkB114 = 0;
                 winSpriteSetDisp(arg1, 1);

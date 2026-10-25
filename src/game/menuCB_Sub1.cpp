@@ -133,7 +133,7 @@ void pokemonInit(MenuSubPokemon *); void insertDancer__12CReliveStageFR7Pokemonl
 void menuCBRule_ErrorFlagSetPokemonGetTiming(void *,MenuSubPokemon *,u32); void menuCBRule_ErrorFlagSet(void *,s32); void menuCBRule_ErrorFlagSetOkPushTiming(void *);
 u8 GSinputIsConnected(s32); u8 gbaCommandIsConnected(s32); s32 menuCB_GetDisconnectedGBA(void);
 void menuCBPokemonEntryPokemonFaceFree(void); void menuCBBattleStartSetStatus(s32); void heroBiosCopy(void *, const void *); void menuCBPokemonEntryLoadTex(void);
-void menuOpenCustom(s32,s32,void *,s32,s32,s32); s32 windowGetActiveID(void);
+void menuOpenCustom(s32,s32,void *,u32,u8,s32,...); s32 windowGetActiveID(void);
 s32 heroBiosGetRnd(void *); int sprintf(char *,const char *,...); void GScharMakeFromSJIS(u16 *, const char *);
 void _menuCBGCDelPokemon__Fv(void);
 u8 menuCBGCEntry_ErrorDisp__FUlUl(u32 arg0, u32 arg1);
@@ -425,8 +425,6 @@ void menuCB_RuleNameChengeBeforeJob(u8 arg0) {
 }
 
 void menuCB_MenuDispCheckONorOFF_RULE(MenuSubWindow *arg0, s32 arg1) {
-    s32 var_r4;
-
     if ((s32) _CB.unkB124 != -1) {
         menuSetDisp(arg0->unk4, 0);
         if ((s32) _CB.unkB124 == arg1) {
@@ -439,14 +437,10 @@ void menuCB_MenuDispCheckONorOFF_RULE(MenuSubWindow *arg0, s32 arg1) {
         }
     } else {
         if (arg1 == 1) {
-            var_r4 = 0;
-            if (((s32) _CB.unkB118 == arg1) || ((s32) _CB.unkB118 == 5)) {
-                var_r4 = 1;
-            }
-            menuCB_MenuDispCheckONorOFF(arg0, var_r4);
-            return;
+            menuCB_MenuDispCheckONorOFF(arg0, ((s32) _CB.unkB118 == arg1) || ((s32) _CB.unkB118 == 5));
+        } else {
+            menuCB_MenuDispCheckONorOFF(arg0, _CB.unkB118 == arg1);
         }
-        menuCB_MenuDispCheckONorOFF(arg0, _CB.unkB118 == arg1);
     }
 }
 
@@ -636,44 +630,25 @@ loop_1:
 }
 
 void toobattle_drawHeroName2(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg2) {
-    s32 temp_r31;
-    s32 temp_r31_2;
-    s32 temp_r3_2;
-    s32 temp_r4;
-    u8 *temp_r30;
-    u8 *temp_r3;
+    u8 *name = (u8 *)&_CB + arg2 * 0x1320 + 0x9BC;
 
-    temp_r4 = arg2 * 0x1320;
-    temp_r3 = (u8 *)&_CB + temp_r4;
-    temp_r30 = temp_r3 + 0x9BC;
-    temp_r3_2 = pokecoloGetCountryCode();
-    if (temp_r3_2 != 0) {
-        if ((temp_r3_2 >= 0) && (temp_r3_2 < 3)) {
-            temp_r31 = fn_8007E634(0x4276);
-            fn_8007F43C(arg0, arg1, heroBiosGetNamePtr(temp_r30), 0, 0, temp_r31);
-        }
-        return;
+    switch (pokecoloGetCountryCode()) {
+    case 0:
+        _drawStrings__FP14tagWINDOW_WORKPUsllUl(arg0, heroBiosGetNamePtr(name), 0, 0, fn_8007E634(0x4276));
+        break;
+    case 1:
+    case 2:
+        fn_8007F43C(arg0, arg1, heroBiosGetNamePtr(name), 0, 0, fn_8007E634(0x4276));
+        break;
     }
-    temp_r31_2 = fn_8007E634(0x4276);
-    _drawStrings__FP14tagWINDOW_WORKPUsllUl(arg0, heroBiosGetNamePtr(temp_r30), 0, 0, temp_r31_2);
 }
 
 void toobattle_drawHeroNames(MenuSubWindow *arg0, s32 arg1) {
-    s32 temp_r31;
-    s32 temp_r5;
-
-    temp_r5 = arg1 * 0x1320;
-    temp_r31 = fn_8007E634(0x4278);
-    _drawStrings__FP14tagWINDOW_WORKPUsllUl(arg0, heroBiosGetNamePtr((u8 *)&_CB + temp_r5 + 0x9BC), 0, 0, temp_r31);
+    _drawStrings__FP14tagWINDOW_WORKPUsllUl(arg0, heroBiosGetNamePtr((u8 *)&_CB + arg1 * 0x1320 + 0x9BC), 0, 0, fn_8007E634(0x4278));
 }
 
 void toobattle_drawHeroName(MenuSubWindow *arg0, s32 arg1) {
-    s32 temp_r31;
-    s32 temp_r5;
-
-    temp_r5 = arg1 * 0x1320;
-    temp_r31 = fn_8007E634(0x4276);
-    _drawStrings__FP14tagWINDOW_WORKPUsllUl(arg0, heroBiosGetNamePtr((u8 *)&_CB + temp_r5 + 0x563C), 0, 0, temp_r31);
+    _drawStrings__FP14tagWINDOW_WORKPUsllUl(arg0, heroBiosGetNamePtr((u8 *)&_CB + arg1 * 0x1320 + 0x563C), 0, 0, fn_8007E634(0x4276));
 }
 
 s32 toolbattle_trainerFace(void) {
@@ -1184,7 +1159,7 @@ void _menuCBPokemonName__FP14tagWINDOW_WORKUlUlUlb(MenuSubWindow *arg0, u32 arg1
     u16 *var_r28;
     MenuSubPokemon *temp_r3;
     u32 var_r3;
-    u8 var_r0;
+    s32 var_r0;
     u8 var_r26;
 
     temp_r3 = menuCBPokemonPtrGet__FUlUl(arg1, arg2);
@@ -1214,56 +1189,54 @@ block_8:
                 GSmsgPrint2(arg0->unk1C, 0, 0, arg0->unk93 | ~0xFF, 0x4277);
                 break;
             }
-            if (pokemonBiosGetTamagoFlag(temp_r3) != 1) {
-                if (var_r26 != 0) {
-                    return;
-                }
-                if (arg4 != 0) {
-                    var_r0 = (u8)menuSubGetPokemonSexForDisp(temp_r3);
-                } else {
-                    var_r0 = menuSubGetPokemonSexForFightDisp(temp_r3);
-                }
-                switch ((s32) var_r0) {
-                case 0:
-                    var_r3 = 0x9C5U;
-                    break;
-                case 1:
-                    var_r3 = 0x9C6U;
-                    break;
-                case 2:
-        default:
-                    var_r3 = 0U;
-                    break;
-                }
-                if (var_r3 != 0U) {
-                    msgctrlSetValue(0x37, GSmsgGetGSchar(var_r3));
-                    temp_r3_2 = pokecoloGetCountryCode();
-                    switch (temp_r3_2) {
+            if (pokemonBiosGetTamagoFlag(temp_r3) == 1 || var_r26 != 0) {
+                return;
+            }
+            if (arg4 != 0) {
+                var_r0 = (s32)menuSubGetPokemonSexForDisp(temp_r3);
+            } else {
+                var_r0 = menuSubGetPokemonSexForFightDisp(temp_r3);
+            }
+            switch (var_r0) {
+            case 0:
+                var_r3 = 0x9C5U;
+                break;
+            case 1:
+                var_r3 = 0x9C6U;
+                break;
+            case 2:
+    default:
+                var_r3 = 0U;
+                break;
+            }
+            if (var_r3 != 0U) {
+                msgctrlSetValue(0x37, GSmsgGetGSchar(var_r3));
+                temp_r3_2 = pokecoloGetCountryCode();
+                switch (temp_r3_2) {
 case 0: {
-                        switch (arg3) {
-                        case 0:
-                            GSmsgPrint2(arg0->unk1C, 0x46, 0, arg0->unk93 | ~0xFF, 0x4278);
-                            return;
-                        case 1:
-                            GSmsgPrint2(arg0->unk1C, 0x5A, 0, arg0->unk93 | ~0xFF, 0x4276);
-                            return;
-                        }
+                    switch (arg3) {
+                    case 0:
+                        GSmsgPrint2(arg0->unk1C, 0x46, 0, arg0->unk93 | ~0xFF, 0x4278);
+                        return;
+                    case 1:
+                        GSmsgPrint2(arg0->unk1C, 0x5A, 0, arg0->unk93 | ~0xFF, 0x4276);
+                        return;
+                    }
 
 } break;
 case 1:
 case 2: {
-                            switch (arg3) {
-                            case 0:
-                                GSmsgPrint2(arg0->unk1C, 0x5A, 0, arg0->unk93 | ~0xFF, 0x4278);
-                                return;
-                            case 1:
-                                GSmsgPrint2(arg0->unk1C, 0x6E, 0, arg0->unk93 | ~0xFF, 0x4276);
-                                break;
-                            }
+                        switch (arg3) {
+                        case 0:
+                            GSmsgPrint2(arg0->unk1C, 0x5A, 0, arg0->unk93 | ~0xFF, 0x4278);
+                            return;
+                        case 1:
+                            GSmsgPrint2(arg0->unk1C, 0x6E, 0, arg0->unk93 | ~0xFF, 0x4276);
+                            break;
+                        }
 
 } break;
 }
-                }
             }
         }
     }
@@ -1287,28 +1260,45 @@ void menuCB2DPokemonItemDisp(MenuSubWindow *arg0, u32 arg1, u32 arg2) {
     }
 }
 
+typedef struct MenuSubFlagByte {
+    u8 bit7 : 1;
+    u8 bit6 : 1;
+    u8 bit5 : 1;
+    u8 bit4 : 1;
+    u8 bit3 : 1;
+    u8 bit2 : 1;
+    u8 bit1 : 1;
+    u8 bit0 : 1;
+} MenuSubFlagByte;
+typedef struct MenuSubEntryError {
+    MenuSubFlagByte byte0;
+    MenuSubFlagByte byte1;
+    u8 reserved2[2];
+} MenuSubEntryError;
+typedef struct MenuSubErrorView {
+    u8 reserved0[0x9C84];
+    MenuSubEntryError errors[4][6];
+} MenuSubErrorView;
+#define ERRS (((MenuSubErrorView *)&_CB)->errors)
 void _menuCB_ErrorTAMAGOCheck__Fv(void) {
-    s32 count;
-    s32 offset = 0;
-#define ENTRY_FLAGS ((MenuSubErrorFlags *)((u8 *)&_CB + (_CB.unkB0D8 * 0x18) + offset + 0x9C84))
-    for (count = 6; count != 0; --count) {
-        if (ENTRY_FLAGS->byte0Bit2 != 0) {
-            ENTRY_FLAGS->byte0Bit5 = 0;
-            ENTRY_FLAGS->byte0Bit4 = 0;
-            ENTRY_FLAGS->byte1Bit3 = 0;
+    s32 i;
+
+    for (i = 0; i < 6; i++) {
+        if (ERRS[_CB.unkB0D8][i].byte0.bit2) {
+            ERRS[_CB.unkB0D8][i].byte0.bit5 = 0;
+            ERRS[_CB.unkB0D8][i].byte0.bit4 = 0;
+            ERRS[_CB.unkB0D8][i].byte1.bit3 = 0;
         }
-        if (ENTRY_FLAGS->byte1Bit1 != 0) {
-            ENTRY_FLAGS->byte0Bit5 = 0;
-            ENTRY_FLAGS->byte0Bit4 = 0;
-            ENTRY_FLAGS->byte1Bit3 = 0;
-            ENTRY_FLAGS->byte0Bit2 = 1;
+        if (ERRS[_CB.unkB0D8][i].byte1.bit1) {
+            ERRS[_CB.unkB0D8][i].byte0.bit5 = 0;
+            ERRS[_CB.unkB0D8][i].byte0.bit4 = 0;
+            ERRS[_CB.unkB0D8][i].byte1.bit3 = 0;
+            ERRS[_CB.unkB0D8][i].byte0.bit2 = 1;
         }
-        if (ENTRY_FLAGS->byte1Bit4 != 0 && ENTRY_FLAGS->byte1Bit6 != 0) {
-            ENTRY_FLAGS->byte1Bit6 = 0;
+        if (ERRS[_CB.unkB0D8][i].byte1.bit4 && ERRS[_CB.unkB0D8][i].byte1.bit6) {
+            ERRS[_CB.unkB0D8][i].byte1.bit6 = 0;
         }
-        offset += 4;
     }
-#undef ENTRY_FLAGS
 }
 
 void _menuCB2DPokemonNewSet2__FUlUlUlUc(u32 arg0, s32 arg1, u32 arg2, u8 arg3) {
@@ -1458,15 +1448,16 @@ void menuCBGCEntryTypeIndex(void) {
 
 void menuCBReliveHallCursolInit(void) {
     s32 temp_r30;
-    s8 var_r29;
+    s32 var_r29;
 
+    s32 stage = _CB.unkB0EC;
     if ((s32) _CB.unkB0F8 <= 4) {
-        temp_r30 = (_CB.unkB0EC * 0x10000) & 0xFFFF0000;
+        temp_r30 = (stage * 0x10000) & 0xFFFF0000;
         if (menuCBPokemonCheck(6U, _CB.unkB0F8 | temp_r30) == 0) {
             var_r29 = 0;
 loop_3:
             if (menuCBPokemonCheck(6U, var_r29 | temp_r30) != 0) {
-                _CB.unkB0F8 = (s32) var_r29;
+                _CB.unkB0F8 = (s8) var_r29;
             } else {
                 var_r29 += 1;
                 if ((u32) var_r29 < 5U) {
@@ -1612,27 +1603,18 @@ s32 menuCBBattleBANextMenu(MenuSubWindow *arg0) {
 
 s32 menuCB_BattleBA_PokemonEntryNum(void) {
     s32 counts[2];
-    s32 var_r28;
-    s32 var_r29;
-    s32 *var_r30;
+    u32 side;
+    s32 slot;
 
-    var_r30 = counts;
-    var_r29 = 0;
-    do {
-        *var_r30 = 0;
-        var_r28 = 0;
-loop_2:
-        if (menuCBPokemonGetDataId(var_r29, var_r28) != 0) {
-            *var_r30 += 1;
+    for (side = 0; (s32)side < 2; side++) {
+        counts[side] = 0;
+        for (slot = 0; slot < 6; slot++) {
+            if (menuCBPokemonGetDataId(side, slot) != 0) {
+                counts[side]++;
+            }
         }
-        var_r28 += 1;
-        if (var_r28 < 6) {
-            goto loop_2;
-        }
-        var_r30 += 1;
-        var_r29 += 1;
-    } while (var_r29 < 2);
-    if ((counts[0] >= 4) || (counts[1] >= 4)) {
+    }
+    if (counts[0] >= 4 || counts[1] >= 4) {
         return 1;
     }
     return 0;
@@ -1686,69 +1668,53 @@ MenuSubPokemon *menuCBPokemonPtrGet__FUlUl(u32 type, u32 index) {
 }
 
 void menuCB_RuleMessageTblDisp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg2) {
-    u16 sp8[31];
-    s16 temp_r4;
-    s32 temp_r5;
-    s32 temp_r5_2;
-    u32 var_ctr;
-    s16 centered;
-    s32 message;
-    MenuSubWindow *temp_r30;
-    u16 *var_r3;
-    u16 *var_r5;
-    u32 temp_r0;
+    u16 buf[31];
+    u16 *src;
+    s32 i;
+    s16 x;
 
-    var_r3 = (u16 *)arg0;
-    temp_r30 = arg0;
     if (arg2 >= 3) {
-        temp_r5 = arg2 * 0x90;
-        msgctrlSetValue(0x37, (u8 *)&_CB + temp_r5 + 0x9936);
+        msgctrlSetValue(0x37, (u8 *)&_CB + arg2 * 0x90 + 0x9936);
     } else {
         switch (arg2) {
         case 0:
-            var_r3 = GSmsgGetGSchar(0x4387);
+            src = GSmsgGetGSchar(0x4387);
             break;
         case 1:
-            var_r3 = GSmsgGetGSchar(0x4389);
+            src = GSmsgGetGSchar(0x4389);
             break;
         case 2:
-            var_r3 = GSmsgGetGSchar(0x4388);
+            src = GSmsgGetGSchar(0x4388);
             break;
         }
-        var_r5 = sp8;
-        var_ctr = 0x1F;
-        do {
-            if (var_r3 != NULL) {
-                if ((u16) *var_r3 == 0xFFFF) {
-                    var_r3 += 2;
+        for (i = 0; i < 31; i++) {
+            if (src != NULL) {
+                if (*src == 0xFFFF) {
+                    src += 2;
                 }
-                *var_r5 = *var_r3;
-                if ((u16) *var_r3 != 0) {
-                    var_r3 += 1;
+                buf[i] = *src;
+                if (*src != 0) {
+                    src++;
                 }
             } else {
-                *var_r5 = 0;
+                buf[i] = 0;
             }
-            var_r5 += 1;
-            var_ctr -= 1;
-        } while (var_ctr != 0);
-        msgctrlSetValue(0x37, sp8);
+        }
+        msgctrlSetValue(0x37, buf);
     }
-    temp_r0 = GSmsgGetRect(fn_8007E634(0x4276)) >> 0x10U;
-    temp_r4 = arg1->unk54;
-    temp_r5_2 = (s16)temp_r0 / 2;
-    centered = (s16)((temp_r4 / 2) - temp_r5_2);
-    message = fn_8007E634(0x4276);
-    GSmsgPrint2(temp_r30->unk1C, centered, 0, ((*(u32 *)&arg1->unk64) & 0xFFFFFF00) | temp_r30->unk93, message);
+    x = (s16)(arg1->unk54 / 2 - (s16)(GSmsgGetRect(fn_8007E634(0x4276)) >> 16) / 2);
+    GSmsgPrint2(arg0->unk1C, x, 0, ((*(u32 *)&arg1->unk64) & 0xFFFFFF00) | arg0->unk93, fn_8007E634(0x4276));
 }
 
+typedef struct MenuSubRuleView { u8 reserved0[0x9C78]; u8 *rule; } MenuSubRuleView;
 void menuCB_RuleItemFlagDisp(MenuSubWindow *arg0, MenuSubSprite *arg1) {
-    s16 var_r30;
-    s32 temp_r31;
     s32 var_r26;
+    s32 var_r27;
+    s32 temp_r31;
+    s16 var_r30;
+    MenuSubItem *temp_r7;
     s32 var_r29;
     MenuSubItem *temp_r27;
-    MenuSubItem *temp_r7;
 
     temp_r31 = winSpriteGetLayerID(arg0,arg1);
     temp_r27 = menuItemBiosGetPtr(arg0->unk4, 0x3AB);
@@ -1765,29 +1731,27 @@ void menuCB_RuleItemFlagDisp(MenuSubWindow *arg0, MenuSubSprite *arg1) {
         var_r29 = 0x3E;
     }
     spriteSetScissor(temp_r31, temp_r27->unk6 - temp_r7->unk6, temp_r27->unk8 - temp_r7->unk8, temp_r7->unkA, temp_r7->unkC);
-    while (var_r26 <= var_r29) {
-        if (var_r26 == 0x3E) {
+    for (var_r27 = var_r26; var_r27 <= var_r29; ++var_r27, var_r30 += 0x18) {
+        if (var_r27 == 0x3E) {
             GSmsgPrint2(arg0->unk1C, 0, var_r30, arg0->unk93 | ~0xFF, 1);
-        } else if ((u8) *((u8 *)_CB.unk9C78 + (var_r26 + 0x52)) != 0) {
+        } else if (((MenuSubRuleView *)&_CB)->rule[var_r27 + 0x52] != 0) {
             GSmsgPrint2(arg0->unk1C, 0, var_r30, arg0->unk93 | 0xFF3F0000, 0x43E4);
         } else {
             GSmsgPrint2(arg0->unk1C, 0, var_r30, arg0->unk93 | ~0xFF, 0x43E3);
         }
-        var_r26 += 1;
-        var_r30 += 0x18;
     }
     spriteClearScissor(temp_r31);
 }
 
 void menuCB_RuleItemNameEntry(MenuSubWindow *arg0, MenuSubSprite *arg1) {
-    s16 var_r30;
-    s32 temp_r31;
     s32 var_r26;
-    s32 var_r27;
-    s32 var_r29;
+    MenuSubItem *temp_r7;
+    s32 temp_r31;
     u32 temp_r3;
     MenuSubItem *temp_r27;
-    MenuSubItem *temp_r7;
+    s32 var_r27;
+    s16 var_r30;
+    s32 var_r29;
 
     temp_r31 = winSpriteGetLayerID(arg0,arg1);
     temp_r27 = menuItemBiosGetPtr(arg0->unk4, 0x3AC);
@@ -1924,67 +1888,52 @@ block_26:
 }
 
 void menuCBRULE_EditNameDispLarge(MenuSubWindow *arg0, s32 arg1) {
-    u16 sp8[31];
-    s32 temp_r5;
-    s32 var_ctr;
-    MenuSubWindow *temp_r31;
-    u16 *var_r30;
-    u16 *var_r3;
-    u16 *var_r5;
+    u16 buf[31];
+    u16 *src;
+    s32 i;
+    s32 count;
 
-    var_r3 = (u16 *)arg0;
-    temp_r31 = arg0;
     if (arg1 >= 3) {
-        temp_r5 = arg1 * 0x90;
-        msgctrlSetValue(0x37, (u8 *)&_CB + temp_r5 + 0x9936);
+        msgctrlSetValue(0x37, (u8 *)&_CB + arg1 * 0x90 + 0x9936);
     } else {
         switch (arg1) {
         case 0:
-            var_r3 = GSmsgGetGSchar(0x4387);
+            src = GSmsgGetGSchar(0x4387);
             break;
         case 1:
-            var_r3 = GSmsgGetGSchar(0x4389);
+            src = GSmsgGetGSchar(0x4389);
             break;
         case 2:
-            var_r3 = GSmsgGetGSchar(0x4388);
+            src = GSmsgGetGSchar(0x4388);
             break;
         }
-        var_r5 = sp8;
-        var_ctr = 0x1F;
-        do {
-            if (var_r3 != NULL) {
-                if ((u16) *var_r3 == 0xFFFF) {
-                    var_r3 += 1;
+        for (i = 0; i < 31; i++) {
+            if (src != NULL) {
+                if (*src == 0xFFFF) {
+                    src += 2;
                 }
-                *var_r5 = *var_r3;
-                if ((u16) *var_r3 != 0) {
-                    var_r3 += 1;
+                buf[i] = *src;
+                if (*src != 0) {
+                    src++;
                 }
             } else {
-                *var_r5 = 0;
+                buf[i] = 0;
             }
-            var_r5 += 1;
-            var_ctr -= 1;
-        } while (var_ctr != 0);
-        msgctrlSetValue(0x37, sp8);
+        }
+        msgctrlSetValue(0x37, buf);
     }
-    GSmsgPrint2(temp_r31->unk1C, 0, 0, temp_r31->unk93 | ~0xFF, 0x4275);
-    if ((s32) _CB.unkB118 == 5) {
-        msgctrlSetValue(0x34, (u16 *)2U);
+    GSmsgPrint2(arg0->unk1C, 0, 0, arg0->unk93 | ~0xFF, 0x4275);
+    if (_CB.unkB118 == 5) {
+        msgctrlSetValue(0x34, (void *)2);
     } else {
         msgctrlSetValue(0x34, (void *)(_CB.unkB118 + 1));
     }
     msgctrlSetValue(0x2F, (void *)_CB.unkB1E0);
-    GSmsgPrint2(temp_r31->unk1C, 0x1CE, 0, temp_r31->unk93 | ~0xFF, 0x427A);
-    GSmsgPrint2(temp_r31->unk1C, 0x1E4, 2, temp_r31->unk93 | ~0xFF, 0x4417);
-    if ((s32) _CB.unkB014 != -1) {
-        var_r30 = (u16 *)5U;
-    } else {
-        var_r30 = (u16 *)4U;
-    }
-    msgctrlSetValue(0x34, var_r30);
-    msgctrlSetValue(0x2F, var_r30);
-    GSmsgPrint2(temp_r31->unk1C, 0x1FA, 0, temp_r31->unk93 | ~0xFF, 0x427A);
+    GSmsgPrint2(arg0->unk1C, 0x1CE, 0, arg0->unk93 | ~0xFF, 0x427A);
+    GSmsgPrint2(arg0->unk1C, 0x1E4, 2, arg0->unk93 | ~0xFF, 0x4417);
+    msgctrlSetValue(0x34, (void *)(count = (_CB.unkB014 != -1) ? 5 : 4));
+    msgctrlSetValue(0x2F, (void *)count);
+    GSmsgPrint2(arg0->unk1C, 0x1FA, 0, arg0->unk93 | ~0xFF, 0x427A);
 }
 
 void menuCBRULE_EditNameDisp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg2) {
@@ -2030,16 +1979,16 @@ void menuCB_GCEntry_ItemKeepJob(void) {
 }
 
 void menuCB_GCEntry_ItemGiveJob(void) {
-    s32 temp_r3_2;
-    s8 var_r30;
+    void *temp_r27;
     MenuSubPokemon *temp_r31;
+    u32 temp_r3;
+    u32 temp_r30;
     u32 temp_r26;
     u32 temp_r28;
-    u32 temp_r30;
-    u32 temp_r3;
-    u32 temp_r25;
     u32 temp_r29;
-    void *temp_r27;
+    u32 temp_r25;
+    s32 var_r30;
+    s32 temp_r3_2;
 
     temp_r31 = menuCBPokemonPtrGet__FUlUl(_CB.unkB1D4, _CB.unkB1D8);
     {
@@ -2082,11 +2031,11 @@ void menuCB_GCEntry_ItemGiveJob(void) {
             temp_r3_2 = pokecoloGetCountryCode();
             switch (temp_r3_2) {
             case 0:
-                var_r30 = ((s32(*)(s32,s32,s32,s32))menuSubOpenYesNo)(0, 0x3C, 0xD2, 0);
+                var_r30 = menuSubOpenYesNo(0, 0x3C, 0xD2, 0);
                 break;
             case 1:
             case 2:
-                var_r30 = ((s32(*)(s32,s32,s32,s32))menuSubOpenYesNo)(0, 0x3C, 0xC8, 0);
+                var_r30 = menuSubOpenYesNo(0, 0x3C, 0xC8, 0);
                 break;
             }
             winMsgClose(1);
@@ -2103,7 +2052,7 @@ void menuCB_GCEntry_ItemGiveJob(void) {
                 heroItemAddItemDataId(temp_r27, temp_r3, 1, -1);
                 temp_r30 = pokemonDoItemSoubi(temp_r31, 0U, 0);
                 pokemonDoItemSoubi(temp_r31, temp_r26, 1);
-                msgctrlSetValue(0x2D, (u16 *) temp_r30);
+                msgctrlSetValue(0x2D, (void *)(u16)temp_r30);
                 msgctrlSetValue(0x2E, (u16 *)(u16)temp_r26);
                 _menuCB_errorMsgDisp2__FUl(0x3ACB);
             }
@@ -2116,75 +2065,51 @@ void menuCB_GCEntry_ItemGiveJob(void) {
 }
 
 void menuCBBattleBABatuMark(MenuSubSprite *arg0, s32 arg1, s32 arg2) {
-    f32 temp_f0;
-    s32 temp_r30;
-    s32 temp_r31;
-    MenuSubState *temp_r3;
-    MenuSubState *temp_r3_2;
-
     if ((menuCBBattleStartGetStatus() == 0) || (menuCBPokemonGetDataId(arg1, arg2) == 0)) {
         winSpriteSetDisp(arg0, 0);
         return;
     }
-    temp_r31 = arg2 * 4;
-    temp_r30 = arg1 * 0x18;
-    temp_r3 = (MenuSubState *)((u8 *)&_CB + temp_r30 + temp_r31);
-    if ((temp_r3->unkB248 == 0.0f) && (temp_r3->unkB1E8 == 0.0f)) {
+    if ((_CB.unkB248[arg1][arg2] == 0.0f) && (_CB.unkB1E8[arg1][arg2] == 0.0f)) {
         winSpriteSetDisp(arg0, 1);
-        temp_r3_2 = (MenuSubState *)((u8 *)&_CB + temp_r30 + temp_r31);
-        temp_r3_2->unkB368 = (f32) (temp_r3_2->unkB368 + temp_r3_2->unkB3C8);
-        if (temp_r3_2->unkB368 >= 1.0f) {
-            temp_r3_2->unkB368 = 1.0f;
+        _CB.unkB368[arg1][arg2] += _CB.unkB3C8[arg1][arg2];
+        if (_CB.unkB368[arg1][arg2] >= 1.0f) {
+            _CB.unkB368[arg1][arg2] = 1.0f;
         }
-        temp_f0 = temp_r3_2->unkB368;
-        arg0->unk6C = temp_f0;
-        arg0->unk68 = temp_f0;
+        arg0->unk68 = arg0->unk6C = _CB.unkB368[arg1][arg2];
         return;
     }
     winSpriteSetDisp(arg0, 0);
 }
 
 void menuCBBattleEndSetPokemonHP(void) {
-    MenuSubState *var_r30;
-    MenuSubState *var_r31;
-    f32 var_f31;
-    s32 var_r27;
-    s32 var_r28;
-    MenuSubPokemon *temp_r3;
+    MenuSubPokemon *pokemon;
+    f32 total;
+    u32 i;
+    s32 j;
 
-    var_f31 = 0.0f;
-    var_r30 = &_CB;
-    var_r28 = 0;
-    do {
-        var_r31 = var_r30;
-        var_r27 = 0;
-loop_2:
-        temp_r3 = toolentryTaisenGetEntryPokemonPtr(var_r28, var_r27);
-        if (temp_r3 != NULL) {
-            var_r31->unkB1E8 = (f32) pokemonBiosGetHp(temp_r3);
-            var_r31->unkB248 = (f32) pokemonBiosGetMaxHp(temp_r3);
-            var_r31->unkB2A8 = (f32) pokemonBiosGetMaxHp(temp_r3);
-            var_r31->unkB308 = (f32) ((var_r31->unkB2A8 - var_r31->unkB1E8) / 60.0f);
-            var_r31->unkB368 = 0.0f;
-            var_f31 += var_r31->unkB308;
-            var_r31->unkB3C8 = 0.06666667f;
-        } else {
-            var_r31->unkB2A8 = 100.0f;
-            var_r31->unkB3C8 = 0.0f;
-            var_r31->unkB368 = 0.0f;
-            var_r31->unkB308 = 0.0f;
-            var_r31->unkB248 = 0.0f;
-            var_r31->unkB1E8 = 0.0f;
+    total = 0.0f;
+    for (i = 0; (s32)i < 4; i++) {
+        for (j = 0; j < 6; j++) {
+            pokemon = toolentryTaisenGetEntryPokemonPtr(i, j);
+            if (pokemon != NULL) {
+                _CB.unkB1E8[i][j] = pokemonBiosGetHp(pokemon);
+                _CB.unkB248[i][j] = pokemonBiosGetMaxHp(pokemon);
+                _CB.unkB2A8[i][j] = pokemonBiosGetMaxHp(pokemon);
+                _CB.unkB308[i][j] = (_CB.unkB2A8[i][j] - _CB.unkB1E8[i][j]) / 60.0f;
+                total += _CB.unkB308[i][j];
+                _CB.unkB368[i][j] = 0.0f;
+                _CB.unkB3C8[i][j] = 0.06666667f;
+            } else {
+                _CB.unkB2A8[i][j] = 100.0f;
+                _CB.unkB3C8[i][j] = 0.0f;
+                _CB.unkB368[i][j] = 0.0f;
+                _CB.unkB308[i][j] = 0.0f;
+                _CB.unkB248[i][j] = 0.0f;
+                _CB.unkB1E8[i][j] = 0.0f;
+            }
         }
-        var_r31 = (MenuSubState *)((u8 *)var_r31 + 4);
-        var_r27 += 1;
-        if (var_r27 < 6) {
-            goto loop_2;
-        }
-        var_r30 = (MenuSubState *)((u8 *)var_r30 + 0x18);
-        var_r28 += 1;
-    } while (var_r28 < 4);
-    if (var_f31 != 0.0f) {
+    }
+    if (total != 0.0f) {
         _CB.unkB180 = 0x5D0;
     } else {
         _CB.unkB180 = 0;
@@ -2195,41 +2120,33 @@ loop_2:
 
 void menuCB_BattleBA_HPBarDispSet(MenuSubSprite *arg0, s32 arg1, s32 arg2) {
     s16 width;
-    f32 temp_f1;
-    f32 temp_f4;
-    f32 temp_f5;
-    MenuSubState *temp_r3;
-    MenuSubState *temp_r3_2;
+    f32 max;
+    f32 hp;
 
     if ((menuCBBattleStartGetStatus() != 0) && (menuCBPokemonGetDataId(arg1, arg2) != 0)) {
         winSpriteSetDisp(arg0, 1);
-        if ((u16) battleEndHPStartFlag == 0) {
-            temp_r3 = (MenuSubState *)((u8 *)&_CB + (arg1 * 0x18) + (arg2 * 4));
-            temp_r3->unkB248 = (f32) (temp_r3->unkB248 - temp_r3->unkB308);
-            temp_f1 = temp_r3->unkB1E8;
-            if (temp_r3->unkB248 < temp_f1) {
-                temp_r3->unkB248 = temp_f1;
+        if (battleEndHPStartFlag == 0) {
+            _CB.unkB248[arg1][arg2] -= _CB.unkB308[arg1][arg2];
+            if (_CB.unkB248[arg1][arg2] < _CB.unkB1E8[arg1][arg2]) {
+                _CB.unkB248[arg1][arg2] = _CB.unkB1E8[arg1][arg2];
             }
         } else {
             if (pauseIsPause() == 0) {
-                battleEndHPStartFlag -= 1;
+                battleEndHPStartFlag = battleEndHPStartFlag - 1;
             }
-            if (((u16) battleEndHPStartFlag == 0) && ((s32) _CB.unkB180 != 0)) {
+            if ((battleEndHPStartFlag == 0) && (_CB.unkB180 != 0)) {
                 menuCB_SE_Play(0x5D0);
             }
         }
-        temp_r3_2 = (MenuSubState *)((u8 *)&_CB + (arg1 * 0x18) + (arg2 * 4));
-        temp_f4 = temp_r3_2->unkB2A8;
-        temp_f5 = temp_r3_2->unkB248;
-        width = (s16) (48.0f * ((temp_f4 - (temp_f4 - temp_f5)) / temp_f4));
-        if (((20.0f * temp_f4) / 100.0f) >= temp_f5) {
+        max = _CB.unkB2A8[arg1][arg2];
+        hp = _CB.unkB248[arg1][arg2];
+        width = 48.0f * ((max - (max - hp)) / max);
+        if (((20.0f * max) / 100.0f) >= hp) {
             menuCB_SetSprite(arg0, menuSpriteBiosGetPtr(BATTLE_BA_HP_Bar_Char[2]));
+        } else if (((50.0f * max) / 100.0f) >= hp) {
+            menuCB_SetSprite(arg0, menuSpriteBiosGetPtr(BATTLE_BA_HP_Bar_Char[1]));
         } else {
-            if (((50.0f * temp_f4) / 100.0f) >= temp_f5) {
-                menuCB_SetSprite(arg0, menuSpriteBiosGetPtr(BATTLE_BA_HP_Bar_Char[1]));
-            } else {
-                menuCB_SetSprite(arg0, menuSpriteBiosGetPtr(BATTLE_BA_HP_Bar_Char[0]));
-            }
+            menuCB_SetSprite(arg0, menuSpriteBiosGetPtr(BATTLE_BA_HP_Bar_Char[0]));
         }
         arg0->unk54 = width;
         return;
@@ -2255,146 +2172,133 @@ void menuCB_PrintXP(MenuSubSprite *arg0, s32 arg1) {
 }
 
 void _menuCBGCDelPokemon__Fv(void) {
-    s32 temp_r3;
-    MenuSubPokemon *temp_r27_2;
-    MenuSubPokemon *temp_r30;
-    MenuSubPokemon *temp_r3_2;
-    u32 *var_r29;
-    u32 *var_r30;
-    u32 temp_r27;
-    u32 temp_r28;
-    u32 temp_r5;
-    u32 var_r31;
+    u32 index;
+    MenuSubPokemon *pokemon;
+    u32 type;
+    MenuSubPokemon *dst;
+    u32 slot;
 
     switch ((s32) _CB.unkB0F8) {
     case 30:
-        var_r31 = 0;
+        slot = 0;
         break;
     case 31:
-        var_r31 = 1;
+        slot = 1;
         break;
     case 32:
-        var_r31 = 2;
+        slot = 2;
         break;
     case 33:
-        var_r31 = 3;
+        slot = 3;
         break;
     case 34:
-        var_r31 = 4;
+        slot = 4;
         break;
     case 35:
-        var_r31 = 5;
+        slot = 5;
         break;
     }
-    temp_r27 = backup_type[var_r31];
-    temp_r28 = backup_index[var_r31];
-    backup_type[var_r31] = 0U;
-    backup_index[var_r31] = 0;
+    type = backup_type[slot];
+    index = backup_index[slot];
+    backup_type[slot] = 0;
+    backup_index[slot] = 0;
     menuCBGCEntryTypeIndex();
-    temp_r30 = menuCBPokemonPtrGet__FUlUl(_CB.unkB1D4, _CB.unkB1D8);
+    pokemon = menuCBPokemonPtrGet__FUlUl(_CB.unkB1D4, _CB.unkB1D8);
     switch (pokecoloGetCountryCode()) {
     case 0:
-        if (temp_r27 != 6U) {
-            memcpy(menuCBPokemonPtrGet__FUlUl(temp_r27, temp_r28), temp_r30, 0xC4);
-            pokemonInit(temp_r30);
+        if (type != 6) {
+            memcpy(menuCBPokemonPtrGet__FUlUl(type, index), pokemon, 0xC4);
+            pokemonInit(pokemon);
         } else {
-            insertDancer__12CReliveStageFR7Pokemonl(getStage__11CReliveHallFl(getPointer__11CReliveHallFv(), temp_r28 >> 0x10U), temp_r30, 0);
+            insertDancer__12CReliveStageFR7Pokemonl(getStage__11CReliveHallFl(getPointer__11CReliveHallFv(), index >> 0x10U), pokemon, 0);
         }
         break;
     case 1:
     case 2:
-        memcpy(menuCBPokemonPtrGet__FUlUl(temp_r27, temp_r28), temp_r30, 0xC4);
-        pokemonInit(temp_r30);
+        memcpy(menuCBPokemonPtrGet__FUlUl(type, index), pokemon, 0xC4);
+        pokemonInit(pokemon);
         break;
     }
-    var_r30 = &backup_type[var_r31];
-    var_r29 = &backup_index[var_r31];
-    for (; var_r31 < 5U; ++var_r31, ++var_r30, ++var_r29) {
-        temp_r27_2 = menuCBPokemonPtrGet__FUlUl(7U, var_r31);
-        temp_r5 = var_r29[1];
-        var_r30[0] = var_r30[1];
-        var_r29[0] = temp_r5;
-        var_r30[1] = 0U;
-        var_r29[1] = 0U;
-        temp_r3_2 = menuCBPokemonPtrGet__FUlUl(7U, var_r31 + 1);
-        memcpy(temp_r27_2, temp_r3_2, 0xC4);
-        pokemonInit(temp_r3_2);
+    for (; slot < 5; slot++) {
+        dst = menuCBPokemonPtrGet__FUlUl(7, slot);
+        backup_type[slot] = backup_type[slot + 1];
+        backup_index[slot] = backup_index[slot + 1];
+        backup_type[slot + 1] = 0;
+        backup_index[slot + 1] = 0;
+        pokemon = menuCBPokemonPtrGet__FUlUl(7, slot + 1);
+        memcpy(dst, pokemon, 0xC4);
+        pokemonInit(pokemon);
     }
     _CB.unkB100 = (s32) (_CB.unkB100 - 1);
 }
 
 u8 menuCBGCEntry_ErrorDisp__FUlUl(u32 arg0, u32 arg1) {
-    MenuSubPokemon *temp_r31;
-    u32 temp_r30;
-    u8 temp_r3;
-    u8 temp_r3_2;
-    MenuSubState *temp_r5;
+    MenuSubPokemon *pokemon;
+    u32 slot;
 
-    temp_r30 = _CB.unkB100 - 1;
-    temp_r31 = menuCBPokemonPtrGet__FUlUl(arg0, arg1);
-    toolBattleRuleErrorFlagClear(0, temp_r30);
-    menuCBRule_ErrorFlagSetPokemonGetTiming((u8 *)&_CB + 0xA65C, temp_r31, temp_r30);
+    slot = _CB.unkB100 - 1;
+    pokemon = menuCBPokemonPtrGet__FUlUl(arg0, arg1);
+    toolBattleRuleErrorFlagClear(0, slot);
+    menuCBRule_ErrorFlagSetPokemonGetTiming((u8 *)&_CB + 0xA65C, pokemon, slot);
     _CB.unkB0D8 = 0;
-    if (menuCB_Trainer_Error_Check(temp_r30, -1) != 0) {
+    if (menuCB_Trainer_Error_Check(slot, -1) != 0) {
         menuCBGCDelPokemon();
         _CB.unkB0FC = 2;
-        temp_r5 = (MenuSubState *)((u8 *)&_CB + (_CB.unkB0D8 * 0x18) + (temp_r30 * 4));
-        temp_r3 = temp_r5->unk9C84;
-        if ((u32) ((temp_r3 >> 7U) & 1) != 0) {
+        if (ERRS[_CB.unkB0D8][slot].byte0.bit7) {
             _CB.unkB1DC = 0x43AF;
-            return 0U;
+            return 0;
         }
-        if ((u32) ((temp_r3 >> 6U) & 1) != 0) {
+        if (ERRS[_CB.unkB0D8][slot].byte0.bit6) {
             _CB.unkB1DC = 0x43A2;
-            return 0U;
+            return 0;
         }
-        if (((u32) ((temp_r3 >> 5U) & 1) != 0) || ((u32) ((temp_r3 >> 4U) & 1) != 0)) {
+        if (ERRS[_CB.unkB0D8][slot].byte0.bit5 || ERRS[_CB.unkB0D8][slot].byte0.bit4) {
             _CB.unkB1DC = 0x43B0;
-            return 0U;
+            return 0;
         }
-        if ((u32) ((temp_r3 >> 3U) & 1) != 0) {
+        if (ERRS[_CB.unkB0D8][slot].byte0.bit3) {
             _CB.unkB1DC = 0x43A5;
-            return 0U;
+            return 0;
         }
-        if ((u32) ((temp_r3 >> 2U) & 1) != 0) {
+        if (ERRS[_CB.unkB0D8][slot].byte0.bit2) {
             _CB.unkB1DC = 0x43A6;
-            return 0U;
+            return 0;
         }
-        if ((u32) ((temp_r3 >> 1U) & 1) != 0) {
+        if (ERRS[_CB.unkB0D8][slot].byte0.bit1) {
             _CB.unkB1DC = 0x43A7;
-            return 0U;
+            return 0;
         }
-        if (((u32) (temp_r3 & 1) != 0) || (temp_r3_2 = temp_r5->unk9C85, (((u32) ((temp_r3_2 >> 1U) & 1) == 0) == 0))) {
+        if (ERRS[_CB.unkB0D8][slot].byte0.bit0 || ERRS[_CB.unkB0D8][slot].byte1.bit1) {
             _CB.unkB1DC = 0x43A8;
-            return 0U;
+            return 0;
         }
-        if ((u32) ((temp_r3_2 >> 7U) & 1) != 0) {
+        if (ERRS[_CB.unkB0D8][slot].byte1.bit7) {
             _CB.unkB1DC = 0x43A9;
-            return 0U;
+            return 0;
         }
-        if ((u32) ((temp_r3_2 >> 6U) & 1) != 0) {
+        if (ERRS[_CB.unkB0D8][slot].byte1.bit6) {
             _CB.unkB1DC = 0x43AA;
-            return 0U;
+            return 0;
         }
-        if ((u32) ((temp_r3_2 >> 5U) & 1) != 0) {
+        if (ERRS[_CB.unkB0D8][slot].byte1.bit5) {
             _CB.unkB1DC = 0x43AB;
-            return 0U;
+            return 0;
         }
-        if ((u32) ((temp_r3_2 >> 4U) & 1) != 0) {
+        if (ERRS[_CB.unkB0D8][slot].byte1.bit4) {
             _CB.unkB1DC = 0x43AC;
-            return 0U;
+            return 0;
         }
-        if ((u32) ((temp_r3_2 >> 3U) & 1) != 0) {
+        if (ERRS[_CB.unkB0D8][slot].byte1.bit3) {
             _CB.unkB1DC = 0x43AD;
-            return 0U;
+            return 0;
         }
-        if ((u32) ((temp_r3_2 >> 2U) & 1) != 0) {
+        if (ERRS[_CB.unkB0D8][slot].byte1.bit2) {
             _CB.unkB1DC = 0x43AE;
-            return 0U;
+            return 0;
         }
-        return 0U;
+        return 0;
     }
-    return 1U;
+    return 1;
 }
 
 s32 menuCB_GCEntry_SubWindow_Disp(void) {
@@ -2447,7 +2351,6 @@ s32 menuCB_GCEntry_SubWindow_Disp(void) {
                 winMsgClose(0);
                 return 6;
             }
-            break;
         case 3:
             return 6;
         }
@@ -2460,7 +2363,8 @@ s32 menuCB_GCEntry_SubWindow_Disp(void) {
             var_r7 = submenu1_y[var_r4];
             break;
         case 0:
-        case 4:
+        case 2:
+        case 3:
             break;
         }
         if (_CB.unkB100 == 6) {
@@ -2812,10 +2716,10 @@ void menuCBGCDelPokemon(void) {
 
 void menuCBGCEntryPokemon(void) {
     s32 temp_r3;
-    MenuSubPokemon *temp_r28;
     MenuSubPokemon *temp_r3_2;
     MenuSubPokemon *temp_r3_3;
     u32 temp_r29;
+    MenuSubPokemon *temp_r28;
     u32 temp_r30;
 
     menuCBGCEntryTypeIndex();
@@ -2846,7 +2750,7 @@ void menuCBGCEntryPokemon(void) {
                     _CB.unkB1DC = 0x43A5;
                     return;
                 }
-                pickupDancer__12CReliveStageFR7Pokemonl(getStage__11CReliveHallFl(getPointer__11CReliveHallFv(), temp_r30 >> 0x10U), temp_r28, (u16)temp_r30);
+                pickupDancer__12CReliveStageFR7Pokemonl(getStage__11CReliveHallFl(getPointer__11CReliveHallFv(), temp_r30 >> 0x10U), temp_r28, temp_r30 & 0xFFFF);
                 break;
             case 1:
             case 2:
@@ -2857,9 +2761,9 @@ void menuCBGCEntryPokemon(void) {
                     _CB.unkB1DC = 0x43A5;
                     return;
                 }
-                temp_r3_2 = menuCBPokemonPtrGet__FUlUl(temp_r29, temp_r30);
-                memcpy(temp_r28, temp_r3_2, 0xC4);
-                pokemonInit(temp_r3_2);
+                temp_r3_3 = menuCBPokemonPtrGet__FUlUl(temp_r29, temp_r30);
+                memcpy(temp_r28, temp_r3_3, 0xC4);
+                pokemonInit(temp_r3_3);
                 break;
             }
 block_17:
@@ -2872,10 +2776,7 @@ block_17:
 }
 
 void menuCB_Trainer_Error_Disp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg2, s32 arg3) {
-    s32 temp_r0;
     s32 var_r5;
-    u8 temp_r8;
-    MenuSubState *temp_r7;
 
     var_r5 = arg2;
     {
@@ -2885,74 +2786,71 @@ void menuCB_Trainer_Error_Disp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg
             err_msgID2[i] = 0;
         }
     }
-    temp_r0 = var_r5 * 4;
     _CB.unkB0E4 = 0;
-    if ((u32) (((u8) ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C84 >> 7U) & 1) != 0) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte0.bit7) {
         err_msgID[_CB.unkB0E4] = 0x43FD;
         err_msgID2[_CB.unkB0E4] = 0x43AF;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    if ((u32) (((u8) ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C84 >> 6U) & 1) != 0) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte0.bit6) {
         err_msgID[_CB.unkB0E4] = 0x43FE;
         err_msgID2[_CB.unkB0E4] = 0x43A2;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    temp_r8 = ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C84;
-    if (((u32) ((temp_r8 >> 5U) & 1) != 0) || ((u32) ((temp_r8 >> 4U) & 1) != 0)) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte0.bit5 || ERRS[_CB.unkB0D8][var_r5].byte0.bit4) {
         err_msgID[_CB.unkB0E4] = 0x43FF;
         err_msgID2[_CB.unkB0E4] = 0x43B0;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    if ((u32) (((u8) ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C84 >> 3U) & 1) != 0) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte0.bit3) {
         err_msgID[_CB.unkB0E4] = 0x4400;
         err_msgID2[_CB.unkB0E4] = 0x43A5;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    if ((u32) (((u8) ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C84 >> 2U) & 1) != 0) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte0.bit2) {
         err_msgID[_CB.unkB0E4] = 0x4401;
         err_msgID2[_CB.unkB0E4] = 0x43A6;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    if ((u32) (((u8) ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C84 >> 1U) & 1) != 0) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte0.bit1) {
         err_msgID[_CB.unkB0E4] = 0x4402;
         err_msgID2[_CB.unkB0E4] = 0x43A7;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    temp_r7 = (MenuSubState *)((u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0);
-    if (((u32) (temp_r7->unk9C84 & 1) != 0) || ((u32) (((u8) temp_r7->unk9C85 >> 1U) & 1) != 0)) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte0.bit0 || ERRS[_CB.unkB0D8][var_r5].byte1.bit1) {
         err_msgID[_CB.unkB0E4] = 0x4403;
         err_msgID2[_CB.unkB0E4] = 0x43A8;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    if ((u32) (((u8) ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C85 >> 7U) & 1) != 0) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte1.bit7) {
         err_msgID[_CB.unkB0E4] = 0x4404;
         err_msgID2[_CB.unkB0E4] = 0x43A9;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    if ((u32) (((u8) ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C85 >> 6U) & 1) != 0) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte1.bit6) {
         err_msgID[_CB.unkB0E4] = 0x4405;
         err_msgID2[_CB.unkB0E4] = 0x43AA;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    if ((u32) (((u8) ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C85 >> 5U) & 1) != 0) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte1.bit5) {
         err_msgID[_CB.unkB0E4] = 0x4406;
         err_msgID2[_CB.unkB0E4] = 0x43AB;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    if ((u32) (((u8) ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C85 >> 4U) & 1) != 0) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte1.bit4) {
         err_msgID[_CB.unkB0E4] = 0x4407;
         err_msgID2[_CB.unkB0E4] = 0x43AC;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    if ((u32) (((u8) ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C85 >> 3U) & 1) != 0) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte1.bit3) {
         err_msgID[_CB.unkB0E4] = 0x4408;
         err_msgID2[_CB.unkB0E4] = 0x43AD;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
-    if ((u32) (((u8) ((MenuSubState *)((u8 *)(u8 *)&_CB + (_CB.unkB0D8 * 0x18) + temp_r0))->unk9C85 >> 2U) & 1) != 0) {
+    if (ERRS[_CB.unkB0D8][var_r5].byte1.bit2) {
         err_msgID[_CB.unkB0E4] = 0x4409;
         err_msgID2[_CB.unkB0E4] = 0x43AE;
-        _CB.unkB0E4 = (s32) (_CB.unkB0E4 + 1);
+        _CB.unkB0E4++;
     }
     err_msgID[_CB.unkB0E4] = 0x435E;
     err_msgID2[_CB.unkB0E4] = 0;
@@ -2986,16 +2884,14 @@ void menuCB_Trainer_Error_Disp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg
 }
 
 void menuCB_Pokemon_ErrorDisp(MenuSubWindow *arg0, s32 arg1) {
-    u8 *temp_r31;
     u8 *temp_r29;
 
     _CB.unkB0D8 = (s32) (s8) arg1;
     menuCBPokemonEntryPokemonFaceFree();
     menuCBBattleStartSetStatus(0);
     temp_r29 = (u8 *)&_CB + 0x9CE4;
-    temp_r31 = (u8 *)&_CB + (arg1 * 0x1320) + 0x9BC;
-    heroBiosCopy(temp_r29, temp_r31);
-    heroBiosCopy(temp_r31, arg0);
+    heroBiosCopy(temp_r29, (u8 *)&_CB + (arg1 * 0x1320) + 0x9BC);
+    heroBiosCopy((u8 *)&_CB + (arg1 * 0x1320) + 0x9BC, arg0);
     menuCBPokemonEntryLoadTex();
     menuCBpokemonFaceReadWait();
     _CB.unkB088 = 0;
@@ -3027,7 +2923,7 @@ loop_13:
         _CB.unkB08C = 0;
         _CB.unkB00C = 0;
 loop_16:
-        menuOpenCustom(0xA7, windowGetActiveID(), (u8 *)&_CB + 0xB00C, 0, 1, 0);
+        menuOpenCustom(0xA7, windowGetActiveID(), &_CB.unkB00C, 0, 1, 0);
         if (((s32) _CB.unkB00C != (s32) _CB.unkB0E4) && ((s32) _CB.unkB08C != 1)) {
             _menuCB_errorMsgDisp__FUl(err_msgID2[_CB.unkB00C]);
             goto loop_16;
@@ -3038,7 +2934,7 @@ loop_16:
     menuCB_SE_Play(0x15);
     menuCloseCustom(0xA6, 0, 1);
     menuCBPokemonEntryPokemonFaceFree();
-    heroBiosCopy(temp_r31, temp_r29);
+    heroBiosCopy((u8 *)&_CB + (arg1 * 0x1320) + 0x9BC, temp_r29);
 }
 
 #pragma pool_strings off
@@ -3088,7 +2984,7 @@ void menuCBBattleStartDispTrainerFaceSub(MenuSubWindow*window,MenuSubSprite*spri
         endSurface__10GSgfxLayerFv(layer);
     }
 }
-f32 _f_menuCB_circleAnimationTime;
+static f32 _f_menuCB_circleAnimationTime;
 f32 timeGetLastFrameSec(void);double fmod(double,double);
 typedef struct MenuSubSpriteValue{u8 reserved0[4];s16 width,height;}MenuSubSpriteValue;
 MenuSubSpriteValue*menuSpriteBiosGetValPtr(void*);

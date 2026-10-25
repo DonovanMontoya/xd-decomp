@@ -31,11 +31,6 @@ struct FaceListEntry {
 struct FaceTextureEntry {u32 reserved;void* data;};
 typedef char FaceEntrySize[sizeof(FaceListEntry)==0x10?1:-1];
 extern "C" {
-extern s32 _menuFaceListNum;
-extern FaceListEntry* pMenuFaceList;
-extern FaceTextureEntry* pMenuFaceTexList;
-extern u8 _menuFaceLoadCallBackFlag;
-extern u8 _testType;
 extern u16 uToolPokemon_faceId;
 u32 menuFaceGetTexID(u16);
 u16 menuFaceGetID(Pokemon*);

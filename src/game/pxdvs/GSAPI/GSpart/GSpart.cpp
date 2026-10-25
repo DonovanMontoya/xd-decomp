@@ -169,12 +169,12 @@ static inline f32 partGetJointScaleX(HSD_JObj* joint) { if (!joint) __assert("jo
 static inline f32 partGetJointScaleY(HSD_JObj* joint) { if (!joint) __assert("jobj.h", 911, "jobj"); return joint->scale.y; }
 static inline f32 partGetJointScaleZ(HSD_JObj* joint) { if (!joint) __assert("jobj.h", 923, "jobj"); return joint->scale.z; }
 void GSpartGetTransform(GSpart* part, Vec* position, Vec* rotation, Vec* scale) {
-    Vec localRotation, totalRotation;
-    f32 scaleX, scaleY, scaleZ;
+    Vec totalRotation, localRotation;
     f32 x, y, z;
+    f32 scaleX, scaleY, scaleZ;
     static HSD_JObj* parentList[24];
-    HSD_JObj* joint = part->joint;
     u32 count = 0;
+    HSD_JObj* joint = part->joint;
     GSmodelUpdate(part->model);
     if (!GSmodelIsBlending(part->model)) {
         partJObjSetupMatrix(joint);
@@ -193,7 +193,7 @@ void GSpartGetTransform(GSpart* part, Vec* position, Vec* rotation, Vec* scale) 
     if (rotation || scale) {
         while (joint) {
             parentList[count++] = joint;
-            joint = partGetParent(joint);
+            joint = !joint ? 0 : joint->parent;
             if (count >= 24) {
                 GSlogWrite("GSpart: child node too deep\n");
                 joint = 0;
@@ -204,11 +204,13 @@ void GSpartGetTransform(GSpart* part, Vec* position, Vec* rotation, Vec* scale) 
             totalRotation.y = 0.0f;
             totalRotation.z = 0.0f;
             HSD_JObj** parent = &parentList[count];
-            for (u32 i = count; i; --i, --parent) {
-                HSD_JObj* joint = parent[-1];
-                localRotation.x = partGetJointRotationX(joint);
-                localRotation.y = partGetJointRotationY(joint);
-                localRotation.z = partGetJointRotationZ(joint);
+            HSD_JObj* current;
+            u32 i = count;
+            for (; i; --parent, --i) {
+                current = parent[-1];
+                localRotation.x = partGetJointRotationX(current);
+                localRotation.y = partGetJointRotationY(current);
+                localRotation.z = partGetJointRotationZ(current);
                 PSVECAdd(&totalRotation, &localRotation, &totalRotation);
             }
         }
@@ -217,11 +219,13 @@ void GSpartGetTransform(GSpart* part, Vec* position, Vec* rotation, Vec* scale) 
             scaleY = 1.0f;
             scaleZ = 1.0f;
             HSD_JObj** parent = &parentList[count];
-            for (u32 i = count; i; --i, --parent) {
-                HSD_JObj* joint = parent[-1];
-                f32 x = partGetJointScaleX(joint);
-                f32 y = partGetJointScaleY(joint);
-                f32 z = partGetJointScaleZ(joint);
+            HSD_JObj* current;
+            u32 i = count;
+            for (; i; --parent, --i) {
+                current = parent[-1];
+                f32 x = partGetJointScaleX(current);
+                f32 y = partGetJointScaleY(current);
+                f32 z = partGetJointScaleZ(current);
                 scaleX *= x;
                 scaleY *= y;
                 scaleZ *= z;
@@ -272,8 +276,8 @@ GSpartMaterial* GSpartGetMaterial(GSpart* part, u32 index) {
 s32 GSpartGetMaterialCount(GSpart* part) {
     HSD_DObj* dobj = partJointHasMaterials(part->joint) ? part->joint->u.dobj : 0;
     if (!dobj) return 0;
-    s32 count;
-    partFindMaterial(dobj, -1, &count);
+    volatile s32 count;
+    partFindMaterial(dobj, -1, (s32*)&count);
     return count;
 }
 void GSpartFree(GSpart* part) { part->inUse = 0; }
@@ -393,9 +397,10 @@ s32 GSpartSetAnimIndex(GSpart* part, s32 index, s32 mode, f32 frame) {
     if (index < 0) return -1;
     if (!GSmodelCanAnimate(model)) return -1;
     if ((u32)index >= GSmodelGetMaxAnimIndex(model)) return -1;
-    GSmodelPartAnimation* slot = model->partAnimations;
+    GSmodelPartAnimation* slot;
     s32 slotIndex;
-    for (slotIndex = 0; slotIndex < 8; ++slotIndex, ++slot) {
+    for (slotIndex = 0; slotIndex < 8; ++slotIndex) {
+        slot = &model->partAnimations[slotIndex];
         if (!slot->animation) break;
     }
     if (slotIndex >= 8) return -1;
@@ -418,24 +423,21 @@ s32 GSpartSetAnimIndex(GSpart* part, s32 index, s32 mode, f32 frame) {
     slot->requestedFrame = slot->frame;
     slot->endFrame = aobj->end_frame;
     switch (slot->mode) {
-    case 0: HSD_AObjClearFlags(slot->animation, AOBJ_LOOP); break;
-    case 1: HSD_AObjSetFlags(slot->animation, AOBJ_LOOP); break;
+    case 0: HSD_AObjClearFlags(aobj, AOBJ_LOOP); break;
+    case 1: HSD_AObjSetFlags(aobj, AOBJ_LOOP); break;
     }
     model->partAnimationChanged = 1;
     return slotIndex;
 }
 void GSpartStopAnimIndex(GSpart* part, s32 index) {
     GSmodel* model = part->model;
-    if (index >= 0) {
-        if (index < 8) {
-            if (model->partAnimations[index].animation) {
-                model->partAnimations[index].animation = 0;
-                s32 newIndex = GSpartSetAnimIndex(part, 0, 1, 0.0f);
-                model->partAnimations[newIndex].animation = 0;
-            }
-        } else {
-            return;
-        }
+    if (index < 0 || index >= 8) {
+        return;
+    }
+    if (model->partAnimations[index].animation) {
+        model->partAnimations[index].animation = 0;
+        s32 newIndex = GSpartSetAnimIndex(part, 0, 1, 0.0f);
+        model->partAnimations[newIndex].animation = 0;
     }
 }
 }
@@ -449,15 +451,17 @@ s32 GSpartSetTexAnimIndex(GSpart* part, s32 materialIndex, s32 animationIndex, s
     if (materialIndex < 0 || animationIndex < 0) return -1;
     if (!GSmodelCanTexAnimate(model)) return -1;
     if ((u32)animationIndex >= GSmodelGetMaxTexAnimIndex(model)) return -1;
-    GSmodelPartAnimation* slot = model->partTextureAnimations;
+    GSmodelPartAnimation* slot;
+    HSD_MatAnim* animation;
     s32 slotIndex;
-    for (slotIndex = 0; slotIndex < 4; ++slotIndex, ++slot) {
+    for (slotIndex = 0; slotIndex < 4; ++slotIndex) {
+        slot = &model->partTextureAnimations[slotIndex];
         if (!slot->animation) break;
     }
     if (slotIndex >= 4) return -1;
     HSD_MatAnimJoint* node = GSpartGetMatAnimPtr(model->scene->materialAnimations[animationIndex], part->index);
     if (!node) return -1;
-    HSD_MatAnim* animation = node->animations;
+    animation = node->animations;
     s32 remaining = materialIndex;
     while (remaining--) {
         animation = animation->next;
@@ -479,8 +483,8 @@ s32 GSpartSetTexAnimIndex(GSpart* part, s32 materialIndex, s32 animationIndex, s
     slot->requestedFrame = slot->frame;
     slot->endFrame = aobj->end_frame;
     switch (slot->mode) {
-    case 0: HSD_AObjClearFlags(slot->animation, AOBJ_LOOP); break;
-    case 1: HSD_AObjSetFlags(slot->animation, AOBJ_LOOP); break;
+    case 0: HSD_AObjClearFlags(aobj, AOBJ_LOOP); break;
+    case 1: HSD_AObjSetFlags(aobj, AOBJ_LOOP); break;
     }
     model->partTextureAnimationChanged = 1;
     return slotIndex;
@@ -508,7 +512,8 @@ static inline GSmodelPartAnimMix* partFindFreeMix(GSpart* part, s32 identifier) 
     return 0;
 }
 void GSpartRegisterAnimMix(GSpart* part, s32 identifier, s32 animationIndex, u32 flags, s32 mode) {
-    if (!identifier || !flags) return;
+    if (!identifier) return;
+    if (!flags) return;
     GSmodelPartAnimMix* mix = partFindFreeMix(part, identifier);
     if (!mix) return;
     mix->identifier = identifier;
@@ -524,7 +529,12 @@ void GSpartRegisterAnimMix(GSpart* part, s32 identifier, s32 animationIndex, u32
     mix->position.param3 = joint->translate.z;
     joint = part->joint;
     if (!joint) __assert("jobj.h", 733, "jobj");
-    HSD_Quaternion rotation = joint->rotate;
+    HSD_Quaternion rotation;
+    if (&rotation == 0) __assert("jobj.h", 734, "quat");
+    rotation.x = joint->rotate.x;
+    rotation.y = joint->rotate.y;
+    rotation.z = joint->rotate.z;
+    rotation.w = joint->rotate.w;
     joint = part->joint;
     if (!joint) __assert("jobj.h", 849, "jobj");
     if (&mix->scale == 0) __assert("jobj.h", 850, "scale");

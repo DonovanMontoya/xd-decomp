@@ -692,13 +692,13 @@ static inline void spritePrimitive(GSgfxLayer* layer,u32 primitive,u16 vertices)
     layer->setRenderStateAndSelect(GSgfxVFBuildTemp(0,3,0,0,1,5,0,0,0));layer->beginSurface(vertices);
 }
 extern "C" void winSpriteDraw(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite) {
-    u8 green;
-    s32 layerID;
-    u8 alpha;
-    u8 blue;
-    GSgfxLayer* layer;
-    u32 color;
     u8 red;
+    u8 blue;
+    u8 alpha;
+    u32 color;
+    u8 green;
+    GSgfxLayer* layer;
+    s32 layerID;
     GSgfxLayerFindByID(window->layerID);
     layerID=winSpriteGetLayerID(window,(WindowSprite*)sprite);
     layer=(GSgfxLayer*)GSgfxLayerFindByID(layerID);
@@ -744,31 +744,31 @@ extern "C" void winSpriteDraw(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite) {
                     break;
                 }
                 case 0x10002: {
-                    u8 r=(u16)sprite->sourceX*red/255,g=(u16)sprite->sourceY*green/255,b=(u16)sprite->sourceWidth*blue/255;
+                    red=(u16)sprite->sourceX*red/255;green=(u16)sprite->sourceY*green/255;blue=(u16)sprite->sourceWidth*blue/255;
                     spritePrimitive(layer,0x98,4);
-                    spriteVertex(sprite->x,sprite->y,r,g,b,alpha);
-                    spriteVertex(sprite->x+sprite->width,sprite->y,r,g,b,alpha);
-                    spriteVertex(sprite->x,sprite->y+sprite->height,r,g,b,alpha);
-                    spriteVertex(sprite->x+sprite->width,sprite->y+sprite->height,r,g,b,alpha);
+                    spriteVertex(sprite->x,sprite->y,red,green,blue,alpha);
+                    spriteVertex(sprite->x+sprite->width,sprite->y,red,green,blue,alpha);
+                    spriteVertex(sprite->x,sprite->y+sprite->height,red,green,blue,alpha);
+                    spriteVertex(sprite->x+sprite->width,sprite->y+sprite->height,red,green,blue,alpha);
                     layer->endSurface();break;
                 }
                 case 0x10008: {
-                    u8 r=(u16)sprite->sourceX*red/255,g=(u16)sprite->sourceY*green/255,b=(u16)sprite->sourceWidth*blue/255;
+                    red=(u16)sprite->sourceX*red/255;green=(u16)sprite->sourceY*green/255;blue=(u16)sprite->sourceWidth*blue/255;
                     spriteLineWidth(layer);
                     spritePrimitive(layer,0xb0,5);
-                    spriteVertex(sprite->x,sprite->y,r,g,b,alpha);
-                    spriteVertex(sprite->x+sprite->width,sprite->y,r,g,b,alpha);
-                    spriteVertex(sprite->x+sprite->width,sprite->y+sprite->height,r,g,b,alpha);
-                    spriteVertex(sprite->x,sprite->y+sprite->height,r,g,b,alpha);
-                    spriteVertex(sprite->x,sprite->y,r,g,b,alpha);
+                    spriteVertex(sprite->x,sprite->y,red,green,blue,alpha);
+                    spriteVertex(sprite->x+sprite->width,sprite->y,red,green,blue,alpha);
+                    spriteVertex(sprite->x+sprite->width,sprite->y+sprite->height,red,green,blue,alpha);
+                    spriteVertex(sprite->x,sprite->y+sprite->height,red,green,blue,alpha);
+                    spriteVertex(sprite->x,sprite->y,red,green,blue,alpha);
                     layer->endSurface();break;
                 }
                 case 0x10003: {
-                    u8 r=(u16)sprite->sourceX*red/255,g=(u16)sprite->sourceY*green/255,b=(u16)sprite->sourceWidth*blue/255;
+                    red=(u16)sprite->sourceX*red/255;green=(u16)sprite->sourceY*green/255;blue=(u16)sprite->sourceWidth*blue/255;
                     spriteLineWidth(layer);
                     spritePrimitive(layer,0xa8,2);
-                    spriteVertex(sprite->x,sprite->y,r,g,b,alpha);
-                    spriteVertex(sprite->width,sprite->height,r,g,b,alpha);
+                    spriteVertex(sprite->x,sprite->y,red,green,blue,alpha);
+                    spriteVertex(sprite->width,sprite->height,red,green,blue,alpha);
                     layer->endSurface();break;
                 }
                 }

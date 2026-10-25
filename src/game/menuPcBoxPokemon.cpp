@@ -914,7 +914,7 @@ bool CMenuPokemonLeave::cursorMoveDown(long &pos) {
     if (cur >= 1 && cur <= 2) {
         pos = 0;
     } else if (pos >= 0x22) {
-        if ((cur - 10) % 6 <= 2) {
+        if ((pos - 10) % 6 <= 2) {
             pos = 1;
         } else {
             pos = 2;
@@ -1777,10 +1777,7 @@ void CMenuPokemonLeave::drawStatusArea() {
         GSmsgPrint2(w->layer, w->x + sp->x, w->y + sp->y, -1, nameMsg);
         sp = menuPtSpriteWorkGetByItemID(w, 0x3DB, 0);
         msgctrlSetValue(0x34, p->getLevel());
-        long spriteX=sp->x;
-        long windowX=w->x;
-        long x=spriteX+0x24;
-        x=windowX+x;
+        long x = w->x + sp->x + 0x24;
         GSmsgPrint2(w->layer, x, w->y + sp->y, -1, levelMsg);
         if (p->isDarkPokemon()) {
             sp = menuPtSpriteWorkGetByItemID(w, 0x4CE, 0);

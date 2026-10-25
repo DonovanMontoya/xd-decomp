@@ -162,7 +162,7 @@ static void _sndStreamPrepareGetDataCallback(u8, u8 half_, GSsndStream* userData
     u32 end = start + 0x10000;
     u32 loopStart;
     if (first->header.loop == 1 && first->header.reserved31 == 1 && start <= (loopStart = first->header.loopStart - 2) && loopStart < end)
-        headerPosition = _sndStreamNibble_GetHeaderPos(loopStart);
+        headerPosition = _sndStreamNibble_GetHeaderPos((u16)loopStart);
     else headerPosition = 0;
     stream->readOffset += stream->sampleCount >> 1;
     if (first->header.loop == 1 && stream->readOffset >= first->header.loopEndSamples) {

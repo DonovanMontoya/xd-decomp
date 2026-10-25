@@ -468,18 +468,18 @@ void menuFightButtonSecretKousan(tagWINDOW_WORK *window) {
 }
 
 void menuFightDrawPP(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) {
-    s32 color;
+    u32 color;
     MENU_WAZA_STATUS *status;
-    s16 cursorIndex;
+    MenuCursor cursor;
     s16 x;
     status = (MENU_WAZA_STATUS *)windowGetAllocPtr(window);
     color = menuSubCalcColor(window, sprite);
-    cursorIndex = windowGetCursor(window->menu).y;
+    cursor = windowGetCursor(window->menu);
     x = sprite->width - (s16)(GSmsgGetRect(0x42C4) >> 16) * 5;
     GSmsgPrint2(winSpriteGetLayerID(window, sprite), x, 0, color, 0x42C4);
-    if (cursorIndex >= 0 && cursorIndex < 4) {
-        s32 off = cursorIndex * 0xC;
-        if (*(u32 *)((u8 *)status + off + 4) != 0) {
+    if (cursor.y >= 0 && cursor.y < 4) {
+        s32 off = cursor.y * 0xC;
+        if (((MenuFightWazaEntry *)&status->raw[4])[cursor.y].name != 0) {
             s32 waza;
             Pokemon *pokemon = fightOutPokemonGetPokemonPtr(WZ_SLOT(status));
             if (pokemon != 0) {
@@ -516,9 +516,9 @@ void menuFightDrawPP(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) {
                 GSmsgPrintRight(winSpriteGetLayerID(window, sprite), 0, 0, sprite->width, sprite->height, color, 0x3AD1);
                 break;
             default:
-                msgctrlSetValue(0x5F, *(u8 *)((u8 *)status + (0xF + off)));
+                msgctrlSetValue(0x5F, status->raw[off + 0xF]);
                 GSmsgPrintRight(winSpriteGetLayerID(window, sprite), 0, 0, x, sprite->height, color, 0x4351);
-                msgctrlSetValue(0x5F, *(u8 *)((u8 *)status + (0xE + off)));
+                msgctrlSetValue(0x5F, status->raw[off + 0xE]);
                 GSmsgPrintRight(winSpriteGetLayerID(window, sprite), 0, 0, sprite->width, sprite->height, color, 0x4351);
                 break;
             }
@@ -533,11 +533,11 @@ struct WazaRowB {
 };
 
 void menuFightDrawType(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) {
-    MENU_WAZA_STATUS *status = (MENU_WAZA_STATUS *)windowGetAllocPtr(window);
+    MenuFightWazaLayout *status = (MenuFightWazaLayout *)windowGetAllocPtr(window);
     s16 cursorIndex = windowGetCursor(window->menu).y;
     if (cursorIndex >= 0 && cursorIndex < 4) {
         s32 off = cursorIndex * 0xC;
-        if (*(u32 *)((u8 *)status + off + 4) != 0) {
+        if (status->entries[cursorIndex].name != 0) {
             s32 waza;
             Pokemon *pokemon = fightOutPokemonGetPokemonPtr(WZ_SLOT(status));
             if (pokemon != 0) {
@@ -570,7 +570,7 @@ void menuFightDrawType(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) {
                 return;
             }
             {
-                u16 type = *(u16 *)((u8 *)status + (0xC + off));
+                u16 type = status->entries[cursorIndex].type;
                 windowDrawSprite(0, 2, window, zokuseiBiosGetSpriteID(type), 0, winSpriteGetLayerID(window, sprite));
             }
         }
@@ -910,7 +910,7 @@ void menuFightButtonSecretMain(tagWINDOW_WORK *window) {
 void menuFightDrawSecretSelect(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) {
     s32 show = 1;
     if (window->menu == 0x92) {
-        u8 has = windowGetParam(window, 2) != 0;
+        u8 has = (u8)(s32)(windowGetParam(window, 2) != 0);
         if (has == 0) {
             show = 0;
         }
@@ -1029,14 +1029,17 @@ static inline s32 targetSecretSprite(s32 id) {
 }
 
 extern "C" void menuFightDrawTargetSecret(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) {
-    FightTargetSecret *entries = (FightTargetSecret *)windowGetParam(window, 0);
-    s32 i;
-    for (i = 0; i < 2; i++) {
-        if (targetSecretSprite(entries[i].idA) == sprite->id) {
-            winSpriteSetDisp(sprite, 1);
-            return;
+    FightTargetEntry *entries = (FightTargetEntry *)windowGetParam(window, 0);
+    s32 item;
+    for (s32 i = 0; i < 4; entries++, i++) {
+        switch (entries->id) {
+        case 0x37: item = 0x42; break;
+        case 0x40: item = 0x41; break;
+        case 0x38: item = 0x40; break;
+        case 0x41: item = 0x3F; break;
+        default: item = 0; break;
         }
-        if (targetSecretSprite(entries[i].idB) == sprite->id) {
+        if (item == sprite->id) {
             winSpriteSetDisp(sprite, 1);
             return;
         }

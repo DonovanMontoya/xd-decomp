@@ -87,13 +87,15 @@ void GsShapeRender::ExecuteFreeInstance() {
 void GsShapeRender::FreeShapeRenderDrawBuffer(s16 id) {
     if(id<0 || id>=256) return;
     u8 next=!currentBuffer;
-    if(freeCount[next]>=256) {
+    GsShapeRender* counters;
+    counters=(GsShapeRender*)((s16*)this+next);
+    if(counters->freeCount[0]>=256) {
         currentBuffer=next;
         shapeFreeQueuedInstances(this);
         currentBuffer=!currentBuffer;
     }
-    freeInstances[next][freeCount[next]]=id;
-    freeCount[next]++;
+    freeInstances[next][counters->freeCount[0]]=id;
+    counters->freeCount[0]++;
 }
 s16 GsShapeRender::CreateShapeRenderDrawBuffer() {
     shapeFreeQueuedInstances(this);
@@ -313,8 +315,8 @@ void GsShapeRender::Update(f32 time,s16 id) {
             object->vertexArrays[0]=0; object->vertexArrays[1]=0; object->vertexArrays[2]=0;
             object->vertexArrays[3]=0; object->vertexArrays[4]=0; object->vertexArrays[5]=0;
         }
-        int vertexDeform=channel->channelFlags[9]==1 && channel->channelFlags[10]==1;
-        int vertexTwist=channel->channelFlags[5]==1 && channel->channelFlags[6]==1;
+        int vertexDeform; if(channel->channelFlags[9]==1 && channel->channelFlags[10]==1) vertexDeform=1; else vertexDeform=0;
+        int vertexTwist; if(channel->channelFlags[5]==1 && channel->channelFlags[6]==1) vertexTwist=1; else vertexTwist=0;
         if(vertexDeform==1 || vertexTwist==1 || channel->channelFlags[2]==1 || channel->channelFlags[4]==1) {
             if(vertexDeform==1) {
                 key->GetDeformParameterU(deformU,first,second,t);
@@ -331,8 +333,8 @@ void GsShapeRender::Update(f32 time,s16 id) {
                 channel->channelFlags[4]!=0,angleU,angleV,vertexTwist!=0,twist);
         }
         key->GetShapeMatrix(&key->shapeMatrix,&key->transformMatrix,primitive,animation->transformCount,animation->transformOrder,first,second,t);
-        int textureDeform=channel->channelFlags[9]==1 && channel->channelFlags[10]==0;
-        int textureTwist=channel->channelFlags[5]==1 && channel->channelFlags[6]==0;
+        int textureDeform; if(channel->channelFlags[9]==1 && channel->channelFlags[10]==0) textureDeform=1; else textureDeform=0;
+        int textureTwist; if(channel->channelFlags[5]==1 && channel->channelFlags[6]==0) textureTwist=1; else textureTwist=0;
         for(u8 texture=0;texture<primitive->textureCount;texture++) {
             if((textureDeform==1 || textureTwist==1) && (!refractTexture || texture!=0)) {
                 if(textureDeform) {
@@ -344,33 +346,35 @@ void GsShapeRender::Update(f32 time,s16 id) {
             }
             if(primitive->shapeType==10 && primitive->textureCount) {
                 GsShapePair offset=key->GetTextureOffset(first,second,t,0);
+                f32 offsetU=offset.u, offsetV=offset.v;
                 GsShapePair scale=key->GetTextureScale(first,second,t,0);
-                offset.u*=scale.u; offset.v*=scale.v;
-                object->WaveTextureCoord(texture,offset.u,offset.v,&key->shapeMatrix,false);
+                offsetU*=scale.u; offsetV*=scale.v;
+                object->WaveTextureCoord(texture,offsetU,offsetV,&key->shapeMatrix,false);
             }
             GsShapeTextureMapping* mapping=(GsShapeTextureMapping*)object->entry->textures[texture];
             GSmtx* matrix=&key->textureMatrices[texture];
             if(primitive->shapeType==8 && texture==0) memcpy(matrix,&mtxIdent,sizeof(GSmtx));
             else if(channel->channelFlags[12+texture]==1) {
                 GsShapePair offset=key->GetTextureOffset(first,second,t,texture);
+                f32 offsetU=offset.u, offsetV=offset.v;
                 GsShapePair scale=key->GetTextureScale(first,second,t,texture);
                 if(first->textureSwapAxes[texture]) {
                     matrix->matrix[0][0]=0.0f; matrix->matrix[0][1]=1.0f; matrix->matrix[0][2]=0.0f; matrix->matrix[0][3]=0.0f;
                     matrix->matrix[1][0]=1.0f; matrix->matrix[1][1]=0.0f; matrix->matrix[1][2]=0.0f; matrix->matrix[1][3]=0.0f;
                     matrix->matrix[2][0]=0.0f; matrix->matrix[2][1]=0.0f; matrix->matrix[2][2]=1.0f; matrix->matrix[2][3]=0.0f;
                     if(!mapping->scaleBeforeOffset) {
-                        PSMTXTransApply(matrix->matrix,matrix->matrix,-offset.u,-offset.v,0.0f);
+                        PSMTXTransApply(matrix->matrix,matrix->matrix,-offsetU,-offsetV,0.0f);
                         PSMTXScaleApply(matrix->matrix,matrix->matrix,scale.u,scale.v,0.0f);
                     } else {
                         PSMTXScaleApply(matrix->matrix,matrix->matrix,scale.u,scale.v,0.0f);
-                        PSMTXTransApply(matrix->matrix,matrix->matrix,-offset.u,-offset.v,0.0f);
+                        PSMTXTransApply(matrix->matrix,matrix->matrix,-offsetU,-offsetV,0.0f);
                     }
                 } else if(!mapping->scaleBeforeOffset) {
-                    PSMTXTrans(matrix->matrix,-offset.u,-offset.v,0.0f);
+                    PSMTXTrans(matrix->matrix,-offsetU,-offsetV,0.0f);
                     PSMTXScaleApply(matrix->matrix,matrix->matrix,scale.u,scale.v,0.0f);
                 } else {
                     PSMTXScale(matrix->matrix,scale.u,scale.v,0.0f);
-                    PSMTXTransApply(matrix->matrix,matrix->matrix,-offset.u,-offset.v,0.0f);
+                    PSMTXTransApply(matrix->matrix,matrix->matrix,-offsetU,-offsetV,0.0f);
                 }
             } else {
                 PSMTXScale(matrix->matrix,mapping->maxU-mapping->minU,mapping->maxV-mapping->minV,0.0f);

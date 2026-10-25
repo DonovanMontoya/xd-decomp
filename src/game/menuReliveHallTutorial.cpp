@@ -23,7 +23,7 @@ u16 CMetaMenu::tutorialManagePrime() {
     static u16 tbl2132[]={0,64};
     static u16 tbl2147[]={0,32,2};
     struct Sequence {u16 values[6];};
-    Sequence sequence={0,1,9,1,8,16};
+    CState *temp_r30;
     u16 var_r29;
     u32 temp_r0;
     u32 temp_r0_10;
@@ -70,7 +70,6 @@ u16 CMetaMenu::tutorialManagePrime() {
     u32 temp_r6_7;
     u32 temp_r6_8;
     u32 temp_r6_9;
-    CState *temp_r30;
     TutorialWork *temp_r4;
     TutorialWork *temp_r4_2;
     TutorialWork *temp_r4_5;
@@ -97,68 +96,68 @@ u16 CMetaMenu::tutorialManagePrime() {
     *(u32*)temp_r30->reservedA4 = 0U;
     var_r29 = 0;
     temp_r30->update();
-    temp_r4_4 = temp_r4->state.unk0;
+    temp_r4_4 = temp_r30->unk0;
     switch (temp_r4_4) {
     case 0:
         tutorialMessage(0xD138);
-        temp_r6 = temp_r4->state.unk0;
+        temp_r6 = temp_r30->unk0;
         temp_r30->unk4 = (s32) (temp_r6 + 1);
         memset(temp_r30->saved,0,0x40);
         break;
     case 1:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD139);
         }
         temp_r0 = temp_r30->frames;
         if (temp_r0 < 5U) {
             var_r29 = tbl2009[temp_r0];
         } else {
-            temp_r6_2 = temp_r4->state.unk0;
+            temp_r6_2 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_2 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 2:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD13A);
         }
         temp_r0_2 = temp_r30->frames;
         if (temp_r0_2 < 2U) {
             var_r29 = tbl2016[temp_r0_2];
         } else {
-            temp_r6_3 = temp_r4->state.unk0;
+            temp_r6_3 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_3 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 3:
         tutorialMessage(0xD13B);
-        temp_r6_4 = temp_r4->state.unk0;
+        temp_r6_4 = temp_r30->unk0;
         temp_r30->unk4 = (s32) (temp_r6_4 + 1);
         memset(temp_r30->saved,0,0x40);
         break;
     case 4:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD13C);
         }
         temp_r0_3 = temp_r30->frames;
         if (temp_r0_3 < 7U) {
             var_r29 = tbl2024[temp_r0_3];
         } else {
-            temp_r6_5 = temp_r4->state.unk0;
+            temp_r6_5 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_5 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 5:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD13D);
         }
         temp_r0_4 = temp_r30->frames;
         if (temp_r0_4 < 6U) {
             var_r29 = tbl2031[temp_r0_4];
         } else {
-            temp_r6_6 = temp_r4->state.unk0;
+            temp_r6_6 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_6 + 1);
             memset(temp_r30->saved,0,0x40);
         }
@@ -170,84 +169,84 @@ u16 CMetaMenu::tutorialManagePrime() {
         break;
     case 7:
         tutorialMessage(0xD13E);
-        temp_r6_7 = temp_r4->state.unk0;
+        temp_r6_7 = temp_r30->unk0;
         temp_r30->unk4 = (s32) (temp_r6_7 + 1);
         memset(temp_r30->saved,0,0x40);
         break;
     case 8:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD13F);
         }
         temp_r0_5 = temp_r30->frames;
         if (temp_r0_5 < 4U) {
             var_r29 = tbl2040[temp_r0_5];
         } else {
-            temp_r6_8 = temp_r4->state.unk0;
+            temp_r6_8 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_8 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 9:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD140);
         }
         temp_r0_6 = temp_r30->frames;
         if (temp_r0_6 < 2U) {
             var_r29 = tbl2047[temp_r0_6];
         } else {
-            temp_r6_9 = temp_r4->state.unk0;
+            temp_r6_9 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_9 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 10:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD141);
         }
         temp_r0_7 = temp_r30->frames;
         if (temp_r0_7 < 5U) {
             var_r29 = tbl2054[temp_r0_7];
         } else {
-            temp_r6_10 = temp_r4->state.unk0;
+            temp_r6_10 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_10 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 11:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD142);
         }
         temp_r0_8 = temp_r30->frames;
         if (temp_r0_8 < 7U) {
             var_r29 = tbl2061[temp_r0_8];
         } else {
-            temp_r6_11 = temp_r4->state.unk0;
+            temp_r6_11 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_11 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 12:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD143);
         }
         temp_r0_9 = temp_r30->frames;
         if (temp_r0_9 < 4U) {
             var_r29 = tbl2068[temp_r0_9];
         } else {
-            temp_r6_12 = temp_r4->state.unk0;
+            temp_r6_12 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_12 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 13:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD144);
         }
         temp_r0_10 = temp_r30->frames;
         if (temp_r0_10 < 3U) {
             var_r29 = tbl2075[temp_r0_10];
         } else {
-            temp_r6_13 = temp_r4->state.unk0;
+            temp_r6_13 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_13 + 1);
             memset(temp_r30->saved,0,0x40);
         }
@@ -262,14 +261,14 @@ u16 CMetaMenu::tutorialManagePrime() {
         }
         break;
     case 15:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD145);
         }
         temp_r0_12 = temp_r30->frames;
         if (temp_r0_12 < 3U) {
             var_r29 = tbl2087[temp_r0_12];
         } else {
-            temp_r6_14 = temp_r4->state.unk0;
+            temp_r6_14 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_14 + 1);
             memset(temp_r30->saved,0,0x40);
         }
@@ -284,14 +283,14 @@ u16 CMetaMenu::tutorialManagePrime() {
         }
         break;
     case 17:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD146);
         }
         temp_r0_14 = temp_r30->frames;
         if (temp_r0_14 < 3U) {
             var_r29 = tbl2099[temp_r0_14];
         } else {
-            temp_r6_15 = temp_r4->state.unk0;
+            temp_r6_15 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_15 + 1);
             memset(temp_r30->saved,0,0x40);
         }
@@ -305,86 +304,88 @@ u16 CMetaMenu::tutorialManagePrime() {
             memset(temp_r30->saved,0,0x40);
         }
         break;
-    case 19:
-        if (temp_r30->time == 0.0f) {
+    case 19: {
+        if (!temp_r30->time) {
             tutorialMessage(0xD147);
         }
+        Sequence sequence={0,1,9,1,8,16};
         temp_r6_16 = temp_r30->frames;
         if (temp_r6_16 < 6U) {
             var_r29 = sequence.values[temp_r6_16];
         } else {
-            temp_r6_17 = temp_r4->state.unk0;
+            temp_r6_17 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_17 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
+    }
     case 20:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD148);
         }
         temp_r0_16 = temp_r30->frames;
         if (temp_r0_16 < 4U) {
             var_r29 = tbl2118[temp_r0_16];
         } else {
-            temp_r6_18 = temp_r4->state.unk0;
+            temp_r6_18 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_18 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 21:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD149);
         }
         temp_r0_17 = temp_r30->frames;
         if (temp_r0_17 < 3U) {
             var_r29 = tbl2125[temp_r0_17];
         } else {
-            temp_r6_19 = temp_r4->state.unk0;
+            temp_r6_19 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_19 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 22:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD14A);
         }
         temp_r0_18 = temp_r30->frames;
         if (temp_r0_18 < 2U) {
             var_r29 = tbl2132[temp_r0_18];
         } else {
-            temp_r6_20 = temp_r4->state.unk0;
+            temp_r6_20 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_20 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 23:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD14B);
         }
         temp_r0_19 = temp_r30->frames;
         if (temp_r0_19 < 6U) {
             var_r29 = tbl2139[temp_r0_19];
         } else {
-            temp_r6_21 = temp_r4->state.unk0;
+            temp_r6_21 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_21 + 1);
             memset(temp_r30->saved,0,0x40);
         }
         break;
     case 24:
         tutorialMessage(0xD14C);
-        temp_r6_22 = temp_r4->state.unk0;
+        temp_r6_22 = temp_r30->unk0;
         temp_r30->unk4 = (s32) (temp_r6_22 + 1);
         memset(temp_r30->saved,0,0x40);
         break;
     case 25:
-        if (temp_r30->time == 0.0f) {
+        if (!temp_r30->time) {
             tutorialMessage(0xD14D);
         }
         temp_r0_20 = temp_r30->frames;
         if (temp_r0_20 < 3U) {
             var_r29 = tbl2147[temp_r0_20];
         } else {
-            temp_r6_23 = temp_r4->state.unk0;
+            temp_r6_23 = temp_r30->unk0;
             temp_r30->unk4 = (s32) (temp_r6_23 + 1);
             memset(temp_r30->saved,0,0x40);
         }

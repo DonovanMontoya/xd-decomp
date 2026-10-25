@@ -72,7 +72,7 @@ extern s32 menuGetCursorItemID(s32);
 extern s32 menuOpen(s32, s32);
 extern s32 menuOpenCustom(s32, s32, s32, s32, s32, s32, ...);
 extern void menuSubCloseNumberInput(void);
-extern u8 menuSubOpenNumberInput(u8, s32*, s32, s32, s32, s32);
+extern u8 menuSubOpenNumberInput(u32, u32*, u8, s16, s16, u8);
 extern u8 menuSubOpenNumberInputID(u16, u32*, void (*)());
 extern s8 menuSubOpenYesNo(s32, s32, s32, s32);
 extern void msgctrlSetValue(s32, u32);
@@ -543,7 +543,7 @@ s32 dbgMenuFightWazaEdit(void) {
     }
 
 s32 dbgMenuFightFlagEdit(void) {
-    s32 value;
+    u32 value;
     s32 result;
     u8 msgSpeed = dbgMenuFightGetMsgSpeed();
     u8 tuikakouka = dbgMenuFightGetTuikakoukaFlag();
@@ -555,13 +555,12 @@ s32 dbgMenuFightFlagEdit(void) {
     u8 soubikouka = dbgMenuFightGetSoubikoukaFlag();
     u16 yubiwohuru = dbgMenuFightGetYubiwohuruWazaDataId();
     u8 lastValueRevise = dbgMenuFightGetFightTrainerAiLastValueReviseFlag();
-    u16 waza;
+    s32 waza;
 
     dbgMenuFightGetFightPokeStMenuOpenFlag();
     for (;;) {
         result = menuOpenCustom(0xE, 0, 0, 0, 1, 0, 0);
-        switch (result) {
-        case -1:
+        if (result == -1) {
             menuCloseCustom(0xE, 0, 1);
             dbgMenuFightSetMsgSpeed(msgSpeed);
             dbgMenuFightSetTuikakoukaFlag(tuikakouka);
@@ -574,49 +573,41 @@ s32 dbgMenuFightFlagEdit(void) {
             dbgMenuFightSetYubiwohuruWazaDataId(yubiwohuru);
             dbgMenuFightSetFightTrainerAiLastValueReviseFlag(lastValueRevise);
             return -1;
-        case -2:
+        } else if (result == -2) {
             if (menuOpen(0x55, 1) != 0) {
                 menuCloseCustom(0x55, 0, 1);
                 continue;
             }
             menuCloseCustom(0x55, 0, 1);
-            menuCloseCustom(0xE, 0, 1);
-            return 1;
-        case 114:
-            DBG_FIGHT_FLAG_TOGGLE(0, dbgMenuFightSetTuikakoukaFlag, dbgMenuFightGetTuikakoukaFlag())
             break;
-        case 118:
-            if (menuSubOpenNumberInput(dbgMenuFightGetMsgSpeed(), &value, 1, 0x32, 0x32, 0) == 0) {
+        } else if (result == 114) {
+            DBG_FIGHT_FLAG_TOGGLE(0, dbgMenuFightSetTuikakoukaFlag, dbgMenuFightGetTuikakoukaFlag())
+        } else if (result == 118) {
+            u8 speed = dbgMenuFightGetMsgSpeed();
+            if (menuSubOpenNumberInput(speed, &value, 1, 0x32, 0x32, 0) == 0) {
                 menuSubCloseNumberInput();
             } else {
                 dbgMenuFightSetMsgSpeed(value);
                 menuSubCloseNumberInput();
             }
-            break;
-        case 120:
+        } else if (result == 120) {
             DBG_FIGHT_FLAG_TOGGLE(0, dbgMenuFightSetMsgKeyWaitFlag, dbgMenuFightGetMsgKeyWaitFlag())
-            break;
-        case 122:
+        } else if (result == 122) {
             DBG_FIGHT_FLAG_TOGGLE(0, fightSeqSetEffectAminFlag, fightSeqGetEffectAminFlag())
-            break;
-        case 124:
+        } else if (result == 124) {
             DBG_FIGHT_FLAG_TOGGLE(0, dbgMenuFightSetAllFightTrainerOperateFlag, dbgMenuFightGetAllFightTrainerOperateFlag())
-            break;
-        case 126:
+        } else if (result == 126) {
             DBG_FIGHT_FLAG_TOGGLE(0, dbgMenuFightSetFightDebugMenuOpenFlag, dbgMenuFightGetFightDebugMenuOpenFlag())
-            break;
-        case 128:
+        } else if (result == 128) {
             DBG_FIGHT_FLAG_TOGGLE(0, dbgMenuFightSetFightTrainerAiFlowDispFlag, dbgMenuFightGetFightTrainerAiFlowDispFlag())
-            break;
-        case 116:
+        } else if (result == 116) {
             DBG_FIGHT_FLAG_TOGGLE(0, dbgMenuFightSetSoubikoukaFlag, dbgMenuFightGetSoubikoukaFlag())
-            break;
-        case 130:
+        } else if (result == 130) {
             if (fightIsFight() != 0) {
                 waza = dbgMenuFightGetYubiwohuruWazaDataId();
                 for (;;) {
-                    waza = dbgMenuFightGetWazaDataId(waza);
-                    if ((s32)waza < 0) {
+                    waza = dbgMenuFightGetWazaDataId((u16)waza);
+                    if (waza < 0) {
                         break;
                     }
                     if (fightSeqCheckYubiwohuruWazaDataId(waza) == 1) {
@@ -625,15 +616,20 @@ s32 dbgMenuFightFlagEdit(void) {
                     }
                 }
             }
-            break;
-        case 132:
+        } else if (result == 132) {
             DBG_FIGHT_FLAG_TOGGLE(0, dbgMenuFightSetFightTrainerAiLastValueReviseFlag, dbgMenuFightGetFightTrainerAiLastValueReviseFlag())
-            break;
-        case 134:
-            DBG_FIGHT_FLAG_TOGGLE(0, dbgMenuFightSetFightPokeStMenuOpenFlag, dbgMenuFightGetFightPokeStMenuOpenFlag())
-            break;
+        } else if (result == 134) {
+            int flag = dbgMenuFightGetFightPokeStMenuOpenFlag();
+            s8 answer = menuSubOpenYesNo(0x7F, -1, -1, flag == 0);
+            if (answer == 0) {
+                dbgMenuFightSetFightPokeStMenuOpenFlag(1);
+            } else if (answer == 1) {
+                dbgMenuFightSetFightPokeStMenuOpenFlag(0);
+            }
         }
     }
+    menuCloseCustom(0xE, 0, 1);
+    return 1;
 }
 
 s32 dbgMenuFightStop(void) {

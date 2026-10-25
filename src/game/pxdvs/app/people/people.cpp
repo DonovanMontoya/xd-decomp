@@ -277,7 +277,7 @@ f32 peopleViewerGetPlaySpeedRate(tagPeopleWork*);
 u8 isAnimLast__13tagPeopleWorkCFv(tagPeopleWork*);
 void GSlogWrite(const char*, ...);
 void peopleSetMotionType(tagPeopleWork*, s32);
-void _peopleSetMotionSub__FP13tagPeopleWorkP8_GSmodelllb(tagPeopleWork*, GSmodel*, s32, s32, bool);
+void _peopleSetMotionSub__FP13tagPeopleWorkP8_GSmodelllb(tagPeopleWork*, GSmodel*, int, int, bool);
 
 s32 peopleWalkPauseTalkMode(u32 group, u32 resource, u8 pause) {
     tagPeopleWork* work = peopleGet(group, resource);
@@ -328,8 +328,8 @@ void peopleSetMotionForce(u32 group, u32 resource, s32 index, s32 frame, bool lo
         }
     }
 }
-void _peopleSetMotionSub__FP13tagPeopleWorkP8_GSmodelllb(tagPeopleWork* work, GSmodel* model, s32 index, s32 frame, bool loop) {
-    work->requestedMotion = index;
+void _peopleSetMotionSub__FP13tagPeopleWorkP8_GSmodelllb(tagPeopleWork* work, GSmodel* model, int index, int frame, bool loop) {
+    work->requestedMotion = (u32)index;
     work->motionBlendStep = 0.0f;
     setAnimIndex__13tagPeopleWorkFi(work, index);
     setAnimFrame__13tagPeopleWorkFf(work, (f32)frame);
@@ -449,7 +449,7 @@ s32 peopleSetDefaultMotionTable(u32 group, u32 resource) {
     _peopleSetAutoMotionFrameCount__FP13tagPeopleWork(work);
     return 1;
 }
-s32 peopleSetMotionTable(u32 group, u32 resource, PeopleMotionTable* table) {
+s32 peopleSetMotionTable(u32 group, u32 resource, const PeopleMotionTable* table) {
     tagPeopleWork* work = peopleGet(group, resource);
     if (!work) return 0;
     work->motions.idle = table->idle;
@@ -518,13 +518,11 @@ f32 peopleGetBlendFactor(f32 value, f32 start, f32 end) {
     if (factor < 0.0f) return 0.0f;
     return factor;
 }
-void peopleSetWalkSpeed(u32 group, u32 resource, u32 mode, f32 speed) {
+void peopleSetWalkSpeed(u32 group, u32 resource, f32 speed, u32 mode) {
     tagPeopleWork* work = peopleGet(group, resource);
-    if (work) {
-        if (!work->model) return;
-        if (mode == 1) { work->unknown20 = speed / work->walkFrames; return; }
-        work->unknown24 = speed / work->runFrames;
-    }
+    if (!work || !work->model) return;
+    if (mode == 1) { work->unknown20 = speed / work->walkFrames; return; }
+    work->unknown24 = speed / work->runFrames;
 }
 
 f64 fabs(f64);
@@ -1038,7 +1036,7 @@ s32 peopleViewerDisplayRandWalk(tagPeopleWork*);
 s32 _peopleMoveSub__FP13tagPeopleWork(tagPeopleWork*);
 void _peopleSetMoveAnimation(tagPeopleWork*);
 f32 _distanceXZ__FP5GSvecP5GSvec(GSvec*, GSvec*);
-extern f32 END_NEED_DISTANCE;
+static f32 END_NEED_DISTANCE = 1.0f;
 f64 atan2(f64, f64);
 u8 GSmodelHasAnimationEnded(GSmodel*);
 void _peopleMoveTypeRandomWalk__FP13tagPeopleWork(tagPeopleWork* work) {
@@ -1244,7 +1242,10 @@ void peopleRotateToXYZ(u32 group, u32 resource, f32 x, f32 y, f32 z, f32 rate) {
         difference.param2 = 0.0f;
         f32 angle;
         if (!(PSVECMag(&difference) < 0.00001f) || !(PSVECMag(&difference) > -0.00001f))
-            angle = atan2(difference.param1, difference.param3);
+        {
+            f32 result = atan2(difference.param1, difference.param3);
+            angle = result;
+        }
         else { peopleBiosGetRot(work, &rotation); angle = rotation.param2; }
         peopleRotateToAngle(group, resource, angle, rate);
     }
@@ -1492,23 +1493,21 @@ f32 _distanceXZ__FP5GSvecP5GSvec(GSvec* first, GSvec* second) {
 }
 void _peopleSetMoveAnimation(tagPeopleWork* work) {
     bool loop = 0;
-    if (work) {
-        if (!work->model) return;
-        if (!work->manualAnimation && (work->walkActive != 4 || work->walkPhase != 0) && !isAlwayBlendChara__13tagPeopleWorkCFv(work)) {
-            s32 first, second;
-            GSmodelGetAnimIndex(work->model, &first, &second);
-            if (!work->running) {
-                if (first != work->motions.walk || second != -1) {
-                    s32 start = work->motions.walkStart;
-                    if (start == -1) { start = work->motions.walk; loop = 1; }
-                    peopleSetMotion(work->group, work->resource, start, 0, loop);
-                }
-            } else {
-                if (first != work->motions.run || second != -1) {
-                    s32 start = work->motions.runStart;
-                    if (start == -1) { start = work->motions.run; loop = 1; }
-                    peopleSetMotion(work->group, work->resource, start, 0, loop);
-                }
+    if (!work || !work->model) return;
+    if (!work->manualAnimation && (work->walkActive != 4 || work->walkPhase != 0) && !isAlwayBlendChara__13tagPeopleWorkCFv(work)) {
+        s32 first, second;
+        GSmodelGetAnimIndex(work->model, &first, &second);
+        if (!work->running) {
+            if (first != work->motions.walk || second != -1) {
+                s32 start = work->motions.walkStart;
+                if (start == -1) { start = work->motions.walk; loop = 1; }
+                peopleSetMotion(work->group, work->resource, start, 0, loop);
+            }
+        } else {
+            if (first != work->motions.run || second != -1) {
+                s32 start = work->motions.runStart;
+                if (start == -1) { start = work->motions.run; loop = 1; }
+                peopleSetMotion(work->group, work->resource, start, 0, loop);
             }
         }
     }
@@ -1534,26 +1533,24 @@ void _peopleCloseSub__FP13tagPeopleWorkbb(tagPeopleWork* work, u8 clearWalks, u8
 void peopleSetSpeedRate(u32 group, u32 resource, f32 rate) {
     s32 first, second;
     tagPeopleWork* work = peopleGet(group, resource);
-    if (work) {
-        if (!work->model) return;
-        GSmodelGetAnimIndex(work->model, &first, &second);
-        if (rate < 0.00001f && rate > -0.00001f) {
-            work->moveSpeed = 0.0f;
-            if (!work->manualAnimation) peopleSetMotion(work->group, work->resource, work->motions.idle, 0, 1);
-        } else if (rate < 1.5f) {
-            work->moveSpeed = work->unknown20;
-            if (work->running) {
-                work->running = 0;
-                if ((first == work->motions.walk || first == work->motions.run) && !isAlwayBlendChara__13tagPeopleWorkCFv(work) && !work->manualAnimation)
-                    peopleSetMotion(work->group, work->resource, work->motions.walk, 0, 1);
-            }
-        } else {
-            work->moveSpeed = work->unknown24;
-            if (!work->running) {
-                work->running = 1;
-                if ((first == work->motions.walk || first == work->motions.run) && !isAlwayBlendChara__13tagPeopleWorkCFv(work) && !work->manualAnimation)
-                    peopleSetMotion(work->group, work->resource, work->motions.run, 0, 1);
-            }
+    if (!work || !work->model) return;
+    GSmodelGetAnimIndex(work->model, &first, &second);
+    if (rate < 0.00001f && rate > -0.00001f) {
+        work->moveSpeed = 0.0f;
+        if (!work->manualAnimation) peopleSetMotion(work->group, work->resource, work->motions.idle, 0, 1);
+    } else if (rate < 1.5f) {
+        work->moveSpeed = work->unknown20;
+        if (work->running) {
+            work->running = 0;
+            if ((first == work->motions.walk || first == work->motions.run) && !isAlwayBlendChara__13tagPeopleWorkCFv(work) && !work->manualAnimation)
+                peopleSetMotion(work->group, work->resource, work->motions.walk, 0, 1);
+        }
+    } else {
+        work->moveSpeed = work->unknown24;
+        if (!work->running) {
+            work->running = 1;
+            if ((first == work->motions.walk || first == work->motions.run) && !isAlwayBlendChara__13tagPeopleWorkCFv(work) && !work->manualAnimation)
+                peopleSetMotion(work->group, work->resource, work->motions.run, 0, 1);
         }
     }
 }
@@ -1855,7 +1852,7 @@ void _peoplePostUpdateShadows__Fv();
 
 u8 GScolsys2WalkGetLayer(GSvec*, u8*, u8*);
 s32 floorDataBiosGetShadowReciveNum(void*);
-u32 floorDataBiosGetShadowReciveID(void*);
+u32 floorDataBiosGetShadowReciveID(void*, u32);
 u8 heroIsPlayerPeople(u32, u32);
 u32 floorGetCurrentGroupID();
 void* floorDataBiosGetCurrentPtr();
@@ -1868,22 +1865,23 @@ void _peopleUpdateShadows__FP13tagPeopleWork(tagPeopleWork* work) {
     void* floorData = floorDataBiosGetCurrentPtr();
     if (floorData) {
         u32 group = floorGetCurrentGroupID();
-        void* resources[2];
         GSvec position;
+        void* resources[6];
         s32 mode;
-        u8 layer[2];
+        u8 layer;
+        u8 floor;
         peopleBiosGetPos(work, &position);
-        if (!GScolsys2WalkGetLayer(&position, &layer[1], &layer[0])) {
-            layer[1] = 0;
-            layer[0] = 0;
+        if (!GScolsys2WalkGetLayer(&position, &layer, &floor)) {
+            layer = 0;
+            floor = 0;
         }
         s32 count = floorDataBiosGetShadowReciveNum(floorData);
-        if (layer[1] >= count || layer[0] >= count) return;
+        if (layer >= count || floor >= count) return;
         mode = 1;
-        resources[0] = GSresGetResource(group, floorDataBiosGetShadowReciveID(floorData));
-        if (layer[1] != layer[0]) {
+        resources[0] = GSresGetResource(group, floorDataBiosGetShadowReciveID(floorData, layer));
+        if (layer != floor) {
             mode = 2;
-            resources[1] = GSresGetResource(group, floorDataBiosGetShadowReciveID(floorData));
+            resources[1] = GSresGetResource(group, floorDataBiosGetShadowReciveID(floorData, floor));
         }
         gimmickBoxSetKenShadowOnBoxIfOnBoxFloor(work, resources, &mode);
         GSmodelSetShadowSurface(work->model, mode, resources);
@@ -1900,12 +1898,15 @@ void _peoplePostUpdateShadows__Fv() {
             tagPeopleWork* work = peopleBiosGetWorkPtr(index);
             if (work->used) {
                 GSmodel* model = peopleBiosGetModelPtr(work);
-                if (model && work->visible && GSmodelGetVisibility(model) && ((heroIsPlayerPeople(work->group, work->resource) != 1) == i)) {
-                    GSvec* position = peopleBiosGetPosPtr(work);
-                    target.param1 = position->param1;
-                    target.param2 = position->param2;
-                    target.param3 = position->param3;
-                    break;
+                if (model && work->visible && GSmodelGetVisibility(model)) {
+                    s32 player = heroIsPlayerPeople(work->group, work->resource) != 1;
+                    if (player == i) {
+                        GSvec* position = peopleBiosGetPosPtr(work);
+                        target.param1 = position->param1;
+                        target.param2 = position->param2;
+                        target.param3 = position->param3;
+                        break;
+                    }
                 }
             }
         }
@@ -2139,6 +2140,10 @@ static f32 m_hero_next_special_idling_time;
 u8 isWalkStartMotion__13tagPeopleWorkCFv(tagPeopleWork*);
 u8 gimmickBoxOnBox(tagPeopleWork*, GSvec*, GSvec*);
 u32 _peopleAdjustPosition__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork*, GSvec*, GSvec*);
+#pragma dollar_identifiers on
+// Keep the retail static identities independent of preceding local declarations.
+static f32 d0_fix$1767;
+static u8 init$1768;
 s32 peopleMoveAlongAngle(u32 group, u32 resource, f32 speed, f32 angle) {
     f32 move;
     GSvec position;
@@ -2152,7 +2157,10 @@ s32 peopleMoveAlongAngle(u32 group, u32 resource, f32 speed, f32 angle) {
         return 1;
     }
     peopleBiosGetPos(work, &position);
-    static f32 d0_fix = 1.0f;
+    if ((s8)init$1768 == 0) {
+        init$1768 = 1;
+        d0_fix$1767 = 1.0f;
+    }
     f32 step = speed * (30.0f * (f32)timeGetLastFrameTime() / (f32)GSgfxVideoGetVsyncRate());
     f32 playRate = peopleViewerGetPlaySpeedRate(work);
     work->unknown160 = speed;
@@ -2214,29 +2222,27 @@ static s32 m_before_special_effect;
 enum PeopleEnterMode { PEOPLE_ENTER_0 = 0, PEOPLE_ENTER_1 = 1, PEOPLE_ENTER_3 = 3 };
 void _peopleEnterFloor__FUi14FloorEnterMode(u32 floor, s32 modeValue) {
     PeopleEnterMode mode = (PeopleEnterMode)modeValue;
-    if (floorDataBiosGetFloorKind(floorDataBiosGetCurrentPtr()) != 2) {
-        if (mode == PEOPLE_ENTER_0 || mode == PEOPLE_ENTER_1 || mode == PEOPLE_ENTER_3) {
-            s32 index;
-            m_bPeopleOpenWithModel = 1;
-            peopleTalkEnterFloor();
-            if (floor == 0xFA1) floorCreateThread(0x40, 0, 1, (void (*)())peopleViewerThread);
-            for (index = 0; index < peopleBiosGetMaxNum(); ++index) {
-                tagPeopleWork* work = peopleBiosGetWorkPtr(index);
-                if (work) work->idleTimer = 0.0f;
-            }
-            peopleViewerSetPlaySpeedRate(1.0f);
-            m_hero_move = 1;
-            gimmickBoxFloorInit();
-            switch ((u16)HSD_Rand() % 3) {
-            case 0: m_before_special_effect = 0x13; break;
-            case 1: m_before_special_effect = 0x14; break;
-            default: m_before_special_effect = 0x15; break;
-            }
-            m_hero_idling_time = 0.0f;
-            m_hero_next_special_idling_time = 4.0f * HSD_Randf() + 8.0f;
-            peopleSetMotion(0, 100, 3, 0, 1);
-        }
+    s32 index;
+    if (floorDataBiosGetFloorKind(floorDataBiosGetCurrentPtr()) == 2) return;
+    if (mode != PEOPLE_ENTER_0 && mode != PEOPLE_ENTER_1 && mode != PEOPLE_ENTER_3) return;
+    m_bPeopleOpenWithModel = 1;
+    peopleTalkEnterFloor();
+    if (floor == 0xFA1) floorCreateThread(0x40, 0, 1, (void (*)())peopleViewerThread);
+    for (index = 0; index < peopleBiosGetMaxNum(); ++index) {
+        tagPeopleWork* work = peopleBiosGetWorkPtr(index);
+        if (work) work->idleTimer = 0.0f;
     }
+    peopleViewerSetPlaySpeedRate(1.0f);
+    m_hero_move = 1;
+    gimmickBoxFloorInit();
+    switch ((u16)HSD_Rand() % 3) {
+    case 0: m_before_special_effect = 0x13; break;
+    case 1: m_before_special_effect = 0x14; break;
+    default: m_before_special_effect = 0x15; break;
+    }
+    m_hero_idling_time = 0.0f;
+    m_hero_next_special_idling_time = 4.0f * HSD_Randf() + 8.0f;
+    peopleSetMotion(0, 100, 3, 0, 1);
 }
 
 // Batch 6.
@@ -2855,46 +2861,44 @@ void peopleDaemon() {
     s32 oldFirst,oldSecond,newFirst,newSecond;
     f32 rate=GSgfxVideoGetVsyncRate();
     f32 frame=30.0f*(f32)timeGetLastFrameTime()/rate;
-    if(!dbgMenuIsOpen() && _getLastFrameTime__Fv()) {
-        if(_getLastFrameSec__Fv()==0.0f)return;
-        if(floorGetFloorState()==4 || floorGetFloorState()==5) {
-            heroMoveMoveParty();peopleTalkMessageDaemon();_peopleSideStepCheck__Fv();
-            s32 i=peopleBiosGetMaxNum();
-            while(i-->0)peopleBiosGetWorkPtr(i);
-            i=peopleBiosGetMaxNum();
-            while(i-->0) {
-                tagPeopleWork* work=peopleBiosGetWorkPtr(i);
-                if(work->used && work->model) {
-                    if(peopleBiosCheckFlag(work,0x40000))_peopleCloseSub__FP13tagPeopleWorkbb(work,1,0);
-                    else {
-                        GSmodelGetAnimIndex(work->model,&oldFirst,&oldSecond);work->unknown17E=0;
-                        if(GSmodelHasAnimationEnded(work->model))_peopleExecAnimEndCallBack__FP13tagPeopleWork(work);
-                        peoplePartAnimationBlink(work);work->unknown28=work->moveSpeed;work->unknown160=0.0f;
-                        if(_peopleIsMoving__FP13tagPeopleWork(work) && !work->walkPaused) {
-                            switch(work->walkActive) {
-                            case 0:break;
-                            case 1:_peopleMoveTypeLinear__FP13tagPeopleWork(work);break;
-                            case 2:_peopleMoveTypeList__FP13tagPeopleWorkb(work,0);break;
-                            case 3:_peopleMoveTypeList__FP13tagPeopleWorkb(work,1);break;
-                            case 4:_peopleMoveTypeRandomWalk__FP13tagPeopleWork(work);break;
-                            case 5:_peopleMoveTypeRandomRot__FP13tagPeopleWork(work);break;
-                            }
+    if(dbgMenuIsOpen() || !_getLastFrameTime__Fv() || _getLastFrameSec__Fv()==0.0f)return;
+    if(floorGetFloorState()==4 || floorGetFloorState()==5) {
+        heroMoveMoveParty();peopleTalkMessageDaemon();_peopleSideStepCheck__Fv();
+        s32 i=peopleBiosGetMaxNum();
+        while(i-->0)peopleBiosGetWorkPtr(i);
+        i=peopleBiosGetMaxNum();
+        while(i-->0) {
+            tagPeopleWork* work=peopleBiosGetWorkPtr(i);
+            if(work->used && work->model) {
+                if(peopleBiosCheckFlag(work,0x40000))_peopleCloseSub__FP13tagPeopleWorkbb(work,1,0);
+                else {
+                    GSmodelGetAnimIndex(work->model,&oldFirst,&oldSecond);work->unknown17E=0;
+                    if(GSmodelHasAnimationEnded(work->model))_peopleExecAnimEndCallBack__FP13tagPeopleWork(work);
+                    peoplePartAnimationBlink(work);work->unknown28=work->moveSpeed;work->unknown160=0.0f;
+                    if(_peopleIsMoving__FP13tagPeopleWork(work) && !work->walkPaused) {
+                        switch(work->walkActive) {
+                        case 0:break;
+                        case 1:_peopleMoveTypeLinear__FP13tagPeopleWork(work);break;
+                        case 2:_peopleMoveTypeList__FP13tagPeopleWorkb(work,0);break;
+                        case 3:_peopleMoveTypeList__FP13tagPeopleWorkb(work,1);break;
+                        case 4:_peopleMoveTypeRandomWalk__FP13tagPeopleWork(work);break;
+                        case 5:_peopleMoveTypeRandomRot__FP13tagPeopleWork(work);break;
                         }
-                        if(frame==0.0f || (_distanceXZ__FP5GSvecP5GSvec(peopleBiosGetPosPtr(work),peopleBiosGetPrevPosPtr(work))<0.00001f && _distanceXZ__FP5GSvecP5GSvec(peopleBiosGetPosPtr(work),peopleBiosGetPrevPosPtr(work))>-0.00001f))work->unknown28=0.0f;
-                        else work->unknown28=PSVECDistance(peopleBiosGetPosPtr(work),peopleBiosGetPrevPosPtr(work))/frame;
-                        peopleViewerDisplayDaemonInfo(work);_peopleMoveRotate__FP13tagPeopleWork(work);peopleUpdateAnimation(work,1);gimmickBoxPushBox(work);
-                        GSvec* position=peopleBiosGetPosPtr(work);GSvec* previous=peopleBiosGetPrevPosPtr(work);previous->param1=position->param1;previous->param2=position->param2;previous->param3=position->param3;
-                        work->unknown13E[1]=0;
-                        GSmodelGetAnimIndex(work->model,&newFirst,&newSecond);
-                        if(!work->animationBlend && newSecond!=-1)setAnimIndex__13tagPeopleWorkFi(work,newSecond);
-                        if(oldFirst!=newFirst || oldSecond!=newSecond || (work->flags&0x4000)) {work->flags&=~0x4000;GSmodelStartAnimation(work->model);}
                     }
+                    if(frame==0.0f || (_distanceXZ__FP5GSvecP5GSvec(peopleBiosGetPosPtr(work),peopleBiosGetPrevPosPtr(work))<0.00001f && _distanceXZ__FP5GSvecP5GSvec(peopleBiosGetPosPtr(work),peopleBiosGetPrevPosPtr(work))>-0.00001f))work->unknown28=0.0f;
+                    else work->unknown28=PSVECDistance(peopleBiosGetPosPtr(work),peopleBiosGetPrevPosPtr(work))/frame;
+                    peopleViewerDisplayDaemonInfo(work);_peopleMoveRotate__FP13tagPeopleWork(work);peopleUpdateAnimation(work,1);gimmickBoxPushBox(work);
+                    GSvec* position=peopleBiosGetPosPtr(work);GSvec* previous=peopleBiosGetPrevPosPtr(work);previous->param1=position->param1;previous->param2=position->param2;previous->param3=position->param3;
+                    work->unknown13E[1]=0;
+                    GSmodelGetAnimIndex(work->model,&newFirst,&newSecond);
+                    if(!work->animationBlend && newSecond!=-1)setAnimIndex__13tagPeopleWorkFi(work,newSecond);
+                    if(oldFirst!=newFirst || oldSecond!=newSecond || (work->flags&0x4000)) {work->flags&=~0x4000;GSmodelStartAnimation(work->model);}
                 }
             }
-            if((s8)init$4020==0) {bCameraMove$4019=1;init$4020=1;}
-            if(bCameraMove$4019)peopleViewerSetHeroPos(0);
-            peopleUpdateShadow();
         }
+        if((s8)init$4020==0) {bCameraMove$4019=1;init$4020=1;}
+        if(bCameraMove$4019)peopleViewerSetHeroPos(0);
+        peopleUpdateShadow();
     }
 }
 }

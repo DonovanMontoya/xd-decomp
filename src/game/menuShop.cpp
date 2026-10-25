@@ -78,7 +78,7 @@ s32 heroGetStatus(s32, s32, s32);
 void heroSetStatus(s32, s32, s32);
 void winMsgOpenWithSE(s32, s32, s32, s32, u8);
 void winMsgClose(s32);
-s32 menuSubOpenYesNo(s32, s32, s32, s32);
+s8 menuSubOpenYesNo(u8, s16, s16, s32);
 f32 GSgfxVideoGetLastRenderTime(void);
 u8 GSgfxVideoGetVsyncRate(void);
 void GSthreadSwitch(void);
@@ -113,13 +113,13 @@ void spriteSetEnv(s32);
 void menuSubCursorAnimeValGet(ShopCursorAnime *, s32 *);
 s32 winSpriteGetLayerID(ShopWindow *, ShopSprite *);
 void windowDrawSpriteCursor(s32, s16, s32, ShopWindow *, s32, s32, s32, ShopCursorAnime *, s32);
-void menuSubCursorAnimeInit(f32 *, u32);
+void menuSubCursorAnimeInit(void);
 void menuSubCursorAnimeMain(void);
 u8 winSeqCheckMove(s32);
 void menuButtonNormal(ShopWindow *);
 void menuSubCursorAnimeStart(void);
 void menuCloseCustom(s32, s32, s32);
-void heroDecPokedoru(s32, u16);
+void heroDecPokedoru(void*, s32);
 void GSsndPlay(s32, s32, s32);
 s32 menuSubOpenSelect(s32, void *, s32, s32, s32, s32);
 void *GSmemAlloc(s32);
@@ -128,7 +128,7 @@ void menuPocket2Call(s32, s32, s32);
 u8 deckDataVirtualDB_GetFlagData__FUs(u16);
 u8 heroItemCheckHaveItemDataId(s32, u16);
 void mailMainReceiveTerminate(void);
-void GSfloorPush(s32, void *);
+void GSfloorPush(s32);
 void GSfloorPop(void);
 void floorSetFadeScript(s32, s32);
 void floorWaitForChange(void);
@@ -159,7 +159,7 @@ static void setExplanationMsgID__FUl(u32);
 static s32 getMoney__Fv(void);
 static s32 getCouponPoint__FUc(u8);
 static s32 getNbHaveItem__FUs(u16);
-static u16 getItemPrice__FUs(u16);
+static u32 getItemPrice__FUs(u16);
 static u32 getItemExplanationMsg__FUs(u16);
 static u32 getItemNameMsg__FUs(u16);
 static u8 _getIsBattleDiskSellOut__Fi(s32);
@@ -217,7 +217,7 @@ static u8 checkExchangeVpc__FP7VPC_BOX(VPC_BOX *box) {
 
 static s32 writeBackPcBox__FiUcP7VPC_BOX(s32 shop, u8 mode, VPC_BOX *box) {
     u8 sprite;
-    s8 answer;
+    s32 answer;
     if (checkExchangeVpc__FP7VPC_BOX(box) == 0) {
         winMsgOpenWithSE(2, menuShopGetCouponMsgID(&sprite, shop, 0xD, -1), 1, 0, sprite);
         answer = menuSubOpenYesNo(0, -1, -1, 0);
@@ -539,8 +539,8 @@ static s32 getItemCouponPoint__FUs(u16 item) {
     return itemDataBiosGetCoupon(itemDataBiosGetPtr(item));
 }
 
-static u16 getItemPrice__FUs(u16 item) {
-    return itemDataBiosGetPrice(itemDataBiosGetPtr(item));
+static u32 getItemPrice__FUs(u16 item) {
+    return (u16)itemDataBiosGetPrice(itemDataBiosGetPtr(item));
 }
 
 static s32 getNbHaveItem__FUs(u16 item) {
@@ -593,11 +593,7 @@ s32 menuShopDrawTitleText(ShopWindow *win, ShopSprite *spr) {
 
 s32 menuShopDrawPointEmblem(ShopWindow *win, ShopSprite *spr) {
     ShopMenuArg *arg = (ShopMenuArg *)win->arg;
-    s32 disp = 0;
-    if (spr->id == 0x6F && (arg->flags & 1) == 0 && (arg->mode == 2 || arg->mode == 3 || arg->mode == 4)) {
-        disp = 1;
-    }
-    winSpriteSetDisp(spr, disp);
+    winSpriteSetDisp(spr, spr->id == 0x6F && (arg->flags & 1) == 0 && (arg->mode == 2 || arg->mode == 3 || arg->mode == 4));
     return 0;
 }
 
@@ -629,26 +625,14 @@ s32 menuShopDrawMoneyWaku(ShopWindow *win, ShopSprite *spr) {
 }
 
 s32 menuShopDrawHaveWakuBack(ShopWindow *win, ShopSprite *spr) {
-    s32 disp;
-    ShopMenuArg *arg;
-    arg = (ShopMenuArg *)win->arg;
-    disp = 0;
-    if (arg->mode == 0 || arg->mode == 1 || arg->mode == 4 || arg->mode == 6) {
-        disp = 1;
-    }
-    winSpriteSetDisp(spr, disp);
+    ShopMenuArg *arg = (ShopMenuArg *)win->arg;
+    winSpriteSetDisp(spr, arg->mode == 0 || arg->mode == 1 || arg->mode == 4 || arg->mode == 6);
     return 0;
 }
 
 s32 menuShopDrawHaveWaku(ShopWindow *win, ShopSprite *spr) {
-    ShopMenuArg *arg;
-    s32 disp;
-    arg = (ShopMenuArg *)win->arg;
-    disp = 0;
-    if (arg->mode == 0 || arg->mode == 1 || arg->mode == 4 || arg->mode == 6) {
-        disp = 1;
-    }
-    winSpriteSetDisp(spr, disp);
+    ShopMenuArg *arg = (ShopMenuArg *)win->arg;
+    winSpriteSetDisp(spr, arg->mode == 0 || arg->mode == 1 || arg->mode == 4 || arg->mode == 6);
     return 0;
 }
 
@@ -928,10 +912,9 @@ s32 menuShopCtrl(ShopWindow *win) {
             winSeqSetMenu(0x3C, 0x78);
             *arg->curPos = 0.0f;
             *arg->isScroll = 0;
-            p = arg->rollUpTime;
-            *p = 0.0f;
+            *arg->rollUpTime = 0.0f;
             win->step = 1;
-            menuSubCursorAnimeInit(p, 0);
+            menuSubCursorAnimeInit();
         }
         break;
     case 2:
@@ -947,9 +930,9 @@ s32 menuShopCtrl(ShopWindow *win) {
         p = arg->curPos;
         v = *p;
         if (v < 0.0f) {
-            n = v + 7.0f;
-            *p = n;
-            if (n > 0.0f) {
+            v += 7.0f;
+            *p = v;
+            if (v > 0.0f) {
                 *arg->curPos = 0.0f;
             }
         }
@@ -1015,7 +998,7 @@ static s32 getExchangeMax__FUsUc(u16 item, u8 mode) {
 }
 
 static s32 getBuyMax__FUs(u16 item) {
-    s32 price = ((s32(*)(u16))getItemPrice__FUs)(item);
+    s32 price = getItemPrice__FUs(item);
     s32 max;
     if (price > 0) {
         max = getMoney__Fv() / price;
@@ -1043,7 +1026,6 @@ static void couponListMain__FiUc(s32 shop, u8 mode) {
 static void couponExchangeMain__FiUc(s32 shop, u8 mode) {
     ShopMenuArg arg;
     u8 sprite;
-    VPC_BOX *boxp;
     u8 m;
     s32 ok;
     s32 min;
@@ -1052,7 +1034,7 @@ static void couponExchangeMain__FiUc(s32 shop, u8 mode) {
     s32 point;
     s32 num;
     s32 cost;
-    s8 answer;
+    s32 answer;
     s32 done;
     done = 0;
     switch (mode) {
@@ -1071,7 +1053,6 @@ static void couponExchangeMain__FiUc(s32 shop, u8 mode) {
                 return;
             }
         }
-        boxp = &arg.vpc;
         m = mode;
         while (done == 0) {
             for (;;) {
@@ -1102,7 +1083,7 @@ static void couponExchangeMain__FiUc(s32 shop, u8 mode) {
                     continue;
                 }
                 openCouponMsgWin__Fi20MENU_COUPON_MSG_CODEie(shop, 6, -1);
-                decCouponAddItem__FiUsiUcP7VPC_BOX(cost, item, num, mode, boxp);
+                decCouponAddItem__FiUsiUcP7VPC_BOX(cost, item, num, mode, &arg.vpc);
                 GSsndPlay(0x1B, 0, 0);
                 if (mode != 4) {
                     continue;
@@ -1115,7 +1096,7 @@ static void couponExchangeMain__FiUc(s32 shop, u8 mode) {
                 }
             }
             if (m == 2) {
-                done = writeBackPcBox__FiUcP7VPC_BOX(shop, mode, boxp);
+                done = writeBackPcBox__FiUcP7VPC_BOX(shop, mode, &arg.vpc);
             } else {
                 done = 1;
             }
@@ -1181,7 +1162,7 @@ static void couponProc__FiUc(s32 shop, u8 mode) {
 static void vendingMachineProc__FiUc(s32 shop, u8 mode) {
     ShopMenuArg arg;
     u16 item;
-    u16 price;
+    u32 price;
     s32 money;
     for (;;) {
         menuCloseCustom(0x3C, 0, 1);
@@ -1215,7 +1196,7 @@ static void shopBuyMain__FiUc(s32 shop, u8 mode) {
     u8 sprite;
     u16 item;
     s32 max;
-    u16 price;
+    u32 price;
     s32 num;
     s32 cost;
     s32 answer;
@@ -1244,25 +1225,26 @@ static void shopBuyMain__FiUc(s32 shop, u8 mode) {
                     } else {
                         setExplanationMsgID__FUl(menuShopGetMsgID(&sprite, shop, 0xC, 0x2D, item, -1));
                         num = inputBuyNum__Fiiii(1, max, price, 0);
+                        if (num < 0) {
+                            continue;
+                        }
                     }
-                    if (num >= 0) {
-                        cost = num * price;
-                        winMsgOpenWithSE(2, menuShopGetMsgID(&sprite, shop, 3, 0x2D, item, 0x2F, num, 0x4B, cost, -1), 1, 0, sprite);
-                        answer = menuSubOpenYesNo(0, -1, -1, 0);
-                        winMsgClose(1);
-                        if (answer != 1 && answer != -1) {
-                            if (heroItemCheckAddItemDataId(0, item) < num) {
-                                openMsgWin__Fi18MENU_SHOP_MSG_CODEie(shop, 6, -1);
-                            } else {
-                                GSsndPlay(0x1A, 0, 0);
-                                heroDecPokedoru(0, cost);
-                                addItem__FUsi(item, num);
-                                _setBattleDiskSellOut__Fi(arg.index);
-                                openMsgWin__Fi18MENU_SHOP_MSG_CODEie(shop, 4, -1);
-                                if (item == 4 && num >= 10 && heroItemCheckAddItemDataId(0, 0xC) >= 1) {
-                                    openMsgWin__Fi18MENU_SHOP_MSG_CODEie(shop, 7, -1);
-                                    addItem__FUsi(0xC, 1);
-                                }
+                    cost = num * price;
+                    winMsgOpenWithSE(2, menuShopGetMsgID(&sprite, shop, 3, 0x2D, item, 0x2F, num, 0x4B, cost, -1), 1, 0, sprite);
+                    answer = menuSubOpenYesNo(0, -1, -1, 0);
+                    winMsgClose(1);
+                    if (answer != 1 && answer != -1) {
+                        if (heroItemCheckAddItemDataId(0, item) < num) {
+                            openMsgWin__Fi18MENU_SHOP_MSG_CODEie(shop, 6, -1);
+                        } else {
+                            GSsndPlay(0x1A, 0, 0);
+                            heroDecPokedoru(0, cost);
+                            addItem__FUsi(item, num);
+                            _setBattleDiskSellOut__Fi(arg.index);
+                            openMsgWin__Fi18MENU_SHOP_MSG_CODEie(shop, 4, -1);
+                            if (item == 4 && num >= 10 && heroItemCheckAddItemDataId(0, 0xC) >= 1) {
+                                openMsgWin__Fi18MENU_SHOP_MSG_CODEie(shop, 7, -1);
+                                addItem__FUsi(0xC, 1);
                             }
                         }
                     }
@@ -1339,7 +1321,7 @@ void menuShopOpen(s32 shop) {
     menuCreateOffScreen(20.0f / GSgfxVideoGetVsyncRate(), 50.0f);
     ShopWork.id = shop;
     ShopWork.pop = 1;
-    GSfloorPush(0x3A4, &ShopWork);
+    GSfloorPush(0x3A4);
     floorSetFadeScript(0, 0);
     floorWaitForChange();
     menuReleaseOffScreen(20.0f / GSgfxVideoGetVsyncRate());

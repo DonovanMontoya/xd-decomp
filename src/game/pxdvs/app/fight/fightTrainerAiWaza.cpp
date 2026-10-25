@@ -215,6 +215,7 @@ s32 _fightTrainerAiWazaSubWaza__FP13FIGHT_TRAINERP15FightOutPokemonUsPUsPsP15Fig
 
 s32 _fightTrainerAiWazaSubDefensePokemon__FP13FIGHT_TRAINERP15FightOutPokemonUsPUsUsPP15FightOutPokemonPP15FightOutPokemonPs(void *trainer,void *pokemon,u16 moveCount,u16 *moves,u16 enemyCount,void **enemies,void **selectedDefense,s16 *selectedSlot) {
     s32 scores[8],damage[8];
+    u16 j;s16 count;u16 i;s32 maximum;s32 bestDamage;
     void *allies[8];
     fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(trainer));
     u8 revise=fightTrainerAiDB_GetLastValueRevise();
@@ -231,17 +232,16 @@ s32 _fightTrainerAiWazaSubDefensePokemon__FP13FIGHT_TRAINERP15FightOutPokemonUsP
         void *ally=allies[i];
         if(!ally||!fightOutPokemonCheckFightOut(ally)||pokemon==ally)continue;
         if(fightTrainerAiIsFightOutPokemonTokuseiDataId(trainer,ally,18)==1&&fightTrainerAiIsFightOutPokemonJoutaiDataId(trainer,ally,58)==0){
-            s16 count=0;
-            for(u16 j=0;j<11;j++){
-                u16 move=electricMoves[j];
-                if(move==237){pokemonGetMezamerupower(fightOutPokemonGetPokemonPtr(pokemon),&hiddenPower,&hiddenElement);if(hiddenElement!=10)continue;}
-                if(fightTrainerAiCheckHaveFightOutPokemonWazaDataId(trainer,pokemon,move,&slot,1)!=0&&slot>=0)choiceSlots[count++]=slot;
+            count=0;
+            for(j=0;j<11;j++){
+                if(electricMoves[j]==237){pokemonGetMezamerupower(fightOutPokemonGetPokemonPtr(pokemon),&hiddenPower,&hiddenElement);if(hiddenElement!=10)continue;}
+                if(fightTrainerAiCheckHaveFightOutPokemonWazaDataId(trainer,pokemon,electricMoves[j],&slot,1)!=0&&slot>=0)choiceSlots[count++]=slot;
             }
             if(count>0){slot=choiceSlots[HSD_Rand()%count];if(selectedDefense)*selectedDefense=ally;if(selectedSlot)*selectedSlot=slot;return -1;}
         }
         if((fightTrainerAiIsFightOutPokemonTokuseiDataId(trainer,ally,62)==1||fightTrainerAiIsFightOutPokemonTokuseiDataId(trainer,ally,63)==1)&&fightTrainerAiIsFightOutPokemonJoutaiNormal(trainer,ally)==1){
-            s16 count=0;
-            for(u16 j=0;j<4;j++)if(fightTrainerAiCheckHaveFightOutPokemonWazaDataId(trainer,pokemon,statusMoves[j],&slot,1)!=0&&slot>=0)choiceSlots[count++]=slot;
+            count=0;
+            for(j=0;j<4;j++)if(fightTrainerAiCheckHaveFightOutPokemonWazaDataId(trainer,pokemon,statusMoves[j],&slot,1)!=0&&slot>=0)choiceSlots[count++]=slot;
             if(count>0){slot=choiceSlots[HSD_Rand()%count];if(selectedDefense)*selectedDefense=ally;if(selectedSlot)*selectedSlot=slot;return -1;}
         }
         u8 swap=0;
@@ -259,13 +259,13 @@ s32 _fightTrainerAiWazaSubDefensePokemon__FP13FIGHT_TRAINERP15FightOutPokemonUsP
         if(fightTrainerAiIsFightOutPokemonAllAbiCntTakai(trainer,ally)==1&&fightTrainerAiIsFightOutPokemonAllAbiCntTakai(trainer,pokemon)==0&&fightTrainerAiCheckHaveFightOutPokemonWazaDataId(trainer,pokemon,244,&slot,1)!=0&&slot>=0){if(selectedDefense)*selectedDefense=ally;if(selectedSlot)*selectedSlot=slot;return -1;}
     }}
     for(u16 i=0;i<8;i++){scores[i]=0;damage[i]=0;canKnockout[i]=0;canHit[i]=0;}
-    s32 bestDamage=0;
-    for(u16 i=0;i<enemyCount;i++){
+    bestDamage=0;
+    for(i=0;i<enemyCount;i++){
         void *enemy=enemies[i];
         if(enemy&&fightOutPokemonGetFightEntryId(enemy)>=0){
             u16 hp=fightTrainerAiGetFightOutPokemonNowHp(trainer,enemy);
-            s32 maximum=0;
-            for(u16 j=0;j<moveCount;j++){
+            maximum=0;
+            for(j=0;j<moveCount;j++){
                 u16 move=moves[j];
                 if(move&&move!=0x176){
                     u8 hit=fightTrainerAiWazaDoWazaHitFunc(trainer,pokemon,move,enemy);
@@ -281,11 +281,11 @@ s32 _fightTrainerAiWazaSubDefensePokemon__FP13FIGHT_TRAINERP15FightOutPokemonUsP
             if(bestDamage<damage[i])bestDamage=damage[i];
         }
     }
-    for(u16 i=0;i<enemyCount;i++){
+    for(i=0;i<enemyCount;i++){
         void *enemy=enemies[i];
         if(enemy&&fightOutPokemonGetFightEntryId(enemy)>=0){
             fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0,enemy);
-            scores[i]=fightAi_ThreatEnemyValue(trainer,pokemon,enemy,-1,1,(s8)canHit[i],(s8)canKnockout[i]);
+            scores[i]=((s16(*)(void*,void*,void*,s16,u16,s8,s8))fightAi_ThreatEnemyValue)(trainer,pokemon,enemy,-1,1,canHit[i],canKnockout[i]);
             if(dbgMenuFightGetFightTrainerAiLastValueReviseFlag()==1)scores[i]=fightTrainerAiAddValue(scores[i],(HSD_Rand()%(revise*2+1))-revise);
         }
     }

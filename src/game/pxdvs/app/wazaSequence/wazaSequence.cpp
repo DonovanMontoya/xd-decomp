@@ -40,8 +40,31 @@ void WazaSequence::ApplyStop() {
         ended = 0;
     }
 }
+static inline void StopEntries(SequenceEntry *e) {
+    for (;e!=0;e=e->next) e->Stop(true);
+}
+static inline void ApplyStopInline(WazaSequence *w) {
+    w->stopped = 0;
+    if (w->active != 0) {
+        if (g_LastStartedWaza == w) g_LastStartedWaza = 0;
+        ModelSequence *model = AsModel(w->sequence);
+        if (model != 0) {
+            u32 handle = model->model;
+            if (w->flags & 0x08000000) GSmodelLinkToGSparticleBank(handle,model->particleBank);
+            if (model->isPokemon == 0) model->DoDefaultAnimation(ANIM_TYPE_1,false);
+            if ((w->flags & 2) && g_EnableModelLayerChange != 0) {
+                s32 layer[] = {2};
+                GSmodelSetRenderLayer(handle,1,layer);
+            }
+        }
+        StopEntries(w->entries);
+        ResetDistortion(0.5f);
+        w->active = 0;
+        w->ended = 0;
+    }
+}
 WazaSequence::~WazaSequence() {
-    if (active != 0) ApplyStop();
+    if (active != 0) ApplyStopInline(this);
     if (entries != 0) delete entries;
     if (cameraResource != 0) GSresFreeResource(20000,cameraResource);
     wazaSequenceSysFreeWazaResource(this);
@@ -72,7 +95,8 @@ void WazaSequence_Free(WazaSequence *waza) {
 void WazaSequence_Stop(WazaSequence *waza) {
     if (waza != 0 && wazaSequenceSysIsValidWaza(waza)) waza->stopped=1;
 }
-void WazaSequence_Start(WazaSequence *waza,bool camera) {
+void WazaSequence_Start(void *arg,bool camera) {
+    WazaSequence *waza=(WazaSequence*)arg;
     if (waza != 0 && wazaSequenceSysIsValidWaza(waza)) waza->Start(camera);
 }
 }
@@ -196,8 +220,8 @@ bool WazaSequence::Update(f32 delta) {
 void WazaSequence::Start(bool camera) {
     if (active != 0) ApplyStop();
     wazaSequenceSysApplyStop();
-    ModelSequence *model=AsModel(sequence);
     SequenceEntry *entry=entries;
+    ModelSequence *model=AsModel(sequence);
     if (model != 0) {
         u32 handle=model->model;
         model->LinkWithWazaSequence(this);

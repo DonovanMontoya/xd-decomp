@@ -6,7 +6,7 @@ int atoi(const char *);
 double atof(const char *);
 void GSgfxGPUSetMode(s32);
 void GSgfxRender();
-void GSprimDraw2DQuad(const void *, f32, f32, f32, f32);
+void GSprimDraw2DQuad(f32, f32, f32, f32, const void *);
 void GSprimSetTextColor(const void *);
 void GSprimSetTextWidth(f32);
 void GSprimSetTextSize(f32, f32);
@@ -87,7 +87,7 @@ extern "C" void sysvarsShowDebug() {
     do {
         GSprimSetup2DRender(0);
         Color color = background;
-        GSprimDraw2DQuad(&color, 0.0f, 0.0f, 640.0f, 480.0f);
+        GSprimDraw2DQuad(0.0f, 0.0f, 640.0f, 480.0f, &color);
         Color textColor = text;
         GSprimSetTextColor(&textColor);
         GSprimSetTextWidth(2.0f);

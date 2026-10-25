@@ -1,3 +1,4 @@
+#pragma auto_inline on
 #include <game/pxdvs/GSAPI/GSmodel/GSmodel.hpp>
 #include <game/maximum/GSAPI/baselib/mtx_base.h>
 extern "C" void __assert(const char*, int, const char*);
@@ -25,7 +26,8 @@ static inline s32 parseJointMtxIsDirty(HSD_JObj* joint) {
 static s32 HSD_JObjMtxIsDirty(HSD_JObj* joint) {return parseJointMtxIsDirty(joint);}
 #pragma dont_inline reset
 static inline void HSD_JObjSetupMatrix(HSD_JObj* joint) {
-    if (joint && (u8)parseJointMtxIsDirty(joint)) HSD_JObjSetupMatrixSub(joint);
+    if (!joint || !(u8)parseJointMtxIsDirty(joint)) return;
+    HSD_JObjSetupMatrixSub(joint);
 }
 }
 struct GSmtx { Mtx matrix; GSmtx() {} };
@@ -38,6 +40,49 @@ static void _modelParseJObjDispDObj__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_
 static void _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_JObj*, GSmtx*, GSmtx*, s32, bool, GSmodelParseCallback, void*);
 static inline void parseDisplayObject(HSD_DObj*, GSmtx*, GSmtx*, bool, GSmodelParseCallback, void*);
 static void _modelParseLoadEnvelopeMatrix__FP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtx(HSD_PObj*, GSmtx*, GSmtx*, GSmtx*);
+static void _modelParseDObjDisp__FP9_HSD_DObjP5GSmtxP5GSmtxbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_DObj*, GSmtx*, GSmtx*, bool, GSmodelParseCallback, void*);
+// All display paths use the same identity matrix, including the separately
+// emitted display entry point.
+static inline GSmtx* parseIdentityMatrix() {
+    static GSmtx identity;
+    memcpy(identity.matrix, mtxIdent, sizeof(Mtx));
+    return &identity;
+}
+
+// The traversal expands the display pass but retains the polygon display call.
+// Keep these inline forms separate from the emitted entry points below, whose
+// own inline boundaries differ.
+static inline void parseJointDisplayPass(HSD_JObj* joint, GSmtx* view, GSmtx* position, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
+    HSD_JObjSetCurrent(joint);
+    u32 objectMask = mask << 1;
+    HSD_PObjClearMtxMark(0, 0);
+    for (HSD_DObj* object = joint->u.dobj; object; object = object->next) {
+        if (!(object->flags & 1) && (object->flags & objectMask)) {
+            HSD_DObjSetCurrent(object);
+            _modelParseDObjDisp__FP9_HSD_DObjP5GSmtxP5GSmtxbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(object, view, position, loadMatrices, callback, context);
+        }
+    }
+    HSD_DObjSetCurrent(0);
+    HSD_JObjSetCurrent(0);
+}
+static inline void parseJointDisplayObjects(HSD_JObj* joint, GSmtx* view, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
+    u32 flags = joint->flags;
+    if (!(flags & 0x10)) {
+        u32 transparency = flags & (mask << 18);
+        if (transparency) {
+            if (joint && HSD_JObjMtxIsDirty(joint)) HSD_JObjSetupMatrixSub(joint);
+            if (!view) view = parseIdentityMatrix();
+            GSmtx position;
+            HSD_JObjMakePositionMtx(joint, view->matrix, position.matrix);
+            if (transparency & 0x40000) parseJointDisplayPass(joint, view, &position, 1, loadMatrices, callback, context);
+            if (transparency & 0x100000) parseJointDisplayPass(joint, view, &position, 4, loadMatrices, callback, context);
+            if (transparency & 0x80000) parseJointDisplayPass(joint, view, &position, 2, loadMatrices, callback, context);
+        }
+    }
+}
+static inline void parseJointDisplay(HSD_JObj* joint, GSmtx* view, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
+    if (joint && ((joint->flags & 0x4020) ? 0 : 1)) parseJointDisplayObjects(joint, view, mask, loadMatrices, callback, context);
+}
 void GSmodelParse(GSmodel* model, bool loadMatrices, GSmodelParseCallback callback, void* context) {
     _modelParseJObjDispAll__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(modelGetRenderJObj__FP8_GSmodel(model), 0, 7, loadMatrices, callback, context);
 }
@@ -50,7 +95,7 @@ static void _modelParseJObjDispAll__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_P
                 _modelParseJObjDispAll__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint->child, &instance, mask, loadMatrices, callback, context);
             }
         } else {
-            if (joint->flags & (mask << 18)) _modelParseJObjDisp__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, mask, loadMatrices, callback, context);
+            if (joint->flags & (mask << 18)) parseJointDisplay(joint, view, mask, loadMatrices, callback, context);
             if (joint->flags & (mask << 28)) {
                 for (HSD_JObj* child = joint->child; child; child = child->next) _modelParseJObjDispAll__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(child, view, mask, loadMatrices, callback, context);
             }
@@ -64,15 +109,18 @@ static void _modelParseSetupInstanceMtx__FP5GSmtxP9_HSD_JObjP5GSmtx(GSmtx* view,
     if (view) PSMTXConcat(view->matrix, out->matrix, out->matrix);
 }
 static void _modelParseJObjDisp__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_JObj* joint, GSmtx* view, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
-    if (joint && !(joint->flags & 0x4020)) _modelParseJObjDispDObj__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, mask, loadMatrices, callback, context);
+    if (joint && ((joint->flags & 0x4020) ? 0 : 1)) _modelParseJObjDispDObj__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, mask, loadMatrices, callback, context);
 }
+// Compile this helper before DispSub is defined so its standalone body keeps
+// the calls, while the deferred tree traversal can inline the other helpers.
+#pragma defer_codegen off
 static void _modelParseJObjDispDObj__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_JObj* joint, GSmtx* view, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
     u32 flags = joint->flags;
     if (!(flags & 0x10)) {
         u32 transparency = flags & (mask << 18);
         if (transparency) {
             HSD_JObjSetupMatrix(joint);
-            if (!view) { static GSmtx identity; memcpy(identity.matrix, mtxIdent, sizeof(Mtx)); view = &identity; }
+            if (!view) view = parseIdentityMatrix();
             GSmtx position;
             HSD_JObjMakePositionMtx(joint, view->matrix, position.matrix);
             if (transparency & 0x40000) _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, &position, 1, loadMatrices, callback, context);
@@ -81,7 +129,7 @@ static void _modelParseJObjDispDObj__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_
         }
     }
 }
-#pragma dont_inline on
+#pragma defer_codegen on
 static void _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_JObj* joint, GSmtx* view, GSmtx* position, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
     HSD_JObjSetCurrent(joint);
     u32 objectMask=mask<<1;
@@ -94,7 +142,6 @@ static void _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP
     }
     HSD_DObjSetCurrent(0); HSD_JObjSetCurrent(0);
 }
-#pragma dont_inline reset
 static inline void parseDisplayObject(HSD_DObj* object, GSmtx* view, GSmtx* position, bool loadMatrices, GSmodelParseCallback callback, void* context) {
     HSD_JObj* rigidJoint;
     HSD_JObj* blendJoint;
@@ -185,3 +232,5 @@ static void _modelParseLoadEnvelopeMatrix__FP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtx(HSD
     }
 }
 }
+
+#pragma auto_inline reset

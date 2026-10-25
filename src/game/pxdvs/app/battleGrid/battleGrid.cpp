@@ -24,12 +24,106 @@ u16 j;
 ModelSequence *model;
 entry=gBattleGrid.trainers;index=0;if(sequence==0)keep=0;else keep=asModelNN(sequence);battleGridResetModelVisibilityFlags();memset(gSavedVisibilityCodes,0,12);for(i=0;i<4;i++,entry++){model=entry->trainer;if(model){gSavedVisibilityCodes[index]=model->visible;if(model!=keep)model->SetVisibility(0);}index++;for(j=0;j<2;j++){model=entry->pokemon[j];if(model){gSavedVisibilityCodes[index]=model->visible;if(model!=keep)model->SetVisibility(0);}index++;}}gVisibilityChanged=1;}
 void battleGridReset(){memset(&gBattleGrid,0,0x44);g_max_model_size=0;gVisibilityChanged=0;}
-void battleGridUpdate(){u16 count=gBattleGrid.trainerCount;BattleGridTrainer *entry=gBattleGrid.trainers;wazaSequenceSysGetActiveWazaNum();if(count){g_max_model_size=-2;u8 found=0;BattleGridTrainer *scan=entry;for(u16 i=0;i<4;i++,scan++){if(scan->trainer){ModelSequence **models=scan->pokemon;for(u16 j=0;j<2;j++,models++){ModelSequence *model=*models;if(model){s8 size=model->modelSize;found=1;if(size>g_max_model_size)g_max_model_size=size;}}}}if(!found)g_max_model_size=0;f32 scale=modelScale();f32 negative=-scale;f32 spacing=30.0f*scale;GSvec trainerPosition,pokemonPosition,rotation;trainerPosition.x=0;trainerPosition.y=0;trainerPosition.z=0;pokemonPosition.x=0;pokemonPosition.y=0;pokemonPosition.z=0;rotation.x=0;rotation.y=0;rotation.z=0;for(u16 i=0;i<4;i++,entry++){if(entry->trainer){lookSource(entry->trainer,0);if(entry->side){trainerPosition.x=65.0f*negative;pokemonPosition.x=40.0f*negative;rotation.y=1.5707964f;}else{trainerPosition.x=65.0f*scale;pokemonPosition.x=40.0f*scale;rotation.y=-1.5707964f;}f32 z=-30.0f*scale*entry->lane;trainerPosition.z=z;pokemonPosition.z=z;switch(entry->count){case 1:trainerPosition.z=z+(-12.5f*scale);if(entry->pokemon[0]){lookSource(entry->pokemon[0],entry->trainer);placeModel(entry->pokemon[0],&pokemonPosition,&rotation,entry->side);}else{lookSource(entry->pokemon[1],entry->trainer);placeModel(entry->pokemon[1],&pokemonPosition,&rotation,entry->side);}break;case 2:{GSvec position=pokemonPosition;position.z=z;lookSource(entry->pokemon[0],entry->trainer);lookSource(entry->pokemon[1],entry->trainer);if(entry->side){position.z=pokemonPosition.z-spacing;placeModel(entry->pokemon[0],&position,&rotation,entry->side);position.z=pokemonPosition.z+spacing;placeModel(entry->pokemon[1],&position,&rotation,entry->side);}else{position.z=pokemonPosition.z-spacing;placeModel(entry->pokemon[1],&position,&rotation,entry->side);position.z=pokemonPosition.z+spacing;placeModel(entry->pokemon[0],&position,&rotation,entry->side);}break;}}placeModel(entry->trainer,&trainerPosition,&rotation,entry->side);entry->trainer->NullSequence::SetVisibility(1);}}}}
+void battleGridUpdate() {
+    ModelSequence **models;
+    ModelSequence *model;
+    s8 size;
+    BattleGridTrainer *scan;
+    u8 found;
+    u16 i, j;
+    u16 count = gBattleGrid.trainerCount;
+    BattleGridTrainer *entry = gBattleGrid.trainers;
+    wazaSequenceSysGetActiveWazaNum();
+    if (count) {
+        scan = gBattleGrid.trainers;
+        g_max_model_size = -2;
+        found = 0;
+        for (i = 0; i < 4; i++, scan++) {
+            if (scan->trainer) {
+                models = scan->pokemon;
+                for (j = 0; j < 2; j++, models++) {
+                    model = *models;
+                    if (model) {
+                        size = model->modelSize;
+                        found = 1;
+                        if (size > g_max_model_size) g_max_model_size = size;
+                    }
+                }
+            }
+        }
+        if (!found) g_max_model_size = 0;
+        f32 scale = modelScale();
+        f32 negative = -scale;
+        GSvec pokemonPosition, rotation, trainerPosition;
+        trainerPosition.x = 0;
+        trainerPosition.y = 0;
+        trainerPosition.z = 0;
+        pokemonPosition.x = 0;
+        pokemonPosition.y = 0;
+        pokemonPosition.z = 0;
+        rotation.x = 0;
+        rotation.y = 0;
+        rotation.z = 0;
+        for (i = 0; i < 4; i++, entry++) {
+            if (entry->trainer) {
+                lookSource(entry->trainer, 0);
+                if (entry->side) {
+                    trainerPosition.x = 65.0f * negative;
+                    pokemonPosition.x = 40.0f * negative;
+                    rotation.y = 1.5707964f;
+                } else {
+                    trainerPosition.x = 65.0f * scale;
+                    pokemonPosition.x = 40.0f * scale;
+                    rotation.y = -1.5707964f;
+                }
+                f32 z = -30.0f * scale * entry->lane;
+                trainerPosition.z = z;
+                pokemonPosition.z = z;
+                switch (entry->count) {
+                case 0:
+                    break;
+                case 1:
+                    trainerPosition.z = z + (-12.5f * scale);
+                    if (entry->pokemon[0]) {
+                        lookSource(entry->pokemon[0], entry->trainer);
+                        placeModel(entry->pokemon[0], &pokemonPosition, &rotation, entry->side);
+                    } else {
+                        lookSource(entry->pokemon[1], entry->trainer);
+                        placeModel(entry->pokemon[1], &pokemonPosition, &rotation, entry->side);
+                    }
+                    break;
+                case 2: {
+                    GSvec position;
+                    position.x = pokemonPosition.x;
+                    position.y = pokemonPosition.y;
+                    position.z = z;
+                    lookSource(entry->pokemon[0], entry->trainer);
+                    lookSource(entry->pokemon[1], entry->trainer);
+                    if (entry->side) {
+                        position.z = pokemonPosition.z - 30.0f * scale;
+                        placeModel(entry->pokemon[0], &position, &rotation, entry->side);
+                        position.z = pokemonPosition.z + 30.0f * scale;
+                        placeModel(entry->pokemon[1], &position, &rotation, entry->side);
+                    } else {
+                        position.z = pokemonPosition.z - 30.0f * scale;
+                        placeModel(entry->pokemon[1], &position, &rotation, entry->side);
+                        position.z = pokemonPosition.z + 30.0f * scale;
+                        placeModel(entry->pokemon[0], &position, &rotation, entry->side);
+                    }
+                    break;
+                }
+                }
+                placeModel(entry->trainer, &trainerPosition, &rotation, entry->side);
+                entry->trainer->NullSequence::SetVisibility(1);
+            }
+        }
+    }
+}
 f32 battleGridGetUnscaledDistance(u8 pokemon){if(pokemon)return 40.0f;return 65.0f;}
 f32 battleGridGetDistance(u8 pokemon){f32 scale=modelScale();if(pokemon)return 40.0f*scale;return 65.0f*scale;}
 void battleGridGetNormalisedScale(GSvec *out){f32 value=modelScale();value*=1.7105263f;out->x=value;out->y=value;out->z=value;}
 void battleGridRemovePokemon(NullSequence *sequence){BattleGridTrainer *entry=gBattleGrid.trainers;ModelSequence *pokemon;if(sequence==0)pokemon=0;else pokemon=asModelNN(sequence);if(pokemon){for(u16 i=0;i<4;i++,entry++){for(u16 j=0;j<2;j++){if(entry->pokemon[j]==pokemon){entry->pokemon[j]=0;entry->count--;gBattleGrid.pokemonCount--;pokemon->SetVisibility(0);pokemon->flipped=0;lookSource(pokemon,0);return;}}}}}
 void battleGridReplacePokemon(NullSequence *oldSequence,NullSequence *newSequence){BattleGridTrainer *entry=gBattleGrid.trainers;ModelSequence *oldModel=asModel(oldSequence),*newModel=asModel(newSequence);if(!oldModel||!newModel){GSlogWrite("battleGridReplacePokemon: NULL argument");return;}for(u16 i=0;i<4;i++,entry++){for(u16 j=0;j<2;j++){if(entry->pokemon[j]==oldModel){lookSource(oldModel,0);entry->pokemon[j]=newModel;lookSource(newModel,entry->trainer);oldModel->SetVisibility(0);newModel->flipped=oldModel->flipped;oldModel->flipped=0;Sequence_CopyState(newSequence,oldSequence);return;}}}}
-void battleGridAddPokemon(NullSequence *trainerSequence,NullSequence *pokemonSequence){BattleGridTrainer *entry=gBattleGrid.trainers;ModelSequence *trainer=asModel(trainerSequence),*pokemon=asModel(pokemonSequence);if(!trainer)return;if(!pokemon)return;if(gBattleGrid.pokemonCount<8){for(u16 i=0;i<4;i++,entry++){if(entry->trainer==trainer){if(entry->count>=2)return;for(u16 j=0;j<2;j++){if(!entry->pokemon[j]){entry->pokemon[j]=pokemon;lookSource(pokemon,trainer);entry->count++;gBattleGrid.pokemonCount++;pokemon->flipped=entry->side;return;}}}}}}
+void battleGridAddPokemon(NullSequence *trainerSequence,NullSequence *pokemonSequence){BattleGridTrainer *entry=gBattleGrid.trainers;ModelSequence *trainer=asModel(trainerSequence),*pokemon=asModel(pokemonSequence);if(!trainer||!pokemon)return;if(gBattleGrid.pokemonCount<8){for(u16 i=0;i<4;i++,entry++){if(entry->trainer==trainer){if(entry->count>=2)return;for(u16 j=0;j<2;j++){if(!entry->pokemon[j]){entry->pokemon[j]=pokemon;lookSource(pokemon,trainer);entry->count++;gBattleGrid.pokemonCount++;pokemon->flipped=entry->side;return;}}}}}}
 void battleGridAddTrainer(NullSequence *sequence,s8 side,s8 lane){ModelSequence *trainer;if(sequence==0)trainer=0;else trainer=asModelNN(sequence);if(trainer&&gBattleGrid.trainerCount<4){BattleGridTrainer *entry=gBattleGrid.trainers;for(s32 i=0;i<4;i++,entry++){if(!entry->trainer)break;}memset(entry,0,16);entry->trainer=trainer;entry->side=side;entry->lane=lane;trainer->flipped=side;gBattleGrid.trainerCount++;}}
 }

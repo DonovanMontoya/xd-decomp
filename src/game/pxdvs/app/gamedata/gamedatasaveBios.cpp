@@ -2,7 +2,7 @@
 #pragma dont_inline on
 extern "C" {
 void gamedataBiosSetZukanFLag(u16* flags,u16 index,u16 value){if(flags==0)return;if(index>0x10)return;u16 bit=(u16)(1u<<index);if(value==1){*flags|=bit;}else{*flags=*flags&~bit;}}
-u32 gamedataBiosGetZukanFlag(const u16* flags,u16 index){if(flags==0)return 0;if(index>0x10)return 0;u16 bit=(u16)(1u<<index);return ((*flags&bit)!=0);}
+u32 gamedataBiosGetZukanFlag(const u16* flags,u16 index){if(flags){if(index>0x10)return 0;u16 bit=(u16)(1u<<index);bit&=*flags;return bit!=0;}return 0;}
 void* gamedatasaveBiosGetplaydata(GamedataSaveRecord* p){if(p==0)return 0;return (u8*)p+0x40;}
 void gamedatasaveBiosSetSysHeadChecksum(GamedataSaveRecord* p,u32 value){if(p)p->payload.checksumWords.sysHeadChecksum=value;}
 u32 gamedatasaveBiosGetSysHeadChecksum(GamedataSaveRecord* p){if(p)return p->payload.checksumWords.sysHeadChecksum;return 0;}
@@ -28,7 +28,7 @@ u32 gamedatasaveBiosGetFloorid(GamedataSaveRecord* p){if(p)return p->payload.flo
 u32 gamedatasaveBiosGetSavecount(GamedataSaveRecord* p){if(p)return p->payload.saveCount;return 0;}
 u64 gamedatasaveBiosGetMemcardID(GamedataSaveRecord* p){if(p)return p->memcardId;return 0;}
 u32 gamedatasaveBiosGetSavernd(GamedataSaveRecord* p){if(p)return p->payload.saveRandom;return 0;}
-void gamedatasaveBiosSetPtr(GamedataSaveRecord* dst,const GamedataSavePayload* src){if(dst==0)return;if(src==0)return;dst->payload.saveCount=src->saveCount;dst->payload.saveRandom=src->saveRandom;dst->payload.parChecksum=src->parChecksum;dst->payload.floorId=src->floorId;dst->payload.copiedWord18=src->copiedWord18;dst->payload.previousFloorId=src->previousFloorId;dst->payload.flags20.copiedFloat20=src->flags20.copiedFloat20;dst->payload.flags20.copiedWords20[1]=src->flags20.copiedWords20[1];dst->payload.raw28.copiedByte28=src->raw28.copiedByte28;dst->payload.raw28.copiedBytes29to2b[0]=src->raw28.copiedBytes29to2b[0];dst->payload.raw28.copiedBytes29to2b[1]=src->raw28.copiedBytes29to2b[1];dst->payload.raw28.copiedBytes29to2b[2]=src->raw28.copiedBytes29to2b[2];dst->payload.copiedAggregateDouble30=src->copiedAggregateDouble30;dst->payload.copiedWord38=src->copiedWord38;}
+void gamedatasaveBiosSetPtr(GamedataSaveRecord* dst,const GamedataSavePayload* src){if(dst==0||src==0)return;*(u64*)&dst->payload.saveCount=*(const u64*)&src->saveCount;dst->payload.parChecksum=src->parChecksum;dst->payload.floorId=src->floorId;dst->payload.copiedWord18=src->copiedWord18;dst->payload.previousFloorId=src->previousFloorId;dst->payload.flags20.copiedFloat20=src->flags20.copiedFloat20;dst->payload.flags20.copiedWords20[1]=src->flags20.copiedWords20[1];dst->payload.raw28.copiedByte28=src->raw28.copiedByte28;dst->payload.raw28.copiedBytes29to2b[0]=src->raw28.copiedBytes29to2b[0];dst->payload.raw28.copiedBytes29to2b[1]=src->raw28.copiedBytes29to2b[1];dst->payload.raw28.copiedBytes29to2b[2]=src->raw28.copiedBytes29to2b[2];dst->payload.copiedAggregateDouble30=src->copiedAggregateDouble30;dst->payload.copiedWord38=src->copiedWord38;}
 GamedataSavePayload* gamedatasaveBiosGetPtr(GamedataSaveRecord* p){if(p==0)return 0;return &p->payload;}
-void gamedatasaveInit(GamedataSaveRecord* p){if(p==0)return;p->payload.parChecksum=0;}
+void gamedatasaveInit(GamedataSaveRecord* p){GamedataSavePayload* pl; if(p==0)pl=0; else pl=&p->payload; if(pl)pl->parChecksum=0;}
 }

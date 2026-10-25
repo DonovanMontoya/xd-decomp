@@ -21,14 +21,19 @@ static void _peopleRestoreAnywaySaveData(GSBinReadStream* stream) {
     }
     for(s32 i=0;i<count;++i) {
         if(stream->readU8()) {
-            u32 start=stream->cur-stream->start;
-            u16 size=stream->readU16();
+            s32 j;
+            u32 resource;
+            u32 group;
+            u16 size;
+            u32 start;
+            start=stream->cur-stream->start;
+            size=stream->readU16();
             memcpy(&flags,stream->cur,5);stream->cur+=5;
             stream->cur+=4;
-            u32 group=stream->readU32();
-            u32 resource=stream->readU32();
+            group=stream->readU32();
+            resource=stream->readU32();
             stream->cur+=4;
-            for(s32 j=0;j<peopleBiosGetMaxNum();++j) {
+            for(j=0;j<peopleBiosGetMaxNum();++j) {
                 work=peopleBiosGetWorkPtr(j);
                 saved=(PeopleSavedState*)&work->state;
                 if(work->used && group==saved->group && resource==saved->resource) {
@@ -53,8 +58,9 @@ static void _peopleRestoreAnywaySaveData(GSBinReadStream* stream) {
             u32 group=stream->readU32();
             u32 resource=stream->readU32();
             u32 object=stream->readU32();
+            s32 j;
             bool found=false;
-            for(s32 j=0;j<peopleBiosGetMaxNum();++j) {
+            for(j=0;j<peopleBiosGetMaxNum();++j) {
                 work=peopleBiosGetWorkPtr(j);
                 saved=(PeopleSavedState*)&work->state;
                 if(work->used && group==saved->group && resource==saved->resource) {found=true;break;}
@@ -63,8 +69,8 @@ static void _peopleRestoreAnywaySaveData(GSBinReadStream* stream) {
                 peopleOpen(group,resource,object);
                 peopleAddCollision(group,resource);
                 work=peopleGet(group,resource);
+                saved=(PeopleSavedState*)&work->state;
             }
-            saved=(PeopleSavedState*)&work->state;
             u32 oldObject=saved->object;
             GSmodel* model=work->model;
             saved->state=flags.state;
@@ -123,7 +129,8 @@ static void _peopleRestoreAnywaySaveData(GSBinReadStream* stream) {
 extern "C" void peopleRestoreAnywaySaveData(void* data,u32 size) {
     GSBinReadStream stream(data,size);
     GSBinReadStream* reader=&stream;
-    if(reader->readU16()==0x103 && reader->readU8()==4) {
+    u16 version=reader->cur[1];version|=reader->cur[0]<<8;reader->cur+=2;
+    if(version==0x103 && reader->readU8()==4) {
         _peopleRestoreAnywaySaveData(reader);
         heroMoveTermEvent();gimmickBoxPop();
     }

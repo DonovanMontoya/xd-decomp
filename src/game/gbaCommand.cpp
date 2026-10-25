@@ -102,21 +102,20 @@ s32 gbaCommandSetKeyState(s32 channel,s32 state){
 s32 gbaCommandKeyRead(s32 channel){
     u16 key;
     if(channel==2){
-        s32 i=0;
-        do{
-            u32 status=SIProbe(i);
+        u32 status;
+        for(s32 i=0;i<4;++i){
+            status=SIProbe(i);
             if(menuCB_GetToolBattleModeFlag()==1 && menuCBBios_CurrentlyWorkingToolBattle())status=0x40000;
             if(status==0x40000){_SIProbe_Result[i]=status;_SIProbe_Counter[i]=2;}
             else if(_SIProbe_Counter[i]==0)_SIProbe_Result[i]=status;
             else --_SIProbe_Counter[i];
-            ++i;
-        }while(i<4);
+        }
     }
     s32 result;
     switch(_keyState[channel-1]){
     case 1:
         result=PKJB_GetKey(channel-1,&key);
-        if(result==0){_keyPressed[channel-1]=key;_keyCounter[channel-1]=0;}
+        if(result==0){_keyCounter[channel-1]=0;_keyPressed[channel-1]=key;}
         else if(result<=2 && ++_keyCounter[channel-1]<=10)result=0;
         else{_keyPressed[channel-1]=0;gbaCommandSetKeyState(channel,0);}
         break;
@@ -137,14 +136,14 @@ s32 gbaCommandKeyRead(s32 channel){
 #pragma force_active reset
 
 extern "C" {
-u16 fightFloorGetStatus(s32,s32,s32,s32);
+u32 fightFloorGetStatus(void*,u16,u16,u16);
 void* fightTypeDataBiosGetPtr(u16);
 u8 fightTypeDataBiosGetTrainerNum(void*);
 u8 fightTypeDataBiosGetEntryPokemonNum(void*);
 u8 fightTypeDataBiosGetFightoutPokemonNum(void*);
 void* fightTargetGetPtr(s32,void*,u16);
 FightOutPokemon* fightTrainerGetValidFightOutPokemonPtr(void*,u16);
-s8 fightTrainerBiosGetControllerId(void*);
+u8 fightTrainerBiosGetControllerId(void*);
 void* fightTrainerGetValidFightPokemonPtr(void*,u16);
 void* fightPokemonGetPokemonPtr(void*);
 u16 pokemonBiosGetFightTrainerPokemonDataId(void*);
@@ -162,15 +161,15 @@ void* fightOutPokemonGetPokemonPtr(FightOutPokemon*);
 void fightOutPokemonGetRndStatus(FightOutPokemon*,u32*,u32*);
 u16 fightOutPokemonBiosGetZokuseiDataId(FightOutPokemon*,u16);
 void* fightFloorBiosGetFightFloorPtr();
-u8 fightFloorCheckFightActionFightOutPokemonIrekaeSelect(FightOutPokemon*,FightOutPokemon**);
+u8 fightFloorCheckFightActionFightOutPokemonIrekaeSelect(void*,FightOutPokemon*,FightOutPokemon**);
 u16 fightOutPokemonGetTokuseiDataId(FightOutPokemon*);
-s32 fightOutPokemonCheckFightActionWazaSelect(FightOutPokemon*,s32);
+u8 fightOutPokemonCheckFightActionWazaSelect(FightOutPokemon*,u8);
 FightOutPokemon* fightSeqSelectDefensePokemonPtr(FightOutPokemon*,u16,u16,s32(*)(FightOutPokemon*,u16,u16),u8,u8,s16);
 u8 fightOutPokemonCheckCanOutOkWazaBanme(FightOutPokemon*,u16,u8,u16*);
 u32 pokemonBiosGetAttest(void*);
 u8 gamedataAttestBiosGetLangareaId(u32);
-s32 GBAMakeFromGSchar(void*,const void*,u8);
-const void* pokemonBiosGetNicknamePtr(void*);
+s32 GBAMakeFromGSchar(u8*,const u16*,s32);
+const u16* pokemonBiosGetNicknamePtr(void*);
 s32 pokemonGetSex(void*);
 s8 pokemonBiosGetLevel(void*);
 u32 pokemonBiosGetRnd(void*);
@@ -187,12 +186,12 @@ void PKJB_ReturnTitle(s32);
 s32 PKJB_BattleGetStatus(s32,u32*);
 void GSthreadSwitch();
 }
-extern "C" s32 gbaCommandRequestAction(s32 channel,void* trainer,u16 position,s32 special) {
+extern "C" s32 gbaCommandRequestAction(s32 channel,void* trainer,s32 position,s32 special) {
     GbaActionPacket packet;
     u32 random0,random1;
     FightOutPokemon* trapped;
-    FightOutPokemon* opponents[4];
     u8 controllers[4];
+    FightOutPokemon* opponents[4];
     u16 fightType=fightFloorGetStatus(0,0,20,0);
     void* type=fightTypeDataBiosGetPtr(fightType);
     u8 trainers=fightTypeDataBiosGetTrainerNum(type);
@@ -213,46 +212,46 @@ extern "C" s32 gbaCommandRequestAction(s32 channel,void* trainer,u16 position,s3
     FightOutPokemon* current=fightTrainerGetValidFightOutPokemonPtr(trainer,position);
     packet.slot=active==2?position+1:0;packet.count=count;packet.special=special;
     u32 ids=0,swaps=0;
-    s32 shift=8,index=0;
-    GbaPartyActionRecord* party=packet.party;
-    for(;index<partySize;index++,shift+=4,party++) {
+    s32 index=0;
+    for(;index<partySize;index++) {
         void* fightPokemon=fightTrainerGetValidFightPokemonPtr(trainer,index);
         if(!fightPokemon)break;
         void* pokemon=fightPokemonGetPokemonPtr(fightPokemon);
-        ids|=pokemonBiosGetFightTrainerPokemonDataId(pokemon)<<shift;
-        swaps|=fightTrainerCheckCanIrekaeFightPokemon(trainer,fightPokemon)<<shift;
+        ids|=pokemonBiosGetFightTrainerPokemonDataId(pokemon)<<(index*4+8);
+        swaps|=fightTrainerCheckCanIrekaeFightPokemon(trainer,fightPokemon)<<(index*4+8);
         u8 pokerus=pokemonBiosGetPokerus(pokemon);
-        party->hp=_swap16(pokemonBiosGetHp(pokemon));
-        u16 condition=gbaPokemonConditonFromGC(pokemon);party->condition=condition;
-        party->held=fightPokemonGetSoubiItemDataId(fightPokemon)!=0;
-        party->mail=pokemonBiosGetMailId(pokemon)!=255;
-        party->pokerusActive=(pokerus&15)!=0;party->pokerusPast=(pokerus&0xf0)!=0;party->conditionHigh=condition>>8;
-        party->item=_swap16(fightPokemonGetSoubiItemDataId(fightPokemon));
-        for(u16 move=0;move<4;move++) {
+        packet.party[index].hp=_swap16(pokemonBiosGetHp(pokemon));
+        s32 condition=gbaPokemonConditonFromGC(pokemon);packet.party[index].condition=condition;
+        packet.party[index].held=fightPokemonGetSoubiItemDataId(fightPokemon)!=0;
+        packet.party[index].mail=pokemonBiosGetMailId(pokemon)!=255;
+        packet.party[index].pokerusActive=(pokerus&15)!=0;packet.party[index].pokerusPast=(pokerus&0xf0)!=0;packet.party[index].conditionHigh=condition>>8;
+        packet.party[index].item=_swap16(fightPokemonGetSoubiItemDataId(fightPokemon));
+        for(s32 move=0;move<4;move++) {
             u16 id=pokemonBiosGetPokemonWazaDataId(pokemon,move);
-            party->moves[move]=_swap16(id);party->pp[move]=pokemonBiosGetPokemonWazaPp(pokemon,move);GetWazaDocGBA(party->descriptions[move],id);
+            packet.party[index].moves[move]=_swap16(id);packet.party[index].pp[move]=pokemonBiosGetPokemonWazaPp(pokemon,move);GetWazaDocGBA(packet.party[index].descriptions[move],id);
         }
     }
-    packet.selection=_swap32(ids|-(1<<((u8)index*4+8)));packet.swaps=_swap32(swaps);
+    ids|=-(1<<((u8)index*4+8));packet.selection=_swap32(ids);packet.swaps=_swap32(swaps);
+    u16 available=0,forced;
     void* pokemon=fightOutPokemonGetPokemonPtr(current);
     fightOutPokemonGetRndStatus(current,&random0,&random1);packet.random[0]=_swap32(random0);packet.random[1]=_swap32(random1);
     u16 species=pokemonBiosGetPokemonDataId(pokemon);packet.species=_swap16(species);
     if(species==0x181) {
         u16 form;
-        switch(fightOutPokemonBiosGetZokuseiDataId(current,0)) {case 10:form=1;break;case 11:form=2;break;case 15:form=3;break;default:form=0;break;}
+        u16 attribute=fightOutPokemonBiosGetZokuseiDataId(current,0);if(attribute==10)form=1;else if(attribute==11)form=2;else if(attribute==15)form=3;else form=0;
         packet.form=_swap16(form);
     }else packet.form=0;
     u8 trap; s32 trapIndex;
     if(special) {trap=0;trapIndex=0;}
     else {
-        fightFloorBiosGetFightFloorPtr();trap=fightFloorCheckFightActionFightOutPokemonIrekaeSelect(current,&trapped);
-        if(trap==2) {switch(fightOutPokemonGetTokuseiDataId(trapped)){case 23:trap=2;break;case 42:trap=3;break;case 71:trap=4;break;default:trap=0;break;}}
+        trap=fightFloorCheckFightActionFightOutPokemonIrekaeSelect(fightFloorBiosGetFightFloorPtr(),current,&trapped);
+        if(trap==2) {u16 ability=fightOutPokemonGetTokuseiDataId(trapped);if(ability==23)trap=2;else if(ability==42)trap=3;else if(ability==71)trap=4;else trap=0;}
         for(trapIndex=count-1;trapIndex>0;trapIndex--)if(trapped==opponents[trapIndex])break;
     }
     packet.trap=trap;packet.trappedBy=trapIndex;
     packet.forbidden=fightOutPokemonCheckFightActionWazaSelect(current,0);
-    u16 available=0,forced;
-    for(u16 move=0,bit=0;move<4;move++,bit+=4) {
+
+    for(s32 move=0,bit=0;move<4;move++,bit+=4) {
         _needSelect=0;
         u16 id=pokemonBiosGetPokemonWazaDataId(pokemon,move);packet.moves[move]=_swap16(id);packet.pp[move]=pokemonBiosGetPokemonWazaPp(pokemon,move);
         fightSeqSelectDefensePokemonPtr(current,id,fightType,_dummySelect,1,0,-1);
@@ -264,21 +263,21 @@ extern "C" s32 gbaCommandRequestAction(s32 channel,void* trainer,u16 position,s3
     }
     packet.available=_swap16(available);
     s32 forcedIndex=3;
-    while(packet.moves[forcedIndex]!=_swap16(forced)) {--forcedIndex;if(forcedIndex<=0)break;}
+    do {if(packet.moves[forcedIndex]==_swap16(forced))break;--forcedIndex;}while(forcedIndex>0);
     packet.forcedMove=forcedIndex;
     for(s32 i=0;i<count;i++) {
-        GbaOpponentActionRecord* record=&packet.opponents[i];memset(record,0,sizeof(*record));
-        if(opponents[i]==current)record->nickname[0]=255;
+        memset(&packet.opponents[i],0,sizeof(packet.opponents[i]));
+        if(opponents[i]==current)packet.opponents[i].nickname[0]=255;
         else {
             void* other=fightOutPokemonGetPokemonPtr(opponents[i]);
             u32 attest=pokemonBiosGetAttest(other);u8 language=gamedataAttestBiosGetLangareaId(attest);
-            s32 length=GBAMakeFromGSchar(record->nickname,pokemonBiosGetNicknamePtr(other),language);if(length<10)record->nickname[length]=255;
+            s32 length=GBAMakeFromGSchar(packet.opponents[i].nickname,pokemonBiosGetNicknamePtr(other),language);if(length<10)packet.opponents[i].nickname[length]=255;
             u16 id=pokemonBiosGetPokemonDataId(other);
-            record->sex=pokemonGetSex(other);record->nidoranMale=id==32;record->nidoranFemale=id==29;record->controller=controllers[i];record->japanese=gamedataAttestBiosGetLangareaId(attest)==1;
-            record->level=pokemonBiosGetLevel(other);record->random=_swap32(pokemonBiosGetRnd(other));record->species=_swap16(pokemonBiosGetPokemonDataId(other));record->hp=_swap16(pokemonBiosGetHp(other));record->maxHp=_swap16(pokemonBiosGetMaxHp(other));record->form=0;
+            packet.opponents[i].sex=pokemonGetSex(other);packet.opponents[i].nidoranMale=id==32;packet.opponents[i].nidoranFemale=id==29;packet.opponents[i].controller=controllers[i];if(gamedataAttestBiosGetLangareaId(attest)==1)packet.opponents[i].japanese=1;else packet.opponents[i].japanese=0;
+            packet.opponents[i].level=pokemonBiosGetLevel(other);packet.opponents[i].random=_swap32(pokemonBiosGetRnd(other));packet.opponents[i].species=_swap16(pokemonBiosGetPokemonDataId(other));packet.opponents[i].hp=_swap16(pokemonBiosGetHp(other));packet.opponents[i].maxHp=_swap16(pokemonBiosGetMaxHp(other));packet.opponents[i].form=0;
             if(pokemonBiosGetPokemonDataId(other)==0x19a) {
-                if(menuCBRule_DEOKISISUCamouflage()) {if(*(s32*)(_CB+8)==2 || *(s32*)(_CB+28)==0)record->form=_swap16(pokemonGetDeoxysSel(controllers[i]));else record->form=_swap16(pokemonGetDeoxysSel(controllers[i]+1));}
-                if(fightOutPokemonIsJoutaiDataId(opponents[i],16)==1)record->form=0;
+                if(menuCBRule_DEOKISISUCamouflage()) {if(*(s32*)(_CB+8)==2 || *(s32*)(_CB+28)==0)packet.opponents[i].form=_swap16(pokemonGetDeoxysSel(controllers[i]));else packet.opponents[i].form=_swap16(pokemonGetDeoxysSel(controllers[i]+1));}
+                if(fightOutPokemonIsJoutaiDataId(opponents[i],16)==1)packet.opponents[i].form=0;
             }
         }
     }
@@ -290,7 +289,7 @@ extern "C" s32 gbaCommandRequestAction(s32 channel,void* trainer,u16 position,s3
         if(fightGetFightResultId()==1) {PKJB_ReturnTitle(port);return 0x50000;}
         if(fightFloorIsUseFightTimerCommand(0)==1 && fightTimerCommandIsOver()==1) {PKJB_ReturnTitle(port);return 0x40000;}
         u32 response;s32 result=PKJB_BattleGetStatus(port,&response);
-        if(result==1) {if(++gba_SIProbe_ErrorCnt[port]!=2)result=-1;}else gba_SIProbe_ErrorCntClear(port);
+        if(result==1) {++gba_SIProbe_ErrorCnt[port];if(gba_SIProbe_ErrorCnt[port]!=2)result=-1;}else gba_SIProbe_ErrorCntClear(port);
         if(result>0)return result|0x50000;
         if(result==0)return _swap32(response);
         GSthreadSwitch();

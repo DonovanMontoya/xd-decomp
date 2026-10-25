@@ -5,9 +5,9 @@
 static f64 _gettLastTime();
 static void _menuUpdateKeyInfo(WINDOW_SYS_WORK *, WINDOW_SYS_WORK *);
 
-f32 _currentAddTime;
-f32 _currentTime;
-s32 _menuCount;
+static f32 _currentAddTime;
+static f32 _currentTime;
+static s32 _menuCount;
 
 struct MenuItemBits {
     u8 selectable : 1;

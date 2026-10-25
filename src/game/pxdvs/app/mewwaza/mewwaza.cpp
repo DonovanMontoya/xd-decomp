@@ -289,12 +289,10 @@ block_54:
 }
 
 s32 _tmplSelect__FP9MEWPOINTS(MEWPOINTS *arg0) {
-    s32 first,second,third;
-    u8 order[3];
     s32 points[3];
+    u8 order[3];
+    points[0]=arg0->unk2;points[1]=arg0->unk4;points[2]=arg0->unk6;
     order[0]='A';
-    first=arg0->unk2;second=arg0->unk4;third=arg0->unk6;
-    points[0]=first;points[1]=second;points[2]=third;
     order[1]='S';
     order[2]='B';
     s32 var_r4_2,var_r4_3,var_r4_4;
@@ -778,16 +776,16 @@ void _question_3__FP9MEWPOINTS(MEWPOINTS *arg0) {
         arg0->unk2 += 2;
         break;
     case 1:
-        arg0->unk2 = (s16)(HSD_Rand() % 3) + arg0->unk2 + 1;
+        arg0->unk2 = (s16)((u32)HSD_Rand() % 3) + arg0->unk2 + 1;
         break;
     case 2:
-        arg0->unk4 = (s16)(HSD_Rand() % 3) + arg0->unk4 + 1;
+        arg0->unk4 = (s16)((u32)HSD_Rand() % 3) + arg0->unk4 + 1;
         break;
     case 3:
         if ((u32)HSD_Rand() % 10 < 5) {
             arg0->unk2 -= 2;
         } else {
-            arg0->unk4 = (s16)(HSD_Rand() % 5) + arg0->unk4 - 1;
+            arg0->unk4 = (s16)((u32)HSD_Rand() % 5) + arg0->unk4 - 1;
         }
         break;
     }
@@ -796,18 +794,16 @@ void _question_3__FP9MEWPOINTS(MEWPOINTS *arg0) {
 s8 _mewSequence__FP9MEWPOINTS(MEWPOINTS *arg0) {
     s32 firstAnswers[2];
     s32 secondAnswers[2];
-    s16 temp_r28_3;
     s16 temp_r3_2;
     s32 temp_r3_3;
     s32 temp_r3;
     s32 temp_r3_4;
     s32 temp_r5;
-    s8 temp_r29;
-    u16 temp_r31;
+    s32 temp_r31;
     u32 temp_ret;
+    u32 var_r29;
     u32 temp_r28;
     u32 temp_r28_2;
-    u32 var_r29;
     u32 var_r29_2;
     WazaTemplate *temp_r3_5;
     void *temp_r4;
@@ -822,10 +818,8 @@ s8 _mewSequence__FP9MEWPOINTS(MEWPOINTS *arg0) {
     winMsgOpenFieldWithSE(0xC6FB, 1, 0, 1);
     temp_r28 = (u32)HSD_Rand() % 3;
     var_r29 = temp_r28;
-loop_2:
-    if (var_r29 == temp_r28) {
+    while (var_r29 == temp_r28) {
         var_r29 = (u32)HSD_Rand() % 3;
-        goto loop_2;
     }
     firstAnswers[0] = mewans1[temp_r28];
     firstAnswers[1] = mewans1[var_r29];
@@ -858,10 +852,8 @@ loop_2:
     winMsgOpenFieldWithSE(0xC6FF, 1, 0, 1);
     temp_r28_2 = (u32)HSD_Rand() & 3;
     var_r29_2 = temp_r28_2;
-loop_18:
-    if (var_r29_2 == temp_r28_2) {
+    while (var_r29_2 == temp_r28_2) {
         var_r29_2 = (u32)HSD_Rand() & 3;
-        goto loop_18;
     }
     secondAnswers[0] = mewans2[temp_r28_2];
     secondAnswers[1] = mewans2[var_r29_2];
@@ -889,10 +881,11 @@ loop_18:
     _question_3__FP9MEWPOINTS(arg0);
     _question_4__FP9MEWPOINTS(arg0);
     _question_5__FP9MEWPOINTS(arg0);
-    temp_r28_3 = arg0->unk6;
+    s16 temp_r28_3 = arg0->unk6;
     if (temp_r28_3 > 0) {
-        arg0->unk0 += ((u32)HSD_Rand() % ((temp_r28_3 * 2) + 1)) - arg0->unk6;
-        if ((s16) arg0->unk0 < 0) {
+        u32 random = HSD_Rand();
+        arg0->unk0 += (random % ((temp_r28_3 * 2) + 1)) - arg0->unk6;
+        if (arg0->unk0 < 0) {
             arg0->unk0 = 0;
         }
     }
@@ -908,10 +901,11 @@ loop_18:
     winMsgOpenFieldWithSE(0xC721, 1, 0, 1);
     temp_r31 = menuMewWazaGetMenuDataID();
     winMsgClose(1);
-    menuOpen(temp_r31, 0);
-    temp_r29 = menuSubOpenYesNo(1, 0x196, 0xC0, 0);
-    menuClose(temp_r31);
-    menuCloseSync(temp_r31, 1);
+    u16 menu = temp_r31;
+    menuOpen(menu, 0);
+    s8 temp_r29 = menuSubOpenYesNo(1, 0x196, 0xC0, 0);
+    menuClose(menu);
+    menuCloseSync(menu, 1);
     heroMoveTermEvent();
     return temp_r29;
 }

@@ -158,6 +158,8 @@ void HSD_MtxSRTQuat(HSD_Mtx m, HSD_Vec3* scale, HSD_Quaternion* rotation, HSD_Ve
 void HSD_MtxSRT(HSD_Mtx m, HSD_Vec3* vec1, HSD_Vec3* vec2, HSD_Vec3* vec3, HSD_Vec3* vec4)
 {
     float sinX, cosX, sinY, cosY, sinZ, cosZ;
+    float parent_y;
+    float parent_x;
     float vec1x_2;
     float vec1y_2;
     float vec1z_2;
@@ -180,16 +182,18 @@ void HSD_MtxSRT(HSD_Mtx m, HSD_Vec3* vec1, HSD_Vec3* vec2, HSD_Vec3* vec3, HSD_V
     vec1z_2 = vec1z_1 = vec1z = vec1->z;
 
     if (vec4 != 0) {
-        float temp1 = (vec4->x >= 0.0F ? 1.0F / (vec4->x + __float_epsilon[0]) : 1.0F / (vec4->x - __float_epsilon[0]));
-        float temp2 = (vec4->y >= 0.0F ? 1.0F / (vec4->y + __float_epsilon[0]) : 1.0F / (vec4->y - __float_epsilon[0]));
+        parent_x = vec4->x;
+        float temp1 = (parent_x >= 0.0F ? 1.0F / (parent_x + __float_epsilon[0]) : 1.0F / (parent_x - __float_epsilon[0]));
+        parent_y = vec4->y;
+        float temp2 = (parent_y >= 0.0F ? 1.0F / (parent_y + __float_epsilon[0]) : 1.0F / (parent_y - __float_epsilon[0]));
         float temp3 = (vec4->z >= 0.0F ? 1.0F / (vec4->z + __float_epsilon[0]) : 1.0F / (vec4->z - __float_epsilon[0]));
 
-        vec1y_2 *= vec4->y * temp1;
+        vec1y_2 *= parent_y * temp1;
         vec1z_2 *= vec4->z * temp1;
-        vec1x_1 *= vec4->x * temp2;
+        vec1x_1 *= parent_x * temp2;
         vec1z_1 *= vec4->z * temp2;
-        vec1x *= vec4->x * temp3;
-        vec1y *= vec4->y * temp3;
+        vec1x *= parent_x * temp3;
+        vec1y *= parent_y * temp3;
     }
 
     m[0][0] = cosZ * (vec1x_2 * cosY);
@@ -462,7 +466,9 @@ int HSD_MtxInverseConcat(HSD_Mtx inv, HSD_Mtx src, HSD_Mtx dest)
     float temp11;
     float temp12;
 
-    det = HSD_CalcDeterminantMatrix3x4(inv);
+    det = inv[0][0] * inv[1][1] * inv[2][2] + inv[0][1] * inv[1][2] * inv[2][0] +
+          inv[0][2] * inv[1][0] * inv[2][1] - inv[2][0] * inv[1][1] * inv[0][2] -
+          inv[1][0] * inv[0][1] * inv[2][2] - inv[0][0] * inv[2][1] * inv[1][2];
 
     if (det == 0.0F) {
         return 0;

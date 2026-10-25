@@ -72,10 +72,10 @@ void wazaSetStatus(void *target, u32 identifier, u16 status, u16 element, u32 va
     WazaDataRecord *data;
 
     data = (WazaDataRecord*)target;
-    if (status != 0) {
-        if (status >= 0x35U) {
-            return;
-        }
+    if (status == 0 || status >= 0x35U) {
+        return;
+    }
+    {
         if (status < 0x25U) {
             data = wazaDataBiosGetPtr(identifier);
             if (data == NULL) {

@@ -1114,6 +1114,7 @@ static inline void prepareVector(Tiga* owner,tigaVariant* value) {
 }
 int Tiga::execute(TigaThread* thread) {
     tigaVariant result;
+    int i;
     bool running=1;
     TigaWorkPrefix* previousWork;
     Tiga* previous;
@@ -1212,7 +1213,7 @@ int Tiga::execute(TigaThread* thread) {
             break;
         }
         case 5:{
-            u8 kind=instruction->subcode;
+            u32 kind=instruction->subcode;
             s16 index=instruction->argument;
             int component=(kind>>4)&15;
             if((u32)(kind&15)==0)globals[index].setVectorIdx(component,stack);
@@ -1226,7 +1227,7 @@ int Tiga::execute(TigaThread* thread) {
         }
         case 6:{
             u8 count=instruction->subcode;
-            for(int i=0;i<count;++i){releaseExpression(thread->stackPtr10);++thread->stackPtr10;}
+            for(i=0;i<count;++i){releaseExpression(thread->stackPtr10);++thread->stackPtr10;}
             *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
@@ -1256,9 +1257,9 @@ int Tiga::execute(TigaThread* thread) {
             break;
         }
         case 9:{
-            u8 wait=execMethod(instruction->subcode,instruction->argument,stack,&thread->retVar);
+            int wait=execMethod(instruction->subcode,instruction->argument,stack,&thread->retVar);
             workBuffer=(TigaWorkPrefix*)&thread->code;
-            running=wait==0;
+            running=(u8)wait==0;
             *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
@@ -1273,13 +1274,13 @@ int Tiga::execute(TigaThread* thread) {
         case 12:*codePtr=(TPCCode*)(field944+(*(u16*)&instruction->argument+(instruction->subcode<<16))*4);break;
         case 13:{
             u8 count=instruction->subcode;
-            for(int i=0;i<count;++i){--thread->stackPtr10;clearExpression(thread->stackPtr10);}
+            for(i=0;i<count;++i){--thread->stackPtr10;clearExpression(thread->stackPtr10);}
             *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }
         case 14:{
             u8 count=instruction->subcode;
-            for(s32 i=0;i<count;++i){releaseExpression(thread->stackPtr10);++thread->stackPtr10;}
+            for(i=0;i<count;++i){releaseExpression(thread->stackPtr10);++thread->stackPtr10;}
             *codePtr=(TPCCode*)((TigaInstruction*)*codePtr+1);
             break;
         }

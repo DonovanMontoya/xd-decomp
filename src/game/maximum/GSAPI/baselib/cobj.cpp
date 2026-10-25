@@ -1,3 +1,4 @@
+#pragma dollar_identifiers on
 /* XD USA camera/material implementation adapted from the baselib reference. */
 #include "game/maximum/GSAPI/baselib/cobj.h"
 typedef int bool;
@@ -183,9 +184,14 @@ static inline f32 vec_get_x(Vec3* v)
     return v->x;
 }
 
+static inline f64 cobj_fabs(f64 x)
+{
+    return __fabs(x);
+}
+
 static inline f64 vec_get_abs_y(Vec3* v)
 {
-    return (f32)fabs(v->y);
+    return (f32)cobj_fabs(v->y);
 }
 
 static inline f32 cobj_get_up_x(Vec3* up)
@@ -537,8 +543,8 @@ void HSD_CObjSetUpVector(HSD_CObj* cobj, Vec3* up)
             cobj->u.up.z != up->z)
         {
             HSD_CObjSetMtxDirty(cobj);
+            cobj->u.up = *up;
         }
-        cobj->u.up = *up;
     } else {
         HSD_CObjSetRoll(cobj, upvec2roll(cobj, up));
     }
@@ -573,33 +579,38 @@ static int roll2upvec(HSD_CObj* cobj, Vec3* up, float roll)
     return 1;
 }
 
+static inline f32 cobjRollAngle(f32 y, f32 x)
+{
+    if (0.0f == x) {
+        if (y >= 0.0f) return 1.5707963267948966F;
+        return -1.5707963267948966F;
+    }
+    return (f32) atan2(y, x);
+}
+
+static Vec3 orig$1007 = {0.0F,0.0F,0.0F};
+static Vec3 uy$1008 = {0.0F,1.0F,0.0F};
+
 static float upvec2roll(HSD_CObj* cobj, Vec3* up)
 {
-    static Vec3 orig = {0.0F,0.0F,0.0F};
-    static Vec3 uy = {0.0F,1.0F,0.0F};
     Vec3 v;
     Vec3 eye;
     Mtx vmtx;
     f32 dot;
 
     if (!HSD_CObjGetEyeVector(cobj, &eye)) {
-        dot = 0.0f;
-    } else {
-        dot = fabsf(VECDotProduct(up, &eye));
-        dot = 1.0f - dot;
-        if (dot < FLT_MIN) {
-            dot = 0.0f;
-        } else {
-            C_MTXLookAt(vmtx, &orig, &uy, &eye);
-            PSMTXMultVecSR(vmtx, up, &v);
-            if (v.y == 0.0f) {
-                dot = -v.x >= 0.0f ? 1.5707963267948966F : -1.5707963267948966F;
-            } else {
-                dot = (float)atan2(-v.x, v.y);
-            }
-        }
+        return 0.0f;
     }
-    return dot;
+    {
+        f64 absolute = __fabs(VECDotProduct(up, &eye));
+        dot = 1.0f - (f32) absolute;
+        if (dot < FLT_MIN) {
+            return 0.0f;
+        }
+        C_MTXLookAt(vmtx, &orig$1007, &uy$1008, &eye);
+        PSMTXMultVecSR(vmtx, up, &v);
+        return cobjRollAngle(-v.x, v.y);
+    }
 }
 
 float HSD_CObjGetEyeDistance(HSD_CObj* cobj)

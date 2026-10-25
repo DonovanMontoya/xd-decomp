@@ -88,7 +88,7 @@ static inline s32 itemAddInner(ITEM *p, u16 num, u16 max) {
     s32 n = item_GetNum(p);
     n += num;
     s32 over;
-    if (n > (s32)max) {
+    if (n > max) {
         over = n - max;
         n = max;
     } else {

@@ -213,31 +213,31 @@ static GSfsysARQTransfer* _fsysGetNewArq() {
     return result;
 }
 static void _fsysAddArq(GSfsysARQTransfer* transfer) { _fsysAddTAG(transfer, &_fsysARQTransRoot); }
+// Release build of a null-check assert: the report is compiled out, leaving the test twice.
+#define FSYS_NULL_RETURN(ptr) if ((ptr) == NULL) { if ((ptr) == NULL) return; return; }
 static void _fsysARQCallbackWrite(u32 request) {
     GSfsysARQTransfer* transfer = _fsysArq2ArqTrans(request);
-    if (transfer) {
-        if (transfer->callback) transfer->callback(request);
-        _fsysDelARQTrans(transfer);
-    }
+    FSYS_NULL_RETURN(transfer);
+    if (transfer->callback) transfer->callback(request);
+    _fsysDelARQTrans(transfer);
 }
 static void _fsysARQCallbackRead(u32 request) {
     GSfsysARQTransfer* transfer = _fsysArq2ArqTrans(request);
-    if (transfer) {
-        DCInvalidateRange(transfer->destination, transfer->length);
-        if (transfer->callback) transfer->callback(request);
-        _fsysDelARQTrans(transfer);
-    }
+    FSYS_NULL_RETURN(transfer);
+    DCInvalidateRange(transfer->destination, transfer->length);
+    if (transfer->callback) transfer->callback(request);
+    _fsysDelARQTrans(transfer);
 }
 }
 typedef GSfsysRequest GSfsysCacheRequest;
 extern "C" {
 void _fsysWriteCache(GSfsysCacheRequest* request, u32 identifier, void* source, u32 destination, u32 length, u32 offset, ARQCallback callback) {
     GSfsysARQTransfer* transfer = _fsysGetNewArq();
-    if (!transfer) return;
+    FSYS_NULL_RETURN(transfer);
     transfer->context = request;
     transfer->identifier = identifier;
     transfer->callback = callback;
-    s32 priority = request->state == 4;
+    s32 priority = request->state == 4 ? 1 : 0;
     DCFlushRange(source, length);
     ARQPostRequest(&transfer->request, request->group, 0, priority, (u32)source, destination + offset, length, _fsysARQCallbackWrite);
 }
@@ -252,7 +252,7 @@ static u8 _fsysReadCacheExec(GSfsysCacheRequest* request, u32 identifier, void* 
     transfer->extra[0] = first;
     transfer->extra[1] = second;
     transfer->extra[2] = third;
-    s32 priority = request->state == 4;
+    s32 priority = request->state == 4 ? 1 : 0;
     if (offset + length > entry->length) length = entry->length - offset;
     if (!((u32)destination & 31) && !(length & 31)) {
         DCInvalidateRange(destination, length);

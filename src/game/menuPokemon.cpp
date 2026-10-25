@@ -151,14 +151,14 @@ void menuPokemonCloseWazaLight(void)
 
 static Pokemon *_menuPokemonStatusCB(Pokemon *pokemon, MENU_POKEMON_CB_TYPE type, long arg)
 {
-    int next;
-    int cur = _menuPokemon.unk6;
+    s8 next = _menuPokemon.unk6;
+    u8 cur = _menuPokemon.unk6;
     switch (type) {
     case MENU_POKEMON_CB_PREV:
-        next = cur - 1;
+        next--;
         break;
     case MENU_POKEMON_CB_NEXT:
-        next = cur + 1;
+        next++;
         break;
     default:
         return pokemon;
@@ -826,22 +826,19 @@ void menuPokemonCursor(tagWINDOW_WORK *window)
     } else if ((keys & 4) != 0) {
         dir = -1;
         if (_menuPokemon.unk4 == 0) {
-            if (cur < 6) {
-                if (cur < 1) {
-                    (void)0;
-                } else {
-                    cur = 0;
-                }
+            switch (cur) {
+            case 1: case 2: case 3: case 4: case 5:
+                cur = 0;
+                break;
             }
         } else if (_menuPokemon.unk4 == 1) {
-            if (cur < 4) {
-                if (cur < 2) {
-                    (void)0;
-                } else {
-                    cur = 0;
-                }
-            } else if (cur < 6) {
+            switch (cur) {
+            case 2: case 3:
+                cur = 0;
+                break;
+            case 4: case 5:
                 cur = 1;
+                break;
             }
         }
     }
@@ -853,8 +850,7 @@ void menuPokemonCursor(tagWINDOW_WORK *window)
         }
     } else if ((keys & 2) != 0) {
         dir = 1;
-        cur += 1;
-        if (cur >= menuDataBiosGetDispMax(window->unk4)) {
+        if (++cur >= menuDataBiosGetDispMax(window->unk4)) {
             cur = 0;
         }
     }

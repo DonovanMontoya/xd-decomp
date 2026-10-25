@@ -5,7 +5,7 @@
 #define true 1
 static int SimplifySrc(HSD_TExp*);
 static int SimplifyThis(HSD_TExp*);
-int SimplifyByMerge(HSD_TExp*);
+static int SimplifyByMerge(HSD_TExp*);
 static void CalcTevRange(HSD_TExp*);
 static HSD_TEArg TE_ARG_ZERO = { 0x00, 0x07, 0xFF };
 
@@ -446,32 +446,51 @@ static int SimplifyThis(HSD_TExp* arg0)
 
 /* XD merges color and alpha inputs after checking range, resource, bias,
  * and scale compatibility. Argument copies retain reference counts. */
-int SimplifyByMerge(HSD_TExp *arg0) {
+/* Keep merge state in separate locals, as in the original compiler output. */
+#pragma opt_propagation off
+static int SimplifyByMerge(HSD_TExp *texp_) {
+    s32 var_r5;
+    s32 var_r6;
+    u8 temp_r7;
+    s32 var_r31;
     s32 var_r30;
+    HSD_TExp *var_r30_2;
     u8 var_r29;
     u8 var_r28;
-    s32 var_r31;
-    HSD_TEArg tmp_arg;
-    HSD_TExp *temp_r20_2;
-    HSD_TExp *temp_r20_3;
-    HSD_TExp *temp_r21;
-    HSD_TExp *temp_r23;
-    HSD_TExp *temp_r3_11;
-    HSD_TExp *temp_r4;
-    HSD_TExp *var_r23;
-    HSD_TExp *var_r23_2;
-    HSD_TExp *var_r23_3;
-    HSD_TExp *var_r23_4;
+    HSD_TExp *arg0;
+    u8 var_r26;
+    HSD_TExp *var_r26_2;
+    HSD_TExp *var_r26_3;
+    HSD_TExp *var_r26_4;
+    HSD_TExp *var_r25;
+    u8 var_r25_2;
+    u8 temp_r25;
+    u8 temp_r25_2;
+    u8 temp_r25_3;
     HSD_TExp *var_r24;
     HSD_TExp *var_r24_2;
     HSD_TExp *var_r24_3;
     HSD_TExp *var_r24_4;
     HSD_TExp *var_r24_5;
-    HSD_TExp *var_r25;
-    HSD_TExp *var_r26_2;
-    HSD_TExp *var_r26_3;
-    HSD_TExp *var_r26_4;
-    HSD_TExp *var_r30_2;
+    HSD_TExp *var_r23;
+    HSD_TExp *var_r23_2;
+    HSD_TExp *var_r23_3;
+    HSD_TExp *var_r23_4;
+    HSD_TExp *temp_r23;
+    s32 var_r22_2;
+    s32 var_r22_3;
+    s32 var_r22_4;
+    s32 var_r22_5;
+    s32 var_r22_6;
+    s32 var_r22;
+    HSD_TExp *temp_r21;
+    u8 temp_r21_2;
+    u8 temp_r21_3;
+    u8 temp_r20;
+    HSD_TExp *temp_r20_2;
+    HSD_TExp *temp_r20_3;
+    HSD_TEArg tmp_arg;
+    HSD_TExp *temp_r3_11;
     HSD_TObj *temp_r0_16;
     HSD_TObj *temp_r0_5;
     HSD_TObj *temp_r3_14;
@@ -508,12 +527,6 @@ int SimplifyByMerge(HSD_TExp *arg0) {
     s32 var_r0_7;
     s32 var_r0_8;
     s32 var_r0_9;
-    s32 var_r22;
-    s32 var_r22_2;
-    s32 var_r22_3;
-    s32 var_r22_4;
-    s32 var_r22_5;
-    s32 var_r22_6;
     s32 var_r3;
     s32 var_r3_10;
     s32 var_r3_11;
@@ -530,13 +543,11 @@ int SimplifyByMerge(HSD_TExp *arg0) {
     s32 var_r3_9;
     s32 var_r4;
     s32 var_r4_2;
-    s32 var_r5;
     s32 var_r5_2;
     s32 var_r5_3;
     s32 var_r5_4;
     s32 var_r5_5;
     s32 var_r5_6;
-    s32 var_r6;
     s32 var_r6_2;
     s32 var_r6_3;
     s32 var_r6_4;
@@ -549,24 +560,15 @@ int SimplifyByMerge(HSD_TExp *arg0) {
     u8 temp_r0;
     u8 temp_r0_10;
     u8 temp_r0_12;
-    u8 temp_r0_13;
     u8 temp_r0_14;
     u8 temp_r0_17;
     u8 temp_r0_18;
     u8 temp_r0_20;
     u8 temp_r0_21;
-    u8 temp_r0_2;
     u8 temp_r0_3;
     u8 temp_r0_6;
     u8 temp_r0_7;
     u8 temp_r0_9;
-    u8 temp_r20;
-    u8 temp_r21_2;
-    u8 temp_r21_3;
-    u8 temp_r25;
-    u8 temp_r25_2;
-    u8 temp_r25_3;
-    u8 temp_r3;
     u8 temp_r3_12;
     u8 temp_r3_15;
     u8 temp_r3_16;
@@ -583,28 +585,24 @@ int SimplifyByMerge(HSD_TExp *arg0) {
     u8 temp_r4_6;
     u8 temp_r4_8;
     u8 temp_r5_11;
-    u8 temp_r5_13;
     u8 temp_r5_2;
     u8 temp_r5_3;
     u8 temp_r5_5;
-    u8 temp_r5_7;
     u8 temp_r5_9;
     u8 temp_r6_2;
     u8 temp_r6_4;
     u8 temp_r6_5;
     u8 temp_r6_6;
-    u8 temp_r7;
     u8 temp_r7_2;
-    u8 var_r25_2;
-    u8 var_r26;
 
+    arg0 = texp_;
     var_r31 = 0;
     do {
         temp_r7 = arg0->tev.c_op;
         var_r30 = 0;
         if (((temp_r7 == 0) || (temp_r7 == 1)) && ((u8) arg0->tev.c_in[2].sel == 7)) {
-            temp_r3 = arg0->tev.c_in[0].type;
-            temp_r4 = arg0->tev.c_in[0].exp;
+            u8 temp_r3 = arg0->tev.c_in[0].type;
+            HSD_TExp *temp_r4 = arg0->tev.c_in[0].exp;
             temp_r0 = arg0->tev.c_in[0].sel;
             var_r25 = temp_r4;
             var_r26 = temp_r0;
@@ -685,8 +683,11 @@ block_64:
 block_65:
                                 temp_r3_2 = var_r25->tev.c_scale;
                                 if (temp_r3_2 == 0) {
-                                    temp_r0_2 = var_r25->tev.c_bias;
+                                    u8 temp_r0_2 = var_r25->tev.c_bias;
+                                    u8 merge_op;
+                                    u8 temp_r5_7;
                                     temp_r5_7 = arg0->tev.c_bias;
+                                    merge_op = arg0->tev.c_op;
                                     switch ((s32) temp_r0_2) {
                                     case 1:
                                         var_r3 = 1;
@@ -698,7 +699,7 @@ block_65:
                                         var_r3 = 0;
                                         break;
                                     }
-                                    if ((s32) arg0->tev.c_op == 1) {
+                                    if ((s32) merge_op == 1) {
                                         var_r3 = -var_r3;
                                     }
                                     switch ((s32) temp_r5_7) {
@@ -767,7 +768,7 @@ block_65:
                                         break;
                                     }
                                     temp_r3_3 = var_r0_2 * var_r3_2;
-                                    temp_r0_4 = (s32) ((temp_r3_3 >> 0x1FU) + temp_r3_3) >> 1;
+                                    temp_r0_4 = (s32) temp_r3_3 / 2;
                                     switch (temp_r0_4) {
                                     case 1:
                                         var_r28 = 3;
@@ -804,8 +805,8 @@ block_135:
                                             var_r24->tev.c_in[0] = var_r30_2->tev.c_in[0];
                                             HSD_TExpRef(var_r24->tev.c_in[0].exp, var_r24->tev.c_in[0].sel);
                                             var_r22 += 1;
-                                            var_r24 = (HSD_TExp*) ((char*) var_r24 + 8);
                                             var_r30_2 = (HSD_TExp*) ((char*) var_r30_2 + 8);
+                                            var_r24 = (HSD_TExp*) ((char*) var_r24 + 8);
                                         } while (var_r22 < 3);
                                         arg0->tev.c_bias = var_r29;
                                         arg0->tev.c_scale = var_r28;
@@ -902,7 +903,7 @@ block_173:
                                     break;
                                 }
                                 temp_r3_7 = var_r3_5 * var_r0_5;
-                                temp_r0_8 = (s32) ((temp_r3_7 >> 0x1FU) + temp_r3_7) >> 1;
+                                temp_r0_8 = (s32) temp_r3_7 / 2;
                                 switch (temp_r0_8) {
                                 case 1:
                                     var_r28 = 3;
@@ -952,8 +953,8 @@ block_216_done:
                                         HSD_TExpRef(var_r24_2->tev.c_in[0].exp, var_r24_2->tev.c_in[0].sel);
                                         HSD_TExpUnref(temp_r23, temp_r25_2);
                                         var_r22_2 += 1;
-                                        var_r26_2 = (HSD_TExp*) ((char*) var_r26_2 + 8);
                                         var_r24_2 = (HSD_TExp*) ((char*) var_r24_2 + 8);
+                                        var_r26_2 = (HSD_TExp*) ((char*) var_r26_2 + 8);
                                     } while (var_r22_2 < 4);
                                 }
                             }
@@ -1044,7 +1045,7 @@ block_216_done:
                                     break;
                                 }
                                 temp_r3_10 = var_r0_8 * var_r3_7;
-                                temp_r0_11 = (s32) ((temp_r3_10 >> 0x1FU) + temp_r3_10) >> 1;
+                                temp_r0_11 = (s32) temp_r3_10 / 2;
                                 switch (temp_r0_11) {
                                 case 1:
                                     var_r28 = 3;
@@ -1070,8 +1071,7 @@ block_308_done:
                                     var_r29 = var_r26_2->tev.c_bias;
 block_311:
                                     var_r30 = 1;
-                                    *(u32*) &arg0->tev.c_in[3] = (s32) *(u32*) &var_r26_2->tev.c_in[3];
-                                    arg0->tev.c_in[3].exp = var_r26_2->tev.c_in[3].exp;
+                                    arg0->tev.c_in[3] = var_r26_2->tev.c_in[3];
                                     HSD_TExpRef(arg0->tev.c_in[3].exp, arg0->tev.c_in[3].sel);
                                     arg0->tev.c_bias = var_r29;
                                     arg0->tev.c_scale = var_r28;
@@ -1098,8 +1098,8 @@ block_311:
                                             HSD_TExpRef(var_r24_3->tev.c_in[0].exp, var_r24_3->tev.c_in[0].sel);
                                             HSD_TExpUnref(temp_r21, temp_r20);
                                             var_r22_3 += 1;
-                                            var_r23 = (HSD_TExp*) ((char*) var_r23 + 8);
                                             var_r24_3 = (HSD_TExp*) ((char*) var_r24_3 + 8);
+                                            var_r23 = (HSD_TExp*) ((char*) var_r23 + 8);
                                         } while (var_r22_3 < 3);
                                     }
                                     HSD_TExpUnref(var_r26_2, temp_r25);
@@ -1185,8 +1185,11 @@ block_379:
 block_383:
                             temp_r3_12 = var_r26_3->tev.a_scale;
                             if (temp_r3_12 == 0) {
-                                temp_r0_13 = var_r26_3->tev.a_bias;
+                                u8 temp_r0_13 = var_r26_3->tev.a_bias;
+                                u8 merge_op;
+                                u8 temp_r5_13;
                                 temp_r5_13 = arg0->tev.a_bias;
+                                merge_op = arg0->tev.a_op;
                                 switch ((s32) temp_r0_13) {
                                 case 1:
                                     var_r3_8 = 1;
@@ -1198,7 +1201,7 @@ block_383:
                                     var_r3_8 = 0;
                                     break;
                                 }
-                                if ((s32) arg0->tev.a_op == 1) {
+                                if ((s32) merge_op == 1) {
                                     var_r3_8 = -var_r3_8;
                                 }
                                 switch ((s32) temp_r5_13) {
@@ -1267,7 +1270,7 @@ block_383:
                                     break;
                                 }
                                 temp_r3_13 = var_r0_11 * var_r3_9;
-                                temp_r0_15 = (s32) ((temp_r3_13 >> 0x1FU) + temp_r3_13) >> 1;
+                                temp_r0_15 = (s32) temp_r3_13 / 2;
                                 switch (temp_r0_15) {
                                 case 1:
                                     var_r28 = 3;
@@ -1304,8 +1307,8 @@ block_453:
                                         var_r24_4->tev.a_in[0] = var_r23_2->tev.a_in[0];
                                         HSD_TExpRef(var_r24_4->tev.a_in[0].exp, var_r24_4->tev.a_in[0].sel);
                                         var_r22_4 += 1;
-                                        var_r24_4 = (HSD_TExp*) ((char*) var_r24_4 + 8);
                                         var_r23_2 = (HSD_TExp*) ((char*) var_r23_2 + 8);
+                                        var_r24_4 = (HSD_TExp*) ((char*) var_r24_4 + 8);
                                     } while (var_r22_4 < 3);
                                     arg0->tev.a_bias = var_r29;
                                     arg0->tev.a_scale = var_r28;
@@ -1400,7 +1403,7 @@ block_490:
                                     break;
                                 }
                                 temp_r3_17 = var_r3_12 * var_r0_14;
-                                temp_r0_19 = (s32) ((temp_r3_17 >> 0x1FU) + temp_r3_17) >> 1;
+                                temp_r0_19 = (s32) temp_r3_17 / 2;
                                 switch (temp_r0_19) {
                                 case 1:
                                     var_r28 = 3;
@@ -1450,8 +1453,8 @@ block_533_done:
                                         HSD_TExpRef(var_r23_3->tev.a_in[0].exp, var_r23_3->tev.a_in[0].sel);
                                         HSD_TExpUnref(temp_r20_2, temp_r21_2);
                                         var_r22_5 += 1;
-                                        var_r26_4 = (HSD_TExp*) ((char*) var_r26_4 + 8);
                                         var_r23_3 = (HSD_TExp*) ((char*) var_r23_3 + 8);
+                                        var_r26_4 = (HSD_TExp*) ((char*) var_r26_4 + 8);
                                     } while (var_r22_5 < 4);
                                 }
                             }
@@ -1540,7 +1543,7 @@ block_533_done:
                                 break;
                             }
                             temp_r3_19 = var_r0_17 * var_r3_14;
-                            temp_r0_22 = (s32) ((temp_r3_19 >> 0x1FU) + temp_r3_19) >> 1;
+                            temp_r0_22 = (s32) temp_r3_19 / 2;
                             switch (temp_r0_22) {
                             case 1:
                                 var_r28 = 3;
@@ -1566,8 +1569,7 @@ block_619_done:
                                 var_r29 = var_r26_4->tev.a_bias;
 block_622:
                                 var_r30 = 1;
-                                *(u32*) &arg0->tev.a_in[3] = (s32) *(u32*) &var_r26_4->tev.a_in[3];
-                                arg0->tev.a_in[3].exp = var_r26_4->tev.a_in[3].exp;
+                                arg0->tev.a_in[3] = var_r26_4->tev.a_in[3];
                                 HSD_TExpRef(arg0->tev.a_in[3].exp, arg0->tev.a_in[3].sel);
                                 arg0->tev.a_bias = var_r29;
                                 arg0->tev.a_scale = var_r28;
@@ -1594,8 +1596,8 @@ block_622:
                                         HSD_TExpRef(var_r23_4->tev.a_in[0].exp, var_r23_4->tev.a_in[0].sel);
                                         HSD_TExpUnref(temp_r20_3, temp_r21_3);
                                         var_r22_6 += 1;
-                                        var_r24_5 = (HSD_TExp*) ((char*) var_r24_5 + 8);
                                         var_r23_4 = (HSD_TExp*) ((char*) var_r23_4 + 8);
+                                        var_r24_5 = (HSD_TExp*) ((char*) var_r24_5 + 8);
                                     } while (var_r22_6 < 3);
                                 }
                                 HSD_TExpUnref(var_r26_4, temp_r25_3);
@@ -1612,6 +1614,7 @@ block_622:
     return var_r31;
 }
 
+#pragma opt_propagation reset
 
 int HSD_TExpSimplify(HSD_TExp* texp_)
 {

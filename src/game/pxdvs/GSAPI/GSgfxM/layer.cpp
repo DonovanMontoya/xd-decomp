@@ -193,7 +193,7 @@ void GSgfxLayerSetActive(s32 id) { if (id<16) gsgfxState->layer=_layerIDTable[id
 LayerNode* GSgfxLayerFindByID(s32 id) {
     if (id==-1) return 0;
     if (id<16) return _layerIDTable[id];
-    return reinterpret_cast<LayerNode*>(id);
+    // The original only defines a result for -1 and registered layer IDs.
 }
 struct LayerNamed { LayerNode* next; u8 reserved4[4]; char name[32]; };
 LayerNode* GSgfxLayerFindByName(char* name) {
@@ -286,7 +286,7 @@ void PrepareNextFrame__10GSgfxLayerFv(void* layer) {
 void BuildRenderListPass__10GSgfxLayerF14GSgfxLayerPass(void* layer,s32 pass) {
     u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
     if (layerField<void*>(fifo,0xa4)) SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(layer,layerField<void*>(fifo,0xa4));
-    if (layerField<void*>(fifo,0) && !layerField<u8>(fifo,0x94)) SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(layer,fifo);
+    if (layerField<void*>((u8*)layer+0x1818,pass*0xbc) && !layerField<u8>(fifo,0x94)) SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(layer,fifo);
     if (layerField<void*>(fifo,0xa8)) SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(layer,layerField<void*>(fifo,0xa8));
 }
 void BuildRenderList__10GSgfxLayerFv(void* layer) {
@@ -405,10 +405,9 @@ static void updateLayerFifo(void* fifo) {
 }
 extern "C" {
 void GSgfxLayerUpdateActiveFifoStats__Fv() {
-    if (gsgfx_gpu_mode!=1) {
-        void* fifo=gsgfx_layer_activeFifo;
-        if (fifo) updateLayerFifo(fifo);
-    }
+    void* fifo;
+    if (gsgfx_gpu_mode==1 || (fifo=gsgfx_layer_activeFifo)==0) return;
+    updateLayerFifo(fifo);
 }
 void SetupFifo__10GSgfxLayerFv(void* layer) {
     if (gsgfx_gpu_mode==2) {
@@ -494,19 +493,22 @@ void SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(void* layer,void* objec
     GSgfxRenderAddToFifoList__FP15GSgfx_GCFifoObjPvPvUlPFPv_vPv(fifo+8,start,layerField<void*>(fifo,0x8c),layerField<u32>(fifo,0x90),0,0);
 }
 void SetPassRedirect__10GSgfxLayerF14GSgfxLayerPassbP10GSgfxLayer14GSgfxLayerPass16GSgfxLayerOffset(void* layer,s32 pass,bool enabled,LayerNode* other,s32 otherPass,s32 offset) {
-    u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
     if (enabled==1) {
+        u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
         u8* target=reinterpret_cast<u8*>(other)+0x1818+otherPass*0xbc;
-        void** link=&layerField<void*>(target,offset==1 ? 0xa4 : 0xa8);
+        void** link=offset==1 ? &layerField<void*>(target,0xa4) : &layerField<void*>(target,0xa8);
         layerField<u8>(fifo,0x94)=1; layerField<s32>(fifo,0x98)=other->id;
         layerField<s32>(fifo,0x9c)=otherPass; layerField<s32>(fifo,0xa0)=offset; *link=fifo; return;
     }
-    if (layerField<void*>(fifo,0) && layerField<u8>(fifo,0x94)) {
-        LayerNode* targetLayer=GSgfxLayerFindByID(layerField<s32>(fifo,0x98));
-        u8* target=reinterpret_cast<u8*>(targetLayer)+0x1818+layerField<s32>(fifo,0x9c)*0xbc;
-        void** link=&layerField<void*>(target,layerField<s32>(fifo,0xa0)==1 ? 0xa4 : 0xa8);
-        layerField<u8>(fifo,0x94)=0; layerField<s32>(fifo,0x98)=-1;
-        layerField<s32>(fifo,0x9c)=2; layerField<s32>(fifo,0xa0)=0; *link=0;
+    if (layerField<void*>((u8*)layer+0x1818,pass*0xbc)) {
+        u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
+        if (layerField<u8>(fifo,0x94)) {
+            LayerNode* targetLayer=GSgfxLayerFindByID(layerField<s32>(fifo,0x98));
+            u8* target=reinterpret_cast<u8*>(targetLayer)+0x1818+layerField<s32>(fifo,0x9c)*0xbc;
+            void** link=layerField<s32>(fifo,0xa0)==1 ? &layerField<void*>(target,0xa4) : &layerField<void*>(target,0xa8);
+            layerField<u8>(fifo,0x94)=0; layerField<s32>(fifo,0x98)=-1;
+            layerField<s32>(fifo,0x9c)=2; layerField<s32>(fifo,0xa0)=0; *link=0;
+        }
     }
 }
 void PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(void* layer,s32 pass) {
@@ -617,7 +619,8 @@ void CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(void* layer,s32 pass,u32 bytes)
 LayerNode* __ct__10GSgfxLayerF12GSgfxLayerIDPcUlUlUl14GSgfxLayerType(void* object,s32 id,char* name,u32 opaque,u32 translucent,u32 matrices,s32 type) {
     LayerNode* layer=static_cast<LayerNode*>(object);
     if (!opaque && !translucent) return layer;
-    if (!name || GSgfxLayerFindByName(name) || !matrices) return layer;
+    if (!name || GSgfxLayerFindByName(name)) return layer;
+    if (!matrices) return layer;
     layer->id=id; layerField<u32>(layer,4)=7; layerField<u8>(layer,0x19b3)=1; layerField<s32>(layer,0x2c)=0;
     SetLayerType__10GSgfxLayerF14GSgfxLayerType(layer,type);
     layerField<s32>(layer,0x1994)=2;
@@ -633,35 +636,43 @@ LayerNode* __ct__10GSgfxLayerF12GSgfxLayerIDPcUlUlUl14GSgfxLayerType(void* objec
     layerField<void*>(layer,0x19a4)=0; layerField<s32>(layer,0x19a8)=0;
     memset(reinterpret_cast<u8*>(layer)+0x19b4,0,0x20);
     PrepareNextFrame__10GSgfxLayerFv(layer);
-    selectLayerPass(static_cast<GraphicsLayerState*>(object),layerField<void*>(layer,0x1818) ? 0 : 1);
+    if (layerField<void*>(layer,0x1818)) selectLayerPass(static_cast<GraphicsLayerState*>(object),0);
+    else selectLayerPass(static_cast<GraphicsLayerState*>(object),1);
     _layerIDTable[layer->id]=layer; return layer;
 }
-void* __dt__10GSgfxLayerFv(void* object,s16 release) {
-    LayerNode* layer=static_cast<LayerNode*>(object);
-    if (layer) {
-        GSgfxRenderWaitForDrawComplete__Fv();
-        SetPassRedirect__10GSgfxLayerF14GSgfxLayerPassbP10GSgfxLayer14GSgfxLayerPass16GSgfxLayerOffset(layer,0,0,0,0,0);
-        SetPassRedirect__10GSgfxLayerF14GSgfxLayerPassbP10GSgfxLayer14GSgfxLayerPass16GSgfxLayerOffset(layer,1,0,0,0,0);
-        SetLayerType__10GSgfxLayerF14GSgfxLayerType(layer,0);
-        SetTextureCopy__10GSgfxLayerFP9GStexturebPUc(layer,0,0,0);
-        if (_layerBottom==layer) _layerBottom=layer->next;
-        else {
-            LayerNode* p=_layerBottom;
-            while (p && p->next!=layer) p=p->next;
-            p->next=layer->next;
-        }
-        void* fifo=gsgfx_layer_activeFifo;
-        if (fifo && (fifo==reinterpret_cast<u8*>(layer)+0x1818 || fifo==reinterpret_cast<u8*>(layer)+0x18d4)) {
-            updateLayerFifo(fifo); GXSetCPUFifo(sdk(GSgfxGPUGetImmediateFifo__Fv())); gsgfx_layer_activeFifo=0;
-        }
-        if (_layerStateLastHWState==reinterpret_cast<u8*>(layer)+0x30) _layerStateLastHWState=0;
-        delete layerField<GSgfxMatrixStack*>(layer,0x19a0); _layerIDTable[layer->id]=0;
-        if (layerField<void*>(layer,0x1818)) { GSmemFree(layerField<void*>(layer,0x1818)); layerField<void*>(layer,0x1818)=0; }
-        if (layerField<void*>(layer,0x18d4)) { GSmemFree(layerField<void*>(layer,0x18d4)); layerField<void*>(layer,0x18d4)=0; }
-        if (release>0) __dl__FPv(layer);
-    }
-    return layer;
 }
+static inline void disableLayerPassRedirect(void* layer,s32 pass) {
+    if (layerField<void*>(layer,0x1818+pass*0xbc)) {
+        if (layerField<u8>(layer,0x18ac+pass*0xbc)) {
+            LayerNode* targetLayer=GSgfxLayerFindByID(layerField<s32>(layer,0x18b0+pass*0xbc));
+            u8* target=reinterpret_cast<u8*>(targetLayer)+0x1818+layerField<s32>(layer,0x18b4+pass*0xbc)*0xbc;
+            void** link=layerField<s32>(layer,0x18b8+pass*0xbc)==1 ? &layerField<void*>(target,0xa4) : &layerField<void*>(target,0xa8);
+            layerField<u8>(layer,0x18ac+pass*0xbc)=0; layerField<s32>(layer,0x18b0+pass*0xbc)=-1;
+            layerField<s32>(layer,0x18b4+pass*0xbc)=2; layerField<s32>(layer,0x18b8+pass*0xbc)=0; *link=0;
+        }
+    }
+}
+GSgfxLayer::~GSgfxLayer() {
+    LayerNode* layer=reinterpret_cast<LayerNode*>(this);
+    GSgfxRenderWaitForDrawComplete__Fv();
+    disableLayerPassRedirect(layer,0);
+    disableLayerPassRedirect(layer,1);
+    SetLayerType__10GSgfxLayerF14GSgfxLayerType(layer,0);
+    SetTextureCopy__10GSgfxLayerFP9GStexturebPUc(layer,0,0,0);
+    if (_layerBottom==layer) _layerBottom=layer->next;
+    else {
+        LayerNode* p=_layerBottom;
+        while (p && p->next!=layer) p=p->next;
+        p->next=layer->next;
+    }
+    void* fifo=gsgfx_layer_activeFifo;
+    if (fifo && (fifo==reinterpret_cast<u8*>(layer)+0x1818 || fifo==reinterpret_cast<u8*>(layer)+0x18d4)) {
+        updateLayerFifo(fifo); GXSetCPUFifo(sdk(GSgfxGPUGetImmediateFifo__Fv())); gsgfx_layer_activeFifo=0;
+    }
+    if (_layerStateLastHWState==reinterpret_cast<u8*>(layer)+0x30) _layerStateLastHWState=0;
+    delete layerField<GSgfxMatrixStack*>(layer,0x19a0); _layerIDTable[layer->id]=0;
+    if (layerField<void*>(layer,0x1818)) { GSmemFree(layerField<void*>(layer,0x1818)); layerField<void*>(layer,0x1818)=0; }
+    if (layerField<void*>(layer,0x18d4)) { GSmemFree(layerField<void*>(layer,0x18d4)); layerField<void*>(layer,0x18d4)=0; }
 }
 
 extern "C" {
@@ -670,9 +681,9 @@ void GSprimSetQuadVertexOrder(s32);
 void GSprimSetLineWidth(float);
 void GSprimSetTextSize(float,float);
 void GSprimSetTextWidth(float);
-void GSprimSetTextColor(const u8*);
-void GSprimDraw2DQuadWH(float,float,float,float,const GXColor*);
-void GSprimDraw2DHLine(float,float,float,const GXColor*);
+void GSprimSetTextColor(GXColor);
+void GSprimDraw2DQuadWH(float,float,float,float,GXColor);
+void GSprimDraw2DHLine(float,float,float,GXColor);
 void GSprimWriteStr(float,float,const char*,...);
 void GSprimWriteChar(float,float,char);
 void GSmtx44Ortho(Mtx44,float,float,float,float,float,float);
@@ -680,20 +691,72 @@ void GSmtx44Ortho(Mtx44,float,float,float,float,float,float);
 extern Mtx mtxIdent;
 extern "C" inline GXColor* GSgfxPerfColorToGSgfxCol(u32 packed) {
     static GXColor c;
-    c.r=static_cast<u8>(packed>>16); c.g=static_cast<u8>(packed>>8);
-    c.b=static_cast<u8>(packed); c.a=255;
+    c.b=static_cast<u8>(packed); c.g=static_cast<u8>(packed>>8);
+    c.r=static_cast<u8>(packed>>16); c.a=255;
     return &c;
 }
 struct LayerStatsRedirect { char marker; u8 pad[3]; LayerNode* target; s32 pass,order; };
 ABI_SIZE(LayerStatsRedirect,0x10);
 // Direct offset views keep this large overlay below the compiler's inline budget.
 #define STATS_FIELD(type, base, offset) (*reinterpret_cast<type*>(reinterpret_cast<u8*>(base)+(offset)))
+static inline void GetPassVisibility(LayerNode* layer, bool* opaque, bool* xluc) {
+    if (opaque) *opaque=(STATS_FIELD(u32,layer,4)>>1)&1;
+    if (xluc) *xluc=(STATS_FIELD(u32,layer,4)>>2)&1;
+}
+static inline void GetWantClearFlags(LayerNode* layer, bool* color, bool* alpha, bool* depth) {
+    if (color) *color=(STATS_FIELD(u32,layer,4)>>6)&1;
+    if (alpha) *alpha=(STATS_FIELD(u32,layer,4)>>7)&1;
+    if (depth) *depth=(STATS_FIELD(u32,layer,4)>>8)&1;
+}
+static inline void GetClearFlags(LayerNode* layer, bool* color, bool* alpha, bool* depth) {
+    bool d,a,c;
+    LayerNode* next=layer->next;
+    if (!next) {
+        c=false; a=false; d=false;
+    } else {
+        bool nc,na,nd;
+        GetWantClearFlags(next,&nc,&na,&nd);
+        u32 flags=STATS_FIELD(u32,layer,4);
+        c=static_cast<u8>((flags&8) || nc);
+        a=static_cast<u8>((flags&0x10) || na);
+        d=static_cast<u8>((flags&0x20) || nd);
+    }
+    if (color) *color=c;
+    if (alpha) *alpha=a;
+    if (depth) *depth=d;
+}
+static inline void GetFifoUsage(LayerNode* layer, u32* opaque, u32* xluc) {
+    if (opaque) { if (STATS_FIELD(void*,layer,0x1818)) *opaque=STATS_FIELD(u32,layer,0x18C8); else *opaque=0; }
+    if (xluc) { if (STATS_FIELD(void*,layer,0x18D4)) *xluc=STATS_FIELD(u32,layer,0x1984); else *xluc=0; }
+}
+static inline void GetFifoPeak(LayerNode* layer, u32* opaque, u32* xluc) {
+    if (opaque) { if (STATS_FIELD(void*,layer,0x1818)) *opaque=STATS_FIELD(u32,layer,0x18D0); else *opaque=0; }
+    if (xluc) { if (STATS_FIELD(void*,layer,0x18D4)) *xluc=STATS_FIELD(u32,layer,0x198C); else *xluc=0; }
+}
+static inline bool GetPassRedirect(LayerNode* layer, s32 pass, LayerNode** target, s32* targetPass, s32* order) {
+    u8* fifo=reinterpret_cast<u8*>(layer)+0x1818+pass*0xBC;
+    if (!STATS_FIELD(void*,fifo,0)) return false;
+    if (!STATS_FIELD(u8,fifo,0x94)) return false;
+    if (target) {
+        s32 id=STATS_FIELD(s32,fifo,0x98);
+        LayerNode* found;
+        if (id==-1) found=0;
+        else if (id<16) found=_layerIDTable[id];
+        *target=found;
+    }
+    if (targetPass) *targetPass=STATS_FIELD(s32,fifo,0x9C);
+    if (order) *order=STATS_FIELD(s32,fifo,0xA0);
+    return true;
+}
+static inline bool IsLayerVisible(LayerNode* layer) { return STATS_FIELD(u32,layer,4)&1; }
 extern "C" void GSgfxLayerRenderStats__FP10GSgfxLayer(void* layer) {
     LayerStatsRedirect redirects[4]={
         {'#',{0,0,0},0,2,0}, {'$',{0,0,0},0,2,0},
         {'=',{0,0,0},0,2,0}, {'+',{0,0,0},0,2,0}
     };
     const GXColor background={32,32,32,192};
+    volatile u32 usedOpaque,usedXluc,peakOpaque,peakXluc;
+    u32 sizeOpaque,sizeXluc;
     const GXColor inactive={96,96,96,255};
     const GXColor empty={160,160,160,255};
     const GXColor white={255,255,255,255};
@@ -718,8 +781,9 @@ extern "C" void GSgfxLayerRenderStats__FP10GSgfxLayer(void* layer) {
     STATS_FIELD(float,layer,0xD64)=projection[1][3];
     STATS_FIELD(float,layer,0xD68)=projection[2][2];
     STATS_FIELD(float,layer,0xD6C)=projection[2][3];
-    memcpy(state->matrixStack->current->matrix,mtxIdent,sizeof(Mtx));
-    state->matrixStack->current->flags|=1;
+    GSgfxMatrixStack* matrixStack=state->matrixStack;
+    memcpy(matrixStack->current->matrix,mtxIdent,sizeof(Mtx));
+    matrixStack->current->flags|=1;
     STATS_FIELD(float,layer,0x1684)=0.0f;
     STATS_FIELD(float,layer,0x1688)=30000.0f;
     if (STATS_FIELD(u8,layer,0x16A7)) {
@@ -738,45 +802,42 @@ extern "C" void GSgfxLayerRenderStats__FP10GSgfxLayer(void* layer) {
     STATS_FIELD(s32,layer,0xD90)=1; state->cullDirty|=4; state->dirty|=2; state->savedCullDirty|=4; state->savedDirty|=2;
     s32 count=0;
     for (LayerNode* p=_layerBottom;p;p=p->next) ++count;
-    GSprimDraw2DQuadWH(10.0f,22.0f,620.0f,12.0f*count+28.0f,&background);
-    GSprimSetTextColor(reinterpret_cast<const u8*>(&white));
+    GSprimDraw2DQuadWH(10.0f,22.0f,620.0f,12.0f*count+28.0f,background);
+    GSprimSetTextColor(white);
     GSprimSetTextSize(10.0f,10.0f);
     GSprimWriteStr(25.0f,29.0f,"#"); GSprimWriteStr(50.0f,29.0f,"ID");
     GSprimWriteStr(85.0f,29.0f,"Name"); GSprimWriteStr(245.0f,29.0f,"TCAZ");
     GSprimWriteStr(295.0f,29.0f,"Opaque"); GSprimWriteStr(470.0f,29.0f,"Xluc");
-    GSprimDraw2DHLine(20.0f,620.0f,42.0f,&yellow);
+    GSprimDraw2DHLine(20.0f,620.0f,42.0f,yellow);
     s32 row=0;
     float y;
-    char name[19];
-    for (LayerNode* p=_layerBottom;p;p=p->next,++row) {
+    char name[32];
+    LayerNode* next;
+    for (LayerNode* p=_layerBottom;p;p=next,++row) {
         s32 id=p->id;
-        LayerNode* next=p->next;
+        next=p->next;
         y=12.0f*row+47.0f;
         u32 packed=id<8 ? _layerPerfColor[id] : _layerPerfUserColor;
-        GXColor tint=*GSgfxPerfColorToGSgfxCol(packed);
-        GSprimDraw2DQuadWH(20.0f,y-1.0f,50.0f,12.0f,&tint);
-        GSprimSetTextColor(reinterpret_cast<const u8*>(&white));
+        GSprimDraw2DQuadWH(20.0f,y-1.0f,50.0f,12.0f,*GSgfxPerfColorToGSgfxCol(packed));
+        GSprimSetTextColor(white);
         GSprimWriteStr(25.0f,y,"%d",row); GSprimWriteStr(55.0f,y,"%d",id);
-        u32 flags=STATS_FIELD(u32,p,4);
-        u8 opaqueVisible=(flags>>1)&1, xlucVisible=(flags>>2)&1;
-        if ((flags&1)!=1) { GSprimSetTextColor(reinterpret_cast<const u8*>(&inactive)); opaqueVisible=xlucVisible=0; }
+        bool opaqueVisible,xlucVisible;
+        GetPassVisibility(p,&opaqueVisible,&xlucVisible);
+        if (IsLayerVisible(p)!=true) { GSprimSetTextColor(inactive); opaqueVisible=false; xlucVisible=false; }
         GSprimSetTextSize(8.5f,10.0f);
-        if (static_cast<s32>(strlen(reinterpret_cast<char*>(p)+8)+1)<=19)
-            memcpy(name,reinterpret_cast<char*>(p)+8,strlen(reinterpret_cast<char*>(p)+8)+1);
-        else { memcpy(name,reinterpret_cast<char*>(p)+8,18); name[18]=0; }
+        LayerNamed* named=(LayerNamed*)p;
+        if ((s32)((u8)strlen(named->name)+1)<=19) memcpy(name,named->name,(u8)strlen(named->name)+1);
+        else { memcpy(name,named->name,18); name[18]=0; }
         GSprimWriteStr(85.0f,y,"%s",name);
         GSprimSetTextSize(10.0f,10.0f);
         char status[5];
-        status[0]=((flags&0x200) && STATS_FIELD(void*,p,0x19A4)) ? 'O':'X';
-        u8 clearColor=0,clearAlpha=0,clearDepth=0;
-        if (next) {
-            u32 nextFlags=STATS_FIELD(u32,next,4);
-            clearColor=(flags&8) || ((nextFlags>>6)&1);
-            clearAlpha=(flags&0x10) || ((nextFlags>>7)&1);
-            clearDepth=(flags&0x20) || ((nextFlags>>8)&1);
-        }
-        status[1]=clearColor==1?'O':'X'; status[2]=clearAlpha==1?'O':'X'; status[3]=clearDepth==1?'O':'X';
-        if (next && ((STATS_FIELD(u32,next,4)&1)==1)) {
+        status[0]=GetTextureCopy__10GSgfxLayerFv(p) ? 'O':'X';
+        bool clearColor,clearAlpha,clearDepth;
+        GetClearFlags(p,&clearColor,&clearAlpha,&clearDepth);
+        if (clearColor==true) status[1]='O'; else status[1]='X';
+        if (clearAlpha==true) status[2]='O'; else status[2]='X';
+        if (clearDepth==true) status[3]='O'; else status[3]='X';
+        if (next && IsLayerVisible(next)==true) {
             switch (STATS_FIELD(s32,next,0x2C)) {
             case 1: status[1]='+'; status[2]='+';
             case 4: status[0]='+'; break;
@@ -784,45 +845,48 @@ extern "C" void GSgfxLayerRenderStats__FP10GSgfxLayer(void* layer) {
         }
         status[4]=0;
         GSprimWriteStr(245.0f,y,status);
-        u32 used[2],peak[2],size[2];
-        used[0]=STATS_FIELD(void*,p,0x1818)?STATS_FIELD(u32,p,0x18C8):0;
-        used[1]=STATS_FIELD(void*,p,0x18D4)?STATS_FIELD(u32,p,0x1984):0;
-        peak[0]=STATS_FIELD(void*,p,0x1818)?STATS_FIELD(u32,p,0x18D0):0;
-        peak[1]=STATS_FIELD(void*,p,0x18D4)?STATS_FIELD(u32,p,0x198C):0;
-        size[0]=STATS_FIELD(u32,p,0x181C); size[1]=STATS_FIELD(u32,p,0x18D8);
-        for (s32 pass=0;pass<2;pass++) {
-            float x=pass?470.0f:295.0f;
-            u32 fifoOffset=pass?0x18D4:0x1818;
-            if (STATS_FIELD(void*,p,fifoOffset) && STATS_FIELD(u8,p,fifoOffset+0x94)) {
-                LayerStatsRedirect* redirect=&redirects[redirectCount];
-                s32 targetID=STATS_FIELD(s32,p,fifoOffset+0x98);
-                if (targetID==-1) redirect->target=0;
-                else if (targetID<16) redirect->target=_layerIDTable[targetID];
-                redirect->pass=STATS_FIELD(s32,p,fifoOffset+0x9C);
-                redirect->order=STATS_FIELD(s32,p,fifoOffset+0xA0);
-                GSprimSetTextColor(reinterpret_cast<const u8*>(&red));
-                GSprimWriteChar(x,y,redirect->marker);
-                ++redirectCount; x+=11.0f;
-            }
-            GSprimSetTextColor(reinterpret_cast<const u8*>(&white));
-            if (size[pass]) {
-                if ((pass?xlucVisible:opaqueVisible)==0) GSprimSetTextColor(reinterpret_cast<const u8*>(&inactive));
-                else if (!used[pass]) GSprimSetTextColor(reinterpret_cast<const u8*>(&empty));
-                if (used[pass]) GSprimWriteStr(x,y,"%.1f/%dK (%dK)",used[pass]*0.0009765625f,static_cast<u32>(size[pass]*0.0009765625f),static_cast<u32>(peak[pass]*0.0009765625f+0.5f));
-                else GSprimWriteStr(x,y,"---/%dK (%dK)",static_cast<u32>(size[pass]*0.0009765625f),static_cast<u32>(peak[pass]*0.0009765625f+0.5f));
-            }
+        GetFifoUsage(p,(u32*)&usedOpaque,(u32*)&usedXluc);
+        GetFifoPeak(p,(u32*)&peakOpaque,(u32*)&peakXluc);
+        GetFifoSize__10GSgfxLayerFPUlPUl(p,(s32*)&sizeOpaque,(s32*)&sizeXluc);
+        float x=295.0f;
+        if (GetPassRedirect(p,0,&redirects[redirectCount].target,&redirects[redirectCount].pass,&redirects[redirectCount].order)==true) {
+            GSprimSetTextColor(red);
+            GSprimWriteChar(x,y,redirects[redirectCount].marker);
+            ++redirectCount; x+=11.0f;
+        }
+        GSprimSetTextColor(white);
+        if (sizeOpaque) {
+            if (opaqueVisible==false) GSprimSetTextColor(inactive);
+            else if (!usedOpaque) GSprimSetTextColor(empty);
+            u32 used=usedOpaque;
+            if (used) GSprimWriteStr(x,y,"%.1f/%dK (%dK)",used/1024.0f,static_cast<u32>(sizeOpaque/1024.0f),static_cast<u32>(peakOpaque/1024.0f+0.5f));
+            else GSprimWriteStr(x,y,"---/%dK (%dK)",static_cast<u32>(sizeOpaque/1024.0f),static_cast<u32>(peakOpaque/1024.0f+0.5f));
+        }
+        x=470.0f;
+        if (GetPassRedirect(p,1,&redirects[redirectCount].target,&redirects[redirectCount].pass,&redirects[redirectCount].order)==true) {
+            GSprimSetTextColor(red);
+            GSprimWriteChar(x,y,redirects[redirectCount].marker);
+            ++redirectCount; x+=11.0f;
+        }
+        GSprimSetTextColor(white);
+        if (sizeXluc) {
+            if (xlucVisible==false) GSprimSetTextColor(inactive);
+            else if (!usedXluc) GSprimSetTextColor(empty);
+            u32 used=usedXluc;
+            if (used) GSprimWriteStr(x,y,"%.1f/%dK (%dK)",used/1024.0f,static_cast<u32>(sizeXluc/1024.0f),static_cast<u32>(peakXluc/1024.0f+0.5f));
+            else GSprimWriteStr(x,y,"---/%dK (%dK)",static_cast<u32>(sizeXluc/1024.0f),static_cast<u32>(peakXluc/1024.0f+0.5f));
         }
     }
     if (redirectCount>0) {
-        GSprimDraw2DQuadWH(10.0f,12.0f*row+50.0f,620.0f,12.0f*redirectCount+4.0f,&background);
+        GSprimDraw2DQuadWH(10.0f,12.0f*row+50.0f,620.0f,12.0f*redirectCount+4.0f,background);
         y+=18.0f;
         for (s32 i=0;i<redirectCount;i++,y+=12.0f) {
-            GSprimSetTextColor(reinterpret_cast<const u8*>(&red)); GSprimWriteChar(40.0f,y,redirects[i].marker);
-            GSprimSetTextColor(reinterpret_cast<const u8*>(&white));
+            GSprimSetTextColor(red); GSprimWriteChar(40.0f,y,redirects[i].marker);
+            GSprimSetTextColor(white);
             LayerNode* target=redirects[i].target;
-            if (static_cast<s32>(strlen(reinterpret_cast<char*>(target)+8)+1)<=19)
-                memcpy(name,reinterpret_cast<char*>(target)+8,strlen(reinterpret_cast<char*>(target)+8)+1);
-            else { memcpy(name,reinterpret_cast<char*>(target)+8,18); name[18]=0; }
+            LayerNamed* named=(LayerNamed*)target;
+            if ((s32)((u8)strlen(named->name)+1)<=19) memcpy(name,named->name,(u8)strlen(named->name)+1);
+            else { memcpy(name,named->name,18); name[18]=0; }
             const char* pass=redirects[i].pass==0?"opaque":"xluc";
             const char* order=redirects[i].order==1?"before":"after";
             GSprimWriteStr(60.0f,y,"redirected %s: %s %s pass",order,name,pass);

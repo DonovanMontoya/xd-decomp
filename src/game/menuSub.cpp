@@ -94,27 +94,23 @@ s32 menuSubGetKaiwaCsrID(void) {
 
 void menuSubDrawMsgWindow2(GSgfxLayerID layer, long x, long y, long w, long h, unsigned char alpha) {
     if (GSgfxLayerFindByID(layer) != 0) {
-        MenuSubSpriteVal* corner;
-        MenuSubSpriteVal* edge;
-        MenuSubSpriteVal* side;
-        u32 color;
         short left;
         short right;
-        short top;
-        short bottom;
-        short edgeW;
         short sideH;
-        long hw;
-        long hh;
+        short bottom;
+        MenuSubSpriteVal* corner;
+        short top;
+        u32 color;
+        MenuSubSpriteVal* edge;
+        MenuSubSpriteVal* side;
+        short edgeW;
 
         corner = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0xB3));
+        left = (x - corner->width / 2) - 15;
+        right = ((x + w) - corner->width / 2) + 15;
+        top = (y - corner->height / 2) - 10;
+        bottom = ((y + h) - corner->height / 2) + 10;
         color = alpha | ~0xFF;
-        hw = corner->width / 2;
-        hh = corner->height / 2;
-        left = (x - hw) - 15;
-        right = ((x + w) - hw) + 15;
-        top = (y - hh) - 10;
-        bottom = ((y + h) - hh) + 10;
         windowDrawSprite2(left, top, corner->width, corner->height, color, 0, 0xB3, 0, layer);
         windowDrawSprite2(right, top, corner->width, corner->height, color, 0, 0xB3, 1, layer);
         windowDrawSprite2(left, bottom, corner->width, corner->height, color, 0, 0xB3, 2, layer);
@@ -269,13 +265,14 @@ void menuSubAnimAlpha(void) {
 
 static s32 _animAlpha(void) {
     f32 rate = 6.2831855f / _cursorSec;
-    f32 t = rate * menuGetTotalTime();
+    f32 t = menuGetTotalTime();
+    t *= rate;
     f32 range = _max_alpha - _min_alpha;
     f32 v;
     f32 c;
     _cursorTimer = t;
     c = (f32)cos(t);
-    v = (range * ((1.0f + c) * 0.5f));
+    v = (range * ((1.0f + c) / 2.0f));
     v += _min_alpha;
     if (v > 255.0f) {
         v = 255.0f;

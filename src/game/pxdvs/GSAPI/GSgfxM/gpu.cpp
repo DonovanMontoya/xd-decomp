@@ -25,9 +25,10 @@ void GSgfxGPUEnterBufferedMode__FP15GSgfx_GCFifoObj(GSgfx_GCFifoObj *f) { GSgfxG
 inline void setRead(GSgfx_GCFifoObj *f,void *ptr) { void *read,*write; BOOL intr=OSDisableInterrupts(); GXGetFifoPtrs(sdk(f),&read,&write); GXInitFifoPtrs(sdk(f),ptr,write); OSRestoreInterrupts(intr); }
 inline void setWrite(GSgfx_GCFifoObj *f,void *ptr) { void *read,*write; BOOL intr=OSDisableInterrupts(); GXGetFifoPtrs(sdk(f),&read,&write); GXInitFifoPtrs(sdk(f),read,ptr); OSRestoreInterrupts(intr); }
 s32 GSgfxGPUSetMode(s32 mode) {
-    s32 old=_gpuMode;
+    s32 old;
     if(mode!=0) {
-    if(old==mode) return old;
+    if(_gpuMode==mode) return _gpuMode;
+    old=_gpuMode;
     switch(mode) {
     case 1:
         GSgfxRenderAbortFrame__Fv(); _gpuBufferFifo=(GSgfx_GCFifoObj*)GXGetCPUFifo(); GXSaveCPUFifo(sdk(_gpuBufferFifo)); GXSaveGPFifo(GXGetGPFifo());

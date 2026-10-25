@@ -8,7 +8,7 @@ void *__nwa__FUl(u32);
 void __dl__FPv(void *);
 void __dla__FPv(void *);
 void *memcpy(void *, const void *, unsigned long);
-u32 memoDataGetCount(s32);
+u16 memoDataGetCount(s32);
 u16 memoDataGetPokemonID(s32, u16);
 u32 memoDataGetPokemonRndFromID(s32, u16);
 u32 memoDataGetPokemonTrainerRndFromID(s32, u16);
@@ -344,22 +344,23 @@ void Sort__11pdaMemoListF15menuPdaMemoSort(MemoWork *arg0, s32 arg1) {
 }
 
 void SortPokemonID__11pdaMemoListFv(MemoWork *arg0) {
-    s32 count;
     MemoSortBuff *records;
-    u16 *copy, id;
-    u32 i;
-    count = (u16)memoDataGetCount(0);
+    u16 *copy;
+    s32 count;
+    u16 id;
+    u16 i;
+    count = memoDataGetCount(0);
     records = (MemoSortBuff *)__nwa__FUl(0x2bc0);
     copy = (u16 *)__nwa__FUl(0x320);
-    for (i = 0; (s32)(u16)i < (s32)count; i++) {
-        id = arg0->ids[(u16)i];
-        copy[(u16)i] = id;
-        records[(u16)i].key = id;
-        records[(u16)i].index = i;
+    for (i = 0; i < count; i++) {
+        id = arg0->ids[i];
+        copy[i] = id;
+        records[i].key = id;
+        records[i].index = i;
     }
     Sort_Small__11pdaMemoListFP12MemoSortBuffl(arg0, records, count);
-    for (i = 0; (s32)(u16)i < (s32)count; i++)
-        arg0->ids[(u16)i] = copy[records[(u16)i].index];
+    for (i = 0; i < count; i++)
+        arg0->ids[i] = copy[records[i].index];
     if (records != 0)
         __dl__FPv(records);
     if (copy != 0)
@@ -367,26 +368,27 @@ void SortPokemonID__11pdaMemoListFv(MemoWork *arg0) {
 }
 
 void SortGojyuon__11pdaMemoListFv(MemoWork *arg0) {
-    s32 count;
     MemoSortBuff *records;
-    u16 *copy, id;
-    u32 i;
-    count = (u16)memoDataGetCount(0);
+    u16 *copy;
+    s32 count;
+    u16 id;
+    u16 i;
+    count = memoDataGetCount(0);
     records = (MemoSortBuff *)__nwa__FUl(0x2bc0);
     copy = (u16 *)__nwa__FUl(0x320);
-    for (i = 0; (s32)(u16)i < (s32)count; i++) {
-        id = arg0->ids[(u16)i];
-        copy[(u16)i] = id;
-        records[(u16)i].key = SortGojyuonDataSet__11pdaMemoListFUs(arg0, id);
-        records[(u16)i].index = i;
-        GScharCpy(records[(u16)i].name, GetPokemonName__11pdaMemoListFl(arg0, i));
+    for (i = 0; i < count; i++) {
+        id = arg0->ids[i];
+        copy[i] = id;
+        records[i].key = SortGojyuonDataSet__11pdaMemoListFUs(arg0, id);
+        records[i].index = i;
+        GScharCpy(records[i].name, GetPokemonName__11pdaMemoListFl(arg0, i));
     }
     if (pokecoloGetCountryCode() == 0)
         Sort_Small__11pdaMemoListFP12MemoSortBuffl(arg0, records, count);
     else
         fn_80055C94(arg0, records, count);
-    for (i = 0; (s32)(u16)i < (s32)count; i++)
-        arg0->ids[(u16)i] = copy[records[(u16)i].index];
+    for (i = 0; i < count; i++)
+        arg0->ids[i] = copy[records[i].index];
     if (records != 0)
         __dl__FPv(records);
     if (copy != 0)
@@ -394,9 +396,12 @@ void SortGojyuon__11pdaMemoListFv(MemoWork *arg0) {
 }
 
 void Sort_Small__11pdaMemoListFP12MemoSortBuffl(MemoWork *arg0, MemoSortBuff *arg1, s32 arg2) {
-    MemoSortBuff saved, *left, *right;
+    MemoSortBuff saved, *left;
+    s32 stride;
+    MemoSortBuff *right;
     s32 gap, i, j;
     for (gap = arg2 / 2; gap > 0; gap /= 2) {
+        stride = gap * sizeof(MemoSortBuff);
         for (i = gap; i < arg2; i++) {
             j = i - gap;
             left = &arg1[j];
@@ -404,7 +409,7 @@ void Sort_Small__11pdaMemoListFP12MemoSortBuffl(MemoWork *arg0, MemoSortBuff *ar
                 memcpy(&saved, left, sizeof(saved));
                 memcpy(left, right, sizeof(saved));
                 memcpy(right, &saved, sizeof(saved));
-                left -= gap;
+                left = (MemoSortBuff *)((char *)left - stride);
                 j -= gap;
             }
         }
@@ -412,9 +417,12 @@ void Sort_Small__11pdaMemoListFP12MemoSortBuffl(MemoWork *arg0, MemoSortBuff *ar
 }
 
 void fn_80055C94(MemoWork *arg0, MemoSortBuff *arg1, s32 arg2) {
-    MemoSortBuff saved, *left, *right;
+    MemoSortBuff saved, *left;
+    s32 stride;
+    MemoSortBuff *right;
     s32 gap, i, j;
     for (gap = arg2 / 2; gap > 0; gap /= 2) {
+        stride = gap * sizeof(MemoSortBuff);
         for (i = gap; i < arg2; i++) {
             j = i - gap;
             left = &arg1[j];
@@ -422,7 +430,7 @@ void fn_80055C94(MemoWork *arg0, MemoSortBuff *arg1, s32 arg2) {
                 memcpy(&saved, left, sizeof(saved));
                 memcpy(left, right, sizeof(saved));
                 memcpy(right, &saved, sizeof(saved));
-                left -= gap;
+                left = (MemoSortBuff *)((char *)left - stride);
                 j -= gap;
             }
         }
@@ -540,14 +548,16 @@ void DispPokemonModel__11pdaMemoListFP14tagWINDOW_WORKP14tagSPRITE_WORKUl(MemoWo
 
 u16 *GetPokemonName__11pdaMemoListFl(MemoWork *arg0, s32 arg1) {
     u16 var_r3;
+    void *data;
 
     if ((arg1 <= (s32)(u16)memoDataGetCount(0)) && (arg1 >= 0)) {
         var_r3 = arg0->ids[arg1];
     } else {
         var_r3 = 0;
     }
-    if (pokemonDataBiosGetPtr(var_r3) != 0U) {
-        return GSmsgGetGSchar(pokemonDataBiosGetName(pokemonDataBiosGetPtr(var_r3)));
+    data = pokemonDataBiosGetPtr(var_r3);
+    if (data != 0U) {
+        return GSmsgGetGSchar(pokemonDataBiosGetName(data));
     }
     return 0;
 }

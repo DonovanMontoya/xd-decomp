@@ -129,10 +129,11 @@ static inline u8 vertexContact(Vec *point,Vec *vertices,Vec *normal,u16 flags,f3
     return 0;
 }
 static inline void getCellBounds(GSvec *point,f32 radius,CCD_THRUMDL_HEAD *model,s32 *minX,s32 *minZ,s32 *maxX,s32 *maxZ) {
-    f32 left=point->x-radius;
-    f32 near=point->z-radius;
-    f32 right=point->x+radius;
-    f32 far=point->z+radius;
+    f32 x=point->x,z=point->z;
+    f32 left=x-radius;
+    f32 near=z-radius;
+    f32 right=x+radius;
+    f32 far=z+radius;
     *minX=(s32)((left-model->originX)/model->cellWidth);
     if(*minX<0)*minX=0;
     *minZ=(s32)((near-model->originZ)/model->cellDepth);
@@ -144,25 +145,34 @@ static inline void getCellBounds(GSvec *point,f32 radius,CCD_THRUMDL_HEAD *model
 }
 static s32 getFixedMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THRUMDL_HEAD *model,ThruEvent *events) {
     s32 count=0;
+    s32 vertexZ;
     s32 minX,minZ,maxX,maxZ;
     getCellBounds(point,radius,model,&minX,&minZ,&maxX,&maxZ);
     f32 radiusSquared=radius*radius;
     {
         ThruEvent *output=events+count;
         for(s32 z=minZ;z<=maxZ && count<4;z++) {
-            ThruCell *cell=&model->cells[minX+z*model->width];
+            ThruEvent *rowOutput=output;
+            ThruCell *cell=model->cells;
+            cell+=minX+z*model->width;
             for(s32 x=minX;x<=maxX && count<4;x++,cell++) {
-                u32 *index=&model->indices[cell->first];
+                ThruEvent *cellOutput=rowOutput;
+                u32 *index=model->indices;
+                index+=cell->first;
                 for(u32 i=0;i<cell->count && count<4;i++,index++) {
-                    ThruPolygon *polygon=&model->polygons[*index];
+                    ThruPolygon *polygon=model->polygons;
+                    polygon+=*index;
                     ThruEvent *existing=events;
         s32 duplicate;
         for(duplicate=0;duplicate<count;existing++,duplicate++) if(polygon->eventID==existing->eventID) break;
         if(duplicate<count) continue;
                     if(PSVECDotProduct(&polygon->normal,(Vec *)direction)>=0.0f) continue;
                     if(faceContact((Vec *)point,polygon->vertices,&polygon->normal,radiusSquared)) {
-                        copyEvent(output++,polygon->vertices,&polygon->normal,polygon->eventID);
+                        copyEvent(cellOutput,polygon->vertices,&polygon->normal,polygon->eventID);
+                        rowOutput++;
+                        output++;
                         count++;
+                        cellOutput++;
                     }
                 }
             }
@@ -171,11 +181,16 @@ static s32 getFixedMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THR
     {
         ThruEvent *output=events+count;
         for(s32 z=minZ;z<=maxZ && count<4;z++) {
-            ThruCell *cell=&model->cells[minX+z*model->width];
+            ThruEvent *rowOutput=output;
+            ThruCell *cell=model->cells;
+            cell+=minX+z*model->width;
             for(s32 x=minX;x<=maxX && count<4;x++,cell++) {
-                u32 *index=&model->indices[cell->first];
+                ThruEvent *cellOutput=rowOutput;
+                u32 *index=model->indices;
+                index+=cell->first;
                 for(u32 i=0;i<cell->count && count<4;i++,index++) {
-                    ThruPolygon *polygon=&model->polygons[*index];
+                    ThruPolygon *polygon=model->polygons;
+                    polygon+=*index;
                     if(!(polygon->edgeFlags&7)) continue;
                     ThruEvent *existing=events;
         s32 duplicate;
@@ -183,8 +198,11 @@ static s32 getFixedMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THR
         if(duplicate<count) continue;
                     if(PSVECDotProduct(&polygon->normal,(Vec *)direction)>=0.0f) continue;
                     if(edgeContact((Vec *)point,polygon->vertices,&polygon->normal,polygon->edgeFlags,radiusSquared)) {
-                        copyEvent(output++,polygon->vertices,&polygon->normal,polygon->eventID);
+                        copyEvent(cellOutput,polygon->vertices,&polygon->normal,polygon->eventID);
+                        rowOutput++;
+                        output++;
                         count++;
+                        cellOutput++;
                     }
                 }
             }
@@ -192,12 +210,17 @@ static s32 getFixedMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THR
     }
     {
         ThruEvent *output=events+count;
-        for(s32 z=minZ;z<=maxZ && count<4;z++) {
-            ThruCell *cell=&model->cells[minX+z*model->width];
+        for(vertexZ=minZ;vertexZ<=maxZ && count<4;vertexZ++) {
+            ThruEvent *rowOutput=output;
+            ThruCell *cell=model->cells;
+            cell+=minX+vertexZ*model->width;
             for(s32 x=minX;x<=maxX && count<4;x++,cell++) {
-                u32 *index=&model->indices[cell->first];
+                ThruEvent *cellOutput=rowOutput;
+                u32 *index=model->indices;
+                index+=cell->first;
                 for(u32 i=0;i<cell->count && count<4;i++,index++) {
-                    ThruPolygon *polygon=&model->polygons[*index];
+                    ThruPolygon *polygon=model->polygons;
+                    polygon+=*index;
                     if(!(polygon->edgeFlags&7)) continue;
                     ThruEvent *existing=events;
         s32 duplicate;
@@ -205,8 +228,11 @@ static s32 getFixedMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THR
         if(duplicate<count) continue;
                     if(PSVECDotProduct(&polygon->normal,(Vec *)direction)>=0.0f) continue;
                     if(vertexContact((Vec *)point,polygon->vertices,&polygon->normal,polygon->edgeFlags,radiusSquared)) {
-                        copyEvent(output++,polygon->vertices,&polygon->normal,polygon->eventID);
+                        copyEvent(cellOutput,polygon->vertices,&polygon->normal,polygon->eventID);
+                        rowOutput++;
+                        output++;
                         count++;
+                        cellOutput++;
                     }
                 }
             }

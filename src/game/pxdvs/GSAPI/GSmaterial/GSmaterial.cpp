@@ -14,9 +14,8 @@ static inline GSimageDesc* noSavedImage() { return (GSimageDesc*)0xfefefefe; }
 static inline void* noSavedPE() { return (void*)0xfefefefe; }
 extern "C" void GSmaterialResetTexture(GSmaterial* m) {
     if (m->savedImage != noSavedImage()) {
-        HSD_TObj* t = m->object->tobj;
-        GSimageDesc* old = (GSimageDesc*)t->imagedesc;
-        t->imagedesc = m->savedImage;
+        GSimageDesc* old = (GSimageDesc*)m->object->tobj->imagedesc;
+        m->object->tobj->imagedesc = m->savedImage;
         HSD_ImageDescRemove(old);
         m->savedImage = noSavedImage();
     }
@@ -141,7 +140,6 @@ extern GSmatClass _matGSmatObj = { { { _GSmaterialObjInit } } };
 typedef char GSmatClassSizeCheck[sizeof(GSmatClass) == 0x54 ? 1 : -1];
 typedef char GSmatObjSizeCheck[sizeof(GSmatObj) == 0x24 ? 1 : -1];
 typedef char GStexDescSizeCheck[sizeof(GStexDesc) == 0x5c ? 1 : -1];
-static GStexDesc environmentDesc = { 0, 0, 0, 4, {0,0,0}, {1,1,1}, {0,0,0}, 0, 0, 1, 1, 0, 0.5f, 1, 0, 0, 0, 0 };
 static inline void disableMaterialExtensions(GSmaterial* material, u32 mask) {
     HSD_MObj* object;
     u32 disable;
@@ -191,21 +189,23 @@ static void _GSmaterialObjInit() {
     _matGSmatObj.makeExpression = _matGSmatObjMakeTExp;
 }
 static GStexExpression* _matGSmatObjMakeTExp(HSD_MObj* object, HSD_TObj* textures, GStexExpression** list) {
-    GSmaterial* material;
     GStexExpression* result;
+    GSmaterial* material;
     GStexExpression* color;
+    GStexExpression* expression;
+    GStexExpression* alpha;
     result = hsdMObj.makeExpression(object, textures, list);
     material = ((GSmatObj*)object)->material;
     if (!material) return result;
     if (material->extensions & 2) {
-        for (GStexExpression* expression = result; expression; expression = expression->next) {
-            if (HSD_TExpGetType(expression) == 1) HSD_TExpColorSwap(expression, material->channels[0], material->channels[1], material->channels[2], material->channels[3]);
+        for (color = result; color; color = color->next) {
+            if (HSD_TExpGetType(color) == 1) HSD_TExpColorSwap(color, material->channels[0], material->channels[1], material->channels[2], material->channels[3]);
         }
     }
     if (material->extensions & 1) {
         color = HSD_TExpCnst(&material->modulate.r, 1, 0, list);
-        GStexExpression* alpha = HSD_TExpCnst(&material->modulate.a, 6, 0, list);
-        GStexExpression* expression = HSD_TExpTev(list);
+        alpha = HSD_TExpCnst(&material->modulate.a, 6, 0, list);
+        expression = HSD_TExpTev(list);
         HSD_TExpColorOp(expression, 0, 0, 1, 1);
         HSD_TExpColorIn(expression, 0, 0, 1, color, 1, result, 0, 0);
         HSD_TExpAlphaOp(expression, 0, 0, 0, 1);
@@ -215,21 +215,23 @@ static GStexExpression* _matGSmatObjMakeTExp(HSD_MObj* object, HSD_TObj* texture
     return result;
 }
 static void _matGSmatEnableEnvMapExt(GSmaterial* material) {
+    static GStexDesc tobjdesc = { 0, 0, 0, 4, {0,0,0}, {1,1,1}, {0,0,0}, 0, 0, 1, 1, 0, 0.5f, 1, 0, 0, 0, 0 };
     HSD_MObj* object;
     GStexture* texture;
     texture = material->environmentTexture;
     if (texture) {
         object = material->object;
         GSimageDesc* image = HSD_ImageDescAlloc();
-        environmentDesc.flags = 0x80;
-        environmentDesc.blending = material->environmentBlend;
+        tobjdesc.flags = 0x80;
+        tobjdesc.blending = material->environmentBlend;
         switch (material->environmentSource) {
-        case 1: environmentDesc.flags |= 5; break;
-        case 0: environmentDesc.flags |= 1; break;
-        default: environmentDesc.flags |= 6; break;
+        case 1: tobjdesc.flags |= 5; break;
+        case 0: tobjdesc.flags |= 1; break;
+        case 2:
+        default: tobjdesc.flags |= 6; break;
         }
-        if (material->environmentMode == 0) environmentDesc.flags |= 0x40000;
-        else environmentDesc.flags |= 0x30000;
+        if (material->environmentMode == 0) tobjdesc.flags |= 0x40000;
+        else tobjdesc.flags |= 0x30000;
         image->image = GStextureLockImage(texture, 0);
         image->width = GStextureGetXsize(texture);
         image->height = GStextureGetYsize(texture);
@@ -245,8 +247,8 @@ static void _matGSmatEnableEnvMapExt(GSmaterial* material) {
         }
         image->mipmap = GStextureGetMiplevels(texture) != 0;
         image->minLOD = 0.0f; image->maxLOD = 0.0f;
-        environmentDesc.image = image;
-        HSD_TObj* environment = HSD_TObjLoadDesc(&environmentDesc);
+        tobjdesc.image = image;
+        HSD_TObj* environment = HSD_TObjLoadDesc(&tobjdesc);
         HSD_TObj* last = HSD_MObjGetTObj(object);
         if (last) {
             while (last->next) last = last->next;

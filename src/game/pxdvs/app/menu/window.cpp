@@ -358,8 +358,10 @@ static s32 _windowCreateItemSprite(tagWINDOW_WORK *window) {
     return 0;
 }
 static bool _windowCheckParent(tagWINDOW_WORK *window,tagWINDOW_WORK *parent) {
+    tagWINDOW_WORK *p;
     if(window==parent)return 0;
-    while(window!=0) { window=window->parent;if(window==parent)return 1; }
+    p=window;
+    while(p!=0) { p=p->parent;if(p==parent)return 1; }
     return 0;
 }
 static s32 _windowDeleteWork(tagWINDOW_WORK *window) {
@@ -399,11 +401,9 @@ static void _winCalcWindowSize(long menuID,const MENU_ITEM_dd_ *item,s16 *width,
         menuSpriteBiosGetPtr(item->spriteID);
         u32 rect;
         if(item->message!=0)rect=GSmsgGetRect(item->message);else rect=0;
-        u32 rawW=rect>>16;
-        u16 rawH=rect;
+        s16 rectW=rect>>16;
+        s16 rectH=rect&0xffff;
         if(minX>item->x)minX=item->x;
-        s16 rectW=rawW;
-        s16 rectH=rawH;
         if(maxX<item->x+item->width)maxX=item->x+item->width;
         if(maxX<item->x+rectW)maxX=item->x+rectW;
         if(minY>item->y)minY=item->y;

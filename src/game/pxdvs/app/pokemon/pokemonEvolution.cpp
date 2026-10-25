@@ -30,7 +30,48 @@ s32 pokemonEvolutionCreateAddPokemon(void *out,void *source,u16 id){
  for(clearIndex=0;clearIndex<5;clearIndex++)pokemonSetStatus(out,0,flags[clearIndex],0,0);for(clearIndex=0;clearIndex<12;clearIndex++)pokemonSetStatus(out,0,stats[clearIndex],0,0);
  pokemonSetStatus(out,0,175,0,0);pokemonInitJoutai(out);pokemonSetStatus(out,0,188,0,0);pokemonResetBasisStatus(out);return 1;
 }
-s32 pokemonEvolution(void *out,void *source,u16 id,EvoInfo *info,u16 *moves){u8 index; s32 count=0;if(!pokemonCheckValid(source)||!pokemonDataCheckValid(0,id))return -1;void *data=getPokemonData__FP7Pokemon(source);if(!data)return -1;pokemonBiosCopy(out,source);void *attest=pokemonBiosGetAttest(source);u8 language=gamedataAttestBiosGetLangareaId(gamedataBiosGetGamedataAtttestPtr(savedataGetStatus(0,1)));if(gamedataAttestBiosGetLangareaId(attest)==language){const u16 *nickname=pokemonBiosGetNicknamePtr(out);if(GScharCmp(nickname,GSmsgGetGSchar(pokemonDataBiosGetName(data)))==0)pokemonBiosSetNicknamePtr(out,GSmsgGetGSchar(pokemonDataBiosGetName(pokemonDataBiosGetPtr(id))));}pokemonBiosSetPokemonDataId(out,id);pokemonResetBasisStatus(out);if(info->unk0==6)pokemonDoItemSoubi(out,0,0);u8 level=pokemonBiosGetLevel(out);index=0;for(;;){u16 move=pokemonGetOboeWazaDataId(out,level,&index);if(move==0)break;if(pokemonSearchWazaDataId(out,move)==-1){moves[count++]=move;if(count>=20)break;}index++;}return count;}
+s32 pokemonEvolution(void *out,void *source,u16 id,EvoInfo *info,u16 *moves){
+    u8 level;
+    u8 index;
+    u32 language;
+    const u16 *name;
+    const u16 *nickname;
+    u16 move;
+    void *data;
+    s32 count;
+    void *attest;
+    const u16 *evoName;
+    count=0;
+    if(!pokemonCheckValid(source))return -1;
+    if(!pokemonDataCheckValid(0,id))return -1;
+    data=getPokemonData__FP7Pokemon(source);
+    if(!data)return -1;
+    pokemonBiosCopy(out,source);
+    attest=pokemonBiosGetAttest(source);
+    language=gamedataAttestBiosGetLangareaId(gamedataBiosGetGamedataAtttestPtr(savedataGetStatus(0,1)));
+    u8 attestLang=gamedataAttestBiosGetLangareaId(attest);
+    if(attestLang==language){
+        nickname=pokemonBiosGetNicknamePtr(out);
+        name=GSmsgGetGSchar(pokemonDataBiosGetName(data));
+        if(GScharCmp(nickname,name)==0){
+            evoName=GSmsgGetGSchar(pokemonDataBiosGetName(pokemonDataBiosGetPtr(id)));
+            pokemonBiosSetNicknamePtr(out,evoName);
+        }
+    }
+    pokemonBiosSetPokemonDataId(out,id);
+    pokemonResetBasisStatus(out);
+    if(info->unk0==6)pokemonDoItemSoubi(out,0,0);
+    level=pokemonBiosGetLevel(out);
+    index=0;
+    while((move=pokemonGetOboeWazaDataId(out,level,&index))!=0){
+        if(pokemonSearchWazaDataId(out,move)==-1){
+            moves[count++]=move;
+            if(count>=20)break;
+        }
+        index++;
+    }
+    return count;
+}
 static s8 getTemotiEmptySlotID__Fv(void) {
     s32 var_r31;
 

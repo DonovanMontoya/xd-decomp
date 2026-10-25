@@ -213,8 +213,8 @@ extern "C" f32 (*GScameraGetProjMatrixPtr(GScamera* camera))[4] {
         GScameraGetPerspective(camera, &fov, &aspect, &nearPlane, &farPlane);
         GSmtx44Perspective(projMtx, fov, aspect, nearPlane, farPlane);
     } else {
-        f32 bottom, top, right, left;
-        cameraGetOrtho(camera, &top, &bottom, &left, &right);
+        volatile f32 left, top, right, bottom;
+        cameraGetOrtho(camera, (f32*)&top, (f32*)&bottom, (f32*)&left, (f32*)&right);
         GSmtx44Ortho(projMtx, top, bottom, left, right, 0.1f, 2000.0f);
     }
     return projMtx;
@@ -231,12 +231,12 @@ extern "C" f32 (*GScameraGetMatrixPtr(GScamera* camera))[4] {
 extern "C" void GScameraGetLookAt(GScamera* camera, Vec* up, Vec* interest) { if (up) *up = camera->up; if (interest) *interest = camera->interest; }
 extern "C" void GScameraLookAt(GScamera* camera, Vec* up, Vec* interest) { if (up) camera->up = *up; if (interest) camera->interest = *interest; camera->dirty = 1; camera->lookAt = 1; }
 extern "C" void GScameraGetFrontVector(GScamera* camera, Vec* front) {
-    Vec position;
-    Mtx zMatrix, yMatrix, matrix;
+    volatile Vec position;
+    Mtx matrix, yMatrix, zMatrix;
     if (!camera || !front) return;
     if (camera->lookAt) {
-        GScameraGetPosition(camera, &position);
-        PSVECSubtract(&camera->interest, &position, front);
+        GScameraGetPosition(camera, (Vec*)&position);
+        PSVECSubtract(&camera->interest, (Vec*)&position, front);
     } else {
         front->x = 0.0f; front->y = 0.0f; front->z = -1.0f;
         PSMTXRotRad(matrix, 'X', camera->rotation.x);
@@ -507,11 +507,13 @@ static void _cameraLoadClipping__FP9_GScameraP10GSgfxLayer(GScamera* camera, GSg
         if (camera->clippingFlags & 4) {
             HSD_CObj* object = camera->object;
             u16 top = object->scissor[2];
+            u16 height = object->scissor[3] - top;
             u16 left = object->scissor[0];
+            u16 width = object->scissor[1] - left;
             layer->scissor[0] = left;
             layer->scissor[1] = top;
-            layer->scissor[2] = object->scissor[1] - left;
-            layer->scissor[3] = object->scissor[3] - top;
+            layer->scissor[2] = width;
+            layer->scissor[3] = height;
             cameraMarkViewport(layer, 1);
             return;
         }
@@ -523,7 +525,7 @@ static void _cameraLoadClipping__FP9_GScameraP10GSgfxLayer(GScamera* camera, GSg
 }
 static void _cameraLoadCameraMatrix__FP9_GScamera12GSgfxLayerID(GScamera* camera, s32 layerID) {
     GSgfxLayer* layer = layerID == -1 ? 0 : GSgfxLayerFindByID(layerID);
-    f32 fov, aspect, nearPlane, farPlane;
+    volatile f32 fov, aspect, nearPlane, farPlane;
     if (camera->animating) {
         HSD_CObj* object = camera->object;
         if (!object) __assert("cobj.h", 426, "cobj");
@@ -534,10 +536,12 @@ static void _cameraLoadCameraMatrix__FP9_GScamera12GSgfxLayerID(GScamera* camera
         HSD_CObjGetInterest(camera->object, &camera->interest);
         if (layer) {
             Mtx44 projection;
-            GScameraGetPerspective(camera, &fov, &aspect, &nearPlane, &farPlane);
-            GSmtx44Perspective(projection, fov, aspect, nearPlane, farPlane);
+            GScameraGetPerspective(camera, (f32*)&fov, (f32*)&aspect, (f32*)&nearPlane, (f32*)&farPlane);
+            f32 f = farPlane;
+            f32 n = nearPlane;
+            GSmtx44Perspective(projection, fov, aspect, n, f);
             cameraSetLayerProjection(layer, projection, 0);
-            cameraSetLayerPlanes(layer, nearPlane, farPlane);
+            cameraSetLayerPlanes(layer, n, f);
             cameraResetLayerMatrix(layer);
             cameraConcatLayerMatrix(layer, camera->matrix);
         }
@@ -549,16 +553,18 @@ static void _cameraLoadCameraMatrix__FP9_GScamera12GSgfxLayerID(GScamera* camera
         PSMTXCopy(camera->matrix, object->view_mtx);
         if (layer) {
             Mtx44 projection;
-            GScameraGetPerspective(camera, &fov, &aspect, &nearPlane, &farPlane);
-            GSmtx44Perspective(projection, fov, aspect, nearPlane, farPlane);
+            GScameraGetPerspective(camera, (f32*)&fov, (f32*)&aspect, (f32*)&nearPlane, (f32*)&farPlane);
+            f32 f = farPlane;
+            f32 n = nearPlane;
+            GSmtx44Perspective(projection, fov, aspect, n, f);
             cameraSetLayerProjection(layer, projection, 0);
-            cameraSetLayerPlanes(layer, nearPlane, farPlane);
+            cameraSetLayerPlanes(layer, n, f);
             cameraResetLayerMatrix(layer);
             cameraConcatLayerMatrix(layer, camera->matrix);
         }
     } else if (layer) {
         Mtx44 projection;
-        cameraGetOrtho(camera, &aspect, &farPlane, &fov, &nearPlane);
+        cameraGetOrtho(camera, (f32*)&aspect, (f32*)&farPlane, (f32*)&fov, (f32*)&nearPlane);
         GSmtx44Ortho(projection, aspect, farPlane, fov, nearPlane, 0.0f, -30000.0f);
         cameraSetLayerProjection(layer, projection, 1);
         cameraResetLayerMatrix(layer);

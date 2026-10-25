@@ -457,7 +457,7 @@ static s32 _selectItemQuantity;
 CMetaMenu *CMetaMenu::pCurrentMenu;
 
 void CMetaMenu::alphaFadeDraw() {
-    static const f32 xy[4][2] = { { 0.0f, 0.0f }, { 640.0f, 0.0f }, { 640.0f, 480.0f }, { 0.0f, 480.0f } };
+    static f32 xy[4][2] = { { 0.0f, 0.0f }, { 640.0f, 0.0f }, { 640.0f, 480.0f }, { 0.0f, 480.0f } };
     GSgfxColAu8 color = { 0, 0, 0, 0xFF };
     GSprimSetQuadVertexOrder(1);
     color.a = 255 - getAlphaFadeAlpha();

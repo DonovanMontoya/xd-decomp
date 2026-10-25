@@ -1,10 +1,10 @@
 #include <game/pxdvs/app/menu/menuFacePrivate.hpp>
 #include <libc/string.h>
-s32 _menuFaceListNum;
-FaceListEntry* pMenuFaceList;
-FaceTextureEntry* pMenuFaceTexList;
-u8 _menuFaceLoadCallBackFlag;
-u8 _testType;
+static s32 _menuFaceListNum;
+static FaceListEntry* pMenuFaceList;
+static FaceTextureEntry* pMenuFaceTexList;
+static u8 _menuFaceLoadCallBackFlag;
+static u8 _testType;
 static tagSPRITE_WORK portraitSprite;
 static tagSPRITE_WORK sizedPortraitSprite;
 static s32 _menuFaceGetListNum();
@@ -54,7 +54,8 @@ s32 menuFaceLoadFromID_Tool(u16 face,FacePokemonGetter getter,void* context){
         resource=menuFaceGetTexID(face);
         if(!resource){face=0;continue;}
         if(menuFaceCheckLoading())return 1;
-        pMenuFaceList[_menuFaceSearchList(face)].state=1;
+        s32 idx=_menuFaceSearchList(face);
+        pMenuFaceList[idx].state=1;
         _menuFaceLoadCallBackFlag=0;
         GSfsysReadIDEX(0x5c0,resource,_menuFaceLoadCallBack,0,face);
         return 1;
@@ -82,7 +83,8 @@ s32 menuFaceLoadFromID(u16 face,FacePokemonGetter getter,void* context){
         resource=menuFaceGetTexID(face);
         if(!resource){face=0;continue;}
         if(menuFaceCheckLoading())return 1;
-        pMenuFaceList[_menuFaceSearchList(face)].state=1;
+        s32 idx=_menuFaceSearchList(face);
+        pMenuFaceList[idx].state=1;
         _menuFaceLoadCallBackFlag=1;
         GSfsysReadIDEX(0x5c0,resource,_menuFaceLoadCallBack,0,face);
         return 1;

@@ -33,7 +33,7 @@ s32 menuOpen(s32, s32);
 void menuClose(s32);
 void menuCloseSync(s32, s32);
 void menuButtonNormal(void);
-void menuSubCursorAnimeInit(s32);
+void menuSubCursorAnimeInit(void);
 void menuSubCursorAnimeStart(void);
 void menuSubCursorAnimeMain(void);
 void menuSubCursorAnimeValGet(s32 *, s32 *);
@@ -487,7 +487,7 @@ extern "C" s32 menuPcBoxDouguHikidashiCtrl(tagWINDOW_WORK *win) {
             CurPos = 0.0f;
             IrekaeSlotID = none;
             win->step = 1;
-            menuSubCursorAnimeInit(none);
+            menuSubCursorAnimeInit();
         }
         break;
     case 2:
@@ -503,7 +503,7 @@ extern "C" s32 menuPcBoxDouguHikidashiCtrl(tagWINDOW_WORK *win) {
                 CurPos = 0.0f;
             }
         }
-        _RollUpTime = _RollUpTime + 0.033333335f;
+        _RollUpTime += 0.033333335f;
         if (_RollUpTime > 1.0f) {
             _RollUpTime = 0.0f;
         }
@@ -628,7 +628,7 @@ extern "C" s32 menuPcBoxDouguConfirmDrawCursor(tagWINDOW_WORK *win, tagSPRITE_WO
 
 static s32 menuPcBoxDouguConfirm(void) {
     s32 ret;
-    ((void (*)(void))menuSubCursorAnimeInit)();
+    menuSubCursorAnimeInit();
     beforCursorPosition = 0;
     ret = menuOpen(0x8D, 1);
     menuClose(0x8D);

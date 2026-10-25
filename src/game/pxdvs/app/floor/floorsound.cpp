@@ -12,13 +12,13 @@ static u8 _displaySndFlag;
 void FloorBgmMask::update(f32 dt){const char *state="---";id=soundGetBGMID();if(id==0)changeMode(None);switch(mode){case None:state="noneMask";break;case Out:state="fadeOut";remaining-=dt;if(remaining<=0.0f)changeMode(Keep);break;case Keep:state="fadeKeep";break;case Delay:state="fadeInDelay";remaining-=dt;if(remaining<=0.0f){soundSetVolumeID(id,(u32)(1000.0f*inTime),original);remaining=inTime;changeMode(In);}break;case In:state="fadeIn";remaining-=dt;if(remaining<=0.0f)changeMode(None);break;}
 if(_displaySndFlag){int layer=dbgMenuGetLayerID();if(layer!=-1){u32 v=0;if(id)v=soundGetVolume(id);GSprint(layer,8,26,0xFFFFFFFF,"snd_id = %d, curVol %d [%s]",id,v,state);}}}
 void FloorBgmMask::endMECallback(){}
-void FloorBgmMask::startMECallback(){if(mode!=Delay){}else{soundSetVolumeID(id,(u32)(1000.0f*inTime),original);changeMode(None);}}
+void FloorBgmMask::startMECallback(){switch(mode){case Delay:soundSetVolumeID(id,(u32)(1000.0f*inTime),original);changeMode(None);break;}}
 void FloorBgmMask::stopMask(){if(isEnable() && mode!=None){soundSetVolumeID(id,(u32)(1000.0f*inTime),original);changeMode(None);}}
 void FloorBgmMask::endMask(){if(isEnable()){remaining=delay;changeMode(Delay);}}
-void FloorBgmMask::startMask(){if(!isEnable() || mode==Out)return;switch(mode){case Keep:return;case Delay:changeMode(Keep);return;case None:id=soundGetBGMID();if(!id)break;volume=127;volume=soundGetVolume(id);original=volume;masked=(u8)((f32)volume*rate);default:soundSetVolumeID(id,(u32)(1000.0f*outTime),masked);changeMode(Out);remaining=outTime;}}
+void FloorBgmMask::startMask(){if(!isEnable()||mode==Out||mode==Keep)return;if(mode==Delay){changeMode(Keep);return;}if(mode==None){id=soundGetBGMID();if(!id)return;volume=127;volume=soundGetVolume(id);original=volume;masked=(u8)((f32)volume*rate);}soundSetVolumeID(id,(u32)(1000.0f*outTime),masked);changeMode(Out);remaining=outTime;}
 void FloorBgmMask::setFadeOutTime(f32 f){outTime=f;}
 void FloorBgmMask::setFadeInTime(f32 f){inTime=f;}
-void FloorBgmMask::setVolumeRate(f32 f){if(f<0.0f)return;if(f>1.0f)return;rate=f;}
+void FloorBgmMask::setVolumeRate(f32 f){if(f<0.0f||f>1.0f)return;rate=f;}
 void FloorBgmMask::finalize(){inTime=0.0f;stopMask();enable=1;mode=None;volume=0;rate=0.9f;inTime=0.3f;outTime=0.3f;delay=4.0f;}
 void FloorBgmMask::initialize(){}
 FloorBgmMask::FloorBgmMask(){enable=1;mode=None;volume=0;rate=0.9f;inTime=0.3f;outTime=0.3f;delay=4.0f;}

@@ -663,10 +663,7 @@ void ModelSequence::Update(f32 dt) {
     void* part;
     void* cam;
     if ((u32)field64 != 0 && field62 != 0) {
-        cam = (void*)camera;
-        if (cam == 0) {
-            cam = GScameraGetActiveCamera();
-        }
+        cam = (void*)camera != 0 ? (void*)camera : GScameraGetActiveCamera();
         if (cam != 0) {
             part = GSmodelGetPart((_GSmodel*)field64, field62);
             if (part != 0) {
@@ -676,8 +673,8 @@ void ModelSequence::Update(f32 dt) {
                 SetPosition(&position);
                 GScameraGetRotation(cam, &rot);
                 rot.param1 = 0.0f;
-                rot.param3 = 0.0f;
                 rot.param2 = rot.param2 + *(f32*)&pad68;
+                rot.param3 = 0.0f;
                 SetRotation(&rot);
                 GSpartFree(part);
             }
@@ -702,7 +699,8 @@ void ModelSequence::Update(f32 dt) {
                     }
                 } else {
                     f32 t = (f32)(s32)(field4A - 10) / 50.0f;
-                    chance = t * (2.0f - t) * 0.016666668f;
+                    chance = t * (2.0f - t);
+                    chance *= 0.016666668f;
                 }
                 if (chance >= HSD_Randf()) {
                     animState = 1;

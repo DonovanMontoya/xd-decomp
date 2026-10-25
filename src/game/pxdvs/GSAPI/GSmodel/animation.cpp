@@ -314,7 +314,34 @@ static inline void modelSetAnimTypeInline(GSmodel* m, s32 type) {
     }
     if (m->flags & 0x2000) GSmodelSetTexAnimType(m, type);
 }
-extern "C" void GSmodelSetAnimType(GSmodel* m, s32 type) { modelSetAnimTypeInline(m, type); }
+extern "C" void GSmodelSetAnimType(GSmodel* m, s32 type) {
+    HSD_JObj* joint;
+    HSD_JObj* blend;
+    if (m->flags & 4) {
+        joint = m->joint;
+        blend = m->animationBlendJoint;
+        if ((m->flags & 0x20000) == 0x20000) joint = joint->child;
+        m->animationType = type; m->blendType = type;
+        if (m->flags & 0x80000000) {
+            modelFreezePartAnimations(m);
+        }
+        switch (m->animationType) {
+        case 0:
+            HSD_ForeachAnim(joint, JOBJ_TYPE, (HSD_TypeMask)0x9b2f, (void*)_modelSetLoopFlag__FP9_HSD_AObjUl, AOBJ_ARG_AU, 0);
+            if (m->flags & 0x80) HSD_ForeachAnim(blend, JOBJ_TYPE, (HSD_TypeMask)0x9b2f, (void*)_modelSetLoopFlag__FP9_HSD_AObjUl, AOBJ_ARG_AU, 0);
+            break;
+        case 1:
+            HSD_ForeachAnim(joint, JOBJ_TYPE, (HSD_TypeMask)0x9b2f, (void*)_modelSetLoopFlag__FP9_HSD_AObjUl, AOBJ_ARG_AU, 1);
+            if (m->flags & 0x80) HSD_ForeachAnim(blend, JOBJ_TYPE, (HSD_TypeMask)0x9b2f, (void*)_modelSetLoopFlag__FP9_HSD_AObjUl, AOBJ_ARG_AU, 1);
+            break;
+        }
+        if (m->flags & 0x80000000) {
+            modelUnfreezePartAnimations(m);
+        }
+    }
+    if (m->flags & 0x2000) GSmodelSetTexAnimType(m, type);
+}
+
 extern "C" void modelCalculatePartMix__FP5GSvecP5GSvecUl(GSvec* out, GSvec* value, u32 mode) {
     switch (mode & 0xff) {
     case 0: break;
@@ -577,9 +604,10 @@ struct GSbound;
 extern "C" void GSboundSetAnimFrame(GSbound*, f32);
 struct ModelAnimEvent { u32 flags; s32 index; void* context; };
 extern "C" void GSmodelAdvanceAnimation(GSmodel* m, f32 delta) {
-    s32 type, index;
-    u32 stopMask, endMask;
-    s32 i;
+    s32 index;
+    s32 type;
+    u32 stopMask;
+    u32 endMask;
     if (!(m->flags & 0x100)) {
         if (m->flags & 0x4000) {
             s32 animIndex, animType;
@@ -633,12 +661,14 @@ extern "C" void GSmodelAdvanceAnimation(GSmodel* m, f32 delta) {
             }
         }
         if (m->partAnimationChanged == 1) {
-            for (i = 0; i < 8; ++i) {
-                if (m->partAnimations[i].animation) {
-                    if (m->partAnimations[i].requestedFrame >= m->partAnimations[i].endFrame - 0.0001f && !(m->animationFlags & 0x10)) {
-                        if (m->partAnimations[i].mode == 0) m->partAnimations[i].animation = 0;
-                        bool looped = (m->partAnimations[i].mode == 1);
-                        s32 eventIndex = m->partAnimations[i].animationIndex;
+            s32 i;
+            GSmodel* cursor;
+            for (i = 0, cursor = m; i < 8; ++i, cursor = (GSmodel*)((u8*)cursor + sizeof(GSmodelPartAnimation))) {
+                if (cursor->partAnimations[0].animation) {
+                    if (cursor->partAnimations[0].requestedFrame >= cursor->partAnimations[0].endFrame - 0.0001f && !(m->animationFlags & 0x10)) {
+                        if (cursor->partAnimations[0].mode == 0) cursor->partAnimations[0].animation = 0;
+                        bool looped = (cursor->partAnimations[0].mode == 1);
+                        s32 eventIndex = cursor->partAnimations[0].animationIndex;
                         if (m->endedCallback) {
                             ModelAnimEvent event;
                             event.flags = 0;
@@ -654,12 +684,14 @@ extern "C" void GSmodelAdvanceAnimation(GSmodel* m, f32 delta) {
             }
         }
         if (m->partTextureAnimationChanged == 1) {
-            for (i = 0; i < 4; ++i) {
-                if (m->partTextureAnimations[i].animation) {
-                    if (m->partTextureAnimations[i].requestedFrame >= m->partTextureAnimations[i].endFrame - 0.0001f && !(m->animationFlags & 0x10)) {
-                        if (m->partTextureAnimations[i].mode == 0) m->partTextureAnimations[i].animation = 0;
-                        bool looped = (m->partTextureAnimations[i].mode == 1);
-                        s32 eventIndex = m->partTextureAnimations[i].animationIndex;
+            s32 i;
+            GSmodel* cursor;
+            for (i = 0, cursor = m; i < 4; ++i, cursor = (GSmodel*)((u8*)cursor + sizeof(GSmodelPartAnimation))) {
+                if (cursor->partTextureAnimations[0].animation) {
+                    if (cursor->partTextureAnimations[0].requestedFrame >= cursor->partTextureAnimations[0].endFrame - 0.0001f && !(m->animationFlags & 0x10)) {
+                        if (cursor->partTextureAnimations[0].mode == 0) cursor->partTextureAnimations[0].animation = 0;
+                        bool looped = (cursor->partTextureAnimations[0].mode == 1);
+                        s32 eventIndex = cursor->partTextureAnimations[0].animationIndex;
                         if (m->endedCallback) {
                             ModelAnimEvent event;
                             event.flags = 0;

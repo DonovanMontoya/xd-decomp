@@ -105,18 +105,15 @@ typedef struct MenuSubState {
     s32 unkB1E0;
     s16 unkB1E4;
     u8 reservedB1E6[0x2];
-    f32 unkB1E8;
-    u8 reservedB1EC[0x5C];
-    f32 unkB248;
-    u8 reservedB24C[0x5C];
-    f32 unkB2A8;
-    u8 reservedB2AC[0x5C];
-    f32 unkB308;
-    u8 reservedB30C[0x5C];
-    f32 unkB368;
-    u8 reservedB36C[0x5C];
-    f32 unkB3C8;
-    u8 reservedB3CC[0x5A];
+    f32 unkB1E8[4][6];
+    f32 unkB248[4][6];
+    f32 unkB2A8[4][6];
+    f32 unkB308[4][6];
+    f32 unkB368[4][6];
+    /* A full fourth row would overlap unkB426. */
+    f32 unkB3C8[3][6];
+    f32 unkB410[5];
+    u8 reservedB424[0x2];
     s16 unkB426[4][6];
     s16 unkB456[4][6];
     u8 reservedB486[0x1];

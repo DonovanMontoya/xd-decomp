@@ -6,14 +6,16 @@ void menuCBDebug_SkipAGBConnection(u8);
 void menuClose(s32);
 s32 menuOpen(s32, s32);
 
-s32 dbgMenuGBAAddCoupon_value;
-s32 dbgMenuGBAResetCoupon_on;
-s32 dbgMenuGBASetClearFlag_on;
-s32 dbgMenuGBAClearCouponFlag_on;
+volatile s32 dbgMenuGBAAddCoupon_value;
+volatile s32 dbgMenuGBAResetCoupon_on;
+volatile s32 dbgMenuGBASetClearFlag_on;
+volatile s32 dbgMenuGBAClearCouponFlag_on;
 
+// The retail build retains these unused debug menu entry points.
+#pragma force_active on
 s32 dbgMenuGBAClearCouponFlag(void) {
-    dbgMenuGBASetClearFlag_on = 0;
     dbgMenuGBAClearCouponFlag_on++;
+    dbgMenuGBASetClearFlag_on = 0;
     return 0;
 }
 
@@ -23,8 +25,8 @@ s32 dbgMenuGBASetClearFlag(void) {
 }
 
 s32 dbgMenuGBAResetCoupon(void) {
-    dbgMenuGBAAddCoupon_value = 0;
     dbgMenuGBAResetCoupon_on++;
+    dbgMenuGBAAddCoupon_value = 0;
     return 0;
 }
 
@@ -42,4 +44,5 @@ s32 dbgToolBattleDebugSetAGBConnectionMode(s32 unused, s32 mode) {
     menuCBDebug_SkipAGBConnection(mode == 0);
     return 0;
 }
+#pragma force_active reset
 }

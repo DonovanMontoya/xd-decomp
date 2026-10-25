@@ -1,6 +1,6 @@
 #include <game/menuPcBoxPokemonLayout.hpp>
 extern "C" {u32 GSflagGet(u32);u32 GSmsgGetRect(u32);void GSmsgPrint2(s32,s16,s16,u32,u32);f32 timeGetLastFrameSec();f32 menuGetLastTime();double sin(double);void winAnimeCursor(tagWINDOW_WORK*,tagSPRITE_WORK*);void winSetSequence(void*,s32);void winSpriteSetDisp(tagSPRITE_WORK*,s32);void winSeqSetMenu(s32,s32);s32 pokecoloGetRomVersion();}
-f32 _fieldMenuTimer;f32 _menuFieldCursorAngle;u8 _openFieldMenu;u32 _soundEnvID;s32 _soundEnvVol;
+static f32 _fieldMenuTimer;static f32 _menuFieldCursorAngle;static u8 _openFieldMenu;static u32 _soundEnvID;static s32 _soundEnvVol;
 static f32 _menuFiledAlpha[5];static s32 barcolor=0xC0C0D000;static f32 _cursorSec=0.8f;static f32 _max_alpha=255.0f;static f32 _min_alpha=200.0f;
 static void _menuFieldMenuCursor(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _menuFieldFlashCursor(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _menuFieldCursorCheck(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _menuFieldDrawItemSub(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _animAlpha(long);static s32 _menuFieldCheckCursor(long);static u8 _menuFieldCheckPDA();
 extern "C" void menuFieldDrawItem2(tagWINDOW_WORK *arg0,tagSPRITE_WORK *arg1) {
@@ -221,33 +221,26 @@ extern "C" s32 menuFieldMainCtrl(tagWINDOW_WORK *arg0) {
 
 class GSvec {public:f32 x,y,z;GSvec(){}};
 struct FieldEvent {GSvec points[3];u8 pad24[12];u16 script;u8 pad32[2];};
-extern "C" {u8 GSgfxVideoGetVsyncRate();void GSgfxVideoSetLockFrameRate(s32);void GSmodelAllPauseAnimation();void GSmodelAllUnpauseAnimation();void GSsndPopVolumeALL(s32,s32,s32);void GSsndPushVolumeALL(s32,s32,s32,s32);void GSthreadSwitch();s8 fadeCheck(s32);void floorEventExecScript(s32,u16);void floorFieldCameraPause();void floorFieldCameraUnpause();void fn_80233AB4();void heroMoveAddAutoEvent(u32,u16,s32,s32,s32);s32 heroMoveCheckEvent(FieldEvent*);void heroMoveInitEvent();void heroMoveTermEvent();void mailMainReceiveTerminate();void menuClose(s32);void menuCloseCustom(s32,s32,s32);void menuCloseSync(s32,s32);void menuCreateOffScreen(f32,f32);u8 menuGetOffScreenFlag();void menuIntUnderTakerDispIconOff2();void menuIntUnderTakerDispIconRestore2();void menuOffScreenRelease();s32 menuOpen(s32,s32);void menuPdaOpen();u32 menuPocket2GetItemScript(u32);u16 menuPocket2Open(s32,s32*,s32);void menuPokemonOpen(s32,s32,s32);void menuReleaseOffScreen(f32);void menuReport();s32 scriptContinueSave();u32 soundGetEnvID();s32 soundGetVolume();void soundSetVolumeID(u32,s32,s32);}
+extern "C" {u8 GSgfxVideoGetVsyncRate();void GSgfxVideoSetLockFrameRate(s32);void GSmodelAllPauseAnimation();void GSmodelAllUnpauseAnimation();void GSsndPopVolumeALL(s32,s32,s32);void GSsndPushVolumeALL(s32,s32,s32,s32);void GSthreadSwitch();s8 fadeCheck(s32);void floorEventExecScript(s32,u16);void floorFieldCameraPause();void floorFieldCameraUnpause();void fn_80233AB4();void heroMoveAddAutoEvent(u32,u32,s32,s32,s32);s32 heroMoveCheckEvent(FieldEvent*);void heroMoveInitEvent();void heroMoveTermEvent();void mailMainReceiveTerminate();void menuClose(s32);void menuCloseCustom(s32,s32,s32);void menuCloseSync(s32,s32);void menuCreateOffScreen(f32,f32);u8 menuGetOffScreenFlag();void menuIntUnderTakerDispIconOff2();void menuIntUnderTakerDispIconRestore2();void menuOffScreenRelease();s32 menuOpen(s32,s32);void menuPdaOpen();u32 menuPocket2GetItemScript(u16);u16 menuPocket2Open(s32,s32*,s32);void menuPokemonOpen(s32,s32,s32);void menuReleaseOffScreen(f32);void menuReport();s32 scriptContinueSave();u32 soundGetEnvID();s32 soundGetVolume();void soundSetVolumeID(u32,s32,s32);}
 extern "C" s32 menuFieldMain(u8 arg0) {
     FieldEvent events[4];
-    s32 sp8;u32 script;
-    FieldEvent *var_r28;
-    s32 var_r27_2;
-    s32 temp_r29;
-    s32 temp_r3_3;
-    s32 temp_r3_4;
-    s32 var_r27;
-    u16 var_r31;
-    u32 temp_r3_2;
-    u8 temp_r3;
-    u8 temp_r3_5;
+    FieldEvent *event;
+    s32 count;
+    s32 i;
+    s32 sp8;
+    u32 script;
+    s32 menu;
+    s32 cursor;
+    u16 item;
 
     if (fadeCheck(0) != 0) {
         return 0;
     }
-    temp_r29 = heroMoveCheckEvent(events);
-    var_r28 = events;
-    var_r27 = 0;
-loop_4:
-    if (var_r27 < temp_r29) {
-        floorEventExecScript(4, var_r28->script);
-        var_r28++;
-        var_r27 += 1;
-        goto loop_4;
+    count = heroMoveCheckEvent(events);
+    event = events;
+    for (i = 0; i < count; i++) {
+        floorEventExecScript(4, event->script);
+        event++;
     }
     menuIntUnderTakerDispIconOff2();
     heroMoveInitEvent();
@@ -258,104 +251,101 @@ loop_4:
     _openFieldMenu = 1;
     GSthreadSwitch();
     menuCreateOffScreen(20.0f / GSgfxVideoGetVsyncRate(), 50.0f);
-loop_7:
-    if (menuGetOffScreenFlag() == 0) {
+    while (menuGetOffScreenFlag() == 0) {
         GSthreadSwitch();
-        goto loop_7;
     }
-    temp_r3_2 = soundGetEnvID();
-    _soundEnvID = temp_r3_2;
-    if (temp_r3_2 != 0U) {
+    _soundEnvID = soundGetEnvID();
+    if (_soundEnvID != 0U) {
         _soundEnvVol = soundGetVolume();
     }
     GSsndPushVolumeALL(0x55, 0x1F4, 1, 1);
     GSgfxVideoSetLockFrameRate(0);
     if (GSflagGet(0x30D) == 0U) {
         if (_menuFieldCheckPDA() != 0) {
-            var_r27_2 = 0x57;
+            menu = 0x57;
         } else {
-            var_r27_2 = 0x58;
+            menu = 0x58;
         }
     } else {
-        var_r27_2 = 0x70;
+        menu = 0x70;
     }
     fn_80233AB4();
-    switch ((s32) arg0) {                           /* irregular */
+    switch (arg0) {
     case 0:
         if (GSflagGet(0x30D) == 0U) {
-loop_22:
-            GSgfxVideoSetLockFrameRate(0);
-            _menuFiledAlpha[0] = 255.0f;
-            _menuFiledAlpha[1] = 255.0f;
-            _menuFiledAlpha[2] = 255.0f;
-            _menuFiledAlpha[3] = 255.0f;
-            _menuFiledAlpha[4] = 255.0f;
-            temp_r3_3 = _menuFieldCheckCursor(menuOpen(var_r27_2,1));
-            if (temp_r3_3 == 0) {
-                menuCloseCustom(var_r27_2, 0, 1);
-                menuPokemonOpen(1, 0, 0);
-                GSmodelAllPauseAnimation();
-block_32:
-                GSthreadSwitch();
-                goto loop_22;
-            }
-            if (temp_r3_3 == 1) {
-                menuCloseCustom(var_r27_2, 0, 1);
-                menuPdaOpen();
-                GSmodelAllPauseAnimation();
-                goto block_32;
-            }
-            if (temp_r3_3 == 2) {
-                menuCloseCustom(var_r27_2, 0, 1);
-                var_r31 = menuPocket2Open(0, &sp8, 0);
-                GSmodelAllPauseAnimation();
-                if (var_r31 != 0) {
-                    if ((u32) ((script=menuPocket2GetItemScript(var_r31)) + 0x10000) != 0xFFFFU) {
-                        heroMoveAddAutoEvent(script,var_r31,sp8,0,0);
+            for (;;) {
+                GSgfxVideoSetLockFrameRate(0);
+                _menuFiledAlpha[0] = 255.0f;
+                _menuFiledAlpha[1] = 255.0f;
+                _menuFiledAlpha[2] = 255.0f;
+                _menuFiledAlpha[3] = 255.0f;
+                _menuFiledAlpha[4] = 255.0f;
+                cursor = _menuFieldCheckCursor(menuOpen(menu, 1));
+                if (cursor == 0) {
+                    menuCloseCustom(menu, 0, 1);
+                    menuPokemonOpen(1, 0, 0);
+                    GSmodelAllPauseAnimation();
+                } else if (cursor == 1) {
+                    menuCloseCustom(menu, 0, 1);
+                    menuPdaOpen();
+                    GSmodelAllPauseAnimation();
+                } else if (cursor == 2) {
+                    menuCloseCustom(menu, 0, 1);
+                    item = menuPocket2Open(0, &sp8, 0);
+                    GSmodelAllPauseAnimation();
+                    if (item == 0) {
+                        continue;
                     }
+                    if ((u32)((script = menuPocket2GetItemScript(item)) + 0x10000) != 0xFFFFU) {
+                        heroMoveAddAutoEvent(script, item, sp8, 0, 0);
+                    }
+                    break;
+                } else if (cursor == 3) {
+                    menuCloseCustom(menu, 0, 1);
+                    menuReport();
                 } else {
-                    goto loop_22;
+                    break;
                 }
-            } else if (temp_r3_3 == 3) {
-                menuCloseCustom(var_r27_2, 0, 1);
-                menuReport();
-                goto block_32;
+                GSthreadSwitch();
             }
         } else {
-loop_34:
-            GSgfxVideoSetLockFrameRate(0);
-            temp_r3_4 = menuOpen(var_r27_2, 1);
-            if (temp_r3_4 == 0) {
-                menuClose(var_r27_2);
-                menuPokemonOpen(1, 0, 0);
-                goto loop_34;
-            }
-            if (temp_r3_4 == 1) {
-                if (scriptContinueSave() == 1) {
-                    menuOffScreenRelease();
-                    _openFieldMenu = 0;
-                    GSthreadSwitch();
+            for (;;) {
+                GSgfxVideoSetLockFrameRate(0);
+                cursor = menuOpen(menu, 1);
+                if (cursor == 0) {
+                    menuClose(menu);
+                    menuPokemonOpen(1, 0, 0);
+                } else if (cursor == 1) {
+                    if (scriptContinueSave() == 1) {
+                        menuOffScreenRelease();
+                        _openFieldMenu = 0;
+                        GSthreadSwitch();
+                    }
+                } else {
+                    break;
                 }
-                goto loop_34;
             }
         }
         break;
     case 1:
-        var_r31 = menuPocket2Open(0, &sp8, 0);
-        if ((var_r31 != 0) && ((u32) ((script=menuPocket2GetItemScript(var_r31)) + 0x10000) != 0xFFFFU)) {
-            heroMoveAddAutoEvent(script,var_r31,sp8,0,0);
+        item = menuPocket2Open(0, &sp8, 0);
+        if (item != 0 && (u32)((script = menuPocket2GetItemScript(item)) + 0x10000) != 0xFFFFU) {
+            heroMoveAddAutoEvent(script, item, sp8, 0, 0);
         }
         break;
+    case 2:
+    case 3:
+        break;
     }
-    menuPocket2GetItemScript(var_r31);
+    menuPocket2GetItemScript(item);
     GSsndPopVolumeALL(0x1F4, 1, 1);
-    if ((u32) _soundEnvID == soundGetEnvID()) {
+    if ((u32)_soundEnvID == soundGetEnvID()) {
         soundSetVolumeID(_soundEnvID, 0x1F4, _soundEnvVol);
     }
     GSthreadSwitch();
-    menuClose(var_r27_2);
+    menuClose(menu);
     menuReleaseOffScreen(20.0f / GSgfxVideoGetVsyncRate());
-    menuCloseSync(var_r27_2, 1);
+    menuCloseSync(menu, 1);
     GSgfxVideoSetLockFrameRate(1);
     heroMoveTermEvent();
     GSmodelAllUnpauseAnimation();

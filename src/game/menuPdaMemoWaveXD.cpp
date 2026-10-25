@@ -4,7 +4,7 @@
 enum GSgfxLayerID {WaveLayerDummy};
 struct NakigoeDispWork {s8 *data;f32 count;u32 sound;f32 start;s32 time;f32 end;s32 samples;f32 alpha,speed;};
 class pdaMemoNakigoe {public:NakigoeDispWork waves[8];u32 index;pdaMemoNakigoe(){Reset();}void Reset(){for(s32 i=0;i<8;i++)waves[i].data=0;index=0;DispInit();}void DispInit();void SetNakigoe(long);void SetSE(unsigned long);u16 GetVocie(long);s8 *GetWaveDispDataAddress(long);void DispRequest(s8*,unsigned long);void NakigoeDispFunc(tagWINDOW_WORK*,tagSPRITE_WORK*);void DispFuncSub(NakigoeDispWork*,GSgfxLayerID);u8 NakigoeCheck();};
-static pdaMemoNakigoe *_nakigoe;
+pdaMemoNakigoe *_nakigoe;
 extern "C" {u32 GSinputButtonsChanged(s32);u32 GSinputButtonsPressed(s32);void GSthreadSwitch();void GSsndPlay(u32,s32,s32);s32 GSsndGetStatus(u32);u16 memoDataGetCount(s32);void *menuPdaMemoListGetPokemonDataPointer(s32);u16 pokemonDataBiosGetVoice(void*);s8 *pokemonNakigoeDataBiosGetDataAddress(void*);}
 extern "C" void menuPdaMemoWaveHook(tagWINDOW_WORK *w,tagSPRITE_WORK *s){if(_nakigoe)_nakigoe->NakigoeDispFunc(w,s);}
 extern "C" void menuPdaMemoWaveInit(){if(_nakigoe){_nakigoe->Reset();}}

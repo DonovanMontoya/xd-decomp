@@ -322,64 +322,48 @@ s32 motorFun(u8 a, u8 b, u32 c, u8 d, bool e) {
 int AppScript::cmpSound(int cmd, tigaVariant* args, tigaVariant* result) {
     switch (cmd) {
     case 0x10: {
-        s32 a = appScriptGetInt(&args[1]);
-        s32 b = appScriptGetInt(&args[2]);
-        appScriptSetInt(result, soundOpenPlay(a, b, appScriptGetInt(&args[3])));
+        appScriptSetInt(result, soundOpenPlay(appScriptGetInt(&args[1]), appScriptGetInt(&args[2]), appScriptGetInt(&args[3])));
         break;
     }
     case 0x11: {
-        s32 a = appScriptGetInt(&args[1]);
-        s32 b = appScriptGetInt(&args[2]);
-        appScriptSetInt(result, soundOpenPlayEnv(a, b, appScriptGetInt(&args[3])));
+        appScriptSetInt(result, soundOpenPlayEnv(appScriptGetInt(&args[1]), appScriptGetInt(&args[2]), appScriptGetInt(&args[3])));
         break;
     }
     case 0x12: {
-        s32 a = appScriptGetInt(&args[1]);
-        appScriptSetInt(result, soundStop(a, appScriptGetInt(&args[2])));
+        appScriptSetInt(result, soundStop(appScriptGetInt(&args[1]), appScriptGetInt(&args[2])));
         break;
     }
     case 0x13:
         appScriptSetInt(result, soundStopEnv(appScriptGetInt(&args[1])));
         break;
     case 0x14: {
-        s32 a = appScriptGetInt(&args[1]);
-        f32 x = appScriptGetFloat(&args[2]);
-        f32 y = appScriptGetFloat(&args[3]);
-        appScriptSetInt(result, soundCreateEmitter(a, x, y, appScriptGetFloat(&args[4])));
+        appScriptSetInt(result,
+            soundCreateEmitter(appScriptGetInt(&args[1]), appScriptGetFloat(&args[2]), appScriptGetFloat(&args[3]), appScriptGetFloat(&args[4])));
         break;
     }
     case 0x15:
         appScriptSetInt(result, soundCreateListener());
         break;
     case 0x16: {
-        s32 a = appScriptGetInt(&args[1]);
-        appScriptSetInt(result, soundSetVolume(a, appScriptGetInt(&args[2])));
+        appScriptSetInt(result, soundSetVolume(appScriptGetInt(&args[1]), appScriptGetInt(&args[2])));
         break;
     }
     case 0x17: {
-        s32 a = appScriptGetInt(&args[1]);
-        s32 b = appScriptGetInt(&args[2]);
-        appScriptSetInt(result, scriptSoundOpenPlayME(a, b, appScriptGetInt(&args[3])));
+        appScriptSetInt(result, scriptSoundOpenPlayME(appScriptGetInt(&args[1]), appScriptGetInt(&args[2]), appScriptGetInt(&args[3])));
         break;
     }
     case 0x18: {
-        s32 a = appScriptGetInt(&args[1]);
-        s32 b = appScriptGetInt(&args[2]);
-        appScriptSetInt(result, soundSetVolumeID(a, b, appScriptGetInt(&args[3])));
+        appScriptSetInt(result, soundSetVolumeID(appScriptGetInt(&args[1]), appScriptGetInt(&args[2]), appScriptGetInt(&args[3])));
         break;
     }
     case 0x19: {
-        s32 a = appScriptGetInt(&args[1]);
-        s32 b = appScriptGetInt(&args[2]);
-        s32 c = appScriptGetInt(&args[3]);
-        appScriptSetInt(result, soundOpenPlayFadeOutIn(a, b, c, appScriptGetInt(&args[4])));
+        appScriptSetInt(result,
+            soundOpenPlayFadeOutIn(appScriptGetInt(&args[1]), appScriptGetInt(&args[2]), appScriptGetInt(&args[3]), appScriptGetInt(&args[4])));
         break;
     }
     case 0x1A: {
-        s32 a = appScriptGetInt(&args[1]);
-        s32 b = appScriptGetInt(&args[2]);
-        s32 c = appScriptGetInt(&args[3]);
-        appScriptSetInt(result, soundOpenPlayEnvFadeOutIn(a, b, c, appScriptGetInt(&args[4])));
+        appScriptSetInt(result,
+            soundOpenPlayEnvFadeOutIn(appScriptGetInt(&args[1]), appScriptGetInt(&args[2]), appScriptGetInt(&args[3]), appScriptGetInt(&args[4])));
         break;
     }
     case 0x1B:
@@ -389,8 +373,7 @@ int AppScript::cmpSound(int cmd, tigaVariant* args, tigaVariant* result) {
         peopleTalkMessageBgmMask(appScriptGetInt(&args[1]) != 0);
         break;
     case 0x1D: {
-        f32 a = appScriptGetFloat(&args[1]);
-        peopleTalkMessageBgmSetFadeSpeed(a, appScriptGetFloat(&args[2]));
+        peopleTalkMessageBgmSetFadeSpeed(appScriptGetFloat(&args[1]), appScriptGetFloat(&args[2]));
         break;
     }
     case 0x1E:
@@ -400,17 +383,13 @@ int AppScript::cmpSound(int cmd, tigaVariant* args, tigaVariant* result) {
         soundPlayWait(appScriptGetInt(&args[1]));
         break;
     case 0x20: {
-        s32 a = appScriptGetInt(&args[1]);
-        s32 b = appScriptGetInt(&args[2]);
-        appScriptSetInt(result, soundPlayME(a, b, appScriptGetInt(&args[3])));
+        appScriptSetInt(result, soundPlayME(appScriptGetInt(&args[1]), appScriptGetInt(&args[2]), appScriptGetInt(&args[3])));
         break;
     }
     case 0x21: {
         GSthread* thread = floorCreateThread(0x80, 0, 1, (s32 (*)(GSthread*))appScriptPlayME_Thread);
-        s32 a = appScriptGetInt(&args[1]);
-        s32 b = appScriptGetInt(&args[2]);
-        s32 c = appScriptGetInt(&args[3]);
-        GSthreadSetArgs(thread, 4, a, b, c, appScriptGetInt(&args[4]));
+        GSthreadSetArgs(thread, 4,
+            appScriptGetInt(&args[1]), appScriptGetInt(&args[2]), appScriptGetInt(&args[3]), appScriptGetInt(&args[4]));
         break;
     }
     }

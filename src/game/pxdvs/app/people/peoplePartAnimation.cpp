@@ -28,7 +28,7 @@ void peoplePartAnimationSpeakStop(tagPeopleWork* work){
         PeopleInfo* info=peopleInfoBiosGetPtr(work->object);
         for(s32 i=0;i<7;i++){
             if(work->speechAnimations[i]>=0){
-                s32 idx=(s8)info->unknown28[i];part=GSmodelGetPart(model,idx);
+                part=GSmodelGetPart(model,*(s8*)&info->unknown28[i]);
                 if(part){GSpartStopAnimIndex(part,work->speechAnimations[i]);GSpartFree(part);}
                 work->speechAnimations[i]=-1;
             }
@@ -63,7 +63,7 @@ void peoplePartAnimationBlink(tagPeopleWork* work){
         if(work->flag14D){work->speechTimer-=timeGetLastFrameSec();if(work->speechTimer<0.0f)peoplePartAnimationSpeakStop(work);}
         if(work->flag14C){
             work->blinkTimer-=timeGetLastFrameSec();
-            if(!(work->blinkTimer>0.0f)){f32 randomWait=(f32)(HSD_Rand()&0x7fff)/32768.0f;work->blinkTimer=randomWait+2.0f;peoplePartAnimationBlinkOnce(work);}
+            if(!(work->blinkTimer>0.0f)){s16 randomTicks=HSD_Rand()&0x7fff;work->blinkTimer=2.0f+(f32)randomTicks/32768.0f;peoplePartAnimationBlinkOnce(work);}
         }
     }
 }

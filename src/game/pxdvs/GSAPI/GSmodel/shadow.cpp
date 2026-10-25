@@ -193,7 +193,7 @@ static u8 _modelShadowGetLightToGroundIntersect__FP8_GSmodelP5GSvec(GSmodel* mod
     GSboundGetWorldPosition((GSbound*)model->boundStorage, &boundPos);
     GSboundGetSize((GSbound*)model->boundStorage, &boundSize, 1, 1);
     boundPos.y = 0.5f * boundSize.y + boundPos.y;
-    planePoint.x = 0.0f; planePoint.y = model->position.param2; planePoint.z = 0.0f;
+    { f32 y = model->position.param2; planePoint.x = 0.0f; planePoint.y = y; planePoint.z = 0.0f; }
     planeNormal.x = 0.0f; planeNormal.y = -1.0f; planeNormal.z = 0.0f;
     PSVECSubtract(&lightPos, &boundPos, &dir);
     lineDir.x = dir.x; lineDir.y = dir.y; lineDir.z = dir.z;
@@ -210,8 +210,7 @@ static u8 _modelShadowGetLightToGroundIntersect__FP8_GSmodelP5GSvec(GSmodel* mod
         PSVECScale(&lineDir, &t, numer / denom);
         scaled.x = t.x; scaled.y = t.y; scaled.z = t.z;
         PSVECSubtract(&boundPos, &scaled, &t2);
-        result = 0;
-        *(Vec*)out = t2;
+        { Vec* o=(Vec*)out; f32 x=t2.x, y=t2.y, z=t2.z; result = 0; o->x = x; o->y = y; o->z = z; }
     }
     return result == 0;
 }

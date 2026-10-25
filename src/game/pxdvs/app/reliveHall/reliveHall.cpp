@@ -28,8 +28,8 @@ void heroMoveTermEvent(void);
 void menuScriptInfoRelive(Pokemon *, u8, long);
 u16 pokemonBiosGetDarkpokemonDataId(Pokemon *);
 u8 darkPokemonBiosGetInformationFlag(u16);
-u16 darkPokemonBiosGetSteps(u16);
-void darkPokemonBiosSetSteps(u16, u16);
+s32 darkPokemonBiosGetSteps(u16);
+void darkPokemonBiosSetSteps(u16, s32);
 u8 pokemonCheckValid(Pokemon *);
 void pokemonAddDp(Pokemon *, f32);
 void pokemonAllKaihuku(Pokemon *);
@@ -73,6 +73,8 @@ public:
     s32 getDancerQuantity();
     Pokemon *getDancerPointer(long);
     void putVisitor(Pokemon &);
+    void putDancer(Pokemon &);
+    s32 getEmptyDancerIndex();
     Pokemon *getVisitorPointer();
     s32 getState();
     bool isLugiaReliveReady();
@@ -187,9 +189,7 @@ bool CReliveHall::isOpen() {
     return GSflagGet(0x3C4) >= flag_etc->value;
 }
 
-namespace {
 void *_pRelivehallCopy;
-}
 
 void CReliveHall::allocMakeBackup() {
     _pRelivehallCopy = GSmemAllocClr(0x2298);
@@ -206,7 +206,10 @@ Pokemon *CReliveStage::getVisitorPointer() {
 
 Pokemon *CReliveStage::getDancerPointer(long i) {
     Pokemon *p = &dancer[i];
-    return pokemonCheckValid(p) ? p : 0;
+    if (pokemonCheckValid(p)) {
+        return p;
+    }
+    return 0;
 }
 
 s32 CReliveStage::getDancerQuantity() {
@@ -496,16 +499,17 @@ Pokemon *CReliveStage::heroWalkReliveCallBack(long steps, bool flag) {
     if (v->getDarkPointDirect() == 0) {
         return 0;
     }
-    u16 cur = darkPokemonBiosGetSteps(id);
-    if (cur >= relivehall_data->steps && flag) {
-        pokemonAddDp(v, (f32)-getPassion());
+    s32 cur = darkPokemonBiosGetSteps(id);
+    if ((u16)cur >= relivehall_data->steps && flag) {
+        s32 passion = getPassion();
+        pokemonAddDp(v, (f32)-passion);
         darkPokemonBiosSetSteps(id, cur - relivehall_data->steps);
         if (v->getDarkPointDirect() != 0) {
             return 0;
         }
         return v;
     }
-    darkPokemonBiosSetSteps(id, cur + steps);
+    darkPokemonBiosSetSteps(id, (u16)(cur + steps));
     return 0;
 }
 
@@ -547,48 +551,6 @@ s32 CReliveStage::getPassion() {
     return passion;
 }
 
-bool CReliveStage::isPokemonZokuseiAllUnique(bool includeVisitor) {
-    s32 n;
-    u8 *used;
-    used = (u8 *)__alloca(*zokusei_data_number);
-    memset(used, 0, *zokusei_data_number);
-    n = 0;
-    do {
-        if (!pokemonCheckValid(&dancer[n])) {
-            break;
-        }
-        n++;
-    } while (n < 4);
-    s32 total = n;
-    if (includeVisitor) {
-        total = n + 1;
-    }
-    for (s32 i = 0; i < total; i++) {
-        Pokemon *p;
-        if (i == n) {
-            p = getVisitorPointer();
-            if (p == 0) {
-                break;
-            }
-        } else {
-            p = getDancerPointer(i);
-        }
-        s32 prev = -1;
-        for (s32 j = 0; j < 2; j++) {
-            s32 zid = pokemonDataBiosGetZokuseiDataId(p->getPokemonDataPtr(), (u16)j);
-            if (j == 1 && zid == prev) {
-                break;
-            }
-            prev = zid;
-            if (used[zid]) {
-                return false;
-            }
-            used[zid] = 1;
-        }
-    }
-    return true;
-}
-
 s32 CReliveHall::getReliveGiveStageQuantity() {
     s32 count = 0;
     for (s32 i = 0; i < 9; i++) {
@@ -605,60 +567,123 @@ s32 CReliveHall::getReliveGiveStageQuantity() {
     return count;
 }
 
+bool CReliveStage::isPokemonZokuseiAllUnique(bool includeVisitor) {
+    s32 n;
+    u8 *used;
+    s32 total;
+    s32 i;
+    Pokemon *p;
+    s32 prev;
+    s32 j;
+    s32 zid;
+    used = (u8 *)__alloca(*zokusei_data_number);
+    memset(used, 0, *zokusei_data_number);
+    n = getDancerQuantity();
+    total = n;
+    if (includeVisitor) {
+        total = n + 1;
+    }
+    for (i = 0; i < total; i++) {
+        if (i == n) {
+            p = getVisitorPointer();
+            if (p == 0) {
+                break;
+            }
+        } else {
+            p = getDancerPointer(i);
+        }
+        prev = -1;
+        for (j = 0; j < 2; j++) {
+            zid = pokemonDataBiosGetZokuseiDataId(p->getPokemonDataPtr(), (u16)j);
+            if (j == 1 && zid == prev) {
+                break;
+            }
+            prev = zid;
+            if (used[zid]) {
+                return false;
+            }
+            used[zid] = 1;
+        }
+    }
+    return true;
+}
+
+
 void menuPocketDebugMakePokemonByID(Pokemon&,u16,bool,f32);
 void menuPocketDebugMakeDarkPokemonByID(Pokemon&,u16,f32);
 
-static inline void reliveDebugPutDancer(CReliveStage* stage,Pokemon& pokemon) {
-    s32 index=0;
-    while(pokemonCheckValid(&stage->dancer[index])) {
+inline s32 CReliveStage::getEmptyDancerIndex() {
+    s32 index = 0;
+    do {
+        if (!pokemonCheckValid(&dancer[index])) {
+            return index;
+        }
         ++index;
-        if(index>=4) { index=-1;break; }
-    }
-    Pokemon* target=&stage->dancer[index];
-    memcpy(target,&pokemon,sizeof(Pokemon));
-    setDancerPlace(stage,target);
+    } while (index < 4);
+    return -1;
+}
+
+inline void CReliveStage::putDancer(Pokemon &pokemon) {
+    Pokemon *target = &dancer[getEmptyDancerIndex()];
+    memcpy(target, &pokemon, sizeof(Pokemon));
+    setDancerPlace(this, target);
     pokemonInit((u32)&pokemon);
 }
 
+// Keep the debug setup loops from hoisting their local Pokemon addresses.
+#pragma opt_loop_invariants off
 void CReliveHall::debugPokemonSetup(long mode) {
     static f32 _darkRateTbl[2][10]={
         {0,0,0,0,0,0,0,0,0,0},
         {0.1f,0.2f,0.3f,0.4f,0.5f,0.5f,0.5f,0.5f,0.5f,0}
     };
     if(mode==0 || mode==1) {
-        init();
-        u16 species=0;
-        CReliveStage* stage=(CReliveStage*)this;
-        for(s32 i=0;i<8;i++,stage++,species+=2) {
+        memset(this, 0, 0x2298);
+        u32 stageIndex = 0;
+        CReliveStage *initialStage = (CReliveStage *)this;
+        do {
+            initialStage->init();
+            ++stageIndex;
+            ++initialStage;
+        } while (stageIndex < 9);
+        for(s32 i=0;i<8;i++) {
+            CReliveStage *stage = getStage(i);
             Pokemon pokemon;
             s32 count[10]={4,3,2,1,1,1,1,1,1,0};
+            s32 quantity = count[i];
             static u16 tempMaxTbl[4]={185,280,387,306};
             static u16 tempMaxTbl2[3]={390,292,312};
-            u16 next=species;
-            for(s32 j=0;j<count[i];j++,next++) {
+            for(s32 j=0;j<quantity;j++) {
                 u16 id;
                 if(i==0) id=tempMaxTbl[j];
                 else if(i==1) id=tempMaxTbl2[j];
-                else id=next;
+                else id=i * 2 + j;
                 menuPocketDebugMakePokemonByID(pokemon,id,false,0.0f);
-                reliveDebugPutDancer(stage,pokemon);
+                stage->putDancer(pokemon);
             }
             static u16 dptbl[9]={68,186,187,188,189,190,191,192,193};
-            menuPocketDebugMakePokemonByID(pokemon,dptbl[i],true,_darkRateTbl[mode!=1][i]);
+            menuPocketDebugMakePokemonByID(pokemon,dptbl[i],true,_darkRateTbl[mode == 1 ? 0 : 1][i]);
             stage->putVisitor(pokemon);
             stage->pairIndex=0;
         }
         return;
     }
     if(mode==2) {
-        init();
-        CReliveStage* stage=(CReliveStage*)this;
-        for(s32 i=0;i<9;i++,stage++) {
+        memset(this, 0, 0x2298);
+        u32 stageIndex = 0;
+        CReliveStage *initialStage = (CReliveStage *)this;
+        do {
+            initialStage->init();
+            ++stageIndex;
+            ++initialStage;
+        } while (stageIndex < 9);
+        for(s32 i=0;i<9;i++) {
+            CReliveStage *stage = getStage(i);
             Pokemon pokemon;
             for(s32 j=0;j<4;j++) {
                 static u16 tempMaxTbl[4]={185,280,387,306};
                 menuPocketDebugMakePokemonByID(pokemon,tempMaxTbl[j],false,0.0f);
-                reliveDebugPutDancer(stage,pokemon);
+                stage->putDancer(pokemon);
             }
             static u16 dptbl[9]={73,1,2,3,4,5,6,7,8};
             menuPocketDebugMakeDarkPokemonByID(pokemon,dptbl[i],_darkRateTbl[1][i]);
@@ -667,3 +692,5 @@ void CReliveHall::debugPokemonSetup(long mode) {
         }
     }
 }
+
+#pragma opt_loop_invariants reset
