@@ -273,6 +273,22 @@ public:
     void setMenuByTbl(long *);
 };
 
+static inline void modelFreeAll(CMenuPokemonChange *m) {
+    long i;
+    for (i = 0; i < 2; i++) {
+        menuModelFree(&m->models[i]);
+        menuModelTerm(&m->models[i]);
+    }
+}
+static inline void modelLoadAll(CMenuPokemonChange *m, MenuItemSimple *item) {
+    long i;
+    for (i = 0; i < 2; i++) {
+        menuModelInit(&m->models[i], item->width, item->height);
+        menuModelLoadPokemon(&m->models[i], m->getPokemonBySelect(m->selectIndex[i]));
+        menuModelCheck(&m->models[i], 1);
+    }
+}
+
 CMenuPokemonChange MenuPokemonChange;
 
 
@@ -782,8 +798,6 @@ void CMenuPokemonChange::_pokemonChangeEvolutionEffect(Pokemon *pokemon, MENU_PO
 }
 
 void CMenuPokemonChange::stateFunctionConfirmExChange() {
-    long i;
-    CMenuPokemonChange *m;
     u8 ready0;
     u8 ready1;
     u32 key0;
@@ -844,12 +858,7 @@ void CMenuPokemonChange::stateFunctionConfirmExChange() {
     }
 done:
     bgDrawFadeOut();
-    m = this;
-    for (i = 0; i < 2; i++) {
-        menuModelFree(&m->models[0]);
-        menuModelTerm(&m->models[0]);
-        m = (CMenuPokemonChange *)((u8 *)m + sizeof(MENU_MODEL));
-    }
+    modelFreeAll(this);
     menuSetEnablePort(1);
 }
 
@@ -1105,19 +1114,12 @@ void CMenuPokemonChange::stateFunctionError(Pokemon *p, u32 msg) {
 
 void CMenuPokemonChange::stateFunctionCheckNext() {
     s8 answer;
-    long i;
-    CMenuPokemonChange *m;
     winMsgOpen(2, 0xC4A1, 0, 0);
     answer = menuSubOpenYesNo(0, -1, -1, 0);
     winMsgClose(1);
     _menuWait(0.5f);
     bgDrawFadeOut();
-    m = this;
-    for (i = 0; i < 2; i++) {
-        menuModelFree(&m->models[0]);
-        menuModelTerm(&m->models[0]);
-        m = (CMenuPokemonChange *)((u8 *)m + sizeof(MENU_MODEL));
-    }
+    modelFreeAll(this);
     if (answer == 0) {
         cstate.unk4 = 6;
         memset(cstate.saved, 0, 0x40);
@@ -1129,16 +1131,9 @@ void CMenuPokemonChange::stateFunctionCheckNext() {
 
 void CMenuPokemonChange::stateFunctionSelectPokemon2DecideAfterWait() {
     MenuItemSimple *item;
-    long i;
     _menuWait(0.6f);
     item = menuPtItemGetByMenuIdAndItemId(0xDD, 0x63D, 0);
-    i = 0;
-    do {
-        menuModelInit(&models[i], item->width, item->height);
-        menuModelLoadPokemon(&models[i], getPokemonBySelect(selectIndex[i]));
-        menuModelCheck(&models[i], 1);
-        i++;
-    } while (i < 2);
+    modelLoadAll(this, item);
     bgDrawFadeOut();
     cstate.unk4 = 0x11;
     memset(cstate.saved, 0, 0x40);
@@ -1457,13 +1452,13 @@ void CMenuPokemonChange::stateFunctionExChangeMain() {
     Pokemon *pokemons[2];
     MenuItemSimple *item;
     long i;
-    long j;
     pokemonInit(&pokemon);
     for (i = 0; i < 2; i++) {
         pokemons[i] = getPokemonBySelect(selectIndex[i]);
     }
-    if (pokemons[0]->getDarkPokemon() != 0) {
-        pokemons[0]->getDarkPokemon()->setPlace(place0, 0);
+    DarkPokemon *dark = pokemons[0]->getDarkPokemon();
+    if (dark != 0) {
+        dark->setPlace(place5, 0);
     }
     pokemonBiosCopy(&pokemon, pokemons[1]);
     pokemonBiosCopy(pokemons[1], pokemons[0]);
@@ -1481,11 +1476,7 @@ void CMenuPokemonChange::stateFunctionExChangeMain() {
     _pokemonChangeFadeOut(0.7f);
     floorMapSetDisp(0);
     item = menuPtItemGetByMenuIdAndItemId(0xDE, 0x652, 0);
-    for (j = 0; j < 2; j++) {
-        menuModelInit(&models[j], item->width, item->height);
-        menuModelLoadPokemon(&models[j], getPokemonBySelect(selectIndex[j]));
-        menuModelCheck(&models[j], 1);
-    }
+    modelLoadAll(this, item);
     menuStateChange((enumMenuState)6);
     _pokemonChangeFadeIn(0.15f);
     cstate.unk4 = 0x14;
@@ -1494,18 +1485,12 @@ void CMenuPokemonChange::stateFunctionExChangeMain() {
 
 void CMenuPokemonChange::stateFunctionExChangeStart() {
     MenuItemSimple *item;
-    long i;
-    long j;
     u32 id0;
     u32 id1;
     u32 nick0;
     u32 nick1;
     item = menuPtItemGetByMenuIdAndItemId(0xDE, 0x652, 0);
-    for (i = 0; i < 2; i++) {
-        menuModelInit(&models[i], item->width, item->height);
-        menuModelLoadPokemon(&models[i], getPokemonBySelect(selectIndex[i]));
-        menuModelCheck(&models[i], 1);
-    }
+    modelLoadAll(this, item);
     menuStateChange((enumMenuState)6);
     bgDrawFadeIn();
     _menuWait(1.0f);
@@ -1521,10 +1506,7 @@ void CMenuPokemonChange::stateFunctionExChangeStart() {
     winMsgOpen(2, 0xC49B, 1, 0);
     winMsgClose(1);
     bgDrawFadeOut();
-    for (j = 0; j < 2; j++) {
-        menuModelFree(&models[j]);
-        menuModelTerm(&models[j]);
-    }
+    modelFreeAll(this);
     menuStateChange(MENU_STATE_1);
     cstate.unk4 = 0x13;
     memset(cstate.saved, 0, 0x40);
@@ -1678,7 +1660,6 @@ namespace {
 #pragma push
 #pragma opt_dead_assignments off
 void CMenuPokemonChange::stateFunctionSaveReport() {
-    CMenuPokemonChange *m;
     u8 unlocked,success;
     success=0;unlocked=0;
     winMsgOpen(2,0xC49D,1,1);
@@ -1710,8 +1691,7 @@ void CMenuPokemonChange::stateFunctionSaveReport() {
         GSsndPlayNow(0x13);
         winMsgOpen(2,0xC49E,1,0);
         winMsgClose(1);
-        m=this;
-        for(index=0;index<2;index++) {menuModelFree(&m->models[0]);menuModelTerm(&m->models[0]);m=(CMenuPokemonChange *)((u8 *)m+sizeof(MENU_MODEL));}
+        modelFreeAll(this);
         cstate.unk4=3;
         memset(cstate.saved,0,0x40);
         return;
@@ -1884,7 +1864,7 @@ void CMenuPokemonChange::stateFunctionEvolution() {
     if(evolution) {
         _pokemonChangeFadeOut(0.3f);
         menuStateChange(MENU_STATE_0);
-        for(s32 i=0;i<2;i++) {menuModelFree(&models[i]);menuModelTerm(&models[i]);}
+        modelFreeAll(this);
         bgModelRelease();
         GSthreadSwitch();
         _pokemonChangeFadeIn(0.0f);
@@ -1893,11 +1873,7 @@ void CMenuPokemonChange::stateFunctionEvolution() {
         _pokemonChangeFadeOut(0.0f);
         bgModelLoad();
         MenuItemSimple* item=menuPtItemGetByMenuIdAndItemId(0xDE,0x652,0);
-        for(s32 i=0;i<2;i++) {
-            menuModelInit(&models[i],item->width,item->height);
-            menuModelLoadPokemon(&models[i],getPokemonBySelect(selectIndex[i]));
-            menuModelCheck(&models[i],1);
-        }
+        modelLoadAll(this, item);
         menuStateChange(MENU_STATE_6);
         _pokemonChangeFadeIn(0.3f);
         for(s32 i=0;i<2;i++) {

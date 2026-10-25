@@ -591,281 +591,281 @@ static void HSD_JObjAddTz(PSJObj *arg0, f32 farg0) {
 
 PSParticle *psInterpretParticle0(PSParticle *arg0, PSParticle *arg1) {
     PSVec vec48;
-    PSVec vec3C;
-    PSVec vec30;
-    PSVec vec24;
-    PSVec vec18;
-    f32 sp14;
-    f32 sp10;
-    f32 spC;
-    f32 sp8;
-    PSAppSRT *temp_r0_5;
-    PSAppSRT *temp_r0_6;
-    PSAppSRT *temp_r0_7;
-    PSAppSRT *temp_r3_18;
-    PSAppSRT *temp_r3_19;
-    PSAppSRT *temp_r3_22;
-    PSAppSRT *temp_r3_23;
-    PSAppSRT *temp_r3_27;
-    PSAppSRT *temp_r3_28;
-    PSAppSRT *temp_r3_33;
-    PSAppSRT *temp_r4_10;
-    PSAppSRT *temp_r4_13;
-    PSAppSRT *temp_r4_14;
-    PSAppSRT *temp_r4_19;
-    PSAppSRT *temp_r4_21;
-    PSAppSRT *temp_r4_4;
-    PSAppSRT *temp_r4_5;
-    PSAppSRT *temp_r4_6;
-    PSAppSRT *temp_r4_7;
-    PSAppSRT *temp_r4_9;
-    PSAppSRT *temp_r5_2;
-    PSAppSRT *temp_r5_4;
-    PSAppSRT *temp_r5_5;
-    PSAppSRT *temp_r6_2;
-    PSGenerator *temp_r26_11;
-    PSGenerator *temp_r3_11;
-    PSGenerator *temp_r3_14;
-    PSGenerator *temp_r3_16;
-    PSGenerator *temp_r3_17;
-    PSGenerator *temp_r3_20;
-    PSGenerator *temp_r3_21;
-    PSGenerator *temp_r3_25;
-    PSGenerator *temp_r3_26;
-    PSGenerator *temp_r3_29;
-    PSGenerator *temp_r3_32;
-    PSGenerator *temp_r3_36;
-    PSGenerator *temp_r3_39;
-    PSGenerator *temp_r3_7;
-    PSGenerator *temp_r3_8;
-    PSGenerator *temp_r3_9;
-    PSGenerator *temp_r4_12;
-    PSGenerator *temp_r4_17;
-    PSGenerator *temp_r4_18;
-    PSGenerator *temp_r4_20;
-    PSGenerator *temp_r4_25;
-    PSGenerator *temp_r4_2;
-    PSGenerator *temp_r4_39;
-    PSGenerator *temp_r4_3;
-    PSGenerator *temp_r5_6;
-    PSJObj *temp_r3_56;
-    PSJObj *temp_r3_57;
-    PSJObj *temp_r3_58;
-    PSJObj *temp_r3_59;
-    PSJObj *temp_r3_60;
-    PSParticle *temp_r3_10;
-    PSParticle *temp_r3_13;
-    PSParticle *temp_r3_31;
-    PSParticle *temp_r3_35;
-    PSParticle *temp_r3_38;
-    PSParticle *var_r26;
-    PSTex *temp_r4;
-    PSTex *temp_r4_24;
-    f32 temp_f0;
-    f32 temp_f0_2;
-    f32 temp_f1;
-    f32 temp_f1_10;
-    f32 temp_f1_12;
-    f32 temp_f1_13;
-    f32 temp_f1_14;
-    f32 temp_f1_15;
-    f32 temp_f1_16;
-    f32 temp_f1_17;
-    f32 temp_f1_18;
-    f32 temp_f1_19;
-    f32 temp_f1_2;
-    f32 temp_f1_3;
-    f32 temp_f1_4;
-    f32 temp_f1_5;
-    f32 temp_f1_6;
-    f32 temp_f1_7;
-    f32 temp_f1_8;
-    f32 temp_f1_9;
-    f32 temp_f26;
-    f32 temp_f27;
-    f32 temp_f27_2;
-    f32 temp_f28;
-    f32 temp_f29;
-    f32 temp_f2;
-    f32 temp_f2_2;
-    f32 temp_f2_3;
-    f32 temp_f2_4;
-    f32 temp_f2_5;
-    f32 temp_f30;
-    f32 temp_f31;
-    f32 temp_f3;
-    f32 temp_f3_2;
-    f32 temp_f3_3;
-    f32 temp_f3_4;
-    f32 temp_f6;
-    f32 temp_f6_2;
-    f32 temp_f7;
-    f32 temp_f7_2;
-    f32 temp_f8;
-    f32 var_f0;
-    f32 var_f0_2;
-    f32 var_f1;
-    f32 var_f1_2;
-    f32 var_f27;
-    f64 temp_f1_11;
-    s32 temp_r0_13;
-    s32 temp_r0_15;
-    s32 temp_r0_18;
-    s32 temp_r0_24;
-    s32 temp_r0_2;
-    s32 temp_r0_30;
-    s32 temp_r0_31;
-    s32 temp_r0_32;
-    s32 temp_r0_33;
-    s32 temp_r0_36;
-    s32 temp_r0_38;
-    s32 temp_r26_2;
-    s32 temp_r26_6;
-    s32 temp_r26_7;
-    s32 temp_r27_3;
-    s32 temp_r27_4;
-    u32 temp_r27_6;
-    s32 temp_r3_45;
-    s32 temp_r3_46;
-    s32 temp_r3_47;
-    s32 temp_r3_48;
-    s32 temp_r5_3;
-    s32 temp_r6;
-    s32 temp_r6_3;
-    s32 temp_r6_4;
-    s32 temp_r6_5;
-    s32 temp_r6_6;
-    s32 var_r26_2;
-    s32 var_r5;
-    s32 var_r6;
-    s32 var_r6_2;
-    u16 temp_r0_12;
-    u16 temp_r0_14;
-    u16 temp_r0_16;
-    u16 temp_r0_23;
-    u16 temp_r0_29;
-    u16 temp_r0_41;
-    u16 temp_r0_44;
-    u16 temp_r0_9;
-    u16 temp_r3;
-    u16 temp_r3_2;
-    u16 temp_r3_3;
-    u16 temp_r3_4;
-    u16 temp_r3_54;
-    u16 temp_r3_5;
-    u16 temp_r3_6;
-    u16 temp_r4_11;
-    u16 temp_r4_15;
-    u16 temp_r4_22;
-    u16 temp_r4_23;
-    u16 temp_r4_27;
-    u16 temp_r4_28;
-    u16 temp_r4_29;
-    u16 temp_r4_30;
-    u16 temp_r4_31;
-    u16 temp_r4_32;
-    u16 temp_r4_33;
-    u16 temp_r4_36;
-    u16 var_r29;
-    u32* temp_r3_12;
-    u32* temp_r3_24;
-    u32* temp_r3_30;
-    u32* temp_r3_37;
-    u32 temp_r3_55;
-    u32 temp_r4_40;
-    u8 *temp_r26_4;
-    u8 *temp_r26_5;
-    u8 *temp_r3_34;
-    u8 *temp_r3_42;
-    u8 *temp_r3_43;
-    u8 *temp_r3_50;
-    u8 *temp_r3_51;
-    u8 *temp_r3_52;
-    u8 *var_r30;
-    u8 temp_r0;
-    u8 temp_r0_10;
-    u8 temp_r0_11;
-    u8 temp_r0_17;
-    u8 temp_r0_19;
-    u8 temp_r0_20;
-    u8 temp_r0_21;
-    u8 temp_r0_22;
-    u8 temp_r0_25;
-    u8 temp_r0_26;
-    u8 temp_r0_27;
-    u8 temp_r0_28;
-    u8 temp_r0_34;
-    u8 temp_r0_35;
-    u8 temp_r0_37;
-    u8 temp_r0_39;
-    u8 temp_r0_3;
-    u8 temp_r0_40;
-    u8 temp_r0_42;
-    u8 temp_r0_43;
-    u8 temp_r0_45;
-    u8 temp_r0_4;
-    u8 temp_r0_8;
-    u8 temp_r26;
-    u8 temp_r26_10;
-    u8 temp_r26_3;
-    u8 temp_r26_8;
-    u8 temp_r26_9;
-    u8 temp_r27;
-    u8 temp_r27_2;
-    u8 temp_r27_5;
-    u8 temp_r3_15;
-    u8 temp_r3_40;
-    u8 temp_r3_41;
-    u8 temp_r3_44;
-    u8 temp_r3_49;
-    u8 temp_r3_53;
-    u8 temp_r4_16;
-    u8 temp_r4_26;
-    u8 temp_r4_34;
-    u8 temp_r4_35;
-    u8 temp_r4_37;
-    u8 temp_r4_38;
-    u8 temp_r4_8;
-    u8 temp_r5;
-    u8 temp_r5_10;
-    u8 temp_r5_11;
-    u8 temp_r5_12;
-    u8 temp_r5_13;
-    u8 temp_r5_14;
-    u8 temp_r5_15;
     u8 temp_r5_16;
-    u8 temp_r5_17;
-    u8 temp_r5_18;
-    u8 temp_r5_19;
-    u8 temp_r5_20;
-    u8 temp_r5_21;
-    u8 temp_r5_22;
-    u8 temp_r5_23;
-    u8 temp_r5_24;
+    PSVec vec3C;
+    u16 temp_r4_29;
+    u8 temp_r0_17;
+    f32 temp_f1_17;
+    u16 temp_r0_9;
+    u16 temp_r4_15;
+    PSVec vec30;
+    f32 temp_f3_4;
     u8 temp_r5_25;
-    u8 temp_r5_26;
-    u8 temp_r5_27;
-    u8 temp_r5_28;
-    u8 temp_r5_29;
-    u8 temp_r5_30;
-    u8 temp_r5_31;
-    u8 temp_r5_32;
+    s32 temp_r0_36;
+    s32 temp_r26_6;
+    PSAppSRT *temp_r4_4;
+    u16 temp_r4_23;
+    f32 temp_f3_3;
+    f32 temp_f1_18;
+    s32 temp_r26_2;
+    f32 temp_f1_2;
+    f32 sp14;
+    u8 temp_r0_28;
+    f32 temp_f27_2;
+    u8 temp_r5_20;
     u8 temp_r5_33;
+    u16 temp_r0_44;
+    s32 temp_r26_9;
+    u16 temp_r4_31;
+    PSAppSRT *temp_r4_5;
+    PSParticle *temp_r3_13;
+    u8 *temp_r3_42;
+    f32 var_f27;
+    u8 temp_r27_2;
+    u8 temp_r5_30;
+    PSAppSRT *temp_r6_2;
+    s32 temp_r3_47;
+    s32 temp_r6_5;
     u8 temp_r5_34;
-    u8 temp_r5_35;
-    u8 temp_r5_36;
-    u8 temp_r5_37;
-    u8 temp_r5_38;
-    u8 temp_r5_39;
-    u8 temp_r5_40;
+    PSGenerator *temp_r5_6;
+    s32 var_r6;
+    u32 temp_r4_40;
+    u8 temp_r0_34;
+    f32 temp_f6_2;
+    f32 temp_f7_2;
+    f32 var_f1;
     u8 temp_r5_41;
-    u8 temp_r5_42;
-    u8 temp_r5_43;
-    u8 temp_r5_44;
-    u8 temp_r5_7;
+    PSGenerator *temp_r4_39;
+    s32 temp_r0_31;
+    u16 temp_r4_32;
+    u8 temp_r3_49;
+    u16 temp_r0_16;
+    u8 temp_r3_41;
+    u8 temp_r5_11;
+    s32 temp_r3_45;
+    PSGenerator *temp_r4_3;
+    PSGenerator *temp_r3_26;
+    s32 temp_r0_30;
+    f32 temp_f1_12;
+    PSParticle *temp_r3_10;
+    s32 temp_r27_5;
+    u8 temp_r0_43;
+    u32 no;
+    u8 temp_r5_22;
+    u16 temp_r0_23;
+    f32 sp10;
+    u8 temp_r26_8;
+    f32 temp_f1_19;
+    f32 temp_f2_2;
+    u8 *temp_r3_52;
+    u16 temp_r4_28;
     u8 temp_r5_8;
+    PSParticle *var_r26;
+    PSAppSRT *temp_r4_7;
+    u8 temp_r5_10;
+    u16 temp_r4_30;
+    u8 temp_r5_24;
+    s32 temp_r27_3;
+    f32 temp_f2_4;
+    s32 temp_r6_3;
+    s32 temp_r6;
+    u8 temp_r0_22;
+    f32 var_f0;
+    u8 *temp_r3_51;
+    f32 temp_f1_5;
+    u8 temp_r5_35;
+    u32* temp_r3_30;
+    u8 temp_r4_35;
+    u8 temp_r0;
+    u8 temp_r4_26;
+    PSGenerator *temp_r3_29;
+    u32 temp_r3_55;
+    s32 temp_r0_32;
+    s32 temp_r0_38;
+    u8 temp_r0_10;
+    s32 temp_r0_13;
+    u8 temp_r5_26;
+    PSAppSRT *temp_r3_18;
+    PSGenerator *temp_r4_20;
+    PSAppSRT *temp_r3_28;
     u8 temp_r5_9;
+    u8 temp_r3_44;
+    PSGenerator *temp_r4_18;
+    PSParticle *temp_r3_38;
+    PSAppSRT *temp_r3_19;
+    u16 temp_r0_12;
+    f32 temp_f1_15;
+    u16 temp_r3_6;
+    PSAppSRT *temp_r3_27;
+    PSAppSRT *temp_r5_4;
+    PSAppSRT *temp_r0_7;
+    u16 temp_r4_27;
+    s32 var_r26_2;
+    u8 temp_r0_45;
+    f32 temp_f3;
+    u8 temp_r4_16;
+    f32 temp_f2;
+    PSParticle *temp_r3_35;
+    u8 temp_r5_19;
+    u8 temp_r0_19;
+    PSGenerator *temp_r3_32;
+    u8 temp_r0_26;
+    PSGenerator *temp_r3_14;
+    u8 temp_r5_43;
+    u8 temp_r5_18;
+    u8 *var_r30;
+    u8 temp_r5_38;
+    f32 temp_f2_5;
+    f32 temp_f0;
+    PSAppSRT *temp_r5_2;
+    f32 temp_f29;
+    u16 temp_r3_2;
+    u8 *temp_r26_4;
+    f32 temp_f27;
+    f32 temp_f1_6;
+    PSAppSRT *temp_r4_10;
+    PSGenerator *temp_r4_25;
+    s32 temp_r0_2;
+    f32 temp_f1_4;
+    PSAppSRT *temp_r3_33;
+    u8 temp_r0_25;
+    u16 temp_r0_41;
+    u8 temp_r5_14;
+    PSVec vec24;
+    u8 temp_r4_38;
+    PSAppSRT *temp_r4_19;
+    u8 temp_r5_37;
+    PSGenerator *temp_r3_11;
+    u8 temp_r0_40;
+    u8 temp_r0_11;
+    PSGenerator *temp_r4_17;
+    u8 temp_r5_29;
+    u8 temp_r5_21;
+    PSGenerator *temp_r3_8;
+    PSGenerator *temp_r4_12;
+    PSAppSRT *temp_r4_14;
+    u16 temp_r0_29;
+    u8 temp_r5_27;
+    f32 temp_f1_8;
+    u16 temp_r3_54;
+    f32 spC;
+    u32* temp_r3_24;
+    s32 temp_r3_46;
+    s32 temp_r5_3;
+    u16 temp_r4_11;
+    u8 temp_r0_39;
+    u8 temp_r0_42;
+    u8 temp_r5_17;
+    PSAppSRT *temp_r4_21;
+    f32 temp_f1_7;
+    s32 temp_r0_18;
+    u8 temp_r5_42;
+    f32 temp_f26;
+    PSGenerator *temp_r4_2;
+    u16 temp_r3;
+    PSVec vec18;
+    u8 temp_r0_20;
+    u8 *temp_r3_43;
+    PSAppSRT *temp_r4_13;
+    PSGenerator *temp_r3_21;
+    s32 temp_r3_48;
+    f32 temp_f6;
+    PSAppSRT *temp_r4_9;
+    u32* temp_r3_12;
+    s32 var_r6_2;
+    u8 temp_r4_34;
+    PSTex *temp_r4;
+    u16 temp_r4_36;
+    f32 temp_f8;
+    u8 temp_r26_10;
+    PSAppSRT *temp_r3_22;
+    s32 temp_r26_7;
+    u8 temp_r4_37;
+    u8 temp_r5_15;
+    u8 temp_r3_15;
+    PSGenerator *temp_r3_9;
+    f32 temp_f1_10;
+    PSJObj *temp_r3_56;
+    u8 temp_r5_36;
+    PSGenerator *temp_r3_7;
+    f32 temp_f7;
+    s32 temp_r6_4;
+    PSAppSRT *temp_r5_5;
+    s32 temp_r0_15;
+    PSAppSRT *temp_r0_5;
+    u8 temp_r5_44;
+    u32 temp_r27_6;
+    PSJObj *temp_r3_60;
+    PSTex *temp_r4_24;
+    u8 *temp_r26_5;
+    u8 temp_r5;
+    PSGenerator *temp_r3_36;
+    u8 temp_r0_4;
+    s32 temp_r0_24;
+    u16 temp_r3_4;
+    PSGenerator *temp_r26_11;
+    u8 temp_r0_27;
+    u8 temp_r4_8;
+    u8 temp_r0_3;
+    u8 temp_r0_21;
+    f32 sp8;
+    PSParticle *temp_r3_31;
+    u8 temp_r5_23;
+    f32 temp_f1_14;
+    PSGenerator *temp_r3_20;
+    u16 var_r29;
+    u16 temp_r0_14;
+    u8 temp_r5_39;
+    u8 *temp_r3_34;
+    u8 temp_r3_53;
+    u16 temp_r3_3;
+    u8 *temp_r3_50;
+    s32 temp_r6_6;
+    u8 temp_r5_31;
+    s32 temp_r0_33;
+    u8 temp_r3_40;
     u8 var_r0;
+    PSGenerator *temp_r3_16;
+    u8 temp_r26_3;
+    u16 temp_r4_22;
+    u8 temp_r27;
+    f32 temp_f3_2;
+    u8 temp_r5_13;
+    PSAppSRT *temp_r0_6;
+    s32 var_r5;
+    f32 temp_f1_9;
+    f32 temp_f1;
+    u32* temp_r3_37;
+    f32 var_f1_2;
+    u8 temp_r26;
+    u8 temp_r0_35;
+    u8 temp_r5_12;
+    PSJObj *temp_r3_57;
+    f32 temp_f31;
+    f32 var_f0_2;
+    f32 temp_f1_16;
+    f32 temp_f30;
+    s32 temp_r27_4;
+    u8 temp_r5_40;
+    PSGenerator *temp_r3_17;
+    u8 temp_r5_32;
+    u8 temp_r5_28;
+    f32 temp_f0_2;
+    PSJObj *temp_r3_59;
+    u16 temp_r4_33;
+    PSAppSRT *temp_r4_6;
+    f32 temp_f28;
+    PSAppSRT *temp_r3_23;
+    u8 temp_r0_37;
+    u16 temp_r3_5;
+    u8 temp_r0_8;
+    u8 temp_r5_7;
+    f32 temp_f2_3;
+    f32 temp_f1_3;
+    f32 temp_f1_13;
+    PSGenerator *temp_r3_25;
+    PSJObj *temp_r3_58;
+    PSGenerator *temp_r3_39;
 
     if (arg0->kind & 0x800) {
         return _psListGetNext(arg0);
@@ -922,7 +922,7 @@ PSParticle *psInterpretParticle0(PSParticle *arg0, PSParticle *arg1) {
     }
     temp_r3_2 = arg0->rotateCount;
     if (temp_r3_2 != 0) {
-        if (arg0->trail != 0.0f) {
+        if (arg0->trail) {
             arg0->rotate += arg0->rotateTarget;
             temp_f1 = arg0->rotateTarget;
 
@@ -931,9 +931,7 @@ PSParticle *psInterpretParticle0(PSParticle *arg0, PSParticle *arg1) {
             } else {
                 arg0->rotateTarget = temp_f1 - arg0->trail;
             }
-            temp_r3_3 = arg0->rotateCount - 1;
-            arg0->rotateCount = temp_r3_3;
-            if (temp_r3_3 == 0) {
+            if (--arg0->rotateCount == 0) {
                 arg0->trail = 0.0f;
                 arg0->rotateTarget = 0.0f;
             }
@@ -945,20 +943,16 @@ PSParticle *psInterpretParticle0(PSParticle *arg0, PSParticle *arg1) {
     }
     temp_r3_4 = arg0->wait;
     if (temp_r3_4 != 0) {
-        temp_r3_5 = temp_r3_4 - 1;
-        arg0->wait = temp_r3_5;
-        if (temp_r3_5 == 0) {
+        if (--arg0->wait == 0) {
             var_r30 = &arg0->commands[arg0->commandPtr];
 loop_30:
             temp_r26 = *var_r30;
             var_r30 += 1;
             if (temp_r26 < 0x80U) {
-                temp_r3_6 = temp_r26 & 0x1F;
-                var_r29 = temp_r3_6;
+                var_r29 = temp_r26 & 0x1F;
                 if (temp_r26 & 0x20) {
-                    temp_r0 = var_r30[0x0];
+                    var_r29 = (var_r29 << 8) + *var_r30;
                     var_r30 += 1;
-                    var_r29 = ((temp_r3_6 << 8) & 0xFFFF00) + temp_r0;
                 }
                 temp_r0_2 = temp_r26 & 0xC0;
                 switch (temp_r0_2) {                /* switch 1; irregular */
@@ -1125,7 +1119,8 @@ loop_30:
                 }
                 goto block_427;
             case 0xA4:                              /* switch 2 */
-                temp_r6 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
+                temp_r6 = ((var_r30[0x0] << 8) & 0xFF00);
+                temp_r6 += var_r30[0x1];
                 var_r30 += 2;
                 temp_r3_10 = psGenerateParticleID0(arg0, (s32) arg0->link, (s32) arg0->bank, temp_r6, 0);
                 if (temp_r3_10 != NULL) {
@@ -1153,11 +1148,10 @@ loop_30:
                 goto block_427;
             case 0xF1:                              /* switch 2 */
                 temp_r5 = arg0->bank;
-                temp_r3_12 = (u32*)ptclref[(u8)temp_r5];
-                var_r6 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
+                var_r6 = (var_r30[0x0] << 8) & 0xFF00; var_r6 += var_r30[0x1];
                 var_r30 += 2;
-                if (temp_r3_12 != 0U) {
-                    var_r6 = temp_r3_12[var_r6];
+                if (ptclref[temp_r5] != NULL) {
+                    var_r6 = ((u32*)ptclref[temp_r5])[var_r6];
                 }
                 temp_r3_13 = psGenerateParticleID0(arg0, (s32) arg0->link, (s32) temp_r5, var_r6, 0);
                 if (temp_r3_13 != NULL) {
@@ -1184,10 +1178,10 @@ loop_30:
                 }
                 goto block_427;
             case 0xA5:                              /* switch 2 */
-                temp_r3_15 = var_r30[0x0];
-                temp_r0_4 = var_r30[0x1];
+                temp_r6 = ((var_r30[0x0] << 8) & 0xFF00);
+                temp_r6 += var_r30[0x1];
                 var_r30 += 2;
-                temp_r3_16 = psCreateGeneratorID((s32) arg0->link, (s32) arg0->bank, ((temp_r3_15 << 8) & 0xFF00) + temp_r0_4);
+                temp_r3_16 = psCreateGeneratorID((s32) arg0->link, (s32) arg0->bank, temp_r6);
                 if (temp_r3_16 != NULL) {
                     temp_r3_16->id = arg0->id;
                     psCopyGeneratorData(temp_r3_16, arg0->generator);
@@ -1254,7 +1248,8 @@ loop_30:
                 goto block_427;
             case 0xEF:                              /* switch 2 */
                 temp_r27 = var_r30[0x2];
-                temp_r5_3 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
+                temp_r5_3 = ((var_r30[0x0] << 8) & 0xFF00);
+                temp_r5_3 += var_r30[0x1];
                 var_r30 += 3;
                 temp_r3_20 = psCreateGeneratorID((s32) arg0->link, (s32) arg0->bank, temp_r5_3);
                 if (temp_r3_20 != NULL) {
@@ -1325,12 +1320,11 @@ loop_30:
                 goto block_427;
             case 0xF0:                              /* switch 2 */
                 temp_r4_8 = arg0->bank;
-                temp_r3_24 = (u32*)ptclref[(u8)temp_r4_8];
                 temp_r27_2 = var_r30[0x2];
-                var_r5 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
+                var_r5 = (var_r30[0x0] << 8) & 0xFF00; var_r5 += var_r30[0x1];
                 var_r30 += 3;
-                if (temp_r3_24 != 0U) {
-                    var_r5 = temp_r3_24[var_r5];
+                if (ptclref[temp_r4_8] != NULL) {
+                    var_r5 = ((u32*)ptclref[temp_r4_8])[var_r5];
                 }
                 temp_r3_25 = psCreateGeneratorID((s32) arg0->link, (s32) temp_r4_8, var_r5);
                 if (temp_r3_25 != NULL) {
@@ -1400,21 +1394,21 @@ loop_30:
                 }
                 goto block_427;
             case 0xA6:                              /* switch 2 */
-                temp_r0_8 = var_r30[0x3];
-                temp_r27_3 = (var_r30[0x2] << 8) & 0xFF00;
-                temp_r26_2 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
+                temp_r26_2 = ((var_r30[0x0] << 8) & 0xFF00);
+                temp_r26_2 += var_r30[0x1];
+                temp_r27_3 = ((var_r30[0x2] << 8) & 0xFF00);
+                temp_r27_3 += var_r30[0x3];
                 var_r30 += 4;
-                arg0->life = temp_r26_2 + (s32) ((f32) (temp_r27_3 + temp_r0_8) * HSD_Randf());
+                arg0->life = temp_r26_2 + (s32) ((f32) temp_r27_3 * HSD_Randf());
                 goto block_427;
             case 0xA7:                              /* switch 2 */
                 temp_r26_3 = var_r30[0x0];
                 var_r30 += 1;
                 if ((s32) temp_r26_3 >= (s32) (100.0f * HSD_Randf())) {
                     arg0->life = 1;
-                } else {
-                    goto block_427;
+                    goto command_done;
                 }
-                break;
+                goto block_427;
             case 0xA8:                              /* switch 2 */
                 temp_r26_4 = getFloat(var_r30, &sp14);
                 vec18.x = (2.0f * sp14 * HSD_Randf()) - sp14;
@@ -1440,10 +1434,10 @@ loop_30:
             case 0xF5:                              /* switch 2 */
                 temp_r5_6 = arg0->generator;
                 if ((temp_r5_6 != NULL) && ((PSAppSRT *) temp_r5_6->appsrt != NULL)) {
-                    temp_r4_11 = temp_r5_6->type;
-                    temp_r5_6->type = temp_r4_11 | 0x2000;
+                    temp_r4_11 = temp_r5_6->type & 0x2000;
+                    temp_r5_6->type |= 0x2000;
                     arg0->generator->appsrt->generatorOwned = 0;
-                    if (!(temp_r4_11 & 0x2000)) {
+                    if (!temp_r4_11) {
                         genPosUpdate(arg0->generator);
                     }
                 }
@@ -1451,9 +1445,9 @@ loop_30:
             case 0xF6:                              /* switch 2 */
                 temp_r3_29 = arg0->generator;
                 if ((temp_r3_29 != NULL) && ((PSAppSRT *) temp_r3_29->appsrt != NULL)) {
-                    temp_r0_9 = temp_r3_29->type;
-                    temp_r3_29->type = temp_r0_9 | 0x1000;
-                    if (!(temp_r0_9 & 0x1000)) {
+                    temp_r6 = temp_r3_29->type & 0x1000;
+                    arg0->generator->type |= 0x1000;
+                    if (!temp_r6) {
                         genPosUpdate(arg0->generator);
                     }
                 }
@@ -1462,11 +1456,12 @@ loop_30:
                 arg0->kind |= 0x10000000;
                 goto block_427;
             case 0xAA:                              /* switch 2 */
-                temp_r0_10 = var_r30[0x3];
-                temp_r27_4 = (var_r30[0x2] << 8) & 0xFF00;
-                temp_r26_6 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
+                var_r26_2 = ((var_r30[0x0] << 8) & 0xFF00);
+                var_r26_2 += var_r30[0x1];
+                temp_r27_4 = ((var_r30[0x2] << 8) & 0xFF00);
+                temp_r27_4 += var_r30[0x3];
                 var_r30 += 4;
-                var_r26_2 = temp_r26_6 + (s32) ((f32) (temp_r27_4 + temp_r0_10) * HSD_Randf());
+                var_r26_2 += (s32) ((f32) temp_r27_4 * HSD_Randf());
                 temp_r5_7 = arg0->bank;
                 temp_r3_30 = (u32*)ptclref[(u8)temp_r5_7];
                 if (temp_r3_30 != 0U) {
@@ -1540,20 +1535,21 @@ loop_30:
                     temp_f6 = arg0->position.x;
                     temp_f7 = arg0->position.z;
                     {
-                        PSVec transformed;
-                        transformed.x = temp_r4_14->matrix[0][3] + ((temp_r4_14->matrix[0][2] * temp_f7) + ((temp_r4_14->matrix[0][0] * temp_f6) + (temp_r4_14->matrix[0][1] * temp_f3_4)));
-                        transformed.y = temp_r4_14->matrix[1][3] + ((temp_r4_14->matrix[1][2] * temp_f7) + ((temp_r4_14->matrix[1][0] * temp_f6) + (temp_r4_14->matrix[1][1] * temp_f3_4)));
-                        transformed.z = temp_r4_14->matrix[2][3] + ((temp_r4_14->matrix[2][2] * temp_f7) + ((temp_r4_14->matrix[2][0] * temp_f6) + (temp_r4_14->matrix[2][1] * temp_f3_4)));
-                        arg0->position = transformed;
+                        f32 tx, ty, tz;
+                        tx = temp_r4_14->matrix[0][3] + ((temp_r4_14->matrix[0][2] * temp_f7) + ((temp_r4_14->matrix[0][0] * temp_f6) + (temp_r4_14->matrix[0][1] * temp_f3_4)));
+                        ty = temp_r4_14->matrix[1][3] + ((temp_r4_14->matrix[1][2] * temp_f7) + ((temp_r4_14->matrix[1][0] * temp_f6) + (temp_r4_14->matrix[1][1] * temp_f3_4)));
+                        tz = temp_r4_14->matrix[2][3] + ((temp_r4_14->matrix[2][2] * temp_f7) + ((temp_r4_14->matrix[2][0] * temp_f6) + (temp_r4_14->matrix[2][1] * temp_f3_4)));
+                        arg0->position.x = tx;
+                        arg0->position.y = ty;
+                        arg0->position.z = tz;
                     }
                     psRemoveParticleAppSRT(arg0);
                 }
                 goto block_427;
             case 0xB3:                              /* switch 2 */
-                temp_r4_15 = arg0->alphaCount;
-                if (temp_r4_15 != 0) {
+                if (arg0->alphaCount != 0) {
                     temp_r5_8 = arg0->alpha1Target;
-                    temp_r6_3 = (s32) (arg0->alphaRemain << 0x10) / (s32) temp_r4_15;
+                    temp_r6_3 = (s32) (arg0->alphaRemain << 0x10) / (s32) arg0->alphaCount;
                     arg0->alpha1 = (u8) ((s32) ((temp_r5_8 << 0x10) + (temp_r6_3 * (arg0->alpha1 - temp_r5_8))) >> 0x10);
                     temp_r4_16 = arg0->alpha2Target;
                     arg0->alpha2 = (u8) ((s32) ((temp_r4_16 << 0x10) + (temp_r6_3 * (arg0->alpha2 - temp_r4_16))) >> 0x10);
@@ -1593,8 +1589,8 @@ loop_30:
                 setVelToJObj(arg0, psPointJObj[temp_r5_9 + arg0->pointOffset]);
                 goto block_427;
             case 0xB8:                              /* switch 2 */
-                temp_r26_7 = var_r30[0x0] + arg0->pointOffset;
-                var_r30 = getFloat(getFloat(var_r30 + 1, &sp14), &sp10);
+                temp_r26_7 = *var_r30++ + arg0->pointOffset;
+                var_r30 = getFloat(getFloat(var_r30, &sp14), &sp10);
                 temp_r4_17 = arg0->generator;
                 if ((temp_r4_17 != NULL) && (temp_r4_17->transformFlags & 0x100)) {
                     temp_f2 = (temp_r4_17->scale.z + (temp_r4_17->scale.x + temp_r4_17->scale.y)) / 3.0f;
@@ -1603,12 +1599,12 @@ loop_30:
                 }
                 if (applyForceJObj(arg0, psPointJObj[temp_r26_7], sp14, sp10) != 0) {
                     arg0->life = 1;
-                } else {
-                    goto block_427;
+                    goto command_done;
                 }
-                break;
+                goto block_427;
             case 0xB9:                              /* switch 2 */
-                temp_r6_4 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
+                temp_r6_4 = ((var_r30[0x0] << 8) & 0xFF00);
+                temp_r6_4 += var_r30[0x1];
                 var_r30 += 2;
                 temp_r3_35 = psGenerateParticleID0(arg0, (s32) arg0->link, (s32) arg0->bank, temp_r6_4, 0);
                 if (temp_r3_35 != NULL) {
@@ -1642,11 +1638,10 @@ loop_30:
                 goto block_427;
             case 0xF2:                              /* switch 2 */
                 temp_r5_10 = arg0->bank;
-                temp_r3_37 = (u32*)ptclref[(u8)temp_r5_10];
-                var_r6_2 = ((var_r30[0x0] << 8) & 0xFF00) + var_r30[0x1];
+                var_r6_2 = (var_r30[0x0] << 8) & 0xFF00; var_r6_2 += var_r30[0x1];
                 var_r30 += 2;
-                if (temp_r3_37 != 0U) {
-                    var_r6_2 = temp_r3_37[var_r6_2];
+                if (ptclref[temp_r5_10] != NULL) {
+                    var_r6_2 = ((u32*)ptclref[temp_r5_10])[var_r6_2];
                 }
                 temp_r3_38 = psGenerateParticleID0(arg0, (s32) arg0->link, (s32) temp_r5_10, var_r6_2, 0);
                 if (temp_r3_38 != NULL) {
@@ -1700,10 +1695,8 @@ loop_30:
                 temp_f1_4 = (f32) ((s8) var_r30[0x2] * 2) * HSD_Randf();
                 sp14 = temp_f1_4;
                 arg0->primTarget[2] = U8ClampAdd(arg0->primTarget[2], temp_f1_4);
-                temp_f1_5 = HSD_Randf();
-                temp_r3_40 = var_r30[0x3];
+                temp_f1_5 = (f32) ((s8) var_r30[0x3] * 2) * HSD_Randf();
                 var_r30 += 4;
-                temp_f1_5 = (f32) ((s8) temp_r3_40 * 2) * temp_f1_5;
                 sp14 = temp_f1_5;
                 arg0->primTarget[3] = U8ClampAdd(arg0->primTarget[3], temp_f1_5);
                 temp_r0_14 = arg0->primCount;
@@ -1735,10 +1728,8 @@ loop_30:
                 temp_f1_8 = (f32) ((s8) var_r30[0x2] * 2) * HSD_Randf();
                 sp14 = temp_f1_8;
                 arg0->envTarget[2] = U8ClampAdd(arg0->envTarget[2], temp_f1_8);
-                temp_f1_9 = HSD_Randf();
-                temp_r3_41 = var_r30[0x3];
+                temp_f1_9 = (f32) ((s8) var_r30[0x3] * 2) * HSD_Randf();
                 var_r30 += 4;
-                temp_f1_9 = (f32) ((s8) temp_r3_41 * 2) * temp_f1_9;
                 sp14 = temp_f1_9;
                 arg0->envTarget[3] = U8ClampAdd(arg0->envTarget[3], temp_f1_9);
                 temp_r0_16 = arg0->envCount;
@@ -1771,9 +1762,8 @@ loop_30:
                 temp_f1_10 = arg0->velocity.x;
                 temp_f0 = arg0->velocity.y;
                 temp_f2_3 = arg0->velocity.z;
-                temp_f1_11 = sqrtf((f32)(temp_f2_3 * temp_f2_3) + ((f32)(temp_f1_10 * temp_f1_10) + (f32)(temp_f0 * temp_f0)));
-                temp_f2_4 = (f32) temp_f1_11;
-                sp10 = (f32) temp_f1_11;
+                sp10 = sqrtf((f32)(temp_f2_3 * temp_f2_3) + ((f32)(temp_f1_10 * temp_f1_10) + (f32)(temp_f0 * temp_f0)));
+                temp_f2_4 = (f32)(f64)sp10;
                 if (temp_f2_4 > 1e-10f) {
                     temp_f1_12 = sp14 / temp_f2_4;
                     sp14 = temp_f1_12;
@@ -1909,22 +1899,20 @@ loop_30:
                 temp_f1_13 = (f32) ((s8) var_r30[0x0] * 2) * HSD_Randf();
                 sp14 = temp_f1_13;
                 arg0->primTarget[0] = U8ClampAdd(arg0->primTarget[0], temp_f1_13);
-                arg0->envTarget[0] = U8ClampAdd(arg0->envTarget[0], temp_f1_13);
+                arg0->envTarget[0] = U8ClampAdd(arg0->envTarget[0], sp14);
                 temp_f1_14 = (f32) ((s8) var_r30[0x1] * 2) * HSD_Randf();
                 sp14 = temp_f1_14;
                 arg0->primTarget[1] = U8ClampAdd(arg0->primTarget[1], temp_f1_14);
-                arg0->envTarget[1] = U8ClampAdd(arg0->envTarget[1], temp_f1_14);
+                arg0->envTarget[1] = U8ClampAdd(arg0->envTarget[1], sp14);
                 temp_f1_15 = (f32) ((s8) var_r30[0x2] * 2) * HSD_Randf();
                 sp14 = temp_f1_15;
                 arg0->primTarget[2] = U8ClampAdd(arg0->primTarget[2], temp_f1_15);
-                arg0->envTarget[2] = U8ClampAdd(arg0->envTarget[2], temp_f1_15);
-                temp_f1_16 = HSD_Randf();
-                temp_r3_44 = var_r30[0x3];
+                arg0->envTarget[2] = U8ClampAdd(arg0->envTarget[2], sp14);
+                temp_f1_16 = (f32) ((s8) var_r30[0x3] * 2) * HSD_Randf();
                 var_r30 += 4;
-                temp_f1_16 = (f32) ((s8) temp_r3_44 * 2) * temp_f1_16;
                 sp14 = temp_f1_16;
                 arg0->primTarget[3] = U8ClampAdd(arg0->primTarget[3], temp_f1_16);
-                arg0->envTarget[3] = U8ClampAdd(arg0->envTarget[3], temp_f1_16);
+                arg0->envTarget[3] = U8ClampAdd(arg0->envTarget[3], sp14);
                 if ((u16) arg0->primCount == 0) {
                     *(u32*)arg0->primColor = (s32) *(u32*)arg0->primTarget;
                 }
@@ -1963,15 +1951,14 @@ loop_30:
                 temp_r26_8 = var_r30[0x0];
                 var_r30 += 2;
                 if ((s32) temp_r27_5 != 0) {
-                    var_f1 = (f32) (s32) ((f32) (temp_r27_5 + 1) * HSD_Randf()) / (f32) temp_r27_5;
+                    sp14 = (f32) (s32) ((f32) (temp_r27_5 + 1) * HSD_Randf()) / (f32) temp_r27_5;
                 } else {
-                    var_f1 = HSD_Randf();
+                    sp14 = HSD_Randf();
                 }
-                sp14 = var_f1;
                 if (temp_r26_8 & 1) {
                     temp_r3_45 = (s8) *var_r30 * 2;
                     var_r30 += 1;
-                    temp_f1_17 = (f32) var_f1 * (f32) temp_r3_45;
+                    temp_f1_17 = sp14 * (f32) temp_r3_45;
                     sp10 = temp_f1_17;
                     if (temp_r26_8 & 0x10) {
                         arg0->primTarget[0] = U8ClampAdd(arg0->primTarget[0], temp_f1_17);
@@ -2005,19 +1992,10 @@ loop_30:
                     }
                 }
                 if (temp_r26_8 & 8) {
-                    if ((s32) temp_r27_5 != 0) {
-                        temp_r3_48 = (s8) *var_r30 * 2;
-                        var_r30 += 1;
-                        var_f0 = ((f32) temp_r3_48 * (f32) (s32) ((f32) (temp_r27_5 + 1) * HSD_Randf())) / (f32) temp_r27_5;
-                    } else {
-                        var_f0 = HSD_Randf();
-                        temp_r3_49 = *var_r30;
-                        var_r30 += 1;
-                        var_f0 = (f32) ((s8) temp_r3_49 * 2) * var_f0;
-                    }
+                    var_f0 = ((s32) temp_r27_5 != 0) ? ((f32) ((s8) *var_r30++ * 2) * (f32) (s32) ((f32) (temp_r27_5 + 1) * HSD_Randf())) / (f32) temp_r27_5 : HSD_Randf() * (f32) ((s8) *var_r30++ * 2);
                     sp14 = var_f0;
                     if (temp_r26_8 & 0x10) {
-                        arg0->primTarget[3] = U8ClampAdd(arg0->primTarget[3], (f32) var_f0);
+                        arg0->primTarget[3] = U8ClampAdd(arg0->primTarget[3], (f32)(f64) var_f0);
                     }
                     if (temp_r26_8 & 0x20) {
                         arg0->envTarget[3] = U8ClampAdd(arg0->envTarget[3], sp14);
@@ -2102,10 +2080,9 @@ loop_30:
                 }
                 goto block_427;
             case 0xEA:                              /* switch 2 */
-                temp_r4_33 = arg0->matCount;
-                if (temp_r4_33 != 0) {
+                if (arg0->matCount != 0) {
                     temp_r5_43 = arg0->matRGBTarget;
-                    temp_r6_5 = (s32) (arg0->matRemain << 0x10) / (s32) temp_r4_33;
+                    temp_r6_5 = (s32) (arg0->matRemain << 0x10) / (s32) arg0->matCount;
                     arg0->matRGB = (u8) ((s32) ((temp_r5_43 << 0x10) + (temp_r6_5 * (arg0->matRGB - temp_r5_43))) >> 0x10);
                     temp_r4_34 = arg0->matAlphaTarget;
                     arg0->matAlpha = (u8) ((s32) ((temp_r4_34 << 0x10) + (temp_r6_5 * (arg0->matAlpha - temp_r4_34))) >> 0x10);
@@ -2133,10 +2110,9 @@ loop_30:
                 }
                 goto block_427;
             case 0xEB:                              /* switch 2 */
-                temp_r4_36 = arg0->ambCount;
-                if (temp_r4_36 != 0) {
+                if (arg0->ambCount != 0) {
                     temp_r5_44 = arg0->ambRGBTarget;
-                    temp_r6_6 = (s32) (arg0->ambRemain << 0x10) / (s32) temp_r4_36;
+                    temp_r6_6 = (s32) (arg0->ambRemain << 0x10) / (s32) arg0->ambCount;
                     arg0->ambRGB = (u8) ((s32) ((temp_r5_44 << 0x10) + (temp_r6_6 * (arg0->ambRGB - temp_r5_44))) >> 0x10);
                     temp_r4_37 = arg0->ambAlphaTarget;
                     arg0->ambAlpha = (u8) ((s32) ((temp_r4_37 << 0x10) + (temp_r6_6 * (arg0->ambAlpha - temp_r4_37))) >> 0x10);
@@ -2168,23 +2144,22 @@ loop_30:
                 temp_r26_9 = *temp_r3_52;
                 var_r30 = temp_r3_52 + 1;
                 if ((s32) temp_r26_9 != 0) {
-                    var_f0_2 = sp14 + ((sp10 * (f32) (s32) ((f32) (temp_r26_9 + 1) * HSD_Randf())) / (f32) temp_r26_9);
+                    sp14 = sp14 + ((sp10 * (f32) (s32) ((f32) (temp_r26_9 + 1) * HSD_Randf())) / (f32) temp_r26_9);
                 } else {
-                    var_f0_2 = (sp10 * HSD_Randf()) + sp14;
+                    sp14 = (sp10 * HSD_Randf()) + sp14;
                 }
-                sp14 = var_f0_2;
-                arg0->rotateTarget += (f32) var_f0_2;
-                arg0->rotate += var_f0_2;
+                arg0->rotateTarget += sp14;
+                arg0->rotate += sp14;
                 goto block_427;
             case 0xF3:                              /* switch 2 */
-                temp_r26_10 = var_r30[0x0];
-                var_r30 = getTime(getFloat(getFloat(var_r30 + 1, &arg0->rotateTarget), &arg0->trail), &arg0->rotateCount);
+                temp_r26_10 = *var_r30++;
+                var_r30 = getTime(getFloat(getFloat(var_r30, &arg0->rotateTarget), &arg0->trail), &arg0->rotateCount);
                 if ((u16) arg0->rotateCount != 0) {
                     if ((s32) temp_r26_10 == 0) {
-                        arg0->rotateTarget = (f32) (((f64) arg0->trail * 0.5) + (f64) arg0->rotateTarget);
+                        arg0->rotateTarget += arg0->trail / 2.0;
                     } else {
                         arg0->rotateTarget *= -1.0f;
-                        arg0->rotateTarget = (f32) -(((f64) arg0->trail * 0.5) - (f64) arg0->rotateTarget);
+                        arg0->rotateTarget -= arg0->trail / 2.0;
                     }
                 } else {
                     arg0->rotateTarget = 0.0f;
@@ -2198,9 +2173,7 @@ loop_30:
                 arg0->loopPtr = var_r30 - arg0->commands;
                 goto block_427;
             case 0xFB:                              /* switch 2 */
-                temp_r3_53 = arg0->loopCount - 1;
-                arg0->loopCount = temp_r3_53;
-                if (temp_r3_53 != 0) {
+                if (--arg0->loopCount != 0) {
                     var_r30 = &arg0->commands[arg0->loopPtr];
                 }
                 goto block_427;
@@ -2224,9 +2197,7 @@ command_done:
             arg0->wait = var_r29;
         }
     }
-    temp_r3_54 = arg0->life - 1;
-    arg0->life = temp_r3_54;
-    if (temp_r3_54 == 0) {
+    if (--arg0->life == 0) {
         temp_r4_39 = arg0->generator;
         if (temp_r4_39 != NULL) {
             temp_r4_39->children -= 1;
@@ -2255,12 +2226,13 @@ command_done:
         if (var_f1_2 < 0.0f) {
             var_f1_2 = -var_f1_2;
         }
-        temp_f27 = (arg0->velocity.z * tanf(var_f1_2)) + var_f27;
+        var_f27 = (arg0->velocity.z * tanf(var_f1_2)) + var_f27;
+        var_f27 *= arg0->velocity.y;
         arg0->velocity.x += temp_r26_11->gravity;
-        temp_f27_2 = temp_f27 * arg0->velocity.y;
+        temp_f27_2 = var_f27;
         temp_f26 = temp_f27_2 * cosf(arg0->velocity.x);
-        temp_f8 = arg0->velocity.z;
         temp_f7_2 = temp_f27_2 * sinf(arg0->velocity.x);
+        temp_f8 = arg0->velocity.z;
         temp_f6_2 = -temp_f26;
         temp_f2_5 = (temp_f29 * (temp_f6_2 * temp_f28)) + (temp_f7_2 * temp_f30);
         temp_f0_2 = temp_f7_2 * temp_f28;
@@ -2283,10 +2255,11 @@ command_done:
     temp_r4_40 = arg0->kind;
     if (temp_r4_40 & 0x8000) {
         temp_r27_6 = (temp_r4_40 >> 0xAU) & 0x1C;
+        no = (temp_r4_40 >> 0xCU) & 7;
         if ((u32) psPointJObj[temp_r27_6 / 4] == 0U) {
             temp_r3_56 = HSD_JObjAlloc();
             if (temp_r3_56 != NULL) {
-                psSetPointJObj(((temp_r4_40 >> 0xCU) & 7) + 1, (PSObject *) temp_r3_56);
+                psSetPointJObj(no + 1, (PSObject *) temp_r3_56);
                 HSD_JObjUnref(temp_r3_56);
             }
         }
