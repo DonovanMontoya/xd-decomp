@@ -25,17 +25,45 @@ static s32 getCpSegPolyArray(bool *blocked, GSvec *start, GSvec *ends, unsigned 
 }
 
 #pragma dont_inline reset
-extern "C" s32 GScolsys2SunArray(bool *blocked, GSvec *start, GSvec *ends, u32 count) {
-    Mtx rotation, matrix;
-    GSvec triangle[3],normal;
+static inline s32 sunModelHit(bool *blocked, GSvec *start, GSvec *ends, u32 count, SunModel *model, Mtx matrix, Mtx rotation)
+{
+    GSvec *src;
+    s32 hit;
+    GSvec normal;
+    GSvec *dst;
+    GSvec triangle[3];
+    SunPolygon *polygon;
+    u32 j;
+    s32 k;
+    s32 status;
+    status=0;
+    polygon=model->polygons;
+    for(j=0;j<model->count;j++,polygon++) {
+        PSMTXMultVec(rotation,(Vec *)&polygon->normal,(Vec *)&normal);
+        src=polygon->vertices;dst=triangle;
+        k=0;
+        do { PSMTXMultVec(matrix,(Vec *)src,(Vec *)dst); k++;dst++;src++; } while(k<3);
+        hit=getCpSegPolyArray(blocked,start,ends,count,triangle,&normal);
+        if(hit<0) { status=-1;break; }
+        if(hit>0) status=1;
+    }
+    return status;
+}
+static inline s32 sunArrayHit(bool *blocked, GSvec *start, GSvec *ends, u32 count)
+{
+    SunObject *object;
+    s32 status;
+    SunFile *head;
     u8 enabled;
-    if(!GScolsys2GetCCDFileHead()) return 0;
-    memset(blocked,0,count);
-    s32 result=0;
-    SunFile *head=GScolsys2GetCCDFileHead();
-    u32 i=0;
     SunModel *model;
-    SunObject *object=head->objects;
+    u32 i;
+    Mtx matrix;
+    s32 result;
+    Mtx rotation;
+    result=0;
+    head=GScolsys2GetCCDFileHead();
+    i=0;
+    object=head->objects;
     for(;i<head->count;i++,object++) {
         GScolsys2GetObjEnable(i,&enabled);
         if(enabled) {
@@ -43,30 +71,18 @@ extern "C" s32 GScolsys2SunArray(bool *blocked, GSvec *start, GSvec *ends, u32 c
             if(model) {
                 GScolsys2GetObjMatrix(matrix,i);
                 GScolsys2GetObjRotMatrix(rotation,i);
-                s32 status;
-                s32 k;
-                u32 j;
-                SunPolygon *polygon;
-                j=0;
-                polygon=model->polygons;
-                status=j;
-                for(;j<model->count;j++,polygon++) {
-                    PSMTXMultVec(rotation,(Vec *)&polygon->normal,(Vec *)&normal);
-                    GSvec *dst;
-                    GSvec *src;
-                    src=polygon->vertices;dst=triangle;
-                    k=0;
-                    do { PSMTXMultVec(matrix,(Vec *)src,(Vec *)dst); k++;dst++;src++; } while(k<3);
-                    s32 hit=getCpSegPolyArray(blocked,start,ends,count,triangle,&normal);
-                    if(hit<0) { status=-1;break; }
-                    if(hit>0) status=1;
-                }
+                status=sunModelHit(blocked,start,ends,count,model,matrix,rotation);
                 if(status<0) { result=1;break; }
                 if(status>0) result=1;
             }
         }
     }
     return result;
+}
+extern "C" s32 GScolsys2SunArray(bool *blocked, GSvec *start, GSvec *ends, u32 count) {
+    if(!GScolsys2GetCCDFileHead()) return 0;
+    memset(blocked,0,count);
+    return sunArrayHit(blocked,start,ends,count);
 }
 extern "C" s32 GScolsys2Sun(GSvec *start,GSvec *end) {
     Mtx rotation,matrix;

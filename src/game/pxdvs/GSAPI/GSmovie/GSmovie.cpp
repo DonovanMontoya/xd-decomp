@@ -244,6 +244,15 @@ struct GSgfxRenderModule {void* reserved00;void(*update)(f32);void(*render)(GSgf
 extern void GSgfxRenderModuleRegister(u8,GSgfxRenderModule*,void*);
 extern "C" u32 GSgappCreate(s32,u8,u32,void(*)(u32,u32));
 extern "C" void GSgappSetName(u32,const char*);
+static inline void _movieStreamingClear()
+{
+    __GSmovieStreaming* movie;
+    u32 i;
+    for(i=0;i<_maxStreaming;++i) {
+        movie=&_movieStreaming[i];
+        movie->handle=0;movie->state=0;movie->decoder=0;
+    }
+}
 extern "C" void GSmovieInit() {
     GSgfxRenderModule module={0,_movieBeforeRender,_movieRender,0,0,0,0xb29a48e1};
     if(_initFlag!=1) {
@@ -252,11 +261,7 @@ extern "C" void GSmovieInit() {
         u8 success;
         if(!_movieStreaming) success=0;
         else {
-            u32 i;
-            for(i=0;i<_maxStreaming;++i) {
-                __GSmovieStreaming* movie=&_movieStreaming[i];
-                movie->handle=0;movie->state=0;movie->decoder=0;
-            }
+            _movieStreamingClear();
             success=1;
         }
         if(success) {

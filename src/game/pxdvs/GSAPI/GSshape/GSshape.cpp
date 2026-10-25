@@ -257,15 +257,19 @@ struct GsShapeRenderModuleData {
 };
 struct GSgfxRenderModule;
 extern void GSgfxRenderModuleRegister(u8,GSgfxRenderModule*,void*);
-extern "C" bool shapeInit(u16 count) {
-    u16 i=0;
-    g_primitiveEditorMode=0;
-    for(;i<g_shapeRenderNum;i++) {
+static inline void shapeFreeAll()
+{
+    u16 i;
+    for(i=0;i<g_shapeRenderNum;i++) {
         if(g_shapeRender[i]) {
             g_shapeRender[i]->FreeShapeRender();
             GSmemFree(g_shapeRender[i]); g_shapeRender[i]=0;
         }
     }
+}
+extern "C" bool shapeInit(u16 count) {
+    g_primitiveEditorMode=0;
+    shapeFreeAll();
     if(g_shapeRender) { GSmemFree(g_shapeRender); g_shapeRender=0; }
     g_shapeRenderNum=0;
     if(!g_moduleInited) {
