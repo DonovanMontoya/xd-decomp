@@ -708,10 +708,15 @@ void Release__11pdaMemoListFv(MemoWork *arg0) {
     }
 }
 
+static inline void SetupIds(MemoWork *arg0) {
+    s32 index;
+    for (index = 0; index < (u16)memoDataGetCount(0); index++)
+        arg0->ids[index] = memoDataGetPokemonID(0, index) & 0x3fff;
+}
+
 void InitWork__11pdaMemoListFv(MemoWork *arg0) {
     s32 count = (u16)memoDataGetCount(0);
     MemoItem *item;
-    s32 index;
     arg0->cursor.pos.selected = 0;
     arg0->cursor.pos.first = 0;
     arg0->x = 0.0f;
@@ -733,8 +738,7 @@ void InitWork__11pdaMemoListFv(MemoWork *arg0) {
     menuModelInit(&arg0->model, item->width, item->height);
     menuModelInit(&arg0->hero, 0x280, 0x1e0);
     menuModelTerm(&arg0->hero);
-    for (index = 0; index < (u16)memoDataGetCount(0); index++)
-        arg0->ids[index] = memoDataGetPokemonID(0, index) & 0x3fff;
+    SetupIds(arg0);
     Sort__11pdaMemoListF15menuPdaMemoSort(arg0, 0);
     menuPdaSubInitAlpha(arg0->alpha, 8, 0);
     LoadPokemon__11pdaMemoListFl(arg0, 0);
