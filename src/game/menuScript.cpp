@@ -89,7 +89,7 @@ u32 GSmsgGetRect(u32);
 void *windowGetKeyInfo(void);
 u32 zokuseiGetPokemonSpriteID(void *, s32);
 u8 pokemonDataBiosGetTokuseiDataId(void *, s32);
-void *pokemonTokuseiDataBiosGetPtr(u8);
+void *pokemonTokuseiDataBiosGetPtr(u16);
 u32 pokemonTokuseiDataBiosGetName(void *);
 u32 pokemonDataBiosGetName(void *);
 void winSpriteSetDisp(tagSPRITE_WORK *, bool);
@@ -180,7 +180,7 @@ extern "C" void menuScriptEeveeHook(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite)
     case 0x4EE:
         if (c.selected >= 3) {
             winSpriteSetDisp(sprite, true);
-            msgctrlSetValue(0x2D, c.selected == 3 ? 0x205 : 0x204);
+            msgctrlSetValue(0x2D, (u16)(c.selected == 3 ? 0x205 : 0x204));
             msgctrlSetValue(0x4E, 0x85);
             sprite->message = 0xA0D4;
         } else {
@@ -202,9 +202,13 @@ extern "C" void menuScriptEeveeHook(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite)
         windowDrawSprite(0, 0, win, icons[c.selected], 0, winSpriteGetLayerID(win, sprite));
         break;
     }
+    case 0x4FF:
+        _menuScriptTokuseiSetumei(win, sprite, &c, (POKEMON_DATA_dd_ *)data);
+        break;
     case 0x4FE:
-        if (pokemonDataBiosGetTokuseiDataId(data, 0) != 0) {
-            u16 *str = GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(0)));
+        u8 tokusei;
+        if ((tokusei = pokemonDataBiosGetTokuseiDataId(data, 0)) != 0) {
+            u16 *str = GSmsgGetGSchar(pokemonTokuseiDataBiosGetName(pokemonTokuseiDataBiosGetPtr(tokusei)));
             msgctrlSetValue(0x37, (u32)str);
             GSmsgPrint2(win->layer, 0, 0, WIN_ALPHA(win) | ~0xFF, 0x4276);
         }
