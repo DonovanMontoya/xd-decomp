@@ -6,8 +6,8 @@ u8 GScolsys2UtilGetCpPlaneLine(Vec *out, f32 *rate, Vec *normal, Vec *plane, Vec
     f32 ny = normal->y;
     f32 nx = normal->x;
     f32 nz = normal->z;
-    f32 dot = nz * delta.z + (nx * delta.x + ny * delta.y);
-    if (0.0f == dot) return 0;
+    f32 dot;
+    if (0.0f == (dot = nz * delta.z + (nx * delta.x + ny * delta.y))) return 0;
     f32 t = (normal->z * (plane->z - start->z) + (normal->x * (plane->x - start->x) + normal->y * (plane->y - start->y))) / dot;
     PSVECScale(&delta, &delta, t);
     PSVECAdd(&delta, start, out);

@@ -320,32 +320,44 @@ void CReliveStage::putVisitor(Pokemon &p) {
 
 
 void CReliveHall::checkWithBackupSet() {
-    CReliveStage *stage = (CReliveStage *)this;
-    s32 offset = 0;
-    u32 i = 0;
+    CReliveStage *backup;
+    Pokemon *bv;
+    CReliveStage *cur;
+    s32 offset2;
+    Pokemon *v;
+    u32 i;
+    s32 offset;
+    CReliveStage *stage;
+    u32 k;
+    u16 id;
+    bool found;
+    u32 j;
+    stage = (CReliveStage *)this;
+    i = 0;
+    offset = 0;
     do {
         if (memcmp(stage, (u8 *)_pRelivehallCopy + offset, 0x3D8) != 0) {
-            Pokemon *v = stage->getVisitorPointer();
+            v = stage->getVisitorPointer();
             if (v) {
                 darkPokemonBiosSetSteps(pokemonBiosGetDarkpokemonDataId(v), 0);
             }
         }
         i++;
-        offset += 0x3D8;
         stage++;
+        offset += 0x3D8;
     } while (i < 9);
-    u32 k = 0;
-    offset = 0;
+    k = 0;
+    offset2 = 0;
     do {
-        CReliveStage *backup = (CReliveStage *)((u8 *)_pRelivehallCopy + offset);
-        Pokemon *bv = backup->getVisitorPointer();
+        backup = (CReliveStage *)((u8 *)_pRelivehallCopy + offset2);
+        bv = backup->getVisitorPointer();
         if (bv) {
-            u16 id = pokemonBiosGetDarkpokemonDataId(bv);
-            bool found = false;
-            CReliveStage *cur = (CReliveStage *)this;
-            u32 j = 0;
+            id = pokemonBiosGetDarkpokemonDataId(bv);
+            found = false;
+            cur = (CReliveStage *)this;
+            j = 0;
             do {
-                Pokemon *v = cur->getVisitorPointer();
+                v = cur->getVisitorPointer();
                 if (v && id == pokemonBiosGetDarkpokemonDataId(v)) {
                     found = true;
                     break;
@@ -358,7 +370,7 @@ void CReliveHall::checkWithBackupSet() {
             }
         }
         k++;
-        offset += 0x3D8;
+        offset2 += 0x3D8;
     } while (k < 9);
     if (_pRelivehallCopy) {
         GSmemFree(_pRelivehallCopy);

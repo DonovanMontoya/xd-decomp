@@ -24,10 +24,10 @@ u8 GSvtrGetInfoDisp() { return _vtrTexDisp; }
 void GSvtrSetInfoDisp(u8 display,u8 border) { _vtrTexDisp=display; _vtrTexDispBorder=border; }
 s32 GSvtrGetState() { return _vtrState; }
 u8 GSvtrIsActive() { return _vtrEnabled; }
+static inline void _vtrUnblockAll() { u32 i; u32* h; h=_vtrGSgappHdlList; for(i=0;i<_vtrGSgappCount;i++,h++) if(*h) GSgappUnblock(*h); }
 void GSvtrDisable() {
-    u32* handles=_vtrGSgappHdlList;
-    _vtrState=0; _vtrEnabled=0;
-    for(u32 i=0;i<_vtrGSgappCount;++i,++handles) if(*handles) GSgappUnblock(*handles);
+    _vtrState = 0; _vtrEnabled = 0;
+    _vtrUnblockAll();
     if(_vtrGSgfxIsPaused==1) { GSgfxRenderUnpause(); _vtrGSgfxIsPaused=0; }
 }
 void GSvtrEnable() { _vtrEnabled=1; _vtrState=2; _vtrBlockState=3; }
@@ -47,6 +47,7 @@ void GSvtrInit() {
     GSgappSetName(handle,"GSvtr");
 }
 }
+static inline void _vtrBlockAll() { u32 i; u32* h; h=_vtrGSgappHdlList; for(i=0;i<_vtrGSgappCount;i++,h++) if(*h) GSgappBlock(*h); }
 static void _vtrUpdateFunc(unsigned long,unsigned long) {
     if(_vtrEnabled) {
         _vtrTexDispFunc();
@@ -55,16 +56,13 @@ static void _vtrUpdateFunc(unsigned long,unsigned long) {
         case 0: paused=0; break;
         case 1: {
             _vtrBlockState=2;
-            u32* item=_vtrGSgappHdlList;
-            for(u32 i=0;i<_vtrGSgappCount;++i,++item) if(*item) GSgappBlock(*item);
+            _vtrBlockAll();
             paused=1; break;
         }
         case 2: paused=1; break;
         case 3: {
-            u32 i=0;
             _vtrBlockState=0;
-            u32* item=_vtrGSgappHdlList;
-            for(;i<_vtrGSgappCount;++i,++item) if(*item) GSgappUnblock(*item);
+            _vtrUnblockAll();
             paused=0; break;
         }
         }
@@ -73,6 +71,7 @@ static void _vtrUpdateFunc(unsigned long,unsigned long) {
             _vtrGSgfxIsPaused=paused;
         }
         switch(_vtrState) {
+        case 2: break;
         case 3: if(_vtrBlockState!=2) _vtrBlockState=1; break;
         case 4: {
             s32 state=2;
