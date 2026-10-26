@@ -81,12 +81,8 @@ extern "C" void modelIntpJObjTrans__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjfP5GSvecUl
 }
 extern "C" {
 static void _modelIntpJObj__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjf(HSD_JObj* a, HSD_JObj* b, HSD_JObj* out, f32 factor) {
-    f32 inverse = 1.0f - factor;
-    GSvec va, vb, value;
-    getTranslation(a, &va); getTranslation(b, &vb);
-    interpolate(&va, &vb, &value, factor, inverse); setTranslation(out, &value);
-    getScale(a, &va); getScale(b, &vb);
-    interpolate(&va, &vb, &value, factor, inverse); setScale(out, &value);
+    modelIntpJObjTrans__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjfP5GSvecUl(a, b, out, factor, 0, 0);
+    modelIntpJObjScale__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjfP5GSvecUl(a, b, out, factor, 0, 0);
     modelIntpJObjRotate__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjfP5GSvecUl(a, b, out, factor, 0, 0);
 }
 static void _modelIntpJObjAll__FP8_GSmodelP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjff(GSmodel* model, HSD_JObj* a, HSD_JObj* b, HSD_JObj* out, f32 factor, f32 rate) {

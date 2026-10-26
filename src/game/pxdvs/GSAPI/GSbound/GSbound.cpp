@@ -306,6 +306,9 @@ void GSboundGetSize(GSbound* bound, Vec* size, u8 scale, u8 rotate) {
 }
 s32 GSgfxProjectFastList(Vec*, Vec*, s32);
 s32 GSboundIsInViewFast(GSbound* bound) {
+    u8 outsideAll, outsideAny;
+    s32 i;
+    Vec* point;
     Vec corners[8], projected[8], maximum, minimum;
     if (bound->flags & 4) return 2;
     GSboundGetMinMax(bound, &minimum, &maximum, 1, 1, 1, 0);
@@ -318,9 +321,11 @@ s32 GSboundIsInViewFast(GSbound* bound) {
     corners[6].x = maximum.x; corners[6].y = maximum.y; corners[6].z = minimum.z;
     corners[7].x = maximum.x; corners[7].y = maximum.y; corners[7].z = maximum.z;
     if (GSgfxProjectFastList(corners, projected, 8) != 2) return 2;
-    u8 outsideAny = 0, outsideAll = 0x1f;
-    Vec* point = projected;
-    for (s32 i = 0; i < 8; ++i, ++point) {
+    outsideAny=0;
+    outsideAll=0x1f;
+    i=0;
+    point=projected;
+    for (; i < 8; ++point, ++i) {
         u8 outside;
         if (point->x < 0.0f) outside = 1;
         else if (point->x > 640.0f) outside = 2;
@@ -331,9 +336,10 @@ s32 GSboundIsInViewFast(GSbound* bound) {
         outsideAny |= outside;
         outsideAll &= outside;
     }
-    if (!outsideAny) return 2;
-    if (outsideAll) return 0;
-    else return 1;
+    s32 result;
+    if (!outsideAny) result=2;
+    else { if (outsideAll) result=0; else result=1; }
+    return result;
 }
 }
 

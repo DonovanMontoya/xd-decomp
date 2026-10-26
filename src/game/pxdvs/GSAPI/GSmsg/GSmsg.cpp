@@ -511,8 +511,8 @@ s32 SJIStoGSchar(u16* destination, char* source) {
         while ((code = *input) != 0) {
             s32 width;
             if ((code >= 0x81 && code <= 0x9f) || (code >= 0xe0 && code <= 0xfc)) {
-                if (code >= 0x81 && code <= 0x9f) code = sjis_81xx[code - 0x81][input[1] - 0x40];
-                else code = sjis_e0xx[code - 0xe0][input[1] - 0x40];
+                if (code >= 0x81 && code <= 0x9f) code = ((u16 (*)[184])sjis_81xx)[code - 0x81][input[1] - 0x40];
+                else code = ((u16 (*)[184])sjis_e0xx)[code - 0xe0][input[1] - 0x40];
                 width = 2;
             } else {
                 if (code >= 0xa1 && code <= 0xdf) code = (u16)(code + 0xfec0);
@@ -645,7 +645,7 @@ extern "C" s32 GBAMakeFromGSchar(u8* destination, const u16* source, s32 languag
         switch (language) {
         case 1: return encodeGbaCharacters(destination, source, gba_code);
         case 3: case 4: return encodeGbaQuotes(destination, source);
-        case 0: case 2: case 5: case 6: case 7: case 8:
+        case 7: case 8:
         default: return encodeGbaCharacters(destination, source, gba_international_code);
         }
     }
@@ -985,14 +985,14 @@ void _msgMakeTexture(MSG_TASK_WORK *task,u8 *pixels,s16 width,s16 height,s16 bea
  if(_pMw->textureX+width+2>=512){_pMw->textureY+=_pMw->rowHeight+2;_pMw->textureX=2;_pMw->rowHeight=task->glyphHeight+2;if(_pMw->textureY+_pMw->rowHeight>=512)_pMw->textureY=1;}
  if(_pMw->rowHeight<height)_pMw->rowHeight=task->glyphHeight;
  s32 bytes=((width+1)&~1)/2;u8 *image=_pMw->image;
- for(s32 y=-1;y<height+1;++y){s32 row=_pMw->textureY+y;for(s32 x=-2;x<width+2;x+=2){s32 column=_pMw->textureX+x;image[(((column&7)+(row&7)*8)>>1)+(((column>>3)+((row>>3)<<6))<<5)]=0;}}
- for(s32 y=0;y<height;++y){u8 *source=pixels+y*bytes;s32 row=_pMw->textureY+y;for(s32 x=0;x<width;x+=2){s32 column=_pMw->textureX+x;image[(((column&7)+(row&7)*8)>>1)+(((column>>3)+((row>>3)<<6))<<5)]=*source++;}}
+ for(s32 y=-1;y<height+1;++y){s32 row=_pMw->textureY+y;for(s32 x=-2;x<width+2;x+=2){s32 column=_pMw->textureX+x;(image+(((column>>3)+((row>>3)<<6))<<5))[(((column&7)+(row&7)*8)>>1)]=0;}}
+ for(s32 y=0;y<height;++y){u8 *source=pixels+y*bytes;s32 row=_pMw->textureY+y;for(s32 x=0;x<width;x+=2){s32 column=_pMw->textureX+x;(image+(((column>>3)+((row>>3)<<6))<<5))[(((column&7)+(row&7)*8)>>1)]=*source++;}}
  s16 x0=task->cursorX;s16 y0=task->reserved43+(bearing*task->scaleY+task->cursorY);s16 x1=width*task->scaleX+x0;s16 y1=height*task->scaleY+y0;
- f32 u0=_pMw->textureX*0.001953125f,v0=_pMw->textureY*0.001953125f,u1=(_pMw->textureX+width)*0.001953125f,v1=(_pMw->textureY+height)*0.001953125f;
- msgLayerWord(0x1998)=0x98;u8 alpha=(u32)(u8)task->color*0xc0/255;
+ f32 u0=_pMw->textureX*0.001953125f,u1=(_pMw->textureX+width)*0.001953125f,v0=_pMw->textureY*0.001953125f,v1=(_pMw->textureY+height)*0.001953125f;
+ u8 alpha=(u32)(u8)task->color*0xc0/255;msgLayerWord(0x1998)=0x98;
  switch(task->immediate){case 0:default:beginSurface__10GSgfxLayerFUs(_TargetLayer,4);break;
  case 1:beginSurface__10GSgfxLayerFUs(_TargetLayer,8);msgShadowQuad(x0+1,(s16)(y0-2)+1,x1+1,(s16)(y1-2)+1,alpha,u0,v0,u1,v1);break;
- case 2:beginSurface__10GSgfxLayerFUs(_TargetLayer,20);s16 top=y0-2,bottom=y1-2;msgShadowQuad(x0-1,top,x1-1,bottom,alpha,u0,v0,u1,v1);msgShadowQuad(x0+1,top,x1+1,bottom,alpha,u0,v0,u1,v1);msgShadowQuad(x0,top-1,x1,bottom-1,alpha,u0,v0,u1,v1);msgShadowQuad(x0,top+1,x1,bottom+1,alpha,u0,v0,u1,v1);break;
+ case 2:beginSurface__10GSgfxLayerFUs(_TargetLayer,20);s32 top=y0-2,bottom=y1-2;msgShadowQuad(x0-1,top,x1-1,bottom,alpha,u0,v0,u1,v1);msgShadowQuad(x0+1,top,x1+1,bottom,alpha,u0,v0,u1,v1);msgShadowQuad(x0,top-1,x1,bottom-1,alpha,u0,v0,u1,v1);msgShadowQuad(x0,top+1,x1,bottom+1,alpha,u0,v0,u1,v1);break;
  }
  msgColorVertex(x0,y0-2,task,u0,v0);msgColorVertex(x1,y0-2,task,u1,v0);msgColorVertex(x0,y1-2,task,u0,v1);msgColorVertex(x1,y1-2,task,u1,v1);endSurface__10GSgfxLayerFv(_TargetLayer);_pMw->textureX+=bytes*2+2;
 }

@@ -4,7 +4,7 @@ void *gamedatasaveBiosGetPtr(void*);void gamedatasaveBiosSetPtr(void*,void*);
 s32 gamedatasaveBiosGetSavernd(void*);void gamedatasaveBiosSetSavernd(void*,s32);
 s32 gamedatasaveBiosGetSavecount(void*);void gamedatasaveBiosSetSavecount(void*,s32);
 s32 gamedatasaveBiosGetFloorid(void*);void gamedatasaveBiosSetFloorid(void*,s32);
-f32 gamedatasaveBiosGetPlaytime(void*);void gamedatasaveBiosSetPlaytime(void*,f32);
+f64 gamedatasaveBiosGetPlaytime(void*);void gamedatasaveBiosSetPlaytime(void*,f32);
 s32 gamedatasaveBiosGetPrevfloorid(void*);void gamedatasaveBiosSetPrevfloorid(void*,s32);
 u8 gamedatasaveBiosGetFloorposindex(void*);void gamedatasaveBiosSetFloorposindex(void*,u8);
 u8 gamedatasaveBiosGetOptionNoVibration(void*);void gamedatasaveBiosSetOptionNoVibration(void*,u8);

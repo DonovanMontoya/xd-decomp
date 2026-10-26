@@ -700,10 +700,10 @@ s32 menuShopDrawListText(ShopWindow *win, ShopSprite *spr) {
     s32 idx;
     s32 nb;
     s32 i;
-    s32 y;
     s32 x;
     s32 rowY;
     u32 w;
+    u32 secondWidth;
     u16 item;
     u32 msg;
     arg = (ShopMenuArg *)win->arg;
@@ -717,7 +717,8 @@ s32 menuShopDrawListText(ShopWindow *win, ShopSprite *spr) {
     nb = getNbItem__FP13SHOP_MENU_ARG(arg);
     msgctrlSetValue(0x50, 99999);
     w = GSmsgGetRect(0x434E) >> 16;
-    x = (spr->width - w) - (GSmsgGetRect(0x42AF) >> 16);
+    secondWidth=GSmsgGetRect(0x42AF) >> 16;
+    x = (spr->width - w) - secondWidth;
     if (*arg->curPos != 0.0f && *arg->isScroll != 0) {
         if (*arg->curPos < 0.0f) {
             idx--;
@@ -727,11 +728,10 @@ s32 menuShopDrawListText(ShopWindow *win, ShopSprite *spr) {
         }
         scroll = (s32)*arg->curPos;
     }
-    y = start * 30;
     i = start;
-    for (; i < limit && idx < nb; y += 30, i++, idx++) {
+    for (; i < limit && idx < nb; i++, idx++) {
         if (idx >= 0) {
-            rowY = y - scroll;
+            rowY = i*30 - scroll;
             item = getItem__FP13SHOP_MENU_ARGi(arg, idx);
             msg = getItemNameMsg__FUs(item);
             if (msg != 0) {
@@ -748,8 +748,7 @@ s32 menuShopDrawListText(ShopWindow *win, ShopSprite *spr) {
                     GSmsgPrint2(win->layer, spr->width - (GSmsgGetRect(0x434E) >> 16), rowY, -1, 0x434E);
                 }
             } else {
-                s32 point = getItemCouponPoint__FUs(item);
-                msgctrlSetValue(0x50, point);
+                msgctrlSetValue(0x50, getItemCouponPoint__FUs(item));
                 GSmsgPrint2(win->layer, spr->width - (GSmsgGetRect(0x4359) >> 16), rowY, -1, 0x4359);
             }
         }
@@ -978,12 +977,17 @@ static u16 selectItem__FiUcUcP13SHOP_MENU_ARG(s32 shop, u8 mode, u8 flags, ShopM
     return arg->item;
 }
 
+#pragma push
+#pragma opt_propagation off
+#pragma scheduling off
 static void setDefMenuItem__Fv(void) {
     ShopMenuItem *item = &DefMenuItem;
-    s16 y = menuItemBiosGetPtr(0x3C, item->id)->y;
+    s32 id=item->id;
+    s16 y = menuItemBiosGetPtr(0x3C, id)->y;
     item->y = y;
 }
 
+#pragma pop
 static s32 getExchangeMax__FUsUc(u16 item, u8 mode) {
     s32 point = getItemCouponPoint__FUs(item);
     s32 max;

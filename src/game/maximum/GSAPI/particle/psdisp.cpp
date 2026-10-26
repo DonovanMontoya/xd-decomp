@@ -167,6 +167,7 @@ __declspec(weak) void setupTevReg(PSParticle *pp) {
 
 __declspec(weak) void psDispSubAPPSRTPoint(PSParticle *arg0) {
     union { f64 alignment; u8 bytes[172]; } stack;
+    s16 sx,sy,sz;
     PSAppSRT *temp_r3;
     PSAppSRT *temp_r3_2;
     PSAppSRT *temp_r3_3;
@@ -204,10 +205,10 @@ __declspec(weak) void psDispSubAPPSRTPoint(PSParticle *arg0) {
     s32 temp_r7_2;
     u16 temp_r5;
     u32 temp_r0;
-    u8 temp_r12;
-    u8 temp_r30_2;
-    u8 temp_r6_4;
-    u8 temp_r7;
+    s32 temp_r12;
+    s32 temp_r30_2;
+    s32 temp_r6_4;
+    s32 temp_r7;
 
     if ((s32) currentMtx != 0) {
         currentMtx = 0;
@@ -311,7 +312,6 @@ __declspec(weak) void psDispSubAPPSRTPoint(PSParticle *arg0) {
         temp_r0 = arg0->kind;
         temp_r4 = temp_r0 & 0x80000080;
         switch (temp_r4) {                          /* irregular */
-        default:
         case 0x0:
             temp_r5 = arg0->primCount;
             if (temp_r5 != 0) {
@@ -333,7 +333,7 @@ __declspec(weak) void psDispSubAPPSRTPoint(PSParticle *arg0) {
             (*(u8*)(stack.bytes+0x2F)) = 0xFF;
             (*(u8*)(stack.bytes+0x2E)) = 0xFF;
             (*(u8*)(stack.bytes+0x2D)) = 0xFF;
-            (*(s8*)(stack.bytes+0x2C)) = 0xFF;
+            (*(u8*)(stack.bytes+0x2C)) = 0xFF;
             break;
         }
         if (temp_r0 & 0x400) {
@@ -355,9 +355,12 @@ __declspec(weak) void psDispSubAPPSRTPoint(PSParticle *arg0) {
 
         (*(f32*)(stack.bytes+0x24)) = var_f23_2;
         (*(f32*)(stack.bytes+0x20)) = var_f24_2;
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x20)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x24)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x28)));
+        sz = PS_FIXED6((*(f32*)(stack.bytes+0x28)));
+        sy = PS_FIXED6((*(f32*)(stack.bytes+0x24)));
+        sx = PS_FIXED6((*(f32*)(stack.bytes+0x20)));
+        *(volatile s16 *)0xCC008000 = sx;
+        *(volatile s16 *)0xCC008000 = sy;
+        *(volatile s16 *)0xCC008000 = sz;
         temp_r7_2 = (((((*(u8*)(stack.bytes+0x2D)) * 0x10) & 0xF00 & ~0xF000) | (((u8) (*(s8*)(stack.bytes+0x2C)) << 8) & 0xF000)) & ~0xF0) | ((*(u8*)(stack.bytes+0x2E)) & 0xF0);
         temp_f0 = (f32) (*(u8*)(stack.bytes+0x2F)) * arg0->textureScale;
         *(volatile s16 *)0xCC008000 = (temp_r7_2 & ~0xF) | (((u32) (s32) temp_f0 >> 4U) & 0xF);
@@ -368,9 +371,12 @@ __declspec(weak) void psDispSubAPPSRTPoint(PSParticle *arg0) {
 
         (*(f32*)(stack.bytes+0x18)) = (*(f32*)(stack.bytes+0x40));
         (*(f32*)(stack.bytes+0x14)) = (*(f32*)(stack.bytes+0x3C));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x14)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x18)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x1C)));
+        sz = PS_FIXED6((*(f32*)(stack.bytes+0x1C)));
+        sy = PS_FIXED6((*(f32*)(stack.bytes+0x18)));
+        sx = PS_FIXED6((*(f32*)(stack.bytes+0x14)));
+        *(volatile s16 *)0xCC008000 = sx;
+        *(volatile s16 *)0xCC008000 = sy;
+        *(volatile s16 *)0xCC008000 = sz;
         *(volatile s16 *)0xCC008000 = (s16) ((((*(u8*)(stack.bytes+0x2F)) >> 4U) & 0xF) | temp_r7_2);
         if (arg0->kind & 0x400) {
             *(volatile u8 *)0xCC008000 = 1;
@@ -397,9 +403,12 @@ __declspec(weak) void psDispSubAPPSRTPoint(PSParticle *arg0) {
 
         (*(f32*)(stack.bytes+0xC)) = (*(f32*)(stack.bytes+0x40));
         (*(f32*)(stack.bytes+0x8)) = (*(f32*)(stack.bytes+0x3C));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x8)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0xC)));
-        *(volatile s16 *)0xCC008000 = PS_FIXED6((*(f32*)(stack.bytes+0x10)));
+        sz = PS_FIXED6((*(f32*)(stack.bytes+0x10)));
+        sy = PS_FIXED6((*(f32*)(stack.bytes+0xC)));
+        sx = PS_FIXED6((*(f32*)(stack.bytes+0x8)));
+        *(volatile s16 *)0xCC008000 = sx;
+        *(volatile s16 *)0xCC008000 = sy;
+        *(volatile s16 *)0xCC008000 = sz;
         if (arg0->kind & 0x400) {
             *(volatile u8 *)0xCC008000 = 1;
         }
@@ -434,10 +443,10 @@ __declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *arg0) {
     s32 temp_r7_2;
     u16 temp_r5;
     u32 temp_r0;
-    u8 temp_r12;
-    u8 temp_r30_2;
-    u8 temp_r6;
-    u8 temp_r7;
+    s32 temp_r12;
+    s32 temp_r30_2;
+    s32 temp_r6;
+    s32 temp_r7;
 
     if ((s32) currentMtx != 0) {
         currentMtx = 0;
@@ -491,7 +500,6 @@ __declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *arg0) {
     temp_r0 = arg0->kind;
     temp_r4 = temp_r0 & 0x80000080;
     switch (temp_r4) {                              /* irregular */
-    default:
     case 0x0:
         temp_r5 = arg0->primCount;
         if (temp_r5 != 0) {
@@ -513,7 +521,7 @@ __declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *arg0) {
         (*(u8*)(stack.bytes+0x23)) = 0xFF;
         (*(u8*)(stack.bytes+0x22)) = 0xFF;
         (*(u8*)(stack.bytes+0x21)) = 0xFF;
-        (*(s8*)(stack.bytes+0x20)) = 0xFF;
+        (*(u8*)(stack.bytes+0x20)) = 0xFF;
         break;
     }
     if (temp_r0 & 0x400) {
@@ -1061,8 +1069,8 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
     u8 temp_r27_4;
     u8 temp_r6_2;
     u8 temp_r7;
-    u8 var_ctr;
-    u8 var_ctr_2;
+    u32 var_ctr;
+    u32 var_ctr_2;
 
     directionX = farg3;
     directionY = farg4;
@@ -1098,8 +1106,8 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                     temp_f22 = ((temp_f21 * (f32) tan((f64) var_f1)) + var_f22) * arg0->velocity.y;
                     temp_f0 = temp_f22 * (f32) cos((f64) radialAngle);
                     radialX = temp_f0;
-                    temp_f5 = -temp_f0;
                     temp_f8 = temp_f22 * (f32) sin((f64) radialAngle);
+                    temp_f5 = -radialX;
                     var_f15 = temp_r27->position.x + ((radialX * temp_f14) + (temp_f21 * temp_f16));
                     var_f14 = temp_r27->position.y + ((temp_f14 * (temp_f21 * temp_f17)) + ((temp_f16 * (temp_f5 * temp_f17)) + (temp_f8 * temp_f15)));
                     var_f16 = temp_r27->position.z + ((temp_f14 * (temp_f21 * temp_f15)) + ((temp_f16 * (temp_f5 * temp_f15)) - (temp_f8 * temp_f17)));
@@ -1137,8 +1145,8 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                     temp_f21_2 = ((temp_f22_2 * (f32) tan((f64) var_f1_2)) + var_f21) * arg0->velocity.y;
                     temp_f0_2 = temp_f21_2 * (f32) cos((f64) radialAngleNoSRT);
                     radialXNoSRT = temp_f0_2;
-                    temp_f5_2 = -temp_f0_2;
                     temp_f8_2 = temp_f21_2 * (f32) sin((f64) radialAngleNoSRT);
+                    temp_f5_2 = -radialXNoSRT;
                     var_f14_2 = temp_r27_2->position.x + ((radialXNoSRT * temp_f17_2) + (temp_f22_2 * temp_f15_2));
                     var_f15_2 = temp_r27_2->position.y + ((temp_f17_2 * (temp_f22_2 * temp_f14_2)) + ((temp_f15_2 * (temp_f5_2 * temp_f14_2)) + (temp_f8_2 * temp_f16_2)));
                     var_f16_2 = temp_r27_2->position.z + ((temp_f17_2 * (temp_f22_2 * temp_f16_2)) + ((temp_f15_2 * (temp_f5_2 * temp_f16_2)) - (temp_f8_2 * temp_f14_2)));
@@ -1152,7 +1160,7 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
         temp_r0 = arg0->kind;
         temp_r4 = temp_r0 & 0x80000080;
         switch (temp_r4) {                          /* switch 1; irregular */
-        default:                                    /* switch 1 */
+        case 0x80000000:
         case 0x0:                                   /* switch 1 */
             temp_r5 = arg0->primCount;
             if (temp_r5 != 0) {
@@ -1175,6 +1183,8 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
             color.b = 0xFF;
             color.g = 0xFF;
             color.r = 0xFF;
+            break;
+        default:
             break;
         }
         if (arg1 == NULL) {
@@ -1359,45 +1369,41 @@ loop_99:
                         GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
                         GXBegin((enum _GXPrimitive) temp_r26, GX_VTXFMT3, (u16) temp_r25);
                     }
-                    var_ctr = temp_r25;
-                    if ((s32) temp_r25 > 0) {
-                        do {
-                            var_f1_4 = *(f32*)var_r29;
-                            temp_r3_5 = arg0->kind;
-                            temp_f3_2 = 2.0f * (var_f1_4 - 0.5f);
-                            if (temp_r3_5 & 0x40000) {
-                                var_f1_4 = 1.0f - var_f1_4;
-                            }
-                            var_f2 = *(f32*)((u8*)var_r29+4);
-                            var_r29 = (u32*)((u8*)var_r29 + 8);
-                            var_r5 = (s32) -((var_f2 * temp_f17_3) - 255.0f);
-                            if (var_r5 < 0) {
-                                var_r5 = 0;
-                            }
-                            if (var_r5 > 0xFF) {
-                                var_r5 = 0xFF;
-                            }
-                            temp_f4_2 = 2.0f * (var_f2 - 0.5f);
-                            if (temp_r3_5 & 0x80000) {
-                                var_f2 = 1.0f - var_f2;
-                            }
-                            trailCustomZ = PS_FIXED6((arg_sp14 * var_f1_3 * temp_f4_2) + ((arg_sp8 * temp_f3_2) + farg2));
-                            saved390 = (f64) ((farg7 * temp_f3_2) + farg1);
+                    for (var_ctr = 0; var_ctr < temp_r25; ++var_ctr) {
+                        var_f1_4 = *(f32*)var_r29;
+                        temp_r3_5 = arg0->kind;
+                        temp_f3_2 = 2.0f * (var_f1_4 - 0.5f);
+                        if (temp_r3_5 & 0x40000) {
+                            var_f1_4 = 1.0f - var_f1_4;
+                        }
+                        var_f2 = *(f32*)((u8*)var_r29+4);
+                        var_r29 = (u32*)((u8*)var_r29 + 8);
+                        var_r5 = (s32) -((var_f2 * temp_f17_3) - 255.0f);
+                        if (var_r5 < 0) {
+                            var_r5 = 0;
+                        }
+                        if (var_r5 > 0xFF) {
+                            var_r5 = 0xFF;
+                        }
+                        temp_f4_2 = 2.0f * (var_f2 - 0.5f);
+                        if (temp_r3_5 & 0x80000) {
+                            var_f2 = 1.0f - var_f2;
+                        }
+                        trailCustomZ = PS_FIXED6((arg_sp14 * var_f1_3 * temp_f4_2) + ((arg_sp8 * temp_f3_2) + farg2));
+                        saved390 = (f64) ((farg7 * temp_f3_2) + farg1);
 
-                            trailCustomY = PS_FIXED6((arg_sp10 * var_f1_3 * temp_f4_2) + (f32) saved390);
-                            saved390 = (f64) ((farg6 * temp_f3_2) + farg0);
-                            trailCustomX = PS_FIXED6((arg_spC * var_f1_3 * temp_f4_2) + (f32) saved390);
-                            *(volatile s16 *)0xCC008000 = trailCustomX;
-                            *(volatile s16 *)0xCC008000 = trailCustomY;
-                            *(volatile s16 *)0xCC008000 = trailCustomZ;
-                            *(volatile s16 *)0xCC008000 = (s16) ((((u32) var_r5 >> 4U) & 0xF) | (((((color.g * 0x10) & 0xF00 & ~0xF000) | (((u8) color.r << 8) & 0xF000)) & ~0xF0) | (color.b & 0xF0)));
-                            if (arg0->kind & 0x400) {
-                                *(volatile f32 *)0xCC008000 = var_f1_4;
-                                *(volatile f32 *)0xCC008000 = var_f2;
-                            }
-                            var_ctr -= 1;
-                        } while (var_ctr != 0);
-                    }
+                        trailCustomY = PS_FIXED6((arg_sp10 * var_f1_3 * temp_f4_2) + (f32) saved390);
+                        saved390 = (f64) ((farg6 * temp_f3_2) + farg0);
+                        trailCustomX = PS_FIXED6((arg_spC * var_f1_3 * temp_f4_2) + (f32) saved390);
+                        *(volatile s16 *)0xCC008000 = trailCustomX;
+                        *(volatile s16 *)0xCC008000 = trailCustomY;
+                        *(volatile s16 *)0xCC008000 = trailCustomZ;
+                        *(volatile s16 *)0xCC008000 = (s16) ((((u32) var_r5 >> 4U) & 0xF) | (((((color.g * 0x10) & 0xF00 & ~0xF000) | (((u8) color.r << 8) & 0xF000)) & ~0xF0) | (color.b & 0xF0)));
+                        if (arg0->kind & 0x400) {
+                            *(volatile f32 *)0xCC008000 = var_f1_4;
+                            *(volatile f32 *)0xCC008000 = var_f2;
+                        }
+                }
                     var_r30 -= 1;
                     goto loop_99;
                 }
@@ -1484,37 +1490,33 @@ loop_126:
                 GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
                 GXBegin((enum _GXPrimitive) temp_r26_2, GX_VTXFMT1, (u16) temp_r27_4);
             }
-            var_ctr_2 = temp_r27_4;
-            if ((s32) temp_r27_4 > 0) {
-                do {
-                    var_f1_5 = *(f32*)var_r29_2;
-                    temp_r3_9 = arg0->kind;
-                    temp_f3_3 = 2.0f * (var_f1_5 - 0.5f);
-                    if (temp_r3_9 & 0x40000) {
-                        var_f1_5 = 1.0f - var_f1_5;
-                    }
-                    var_f2_2 = *(f32*)((u8*)var_r29_2+4);
-                    var_r29_2 = (u32*)((u8*)var_r29_2 + 8);
-                    temp_f4_3 = 2.0f * (var_f2_2 - 0.5f);
-                    if (temp_r3_9 & 0x80000) {
-                        var_f2_2 = 1.0f - var_f2_2;
-                    }
-                    customZ = PS_FIXED6((arg_sp14 * temp_f4_3) + ((arg_sp8 * temp_f3_3) + farg2));
-                    saved390 = (f64) ((farg7 * temp_f3_3) + farg1);
+            for (var_ctr_2 = 0; var_ctr_2 < temp_r27_4; ++var_ctr_2) {
+                var_f1_5 = *(f32*)var_r29_2;
+                temp_r3_9 = arg0->kind;
+                temp_f3_3 = 2.0f * (var_f1_5 - 0.5f);
+                if (temp_r3_9 & 0x40000) {
+                    var_f1_5 = 1.0f - var_f1_5;
+                }
+                var_f2_2 = *(f32*)((u8*)var_r29_2+4);
+                var_r29_2 = (u32*)((u8*)var_r29_2 + 8);
+                temp_f4_3 = 2.0f * (var_f2_2 - 0.5f);
+                if (temp_r3_9 & 0x80000) {
+                    var_f2_2 = 1.0f - var_f2_2;
+                }
+                customZ = PS_FIXED6((arg_sp14 * temp_f4_3) + ((arg_sp8 * temp_f3_3) + farg2));
+                saved390 = (f64) ((farg7 * temp_f3_3) + farg1);
 
-                    customY = PS_FIXED6((arg_sp10 * temp_f4_3) + (f32) saved390);
-                    saved390 = (f64) ((farg6 * temp_f3_3) + farg0);
-                    customX = PS_FIXED6((arg_spC * temp_f4_3) + (f32) saved390);
-                    *(volatile s16 *)0xCC008000 = customX;
-                    *(volatile s16 *)0xCC008000 = customY;
-                    *(volatile s16 *)0xCC008000 = customZ;
-                    if (arg0->kind & 0x400) {
-                        *(volatile f32 *)0xCC008000 = var_f1_5;
-                        *(volatile f32 *)0xCC008000 = var_f2_2;
-                    }
-                    var_ctr_2 -= 1;
-                } while (var_ctr_2 != 0);
-            }
+                customY = PS_FIXED6((arg_sp10 * temp_f4_3) + (f32) saved390);
+                saved390 = (f64) ((farg6 * temp_f3_3) + farg0);
+                customX = PS_FIXED6((arg_spC * temp_f4_3) + (f32) saved390);
+                *(volatile s16 *)0xCC008000 = customX;
+                *(volatile s16 *)0xCC008000 = customY;
+                *(volatile s16 *)0xCC008000 = customZ;
+                if (arg0->kind & 0x400) {
+                    *(volatile f32 *)0xCC008000 = var_f1_5;
+                    *(volatile f32 *)0xCC008000 = var_f2_2;
+                }
+        }
             var_r25 -= 1;
             goto loop_126;
         }

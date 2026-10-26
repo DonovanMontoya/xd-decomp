@@ -137,8 +137,8 @@ static void modifyDirGenBase(PSParticle *arg0, f32 farg0, f32 farg1, f32 farg2, 
     temp_f24 = var_f31 * (f32) sin((f64) farg0);
     temp_f25_3 = temp_f24 * (f32) cos((f64) temp_f25_2);
     temp_f26 = temp_f24 * (f32) sin((f64) temp_f25_2);
-    temp_f1_4 = -temp_f25_3;
     temp_f6 = var_f31 * (f32) cos((f64) farg0);
+    temp_f1_4 = -temp_f25_3;
     arg0->velocity.x = (temp_f25_3 * temp_f27_2) + (temp_f6 * temp_f28_2);
     arg0->velocity.y = (temp_f27_2 * (temp_f6 * temp_f30)) + ((temp_f28_2 * (temp_f1_4 * temp_f30)) + (temp_f26 * temp_f29));
     arg0->velocity.z = (temp_f27_2 * (temp_f6 * temp_f29)) + ((temp_f28_2 * (temp_f1_4 * temp_f29)) - (temp_f26 * temp_f30));
@@ -235,8 +235,8 @@ static void modifyDir(PSParticle *arg0, f32 farg0) {
     temp_f24 = var_f27 * (f32) sin((f64) farg0);
     temp_f26_3 = temp_f24 * (f32) cos((f64) temp_f26_2);
     temp_f25 = temp_f24 * (f32) sin((f64) temp_f26_2);
-    temp_f1_4 = -temp_f26_3;
     temp_f6 = var_f27 * (f32) cos((f64) farg0);
+    temp_f1_4 = -temp_f26_3;
     arg0->velocity.x = (temp_f26_3 * temp_f28_2) + (temp_f6 * temp_f29);
     arg0->velocity.y = (temp_f28_2 * (temp_f6 * temp_f31)) + ((temp_f29 * (temp_f1_4 * temp_f31)) + (temp_f25 * temp_f30));
     arg0->velocity.z = (temp_f28_2 * (temp_f6 * temp_f30)) + ((temp_f29 * (temp_f1_4 * temp_f30)) - (temp_f25 * temp_f31));

@@ -84,14 +84,14 @@ u32 fightFloor_GetStockPokemonNum(s32);
 s8 pcboxGetNbPokemonBox(void);
 s8 pcboxGetPokemonBoxNbEmptySlot(s32, s8);
 void menuPocket2GetHero(Hero**, s32*);
-void fightFloorGetNowPtr(void);
-u32 fightFloor_GetFightKind(void);
+void* fightFloorGetNowPtr(void);
+u32 fightFloor_GetFightKind(void*);
 u8 fightTrainerIsSelectedItemBall(s32);
 void GSmsgMakeGScharStr(unsigned short*, s32, s32);
 s32 pokemonGetStatus(Pokemon*, s32, s32, s32);
-void itemDataBiosGetItemEffectParam(void);
-void* itemParamGetPtr(void);
-u8 itemParamGetPPSelectFlag(void);
+u8 itemDataBiosGetItemEffectParam(void*);
+void* itemParamGetPtr(u8);
+u8 itemParamGetPPSelectFlag(void*);
 s32 menuPokemonOpenWazaLight(s8);
 void menuPokemonCloseWazaLight(void);
 u8 pokemonCheckValid(Pokemon*);
@@ -100,7 +100,7 @@ u16 pokemonBiosGetPokemonWazaDataId(Pokemon*, u16);
 u8 pokemonDataBiosGetWazaMcn(u32, u16);
 s32 evolutionWazaLearn(Pokemon*, u16, u8*, s32, s8 (*)(Pokemon*, u16, long), void*);
 s32 itemDataBiosGetPtr(u16);
-u32 itemDataBiosGetWazaMachineNo(void);
+u32 itemDataBiosGetWazaMachineNo(void*);
 u8 itemDataBiosGetHidenMachineNo(s32);
 s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1*, Pokemon*, u32, u16, u8);
 void menuPokemonUpdate(void);
@@ -115,7 +115,7 @@ s32 menuSubOpenYesNo(s32, s32, s32, s32);
 void msgctrlSetValue(s32, s32);
 void pokemonBiosGetPokemonDataId(Pokemon*);
 u32 pokemonDataBiosGetPtr(void);
-u32 pokemonDataBiosGetVoice(void);
+u32 pokemonDataBiosGetVoice(void*);
 void pokemonGetFriendFormPokemonFriendFilterId(Pokemon*, s32, s32);
 s32 pokemonGetSoubiItemSoubiDataId(Pokemon*);
 void pokemonWazaCreate(Pokemon*, u32, u16);
@@ -173,10 +173,11 @@ static u32 getPokemonData(Pokemon* pokemon) {
 
 static u16 playPokemonVoice(Pokemon* pokemon) {
     u16 voice;
-    if (getPokemonData(pokemon) == 0) {
+    u32 data = getPokemonData(pokemon);
+    if (data == 0) {
         return 0;
     }
-    voice = pokemonDataBiosGetVoice();
+    voice = pokemonDataBiosGetVoice((void*)data);
     GSsndPlayNow(voice);
     return voice;
 }
@@ -668,7 +669,7 @@ s32 menuUseItemSkill(u32 item, s32* out) {
     s32 answer;
     s32 learned;
     itemData = itemDataBiosGetPtr(item);
-    machine = itemDataBiosGetWazaMachineNo();
+    machine = itemDataBiosGetWazaMachineNo((void*)itemData);
     move = itemDataBiosGetWazaIDByWazaMachineNo(machine);
     GSsndPlayNow(0x23);
     hiden = itemDataBiosGetHidenMachineNo(itemData);
@@ -804,10 +805,7 @@ s32 menuUseItemPPRecovery(u32 item, s32* out) {
             if (pokemonIsJoutaiDataId(pokemon, 0x3E) != 0) {
                 joutai = 1;
             } else {
-                itemDataBiosGetPtr(item);
-                itemDataBiosGetItemEffectParam();
-                itemParamGetPtr();
-                if (itemParamGetPPSelectFlag() != 0) {
+                if (itemParamGetPPSelectFlag(itemParamGetPtr(itemDataBiosGetItemEffectParam((void*)itemDataBiosGetPtr(item)))) != 0) {
                     selected = menuPokemonOpenWazaLight(menu);
                     menuPokemonCloseWazaLight();
                 } else {
@@ -878,8 +876,7 @@ s32 menuUseItemBattleBall(u32 item, s32* out) {
         return 1;
     }
     menuPocket2GetHero(&hero, &ball);
-    fightFloorGetNowPtr();
-    kind = fightFloor_GetFightKind();
+    kind = fightFloor_GetFightKind(fightFloorGetNowPtr());
     if (hero->getHeroStyle() != 2 && kind != 0xC && kind != 0xD) {
         dispMsg(0x5000);
         return 1;

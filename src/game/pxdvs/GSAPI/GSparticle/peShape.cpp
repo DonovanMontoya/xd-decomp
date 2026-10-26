@@ -118,7 +118,7 @@ void peShapeContainer::Render() {
     Vec position, direction, transformed;
     ParticleLight* light0;
     ParticleLight* light1;
-    struct LightList {ParticleLight* first;ParticleLight* second;};
+    struct LightList {ParticleLight* entries[2];};
     LightList lights;
     s32 var_r7,var_r8;
     f32 temp_f1,temp_f2;
@@ -239,7 +239,7 @@ block_31:
                 state->unkEAC = 1;
 
                 state->unk16CC = (s32) (state->unk16CC | 1);
-                lights.first = temp_r9;
+                lights.entries[0] = temp_r9;
                 state->unk16A8 = (s32) (state->unk16A8 | 8);
                 state->unk1784 = (s32) (state->unk1784 | 1);
                 state->unk1760 = (s32) (state->unk1760 | 8);
@@ -301,25 +301,27 @@ block_31:
                 state->unk1760 = (s32) (state->unk1760 | 8);
                 }
                 PSMTXMultVec(g_CameraMatrix,&arg0->shape->position,&position);
-                temp_r0_2 = light0->type;
+                ParticleLight* positionLight=light0;
+                temp_r0_2 = positionLight->type;
                 transformed.x = position.x;
                 transformed.y = position.y;
                 transformed.z = position.z;
-                switch (temp_r0_2) {                /* switch 2; irregular */
-                case 2:                             /* switch 2 */
-                    light0->position.x = position.x;
-                    light0->position.y = position.y;
-                    light0->position.z = position.z;
-                default:                            /* switch 2 */
-block_48:
-                    light0->flags = (u16) (light0->flags | 2);
+                switch (temp_r0_2) {
+                case 0:
+                    goto positionDone;
+                case 2:
+                    positionLight->position.x = transformed.x;
+                    positionLight->position.y = transformed.y;
+                    positionLight->position.z = transformed.z;
                     break;
-                case 1:                             /* switch 2 */
-                    light0->position.x = position.x;
-                    light0->position.y = position.y;
-                    light0->position.z = position.z;
-                    goto block_48;
+                case 1:
+                    positionLight->position.x = transformed.x;
+                    positionLight->position.y = transformed.y;
+                    positionLight->position.z = transformed.z;
+                    break;
                 }
+                positionLight->flags = (u16)(positionLight->flags | 2);
+positionDone:
 
                 cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(g_current_layer,0,0,0,0,1,&light0,2,2);
                 if (temp_r31 & 0x400) {
@@ -328,7 +330,7 @@ block_48:
                     { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
                     state->unkEAC = 2;
                     var_r30 = 2;
-                    lights.second = temp_r11;
+                    lights.entries[1] = temp_r11;
                     state->unk16CC = (s32) (state->unk16CC | 1);
                     state->unk16A8 = (s32) (state->unk16A8 | 8);
                     state->unk1784 = (s32) (state->unk1784 | 1);
@@ -400,40 +402,41 @@ block_48:
                         direction.z = 0.0f;
                     } else {
                         temp_r5 = arg0->shape;
-                        temp_f2 = -temp_r5->position.y;
-                        temp_f1 = -temp_r5->position.z;
-                        direction.y = temp_f2;
-                        direction.x = -temp_r5->position.x;
-                        direction.z = temp_f1;
+                        temp_f2 = temp_r5->position.y;
+                        temp_f1 = temp_r5->position.z;
+                        f32 directionX = temp_r5->position.x;
+                        direction.y = -temp_f2;
+                        direction.x = -directionX;
+                        direction.z = -temp_f1;
                         PSVECNormalize(&direction,&direction);
                     }
                     PSMTXMultVecSR(g_CameraMatrix,&direction,&direction);
-                    temp_r0_3 = light1->type;
-                    if (temp_r0_3 < 2) {
-                        if (temp_r0_3 < 0) {
-
-                        } else {
-                            light1->direction.x = direction.x;
-                            light1->direction.y = direction.y;
-                            light1->direction.z = direction.z;
-                            light1->flags = (u16) (light1->flags | 4);
-                        }
+                    ParticleLight* directionLight=light1;
+                    temp_r0_3 = directionLight->type;
+                    switch (temp_r0_3) {
+                    case 0:
+                    case 1:
+                        directionLight->direction.x = direction.x;
+                        directionLight->direction.y = direction.y;
+                        directionLight->direction.z = direction.z;
+                        directionLight->flags = (u16)(directionLight->flags | 4);
+                        break;
                     }
+
                 }
                 var_r7_2 = 0;
-                ((ParticleLayerState*)g_current_layer)->unkD94 = var_r30;
-loop_62:
-                if (var_r7_2 < 8U) {
+                ParticleLayerState* lightState=(ParticleLayerState*)g_current_layer;
+                lightState->unkD94 = var_r30;
+                while (var_r7_2 < 8U) {
                     if (var_r7_2 < var_r30) {
                         temp_r9_2 = (var_r7_2 * 4) & 0x3FC;
-                        ((ParticleLayerState*)g_current_layer)->lights[var_r7_2]=(&lights.first)[var_r7_2];
+                        lightState->lights[var_r7_2]=lights.entries[var_r7_2];
                     } else {
-                        ((ParticleLayerState*)g_current_layer)->lights[var_r7_2]=0;
+                        lightState->lights[var_r7_2]=0;
                     }
                     var_r7_2 += 1;
-                    goto loop_62;
                 }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+                { ParticleLayerState* state=lightState;
                 state->unk16BC = (s32) (state->unk16BC | 0x10);
                 state->unk16A8 = (s32) (state->unk16A8 | 4);
                 state->unk1774 = (s32) (state->unk1774 | 0x10);
@@ -626,8 +629,8 @@ extern "C" { extern f32 __float_nan[]; }
 static inline s32 shapeFloatClass(f32 x) {
     union {f32 value;s32 bits;} v;v.value=x;
     switch(v.bits&0x7f800000) {
-    case 0x7f800000:return (v.bits&0x7fffff)?1:2;
-    case 0:return (v.bits&0x7fffff)?5:3;
+    case 0x7f800000:if(v.bits&0x7fffff)return 1;return 2;
+    case 0:if(v.bits&0x7fffff)return 5;return 3;
     default:return 4;
     }
 }
@@ -649,12 +652,20 @@ bool peShapeNode::Update(peEmitterNode* emitter,_peShape* shape,f32 delta) {
     u32 emitterFlags=emitter->emitter->flags;
     f32 progress=1.0f-time/life;
     Vec angles;
+    Quaternion flipped;
+    Vec direction;
+    Quaternion step;
+    Vec copy;
+    Vec distance;
+    Vec rotationVector;
+    Quaternion rotation;
+    ShapeTransform local;
+    Mtx rotationMatrix;
     if(emitterFlags&0x400) {
-        Vec direction;direction.x=velocity.x;direction.y=velocity.y;direction.z=velocity.z;
+        direction.x=velocity.x;direction.y=velocity.y;direction.z=velocity.z;
         if(emitterFlags&0x40) {
-            Mtx rotation;
-            PSMTXQuat(rotation,(Quaternion*)((u8*)transform+12));
-            PSMTXMultVecSR(rotation,&direction,&direction);
+            PSMTXQuat(rotationMatrix,(Quaternion*)((u8*)transform+12));
+            PSMTXMultVecSR(rotationMatrix,&direction,&direction);
         }
         f32 horizontal=shapeSqrt(direction.x*direction.x+direction.z*direction.z);
         angles.x=(f32)atan2(-direction.y,horizontal);
@@ -666,30 +677,28 @@ bool peShapeNode::Update(peEmitterNode* emitter,_peShape* shape,f32 delta) {
         angles.z=shape->rotation.z*shapeSpline(shape->rotationSpline[2],progress);
         EulerToQuat(&angles,&localRotation);
     } else {
-        Vec rotation;Quaternion step;
-        PSVECScale(&angularSpeed,&rotation,delta);angles=rotation;
+        PSVECScale(&angularSpeed,&rotationVector,delta);angles=rotationVector;
         EulerToQuat(&angles,&step);PSQUATMultiply(&localRotation,&step,&localRotation);
     }
-    Vec scale;
-    scale.x=baseScale.x*shapeSpline(shape->scaleSpline[0],progress);
-    scale.y=baseScale.y*shapeSpline(shape->scaleSpline[1],progress);
-    scale.z=baseScale.z*shapeSpline(shape->scaleSpline[2],progress);
+    angles.x=baseScale.x*shapeSpline(shape->scaleSpline[0],progress);
+    angles.y=baseScale.y*shapeSpline(shape->scaleSpline[1],progress);
+    angles.z=baseScale.z*shapeSpline(shape->scaleSpline[2],progress);
     peColorSplineGetValue(&color,shape->colorSpline,progress);
     u8* rgba=(u8*)&color;
     rgba[0]=shapeColorByte(emitter->color[0]*shapeU8(rgba[0]));
     rgba[1]=shapeColorByte(emitter->color[1]*shapeU8(rgba[1]));
     rgba[2]=shapeColorByte(emitter->color[2]*shapeU8(rgba[2]));
     rgba[3]=shapeColorByte((255.0f*emitter->color[3])*shapeSpline(shape->alphaSpline,progress));
-    Quaternion flipped;
-    flipped.x=(flips&1)?-localRotation.x:localRotation.x;
-    flipped.y=(flips&2)?-localRotation.y:localRotation.y;
-    flipped.z=(flips&4)?-localRotation.z:localRotation.z;
+    if(flips&1)flipped.x=-localRotation.x;else flipped.x=localRotation.x;
+    if(flips&2)flipped.y=-localRotation.y;else flipped.y=localRotation.y;
+    if(flips&4)flipped.z=-localRotation.z;else flipped.z=localRotation.z;
     flipped.w=localRotation.w;
-    ShapeTransform local;
-    Vec* scalePtr=&scale;
-    local.position=position;PSQUATMultiply(&randomRotation,&flipped,&local.rotation);local.scale=*scalePtr;
+    local.position=position;
+    PSQUATMultiply(&randomRotation,&flipped,&rotation);
+    local.rotation.x=rotation.x;local.rotation.y=rotation.y;local.rotation.z=rotation.z;local.rotation.w=rotation.w;
+    local.scale=angles;
     peNodeTransformsConcat((ShapeTransform*)&worldPosition,transform,&local,0);
-    Vec distance;PSVECSubtract(&worldPosition,&g_CameraPosition,&distance);
-    Vec copy=distance;depth=PSVECDotProduct(&g_CameraLookDir,&copy);
+    PSVECSubtract(&worldPosition,&g_CameraPosition,&distance);
+    copy.x=distance.x;copy.y=distance.y;copy.z=distance.z;depth=PSVECDotProduct(&g_CameraLookDir,&copy);
     return true;
 }

@@ -650,16 +650,19 @@ void windowCreateCursorSprite(tagWINDOW_WORK *);
 void menuCloseSync(s32,s32);
 void winMsgOpen(s32,s32,s32,s32);
 void winMsgClose(s32);
-s32 fightEncount(u32);
+u16 fightEncount(u16);
 void menuCloseCustom(s32,s32,s32);
 }
-u8 deckDataVirtualDB_GetAllyDeck(u16);
-u8 deckDataVirtualDB_GetEnemyDeck(u16);
+extern "C++" {
+u32 deckDataVirtualDB_GetAllyDeck(u16);
+u32 deckDataVirtualDB_GetEnemyDeck(u16);
 u8 deckDataVirtualDB_GetPokemonNum(u16);
+}
 
 extern "C" void menuBattleDiskMain()
 {
     s32 cursor=0;
+    s32 selection;
     u8 running=1;
     switch(gBDisk.mode) {
     case 0:
@@ -680,8 +683,8 @@ extern "C" void menuBattleDiskMain()
                 s32 faceIndex=0;
                 u8 id=bdiskEntry(index)->id;
                 fightEncountDataBiosSetDiskId(fightEncountDataBiosGetPtr(0xE),id);
-                fightTrainerCreateFightTrainerDataIdToHero(deckDataVirtualDB_GetAllyDeck(id),0,&gBDisk.heroes[0],0xE);
-                fightTrainerCreateFightTrainerDataIdToHero(deckDataVirtualDB_GetEnemyDeck(id),0,&gBDisk.heroes[1],0xE);
+                fightTrainerCreateFightTrainerDataIdToHero((u8)deckDataVirtualDB_GetAllyDeck(id),0,&gBDisk.heroes[0],0xE);
+                fightTrainerCreateFightTrainerDataIdToHero((u8)deckDataVirtualDB_GetEnemyDeck(id),0,&gBDisk.heroes[1],0xE);
                 menuFaceLoad(0,loadPkmFace,&faceIndex);
                 gBDisk.unk16=deckDataVirtualDB_GetPokemonNum(id);
                 gBDisk.selectedID=id;
@@ -692,6 +695,8 @@ extern "C" void menuBattleDiskMain()
                 menuClose(0xE7);
                 menuClose(0xE8);
                 switch(action) {
+                case 2:
+                    break;
                 case 0:
                     running=0;
                     break;
@@ -706,7 +711,7 @@ extern "C" void menuBattleDiskMain()
                     u32 panel=0;
                     s32 *item=cBattleDisk::mContentsCurIdx;
                     do {
-                        u8 enabled=1;
+                        s32 enabled=1;
                         if(getPanelIdx(panel,gBDisk.unk16)==-1) {
                             enabled=0;
                         } else {
@@ -715,15 +720,15 @@ extern "C" void menuBattleDiskMain()
                                 if(heroGetPokeomCount(&gBDisk.heroes[0])<=pokemonIndex) enabled=0;
                             } else if(heroGetPokeomCount(&gBDisk.heroes[1])<=pokemonIndex-6) enabled=0;
                         }
-                        if(enabled) {
+                        if((u8)enabled) {
                             switch(panel) {
                             case 1:if(gBDisk.unk16!=2)enabled=0;break;
                             case 2:if(gBDisk.unk16!=1)enabled=0;break;
                             case 7:
-                                if(gBDisk.unk16==2 && heroGetPokeomCount(&gBDisk.heroes[1])==1)enabled=0;
+                                if(gBDisk.unk16==2 && (s32)heroGetPokeomCount(&gBDisk.heroes[1])==1)enabled=0;
                                 break;
                             case 8:
-                                if(gBDisk.unk16!=2 || heroGetPokeomCount(&gBDisk.heroes[1])!=1)enabled=0;
+                                if(gBDisk.unk16!=2 || (s32)heroGetPokeomCount(&gBDisk.heroes[1])!=1)enabled=0;
                                 break;
                             case 9:
                                 if(menuItemBiosGetSelectFlag(0x109,cBattleDisk::mContentsCurIdx[8]))enabled=0;
@@ -801,7 +806,7 @@ extern "C" void menuBattleDiskMain()
         menuClose(0xEA);
         break;
     case 2: {
-        s32 selection=0;
+        selection=0;
         menuOpenCustom(0xE9,windowGetActiveID(),0,2,0,0);
         gBDisk.field24=menuOpenCustom(0x8F,0,&selection,0,1,0);
         menuCloseCustom(0x8F,0,1);

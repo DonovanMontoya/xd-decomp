@@ -17,7 +17,12 @@ s32 GSpartSetTexAnimIndex(GSpart*, s32, s32, s32, f32);
 void GSpartFree(GSpart*);
 void __assert(const char*, int, const char*);
 void HSD_JObjSetupMatrixSub(HSD_JObj*);
-static inline u8 HSD_JObjMtxIsDirty(HSD_JObj* joint) {
+static inline s32 HSD_JObjMtxIsDirty(HSD_JObj* joint) {
+    if (!joint) __assert("jobj.h", 605, "jobj");
+    return (u8)(!(joint->flags & 0x800000) && (joint->flags & 0x40));
+}
+// The setters keep a byte predicate; matrix setup uses the SDK integer result.
+static inline u8 jointMtxIsDirtyForWrite(HSD_JObj* joint) {
     u32 flags;
     int result;
     if (!joint) __assert("jobj.h", 605, "jobj");
@@ -34,7 +39,7 @@ static inline void HSD_JObjSetupMatrix(HSD_JObj* joint) {
 extern "C" void HSD_JObjSetMtxDirtySub(HSD_JObj*);
 static inline void setQuaternion(f32* q, f32 x, f32 y, f32 z, f32 w) { q[0] = x; q[1] = y; q[2] = z; q[3] = w; }
 static inline void HSD_JObjSetMtxDirty(HSD_JObj* joint) {
-    if (joint && !HSD_JObjMtxIsDirty(joint)) HSD_JObjSetMtxDirtySub(joint);
+    if (joint && !jointMtxIsDirtyForWrite(joint)) HSD_JObjSetMtxDirtySub(joint);
 }
 static inline void HSD_JObjSetTranslate(HSD_JObj* joint, GSvec* translate) {
     if (!joint) __assert("jobj.h", 937, "jobj");

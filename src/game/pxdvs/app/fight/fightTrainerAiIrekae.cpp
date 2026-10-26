@@ -44,30 +44,31 @@ s32 fightTrainerAiSelectFightActionIrekae(void *arg0, void *arg1, void *arg2) {
 }
 
 s16 fightTrainerAiSelectIrekaeDasuFightPokemon(void *trainer,void *target,u8 selectMode,void *pokemon) {
-    struct Scratch {
-        u16 moves[8];void *allies[8],*enemies[8];s32 values[6];void *candidates[6],*party[24];FightOutSnapshot snapshot;
-    } work;
-    typedef char ScratchSize[sizeof(Scratch)==0x974?1:-1];
+    FightOutSnapshot snapshot;
+    void *party[24],*candidates[6];
+    s32 values[6];
+    void *enemies[8],*allies[8];
+    u16 moves[8];
     s32 ai=fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(trainer));
     u8 revise=fightTrainerAiDB_GetLastValueRevise();
     s32 weather=fightTrainerAiGetFightFloorNowTenkouDataId(trainer,0,1);
-    for(u8 i=0;i<6;i++)work.values[i]=0;
-    fightOutPokemonBiosCopy(&work.snapshot,pokemon);
+    for(u8 i=0;i<6;i++)values[i]=0;
+    fightOutPokemonBiosCopy(&snapshot,pokemon);
     if(fightOutPokemonCheckFightOut(pokemon)==1)fightOutPokemonIsFightActionAttackWazaOut(pokemon,0xE2,0);
-    u16 count=fightTrainerGetIrekaeFightPokemonAry(trainer,work.candidates);
-    u16 enemyCount=fightFloorGetFightTrainerFightOutPokemonPtrAry(0,trainer,work.enemies,0,1);
-    u16 partyCount=fightFloorGetFightTrainerFightPokemonPtrAry(0,trainer,work.party,1,1);
-    fightFloorGetFightTrainerFightOutPokemonPtrAry(0,trainer,work.allies,1,1);
+    u16 count=fightTrainerGetIrekaeFightPokemonAry(trainer,candidates);
+    u16 enemyCount=fightFloorGetFightTrainerFightOutPokemonPtrAry(0,trainer,enemies,0,1);
+    u16 partyCount=fightFloorGetFightTrainerFightPokemonPtrAry(0,trainer,party,1,1);
+    fightFloorGetFightTrainerFightOutPokemonPtrAry(0,trainer,allies,1,1);
     if(count==0)return -1;
     if(fightTrainerAiDB_GetPokemonSelectRandomFlag(ai)==1){
-        void *chosen=work.candidates[HSD_Rand()%count];
+        void *chosen=candidates[(u16)(HSD_Rand()%count)];
         if(chosen){fightFloorGetFightPokemonPtrToFightTrainerPtr(0,chosen);return fightPokemon_GetEntryId(chosen);}
     }
     s32 bestAffinity=-65535;
     u16 firstData=0xFFFF;
-    u16 fastest=0;
+    u32 fastest=0;
     for(u8 i=0;i<count;i++){
-        void *candidate=work.candidates[i];
+        void *candidate=candidates[i];
         if(candidate&&fightPokemon_GetEntryId(candidate)>=0){
             u16 speed=fightTrainerAiGetFightPokemonSubayasa(trainer,candidate);
             s32 affinity=fightTrainerAiGetFightPokemonZokuseiAisyouValue(trainer,candidate,2);
@@ -79,7 +80,7 @@ s16 fightTrainerAiSelectIrekaeDasuFightPokemon(void *trainer,void *target,u8 sel
     }
     if(fightTrainerAiDB_GetPokemonDataOrderOutFlag(ai)==1){
         for(u8 i=0;i<count;i++){
-            void *candidate=work.candidates[i];
+            void *candidate=candidates[i];
             if(candidate&&fightPokemon_GetEntryId(candidate)>=0){
                 fightFloorGetFightPokemonPtrToFightTrainerPtr(0,candidate);
                 if(firstData>=pokemon_GetFightTrainerPokemonDataId(fightPokemonGetPokemonPtr(candidate))){fightFloorGetFightPokemonPtrToFightTrainerPtr(0,candidate);return fightPokemon_GetEntryId(candidate);}
@@ -87,73 +88,74 @@ s16 fightTrainerAiSelectIrekaeDasuFightPokemon(void *trainer,void *target,u8 sel
         }
     }
     for(u8 i=0;i<count;i++){
-        void *candidate=work.candidates[i];
+        void *candidate=candidates[i];
         if(!candidate||fightPokemon_GetEntryId(candidate)<0)continue;
         fightFloorGetFightPokemonPtrToFightTrainerPtr(0,candidate);
         fightOutPokemonCreate(pokemon,candidate,0);
-        u16 moveCount=fightTrainerAiGetFightOutPokemonWazaDataIdAry(trainer,pokemon,work.moves,0,1);
+        u16 moveCount=fightTrainerAiGetFightOutPokemonWazaDataIdAry(trainer,pokemon,moves,0,1);
         u8 canHit=0;
         for(u8 j=0;j<enemyCount;j++){
-            void *enemy=work.enemies[j];
-            if(enemy){for(u16 k=0;k<moveCount;k++){u16 move=work.moves[k];if(move&&move!=0x176&&fightTrainerAiWazaDoWazaHitFunc(trainer,pokemon,move,enemy)==1){canHit=1;break;}}if(canHit==1)break;}
+            void *enemy=enemies[j];
+            if(enemy){for(u16 k=0;k<moveCount;k++){u16 move=moves[k];if(move&&move!=0x176&&fightTrainerAiWazaDoWazaHitFunc(trainer,pokemon,move,enemy)==1){canHit=1;break;}}if(canHit==1)break;}
         }
-        fightOutPokemonBiosCopy(pokemon,&work.snapshot);
-        u16 candidateMoves=fightTrainerAiGetFightPokemonWazaDataIdAry(trainer,candidate,work.moves,0,1);
-        u8 combo=fightTrainerAiIrekae_SelComboPartner(trainer,candidate,work.allies[0]);
-        if(combo==1)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,27);
-        if(combo==2)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,28);
+        fightOutPokemonBiosCopy(pokemon,&snapshot);
+        u32 candidateMoves=fightTrainerAiGetFightPokemonWazaDataIdAry(trainer,candidate,moves,0,1);
+        u8 combo=fightTrainerAiIrekae_SelComboPartner(trainer,candidate,allies[0]);
+        if(combo==1)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,27);
+        if(combo==2)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,28);
         u8 key=fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,candidate);
-        if(key==1)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,29);
-        if(key==2)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,30);
-        if(key==3)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,31);
+        if(key==1)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,29);
+        if(key==2)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,30);
+        if(key==3)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,31);
         for(u8 j=0;j<2;j++){
             u8 element=fightTrainerAiDB_GetZokuseiReviseZokuseiDataId(ai,j);
-            if(element!=9&&fightTrainerAiIsFightPokemonZokuseiDataId(trainer,candidate,element)==1)work.values[i]=fightTrainerAiReviseValueByAddsubDataId(work.values[i],fightTrainerAiDB_GetZokuseiReviseValue(ai,j),trainer,32);
+            if(element!=9&&fightTrainerAiIsFightPokemonZokuseiDataId(trainer,candidate,element)==1)values[i]=fightTrainerAiReviseValueByAddsubDataId(values[i],fightTrainerAiDB_GetZokuseiReviseValue(ai,j),trainer,32);
         }
-        if(fightTrainerAiIsFightPokemonNokoriHpHikui(trainer,candidate)==1)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,33);
-        if(canHit==0)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,34);
-        if(fastest<=fightTrainerAiGetFightPokemonSubayasa(trainer,candidate))work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,36);
-        if(bestAffinity<=fightTrainerAiGetFightPokemonZokuseiAisyouValue(trainer,candidate,2))work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,35);
+        if(fightTrainerAiIsFightPokemonNokoriHpHikui(trainer,candidate)==1)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,33);
+        if(canHit==0)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,34);
+        if(fastest<=(u16)fightTrainerAiGetFightPokemonSubayasa(trainer,candidate))values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,36);
+        if(bestAffinity<=fightTrainerAiGetFightPokemonZokuseiAisyouValue(trainer,candidate,2))values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,35);
         for(u8 j=0;j<enemyCount;j++){
-            void *enemy=work.enemies[j];
-            if(enemy)for(u16 k=0;k<candidateMoves;k++){
-                u16 move=work.moves[k];
-                if(move){u16 element=fightTrainerAiGetWazaZokuseiDataId(trainer,move,pokemon);if(element!=9&&fightTrainerAiIsWazaTypeId(trainer,move,1)!=0&&fightTrainerAiGetFightOutPokemonZokuseiDataIdWazaJoutaiDataId(trainer,enemy,element,fightTrainerAiGetWazaIryoku(trainer,move))==0x41)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,37);}
+            void *enemy=enemies[j];
+            if(enemy)for(u16 k=0;k<(u16)candidateMoves;k++){
+                u16 move=moves[k];
+                if(move){u16 element=fightTrainerAiGetWazaZokuseiDataId(trainer,move,pokemon);if(element!=9&&fightTrainerAiIsWazaTypeId(trainer,move,1)!=0&&fightTrainerAiGetFightOutPokemonZokuseiDataIdWazaJoutaiDataId(trainer,enemy,element,fightTrainerAiGetWazaIryoku(trainer,move))==0x41)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,37);}
             }
         }
         for(u8 j=0;j<enemyCount;j++){
-            void *enemy=work.enemies[j];
-            if(enemy){u16 numMoves=fightTrainerAiGetFightOutPokemonWazaDataIdAry(trainer,enemy,work.moves,0,0);for(u16 k=0;k<numMoves;k++){
-                u16 move=work.moves[k];
-                if(move){u16 element=fightTrainerAiGetWazaZokuseiDataId(trainer,move,enemy);if(element!=9&&fightTrainerAiIsWazaTypeId(trainer,move,1)!=0&&fightTrainerAiGetFightPokemonZokuseiDataIdWazaJoutaiDataId(trainer,candidate,element,fightTrainerAiGetWazaIryoku(trainer,move))==0x41)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,38);}
+            void *enemy=enemies[j];
+            if(enemy){u16 numMoves=fightTrainerAiGetFightOutPokemonWazaDataIdAry(trainer,enemy,moves,0,0);for(u16 k=0;k<numMoves;k++){
+                u16 move=moves[k];
+                if(move){u16 element=fightTrainerAiGetWazaZokuseiDataId(trainer,move,enemy);if(element!=9&&fightTrainerAiIsWazaTypeId(trainer,move,1)!=0&&fightTrainerAiGetFightPokemonZokuseiDataIdWazaJoutaiDataId(trainer,candidate,element,fightTrainerAiGetWazaIryoku(trainer,move))==0x41)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,38);}
             }}
         }
         if(fightTrainerAiDB_GetPokemonSelectWeakPointFlag(ai)==1){for(u16 element=0;element<*zokusei_data_number;element++){
             if(element!=9&&fightTrainerAiGetFightPokemonZokuseiDataIdWazaJoutaiDataId(trainer,candidate,element,1)==0x41){for(u8 j=0;j<partyCount;j++){
-                void *member=work.party[j];
-                if(member&&fightFloorGetFightPokemonPtrToFightTrainerPtr(0,member)){
-                    u8 canSwitch=fightTrainerCheckCanIrekaeFightPokemon(member);
-                    if(canSwitch!=1&&(canSwitch==2||canSwitch==3)&&fightTrainerAiGetFightPokemonZokuseiDataIdWazaJoutaiDataId(trainer,member,element,1)==0x41)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,39);
+                void *member=party[j];
+                if(member){
+                  void *memberTrainer=fightFloorGetFightPokemonPtrToFightTrainerPtr(0,member);
+                  if(memberTrainer){
+                    u8 canSwitch=fightTrainerCheckCanIrekaeFightPokemon(memberTrainer,member);
+                    if(canSwitch!=1&&(canSwitch==2||canSwitch==3)&&fightTrainerAiGetFightPokemonZokuseiDataIdWazaJoutaiDataId(trainer,member,element,1)==0x41)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,39);
+                  }
                 }
             }}
         }}
-        u16 ability=fightTrainerAiGetFightPokemonIrekaeDasuTokuseiAddsubDataId(trainer,candidate);
-        if(ability)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,ability);
-        switch((u8)weather){
-        case 2:if(fightTrainerAiIsFightPokemonTokuseiDataId(trainer,candidate,33)==1||fightTrainerAiIsFightPokemonTokuseiDataId(trainer,candidate,44)==1)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,44);break;
-        case 1:if(fightTrainerAiIsFightPokemonTokuseiDataId(trainer,candidate,34)==1)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,45);break;
-        case 3:{u8 safe=0;if(fightTrainerAiIsFightPokemonTokuseiDataId(trainer,candidate,8)==1)safe=1;if(fightTrainerAiIsFightPokemonZokuseiDataId(trainer,candidate,8)==1||fightTrainerAiIsFightPokemonZokuseiDataId(trainer,candidate,5)==1||fightTrainerAiIsFightPokemonZokuseiDataId(trainer,candidate,4)==1)safe=1;if(safe==1)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,46);break;}
-        case 4:if(fightTrainerAiIsFightPokemonZokuseiDataId(trainer,candidate,15)==1)work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,47);break;
-        }
+        u32 ability=fightTrainerAiGetFightPokemonIrekaeDasuTokuseiAddsubDataId(trainer,candidate);
+        if((u16)ability)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,ability);
+        if((u8)weather==2){if(fightTrainerAiIsFightPokemonTokuseiDataId(trainer,candidate,33)==1||fightTrainerAiIsFightPokemonTokuseiDataId(trainer,candidate,44)==1)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,44);}
+        else if((u8)weather==1){if(fightTrainerAiIsFightPokemonTokuseiDataId(trainer,candidate,34)==1)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,45);}
+        else if((u8)weather==3){u8 safe=0;if(fightTrainerAiIsFightPokemonTokuseiDataId(trainer,candidate,8)==1)safe=1;if(fightTrainerAiIsFightPokemonZokuseiDataId(trainer,candidate,8)==1||fightTrainerAiIsFightPokemonZokuseiDataId(trainer,candidate,5)==1||fightTrainerAiIsFightPokemonZokuseiDataId(trainer,candidate,4)==1)safe=1;if(safe==1)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,46);}
+        else if((u8)weather==4){if(fightTrainerAiIsFightPokemonZokuseiDataId(trainer,candidate,15)==1)values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,47);}
         for(u8 j=0;j<enemyCount;j++){
-            void *enemy=work.enemies[j];
-            if(enemy&&fightTrainerAiIsFightOutPokemonJoutaiDataId(trainer,enemy,34)==1){s32 damage=fightTrainerAiWazaDoWazaDamageFightPokemonFunc(trainer,enemy,fightOutPokemon_GetMotoWazaDataId(enemy),candidate,0);if(damage>=(s32)pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(candidate)))work.values[i]=fightTrainerAiAddValueByAddsubDataId(work.values[i],trainer,49);}
+            void *enemy=enemies[j];
+            if(enemy&&fightTrainerAiIsFightOutPokemonJoutaiDataId(trainer,enemy,34)==1){s32 damage=fightTrainerAiWazaDoWazaDamageFightPokemonFunc(trainer,enemy,fightOutPokemon_GetMotoWazaDataId(enemy),candidate,0);if(damage>=(s32)pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(candidate)))values[i]=fightTrainerAiAddValueByAddsubDataId(values[i],trainer,49);}
         }
-        if(dbgMenuFightGetFightTrainerAiLastValueReviseFlag()==1)work.values[i]=fightTrainerAiAddValue(work.values[i],(HSD_Rand()%(revise*2+1))-revise);
+        if(dbgMenuFightGetFightTrainerAiLastValueReviseFlag()==1)values[i]=fightTrainerAiAddValue(values[i],(HSD_Rand()%(revise*2+1))-revise);
     }
-    s32 selected=fightTrainerAiGetValueAryMaxBanme(work.values,count,1);
+    s32 selected=fightTrainerAiGetValueAryMaxBanme(values,count,1);
     if(selected<0)return -1;
-    void *chosen=work.candidates[selected];
+    void *chosen=candidates[selected];
     if(!chosen)return -1;
     fightFloorGetFightPokemonPtrToFightTrainerPtr(0,chosen);
     return fightPokemon_GetEntryId(chosen);
@@ -206,7 +208,7 @@ s32 fightTrainerAiGetFightPokemonIrekaeModosuValue(void *trainer,void *pokemon,v
     return value;
 }
 
-u16 fightTrainerAiGetFightPokemonIrekaeDasuTokuseiAddsubDataId(void *trainer,void *pokemon) {
+u32 fightTrainerAiGetFightPokemonIrekaeDasuTokuseiAddsubDataId(void *trainer,void *pokemon) {
     s32 weather=fightTrainerAiGetFightFloorNowTenkouDataId(trainer,0,1);
     void *enemies[8];
     u16 abilities[10]={1,2,35,36,45,50,53,54,59,70};

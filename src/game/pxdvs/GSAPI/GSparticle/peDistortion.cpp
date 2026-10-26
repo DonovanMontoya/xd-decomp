@@ -26,24 +26,25 @@ void peDistortionContainer::Stop() {
 }
 static inline u8 visible(peDistortionContainer *c) {
  if(!c->active)return 0;u32 flags=c->definition->flags;
- if(!c->count||g_render_pass!=1)return 0;
+ if(!c->count)return 0;
+ if(g_render_pass!=1)return 0;
  switch(layerWord(0x28)) {case 1:if(!(flags&0x2000))return 0;break;case 3:if(flags&0x10)return 0;break;case 5:if(!(flags&0x10))return 0;break;default:return 0;}return 1;
 }
 void peDistortionContainer::Render() {
  if(active&&visible(this)) {
-  ResolveMultipleSwap();u32 flags=definition->flags;
-  if(flags&0x100){layerWord(0xd8c)=2;layerWord(0x16b8)|=2;layerWord(0x16a8)|=2;layerWord(0x1770)|=2;layerWord(0x1760)|=2;}
-  else{layerWord(0xd8c)=0;layerWord(0x16b8)|=2;layerWord(0x16a8)|=2;layerWord(0x1770)|=2;layerWord(0x1760)|=2;}
-  layerWord(0x165c)=0;layerWord(0x1660)=3;layerWord(0x170c)|=8;layerWord(0x16a8)|=0x40;layerWord(0x17c4)|=8;layerWord(0x1760)|=0x40;
-  layerByte(0x1656)=1;layerByte(0x1657)=0;layerByte(0x1658)=0;layerWord(0x170c)|=4;layerWord(0x16a8)|=0x40;layerWord(0x17c4)|=4;layerWord(0x1760)|=0x40;
-  layerWord(0x1664)=7;layerByte(0x1670)=0;layerWord(0x1668)=0;layerWord(0x166c)=7;layerByte(0x1671)=0;layerByte(0x1672)=1;
-  layerWord(0x170c)|=0x10;layerWord(0x16a8)|=0x40;layerWord(0x17c4)|=0x10;layerWord(0x1760)|=0x40;
+  ResolveMultipleSwap();u32 flags=definition->flags;u8 *layer;
+  if(flags&0x100){layer=(u8*)g_current_layer;(*(u32*)(layer+0xd8c))=2;(*(u32*)(layer+0x16b8))|=2;(*(u32*)(layer+0x16a8))|=2;(*(u32*)(layer+0x1770))|=2;(*(u32*)(layer+0x1760))|=2;}
+  else{layer=(u8*)g_current_layer;(*(u32*)(layer+0xd8c))=0;(*(u32*)(layer+0x16b8))|=2;(*(u32*)(layer+0x16a8))|=2;(*(u32*)(layer+0x1770))|=2;(*(u32*)(layer+0x1760))|=2;}
+  layer=(u8*)g_current_layer;(*(u8*)(layer+0x165c))=0;(*(u32*)(layer+0x1660))=3;(*(u32*)(layer+0x170c))|=8;(*(u32*)(layer+0x16a8))|=0x40;(*(u32*)(layer+0x17c4))|=8;(*(u32*)(layer+0x1760))|=0x40;
+  layer=(u8*)g_current_layer;(*(u8*)(layer+0x1656))=1;(*(u8*)(layer+0x1657))=0;(*(u8*)(layer+0x1658))=0;(*(u32*)(layer+0x170c))|=4;(*(u32*)(layer+0x16a8))|=0x40;(*(u32*)(layer+0x17c4))|=4;(*(u32*)(layer+0x1760))|=0x40;
+  layer=(u8*)g_current_layer;(*(u32*)(layer+0x1664))=7;(*(u8*)(layer+0x1670))=0;(*(u32*)(layer+0x1668))=0;(*(u32*)(layer+0x166c))=7;(*(u8*)(layer+0x1671))=0;(*(u8*)(layer+0x1672))=1;
+  (*(u32*)(layer+0x170c))|=0x10;(*(u32*)(layer+0x16a8))|=0x40;(*(u32*)(layer+0x17c4))|=0x10;(*(u32*)(layer+0x1760))|=0x40;
   particleEngineSetupBlendMode(0);particleEngineSetupTevStages(0,0,0);
   u32 wrapT=0;if(flags&0x40)wrapT=2;u32 wrapS=0;if(flags&0x20)wrapS=2;
   particleEngineSetupTexture(0,definition->texture,flags&3,(flags>>2)&3,wrapS,wrapT);
-  GSgfxDL *list=&displayLists[swapIndex];GSgfxVF *format=(list->flags&1)?(GSgfxVF*)list->reserved:0;u8 *data=renderData[swapIndex];
+  u8 *data=renderData[swapIndex];GSgfxDL *list=&displayLists[swapIndex];GSgfxVF *format=(list->flags&1)?(GSgfxVF*)list->reserved:0;
   GSgfxVFSetArray(format,9,3,data,4,renderBytes);GSgfxVFSetArray(format,11,3,data+0x30,4,renderBytes);GSgfxVFSetArray(format,13,3,uv,4,0x20);
-  dlDraw__10GSgfxLayerFP7GSgfxDL(g_current_layer,list);MarkForSwap();
+  dlDraw__10GSgfxLayerFP7GSgfxDL(g_current_layer,&displayLists[swapIndex]);MarkForSwap();
  }
 }
 static inline u8 distortionUpdateNode(peDistortionNode* node,peEmitterNode* emitter,_peDistortion* d,GSgfxDL* list,u8* data,f32 dt) {

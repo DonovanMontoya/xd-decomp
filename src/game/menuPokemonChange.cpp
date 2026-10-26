@@ -36,7 +36,7 @@ s32 menuOpenCustom(s32, s32, ...);
 void menuSetDisp(s32, bool);
 tagWINDOW_WORK *windowSearchID(s32);
 tagSPRITE_WORK *windowSearchItemID(tagWINDOW_WORK *, u16);
-void winSpriteSetDisp(tagSPRITE_WORK *, s32);
+void winSpriteSetDisp(tagSPRITE_WORK *, bool);
 s32 floorGetCurrentGroupID(void);
 void *scriptModelOpen(u32);
 void *GSresGetResource(s32, void *);
@@ -140,7 +140,7 @@ struct MenuItemSimple {
     s16 height;
 };
 MenuItemSimple *menuPtItemGetByMenuIdAndItemId(long, u32, long);
-u32 menuPtSpriteWorkGetIndexFromId(tagWINDOW_WORK*,tagSPRITE_WORK*,u32);
+s32 menuPtSpriteWorkGetIndexFromId(tagWINDOW_WORK*,tagSPRITE_WORK*,u32);
 struct MENU_MODEL;
 extern "C" {
 void menuModelInit(MENU_MODEL *, long, long);
@@ -194,7 +194,7 @@ public:
     CState cstate;
     s32 menuId;
     void *saveData;
-    u8 ready[2];
+    bool ready[2];
     u8 padA56[2];
     s32 bgModelId;
     void *bgModel;
@@ -203,7 +203,7 @@ public:
     MENU_MODEL models[2];
     s32 exchangeSeed;
     unsigned long long elapsed;
-    u8 flagC50;
+    bool flagC50;
     u8 flagC51;
     u8 padC52[6];
 
@@ -323,7 +323,8 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
     case 0x5F7:
     case 0x5F8:
     {
-        Pokemon* poke = hero->getPokemon(menuPtSpriteWorkGetIndexFromId(win,sprite,0x5F3));
+        s32 index = menuPtSpriteWorkGetIndexFromId(win,sprite,0x5F3);
+        Pokemon* poke = hero->getPokemon(index);
         if (_isPokemonValid(poke,(enumPlayerIndex)player)) {
             menuFaceDisp(win,sprite,poke); winSpriteSetDisp(sprite,1);
         } else winSpriteSetDisp(sprite,0);
@@ -336,7 +337,8 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
     case 0x5FD:
     case 0x5FE:
     {
-        Pokemon* poke = hero->getPokemon(menuPtSpriteWorkGetIndexFromId(win,sprite,0x5F9));
+        s32 index = menuPtSpriteWorkGetIndexFromId(win,sprite,0x5F9);
+        Pokemon* poke = hero->getPokemon(index);
         switch(_getPokemonState(poke,(enumPlayerIndex)player)) {
         case 4: case 7: case 0: sprite->color = 0xFFFFFFFF; break;
         case 3: sprite->color = 0xB473C8FF; break;
@@ -351,7 +353,8 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
     case 0x603:
     case 0x604:
     {
-        Pokemon* poke = hero->getPokemon(menuPtSpriteWorkGetIndexFromId(win,sprite,0x5FF));
+        s32 index = menuPtSpriteWorkGetIndexFromId(win,sprite,0x5FF);
+        Pokemon* poke = hero->getPokemon(index);
         u16 item = 0;
         if (_isPokemonValid(poke,(enumPlayerIndex)player)) item = pokemonBiosGetItemDataId(poke);
         sprite->color = 0xFFFFFFFF;
@@ -366,7 +369,8 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
     case 0x613:
     case 0x614:
     {
-        Pokemon* poke = hero->getPokemon(menuPtSpriteWorkGetIndexFromId(win,sprite,0x60F));
+        s32 index = menuPtSpriteWorkGetIndexFromId(win,sprite,0x60F);
+        Pokemon* poke = hero->getPokemon(index);
         u32 sex = 0;
         switch(_getPokemonState(poke,(enumPlayerIndex)player)) {
         case 0: case 1: case 2: break;
@@ -390,13 +394,18 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
     case 0x619:
     case 0x61A:
     {
-        Pokemon* poke = hero->getPokemon(menuPtSpriteWorkGetIndexFromId(win,sprite,0x615));
+        s32 index = menuPtSpriteWorkGetIndexFromId(win,sprite,0x615);
+        Pokemon* poke = hero->getPokemon(index);
         u32 message = 0x4277;
         switch(_getPokemonState(poke,(enumPlayerIndex)player)) {
         case 1: msgctrlSetValue(0x37,GSmsgGetGSchar(0x56C)); break;
         case 2: msgctrlSetValue(0x37,GSmsgGetGSchar(0x56B)); break;
         case 0: message = 0; break;
-        default: msgctrlSetValue(0x37,pokemonBiosGetNicknamePtr(poke)); break;
+        default: {
+            u32 name = pokemonBiosGetNicknamePtr(poke);
+            msgctrlSetValue(0x37,name);
+            break;
+        }
         }
         if (message) {
             u32 rect = GSmsgGetRect(message);
@@ -405,9 +414,11 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
         } else winSpriteSetDisp(sprite,0);
         break;
     }
-    case 0x61B:
-        msgctrlSetValue(0x37,heroBiosGetNamePtr(hero));
+    case 0x61B: {
+        u32 name = heroBiosGetNamePtr(hero);
+        msgctrlSetValue(0x37,name);
         GSmsgPrint2(win->messageContext,0,0,color,0x4277); break;
+    }
     case 0x605:
     case 0x606:
     case 0x607:
@@ -416,7 +427,7 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
     case 0x60A:
     case 0x60B:
     case 0x60C:
-        winSpriteSetDisp(sprite, menuState == player); break;
+        winSpriteSetDisp(sprite, currentPlayer == player); break;
     case 0x8B9:
     case 0x8BA:
     case 0x8BB:
@@ -426,10 +437,13 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
     {
         s32 index = selectIndex[player];
         if (index >= getQuantityHeroPokemon(PLAYER_0)) index -= getQuantityHeroPokemon(PLAYER_0);
-        u8 display = 0;
-        if (index == menuPtSpriteWorkGetIndexFromId(win,sprite,0x8B9)) {
-            if (player == 0) {u8 active = 0; if(cstate.unk0 >= 12 && cstate.unk0 <= 16) active=1; display=active;}
-            else if (player == 1) display = cstate.unk0 == 16;
+        s32 slot = menuPtSpriteWorkGetIndexFromId(win,sprite,0x8B9);
+        bool display = false;
+        s32 state;
+        if (index == slot) {
+            state=cstate.unk0;
+            if (player == 0) {bool active = false; if(state >= 12 && state <= 16) active=1; display=active;}
+            else if (player == 1) display = state == 16;
         }
         winSpriteSetDisp(sprite,display); break;
     }
@@ -446,7 +460,7 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
         s32 side;
         if(selection>=getQuantityHeroPokemon(PLAYER_0)) side=1;else side=0;
         s32 slot=menuPtSpriteWorkGetIndexFromId(win,sprite,0x8CE);
-        u8 display=0;
+        bool display=false;
         if(slot==index && side==player && cstate.unk0!=16 && slot<getQuantityHeroPokemon((enumPlayerIndex)side)) display=1;
         winSpriteSetDisp(sprite,display); sprite->channels.alpha=pulse;break;
     }
@@ -487,7 +501,7 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
     case 0x7B4: {
         u32 sex;
         switch(fn_80098B44(menuSubGetPokemonSexForFightDisp(selected),selected)) {
-        case 0: sex=0x9C5; break; case 1:sex=0x9C6;break; default:sex=0;break;
+        case 0: sex=0x9C5; break; case 1:sex=0x9C6;break; case 2:default:sex=0;break;
         }
         if(sex) {msgctrlSetValue(0x37,GSmsgGetGSchar(sex)); GSmsgPrint2(win->messageContext,0,0,color,0x4276);winSpriteSetDisp(sprite,1);}
         else winSpriteSetDisp(sprite,0);
@@ -505,7 +519,7 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
     case 0x647:
     case 0x648:
     {
-        u16 slot=menuPtSpriteWorkGetIndexFromId(win,sprite,0x645);
+        u32 slot=menuPtSpriteWorkGetIndexFromId(win,sprite,0x645);
         s32 move=pokemonBiosGetPokemonWazaDataId(selected,slot);
         if(pokemonWazaCheckValid(selected,slot)) {
             u32 name=wazaGetStatus(0,move,1,0);
@@ -519,10 +533,10 @@ void CMenuPokemonChange::selectItemHookPrime(tagWINDOW_WORK* win, tagSPRITE_WORK
         if(item) {msgctrlSetValue(0x37,GSmsgGetGSchar(itemDataBiosGetName(itemDataBiosGetPtr(item))));GSmsgPrint2(win->messageContext,0,0,color,0x4277);winSpriteSetDisp(sprite,1);}
         else winSpriteSetDisp(sprite,0);}
         break;
-    case 0x637: winSpriteSetDisp(sprite,ready[player]==0);break;
-    case 0x638: winSpriteSetDisp(sprite,ready[player]==0);break;
     case 0x64B: sprite->message=0xC495;winSpriteSetDisp(sprite,ready[player]==0);break;
     case 0x64C: winSpriteSetDisp(sprite,ready[player]==0);sprite->message=0x4295;break;
+    case 0x637: winSpriteSetDisp(sprite,ready[player]==0);break;
+    case 0x638: winSpriteSetDisp(sprite,ready[player]==0);break;
     case 0x64D: winSpriteSetDisp(sprite,ready[player]);break;
     case 0x652: selectItemHookPrime(win,sprite,0x63D);break;
     case 0x653: selectItemHookPrime(win,sprite,0x61B);break;
@@ -798,8 +812,8 @@ void CMenuPokemonChange::_pokemonChangeEvolutionEffect(Pokemon *pokemon, MENU_PO
 }
 
 void CMenuPokemonChange::stateFunctionConfirmExChange() {
-    u8 ready0;
-    u8 ready1;
+    bool ready0;
+    bool ready1;
     u32 key0;
     u32 key1;
     ready[0] = 0;
@@ -1840,7 +1854,7 @@ void CMenuPokemonChange::selectDrawHook(tagWINDOW_WORK*) {
 }
 
 extern "C" {
-u16 pokemonEvolutionCheck(Pokemon*,s32,s32,s32*,POKEMON_EVOLUTION_INFO*);
+u16 pokemonEvolutionCheck(Pokemon*,s32,void*,u16*,POKEMON_EVOLUTION_INFO*);
 u16 pokemonBiosGetPokemonDataId(Pokemon*);
 u32 menuFaceGetID(Pokemon*);
 s8 menuFaceSearchEnable(u32);
@@ -1849,7 +1863,7 @@ namespace {
 void CMenuPokemonChange::stateFunctionEvolution() {
     POKEMON_EVOLUTION_INFO info0;
     POKEMON_EVOLUTION_INFO info1;
-    s32 auxiliary;
+    u16 auxiliary;
     u16 species0;
     u16 species1;
     u8 evolution=0;

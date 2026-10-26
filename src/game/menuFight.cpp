@@ -8,7 +8,7 @@ u8 fightFloorIsNowEncountTuusinTaisen(s32);
 u8 fightFloorIsUseFightTimerCommand(s32);
 u8 fightTimerCommandIsOver(void);
 u16 fightGetFightResultId(void);
-s32 fightMenuGetFightTrainerPtrToStatusMenuId(void);
+u32 fightMenuGetFightTrainerPtrToStatusMenuId(FIGHT_TRAINER *, u16);
 void gbaCommandRequestAction(s32, s32, s32, s32);
 u8 menuIsCheck(s32);
 s32 menuOpen(s32, s32);
@@ -82,15 +82,15 @@ u16 fightFloor_GetTurnCount(s32);
 u32 fightFloor_GetFightTypeFightoutPokemonNum(s32);
 u8 fightFloor_GetFightKindGetOkaneFlag(s32);
 u8 fightFloor_GetFightKindOkanePoolFlag(s32);
-u32 fightTrainer_GetHeroPtr(void);
+void *fightTrainer_GetHeroPtr(FIGHT_TRAINER *);
 u8 fightTrainer_GetOkaneBai(FIGHT_TRAINER *);
 FIGHT_TRAINER *fightTargetGetPtrAsNowFightType(s32, FIGHT_TRAINER *);
-void fightTrainer_GetFightTrainerDataId(void);
-u32 fightTrainerDB_GetKindDataId(void);
-void fightTrainerKindDataBiosGetPtr(u8);
-u16 fightTrainerKindDataBiosGetSyoukinBairitu(void);
+u16 fightTrainer_GetFightTrainerDataId(FIGHT_TRAINER *);
+s32 fightTrainerDB_GetKindDataId(u16);
+u16 *fightTrainerKindDataBiosGetPtr(u16);
+u16 fightTrainerKindDataBiosGetSyoukinBairitu(u16 *);
 void *fightTrainer_GetFightPokemonPtr(FIGHT_TRAINER *, u16);
-u8 fightPokemonCheckValid(void);
+bool fightPokemonCheckValid(void *);
 u8 figthPokemonGetLevel(void *);
 u8 fightPokemon_GetCatchEntryFlag(void *);
 f32 menuGetTotalTime(void);
@@ -128,19 +128,19 @@ static s32 getKane(void) {
     if (hero == 0) {
         return -1;
     }
-    if (fightTrainer_GetHeroPtr() == 0) {
+    if (fightTrainer_GetHeroPtr(hero) == 0) {
         return -1;
     }
     okaneBai = fightTrainer_GetOkaneBai(hero);
     target = fightTargetGetPtrAsNowFightType(9, hero);
-    fightTrainer_GetFightTrainerDataId();
-    fightTrainerKindDataBiosGetPtr(fightTrainerDB_GetKindDataId());
-    bairitu = fightTrainerKindDataBiosGetSyoukinBairitu();
+    bairitu = fightTrainerKindDataBiosGetSyoukinBairitu(
+        fightTrainerKindDataBiosGetPtr((u8)fightTrainerDB_GetKindDataId(
+            fightTrainer_GetFightTrainerDataId(target))));
     maxLevel = 0;
     {
         for (i = 0; i < 6; i++) {
             p = fightTrainer_GetFightPokemonPtr(target, i);
-            if (fightPokemonCheckValid()) {
+            if (fightPokemonCheckValid(p)) {
                 u8 level = figthPokemonGetLevel(p);
                 if (maxLevel < level) {
                     maxLevel = level;
@@ -151,7 +151,7 @@ static s32 getKane(void) {
     {
         for (j = 0; j < 6; j++) {
             p2 = fightTrainer_GetFightPokemonPtr(hero, j);
-            if (fightPokemonCheckValid() && fightPokemon_GetCatchEntryFlag(p2) == 1) {
+            if (fightPokemonCheckValid(p2) && fightPokemon_GetCatchEntryFlag(p2) == 1) {
                 u8 level = figthPokemonGetLevel(p2);
                 if (maxLevel < level) {
                     maxLevel = level;
@@ -827,9 +827,9 @@ s32 menuFightCloseTarget(s32 arg) {
     return 0;
 }
 
-s32 menuFightGetKeyWaitMenuId(void) {
+s32 menuFightGetKeyWaitMenuId(FIGHT_TRAINER *trainer, u16 index) {
     s32 id = 0x98;
-    switch (fightMenuGetFightTrainerPtrToStatusMenuId()) {
+    switch (fightMenuGetFightTrainerPtrToStatusMenuId(trainer, index)) {
     case 0x42:
         id = 0x98;
         break;
@@ -1555,8 +1555,7 @@ extern "C" void menuFightDrawIwaitStatus(tagWINDOW_WORK *window, tagSPRITE_WORK 
         break;
     case 0x1c2: case 0x1ef:
         if (pokemon1) {
-            s32 name = pokemonGetStatus(pokemon1, 0, 0x77, 0);
-            msgctrlSetValue(0x37, name);
+            msgctrlSetValue(0x37, pokemonGetStatus(pokemon1, 0, 0x77, 0));
             GSmsgPrintRect(winSpriteGetLayerID(window, sprite), 0, 0, sprite->width, sprite->height, color, 0x4277);
         }
         break;
@@ -1595,8 +1594,7 @@ extern "C" void menuFightDrawIwaitStatus(tagWINDOW_WORK *window, tagSPRITE_WORK 
         break;
     case 0x1cc: case 0x1f9:
         if (pokemon2) {
-            s32 name = pokemonGetStatus(pokemon2, 0, 0x77, 0);
-            msgctrlSetValue(0x37, name);
+            msgctrlSetValue(0x37, pokemonGetStatus(pokemon2, 0, 0x77, 0));
             GSmsgPrintRect(winSpriteGetLayerID(window, sprite), 0, 0, sprite->width, sprite->height, color, 0x4277);
         }
         break;

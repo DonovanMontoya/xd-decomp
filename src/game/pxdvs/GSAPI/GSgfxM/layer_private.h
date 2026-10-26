@@ -37,7 +37,7 @@ private:
     u8 reserved2C[0x1a14-sizeof(LayerNode)];
 };
 ABI_SIZE(GSgfxLayer,0x1a14);
-struct LayerConfigData { s32 id; char* name; s32 type; u8 clearColor,clearAlpha,clearDepth,visible; u32 opaqueSize,translucentSize,matrixCount; };
+struct LayerConfigData { s32 id; char* name; s32 type; bool clearColor,clearAlpha,clearDepth,visible; u32 opaqueSize,translucentSize,matrixCount; };
 ABI_OFF(LayerNode,id,0x28); ABI_SIZE(LayerConfigData,0x1c);
 extern "C" {
 LayerNode* GetLayerList__10GSgfxLayerFv();
@@ -59,7 +59,7 @@ inline LayerNode* findConfigLayer(s32 id) {
 inline s32 freeConfigLayerID() {
     for (u32 id=8;id<16;id++) {
         u8 found=0;
-        for (LayerNode* p=GetLayerList__10GSgfxLayerFv();p;p=p->next) if (p->id==id) { found=1; break; }
+        for (LayerNode* p=GetLayerList__10GSgfxLayerFv();p;p=p->next) if (id==p->id) { found=1; break; }
         if (!found) return id;
     }
     return -1;

@@ -18,7 +18,7 @@ extern "C" GSmodel* GSmodelSearchModelList(HSD_JObj* joint) {
     return 0;
 }
 extern "C" void GSmodelSetRenderCamera(GSmodel* model, GScamera* camera) { model->camera = camera; }
-extern "C" void GSmodelSetRenderLayer(GSmodel* model, s32 count, const s32* layers) {
+extern "C" void GSmodelSetRenderLayer(GSmodel* model, s32 count, s32* layers) {
     for (s32 i = 0; i < 8; ++i) { if (i < count) model->renderLayers[i] = layers[i]; else model->renderLayers[i] = 255; }
 }
 extern "C" void GSmodelDestroyLinkedParticles(GSmodel* model) { if (model->particleBank) GSparticleDestroyAllGenerators(model->particleBank, 1); }
@@ -535,6 +535,7 @@ static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer, s32 
     u16 width;
     u16 halfWidth;
     u16 halfHeight;
+    f32 zero;
     f32 right;
     f32 bottom;
     u8 fogWasOn;
@@ -551,15 +552,17 @@ static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer, s32 
         modelShadowRender__FP10GSgfxLayer(layer);
         bottom = 240.0f;
         right = 320.0f;
+        zero = 0.0f;
         if (pass == 0) {
             GSgfxVideoGetEFBSize(&width, &height);
+            zero = 0.0f;
             halfWidth = width >> 1;
             right = __OSu16tof32(&halfWidth);
             halfHeight = height >> 1;
             bottom = __OSu16tof32(&halfHeight);
         }
-        modelLayerField<f32>(layer, 0xD78) = 0.0f;
-        modelLayerField<f32>(layer, 0xD7C) = 0.0f;
+        modelLayerField<f32>(layer, 0xD78) = zero;
+        modelLayerField<f32>(layer, 0xD7C) = zero;
         modelLayerField<f32>(layer, 0xD80) = right;
         modelLayerField<f32>(layer, 0xD84) = bottom;
         modelLayerField<u32>(layer, 0x16B8) |= 0x10;
@@ -588,7 +591,7 @@ static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer, s32 
             GSgfxTokenIfClearedReset((u8*)model + 0x62);
             if (model->flags & 0x04000000) {
                 for (s32 i = 0; i < 8; i++) {
-                    if (*((u8*)model + (i + 0x64)) == layerId) {
+                    if (model->renderLayers[i] == layerId) {
                         _modelRenderModelSub__FP10GSgfxLayer14GSgfxLayerPassP8_GSmodel(layer, pass, model);
                         rendered = 1;
                         break;

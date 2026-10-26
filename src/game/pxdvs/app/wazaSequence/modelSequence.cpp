@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/wazaSequence/modelSequence.hpp>
+#include <dolphin/os/OSFastCast.h>
 
 extern "C" f32 GSmodelGetAnimFrame(_GSmodel*);
 
@@ -532,6 +533,10 @@ void ModelSequence::SetStatus(u8 status) {
 
 extern "C" void GSmodelGetFrameCount(_GSmodel*, f32*, f32*);
 
+static inline u16 modelFrameCount(f32 frames) {
+    return __OSf32tou16(frames);
+}
+
 u8 ModelSequence::ModelMotionStart() {
     if (flags & 8) {
         return 0;
@@ -571,14 +576,16 @@ u8 ModelSequence::ModelMotionStart() {
         if (half != 0) {
             t = half - 1;
         }
-        talkCount = t / (u16)frames;
-        u16 rem = t % (u16)(0.5f + frames);
+        talkCount = t / modelFrameCount(frames);
+        u16 rem = t % modelFrameCount(0.5f + frames);
         if (rem == 0 && talkCount != 0) {
-            rem = (u16)(0.5f + frames);
+            u16 roundedFrames = modelFrameCount(0.5f + frames);
             talkCount--;
+            rem = roundedFrames;
         }
         field5D = 1;
-        GSmodelSetAnimFrame(model, frames - (f32)rem);
+        u16 remainderFrames = rem;
+        GSmodelSetAnimFrame(model, frames - __OSu16tof32(&remainderFrames));
         GSmodelStartAnimation(model);
     }
     return 1;

@@ -1004,17 +1004,19 @@ static s32 _menuModelAdjustCamera2(MENU_MODEL* a,MENU_MODEL* b) {
     }
     width=a->boundSize[0]+b->boundSize[0];
     height=a->boundSize[1];
-    if(height>=b->boundSize[1]) {} else height=b->boundSize[1];
+    height=a->boundSize[1]>=b->boundSize[1]?a->boundSize[1]:b->boundSize[1];
     f32 negatedB=-b->boundSize[0];
     f32 shift=width*0.5f+negatedB;
     GSmodelGetPosition(modelA,&positionA);
-    positionA.y=0.0f;positionA.z=0.0f;
+    positionA.y=0.0f;
     positionA.x=-(a->boundSize[0]*0.5f)+shift;
+    positionA.z=0.0f;
     PSVECAdd(&positionA,(Vec*)a->offset,&positionA);
     GSmodelSetPosition(modelA,&positionA);
     GSmodelGetPosition(modelB,&positionB);
-    positionB.y=0.0f;positionB.z=0.0f;
+    positionB.y=0.0f;
     positionB.x=b->boundSize[0]*0.5f+shift;
+    positionB.z=0.0f;
     PSVECAdd(&positionB,(Vec*)b->offset,&positionB);
     GSmodelSetPosition(modelB,&positionB);
     if(!a->camera)return 0;
@@ -1024,13 +1026,14 @@ static s32 _menuModelAdjustCamera2(MENU_MODEL* a,MENU_MODEL* b) {
     case 0x4e:case 0x82:case 0x90:case 0x96:case 0xd0:case 0xf3:case 0xfa:displayScale=_disp_scale;break;
     default:displayScale=1.0f;break;
     }
-    if(width>height) {} else width=height;
+    width=width>height?width:height;
     f32 tangent=(f32)tan((0.017453292f*fov)/2.0f);
     f32 distance=width/sizeRatio;
     f32 baseDistance=0.8f*distance/tangent;
     camera.z=((baseDistance*scale)/displayScale)/a->zoom;
-    camera.x=0.0f;camera.y=0.0f;
+    camera.x=0.0f;
     target.y=0.75f*height;
+    camera.y=0.0f;
     PSMTXRotRad(rot,'X',a->camRot[0]);
     PSMTXRotRad(rotY,'Y',-a->camRot[1]);
     PSMTXConcat(rotY,rot,rot);

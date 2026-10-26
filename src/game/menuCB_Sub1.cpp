@@ -69,7 +69,7 @@ static MenuSubAnt ant[36]; static MenuSubAnt antR[30]; static MenuSubAnt antL[30
 #pragma force_active reset
 static u16 battleEndHPStartFlag; static u16 battleEndHPEndFlag;
 void _menuCB_ErrorTAMAGOCheck__Fv(void);
-void _menuCB2DPokemonNewSet2__FUlUlUlUc(u32 arg0, s32 arg1, u32 arg2, u8 arg3);
+void _menuCB2DPokemonNewSet2__FUlUlUlUc(u32 arg0, u32 arg1, u32 arg2, u8 arg3);
 void _menuCB2DPokemonNewSet__FUc(u8 arg0);
 void _menuCB_errorMsgDisp2__FUl(s32 arg0);
 void _menuCB_errorMsgDisp__FUl(s32 arg0);
@@ -1301,7 +1301,7 @@ void _menuCB_ErrorTAMAGOCheck__Fv(void) {
     }
 }
 
-void _menuCB2DPokemonNewSet2__FUlUlUlUc(u32 arg0, s32 arg1, u32 arg2, u8 arg3) {
+void _menuCB2DPokemonNewSet2__FUlUlUlUc(u32 arg0, u32 arg1, u32 arg2, u8 arg3) {
     MenuSubAnt *var_r31;
     MenuSubAnt *var_r30;
     MenuSubAnt *var_r29;

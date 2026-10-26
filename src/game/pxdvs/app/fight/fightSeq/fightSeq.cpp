@@ -201,8 +201,8 @@ u32 joutaiDataBiosGetName(u16);
 u8 pokemonDB_GetTokuseiDataId(u16, u8);
 u8 pokemonGetDarkPokemonHyperJoutaiKakuritu();
 u32 pokemonGetJoutaiMsgId(Pokemon *);
-void pokemonGetSoubiItemBuff();
-u16 pokemonGetSoubiItemSoubiDataId();
+u16 pokemonGetSoubiItemBuff(Pokemon*);
+u16 pokemonGetSoubiItemSoubiDataId(Pokemon*);
 s32 pokemonGetStatus(Pokemon *,u32,u16,u16);
 void pokemonInitJoutai(Pokemon *);
 u8 pokemonIsDarkPokemon(Pokemon *);
@@ -3015,10 +3015,8 @@ s32 fightSeqWazaDamageCalcHikaePokemon(FightOutPokemon *arg0, FightPokemon *arg1
     sp28 = ((u32 (*)(FightOutPokemon *))figthOutPokemonGetLevel)(arg0);
     temp_r18 = pokemon_GetPokemonDataId(fightPokemon_GetPokemonBuffPtr(arg1));
     sp10 = (u16) pokemonDB_GetTokuseiDataId(temp_r18, pokemon_GetTokuseiFlag(fightPokemon_GetPokemonBuffPtr(arg1)));
-    fightPokemon_GetPokemonBuffPtr(arg1);
-    temp_r14 = pokemonGetSoubiItemSoubiDataId();
-    fightPokemon_GetPokemonBuffPtr(arg1);
-    pokemonGetSoubiItemBuff();
+    temp_r14 = pokemonGetSoubiItemSoubiDataId(fightPokemon_GetPokemonBuffPtr(arg1));
+    pokemonGetSoubiItemBuff(fightPokemon_GetPokemonBuffPtr(arg1));
     var_r21 = pokemon_GetPhyDef(fightPokemon_GetPokemonBuffPtr(arg1));
     var_r19 = pokemon_GetSpeDef(fightPokemon_GetPokemonBuffPtr(arg1));
     temp_r25 = fightTrainer_GetHeroPtr(fightFloorGetFightPokemonPtrToFightTrainerPtr(NULL, arg1));
@@ -3026,38 +3024,38 @@ s32 fightSeqWazaDamageCalcHikaePokemon(FightOutPokemon *arg0, FightPokemon *arg1
         var_r22 = (var_r22 * 2) & 0xFFFE;
     }
     if ((temp_r24 == 1) && ((u8) (heroGetStatus(spC, 0xFU, 0U) != 0) == 1)) {
-        var_r22 = (u32) (u16) ((s32) ((u16) var_r22 * 0x6E) / 100);
+        var_r22 = (u16) ((s32) ((u16) var_r22 * 0x6E) / 100);
     }
     if ((temp_r24 == 1) && ((u8) (heroGetStatus(temp_r25, 0x13U, 0U) != 0) == 1)) {
-        var_r21 = (u32) (u16) ((s32) ((u16) var_r21 * 0x6E) / 100);
+        var_r21 = (u16) ((s32) ((u16) var_r21 * 0x6E) / 100);
     }
     if ((temp_r24 == 1) && ((u8) (heroGetStatus(spC, 0x15U, 0U) != 0) == 1)) {
-        var_r20 = (u32) (u16) ((s32) ((u16) var_r20 * 0x6E) / 100);
+        var_r20 = (u16) ((s32) ((u16) var_r20 * 0x6E) / 100);
     }
     if ((temp_r24 == 1) && ((u8) (heroGetStatus(temp_r25, 0x15U, 0U) != 0) == 1)) {
-        var_r19 = (u32) (u16) ((s32) ((u16) var_r19 * 0x6E) / 100);
+        var_r19 = (u16) ((s32) ((u16) var_r19 * 0x6E) / 100);
     }
     for (var_r5 = 0; var_r5 < 0x11; var_r5++) {
         temp_r6 = &SoubiItemWazaTypePowUpTbl[var_r5];
         if (((s32) (u16) temp_r30 == (s32) temp_r6->item) && ((s32) (u16) var_r27 == (s32) temp_r6->type)) {
             switch ((s32) (u8) sp18) {              /* switch 1; irregular */
             case 1:                                 /* switch 1 */
-                var_r22 = (u32) (u16) ((s32) ((u16) var_r22 * (sp1C + 0x64)) / 100);
+                var_r22 = (u16) ((s32) ((u16) var_r22 * (sp1C + 0x64)) / 100);
                 break;
             case 2:                                 /* switch 1 */
-                var_r20 = (u32) (u16) ((s32) ((u16) var_r20 * (sp1C + 0x64)) / 100);
+                var_r20 = (u16) ((s32) ((u16) var_r20 * (sp1C + 0x64)) / 100);
                 break;
             }
         }
     }
     if ((u16) temp_r30 == 0x1D) {
-        var_r22 = (u32) (u16) ((s32) ((u16) var_r22 * 0x96) / 100);
+        var_r22 = (u16) ((s32) ((u16) var_r22 * 0x96) / 100);
     }
     if (((u8) sp14 == 1) && ((u16) temp_r30 == 0x22) && ((temp_r31 == 0x198) || (temp_r31 == 0x197))) {
-        var_r20 = (u32) (u16) ((s32) ((u16) var_r20 * 0x96) / 100);
+        var_r20 = (u16) ((s32) ((u16) var_r20 * 0x96) / 100);
     }
     if (((u8) sp14 == 1) && (temp_r14 == 0x22) && ((temp_r18 == 0x198) || (temp_r18 == 0x197))) {
-        var_r19 = (u32) (u16) ((s32) ((u16) var_r19 * 0x96) / 100);
+        var_r19 = (u16) ((s32) ((u16) var_r19 * 0x96) / 100);
     }
     if (((u16) temp_r30 == 0x23) && (temp_r31 == 0x175)) {
         var_r20 = (var_r20 * 2) & 0xFFFE;
@@ -3075,22 +3073,22 @@ s32 fightSeqWazaDamageCalcHikaePokemon(FightOutPokemon *arg0, FightPokemon *arg1
         var_r22 = (var_r22 * 2) & 0xFFFE;
     }
     if ((sp10 == 0x2F) && (((u16) var_r27 == 0xA) || ((u16) var_r27 == 0xF))) {
-        var_r20 = (u32) (u16) ((s32) (u16) var_r20 / 2);
+        var_r20 = (u16) ((s32) (u16) var_r20 / 2);
     }
     if (temp_r29 == 0x37) {
-        var_r22 = (u32) (u16) ((s32) ((u16) var_r22 * 0x96) / 100);
+        var_r22 = (u16) ((s32) ((u16) var_r22 * 0x96) / 100);
     }
     if ((temp_r29 == 0x39) && (fightFloorCheckFightOutPokemonPtrAryPokemonTokuseiDataId(NULL, 0x3AU, 0U, NULL) != 0)) {
-        var_r20 = (u32) (u16) ((s32) ((u16) var_r20 * 0x96) / 100);
+        var_r20 = (u16) ((s32) ((u16) var_r20 * 0x96) / 100);
     }
     if ((temp_r29 == 0x3A) && (fightFloorCheckFightOutPokemonPtrAryPokemonTokuseiDataId(NULL, 0x39U, 0U, NULL) != 0)) {
-        var_r20 = (u32) (u16) ((s32) ((u16) var_r20 * 0x96) / 100);
+        var_r20 = (u16) ((s32) ((u16) var_r20 * 0x96) / 100);
     }
     if ((temp_r29 == 0x3E) && (fightOutPokemonIsJoutaiNormal(arg0) == 0)) {
-        var_r22 = (u32) (u16) ((s32) ((u16) var_r22 * 0x96) / 100);
+        var_r22 = (u16) ((s32) ((u16) var_r22 * 0x96) / 100);
     }
     if ((sp10 == 0x3F) && (pokemonIsJoutaiNormal(fightPokemon_GetPokemonBuffPtr(arg1)) == 0)) {
-        var_r21 = (u32) (u16) ((s32) ((u16) var_r21 * 0x96) / 100);
+        var_r21 = (u16) ((s32) ((u16) var_r21 * 0x96) / 100);
     }
     if (((u16) var_r27 == 0xD) && (fightFloorCheckFightOutPokemonPtrAryJoutaiDataId(NULL, 0x38) != 0)) {
         var_r23 = (u16) ((s32) var_r23 / 2);
@@ -3119,17 +3117,19 @@ s32 fightSeqWazaDamageCalcHikaePokemon(FightOutPokemon *arg0, FightPokemon *arg1
             if ((u8) sp20 > 6U) {
                 var_r14_2 = fightAbicntDoKakeWaru((u8) sp20, (u32) (u16) var_r22);
             } else {
-                var_r14_2 = (u32) (u16) var_r22;
+                var_r14_2 = (u16) var_r22;
             }
         } else {
             var_r14_2 = fightAbicntDoKakeWaru((u8) sp20, (u32) (u16) var_r22);
         }
+        var_r14_2 *= (u16)var_r23;
+        var_r14_2 *= ((s32)((sp28*2)&0x1FE)/5)+2;
         if (temp_r28 == 2) {
             var_r3 = (u16) var_r21;
         } else {
             var_r3 = fightAbicntDoKakeWaru(6U, (u32) (u16) var_r21);
         }
-        temp_r14_2 = (s32) (var_r14_2 * var_r23 * (((s32) ((sp28 * 2) & 0x1FE) / 5) + 2)) / (s32) var_r3;
+        temp_r14_2 = (s32)var_r14_2 / (s32)var_r3;
         var_r14 = temp_r14_2 / 50;
         if ((fightOutPokemonIsJoutaiDataId(arg0, 6U) == 1) && (temp_r29 != 0x3E)) {
             var_r14 = (temp_r14_2 / 50) / 2;
@@ -3148,17 +3148,19 @@ s32 fightSeqWazaDamageCalcHikaePokemon(FightOutPokemon *arg0, FightPokemon *arg1
             if ((u8) sp24 > 6U) {
                 var_r14_3 = fightAbicntDoKakeWaru((u8) sp24, (u32) (u16) var_r20);
             } else {
-                var_r14_3 = (u32) (u16) var_r20;
+                var_r14_3 = (u16) var_r20;
             }
         } else {
             var_r14_3 = fightAbicntDoKakeWaru((u8) sp24, (u32) (u16) var_r20);
         }
+        var_r14_3 *= (u16)var_r23;
+        var_r14_3 *= ((s32)((sp28*2)&0x1FE)/5)+2;
         if (temp_r28 == 2) {
             var_r3_2 = (u16) var_r19;
         } else {
             var_r3_2 = fightAbicntDoKakeWaru(6U, (u32) (u16) var_r19);
         }
-        temp_r14_3 = (s32) (var_r14_3 * var_r23 * (((s32) ((sp28 * 2) & 0x1FE) / 5) + 2)) / (s32) var_r3_2;
+        temp_r14_3 = (s32)var_r14_3 / (s32)var_r3_2;
         var_r14 = temp_r14_3 / 50;
         if ((fightSideIsJoutaiDataId(sp8, 0x49U) == 1) && (temp_r28 == 1)) {
             fightFloor_GetFightSideFightOutPokemonSideMax(NULL);
@@ -3246,7 +3248,7 @@ s32 fightSeqWazaDamageCalc(FightOutPokemon *arg0, FightOutPokemon *arg1, u32 arg
     temp_r23 = fightFloor_GetFightKindDoBadgeCheckFlag(NULL);
     sp14 = fightFloor_GetFightKindDoItemSoubiTokukoutokubouupFlag(NULL);
     if ((u16) arg4 == 0) {
-        var_r0 = wazaDB_GetIryoku(arg3);
+        var_r0 = (u16)wazaDB_GetIryoku(arg3);
     } else {
         var_r0 = arg4;
     }
@@ -3289,38 +3291,38 @@ s32 fightSeqWazaDamageCalc(FightOutPokemon *arg0, FightOutPokemon *arg1, u32 arg
         var_r21 = (var_r21 * 2) & 0xFFFE;
     }
     if ((temp_r23 == 1) && ((u8) (heroGetStatus(spC, 0xFU, 0U) != 0) == 1)) {
-        var_r21 = (u32) (u16) ((s32) ((u16) var_r21 * 0x6E) / 100);
+        var_r21 = (u16) ((s32) ((u16) var_r21 * 0x6E) / 100);
     }
     if ((temp_r23 == 1) && ((u8) (heroGetStatus(temp_r24, 0x13U, 0U) != 0) == 1)) {
-        var_r20 = (u32) (u16) ((s32) ((u16) var_r20 * 0x6E) / 100);
+        var_r20 = (u16) ((s32) ((u16) var_r20 * 0x6E) / 100);
     }
     if ((temp_r23 == 1) && ((u8) (heroGetStatus(spC, 0x15U, 0U) != 0) == 1)) {
-        var_r19 = (u32) (u16) ((s32) ((u16) var_r19 * 0x6E) / 100);
+        var_r19 = (u16) ((s32) ((u16) var_r19 * 0x6E) / 100);
     }
     if ((temp_r23 == 1) && ((u8) (heroGetStatus(temp_r24, 0x15U, 0U) != 0) == 1)) {
-        var_r18 = (u32) (u16) ((s32) ((u16) var_r18 * 0x6E) / 100);
+        var_r18 = (u16) ((s32) ((u16) var_r18 * 0x6E) / 100);
     }
     for (var_r5 = 0; var_r5 < 0x11; var_r5++) {
         temp_r6 = &SoubiItemWazaTypePowUpTbl[var_r5];
         if (((s32) (u16) temp_r28 == (s32) temp_r6->item) && ((s32) (u16) var_r25 == (s32) temp_r6->type)) {
             switch ((s32) (u8) sp18) {              /* switch 1; irregular */
             case 1:                                 /* switch 1 */
-                var_r21 = (u32) (u16) ((s32) ((u16) var_r21 * (sp20 + 0x64)) / 100);
+                var_r21 = (u16) ((s32) ((u16) var_r21 * (sp20 + 0x64)) / 100);
                 break;
             case 2:                                 /* switch 1 */
-                var_r19 = (u32) (u16) ((s32) ((u16) var_r19 * (sp20 + 0x64)) / 100);
+                var_r19 = (u16) ((s32) ((u16) var_r19 * (sp20 + 0x64)) / 100);
                 break;
             }
         }
     }
     if ((u16) temp_r28 == 0x1D) {
-        var_r21 = (u32) (u16) ((s32) ((u16) var_r21 * 0x96) / 100);
+        var_r21 = (u16) ((s32) ((u16) var_r21 * 0x96) / 100);
     }
     if (((u8) sp14 == 1) && ((u16) temp_r28 == 0x22) && ((temp_r29 == 0x198) || (temp_r29 == 0x197))) {
-        var_r19 = (u32) (u16) ((s32) ((u16) var_r19 * 0x96) / 100);
+        var_r19 = (u16) ((s32) ((u16) var_r19 * 0x96) / 100);
     }
     if (((u8) sp14 == 1) && ((u16) temp_r30 == 0x22) && ((temp_r14 == 0x198) || (temp_r14 == 0x197))) {
-        var_r18 = (u32) (u16) ((s32) ((u16) var_r18 * 0x96) / 100);
+        var_r18 = (u16) ((s32) ((u16) var_r18 * 0x96) / 100);
     }
     if (((u16) temp_r28 == 0x23) && (temp_r29 == 0x175)) {
         var_r19 = (var_r19 * 2) & 0xFFFE;
@@ -3338,28 +3340,28 @@ s32 fightSeqWazaDamageCalc(FightOutPokemon *arg0, FightOutPokemon *arg1, u32 arg
         var_r21 = (var_r21 * 2) & 0xFFFE;
     }
     if (((u16) sp30 == 0x2F) && (((u16) var_r25 == 0xA) || ((u16) var_r25 == 0xF))) {
-        var_r19 = (u32) (u16) ((s32) (u16) var_r19 / 2);
+        var_r19 = (u16) ((var_r19 & 0xffff) / 2);
     }
     if (temp_r27 == 0x37) {
-        var_r21 = (u32) (u16) ((s32) ((u16) var_r21 * 0x96) / 100);
+        var_r21 = (u16) ((s32) ((u16) var_r21 * 0x96) / 100);
     }
     if ((temp_r27 == 0x39) && (fightFloorCheckFightOutPokemonPtrAryPokemonTokuseiDataId(NULL, 0x3AU, 0U, NULL) != 0)) {
-        var_r19 = (u32) (u16) ((s32) ((u16) var_r19 * 0x96) / 100);
+        var_r19 = (u16) ((s32) ((u16) var_r19 * 0x96) / 100);
     }
     if ((temp_r27 == 0x3A) && (fightFloorCheckFightOutPokemonPtrAryPokemonTokuseiDataId(NULL, 0x39U, 0U, NULL) != 0)) {
-        var_r19 = (u32) (u16) ((s32) ((u16) var_r19 * 0x96) / 100);
+        var_r19 = (u16) ((s32) ((u16) var_r19 * 0x96) / 100);
     }
     if ((temp_r27 == 0x3E) && (fightOutPokemonIsJoutaiNormal(arg0) == 0)) {
-        var_r21 = (u32) (u16) ((s32) ((u16) var_r21 * 0x96) / 100);
+        var_r21 = (u16) ((s32) ((u16) var_r21 * 0x96) / 100);
     }
     if (((u16) sp30 == 0x3F) && (fightOutPokemonIsJoutaiNormal(arg1) == 0)) {
-        var_r20 = (u32) (u16) ((s32) ((u16) var_r20 * 0x96) / 100);
+        var_r20 = (u16) ((s32) ((u16) var_r20 * 0x96) / 100);
     }
     if (((u16) var_r25 == 0xD) && (fightFloorCheckFightOutPokemonPtrAryJoutaiDataId(NULL, 0x38) != 0)) {
-        var_r22 = (u16) ((s32) var_r22 / 2);
+        var_r22 = (u16) ((var_r22 & 0xffff) / 2);
     }
     if (((u16) var_r25 == 0xA) && (fightFloorCheckFightOutPokemonPtrAryJoutaiDataId(NULL, 0x39) != 0)) {
-        var_r22 = (u16) ((s32) var_r22 / 2);
+        var_r22 = (u16) ((var_r22 & 0xffff) / 2);
     }
     if (((u16) var_r25 == 0xC) && (temp_r27 == 0x41) && (fightOutPokemonIsNokoriHpFollowing(arg0, 3U) != 0)) {
         var_r22 = (u16) ((s32) (var_r22 * 0x96) / 100);
@@ -3382,21 +3384,23 @@ s32 fightSeqWazaDamageCalc(FightOutPokemon *arg0, FightOutPokemon *arg1, u32 arg
             if ((u8) sp24 > 6U) {
                 var_r14_2 = fightAbicntDoKakeWaru((u8) sp24, (u32) (u16) var_r21);
             } else {
-                var_r14_2 = (u32) (u16) var_r21;
+                var_r14_2 = (u16) var_r21;
             }
         } else {
             var_r14_2 = fightAbicntDoKakeWaru((u8) sp24, (u32) (u16) var_r21);
         }
+        var_r14_2 *= (u16)var_r22;
+        var_r14_2 *= ((s32)((sp2C*2)&0x1FE)/5)+2;
         if (temp_r26 == 2) {
             if ((u8) sp34 < 6U) {
                 var_r3 = fightAbicntDoKakeWaru((u8) sp34, (u32) (u16) var_r20);
             } else {
-                var_r3 = (u32) (u16) var_r20;
+                var_r3 = (u16) var_r20;
             }
         } else {
             var_r3 = fightAbicntDoKakeWaru((u8) sp34, (u32) (u16) var_r20);
         }
-        temp_r14_2 = (s32) (var_r14_2 * var_r22 * (((s32) ((sp2C * 2) & 0x1FE) / 5) + 2)) / (s32) var_r3;
+        temp_r14_2 = (s32)var_r14_2 / (s32)var_r3;
         var_r14 = temp_r14_2 / 50;
         if ((fightOutPokemonIsJoutaiDataId(arg0, 6U) == 1) && (temp_r27 != 0x3E)) {
             var_r14 = (temp_r14_2 / 50) / 2;
@@ -3420,21 +3424,23 @@ s32 fightSeqWazaDamageCalc(FightOutPokemon *arg0, FightOutPokemon *arg1, u32 arg
             if ((u8) sp28 > 6U) {
                 var_r14_3 = fightAbicntDoKakeWaru((u8) sp28, (u32) (u16) var_r19);
             } else {
-                var_r14_3 = (u32) (u16) var_r19;
+                var_r14_3 = (u16) var_r19;
             }
         } else {
             var_r14_3 = fightAbicntDoKakeWaru((u8) sp28, (u32) (u16) var_r19);
         }
+        var_r14_3 *= (u16)var_r22;
+        var_r14_3 *= ((s32)((sp2C*2)&0x1FE)/5)+2;
         if (temp_r26 == 2) {
             if ((u8) sp38 < 6U) {
                 var_r3_2 = fightAbicntDoKakeWaru((u8) sp38, (u32) (u16) var_r18);
             } else {
-                var_r3_2 = (u32) (u16) var_r18;
+                var_r3_2 = (u16) var_r18;
             }
         } else {
             var_r3_2 = fightAbicntDoKakeWaru((u8) sp38, (u32) (u16) var_r18);
         }
-        temp_r14_3 = (s32) (var_r14_3 * var_r22 * (((s32) ((sp2C * 2) & 0x1FE) / 5) + 2)) / (s32) var_r3_2;
+        temp_r14_3 = (s32)var_r14_3 / (s32)var_r3_2;
         var_r14 = temp_r14_3 / 50;
         if ((fightSideIsJoutaiDataId(sp8, 0x49U) == 1) && (temp_r26 == 1)) {
             if ((fightFloor_GetFightSideFightOutPokemonSideMax(NULL) >= 2U) && (temp_r31 >= 2U)) {

@@ -135,7 +135,7 @@ void GSmodelEnableEnvMap(GSmodel* model, s32 source, s32 mode, f32 blend);
 void GSmodelIterateList(void (*callback)(GSmodel*, void*), void* context);
 GSmodel* GSmodelSearchModelList(HSD_JObj* joint);
 void GSmodelSetRenderCamera(GSmodel* model, GScamera* camera);
-void GSmodelSetRenderLayer(GSmodel* model, s32 count, const s32* layers);
+void GSmodelSetRenderLayer(GSmodel* model, s32 count, s32* layers);
 void GSmodelDestroyLinkedParticles(GSmodel* model);
 s32 GSmodelGetGSparticleLinkAttachMode(GSmodel* model);
 GSparticleBank* GSmodelGetLinkedGSparticleBank(GSmodel* model);

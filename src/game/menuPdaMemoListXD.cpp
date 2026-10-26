@@ -793,7 +793,8 @@ void Cursor__11pdaMemoListFP14tagWINDOW_WORK(MemoWork *arg0, MemoWindow *arg1) {
     MemoCursor cursor, copy;
     s32 before, visible, count;
     u16 repeat;
-    s16 selected, last;
+    s16 selected;
+    s32 last;
     s32 tf, ts;
     windowGetKeyInfo();
     cursor.packed = _getCursor__11pdaMemoListFv(arg0);
@@ -836,7 +837,7 @@ void Cursor__11pdaMemoListFP14tagWINDOW_WORK(MemoWork *arg0, MemoWindow *arg1) {
         last = visible - 1;
         cursor.pos.first += selected - last;
         cursor.pos.selected = last;
-        if (cursor.pos.first + last >= count) {
+        if (cursor.pos.first + cursor.pos.selected >= count) {
             cursor.pos.selected = last;
             cursor.pos.first = count - visible;
         }

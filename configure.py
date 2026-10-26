@@ -1004,7 +1004,7 @@ config.libs = [
 
             Object(NonMatching, "game/pxdvs/GSAPI/GSpart/GSpart.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSscratch/GSscratch.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GStexture/GStexture.cpp", extra_cflags=["-O4", "-inline deferred,auto"]),
+            Object(NonMatching, "game/pxdvs/GSAPI/GStexture/GStexture.cpp", extra_cflags=["-O4", "-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSthread/GSthread.cpp", extra_cflags=["-inline off", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSinput/GSinput.cpp", cflags=cflags_xd_input),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSres/GSres.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
@@ -1085,7 +1085,7 @@ config.libs = [
 
             # GSprim
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSprim/GSprim.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSprim/2d.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSprim/2d.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSprim/text.cpp"),
 
             # GSshape
@@ -1148,7 +1148,7 @@ config.libs = [
 
             # zokusei
             Object(NonMatching, "game/pxdvs/app/zokusei/zokusei.cpp"),
-            Object(NonMatching, "game/pxdvs/app/zokusei/zokuseiBios.cpp"),
+            Object(NonMatching, "game/pxdvs/app/zokusei/zokuseiBios.cpp", extra_cflags=["-O1,p"]),
 
             # floor
             Object(NonMatching, "game/pxdvs/app/floor/floor.cpp", extra_cflags=["-inline off", "-opt nopeephole", "-str reuse,nopool,readonly"]),
@@ -1161,7 +1161,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/floor/floorManager.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/app/floor/floorModule.cpp", extra_cflags=["-inline off", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/floor/floorStack.cpp", extra_cflags=["-inline off", "-opt nopeephole", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/app/floor/floorLoad.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/floor/floorLoad.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/app/floor/floorScript.cpp", extra_cflags=["-inline off", "-opt nopeephole"]),
             Object(NonMatching, "game/pxdvs/app/floor/floorsound.cpp", extra_cflags=["-inline off", "-opt nopeephole", "-str reuse,nopool,readonly"]),
 
@@ -1505,7 +1505,7 @@ config.libs = [
             Object(NonMatching, "game/maximum/GSAPI/baselib/jobj.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(NonMatching, "game/maximum/GSAPI/baselib/list.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(NonMatching, "game/maximum/GSAPI/baselib/lobj.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
-            Object(NonMatching, "game/maximum/GSAPI/baselib/memory.cpp"),
+            Object(NonMatching, "game/maximum/GSAPI/baselib/memory.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/maximum/GSAPI/baselib/mobj.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(NonMatching, "game/maximum/GSAPI/baselib/mtx_base.cpp", extra_cflags=['-str reuse,nopool,readonly']),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/objalloc.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),

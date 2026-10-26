@@ -1,7 +1,7 @@
 #include <dolphin/types.h>
 struct BattleControl {s32 unk0;s32 unk4;s32 unk8;u8 padC[45040];s32 unkAFFC;u8 padB000[320];s32 unkB140;u8 padB144[44];s32 unkB170;s32 unkB174;s32 unkB178;u8 padB17C[8];s32 unkB184;u8 padB188[20];s32 unkB19C;u8 padB1A0[68];s16 unkB1E4;};
 struct SaveStatus {u8 pad[0x959];u8 unk959;};
-extern "C" {extern BattleControl _CB;u8 FlashSystemIsLastFrame(u32);void FlashSystemSetLoopFlag(u32,s32);void FlashSystemSetNowFrameLabel(u32,const char*);void FlashSystemSetPlayFrameLabel(u32,const char*,const char*);u8 GSfloorIsFloorPushed();void GSfloorPop();void GSfsysFree(s32);void GSfsysReadWait(s32);void GSresFreeGroup(s32);void GSthreadSwitch();void fightFreeResourceID(u32,u32);u16 fightGetFightResultId();u8 fightReadResourceID(u32,u32);void menuCBBattleEndSetPokemonHP();void menuCBBattleStartInit(BattleControl*,s32);void menuCBBattleStartTrainerFaceFree();void menuCBBattleStartTrainerLoadTex();void menuCBBios_CurrentlyWorkingToolBattleSet(s32);void menuCBPokemonEntryLoadTex();void menuCBPokemonEntryPokemonFaceFree(s32);s32 menuCB_Battle(BattleControl*);u8 menuCB_BattleBA_PokemonEntryNum();s32 menuCB_BattleResult(BattleControl*);void menuCB_GBADisconnectedErrorJob();void menuCB_InitBattle(BattleControl*);void menuCB_MenuRollback(s32);s32 menuCB_PokemonEntry(BattleControl*);void menuCB_SE_Play(s32);void menuCBpokemonFaceReadWait();void menuCBtrainerFaceReadWait();void menuCloseCustom(s32,s32,s32);u8 menuIsCheck(s32);void menuOpen(s32,s32);u8 pauseIsPause();SaveStatus*savedataGetStatus(s32,s32);void toolentryCopyHero();u8 winSeqCheckMove(s32);u16*windowGetKeyInfo();}
+extern "C" {extern BattleControl _CB;u8 FlashSystemIsLastFrame(u32);void FlashSystemSetLoopFlag(u32,s32);void FlashSystemSetNowFrameLabel(u32,const char*);void FlashSystemSetPlayFrameLabel(u32,const char*,const char*);u8 GSfloorIsFloorPushed();void GSfloorPop();void GSfsysFree(s32);void GSfsysReadWait(s32);void GSresFreeGroup(s32);void GSthreadSwitch();void fightFreeResourceID(u32,u32);u16 fightGetFightResultId();u8 fightReadResourceID(u32,u32);void menuCBBattleEndSetPokemonHP();void menuCBBattleStartInit(BattleControl*,s32);void menuCBBattleStartTrainerFaceFree();void menuCBBattleStartTrainerLoadTex();void menuCBBios_CurrentlyWorkingToolBattleSet(s32);void menuCBPokemonEntryLoadTex();void menuCBPokemonEntryPokemonFaceFree();s32 menuCB_Battle(BattleControl*);u8 menuCB_BattleBA_PokemonEntryNum();s32 menuCB_BattleResult(BattleControl*);void menuCB_GBADisconnectedErrorJob();void menuCB_InitBattle(BattleControl*);void menuCB_MenuRollback(s32);s32 menuCB_PokemonEntry(BattleControl*);void menuCB_SE_Play(s32);void menuCBpokemonFaceReadWait();void menuCBtrainerFaceReadWait();void menuCloseCustom(s32,s32,s32);u8 menuIsCheck(s32);void menuOpen(s32,s32);u8 pauseIsPause();SaveStatus*savedataGetStatus(s32,s32);void toolentryCopyHero();u8 winSeqCheckMove(s32);u16*windowGetKeyInfo();}
 static void _menuCB_FlashEnd_WINLOSE(void) {
     if (menuIsCheck(0x110) != 0) {
         menuCloseCustom(0x110, 0, 0);
@@ -109,13 +109,12 @@ extern "C" void menuToolBattleMain(void) {
     temp_r3 = savedataGetStatus(0, 2);
     temp_r26 = temp_r3->unk959;
     temp_r3->unk959 = 0U;
-loop_46:
-    if (var_r27 != 0) {
+    while (var_r27 != 0) {
         menuCBBios_CurrentlyWorkingToolBattleSet(1);
         menuCBBattleStartInit(&_CB, 0);
         _CB.unkB19C = 0;
         _CB.unkB1E4 = 0xF;
-        menuCBPokemonEntryPokemonFaceFree(0);
+        menuCBPokemonEntryPokemonFaceFree();
         menuCBPokemonEntryLoadTex();
         menuCBpokemonFaceReadWait();
         menuCBBattleStartTrainerFaceFree();
@@ -162,7 +161,7 @@ loop_46:
             }
             switch (var_r3) {                       /* switch 1; irregular */
             case 0xA9:                              /* switch 1 */
-                menuCB_MenuRollback(0xA9);
+                menuCB_MenuRollback(var_r3);
                 break;
             default:                                /* switch 1 */
             case 0xB1:                              /* switch 1 */
@@ -176,7 +175,7 @@ loop_46:
                 menuCBBattleStartInit(&_CB, 1);
                 _CB.unkB19C = 0;
                 _CB.unkB1E4 = 0xB4;
-                menuCBPokemonEntryPokemonFaceFree(0);
+                menuCBPokemonEntryPokemonFaceFree();
                 menuCBPokemonEntryLoadTex();
                 menuCBpokemonFaceReadWait();
                 menuCBBattleStartTrainerFaceFree();
@@ -257,11 +256,12 @@ block_36:
                         var_r27 = 0;
                         break;
                     }
-                    goto loop_46;
+                    continue;
                 }
                 break;
             }
         }
+        break;
     }
     _menuCB_FlashEnd();
     menuCBBattleStartTrainerFaceFree();

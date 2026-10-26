@@ -434,28 +434,28 @@ void GSgfx_GCWriteVtxAttrFmt(s32 formatIndex, const GCVertexAttributeFormat *for
     s32 color1Type;
     s32 tex0Count;
     s32 tex0Type;
-    u8 tex0Fraction;
+    s32 tex0Fraction;
     s32 tex1Count;
     s32 tex1Type;
-    u8 tex1Fraction;
+    s32 tex1Fraction;
     s32 tex2Count;
     s32 tex2Type;
-    u8 tex2Fraction;
+    s32 tex2Fraction;
     s32 tex3Count;
     s32 tex3Type;
-    u8 tex3Fraction;
+    s32 tex3Fraction;
     s32 tex4Count;
     s32 tex4Type;
-    u8 tex4Fraction;
+    s32 tex4Fraction;
     s32 tex5Count;
     s32 tex5Type;
-    u8 tex5Fraction;
+    s32 tex5Fraction;
     s32 tex6Count;
     s32 tex6Type;
-    u8 tex6Fraction;
+    s32 tex6Fraction;
     s32 tex7Count;
     s32 tex7Type;
-    u8 tex7Fraction;
+    s32 tex7Fraction;
     s32 attribute;
     s32 count;
     const GCVertexAttributeFormat *format;
@@ -1679,7 +1679,7 @@ static inline void GCFlushRegister(const GCBPRegister* reg) {
     GCWriteByte(GX_LOAD_BP_REG);
     GCWriteWord(reg->value);
 }
-u8* GSgfx_GCWriteCopyDispDirect(u8* buffer, GCCopyDisplayInfo* info, u32 destination, u32 colorUpdate, u32 alphaUpdate, u32 depthUpdate) {
+u8* GSgfx_GCWriteCopyDispDirect(u8* buffer, GCCopyDisplayInfo* info, u32 destination, u8 colorUpdate, u8 alphaUpdate, u8 depthUpdate) {
     u8* output = buffer;
     GCBPRegister clearColor, clearDepth, blend, depth, pixel, scale, source, size, stride, address, control;
     if (info->clear == 1) {
@@ -1755,7 +1755,7 @@ u8* GSgfx_GCWriteCopyDispDirect(u8* buffer, GCCopyDisplayInfo* info, u32 destina
     return output + 45;
 }
 
-void GSgfx_GCWriteCopyDisp(GCCopyDisplayInfo* info, u32 destination, u32 colorUpdate, u32 alphaUpdate, u32 depthUpdate) {
+void GSgfx_GCWriteCopyDisp(GCCopyDisplayInfo* info, u32 destination, u8 colorUpdate, u8 alphaUpdate, u8 depthUpdate) {
     GCBPRegister clearColor, clearDepth, blend, depth, pixel, scale, source, size, stride, address, control;
     if (info->clear == 1) {
         blend.value = 0;

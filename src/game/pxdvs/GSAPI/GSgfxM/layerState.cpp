@@ -333,23 +333,32 @@ void LoadHWState__10GSgfxLayerFv(void* layer) {
 }
 struct LayerArray { u16 flags; u8 stride,padding; s32 attribute; void* data; u32 size; };
 ABI_SIZE(LayerArray,0x10);
+struct LayerMatrixIndex { u8 reserved:2, index:6; };
+ABI_SIZE(LayerMatrixIndex,1);
 static void loadLayerMatrix(void* layer,u8* dirty) {
     GSgfxMatrixStack* stack=layerField<GSgfxMatrixStack*>(layer,0x19a0);
     GSgfxMatrixStack::Entry* entry=stack->current;
     if ((entry->flags&1) || entry!=layerField<GSgfxMatrixStack::Entry*>(dirty,0x8c)) {
         GXLoadPosMtxImm(entry->matrix,0x1b);
+        stack=layerField<GSgfxMatrixStack*>(layer,0x19a0);
         if (stack->current->flags&1) {
             PSMTXInvXpose(stack->current->matrix,stack->current->inverse);
             stack->current->flags&=~1;
         }
         GXLoadNrmMtxImm(stack->current->inverse,0x1b);
-        layerField<GSgfxMatrixStack::Entry*>(dirty,0x8c)=stack->current;
+        layerField<GSgfxMatrixStack::Entry*>(dirty,0x8c)=layerField<GSgfxMatrixStack*>(layer,0x19a0)->current;
     }
     if (layerField<u8>(dirty,0x90)==0) {
-        layerField<u8>(gsgfxState,0x1f3)=(layerField<u8>(gsgfxState,0x1f3)&~0x3f)|0x1b;
+        layerField<LayerMatrixIndex>(gsgfxState,0x1f3).index=0x1b;
         gsgfxState->dirty|=0x40; layerField<u8>(dirty,0x90)=1;
     }
 }
+struct LayerRenderLights { u8 reserved[0x128]; void* lights[8]; };
+struct LayerRenderTextures { u8 reserved[0x98]; u8* textures[8]; };
+ABI_OFF(LayerRenderLights,lights,0x128);
+ABI_OFF(LayerRenderTextures,textures,0x98);
+union LayerBPCommand { u32 value; struct { u32 address:8, payload:24; } fields; };
+ABI_SIZE(LayerBPCommand,4);
 extern "C" void SetupRenderState__10GSgfxLayerFv(void* layer) {
     LoadHWState__10GSgfxLayerFv(layer);
     u32& flags=layerField<u32>(layer,4);
@@ -357,27 +366,38 @@ extern "C" void SetupRenderState__10GSgfxLayerFv(void* layer) {
     if (flags&0x20000000) { gsgfxState->dirty|=0x10; flags&=~0x20000000; }
     if (flags&0x08000000) { *(volatile u8*)0xcc008000=0x48; flags&=~0x08000000; }
     if (flags&0x10000000) {
-        *(volatile u8*)0xcc008000=0x61; *(volatile u32*)0xcc008000=0x0f;
-        *(volatile u8*)0xcc008000=0x61; *(volatile u32*)0xcc008000=0x66001000;
-        *(volatile u8*)0xcc008000=0x61; *(volatile u32*)0xcc008000=0x66001100;
+        LayerBPCommand invalidate;
+        LayerBPCommand indirect;
+        indirect.value=0;
+        invalidate.value=0;
+        indirect.fields.address=0x0f;
+        *(volatile u8*)0xcc008000=0x61; *(volatile u32*)0xcc008000=indirect.value;
+        invalidate.fields.address=0x66;
+        invalidate.fields.payload=0x1000;
+        *(volatile u8*)0xcc008000=0x61; *(volatile u32*)0xcc008000=invalidate.value;
+        invalidate.fields.payload=0x1100;
+        *(volatile u8*)0xcc008000=0x61; *(volatile u32*)0xcc008000=invalidate.value;
         gsgfxState->dirty|=0x800; flags&=~0x10000000;
     }
     if (flags&0x40000000) {
-        *(volatile u8*)0xcc008000=0x61; *(volatile u32*)0xcc008000=0x63000000;
+        LayerBPCommand invalidate;
+        invalidate.fields.address=0x63;
+        invalidate.fields.payload=0;
+        *(volatile u8*)0xcc008000=0x61; *(volatile u32*)0xcc008000=invalidate.value;
         flags&=~0x40000000;
     }
     u8* state=static_cast<u8*>(layer)+0xc70;
     u8* dirty=static_cast<u8*>(layer)+layerField<s32>(layer,0x1994)*0xb8+0x16a8;
     if ((layerField<u32>(dirty,0)&4) && (layerField<u32>(dirty,0x14)&0x10)) {
         u8 count=layerField<u8>(state,0x124);
-        for (u8 i=0;i<count;i++) Load__10GSgfxLightFUc(layerField<void*>(state,0x128+i*4),i);
+        for (u8 i=0;i<count;i++) Load__10GSgfxLightFUc(reinterpret_cast<LayerRenderLights*>(state)->lights[i],i);
         layerField<u32>(dirty,0x14)&=~0x10;
     }
     SetupGPUState__10GSgfxLayerFv(layer);
     dirty=static_cast<u8*>(layer)+layerField<s32>(layer,0x1994)*0xb8+0x16a8;
     if (layerField<u32>(dirty,0x94) && layerField<u8>(layer,0xc70)) {
         for (s32 i=0;i<8;i++) if (layerField<u32>(dirty,0x94)&(1<<i)) {
-            u8* tex=layerField<u8*>(dirty,0x98+i*4);
+            u8* tex=reinterpret_cast<LayerRenderTextures*>(dirty)->textures[i];
             if (!layerField<u16>(tex,0) || !layerField<u16>(tex,2)) ++_foo;
             if (layerField<void*>(tex,0x48)) {
                 GXInitTexObjTlut(reinterpret_cast<GXTexObj*>(tex+0x54),i);
@@ -396,9 +416,8 @@ extern "C" void SetupRenderState__10GSgfxLayerFv(void* layer) {
                 GSgfx_GCWriteArray(a->attribute,a->data,a->stride);
             layerField<void*>(dirty,0x88)=format;
         }
-        u32 index=layerField<u32>(format,4);
-        if (layerField<void*>(dirty,0x68+index*4)!=format || (layerField<u16>(format,0)&2)) {
-            GSgfx_GCWriteVtxAttrFmt(index,format+8); layerField<void*>(dirty,0x68+index*4)=format;
+        if (layerField<void*>(dirty,0x68+layerField<u32>(format,4)*4)!=format || (layerField<u16>(format,0)&2)) {
+            GSgfx_GCWriteVtxAttrFmt(layerField<u32>(format,4),format+8); layerField<void*>(dirty,0x68+layerField<u32>(format,4)*4)=format;
         }
         u8 sync=0;
         for (LayerArray* a=reinterpret_cast<LayerArray*>(format+0x290);a->attribute!=255;a++) if (a->flags&1) {
@@ -464,8 +483,14 @@ __declspec(weak) void GSgfx_GCSetChanCtrl(s32 arg0, u8 arg1, s32 arg2, s32 arg3,
 __declspec(weak) void GSgfx_GCSetScissor(u16 arg0, u16 arg1, u16 arg2, u16 arg3, s32 arg4, s32 arg5);
 __declspec(weak) void GSgfx_GCSetProjection(s32 arg0, u8 *arg1);
 
+struct LayerTevRegularColorRegister { u32 address:8, bank:1, high:11, reserved:1, low:11; };
+struct LayerTevRegularColorRegisters { u8 reserved[0x2A4]; LayerTevRegularColorRegister ra[4], bg[4]; };
+ABI_SIZE(LayerTevRegularColorRegister, 4);
+ABI_OFF(LayerTevRegularColorRegisters, ra, 0x2A4);
+ABI_OFF(LayerTevRegularColorRegisters, bg, 0x2B4);
+struct LayerGpuPassArray { u8 reserved[0x16A8]; LayerPassVertexFormats pass[2]; };
+ABI_OFF(LayerGpuPassArray, pass, 0x16A8);
 void SetupGPUState__10GSgfxLayerFv(void *arg0) {
-    Mtx44 fogProjection;
     s32 sp38;
     s32 sp34;
     u32 sp30;
@@ -480,12 +505,9 @@ void SetupGPUState__10GSgfxLayerFv(void *arg0) {
     s32 sp8;
     s32 temp_r0_2;
     s32 temp_r0_3;
-    s32 temp_r10;
-    s32 temp_r10_2;
     s32 temp_r10_3;
     s32 temp_r10_4;
     s32 temp_r11;
-    s32 temp_r12_2;
     s32 temp_r12_3;
     s32 temp_r24_2;
     s32 temp_r25;
@@ -498,12 +520,7 @@ void SetupGPUState__10GSgfxLayerFv(void *arg0) {
     s32 temp_r6_4;
     s32 temp_r6_5;
     s32 temp_r6_6;
-    s32 temp_r7_2;
-    s32 temp_r7_3;
     s32 temp_r8;
-    s32 temp_r8_2;
-    s32 temp_r8_3;
-    s32 temp_r9;
     s32 temp_r9_2;
     s32 temp_r9_3;
     s32 var_ctr;
@@ -530,7 +547,6 @@ void SetupGPUState__10GSgfxLayerFv(void *arg0) {
     s32 var_r4_4;
     s32 var_r4_5;
     s32 var_r5;
-    s32 var_r5_3;
     s32 var_r5_4;
     s32 var_r5_5;
     s32 var_r5_6;
@@ -590,7 +606,7 @@ void SetupGPUState__10GSgfxLayerFv(void *arg0) {
     u8 *var_r3_4;
     u8 *var_r3_5;
 
-    temp_r30 = static_cast<u8*>(arg0) + ((LAYER_STATE_FIELD(s32, arg0, 0x1994) * 0xB8) + 0x16A8);
+    temp_r30 = reinterpret_cast<u8*>(&reinterpret_cast<LayerGpuPassArray*>(arg0)->pass[LAYER_STATE_FIELD(s32,arg0,0x1994)]);
     temp_r0 = LAYER_STATE_FIELD(s32, temp_r30, 0x0);
     if (temp_r0 != 0) {
         temp_r31 = static_cast<u8*>(arg0) + 0xC70;
@@ -613,9 +629,14 @@ void SetupGPUState__10GSgfxLayerFv(void *arg0) {
                         if (temp_r3 != NULL) {
                             LAYER_STATE_FIELD(s32, var_r29, 0x4) = (s32) (LAYER_STATE_FIELD(u8, temp_r3, 0x7C) + 2);
                         }
+                        s32 function=LAYER_STATE_FIELD(s32,var_r29,4);
+                        s32 source=LAYER_STATE_FIELD(s32,var_r29,8);
+                        u32 matrix=LAYER_STATE_FIELD(u32,var_r29,12);
+                        u8 normalize=LAYER_STATE_FIELD(u8,var_r29,16);
+                        u32 postMatrix=LAYER_STATE_FIELD(u32,var_r29,20);
                         temp_r3_2 = reinterpret_cast<u8*>(gsgfxState) + var_r27;
-                        if (((s32) LAYER_STATE_FIELD(s32, temp_r3_2, 0x358) != (s32) LAYER_STATE_FIELD(s32, var_r29, 0x4)) || ((s32) LAYER_STATE_FIELD(s32, temp_r3_2, 0x35C) != (s32) LAYER_STATE_FIELD(s32, var_r29, 0x8)) || ((u32) LAYER_STATE_FIELD(u32, temp_r3_2, 0x360) != (u32) LAYER_STATE_FIELD(u32, var_r29, 0xC)) || ((u8) LAYER_STATE_FIELD(u8, temp_r3_2, 0x364) != (u8) LAYER_STATE_FIELD(u8, var_r29, 0x10)) || ((u32) LAYER_STATE_FIELD(u32, temp_r3_2, 0x368) != (u32) LAYER_STATE_FIELD(u32, var_r29, 0x14))) {
-                            GSgfx_GCWriteTexCoordGen(var_r28, LAYER_STATE_FIELD(s32, var_r29,4), LAYER_STATE_FIELD(s32, var_r29,8), LAYER_STATE_FIELD(u32, var_r29,12), LAYER_STATE_FIELD(u8, var_r29,16), LAYER_STATE_FIELD(u32, var_r29,20));
+                        if (((s32) LAYER_STATE_FIELD(s32, temp_r3_2, 0x358) != (s32) function) || ((s32) LAYER_STATE_FIELD(s32, temp_r3_2, 0x35C) != (s32) source) || ((u32) LAYER_STATE_FIELD(u32, temp_r3_2, 0x360) != (u32) matrix) || ((u8) LAYER_STATE_FIELD(u8, temp_r3_2, 0x364) != (u8) normalize) || ((u32) LAYER_STATE_FIELD(u32, temp_r3_2, 0x368) != (u32) postMatrix)) {
+                            GSgfx_GCWriteTexCoordGen(var_r28, function, source, matrix, normalize, postMatrix);
                         }
                     }
                     var_r29 += 0x18;
@@ -835,39 +856,29 @@ void SetupGPUState__10GSgfxLayerFv(void *arg0) {
             if ((u32) LAYER_STATE_FIELD(u32, temp_r30, 0x3C) != 0) {
                 var_r3_2 = temp_r31;
                 var_r4_2 = 0;
-                var_r5_3 = 0;
                 var_ctr = 4;
                 do {
                     temp_r0_3 = 1 << var_r4_2;
                     if (LAYER_STATE_FIELD(s32, temp_r30, 0x3C) & temp_r0_3) {
                         if ((u32) LAYER_STATE_FIELD(u32, var_r3_2, 0x780) == 0U) {
-                            temp_r9 = var_r5_3 + 0x2A6;
-                            temp_r10 = var_r5_3 + 0x2A4;
                             sp1C = LAYER_STATE_FIELD(s32, var_r3_2, 0x784);
-                            temp_r8_2 = var_r5_3 + 0x2B6;
-                            temp_r7_2 = var_r5_3 + 0x2B4;
-                            LAYER_STATE_FIELD(u16, reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) = (LAYER_STATE_FIELD(u16, reinterpret_cast<u8*>(gsgfxState) + temp_r9, 0) & ~0x7FF) | (LAYER_STATE_FIELD(u8, &sp1C,0) & 0x7FF);
-                            LAYER_STATE_FIELD(u32, reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) = (LAYER_STATE_FIELD(u32, reinterpret_cast<u8*>(gsgfxState) + temp_r10, 0) & ~0x7FF000) | ((LAYER_STATE_FIELD(u8, &sp1C,3) << 0xC) & 0x7FF000);
-                            LAYER_STATE_FIELD(u16, reinterpret_cast<u8*>(gsgfxState) + temp_r8_2, 0) = (LAYER_STATE_FIELD(u16, reinterpret_cast<u8*>(gsgfxState) + temp_r8_2, 0) & ~0x7FF) | (LAYER_STATE_FIELD(u8, &sp1C,2) & 0x7FF);
-                            LAYER_STATE_FIELD(u32, reinterpret_cast<u8*>(gsgfxState) + temp_r7_2, 0) = (LAYER_STATE_FIELD(u32, reinterpret_cast<u8*>(gsgfxState) + temp_r7_2, 0) & ~0x7FF000) | ((LAYER_STATE_FIELD(u8, &sp1C,1) << 0xC) & 0x7FF000);
+                            reinterpret_cast<LayerTevRegularColorRegisters*>(gsgfxState)->ra[var_r4_2].low = LAYER_STATE_FIELD(u8,&sp1C,0);
+                            reinterpret_cast<LayerTevRegularColorRegisters*>(gsgfxState)->ra[var_r4_2].high = LAYER_STATE_FIELD(u8,&sp1C,3);
+                            reinterpret_cast<LayerTevRegularColorRegisters*>(gsgfxState)->bg[var_r4_2].low = LAYER_STATE_FIELD(u8,&sp1C,2);
+                            reinterpret_cast<LayerTevRegularColorRegisters*>(gsgfxState)->bg[var_r4_2].high = LAYER_STATE_FIELD(u8,&sp1C,1);
                             LAYER_STATE_FIELD(s32, gsgfxState, 0x24) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x24) | temp_r0_3);
                         } else {
-                            temp_r10_2 = var_r5_3 + 0x2A6;
-                            temp_r12_2 = var_r5_3 + 0x2A4;
                             sp34 = LAYER_STATE_FIELD(s32, var_r3_2, 0x784);
-                            temp_r8_3 = var_r5_3 + 0x2B6;
-                            temp_r7_3 = var_r5_3 + 0x2B4;
                             sp38 = LAYER_STATE_FIELD(s32, var_r3_2, 0x788);
-                            LAYER_STATE_FIELD(u16, reinterpret_cast<u8*>(gsgfxState) + temp_r10_2, 0) = (LAYER_STATE_FIELD(u16, reinterpret_cast<u8*>(gsgfxState) + temp_r10_2, 0) & ~0x7FF) | (LAYER_STATE_FIELD(s16, &sp34,0) & 0x7FF);
-                            LAYER_STATE_FIELD(u32, reinterpret_cast<u8*>(gsgfxState) + temp_r12_2, 0) = (LAYER_STATE_FIELD(u32, reinterpret_cast<u8*>(gsgfxState) + temp_r12_2, 0) & ~0x7FF000) | (((LAYER_STATE_FIELD(u16, &sp38,2) & 0x7FF) << 0xC) & 0x7FF000);
-                            LAYER_STATE_FIELD(u16, reinterpret_cast<u8*>(gsgfxState) + temp_r8_3, 0) = (LAYER_STATE_FIELD(u16, reinterpret_cast<u8*>(gsgfxState) + temp_r8_3, 0) & ~0x7FF) | (LAYER_STATE_FIELD(s16, &sp38,0) & 0x7FF & 0x7FF);
-                            LAYER_STATE_FIELD(u32, reinterpret_cast<u8*>(gsgfxState) + temp_r7_3, 0) = (LAYER_STATE_FIELD(u32, reinterpret_cast<u8*>(gsgfxState) + temp_r7_3, 0) & ~0x7FF000) | (((LAYER_STATE_FIELD(u16, &sp34,2) & 0x7FF) << 0xC) & 0x7FF000);
+                            reinterpret_cast<LayerTevRegularColorRegisters*>(gsgfxState)->ra[var_r4_2].low = LAYER_STATE_FIELD(s16,&sp34,0);
+                            reinterpret_cast<LayerTevRegularColorRegisters*>(gsgfxState)->ra[var_r4_2].high = LAYER_STATE_FIELD(s16,&sp38,2);
+                            reinterpret_cast<LayerTevRegularColorRegisters*>(gsgfxState)->bg[var_r4_2].low = LAYER_STATE_FIELD(s16,&sp38,0);
+                            reinterpret_cast<LayerTevRegularColorRegisters*>(gsgfxState)->bg[var_r4_2].high = LAYER_STATE_FIELD(s16,&sp34,2);
                             LAYER_STATE_FIELD(s32, gsgfxState, 0x24) = (s32) (LAYER_STATE_FIELD(s32, gsgfxState, 0x24) | temp_r0_3);
                         }
                     }
                     var_r3_2 += 0xC;
                     var_r4_2 += 1;
-                    var_r5_3 += 4;
                     var_ctr -= 1;
                 } while (var_ctr != 0);
                 LAYER_STATE_FIELD(s32, temp_r30, 0x3C) = 0U;
@@ -1128,8 +1139,12 @@ void SetupGPUState__10GSgfxLayerFv(void *arg0) {
                 } else {
                     var_r24_2 = 0;
                 }
-                if (((s32) LAYER_STATE_FIELD(s32, gsgfxState, 0xBF4) != var_r24_2) || (LAYER_STATE_FIELD(float, gsgfxState, 0xBF8) != LAYER_STATE_FIELD(float, temp_r31, 0xA0C)) || (LAYER_STATE_FIELD(float, gsgfxState, 0xBFC) != LAYER_STATE_FIELD(float, temp_r31, 0xA10)) || (LAYER_STATE_FIELD(float, gsgfxState, 0xC00) != LAYER_STATE_FIELD(float, temp_r31, 0xA14)) || (LAYER_STATE_FIELD(float, gsgfxState, 0xC04) != LAYER_STATE_FIELD(float, temp_r31, 0xA18))) {
-                    GSgfx_GCWriteFog(var_r24_2, LAYER_STATE_FIELD(float, temp_r31,0xA0C), LAYER_STATE_FIELD(float, temp_r31,0xA10), LAYER_STATE_FIELD(float, temp_r31,0xA14), LAYER_STATE_FIELD(float, temp_r31,0xA18));
+                f32 startZ=LAYER_STATE_FIELD(float,temp_r31,0xa0c);
+                f32 endZ=LAYER_STATE_FIELD(float,temp_r31,0xa10);
+                f32 nearZ=LAYER_STATE_FIELD(float,temp_r31,0xa14);
+                f32 farZ=LAYER_STATE_FIELD(float,temp_r31,0xa18);
+                if (((s32) LAYER_STATE_FIELD(s32, gsgfxState, 0xBF4) != var_r24_2) || (LAYER_STATE_FIELD(float, gsgfxState, 0xBF8) != startZ) || (LAYER_STATE_FIELD(float, gsgfxState, 0xBFC) != endZ) || (LAYER_STATE_FIELD(float, gsgfxState, 0xC00) != nearZ) || (LAYER_STATE_FIELD(float, gsgfxState, 0xC04) != farZ)) {
+                    GSgfx_GCWriteFog(var_r24_2, startZ, endZ, nearZ, farZ);
                 }
                 if ((var_r24_2 != 0) && ((temp_r3_4 = LAYER_STATE_FIELD(s32, temp_r31, 0xA1C), sp24 = temp_r3_4, (((u32) LAYER_STATE_FIELD(u32, gsgfxState, 0xC09) == temp_r3_4) == 0)) || ((u8) LAYER_STATE_FIELD(u8, gsgfxState, 0xC08) == 1))) {
                     sp18 = sp24;
@@ -1150,7 +1165,7 @@ void SetupGPUState__10GSgfxLayerFv(void *arg0) {
                 LAYER_STATE_FIELD(u8, gsgfxState, 0xC08) = 0U;
             }
             if (LAYER_STATE_FIELD(s32, temp_r30, 0x64) & 0x100) {
-                memset(fogProjection,0,sizeof(fogProjection));
+                Mtx44 fogProjection={0};
                 temp_r3_6 = static_cast<u8*>(GSgfxVideoGetViewport());
                 if ((s32) LAYER_STATE_FIELD(s32, temp_r31, 0xE4) == 0) {
                     fogProjection[0][0] = LAYER_STATE_FIELD(float, temp_r31, 0xE8);

@@ -1122,7 +1122,7 @@ void peopleUpdateAnimation(tagPeopleWork* work, u8 moveByHero) {
 }
 u8 GSgfxVideoGetVsyncRate();
 s32 peopleMoveAlongAngle(u32, u32, f32, f32);
-void _peopleMoveTypeList__FP13tagPeopleWorkb(tagPeopleWork* work, u8 loop) {
+void _peopleMoveTypeList__FP13tagPeopleWorkb(tagPeopleWork* work, bool loop) {
     f32 angle;
     f32 speed;
     f32 rotationSpeed = 2.0f;
@@ -1156,8 +1156,7 @@ void _peopleMoveTypeList__FP13tagPeopleWorkb(tagPeopleWork* work, u8 loop) {
             arrived = 1;
         }
         if (arrived) {
-            work->walkPointIndex++;
-            if (work->walkPointIndex >= work->walkPointCount) {
+            if (++work->walkPointIndex >= work->walkPointCount) {
                 if (loop) {
                     work->walkPointIndex = 0;
                 } else {
@@ -1181,19 +1180,20 @@ void _peopleMoveTypeList__FP13tagPeopleWorkb(tagPeopleWork* work, u8 loop) {
         } else {
             if (work->walkPointIndex != 0) {
                 static f32 max_rot_speed = 5.0f;
-                f32 first = PSVECDistance(peopleBiosGetPosPtr(work), &work->walkPoints[work->walkPointIndex]);
+                f32 first = PSVECDistance(&work->walkPoints[work->walkPointIndex], peopleBiosGetPosPtr(work));
                 f32 second = PSVECDistance(&work->walkPoints[work->walkPointIndex - 1], &work->walkPoints[work->walkPointIndex]);
                 if (first < second) {
                     f32 factor = peopleGetBlendFactor(first, 0.0f, second);
                     f32 value = 2.0f * factor + max_rot_speed * (1.0f - factor);
-                    if (!(2.0f >= value)) rotationSpeed = value;
+                    if (2.0f < value) rotationSpeed = value;
                 }
-                first = PSVECDistance(&work->walkPoints[work->walkPointIndex - 1], peopleBiosGetPosPtr(work));
+                GSvec* position = peopleBiosGetPosPtr(work);
+                first = PSVECDistance(&work->walkPoints[work->walkPointIndex - 1], position);
                 second = PSVECDistance(&work->walkPoints[work->walkPointIndex - 1], &work->walkPoints[work->walkPointIndex]);
                 if (first < second) {
                     f32 factor = peopleGetBlendFactor(first, 0.0f, second);
                     f32 value = 2.0f * factor + max_rot_speed * (1.0f - factor);
-                    if (!(rotationSpeed >= value)) rotationSpeed = value;
+                    if (rotationSpeed < value) rotationSpeed = value;
                 }
             }
             GSvec rotation;
@@ -1974,7 +1974,7 @@ void _peopleRegisterChestPart__FP13tagPeopleWork(tagPeopleWork* work) {
     }
 }
 u8 peopleViewerIsCheckNpc(tagPeopleWork*);
-void peopleViewerDisplayMoveRotInfo(tagPeopleWork*);
+s32 peopleViewerDisplayMoveRotInfo(tagPeopleWork*,f32);
 void _peopleMoveRotate__FP13tagPeopleWork(tagPeopleWork* work) {
     GSvec rotation;
     f32 diff;
@@ -1982,6 +1982,7 @@ void _peopleMoveRotate__FP13tagPeopleWork(tagPeopleWork* work) {
     f32 second;
     f32 first;
     f32 rateStep;
+    f32 signedStep;
     f32 frame;
     peopleBiosGetRot(work, &rotation);
     rotation.param2 = adjustPIPI__Ff(rotation.param2);
@@ -2005,10 +2006,10 @@ void _peopleMoveRotate__FP13tagPeopleWork(tagPeopleWork* work) {
                 work->chestRotation.param2 = 0.0f;
                 if (work->neckEnabled == 0) work->neckRotation.param2 = 0.0f;
             } else {
-                if (diff > 0.0f) rateStep = work->rotationProgress;
-                else rateStep = -work->rotationProgress;
+                if (diff > 0.0f) signedStep = work->rotationProgress;
+                else signedStep = -work->rotationProgress;
                 frame = 30.0f * (f32)timeGetLastFrameTime() / (f32)GSgfxVideoGetVsyncRate();
-                rateStep = rateStep * (peopleViewerGetPlaySpeedRate(work) * frame);
+                rateStep = signedStep * (peopleViewerGetPlaySpeedRate(work) * frame);
                 rotation.param2 = rotation.param2 + rateStep;
             }
         }
@@ -2026,8 +2027,8 @@ void _peopleMoveRotate__FP13tagPeopleWork(tagPeopleWork* work) {
     }
     if (work->attachIndex < 0) {
         if (peopleViewerIsCheckNpc(work)) {
-            _peopleGetDiffAngleFixForNeck__FffP13tagPeopleWork(rotation.param2, original, work);
-            peopleViewerDisplayMoveRotInfo(work);
+            f32 difference=_peopleGetDiffAngleFixForNeck__FffP13tagPeopleWork(rotation.param2, original, work);
+            peopleViewerDisplayMoveRotInfo(work,difference);
         }
         peopleBiosSetRot(work, &rotation);
     }

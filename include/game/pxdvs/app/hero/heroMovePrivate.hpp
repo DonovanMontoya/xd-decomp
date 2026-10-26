@@ -81,7 +81,7 @@ u8 cameraGetType();
 u8 dbgMenuIsOpen();
 u8 menuIsCheck(u32);
 s32 floorGetFloorState();
-void floorExecScriptInteger(s32, s32, s32, s32);
+s32 floorExecScriptInteger(s32, s32, s32, s32, s32);
 s32 floorEventExecScript(u32, s32);
 u8 gimmickBoxIsGimmickMoving();
 FloorBgmMask* floorSound_getBgmMaskObj();

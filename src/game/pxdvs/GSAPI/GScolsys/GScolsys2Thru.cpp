@@ -350,14 +350,14 @@ extern "C" s32 GScolsys2ThruGetEventID(GSvec *start,GSvec *end,ThruEvent *events
         PSVECScale(&direction,&point,t);
         PSVECAdd(&point,(Vec *)start,&point);
         s32 found=getEventList((GSvec *)&point,(GSvec *)&direction,radius,temporary);
+        ThruEvent *existing;
         ThruEvent *entry=temporary;
-        for(s32 j=0;j<found && count<4;j++,entry++) {
-            ThruEvent *existing=events;
-                s32 duplicate;
-                for(duplicate=0;duplicate<count;existing++,duplicate++) if(existing->eventID==entry->eventID) break;
-                if(duplicate>=count) {
-                copyEvent(&events[count],entry);
-                count++;
+        for(s32 j=0;j<found && count<4;entry++,j++) {
+            existing=events;
+            s32 duplicate;
+            for(duplicate=0;duplicate<count;existing++,duplicate++) if(entry->eventID==existing->eventID) break;
+            if(duplicate>=count) {
+                copyEvent(&events[count++],entry);
             }
         }
         if(step<=0.0f) break;

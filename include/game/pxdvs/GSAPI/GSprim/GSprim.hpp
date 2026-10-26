@@ -192,14 +192,14 @@ void GSprimSetRenderLayer(GSgfxLayer*);
 void GSprimSetup3DRender(GSgfxLayer*);
 void GSprimSetup2DRender(GSgfxLayer*);
 extern "C" {
-void GSprimDraw2DTexQuad4VCA(const GSvec2*, const GSvec2*, GStexture*, const GXColor*, const GXColorS10*);
-void GSprimDraw2DTexQuad4V(const GSvec2*, const GSvec2*, GStexture*, const GXColor*);
+void GSprimDraw2DTexQuad4VCA(GSvec2*, GSvec2*, GStexture*, const GXColor*, const GXColorS10*);
+void GSprimDraw2DTexQuad4V(GSvec2*, GSvec2*, GStexture*, const GXColor*);
 void GSprimDraw2DTexQuad(f32, f32, f32, f32, GStexture*, const GXColor*);
-void GSprimDraw2DQuad4V(const GSvec2*, const GXColor*);
+void GSprimDraw2DQuad4V(GSvec2*, const GXColor*);
 void GSprimDraw2DQuadWH(f32, f32, f32, f32, const GXColor*);
 void GSprimDraw2DQuad(f32, f32, f32, f32, const GXColor*);
 void GSprimDraw2DPixelListC(const GSprimPixel*, u32, const GXColor*);
-void GSprimDraw2DLineListC(const GSvec2*, u32, const GXColor*);
+void GSprimDraw2DLineListC(GSvec2*, u32, GXColor*);
 void GSprimDraw2DVLine(f32, f32, f32, const GXColor*);
 void GSprimDraw2DHLine(f32, f32, f32, const GXColor*);
 void GSprimDraw2DLine(f32, f32, f32, f32, const GXColor*, const GXColor*);

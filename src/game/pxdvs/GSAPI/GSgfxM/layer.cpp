@@ -512,14 +512,14 @@ void SetPassRedirect__10GSgfxLayerF14GSgfxLayerPassbP10GSgfxLayer14GSgfxLayerPas
     }
 }
 void PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(void* layer,s32 pass) {
-    u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
-    if (layerField<void*>(fifo,0)) {
+    if (layerField<void*>(layer,0x1818+pass*0xbc)) {
         u32 visible=pass==0 ? 3 : 5;
         if (visible==(visible&layerField<u32>(layer,4))) {
             selectLayerPass(static_cast<GraphicsLayerState*>(layer),pass);
             SetupFifo__10GSgfxLayerFv(layer);
             GSgfxRenderModuleDoRender__FP10GSgfxLayer14GSgfxLayerPass(layer,pass); return;
         }
+        u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
         if (fifo==gsgfx_layer_activeFifo) updateLayerFifo(fifo);
         GSgfxGPUSetFifoWritePtr__FP15GSgfx_GCFifoObjPv(fifo+8,layerField<void*>(fifo,0x88));
         layerField<void*>(fifo,0x8c)=layerField<void*>(fifo,0x88);

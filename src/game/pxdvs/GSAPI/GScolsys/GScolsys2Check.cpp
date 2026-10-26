@@ -56,7 +56,7 @@ static s32 getEventList(GSvec *start, GSvec *end, CCDCheckEvent *events) {
                     s32 k;
                     for(k=0;k<count;existing++,k++) if(existing->eventID==entry->eventID) break;
                     if(k>=count) {
-                        s32 index=count;
+                        u8 index=count;
                         count++;
                         CCDCheckEvent *output=&events[index];
                         for(s32 v=0;v<3;v++) *(Vec *)&output->vertices[v]=*(Vec *)&entry->vertices[v];

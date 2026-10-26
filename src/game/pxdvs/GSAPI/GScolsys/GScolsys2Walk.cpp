@@ -25,6 +25,8 @@ extern "C" s32 GScolsys2WalkGetLayer(GSvec *point,u8 *layer,u8 *floor) {
 #pragma dont_inline on
 static u8 getCpPolyVec(GSvec *out,GSvec *point,GSvec *triangle,GSvec *normal) {
     GSvec minimum,maximum;
+    f32 heightOffset;
+    f32 edgeX;
     minimum.x=minimum.z=1000000.0f;
     maximum.x=maximum.z=-1000000.0f;
     for(s32 i=0;i<3;i++) {
@@ -42,13 +44,21 @@ static u8 getCpPolyVec(GSvec *out,GSvec *point,GSvec *triangle,GSvec *normal) {
         displacement.z=point->z-triangle[i].z;
         edge.z=triangle[next].z-triangle[i].z;
         edge.x=triangle[next].x-triangle[i].x;
+        edgeX=edge.x;
         f32 cross=edge.z*displacement.x;
-        if(edge.x*displacement.z-cross>0.0f) return 0;
+        if(edgeX*displacement.z-cross>0.0f) return 0;
     }
+    if(normal->y==0.0f) return 0;
     f32 ny=normal->y;
-    if(ny==0.0f) return 0;
+    GSvec displacement;
+    displacement.y=point->y-triangle->y;
+    displacement.x=point->x-triangle->x;
+    displacement.z=point->z-triangle->z;
+    f32 nx=normal->x,nz=normal->z;
+    f32 vertical=ny*displacement.y;
+    heightOffset=-(nz*displacement.z+(nx*displacement.x+vertical))/ny;
     out->x=point->x;
-    out->y=point->y + -(normal->z*(point->z-triangle->z)+(normal->x*(point->x-triangle->x)+ny*(point->y-triangle->y)))/ny;
+    out->y=point->y + heightOffset;
     out->z=point->z;
     return 1;
 }
@@ -67,6 +77,38 @@ static inline u8 storeHeight(WalkHeight *output,WalkHeight *begin,s32 count,f32 
     output->layer=(packed>>4)&15;
     output->floor=packed&15;
     return 1;
+}
+static inline s32 getGridHeights(GSvec* point, WalkModel* model, WalkHeight* temporary, GSvec* gridCrossing) {
+    s32 used=0;
+    s32 x=(s32)((point->x-model->originX)/model->cellWidth);
+    if(x<0 || x>=model->width) return 0;
+    s32 z=(s32)((point->z-model->originZ)/model->cellDepth);
+    if(z<0 || z>=model->depth) return 0;
+    WalkHeight *entry=temporary;
+    WalkCell *cell=&model->cells[x+z*model->width];
+    u32 *index=&model->indices[cell->first];
+    for(u32 j=0;j<cell->count && used<8;j++,index++) {
+        WalkPolygon *polygon=&model->polygons[*index];
+        if(getCpPolyVec(gridCrossing,point,polygon->vertices,&polygon->normal)) {
+            if(storeHeight(entry,temporary,used,gridCrossing->y,polygon)) {entry++;used++;}
+        }
+    }
+    return used;
+}
+static inline s32 getTransformedHeights(GSvec* point,WalkModel* model,WalkHeight* temporary,Mtx matrix,Mtx rotation,GSvec* triangle,GSvec* crossing,GSvec* normal) {
+    s32 used=0;
+    WalkPolygon *polygon=model->polygons;
+    WalkHeight *entry=temporary;
+    for(u32 j=0;j<model->count && used<8;j++,polygon++) {
+        GSvec *src=polygon->vertices,*dst=triangle;
+        s32 k=0;
+        do {PSMTXMultVec(matrix,(Vec *)src,(Vec *)dst);k++;src++;dst++;} while(k<3);
+        PSMTXMultVec(rotation,(Vec *)&polygon->normal,(Vec *)normal);
+        if(getCpPolyVec(crossing,point,triangle,normal)) {
+            if(storeHeight(entry,temporary,used,crossing->y,polygon)) {entry++;used++;}
+        }
+    }
+    return used;
 }
 extern "C" s32 GScolsys2WalkGetHeight(GSvec *point,WalkHeight *heights) {
     WalkHeight temporary[8];
@@ -87,45 +129,19 @@ extern "C" s32 GScolsys2WalkGetHeight(GSvec *point,WalkHeight *heights) {
                 if(object->flags&1) {
                     GScolsys2GetObjMatrix(matrix,i);
                     GScolsys2GetObjRotMatrix(rotation,i);
-                    s32 used=0;
-                    WalkPolygon *polygon=model->polygons;
-                    WalkHeight *entry=temporary;
-                    for(u32 j=0;j<model->count && used<8;j++,polygon++) {
-                        GSvec *src=polygon->vertices,*dst=triangle;
-                        s32 k=0;
-                        do {PSMTXMultVec(matrix,(Vec *)src,(Vec *)dst);k++;src++;dst++;} while(k<3);
-                        PSMTXMultVec(rotation,(Vec *)&polygon->normal,(Vec *)&normal);
-                        if(getCpPolyVec(&crossing,point,triangle,&normal)) {
-                            if(storeHeight(entry,temporary,used,crossing.y,polygon)) {entry++;used++;}
-                        }
-                    }
-                    found=used;
+                    found=getTransformedHeights(point,model,temporary,matrix,rotation,triangle,&crossing,&normal);
                 } else {
-                    s32 used=0;
-                    s32 x=(s32)((point->x-model->originX)/model->cellWidth);
-                    if(x>=0 && x<model->width) {
-                        s32 z=(s32)((point->z-model->originZ)/model->cellDepth);
-                        if(z>=0 && z<model->depth) {
-                            WalkHeight *entry=temporary;
-                            WalkCell *cell=&model->cells[x+z*model->width];
-                            u32 *index=&model->indices[cell->first];
-                            for(u32 j=0;j<cell->count && used<8;j++,index++) {
-                                WalkPolygon *polygon=&model->polygons[*index];
-                                if(getCpPolyVec(&gridCrossing,point,polygon->vertices,&polygon->normal)) {
-                                    if(storeHeight(entry,temporary,used,gridCrossing.y,polygon)) {entry++;used++;}
-                                }
-                            }
-                        }
-                    }
-                    found=used;
+                    found=getGridHeights(point,model,temporary,&gridCrossing);
                 }
                 WalkHeight *entry=temporary;
-                for(s32 j=0;j<found && count<8;j++,entry++,output++) {
-                    output->height=entry->height;
-                    output->upper=entry->upper;
-                    output->lower=entry->lower;
-                    output->layer=entry->layer;
-                    output->floor=entry->floor;
+                WalkHeight *destination=output;
+                for(s32 j=0;j<found && count<8;j++,entry++,destination++) {
+                    output++;
+                    destination->height=entry->height;
+                    destination->upper=entry->upper;
+                    destination->lower=entry->lower;
+                    destination->layer=entry->layer;
+                    destination->floor=entry->floor;
                     count++;
                 }
             }

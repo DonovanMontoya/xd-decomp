@@ -652,18 +652,14 @@ void menuPdaDPMList::SortSub(SnatchSortBuff *buf, long n, bool asc) {
     long gap;
     long i;
     long j;
-    SnatchSortBuff *a;
-    SnatchSortBuff *b;
     if (asc) {
         for (gap = n / 2; gap > 0; gap /= 2) {
             for (i = gap; i < n; i++) {
                 j = i - gap;
-                a = &buf[j];
-                while (j >= 0 && (s32)a->snatchIndex > (s32)(b = &buf[j + gap])->snatchIndex) {
-                        memcpy(&tmp, a, 8);
-                        memcpy(a, b, 8);
-                        memcpy(b, &tmp, 8);
-                        a -= gap;
+                while (j >= 0 && (s32)buf[j].snatchIndex > (s32)buf[j + gap].snatchIndex) {
+                        memcpy(&tmp, &buf[j], 8);
+                        memcpy(&buf[j], &buf[j + gap], 8);
+                        memcpy(&buf[j + gap], &tmp, 8);
                         j -= gap;
                     }
             }
@@ -673,12 +669,10 @@ void menuPdaDPMList::SortSub(SnatchSortBuff *buf, long n, bool asc) {
     for (gap = n / 2; gap > 0; gap /= 2) {
         for (i = gap; i < n; i++) {
             j = i - gap;
-            a = &buf[j];
-            while (j >= 0 && (s32)a->snatchIndex < (s32)(b = &buf[j + gap])->snatchIndex) {
-                    memcpy(&tmp, a, 8);
-                    memcpy(a, b, 8);
-                    memcpy(b, &tmp, 8);
-                    a -= gap;
+            while (j >= 0 && (s32)buf[j].snatchIndex < (s32)buf[j + gap].snatchIndex) {
+                    memcpy(&tmp, &buf[j], 8);
+                    memcpy(&buf[j], &buf[j + gap], 8);
+                    memcpy(&buf[j + gap], &tmp, 8);
                     j -= gap;
                 }
         }
@@ -803,7 +797,7 @@ void spriteSetScissor(s32,s32,s32,s16,s16);
 void spriteClearScissor(s32);
 void menuDrawReliveUpdate();
 u16 mballBiosGetSpriteID(u16);
-void windowDrawSprite2(s16,s32,s16,s16,u32,tagWINDOW_WORK*,u16,s32,s32);
+void windowDrawSprite2(s16,s16,s16,s16,u32,tagWINDOW_WORK*,u16,s32,s32);
 }
 void menuPdaDPMList::DispList(tagWINDOW_WORK* win,tagSPRITE_WORK* sprite) {
     CURSOR cursor=_getCursor();
@@ -817,8 +811,10 @@ void menuPdaDPMList::DispList(tagWINDOW_WORK* win,tagSPRITE_WORK* sprite) {
     spriteSetScissor(win->layer,clip->x-base->x,clip->y-base->y,clip->width,clip->height);
     f32 y=posY;
     menuDrawReliveUpdate();
+    s32 firstVisible=cursor.first-1;
+    s32 lastVisible=cursor.first+11;
     for(s32 i=0;i<total;y+=23.0f,++i) {
-        if(i>=cursor.first-1 && i<cursor.first+11) {
+        if(i>=firstVisible && i<lastVisible) {
             DarkPokemon* pokemon=darkPokemonGetDarkPokemon(GetDarkPokemonID(i));
             u32 nameColor,placeColor;
             if(pokemon->isUpdate()) {nameColor=0xd5aa3300;placeColor=0xd5aa3300;}
@@ -828,16 +824,15 @@ void menuPdaDPMList::DispList(tagWINDOW_WORK* win,tagSPRITE_WORK* sprite) {
             u8 slot;
             u32 placeMessage=menuPdaDPMListGetDarkPokemonPlaceMsgID(i,&slot);
             msgctrlSetValue(0x37,message);
-            s32 row=(s32)y;
-            GSmsgPrint2(win->layer,0,row,nameColor|WIN_ALPHA(win),0x4277);
-            menuPdaDPMListDispRelive(win,sprite,meter->x-name->x,row,i,WIN_ALPHA(win),1);
+            GSmsgPrint2(win->layer,0,(s32)y,nameColor|WIN_ALPHA(win),0x4277);
+            menuPdaDPMListDispRelive(win,sprite,meter->x-name->x,(s32)y,i,WIN_ALPHA(win),1);
             if(placeMessage) {
                 msgctrlSetValue(0x2f,slot+1);
-                GSmsgPrint2(win->layer,place->x-name->x,row,placeColor|WIN_ALPHA(win),placeMessage);
+                GSmsgPrint2(win->layer,place->x-name->x,(s32)y,placeColor|WIN_ALPHA(win),placeMessage);
             }
             if(pokemon->isSnach()) {
                 u16 id=mballBiosGetSpriteID(pokemon->getCatchBallID());
-                if(id)windowDrawSprite2(ball->x-name->x,(s32)y,ball->width,ball->height,WIN_ALPHA(win)|0xffffff00,win,id,0,win->layer);
+                if(id)windowDrawSprite2(ball->x-name->x,(s16)y,ball->width,ball->height,WIN_ALPHA(win)|0xffffff00,win,id,0,win->layer);
             }
         }
     }
@@ -847,8 +842,8 @@ void menuPdaDPMList::DispList(tagWINDOW_WORK* win,tagSPRITE_WORK* sprite) {
 s32 menuPdaDPMList::SortPlace() {
     darkPokemonWhere where;
     u8 slot;
-    s32 amount=0;
     s32 n=Sort(DPM_SEL_SORT_0);
+    s32 amount=0;
     unk5C=0;
     for(s32 i=0;i<n;++i) {
         u16 dark=GetDarkPokemonID(i);
@@ -856,9 +851,10 @@ s32 menuPdaDPMList::SortPlace() {
         pokemon->getPlace(where,slot);
         if(pokemon->isSnach() && where==1) {
             u16 id=pokemon->getPokemonID();
+            u16 entryIndex=amount;
             slot=getTemochiIndex(id,dark);
             ((SnatchSortBuff*)unk54)[amount].snatchIndex=slot;
-            ((SnatchSortBuff*)unk54)[amount].pokemonID=id;
+            ((SnatchSortBuff*)unk54)[entryIndex].pokemonID=id;
             ((SnatchSortBuff*)unk54)[amount].darkID=dark;
             ++amount;
         }

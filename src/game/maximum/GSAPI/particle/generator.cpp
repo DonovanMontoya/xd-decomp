@@ -612,8 +612,14 @@ PSGenerator *psCreateGeneratorID(s32 arg0, s32 arg1, s32 arg2) {
     return var_r29;
 }
 
+static inline f32 generatorSingle(f64 value) {return (f32)value;}
+static inline f32 generatorBoundaryCoordinate(f32 coordinate,f32 upper) {
+ if(coordinate>0.5f)return upper;
+ return 0.0f;
+}
 f32 generateParticle(PSGenerator *arg0) {
     f32 sp8;
+    f32 faceRandom3,faceRandom5,faceRandom6;
     f32 bits18;
     f32 bits14;
     f32 bits10;
@@ -1042,8 +1048,8 @@ loop_215:
                     var_f22 = var_f20_2 * -temp_f1_12;
                 } else {
                     temp_f31_2 = arg0->param1;
-                    var_f22 = var_f20_2 * arg0->angle;
                     var_f31 = ((arg0->param2 - temp_f31_2) * HSD_Randf()) + temp_f31_2;
+                    var_f22 = var_f20_2 * arg0->angle;
                 }
                 break;
             }
@@ -1054,7 +1060,7 @@ loop_215:
                 temp_f1_13 = HSD_Randf();
                 position.z = temp_f1_13;
                 if ((s32) (arg0->type & 0xF) == 6) {
-                    temp_f2_5 = 1.0f - (f32) temp_f1_13;
+                    temp_f2_5 = 1.0f - generatorSingle(temp_f1_13);
                     position.x *= temp_f2_5;
                     position.y *= temp_f2_5;
                 }
@@ -1136,8 +1142,9 @@ loop_215:
                 position.y = var_f0_3;
                 break;
             case 3:                                 /* switch 5 */
+                faceRandom3=HSD_Randf();
                 temp_f2_6 = arg0->param1;
-                if (HSD_Randf() > (temp_f2_6 / (temp_f2_6 + arg0->param2))) {
+                if (faceRandom3 > (temp_f2_6 / (temp_f2_6 + arg0->param2))) {
                     if (position.y > 0.5f) {
                         var_f0_4 = 1.0f;
                     } else {
@@ -1154,7 +1161,7 @@ loop_215:
                 }
                 break;
             case 4:                                 /* switch 5 */
-                if ((f32) temp_f1_15 > 0.5f) {
+                if (generatorSingle(temp_f1_15) > 0.5f) {
                     var_f0_6 = 1.0f;
                 } else {
                     var_f0_6 = 0.0f;
@@ -1162,8 +1169,9 @@ loop_215:
                 position.z = var_f0_6;
                 break;
             case 5:                                 /* switch 5 */
+                faceRandom5=HSD_Randf();
                 temp_f2_7 = arg0->param1;
-                if (HSD_Randf() > (temp_f2_7 / (temp_f2_7 + arg0->param3))) {
+                if (faceRandom5 > (temp_f2_7 / (temp_f2_7 + arg0->param3))) {
                     if (position.z > 0.5f) {
                         var_f0_7 = 1.0f;
                     } else {
@@ -1180,8 +1188,9 @@ loop_215:
                 }
                 break;
             case 6:                                 /* switch 5 */
+                faceRandom6=HSD_Randf();
                 temp_f2_8 = arg0->param2;
-                if (HSD_Randf() > (temp_f2_8 / (temp_f2_8 + arg0->param3))) {
+                if (faceRandom6 > (temp_f2_8 / (temp_f2_8 + arg0->param3))) {
                     if (position.z > 0.5f) {
                         var_f0_9 = 1.0f;
                     } else {
@@ -1205,26 +1214,11 @@ loop_215:
                 var_f4_2 = 1.0f;
                 temp_f2_9 = 1.0f / ((temp_f6_2 * (temp_f0_5 + temp_f5_2)) + (temp_f0_5 * temp_f5_2));
                 if (temp_f1_16 < (temp_f2_9 * (temp_f6_2 * temp_f0_5))) {
-                    if (position.z > 0.5f) {
-
-                    } else {
-                        var_f4_2 = 0.0f;
-                    }
-                    position.z = var_f4_2;
+                    position.z = generatorBoundaryCoordinate(position.z,var_f4_2);
                 } else if (temp_f1_16 > -((temp_f2_9 * (temp_f6_2 * temp_f5_2)) - 1.0f)) {
-                    if (position.y > 0.5f) {
-
-                    } else {
-                        var_f4_2 = 0.0f;
-                    }
-                    position.y = var_f4_2;
+                    position.y = generatorBoundaryCoordinate(position.y,var_f4_2);
                 } else {
-                    if (position.x > 0.5f) {
-
-                    } else {
-                        var_f4_2 = 0.0f;
-                    }
-                    position.x = var_f4_2;
+                    position.x = generatorBoundaryCoordinate(position.x,var_f4_2);
                 }
                 break;
             }
@@ -1306,8 +1300,9 @@ loop_215:
             velocity.y = (f32) sin((f64) var_f0_11) * temp_f21_4;
             velocity.z = (f32) cos((f64) var_f0_11);
             PSMTXMultVec((f32 (*)[4]) &transform[0][0], (PSVec *) &velocity.x, (PSVec *) &position.x);
+            temp_f2_11 = position.x;
             temp_f5_4 = arg0->param1;
-            temp_f2_11 = position.x * temp_f5_4;
+            temp_f2_11 = temp_f2_11 * temp_f5_4;
             temp_f4_2 = position.y * temp_f5_4;
             temp_f3_3 = position.z * temp_f5_4;
             velocity.x = temp_f2_11;

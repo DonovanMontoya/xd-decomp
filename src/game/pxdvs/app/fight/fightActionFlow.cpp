@@ -871,7 +871,7 @@ extern "C" s32 fightActionFlowKaisiNyuujouPokemon(void *actor) {
     encounter = fightFloor_GetEncountDataId(0);
     side = fightTargetGetPtr(kind, 0, type);
     if (!fightSideCheckValid(side)) return 0;
-    sideCount = fightSideGetDoFightTrainerCount(side);
+    sideCount = (u8)fightSideGetDoFightTrainerCount(side);
     for (i = 0; i < trainerCount; ++i) {
         trainer = fightSideGetValidFightTrainerPtr(side, i);
         if (trainer != 0) {

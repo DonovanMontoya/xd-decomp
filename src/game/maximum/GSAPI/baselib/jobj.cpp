@@ -857,11 +857,29 @@ inline void HSD_JObjReqAnimByFlags(HSD_JObj* jobj, u32 flags, f32 frame)
 void HSD_JObjReqAnimAllByFlags(HSD_JObj* jobj, u32 flags, f32 frame)
 {
     if (jobj != NULL) {
-        HSD_JObjReqAnimByFlags(jobj, flags, frame);
+        {
+            bool has_dobj;
+            if (jobj != NULL) {
+                if (flags & 1) HSD_AObjReqAnim(jobj->aobj, frame);
+                if (jobj->flags & (JOBJ_PTCL | JOBJ_SPLINE)) has_dobj = false;
+                else has_dobj = true;
+                if (has_dobj) HSD_DObjReqAnimAllByFlags(jobj->u.dobj, frame, flags);
+                HSD_RObjReqAnimAllByFlags(jobj->robj, frame, flags);
+            }
+        }
         if (!(jobj->flags & JOBJ_INSTANCE)) {
             HSD_JObj* child = jobj->child;
             while (child != NULL) {
-                HSD_JObjReqAnimAllByFlags(child, flags, frame);
+                if (child != NULL) {
+                    HSD_JObjReqAnimByFlags(child, flags, frame);
+                    if (!(child->flags & JOBJ_INSTANCE)) {
+                        HSD_JObj* grandchild = child->child;
+                        while (grandchild != NULL) {
+                            HSD_JObjReqAnimAllByFlags(grandchild, flags, frame);
+                            grandchild = grandchild->next;
+                        }
+                    }
+                }
                 child = child->next;
             }
         }

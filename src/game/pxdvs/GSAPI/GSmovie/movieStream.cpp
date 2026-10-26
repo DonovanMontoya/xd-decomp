@@ -290,6 +290,10 @@ static inline void releaseMovieRead(__GSmovieStreaming* movie, THPReadBuffer* re
 }
 extern "C" u32 THPAudioDecode(s16*, u8*, s32);
 extern "C" void _movieStreamDecode(__GSmovieStreaming* movie) {
+    u32* sizes;
+    u32 component;
+    u32 payloadAddress;
+    u32 frameAddress;
     THPTextureSet* texture;
     THPAudioBuffer* audio;
     THPReadBuffer* audioRead;
@@ -299,14 +303,15 @@ extern "C" void _movieStreamDecode(__GSmovieStreaming* movie) {
         if (audio->state[0] != 1) {
             audioRead = &audioDecoder->reads[audioDecoder->readAudio];
             if (audioRead->valid && audioRead->audio != 1) {
-                u32 component = 0;
-                u32 raw = (u32)audioRead->data;
-                u32* sizes = (u32*)(raw + 8);
-                u8* data = (u8*)(raw + (audioDecoder->componentCount * 4 + 8));
+                component = 0;
+                frameAddress = (u32)audioRead->data;
+                sizes = (u32*)(frameAddress + 8);
+                payloadAddress = audioDecoder->componentCount * 4 + 8;
+                payloadAddress += frameAddress;
                 for (; component < audioDecoder->componentCount; ++sizes, ++component) {
                     switch (audioDecoder->componentTypes[component]) {
                     case 1:
-                        audio->samples = THPAudioDecode(audio->buffer, data + *sizes * audioDecoder->audioTrack, 0);
+                        audio->samples = THPAudioDecode(audio->buffer, (u8*)(payloadAddress + *sizes * audioDecoder->audioTrack), 0);
                         audio->current = audio->buffer;
                         audio->state[0] = 1;
                         ++audioDecoder->audioWrite;
@@ -314,10 +319,14 @@ extern "C" void _movieStreamDecode(__GSmovieStreaming* movie) {
                         goto audioDecoded;
                     default: break;
                     }
-                    data += *sizes;
+                    payloadAddress += *sizes;
                 }
 audioDecoded:
-                if (audioDecoder->token2 < 2 && !(audioDecoder->loop & 1) && audioRead->frame + audioDecoder->currentFrame == audioDecoder->frames - 1) movie->ready = 1;
+                if (audioDecoder->token2 < 2 && !(audioDecoder->loop & 1)) {
+                    u32 lastFrame = audioDecoder->frames - 1;
+                    u32 currentFrame = audioRead->frame + audioDecoder->currentFrame;
+                    if (currentFrame == lastFrame) movie->ready = 1;
+                }
                 if (audioDecoder->token2 == 2) movie->ready = 1;
                 audioRead->audio = 1;
                 releaseMovieRead(movie, audioRead);
@@ -330,10 +339,11 @@ audioDecoded:
     if (decoder->hasAudio) {
         while (decoder->token1) {
             texture = &decoder->textures[decoder->texWrite];
-            if (texture->valid == 1) return;
+            if (texture->valid == 1) goto decodeDone;
             videoRead = &decoder->reads[decoder->readVideo];
-            if (!videoRead->valid || videoRead->video == 1) return;
-            if ((videoRead->frame + decoder->currentFrame) % decoder->frames == decoder->frames - 1 && !(decoder->loop & 1)) _VideoDecode(movie, videoRead, texture);
+            if (!videoRead->valid || videoRead->video == 1) goto decodeDone;
+            u32 frameIndex = (videoRead->frame + decoder->currentFrame) % decoder->frames;
+            if (frameIndex == decoder->frames - 1 && !(decoder->loop & 1)) _VideoDecode(movie, videoRead, texture);
             videoRead->video = 1;
             releaseMovieRead(movie, videoRead);
             --decoder->token1;
@@ -342,13 +352,15 @@ audioDecoded:
     }
     texture = &decoder->textures[decoder->texWrite];
     if (texture->valid != 1) {
-        videoRead = &decoder->reads[decoder->readVideo];
-        if (videoRead->valid && videoRead->video != 1) {
-            decoder->token1 = _VideoDecode(movie, videoRead, texture);
-            videoRead->video = 1;
-            releaseMovieRead(movie, videoRead);
+        THPReadBuffer* finalRead = &decoder->reads[decoder->readVideo];
+        if (finalRead->valid && finalRead->video != 1) {
+            decoder->token1 = _VideoDecode(movie, finalRead, texture);
+            finalRead->video = 1;
+            releaseMovieRead(movie, finalRead);
         }
     }
+decodeDone:
+    ;
 }
 
 extern "C" void OSReport(const char*, ...);

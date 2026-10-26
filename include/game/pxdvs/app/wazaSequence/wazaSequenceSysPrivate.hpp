@@ -108,7 +108,7 @@ struct WazaExtEntry {
     u8 variant;
     u8 pad1;
     u16 wazaId;
-    u16 res[4];
+    u16 res[3];
 };
 extern PokemonWazaEntry pokemon_waza_wzx_data[];
 extern u16 waza_generic_wzx_data[];

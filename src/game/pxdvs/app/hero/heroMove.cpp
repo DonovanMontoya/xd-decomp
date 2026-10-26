@@ -741,7 +741,7 @@ s32 heroMoveMain() {
     unsigned long group;
     unsigned long res;
     u32 total = 0;
-    s32 i;
+    s32 firstIndex,secondIndex,thirdIndex;
     u8* p1;
     u8* p2;
     u8* p3;
@@ -773,34 +773,35 @@ s32 heroMoveMain() {
     if (peopleCheckFlag(group, res, 0x80000000) != 0) {
         return 0;
     }
-    if (*(u32*)&HeroMove.raw[0x3B4] != 0) {
+    u32 scriptId=*(u32*)&HeroMove.raw[0x3B4];
+    if (scriptId != 0) {
         *(u32*)&HeroMove.raw[0x3B4] = 0;
-        floorExecScriptInteger(*(s32*)&HeroMove.raw[0x3B8], *(s32*)&HeroMove.raw[0x3BC], *(s32*)&HeroMove.raw[0x3C0], *(s32*)&HeroMove.raw[0x3C4]);
+        floorExecScriptInteger(scriptId, *(s32*)&HeroMove.raw[0x3B8], *(s32*)&HeroMove.raw[0x3BC], *(s32*)&HeroMove.raw[0x3C0], *(s32*)&HeroMove.raw[0x3C4]);
         return 0;
     }
     if (heroMoveCallStepCallbackAll() != 0) {
         return 0;
     }
     p3 = (u8*)&HeroMove;
-    i = 0;
-    while (i < *(s32*)&HeroMove.raw[0x638]) {
+    firstIndex = 0;
+    while (firstIndex < *(s32*)&HeroMove.raw[0x638]) {
         total += floorEventExecScript(3, *(u16*)(p3 + 0x3F8));
         p3 += 0x34;
-        i++;
+        firstIndex++;
     }
     p2 = (u8*)&HeroMove;
-    i = 0;
-    while (i < *(s32*)&HeroMove.raw[0x640]) {
+    secondIndex = 0;
+    while (secondIndex < *(s32*)&HeroMove.raw[0x640]) {
         total += floorEventExecScript(2, *(u16*)(p2 + 0x598));
         p2 += 0x34;
-        i++;
+        secondIndex++;
     }
     p1 = (u8*)&HeroMove;
-    i = 0;
-    while (i < *(s32*)&HeroMove.raw[0x63C]) {
+    thirdIndex = 0;
+    while (thirdIndex < *(s32*)&HeroMove.raw[0x63C]) {
         total += floorEventExecScript(1, *(u16*)(p1 + 0x4C8));
         p1 += 0x34;
-        i++;
+        thirdIndex++;
     }
     *(s32*)&HeroMove.raw[0x63C] = 0;
     *(s32*)&HeroMove.raw[0x640] = 0;
@@ -811,8 +812,9 @@ s32 heroMoveMain() {
     if (gimmickBoxIsGimmickMoving() == 0 && total == 0 && peopleCheckFlag(group, res, 0x80000000) == 0) {
         s32 changed = GSinputButtonsChanged(1);
         if (GSinputButtonsPressed(1) & changed & 0x1C00) {
-            if (floorSound_getBgmMaskObj() != 0) {
-                floorSound_getBgmMaskObj()->stopMask();
+            FloorBgmMask* mask=floorSound_getBgmMaskObj();
+            if (mask != 0) {
+                mask->stopMask();
             }
             menuFieldMain(0);
             return 0;
@@ -1413,7 +1415,7 @@ static void updateLeaderMovement(HEROMOVE_MEMBER member,float* movement) {
 
 extern "C" {
 f32 peopleInfoBiosGetColBallSize(void*);
-u8 GScolsys2HitCollision(GSvec*,GSvec*,s32);
+s32 GScolsys2HitCollision(GSvec*,GSvec*,GSvec*,f32);
 void PSVECScale(GSvec*,GSvec*,f32);
 s32 GScolsys2HumanCollision(void*,GSvec*,GSvec*,s32);
 
@@ -1431,7 +1433,7 @@ u8 heroMoveChkHinderClear(s32 member) {
     void* info=peopleInfoBiosGetPtr(object);
     if(!info)return 0;
     f32 memberSize=peopleInfoBiosGetColBallSize(info);
-    if(GScolsys2HitCollision(&memberPosition,&leaderPosition,0))return 0;
+    if((u8)GScolsys2HitCollision(&memberPosition,&leaderPosition,0,memberSize))return 0;
     object=getObjID(leader);
     if(object==0xFFFFFFFF)return 0;
     info=peopleInfoBiosGetPtr(object);

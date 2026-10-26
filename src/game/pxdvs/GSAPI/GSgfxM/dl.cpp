@@ -141,34 +141,36 @@ static u8 *_dlParseSurface__F13GSgfxPrimTypeP16_HSD_VtxDescListPUcUsP22GSgfxPars
     if (callbacks->endSurface) callbacks->endSurface(argument);
     return data;
 }
+#pragma opt_propagation off
 static u8 *_dlParseVertex__FP16_HSD_VtxDescListPUcP22GSgfxParseCallbackListPv(DLInputDescriptor *descriptor, u8 *data, DLParseCallbacks *callbacks, void *argument) {
     u8 *next = data;
     u32 attributeFlag;
     u32 componentFlag;
-    u32 countFlag;
+    s32 countFlag;
     s32 attribute = descriptor->attribute;
-    if (attribute < 21) {
-        if (attribute < 9) {
-            if (attribute >= 0) {
-                componentFlag = 0x10000;
-                countFlag = 0x10000000;
-                switch (attribute) {
-                case 0: attributeFlag = 1; break;
-                case 1: attributeFlag = 0x40; break;
-                case 2: attributeFlag = 0x40; break;
-                case 3: attributeFlag = 0x40; break;
-                case 4: attributeFlag = 0x40; break;
-                case 5: attributeFlag = 0x40; break;
-                case 6: attributeFlag = 0x40; break;
-                case 7: attributeFlag = 0x40; break;
-                case 8: attributeFlag = 0x40; break;
+    switch(attribute) {
+    case 0:case 1:case 2:case 3:case 4:case 5:case 6:case 7:case 8: {
+        componentFlag = 0x10000;
+        countFlag = 0x10000000;
+        switch (attribute) {
+        case 0: attributeFlag = 1; break;
+        case 1: attributeFlag = 0x40; break;
+        case 2: attributeFlag = 0x40; break;
+        case 3: attributeFlag = 0x40; break;
+        case 4: attributeFlag = 0x40; break;
+        case 5: attributeFlag = 0x40; break;
+        case 6: attributeFlag = 0x40; break;
+        case 7: attributeFlag = 0x40; break;
+        case 8: attributeFlag = 0x40; break;
 
-                }
-                ++next;
-            } else goto emit;
-            goto emit;
         }
-    } else if (attribute != 25) goto emit;
+        ++next;
+        goto emit;
+    }
+    case 9:case 10:case 11:case 12:case 13:case 14:case 15:case 16:case 17:case 18:case 19:case 20:case 25:
+        break;
+    default:goto emit;
+    }
     if (attribute == 11 || attribute == 12) {
         u32 colorFlag = 0x20;
         if (attribute == 11) colorFlag = 0x10;
@@ -204,22 +206,25 @@ static u8 *_dlParseVertex__FP16_HSD_VtxDescListPUcP22GSgfxParseCallbackListPv(DL
             attributeFlag = 8;
             if (descriptor->count == 1) countFlag = 0x40000000;
             break;
-        case 13: attributeFlag = 0x80; goto textureCount;
-        case 14: attributeFlag = 0x100; goto textureCount;
-        case 15: attributeFlag = 0x200; goto textureCount;
-        case 16: attributeFlag = 0x400; goto textureCount;
-        case 17: attributeFlag = 0x800; goto textureCount;
-        case 18: attributeFlag = 0x1000; goto textureCount;
-        case 19: attributeFlag = 0x2000; goto textureCount;
-        case 20: attributeFlag = 0x4000;
-        default:
-textureCount:
+        case 13:case 14:case 15:case 16:case 17:case 18:case 19:case 20:
+            switch(attribute) {
+            case 13: attributeFlag=0x80;break;
+            case 14: attributeFlag=0x100;break;
+            case 15: attributeFlag=0x200;break;
+            case 16: attributeFlag=0x400;break;
+            case 17: attributeFlag=0x800;break;
+            case 18: attributeFlag=0x1000;break;
+            case 19: attributeFlag=0x2000;break;
+            case 20: attributeFlag=0x4000;break;
+            }
             if (descriptor->count == 0) countFlag = 0x10000000;
             else countFlag = 0x20000000;
             break;
         }
     }
+
     if (descriptor->type == 1) {
+        data=next;
         u32 bytes;
         switch (componentFlag) {
         case 0x10000: case 0x20000: bytes = 1; break;
@@ -231,7 +236,7 @@ textureCount:
         case 0x10000000: break;
         case 0x20000000: bytes *= 2; break;
         case 0x40000000: bytes *= 3; break;
-        default: bytes *= 4; break;
+        case (s32)0x80000000: bytes *= 4; break;
         }
         next += bytes;
     } else {
@@ -244,6 +249,7 @@ emit:
     if (callbacks->attribute) callbacks->attribute(countFlag | (attributeFlag | componentFlag), data, argument);
     return next;
 }
+#pragma opt_propagation reset
 static u16 _dlCalculateStride__FP7GSgfxVF(DLVertexFormat *format) {
     DLAttributeFormat *attribute = format->formats;
     DLVertexDescriptor *descriptor = format->descriptors;

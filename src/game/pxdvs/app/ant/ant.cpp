@@ -294,6 +294,8 @@ void CAnt::allRequestCancel() {
     pokeDanceRelease();
 }
 
+#pragma push
+#pragma ppc_unroll_factor_limit 1
 void CAnt::systemUpdate(bool request) {
     if (_pokeDance.loading != -1) {
         PokeDanceEntry *e = &_pokeDance.entries[_pokeDance.loading];
@@ -309,7 +311,7 @@ void CAnt::systemUpdate(bool request) {
         for (i = 0; i < 0xF0; i++) {
             PokeDanceEntry *e = &_pokeDance.entries[i];
             if (e->id == 0) break;
-            if (e->resource == 0) {
+            if (e->id != 0 && e->resource == 0) {
                 GSfsysReadID(0x825, e->id);
                 _pokeDance.loading = i;
                 break;
@@ -325,6 +327,8 @@ void CAnt::systemUpdate(bool request) {
         colorAnimationTimeReliveReady -= 1.0f;
     }
 }
+
+#pragma pop
 
 void CAnt::waitEndOfReading() {
     for (;;) {

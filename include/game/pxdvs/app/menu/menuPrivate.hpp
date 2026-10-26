@@ -94,7 +94,7 @@ void GSsndPlayNow(u32);
 void GSlogWrite(const char *, ...);
 u32 GSthreadGetCurrentThread();
 s32 windowClose(tagWINDOW_WORK *, s32);
-f64 timeGetLastFrameSec();
+f32 timeGetLastFrameSec();
 void menuOffScreenFadeSet(f32, f32);
 void menuOffScreenFadeSync(u32);
 void menuOffScreenRelease();

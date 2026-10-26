@@ -16,24 +16,25 @@ u16 HSD_Rand();
 void *fightEncountDataBiosGetPtr(u16);
 void fightEncountDataBiosSetBgmSndId(void *,u32);
 void fightEncountDataBiosSetFightFloorDataId(void *,u16);
-void fightEncountDataBiosSetFightKind(void *,s32);
-void fightEncountDataBiosSetSyoukaiWzxDataId(void *,u16);
-void fightEncountDataBiosSetFightType(void *,s32);
-void fightEncountDataBiosSetFightTrainerDataId(void *,s32,u16);
-void fightEncountDataBiosSetGSInputDevice(void *,s32,s32);
-void menuCBBios_InitTrainerFromDataID(void *,u16,u16);
+void fightEncountDataBiosSetFightKind(void *,u8);
+void fightEncountDataBiosSetSyoukaiWzxDataId(void *,u32);
+void fightEncountDataBiosSetFightType(void *,u8);
+void fightEncountDataBiosSetFightTrainerDataId(void *,u8,u32);
+void fightEncountDataBiosSetGSInputDevice(void *,u8,u32);
+void menuCBBios_InitTrainerFromDataID(void *,u16,s32);
 void menuCBTrainerBios_SetControlerID(void *,s32);
 void menuCBTrainerBios_SetHomePlace(void *,s32);
 u16 *GSmsgGetGSchar(u32);
 void fightTrainerCreateFightTrainerDataIdToHero(u16,s32,Hero *,u16);
 void heroBiosSetNamePtr(Hero *,u16 *);
-void menuCBBios_InitTrainerFromHero(void *,Hero *,u32);
+void menuCBBios_InitTrainerFromHero(void *,Hero *,u16);
 s32 menuCBBios_PortIDtoControlerID(s32);
 void menuCBBios_CopyTrainer(void *,void *);
 }
 #define CB_LONG(offset) (*(s32 *)(_CB+(offset)))
 #define CB_BYTE(offset) (*(s8 *)(_CB+(offset)))
 #define WORK_LONG(offset) (*(s32 *)(work->bytes+(offset)))
+#define WORK_UINT(offset) (*(u32 *)(work->bytes+(offset)))
 #define WORK_SHORT(offset) (*(u16 *)(work->bytes+(offset)))
 extern "C" s32 menuCB_InitBattle(_MENUCBWORK *work)
 {
@@ -43,13 +44,15 @@ extern "C" s32 menuCB_InitBattle(_MENUCBWORK *work)
     static const u16 staColosseum_imasugu[6]={0x24,0x26,0x25,0x3C,0x3D,0x3E};
     static const u16 staDefaultNameID[3]={0x3B20,0x3B21,0x3B22};
     Hero hero;
-    u16 encounterId;
+    u32 encounterId;
     void *encounter;
     s32 battleMode,encounterMode,fightMode,typeMode,partyMode,trainerMode,copyMode,inputMode;
     u32 bgm;
-    u16 floorId;
-    u16 random,nameRandom;
-    u16 opponentRank,playerRank,opponentTrainer,playerTrainer,savedRank,character;
+    u32 floorId;
+    u16 random;
+    u32 nameRandom;
+    u32 opponentRank,playerRank,opponentTrainer,playerTrainer,savedRank;
+    u16 character;
     u16 *name,*nameOut;
     encounterId = 0;
     if (CB_BYTE(0xB4A1) == -1) {
@@ -89,16 +92,16 @@ extern "C" s32 menuCB_InitBattle(_MENUCBWORK *work)
         }
     }
     encounter = fightEncountDataBiosGetPtr(encounterId);
-    WORK_LONG(0x9C7C) = (s32) (WORK_LONG(0x9C7C) + 1);
+    WORK_UINT(0x9C7C) += 1;
     if ((s32) CB_LONG(0x4) == 1) {
-        WORK_LONG(0x9C7C) = (s32) (WORK_LONG(0x9C7C) % 3);
-        bgm = staBGM_imasugu[WORK_LONG(0x9C7C)];
+        WORK_UINT(0x9C7C) %= 3;
+        bgm = staBGM_imasugu[WORK_UINT(0x9C7C)];
         if ((s32) WORK_LONG(0xAFD8) == 0) {
             bgm = 0x5CD;
         }
     } else {
-        WORK_LONG(0x9C7C) = (s32) (WORK_LONG(0x9C7C) % 3);
-        bgm = staBGM_tunaide[WORK_LONG(0x9C7C)];
+        WORK_UINT(0x9C7C) %= 3;
+        bgm = staBGM_tunaide[WORK_UINT(0x9C7C)];
     }
     fightEncountDataBiosSetBgmSndId(encounter, bgm);
     if ((s32) CB_LONG(0x4) != 1) {
@@ -138,6 +141,7 @@ extern "C" s32 menuCB_InitBattle(_MENUCBWORK *work)
         case 2:
             fightEncountDataBiosSetFightType(encounter, 0x24);
             break;
+        case 0:
         default:
             fightEncountDataBiosSetFightType(encounter, 0x17);
             break;
@@ -166,13 +170,10 @@ extern "C" s32 menuCB_InitBattle(_MENUCBWORK *work)
             CB_BYTE(0xB4A1) = (s8) (nameRandom % 3);
             name = GSmsgGetGSchar(staDefaultNameID[CB_BYTE(0xB4A1)]);
             nameOut = (u16 *)(_CB + 0xB4A2);
-loop_56:
-            character = *name;
-            if (character != 0) {
+            while ((character = *name) != 0) {
                 *nameOut = character;
                 name++;
                 nameOut++;
-                goto loop_56;
             }
             *nameOut = 0;
         }
@@ -192,46 +193,37 @@ loop_56:
         break;
     case 0:
         copyMode = WORK_LONG(0x8);
-        if (copyMode != 2) {
-            if (copyMode < 2) {
-                if (copyMode < 0) {
-
-                } else {
+        switch(copyMode) {
+        case 0: case 1:
                     WORK_LONG(0x4CC0) = 0;
                     WORK_LONG(0x5FE0) = 1;
                     WORK_LONG(0x7300) = 2;
                     WORK_LONG(0x8620) = 3;
                     menuCBBios_CopyTrainer(work->bytes + 0x18, work->bytes + 0x4C98);
                     menuCBBios_CopyTrainer(work->bytes + 0x1338, work->bytes + 0x5FB8);
-                }
-            }
-        } else {
+            break;
+        case 2:
             menuCBBios_CopyTrainer(work->bytes + 0x18, work->bytes + ((WORK_LONG(0x4CC0) * 0x1320) + 0x4C98));
             menuCBBios_CopyTrainer(work->bytes + 0x1338, work->bytes + ((WORK_LONG(0x5FE0) * 0x1320) + 0x4C98));
             menuCBBios_CopyTrainer(work->bytes + 0x2658, work->bytes + ((WORK_LONG(0x7300) * 0x1320) + 0x4C98));
             menuCBBios_CopyTrainer(work->bytes + 0x3978, work->bytes + ((WORK_LONG(0x8620) * 0x1320) + 0x4C98));
+            break;
         }
         break;
     }
     inputMode = WORK_LONG(0x8);
-    if (inputMode != 2) {
-        if (inputMode < 2) {
-            if (inputMode < 0) {
-
-            } else {
-                goto block_74;
-            }
-        }
-    } else {
+    switch(inputMode) {
+    case 2:
         fightEncountDataBiosSetFightTrainerDataId(encounter, 2, WORK_SHORT(0x2658));
         fightEncountDataBiosSetFightTrainerDataId(encounter, 3, WORK_SHORT(0x3978));
         fightEncountDataBiosSetGSInputDevice(encounter, 2, WORK_LONG(0x267C));
         fightEncountDataBiosSetGSInputDevice(encounter, 3, WORK_LONG(0x399C));
-block_74:
+    case 0: case 1:
         fightEncountDataBiosSetFightTrainerDataId(encounter, 0, WORK_SHORT(0x18));
         fightEncountDataBiosSetFightTrainerDataId(encounter, 1, WORK_SHORT(0x1338));
         fightEncountDataBiosSetGSInputDevice(encounter, 0, WORK_LONG(0x3C));
         fightEncountDataBiosSetGSInputDevice(encounter, 1, WORK_LONG(0x135C));
+        break;
     }
     return 0;
 }
