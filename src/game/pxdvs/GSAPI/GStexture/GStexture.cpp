@@ -32,12 +32,7 @@ static inline s32 textureGetGXformat(const GStexture* texture, u8 direct) {
     }
 }
 static inline void textureCopyRow(const u16*& source, u16*& destination) {
-    destination[0] = source[0];
-    destination[1] = source[1];
-    destination[2] = source[2];
-    destination[3] = source[3];
-    source += 4;
-    destination += 4;
+    for (s32 i=0;i<4;++i) *destination++ = *source++;
 }
 
 extern "C" {
@@ -84,14 +79,15 @@ void GStextureConvertFromHW(GStexture* texture) {
             u16* tile = (u16*)(image + y * texture->width * 2);
             for (s32 x = 0; x < texture->width; x += 4) {
                 u16* row = out;
-                row[0] = tile[0]; row[1] = tile[1]; row[2] = tile[2]; row[3] = tile[3];
+                const u16* input = tile;
                 out += 4;
-                row += texture->width;
-                row[0] = tile[4]; row[1] = tile[5]; row[2] = tile[6]; row[3] = tile[7];
-                row += texture->width;
-                row[0] = tile[8]; row[1] = tile[9]; row[2] = tile[10]; row[3] = tile[11];
-                row += texture->width;
-                row[0] = tile[12]; row[1] = tile[13]; row[2] = tile[14]; row[3] = tile[15];
+                textureCopyRow(input, row);
+                row = (u16*)((u8*)row + texture->width * 2 - 8);
+                textureCopyRow(input, row);
+                row = (u16*)((u8*)row + texture->width * 2 - 8);
+                textureCopyRow(input, row);
+                row = (u16*)((u8*)row + texture->width * 2 - 8);
+                textureCopyRow(input, row);
                 tile += 16;
             }
             memcpy(image + y * texture->width * 2, _texXformBuf, texture->width * 8);
@@ -205,21 +201,6 @@ s32 GXFmtToGStextureFmt(GXTexFmt format) {
     }
 }
 
-}
-
-static inline s32 textureSetBitDepth(GStexture* texture, s32 format) {
-    s32 entries = 0;
-    switch (format) {
-    case 0: entries = 16; texture->bitsPerPixel = 4; break;
-    case 1: entries = 256; texture->bitsPerPixel = 8; break;
-    case 0x30: entries = 1024; texture->bitsPerPixel = 16; break;
-    case 0x40: case 0xb0: texture->bitsPerPixel = 4; break;
-    case 0x41: case 0x42: case 0xa0: case 0xa1: case 0xa2: case 0xa3: texture->bitsPerPixel = 8; break;
-    case 0x43: case 0x44: case 0x90: texture->bitsPerPixel = 16; break;
-    case 0x45: texture->bitsPerPixel = 32; break;
-    default: return -1;
-    }
-    return entries;
 }
 
 static inline void textureInitHardware(GStexture* texture) {
@@ -341,6 +322,14 @@ extern "C" void GSgfxVideoGetEFBSize(u16* width, u16* height);
 extern "C" void GSlogWrite(const char* format, ...);
 extern "C" void* GSmemAllocAlign(u32 size, u16 alignment);
 
+static inline GStexture* textureFindFree() {
+    GStexture* texture = _textureStructList;
+    for (u32 i = 0; i < _textureStructCount; ++i, ++texture) {
+        if (!texture->inUse) return texture;
+    }
+    return 0;
+}
+
 extern "C" GStexture* GStextureCreate(u16 width, u16 height, s32 format,
                                       s32 tlutFormat, u8 mipLevels) {
     if (width == 0 && height == 0) GSgfxVideoGetEFBSize(&width, &height);
@@ -348,8 +337,9 @@ extern "C" GStexture* GStextureCreate(u16 width, u16 height, s32 format,
     s32 alignment;
     switch (format) {
     case 0: case 0x40: case 0x41: case 0xb0: alignment = 8; break;
-    case 1: case 0x30: case 0x42: case 0x43: case 0x44: case 0x45: case 0x90:
+    case 1: case 0x42: case 0x43:
     case 0xa0: case 0xa1: case 0xa2: case 0xa3: alignment = 4; break;
+    case 0x30: case 0x44: case 0x45: case 0x90: alignment = 4; break;
     default:
         GSlogWrite("GStexture: invalid texture format\n");
         return 0;
@@ -371,19 +361,23 @@ extern "C" GStexture* GStextureCreate(u16 width, u16 height, s32 format,
         ++maxMip;
     }
     if (mipLevels > maxMip) mipLevels = maxMip;
-    GStexture* texture = _textureStructList;
-    u32 i;
-    for (i = 0; i < _textureStructCount; ++i, ++texture) {
-        if (!texture->inUse) break;
-    }
-    if (i == _textureStructCount) texture = 0;
+    GStexture* texture = textureFindFree();
     if (!texture) return 0;
-    s32 entries = textureSetBitDepth(texture, format);
-    if (entries < 0) return 0;
-    u8 mipCount = mipLevels + 1;
-    texture->imageSize = 0;
+    s32 entries = 0;
+    switch (format) {
+    case 0: entries = 16;
+    case 0x40: case 0xb0: texture->bitsPerPixel = 4; break;
+    case 1: entries = 256;
+    case 0x41: case 0x42: case 0xa0: case 0xa1: case 0xa2: case 0xa3: texture->bitsPerPixel = 8; break;
+    case 0x30: entries = 1024;
+    case 0x43: case 0x44: case 0x90: texture->bitsPerPixel = 16; break;
+    case 0x45: texture->bitsPerPixel = 32; break;
+    default: return 0;
+    }
+    u32 mipCount = (u8)mipLevels + 1;
     u32 size = (u32)(texture->bitsPerPixel * (width * height)) >> 3;
-    for (s32 level = 0; level < mipCount; ++level) {
+    texture->imageSize = 0;
+    for (s32 level = 0; level < (u8)mipCount; ++level) {
         texture->imageSize += (size + 31) & ~31;
         size >>= 1;
     }
@@ -408,7 +402,8 @@ extern "C" GStexture* GStextureCreate(u16 width, u16 height, s32 format,
     texture->wrapT = 0;
     texture->minFilter = 2;
     texture->magFilter = 2;
-    texture->mipFilter = mipCount > 1 ? 2 : 0;
+    if ((u8)mipCount > 1) texture->mipFilter = 2;
+    else texture->mipFilter = 0;
     texture->lockCount = 0;
     texture->reserved = 0;
     textureSetMipImages(texture, (u32)(texture->bitsPerPixel * (width * height)) >> 3, tlutFormat);

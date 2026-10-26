@@ -8,17 +8,17 @@ u32 GSflagGet(s32);
 u8* GSmsgGetGSchar(s32);
 u32 fightFloorGetGcHeroFightTrainerPtr(s32);
 Hero* fightTrainerBiosGetHeroPtr(FIGHT_TRAINER*);
-u8 gamedataGetStatus(s32, s32);
+u32 gamedataGetStatus(s32, s32);
 u8* heroBiosGetNamePtr(Hero*);
 u32 heroBiosGetRnd(Hero*);
 Hero* menuCBBios_GetRegisteredHero(void);
 s32 pokemonGetStatus(Pokemon*, u16, u16, u16);
-u8 pokemonCheckValid(Pokemon*);
-u16 windowGetKeyTrg(void);
+bool pokemonCheckValid(Pokemon*);
+u32 windowGetKeyTrg(void);
 void pokemonWazaReplace(Pokemon*, s32, s32);
-u8 menuIsCheck(s32);
+s32 menuIsCheck(s32);
 void menuSetDisp(s32, s32);
-u8 menuFaceCheckLoading(void);
+bool menuFaceCheckLoading(void);
 void GSthreadSwitch(void);
 void GSfloorPush(s32);
 void floorSetFadeScript(s32, s32);
@@ -50,7 +50,7 @@ struct MenuItemRect {
     s16 height;
 };
 MenuItemRect* menuItemBiosGetPtr(s32, s32);
-u8 pokemonWazaCheckValid(Pokemon*, u16);
+bool pokemonWazaCheckValid(Pokemon*, u16);
 void* savedataGetStatus(s32, s32);
 u16 zokuseiBiosGetSpriteID(u16);
 void winSpriteSetDisp(tagSPRITE_WORK*, s32);
@@ -66,17 +66,17 @@ u16 windowGetKeyRepeat(void);
 void* pokemonDataBiosGetPtr(u16);
 u8 pokemonIsDarkPokemon(Pokemon*);
 void menuModelSetSize(void*, s16, s16, s16, s16);
-u8 menuModelCheck(void*, s32);
+bool menuModelCheck(void*, s32);
 void menuModelAdjustCamera(void*);
 void menuModelSetAngle(void*, f32*);
 void menuModelRender(void*);
 u8 pokemonBiosGetCatchBallId(Pokemon*);
-u32 mballBiosGetSpriteID(u8);
-void windowDrawSprite2(s32, s32, s32, s32, s32, tagWINDOW_WORK*, s32, s32, s32);
+u16 mballBiosGetSpriteID(u16);
+void windowDrawSprite2(s16, s16, s16, s16, s32, tagWINDOW_WORK*, u16, u32, s32);
 s32 menuPokemonGetJoutaiSpriteID(Pokemon*, s32);
-u32 pokemonGetSoubiItemDataId(Pokemon*);
-u8 pokemonCheckRare(Pokemon*);
-u8 menuSubGetPokemonSexForDisp(Pokemon*);
+u16 pokemonGetSoubiItemDataId(Pokemon*);
+u32 pokemonCheckRare(Pokemon*);
+s32 menuSubGetPokemonSexForDisp(Pokemon*);
 u32 GSmsgGetRect(u32);
 u8 wazaDB_GetCompatible(u32);
 u16 zokuseiBiosGetWazaJoutai(u16, u16);
@@ -88,7 +88,7 @@ u32 pokemonSeikakuDataBiosGetName(void*);
 u32 floorGetPlaceName(u32);
 u8 fightKind_CheckFightKind(s32);
 u32 pokemonGetLevelToExp(Pokemon*, u8);
-u16 pokemonGetTokuseiDataId(Pokemon*);
+u32 pokemonGetTokuseiDataId(Pokemon*);
 void* pokemonTokuseiDataBiosGetPtr(u16);
 void* pokemonTokuseiDataBiosGetDoc(void*);
 void* pokemonTokuseiDataBiosGetName(void*);
@@ -231,7 +231,7 @@ u8 _menuPokemonStatusCheckOya(Pokemon* pokemon) {
     if (pokemon == 0) {
         return 0;
     }
-    if (gamedataGetStatus(pokemonGetStatus(pokemon, 0, 0x70, 0), 2) != 0xB) {
+    if ((u8)gamedataGetStatus(pokemonGetStatus(pokemon, 0, 0x70, 0), 2) != 0xB) {
         return 0;
     }
     if (_menuStatus.flags & 0x20) {
@@ -521,16 +521,16 @@ extern "C" void menuPokemonStatusClose(void) {
             fadeCheck(1);
         }
     }
-    if (menuIsCheck(0x5F)) {
+    if ((u8)menuIsCheck(0x5F)) {
         menuCloseCustom(0x5F, 0, 0);
     }
-    if (menuIsCheck(0x60)) {
+    if ((u8)menuIsCheck(0x60)) {
         menuCloseCustom(0x60, 0, 0);
     }
-    if (menuIsCheck(0x62)) {
+    if ((u8)menuIsCheck(0x62)) {
         menuCloseCustom(0x62, 0, 0);
     }
-    if (menuIsCheck(0x63)) {
+    if ((u8)menuIsCheck(0x63)) {
         menuCloseCustom(0x63, 0, 0);
     }
     menuCloseCustom(0x5E, 0, 1);
@@ -565,10 +565,10 @@ static s32 _menuPokemonStatusChangeSubMenu(CURSOR cursor) {
     }
     for (i = 0; i < 4; i++) {
         if (id == sub_menu_id[i]) {
-            if (!menuIsCheck(id)) {
+            if (!(u8)menuIsCheck(id)) {
                 menuOpen(id, 0);
             }
-        } else if (menuIsCheck(sub_menu_id[i])) {
+        } else if ((u8)menuIsCheck(sub_menu_id[i])) {
             menuClose(sub_menu_id[i]);
         }
     }
@@ -672,13 +672,13 @@ s32 menuPokemonStatusOpenWazaLearn(Pokemon* pokemon, u16 wazaId) {
     s32 result;
     s32 i;
     for (i = 0; i < 4; i++) {
-        if (menuIsCheck(ids[i])) {
+        if ((u8)menuIsCheck(ids[i])) {
             menuSetDisp(ids[i], 0);
         }
     }
     result = _menuPokemonStatusOpen(0x59, 0, pokemon, wazaId, 0, 0);
     for (i = 0; i < 4; i++) {
-        if (menuIsCheck(ids[i])) {
+        if ((u8)menuIsCheck(ids[i])) {
             menuSetDisp(ids[i], 1);
         }
     }
@@ -690,13 +690,13 @@ s32 menuPokemonStatusOpenWazaLearnList(Pokemon* pokemon, u16 wazaId) {
     s32 result;
     s32 i;
     for (i = 0; i < 4; i++) {
-        if (menuIsCheck(ids[i])) {
+        if ((u8)menuIsCheck(ids[i])) {
             menuSetDisp(ids[i], 0);
         }
     }
     result = _menuPokemonStatusOpen(0x19, 0, pokemon, wazaId, 0, 0);
     for (i = 0; i < 4; i++) {
-        if (menuIsCheck(ids[i])) {
+        if ((u8)menuIsCheck(ids[i])) {
             menuSetDisp(ids[i], 1);
         }
     }
@@ -1273,7 +1273,7 @@ extern "C" void menuPokemonStatusDrawStatus(tagWINDOW_WORK* win, tagSPRITE_WORK*
                 v = 0x3AEB;
             }
         } else {
-            switch (gamedataGetStatus(pokemonGetStatus(pokemon, 0, 0x70, 0), 2)) {
+            switch ((u8)gamedataGetStatus(pokemonGetStatus(pokemon, 0, 0x70, 0), 2)) {
             case 0xB:
                 if (_menuPokemonStatusCheckGinzaru(pokemon) != 0) {
                     if (place != 0) {
@@ -1644,21 +1644,21 @@ extern "C" void menuPokemonStatusDrawTitle(tagWINDOW_WORK* win, tagSPRITE_WORK* 
             name = (u32)GSmsgGetGSchar(pokemonGetStatus(0, (u16)pokemonGetStatus(pokemon, 0, 0x6E, 0), 1, 0));
         } else {
             name = pokemonGetStatus(pokemon, 0, 0x77, 0);
-            if (pokemonCheckRare(pokemon) != 0) {
+            if ((u8)pokemonCheckRare(pokemon) != 0) {
                 color = win->alpha | 0xFFDC0000;
             }
         }
         msgctrlSetValue(0x37, name);
         GSmsgPrintRect(winSpriteGetLayerID(win, spr), 0, 0, spr->x, spr->y, color, 0x4277);
         GSmsgGetRect(0x4277);
-        switch (menuSubGetPokemonSexForDisp(pokemon)) {
+        switch ((u8)menuSubGetPokemonSexForDisp(pokemon)) {
         case 0:
             sexMsg = 0x9C5;
             break;
         case 1:
             sexMsg = 0x9C6;
             break;
-        case 3:
+        case 2:
         default:
             sexMsg = 0;
             break;

@@ -4510,13 +4510,15 @@ extern "C" s32 fightAiCombo_Batontatti_Nekodamasi_2(FIGHT_TRAINER *trainer,
             if (candidateCount == 0) return 0;
             s16 best = 0;
             for (u8 i = 0; i < candidateCount; ++i) {
+                s8 otherSide = fightAi_getAnotherPokeNo(a);
                 FightAiAllWazaValid *cur = &candidates[i];
-                cur->attacker[(s8)fightAi_getAnotherPokeNo(a)] = 0;
+                cur->attacker[otherSide] = 0;
                 if (cur->wazaId[a] == 0xB6) cur->defender[a] = cur->attacker[a];
                 s16 value = fightAiCombo_GetAllWazaValueTable(cur, base, trainer, allies, enemies, -1);
                 u16 move = cur->wazaId[a];
                 if (move == 0xB6) {
-                    if (wazaDB_GetFightTrainerAiWazaHitFuncPtr(move)(trainer, cur->attacker[a], cur->wazaId[a], cur->defender[a]) == 0) value = 0;
+                    WazaHitFunc hit = wazaDB_GetFightTrainerAiWazaHitFuncPtr(move);
+                    if (hit(trainer, cur->attacker[a], cur->wazaId[a], cur->defender[a]) == 0) value = 0;
                     if (fightAi_GetWazaHaveFlag(trainer, getFightPokemonPtr__15FightOutPokemonFv(cur->attacker[a]), 0xE2) != 2) value = 0;
                 }
                 if (best < value) {
@@ -4544,6 +4546,7 @@ extern "C" s32 fightAiCombo_Batontatti_Nekodamasi_2(FIGHT_TRAINER *trainer,
     if (candidateCount == 0) return 0;
     s16 best = 0;
     s16 base = fightAiCombo_GetValidValue(allies, allyCount, enemies, enemyCount);
+    u8 targetFightType = fightType;
     for (u8 i = 0; i < candidateCount; ++i) {
         FightAiAllWazaValid *cur = &candidates[i];
         for (u8 a = 0; a < ai_allwaza_valid_work; ++a) {
@@ -4552,7 +4555,7 @@ extern "C" s32 fightAiCombo_Batontatti_Nekodamasi_2(FIGHT_TRAINER *trainer,
                 // Retail tests the corresponding enemy for type immunity here.
                 if (fightAi_GetTokuseiHaveFlag(trainer, cur->defender[a], 0x27) >= 1 ||
                     fightTrainerAiIsFightOutPokemonZokuseiDataId(trainer, enemies[a], 7) == 1) {
-                    FightOutPokemon *other = (FightOutPokemon *)fightTargetGetPtr(0xE, (FIGHT_TRAINER *)cur->defender[a], (u8)fightType);
+                    FightOutPokemon *other = (FightOutPokemon *)fightTargetGetPtr(0xE, (FIGHT_TRAINER *)cur->defender[a], targetFightType);
                     if (other != 0 && fightAi_GetTokuseiHaveFlag(trainer, other, 0x27) == 0 &&
                         fightTrainerAiIsFightOutPokemonZokuseiDataId(trainer, other, 7) == 0) cur->defender[a] = other;
                 }
@@ -4562,8 +4565,10 @@ extern "C" s32 fightAiCombo_Batontatti_Nekodamasi_2(FIGHT_TRAINER *trainer,
         for (u8 a = 0; a < ai_allwaza_valid_work; ++a) {
             if (cur->wazaId[a] == 0xE &&
                 fightAi_GetWazaHaveFlag(trainer, getFightPokemonPtr__15FightOutPokemonFv(cur->attacker[a]), 0xE2) != 2) value = 0;
-            if (cur->wazaId[a] == 0xFC &&
-                wazaDB_GetFightTrainerAiWazaHitFuncPtr(cur->wazaId[a])(trainer, cur->attacker[a], cur->wazaId[a], cur->defender[a]) == 0) value = 0;
+            if (cur->wazaId[a] == 0xFC) {
+                WazaHitFunc hit = wazaDB_GetFightTrainerAiWazaHitFuncPtr(cur->wazaId[a]);
+                if (hit(trainer, cur->attacker[a], cur->wazaId[a], cur->defender[a]) == 0) value = 0;
+            }
         }
         if (best < value) {
             indexes[0] = i;

@@ -12,7 +12,7 @@ s32 menuItemBiosGetLayerID(s32);
 MenuSpriteData *menuSpriteBiosGetPtr(s32);
 MenuSpriteValue *menuSpriteBiosGetValPtr(MenuSpriteData *);
 s32 menuGetCursorItemID(s32);
-s8 menuGetEnablePort();
+u8 menuGetEnablePort();
 s32 floorGetMenuLayerID();
 void menuPlaySe(s32,s32);
 void spriteGetOffset(s32,s16 *,s16 *);
@@ -69,7 +69,7 @@ void windowDrawSpriteCursor(s16 x,s16 y,s32 color,tagWINDOW_WORK *work,u16 sprit
         else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
         else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
         if(index==0) { draw->x=x+sprite->x;draw->y=y+sprite->y; }
-        else { draw->x=x+(sprite->x+(s32)offset[0]);draw->y=y+(sprite->y+(s32)offset[1]); }
+        else { draw->x=x+sprite->x+(s32)offset[0];draw->y=y+sprite->y+(s32)offset[1]; }
         draw->width=value->width;draw->height=value->height;
         draw->sourceX=value->x;draw->sourceY=value->y;draw->sourceWidth=value->width;draw->sourceHeight=value->height;
         draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
@@ -95,10 +95,10 @@ void windowDrawSprite2(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK
         if(kind==1){draw->flags|=1;draw->resource=value->resource;}
         else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
         else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
-        draw->x=x+sprite->x;draw->width=width;draw->height=height;draw->y=y+sprite->y;
+        draw->x=x+sprite->x;draw->y=y+sprite->y;draw->width=width;draw->height=height;
         draw->sourceX=value->x;draw->sourceY=value->y;draw->sourceWidth=value->width;draw->sourceHeight=value->height;
         draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
-        if((flags&1)!=0)draw->width=-width;
+        if((flags&1)!=0)draw->width=-draw->width;
         if((flags&2)!=0)draw->height=-draw->height;
         if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;*(s32 *)&temporary.frame=-1; }
         winSpriteDraw(work,draw);
@@ -119,10 +119,10 @@ void windowDrawSprite3(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK
         if(kind==1){draw->flags|=1;draw->resource=value->resource;}
         else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
         else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
-        draw->x=x+sprite->x;draw->width=width;draw->height=height;draw->y=y+sprite->y;
-        draw->sourceX=value->x+sourceX;draw->sourceWidth=sourceWidth;draw->sourceY=value->y+sourceY;draw->sourceHeight=sourceHeight;
+        draw->x=x+sprite->x;draw->y=y+sprite->y;draw->width=width;draw->height=height;
+        draw->sourceX=value->x+sourceX;draw->sourceY=value->y+sourceY;draw->sourceWidth=sourceWidth;draw->sourceHeight=sourceHeight;
         draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
-        if((flags&1)!=0)draw->width=-width;
+        if((flags&1)!=0)draw->width=-draw->width;
         if((flags&2)!=0)draw->height=-draw->height;
         if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;*(s32 *)&temporary.frame=-1; }
         winSpriteDraw(work,draw);
@@ -247,17 +247,18 @@ void windowCreateCursorSprite(tagWINDOW_WORK *window) {
         }
     }
 }
-tagWINDOW_WORK *windowOpen(s32 *selection,s32 menuID,s32 parentID,u8 flags,s32 parameterCount,va_list parameters) {
+tagWINDOW_WORK *windowOpen(s32 *selection,s32 menuID,s32 parentID,u32 flags,s32 parameterCount,va_list parameters) {
+    tagWINDOW_WORK *window;
     tagWINDOW_WORK *parent=windowSearchID(parentID);
     s32 layer;
     if(parent!=0)layer=parent->layerID;else layer=menuItemBiosGetLayerID(menuID);
     if(layer==-1)return 0;
     MenuData *data=menuDataBiosGetPtr(menuID);
-    tagWINDOW_WORK *window=windowSearchID(menuID);
+    window=windowSearchID(menuID);
     if(window==0) {
         s8 priority;
-        if((data->flags&2)!=0)priority=100;
-        else if((flags&2)!=0)priority=100;
+        if(((u32)data->flags>>1&1)!=0)priority=100;
+        else if((flags&2U)!=0)priority=100;
         else {
             if(parentID==0)parentID=windowGetActiveID();
             parent=windowSearchID(parentID);
@@ -271,8 +272,8 @@ tagWINDOW_WORK *windowOpen(s32 *selection,s32 menuID,s32 parentID,u8 flags,s32 p
         window->layerID=layer;window->drawKind=(data->flags>>5)&7;
         MENU_ITEM_dd_ *item=menuItemBiosGetPtr(menuID,data->firstItem);
         for(;;) {
-            if((item->flags&0x80)!=0)++window->itemCount;
-            if((item->flags&0x40)!=0)break;
+            if(((u32)item->flags>>7&1)!=0)++window->itemCount;
+            if(((u32)item->flags>>6&1)!=0)break;
             item=menuItemBiosGetPtr(menuID,item->nextItem);
         }
         _windowCreateItemSprite(window);
@@ -286,8 +287,8 @@ tagWINDOW_WORK *windowOpen(s32 *selection,s32 menuID,s32 parentID,u8 flags,s32 p
     window->port=menuGetEnablePort();window->openFlags=flags;
     if(parameterCount>8)parameterCount=8;
     for(s32 i=0;i<parameterCount;++i)window->parameters[i]=va_arg(parameters,u32);
-    if(((data->flags2>>5)&7)==0)window->finished=1;
-    else if((flags&4)==0)winSysWork.activeID=menuID;
+    if((((u32)data->flags2>>5)&7)==0)window->finished=1;
+    else if((flags&4U)==0)winSysWork.activeID=menuID;
     if(winSysWork.activeID!=menuID)window->inactive=1;
     if(data->control!=0)data->control(window);
     if(window->entered!=0) { window->closing=0;window->state=2;window->entered=0; }

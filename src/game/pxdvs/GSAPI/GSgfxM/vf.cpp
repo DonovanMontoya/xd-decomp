@@ -167,15 +167,18 @@ void GSgfxVFSetArray(VFFormat *format, s32 attribute, s32 type, void *data, u8 s
         if (!array) {
             u32 index = elementIndex(attribute);
             s32 *element = _vfElemTable + index;
-            VFArray *insert = 0;
+            VFArray *end;
+            VFArray *insert;
             while (index != 0) {
-                s32 previous = *--element;
+                int previous = *--element;
                 --index;
                 VFArray *found = findArray(format, previous);
-                if (found) { insert = found + 1; break; }
+                if (found) { insert = found + 1; goto insertionFound; }
             }
+            insert = 0;
+        insertionFound:
             if (!insert) insert = format->arrays;
-            VFArray *end = insert;
+            end = insert;
             while (end->attribute != 255) ++end;
             for (; end >= insert; --end) {
                 end[1].attribute = end->attribute;
@@ -293,8 +296,8 @@ u32 GSgfxVFIsUsed(VFFormat *format) { return format->flags & 1; }
 VFFormat *GSgfxVFGetPredef(s32 index) { return &_vfPredefFmt[index]; }
 void GSgfxVFCreate(VFFormat *format) {
     u32 index = _vfAllocIndex;
-    u32 next = index + 1;
-    if (next >= 8) next = 0;
+    u32 next;
+    if ((next = index + 1) >= 8) next = 0;
     _vfAllocIndex = next;
     format->index = index;
     format->flags |= 1;
@@ -305,8 +308,13 @@ void GSgfxVFCreate(VFFormat *format) {
 }
 void GSgfxVFInit(VFFormat *format) { memset(format, 0, sizeof(*format)); }
 VFFormat *GSgfxVFBuildTemp(s32 positionCount, s32 positionComponent, u8 normal, s32 normalCount, u8 colors, s32 colorComponent, u8 textures, s32 textureCount, s32 textureComponent) {
-    if (normalCount == 2 || colors > 2 || textures > 8 || colorComponent < 0 || textureComponent > 4) return 0;
-    _vfLocal.formats[0].attribute = 9;
+    if (normalCount == 2) return 0;
+    if (colors > 2) return 0;
+    if (textures > 8) return 0;
+    if (colorComponent < 0) return 0;
+    if (textureComponent > 4) return 0;
+    VFFormat* format = &_vfLocal;
+    format->formats[0].attribute = 9;
     _vfLocal.formats[0].count = positionCount;
     _vfLocal.formats[0].component = positionComponent;
     _vfLocal.formats[0].fraction = 0;
@@ -325,9 +333,12 @@ VFFormat *GSgfxVFBuildTemp(s32 positionCount, s32 positionComponent, u8 normal, 
         descriptor->type = 1;
         ++descriptor;
     }
-    for (s32 i = 0; i < colors; ++i) {
-        if (colorComponent >= 0 && colorComponent < 2) entry->count = 0;
-        else if (colorComponent >= 2 && colorComponent < 6) entry->count = 1;
+    s32 i;
+    for (i = 0; i < colors; ++i) {
+        switch (colorComponent) {
+        case 0: case 1: entry->count = 0; break;
+        case 2: case 3: case 4: case 5: entry->count = 1; break;
+        }
         entry->attribute = i + 11;
         entry->component = colorComponent;
         entry->fraction = 0;
@@ -336,7 +347,7 @@ VFFormat *GSgfxVFBuildTemp(s32 positionCount, s32 positionComponent, u8 normal, 
         descriptor->type = 1;
         ++descriptor;
     }
-    for (s32 i = 0; i < textures; ++i) {
+    for (i = 0; i < textures; ++i) {
         entry->attribute = i + 13;
         entry->count = textureCount;
         entry->component = textureComponent;
@@ -348,7 +359,7 @@ VFFormat *GSgfxVFBuildTemp(s32 positionCount, s32 positionComponent, u8 normal, 
     }
     entry->attribute = 255;
     descriptor->attribute = 255;
-    _vfLocal.arrays[0].attribute = 255;
+    format->arrays[0].attribute = 255;
     _vfLocal.colors = colors;
     _vfLocal.textures = textures;
     _vfLocal.flags |= 6;

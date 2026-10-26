@@ -3,11 +3,12 @@
 #include <dolphin/types.h>
 struct FIGHT_TRAINER;struct FightOutPokemon;struct Pokemon;struct FightPokemon;struct Hero;
 typedef u8 (*AiDirectHitFunction)(FIGHT_TRAINER*,FightOutPokemon*,u16,FightOutPokemon*);
+struct AiWordPair {u32 data[2];};
 struct AiWordBlock20 {u32 data[8];};
 struct AiWordBlock200 {u32 data[128];};
 struct AiFightPokemonRecord {
     AiFightPokemonRecord& operator=(const AiFightPokemonRecord&);
-    u32 entry;u8 pokemon[0xC4];u32 c8,cc,d0,d4;s16 d8;u8 da,db,dc,dd;u16 de;AiWordBlock20 extra;AiWordBlock200 work;
+    u32 entry;u8 pokemon[0xC4];AiWordPair c8,d0;s16 d8;u8 da,db,dc,dd;u16 de;AiWordBlock20 extra;AiWordBlock200 work;
 };
 typedef char AiFightPokemonRecordSize[sizeof(AiFightPokemonRecord)==0x300?1:-1];
 extern "C" {
@@ -28,7 +29,7 @@ s32 _fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP
 inline AiFightPokemonRecord& AiFightPokemonRecord::operator=(const AiFightPokemonRecord &src) {
     AiFightPokemonRecord &dst = *this;
     dst.entry=src.entry;memcpy(dst.pokemon,src.pokemon,0xC4);
-    dst.c8=src.c8;dst.cc=src.cc;dst.d0=src.d0;dst.d4=src.d4;dst.d8=src.d8;dst.da=src.da;dst.db=src.db;dst.dc=src.dc;dst.dd=src.dd;dst.de=src.de;dst.extra=src.extra;dst.work=src.work;
+    dst.c8=src.c8;dst.d0=src.d0;dst.d8=src.d8;dst.da=src.da;dst.db=src.db;dst.dc=src.dc;dst.dd=src.dd;dst.de=src.de;dst.extra=src.extra;dst.work=src.work;
     return *this;
 }
 #endif

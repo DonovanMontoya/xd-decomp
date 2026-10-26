@@ -3060,23 +3060,14 @@ block_95:
                     case 2:                         /* switch 3 */
                         stageIndex = _CB.unkB0EC;
                         switch (_CB.unkB0F8) {  /* switch 6 */
-                        case 37:                /* switch 6 */
-                            if (var_r29 != 4) {
-                                if (var_r29 < 4) {
-                                    if (var_r29 < 2) {
-                                        if (var_r29 < 0) {
-
-                                        } else if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
-                                            _CB.unkB0F8 = 4;
-                                        } else if (var_r29 == 1) {
-                                            _CB.unkB0F8 = 0;
-                                        }
-                                    } else {
-                                        _CB.unkB0F8 = 1;
-                                    }
-                                }
-                            } else {
-                                _CB.unkB0F8 = 2;
+                        case 37:
+                            switch(var_r29) {
+                            case 0: case 1:
+                                if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) _CB.unkB0F8=4;
+                                else if(var_r29==1) _CB.unkB0F8=0;
+                                break;
+                            case 2: case 3: _CB.unkB0F8=1;break;
+                            case 4: _CB.unkB0F8=2;break;
                             }
                             break;
                         case 36:                /* switch 6 */
@@ -3128,8 +3119,8 @@ block_95:
                             }
                             break;
                         case 4:                 /* switch 6 */
-                            if ((var_r29 != 0) && (var_r29 >= 0) && (var_r29 < 5)) {
-                                _CB.unkB0F8 = 0;
+                            switch(var_r29) {
+                            case 1: case 2: case 3: case 4: _CB.unkB0F8=0;break;
                             }
                             break;
                         case 31:                /* switch 6 */
@@ -7801,11 +7792,11 @@ void menuTool_Rule00_Ctrl(MenuDBWindow *arg0) {
     s16 temp_r0_6;
     s16 temp_r0_7;
     s16 temp_r0_8;
-    s16 temp_r29;
-    s16 temp_r29_2;
-    s16 temp_r29_3;
-    s16 temp_r29_4;
-    s16 temp_r30;
+    s32 temp_r29;
+    s32 temp_r29_2;
+    s32 temp_r29_3;
+    s32 temp_r29_4;
+    s32 temp_r30;
     s16 temp_r3_2;
     s16 temp_r3_3;
     s16 temp_r4;
@@ -8039,7 +8030,7 @@ block_27:
                             }
                             temp_r4_2 = (s16) _CB.unk9C78->unk2;
                             if ((s16) _CB.unk9C78->unk0 >= temp_r4_2) {
-                                _CB.unk9C78->unk0 = temp_r4_2;
+                                _CB.unk9C78->unk0 = _CB.unk9C78->unk2;
                             }
                             _CB.unk9C78->unk4 = (s16) ((s16) _CB.unk9C78->unk2 * 6);
                         }
@@ -8296,7 +8287,7 @@ block_27:
                         if (((s32) (windowGetKeyRepeat() & 1) != 0) && ((s32) _ruleCursol.unk10 == 0)) {
                             temp_r3_2 = (s16) _CB.unk9C78->unk1A;
                             if (temp_r3_2 != 6) {
-                                _CB.unk9C78->unk1A = temp_r3_2 + 1;
+                                _CB.unk9C78->unk1A += 1;
                                 menuCB_SE_Play(0x10);
                                 return;
                             }
@@ -8304,7 +8295,7 @@ block_27:
                         if (((s32) (windowGetKeyRepeat() & 2) != 0) && ((s32) _ruleCursol.unk10 == 0)) {
                             temp_r3_3 = (s16) _CB.unk9C78->unk1A;
                             if (temp_r3_3 != 1) {
-                                _CB.unk9C78->unk1A = temp_r3_3 - 1;
+                                _CB.unk9C78->unk1A -= 1;
                                 menuCB_SE_Play(0x10);
                                 return;
                             }
@@ -8610,7 +8601,8 @@ block_27:
                                 case 0:             /* switch 10 */
                                     _CB.unkB11C += _CB.unkB014;
                                     switch ((s32) _CB.unkB014) { /* switch 11; irregular */
-                                    default:        /* switch 11 */
+                                    case 0:         /* switch 11 */
+                                    case 1:
                                         _ruleCursol.unk0 = 0;
                                         _ruleCursol.unk4 = 0;
                                         break;

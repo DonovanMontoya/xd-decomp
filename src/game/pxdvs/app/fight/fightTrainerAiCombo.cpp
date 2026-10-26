@@ -187,27 +187,34 @@ void ComboStatusUp(FIGHT_TRAINER *trainer,ComboWaza *table,s16 *score){
     *score=value;
 }
 void ComboStatusDown(FIGHT_TRAINER *trainer,FightOutPokemon **enemies,ComboWaza *table,s16 *score){
-    u16 immune[3]={0x1D,0x49,0};
+    u16 immune[3];
+    u8 current,immuneCount,i,j,k,l;
+    ComboStatusMove *entry;
+    u16 *stat;
+    u16 *amount;
+    immune[0]=0x1D;
+    immune[1]=0x49;
     s16 value=*score;
-    for(u8 i=0;i<2;i++)if(table->attackers[i]){
-        for(u8 j=0;j<18;j++){
-            ComboStatusMove *entry=&statusDownWazaTbl[j];
+    for(i=0;i<2;i++)if(table->attackers[i]){
+        for(j=0;j<18;j++){
+            entry=&statusDownWazaTbl[j];
             if(table->moves[i]==entry->move){
                 switch(table->eligible[i]){
                 case 0:case 1:
                     if(table->defenders[i]){
-                        u8 current=0,immuneCount=0;
                         switch(entry->stat){case 1:current=fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(trainer,table->defenders[i]);immune[2]=0x34;immuneCount=3;break;case 2:current=fightTrainerAiGetFightOutPokemonAbiCntPhyDef(trainer,table->defenders[i]);immuneCount=2;break;case 3:current=fightTrainerAiGetFightOutPokemonAbiCntSubayasa(trainer,table->defenders[i]);immuneCount=2;break;case 4:current=fightTrainerAiGetFightOutPokemonAbiCntSpeAtk(trainer,table->defenders[i]);immuneCount=2;break;case 5:current=fightTrainerAiGetFightOutPokemonAbiCntSpeDef(trainer,table->defenders[i]);immuneCount=2;break;case 6:current=fightTrainerAiGetFightOutPokemonAbiCntAvg(trainer,table->defenders[i]);immune[2]=0x33;immuneCount=3;break;case 7:current=fightTrainerAiGetFightOutPokemonAbiCntAvd(trainer,table->defenders[i]);immuneCount=2;break;}
-                        if(current-(entry->amount-1)<=0)value=0;
-                        for(u8 k=0;k<immuneCount;k++)if(fightAi_GetTokuseiHaveFlag(trainer,table->defenders[i],immune[k])>=1)value=0;
+                        if((u8)current-(entry->amount-1)<=0)value=0;
+                        for(k=0;k<immuneCount;k++)if(fightAi_GetTokuseiHaveFlag(trainer,table->defenders[i],immune[k])>=1)value=0;
                     }
                     break;
+                case 3:break;
                 case 2:
-                    for(u8 k=0;k<2;k++)if(enemies[k]){
-                        u8 current=0,immuneCount=0;
-                        switch(entry->stat){case 1:current=fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(trainer,enemies[k]);immune[2]=0x34;immuneCount=3;break;case 2:current=fightTrainerAiGetFightOutPokemonAbiCntPhyDef(trainer,enemies[k]);immuneCount=2;break;case 3:current=fightTrainerAiGetFightOutPokemonAbiCntSubayasa(trainer,enemies[k]);immuneCount=2;break;case 4:current=fightTrainerAiGetFightOutPokemonAbiCntSpeAtk(trainer,enemies[k]);immuneCount=2;break;case 5:current=fightTrainerAiGetFightOutPokemonAbiCntSpeDef(trainer,enemies[k]);immuneCount=2;break;case 6:current=fightTrainerAiGetFightOutPokemonAbiCntAvg(trainer,enemies[k]);immune[2]=0x33;immuneCount=3;break;case 7:current=fightTrainerAiGetFightOutPokemonAbiCntAvd(trainer,enemies[k]);immuneCount=2;break;}
-                        if(current-(entry->amount-1)<=0)value=0;
-                        for(u8 l=0;l<immuneCount;l++)if(fightAi_GetTokuseiHaveFlag(trainer,table->defenders[i],immune[l])>=1)value=0;
+                    stat=&entry->stat;
+                    amount=&entry->amount;
+                    for(k=0;k<2;k++)if(enemies[k]){
+                        switch(*stat){case 1:current=fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(trainer,enemies[k]);immune[2]=0x34;immuneCount=3;break;case 2:current=fightTrainerAiGetFightOutPokemonAbiCntPhyDef(trainer,enemies[k]);immuneCount=2;break;case 3:current=fightTrainerAiGetFightOutPokemonAbiCntSubayasa(trainer,enemies[k]);immuneCount=2;break;case 4:current=fightTrainerAiGetFightOutPokemonAbiCntSpeAtk(trainer,enemies[k]);immuneCount=2;break;case 5:current=fightTrainerAiGetFightOutPokemonAbiCntSpeDef(trainer,enemies[k]);immuneCount=2;break;case 6:current=fightTrainerAiGetFightOutPokemonAbiCntAvg(trainer,enemies[k]);immune[2]=0x33;immuneCount=3;break;case 7:current=fightTrainerAiGetFightOutPokemonAbiCntAvd(trainer,enemies[k]);immuneCount=2;break;}
+                        if((u8)current-(*amount-1)<=0)value=0;
+                        for(l=0;l<immuneCount;l++)if(fightAi_GetTokuseiHaveFlag(trainer,table->defenders[i],immune[l])>=1)value=0;
                     }
                     break;
                 }

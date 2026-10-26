@@ -782,6 +782,7 @@ u8 _fsysCheckExpandComplete(FsysWork* work, u32 index) {
     u8 complete;
     if (!(resource->flags & 8)) {
         switch ((s32)resource->reserved3C) {
+        case 1:break;
         case 3:
             _fsysReadDataExec((GSfsysRequest*)work, resource);
             break;
@@ -958,8 +959,8 @@ void _fsysBackgroundTaskCompressType(FsysBackgroundWork* entry) {
         entry->decodeState = 0;
     } else position = 0;
     s32 tokens = entry->tokenCount;
-    u32 flags = entry->tokenFlags;
     s32 ringPosition = entry->dictionaryPosition;
+    u32 flags = entry->tokenFlags;
     s32 matchPosition = entry->matchPosition;
     u32 consumed = entry->consumedBytes;
     s32 written = entry->writtenBytes;
@@ -997,8 +998,8 @@ literal:
     if (consumed > inputLength) goto finishBlock;
     if (position > blockBytes) { state = 2; --consumed; goto finishBlock; }
     output[written++] = value;
-    ring[ringPosition] = value;
-    ringPosition = (ringPosition + 1) & 0xfff;
+    ring[ringPosition++] = value;
+    ringPosition &= 0xfff;
     goto tokenDone;
 matchLow:
     ++consumed;
@@ -1015,8 +1016,8 @@ matchHigh:
     for (s32 i = 0; i <= count; ++i) {
         value = ring[(matchPosition + i) & 0xfff];
         output[written++] = value;
-        ring[ringPosition] = value;
-        ringPosition = (ringPosition + 1) & 0xfff;
+        ring[ringPosition++] = value;
+        ringPosition &= 0xfff;
     }
 tokenDone:
     ++tokens;

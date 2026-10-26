@@ -2124,7 +2124,7 @@ u8 fightAi_CreateAllWazaValid_GetDefense(u16 arg0, u8 arg1) {
 }
 
 u8 fightAi_AttackResult(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, u16 arg3, u16 arg4) {
-    FightOutPokemon *sp8[2];
+    FightOutPokemon *sp8[8];
     s32 temp_r3;
     Pokemon *temp_r30;
     FightPokemon *temp_r3_2;
@@ -2263,7 +2263,7 @@ u8 fightAi_WazaSuccessProbability(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, Fi
     u8 var_r30;
     s32 temp_r3_2;
     u8 var_r29;
-    s32 temp_r23;
+    u16 temp_r23;
     Pokemon *temp_r22;
 
     var_r29 = 0;
@@ -2287,7 +2287,7 @@ u8 fightAi_WazaSuccessProbability(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, Fi
             sp8[var_r30] = 0;
         }
         if (temp_r23 < sp8[var_r30]) {
-            var_r29 = var_r29 + 1;
+            var_r29 = (u8)var_r29 + 1;
         }
     }
     if (var_r29 == 1) {
@@ -2300,8 +2300,12 @@ u8 fightAi_WazaSuccessProbability(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, Fi
     case 0:
         var_r31 = 0;
         break;
-    default:
+    case 1:
+    case 2:
         var_r31 = (u8) ((s32) (var_r31 * 0x32) / 100);
+        break;
+    case 4:
+    default:
         break;
     case 3:
         var_r31 = (u8) ((s32) (var_r31 * 0x4B) / 100);
@@ -2722,12 +2726,13 @@ void fightAi_AllWazaValid_AddComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
     n = *count;
     for (idx = 0; idx < 0x40; idx++) {
         hitA = 0;
+        side = 0;
         hitB = hitA;
         entry = &ai_allwaza_valid_tbl[idx];
         move0 = &entry->moves[0];
         move1 = &entry->moves[1];
         atk1 = &entry->attackers[1];
-        for (side = 0; side < 2; side++) {
+        for (; side < 2; side++) {
             switch (kinds[side]) {
             case 0:
                 hitA += 1;
@@ -2737,7 +2742,7 @@ void fightAi_AllWazaValid_AddComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                 if (vals[side] != 0) {
                     if (*move0 == vals[side]) {
                         if (side == 0) {
-                            hitA = hitA + 1;
+                            hitA = (u8)hitA + 1;
                         }
                         if (side == 1) {
                             hitB += 1;
@@ -2745,7 +2750,7 @@ void fightAi_AllWazaValid_AddComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                     }
                     if (*move1 == vals[side]) {
                         if (side == 0) {
-                            hitB = hitB + 1;
+                            hitB = (u8)hitB + 1;
                         }
                         if (side == 1) {
                             hitA += 1;
@@ -2758,7 +2763,7 @@ void fightAi_AllWazaValid_AddComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                 if (type != 0) {
                     if (wazaIsWazaTypeId(*move0, type) == 1) {
                         if (side == 0) {
-                            hitA = hitA + 1;
+                            hitA = (u8)hitA + 1;
                         }
                         if (side == 1) {
                             hitB += 1;
@@ -2766,7 +2771,7 @@ void fightAi_AllWazaValid_AddComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                     }
                     if (wazaIsWazaTypeId(*move1, type) == 1) {
                         if (side == 0) {
-                            hitB = hitB + 1;
+                            hitB = (u8)hitB + 1;
                         }
                         if (side == 1) {
                             hitA += 1;
@@ -2779,7 +2784,7 @@ void fightAi_AllWazaValid_AddComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                 if (vals[side] != -1) {
                     if (vals[side] == fightTrainerAiGetWazaZokuseiDataId(trainer, *move0, entry->attackers[0])) {
                         if (side == 0) {
-                            hitA = hitA + 1;
+                            hitA = (u8)hitA + 1;
                         }
                         if (side == 1) {
                             hitB += 1;
@@ -2787,7 +2792,7 @@ void fightAi_AllWazaValid_AddComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                     }
                     if (vals[side] == fightTrainerAiGetWazaZokuseiDataId(trainer, *move1, *atk1)) {
                         if (side == 0) {
-                            hitB = hitB + 1;
+                            hitB = (u8)hitB + 1;
                         }
                         if (side == 1) {
                             hitA += 1;
@@ -2840,7 +2845,7 @@ void fightAi_AllWazaValid_DelComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                 if (vals[side] != 0) {
                     if (cand->moves[0] == vals[side]) {
                         if (side == 0) {
-                            hitA = hitA + 1;
+                            hitA = (u8)hitA + 1;
                         }
                         if (side == 1) {
                             hitB += 1;
@@ -2848,7 +2853,7 @@ void fightAi_AllWazaValid_DelComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                     }
                     if (cand->moves[1] == vals[side]) {
                         if (side == 0) {
-                            hitB = hitB + 1;
+                            hitB = (u8)hitB + 1;
                         }
                         if (side == 1) {
                             hitA += 1;
@@ -2860,7 +2865,7 @@ void fightAi_AllWazaValid_DelComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                 if (vals[side] != 0) {
                     if (wazaIsWazaTypeId(cand->moves[0], vals[side]) == 1) {
                         if (side == 0) {
-                            hitA = hitA + 1;
+                            hitA = (u8)hitA + 1;
                         }
                         if (side == 1) {
                             hitB += 1;
@@ -2868,7 +2873,7 @@ void fightAi_AllWazaValid_DelComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                     }
                     if (wazaIsWazaTypeId(cand->moves[1], vals[side]) == 1) {
                         if (side == 0) {
-                            hitB = hitB + 1;
+                            hitB = (u8)hitB + 1;
                         }
                         if (side == 1) {
                             hitA += 1;
@@ -2881,7 +2886,7 @@ void fightAi_AllWazaValid_DelComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                 if (vals[side] != -1) {
                     if (vals[side] == fightTrainerAiGetWazaZokuseiDataId(trainer, cand->moves[0], tblEntry->attackers[0])) {
                         if (side == 0) {
-                            hitA = hitA + 1;
+                            hitA = (u8)hitA + 1;
                         }
                         if (side == 1) {
                             hitB += 1;
@@ -2889,7 +2894,7 @@ void fightAi_AllWazaValid_DelComboList(FIGHT_TRAINER *trainer, AiWazaCandidate *
                     }
                     if (vals[side] == fightTrainerAiGetWazaZokuseiDataId(trainer, cand->moves[1], *atk1)) {
                         if (side == 0) {
-                            hitB = hitB + 1;
+                            hitB = (u8)hitB + 1;
                         }
                         if (side == 1) {
                             hitA += 1;
@@ -3074,7 +3079,7 @@ s32 _fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP
     first = *(AiFightPokemonRecord*)firstFight;
     second = *(AiFightPokemonRecord*)secondFight;
     for(u16 i=0;i<selectedCount;i++){}
-    s32 count=0;
+    u32 count=0;
     for(u16 i=0;i<6;i++){
         Pokemon *candidate=heroGetStatus(hero,3,i);
         if(candidate&&pokemonCheckValid(candidate)!=0&&pokemonCheckFightOut(candidate)!=0){
@@ -3082,12 +3087,17 @@ s32 _fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP
             for(j=0;j<selectedCount;j++)if(selected[j]&&selected[j]==candidate)break;
             if(j>=selectedCount){
                 fightPokemonCreate(trainer,firstFight,candidate,fightFloorGetFightPokemonEntryCntInc(0));
-                switch(mode){
-                case 1:if(fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,firstFight)==2)out[count++]=candidate;break;
-                default:case 0:out[count++]=candidate;break;
-                case 2:if(fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,firstFight)==3)out[count++]=candidate;break;
-                case 3:if(fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,firstFight)!=2&&fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,firstFight)!=3)out[count++]=candidate;break;
+                if(mode!=0){
+                    if(mode==1){
+                        if(fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,firstFight)!=2)continue;
+                    }else if(mode==2){
+                        if(fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,firstFight)!=3)continue;
+                    }else if(mode==3){
+                        if(fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,firstFight)==2||fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,firstFight)==3)continue;
+                    }
                 }
+                out[(u16)count]=candidate;
+                count++;
             }
         }
     }
@@ -3117,39 +3127,55 @@ void fightTrainerAiSortFirstSelectPokemonAry(FIGHT_TRAINER *trainer,Hero *hero,P
             void *deck=getDeckTrainerObj__11DeckTrainerFUl(fightTrainer_GetFightTrainerDataId(trainer));
             for(u16 i=0;i<4;i++)if(getComboID__11DeckTrainerCFUc(deck,(u8)i)!=0){hasCombo=1;break;}
             if(fightTrainerAiDB_GetPokemonSelectRandomFlag(ai)==1){
-                for(;selected<count;selected++){
-                    u16 available=_fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(trainer,hero,out,(u8)count,0,candidates);
-                    if(!available)break;
-                    out[selected]=candidates[HSD_Rand()%available];
+                while(1){
+                    if(selected>=count)break;
+                    u32 available=_fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(trainer,hero,out,(u8)count,0,candidates);
+                    if(!(u16)available)break;
+                    out[selected]=candidates[(u16)(HSD_Rand()%(u16)available)];
                     fightPokemonCreate(trainer,firstFight,out[selected],fightFloorGetFightPokemonEntryCntInc(0));
                     flags[selected]=fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,firstFight);
+                    selected++;
                 }
             }else{
                 if(hasCombo==1){comboCount=fightTrainerAi_SelComboPartner(candidates,out,_fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(trainer,hero,out,(u8)count,0,candidates),trainer);selected=comboCount;}
-                for(u16 i=0;i<limit;i++){
-                    u16 available=_fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(trainer,hero,out,(u8)count,1,candidates);
-                    if(!available)break;
-                    flags[selected]=2;out[selected++]=candidates[HSD_Rand()%available];
+                u16 aceIndex=0;
+                while(1){
+                    if(aceIndex>=limit)break;
+                    u32 available=_fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(trainer,hero,out,(u8)count,1,candidates);
+                    if(!(u16)available)break;
+                    u16 randomIndex=HSD_Rand()%(u16)available;
+                    flags[selected]=2;out[selected]=candidates[randomIndex];
+                    selected++;
+                    aceIndex++;
                 }
-                for(u16 i=0;i<limit;i++){
-                    u16 available=_fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(trainer,hero,out,(u8)count,2,candidates);
-                    if(!available)break;
-                    flags[selected]=3;out[selected++]=candidates[HSD_Rand()%available];
+                u16 bossIndex=0;
+                while(1){
+                    if(bossIndex>=limit)break;
+                    u32 available=_fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(trainer,hero,out,(u8)count,2,candidates);
+                    if(!(u16)available)break;
+                    u16 randomIndex=HSD_Rand()%(u16)available;
+                    flags[selected]=3;out[selected]=candidates[randomIndex];
+                    selected++;
+                    bossIndex++;
                 }
-                for(;selected<count;selected++){
-                    u16 available=_fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(trainer,hero,out,(u8)count,3,candidates);
-                    if(!available)break;
-                    out[selected]=candidates[HSD_Rand()%available];
+                while(1){
+                    if(selected>=count)break;
+                    u32 available=_fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(trainer,hero,out,(u8)count,3,candidates);
+                    if(!(u16)available)break;
+                    out[selected]=candidates[(u16)(HSD_Rand()%(u16)available)];
                     fightPokemonCreate(trainer,firstFight,out[selected],fightFloorGetFightPokemonEntryCntInc(0));
                     flags[selected]=fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,firstFight);
+                    selected++;
                 }
-                for(;selected<count;selected++){
-                    u16 available=_fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(trainer,hero,out,(u8)count,0,candidates);
-                    if(!available)break;
-                    out[selected]=candidates[HSD_Rand()%available];
+                while(1){
+                    if(selected>=count)break;
+                    u32 available=_fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(trainer,hero,out,(u8)count,0,candidates);
+                    if(!(u16)available)break;
+                    out[selected]=candidates[(u16)(HSD_Rand()%(u16)available)];
                     fightPokemonCreate(trainer,firstFight,out[selected],fightFloorGetFightPokemonEntryCntInc(0));
                     flags[selected]=fightTrainerAiGetFightPokemonKeyPlayerFlag(trainer,firstFight);
                     if(flags[selected]==2)flags[selected]=3;
+                    selected++;
                 }
             }
             if(fightTrainerAiDB_GetPokemonSelectRandomFlag(ai)!=1){
@@ -3161,7 +3187,7 @@ void fightTrainerAiSortFirstSelectPokemonAry(FIGHT_TRAINER *trainer,Hero *hero,P
                         }
                     }
                 }else{
-                    for(u8 i=comboCount;i<count;i++)if(out[i]){
+                    for(u16 i=comboCount;i<count;i++)if(out[i]){
                         for(u16 j=i+1;j<count;j++)if(out[j]&&flags[i]!=2&&flags[j]==2){Pokemon *old=out[i];u8 flag=flags[i];flags[i]=flags[j];out[i]=out[j];out[j]=old;flags[j]=flag;}
                     }
                 }
@@ -3367,9 +3393,12 @@ void fightAi_CheckDoFightActionStroke(FIGHT_TRAINER *trainer){
 struct AiComboRecord { u8 count, inverted; u8 rest[10]; };
 extern AiComboRecord comboid[];
 u8 pokemon_GetComboPartner(Pokemon*,u8,u8);
+static inline u32 isPokemonComboPartner(Pokemon *pokemon,u8 slot,u8 side) {
+    return pokemon_GetComboPartner(pokemon,slot,side)!=0;
+}
 u8 fightTrainerAi_SelComboPartner(Pokemon **candidates, Pokemon **out, u8 count, FIGHT_TRAINER *trainer) {
     u8 order[4]={0,1,2,3};
-    u8 second[6],first[6],single[6];
+    u8 single[6],first[6],second[6];
     void *deck=getDeckTrainerObj__11DeckTrainerFUl(fightTrainer_GetFightTrainerDataId(trainer));
     u8 outCount=fightFloor_GetFightTypeFightoutPokemonNum(0);
     u8 i;
@@ -3385,10 +3414,10 @@ u8 fightTrainerAi_SelComboPartner(Pokemon **candidates, Pokemon **out, u8 count,
             if(combo->count==2) {
                 if(outCount==1)continue;
                 u8 firstCount=0,secondCount,j;
-                for(j=0;j<count;j++)if((u8)(pokemon_GetComboPartner(candidates[j],order[i],1)!=0))first[firstCount++]=j;
+                for(j=0;j<count;j++)if((u8)isPokemonComboPartner(candidates[j],order[i],1)!=0)first[firstCount++]=j;
                 secondCount=0;
                 for(j=0;j<count;j++) {
-                    u8 partner=pokemon_GetComboPartner(candidates[j],order[i],0)!=0;
+                    u8 partner=isPokemonComboPartner(candidates[j],order[i],0);
                     if(inverted==0) {if(partner){second[secondCount]=j;secondCount++;}}
                     else {if(partner==1)continue;second[secondCount]=j;secondCount++;}
                 }
@@ -3397,14 +3426,14 @@ u8 fightTrainerAi_SelComboPartner(Pokemon **candidates, Pokemon **out, u8 count,
                     do {x=HSD_Rand()%firstCount;y=HSD_Rand()%secondCount;attempts++;}while(attempts<=100 && first[x]==second[y]);
                     if(inverted==1) {
                         u8 valid=1;
-                        if(valid==1) {out[selected++]=candidates[first[x]];out[selected++]=candidates[second[y]];return selected;}
-                    }else {out[selected++]=candidates[first[x]];out[selected++]=candidates[second[y]];return selected;}
+                        if(valid==1) {u32 current=(u8)selected;out[current]=candidates[first[x]];out[(u8)(current+1)]=candidates[second[y]];selected=current+2;return selected;}
+                    }else {u32 current=(u8)selected;out[current]=candidates[first[x]];out[(u8)(current+1)]=candidates[second[y]];selected=current+2;return selected;}
                 }
             }
             if(combo->count==1) {
                 u8 singleCount=0,j;
-                for(j=0;j<count;j++)if((u8)(pokemon_GetComboPartner(candidates[j],order[i],1)!=0))single[singleCount++]=j;
-                for(j=0;j<count;j++)if((u8)(pokemon_GetComboPartner(candidates[j],order[i],0)!=0))single[singleCount++]=j;
+                for(j=0;j<count;j++)if((u8)isPokemonComboPartner(candidates[j],order[i],1)!=0)single[singleCount++]=j;
+                for(j=0;j<count;j++)if((u8)isPokemonComboPartner(candidates[j],order[i],0)!=0)single[singleCount++]=j;
                 if(singleCount) {out[selected++]=candidates[single[(u8)(HSD_Rand()%singleCount)]];if(selected>=outCount)return selected;}
             }
         }

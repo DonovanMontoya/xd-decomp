@@ -145,7 +145,8 @@ void glowEffect::_render(GSgfxLayer *arg1, GSgfxLayerPass arg2) {
 }
 
 void glowEffect::_renderOffset(GSgfxLayer *arg1) {
-    f32 weights[2]={0.24197073f,0.053990968f};
+    f32 weights[2];
+    weights[0]=0.24197073f;weights[1]=0.053990968f;
     u8 alpha,diagonalAlpha;
     u8 sp13;
     u8 sp12;
@@ -174,7 +175,7 @@ void glowEffect::_renderOffset(GSgfxLayer *arg1) {
     u8 temp_r31;
     u8 temp_r4;
     u8 temp_r5;
-    u8 var_r10;
+    u32 var_r10;
     u8 var_r11_2;
     u8 var_r30;
     u8 var_r3;
@@ -283,15 +284,15 @@ void glowEffect::_renderOffset(GSgfxLayer *arg1) {
     }
     temp_r5 = count;
     arg1->beginSurface((u16) (temp_r5 * 4 * (temp_r5 + 1)));
+    register f32 zero=0.0f,one=1.0f;
     var_r10 = 0;
-loop_22:
-    if (var_r10 < (u8) count) {
-        temp_r0_2 = var_r10 + 1;
+while ((u8)var_r10 < (u8) count) {
+        temp_r0_2 = (u8)var_r10 + 1;
         sp12 = temp_r0_2;
-        sp11 = temp_r0_2;
         temp_f0 = 0.0015625f * (temp_f29 * __OSu8tof32(&sp12));
+        sp11 = temp_r0_2;
         temp_f6 = 0.0020833334f * (temp_f29 * __OSu8tof32(&sp11));
-        alpha=glowAlpha(0.25f*(255.0f*(strength*weights[var_r10]))+0.5f);
+        alpha=glowAlpha(0.25f*(255.0f*(strength*weights[(u8)var_r10]))+0.5f);
         temp_f13 = -temp_f0;
         *(volatile s16 *)0xCC008000 = 0;
         temp_f2 = -temp_f6;
@@ -302,12 +303,12 @@ loop_22:
         *(volatile u8 *)0xCC008000 = 0xFF;
         *(volatile u8 *)0xCC008000 = alpha;
         *(volatile f32 *)0xCC008000 = temp_f13;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
+        *(volatile f32 *)0xCC008000 = zero;
+        *(volatile f32 *)0xCC008000 = zero;
         *(volatile f32 *)0xCC008000 = temp_f2;
         *(volatile f32 *)0xCC008000 = temp_f0;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
+        *(volatile f32 *)0xCC008000 = zero;
+        *(volatile f32 *)0xCC008000 = zero;
         *(volatile f32 *)0xCC008000 = temp_f6;
         *(volatile s16 *)0xCC008000 = 0x280;
         *(volatile s16 *)0xCC008000 = 0;
@@ -316,16 +317,16 @@ loop_22:
         *(volatile u8 *)0xCC008000 = 0xFF;
         *(volatile u8 *)0xCC008000 = alpha;
         *(volatile f32 *)0xCC008000 = temp_f11;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 1.0f;
+        *(volatile f32 *)0xCC008000 = zero;
+        *(volatile f32 *)0xCC008000 = one;
         *(volatile f32 *)0xCC008000 = temp_f2;
         temp_f12 = 1.0f + temp_f0;
         temp_f2_2 = 1.0f - temp_f6;
         var_r11_2 = 0;
         temp_f5 = 1.0f + temp_f6;
         *(volatile f32 *)0xCC008000 = temp_f12;
-        *(volatile f32 *)0xCC008000 = 0.0f;
-        *(volatile f32 *)0xCC008000 = 1.0f;
+        *(volatile f32 *)0xCC008000 = zero;
+        *(volatile f32 *)0xCC008000 = one;
         *(volatile f32 *)0xCC008000 = temp_f6;
         *(volatile s16 *)0xCC008000 = 0x280;
         *(volatile s16 *)0xCC008000 = 0x1E0;
@@ -334,12 +335,12 @@ loop_22:
         *(volatile u8 *)0xCC008000 = 0xFF;
         *(volatile u8 *)0xCC008000 = alpha;
         *(volatile f32 *)0xCC008000 = temp_f11;
-        *(volatile f32 *)0xCC008000 = 1.0f;
-        *(volatile f32 *)0xCC008000 = 1.0f;
+        *(volatile f32 *)0xCC008000 = one;
+        *(volatile f32 *)0xCC008000 = one;
         *(volatile f32 *)0xCC008000 = temp_f2_2;
         *(volatile f32 *)0xCC008000 = temp_f12;
-        *(volatile f32 *)0xCC008000 = 1.0f;
-        *(volatile f32 *)0xCC008000 = 1.0f;
+        *(volatile f32 *)0xCC008000 = one;
+        *(volatile f32 *)0xCC008000 = one;
         *(volatile f32 *)0xCC008000 = temp_f5;
         *(volatile s16 *)0xCC008000 = 0;
         *(volatile s16 *)0xCC008000 = 0x1E0;
@@ -348,16 +349,15 @@ loop_22:
         *(volatile u8 *)0xCC008000 = 0xFF;
         *(volatile u8 *)0xCC008000 = alpha;
         *(volatile f32 *)0xCC008000 = temp_f13;
-        *(volatile f32 *)0xCC008000 = 1.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
+        *(volatile f32 *)0xCC008000 = one;
+        *(volatile f32 *)0xCC008000 = zero;
         *(volatile f32 *)0xCC008000 = temp_f2_2;
         *(volatile f32 *)0xCC008000 = temp_f0;
-        *(volatile f32 *)0xCC008000 = 1.0f;
-        *(volatile f32 *)0xCC008000 = 0.0f;
+        *(volatile f32 *)0xCC008000 = one;
+        *(volatile f32 *)0xCC008000 = zero;
         *(volatile f32 *)0xCC008000 = temp_f5;
-loop_20:
-        if (var_r11_2 < (u8) count) {
-            diagonalAlpha=glowAlpha(0.25f*(255.0f*((strength*weights[var_r10])*weights[var_r11_2]))+0.5f);
+while (var_r11_2 < (u8) count) {
+            diagonalAlpha=glowAlpha(0.25f*(255.0f*((strength*weights[(u8)var_r10])*weights[var_r11_2]))+0.5f);
             sp10 = var_r11_2 + 1;
             *(volatile s16 *)0xCC008000 = 0;
             *(volatile s16 *)0xCC008000 = 0;
@@ -420,11 +420,11 @@ loop_20:
             *(volatile f32 *)0xCC008000 = temp_f2_4;
             *(volatile f32 *)0xCC008000 = temp_f0;
             *(volatile f32 *)0xCC008000 = temp_f5_3;
-            goto loop_20;
         }
+
         var_r10 += 1;
-        goto loop_22;
     }
+
     arg1->endSurface();
 }
 
@@ -565,8 +565,8 @@ loop_19:
     if ((s32) var_r9 < (s32) (count * 2)) {
         temp_r0_2 = var_r9 + 1;
         sp11 = temp_r0_2;
-        sp10 = temp_r0_2;
         temp_f10 = 0.0015625f * (temp_f31 * __OSu8tof32(&sp11));
+        sp10 = temp_r0_2;
         temp_f9 = 0.0020833334f * (temp_f31 * __OSu8tof32(&sp10));
         alpha=glowAlpha(255.0f*(strength*weights[var_r9])+0.5f);
         temp_f8 = -temp_f10;

@@ -18,7 +18,7 @@ struct FLASHCXFORM {
     s16 v[8];
 };
 struct VEC_GRAPH_DATA {
-    s32 fillLeft,fillRight,shiftLeft,shiftRight,previousLeft,previousRight;
+    s32 fill[2],shift[2],previous[2];
     s16 minX,minY,maxX,maxY,centerX,centerY,width,height;
     u32 color;
     FLASHCXFORM* colorTransform;
@@ -28,9 +28,13 @@ struct VEC_GRAPH_DATA {
     void* gradient;
     s32 originX,originY;
     f32 scale,angle,sinAngle,cosAngle,inverseSin,inverseCos;
-    u8 reserved64[0x400];
+    u32 reserved64[256];
     s16 crossPoints[256][8];
 };
+typedef char VecGraphDataSize[sizeof(VEC_GRAPH_DATA)==0x1464?1:-1];
+typedef char VecGraphFillOffset[(u32)&((VEC_GRAPH_DATA*)0)->fill==0?1:-1];
+typedef char VecGraphShiftOffset[(u32)&((VEC_GRAPH_DATA*)0)->shift==8?1:-1];
+typedef char VecGraphPreviousOffset[(u32)&((VEC_GRAPH_DATA*)0)->previous==16?1:-1];
 struct GXColor {
     u8 r, g, b, a;
 };
@@ -368,8 +372,8 @@ extern "C" void vectorGraph(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines
         if(flags&0x40)vecBlend(layer,_typemask,_srcmask,_dstmask);
         else vecBlend(layer,_type,_src,_dst);
         GSprimSetQuadVertexOrder(1);
-        ((VEC_GRAPH_DATA*)gVecDat)->fillLeft=0;((VEC_GRAPH_DATA*)gVecDat)->shiftLeft=-1;((VEC_GRAPH_DATA*)gVecDat)->previousLeft=-1;
-        ((VEC_GRAPH_DATA*)gVecDat)->fillRight=0;((VEC_GRAPH_DATA*)gVecDat)->shiftRight=-1;((VEC_GRAPH_DATA*)gVecDat)->previousRight=-1;
+        ((VEC_GRAPH_DATA*)gVecDat)->fill[0]=0;((VEC_GRAPH_DATA*)gVecDat)->shift[0]=-1;((VEC_GRAPH_DATA*)gVecDat)->previous[0]=-1;
+        ((VEC_GRAPH_DATA*)gVecDat)->fill[1]=0;((VEC_GRAPH_DATA*)gVecDat)->shift[1]=-1;((VEC_GRAPH_DATA*)gVecDat)->previous[1]=-1;
         ((VEC_GRAPH_DATA*)gVecDat)->styleCount=fills->count;((VEC_GRAPH_DATA*)gVecDat)->colorTransform=colors;
         ((VEC_GRAPH_DATA*)gVecDat)->lineColor=flcalcMultiTransformColor(colors,0xffffffff);
         ((VEC_GRAPH_DATA*)gVecDat)->fillStyles=fills->styles;((VEC_GRAPH_DATA*)gVecDat)->lineStyles=lines->styles;
@@ -390,18 +394,17 @@ struct VEC_RECT {s16 x0,y0,x1,y1,twiceX,twiceY,dx,dy;};
 static void calcVecRect(VEC_RECT*,VEC_GRAPH_DATA*,long);
 static void gradientline(s16,s16,s16,VEC_GRAPH_DATA*);
 
-static inline void vecTogglePoint(s16 x,s16 y,u32* row) {
+static inline void vecTogglePoint(s16 x,s16 y,u32* row,VEC_GRAPH_DATA* data) {
     if(x<0)x=0;
     if(x>=640)x=639;
     if(y>=0 && y<480) {
         u32* bits=row+x/8;
-        VEC_GRAPH_DATA* data=(VEC_GRAPH_DATA*)gVecDat;
-        if(data->fillLeft) {
-            u32 mask=bit_value[data->shiftLeft+(x%8)*4];
+        if(data->fill[0]) {
+            u32 mask=bit_value[data->shift[0]+(x%8)*4];
             if(*bits&mask)*bits^=mask;else *bits|=mask;
         }
-        if(data->fillRight) {
-            u32 mask=bit_value[data->shiftRight+(x%8)*4];
+        if(data->fill[1]) {
+            u32 mask=bit_value[data->shift[1]+(x%8)*4];
             if(*bits&mask)*bits^=mask;else *bits|=mask;
         }
         if(debugstep==0)printf("x = %3d\t\ty = %3d\n",x,y);
@@ -412,11 +415,11 @@ static void SBline(GSvec2* first,GSvec2* second) {
     s16 previousY=-1;
     if(debugstep==0x77F)return;
     if(first->y<second->y) {
-        vecRect[0]=(s16)first->x;vecRect[1]=(s16)first->y;
-        vecRect[2]=(s16)second->x;vecRect[3]=(s16)second->y;
+        vecRect[0]=__OSf32tos16(first->x);vecRect[1]=__OSf32tos16(first->y);
+        vecRect[2]=__OSf32tos16(second->x);vecRect[3]=__OSf32tos16(second->y);
     }else if(first->y>second->y) {
-        vecRect[0]=(s16)second->x;vecRect[1]=(s16)second->y;
-        vecRect[2]=(s16)first->x;vecRect[3]=(s16)first->y;
+        vecRect[0]=__OSf32tos16(second->x);vecRect[1]=__OSf32tos16(second->y);
+        vecRect[2]=__OSf32tos16(first->x);vecRect[3]=__OSf32tos16(first->y);
     }else return;
     vecRect[7]=vecRect[3]-vecRect[1];
     if(vecRect[7]==0)return;
@@ -425,24 +428,24 @@ static void SBline(GSvec2* first,GSvec2* second) {
     vecRect[6]=width;
     s16 x=vecRect[0],y=vecRect[1];
     vecRect[4]=width*2;vecRect[5]=vecRect[7]*2;
-    if(width==0) {
+    if(vecRect[6]==0) {
         for(s16 i=0;i<vecRect[7];++i) {
-            s16 row=y++;
-            vecTogglePoint(x,row,(u32*)(scanline_buffer+row*0x140));
+            s32 row=y++;
+            vecTogglePoint(x,row,(u32*)(scanline_buffer+row*0x140),(VEC_GRAPH_DATA*)gVecDat);
         }
         return;
     }
     if(vecRect[7]<2) {
-        vecTogglePoint(x,y,(u32*)(scanline_buffer+y*0x140));
+        vecTogglePoint(x,y,(u32*)(scanline_buffer+y*0x140),(VEC_GRAPH_DATA*)gVecDat);
         return;
     }
-    if(width>=vecRect[7]) {
+    if(vecRect[6]>=vecRect[7]) {
         s16 error=-width;
         u32* row=(u32*)(scanline_buffer+y*0x140);
         for(s16 i=0;i<=vecRect[6];++i) {
             if(y==vecRect[3])return;
             if(previousY!=y) {
-                vecTogglePoint(x,y,row);
+                vecTogglePoint(x,y,row,(VEC_GRAPH_DATA*)gVecDat);
                 previousY=y;
             }
             x+=direction;
@@ -456,7 +459,7 @@ static void SBline(GSvec2* first,GSvec2* second) {
         s16 error=-vecRect[7];
         u32* row=(u32*)(scanline_buffer+y*0x140);
         for(s16 i=0;i<vecRect[7];++i) {
-            vecTogglePoint(x,y,row);
+            vecTogglePoint(x,y,row,(VEC_GRAPH_DATA*)gVecDat);
             row+=0x50;++y;
             error+=vecRect[4];
             if(error>=0) {x+=direction;error-=vecRect[5];}
@@ -473,9 +476,9 @@ static inline void vecFlushLines() {
 }
 static inline void vecLineVertex(s16 x,s16 y,u32 color) {
     if(lList[0]>=0x200)vecFlushLines();
-    memcpy(&lList[lList[0]+1],&color,4);
-    ((GSvec2*)&lList[0x201])[lList[0]].x=(f32)x;
-    ((GSvec2*)&lList[0x201])[lList[0]].y=(f32)y;
+    memcpy(&lList[lList[0]]+1,&color,4);
+    ((GSvec2*)((u8*)lList+lList[0]*sizeof(GSvec2)+0x804))->x=__OSs16tof32(&x);
+    ((GSvec2*)((u8*)lList+lList[0]*sizeof(GSvec2)+0x804))->y=__OSs16tof32(&y);
     ++lList[0];
 }
 static void SBscan() {
@@ -517,10 +520,12 @@ struct VecFillStyle {
     u8 type;u8 padding[3];u32 color;
     FLASHMATRIX matrix;
     VecGradient gradient;
-    u16 texture;u16 reserved66;
+    u32 texture;
     FLASHMATRIX textureMatrix;
 };
 typedef char VecFillStyleSize[sizeof(VecFillStyle)==0x80?1:-1];
+typedef char VecFillTextureOffset[(u32)&((VecFillStyle*)0)->texture==0x64?1:-1];
+typedef char VecFillTextureMatrixOffset[(u32)&((VecFillStyle*)0)->textureMatrix==0x68?1:-1];
 struct VecStyleChange {
     u8 flags;u8 reserved[3];s32 x,y;
     u8 left,right,line,padding;
@@ -534,24 +539,25 @@ f64 acos(f64);
 f64 sin(f64);
 f64 cos(f64);
 }
-static inline void vecBounds(const GSvec2* point) {
-    VEC_GRAPH_DATA* data=(VEC_GRAPH_DATA*)gVecDat;
-    s16 x=(s16)point->x,y=(s16)point->y;
+static inline void vecBounds(const GSvec2* point,VEC_GRAPH_DATA* data) {
+    s16 x=__OSf32tos16(point->x),y=__OSf32tos16(point->y);
     if(x<data->minX)data->minX=x;
     if(x>data->maxX)data->maxX=x;
     if(y<data->minY)data->minY=y;
     if(y>data->maxY)data->maxY=y;
 }
+#pragma push
+#pragma pool_strings off
 static void vecExec(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines,_SHAPERECORD* shape,FLASHMATRIXF* matrix,FLASHMATRIXF* parent,FLASHCXFORM* colors) {
     FLASHMATRIXF combined;
-    GSvec2 oldPoint,newPoint,control,local;
-    GSvec2 curve[3],previous,current;
-    s32 x=0,y=0;
+    GSvec2 points[3]; GSvec2 local;
+    GSvec2 curve[3],current,previous;
+    s32 x,y;
     u8 sprite=0,more=1;
     if(fills->count==0 && fills->styles)((VecFillStyle*)fills->styles)->color=0xffffffff;
+    x=0;y=0;
     if(matrix)flcalcMulMatrixf(&combined,parent,matrix);
     else for(s32 component=0;component<6;++component)combined.m[component]=parent->m[component];
-    VEC_GRAPH_DATA* data=(VEC_GRAPH_DATA*)gVecDat;
     do {
         switch(shape->type) {
         case 0:more=0;break;
@@ -561,38 +567,42 @@ static void vecExec(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines,_SHAPER
             if(change->flags&1) {
                 x=change->x;y=change->y;
                 local.x=(f32)x/20.0f;local.y=(f32)y/20.0f;
-                flcalcMatrix(&oldPoint,&combined,&local);
+                flcalcMatrix(&points[0],&combined,&local);
             }
             if(change->flags&4) {
-                if(change->right) {data->shiftRight=change->right-1;data->fillRight=1;}
-                else data->fillRight=0;
+                if(change->right) {((VEC_GRAPH_DATA*)gVecDat)->shift[1]=change->right-1;((VEC_GRAPH_DATA*)gVecDat)->fill[1]=1;}
+                else ((VEC_GRAPH_DATA*)gVecDat)->fill[1]=0;
             }
             if(change->flags&2) {
-                if(change->left) {data->shiftLeft=change->left-1;data->fillLeft=1;}
-                else data->fillLeft=0;
+                if(change->left) {((VEC_GRAPH_DATA*)gVecDat)->shift[0]=change->left-1;((VEC_GRAPH_DATA*)gVecDat)->fill[0]=1;}
+                else ((VEC_GRAPH_DATA*)gVecDat)->fill[0]=0;
             }
             if(change->flags&8) {
-                if(data->fillLeft) {data->previousLeft=change->line;if(change->line && !(change->flags&6))sprite=1;}
-                if(data->fillRight) {data->previousRight=change->line;if(change->line && !(change->flags&6))sprite=1;}
+                for(s32 side=0;side<2;++side) {
+                    if(((VEC_GRAPH_DATA*)gVecDat)->fill[side]) {
+                        ((VEC_GRAPH_DATA*)gVecDat)->previous[side]=change->line;
+                        if(change->line && !(change->flags&6))sprite=1;
+                    }
+                }
             }
             if((change->flags&16) && change->fillStyles) {
                 SBscan();
-                data->minY=0x7fff;data->minX=0x7fff;data->maxY=-0x8000;data->maxX=-0x8000;
+                ((VEC_GRAPH_DATA*)gVecDat)->minY=0x7fff;((VEC_GRAPH_DATA*)gVecDat)->minX=0x7fff;((VEC_GRAPH_DATA*)gVecDat)->maxY=-0x8000;((VEC_GRAPH_DATA*)gVecDat)->maxX=-0x8000;
                 memset(scanline_buffer,0,sizeof(scanline_buffer));
-                data->fillStyles=change->fillStyles;
-                data->shiftRight=0;data->shiftLeft=0;data->fillRight=0;data->fillLeft=0;
-                if(!(change->flags&4)){data->shiftRight=0;data->fillRight=0;}
-                if(!(change->flags&2)){data->shiftLeft=0;data->fillLeft=0;}
+                ((VEC_GRAPH_DATA*)gVecDat)->fillStyles=change->fillStyles;
+                ((VEC_GRAPH_DATA*)gVecDat)->shift[1]=0;((VEC_GRAPH_DATA*)gVecDat)->shift[0]=0;((VEC_GRAPH_DATA*)gVecDat)->fill[1]=0;((VEC_GRAPH_DATA*)gVecDat)->fill[0]=0;
+                if(!(change->flags&4)){((VEC_GRAPH_DATA*)gVecDat)->shift[1]=0;((VEC_GRAPH_DATA*)gVecDat)->fill[1]=0;}
+                if(!(change->flags&2)){((VEC_GRAPH_DATA*)gVecDat)->shift[0]=0;((VEC_GRAPH_DATA*)gVecDat)->fill[0]=0;}
             }else {
                 for(s32 side=0;side<2;++side) {
-                    s32* active=&data->fillLeft+side;
-                    if(*active) {
-                        s32 style=active[2];
-                        VecFillStyle* fill=&((VecFillStyle*)data->fillStyles)[style];
-                        if(fill->type&0x40) {
+                    if(((VEC_GRAPH_DATA*)gVecDat)->fill[side]) {
+                        s32 style=((VEC_GRAPH_DATA*)gVecDat)->shift[side];
+                        VecFillStyle* styles=(VecFillStyle*)((VEC_GRAPH_DATA*)gVecDat)->fillStyles;
+                        if(styles[style].type&0x40) {
+                            VecFillStyle* fill=&styles[style];
                             if(!(change->flags&1)){y=0;x=0;}
+                            shape=SpriteCode(id,shape->next,fill->texture,&combined,&fill->textureMatrix,x,y,(VEC_GRAPH_DATA*)gVecDat,colors);
                             sprite=1;
-                            shape=SpriteCode(id,shape->next,fill->texture,&combined,&fill->textureMatrix,x,y,data,colors);
                         }
                     }
                 }
@@ -603,37 +613,42 @@ static void vecExec(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines,_SHAPER
             x+=shape->move->x;y+=shape->move->y;
             local.x=(f32)x/20.0f;local.y=(f32)y/20.0f;
             if(!sprite) {
-                flcalcMatrix(&newPoint,&combined,&local);
-                SBline(&oldPoint,&newPoint);
-                vecBounds(&newPoint);
-                oldPoint=newPoint;
+                flcalcMatrix(&points[1],&combined,&local);
+                SBline(&points[0],&points[1]);
+                vecBounds(&points[1],(VEC_GRAPH_DATA*)gVecDat);
+                points[0]=points[1];
             }
             break;
         case 3: {
             VecCurve* edge=(VecCurve*)shape->move;
             s32 controlX=x+edge->controlX,controlY=y+edge->controlY;
             local.x=(f32)controlX/20.0f;local.y=(f32)controlY/20.0f;
-            flcalcMatrix(&control,&combined,&local);
+            flcalcMatrix(&points[2],&combined,&local);
             x=controlX+edge->endX;y=controlY+edge->endY;
             local.x=(f32)x/20.0f;local.y=(f32)y/20.0f;
             if(!sprite) {
-                flcalcMatrix(&newPoint,&combined,&local);
-                curve[1]=control;
-                if(oldPoint.y<newPoint.y){curve[0]=oldPoint;curve[2]=newPoint;}
-                else {curve[0]=newPoint;curve[2]=oldPoint;}
-                previous=curve[0];
+                flcalcMatrix(&points[1],&combined,&local);
                 f32 fraction=0;
+                curve[1]=points[2];
+                if(points[0].y<points[1].y){
+                    curve[0].x=points[0].x;curve[0].y=points[0].y;
+                    curve[2].x=points[1].x;curve[2].y=points[1].y;
+                } else {
+                    curve[0].x=points[1].x;curve[0].y=points[1].y;
+                    curve[2].x=points[0].x;curve[2].y=points[0].y;
+                }
+                previous=curve[0];
                 for(s32 i=0;i<9;++i) {
                     fraction+=0.1f;
                     flcalcBezier3(&current,curve,fraction);
                     SBline(&previous,&current);
                     previous=current;
-                    vecBounds(&current);
+                    vecBounds(&current,(VEC_GRAPH_DATA*)gVecDat);
                 }
                 current=curve[2];
                 SBline(&previous,&current);
-                vecBounds(&current);
-                oldPoint=newPoint;
+                vecBounds(&current,(VEC_GRAPH_DATA*)gVecDat);
+                points[0]=points[1];
             }
             break;
         }
@@ -645,14 +660,17 @@ static void vecExec(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines,_SHAPER
     if(!sprite)SBscan();
 }
 
+#pragma pop
+
 static void calcVecRect(VEC_RECT* rect,VEC_GRAPH_DATA* data,long style) {
     data->centerX=(data->maxX+data->minX)/2;
     data->centerY=(data->maxY+data->minY)/2;
     data->width=data->maxX-data->minX;
     data->height=data->maxY-data->minY;
     if(data->fillStyles) {
-        VecFillStyle* fill=&((VecFillStyle*)data->fillStyles)[style];
+        VecFillStyle* fill;
         if(style) {
+            fill=&((VecFillStyle*)data->fillStyles)[style];
             switch(fill->type) {
             case 0:data->color=flcalcMultiTransformColor(data->colorTransform,fill->color);data->gradient=0;return;
             case 16: {
@@ -695,11 +713,12 @@ static void calcVecRect(VEC_RECT* rect,VEC_GRAPH_DATA* data,long style) {
                     memcpy(&oldColor,&((u32*)data->reserved64)[position-1],4);
                     for(;position<256;++position)memcpy(&((u32*)data->reserved64)[position],&oldColor,4);
 
-                    return;
+                    break;
                 }
             }
             return;
         }
+        fill=&((VecFillStyle*)data->fillStyles)[style];
         f32 first=(f32)fill->matrix.m[0];
         f32 second=(f32)fill->matrix.m[1];
         data->originX=fill->matrix.m[4]/20-data->centerX;
@@ -769,26 +788,25 @@ static void calcVecRect(VEC_RECT* rect,VEC_GRAPH_DATA* data,long style) {
 static inline s16 vecGradientIndex(s16 x,s16 y,VEC_GRAPH_DATA* data) {
     s32 vertical=data->originY+((y-data->minY)*256)/data->height;
     s32 horizontal=((x-data->minX)*256)/data->width-data->originX;
-    s16 index=(s16)(128.0f+(((f32)horizontal-128.0f)*data->inverseCos-((f32)vertical-128.0f)*data->inverseSin)/data->scale);
+    s16 index=__OSf32tos16(128.0f+(((f32)horizontal-128.0f)*data->inverseCos-((f32)vertical-128.0f)*data->inverseSin)/data->scale);
     if(index<0)index=0;
     if(index>=256)index=255;
     return index;
 }
 static void gradientline(s16 left,s16 right,s16 y,VEC_GRAPH_DATA* data) {
     s16 points[8];
-    s32 count=0;
+    s32 count;
     VecGradient* gradient=(VecGradient*)data->gradient;
-    for(s32 i=0;i<gradient->count;++i) {
+    for(s32 i=count=0;i<gradient->count;++i) {
         s16 x=data->minX+(data->crossPoints[((y-data->minY)*256)/data->height][i]*data->width)/256;
         if(left<x && right>x)points[count++]=x;
     }
     for(s32 i=0;i<count-1;++i)for(s32 j=i+1;j<count;++j)if(points[i]>points[j]) {s16 temp=points[i];points[i]=points[j];points[j]=temp;}
-    u32* palette=(u32*)data->reserved64;
-    vecLineVertex(left,y,palette[vecGradientIndex(left,y,data)]);
+    vecLineVertex(left,y,data->reserved64[vecGradientIndex(left,y,data)%256]);
     for(s32 i=0;i<count;++i) {
-        u32 color=palette[vecGradientIndex(points[i],y,data)];
+        u32 color=data->reserved64[vecGradientIndex(points[i],y,data)%256];
         vecLineVertex(points[i],y,color);
         vecLineVertex(points[i],y,color);
     }
-    vecLineVertex(right,y,palette[vecGradientIndex(right,y,data)]);
+    vecLineVertex(right,y,data->reserved64[vecGradientIndex(right,y,data)%256]);
 }

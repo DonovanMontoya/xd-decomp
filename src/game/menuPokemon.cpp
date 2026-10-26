@@ -79,8 +79,9 @@ u8 menuPokemonCheckPokemonChange(void *, FIGHT_TRAINER *, s32);
 void pokemonToMenuPokemonStatus(Pokemon *, s32, MENU_POKEMON_STATUS_TBL *, s32);
 u16 pokemonGetJoutaiMenuSpriteId(Pokemon *);
 u16 menuPocket2Call(s32, s32, s32);
-s32 wazaGetStatus(s32, s32, s32);
-void pokemonToMenuWazaStatus(void *);
+u32 wazaGetStatus(void*,u32,u16,u16);
+struct PokemonMenuWazaStatus;
+void pokemonToMenuWazaStatus(Pokemon*,PokemonMenuWazaStatus*);
 s32 menuSubOpenSelect2(s32, s32 *, s32, s32, s32, s32, s32, s32);
 MENU_POKEMON_STATUS_TBL *windowGetParam(tagWINDOW_WORK *, s32);
 void menuItemBiosSetXY(s32, s16, s16, s16);
@@ -555,14 +556,14 @@ static s32 _menuPokemonActionField(s8 index)
             break;
         case 431:
         case 369: {
-            s8 other;
+            s16 other;
             _menuPokemon.unk8 = index;
             _menuPokemon.unk18 = 2;
             other = _menuPokemonOpenList(1);
             _menuPokemon.unk8 = -1;
             if (menuGetCursorItemID(0x4C) != 0x163 && other != -1) {
                 Pokemon *a = _menuPokemonGetPokemonPtr(index);
-                Pokemon *b = _menuPokemonGetPokemonPtr((s8)(u16)other);
+                Pokemon *b = _menuPokemonGetPokemonPtr((u16)other);
                 if (a != 0 && a != 0) {
                     _menuPokemonMovePanel(index, 1);
                     _menuPokemonMovePanel(other, 1);
@@ -721,13 +722,13 @@ s32 menuPokemonOpenWazaLight(s8 index)
     if (pokemon == 0) {
         return -1;
     }
-    pokemonToMenuWazaStatus(wazaStatus);
+    pokemonToMenuWazaStatus(pokemon,(PokemonMenuWazaStatus*)wazaStatus);
     count = 0;
     p = &ids[count];
     for (i = 0; i < 4; i++) {
-        u16 id = pokemonGetStatus(pokemon, 0, 0x7F, i);
+        u16 id = pokemonGetStatus(pokemon, 0, 0x7F, (u16)i);
         if (id != 0) {
-            *p = wazaGetStatus(0, 1, 0);
+            *p = wazaGetStatus(0,id,1,0);
             count++;
         }
         p++;

@@ -24,7 +24,7 @@ static WazaSequenceEntry hologramReliveWazaSeqTbl={77,4};
 static WazaSequenceEntry hologramPigeonReliveWazaSeqTbl={315,4};
 static WazaSequenceEntry noWazaSeqTbl={122,4};
 static FloorParameter pParameter;static void *mParameter;static u32 lbl_804EB994;static s32 keepRelivePatternIsHologram;static void *hokoraParticleGen;static u8 isHokoraParticleLoaded;
-static s8 _cbWazaForget__FP7PokemonUsl(void*,u16,s32);static void _preReliveDisplayHokoraParticleThreadFunc__Fv();static u8 _expRecover__FP7PokemonUl(void*,u32);static s32 reliveCeremonyAll__FlP7PokemonUl(s32,void*,s32);
+static s8 _cbWazaForget__FP7PokemonUsl(void*,u16,s32);static void _preReliveDisplayHokoraParticleThreadFunc__Fv();static u8 _expRecover__FP7PokemonUl(void*,u32);static s32 reliveCeremonyAll__FlP7PokemonUl(s32,void*,u32);
 static s8 _cbWazaForget__FP7PokemonUsl(void *arg0, u16 arg1,s32) {
     s32 sp8;
     f32 var_f30;
@@ -198,7 +198,7 @@ loop_1:
     return var_r23;
 }
 
-static s32 reliveCeremonyAll__FlP7PokemonUl(s32 arg0, void *arg1, s32 arg2) {
+static s32 reliveCeremonyAll__FlP7PokemonUl(s32 arg0, void *arg1, u32 arg2) {
     s32 temp_r29_2;
     WazaSequenceEntry *var_r27_2;
     s32 var_r27_3;
@@ -430,7 +430,7 @@ loop_63:
         pokemonBiosSetPoolFriend(arg1, 0);
         if (_expRecover__FP7PokemonUl(arg1, temp_r25) == 1) {
             temp_r3_4 = pokemonEvolutionCheck(arg1, 0, 0, &sp8, &sp1C);
-            if ((temp_r3_4 != 0) && (temp_r3_4 != -1U)) {
+            if ((temp_r3_4 != 0) && (temp_r3_4 != 0xFFFFU)) {
                 fadeSetToBlackOutIfNotBlack(0.5f);
                 fadeCheck(1);
                 if ((s32) keepRelivePatternIsHologram != 0) {

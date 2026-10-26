@@ -1060,9 +1060,9 @@ void CMenuPokemonCursor::draw() {
                 f32 progress=unk8;
                 s32 vertical=(s32)(-8.0f*progress);
                 s32 offset=(s32)horizontal;
-                PocketVec<short> left=position,right=position;
-                right.x+=offset;left.x-=offset;
-                right.y-=vertical;left.y-=-8-vertical;
+                PocketVec<short> right=position,left=position;
+                left.y-=-8-vertical;
+                right.x+=offset;left.x-=offset;right.y-=vertical;
                 if(progress<0.5f){ant.drawAndUpdate(left);beforeAnt.drawAndUpdate(right);}
                 else {beforeAnt.drawAndUpdate(right);ant.drawAndUpdate(left);}
             } else ant.drawAndUpdate(position);
@@ -1080,14 +1080,14 @@ void CMenuPokemonCursor::draw() {
         if(!isCatchPokemon()) {
             MenuSpriteValue* sprite=menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x216));
             s16 width=sprite->width,height=sprite->height;
-            s16 offset=5.0f*pulse;
+            s32 offset=(s16)(5.0f*pulse);
             if(offset>4)offset=4;
             s16 left=position.x+offset+4,top=position.y+offset+4;
             menuPtSpriteDrawColor(0x216,left,top,width,height,color);
-            s16 negativeWidth=-width;
+            s32 negativeWidth=-width;
             s16 right=position.x+50-offset;
             menuPtSpriteDrawColor(0x216,right,top,negativeWidth,height,color);
-            s16 negativeHeight=-height;
+            s32 negativeHeight=-height;
             s16 bottom=position.y+50-offset;
             menuPtSpriteDrawColor(0x216,left,bottom,width,negativeHeight,color);
             menuPtSpriteDrawColor(0x216,right,bottom,negativeWidth,negativeHeight,color);

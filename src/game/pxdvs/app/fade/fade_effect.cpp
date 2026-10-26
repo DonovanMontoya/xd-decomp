@@ -1819,27 +1819,24 @@ bool fadeEffectHookFunction_slide_ball(GSgfxLayerID id, bool active, f32 elapsed
     FADE_LAYER_BIND_TEXTURE((GStexture*)opaque)
     layer->field1998 = 0x80;
     layer->beginSurface(0x30);
-    FADE_EFFECT_BOUND* ball = _fadeEffectBound;
     FADE_EFFECT_BOUND* base = _fadeEffectBound;
-    s32 n = 12;
-    do {
+    for (s32 n = 0; n < 12; ++n) {
         f32 left, right, v0, v1;
-        if ((f32)ball->speed > 0.0f) {
-            left = ball->x;
+        if ((f32)base[n].speed > 0.0f) {
+            left = base[n].x;
             if (left < -1.0f) left = -1.0f;
             right = 641.0f;
             v0 = 0.0f;
             v1 = (641.0f - left) / 640.0f;
         } else {
             left = -1.0f;
-            right = ball->x;
+            right = base[n].x;
             if (right > 641.0f) right = 641.0f;
             v1 = 1.0f;
             v0 = (640.0f - right) / 640.0f;
         }
-        f32 top = ball->y - 26;
+        f32 top = base[n].y - 26;
         f32 vt = top / 480.0f;
-        ++ball;
         GXPosition2f32(left, top);
         GXColor4u8(255, 255, 255, (u8)alpha);
         GXTexCoord2f32(v0, vt);
@@ -1854,10 +1851,11 @@ bool fadeEffectHookFunction_slide_ball(GSgfxLayerID id, bool active, f32 elapsed
         GXPosition2f32(left, bottom);
         GXColor4u8(255, 255, 255, (u8)alpha);
         GXTexCoord2f32(v0, vb);
-    } while (--n != 0);
+    }
     layer->endSurface();
     layer->setRenderStateAndSelect(GSgfxVFBuildTemp(0, 4, 0, 0, 1, 5, 1, 1, 4));
-    FADE_LAYER_BIND_TEXTURE(_fadeEffectWork.ballTexture)
+    GStexture* ballTexture = _fadeEffectWork.ballTexture;
+    FADE_LAYER_BIND_TEXTURE(ballTexture)
     layer->field1998 = 0x80;
     layer->beginSurface(0x60);
     s32 i = 0;
@@ -1872,7 +1870,7 @@ bool fadeEffectHookFunction_slide_ball(GSgfxLayerID id, bool active, f32 elapsed
         }
         _disp_slide_ball(layer, base->x, base->y, x2, base->rotation, (u8)alpha);
         if (timeGetLastFrameTime() != 0) {
-            base->x = base->x + base->speed;
+            base->x += base->speed;
             base->rotation = (s16)((360.0f * base->x) / 166.50441f);
             if (base->speed > 0) {
                 base->x = base->x + (base->x / 80);
@@ -3652,6 +3650,12 @@ static void _fadeDistortionStripDoTate() {
     }
 }
 
+static inline u8 fadeStripTateForward(u16 direction) {if(direction<2)return 1;return 0;}
+static inline u8 fadeStripYokoForward(u16 direction) {if(direction%2==0)return 1;return 0;}
+static inline void fadeStripAlphas(f32 alpha,f32 scale,u8 forward,u8* first,u8* second) {
+ if(forward){*first=(u8)alpha;*second=(u8)(alpha*scale);}
+ else{*second=(u8)alpha;*first=(u8)(alpha*scale);}
+}
 bool fadeEffectHookFunction_distortion_strip_tate(GSgfxLayerID id, bool active, f32 elapsed, f32 duration, f32, f32, void* opaque) {
     GSgfxLayer* layer = GSgfxLayerFindByID(id);
     if (!layer) return active;
@@ -3763,23 +3767,22 @@ bool fadeEffectHookFunction_distortion_strip_tate(GSgfxLayerID id, bool active, 
     if (!points || !uv) return false;
     f32 opacity = progress < 0.00001f ? 1.0f - progress : 1.0f - fadeSqrt(progress);
     f32 alpha = 255.0f * opacity;
-    bool forward = _fadeEffectWork.direction < 2;
+    u8 forward = fadeStripTateForward(_fadeEffectWork.direction);
     u8 alphaFirst, alphaSecond;
-    if (forward) { alphaFirst = (u8)alpha; alphaSecond = (u8)(alpha * 1.0f); }
-    else { alphaSecond = (u8)alpha; alphaFirst = (u8)(alpha * 1.0f); }
-    u16 count = columns * 2;
+    fadeStripAlphas(alpha,1.0f,forward,&alphaFirst,&alphaSecond);
+    u32 count = columns * 2;
     int row = columns;
     for (int y = 1; y < rows; ++y) {
         layer->beginSurface(count);
-        for (int x = 0; x < columns; ++x) {
-            int index = row + x;
-            GXPosition3s16(points[index].x, points[index].y, 0);
+        int current = row;
+        int previous = (y - 1) * columns;
+        for (int x = 0; x < columns; ++x, ++current, ++previous) {
+            GXPosition3s16(points[current].x, points[current].y, 0);
             GXColor4u8(255, 255, 255, alphaFirst);
-            GXTexCoord2f32(uv[index].u, forward ? uv[index].v : 1.0f);
-            index = (y - 1) * columns + x;
-            GXPosition3s16(points[index].x, points[index].y, 0);
+            GXTexCoord2f32(uv[current].u, forward ? uv[current].v : 1.0f);
+            GXPosition3s16(points[previous].x, points[previous].y, 0);
             GXColor4u8(255, 255, 255, alphaSecond);
-            GXTexCoord2f32(uv[index].u, forward ? 0.0f : uv[index].v);
+            GXTexCoord2f32(uv[previous].u, forward ? 0.0f : uv[previous].v);
         }
         layer->endSurface();
         row += columns;
@@ -3946,11 +3949,10 @@ bool fadeEffectHookFunction_distortion_strip_yoko(GSgfxLayerID id, bool active, 
     if (!points || !uv) return false;
     f32 opacity = progress < 0.00001f ? 1.0f - progress : 1.0f - fadeSqrt(progress);
     f32 alpha = 255.0f * opacity;
-    bool forward = _fadeEffectWork.direction % 2 == 0;
+    u8 forward = fadeStripYokoForward(_fadeEffectWork.direction);
     u8 alphaFirst, alphaSecond;
-    if (forward) { alphaFirst = (u8)alpha; alphaSecond = (u8)(alpha * 1.0f); }
-    else { alphaSecond = (u8)alpha; alphaFirst = (u8)(alpha * 1.0f); }
-    u16 count = rows * 2;
+    fadeStripAlphas(alpha,1.0f,forward,&alphaFirst,&alphaSecond);
+    u32 count = rows * 2;
     for (int x = 1; x < columns; ++x) {
         layer->beginSurface(count);
         for (int y = 0; y < rows; ++y) {

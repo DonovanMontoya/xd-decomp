@@ -1510,10 +1510,12 @@ static u32 _animeTable_B[4][4]={
     {0x20CD0400,0x20CD1000,1,0x20C91800},{0x20CE0400,0x20CE1000,1,0x20CA1800}
 };
 static u32 (*_animeTable[2])[4]={_animeTable_A,_animeTable_B};
-static u8 _testVisibility=1,_testExit=1,_glowwidth=20,_glownormalize=1,_glowsamples=1;
+static bool _testVisibility=true,_testExit=true;
+static u8 _glowwidth=20,_glownormalize=1,_glowsamples=1;
 static f32 _testFadeTime=1.5f;
 extern "C" {
-extern u8 _AnimeLoop,_glowblend,_glowmethod;
+extern bool _AnimeLoop;
+extern u8 _glowblend,_glowmethod;
 u16 HSD_Rand();
 void GSgfxVideoSetLockFrameRate(u32);
 void GSmodelSetShadowFlags(void *,u32);
@@ -1528,7 +1530,7 @@ void WorldMap::moveDemo(long previous,long selected) {
     WorldMapIconData *to=&icons[_cursor_index[selected]];
     WorldMapIconData *from=&icons[_cursor_index[previous]];
     f32 angle=(f32)atan2(to->screen.param2-from->screen.param2,to->screen.param1-from->screen.param1);
-    if(angle<0.0f)angle+=6.2831855f;
+    if(angle<0.0f)angle=6.2831855f+angle;
     if(!(angle>=1.5707964f && angle<4.712389f))variant+=2;
     WorldMapData *data=SearchData(_cursor_index[previous]);
     unk8->archive4C=*(u32 *)((u8 *)data+0x14);
@@ -1546,8 +1548,9 @@ void WorldMap::moveDemo(long previous,long selected) {
         unk4->glow=0.0f;unk4->width=_glowwidth;unk4->blend=_glowblend;unk4->normalize=_glownormalize;unk4->method=_glowmethod;unk4->samples=_glowsamples;unk4->Start();
     }
     void *model=GSresGetResourceAllGroup(unk8->resList->pad[0]);
-    void *surface=GSresGetResourceAllGroup(unk8->model58);
+    void *surfaceResource=GSresGetResourceAllGroup(unk8->model58);
     void *light=GSresGetResourceAllGroup(unk8->model5C);
+    void *surface=surfaceResource;
     GSmodelSetShadowFlags(model,1);GSmodelSetShadowLight(model,light);GSmodelSetShadowSurface(model,1,&surface);
     SetMotion(unk8->modelB,0,0.0f,_AnimeLoop);
     f32 frames=GetAnimeFrameCount(unk8->modelB,0);
@@ -1561,7 +1564,7 @@ void WorldMap::moveDemo(long previous,long selected) {
             unk8->f3c-=fade;
             if(unk8->f3c<0.0f) {unk8->f3c=0.0f;ObjectVisibility(0x18530200,_testVisibility);}
         }
-        if(_testExit!=0 && GetAnimeFrame(unk8->modelB)>frames-60.0f)break;
+        if(_testExit!=0 && frames-60.0f<GetAnimeFrame(unk8->modelB))break;
         GSthreadSwitch();
     }
 }

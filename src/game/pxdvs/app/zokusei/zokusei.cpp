@@ -1,7 +1,7 @@
 #include <global.h>
 extern "C" {
 extern u32 *pokemon_data_number,*zokusei_data_number;
-u8 pokemonDB_GetZokuseiDataId(u16,u8);u8 pokemonDataBiosGetZokuseiDataId(void*,u16);u32 zokuseiBiosGetSpriteID(u32);u16 zokuseiBiosGetWazaJoutai(u16,u16);
+u8 pokemonDB_GetZokuseiDataId(u32,u16);u8 pokemonDataBiosGetZokuseiDataId(void*,u16);u16 zokuseiBiosGetSpriteID(u16);u16 zokuseiBiosGetWazaJoutai(u32,u32);
 u32 zokuseiGetPokemonSpriteID(void *volatile pokemon,u16 slot){u16 index=slot;if(index>=2)return 0;return zokuseiBiosGetSpriteID(pokemonDataBiosGetZokuseiDataId(pokemon,index));}
 s32 zokuseiGetAisyouValue(u16 attack,volatile u8 offense,u8 filter){s32 result=0;u16 type=0;for(;type<*zokusei_data_number;type++){if(type==9)continue;if(offense==1){u16 value=zokuseiBiosGetWazaJoutai(attack,type);if(value==0x43){if(filter!=1)result-=10;}else if(value==0x42){if(filter!=1)result-=10;}else if(value==0x41){if(filter!=2)result+=10;}}else{u16 value=zokuseiBiosGetWazaJoutai(type,attack);if(value==0x43){if(filter!=2)result+=10;}else if(value==0x42){if(filter!=2)result+=10;}else if(value==0x41){if(filter!=1)result-=10;}}}return result;}
 static inline u16 evaluate(u16 attack,const u16 *types,u16 count){u16 weakness=0,resistance=0,index=0;for(;index<count;index++){if(types[index]==9)continue;u16 value=zokuseiBiosGetWazaJoutai(attack,types[index]);if(value==0x43)return 0x43;else if(value==0x41)weakness++;else if(value==0x42)resistance++;}if(weakness==0&&resistance==0)return 0x3f;if(weakness==resistance)return 0x3f;if(weakness>resistance)return 0x41;return 0x42;}

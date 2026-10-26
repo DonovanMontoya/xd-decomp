@@ -29,7 +29,7 @@ static GStexture* _modelShadowMarukageTex;
 static u8 _shadowCheckCameraHeight;
 void GSgfxRenderWaitForDrawComplete__Fv();
 void HSD_ShadowFreeTexture(HSD_Shadow*);
-void HSD_ShadowSetActive(HSD_Shadow*, u8);
+void HSD_ShadowSetActive(HSD_Shadow*, int);
 HSD_Shadow* HSD_ShadowAlloc();
 void HSD_ShadowSetDebug(u8);
 void* GSmemAlloc(u32);
@@ -500,10 +500,10 @@ static inline void shadowColorState(GSgfxLayer* layer,u8 color,u8 alpha,u8 befor
 }
 static inline void shadowVertexXYZ(f32 x,f32 y,f32 z,GXColor color,f32 s,f32 t) {
     *(f32*)0xcc008000=x;*(f32*)0xcc008000=y;*(f32*)0xcc008000=z;
-    *(u32*)0xcc008000=*(const u32*)&color;
+    *(u32*)0xcc008000=*(u32*)&color;
     *(f32*)0xcc008000=s;*(f32*)0xcc008000=t;
 }
-static inline void shadowVertex(Vec point,const GXColor& color,f32 s,f32 t) {
+static inline void shadowVertex(Vec point,GXColor& color,f32 s,f32 t) {
     shadowVertexXYZ(point.x,point.y,point.z,color,s,t);
 }
 extern "C" void modelShadowRenderMarukage__FP8_GSmodelP10GSgfxLayer(GSmodel* model,GSgfxLayer* layer) {
@@ -518,7 +518,9 @@ extern "C" void modelShadowRenderMarukage__FP8_GSmodelP10GSgfxLayer(GSmodel* mod
     if(size.x<radius)size.x=radius;if(size.z<radius)size.z=radius;
     GSboundGetWorldPosition((GSbound*)model->boundStorage,&minimum);
     maximum=minimum;
-    minimum.x-=size.x;minimum.z-=size.z;maximum.x+=size.x;maximum.z+=size.z;
+    f32 minX=minimum.x-size.x,minZ=minimum.z-size.z;
+    f32 maxX=maximum.x+size.x,maxZ=maximum.z+size.z;
+    minimum.x=minX;minimum.z=minZ;maximum.x=maxX;maximum.z=maxZ;
     maximum.y=minimum.y=0.2f+model->position.param2;
     color.r=color.g=color.b=color.a=_modelShadowIntensity-((s32)_modelShadowIntensity>>2);
     GSprimSetup3DRender(layer);

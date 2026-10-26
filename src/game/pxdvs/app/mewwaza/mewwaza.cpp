@@ -112,8 +112,7 @@ s32 _fillTmplate__FPUsP9MEWPOINTS(u16 *arg0, MEWPOINTS *arg1) {
     s32 var_r27;
     s32 var_r30;
     s32 var_r31;
-    s32 var_r31_2;
-    u16 temp_r3;
+    s32 temp_r3;
     MWAZA *var_r28;
     MWAZA *var_r29;
 
@@ -125,7 +124,7 @@ s32 _fillTmplate__FPUsP9MEWPOINTS(u16 *arg0, MEWPOINTS *arg1) {
         var_r0 = temp_r4 * 4;
         var_r31 = 0;
     }
-    var_r31_2 = var_r31 * 4;
+    var_r31 = var_r31 * 4;
     var_r27 = 0;
     var_r29 = mWazaTbl + (0x30 - var_r0);
     var_r30 = 0;
@@ -135,7 +134,23 @@ s32 _fillTmplate__FPUsP9MEWPOINTS(u16 *arg0, MEWPOINTS *arg1) {
         if (*(u16*)((u8*)arg0 + var_r25) & 0x8000) {
 loop_6:
             temp_r3 = _searchwaza__FP5MWAZAlPUsll(var_r28, (s32) *(u16*)((u8*)arg0 + var_r25), arg0, var_r30, 0);
-            if (temp_r3 == 0) {
+            if (temp_r3 != 0) {
+                var_r23 = (u32)HSD_Rand() % (((s32) temp_r3 / 2) + (((s32) temp_r3 / 8) + 1));
+                if (var_r23 >= (s32) temp_r3) {
+                    var_r23 = 0;
+                }
+                if (var_r31 != 0) {
+                    if (var_r31 <= var_r23) {
+                        var_r23 -= var_r31;
+                        var_r31 = 0;
+                    } else {
+                        var_r31 -= var_r23;
+                        var_r23 = 0;
+                    }
+                }
+                *(u16*)((u8*)arg0 + var_r25) = _searchwaza__FP5MWAZAlPUsll(var_r28, (s32) *(u16*)((u8*)arg0 + var_r25), arg0, var_r30, var_r23 + 1);
+                var_r28 += var_r23 + 1;
+            } else {
                 if (var_r27 < 2) {
                     var_r28 = var_r29;
                     var_r27 += 1;
@@ -148,21 +163,6 @@ loop_6:
                 }
                 goto loop_6;
             }
-            var_r23 = (u32)HSD_Rand() % (((s32) temp_r3 / 2) + (((s32) temp_r3 / 8) + 1));
-            if (var_r23 >= (s32) temp_r3) {
-                var_r23 = 0;
-            }
-            if (var_r31_2 != 0) {
-                if (var_r31_2 <= var_r23) {
-                    var_r23 -= var_r31_2;
-                    var_r31_2 = 0;
-                } else {
-                    var_r31_2 -= var_r23;
-                    var_r23 = 0;
-                }
-            }
-            *(u16*)((u8*)arg0 + var_r25) = _searchwaza__FP5MWAZAlPUsll(var_r28, (s32) *(u16*)((u8*)arg0 + var_r25), arg0, var_r30, var_r23 + 1);
-            var_r28 += var_r23 + 1;
         }
         var_r30 += 1;
         var_r25 += 2;
@@ -171,120 +171,64 @@ loop_6:
 }
 
 WazaTemplate *_getWazaFromTmpl__FlP9MEWPOINTS(s32 arg0, MEWPOINTS *arg1) {
-    s16 temp_r3;
-    s32 temp_r5;
-    s32 temp_r5_2;
-    s32 var_r29;
-    s32 var_r29_2;
-    s32 var_r29_3;
-    s32 var_r6;
-    s32 var_r6_2;
-    u16 var_r30;
-    WazaTemplate *temp_r31;
-    WazaTemplate *var_r3;
-    WazaTemplate *var_r3_2;
-    WazaTemplate *var_r4;
-    WazaTemplate *var_r4_2;
-
-    temp_r31 = wazaTmplTbl[arg0];
-    switch (arg0) {                                 /* irregular */
-    case 0:
-        temp_r3 = arg1->unk2;
-        if ((temp_r3 > (s16) arg1->unk6) && (temp_r3 >= 0)) {
-            var_r30 = 3;
-        } else if (temp_r3 >= 0) {
-            var_r30 = 2;
-        } else {
-            var_r30 = 1;
+    WazaTemplate* table = wazaTmplTbl[arg0];
+    u16 category;
+    s32 chance;
+    switch (arg0) {
+    case 0: {
+        s16 points = arg1->unk2;
+        if (points > (s16)arg1->unk6 && points >= 0) category = 3;
+        else if (points >= 0) category = 2;
+        else category = 1;
+        chance = 100;
+        if (arg1->unk8 == 1 && (u32)HSD_Rand() % 100 < 30) {
+            return table + 10 + ((u32)HSD_Rand() % 3);
         }
-        var_r29 = 0x64;
-        if (((s32) arg1->unk8 == 1) && ((u32) ((u32)HSD_Rand() % 100) < 0x1EU)) {
-            return temp_r31 + (((u32)HSD_Rand() % 3) + 10);
+        if (arg1->unk8 == 2 && (u32)HSD_Rand() % 100 < 30) {
+            return table + 7 + ((u32)HSD_Rand() % 3);
         }
-        if (((s32) arg1->unk8 == 2) && ((u32) ((u32)HSD_Rand() % 100) < 0x1EU)) {
-            return temp_r31 + (((u32)HSD_Rand() % 3) + 7);
-        }
-    default:
-block_25:
-        if ((var_r29 == 0x64) || (var_r29 > (s32) ((u32)HSD_Rand() % 100))) {
-            var_r4 = temp_r31;
-            var_r29_2 = 0;
-loop_31:
-            if ((u16) var_r4->unk0 != 0) {
-                if ((u16) var_r4->unk2 == var_r30) {
-                    var_r29_2 += 1;
-                }
-                var_r4 += 1;
-                goto loop_31;
-            }
-            if (var_r29_2 == 0) {
-                return 0;
-            }
-            var_r3_2 = temp_r31;
-            var_r6 = 0;
-            temp_r5 = (u32)HSD_Rand() % var_r29_2;
-loop_40:
-            if ((u16) var_r3_2->unk0 == 0) {
-                return 0;
-            }
-            if ((u16) var_r3_2->unk2 == var_r30) {
-                if (var_r6 == temp_r5) {
-                    return var_r3_2;
-                }
-                var_r6 += 1;
-                goto block_39;
-            }
-block_39:
-            var_r3_2 += 1;
-            goto loop_40;
-        }
-        var_r4_2 = temp_r31;
-        var_r29_3 = 0;
-loop_46:
-        if ((u16) var_r4_2->unk0 != 0) {
-            if ((u16) var_r4_2->unk2 != var_r30) {
-                var_r29_3 += 1;
-            }
-            var_r4_2 += 1;
-            goto loop_46;
-        }
-        if (var_r29_3 == 0) {
-            return 0;
-        }
-        var_r3 = temp_r31;
-        var_r6_2 = 0;
-        temp_r5_2 = (u32)HSD_Rand() % var_r29_3;
-loop_55:
-        if ((u16) var_r3->unk0 == 0) {
-            return 0;
-        }
-        if ((u16) var_r3->unk2 != var_r30) {
-            if (var_r6_2 == temp_r5_2) {
-                return var_r3;
-            }
-            var_r6_2 += 1;
-            goto block_54;
-        }
-block_54:
-        var_r3 += 1;
-        goto loop_55;
-    case 1:
-        var_r30 = 1;
-        var_r29 = 0x3C;
-        goto block_25;
+        break;
+    }
+    case 1: category = 1; chance = 60; break;
     case 5:
-    case 2:
-        var_r30 = 1;
-        var_r29 = 0x64;
-        goto block_25;
-    case 3:
-        var_r30 = 1;
-        var_r29 = 0x46;
-        goto block_25;
-    case 4:
-        var_r30 = 1;
-        var_r29 = 0x46;
-        goto block_25;
+    case 2: category = 1; chance = 100; break;
+    case 3: category = 1; chance = 70; break;
+    case 4: category = 1; chance = 70; break;
+    }
+    if (chance == 100 || chance > (s32)((u32)HSD_Rand() % 100)) {
+        WazaTemplate* entry = table;
+        s32 count = 0;
+        for (; entry->unk0; ++entry) {
+            if (entry->unk2 == category) ++count;
+        }
+        if (!count) return 0;
+        s32 selected = (u32)HSD_Rand() % count;
+        entry = table;
+        s32 index = 0;
+        for (; entry->unk0; ++entry) {
+            if (entry->unk2 == category) {
+                if (index == selected) return entry;
+                ++index;
+            }
+        }
+        return 0;
+    } else {
+        WazaTemplate* entry = table;
+        s32 count = 0;
+        for (; entry->unk0; ++entry) {
+            if (entry->unk2 != category) ++count;
+        }
+        if (!count) return 0;
+        s32 selected = (u32)HSD_Rand() % count;
+        entry = table;
+        s32 index = 0;
+        for (; entry->unk0; ++entry) {
+            if (entry->unk2 != category) {
+                if (index == selected) return entry;
+                ++index;
+            }
+        }
+        return 0;
     }
 }
 
@@ -321,364 +265,64 @@ s32 _tmplSelect__FP9MEWPOINTS(MEWPOINTS *arg0) {
             return 5;
 }
 
+static inline s32 pointMagnitude(s16 point) {
+    return point < 0 ? -point : point;
+}
+static inline void scaleLargestPoint(MEWPOINTS* points, s32 factor) {
+    if (pointMagnitude(points->unk2) > pointMagnitude(points->unk4) &&
+        pointMagnitude(points->unk2) > pointMagnitude(points->unk6)) {
+        points->unk2 = (factor * points->unk2) >> 8;
+    } else if (pointMagnitude(points->unk4) > pointMagnitude(points->unk2) &&
+               pointMagnitude(points->unk4) > pointMagnitude(points->unk6)) {
+        points->unk4 = (factor * points->unk4) >> 8;
+    } else {
+        points->unk6 = (factor * points->unk6) >> 8;
+    }
+}
 void _question_5__FP9MEWPOINTS(MEWPOINTS *arg0) {
     s32 answers[2];
-    s16 temp_r4;
-    s16 temp_r4_2;
-    s16 temp_r4_3;
-    s16 temp_r4_4;
-    s16 temp_r4_5;
-    s32 var_r0;
-    s32 var_r0_10;
-    s32 var_r0_11;
-    s32 var_r0_12;
-    s32 var_r0_13;
-    s32 var_r0_14;
-    s32 var_r0_15;
-    s32 var_r0_16;
-    s32 var_r0_17;
-    s32 var_r0_18;
-    s32 var_r0_19;
-    s32 var_r0_20;
-    s32 var_r0_2;
-    s32 var_r0_3;
-    s32 var_r0_4;
-    s32 var_r0_5;
-    s32 var_r0_6;
-    s32 var_r0_7;
-    s32 var_r0_8;
-    s32 var_r0_9;
-    s32 var_r3;
-    s32 var_r3_10;
-    s32 var_r3_11;
-    s32 var_r3_12;
-    s32 var_r3_13;
-    s32 var_r3_14;
-    s32 var_r3_15;
-    s32 var_r3_2;
-    s32 var_r3_3;
-    s32 var_r3_4;
-    s32 var_r3_5;
-    s32 var_r3_6;
-    s32 var_r3_7;
-    s32 var_r3_8;
-    s32 var_r3_9;
-    s32 var_r5;
-    s32 var_r5_2;
-    s32 var_r5_3;
-    s32 var_r5_4;
-    s32 var_r5_5;
-    s32 temp_r28;
-    s32 temp_r3;
-    s32 temp_r6;
-    s32 temp_r6_2;
-    s32 temp_r6_3;
-    s32 temp_r6_4;
-    s32 temp_r6_5;
-    u32 temp_ret;
-
-    temp_ret = (u32)HSD_Rand();
-    temp_r28 = temp_ret % 5;
-    winMsgOpenFieldWithSE(mewques5[temp_r28], 1, 0, 1);
-    answers[0] = mewans5[temp_r28].unk0;
-    answers[1] = mewans5[temp_r28].unk4;
+    s32 question = (u32)HSD_Rand() % 5;
+    winMsgOpenFieldWithSE(mewques5[question], 1, 0, 1);
+    answers[0] = mewans5[question].unk0;
+    answers[1] = mewans5[question].unk4;
+    s32 choice;
     do {
-        temp_r3 = menuSubOpenSelect3(0, &answers[0], 2, 0x34, 0xD1, 0, 2, 1, 0);
-    } while (temp_r3 < 0);
+        choice = menuSubOpenSelect3(0, answers, 2, 0x34, 0xD1, 0, 2, 1, 0);
+    } while (choice < 0);
     winMsgClose(1);
-    switch (temp_r28) {                             /* irregular */
-    case 0:
-        temp_r6 = (u32)HSD_Rand() % 487;
-        if ((u8) temp_r3 == 0) {
-            arg0->unk0 = (s16) ((s32) ((temp_r6 + 0x99) * arg0->unk0) >> 8);
-        } else {
-            temp_r4 = arg0->unk4;
-            var_r3 = temp_r4;
-            if (temp_r4 < 0) {
-                var_r3 = -temp_r4;
-            }
-            var_r5 = arg0->unk2;
-            var_r0 = var_r5;
-            if (var_r5 < 0) {
-                var_r0 = -var_r5;
-            }
-            if (var_r0 > var_r3) {
-                var_r3_2 = arg0->unk6;
-                if (var_r3_2 < 0) {
-                    var_r3_2 = -var_r3_2;
-                }
-                var_r0_2 = var_r5;
-                if (var_r5 < 0) {
-                    var_r0_2 = -var_r5;
-                }
-                if (var_r0_2 > var_r3_2) {
-                    arg0->unk2 = (s16) ((s32) ((temp_r6 + 0x99) * var_r5) >> 8);
-                } else {
-                    goto block_23;
-                }
-            } else {
-block_23:
-                if (var_r5 < 0) {
-                    var_r5 = -var_r5;
-                }
-                var_r0_3 = temp_r4;
-                if (temp_r4 < 0) {
-                    var_r0_3 = -temp_r4;
-                }
-                if (var_r0_3 > var_r5) {
-                    var_r3_3 = arg0->unk6;
-                    if (var_r3_3 < 0) {
-                        var_r3_3 = -var_r3_3;
-                    }
-                    var_r0_4 = temp_r4;
-                    if (temp_r4 < 0) {
-                        var_r0_4 = -temp_r4;
-                    }
-                    if (var_r0_4 > var_r3_3) {
-                        arg0->unk4 = (s16) ((s32) ((temp_r6 + 0x99) * temp_r4) >> 8);
-                    } else {
-                        goto block_34;
-                    }
-                } else {
-block_34:
-                    arg0->unk6 = (s16) ((s32) ((temp_r6 + 0x99) * arg0->unk6) >> 8);
-                }
-            }
-        }
-        if ((u8) temp_r3 == 0) {
-            arg0->unk8 = 1;
-            return;
-        }
-        arg0->unk8 = 2;
+    switch (question) {
+    case 0: {
+        s32 random = (u32)HSD_Rand() % 487;
+        if ((u8)choice == 0) arg0->unk0 = ((random + 153) * arg0->unk0) >> 8;
+        else scaleLargestPoint(arg0, random + 153);
+        if ((u8)choice == 0) arg0->unk8 = 1;
+        else arg0->unk8 = 2;
         return;
-    case 1:
-        temp_r6_2 = (u32)HSD_Rand() % 384;
-        if ((u8) temp_r3 == 0) {
-            arg0->unk0 = (s16) ((s32) ((temp_r6_2 + 0xB3) * arg0->unk0) >> 8);
-            return;
-        }
-        temp_r4_2 = arg0->unk4;
-        var_r3_4 = temp_r4_2;
-        if (temp_r4_2 < 0) {
-            var_r3_4 = -temp_r4_2;
-        }
-        var_r5_2 = arg0->unk2;
-        var_r0_5 = var_r5_2;
-        if (var_r5_2 < 0) {
-            var_r0_5 = -var_r5_2;
-        }
-        if (var_r0_5 > var_r3_4) {
-            var_r3_5 = arg0->unk6;
-            if (var_r3_5 < 0) {
-                var_r3_5 = -var_r3_5;
-            }
-            var_r0_6 = var_r5_2;
-            if (var_r5_2 < 0) {
-                var_r0_6 = -var_r5_2;
-            }
-            if (var_r0_6 > var_r3_5) {
-                arg0->unk2 = (s16) ((s32) ((temp_r6_2 + 0xB3) * var_r5_2) >> 8);
-                return;
-            }
-            goto block_51;
-        }
-block_51:
-        if (var_r5_2 < 0) {
-            var_r5_2 = -var_r5_2;
-        }
-        var_r0_7 = temp_r4_2;
-        if (temp_r4_2 < 0) {
-            var_r0_7 = -temp_r4_2;
-        }
-        if (var_r0_7 > var_r5_2) {
-            var_r3_6 = arg0->unk6;
-            if (var_r3_6 < 0) {
-                var_r3_6 = -var_r3_6;
-            }
-            var_r0_8 = temp_r4_2;
-            if (temp_r4_2 < 0) {
-                var_r0_8 = -temp_r4_2;
-            }
-            if (var_r0_8 > var_r3_6) {
-                arg0->unk4 = (s16) ((s32) ((temp_r6_2 + 0xB3) * temp_r4_2) >> 8);
-                return;
-            }
-            goto block_62;
-        }
-block_62:
-        arg0->unk6 = (s16) ((s32) ((temp_r6_2 + 0xB3) * arg0->unk6) >> 8);
+    }
+    case 1: {
+        s32 random = (u32)HSD_Rand() % 384;
+        if ((u8)choice == 0) arg0->unk0 = ((random + 179) * arg0->unk0) >> 8;
+        else scaleLargestPoint(arg0, random + 179);
         return;
-    case 2:
-        temp_r6_3 = (u32)HSD_Rand() % 308;
-        if ((u8) temp_r3 == 0) {
-            arg0->unk0 = (s16) ((s32) ((temp_r6_3 + 0xCC) * arg0->unk0) >> 8);
-            return;
-        }
-        temp_r4_3 = arg0->unk4;
-        var_r3_7 = temp_r4_3;
-        if (temp_r4_3 < 0) {
-            var_r3_7 = -temp_r4_3;
-        }
-        var_r5_3 = arg0->unk2;
-        var_r0_9 = var_r5_3;
-        if (var_r5_3 < 0) {
-            var_r0_9 = -var_r5_3;
-        }
-        if (var_r0_9 > var_r3_7) {
-            var_r3_8 = arg0->unk6;
-            if (var_r3_8 < 0) {
-                var_r3_8 = -var_r3_8;
-            }
-            var_r0_10 = var_r5_3;
-            if (var_r5_3 < 0) {
-                var_r0_10 = -var_r5_3;
-            }
-            if (var_r0_10 > var_r3_8) {
-                arg0->unk2 = (s16) ((s32) ((temp_r6_3 + 0xCC) * var_r5_3) >> 8);
-                return;
-            }
-            goto block_76;
-        }
-block_76:
-        if (var_r5_3 < 0) {
-            var_r5_3 = -var_r5_3;
-        }
-        var_r0_11 = temp_r4_3;
-        if (temp_r4_3 < 0) {
-            var_r0_11 = -temp_r4_3;
-        }
-        if (var_r0_11 > var_r5_3) {
-            var_r3_9 = arg0->unk6;
-            if (var_r3_9 < 0) {
-                var_r3_9 = -var_r3_9;
-            }
-            var_r0_12 = temp_r4_3;
-            if (temp_r4_3 < 0) {
-                var_r0_12 = -temp_r4_3;
-            }
-            if (var_r0_12 > var_r3_9) {
-                arg0->unk4 = (s16) ((s32) ((temp_r6_3 + 0xCC) * temp_r4_3) >> 8);
-                return;
-            }
-            goto block_87;
-        }
-block_87:
-        arg0->unk6 = (s16) ((s32) ((temp_r6_3 + 0xCC) * arg0->unk6) >> 8);
+    }
+    case 2: {
+        s32 random = (u32)HSD_Rand() % 308;
+        if ((u8)choice == 0) arg0->unk0 = ((random + 204) * arg0->unk0) >> 8;
+        else scaleLargestPoint(arg0, random + 204);
         return;
-    case 3:
-        temp_r6_4 = (u32)HSD_Rand() % 204;
-        if ((u8) temp_r3 == 0) {
-            arg0->unk0 = (s16) ((s32) ((temp_r6_4 + 0x100) * arg0->unk0) >> 8);
-            return;
-        }
-        temp_r4_4 = arg0->unk4;
-        var_r3_10 = temp_r4_4;
-        if (temp_r4_4 < 0) {
-            var_r3_10 = -temp_r4_4;
-        }
-        var_r5_4 = arg0->unk2;
-        var_r0_13 = var_r5_4;
-        if (var_r5_4 < 0) {
-            var_r0_13 = -var_r5_4;
-        }
-        if (var_r0_13 > var_r3_10) {
-            var_r3_11 = arg0->unk6;
-            if (var_r3_11 < 0) {
-                var_r3_11 = -var_r3_11;
-            }
-            var_r0_14 = var_r5_4;
-            if (var_r5_4 < 0) {
-                var_r0_14 = -var_r5_4;
-            }
-            if (var_r0_14 > var_r3_11) {
-                arg0->unk2 = (s16) ((s32) ((temp_r6_4 + 0x100) * var_r5_4) >> 8);
-                return;
-            }
-            goto block_101;
-        }
-block_101:
-        if (var_r5_4 < 0) {
-            var_r5_4 = -var_r5_4;
-        }
-        var_r0_15 = temp_r4_4;
-        if (temp_r4_4 < 0) {
-            var_r0_15 = -temp_r4_4;
-        }
-        if (var_r0_15 > var_r5_4) {
-            var_r3_12 = arg0->unk6;
-            if (var_r3_12 < 0) {
-                var_r3_12 = -var_r3_12;
-            }
-            var_r0_16 = temp_r4_4;
-            if (temp_r4_4 < 0) {
-                var_r0_16 = -temp_r4_4;
-            }
-            if (var_r0_16 > var_r3_12) {
-                arg0->unk4 = (s16) ((s32) ((temp_r6_4 + 0x100) * temp_r4_4) >> 8);
-                return;
-            }
-            goto block_112;
-        }
-block_112:
-        arg0->unk6 = (s16) ((s32) ((temp_r6_4 + 0x100) * arg0->unk6) >> 8);
+    }
+    case 3: {
+        s32 random = (u32)HSD_Rand() % 204;
+        if ((u8)choice == 0) arg0->unk0 = ((random + 256) * arg0->unk0) >> 8;
+        else scaleLargestPoint(arg0, random + 256);
         return;
-    case 4:
-        temp_r6_5 = (u32)HSD_Rand() % 51;
-        if ((u8) temp_r3 == 0) {
-            arg0->unk0 = (s16) ((s32) ((temp_r6_5 + 0x133) * arg0->unk0) >> 8);
-            return;
-        }
-        temp_r4_5 = arg0->unk4;
-        var_r3_13 = temp_r4_5;
-        if (temp_r4_5 < 0) {
-            var_r3_13 = -temp_r4_5;
-        }
-        var_r5_5 = arg0->unk2;
-        var_r0_17 = var_r5_5;
-        if (var_r5_5 < 0) {
-            var_r0_17 = -var_r5_5;
-        }
-        if (var_r0_17 > var_r3_13) {
-            var_r3_14 = arg0->unk6;
-            if (var_r3_14 < 0) {
-                var_r3_14 = -var_r3_14;
-            }
-            var_r0_18 = var_r5_5;
-            if (var_r5_5 < 0) {
-                var_r0_18 = -var_r5_5;
-            }
-            if (var_r0_18 > var_r3_14) {
-                arg0->unk2 = (s16) ((s32) ((temp_r6_5 + 0x133) * var_r5_5) >> 8);
-                return;
-            }
-            goto block_126;
-        }
-block_126:
-        if (var_r5_5 < 0) {
-            var_r5_5 = -var_r5_5;
-        }
-        var_r0_19 = temp_r4_5;
-        if (temp_r4_5 < 0) {
-            var_r0_19 = -temp_r4_5;
-        }
-        if (var_r0_19 > var_r5_5) {
-            var_r3_15 = arg0->unk6;
-            if (var_r3_15 < 0) {
-                var_r3_15 = -var_r3_15;
-            }
-            var_r0_20 = temp_r4_5;
-            if (temp_r4_5 < 0) {
-                var_r0_20 = -temp_r4_5;
-            }
-            if (var_r0_20 > var_r3_15) {
-                arg0->unk4 = (s16) ((s32) ((temp_r6_5 + 0x133) * temp_r4_5) >> 8);
-                return;
-            }
-            goto block_137;
-        }
-block_137:
-        arg0->unk6 = (s16) ((s32) ((temp_r6_5 + 0x133) * arg0->unk6) >> 8);
+    }
+    case 4: {
+        s32 random = (u32)HSD_Rand() % 51;
+        if ((u8)choice == 0) arg0->unk0 = ((random + 307) * arg0->unk0) >> 8;
+        else scaleLargestPoint(arg0, random + 307);
         return;
+    }
     }
 }
 

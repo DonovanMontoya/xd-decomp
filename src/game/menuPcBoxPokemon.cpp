@@ -596,12 +596,25 @@ void CMenuPokemonLeave::drawTemochiArea() {
     }
 }
 
+inline void setAntPosition(CAnt *ant, PocketVec<short> position) {
+    ant->x = position.x;
+    ant->y = position.y;
+}
+
+inline void setCursorProgress(CMenuPokemonCursor *cursor, f32 value) {
+    cursor->unk8 = value < 1.0f ? value : 1.0f;
+}
+
+inline void setAntHidden(CAnt *ant, u32 hidden) {
+    ant->unk14 = hidden;
+}
+
 void CMenuPokemonLeave::animationStateUpdate() {
     scroll = 0.0f;
     anim.update();
     switch (anim.state) {
     case 0:
-        if (anim.time == 0.0f) {
+        if (!anim.time) {
             if (pad34B0[0] != 0) {
                 temochiX = 0;
             } else {
@@ -614,11 +627,11 @@ void CMenuPokemonLeave::animationStateUpdate() {
         }
         break;
     case 2: {
-        if (anim.time == 0.0f) {
+        if (!anim.time) {
             cursor->unk4 = 3;
         }
         f32 t = anim.time / 0.1f;
-        cursor->unk8 = t < 1.0f ? t : 1.0f;
+        setCursorProgress(cursor, t);
         if (t >= 1.0f) {
             anim.sub = 0;
             memset(anim.saved, 0, 0x40);
@@ -626,7 +639,7 @@ void CMenuPokemonLeave::animationStateUpdate() {
         break;
     }
     case 3: {
-        if (anim.time == 0.0f) {
+        if (!anim.time) {
             cursor->unk4 = 3;
             cursor->unk8 = 0.0f;
         }
@@ -640,7 +653,7 @@ void CMenuPokemonLeave::animationStateUpdate() {
         break;
     }
     case 4: {
-        if (anim.time == 0.0f) {
+        if (!anim.time) {
             cursor->unk4 = 3;
             cursor->unk8 = 0.0f;
         }
@@ -666,12 +679,12 @@ void CMenuPokemonLeave::animationStateUpdate() {
         break;
     }
     case 6: {
-        if (anim.time == 0.0f) {
+        if (!anim.time) {
             cursor->unk4 = 1;
-            cursorUnderPokemonGetAntPointer()->unk14 = true;
+            setAntHidden(cursorUnderPokemonGetAntPointer(), true);
         }
         f32 t = anim.time / 0.25f;
-        cursor->unk8 = t < 1.0f ? t : 1.0f;
+        setCursorProgress(cursor, t);
         if (t >= 1.0f) {
             anim.sub = 0;
             memset(anim.saved, 0, 0x40);
@@ -679,11 +692,11 @@ void CMenuPokemonLeave::animationStateUpdate() {
         break;
     }
     case 7: {
-        if (anim.time == 0.0f) {
+        if (!anim.time) {
             cursor->unk4 = 2;
         }
         f32 t = anim.time / 0.5f;
-        cursor->unk8 = t < 1.0f ? t : 1.0f;
+        setCursorProgress(cursor, t);
         if (t >= 1.0f) {
             anim.sub = 1;
             memset(anim.saved, 0, 0x40);
@@ -697,13 +710,10 @@ void CMenuPokemonLeave::animationStateUpdate() {
         PocketVec<short> from = getTemochiSlotPosition(idx - 4);
         PocketVec<short> to = getTemochiSlotPosition(last);
         PocketVec<short> pos;
-        PocketVec<short> pos2;
         CAnt *ant = &temochiAnt[last];
         pos.x = (s16)(from.x + t * (to.x - from.x));
         pos.y = (s16)(from.y + t * (to.y - from.y));
-        pos2 = pos;
-        ant->x = pos2.x;
-        ant->y = pos2.y;
+        setAntPosition(ant, pos);
         if (t >= 1.0f) {
             anim.sub = 0;
             memset(anim.saved, 0, 0x40);
@@ -711,7 +721,7 @@ void CMenuPokemonLeave::animationStateUpdate() {
         break;
     }
     case 9: {
-        if (anim.time == 0.0f) {
+        if (!anim.time) {
             resetViewAntAll();
             if (temochiPokemonIsFull()) {
                 anim.sub = 0;
@@ -721,18 +731,15 @@ void CMenuPokemonLeave::animationStateUpdate() {
         }
         f32 t = anim.time / 0.2f;
         int i = cursor->index - 4;
-        CAnt *ant = &temochiAnt[i];
-        for (; i < 6; i++, ant++) {
+        for (; i < 6; i++) {
+            CAnt *ant = &temochiAnt[i];
             if (ant->unk0 != 0) {
                 PocketVec<short> a = getTemochiSlotPosition(i);
                 PocketVec<short> b = getTemochiSlotPosition(i + 1);
                 PocketVec<short> pos;
-                PocketVec<short> pos2;
                 pos.x = (s16)(b.x + t * (a.x - b.x));
                 pos.y = (s16)(b.y + t * (a.y - b.y));
-                pos2 = pos;
-                ant->x = pos2.x;
-                ant->y = pos2.y;
+                setAntPosition(ant, pos);
             }
         }
         if (t >= 1.0f) {

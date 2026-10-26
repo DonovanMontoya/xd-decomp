@@ -43,17 +43,25 @@ static inline void lensIdentity(GSgfxLayer* layer) {
     memcpy(stack->current->matrix,mtxIdent,0x30);
     stack->current->flags |= 1;
 }
-static inline void lensVertex(f32 x,f32 y,const u8* color) {
+static inline void lensPosition(f32 x,f32 y,f32 z) {
     *(volatile f32*)0xCC008000=x;
     *(volatile f32*)0xCC008000=y;
-    *(volatile f32*)0xCC008000=0.0f;
+    *(volatile f32*)0xCC008000=z;
+}
+static inline void lensColor(const u8* color) {
     *(volatile u8*)0xCC008000=color[0];
     *(volatile u8*)0xCC008000=color[1];
     *(volatile u8*)0xCC008000=color[2];
     *(volatile u8*)0xCC008000=color[3];
 }
-static inline void lensPrepare(GSgfxLayer* layer,s32 layerID) {
-    Mtx44 projection;
+static inline void lensTintColor(s32 intensity,u8 alpha) {
+    *(volatile u8*)0xCC008000=intensity;
+    *(volatile u8*)0xCC008000=intensity;
+    *(volatile u8*)0xCC008000=intensity;
+    *(volatile u8*)0xCC008000=alpha;
+}
+static inline void lensVertex(f32 x,f32 y,const u8* color,f32 z){lensPosition(x,y,z);lensColor(color);}
+static inline void lensPrepare(GSgfxLayer* layer,s32 layerID,Mtx44 projection) {
     GScameraLoadActiveCameraMatrix(layerID);
     GSmtx44Ortho(projection,0.0f,480.0f,0.0f,640.0f,0.0f,-30000.0f);
     layer->projectionType=1;
@@ -157,9 +165,16 @@ void GSlensFlareInit() {
     }
 }
 static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s32 pass) {
+    register f32 zero=0.0f,one=1.0f,width=640.0f,height=480.0f;
+    f32 centerX,centerY;
     s32 layerID=layer->id;
     u8 cameraReady=0, layerReady=0;
-    GSvec cameraPosition,up,right;
+    Mtx44 projectionMatrix;
+    Mtx rotationNegative,rotationPositive;
+    GSvec projected,screen,offset,up,right,cameraPosition;
+    GSvec copied0,copied1,copied2,copied3;
+    GSvec result0,result1,result2,result3;
+    GSvec scaled0,scaled1,scaled2,scaled3;
     if (pass!=1 || (layerID!=6 && layerID!=5)) return;
     for (u16 i=0;i<4;i++) {
         LensFlareWork* flare=_lfLensFlarePtrs[i];
@@ -172,14 +187,18 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
             GScameraLoadActiveCameraMatrix(-1);
             f32 (*matrix)[4]=GScameraGetMatrixPtr(camera);
             GScameraGetPosition(camera,&cameraPosition);
-            lensSet(up,matrix[0][1],matrix[1][1],matrix[2][1]);
-            lensSet(right,matrix[0][0],matrix[1][0],matrix[2][0]);
+            f32 upY=matrix[1][1],upZ=matrix[2][1],upX=matrix[0][1];
+            centerX=320.0f;centerY=240.0f;
+            lensSet(up,upX,upY,upZ);
+            f32 rightY=matrix[1][0],rightZ=matrix[2][0],rightX=matrix[0][0];
+            lensSet(right,rightX,rightY,rightZ);
             GSgfxProjectSetupParameters(); cameraReady=1;
         }
-        GSvec projected,screen;
+
         s32 projection=GSgfxProjectFast(&flare->sun,&projected);
         if (!projection) continue;
-        lensSet(screen,projected.param1-320.0f,projected.param2-240.0f,0.0f);
+        f32 sx=projected.param1-centerX;f32 sy=projected.param2-centerY;
+        screen.param3=0.0f;screen.param1=sx;screen.param2=sy;
         f32 distance=PSVECMag(lensVec(&screen));
         if (distance>(f32)header->outerRadius) continue;
         f32 occlusion=1.0f;
@@ -190,10 +209,27 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
                 f32 step=0.2f*header->sampleRadius;
                 for (u16 j=0;j<5;j++) {
                     f32 spread=step*lensU16(j);
-                    lensAssign(points[j],lensSubtract(flare->sun,lensScale(up,spread)));
-                    lensAssign(points[j+5],lensAdd(flare->sun,lensScale(up,spread)));
-                    lensAssign(points[j+10],lensSubtract(flare->sun,lensScale(right,spread)));
-                    lensAssign(points[j+15],lensAdd(flare->sun,lensScale(right,spread)));
+                    {
+                      PSVECScale(lensVec(&up),lensVec(&scaled0),spread);
+                      lensCopy(&copied0,&scaled0);
+                      PSVECSubtract(lensVec(&flare->sun),lensVec(&copied0),lensVec(&result0));
+                      lensCopy(&points[j],&result0); }
+                    {
+                      PSVECScale(lensVec(&up),lensVec(&scaled1),spread);
+                      lensCopy(&copied1,&scaled1);
+                      PSVECAdd(lensVec(&flare->sun),lensVec(&copied1),lensVec(&result1));
+                      lensCopy(&points[j+5],&result1); }
+                    {
+                      PSVECScale(lensVec(&right),lensVec(&scaled2),spread);
+                      lensCopy(&copied2,&scaled2);
+                      PSVECSubtract(lensVec(&flare->sun),lensVec(&copied2),lensVec(&result2));
+                      lensCopy(&points[j+10],&result2); }
+                    {
+                      PSVECScale(lensVec(&right),lensVec(&scaled3),spread);
+                      lensCopy(&copied3,&scaled3);
+                      PSVECAdd(lensVec(&flare->sun),lensVec(&copied3),lensVec(&result3));
+                      lensCopy(&points[j+15],&result3); }
+
                 }
                 lensCopy(&points[20],&flare->sun);
                 if (GScolsys2SunArray(blocked,&cameraPosition,points,21)==1) {
@@ -203,7 +239,7 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
                 }
             } else if (GScolsys2Sun(&flare->sun,&cameraPosition)==1) continue;
         }
-        if (!layerReady) { lensPrepare(layer,layerID); layerReady=1; }
+        if (!layerReady) { lensPrepare(layer,layerID,projectionMatrix); layerReady=1; }
         if (projection==2) {
             f32 sunScale=1.0f;
             LensElement* sunElement=flare->elements;
@@ -216,14 +252,16 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
             if (distance<(f32)header->fadeStart) radialFade=1.0f;
             else {
                 u32 span=header->outerRadius-header->fadeStart;
-                radialFade=lensClamp(((f32)span-(distance-(f32)header->fadeStart))/(f32)span);
+                radialFade=((f32)span-(distance-(f32)header->fadeStart))/(f32)span;
+                if(radialFade<0.0f)radialFade=0.0f;
+                else if(radialFade>1.0f)radialFade=1.0f;
             }
             f32 scaleFactor=header->scaleFactor;
             u32 perspective=header->flags&1;
             layer->setRenderStateAndSelect(GSgfxVFGetPredef(5));
             LensElement* element=flare->elements;
-            for (s32 remaining=header->elementCount;remaining--!=0;element++) {
-                if (layer->mode==1 && !(element->flags&2)) continue;
+            for (s32 remaining=header->elementCount;remaining--!=0;) {
+                if (layer->mode==1 && !(element->flags&2)) { ++element; continue; }
                 GStexture* texture=flare->textures[element->texture];
                 lensIdentity(layer);
                 f32 scale=element->scale;
@@ -234,17 +272,17 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
                     PSMTXTransApply(current->matrix,current->matrix,projected.param1,projected.param2,0.0f);
                     stack->current->flags|=1;
                 } else {
-                    GSvec offset;
+
                     PSVECScale(lensVec(&screen),lensVec(&offset),1.0f/element->divisor);
                     if (perspective) {
                         f32 adjustment;
                         if (element->divisor>0.0f && element->divisor<1.0f) adjustment=(1.0f/element->divisor)-1.0f;
                         else adjustment=1.0f-(1.0f/element->divisor);
-                        scale *= 1.0f+(adjustment*(800.0f/scaleDistance)*((scaleFactor/sunScale)-1.0f));
+                        scale *= 1.0f+(f32)(adjustment*(800.0f/scaleDistance)*((scaleFactor/sunScale)-1.0f));
                     } else scale *= 1.0f+(((scaleFactor-1.0f)*PSVECMag(lensVec(&offset)))/800.0f);
                     GSgfxMatrixStack* stack=layer->matrixStack;
                     current=stack->current;
-                    PSMTXTransApply(current->matrix,current->matrix,offset.param1+320.0f,offset.param2+240.0f,0.0f);
+                    PSMTXTransApply(current->matrix,current->matrix,offset.param1+centerX,offset.param2+centerY,0.0f);
                     stack->current->flags|=1;
                 }
                 f32 left=-(scale*(f32)(GStextureGetXsize(texture)>>1));
@@ -255,24 +293,24 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
                     if (header->flags&4) {
                         f32 rotation=(f32)atan2(screen.param2,screen.param1);
                         GSgfxMatrixStack* stack=layer->matrixStack;
-                        Mtx matrix;
-                        PSMTXRotRad(matrix,'X',0.0f); current=stack->current;
-                        PSMTXConcat(current->matrix,matrix,current->matrix);
-                        PSMTXRotRad(matrix,'Y',0.0f); current=stack->current;
-                        PSMTXConcat(current->matrix,matrix,current->matrix);
-                        PSMTXRotRad(matrix,'Z',-rotation); current=stack->current;
-                        PSMTXConcat(current->matrix,matrix,current->matrix);
+
+                        PSMTXRotRad(rotationNegative,'X',0.0f); current=stack->current;
+                        PSMTXConcat(current->matrix,rotationNegative,current->matrix);
+                        PSMTXRotRad(rotationNegative,'Y',0.0f); current=stack->current;
+                        PSMTXConcat(current->matrix,rotationNegative,current->matrix);
+                        PSMTXRotRad(rotationNegative,'Z',-rotation); current=stack->current;
+                        PSMTXConcat(current->matrix,rotationNegative,current->matrix);
                         stack->current->flags|=1;
                     } else {
                         f32 rotation=(f32)atan2(screen.param2,screen.param1);
                         GSgfxMatrixStack* stack=layer->matrixStack;
-                        Mtx matrix;
-                        PSMTXRotRad(matrix,'X',0.0f); current=stack->current;
-                        PSMTXConcat(current->matrix,matrix,current->matrix);
-                        PSMTXRotRad(matrix,'Y',0.0f); current=stack->current;
-                        PSMTXConcat(current->matrix,matrix,current->matrix);
-                        PSMTXRotRad(matrix,'Z',rotation); current=stack->current;
-                        PSMTXConcat(current->matrix,matrix,current->matrix);
+
+                        PSMTXRotRad(rotationPositive,'X',0.0f); current=stack->current;
+                        PSMTXConcat(current->matrix,rotationPositive,current->matrix);
+                        PSMTXRotRad(rotationPositive,'Y',0.0f); current=stack->current;
+                        PSMTXConcat(current->matrix,rotationPositive,current->matrix);
+                        PSMTXRotRad(rotationPositive,'Z',rotation); current=stack->current;
+                        PSMTXConcat(current->matrix,rotationPositive,current->matrix);
                         stack->current->flags|=1;
                     }
                 }
@@ -286,11 +324,12 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
                     layer->field17F8=texture; layer->field17F4|=1;
                 }
                 layer->beginSurface(4);
-                lensVertex(left,top,color); *(volatile f32*)0xCC008000=0.0f; *(volatile f32*)0xCC008000=0.0f;
-                lensVertex(rightEdge,top,color); *(volatile f32*)0xCC008000=1.0f; *(volatile f32*)0xCC008000=0.0f;
-                lensVertex(left,bottom,color); *(volatile f32*)0xCC008000=0.0f; *(volatile f32*)0xCC008000=1.0f;
-                lensVertex(rightEdge,bottom,color); *(volatile f32*)0xCC008000=1.0f; *(volatile f32*)0xCC008000=1.0f;
+                lensVertex(left,top,color,zero); *(volatile f32*)0xCC008000=zero; *(volatile f32*)0xCC008000=zero;
+                lensVertex(rightEdge,top,color,zero); *(volatile f32*)0xCC008000=one; *(volatile f32*)0xCC008000=zero;
+                lensVertex(left,bottom,color,zero); *(volatile f32*)0xCC008000=zero; *(volatile f32*)0xCC008000=one;
+                lensVertex(rightEdge,bottom,color,zero); *(volatile f32*)0xCC008000=one; *(volatile f32*)0xCC008000=one;
                 layer->endSurface();
+                ++element;
             }
             if (layer->mode==0) {
                 if (distance < (f32)header->fadeStart) {
@@ -300,19 +339,23 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
                         u32 span=header->fadeStart-header->fadePeak;
                         fade=lensClamp(header->frontTint * (((f32)span-(distance-(f32)header->fadePeak))/(f32)span));
                     }
-                    u8 intensity=(u8)(s32)(255.0f*fade);
+                    s32 intensity=(s32)(255.0f*fade);
                     layer->setRenderStateAndSelect(GSgfxVFGetPredef(0));
                     lensIdentity(layer);
                     layer->beginSurface(4);
-                    u8 color[4]; color[0]=intensity; color[1]=intensity; color[2]=intensity;
-                    color[3]=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
-                    lensVertex(0.0f,0.0f,color);
-                    color[3]=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
-                    lensVertex(640.0f,0.0f,color);
-                    color[3]=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
-                    lensVertex(0.0f,480.0f,color);
-                    color[3]=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
-                    lensVertex(640.0f,480.0f,color);
+                    u8 alpha;
+                    lensPosition(zero,zero,zero);
+                    alpha=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
+                    lensTintColor(intensity,alpha);
+                    lensPosition(width,zero,zero);
+                    alpha=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
+                    lensTintColor(intensity,alpha);
+                    lensPosition(zero,height,zero);
+                    alpha=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
+                    lensTintColor(intensity,alpha);
+                    lensPosition(width,height,zero);
+                    alpha=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
+                    lensTintColor(intensity,alpha);
                     layer->endSurface();
                 }
             }
@@ -320,7 +363,8 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
             PSVECSubtract(lensVec(&cameraPosition),lensVec(&flare->sun),lensVec(&screen));
             PSVECAdd(lensVec(&cameraPosition),lensVec(&screen),lensVec(&screen));
             if (GSgfxProjectFast(&screen,&projected)==2) {
-                lensSet(screen,projected.param1-320.0f,projected.param2-240.0f,0.0f);
+                f32 sx=projected.param1-centerX;f32 sy=projected.param2-centerY;
+                screen.param3=0.0f;screen.param1=sx;screen.param2=sy;
                 f32 backDistance=PSVECMag(lensVec(&screen));
                 if (backDistance>0.00001f && backDistance<(f32)header->outerRadius) {
                     if (backDistance < (f32)header->fadeStart) {
@@ -330,19 +374,23 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
                             u32 span=header->fadeStart-header->fadePeak;
                             fade=lensClamp(header->backTint * (((f32)span-(backDistance-(f32)header->fadePeak))/(f32)span));
                         }
-                        u8 intensity=(u8)(s32)(255.0f*fade);
+                        s32 intensity=(s32)(255.0f*fade);
                         layer->setRenderStateAndSelect(GSgfxVFGetPredef(0));
                         lensIdentity(layer);
                         layer->beginSurface(4);
-                        u8 color[4]; color[0]=intensity; color[1]=intensity; color[2]=intensity;
-                        color[3]=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
-                        lensVertex(0.0f,0.0f,color);
-                        color[3]=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
-                        lensVertex(640.0f,0.0f,color);
-                        color[3]=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
-                        lensVertex(0.0f,480.0f,color);
-                        color[3]=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
-                        lensVertex(640.0f,480.0f,color);
+                        u8 alpha;
+                        lensPosition(zero,zero,zero);
+                        alpha=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
+                        lensTintColor(intensity,alpha);
+                        lensPosition(width,zero,zero);
+                        alpha=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
+                        lensTintColor(intensity,alpha);
+                        lensPosition(zero,height,zero);
+                        alpha=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
+                        lensTintColor(intensity,alpha);
+                        lensPosition(width,height,zero);
+                        alpha=__OSf32tou8((255.0f*flare->alpha*occlusion)+0.5f);
+                        lensTintColor(intensity,alpha);
                         layer->endSurface();
                     }
                 }

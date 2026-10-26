@@ -1466,11 +1466,7 @@ s32 fightTrainerAiWazaValueIryokuHonoo(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     s32 temp_r28;
     s32 var_r28;
     u8 var_r27;
-    u8 var_r27_2;
-    u8 var_r27_3;
     u8 var_r26;
-    u8 var_r26_2;
-    u8 var_r26_3;
     s32 var_r25_2;
     u8 var_r25;
 
@@ -1489,31 +1485,31 @@ s32 fightTrainerAiWazaValueIryokuHonoo(FIGHT_TRAINER *arg0, FightOutPokemon *arg
         var_r25_2 = fightTrainerAiAddValueByAddsubDataId(var_r25_2, arg0, 0x100U);
     }
     var_r27 = 0;
-    var_r26_2 = 0;
-    while ((s32) var_r26_2 < (s32) temp_r31) {
-        if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r26_2 * 4) & 0x3FC)), 7U) == 1) {
+    var_r26 = var_r27;
+    while ((s32) var_r26 < (s32) temp_r31) {
+        if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r26 * 4) & 0x3FC)), 7U) == 1) {
             var_r27 = (u8)var_r27 + 1;
         }
-        var_r26_2 += 1;
+        var_r26 += 1;
         continue;
     }
-    var_r27_2 = 0;
     temp_r28 = fightTrainerAiAddValue(var_r25_2, var_r27 * fightTrainerGetStatus(0, 0x101U, 0x3EU, 0U));
-    var_r26_3 = 0;
-    while ((s32) var_r26_3 < (s32) temp_r31) {
+    var_r27 = 0;
+    var_r26 = var_r27;
+    while ((s32) var_r26 < (s32) temp_r31) {
         if ((fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg3) == 0) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x29U) == 1) || (fightTrainerAiIsFightOutPokemonZokuseiDataId(arg0, arg3, 0xAU) == 1)) {
-            var_r27_2 += 1;
+            var_r27 += 1;
         }
-        var_r26_3 += 1;
+        var_r26 += 1;
         continue;
     }
-    var_r28 = fightTrainerAiAddValue(temp_r28, var_r27_2 * fightTrainerGetStatus(0, 0x102U, 0x3EU, 0U));
-    var_r27_3 = 0;
-    while ((s32) var_r27_3 < (s32) temp_r31) {
-        if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r27_3 * 4) & 0x3FC)), 0x14U) == 1) {
+    var_r28 = fightTrainerAiAddValue(temp_r28, var_r27 * fightTrainerGetStatus(0, 0x102U, 0x3EU, 0U));
+    var_r27 = 0;
+    while ((s32) var_r27 < (s32) temp_r31) {
+        if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r27 * 4) & 0x3FC)), 0x14U) == 1) {
             var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x103U);
         }
-        var_r27_3 += 1;
+        var_r27 += 1;
         continue;
     }
     return var_r28;

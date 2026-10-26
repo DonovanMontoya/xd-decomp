@@ -834,19 +834,23 @@ void vectorGraph(s32,s32*,s32*,_SHAPERECORD*,FLASHMATRIXF*,FLASHMATRIXF*,FLASHCX
 void msgctrlSetValue(s32,u32);
 void GSmsgPrint2(s32,s32,s32,s32,u32);
 }
+static void flashCopyMatrix(FLASHMATRIXF* out, FLASHMATRIXF* in) {
+    f32 a=in->m[0],b=in->m[1],c=in->m[2],d=in->m[3],e=in->m[4],f=in->m[5];
+    out->m[0]=(f32)a; out->m[1]=(f32)b; out->m[2]=(f32)c; out->m[3]=(f32)d; out->m[4]=(f32)e; out->m[5]=(f32)f;
+}
 static u8 _drawflag=1;
 void FlashMenu::DrawSprite(_DEFINESPRITE* sprite,FLASHMATRIXF* parent,FLASHCXFORM* parentColor,u16 outerItem,u8 flags) {
     u16 parentItem=outerItem;
     FLASHCXFORM combinedColor;
-    FLASHMATRIXF textMatrix;
+    FLASHMATRIXF combined,local;
     _DEFINESHAPE drawShape;
-    FLASHMATRIXF local,combined;
+    FLASHMATRIXF textMatrix;
     FlashHeader* hdr=header;
     s32 inherited=flags;
     s32 offset=0;
-    for(u16 i=0;i<hdr->itemCount;i++,offset+=0x40) {
+    for(u32 i=0;i<hdr->itemCount;i++,offset+=0x40) {
         FlashItem* item=(FlashItem*)((u8*)layers[sprite->id].items+offset);
-        if(item->field34) {
+        if((u32)item->field34 != 0U) {
             FlashDataPointer* entry=&memory[item->frame];
             flcalcConvFlashMatrix(&local,&item->matrix);
             field10=i;
@@ -862,19 +866,20 @@ void FlashMenu::DrawSprite(_DEFINESPRITE* sprite,FLASHMATRIXF* parent,FLASHCXFOR
                 drawShape.fills=(FlashFillStyle*)morph->start;
                 drawShape.lineCount=morph->reserved20;
                 drawShape.lines=morph->end;
-                s32 inputOffset=0,outputOffset=0;
-                for(s32 fill=0;fill<(s32)morph->fillCount;fill++,inputOffset+=0xD4,outputOffset+=0x80) {
+                s32 inputOffset,outputOffset,fill;
+                fill=inputOffset=outputOffset=0;
+                for(;fill<(s32)morph->fillCount;inputOffset+=0xD4,outputOffset+=0x80,fill++) {
                     FlashMorphFillStyle* source=(FlashMorphFillStyle*)((u8*)morph->fills+inputOffset);
-                    FlashFillStyle* destination=(FlashFillStyle*)((u8*)drawShape.fills+outputOffset);
-                    if(source->flags==0) destination->color=flcalcBlendColor(source->colorA,source->colorB,ratio);
+                    if(source->flags==0) { s32 color=flcalcBlendColor(source->colorA,source->colorB,ratio); ((FlashFillStyle*)((u8*)drawShape.fills+outputOffset))->color=color; }
                     else if(source->flags&16) {
-                        u8* input=(u8*)source+0x3C;
-                        u8* output=(u8*)destination+0x20;
-                        for(s32 j=0;j<source->count;j++,input+=0xC,output+=8) {
+                        u8* count=(u8*)source+0x3C;
+                        u8* input=count;
+                        u8* output=(u8*)drawShape.fills+outputOffset+0x20;
+                        for(s32 j=0;j<*count;input+=0xC,output+=8,j++) {
                             output[4]=flcalcBlend(input[4],input[5],ratio);
                             *(u32*)(output+8)=flcalcBlendColor(*(u32*)(input+8),*(u32*)(input+12),ratio);
                         }
-                        s32* matrix=destination->matrix;
+                        s32* matrix=((FlashFillStyle*)((u8*)drawShape.fills+outputOffset))->matrix;
                         matrix[0]=flcalcBlend(source->matrixA[0],source->matrixB[0],ratio);
                         matrix[1]=flcalcBlend(source->matrixA[1],source->matrixB[1],ratio);
                         matrix[2]=flcalcBlend(source->matrixA[2],source->matrixB[2],ratio);
@@ -913,7 +918,7 @@ void FlashMenu::DrawSprite(_DEFINESPRITE* sprite,FLASHMATRIXF* parent,FLASHCXFOR
                     s32 color=text->color;
                     u16 height=text->height/20;
                     if(parent) flcalcMulMatrixf(&textMatrix,&local,parent);
-                    else textMatrix=local;
+                    else flashCopyMatrix(&textMatrix,&local);
                     msgctrlSetValue(0x37,(u32)text->text);
                     switch(height) {
                     case 13:GSmsgPrint2(7,(s32)textMatrix.m[4],(s32)textMatrix.m[5],color,0x4278);break;
@@ -1025,24 +1030,27 @@ void FlashMenu::DrawText(_DEFINETEXT* text, FLASHMATRIXF* parent, FLASHMATRIXF* 
 
 extern "C" void vectroGraphSetBlendMode(s32,s32);
 void FlashMenu::DrawSub(GSgfxLayerID, tagWINDOW_WORK*, tagSPRITE_WORK* sprite) {
-    FLASHMATRIXF local, textMatrix;
+    FLASHMATRIXF local;
     _DEFINESHAPE drawShape;
+    FLASHMATRIXF textMatrix;
     FlashHeader* hdr = header;
     vectroGraphSetBlendMode(4,5);
     s32 offset = 0;
-    for (u16 i = 0; i < hdr->itemCount; ++i, offset += 0x40) {
+    for (u32 i = 0; i < hdr->itemCount; offset += 0x40, ++i) {
         FlashItem* item = (FlashItem*)((u8*)items + offset);
-        if (item->field34) {
+        if ((u32)item->field34 != 0U) {
             field10 = i;
-            FlashDataPointer* entry = &memory[(u16)item->frame];
-            flcalcConvFlashMatrix(&local, &item->matrix);
-            item->flag |= *(u8*)item->field34;
+            FlashItem* active = (FlashItem*)((u8*)items + offset);
+            FLASHCXFORM* colorTransform = &active->cxform;
+            FlashDataPointer* entry = &memory[(u16)active->frame];
+            flcalcConvFlashMatrix(&local, &active->matrix);
+            item->flag = (u8)(item->flag | *(u8*)item->field34);
             local.m[4] += *(s16*)((u8*)sprite + 0x50);
             local.m[5] += *(s16*)((u8*)sprite + 0x52);
             if (item->flag & 0x40) vectroGraphSetBlendMode(2,5);
             if(entry->type&1) {
                 u8 drawFlags=item->flag;
-                f32 ratio=item->depth;
+                f32 ratio=((FlashItem*)((u8*)items + offset))->depth;
                 _DEFINEMORPHSHAPE* morph=(_DEFINEMORPHSHAPE*)entry->data;
                 memset(&drawShape,0,0x1C);
                 drawShape.fillCount=morph->reserved18;
@@ -1050,18 +1058,19 @@ void FlashMenu::DrawSub(GSgfxLayerID, tagWINDOW_WORK*, tagSPRITE_WORK* sprite) {
                 drawShape.lineCount=morph->reserved20;
                 drawShape.lines=morph->end;
                 s32 inputOffset=0,outputOffset=0;
-                for(s32 fill=0;fill<(s32)morph->fillCount;fill++,inputOffset+=0xD4,outputOffset+=0x80) {
+                for(s32 fill=0;fill<(s32)morph->fillCount;inputOffset+=0xD4,outputOffset+=0x80,fill++) {
                     FlashMorphFillStyle* source=(FlashMorphFillStyle*)((u8*)morph->fills+inputOffset);
-                    FlashFillStyle* destination=(FlashFillStyle*)((u8*)drawShape.fills+outputOffset);
-                    if(source->flags==0) destination->color=flcalcBlendColor(source->colorA,source->colorB,ratio);
+
+                    if(source->flags==0) ((FlashFillStyle*)((u8*)drawShape.fills+outputOffset))->color=flcalcBlendColor(source->colorA,source->colorB,ratio);
                     else if(source->flags&16) {
-                        u8* input=(u8*)source+0x3C;
-                        u8* output=(u8*)destination+0x20;
-                        for(s32 j=0;j<source->count;j++,input+=0xC,output+=8) {
+                        u8* gradient=(u8*)source+0x3C;
+                        u8* input=gradient;
+                        u8* output=(u8*)drawShape.fills+outputOffset+0x20;
+                        for(s32 j=0;j<*gradient;input+=0xC,output+=8,j++) {
                             output[4]=flcalcBlend(input[4],input[5],ratio);
                             *(u32*)(output+8)=flcalcBlendColor(*(u32*)(input+8),*(u32*)(input+12),ratio);
                         }
-                        s32* matrix=destination->matrix;
+                        s32* matrix=((FlashFillStyle*)((u8*)drawShape.fills+outputOffset))->matrix;
                         matrix[0]=flcalcBlend(source->matrixA[0],source->matrixB[0],ratio);
                         matrix[1]=flcalcBlend(source->matrixA[1],source->matrixB[1],ratio);
                         matrix[2]=flcalcBlend(source->matrixA[2],source->matrixB[2],ratio);
@@ -1071,28 +1080,33 @@ void FlashMenu::DrawSub(GSgfxLayerID, tagWINDOW_WORK*, tagSPRITE_WORK* sprite) {
                     }
                 }
                 BlendShapeRecord(morph->shapes[2]->records,morph->shapes[0]->records,morph->shapes[1]->records,ratio);
-                vectorGraph(field34,&drawShape.fillCount,&drawShape.lineCount,morph->shapes[2]->records,0,&local,&item->cxform,drawFlags);
+                vectorGraph(field34,&drawShape.fillCount,&drawShape.lineCount,morph->shapes[2]->records,0,&local,colorTransform,drawFlags);
             }
 
             if (entry->type & 4) {
                 _DEFINESPRITE* child = (_DEFINESPRITE*)entry->data;
                 u32 frame = playFrame;
                 if (header->frameCount > frame) {
-                    pos = start; frameStart = frame; field14 = 0;
+                    pos = start; frameStart = frame;
                     FlashTag* tag = (FlashTag*)((u8*)header + pos);
-                    while (!ParseTag(tag->type, tag->size, false, false, false)) tag = (FlashTag*)((u8*)header + pos);
+                    field14 = 0;
+                    for (;;) {
+                        if (ParseTag(tag->type, tag->size, false, false, false)) break;
+                        tag = (FlashTag*)((u8*)header + pos);
+                    }
                 }
-                DrawSprite(child, &local, &item->cxform, i, item->flag);
+                DrawSprite(child, &local, colorTransform, i, item->flag);
             }
             if (entry->type & 2) {
+                u8 shapeFlags = item->flag;
                 _DEFINESHAPE* shape = (_DEFINESHAPE*)entry->data;
-                if (_drawflag) vectorGraph(field34, &shape->fillCount, &shape->lineCount, shape->records, 0, &local, &item->cxform, item->flag);
+                if (_drawflag) vectorGraph(field34, &shape->fillCount, &shape->lineCount, shape->records, 0, &local, colorTransform, shapeFlags);
                 field20++;
             }
             if (entry->type & 0x10) {
                 FlashEditText* text = (FlashEditText*)entry->data;
                 if (text->text) {
-                    textMatrix = local;
+                    for (s32 component = 0; component < 6; ++component) textMatrix.m[component] = local.m[component];
                     s32 color = text->color;
                     u16 height = text->height / 20;
                     msgctrlSetValue(0x37, (u32)text->text);
@@ -1103,7 +1117,7 @@ void FlashMenu::DrawSub(GSgfxLayerID, tagWINDOW_WORK*, tagSPRITE_WORK* sprite) {
                     }
                 }
             }
-            if (entry->type & 0x20) DrawText((_DEFINETEXT*)entry->data, 0, &local, &item->cxform, item->flag);
+            if (entry->type & 0x20) DrawText((_DEFINETEXT*)entry->data, 0, &local, colorTransform, item->flag);
         }
     }
 }

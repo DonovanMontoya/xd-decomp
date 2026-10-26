@@ -130,16 +130,20 @@ extern "C" void* OSAllocFromHeap(int heap, register unsigned long size) {
         search = hd->free;
         largest = -1;
         cell = 0;
-        for (; search; search = search->getNext()) {
+        for (; search;) {
             if (largest <= search->getSize()) { largest = search->size; cell = search; }
+            GSmemCell* next = search->getNext();
+            search = next;
         }
         if ((int)size > largest) cell = 0;
     } else if (hd->method == 3) {
         // Preserve the duplicated method test in the original allocator.
         search = hd->free;
         cell = 0;
-        for (; search; search = search->getNext()) {
+        for (; search;) {
             if ((int)size <= search->size && cell < search) cell = search;
+            GSmemCell* next = search->getNext();
+            search = next;
         }
     } else {
         for (cell = hd->free; cell; cell = cell->next) {

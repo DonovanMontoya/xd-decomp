@@ -188,12 +188,13 @@ static s32 _menuFaceAddList(u16 face,FacePokemonGetter getter,void* context){
             if(oldState==2)GSresFreeResource(0x5c0,oldResource);
             for(s32 i=0;i<count-1;++i)pMenuFaceList[i]=pMenuFaceList[i+1];
             count=_menuFaceListNum-1;
-            pMenuFaceList[count].resource=oldResource;
-            pMenuFaceList[count].face=oldFace;
-            pMenuFaceList[count].state=oldState;
-            pMenuFaceList[count].slot=oldSlot;
-            pMenuFaceList[count].getter=oldGetter;
-            pMenuFaceList[count].context=oldContext;
+            FaceListEntry* restored = &pMenuFaceList[count];
+            restored->resource=oldResource;
+            restored->face=oldFace;
+            restored->state=oldState;
+            restored->slot=oldSlot;
+            restored->getter=oldGetter;
+            restored->context=oldContext;
         }
         pMenuFaceList[count].resource=resource;
         pMenuFaceList[count].face=face;
@@ -202,19 +203,21 @@ static s32 _menuFaceAddList(u16 face,FacePokemonGetter getter,void* context){
         pMenuFaceList[count].context=context;
         return count;
     }
-    u32 oldResource=pMenuFaceList[index].resource;
-    u16 oldFace=pMenuFaceList[index].face;
-    u8 oldState=pMenuFaceList[index].state;
-    s8 oldSlot=pMenuFaceList[index].slot;
-    FacePokemonGetter oldGetter=pMenuFaceList[index].getter;
-    void* oldContext=pMenuFaceList[index].context;
+    FaceListEntry* existing = &pMenuFaceList[index];
+    u32 oldResource=existing->resource;
+    u16 oldFace=existing->face;
+    u8 oldState=existing->state;
+    s8 oldSlot=existing->slot;
+    FacePokemonGetter oldGetter=existing->getter;
+    void* oldContext=existing->context;
     for(;index<count-1;++index)pMenuFaceList[index]=pMenuFaceList[index+1];
-    pMenuFaceList[index].resource=oldResource;
-    pMenuFaceList[index].face=oldFace;
-    pMenuFaceList[index].state=oldState;
-    pMenuFaceList[index].slot=oldSlot;
-    pMenuFaceList[index].getter=oldGetter;
-    pMenuFaceList[index].context=oldContext;
+    FaceListEntry* restored = &pMenuFaceList[index];
+    restored->resource=oldResource;
+    restored->face=oldFace;
+    restored->state=oldState;
+    restored->slot=oldSlot;
+    restored->getter=oldGetter;
+    restored->context=oldContext;
     return index;
 }
 

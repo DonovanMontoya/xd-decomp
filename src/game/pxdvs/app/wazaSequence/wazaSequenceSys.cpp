@@ -938,15 +938,16 @@ static void _wazaSequenceSysCameraShakeInit() {
 }
 
 u16 wazaSequenceSysGetResourceID(ModelSequence* seq, u16 waza, u16 kind, u8 variant) {
-    u16 end;
     u16 begin;
     int pokemon;
-    PokemonWazaEntry* e;
     u16 i;
+    PokemonWazaEntry* e;
+    u16 column;
     if (kind == 0 || kind > 4) {
         return 0;
     }
     if (seq != 0 && seq->isPokemon != 0) {
+        u16 end;
         pokemon = seq->id;
         if (variant != 0 && variant < WazaSequence::GetNumVariations(waza, kind)) {
             switch (kind) {
@@ -1002,23 +1003,25 @@ u16 wazaSequenceSysGetResourceID(ModelSequence* seq, u16 waza, u16 kind, u8 vari
         }
         return waza_generic_wzx_data[waza];
     }
+    column=kind-1;
     if (waza == 0 || waza >= waza_wzx_data_number) {
         return 0;
     }
+    u16 resource=waza_wzx_data[waza][column];
     if (variant != 0) {
         u16 j = 0;
         WazaExtEntry* x = waza_ext_wzx_data;
         for (; j < waza_ext_wzx_data_number; j++, x++) {
             if (x->wazaId == waza && x->variant == variant) {
-                u16 r = x->res[(u16)(kind - 1)];
+                u16 r = x->res[column];
                 if (r != 0) {
                     return r;
                 }
-                return waza_wzx_data[waza][(u16)(kind - 1)];
+                return resource;
             }
         }
     }
-    return waza_wzx_data[waza][(u16)(kind - 1)];
+    return resource;
 }
 
 

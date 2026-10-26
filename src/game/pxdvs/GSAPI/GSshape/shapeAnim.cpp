@@ -79,12 +79,15 @@ static inline f32 shapeCurve(const GsShapeCurvePoint* points, u8 count, f32 time
     }
     if(segment==0) return points[0].value;
     if(segment==segments) return points[(segments-1)*3].value;
+    f32 startTime=points[(segment-1)*3].time;
     const GsShapeCurvePoint* first=points+(segment-1)*3;
     f32 square, remaining, remainingSquare, t;
-    t=(time-first[0].time)/(points[segment*3].time-first[0].time);
+    t=(time-startTime)/(points[segment*3].time-startTime);
     remaining=1.0f-t; square=t*t; remainingSquare=remaining*remaining;
     return first[3].value*(square*t)+(first[2].value*(3.0f*square*remaining)+(first[0].value*(remainingSquare*remaining)+first[1].value*(3.0f*t*remainingSquare)));
 }
+#pragma push
+#pragma opt_common_subs off
 f32 GsKeyObject::GetShapeColorAlpha(const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
     f32 alpha;
     f32 inverse=1.0f-t;
@@ -95,6 +98,8 @@ f32 GsKeyObject::GetShapeColorAlpha(const tagGsFilePrimKeyFrame* a, const tagGsF
     } else alpha=inverse*a->color.a+t*b->color.a;
     return alpha/255.0f;
 }
+#pragma pop
+
 tagGScol4ub GsKeyObject::GetShapeColor(const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
     f32 values[4];
     const u8* first=&a->color.r;

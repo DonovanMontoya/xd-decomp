@@ -130,7 +130,7 @@ void GSlogWrite(const char *, ...);
 void *GSmemAllocClr(u32);
 void DCFlushRange(void *, u32);
 void *peBankLoadFile(void *, void *);
-void psInitDataBank(u8, void *, void *, void *, s32);
+void psInitDataBank(s32, void *, void *, void *, s32);
 void GSvecMakeFromQuat(void *, f32 *);
 void psLinkChildGensToJObj(void *, void *);
 void GSmodelSet60fpsAnimFlag(s32, s32);
@@ -1078,21 +1078,49 @@ static inline bool _bankIdInUse(u8 id) {
     return false;
 }
 
+extern "C" void GSparticleInit(u32 count) {
+    ParticleRenderModule module = {{0, (void *)_particlePreUpdate, (void *)_particleRender, 0, (void *)_particlePostUpdate, 0}, 0xb29a48e1};
+    memset(g_particle_cameras, 0, 0x10);
+    _particleBankStructCount = count;
+    g_particle_cameras_count = 0;
+    _particleBankStructList = GSmemAlloc(count * 0x14);
+    if (_particleBankStructList) {
+        u32 i;
+        for (i = 0; i < (u32)_particleBankStructCount; i++) {
+            ((_GSparticleBank *)_particleBankStructList)[i].reserved0 = 0;
+        }
+        psSetToken(0);
+        psInitParticle(0);
+        psInitGenerator(0);
+        psInitAppSRT(0, 0x74);
+        HSD_JObjSetSPtclCallback(_particleJObjCallback);
+        HSD_JObjSetDPtclCallback(_particleJObjCallback);
+        HSD_JObjSetPtclTargetCallback(psSetPointJObjNodup);
+        particleEngineInit();
+        GSgfxRenderModuleRegister__FUcP17GSgfxRenderModulePv(0x40, &module, 0);
+    }
+}
+
+// Stripped from the DOL; its string still occupies .rodata.
+extern "C" void GSparticleSetGeneratorZDraw(_GSparticleGen *, u8) {
+    GSlogWrite("GSparticle: changing the Z draw flag of a generator currently has no effect\n");
+}
+
+
+static inline u8 _findBankId(void) {
+ u8 id;
+ for(id=0;id<0x40;++id) {if(!_bankIdInUse(id))return id;}
+ return 0xff;
+}
+
 extern "C" _GSparticleBank *GSparticleLoad(void *file) {
     GptHdr *hdr = (GptHdr *)file;
-    u8 id = 0;
+    u8 id;
     _GSparticleBank *bank = _findFreeBank();
     if (bank == 0) {
         return 0;
     }
-    for (id = 0; id < 0x40; id++) {
-        if (!_bankIdInUse(id)) {
-            break;
-        }
-    }
-    if (id >= 0x40) {
-        id = 0xff;
-    }
+    id=_findBankId();
     if (id == 0xff) {
         return 0;
     }
@@ -1109,23 +1137,23 @@ extern "C" _GSparticleBank *GSparticleLoad(void *file) {
         if (bank->gens == 0) {
             return 0;
         }
-        *(u8 *)&bank->gens[0] = 1;
-        *((u8 *)bank->gens + 0x3c) = 1;
-        *((u8 *)bank->gens + 0x78) = 1;
-        *((u8 *)bank->gens + 0xb4) = 1;
-        *((u8 *)bank->gens + 0xf0) = 1;
-        *((u8 *)bank->gens + 0x12c) = 1;
-        *((u8 *)bank->gens + 0x168) = 1;
-        *((u8 *)bank->gens + 0x1a4) = 1;
-        *((u8 *)bank->gens + 0x1e0) = 1;
-        *((u8 *)bank->gens + 0x21c) = 1;
-        *((u8 *)bank->gens + 0x258) = 1;
-        *((u8 *)bank->gens + 0x294) = 1;
-        *((u8 *)bank->gens + 0x2d0) = 1;
-        *((u8 *)bank->gens + 0x30c) = 1;
-        *((u8 *)bank->gens + 0x348) = 1;
-        *((u8 *)bank->gens + 0x384) = 1;
-        bank->file = peBankLoadFile(file, bank->gens);
+        bank->gens[0].isBank = 1;
+        bank->gens[1].isBank = 1;
+        bank->gens[2].isBank = 1;
+        bank->gens[3].isBank = 1;
+        bank->gens[4].isBank = 1;
+        bank->gens[5].isBank = 1;
+        bank->gens[6].isBank = 1;
+        bank->gens[7].isBank = 1;
+        bank->gens[8].isBank = 1;
+        bank->gens[9].isBank = 1;
+        bank->gens[10].isBank = 1;
+        bank->gens[11].isBank = 1;
+        bank->gens[12].isBank = 1;
+        bank->gens[13].isBank = 1;
+        bank->gens[14].isBank = 1;
+        _GSparticleGen* gens=bank->gens;gens[15].isBank = 1;
+        bank->file = peBankLoadFile(file, gens);
         if (bank->file == 0) {
             goto fail;
         }
@@ -1149,7 +1177,7 @@ extern "C" _GSparticleBank *GSparticleLoad(void *file) {
             hdr->w4 += (u32)file;
             hdr->w8 += (u32)file;
             hdr->w10 += (u32)file;
-            if (*(u16 *)hdr->w4 != 0x43) {
+            if ((s32)*(u16 *)hdr->w4 != 0x43) {
                 GSlogWrite("GSparticle: version mismatch between system(%d) and ptcl-file(%d)", 0x43, *(u16 *)hdr->w4);
                 goto fail;
             }
@@ -1168,34 +1196,6 @@ fail:
         bank->gens = 0;
     }
     return 0;
-}
-
-// Stripped from the DOL; its string still occupies .rodata.
-extern "C" void GSparticleSetGeneratorZDraw(_GSparticleGen *, u8) {
-    GSlogWrite("GSparticle: changing the Z draw flag of a generator currently has no effect\n");
-}
-
-extern "C" void GSparticleInit(u32 count) {
-    ParticleRenderModule module = {{0, (void *)_particlePreUpdate, (void *)_particleRender, 0, (void *)_particlePostUpdate, 0}, 0xb29a48e1};
-    memset(g_particle_cameras, 0, 0x10);
-    _particleBankStructCount = count;
-    g_particle_cameras_count = 0;
-    _particleBankStructList = GSmemAlloc(count * 0x14);
-    if (_particleBankStructList) {
-        u32 i;
-        for (i = 0; i < (u32)_particleBankStructCount; i++) {
-            ((_GSparticleBank *)_particleBankStructList)[i].reserved0 = 0;
-        }
-        psSetToken(0);
-        psInitParticle(0);
-        psInitGenerator(0);
-        psInitAppSRT(0, 0x74);
-        HSD_JObjSetSPtclCallback(_particleJObjCallback);
-        HSD_JObjSetDPtclCallback(_particleJObjCallback);
-        HSD_JObjSetPtclTargetCallback(psSetPointJObjNodup);
-        particleEngineInit();
-        GSgfxRenderModuleRegister__FUcP17GSgfxRenderModulePv(0x40, &module, 0);
-    }
 }
 
 static inline _HSD_JObj *_jobjParent(_HSD_JObj *j) {

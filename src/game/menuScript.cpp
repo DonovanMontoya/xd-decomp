@@ -279,7 +279,7 @@ extern "C" void menuScriptPdaAddFuncInit(void) {
     menuPdaModelVisibility(0x17CF1000, false);
 }
 
-static u16 _wazaOshieWazaNum(tagWINDOW_WORK *win) {
+static u32 _wazaOshieWazaNum(tagWINDOW_WORK *win) {
     if (win->menu == 0xE4) {
         return _WazaNum;
     }
@@ -819,12 +819,14 @@ extern "C" s32 menuScriptWazaOshieCursor(tagWINDOW_WORK *win) {
     CURSOR c;
     s16 sel;
     u16 key;
+    u16 available;
     s32 num;
     s32 vis;
     windowGetKeyInfo();
     key = windowGetKeyRepeat();
     *(s32 *)&c = *(s32 *)&win->pos;
-    num = _wazaOshieWazaNum(win);
+    available = _wazaOshieWazaNum(win);
+    num = available;
     vis = 9;
     if (num < 9) {
         vis = num;
@@ -936,6 +938,29 @@ windowGetKeyInfo();
 }
 
 
+static inline s32 scriptCopyWordPrefix(const u16 *text,u16 *line,s32 endWord) {
+    s32 spaces = 0;
+    s32 copied = 0;
+    const u16 *src = text;
+    u16 *dst = line;
+    for (;;) {
+        u32 ch = *src;
+        if (ch == 0x20 || ch == 0x3000) {
+            if (spaces == endWord) break;
+            *dst = ch;
+            spaces++;
+        } else {
+            if (ch == 0) break;
+            *dst = ch;
+        }
+        src++;
+        dst++;
+        copied++;
+    }
+    line[copied] = 0;
+    return copied + 1;
+}
+
 static void _menuScriptTokuseiSetumei(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite, CURSOR *cursor, POKEMON_DATA_dd_ *pdata) {
     MENU_ITEM_dd_ *item = menuItemBiosGetPtr(0xAF, sprite->id);
     if (u8 tokusei = pokemonDataBiosGetTokuseiDataId(pdata, 0)) {
@@ -949,32 +974,7 @@ static void _menuScriptTokuseiSetumei(tagWINDOW_WORK *win, tagSPRITE_WORK *sprit
         s32 fitLine = 0;
         u8 overflow = 0;
         for (;;) {
-            s32 spaces = 0;
-            s32 out = 0;
-            s32 limit = line;
-            u16 *src = text;
-            u16 *dst = buf1;
-            line++;
-            for (;;) {
-                u16 ch = *src;
-                if (ch == 0x20 || ch == 0x3000) {
-                    if (spaces == limit) {
-                        break;
-                    }
-                    *dst = ch;
-                    spaces++;
-                } else {
-                    if (ch == 0) {
-                        break;
-                    }
-                    *dst = ch;
-                }
-                src++;
-                dst++;
-                out++;
-            }
-            buf1[out] = 0;
-            out++;
+            s32 out = scriptCopyWordPrefix(text,buf1,line++);
             msgctrlSetValue(0x37, (u32)printBuf);
             u32 rect = GSmsgGetRect(0x4276);
             if ((rect >> 16) <= (u32)item->width) {
@@ -1012,10 +1012,10 @@ static void _menuScriptTokuseiSetumei(tagWINDOW_WORK *win, tagSPRITE_WORK *sprit
                     continue;
                 }
                 if (ch == 0) {
-                    if (total > idx) {
-                        continue;
+                    if (total <= idx) {
+                        break;
                     }
-                    break;
+                    continue;
                 }
                 if (second != 0) {
                     buf2[count2++] = ch;
@@ -1066,14 +1066,15 @@ extern "C" void menuScriptWazaOshieHook(tagWINDOW_WORK* window,tagSPRITE_WORK* s
     case 0x6b9:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,(u16)count,9,0);return;
     case 0x6ba:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,(u16)count,9,1);return;
     case 0x6d5:
-        if(count) {
+        if((u16)count) {
             MENU_ITEM_dd_* clip=menuItemBiosGetPtr(window->menu,0x6d5);
             MENU_ITEM_dd_* item=menuItemBiosGetPtr(window->menu,sprite->id);
             spriteSetScissor(layer,clip->x-item->x,clip->y-item->y,clip->width,clip->height);
-            u16 index=0;s16 y=-cursor.first*31;
+            u32 index=0;s16 y=-cursor.first*31;
+            count=(u16)count;
             for(;index<count;index++,y+=31) {
-                if(index>=cursor.first-1 && index<cursor.first+10) {
-                    WAZAOSHIEDEF* entry=_getWaza2Pointer(index);
+                if((u16)index>=cursor.first-1 && (u16)index<cursor.first+10) {
+                    WAZAOSHIEDEF* entry=_getWaza2Pointer((u16)index);
                     if(entry->id) {
                         GSmsgPrint2(layer,0,y,color,entry->name);
                         if(window->menu==0xe4) {

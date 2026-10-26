@@ -913,8 +913,11 @@ void CMenuHologram::stageAllModelLoad()
     ArchiveHeader *header = (ArchiveHeader *)_makeArchiveHeader(archive);
     if (header->lights != 0) {
         floorReadMakeLightResID(archive);
-        for (s32 i = 0; header->lights[i] != 0; i++) {
-            s32 light = GSlightLoad(header->lights[i]);
+        s32 i=0;
+        for (;;) {
+            u32 lightID=header->lights[i];
+            if(lightID==0)break;
+            s32 light = GSlightLoad(lightID);
             lights[lightCount++] = light;
             GSlightSetActive(light, 1);
             if (GSlightCanAnimate(light)) {
@@ -922,6 +925,7 @@ void CMenuHologram::stageAllModelLoad()
                 GSlightSetAnimRate(light, 0.5f);
                 GSlightStartAnimation(light);
             }
+            ++i;
         }
     }
     GSgfxLayerID layers[2] = { (GSgfxLayerID)0, (GSgfxLayerID)0 };

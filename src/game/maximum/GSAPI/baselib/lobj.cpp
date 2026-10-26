@@ -33,7 +33,7 @@ typedef char LObjPrefixSizeCheck[sizeof(HSD_LObj)==0x4C?1:-1];
 typedef char LObjInfoSizeCheck[sizeof(HSD_LObjInfo)==0x44?1:-1];
 static inline float clamp_unit(float v) { if (v <= 0.0F) return 0.0F; if (v >= 1.0F) return 1.0F; return v; }
 static inline u32 HSD_LObjGetType(HSD_LObj* lobj);
-static inline void HSD_LObjSetActive(HSD_LObj* lobj);
+static inline void HSD_LObjSetActive(HSD_LObj* lobj, HSD_LObj** lights);
 static inline void HSD_LObjClearActive(void);
 static inline void setup_diffuse_lightobj(HSD_LObj* lobj);
 static inline void setup_spec_lightobj(HSD_LObj* lobj, Mtx mtx, s32 spec_id);
@@ -104,13 +104,13 @@ static inline u32 HSD_LObjGetType(HSD_LObj* lobj)
     return lobj->flags & LOBJ_TYPE_MASK;
 }
 
-static inline void HSD_LObjSetActive(HSD_LObj* lobj)
+static inline void HSD_LObjSetActive(HSD_LObj* lobj, HSD_LObj** lights)
 {
     int idx;
 
     if (HSD_LObjGetType(lobj) == LOBJ_AMBIENT) {
         idx = MAX_GXLIGHT - 1;
-        if (active_lights[idx]) {
+        if (lights[idx]) {
             return;
         }
     } else {
@@ -710,14 +710,25 @@ void HSD_LObjDeleteCurrentAll(HSD_LObj* lobj)
 
 void HSD_LObjAddCurrentAll(HSD_LObj* lobj) { for (; lobj; lobj = lobj->next) HSD_LObjAddCurrent(lobj); }
 
+static inline HSD_LObj* lobjGetActiveByIndex(HSD_LObj** lights, s32 index)
+{
+    if (0 <= index && index < MAX_GXLIGHT - 1) return lights[index];
+    return NULL;
+}
+
 // Keep the original repeated hardware-light address calculations.
 #pragma push
 #pragma opt_common_subs off
 void HSD_LObjSetupInit(HSD_CObj* cobj)
 {
+    int activeCount;
     MtxPtr vmtx;
+    HSD_LObj** lights=active_lights;
+    HSD_LObj** renderLights;
     int i, num, idx;
+    HSD_LObj** renderTableView;
     HSD_SList* list;
+    HSD_LObj* setupLight;
 
     idx = 0;
     num = 0;
@@ -750,7 +761,7 @@ void HSD_LObjSetupInit(HSD_CObj* cobj)
 
         if (!ref_type) continue;
 
-        HSD_LObjSetActive(lobj);
+        HSD_LObjSetActive(lobj,lights);
         idx = HSD_LObjGetNbActive();
 
         LOBJ_EXT(lobj)->spec_id = GX_LIGHT_NULL;
@@ -772,7 +783,7 @@ void HSD_LObjSetupInit(HSD_CObj* cobj)
         if (ref_type & (LOBJ_DIFFUSE | LOBJ_ALPHA)) { setup_diffuse_lightobj(lobj); } else if (ref_type & LOBJ_SPECULAR) { setup_spec_lightobj(lobj,vmtx,LOBJ_EXT(lobj)->id); }
     }
 
-    if (!active_lights[8]) {
+    if (!lights[8]) {
         for (; list; list = list->next) {
             HSD_LObj* lobj = list->data;
             if (!lobj) continue;
@@ -780,15 +791,17 @@ void HSD_LObjSetupInit(HSD_CObj* cobj)
             if (!(lobj->flags & LOBJ_HIDDEN) &&
                 HSD_LObjGetType(lobj) == LOBJ_AMBIENT && (lobj->flags & (LOBJ_DIFFUSE | LOBJ_ALPHA)))
             {
-                HSD_LObjSetActive(lobj);
+                HSD_LObjSetActive(lobj,lights);
                 break;
             }
         }
     }
 
-    num = HSD_LObjGetNbActive();
+    activeCount = HSD_LObjGetNbActive();
+    num = activeCount;
+    renderLights=active_lights;
     for (i=0; idx < MAX_GXLIGHT-1 && i<num; i++) {
-        HSD_LObj* lobj=HSD_LObjGetActiveByIndex(i);
+        HSD_LObj* lobj=lobjGetActiveByIndex(renderLights,i);
         if (!lobj || !(lobj->flags & LOBJ_SPECULAR) || !(lobj->flags & (LOBJ_DIFFUSE | LOBJ_ALPHA))) continue;
         setup_spec_lightobj(lobj,vmtx,HSD_Index2LightID(idx++));
     }
@@ -796,10 +809,11 @@ void HSD_LObjSetupInit(HSD_CObj* cobj)
     for (i = 0; i < num; i++) {
         HSD_LObj* lobj;
 
-        if (!(lobj = HSD_LObjGetActiveByIndex(i))) {
-            return;
+        if (!(lobj = lobjGetActiveByIndex(renderTableView = renderLights,i))) {
+            continue;
         }
-        HSD_LObjSetup(lobj, LOBJ_EXT(lobj)->color, lobj->shininess);
+        setupLight = lobj;
+        HSD_LObjSetup(setupLight, LOBJ_EXT(setupLight)->color, setupLight->shininess);
     }
 }
 #pragma pop

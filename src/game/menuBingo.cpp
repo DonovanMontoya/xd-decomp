@@ -170,129 +170,35 @@ static inline u32 bingoCountLinesFrom(BingoState *state, s32 line) {
     return count;
 }
 
+static inline s32 bingoFindPlayerPokemon(u32 player) {
+    s32 index;
+    for (index=0;index<14;index++) { if (mPokemon__6cBingo[index].unkC5 == player+1) return index; }
+    return -1;
+}
+
+static inline s32 bingoPlayerCount(void) {
+    s32 player;
+    for(player=0;player<4;player++) { if(bingoFindPlayerPokemon(player)==-1) break; }
+    return player;
+}
+
 s32 menuBingoPokemonDraw(BingoWindow *arg0, BingoSprite *arg1) {
-    BingoPokemon *temp_r29;
-    BingoPokemon *temp_r29_10;
-    BingoPokemon *temp_r29_11;
-    BingoPokemon *temp_r29_12;
-    BingoPokemon *temp_r29_13;
-    BingoPokemon *temp_r29_14;
-    BingoPokemon *temp_r29_15;
-    BingoPokemon *temp_r29_16;
-    BingoPokemon *temp_r29_17;
-    BingoPokemon *temp_r29_18;
-    BingoPokemon *temp_r29_19;
-    BingoPokemon *temp_r29_20;
-    BingoPokemon *temp_r29_21;
-    BingoPokemon *temp_r29_22;
-    BingoPokemon *temp_r29_23;
-    BingoPokemon *temp_r29_24;
-    BingoPokemon *temp_r29_25;
-    BingoPokemon *temp_r29_26;
-    BingoPokemon *temp_r29_27;
-    BingoPokemon *temp_r29_28;
-    BingoPokemon *temp_r29_29;
-    BingoPokemon *temp_r29_2;
-    BingoPokemon *temp_r29_30;
-    BingoPokemon *temp_r29_31;
-    BingoPokemon *temp_r29_32;
-    BingoPokemon *temp_r29_33;
-    BingoPokemon *temp_r29_34;
-    BingoPokemon *temp_r29_35;
-    BingoPokemon *temp_r29_3;
-    BingoPokemon *temp_r29_4;
-    BingoPokemon *temp_r29_5;
-    BingoPokemon *temp_r29_6;
-    BingoPokemon *temp_r29_7;
-    BingoPokemon *temp_r29_8;
-    BingoPokemon *temp_r29_9;
-    BingoPokemon *temp_r4;
-    BingoPokemon *temp_r4_2;
-    BingoPokemon *temp_r4_3;
-    BingoPokemon *temp_r4_4;
-    BingoPokemon *temp_r4_5;
-    BingoPokemon *temp_r5;
-    BingoPokemon *temp_r5_10;
-    BingoPokemon *temp_r5_2;
-    BingoPokemon *temp_r5_3;
-    BingoPokemon *temp_r5_4;
-    BingoPokemon *temp_r5_5;
-    BingoPokemon *temp_r5_6;
-    BingoPokemon *temp_r5_7;
-    BingoPokemon *temp_r5_8;
-    BingoPokemon *temp_r5_9;
-    BingoPokemon *temp_r6;
-    BingoPokemon *temp_r6_10;
-    BingoPokemon *temp_r6_11;
-    BingoPokemon *temp_r6_12;
-    BingoPokemon *temp_r6_13;
-    BingoPokemon *temp_r6_14;
-    BingoPokemon *temp_r6_15;
-    BingoPokemon *temp_r6_16;
-    BingoPokemon *temp_r6_17;
-    BingoPokemon *temp_r6_18;
-    BingoPokemon *temp_r6_19;
-    BingoPokemon *temp_r6_20;
-    BingoPokemon *temp_r6_2;
-    BingoPokemon *temp_r6_3;
-    BingoPokemon *temp_r6_4;
-    BingoPokemon *temp_r6_5;
-    BingoPokemon *temp_r6_6;
-    BingoPokemon *temp_r6_7;
-    BingoPokemon *temp_r6_8;
-    BingoPokemon *temp_r6_9;
+    BingoPokemon *selected;
+    BingoPokemon *selectedOther;
     BingoPokemon *var_r29;
     BingoPokemon *var_r4_5;
-    BingoPokemon *var_r5;
-    BingoPokemon *var_r5_8;
-    BingoPokemon *var_r6;
-    BingoPokemon *var_r6_2;
-    BingoPokemon *var_r6_3;
-    BingoPokemon *var_r6_4;
     s16 temp_r0;
     s32 temp_r28;
-    s32 var_ctr;
-    s32 var_ctr_10;
-    s32 var_ctr_11;
-    s32 var_ctr_12;
-    s32 var_ctr_13;
-    s32 var_ctr_14;
-    s32 var_ctr_2;
-    s32 var_ctr_3;
-    s32 var_ctr_4;
-    s32 var_ctr_5;
-    s32 var_ctr_6;
-    s32 var_ctr_7;
-    s32 var_ctr_8;
-    s32 var_ctr_9;
     s32 var_r4;
     s32 var_r4_2;
     s32 var_r4_3;
     s32 var_r4_4;
     s32 var_r4_6;
-    s32 var_r5_10;
     s32 var_r5_11;
-    s32 var_r5_14;
-    s32 var_r5_5;
-    s32 var_r5_7;
-    u16 temp_r3_14;
-    u16 temp_r3_5;
-    u32 temp_r3;
+    u32 temp_r3_14;
+    u32 temp_r3_5;
     u32 temp_r3_10;
-    u32 temp_r3_11;
-    u32 temp_r3_12;
-    u32 temp_r3_13;
-    u32 temp_r3_15;
-    u32 temp_r3_16;
-    u32 temp_r3_17;
-    u32 temp_r3_18;
-    u32 temp_r3_20;
-    u32 temp_r3_2;
     u32 temp_r3_3;
-    u32 temp_r3_4;
-    u32 temp_r3_6;
-    u32 temp_r3_8;
-    u32 temp_r3_9;
     u32 var_r5_12;
     u32 var_r5_13;
     u32 var_r5_2;
@@ -300,75 +206,18 @@ s32 menuBingoPokemonDraw(BingoWindow *arg0, BingoSprite *arg1) {
     u32 var_r5_4;
     u32 var_r5_6;
     u32 var_r5_9;
-    u8 temp_r26;
+    u16 temp_r26;
     u8 temp_r3_19;
     u8 temp_r3_7;
-    u8 var_r26;
+    u32 var_r26;
 
     var_r26 = 0;
     menuSubCalcColor();
     var_r29 = mPokemon__6cBingo;
-    var_r4 = 0;
-    var_r5 = mPokemon__6cBingo;
-    temp_r3 = gBingo.unk12C + 1;
-    var_ctr = 2;
-loop_1:
-    if (temp_r3 != (u8) var_r5->unkC5) {
-        goto block_3;
-    }
-    goto block_17;
-block_3:
-    var_r4 += 1;
-    if (temp_r3 != (u8) var_r5[1].unkC5) {
-        goto block_5;
-    }
-    goto block_17;
-block_5:
-    temp_r5 = (BingoPokemon *)((u8 *)&var_r5[1] + 0xC8);
-    var_r4 += 1;
-    if (temp_r3 != (u8) temp_r5->unkC5) {
-        goto block_7;
-    }
-    goto block_17;
-block_7:
-    temp_r5_2 = (BingoPokemon *)((u8 *)temp_r5 + 0xC8);
-    var_r4 += 1;
-    if (temp_r3 != (u8) temp_r5_2->unkC5) {
-        goto block_9;
-    }
-    goto block_17;
-block_9:
-    temp_r5_3 = (BingoPokemon *)((u8 *)temp_r5_2 + 0xC8);
-    var_r4 += 1;
-    if (temp_r3 != (u8) temp_r5_3->unkC5) {
-        goto block_11;
-    }
-    goto block_17;
-block_11:
-    temp_r5_4 = (BingoPokemon *)((u8 *)temp_r5_3 + 0xC8);
-    var_r4 += 1;
-    if (temp_r3 != (u8) temp_r5_4->unkC5) {
-        goto block_13;
-    }
-    goto block_17;
-block_13:
-    temp_r5_5 = (BingoPokemon *)((u8 *)temp_r5_4 + 0xC8);
-    var_r4 += 1;
-    if (temp_r3 != (u8) temp_r5_5->unkC5) {
-        goto block_15;
-    }
-    goto block_17;
-block_15:
-    var_r5 = (BingoPokemon *)((u8 *)temp_r5_5 + 0xC8);
-    var_r4 += 1;
-    var_ctr -= 1;
-    if (var_ctr != 0) {
-        goto loop_1;
-    }
-    var_r4 = -1;
-block_17:
-    temp_r0 = arg1->unk6;
+    var_r4 = bingoFindPlayerPokemon(gBingo.unk12C);
+    selected=&mPokemon__6cBingo[var_r4];
     temp_r28 = winSpriteGetLayerID(arg0, arg1);
+    temp_r0 = arg1->unk6;
     if (temp_r0 == 0x898) {
         goto block_155;
     }
@@ -469,64 +318,7 @@ block_51:
     }
     goto block_110;
 block_53:
-    var_r5_2 = 0;
-    temp_r3_2 = gBingo.unk12C + 1;
-    var_ctr_2 = 2;
-loop_54:
-    if (temp_r3_2 != (u8) var_r29->unkC5) {
-        goto block_56;
-    }
-    goto block_70;
-block_56:
-    var_r5_2 += 1;
-    if (temp_r3_2 != (u8) var_r29[1].unkC5) {
-        goto block_58;
-    }
-    goto block_70;
-block_58:
-    temp_r29 = (BingoPokemon *)((u8 *)&var_r29[1] + 0xC8);
-    var_r5_2 += 1;
-    if (temp_r3_2 != (u8) temp_r29->unkC5) {
-        goto block_60;
-    }
-    goto block_70;
-block_60:
-    temp_r29_2 = (BingoPokemon *)((u8 *)temp_r29 + 0xC8);
-    var_r5_2 += 1;
-    if (temp_r3_2 != (u8) temp_r29_2->unkC5) {
-        goto block_62;
-    }
-    goto block_70;
-block_62:
-    temp_r29_3 = (BingoPokemon *)((u8 *)temp_r29_2 + 0xC8);
-    var_r5_2 += 1;
-    if (temp_r3_2 != (u8) temp_r29_3->unkC5) {
-        goto block_64;
-    }
-    goto block_70;
-block_64:
-    temp_r29_4 = (BingoPokemon *)((u8 *)temp_r29_3 + 0xC8);
-    var_r5_2 += 1;
-    if (temp_r3_2 != (u8) temp_r29_4->unkC5) {
-        goto block_66;
-    }
-    goto block_70;
-block_66:
-    temp_r29_5 = (BingoPokemon *)((u8 *)temp_r29_4 + 0xC8);
-    var_r5_2 += 1;
-    if (temp_r3_2 != (u8) temp_r29_5->unkC5) {
-        goto block_68;
-    }
-    goto block_70;
-block_68:
-    var_r29 = (BingoPokemon *)((u8 *)temp_r29_5 + 0xC8);
-    var_r5_2 += 1;
-    var_ctr_2 -= 1;
-    if (var_ctr_2 != 0) {
-        goto loop_54;
-    }
-    var_r5_2 = -1U;
-block_70:
+    var_r5_2 = bingoFindPlayerPokemon(gBingo.unk12C);
     temp_r3_3 = wazaGetStatus(0, getPanelWaza__10bingo_biosFP14BINGO_DATA_dd_Ul(&gBingo, gBingo.unk4, var_r5_2), 1, 0);
     if (temp_r3_3 == 0) {
         goto block_310;
@@ -537,131 +329,17 @@ block_70:
     GSmsgPrint2(winSpriteGetLayerID(arg0, arg1), 0x5A, 0, arg0->unk93 | ~0xFF, 0x4277U);
     goto block_310;
 block_72:
-    var_r5_3 = 0;
-    temp_r3_4 = gBingo.unk12C + 1;
-    var_ctr_3 = 2;
-loop_73:
-    if (temp_r3_4 != (u8) var_r29->unkC5) {
-        goto block_75;
-    }
-    goto block_89;
-block_75:
-    var_r5_3 += 1;
-    if (temp_r3_4 != (u8) var_r29[1].unkC5) {
-        goto block_77;
-    }
-    goto block_89;
-block_77:
-    temp_r29_6 = (BingoPokemon *)((u8 *)&var_r29[1] + 0xC8);
-    var_r5_3 += 1;
-    if (temp_r3_4 != (u8) temp_r29_6->unkC5) {
-        goto block_79;
-    }
-    goto block_89;
-block_79:
-    temp_r29_7 = (BingoPokemon *)((u8 *)temp_r29_6 + 0xC8);
-    var_r5_3 += 1;
-    if (temp_r3_4 != (u8) temp_r29_7->unkC5) {
-        goto block_81;
-    }
-    goto block_89;
-block_81:
-    temp_r29_8 = (BingoPokemon *)((u8 *)temp_r29_7 + 0xC8);
-    var_r5_3 += 1;
-    if (temp_r3_4 != (u8) temp_r29_8->unkC5) {
-        goto block_83;
-    }
-    goto block_89;
-block_83:
-    temp_r29_9 = (BingoPokemon *)((u8 *)temp_r29_8 + 0xC8);
-    var_r5_3 += 1;
-    if (temp_r3_4 != (u8) temp_r29_9->unkC5) {
-        goto block_85;
-    }
-    goto block_89;
-block_85:
-    temp_r29_10 = (BingoPokemon *)((u8 *)temp_r29_9 + 0xC8);
-    var_r5_3 += 1;
-    if (temp_r3_4 != (u8) temp_r29_10->unkC5) {
-        goto block_87;
-    }
-    goto block_89;
-block_87:
-    var_r29 = (BingoPokemon *)((u8 *)temp_r29_10 + 0xC8);
-    var_r5_3 += 1;
-    var_ctr_3 -= 1;
-    if (var_ctr_3 != 0) {
-        goto loop_73;
-    }
-    var_r5_3 = -1U;
-block_89:
+    var_r5_3 = bingoFindPlayerPokemon(gBingo.unk12C);
     temp_r3_5 = zokuseiBiosGetSpriteID(wazaDB_GetZokuseiDataId(getPanelWaza__10bingo_biosFP14BINGO_DATA_dd_Ul(&gBingo, gBingo.unk4, var_r5_3)));
     if (temp_r3_5 == 0) {
         goto block_310;
     }
-    windowDrawSprite(0, 0, arg0, (BingoSprite *) temp_r3_5, 0, temp_r28);
+    windowDrawSprite(0,0,arg0,temp_r3_5,0,temp_r28);
     goto block_310;
 block_91:
-    var_r5_4 = 0;
-    temp_r3_6 = gBingo.unk12C + 1;
-    var_ctr_4 = 2;
-loop_92:
-    if (temp_r3_6 != (u8) var_r29->unkC5) {
-        goto block_94;
-    }
-    goto block_108;
-block_94:
-    var_r5_4 += 1;
-    if (temp_r3_6 != (u8) var_r29[1].unkC5) {
-        goto block_96;
-    }
-    goto block_108;
-block_96:
-    temp_r29_11 = (BingoPokemon *)((u8 *)&var_r29[1] + 0xC8);
-    var_r5_4 += 1;
-    if (temp_r3_6 != (u8) temp_r29_11->unkC5) {
-        goto block_98;
-    }
-    goto block_108;
-block_98:
-    temp_r29_12 = (BingoPokemon *)((u8 *)temp_r29_11 + 0xC8);
-    var_r5_4 += 1;
-    if (temp_r3_6 != (u8) temp_r29_12->unkC5) {
-        goto block_100;
-    }
-    goto block_108;
-block_100:
-    temp_r29_13 = (BingoPokemon *)((u8 *)temp_r29_12 + 0xC8);
-    var_r5_4 += 1;
-    if (temp_r3_6 != (u8) temp_r29_13->unkC5) {
-        goto block_102;
-    }
-    goto block_108;
-block_102:
-    temp_r29_14 = (BingoPokemon *)((u8 *)temp_r29_13 + 0xC8);
-    var_r5_4 += 1;
-    if (temp_r3_6 != (u8) temp_r29_14->unkC5) {
-        goto block_104;
-    }
-    goto block_108;
-block_104:
-    temp_r29_15 = (BingoPokemon *)((u8 *)temp_r29_14 + 0xC8);
-    var_r5_4 += 1;
-    if (temp_r3_6 != (u8) temp_r29_15->unkC5) {
-        goto block_106;
-    }
-    goto block_108;
-block_106:
-    var_r29 = (BingoPokemon *)((u8 *)temp_r29_15 + 0xC8);
-    var_r5_4 += 1;
-    var_ctr_4 -= 1;
-    if (var_ctr_4 != 0) {
-        goto loop_92;
-    }
-    var_r5_4 = -1U;
-block_108:
+    var_r5_4 = bingoFindPlayerPokemon(gBingo.unk12C);
     temp_r26 = getPanelTokusei__10bingo_biosFP14BINGO_DATA_dd_Ul(&gBingo, gBingo.unk4, var_r5_4);
-    temp_r3_7 = pokemonDB_GetTokuseiDataId(pokemon_GetPokemonDataId(&mPokemon__6cBingo[var_r4]));
+    temp_r3_7 = pokemonDB_GetTokuseiDataId(pokemon_GetPokemonDataId(selected),temp_r26);
     if (temp_r3_7 == 0) {
         goto block_310;
     }
@@ -677,136 +355,11 @@ block_111:
 block_112:
     var_r26 += 1;
 block_113:
-    var_r4_2 = 0;
-loop_114:
-    var_r6 = mPokemon__6cBingo;
-    var_r5_5 = 0;
-    temp_r3_8 = var_r4_2 + 1;
-    var_ctr_5 = 2;
-loop_115:
-    if (temp_r3_8 != (u8) var_r6->unkC5) {
-        goto block_117;
-    }
-    goto block_131;
-block_117:
-    var_r5_5 += 1;
-    if (temp_r3_8 != (u8) var_r6[1].unkC5) {
-        goto block_119;
-    }
-    goto block_131;
-block_119:
-    temp_r6 = (BingoPokemon *)((u8 *)&var_r6[1] + 0xC8);
-    var_r5_5 += 1;
-    if (temp_r3_8 != (u8) temp_r6->unkC5) {
-        goto block_121;
-    }
-    goto block_131;
-block_121:
-    temp_r6_2 = (BingoPokemon *)((u8 *)temp_r6 + 0xC8);
-    var_r5_5 += 1;
-    if (temp_r3_8 != (u8) temp_r6_2->unkC5) {
-        goto block_123;
-    }
-    goto block_131;
-block_123:
-    temp_r6_3 = (BingoPokemon *)((u8 *)temp_r6_2 + 0xC8);
-    var_r5_5 += 1;
-    if (temp_r3_8 != (u8) temp_r6_3->unkC5) {
-        goto block_125;
-    }
-    goto block_131;
-block_125:
-    temp_r6_4 = (BingoPokemon *)((u8 *)temp_r6_3 + 0xC8);
-    var_r5_5 += 1;
-    if (temp_r3_8 != (u8) temp_r6_4->unkC5) {
-        goto block_127;
-    }
-    goto block_131;
-block_127:
-    temp_r6_5 = (BingoPokemon *)((u8 *)temp_r6_4 + 0xC8);
-    var_r5_5 += 1;
-    if (temp_r3_8 != (u8) temp_r6_5->unkC5) {
-        goto block_129;
-    }
-    goto block_131;
-block_129:
-    var_r6 = (BingoPokemon *)((u8 *)temp_r6_5 + 0xC8);
-    var_r5_5 += 1;
-    var_ctr_5 -= 1;
-    if (var_ctr_5 != 0) {
-        goto loop_115;
-    }
-    var_r5_5 = -1;
-block_131:
-    if (var_r5_5 == -1) {
-        goto block_133;
-    }
-    var_r4_2 += 1;
-    if (var_r4_2 < 4) {
-        goto loop_114;
-    }
-block_133:
+    var_r4_2 = bingoPlayerCount();
     if (var_r26 >= (u32) var_r4_2) {
         goto block_310;
     }
-    var_r5_6 = 0;
-    temp_r3_9 = var_r26 + 1;
-    var_ctr_6 = 2;
-loop_135:
-    if (temp_r3_9 != (u8) var_r29->unkC5) {
-        goto block_137;
-    }
-    goto block_151;
-block_137:
-    var_r5_6 += 1;
-    if (temp_r3_9 != (u8) var_r29[1].unkC5) {
-        goto block_139;
-    }
-    goto block_151;
-block_139:
-    temp_r29_16 = (BingoPokemon *)((u8 *)&var_r29[1] + 0xC8);
-    var_r5_6 += 1;
-    if (temp_r3_9 != (u8) temp_r29_16->unkC5) {
-        goto block_141;
-    }
-    goto block_151;
-block_141:
-    temp_r29_17 = (BingoPokemon *)((u8 *)temp_r29_16 + 0xC8);
-    var_r5_6 += 1;
-    if (temp_r3_9 != (u8) temp_r29_17->unkC5) {
-        goto block_143;
-    }
-    goto block_151;
-block_143:
-    temp_r29_18 = (BingoPokemon *)((u8 *)temp_r29_17 + 0xC8);
-    var_r5_6 += 1;
-    if (temp_r3_9 != (u8) temp_r29_18->unkC5) {
-        goto block_145;
-    }
-    goto block_151;
-block_145:
-    temp_r29_19 = (BingoPokemon *)((u8 *)temp_r29_18 + 0xC8);
-    var_r5_6 += 1;
-    if (temp_r3_9 != (u8) temp_r29_19->unkC5) {
-        goto block_147;
-    }
-    goto block_151;
-block_147:
-    temp_r29_20 = (BingoPokemon *)((u8 *)temp_r29_19 + 0xC8);
-    var_r5_6 += 1;
-    if (temp_r3_9 != (u8) temp_r29_20->unkC5) {
-        goto block_149;
-    }
-    goto block_151;
-block_149:
-    var_r29 = (BingoPokemon *)((u8 *)temp_r29_20 + 0xC8);
-    var_r5_6 += 1;
-    var_ctr_6 -= 1;
-    if (var_ctr_6 != 0) {
-        goto loop_135;
-    }
-    var_r5_6 = -1U;
-block_151:
+    var_r5_6 = bingoFindPlayerPokemon((u8)var_r26);
     temp_r3_10 = wazaGetStatus(0, getPanelWaza__10bingo_biosFP14BINGO_DATA_dd_Ul(&gBingo, gBingo.unk4, var_r5_6), 1, 0);
     if (temp_r3_10 == 0) {
         goto block_310;
@@ -823,177 +376,17 @@ block_154:
 block_155:
     var_r26 += 1;
 block_156:
-    var_r4_3 = 0;
-loop_157:
-    var_r6_2 = mPokemon__6cBingo;
-    var_r5_7 = 0;
-    temp_r3_11 = var_r4_3 + 1;
-    var_ctr_7 = 2;
-loop_158:
-    if (temp_r3_11 != (u8) var_r6_2->unkC5) {
-        goto block_160;
-    }
-    goto block_174;
-block_160:
-    var_r5_7 += 1;
-    if (temp_r3_11 != (u8) var_r6_2[1].unkC5) {
-        goto block_162;
-    }
-    goto block_174;
-block_162:
-    temp_r6_6 = (BingoPokemon *)((u8 *)&var_r6_2[1] + 0xC8);
-    var_r5_7 += 1;
-    if (temp_r3_11 != (u8) temp_r6_6->unkC5) {
-        goto block_164;
-    }
-    goto block_174;
-block_164:
-    temp_r6_7 = (BingoPokemon *)((u8 *)temp_r6_6 + 0xC8);
-    var_r5_7 += 1;
-    if (temp_r3_11 != (u8) temp_r6_7->unkC5) {
-        goto block_166;
-    }
-    goto block_174;
-block_166:
-    temp_r6_8 = (BingoPokemon *)((u8 *)temp_r6_7 + 0xC8);
-    var_r5_7 += 1;
-    if (temp_r3_11 != (u8) temp_r6_8->unkC5) {
-        goto block_168;
-    }
-    goto block_174;
-block_168:
-    temp_r6_9 = (BingoPokemon *)((u8 *)temp_r6_8 + 0xC8);
-    var_r5_7 += 1;
-    if (temp_r3_11 != (u8) temp_r6_9->unkC5) {
-        goto block_170;
-    }
-    goto block_174;
-block_170:
-    temp_r6_10 = (BingoPokemon *)((u8 *)temp_r6_9 + 0xC8);
-    var_r5_7 += 1;
-    if (temp_r3_11 != (u8) temp_r6_10->unkC5) {
-        goto block_172;
-    }
-    goto block_174;
-block_172:
-    var_r6_2 = (BingoPokemon *)((u8 *)temp_r6_10 + 0xC8);
-    var_r5_7 += 1;
-    var_ctr_7 -= 1;
-    if (var_ctr_7 != 0) {
-        goto loop_158;
-    }
-    var_r5_7 = -1;
-block_174:
-    if (var_r5_7 == -1) {
-        goto block_176;
-    }
-    var_r4_3 += 1;
-    if (var_r4_3 < 4) {
-        goto loop_157;
-    }
-block_176:
+    var_r4_3 = bingoPlayerCount();
     if (var_r26 >= (u32) var_r4_3) {
         goto block_310;
     }
-    var_r5_8 = mPokemon__6cBingo;
-    temp_r3_12 = var_r26 + 1;
-    var_ctr_8 = 2;
-loop_178:
-    if (temp_r3_12 == (u8) var_r5_8->unkC5) {
-        goto block_186;
-    }
-    if (temp_r3_12 == (u8) var_r5_8[1].unkC5) {
-        goto block_186;
-    }
-    temp_r5_6 = (BingoPokemon *)((u8 *)&var_r5_8[1] + 0xC8);
-    if (temp_r3_12 == (u8) temp_r5_6->unkC5) {
-        goto block_186;
-    }
-    temp_r5_7 = (BingoPokemon *)((u8 *)temp_r5_6 + 0xC8);
-    if (temp_r3_12 == (u8) temp_r5_7->unkC5) {
-        goto block_186;
-    }
-    temp_r5_8 = (BingoPokemon *)((u8 *)temp_r5_7 + 0xC8);
-    if (temp_r3_12 == (u8) temp_r5_8->unkC5) {
-        goto block_186;
-    }
-    temp_r5_9 = (BingoPokemon *)((u8 *)temp_r5_8 + 0xC8);
-    if (temp_r3_12 == (u8) temp_r5_9->unkC5) {
-        goto block_186;
-    }
-    temp_r5_10 = (BingoPokemon *)((u8 *)temp_r5_9 + 0xC8);
-    if (temp_r3_12 == (u8) temp_r5_10->unkC5) {
-        goto block_186;
-    }
-    var_r5_8 = (BingoPokemon *)((u8 *)temp_r5_10 + 0xC8);
-    var_ctr_8 -= 1;
-    if (var_ctr_8 != 0) {
-        goto loop_178;
-    }
-block_186:
-    var_r5_9 = 0;
-    temp_r3_13 = var_r26 + 1;
-    var_ctr_9 = 2;
-loop_187:
-    if (temp_r3_13 != (u8) var_r29->unkC5) {
-        goto block_189;
-    }
-    goto block_203;
-block_189:
-    var_r5_9 += 1;
-    if (temp_r3_13 != (u8) var_r29[1].unkC5) {
-        goto block_191;
-    }
-    goto block_203;
-block_191:
-    temp_r29_21 = (BingoPokemon *)((u8 *)&var_r29[1] + 0xC8);
-    var_r5_9 += 1;
-    if (temp_r3_13 != (u8) temp_r29_21->unkC5) {
-        goto block_193;
-    }
-    goto block_203;
-block_193:
-    temp_r29_22 = (BingoPokemon *)((u8 *)temp_r29_21 + 0xC8);
-    var_r5_9 += 1;
-    if (temp_r3_13 != (u8) temp_r29_22->unkC5) {
-        goto block_195;
-    }
-    goto block_203;
-block_195:
-    temp_r29_23 = (BingoPokemon *)((u8 *)temp_r29_22 + 0xC8);
-    var_r5_9 += 1;
-    if (temp_r3_13 != (u8) temp_r29_23->unkC5) {
-        goto block_197;
-    }
-    goto block_203;
-block_197:
-    temp_r29_24 = (BingoPokemon *)((u8 *)temp_r29_23 + 0xC8);
-    var_r5_9 += 1;
-    if (temp_r3_13 != (u8) temp_r29_24->unkC5) {
-        goto block_199;
-    }
-    goto block_203;
-block_199:
-    temp_r29_25 = (BingoPokemon *)((u8 *)temp_r29_24 + 0xC8);
-    var_r5_9 += 1;
-    if (temp_r3_13 != (u8) temp_r29_25->unkC5) {
-        goto block_201;
-    }
-    goto block_203;
-block_201:
-    var_r29 = (BingoPokemon *)((u8 *)temp_r29_25 + 0xC8);
-    var_r5_9 += 1;
-    var_ctr_9 -= 1;
-    if (var_ctr_9 != 0) {
-        goto loop_187;
-    }
-    var_r5_9 = -1U;
-block_203:
+    bingoFindPlayerPokemon(var_r26);
+    var_r5_9 = bingoFindPlayerPokemon((u8)var_r26);
     temp_r3_14 = zokuseiBiosGetSpriteID(wazaDB_GetZokuseiDataId(getPanelWaza__10bingo_biosFP14BINGO_DATA_dd_Ul(&gBingo, gBingo.unk4, var_r5_9)));
     if (temp_r3_14 == 0) {
         goto block_310;
     }
-    windowDrawSprite(0, 0, arg0, (BingoSprite *) temp_r3_14, 0, temp_r28);
+    windowDrawSprite(0,0,arg0,temp_r3_14,0,temp_r28);
     goto block_310;
 block_205:
     var_r26 = 1;
@@ -1002,262 +395,24 @@ block_206:
 block_207:
     var_r26 += 1;
 block_208:
-    var_r4_4 = 0;
-loop_209:
-    var_r6_3 = mPokemon__6cBingo;
-    var_r5_10 = 0;
-    temp_r3_15 = var_r4_4 + 1;
-    var_ctr_10 = 2;
-loop_210:
-    if (temp_r3_15 != (u8) var_r6_3->unkC5) {
-        goto block_212;
-    }
-    goto block_226;
-block_212:
-    var_r5_10 += 1;
-    if (temp_r3_15 != (u8) var_r6_3[1].unkC5) {
-        goto block_214;
-    }
-    goto block_226;
-block_214:
-    temp_r6_11 = (BingoPokemon *)((u8 *)&var_r6_3[1] + 0xC8);
-    var_r5_10 += 1;
-    if (temp_r3_15 != (u8) temp_r6_11->unkC5) {
-        goto block_216;
-    }
-    goto block_226;
-block_216:
-    temp_r6_12 = (BingoPokemon *)((u8 *)temp_r6_11 + 0xC8);
-    var_r5_10 += 1;
-    if (temp_r3_15 != (u8) temp_r6_12->unkC5) {
-        goto block_218;
-    }
-    goto block_226;
-block_218:
-    temp_r6_13 = (BingoPokemon *)((u8 *)temp_r6_12 + 0xC8);
-    var_r5_10 += 1;
-    if (temp_r3_15 != (u8) temp_r6_13->unkC5) {
-        goto block_220;
-    }
-    goto block_226;
-block_220:
-    temp_r6_14 = (BingoPokemon *)((u8 *)temp_r6_13 + 0xC8);
-    var_r5_10 += 1;
-    if (temp_r3_15 != (u8) temp_r6_14->unkC5) {
-        goto block_222;
-    }
-    goto block_226;
-block_222:
-    temp_r6_15 = (BingoPokemon *)((u8 *)temp_r6_14 + 0xC8);
-    var_r5_10 += 1;
-    if (temp_r3_15 != (u8) temp_r6_15->unkC5) {
-        goto block_224;
-    }
-    goto block_226;
-block_224:
-    var_r6_3 = (BingoPokemon *)((u8 *)temp_r6_15 + 0xC8);
-    var_r5_10 += 1;
-    var_ctr_10 -= 1;
-    if (var_ctr_10 != 0) {
-        goto loop_210;
-    }
-    var_r5_10 = -1;
-block_226:
-    if (var_r5_10 == -1) {
-        goto block_228;
-    }
-    var_r4_4 += 1;
-    if (var_r4_4 < 4) {
-        goto loop_209;
-    }
-block_228:
+    var_r4_4 = bingoPlayerCount();
     if (var_r26 >= (u32) var_r4_4) {
         goto block_310;
     }
     var_r4_5 = mPokemon__6cBingo;
-    var_r5_11 = 0;
-    temp_r3_16 = var_r26 + 1;
-    var_ctr_11 = 2;
-loop_230:
-    if (temp_r3_16 != (u8) var_r4_5->unkC5) {
-        goto block_232;
-    }
-    goto block_246;
-block_232:
-    var_r5_11 += 1;
-    if (temp_r3_16 != (u8) var_r4_5[1].unkC5) {
-        goto block_234;
-    }
-    goto block_246;
-block_234:
-    temp_r4 = (BingoPokemon *)((u8 *)&var_r4_5[1] + 0xC8);
-    var_r5_11 += 1;
-    if (temp_r3_16 != (u8) temp_r4->unkC5) {
-        goto block_236;
-    }
-    goto block_246;
-block_236:
-    temp_r4_2 = (BingoPokemon *)((u8 *)temp_r4 + 0xC8);
-    var_r5_11 += 1;
-    if (temp_r3_16 != (u8) temp_r4_2->unkC5) {
-        goto block_238;
-    }
-    goto block_246;
-block_238:
-    temp_r4_3 = (BingoPokemon *)((u8 *)temp_r4_2 + 0xC8);
-    var_r5_11 += 1;
-    if (temp_r3_16 != (u8) temp_r4_3->unkC5) {
-        goto block_240;
-    }
-    goto block_246;
-block_240:
-    temp_r4_4 = (BingoPokemon *)((u8 *)temp_r4_3 + 0xC8);
-    var_r5_11 += 1;
-    if (temp_r3_16 != (u8) temp_r4_4->unkC5) {
-        goto block_242;
-    }
-    goto block_246;
-block_242:
-    temp_r4_5 = (BingoPokemon *)((u8 *)temp_r4_4 + 0xC8);
-    var_r5_11 += 1;
-    if (temp_r3_16 != (u8) temp_r4_5->unkC5) {
-        goto block_244;
-    }
-    goto block_246;
-block_244:
-    var_r4_5 = (BingoPokemon *)((u8 *)temp_r4_5 + 0xC8);
-    var_r5_11 += 1;
-    var_ctr_11 -= 1;
-    if (var_ctr_11 != 0) {
-        goto loop_230;
-    }
-    var_r5_11 = -1;
-block_246:
+    var_r5_11 = bingoFindPlayerPokemon(var_r26);
+    selectedOther=&mPokemon__6cBingo[var_r5_11];
     if ((s16) var_r26 >= 0) {
         goto block_265;
     }
-    var_r5_12 = 0;
-    temp_r3_17 = gBingo.unk12C + 1;
-    var_ctr_12 = 2;
-loop_248:
-    if (temp_r3_17 != (u8) var_r29->unkC5) {
-        goto block_250;
-    }
-    goto block_264;
-block_250:
-    var_r5_12 += 1;
-    if (temp_r3_17 != (u8) var_r29[1].unkC5) {
-        goto block_252;
-    }
-    goto block_264;
-block_252:
-    temp_r29_26 = (BingoPokemon *)((u8 *)&var_r29[1] + 0xC8);
-    var_r5_12 += 1;
-    if (temp_r3_17 != (u8) temp_r29_26->unkC5) {
-        goto block_254;
-    }
-    goto block_264;
-block_254:
-    temp_r29_27 = (BingoPokemon *)((u8 *)temp_r29_26 + 0xC8);
-    var_r5_12 += 1;
-    if (temp_r3_17 != (u8) temp_r29_27->unkC5) {
-        goto block_256;
-    }
-    goto block_264;
-block_256:
-    temp_r29_28 = (BingoPokemon *)((u8 *)temp_r29_27 + 0xC8);
-    var_r5_12 += 1;
-    if (temp_r3_17 != (u8) temp_r29_28->unkC5) {
-        goto block_258;
-    }
-    goto block_264;
-block_258:
-    temp_r29_29 = (BingoPokemon *)((u8 *)temp_r29_28 + 0xC8);
-    var_r5_12 += 1;
-    if (temp_r3_17 != (u8) temp_r29_29->unkC5) {
-        goto block_260;
-    }
-    goto block_264;
-block_260:
-    temp_r29_30 = (BingoPokemon *)((u8 *)temp_r29_29 + 0xC8);
-    var_r5_12 += 1;
-    if (temp_r3_17 != (u8) temp_r29_30->unkC5) {
-        goto block_262;
-    }
-    goto block_264;
-block_262:
-    var_r29 = (BingoPokemon *)((u8 *)temp_r29_30 + 0xC8);
-    var_r5_12 += 1;
-    var_ctr_12 -= 1;
-    if (var_ctr_12 != 0) {
-        goto loop_248;
-    }
-    var_r5_12 = -1U;
-block_264:
-    getPanelTokusei__10bingo_biosFP14BINGO_DATA_dd_Ul(&gBingo, gBingo.unk4, var_r5_12);
+    var_r5_12 = bingoFindPlayerPokemon(gBingo.unk12C);
+    temp_r26=getPanelTokusei__10bingo_biosFP14BINGO_DATA_dd_Ul(&gBingo, gBingo.unk4, var_r5_12);
     goto block_283;
 block_265:
-    var_r5_13 = 0;
-    temp_r3_18 = (s16) var_r26 + 1;
-    var_ctr_13 = 2;
-loop_266:
-    if (temp_r3_18 != (u8) var_r29->unkC5) {
-        goto block_268;
-    }
-    goto block_282;
-block_268:
-    var_r5_13 += 1;
-    if (temp_r3_18 != (u8) var_r29[1].unkC5) {
-        goto block_270;
-    }
-    goto block_282;
-block_270:
-    temp_r29_31 = (BingoPokemon *)((u8 *)&var_r29[1] + 0xC8);
-    var_r5_13 += 1;
-    if (temp_r3_18 != (u8) temp_r29_31->unkC5) {
-        goto block_272;
-    }
-    goto block_282;
-block_272:
-    temp_r29_32 = (BingoPokemon *)((u8 *)temp_r29_31 + 0xC8);
-    var_r5_13 += 1;
-    if (temp_r3_18 != (u8) temp_r29_32->unkC5) {
-        goto block_274;
-    }
-    goto block_282;
-block_274:
-    temp_r29_33 = (BingoPokemon *)((u8 *)temp_r29_32 + 0xC8);
-    var_r5_13 += 1;
-    if (temp_r3_18 != (u8) temp_r29_33->unkC5) {
-        goto block_276;
-    }
-    goto block_282;
-block_276:
-    temp_r29_34 = (BingoPokemon *)((u8 *)temp_r29_33 + 0xC8);
-    var_r5_13 += 1;
-    if (temp_r3_18 != (u8) temp_r29_34->unkC5) {
-        goto block_278;
-    }
-    goto block_282;
-block_278:
-    temp_r29_35 = (BingoPokemon *)((u8 *)temp_r29_34 + 0xC8);
-    var_r5_13 += 1;
-    if (temp_r3_18 != (u8) temp_r29_35->unkC5) {
-        goto block_280;
-    }
-    goto block_282;
-block_280:
-    var_r29 = (BingoPokemon *)((u8 *)temp_r29_35 + 0xC8);
-    var_r5_13 += 1;
-    var_ctr_13 -= 1;
-    if (var_ctr_13 != 0) {
-        goto loop_266;
-    }
-    var_r5_13 = -1U;
-block_282:
-    getPanelTokusei__10bingo_biosFP14BINGO_DATA_dd_Ul(&gBingo, gBingo.unk4, var_r5_13);
+    var_r5_13 = bingoFindPlayerPokemon((s16)var_r26);
+    temp_r26=getPanelTokusei__10bingo_biosFP14BINGO_DATA_dd_Ul(&gBingo, gBingo.unk4, var_r5_13);
 block_283:
-    temp_r3_19 = pokemonDB_GetTokuseiDataId(pokemon_GetPokemonDataId(&mPokemon__6cBingo[var_r5_11]));
+    temp_r3_19 = pokemonDB_GetTokuseiDataId(pokemon_GetPokemonDataId(selectedOther),temp_r26);
     if (temp_r3_19 == 0) {
         goto block_310;
     }
@@ -1274,75 +429,7 @@ block_287:
     var_r26 += 1;
 block_288:
     winSpriteSetDisp(arg1, 0);
-    var_r4_6 = 0;
-loop_289:
-    var_r6_4 = mPokemon__6cBingo;
-    var_r5_14 = 0;
-    temp_r3_20 = var_r4_6 + 1;
-    var_ctr_14 = 2;
-loop_290:
-    if (temp_r3_20 != (u8) var_r6_4->unkC5) {
-        goto block_292;
-    }
-    goto block_306;
-block_292:
-    var_r5_14 += 1;
-    if (temp_r3_20 != (u8) var_r6_4[1].unkC5) {
-        goto block_294;
-    }
-    goto block_306;
-block_294:
-    temp_r6_16 = (BingoPokemon *)((u8 *)&var_r6_4[1] + 0xC8);
-    var_r5_14 += 1;
-    if (temp_r3_20 != (u8) temp_r6_16->unkC5) {
-        goto block_296;
-    }
-    goto block_306;
-block_296:
-    temp_r6_17 = (BingoPokemon *)((u8 *)temp_r6_16 + 0xC8);
-    var_r5_14 += 1;
-    if (temp_r3_20 != (u8) temp_r6_17->unkC5) {
-        goto block_298;
-    }
-    goto block_306;
-block_298:
-    temp_r6_18 = (BingoPokemon *)((u8 *)temp_r6_17 + 0xC8);
-    var_r5_14 += 1;
-    if (temp_r3_20 != (u8) temp_r6_18->unkC5) {
-        goto block_300;
-    }
-    goto block_306;
-block_300:
-    temp_r6_19 = (BingoPokemon *)((u8 *)temp_r6_18 + 0xC8);
-    var_r5_14 += 1;
-    if (temp_r3_20 != (u8) temp_r6_19->unkC5) {
-        goto block_302;
-    }
-    goto block_306;
-block_302:
-    temp_r6_20 = (BingoPokemon *)((u8 *)temp_r6_19 + 0xC8);
-    var_r5_14 += 1;
-    if (temp_r3_20 != (u8) temp_r6_20->unkC5) {
-        goto block_304;
-    }
-    goto block_306;
-block_304:
-    var_r6_4 = (BingoPokemon *)((u8 *)temp_r6_20 + 0xC8);
-    var_r5_14 += 1;
-    var_ctr_14 -= 1;
-    if (var_ctr_14 != 0) {
-        goto loop_290;
-    }
-    var_r5_14 = -1;
-block_306:
-    if (var_r5_14 == -1) {
-        goto block_308;
-    }
-    var_r4_6 += 1;
-    if (var_r4_6 < 4) {
-        goto loop_289;
-    }
-block_308:
+    var_r4_6 = bingoPlayerCount();
     if (var_r26 >= (u32) var_r4_6) {
         goto block_310;
     }
@@ -1352,6 +439,7 @@ block_310:
 }
 
 s32 menuBingoMessageDraw(BingoWindow *arg0, BingoSprite *arg1) {
+    u32 completed;
     BingoPokemon *temp_r4;
     BingoPokemon *temp_r4_2;
     BingoPokemon *temp_r4_3;
@@ -1392,9 +480,6 @@ s32 menuBingoMessageDraw(BingoWindow *arg0, BingoSprite *arg1) {
     s32 var_ctr_4;
     s32 var_ctr_5;
     s32 var_r28;
-    s32 var_r3_3;
-    s32 var_r3_4;
-    s32 var_r3_5;
     s32 var_r4_2;
     u16 *temp_r28_3;
     u16 *temp_r28_4;
@@ -1409,7 +494,7 @@ s32 menuBingoMessageDraw(BingoWindow *arg0, BingoSprite *arg1) {
     u8 temp_r28_2;
     u8 temp_r28_6;
     u8 temp_r28_7;
-    u8 var_r0_2;
+    u32 var_r0_2;
     u8 var_r0_3;
     u8 var_r0_4;
     u8 var_r0_5;
@@ -1595,11 +680,11 @@ loop_42:
             }
             break;
         case -4294911254:                           /* switch 2 */
-            temp_cr0_eq = (u8) gBingo.cells[gBingo.unk134].unk0 == 0;
-            if (temp_cr0_eq == 0) {
+            temp_cr0_eq = (u8) gBingo.cells[gBingo.unk134].unk0;
+            if (temp_cr0_eq != 0) {
                 var_r28 = -1;
                 var_r0_2 = -1U;
-                if (temp_cr0_eq == 0) {
+                if (temp_cr0_eq != 0) {
                     var_r0_2 = getGridGrid__10bingo_biosFP14BINGO_DATA_dd_Ul(&gBingo, gBingo.unk4, (u32) gBingo.cells[gBingo.unk134].unk1);
                 }
                 switch ((s32) var_r0_2) {           /* switch 3; irregular */
@@ -1622,26 +707,16 @@ loop_42:
             break;
         case -4294911242:                           /* switch 2 */
             temp_r28_6 = gBingo.unk12D;
-            var_r3_3 = 0;
-            for (; var_r3_3 < 0xA; var_r3_3++) {
-                if (bingoLineClear(&gBingo, var_r3_3)) {
-                    var_r31 = (BingoPokemon *)((u8 *)var_r31 + 1);
-                }
-            }
+            completed = bingoCompletedLines(&gBingo);
             msgctrlSetValue(0x37, GSmsgGetGSchar((u32) temp_r29));
-            msgctrlSetValue(0x2F, (u32)var_r31 - temp_r28_6);
+            msgctrlSetValue(0x2F, completed - temp_r28_6);
             arg1->unk4C = 0x4276;
             break;
         case -4294911241:                           /* switch 2 */
             temp_r28_7 = gBingo.unk12D;
-            var_r3_4 = 0;
-            for (; var_r3_4 < 0xA; var_r3_4++) {
-                if (bingoLineClear(&gBingo, var_r3_4)) {
-                    var_r31 = (BingoPokemon *)((u8 *)var_r31 + 1);
-                }
-            }
+            completed = bingoCompletedLines(&gBingo);
             msgctrlSetValue(0x37, GSmsgGetGSchar((u32) temp_r29));
-            temp_r28_8 = (u32)var_r31 - temp_r28_7;
+            temp_r28_8 = completed - temp_r28_7;
             msgctrlSetValue(0x2F, temp_r28_8);
             msgctrlSetValue(0x2F, temp_r28_8);
             arg1->unk4C = 0x4276;
@@ -1651,14 +726,9 @@ loop_42:
             arg1->unk4C = 0x4276;
             break;
         case -4294911173:                           /* switch 2 */
-            var_r3_5 = 0;
-            for (; var_r3_5 < 0xA; var_r3_5++) {
-                if (bingoLineClear(&gBingo, var_r3_5)) {
-                    var_r31 = (BingoPokemon *)((u8 *)var_r31 + 1);
-                }
-            }
+            completed = bingoCompletedLines(&gBingo);
             msgctrlSetValue(0x37, GSmsgGetGSchar((u32) temp_r29));
-            msgctrlSetValue(0x2F, (u32) var_r31);
+            msgctrlSetValue(0x2F, completed);
             arg1->unk4C = 0x4276;
             break;
         case -4294911265:                           /* switch 2 */
@@ -2029,7 +1099,7 @@ block_146:
     if (var_r29_end == temp_r29) {
         goto block_150;
     }
-    windowDrawSprite((s16) (var_r30 * 0x47), 0, arg0, (BingoSprite *)0x2E2, 0, winSpriteGetLayerID(arg0, arg1));
+    windowDrawSprite((s16) (var_r30 * 0x47), 0, arg0, (u16)0x2E2, 0, winSpriteGetLayerID(arg0, arg1));
 block_150:
     temp_r28 = FlashSystemGetNowFrame(0x1ECC3000U);
     if ((u32) (FlashSystemGetEndFrame(0x1ECC3000U) - 0x23) > temp_r28) {
@@ -2049,7 +1119,7 @@ block_152:
     if (var_r29_end == temp_r29_2) {
         goto block_156;
     }
-    windowDrawSprite(0, (s16) ((7 - var_r30) * 0x44), arg0, (BingoSprite *)0x2E1, 0, winSpriteGetLayerID(arg0, arg1));
+    windowDrawSprite(0, (s16) ((7 - var_r30) * 0x44), arg0, (u16)0x2E1, 0, winSpriteGetLayerID(arg0, arg1));
 block_156:
     temp_r28_2 = FlashSystemGetNowFrame(0x1ECB3000U);
     if ((u32) (FlashSystemGetEndFrame(0x1ECB3000U) - 0x23) > temp_r28_2) {
@@ -2069,7 +1139,7 @@ block_158:
     if (var_r29_end == temp_r29_3) {
         goto block_162;
     }
-    windowDrawSprite(0, 0, arg0, (BingoSprite *)0x2E4, 0, winSpriteGetLayerID(arg0, arg1));
+    windowDrawSprite(0, 0, arg0, (u16)0x2E4, 0, winSpriteGetLayerID(arg0, arg1));
 block_162:
     temp_r28_3 = FlashSystemGetNowFrame(0x1ECE3000U);
     if ((u32) (FlashSystemGetEndFrame(0x1ECE3000U) - 0x23) > temp_r28_3) {
@@ -2089,7 +1159,7 @@ block_164:
     if (var_r29_end == temp_r29_4) {
         goto block_168;
     }
-    windowDrawSprite(0, 0, arg0, (BingoSprite *)0x2E3, 0, winSpriteGetLayerID(arg0, arg1));
+    windowDrawSprite(0, 0, arg0, (u16)0x2E3, 0, winSpriteGetLayerID(arg0, arg1));
 block_168:
     temp_r28_4 = FlashSystemGetNowFrame(0x1ECD3000U);
     if ((u32) (FlashSystemGetEndFrame(0x1ECD3000U) - 0x23) > temp_r28_4) {
@@ -2207,7 +1277,7 @@ s32 menuBingoScoreDraw(BingoWindow *arg0, BingoSprite *arg1) {
                 temp_r28 = FlashSystemGetNowFrame(0x1F583000U);
                 temp_r27 = FlashSystemGetEndFrame(0x1F583000U);
                 if (temp_r27 != temp_r28) {
-                    windowDrawSprite(0, (s16) (((0xA - (var_r31 + 1)) * 0x17) + 8), arg0, (BingoSprite *)0x324, 0, winSpriteGetLayerID(arg0, arg1));
+                    windowDrawSprite(0, (s16) (((0xA - (var_r31 + 1)) * 0x17) + 8), arg0, (u16)0x324, 0, winSpriteGetLayerID(arg0, arg1));
                 } else {
                     winSpriteSetDisp(arg1, 1);
                 }
@@ -2262,29 +1332,12 @@ s32 menuBingoScoreDraw(BingoWindow *arg0, BingoSprite *arg1) {
 }
 
 s32 menuBingoPkmDraw(BingoWindow *arg0, BingoSprite *arg1) {
-    BingoPokemon *temp_r4_2;
-    BingoPokemon *temp_r4_3;
-    BingoPokemon *temp_r4_4;
-    BingoPokemon *temp_r4_5;
-    BingoPokemon *temp_r4_6;
-    BingoPokemon *temp_r7;
-    BingoPokemon *temp_r7_2;
-    BingoPokemon *temp_r7_3;
-    BingoPokemon *temp_r7_4;
-    BingoPokemon *temp_r7_5;
-    BingoPokemon *var_r4;
-    BingoPokemon *var_r7;
     BingoState *var_r27;
     f32 var_f1;
     s16 temp_r4;
-    s32 var_ctr;
-    s32 var_ctr_2;
     s32 var_r29;
     s32 var_r5;
-    s32 var_r6;
     u32 temp_r0;
-    u32 temp_r3;
-    u32 temp_r3_2;
     u32 var_r28;
     u32 var_r31;
     u32 var_r3;
@@ -2313,57 +1366,7 @@ s32 menuBingoPkmDraw(BingoWindow *arg0, BingoSprite *arg1) {
         var_r31 += 1;
         /* fallthrough */
     case 0x53D:                                     /* switch 1 */
-        var_r29 = 0;
-        var_r4 = mPokemon__6cBingo;
-        var_ctr = 2;
-loop_9:
-        temp_r3 = var_r31 + 2;
-        if (temp_r3 == (u8) var_r4->unkC5) {
-
-        } else {
-            var_r29 += 1;
-            if (temp_r3 == (u8) var_r4[1].unkC5) {
-
-            } else {
-                temp_r4_2 = (BingoPokemon *)((u8 *)&var_r4[1] + 0xC8);
-                var_r29 += 1;
-                if (temp_r3 == (u8) temp_r4_2->unkC5) {
-
-                } else {
-                    temp_r4_3 = (BingoPokemon *)((u8 *)temp_r4_2 + 0xC8);
-                    var_r29 += 1;
-                    if (temp_r3 == (u8) temp_r4_3->unkC5) {
-
-                    } else {
-                        temp_r4_4 = (BingoPokemon *)((u8 *)temp_r4_3 + 0xC8);
-                        var_r29 += 1;
-                        if (temp_r3 == (u8) temp_r4_4->unkC5) {
-
-                        } else {
-                            temp_r4_5 = (BingoPokemon *)((u8 *)temp_r4_4 + 0xC8);
-                            var_r29 += 1;
-                            if (temp_r3 == (u8) temp_r4_5->unkC5) {
-
-                            } else {
-                                temp_r4_6 = (BingoPokemon *)((u8 *)temp_r4_5 + 0xC8);
-                                var_r29 += 1;
-                                if (temp_r3 == (u8) temp_r4_6->unkC5) {
-
-                                } else {
-                                    var_r4 = (BingoPokemon *)((u8 *)temp_r4_6 + 0xC8);
-                                    var_r29 += 1;
-                                    var_ctr -= 1;
-                                    if (var_ctr == 0) {
-                                        var_r29 = -1;
-                                    } else {
-                                                                }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        var_r29=bingoFindPokemon(var_r31+2);
         winSpriteSetDisp(arg1, 0);
         if (var_r29 < 0) {
             var_r28 = 0U;
@@ -2372,8 +1375,8 @@ loop_27:
             if (((u8) var_r27->cells[0].unk2 != 0) && ((u8) var_r27->cells[0].unk0 != 0) && (getGridGrid__10bingo_biosFP14BINGO_DATA_dd_Ul(&gBingo, gBingo.unk4, (u32) var_r27->cells[0].unk1) == 1)) {
                 var_r0 = 1;
             } else {
-                var_r27 = (BingoState *)((u8 *)var_r27 + 8);
                 var_r28 += 1;
+                var_r27 = (BingoState *)((u8 *)var_r27 + 8);
                 if (var_r28 >= 0x10U) {
                     var_r0 = 0;
                 } else {
@@ -2408,66 +1411,7 @@ loop_27:
         /* fallthrough */
     case 0x540:                                     /* switch 1 */
         winSpriteSetDisp(arg1, 0);
-        var_r5 = 0;
-loop_46:
-        var_r7 = mPokemon__6cBingo;
-        var_r6 = 0;
-        temp_r3_2 = var_r5 + 1;
-        var_ctr_2 = 2;
-loop_47:
-        if (temp_r3_2 == (u8) var_r7->unkC5) {
-
-        } else {
-            var_r6 += 1;
-            if (temp_r3_2 == (u8) var_r7[1].unkC5) {
-
-            } else {
-                temp_r7 = (BingoPokemon *)((u8 *)&var_r7[1] + 0xC8);
-                var_r6 += 1;
-                if (temp_r3_2 == (u8) temp_r7->unkC5) {
-
-                } else {
-                    temp_r7_2 = (BingoPokemon *)((u8 *)temp_r7 + 0xC8);
-                    var_r6 += 1;
-                    if (temp_r3_2 == (u8) temp_r7_2->unkC5) {
-
-                    } else {
-                        temp_r7_3 = (BingoPokemon *)((u8 *)temp_r7_2 + 0xC8);
-                        var_r6 += 1;
-                        if (temp_r3_2 == (u8) temp_r7_3->unkC5) {
-
-                        } else {
-                            temp_r7_4 = (BingoPokemon *)((u8 *)temp_r7_3 + 0xC8);
-                            var_r6 += 1;
-                            if (temp_r3_2 == (u8) temp_r7_4->unkC5) {
-
-                            } else {
-                                temp_r7_5 = (BingoPokemon *)((u8 *)temp_r7_4 + 0xC8);
-                                var_r6 += 1;
-                                if (temp_r3_2 == (u8) temp_r7_5->unkC5) {
-
-                                } else {
-                                    var_r7 = (BingoPokemon *)((u8 *)temp_r7_5 + 0xC8);
-                                    var_r6 += 1;
-                                    var_ctr_2 -= 1;
-                                    if (var_ctr_2 == 0) {
-                                        var_r6 = -1;
-                                    } else {
-                                        goto loop_47;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if (var_r6 != -1) {
-            var_r5 += 1;
-            if (var_r5 < 4) {
-                goto loop_46;
-            }
-        }
+        var_r5=bingoPlayerCount();
         if ((var_r5 > 1) && (var_r31 == (u8) gBingo.unk12C)) {
             if ((s32) gBingo.unk108 != 0) {
                 var_r0_2 = 0;
@@ -2493,7 +1437,7 @@ loop_47:
                 if (var_f1 < 0.0f) {
                     var_f1 = 0.0f;
                 }
-                arg1->unk67 = (u8) (s32) var_f1;
+                arg1->unk67 = (s32) var_f1;
                 winSpriteSetDisp(arg1, 1);
             }
         }
@@ -2760,6 +1704,7 @@ static inline u8 bingoCanOpenPanel(BingoState *state) {
 #pragma inline_max_size(100000)
 #pragma inline_max_total_size(100000)
 s32 menuBingoSheetBtn(BingoWindow *arg0) {
+    u8 previousLines;
     BingoCell *temp_r29_3;
     BingoCell *temp_r29_4;
     BingoCell *temp_r29_5;
@@ -2867,7 +1812,6 @@ s32 menuBingoSheetBtn(BingoWindow *arg0) {
     BingoPokemon *var_r9_3;
     BingoPokemon *var_r9_4;
     BingoState *var_r29;
-    BingoState *var_r6_11;
     BingoState *var_r6_8;
     s16 temp_r0_2;
     s16 temp_r3_9;
@@ -3022,7 +1966,7 @@ s32 menuBingoSheetBtn(BingoWindow *arg0) {
     u8 var_r0_6;
     u8 var_r0_7;
     u8 var_r3_3;
-    u8 var_r4_10;
+    u32 var_r4_10;
     u8 var_r4_4;
     u8 var_r5;
     u8 var_r5_2;
@@ -3044,7 +1988,7 @@ s32 menuBingoSheetBtn(BingoWindow *arg0) {
             if ((u8) gBingo.cells[gBingo.unk134].unk0 == 0) {
                 gBingo.unk10C = 1;
                 var_r6 = mPokemon__6cBingo;
-                setStaticIdx__10bingo_biosFUcUc(bingoFindPokemon(gBingo.unk12C + 1), gBingo.cells[gBingo.unk134].unk1);
+                { u8 panel=gBingo.cells[gBingo.unk134].unk1; setStaticIdx__10bingo_biosFUcUc(bingoFindPlayerPokemon(gBingo.unk12C),panel); }
                 setStaticBall__10bingo_biosFUc(gBingo.unk129);
             }
             temp_r0 = gBingo.unk144 + 1;
@@ -3094,7 +2038,7 @@ s32 menuBingoSheetBtn(BingoWindow *arg0) {
                         gBingo.unk10C = 1;
                         var_r6_2 = mPokemon__6cBingo;
                         var_r5_2 = 0;
-                        setStaticIdx__10bingo_biosFUcUc(bingoFindPokemon(gBingo.unk12C + 1), gBingo.cells[gBingo.unk134].unk1);
+                        { u8 panel=gBingo.cells[gBingo.unk134].unk1; setStaticIdx__10bingo_biosFUcUc(bingoFindPlayerPokemon(gBingo.unk12C),panel); }
                         setStaticBall__10bingo_biosFUc(gBingo.unk129);
                         temp_r0_4 = gBingo.unk144 + 1;
                         gBingo.unk144 = temp_r0_4;
@@ -3132,8 +2076,9 @@ s32 menuBingoSheetBtn(BingoWindow *arg0) {
                     }
                     var_r3 = 0;
                     var_r4 = 0;
+                    previousLines = gBingo.unk12D;
                     var_r3=bingoCompletedLines(&gBingo);
-                    if ((s32) (var_r3 - gBingo.unk12D) != 0) {
+                    if ((s32) (var_r3 - previousLines) != 0) {
                         GSsndPlayNow(0x575);
                     } else {
                         GSsndPlayNow(0x574);
@@ -3149,8 +2094,7 @@ s32 menuBingoSheetBtn(BingoWindow *arg0) {
 loop_156:
                             var_r7 = mPokemon__6cBingo;
                             var_r5_3 = 0;
-                            temp_r3_5 = var_r6_3 + 1;
-                            var_r5_3=bingoFindPokemon(temp_r3_5);
+                            var_r5_3=bingoFindPlayerPokemon(var_r6_3);
                             if (var_r5_3 != -1) {
                                 var_r6_3 += 1;
                                 if (var_r6_3 < 4) {
@@ -3164,8 +2108,9 @@ loop_156:
                         }
                         var_r3_2 = 0;
                         var_r4_2 = 0;
+                        previousLines = gBingo.unk12D;
                         var_r3_2=bingoCompletedLines(&gBingo);
-                        if ((s32) (var_r3_2 - gBingo.unk12D) != 0) {
+                        if ((s32) (var_r3_2 - previousLines) != 0) {
                             GSsndPlayNow(0x575);
                         } else {
                             GSsndPlayNow(0x574);
@@ -3215,12 +2160,13 @@ loop_156:
         case 3:                                     /* switch 1 */
             var_r4_4 = 0;
             var_r5_5 = 0;
+            previousLines = gBingo.unk12D;
             var_r4_4=bingoCompletedLines(&gBingo);
             if ((s32) var_r4_4 == 0xA) {
                 gBingo.unk108 = 2;
-                gBingo.unk12A += (u8) (var_r4_4 - gBingo.unk12D);
+                gBingo.unk12A += (u8) (var_r4_4 - previousLines);
             } else {
-                temp_r6_19 = var_r4_4 - gBingo.unk12D;
+                temp_r6_19 = var_r4_4 - previousLines;
                 gBingo.unk12F = gBingo.unk12A;
                 if (temp_r6_19 == 0) {
                     temp_r0_10 = gBingo.unk144 + 1;
@@ -3248,8 +2194,9 @@ loop_156:
         case 4:                                     /* switch 1 */
             var_r4_5 = 0;
             var_r5_6 = 0;
+            previousLines = gBingo.unk12D;
             var_r4_5=bingoCompletedLines(&gBingo);
-            if ((s32) (var_r4_5 - gBingo.unk12D) == 0) {
+            if ((s32) (var_r4_5 - previousLines) == 0) {
                 if ((u8) gBingo.unk12A != 0) {
                     temp_r0_12 = gBingo.unk144 + 1;
                     gBingo.unk144 = temp_r0_12;
@@ -3287,8 +2234,7 @@ loop_156:
 loop_472:
                 var_r8_2 = mPokemon__6cBingo;
                 var_r7_2 = 0;
-                temp_r4_3 = var_r6_5 + 1;
-                var_r7_2=bingoFindPokemon(temp_r4_3);
+                var_r7_2=bingoFindPlayerPokemon(var_r6_5);
                 if (var_r7_2 != -1) {
                     var_r6_5 += 1;
                     if (var_r6_5 < 4) {
@@ -3311,8 +2257,7 @@ loop_472:
                 case 0:                             /* switch 4 */
                     var_r7_3 = mPokemon__6cBingo;
                     var_r4_6 = 0;
-                    temp_r3_6 = gBingo.unk12C + 1;
-                    var_r4_6=bingoFindPokemon(temp_r3_6);
+                    var_r4_6=bingoFindPlayerPokemon(gBingo.unk12C);
                     if (var_r4_6 >= 0) {
                         temp_r5_9 = &mPokemon__6cBingo[var_r4_6];
                         temp_r5_9->unkC6 += 1;
@@ -3330,6 +2275,7 @@ loop_472:
                         gBingo.unk124 = -1;
                     }
                     break;
+                case -1:
                 case 1:                             /* switch 4 */
                     gBingo.unk124 = -1;
                     break;
@@ -3347,8 +2293,7 @@ loop_590:
 loop_591:
                     var_r9 = mPokemon__6cBingo;
                     var_r8_3 = 0;
-                    temp_r5_10 = var_r7_4 + 1;
-                    var_r8_3=bingoFindPokemon(temp_r5_10);
+                    var_r8_3=bingoFindPlayerPokemon(var_r7_4);
                     if (var_r8_3 != -1) {
                         var_r7_4 += 1;
                         if (var_r7_4 < 4) {
@@ -3358,18 +2303,15 @@ loop_591:
                     if (var_r3_4 < (u32) var_r7_4) {
                         var_r8_4 = mPokemon__6cBingo;
                         var_r7_5 = 0;
-                        temp_r5_11 = var_r3_4 + 1;
-                        var_r7_5=bingoFindPokemon(temp_r5_11);
+                        var_r7_5=bingoFindPlayerPokemon(var_r3_4);
                         var_r9_2 = mPokemon__6cBingo;
                         var_r8_5 = 0;
                         temp_r7_15 = &mPokemon__6cBingo[var_r7_5];
-                        temp_r5_12 = var_r3_4 + 1;
-                        var_r8_5=bingoFindPokemon(temp_r5_12);
+                        var_r8_5=bingoFindPlayerPokemon(var_r3_4);
                         var_r9_3 = mPokemon__6cBingo;
                         var_r8_6 = 0;
                         temp_r7_15->unkC4 += mPokemon__6cBingo[var_r8_5].unkC6;
-                        temp_r5_13 = var_r3_4 + 1;
-                        var_r8_6=bingoFindPokemon(temp_r5_13);
+                        var_r8_6=bingoFindPlayerPokemon(var_r3_4);
                         var_r3_4 += 1;
                         mPokemon__6cBingo[var_r8_6].unkC6 = 0;
                         goto loop_590;
@@ -3381,6 +2323,7 @@ loop_591:
                     }
                     gBingo.unk124 = -1;
                     break;
+                case -1:
                 case 1:                             /* switch 5 */
                     var_r6_6 = 0U;
                     gBingo.unk12A = gBingo.unk12F;
@@ -3389,8 +2332,7 @@ loop_633:
 loop_634:
                     var_r8_7 = mPokemon__6cBingo;
                     var_r7_6 = 0;
-                    temp_r3_7 = var_r4_7 + 1;
-                    var_r7_6=bingoFindPokemon(temp_r3_7);
+                    var_r7_6=bingoFindPlayerPokemon(var_r4_7);
                     if (var_r7_6 != -1) {
                         var_r4_7 += 1;
                         if (var_r4_7 < 4) {
@@ -3400,8 +2342,7 @@ loop_634:
                     if (var_r6_6 < (u32) var_r4_7) {
                         var_r7_7 = mPokemon__6cBingo;
                         var_r4_8 = 0;
-                        temp_r3_8 = var_r6_6 + 1;
-                        var_r4_8=bingoFindPokemon(temp_r3_8);
+                        var_r4_8=bingoFindPlayerPokemon(var_r6_6);
                         var_r6_6 += 1;
                         mPokemon__6cBingo[var_r4_8].unkC6 = 0;
                         goto loop_633;
@@ -3426,8 +2367,7 @@ loop_678:
             if (var_r7_8 < 4) {
                 var_r9_4 = mPokemon__6cBingo;
                 var_r8_8 = 0;
-                temp_r4_4 = var_r7_8 + 1;
-                var_r8_8=bingoFindPokemon(temp_r4_4);
+                var_r8_8=bingoFindPlayerPokemon(var_r7_8);
                 if (var_r8_8 != -1) {
                     var_r7_8 += 1;
                     var_r6_7 += mPokemon__6cBingo[var_r8_8].unkC4;
@@ -3464,18 +2404,7 @@ block_734:
             }
             break;
         case 8:                                     /* switch 1 */
-            var_r6_9 = 0;
-loop_791:
-            var_r8_9 = mPokemon__6cBingo;
-            var_r7_9 = 0;
-            temp_r4_7 = var_r6_9 + 1;
-            var_r7_9=bingoFindPokemon(temp_r4_7);
-            if (var_r7_9 != -1) {
-                var_r6_9 += 1;
-                if (var_r6_9 < 4) {
-                    goto loop_791;
-                }
-            }
+            var_r6_9 = bingoPlayerCount();
             if ((var_r6_9 < 2) || ((s32) (temp_r3 & 0x10) != 0)) {
                 temp_r0_22 = gBingo.unk144 + 1;
                 gBingo.unk144 = temp_r0_22;
@@ -3525,15 +2454,13 @@ loop_791:
             var_r8_10 = mPokemon__6cBingo;
             var_r5_9 = 0;
             var_r6_10 = mPokemon__6cBingo;
-            temp_r4_8 = gBingo.unk12C + 1;
-            var_r5_9=bingoFindPokemon(temp_r4_8);
+            var_r5_9=bingoFindPlayerPokemon(gBingo.unk12C);
             if ((u8) mPokemon__6cBingo[var_r5_9].unkC4 != 0) {
                 temp_r0_25 = gBingo.unk124 - 1;
                 switch (temp_r0_25) {               /* switch 7; irregular */
                 case 0:                             /* switch 7 */
                     var_r5_10 = 0;
-                    temp_r4_9 = gBingo.unk12C + 1;
-                    var_r5_10=bingoFindPokemon(temp_r4_9);
+                    var_r5_10=bingoFindPlayerPokemon(gBingo.unk12C);
                     if (var_r5_10 >= 0) {
                         temp_r5_19 = &mPokemon__6cBingo[var_r5_10];
                         temp_r4_10 = temp_r5_19->unkC4;
@@ -3541,7 +2468,6 @@ loop_791:
                             temp_r5_19->unkC4 = temp_r4_10 - 1;
                         }
                     }
-                    var_r6_11 = &gBingo;
                     var_r5_11 = 0;
                     var_r4_10 = 0;
                     gBingo.unk138 = gBingo.unk134;
@@ -3549,14 +2475,14 @@ loop_791:
                     for(var_r5_11=0;var_r5_11<10;++var_r5_11) {
                         var_r0_7=bingoLineClear(&gBingo,var_r5_11);
                         if(var_r0_7)++var_r4_10;
-                        var_r6_11->lineState[0]=var_r0_7;
-                        var_r6_11->lineEffects[0]=0;
-                        var_r6_11=(BingoState*)((u8*)var_r6_11+1);
+                        gBingo.lineState[var_r5_11]=var_r0_7;
+                        gBingo.lineEffects[var_r5_11]=0;
                     }
                     gBingo.unk144 = 0;
                     gBingo.unk12D = var_r4_10;
                     gBingo.unk124 = -1;
                     break;
+                case -1:
                 case 1:                             /* switch 7 */
                     gBingo.unk144 = 7;
                     gBingo.unk124 = -1;
@@ -4084,7 +3010,9 @@ void menuBingoInit(void) {
 
 void setStepMessage__6cBingoFv(BingoState *arg0) {
     BingoState *var_r29;
-    s32 temp_cr0_eq;
+    u8 previousLines;
+    u8 previousPlayers;
+    u8 temp_cr0_eq;
     s32 temp_r0;
     s32 temp_r0_2;
     s32 temp_r0_3;
@@ -4113,7 +3041,7 @@ void setStepMessage__6cBingoFv(BingoState *arg0) {
     u8 temp_r0_6;
     u8 temp_r24;
     u8 temp_r3_2;
-    u8 var_r0;
+    s32 var_r0;
     u8 var_r0_2;
     u8 var_r4_2;
     void *temp_r3_6;
@@ -4129,7 +3057,7 @@ void setStepMessage__6cBingoFv(BingoState *arg0) {
     switch (temp_r0) {                               /* jump table: jtbl_recovery_6 */
 case 1:
 loop_4:
-    var_r6 = bingoFindPokemon(var_r4 + 1);
+    var_r6 = bingoFindPlayerPokemon(var_r4);
 
     if (var_r6 == -1) {
         goto block_23;
@@ -4141,12 +3069,12 @@ loop_4:
 block_23:
     arg0->unk148 = (u8) var_r4;
     temp_r0_2 = arg0->unk134;
-    temp_cr0_eq = (u8) arg0->cells[temp_r0_2].unk0 == 0;
-    if (temp_cr0_eq != 0) {
+    temp_cr0_eq = arg0->cells[temp_r0_2].unk0;
+    if (temp_cr0_eq == 0) {
         goto block_115;
     }
-    var_r0 = -1U;
-    if (temp_cr0_eq != 0) {
+    var_r0 = -1;
+    if (temp_cr0_eq == 0) {
         goto block_26;
     }
     var_r0 = getGridGrid__10bingo_biosFP14BINGO_DATA_dd_Ul(arg0, arg0->unk4, (u32) arg0->cells[temp_r0_2].unk1);
@@ -4202,8 +3130,9 @@ block_41:
     arg0->unk12A += 2;
 block_42:
     arg0->cells[arg0->unk134].unk2 = 1;
+    previousLines = arg0->unk12D;
     var_r3 = bingoCompletedLines(arg0);
-    if ((s32) (var_r3 - arg0->unk12D) == 0) {
+    if ((s32) (var_r3 - previousLines) == 0) {
         goto block_107;
     }
     GSsndPlayNow(0x575);
@@ -4215,7 +3144,7 @@ block_108:
 block_109:
     GSthreadSwitch();
 loop_110:
-    if (0.0f < arg0->cells[arg0->unk134].unk4) {
+    if (0.0 < arg0->cells[arg0->unk134].unk4) {
         goto block_109;
     }
     FlashSystemSetNowFrameLabel(0x1F573000U, "ball_start");
@@ -4241,13 +3170,10 @@ block_115:
     }
     temp_r3_3 = fightEncount(0xC);
     arg0->unk130 = (u8) temp_r3_3;
-    if ((s32) temp_r3_3 >= 5) {
-        goto block_147;
+    switch (temp_r3_3) {
+    case 3: case 4: goto block_119;
+    default: goto block_147;
     }
-    if ((s32) temp_r3_3 >= 3) {
-        goto block_119;
-    }
-    goto block_147;
 block_119:
     menuOpen(0xDC, 0);
     menuOpen(0xC7, 0);
@@ -4328,13 +3254,10 @@ block_158:
     return;
 block_159:
     temp_r0_6 = arg0->unk130;
-    if ((s32) temp_r0_6 >= 5) {
-        goto block_163;
+    switch (temp_r0_6) {
+    case 3: case 4: goto block_162;
+    default: goto block_163;
     }
-    if ((s32) temp_r0_6 >= 3) {
-        goto block_162;
-    }
-    goto block_163;
 block_162:
     arg0->unk13C = 0xDAF4;
     return;
@@ -4342,8 +3265,9 @@ block_163:
     arg0->unk13C = 0xDAEA;
     return;
 case 3:
+    previousLines = arg0->unk12D;
     var_r4 = bingoCompletedLines(arg0);
-    temp_r0_7 = var_r4 - arg0->unk12D;
+    temp_r0_7 = var_r4 - previousLines;
     if (temp_r0_7 == 0) {
         goto block_234;
     }
@@ -4364,9 +3288,10 @@ block_233:
     arg0->unk13C = 0xDAF6;
 block_234:
     GSthreadSwitch();
+    previousPlayers = arg0->unk148;
     var_r6_2 = 0;
 loop_235:
-    var_r7_4 = bingoFindPokemon(var_r6_2 + 1);
+    var_r7_4 = bingoFindPlayerPokemon(var_r6_2);
 
     if (var_r7_4 == -1) {
         goto block_254;
@@ -4376,7 +3301,7 @@ loop_235:
         goto loop_235;
     }
 block_254:
-    if (var_r6_2 == (s32) arg0->unk148) {
+    if (var_r6_2 == (s32) previousPlayers) {
         goto block_416;
     }
     var_r29 = arg0;
@@ -4403,7 +3328,7 @@ loop_261:
     temp_r3_7 = menuItemBiosGetPtr(0xFA, 0x7FFU);
     var_r6_3 = 0;
 loop_263:
-    var_r7_5 = bingoFindPokemon(var_r6_3 + 1);
+    var_r7_5 = bingoFindPlayerPokemon(var_r6_3);
 
     if (var_r7_5 == -1) {
         goto block_282;
@@ -4438,8 +3363,9 @@ block_286:
     }
     return;
 case 4:
+    previousLines = arg0->unk12D;
     var_r4 = bingoCompletedLines(arg0);
-    if ((s32) (var_r4 - arg0->unk12D) == 0) {
+    if ((s32) (var_r4 - previousLines) == 0) {
         goto block_416;
     }
     arg0->unk13C = 0xDAF7;
@@ -4457,7 +3383,8 @@ case 5:
     if (temp_r3_10 != 0) {
         goto block_360;
     }
-    *(s16 *)((u8 *)menuItemBiosGetPtr(0xF9, 0x7FDU) + 8) = (s16) (arg0->unk12C * 0x50);
+    temp_r3_7 = menuItemBiosGetPtr(0xF9, 0x7FDU);
+    *(s16 *)((u8 *)temp_r3_7 + 8) = (s16) (arg0->unk12C * 0x50);
     FlashSystemSetNowFrameLabel(0x1F573000U, "ep1_start");
     FlashSystemSetPlayFrameLabel(0x1F573000U, "ep1_start", "ep1_end");
     menuOpen(0xF9, 0);
@@ -4514,7 +3441,7 @@ block_370:
     return;
 case 8:
 loop_372:
-    var_r6_5 = bingoFindPokemon(var_r4 + 1);
+    var_r6_5 = bingoFindPlayerPokemon(var_r4);
 
     if (var_r6_5 == -1) {
         goto block_391;
@@ -4538,7 +3465,7 @@ case 9:
     arg0->unk124 = menuSubOpenSelect2(0, MenuPkmMsgIdx__6cBingo, 3, 0x1BD, 0x104, 0, 3, 0) + 1;
     return;
 case 10:
-    var_r4 = bingoFindPokemon(arg0->unk12C + 1);
+    var_r4 = bingoFindPlayerPokemon(arg0->unk12C);
 
     if ((u8) mPokemon__6cBingo[var_r4].unkC4 != 0) {
         goto block_414;
@@ -4990,7 +3917,7 @@ block_116:
     if (var_r0_5 == 0) {
         goto block_118;
     }
-    windowDrawSprite(0x15, -0x10, arg2, (BingoSprite *)0x39A, 0, 7);
+    windowDrawSprite(0x15, -0x10, arg2, (u16)0x39A, 0, 7);
 block_118:
     temp_r3_2 = arg0->unk134;
     if ((u8) arg0->unk122 == 0) {
@@ -5138,7 +4065,7 @@ block_164:
     if (var_r0_6 == 0) {
         goto block_166;
     }
-    windowDrawSprite(0x15, 0x37, arg2, (BingoSprite *)0x39C, 0, 7);
+    windowDrawSprite(0x15, 0x37, arg2, (u16)0x39C, 0, 7);
 block_166:
     temp_r3_3 = arg0->unk134;
     if ((u8) arg0->unk122 == 0) {
@@ -5286,7 +4213,7 @@ block_212:
     if (var_r0_7 == 0) {
         goto block_214;
     }
-    windowDrawSprite(-0xF, 0x14, arg2, (BingoSprite *)0x39B, 0, 7);
+    windowDrawSprite(-0xF, 0x14, arg2, (u16)0x39B, 0, 7);
 block_214:
     temp_r3_4 = arg0->unk134;
     if ((u8) arg0->unk122 == 0) {
@@ -5434,7 +4361,7 @@ block_260:
     if (var_r0_8 == 0) {
         goto block_262;
     }
-    windowDrawSprite(0x39, 0x14, arg2, (BingoSprite *)0x39D, 0, 7);
+    windowDrawSprite(0x39, 0x14, arg2, (u16)0x39D, 0, 7);
 block_262:
     return;
 }
@@ -5711,289 +4638,68 @@ void dispShufflePanel__6cBingoFUlP14tagWINDOW_WORKP14tagSPRITE_WORK(BingoState *
 
 void dispPkmPanel__6cBingoFUlP14tagWINDOW_WORKP14tagSPRITE_WORK(BingoState *arg0, u32 arg1, BingoWindow *arg2, BingoSprite *arg3) {
     BingoSprite sp18;
-    f32 sp14;
-    f32 sp10;
+    f32 facePosition[2];
     s32 sp8;
     BingoPokemon *temp_r28;
-    BingoPokemon *temp_r5;
-    BingoPokemon *temp_r5_2;
-    BingoPokemon *temp_r5_3;
-    BingoPokemon *temp_r5_4;
-    BingoPokemon *temp_r5_5;
     BingoPokemon *temp_r5_6;
-    BingoPokemon *temp_r7;
-    BingoPokemon *temp_r7_10;
-    BingoPokemon *temp_r7_2;
-    BingoPokemon *temp_r7_3;
-    BingoPokemon *temp_r7_4;
-    BingoPokemon *temp_r7_5;
-    BingoPokemon *temp_r7_6;
-    BingoPokemon *temp_r7_7;
-    BingoPokemon *temp_r7_8;
-    BingoPokemon *temp_r7_9;
-    BingoPokemon *var_r5;
-    BingoPokemon *var_r7;
-    BingoPokemon *var_r7_2;
     BingoSprite *temp_r25_2;
     BingoSprite *temp_r6;
     BingoState *var_r3;
     f32 temp_f1;
     f32 var_f1;
-    s16 temp_r31;
+    s32 temp_r31;
     s32 temp_r27;
-    s32 temp_r3;
-    s32 var_ctr;
-    s32 var_ctr_2;
-    s32 var_ctr_3;
-    s32 var_ctr_4;
     s32 var_r28;
     s32 var_r31;
     s32 var_r4;
     s32 var_r5_2;
     s32 var_r5_3;
-    s32 var_r6;
-    s32 var_r6_2;
-    u16 temp_r25;
+    u32 temp_r25;
     u16 temp_r3_3;
     u16 temp_r3_4;
-    u32 temp_r4;
-    u32 temp_r4_2;
-    u32 temp_r4_3;
     u32 var_r3_2;
     u8 temp_r3_2;
 
-    var_r28 = 0;
     temp_r27 = winSpriteGetLayerID(arg2, arg3);
-    var_r5 = mPokemon__6cBingo;
-    temp_r4 = arg1 + 1;
-    var_ctr = 2;
-loop_1:
-    if (temp_r4 == (u8) var_r5->unkC5) {
-
-    } else {
-        var_r28 += 1;
-        if (temp_r4 == (u8) var_r5[1].unkC5) {
-
-        } else {
-            temp_r5 = (BingoPokemon *)((u8 *)&var_r5[1] + 0xC8);
-            var_r28 += 1;
-            if (temp_r4 == (u8) temp_r5->unkC5) {
-
-            } else {
-                temp_r5_2 = (BingoPokemon *)((u8 *)temp_r5 + 0xC8);
-                var_r28 += 1;
-                if (temp_r4 == (u8) temp_r5_2->unkC5) {
-
-                } else {
-                    temp_r5_3 = (BingoPokemon *)((u8 *)temp_r5_2 + 0xC8);
-                    var_r28 += 1;
-                    if (temp_r4 == (u8) temp_r5_3->unkC5) {
-
-                    } else {
-                        temp_r5_4 = (BingoPokemon *)((u8 *)temp_r5_3 + 0xC8);
-                        var_r28 += 1;
-                        if (temp_r4 == (u8) temp_r5_4->unkC5) {
-
-                        } else {
-                            temp_r5_5 = (BingoPokemon *)((u8 *)temp_r5_4 + 0xC8);
-                            var_r28 += 1;
-                            if (temp_r4 == (u8) temp_r5_5->unkC5) {
-
-                            } else {
-                                var_r5 = (BingoPokemon *)((u8 *)temp_r5_5 + 0xC8);
-                                var_r28 += 1;
-                                var_ctr -= 1;
-                                if (var_ctr == 0) {
-                                    var_r28 = -1;
-                                } else {
-                                    goto loop_1;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    var_r28 = bingoFindPlayerPokemon(arg1);
     if (var_r28 >= 0) {
         var_r31 = 0;
-        var_r5_2 = 0;
-loop_19:
-        var_r7 = mPokemon__6cBingo;
-        var_r6 = 0;
-        temp_r4_2 = var_r5_2 + 1;
-        var_ctr_2 = 2;
-loop_20:
-        if (temp_r4_2 == (u8) var_r7->unkC5) {
-
-        } else {
-            var_r6 += 1;
-            if (temp_r4_2 == (u8) var_r7[1].unkC5) {
-
-            } else {
-                temp_r7 = (BingoPokemon *)((u8 *)&var_r7[1] + 0xC8);
-                var_r6 += 1;
-                if (temp_r4_2 == (u8) temp_r7->unkC5) {
-
-                } else {
-                    temp_r7_2 = (BingoPokemon *)((u8 *)temp_r7 + 0xC8);
-                    var_r6 += 1;
-                    if (temp_r4_2 == (u8) temp_r7_2->unkC5) {
-
-                    } else {
-                        temp_r7_3 = (BingoPokemon *)((u8 *)temp_r7_2 + 0xC8);
-                        var_r6 += 1;
-                        if (temp_r4_2 == (u8) temp_r7_3->unkC5) {
-
-                        } else {
-                            temp_r7_4 = (BingoPokemon *)((u8 *)temp_r7_3 + 0xC8);
-                            var_r6 += 1;
-                            if (temp_r4_2 == (u8) temp_r7_4->unkC5) {
-
-                            } else {
-                                temp_r7_5 = (BingoPokemon *)((u8 *)temp_r7_4 + 0xC8);
-                                var_r6 += 1;
-                                if (temp_r4_2 == (u8) temp_r7_5->unkC5) {
-
-                                } else {
-                                    var_r7 = (BingoPokemon *)((u8 *)temp_r7_5 + 0xC8);
-                                    var_r6 += 1;
-                                    var_ctr_2 -= 1;
-                                    if (var_ctr_2 == 0) {
-                                        var_r6 = -1;
-                                    } else {
-                                        goto loop_20;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if (var_r6 != -1) {
-            var_r5_2 += 1;
-            if (var_r5_2 < 4) {
-                goto loop_19;
-            }
-        }
+        var_r5_2 = bingoPlayerCount();
         lbl_804EAA00 = 0;
-        temp_r3 = arg0->unk144;
-        if (temp_r3 < 9) {
-            if (temp_r3 < 2) {
-                if (temp_r3 < 0) {
-                    goto block_44;
-                }
-                goto block_45;
-            }
-            goto block_44;
-        }
-        if (temp_r3 < 0xC) {
-block_45:
-            if (arg1 == (u8) arg0->unk12C) {
+        switch(arg0->unk144) {
+        default:
+            arg0->unk14C = -0x100;
+            break;
+        case 0:case 1:case 9:case 10:case 11:
+            if(arg1 == arg0->unk12C) {
                 arg0->unk14C = -0x100;
                 lbl_804EAA00 = 6;
-            } else {
-                arg0->unk14C = 0xA0A0A000;
-            }
-        } else {
-block_44:
-            arg0->unk14C = -0x100;
+            } else arg0->unk14C = 0xA0A0A000;
+            break;
         }
-        var_r5_3 = 0;
-        arg3->unk64 = (s32) (arg0->unk14C | arg2->unk93);
-loop_49:
-        var_r7_2 = mPokemon__6cBingo;
-        var_r6_2 = 0;
-        temp_r4_3 = var_r5_3 + 1;
-        var_ctr_3 = 2;
-loop_50:
-        if (temp_r4_3 == (u8) var_r7_2->unkC5) {
-
-        } else {
-            var_r6_2 += 1;
-            if (temp_r4_3 == (u8) var_r7_2[1].unkC5) {
-
-            } else {
-                temp_r7_6 = (BingoPokemon *)((u8 *)&var_r7_2[1] + 0xC8);
-                var_r6_2 += 1;
-                if (temp_r4_3 == (u8) temp_r7_6->unkC5) {
-
-                } else {
-                    temp_r7_7 = (BingoPokemon *)((u8 *)temp_r7_6 + 0xC8);
-                    var_r6_2 += 1;
-                    if (temp_r4_3 == (u8) temp_r7_7->unkC5) {
-
-                    } else {
-                        temp_r7_8 = (BingoPokemon *)((u8 *)temp_r7_7 + 0xC8);
-                        var_r6_2 += 1;
-                        if (temp_r4_3 == (u8) temp_r7_8->unkC5) {
-
-                        } else {
-                            temp_r7_9 = (BingoPokemon *)((u8 *)temp_r7_8 + 0xC8);
-                            var_r6_2 += 1;
-                            if (temp_r4_3 == (u8) temp_r7_9->unkC5) {
-
-                            } else {
-                                temp_r7_10 = (BingoPokemon *)((u8 *)temp_r7_9 + 0xC8);
-                                var_r6_2 += 1;
-                                if (temp_r4_3 == (u8) temp_r7_10->unkC5) {
-
-                                } else {
-                                    var_r7_2 = (BingoPokemon *)((u8 *)temp_r7_10 + 0xC8);
-                                    var_r6_2 += 1;
-                                    var_ctr_3 -= 1;
-                                    if (var_ctr_3 == 0) {
-                                        var_r6_2 = -1;
-                                    } else {
-                                        goto loop_50;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if (var_r6_2 != -1) {
-            var_r5_3 += 1;
-            if (var_r5_3 < 4) {
-                goto loop_49;
-            }
-        }
+        arg3->tint = arg0->unk14C | arg2->unk93;
+        var_r5_3 = bingoPlayerCount();
         if (arg1 == (u32) (var_r5_3 - 1)) {
             var_r3 = arg0;
-            var_r4 = 0;
-            var_ctr_4 = 0x10;
-loop_70:
-            if ((var_r28 == (s32) var_r3->cells[0].unk1) && ((u8) var_r3->cells[0].unk0 == 0)) {
-                temp_f1 = arg0->cells[var_r4].unk4;
-                if (temp_f1 > 0.2f) {
-                    var_f1 = 3.0f;
-                } else {
-                    var_f1 = 5.0f * temp_f1;
-                }
-                if (var_f1 < 0.0f) {
-                    var_f1 = 0.0f;
-                }
-                var_r31 = (s32) (-128.0f * var_f1);
-            } else {
-                var_r3 = (BingoState *)((u8 *)var_r3 + 8);
-                var_r4 += 1;
-                var_ctr_4 -= 1;
-                if (var_ctr_4 != 0) {
-                    goto loop_70;
+            for(var_r4=0;var_r4<16;var_r4++,var_r3=(BingoState*)((u8*)var_r3+8)) {
+                if(var_r28 == (s32)var_r3->cells[0].unk1 && var_r3->cells[0].unk0 == 0) {
+                    temp_f1=arg0->cells[var_r4].unk4;
+                    if(0.2f < temp_f1) var_f1=3.0f;
+                    else var_f1=5.0f*temp_f1;
+                    if(var_f1 < 0.0f) var_f1=0.0f;
+                    var_r31=(s32)(-128.0f*var_f1);
+                    break;
                 }
             }
         }
         temp_r31 = var_r31 + lbl_804EAA00;
-        sp14 = 14.0f;
-        sp10 = (f32) (temp_r31 + 0xE);
+        facePosition[1] = 14.0f;
+        facePosition[0] = (f32) (temp_r31 + 0xE);
         temp_r25 = pokemonDataBiosGetStatusFaceMenuSpriteId(getPokemonDataPtr__7PokemonCFv(&mPokemon__6cBingo[var_r28]), 0);
         memcpy(&sp18, arg3, 0x78U);
         arg3->unk56 = 0x2A;
         arg3->unk54 = 0x2A;
-        menuFaceDispFromID2(arg2, arg3, temp_r25, &sp10);
+        menuFaceDispFromID2(arg2, arg3, temp_r25, facePosition);
         memcpy(arg3, &sp18, 0x78U);
         sp8 = temp_r27;
         windowDrawSprite2(temp_r31, 0, 0xB8, 0x46, arg0->unk14C | arg2->unk93, arg2, 0x27AU, 0, sp8);
@@ -6013,6 +4719,9 @@ loop_70:
         case 1:
             var_r3_2 = 0x9C6;
             break;
+        case 2:
+            var_r3_2 = 0;
+            break;
         default:
             var_r3_2 = 0;
             break;
@@ -6021,14 +4730,14 @@ loop_70:
             msgctrlSetValue(0x37, GSmsgGetGSchar(var_r3_2));
             GSmsgPrint2(temp_r27, temp_r31 + 0xA0, 9, arg0->unk14C | arg2->unk93, 0x4278U);
         }
-        temp_r3_3 = zokuseiGetPokemonSpriteID(getPokemonDataPtr__7PokemonCFv(temp_r28));
+        temp_r3_3 = zokuseiGetPokemonSpriteID(getPokemonDataPtr__7PokemonCFv(temp_r28),0);
         temp_r6 = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(temp_r3_3));
         if (temp_r3_3 != 0) {
             sp8 = temp_r27;
             windowDrawSprite2((s16) (temp_r31 + 0x66), 0x19, *(s16 *)((u8 *)temp_r6 + 4), temp_r6->unk6, arg0->unk14C | arg2->unk93, arg2, temp_r3_3, 0, sp8);
-            if (temp_r3_3 != zokuseiGetPokemonSpriteID(getPokemonDataPtr__7PokemonCFv(temp_r28))) {
-                temp_r25_2 = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(zokuseiGetPokemonSpriteID(getPokemonDataPtr__7PokemonCFv(temp_r28))));
-                temp_r3_4 = zokuseiGetPokemonSpriteID(getPokemonDataPtr__7PokemonCFv(temp_r28));
+            if (temp_r3_3 != zokuseiGetPokemonSpriteID(getPokemonDataPtr__7PokemonCFv(temp_r28),1)) {
+                temp_r25_2 = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(zokuseiGetPokemonSpriteID(getPokemonDataPtr__7PokemonCFv(temp_r28),1)));
+                temp_r3_4 = zokuseiGetPokemonSpriteID(getPokemonDataPtr__7PokemonCFv(temp_r28),1);
                 sp8 = temp_r27;
                 windowDrawSprite2((s16) (temp_r31 + 0x66), 0x2D, *(s16 *)((u8 *)temp_r25_2 + 4), temp_r25_2->unk6, arg0->unk14C | arg2->unk93, arg2, temp_r3_4, 0, sp8);
             }

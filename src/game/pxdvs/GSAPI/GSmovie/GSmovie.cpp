@@ -457,9 +457,10 @@ inline u32 movieBufferSize(__GSmovieStreaming *movie)
     if(decoder->preload) size=(decoder->movieBytes+31)&~31;
     else size=0;
     u32 pixels=decoder->width*decoder->height;
-    u32 uvBytes=(((pixels>>2)+31)&~31)*3;
+    u32 uvBytes;
     size+=((decoder->maxBufferSize+31)&~31)*10;
     size+=((pixels+31)&~31)*3;
+    uvBytes=(((pixels>>2)+31)&~31)*3;
     size+=uvBytes;
     size+=uvBytes;
     if(decoder->hasAudio) {
@@ -469,10 +470,9 @@ inline u32 movieBufferSize(__GSmovieStreaming *movie)
     return size;
 }
 
-inline u8 moviePrepareDecoder(__GSmovieStreaming *movie)
+inline u8 moviePrepareDecoder(__GSmovieStreaming *movie,bool loop,u8 track)
 {
     MovieDecoder *decoder=movie->decoder;
-    u8 track=movie->track;
     if(decoder->state==0) {
         decoder->currentOffset=decoder->firstFrameOffset;
         decoder->currentSize=decoder->firstFrameSize;
@@ -482,7 +482,7 @@ inline u8 moviePrepareDecoder(__GSmovieStreaming *movie)
             if((s32)track<0 || track>=decoder->tracks) return 0;
             decoder->audioTrack=track;
         }
-        decoder->loop=(movie->loop==1)&1;
+        decoder->loop=loop&1;
         decoder->framesDecoded=0;
         decoder->lastAudioFrame=-1;
         decoder->playedAudioFrame=0;
@@ -502,6 +502,21 @@ inline void movieStartDecoder(__GSmovieStreaming *movie)
         decoder->videoTicks=-1;
         if(OldVIPostCallback==0) OldVIPostCallback=GSgfxVideoSetVSyncCallback(_PlayControl);
     }
+}
+
+static inline u8 movieRequestPreload(__GSmovieStreaming* movie) {
+ s32 interrupts=OSDisableInterrupts();
+ u8 success;
+ if(GSfsysStreamGetData(movie->handle,0,_readAddr,0x8000,_readOffset,_movieStreamTHPPlayerPrepareGetDataCallback,movie,0)==1) {success=1;_readWaitFlag=0;}else success=0;
+ OSRestoreInterrupts(interrupts);
+ return success;
+}
+
+static inline s32 movieReadState(__GSmovieStreaming* movie) {
+ MovieDecoder* decoder=movie->decoder;
+ if(_readWaitFlag==0)return 2;
+ if(_readBytes>=decoder->movieBytes)return 1;
+ return 0;
 }
 
 void _movieDaemon()
@@ -524,7 +539,8 @@ void _movieDaemon()
                     break;
                 }
                 movieOpenDecoder(movie);
-                movie->workBuffer=(u8 *)GSmemAllocAlignFromEnd(movieBufferSize(movie)+0x1000,0x20);
+                u32 bufferBytes=movieBufferSize(movie);
+                movie->workBuffer=(u8 *)GSmemAllocAlignFromEnd(bufferBytes+0x1000,0x20);
                 if(movie->workBuffer==0) {
                     movieStop(movie->handle);
                     break;
@@ -549,7 +565,7 @@ void _movieDaemon()
                 movie->state=2;
             }
             case 2:
-                if(moviePrepareDecoder(movie)==0) {
+                if(moviePrepareDecoder(movie,movie->loop==1,movie->track)==0) {
                     movie->state=10;
                     break;
                 }
@@ -564,22 +580,13 @@ void _movieDaemon()
                     break;
                 }
             case 6: {
-                s32 interrupts=OSDisableInterrupts();
-                u8 success;
-                if(GSfsysStreamGetData(movie->handle,0,_readAddr,0x8000,_readOffset,_movieStreamTHPPlayerPrepareGetDataCallback,movie,0)==1) {
-                    success=1;
-                    _readWaitFlag=0;
-                } else success=0;
-                OSRestoreInterrupts(interrupts);
-                if(success!=1) break;
+                if(movieRequestPreload(movie)!=1)break;
                 movie->state=5;
             }
             case 5: {
-                s32 state;
-                if(_readWaitFlag==0) state=2;
-                else if(_readBytes>=movie->decoder->movieBytes) state=1;
-                else state=0;
+                s32 state=movieReadState(movie);
                 switch(state) {
+                case 2: break;
                 case 0: movie->state=6;break;
                 case 1: movie->state=7;break;
                 }

@@ -55,13 +55,14 @@ f32 cameraGetFov() { return pCamWork->fov; }
 f32 cameraGetRotY() { return pCamWork->rotation.param2; }
 f32 cameraGetDistance() { return pCamWork->distance; }
 f32 cameraGetHeight() { return pCamWork->height; }
-void cameraSetFov(f32 value) {
+static inline void cameraSetFovValue(f32& value) {
     if (value < 3.0f) value = 3.0f;
     if (value > 120.0f) value = 120.0f;
     FloorCamera* floor = currentFloorCamera();
     if (floor) floor->fov = value;
     pCamWork->fov = value;
 }
+void cameraSetFov(f32 value) { cameraSetFovValue(value); }
 void cameraSetRotY(f32 value) { FloorCamera* floor=currentFloorCamera(); if (floor) floor->rotation=value; pCamWork->rotation.param2=value; }
 void cameraSetDistance(f32 value) { FloorCamera* floor=currentFloorCamera(); if (floor) floor->distance=value; pCamWork->distance=value; }
 void cameraSetHeight(f32 value) { FloorCamera* floor=currentFloorCamera(); if (floor) floor->height=value; pCamWork->height=value; }
@@ -261,6 +262,7 @@ void cameraSetGScamera(GScamera* camera) {
     if(camera) {
         f32 fov,aspect,nearPlane,farPlane;
         Vec distance;
+        f32 height,depth,fieldOfView,rotation;
         GScamera* target=(GScamera*)GSresGetResource(0,0);
         GScameraGetPerspective(camera,&fov,&aspect,&nearPlane,&farPlane);
         GScameraSetPerspective(target,fov,aspect,nearPlane,farPlane);
@@ -268,8 +270,9 @@ void cameraSetGScamera(GScamera* camera) {
         cameraSetType(3);
         target->interest=camera->interest;
         target->position=camera->position;
-        f32 rotation=(f32)atan2(distance.x,distance.z);
-        f32 height=distance.y, depth=distance.z;
+        fieldOfView=fov;
+        rotation=(f32)atan2(distance.x,distance.z);
+        depth=distance.z; height=distance.y;
         FloorCamera* floor=currentFloorCamera();
         if(floor) {
             if(floor->state) { height=floor->height; depth=floor->distance; rotation=floor->rotation; }
@@ -277,10 +280,10 @@ void cameraSetGScamera(GScamera* camera) {
                 if(height<0.0f) height=0.0f;
                 if(depth<10.0f) { depth=30.0f; height=0.0f; }
                 else if(depth>500.0f) depth=500.0f;
-                floor->state=1; floor->defaultHeight=height; floor->defaultDistance=depth; floor->defaultRotation=rotation; floor->defaultFov=fov;
+                floor->state=1; floor->defaultHeight=height; floor->defaultDistance=depth; floor->defaultRotation=rotation; floor->defaultFov=fieldOfView;
             }
         }
-        cameraSetHeight(height); cameraSetDistance(depth); cameraSetRotY(rotation); cameraSetFov(fov);
+        cameraSetHeight(height); cameraSetDistance(depth); cameraSetRotY(rotation); cameraSetFovValue(fieldOfView);
     }
 }
 void cameraReturn(f32 duration,u8 wait) {
@@ -577,74 +580,89 @@ static inline void cameraApplyFov(GScamera* camera) {
 extern "C" {
 static void _cameraOffsetAnimeUpdate__FP9_GScamera(GScamera* camera) {
     GScamera* animation=animationCamera(pCamWork);
-    if(animation && animation!=camera && GScameraIsAnimating(animation)) {
-        if(GScameraHasAnimationEnded(animation)) return;
-        f32 fov,aspect,nearPlane,farPlane;
-        Vec up,target,position;
-        Quaternion quaternion,inverse;
-        Mtx positionMatrix,targetMatrix,upMatrix;
-        GScameraGetPerspective(animation,&fov,&aspect,&nearPlane,&farPlane);
-        GScameraGetLookAt(animation,&up,&target); GScameraGetPosition(animation,&position);
-        up.x=0.0f; up.y=1.0f; up.z=0.0f;
-        target.x*=pCamWork->offsetScale.param1; position.x*=pCamWork->offsetScale.param1;
-        target.y*=pCamWork->offsetScale.param2; position.y*=pCamWork->offsetScale.param2;
-        target.z*=pCamWork->offsetScale.param3; position.z*=pCamWork->offsetScale.param3;
-        HSD_Quaternion rotation;
-        EulerToQuat((HSD_Vec3*)&pCamWork->offsetRotation,&rotation);
-        quaternion.x=rotation.x; quaternion.y=rotation.y; quaternion.z=rotation.z; quaternion.w=rotation.w;
-        PSMTXQuat(positionMatrix,&quaternion); PSMTXMultVecSR(positionMatrix,&position,&position);
-        PSMTXQuat(targetMatrix,&quaternion); PSMTXMultVecSR(targetMatrix,&target,&target);
-        PSQUATInverse(&quaternion,&inverse);
-        Quaternion inverseCopy=inverse;
-        PSMTXQuat(upMatrix,&inverseCopy); PSMTXMultVecSR(upMatrix,&up,&up);
-        if(pCamWork->flags & 1) { target.x*=-1.0f; up.x*=-1.0f; position.x*=-1.0f; }
-        if(pCamWork->flags & 2) { target.y*=-1.0f; up.y*=-1.0f; position.y*=-1.0f; }
-        if(pCamWork->flags & 4) { target.z*=-1.0f; up.z*=-1.0f; position.z*=-1.0f; }
-        PSVECAdd(&position,vec(&pCamWork->offsetPosition),&position);
-        PSVECAdd(&target,vec(&pCamWork->offsetPosition),&target);
-        cameraApplyLockedY(&target);
-        GScameraSetPerspective(camera,fov,aspect,nearPlane,farPlane);
-        GScameraSetPosition(camera,&position); GScameraLookAt(camera,&up,&target);
-        copyVector(&pCamWork->position,(GSvec*)&position);
-        copyVector(&pCamWork->targetPosition,&pCamWork->offsetPosition);
-        Vec offset;
-        PSVECSubtract(&target,vec(&pCamWork->targetPosition),&offset);
-        copyVector(&pCamWork->targetOffset,(GSvec*)&offset);
-        PSVECSubtract(&position,&target,&position);
-        pCamWork->height=position.y;
-        pCamWork->distance=cameraSqrt(position.x*position.x+position.z*position.z);
-        pCamWork->rotation.param2=(f32)atan2(position.x,position.z);
-        pCamWork->rotation.param1=-(f32)atan2(pCamWork->height,pCamWork->distance);
-    }
+    if(!animation || animation==camera || !GScameraIsAnimating(animation) || GScameraHasAnimationEnded(animation)) return;
+    f32 fov,aspect,nearPlane,farPlane;
+    Quaternion quaternion;
+    Vec position,target,up;
+    HSD_Quaternion rotation;
+    Quaternion inverseCopy,inverse;
+    Mtx positionMatrix,targetMatrix,upMatrix;
+    GScameraGetPerspective(animation,&fov,&aspect,&nearPlane,&farPlane);
+    GScameraGetLookAt(animation,&up,&target); GScameraGetPosition(animation,&position);
+    up.x=0.0f; up.y=1.0f; up.z=0.0f;
+    position.x*=pCamWork->offsetScale.param1;
+    position.y*=pCamWork->offsetScale.param2;
+    position.z*=pCamWork->offsetScale.param3;
+    target.x*=pCamWork->offsetScale.param1;
+    target.y*=pCamWork->offsetScale.param2;
+    target.z*=pCamWork->offsetScale.param3;
+    EulerToQuat((HSD_Vec3*)&pCamWork->offsetRotation,&rotation);
+    quaternion.x=rotation.x; quaternion.y=rotation.y; quaternion.z=rotation.z; quaternion.w=rotation.w;
+    PSMTXQuat(positionMatrix,&quaternion); PSMTXMultVecSR(positionMatrix,&position,&position);
+    PSMTXQuat(targetMatrix,&quaternion); PSMTXMultVecSR(targetMatrix,&target,&target);
+    PSQUATInverse(&quaternion,&inverse);
+    inverseCopy.x=inverse.x; inverseCopy.y=inverse.y; inverseCopy.z=inverse.z; inverseCopy.w=inverse.w;
+    PSMTXQuat(upMatrix,&inverseCopy); PSMTXMultVecSR(upMatrix,&up,&up);
+    if(pCamWork->flags & 1) { target.x*=-1.0f; up.x*=-1.0f; position.x*=-1.0f; }
+    if(pCamWork->flags & 2) { target.y*=-1.0f; up.y*=-1.0f; position.y*=-1.0f; }
+    if(pCamWork->flags & 4) { target.z*=-1.0f; up.z*=-1.0f; position.z*=-1.0f; }
+    PSVECAdd(&position,vec(&pCamWork->offsetPosition),&position);
+    PSVECAdd(&target,vec(&pCamWork->offsetPosition),&target);
+    cameraApplyLockedY(&target);
+    GScameraSetPerspective(camera,fov,aspect,nearPlane,farPlane);
+    GScameraSetPosition(camera,&position); GScameraLookAt(camera,&up,&target);
+    copyVector(&pCamWork->position,(GSvec*)&position);
+    copyVector(&pCamWork->targetPosition,&pCamWork->offsetPosition);
+    Vec offset;
+    PSVECSubtract(&target,vec(&pCamWork->targetPosition),&offset);
+    f32 offsetX=offset.x,offsetY=offset.y,offsetZ=offset.z;
+    CameraWork* work=pCamWork;
+    work->targetOffset.param1=offsetX;
+    work->targetOffset.param2=offsetY;
+    work->targetOffset.param3=offsetZ;
+    PSVECSubtract(&position,&target,&position);
+    pCamWork->height=position.y;
+    pCamWork->distance=cameraSqrt(position.x*position.x+position.z*position.z);
+    pCamWork->rotation.param2=(f32)atan2(position.x,position.z);
+    pCamWork->rotation.param1=-(f32)atan2(pCamWork->height,pCamWork->distance);
+}
+static inline f32 cameraAngle(f32 height,f32 distance) { return (f32)atan2(height,distance); }
+static inline void cameraDisplacement(Vec* out,f32 height,f32 distance) {
+    out->x=0.0f;out->y=height;out->z=distance;
 }
 static void _cameraPadRotateUpdate__FP9_GScamera(GScamera* camera) {
     if(!dbgMenuIsOpen()) {
         s32 render=(s32)GSgfxVideoGetLastRenderTime();
-        s32 horizontal=(s8)GSinputGetRightStickXData(1,1)*render;
+        s32 input=(s8)GSinputGetRightStickXData(1,1);
+        s32 horizontal=input*render;
         render=(s32)GSgfxVideoGetLastRenderTime();
-        s32 vertical=(s8)GSinputGetRightStickYData(1,1)*render;
+        input=(s8)GSinputGetRightStickYData(1,1);
+        s32 vertical=input*render;
+        f32 angle=cameraAngle(pCamWork->height,pCamWork->distance);
         f32 height=pCamWork->height, distance=pCamWork->distance;
-        f32 angle=(f32)atan2(height,distance);
-        f32 radius=cameraSqrt(height*height+distance*distance);
-        if(GSinputButtonsPressed(1)&0x20) cameraSetFov((f32)vertical*0.015625f+pCamWork->fov);
-        else if(GSinputButtonsPressed(1)&0x40) radius+=(f32)vertical*0.015625f;
+        f32 radius=cameraSqrt((f32)(height*height)+(f32)(distance*distance));
+        if(GSinputButtonsPressed(1)&0x20) { f32 fov=(f32)vertical/64.0f+pCamWork->fov;cameraSetFov(fov); }
+        else if(GSinputButtonsPressed(1)&0x40) radius+=(f32)vertical/64.0f;
         else angle-=(f32)vertical/4096.0f;
         pCamWork->height=radius*(f32)sin(angle);
         pCamWork->distance=radius*(f32)cos(angle);
         if(pCamWork->distance<10.0f) pCamWork->distance=10.0f;
         else if(pCamWork->distance>500.0f) pCamWork->distance=500.0f;
         cameraSetHeight(pCamWork->height); cameraSetDistance(pCamWork->distance);
-        Vec displacement={0.0f,pCamWork->height,pCamWork->distance};
+        Vec target,displacement;
+        cameraDisplacement(&displacement,pCamWork->height,pCamWork->distance);
         pCamWork->rotation.param2+=(f32)horizontal/2048.0f;
         cameraSetRotY(pCamWork->rotation.param2);
         Mtx matrix;
         PSMTXRotRad(matrix,'Y',pCamWork->rotation.param2); PSMTXMultVec(matrix,&displacement,&displacement);
-        Vec target;
-        PSVECAdd(vec(&pCamWork->targetPosition),vec(&pCamWork->targetOffset),&target);
+        CameraWork* work=pCamWork;
+        Vec* base=vec(&work->targetPosition);
+        Vec* offset=vec(&work->targetOffset);
+        PSVECAdd(base,offset,&target);
         PSVECAdd(&target,&displacement,vec(&pCamWork->position));
         cameraApplyLockedY(&target);
         GScameraSetPosition(camera,vec(&pCamWork->position)); GScameraLookAt(camera,vec(&gUpVec),&target);
-        pCamWork->rotation.param1=-(f32)atan2(pCamWork->height,pCamWork->distance);
+        pCamWork->rotation.param1=-cameraAngle(pCamWork->height,pCamWork->distance);
         cameraApplyFov(camera);
     }
 }

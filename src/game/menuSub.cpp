@@ -35,7 +35,7 @@ extern "C" {
 u32 GSinputButtonsChanged(s32);
 u32 GSinputButtonsPressed(s32);
 s32 GScharCmp(s32, s32);
-s32 GSmsgGetGSchar(void);
+s32 GSmsgGetGSchar(u32);
 void GSthreadSwitch(void);
 double cos(double);
 s32 menuCB_GetDisconnectedGBA(void);
@@ -394,14 +394,14 @@ void menuSubCursorAnimeValGet(f32* out, s32* color) {
 void menuSubCursorAnimeMain(void) {
     MenuSubCursorAnimeWork *w = &_cursorAnimeWork;
     if (w->x != 0.0f) {
-        s16 t = w->time + timeGetLastFrameTime();
-        f32 ratio = (f32)t / (f32)w->duration;
-        w->time = t;
-        w->x = (f32)(s16)((((f32)t * (f32)t) / (f32)w->duration / (f32)w->duration) * (w->toX - w->fromX) + w->fromX);
-        w->cur[0] = (s32)(ratio * (f32)(w->to[0] - w->from[0]) + (f32)w->from[0]);
-        w->cur[1] = (s32)(ratio * (f32)(w->to[1] - w->from[1]) + (f32)w->from[1]);
-        w->cur[2] = (s32)(ratio * (f32)(w->to[2] - w->from[2]) + (f32)w->from[2]);
-        w->cur[3] = (s32)(ratio * (f32)(w->to[3] - w->from[3]) + (f32)w->from[3]);
+        s32 t = w->time + timeGetLastFrameTime();
+        w->time=t;
+        w->x = (f32)(s16)((((f32)w->time * (f32)w->time) / (f32)w->duration / (f32)w->duration) * (w->toX - w->fromX) + w->fromX);
+        f32 ratio = (f32)(s16)t / (f32)w->duration;
+        w->cur[0] = (u8)(ratio * (f32)(w->to[0] - w->from[0]) + (f32)w->from[0]);
+        w->cur[1] = (u8)(ratio * (f32)(w->to[1] - w->from[1]) + (f32)w->from[1]);
+        w->cur[2] = (u8)(ratio * (f32)(w->to[2] - w->from[2]) + (f32)w->from[2]);
+        w->cur[3] = (u8)(ratio * (f32)(w->to[3] - w->from[3]) + (f32)w->from[3]);
         if (w->x > 0.0f) {
             w->x = 0.0f;
             w->cur[3] = 0xFF;
@@ -411,7 +411,8 @@ void menuSubCursorAnimeMain(void) {
         }
         w->color = (w->cur[0] << 24) | (w->cur[1] << 16) | (w->cur[2] << 8) | w->cur[3];
     }
-    w->sec = w->sec + timeGetLastFrameSec();
+    f32 delta=timeGetLastFrameSec();
+    _cursorAnimeWork.sec = _cursorAnimeWork.sec + delta;
 }
 
 void menuSubCursorAnimeStart(void) {
@@ -456,8 +457,7 @@ s32 menuSubGetPokemonSexForFightDisp(s32 pokemon) {
     if (id == 0x1D || id == 0x20) {
         void* data = pokemonDataBiosGetPtr(pokemonGetStatus(pokemon, 0, 0x6E, 0));
         if (data != 0) {
-            pokemonDataBiosGetName(data);
-            name = GSmsgGetGSchar();
+            name = GSmsgGetGSchar(pokemonDataBiosGetName(data));
             if (GScharCmp(pokemonGetStatus(pokemon, 0, 0x77, 0), name) == 0) {
                 return 2;
             }

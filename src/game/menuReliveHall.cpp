@@ -548,6 +548,22 @@ void CStick::update() {
     frames = 0;
 }
 
+static inline f32 circleSqrt(f32 value) {
+    if (value > 0.0f) {
+        f64 input = value;
+        f64 guess = __frsqrte(input);
+        guess = 0.5 * guess * (3.0 - input * (guess * guess));
+        guess = 0.5 * guess * (3.0 - input * (guess * guess));
+        guess = 0.5 * guess * (3.0 - input * (guess * guess));
+        return (f32)(input * guess);
+    } else if (value < 0.0) {
+        return __float_nan[0];
+    } else if (hsdFloatClassify(value) == 1) {
+        return __float_nan[0];
+    }
+    return value;
+}
+
 void SCircle::init(f32 outerRadius, int dotRadius, f32 innerRadius, GSgfxColAu8 color) {
     memset(this, 0, sizeof(SCircle));
     outer = outerRadius;
@@ -580,8 +596,8 @@ void SCircle::init(f32 outerRadius, int dotRadius, f32 innerRadius, GSgfxColAu8 
         dx = dx > 0 ? dx : -dx;
         int dy = dots[i].y - 0x118;
         dy = dy > 0 ? dy : -dy;
-        f32 dist = hsdSqrt((f32)(dx * dx + dy * dy));
-        f32 diff = (f32)fabs(dist - 90.0f);
+        f32 dist = circleSqrt((f32)(dx * dx + dy * dy));
+        f32 diff = (f32)__fabs(dist - 90.0f);
         if (diff <= inner) {
             dots[i].alpha = 0xFF;
         } else if (diff < outer) {
@@ -1282,12 +1298,8 @@ void CMenuReliveHall::aButtomAction() {
         break;
     }
     case 6: {
-        u8 dark = 0;
-        u8 multiple = stage->getDancerQuantity() >= 2;
+        int multiple = stage->getDancerQuantity() >= 2;
         if (catchDarkB()) {
-            dark = 1;
-        }
-        if (dark != 0) {
             if (views[6].ant.unk0 != 0) {
                 if (cursor->unk14C != 0) {
                     actionChange();
@@ -1863,7 +1875,7 @@ void CMenuReliveHall::drawMainBG() {
     tagWINDOW_WORK *window = windowSearchID(0x67);
     GSgfxColAu8 *colors;
     int level, cur, i;
-    u8 hasVisitor = getVisitorWithCatch() != 0;
+    bool hasVisitor = getVisitorWithCatch() != 0;
     int bonus;
     int passion = getPassion(&bonus);
     if (passion <= 0) {
@@ -1890,7 +1902,7 @@ void CMenuReliveHall::drawMainBG() {
         GSgfxColAu8 color = *colors;
         sprite->color.value = GSgfxColAu8To32(color);
         if (i < level && hasVisitor) {
-            u8 alpha;
+            s32 alpha;
             if (cur < 13) {
                 if (i < cur) {
                     alpha = 0xFF;
@@ -2147,9 +2159,10 @@ void CMenuReliveHall::dancerMoveAnimationOne(SPokemonView &view, f32 rate) {
 
 SPokemonView *CMenuReliveHall::getPokemonViewByClockwizePositionWithCatch(int position) {
     if (position == 6) return &views[6];
+    CMenuPokemonCursor *c;
     u8 notDark = 0;
     if (cursor->isCatchPokemon()) {
-        CMenuPokemonCursor *c = cursor;
+        c = cursor;
         Pokemon *p;
         if (c->pokemon.checkValid()) p = &c->pokemon;
         else p = 0;
@@ -2158,8 +2171,9 @@ SPokemonView *CMenuReliveHall::getPokemonViewByClockwizePositionWithCatch(int po
     if (notDark) {
         int picked = cursor->index;
         if (picked >= stage->getDancerQuantity()) {
+            int quantity = stage->getDancerQuantity();
             picked = cursor->index;
-            int offset = picked - stage->getDancerQuantity() + 1;
+            int offset = picked - quantity + 1;
             if (position < offset) return &views[position];
             if (position == offset) return &views[picked];
             return &views[position - 1];

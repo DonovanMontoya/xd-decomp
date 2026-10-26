@@ -37,7 +37,7 @@ u32 fightTrainerDB_GetAiDataId(u16);
 FightTrainerKindData* fightTrainerKindDataBiosGetPtr(u8);
 u32 fightTrainerKindDataBiosGetPrefixName(FightTrainerKindData*);
 u16* GSmsgGetGSchar(u32);
-u32 heroGetStatus(Hero*, u32, u32);
+u32 heroGetStatus(Hero*, u16, u16);
 u8 heroIsMinePokemon(Hero*, Pokemon*);
 u8 heroCheckValid(Hero*);
 void heroInit(Hero*);
@@ -501,7 +501,7 @@ void fightTrainerToMenuBallStatus(FightTrainer* trainer, u8* status) {
         for (u16 i = 0; i < 6; i++) status[i] = 0;
         u16 i;
         for (i = 0; i < 6; i++) {
-            Pokemon* pokemon = reinterpret_cast<Pokemon*>(((u32 (*)(Hero*, u32, u16))heroGetStatus)(hero, 3, i));
+            Pokemon* pokemon = reinterpret_cast<Pokemon*>(heroGetStatus(hero, 3, i));
             if (!pokemonCheckValid(pokemon)) continue;
             FightPokemon* poke = fightTrainerCheckTemotiPokemonFightEntry(trainer, pokemon);
             if (poke == nullptr) continue;
@@ -1141,15 +1141,16 @@ void fightTrainerInitAry(FightTrainer* trainers, u16 count) {
 }
 
 void fightTrainerSortFightTrainerDataIdToHeroTemotiPokemon(FightTrainer* trainer, u16 count, u32 mode) {
-    u16 swapDeck = fightEncountGetStrObj()->getSwapDeckNO();
-    if (trainer == nullptr || !fightTrainerCheckValid(trainer)) return;
+    u32 swapDeck = fightEncountGetStrObj()->getSwapDeckNO();
+    if (trainer == nullptr) return;
+    if (fightTrainerCheckValid(trainer) == 0) return;
     u16 id = fightTrainer_GetFightTrainerDataId(trainer);
     u32 ai = fightTrainerDB_GetAiDataId(id);
     Hero* hero = fightTrainer_GetHeroPtr(trainer);
     if (static_cast<u16>(ai) == 0) return;
     if (_fightTrainerGetHeroKind(id) == 0) return;
     if (_fightTrainerGetHeroKind(id) == 1) return;
-    if (swapDeck != 0 && static_cast<u8>(fightTrainerAiDB_GetPokemonDataOrderOutFlag(ai)) == 1) return;
+    if (static_cast<u16>(swapDeck) != 0 && static_cast<u8>(fightTrainerAiDB_GetPokemonDataOrderOutFlag(ai)) == 1) return;
     Pokemon* selected[6];
     Pokemon roster[6];
     for (u8 i = 0; i < 6; i++) {
@@ -1159,14 +1160,15 @@ void fightTrainerSortFightTrainerDataIdToHeroTemotiPokemon(FightTrainer* trainer
     if (count > 6) count = 6;
     fightTrainerAiSortFirstSelectPokemonAry(trainer, hero, selected, count, mode);
     u8 used = 0;
-    for (u8 i = 0; i < static_cast<int>(count); i++) {
+    u8 i;
+    for (i = 0; i < static_cast<int>(count); i++) {
         Pokemon* pokemon = selected[i];
         if (pokemon != nullptr && pokemonCheckValid(pokemon)) {
             memcpy(&roster[used], pokemon, sizeof(Pokemon));
             used++;
         }
     }
-    for (u8 i = 0; i < 6; i++) {
+    for (i = 0; i < 6; i++) {
         Pokemon* pokemon = reinterpret_cast<Pokemon*>(heroGetStatus(hero, 3, i));
         if (pokemon != nullptr) memcpy(pokemon, &roster[i], sizeof(Pokemon));
     }
@@ -1203,7 +1205,7 @@ void fightTrainerTimeOutSelectFightAction(FightTrainer*, FightOutPokemon* poke, 
 }
 
 extern "C" {
-Pokemon* heroBiosGetPokemonPtr(Hero*, u32);
+Pokemon* heroBiosGetPokemonPtr(Hero*, u16);
 u16* heroBiosGetNamePtr(Hero*);
 void heroSetStatus(Hero*, u32, u32);
 u32 heroCreateRnd();
@@ -1233,18 +1235,24 @@ void _fightTrainerCreateDeckNormal(u16, Hero*, u16);
 static void _fightTrainerCreateRndCheckRare(Hero* hero, bool rare) {
     Pokemon* roster[6];
     u16 attempts = 10000;
-    for (u8 i = 0; i < 6; i++) roster[i] = nullptr;
-    u32 rnd = heroGetStatus(hero, 2, 0);
+    u32 rnd;
+    u8 i;
+    u8 j;
+    Pokemon* poke;
+    u8 mismatch;
+    u32 personality;
+    for (i = 0; i < 6; i++) roster[i] = nullptr;
+    rnd = heroGetStatus(hero, 2, 0);
     do {
-        u8 mismatch = 0;
-        for (u8 i = 0; i < 6; i++) {
+        mismatch = 0;
+        for (i = 0; i < 6; i++) {
             roster[i] = heroBiosGetPokemonPtr(hero, i);
-            Pokemon* poke = roster[i];
+            poke = roster[i];
             if (poke == nullptr) continue;
             if (static_cast<u16>(pokemon_GetPokemonDataId(poke)) == 0) continue;
-            u32 personality = pokemon_GetRnd(poke);
+            personality = pokemon_GetRnd(poke);
             if (personality == 0) continue;
-            if (static_cast<u8>(rare) != static_cast<u8>(pokemonCheckRareRnd(rnd, personality))) {
+            if (rare != static_cast<u8>(pokemonCheckRareRnd(rnd, personality))) {
                 mismatch = 1;
                 break;
             }
@@ -1258,9 +1266,9 @@ static void _fightTrainerCreateRndCheckRare(Hero* hero, bool rare) {
         }
     } while (true);
     heroSetStatus(hero, 2, rnd);
-    for (u8 i = 0; i < 6; i++) {
-        roster[i] = heroBiosGetPokemonPtr(hero, i);
-        if (roster[i] != nullptr) pokemon_SetCatchTrainerRnd(roster[i], rnd);
+    for (j = 0; j < 6; j++) {
+        roster[j] = heroBiosGetPokemonPtr(hero, j);
+        if (roster[j] != nullptr) pokemon_SetCatchTrainerRnd(roster[j], rnd);
     }
 }
 
@@ -1808,7 +1816,7 @@ u8 darkPokemonBiosGetFightFlag(u16);
 u32 darkPokemonBiosGetRnd(u16);
 s8 darkPokemonBiosGetStatusRnd(u16,u8);
 void darkPokemonBiosSetRnd(u16,u32);
-void darkPokemonBiosSetStatusRnd(u16,u8,s8);
+void darkPokemonBiosSetStatusRnd(u16,u8,u8);
 u32 heroBiosGetRnd(Hero*);
 void pokemon_SetComboPartnerAll(Pokemon*,u32);
 void pokemon_SetFriend(Pokemon*,u8);
@@ -1823,7 +1831,7 @@ u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 dataId,Pokemon* poke
     u8 reuseDark=0;
     Hero *hero=(Hero*)savedataGetStatus(0,2);
     if(encounterId==0)encounterId=fightGetFightEncountDataId();
-    u8 kind=fightEncountDataBiosGetFightKind(fightEncountDataBiosGetPtr(encounterId));
+    u32 kind=fightEncountDataBiosGetFightKind(fightEncountDataBiosGetPtr(encounterId));
     u16 species=deck->getPokemonID();
     if(species==0)return 0;
     u8 random=deck->getRandomSetting()!=0;
@@ -1858,14 +1866,14 @@ u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 dataId,Pokemon* poke
             for(;;){
                 total=0;
                 for(i=0;i<6;i++){efforts[i]+=(u8)(HSD_Rand()%256);total+=efforts[i];}
-                if(kind==10||kind==17){if(total==510)break;if(total>490&&total<530)goto adjust;}
+                if((u8)kind==10||(u8)kind==17){if(total==510)break;if(total>490&&total<530)goto adjust;}
                 else if(total<=510)break;
                 if(total>510&&tries<100)for(i=0;i<6;i++)efforts[i]=0;
                 if(tries++>=100){
 adjust:
                     for(;;){
                         for(u8 j=0;j<6;j++){
-                            if(kind==10||kind==17){
+                            if((u8)kind==10||(u8)kind==17){
                                 if(total<510&&efforts[j]<255){total++;efforts[j]++;}
                                 else if(total>510&&efforts[j]!=0){total--;efforts[j]--;}
                                 if(total==510)goto adjusted;
@@ -1893,7 +1901,7 @@ adjusted:
             u32 value=pokemonCreateRndFit(pokemon,-1,-1,0,rnd);
             darkPokemonBiosSetRnd(darkId,value);pokemon_SetRnd(pokemon,value);
             if(dark)dark->setRnd(value);
-            for(i=0;i<6;i++)darkPokemonBiosSetStatusRnd(darkId,i,(s8)pokemonGetStatus(pokemon,0,individualStatus[i],0));
+            for(i=0;i<6;i++)darkPokemonBiosSetStatusRnd(darkId,i,(u8)pokemonGetStatus(pokemon,0,individualStatus[i],0));
         }
     }
     pokemonResetBasisStatus(pokemon);return 1;

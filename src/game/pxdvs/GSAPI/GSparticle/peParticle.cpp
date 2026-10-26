@@ -97,50 +97,44 @@ void peParticleContainer::Start() {
     }
 }
 peParticleContainer::~peParticleContainer(){if(sorted)delete[] sorted;g_particle_debug_stats.node-=0x7c;g_particle_debug_stats.total-=0x7c;}
+static inline s32 previousLiveParticle(peParticleContainer* container,s32 index) {
+ if(!container->sorted)return -1;
+ while(index>0) {--index;if(container->sorted[index]->live)return index;}
+ return -1;
+}
 void peParticleContainer::DepthSort() {
+    s32 sortSlot,rewriteSlot,position,previous;peParticleNode *node,*before,*rewriteNode;u8 changed,move;u32 extended;GSgfxDL* list;u16 vertex,*indices,j,uv;
     if(active && (particle->flags&0x80000) && count>=2 && sorted) {
-        u8 changed=0;
-        for(s32 i=1;i<(s32)capacity;++i) {
-            peParticleNode* node=sorted[i];
+        changed=0;
+        for(sortSlot=1;sortSlot<(s32)capacity;++sortSlot) {
+            node=sorted[sortSlot];
             if(node->live) {
-                s32 position=i;
-                for(;;) {
-                    s32 previous=position;
-                    if(!sorted)previous=-1;
-                    else {
-                        peParticleNode** cursor=&sorted[position];
-                        for(;;) {
-                            if(previous<=0){previous=-1;break;}
-                            peParticleNode* before=cursor[-1];--cursor;--previous;
-                            if(before->live)break;
-                        }
-                    }
-                    if(previous>=0) {
-                        peParticleNode* before=sorted[previous];
-                        u8 move;
-                        if(before->depth==node->depth)move=0;
-                        else if(before->sortIndex<node->sortIndex)move=before->depth<node->depth;
-                        else move=before->depth>node->depth;
-                        if(move){sorted[position]=before;position=previous;changed=1;continue;}
-                    }
-                    sorted[position]=node;break;
+                position=sortSlot;
+                while((previous=previousLiveParticle(this,position))>=0) {
+                    before=sorted[previous];
+                    if(before->depth==node->depth)move=0;
+                    else if(before->sortIndex<node->sortIndex)move=before->depth<node->depth;
+                    else move=before->depth>node->depth;
+                    if(!move)break;
+                    sorted[position]=before;position=previous;changed=1;
                 }
+                sorted[position]=node;
             }
         }
         if(changed) {
-            u32 extended=(particle->flags>>25)&1;
-            GSgfxDL* list=&displayLists[swapIndex];
-            for(s32 i=0;i<(s32)capacity;++i) {
-                peParticleNode* node=sorted[i];
-                if(node->live && node->sortIndex!=(u16)i) {
-                    node->sortIndex=i;
-                    u16 vertex=node->index*(u16)((extended!=0)+13);
-                    u16* indices=(list->flags&1)?(u16*)(list->data+(((i*4)&0xfffc)*list->stride)+3):0;
-                    u16 j=0;
+            extended=(particle->flags>>25)&1;
+            list=&displayLists[swapIndex];
+            for(rewriteSlot=0;rewriteSlot<(s32)capacity;++rewriteSlot) {
+                rewriteNode=sorted[rewriteSlot];
+                if(rewriteNode->live && rewriteNode->sortIndex!=(u16)rewriteSlot) {
+                    rewriteNode->sortIndex=rewriteSlot;
+                    vertex=rewriteNode->index*(u16)((extended!=0)+13);
+                    indices=(list->flags&1)?(u16*)(list->data+((u16)((u16)rewriteSlot*4)*list->stride)+3):0;
+                    j=0;
                     if(extended) {
-                        for(;j<4;++j){s16 uv=j*2;indices[0]=vertex+j*3;indices[1]=vertex;indices[2]=vertex;indices[3]=uv;indices+=4;}
+                        for(;j<4;++j){uv=j*2;indices[0]=vertex+j*3;indices[1]=vertex;indices[2]=vertex;indices[3]=uv;indices+=4;}
                     } else {
-                        for(;j<4;++j){s16 uv=j*2;indices[0]=vertex+j*3;indices[1]=vertex;indices[2]=uv;indices+=3;}
+                        for(;j<4;++j){uv=j*2;indices[0]=vertex+j*3;indices[1]=vertex;indices[2]=uv;indices+=3;}
                     }
                 }
             }
@@ -241,18 +235,19 @@ void peParticleNode::Start(peEmitterNode* emitter,_peParticle* definition,GSgfxD
 peParticleContainer::peParticleContainer(peEmitterNode* emitter,_peParticle* definition,u16 maximum):peRenderContainer(emitter,0x50,maximum,(definition->flags&0x2000000)?&g_ext_vertex_format:&g_vertex_format,(GSgfxPrimType)0x80,4,(definition->flags&0x2000000)?0x38:0x34,(definition->flags>>26)&1) {
     sorted=0;
     particle=definition;
+    f32 *coordinates=uv;
     _peParticle* texture=particle;
     s16 sv0,sv1,sv2,sv3;
     sv0=texture->u0;
-    sv1=texture->v0;
     f32 fu0=__OSs16tof32(&sv0)/1024.0f;
+    sv1=texture->v0;
     f32 fv0=__OSs16tof32(&sv1)/1024.0f;
     sv2=texture->u1;
     f32 fu1=__OSs16tof32(&sv2)/1024.0f;
     sv3=texture->v1;
     f32 fv1=__OSs16tof32(&sv3)/1024.0f;
-    uv[0]=fu1;uv[1]=fv1;uv[2]=fu0;uv[3]=fv1;uv[4]=fu0;uv[5]=fv0;uv[6]=fu1;uv[7]=fv0;
-    DCFlushRange(uv,0x20);
+    coordinates[0]=fu1;coordinates[1]=fv1;coordinates[2]=fu0;coordinates[3]=fv1;coordinates[4]=fu0;coordinates[5]=fv0;coordinates[6]=fu1;coordinates[7]=fv0;
+    DCFlushRange(coordinates,0x20);
     if(particle->flags&0x80000)sorted=(peParticleNode**)new peParticleNode*[maximum];
     peParticleNode* node=(peParticleNode*)freeNodes;
     u16 slot=0;

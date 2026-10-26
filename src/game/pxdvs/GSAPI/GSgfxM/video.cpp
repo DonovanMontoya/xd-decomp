@@ -80,7 +80,7 @@ inline u8 ready(void *ptr) {
     else {
         b=findPointer(ptr); if(!b) { OSRestoreInterrupts(intr); return 0; }
         if(_videoState.count==3) { VideoBuffer *old=findState(2); if(old) old->state=3; }
-        s64 now=OSGetTime(); float delta=(float)(now-_videoState.lastTime); _videoState.lastTime=now; _videoState.elapsed=delta/(float)(((*(u32*)0x800000f8)>>2)/_videoState.rate);
+        s64 now=OSGetTime(); float delta=(float)(now-_videoState.lastTime); float elapsed=delta/(float)(((*(u32*)0x800000f8)>>2)/_videoState.rate); _videoState.lastTime=now; _videoState.elapsed=elapsed;
     }
     b->state=2; OSRestoreInterrupts(intr); return 1;
 }
@@ -130,28 +130,28 @@ void GSgfxVideoInit__FUcUs14GSgfxVideoMode(u8 count,u16 height,s32 mode) {
     VISetBlack(1);VIConfigure((GXRenderModeObj*)&_videoState.mode);VIFlush();VIWaitForRetrace();VIWaitForRetrace();
 }
 
-inline void writeViewport(float x,float y,float width,float height,float nearZ,float farZ,u32 field) {
+inline void writeViewport(float x,float y,float width,float height,float nearZ,float farZ,u32 field,float depthScale,float depthBias) {
     if(gsgfxState->vx!=x || gsgfxState->vy!=y || gsgfxState->vw!=width || gsgfxState->vh!=height || gsgfxState->vnear!=nearZ || gsgfxState->vfar!=farZ || gsgfxState->field!=field) {
         if(field==0) y-=0.5f;
         GXWGFifo.u8=0x10;
         float hh=height*0.5f;
         GXWGFifo.u16=5;
-        float hw=width*0.5f;float z=farZ*16777216.0f;
+        float hw=width*0.5f;float z=farZ*depthScale;
         GXWGFifo.u16=0x101a;
         GXWGFifo.f32=hw;
         GXWGFifo.f32=-hh;
-        GXWGFifo.f32=-(nearZ*16777216.0f-z);
+        GXWGFifo.f32=-(nearZ*depthScale-z);
         GXWGFifo.f32=342.0f+(x+hw);
         GXWGFifo.f32=342.0f+(y+hh);
-        GXWGFifo.f32=z+0.0f;
+        GXWGFifo.f32=z+depthBias;
         gsgfxState->vx=x;gsgfxState->vy=y;gsgfxState->vw=width;gsgfxState->vh=height;gsgfxState->vnear=nearZ;gsgfxState->vfar=farZ;gsgfxState->field=field;
     }
 }
 static void _videoUpdateViewport__Fb(bool noOffset) {
     VideoState *state=&_videoState;float x,y;
     if(!noOffset) GSgfxSSGetViewportOffset__FPfPf(&x,&y);else {x=0;y=0;}
-    if(state->mode.field) writeViewport(_viewport.x+x,_viewport.y+y,_viewport.width,_viewport.height,_viewport.nearZ,_viewport.farZ,_videoState.field);
-    else writeViewport(_viewport.x+x,_viewport.y+y,_viewport.width,_viewport.height,_viewport.nearZ,_viewport.farZ,1);
+    if(state->mode.field) writeViewport(_viewport.x+x,_viewport.y+y,_viewport.width,_viewport.height,_viewport.nearZ,_viewport.farZ,_videoState.field,16777216.0f,0.0f);
+    else writeViewport(_viewport.x+x,_viewport.y+y,_viewport.width,_viewport.height,_viewport.nearZ,_viewport.farZ,1,16777216.0f,0.0f);
 }
 
 static u8 _videoSetupRenderMode__F14GSgfxVideoMode15GSgfxVideoFrameb16GSgfxVideoFilterb(s32 mode,s32 frame,bool interlace,s32 filter,bool progressive) {

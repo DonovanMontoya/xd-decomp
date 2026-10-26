@@ -308,58 +308,90 @@ bool GsShapeObject::DeformVertexCoordCylinderEx(bool deform,const f32* u,const f
     return true;
 }
 
+#pragma dont_inline off
+extern "C" { extern f32 __float_nan[]; }
+static inline f32 shapeSqrt(f32 x) {
+    if(x>0.0f) {
+        f64 guess=__frsqrte(x);
+        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
+        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
+        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
+        return (f32)((f64)x*guess);
+    }
+    if((f64)x<0.0)return __float_nan[0];
+    union {f32 value;s32 bits;} v;v.value=x;
+    s32 type;
+    switch(v.bits&0x7f800000) {
+    case 0x7f800000:if(v.bits&0x7fffff)type=1;else type=2;break;
+    case 0:if(v.bits&0x7fffff)type=5;else type=3;break;
+    default:type=4;break;
+    }
+    if(type==1)return __float_nan[0];
+    return x;
+}
+#pragma dont_inline on
 bool GsShapeObject::DeformVertexCoordSpiral(bool deform,const f32* u,const f32* v,bool radius,f32 radiusU,f32 radiusV,bool angle,f32 angleU,f32 angleV,bool twistEnabled,const f32* twist) {
-    Vec *out=(Vec*)vertexArrays[0];
-    if(!out)return false;
+    Vec *array=(Vec*)vertexArrays[0];
+    if(!array)return false;
+    Vec *out=array;
+    int row,column;
+    const f32 *horizontal;
     Vec *normals=0;
     int columns=entry->segmentsU+1,rows=entry->segmentsV+1;
     if(!radius){radiusU=entry->width;radiusV=entry->height;}
     if(angle)normals=(Vec*)entry->reserved1C;
     else {angleU=entry->shearAngle;angleV=*(f32*)((u8*)entry+0x60);}
     f32 delta=radiusV-radiusU,length=shapeEntryLength(entry);
+    f32 angleStart=0.017453292f*angleU;
+    f32 angleSweep=0.017453292f*(angleV-angleU);
+    f32 widthStart=*(f32*)((u8*)entry+0x64),widthEnd=*(f32*)((u8*)entry+0x68);
     f32 lengthSquared=length*length;
-    f32 slant=sqrtf(lengthSquared+delta*delta);
-    u8 mode=*((u8*)entry+0xCC);
+    f32 slant=shapeSqrt(lengthSquared+(f32)(delta*delta));
+    u32 mode=*((u8*)entry+0xCC);
+    u32 even=((s32)mode%2==0),rounded=(mode>=2);
     f32 quarter=0.25f*lengthSquared;
     f32 taper=1.0f-2.0f/(f32)entry->segmentsU;
     f32 scale;
-    for(int row=0;row<rows;row++,twist++,v++){
+    for(row=0;row<rows;row++,twist++,v++){
         if(twistEnabled==1)scale=1.0f+*twist;
         f32 vertical;
         if(deform)vertical=*v;else vertical=(f32)row/(f32)(rows-1);
-        const f32 *horizontal=u;
-        for(int column=0;column<columns;column++,horizontal++){
+        horizontal=u;
+        for(column=0;column<columns;column++,horizontal++){
             f32 across;
             if(deform)across=*horizontal;else across=(f32)column/(f32)(columns-1);
             f32 complement=1.0f-across;
-            f32 theta=0.017453292f*(angleV-angleU)*across+0.017453292f*angleU;
-            f32 width=*(f32*)((u8*)entry+0x64)*complement+*(f32*)((u8*)entry+0x68)*across;
+            f32 theta=angleSweep*across+angleStart;
+            f32 width=widthStart*complement+widthEnd*across;
             f32 sine,cosine;
-            if(mode%2==0||slant<0.00001f){
+            if(even==1||slant<0.00001f){
                 f32 sample=across;
                 f32 current;
-                if(mode>=2){
+                if(rounded==1){
                     sample=(across-0.5f)*taper+0.5f;
                     current=radiusU*(1.0f-sample)+radiusV*sample;
                     f32 distance=length*(f32)fabs(sample-0.5f);
                     f32 bulge=quarter-distance*distance;
-                    if(bulge>0.0f)current+=sqrtf(bulge);
+                    if(bulge>0.0f)current+=shapeSqrt(bulge);
                 }else current=radiusU*complement+radiusV*across;
                 if(twistEnabled==1)current*=scale;
                 sine=theta;shapeFastSinCos(sine,cosine);
                 out->x=current*cosine;out->y=current*sine;
                 out->z=width*vertical+(length*sample-0.5f*width);out++;
             }else{
-                f32 fraction=width/slant;
-                f32 sample=(across-0.5f)*(1.0f-fraction)+0.5f;
+                f32 fraction,sample;
                 f32 current;
-                if(mode>=2){
+                if(rounded==1){
+                    fraction=width/slant;
+                    sample=(across-0.5f)*(1.0f-fraction)+0.5f;
                     f32 position=((fraction*vertical+(sample-0.5f*fraction))-0.5f)*taper+0.5f;
                     current=radiusU*(1.0f-position)+radiusV*position;
                     f32 distance=length*(f32)fabs(position-0.5f);
                     f32 bulge=quarter-distance*distance;
-                    if(bulge>0.0f)current+=sqrtf(bulge);
+                    if(bulge>0.0f)current+=shapeSqrt(bulge);
                 }else{
+                    fraction=width/slant;
+                    sample=(across-0.5f)*(1.0f-fraction)+0.5f;
                     f32 position=fraction*vertical+(sample-0.5f*fraction);
                     current=radiusU*(1.0f-position)+radiusV*position;
                 }
@@ -721,15 +753,16 @@ extern "C" void CallDisplayListShape__13GsShapeObjectFP10GSgfxLayersUc(GsShapeOb
 }
 
 #pragma dont_inline off
-static inline void shapeKColorSelect(GSgfxLayer *layer,u8 stage,u32 value) {
+static inline void shapeKColorSelect(GSgfxLayer *layer,u8 stage,GXTevKColorSel value) {
  layer->konstColors[stage]=value;layer->konstColorDirty|=1<<stage;layer->dirty|=0x10;layer->savedKonstColorDirty|=1<<stage;layer->savedDirty|=0x10;
 }
-static inline void shapeKAlphaSelect(GSgfxLayer *layer,u8 stage,u32 value) {
+static inline void shapeKAlphaSelect(GSgfxLayer *layer,u8 stage,GXTevKAlphaSel value) {
  layer->konstAlphas[stage]=value;layer->konstAlphaDirty|=1<<stage;layer->dirty|=0x10;layer->savedKonstAlphaDirty|=1<<stage;layer->savedDirty|=0x10;
 }
 #pragma dont_inline on
 extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(GsShapeObject *self,GSgfxLayer *layer,GsShapeTexture *textures,GStexture *refract) {
- u32 colorRegisters[4]={12,13,14,15},alphaRegisters[4]={28,29,30,31};
+ GXTevKColorSel colorRegisters[4]={GX_TEV_KCSEL_K0,GX_TEV_KCSEL_K1,GX_TEV_KCSEL_K2,GX_TEV_KCSEL_K3};
+ GXTevKAlphaSel alphaRegisters[4]={GX_TEV_KASEL_K0_A,GX_TEV_KASEL_K1_A,GX_TEV_KASEL_K2_A,GX_TEV_KASEL_K3_A};
  u8 stage=0,textureIndex=0,count=self->entry->textureCount;
  int var_r5_2,var_r5_3,var_r5_4,var_r5_5,var_r6_2,var_r6_3,var_r6_4,var_r7,var_r7_2,var_r7_3,var_r8,var_r8_10,var_r8_11,var_r8_12,var_r8_13,var_r8_14,var_r8_2,var_r8_3,var_r8_4,var_r8_5,var_r8_6,var_r8_7,var_r8_8,var_r8_9;
  while(textureIndex<count) {
@@ -1045,19 +1078,21 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
 #pragma dont_inline off
 
 extern "C" f32* GSgfxMatrixGetPtr(s32);
+static inline void refractCopy(Vec* out,const Vec* in) {f32 x=in->x,y=in->y,z=in->z;out->x=x;out->y=y;out->z=z;}
 extern "C" bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(GsShapeObject *self,f32 offsetU,f32 offsetV,GSmtx *first,GSmtx *second,GSmtx *third,f32) {
  Mtx transform,projectionMatrix;f32 *sourceProjection=GSgfxMatrixGetPtr(4);
  f32 projection[7];
  f32 viewport[6];
+ f32 screenWidth,screenHeight;
  projection[0]=0.0f;projection[1]=sourceProjection[0];projection[2]=sourceProjection[2];projection[3]=sourceProjection[5];projection[4]=sourceProjection[6];projection[5]=sourceProjection[10];projection[6]=sourceProjection[11];
  viewport[0]=0.0f;viewport[1]=0.0f;viewport[2]=640.0f;viewport[3]=480.0f;viewport[4]=0.0f;viewport[5]=1.0f;
+ screenWidth=viewport[2];screenHeight=viewport[3];
  u32 copySize=self->entry->vertexCount*sizeof(GsShapePair);
  for(s32 texture=0;texture<self->entry->textureCount;++texture) {
   const Vec *normalGrid=(const Vec*)self->entry->reserved1C;const Vec *positions=self->entry->vertices;
   if(!normalGrid)continue;GsShapePair *out=(GsShapePair*)self->vertexArrays[texture+2];if(!out)continue;
-  PSMTXCopy(second->matrix,transform);
-  if(texture==0){PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);memcpy(projectionMatrix,transform,sizeof(Mtx));}
-  else memcpy(out,self->entry->textureCoords,copySize);
+  if(texture==0){PSMTXCopy(second->matrix,transform);PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);memcpy(projectionMatrix,transform,sizeof(Mtx));}
+  else {PSMTXCopy(second->matrix,transform);memcpy(out,self->entry->textureCoords,copySize);}
   u16 segmentsU=self->entry->segmentsU,segmentsV=self->entry->segmentsV;int columns=segmentsU+1,rows=segmentsV+1;
   if(offsetU>1.0f)offsetU-=(f32)(int)offsetU;else if(offsetU<0.0f)offsetU-=(f32)((int)offsetU-1);
   if(offsetV>1.0f)offsetV-=(f32)(int)offsetV;else if(offsetV<0.0f)offsetV-=(f32)((int)offsetV-1);
@@ -1067,70 +1102,102 @@ extern "C" bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(Gs
   f32 diagonalWeight=fractionU*fractionV,verticalWeight=(1.0f-fractionU)*fractionV,horizontalWeight=fractionU*(1.0f-fractionV),originWeight=(1.0f-fractionU)*(1.0f-fractionV);
   int rowOffset=0;
   for(int row=0;row<rows;++row,rowOffset+=columns) {
-   for(int column=0;column<columns;++column) {
-    u16 sampleU=(column+shiftU)%self->entry->segmentsU;int sampleV=(row+shiftV)%self->entry->segmentsV;
+   int index=rowOffset;
+   for(int column=0;column<columns;++column,++index) {
+    int sampleU=(column+shiftU)%self->entry->segmentsU;int sampleV=(row+shiftV)%self->entry->segmentsV;
     if(sampleU==0&&column==columns-1)sampleU=self->entry->segmentsU;
     if(sampleV==0&&row==rows-1)sampleV=self->entry->segmentsV;
     int sample=sampleU+sampleV*columns;Vec value;
-    if(sampleU==columns-1&&sampleV==rows-1)value=normalGrid[sample];
-    else {
-     if(sampleU==columns-1){
+    if(sampleU==columns-1) {
+     if(sampleV==rows-1) {value.x=normalGrid[sample].x;value.y=normalGrid[sample].y;value.z=normalGrid[sample].z;}
+     else {
       int diagonal=sample+columns+1,vertical=sample+columns,horizontal=sample-1;
-      Vec a,b,c,d,sum;PSVECScale(&normalGrid[diagonal],&a,diagonalWeight);PSVECScale(&normalGrid[vertical],&b,verticalWeight);PSVECScale(&normalGrid[horizontal],&c,horizontalWeight);PSVECScale(&normalGrid[sample],&d,originWeight);PSVECAdd(&d,&c,&sum);PSVECAdd(&sum,&b,&sum);PSVECAdd(&sum,&a,&value);
-     }else if(sampleV==rows-1){
-      int diagonal=sample-columns+1,vertical=sample-columns,horizontal=sample+1;
-      Vec a,b,c,d,sum;PSVECScale(&normalGrid[diagonal],&a,diagonalWeight);PSVECScale(&normalGrid[vertical],&b,verticalWeight);PSVECScale(&normalGrid[horizontal],&c,horizontalWeight);PSVECScale(&normalGrid[sample],&d,originWeight);PSVECAdd(&d,&c,&sum);PSVECAdd(&sum,&b,&sum);PSVECAdd(&sum,&a,&value);
-     }else{
-      int diagonal=sample+columns+1,vertical=sample+columns,horizontal=sample+1;
-      Vec a,b,c,d,sum;PSVECScale(&normalGrid[diagonal],&a,diagonalWeight);PSVECScale(&normalGrid[vertical],&b,verticalWeight);PSVECScale(&normalGrid[horizontal],&c,horizontalWeight);PSVECScale(&normalGrid[sample],&d,originWeight);PSVECAdd(&d,&c,&sum);PSVECAdd(&sum,&b,&sum);PSVECAdd(&sum,&a,&value);
+      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
+      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
+      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
+      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
+      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
+      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
+      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
+      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
+
      }
+    } else if(sampleV==rows-1) {
+      int diagonal=sample-columns+1,vertical=sample-columns,horizontal=sample+1;
+      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
+      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
+      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
+      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
+      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
+      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
+      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
+      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
+
+    } else {
+      int diagonal=sample+columns+1,vertical=sample+columns,horizontal=sample+1;
+      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
+      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
+      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
+      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
+      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
+      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
+      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
+      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
+
     }
-    PSMTXMultVecSR(transform,&value,&value);int index=rowOffset+column;
+    PSMTXMultVecSR(transform,&value,&value);
     if(texture==0) {
      f32 x,y,z;GXProject(positions[index].x,positions[index].y,positions[index].z,projectionMatrix,projection,viewport,&x,&y,&z);
      if((f32)fabs(value.x)>0.00001f||(f32)fabs(value.y)>0.00001f||(f32)fabs(value.z)>0.00001f) {
       PSVECNormalize(&value,&value);
-      if(value.x<=0.0f)x=x*(1.0f+value.x);else x=value.x*(640.0f-x)+x;
-      if(value.y<=0.0f)y+=-value.y*(480.0f-y);else y*=1.0f-value.y;
+      if(value.x<=0.0f)x=x*(1.0f+value.x);else x=value.x*(screenWidth-x)+x;
+      if(value.y<=0.0f)y+=-value.y*(screenHeight-y);else y*=1.0f-value.y;
      }
-     out[index].u=x/640.0f;out[index].v=y/480.0f;
+     out[index].u=x/screenWidth;out[index].v=y/screenHeight;
     }else {out[index].u+=value.x;out[index].v+=value.y;}
    }
   }
  }
  return true;
 }
+
 #pragma dont_inline off
 extern "C" double acos(double);
-static inline f32 shapeAngularWeight(Vec *normal,Vec *view,f32 width) {
- f32 dot=(f32)fabs(PSVECDotProduct(normal,view));
- if(dot>1.0f||width<0.00001f)return 1.0f;
- f32 distance=sqrtf(1.0f-dot),threshold=1.0f-width;
- if(distance<=threshold)return 1.0f;
- f32 weight=(f32)cos((1.5707964f*(distance-threshold))/width);return weight*weight;
+static f32 shapeAngleWeight(f32 dot,f32 width) {
+ f32 result;
+ if(dot>1.0f||width<0.00001f)result=1.0f;
+ else {
+  f32 distance=shapeSqrt(1.0f-dot),threshold=1.0f-width;
+  if(distance<=threshold)result=1.0f;
+  else {f32 weight=(f32)cos((1.5707964f*(distance-threshold))/width);result=weight*weight;}
+ }
+ return result;
+}
+static f32 shapeAngularWeight(Vec *normal,Vec *view,GsShapeObject *self) {
+ f64 absolute=fabs(PSVECDotProduct(normal,view));f32 dot=(f32)absolute;
+ return shapeAngleWeight(dot,*(f32*)((u8*)self->entry+0xd0));
 }
 #pragma dont_inline on
 extern "C" bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShapeObject *self,GSmtx *first,GSmtx *second,GSmtx *third,f32 distance,bool preserveNormal) {
  if(!self->vertexArrays[1])return false;
  Mtx transform,rotation;PSMTXCopy(second->matrix,transform);PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);
- Vec *normals=(Vec*)self->entry->reserved1C,*positions=self->entry->vertices;tagGScol4ub *colors=(tagGScol4ub*)self->vertexArrays[1];u16 count=self->entry->vertexCount;
- for(int i=0;i<count;++i,++normals,++positions,++colors) {
-  Vec normal=*normals,position=*positions,view;PSMTXMultVecSR(transform,&normal,&normal);PSMTXMultVec(transform,&position,&view);f32 viewZ=view.z;view.z=viewZ-distance;
-  f32 weight,width=*(f32*)((u8*)self->entry+0xd0);
-  switch(self->entry->colorMode) {
-  case 1:normal.y=0.0f;view.y=0.0f;
-   if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,width);}else weight=0.0f;break;
-  case 2:normal.x=0.0f;view.x=0.0f;
-   if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,width);}else weight=0.0f;break;
-  case 3:
+ Vec *normals;Vec *positions;tagGScol4ub *colors;int i;int count;
+ normals=(Vec*)self->entry->reserved1C;count=self->entry->vertexCount;positions=self->entry->vertices;colors=(tagGScol4ub*)self->vertexArrays[1];i=0;
+ for(;i<count;++normals,++positions,++colors,++i) {
+  Vec normalInput,position,normal,view;normalInput.x=normals->x;normalInput.y=normals->y;normalInput.z=normals->z;position.x=positions->x;position.y=positions->y;position.z=positions->z;PSMTXMultVecSR(transform,&normalInput,&normal);PSMTXMultVec(transform,&position,&view);f32 viewZ=view.z;view.z=viewZ-distance;
+  f32 weight;
+  if(self->entry->colorMode==1) {normal.y=0.0f;view.y=0.0f;
+   if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
+  else if(self->entry->colorMode==2) {normal.x=0.0f;view.x=0.0f;
+   if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
+  else if(self->entry->colorMode==3) {
    if((self->entry->geometryType==31&&*((u8*)self->entry+0xce)==1&&!preserveNormal)||(self->entry->geometryType==32&&(*((u8*)self->entry+0xcc)%2)==0)) {
-    Vec forward={0.0f,0.0f,1.0f},axis;PSMTXMultVecSR(transform,&forward,&forward);PSVECCrossProduct(&view,&forward,&axis);
-    if(PSVECSquareMag(&axis)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&axis,&axis);PSVECNormalize(&view,&view);PSMTXRotAxisRad(rotation,&axis,1.5707964f-(f32)acos(PSVECDotProduct(&forward,&view)));PSMTXMultVecSR(rotation,&normal,&normal);weight=shapeAngularWeight(&normal,&view,width);}else weight=0.0f;
-   }else if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,width);}else weight=0.0f;break;
-  default:weight=1.0f;break;
-  }
+    Vec forward,axis;forward.x=0.0f;forward.y=0.0f;forward.z=1.0f;PSMTXMultVecSR(transform,&forward,&forward);PSVECCrossProduct(&view,&forward,&axis);
+    if(PSVECSquareMag(&axis)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&axis,&axis);PSVECNormalize(&view,&view);PSMTXRotAxisRad(rotation,&axis,1.5707964f-(f32)acos(PSVECDotProduct(&forward,&view)));PSMTXMultVecSR(rotation,&normal,&normal);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;
+   }else if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
+  else weight=1.0f;
   if(viewZ>0.0f&&distance>0.00001f){f32 attenuation;if(viewZ>distance)attenuation=0.0f;else attenuation=(distance-viewZ)/distance;weight*=attenuation;}
-  switch(self->entry->shapeType){case 2:case 8:case 10:colors->a=weight*colors->a;break;default:colors->r=weight*colors->r;colors->g=weight*colors->g;colors->b=weight*colors->b;break;}
+  switch(self->entry->shapeType){case 2:case 8:case 10:((u8*)self->vertexArrays[1])[(i*4+3)]=weight*colors->a;break;default:((u8*)self->vertexArrays[1])[(i*4+0)]=weight*colors->r;((u8*)self->vertexArrays[1])[(i*4+1)]=weight*colors->g;((u8*)self->vertexArrays[1])[(i*4+2)]=weight*colors->b;break;}
  }
  return true;
 }

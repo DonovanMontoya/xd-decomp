@@ -1783,12 +1783,16 @@ bool ModelEntry::Start() {
 void ModelEntry::Stop(bool force) {
     ModelSequence *ms;
     u32 seqModel = 0;
-    if (state == 1 || (state != 2 && force)) {
+    if (state == 1) goto stop;
+    if (state != 2 && force) goto stop;
+    return;
+stop:
+    {
         {
             state = 2;
             if (model != 0) {
                 ms = (ModelSequence *)waza->sequence;
-                ms = ms->type == 1 ? ms : 0;
+                ms = ms->type == 1 ? (ModelSequence *)waza->sequence : 0;
                 if (ms != 0) {
                     seqModel = ms->model;
                 }

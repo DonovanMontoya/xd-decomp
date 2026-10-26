@@ -22,7 +22,7 @@ void peParticleStripContainer::RearrangeIndices() {
     if(extended) {for(;j<2;j++){indices[0]=first+j*3;indices[1]=first;indices[2]=first;indices[3]=first+j*2;indices+=4;}}
     else {for(;j<2;j++){indices[0]=first+j*3;indices[1]=first;indices[2]=first+j*2;indices+=3;}}
     f32 value;if(reverse){u16 flipped=count-ordinal-1;value=__OSu16tof32(&flipped);}else{u16 current=ordinal;value=__OSu16tof32(&current);}
-    if(mirror)data[9]=data[7]=-((value*step)-1.0f);else data[9]=data[7]=value*step;
+    if(mirror)data[7]=data[9]=-((value*step)-1.0f);else data[7]=data[9]=value*step;
     output+=indexStep;++ordinal;data[8]=definition->v0;data[10]=definition->v1;node=(peParticleStripNode*)node->next;
    }list->flags|=2;
   }
@@ -150,11 +150,13 @@ peParticleStripContainer::peParticleStripContainer(peEmitterNode *emitter,_pePar
 }
 void peParticleStripNode::UpdateRenderData(peEmitterNode *emitter,_peParticleStrip *d,char *data,f32 progress) {
  u32 flags=d->flags;u32 extended=(flags>>18)&1;Mtx matrix;Mtx segmentMatrix;ShapeTransform *parent=(ShapeTransform*)transform;Vec world,segment;
- world.x=position.x*parent->scale.x;world.y=position.y*parent->scale.y;world.z=position.z*parent->scale.z;PSMTXQuat(matrix,&parent->rotation);PSMTXMultVecSR(matrix,&world,&world);PSVECAdd(&world,&parent->position,&world);
+ Vec offset,half;
+ u8 color[4];u8 red,green,blue;
+ f32 wy=position.y*parent->scale.y;f32 wz=position.z*parent->scale.z;f32 wx=position.x*parent->scale.x;world.x=wx;world.y=wy;world.z=wz;PSMTXQuat(matrix,&parent->rotation);PSMTXMultVecSR(matrix,&world,&world);PSVECAdd(&world,&((ShapeTransform*)transform)->position,&world);
  char *out;if(extended)out=data+index*0x30;else out=data+index*0x2c;
- segment.x=this->segment.x*parent->scale.x;segment.y=this->segment.y*parent->scale.y;segment.z=this->segment.z*parent->scale.z;PSMTXQuat(segmentMatrix,&parent->rotation);PSMTXMultVecSR(segmentMatrix,&segment,&segment);
- if(flags&0x4000){Vec half;PSVECScale(&segment,&half,0.5f);PSVECSubtract(&world,&half,&world);}
+ parent=(ShapeTransform*)transform;f32 sy=this->segment.y*parent->scale.y;f32 sz=this->segment.z*parent->scale.z;f32 sx=this->segment.x*parent->scale.x;segment.x=sx;segment.y=sy;segment.z=sz;PSMTXQuat(segmentMatrix,&parent->rotation);PSMTXMultVecSR(segmentMatrix,&segment,&segment);
+ if(flags&0x4000){PSVECScale(&segment,&half,0.5f);offset=half;PSVECSubtract(&world,&offset,&world);}
  *(Vec*)out=world;if(g_currentBound)GSboundAddPoint(g_currentBound,world.x,world.y,world.z);PSVECAdd(&world,&segment,&world);*(Vec*)(out+0xc)=world;if(g_currentBound)GSboundAddPoint(g_currentBound,world.x,world.y,world.z);
- u8 color[4];peColorSplineGetValue(color,d->colorSpline,progress);color[2]=__OSf32tou8(__OSu8tof32(&color[2])*emitter->color[2]);color[1]=__OSf32tou8(__OSu8tof32(&color[1])*emitter->color[1]);color[0]=__OSf32tou8(__OSu8tof32(&color[0])*emitter->color[0]);color[3]=__OSf32tou8((255.0f*emitter->color[3])*spline(d->alphaSpline,progress));*(u32*)(out+0x18)=*(u32*)color;
+ peColorSplineGetValue(color,d->colorSpline,progress);red=color[0];color[0]=__OSf32tou8(__OSu8tof32(&red)*emitter->color[0]);green=color[1];color[1]=__OSf32tou8(__OSu8tof32(&green)*emitter->color[1]);blue=color[2];color[2]=__OSf32tou8(__OSu8tof32(&blue)*emitter->color[2]);color[3]=__OSf32tou8((255.0f*emitter->color[3])*spline(d->alphaSpline,progress));*(u32*)(out+0x18)=*(u32*)color;
  if(extended){peColorSplineGetValue(color,d->secondColorSpline,progress);*(u32*)(out+0x2c)=*(u32*)color;}
 }

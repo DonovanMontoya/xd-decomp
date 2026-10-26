@@ -360,8 +360,8 @@ extern "C" s32 menuPcBoxDouguHikidashiCursor(void) {
     u16 trg = windowGetKeyTrg();
     s32 sel;
     s32 total;
-    s32 pos;
     s32 ofs;
+    s32 pos;
     s32 pages;
     if (CurPos != 0.0f) {
         return 0;
@@ -406,9 +406,7 @@ extern "C" s32 menuPcBoxDouguHikidashiCursor(void) {
         }
     } else if ((repeat & 1) != 0) {
         if (pos > 0 || ofs > 0) {
-            s32 np = CursorPos - 1;
-            CursorPos = np;
-            if (np < 0) {
+            if (--CursorPos < 0) {
                 CursorPos = 0;
                 CursorOfs = CursorOfs - 1;
                 IsScroll = 1;
@@ -419,13 +417,14 @@ extern "C" s32 menuPcBoxDouguHikidashiCursor(void) {
             menuPtPlaySe(0x441);
         }
     } else if ((repeat & 8) != 0) {
+        s32 no;
         s16 last = total - 8;
         if (pages == 1) {
             CursorPos = (s16)(total - 1);
         } else if (ofs == last) {
             CursorPos = 7;
         } else {
-            s32 no = ofs + 8;
+            no = ofs + 8;
             CursorOfs = no;
             if (no > last) {
                 CursorOfs = last;
@@ -454,10 +453,10 @@ extern "C" s32 menuPcBoxDouguHikidashiCursor(void) {
     u32 msg;
     if (IrekaeSlotID >= 0) {
         msg = 0x3BBC;
-    } else if (getItemIDFromMenuPos(CursorOfs + CursorPos) != 0) {
-        msg = getItemInstMsg(getItemIDFromMenuPos(CursorOfs + CursorPos));
     } else {
-        msg = 0x3BBB;
+        u16 id = getItemIDFromMenuPos(CursorOfs + CursorPos);
+        if (id != 0) msg = getItemInstMsg(id);
+        else msg = 0x3BBB;
     }
     setExplanationMsgID(msg);
     return 0;

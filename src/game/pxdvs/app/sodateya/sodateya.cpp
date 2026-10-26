@@ -14,8 +14,24 @@ static inline u8 getInitialLevel(Sodateya *work){work=getWork(work);if(work->act
 static inline void setActive(Sodateya *work,u8 active){work=getWork(work);if(work)work->active=active;}
 static inline void setLevel(Sodateya *work,u8 level){work=getWork(work);if(work)work->level=level;}
 static inline void setSteps(Sodateya *work,u16 steps){work=getWork(work);if(work)work->steps=steps;}
-static inline u16 validDark(void *pokemon,s32 mode){u16 id=pokemonBiosGetDarkpokemonDataId(pokemon);if(id){if(mode==1){if(darkPokemonBiosGetReliveFlag(id)||id==73)id=0;else if(pokemonGetDp(pokemon)==0.0f){}else id=0;}else if(darkPokemonBiosGetReliveFlag(id)||pokemonBiosGetHp(pokemon)==0||id==73)id=0;}return id;}
+static inline u16 validDark(void *pokemon, s32 mode) {
+    u16 id = pokemonBiosGetDarkpokemonDataId(pokemon);
+    if (id) {
+        if (mode == 1) {
+            if (darkPokemonBiosGetReliveFlag(id) || id == 73) return 0;
+            if (pokemonGetDp(pokemon) == 0.0f) return id;
+            return 0;
+        }
+        if (darkPokemonBiosGetReliveFlag(id) || pokemonBiosGetHp(pokemon) == 0 || id == 73) return 0;
+    }
+    return id;
+}
 static inline void notifyRelive(void *pokemon,s32 mode){u16 id=validDark(pokemon,mode);if(id&&darkPokemonBiosGetInformationFlag(id)==0){heroMoveInitEvent();heroMoveSetColision(1);GSthreadSwitch();menuScriptInfoRelive(pokemon,1);heroMoveTermEvent();}}
+static inline u32 addExperience(u32 original, u32 steps) {
+    u32 sum = original + steps;
+    if (original > sum) return -1U;
+    return sum;
+}
 extern "C" {
 s32 sodateyaeChekcRais(){Sodateya *work=getWork(0);if(!work)return -1;switch(work->active){case 1:return 1;case 0:return 0;default:return -1;}}
 u8 *sodateyaGetPokemonPtr(Sodateya *work){work=getWork(work);return work->pokemon;}
@@ -39,8 +55,8 @@ static void _sodateyaCallBackFunc__Fl15FootStepCounterl(s32, s32 arg1, s32 arg2)
     u16 var_r24_2;
     u16 var_r24_3;
     u16 var_r25;
-    s32 var_r28;
-    s32 var_r31;
+    u16 var_r28;
+    u16 var_r31;
     u32 temp_r3_6;
     u32 temp_r5;
     u32 var_r4;
@@ -54,40 +70,15 @@ static void _sodateyaCallBackFunc__Fl15FootStepCounterl(s32, s32 arg1, s32 arg2)
         for(var_r28=0;var_r28<6U;var_r28++) {
             temp_r26 = (u8*)heroBiosGetPokemonPtr(temp_r3, var_r28);
             if ((pokemonCheckValid(temp_r26) != 0) && (temp_r26 != NULL)) {
-                var_r25 = pokemonBiosGetDarkpokemonDataId(temp_r26);
-                if (var_r25 != 0) {
-                    if (arg1 == 1) {
-                        if ((darkPokemonBiosGetReliveFlag(var_r25) != 0) || (var_r25 == 0x49)) {
-                            var_r25 = 0;
-                        } else if (pokemonGetDp(temp_r26) == 0.0f) {
-
-                        } else {
-                            var_r25 = 0;
-                        }
-                    } else if ((darkPokemonBiosGetReliveFlag(var_r25) != 0) || (pokemonBiosGetHp(temp_r26) == 0) || (var_r25 == 0x49)) {
-                        var_r25 = 0;
-                    }
-                }
+                var_r25 = validDark(temp_r26, arg1);
                 if (var_r25 != 0) {
                     if (pokemonBiosGetDp(temp_r26) != 0U) {
-                        temp_r0 = darkPokemonBiosGetSteps(var_r25) + arg2;
+                        s32 previousSteps = darkPokemonBiosGetSteps(var_r25);
+                        temp_r0 = previousSteps + arg2;
                         if (temp_r0 >= 0x100U) {
                             pokemonAddDpFormPokemonDpFilterId(temp_r26, 0, 1);
                             if (pokemonGetDp(temp_r26) == 0.0f) {
-                                var_r24 = pokemonBiosGetDarkpokemonDataId(temp_r26);
-                                if (var_r24 != 0) {
-                                    if (arg1 == 1) {
-                                        if ((darkPokemonBiosGetReliveFlag(var_r24) != 0) || (var_r24 == 0x49)) {
-                                            var_r24 = 0;
-                                        } else if (pokemonGetDp(temp_r26) == 0.0f) {
-
-                                        } else {
-                                            var_r24 = 0;
-                                        }
-                                    } else if ((darkPokemonBiosGetReliveFlag(var_r24) != 0) || (pokemonBiosGetHp(temp_r26) == 0) || (var_r24 == 0x49)) {
-                                        var_r24 = 0;
-                                    }
-                                }
+                                var_r24 = validDark(temp_r26, arg1);
                                 if ((var_r24 != 0) && (darkPokemonBiosGetInformationFlag(var_r24) == 0)) {
                                     heroMoveInitEvent();
                                     heroMoveSetColision(1);
@@ -103,20 +94,7 @@ static void _sodateyaCallBackFunc__Fl15FootStepCounterl(s32, s32 arg1, s32 arg2)
                             darkPokemonBiosSetSteps(var_r25, temp_r0);
                         }
                     } else {
-                        var_r24_2 = pokemonBiosGetDarkpokemonDataId(temp_r26);
-                        if (var_r24_2 != 0) {
-                            if (arg1 == 1) {
-                                if ((darkPokemonBiosGetReliveFlag(var_r24_2) != 0) || (var_r24_2 == 0x49)) {
-                                    var_r24_2 = 0;
-                                } else if (pokemonGetDp(temp_r26) == 0.0f) {
-
-                                } else {
-                                    var_r24_2 = 0;
-                                }
-                            } else if ((darkPokemonBiosGetReliveFlag(var_r24_2) != 0) || (pokemonBiosGetHp(temp_r26) == 0) || (var_r24_2 == 0x49)) {
-                                var_r24_2 = 0;
-                            }
-                        }
+                        var_r24_2 = validDark(temp_r26, arg1);
                         if ((var_r24_2 != 0) && (darkPokemonBiosGetInformationFlag(var_r24_2) == 0)) {
                             heroMoveInitEvent();
                             heroMoveSetColision(1);
@@ -146,32 +124,13 @@ static void _sodateyaCallBackFunc__Fl15FootStepCounterl(s32, s32 arg1, s32 arg2)
             temp_r25 = (u8*)savedataGetStatus(0, 0xB) + 8;
             var_r24_3 = 0;
             if (temp_r25 != NULL) {
-                var_r24_3 = pokemonBiosGetDarkpokemonDataId(temp_r25);
-                if (var_r24_3 != 0) {
-                    if (arg1 == 1) {
-                        if ((darkPokemonBiosGetReliveFlag(var_r24_3) != 0) || (var_r24_3 == 0x49)) {
-                            var_r24_3 = 0;
-                        } else if (pokemonGetDp(temp_r25) == 0.0f) {
-
-                        } else {
-                            var_r24_3 = 0;
-                        }
-                    } else if ((darkPokemonBiosGetReliveFlag(var_r24_3) != 0) || (pokemonBiosGetHp(temp_r25) == 0) || (var_r24_3 == 0x49)) {
-                        var_r24_3 = 0;
-                    }
-                }
+                var_r24_3 = validDark(temp_r25, arg1);
                 if ((var_r24_3 != 0) && (darkPokemonBiosGetReliveFlag(var_r24_3) != 0)) {
                     var_r24_3 = 0;
                 }
             }
             if ((var_r24_3 == 0) && (pokemonBiosGetLevel(temp_r25) < 0x64U)) {
-                temp_r3_6 = pokemonBiosGetExp(temp_r25);
-                temp_r5 = temp_r3_6 + arg2;
-                var_r4 = -1U;
-                if (temp_r3_6 <= temp_r5) {
-                    var_r4 = temp_r5;
-                }
-                pokemonGrowBasisStatus(temp_r25, var_r4);
+                pokemonGrowBasisStatus(temp_r25, addExperience(pokemonBiosGetExp(temp_r25), arg2));
                 sp8 = 0;
                 pokemonOboeWaza(temp_r25, pokemonBiosGetLevel(temp_r25), 1, &sp8);
             }

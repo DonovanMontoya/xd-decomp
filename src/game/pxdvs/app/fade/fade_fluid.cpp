@@ -6,7 +6,7 @@ static void _fadeFluidDoFree(void *);
 static void *_fadeFluidDoMalloc(unsigned long);
 static void _fadeFluidSetShockSub(unsigned long,unsigned long,f32);
 
-extern "C" f32 __float_nan;
+extern "C" f32 __float_nan[];
 static inline f32 FluidSqrt(f32 x) {
     if (x > 0.0f) {
         f64 guess=__frsqrte((f64)x);
@@ -14,47 +14,59 @@ static inline f32 FluidSqrt(f32 x) {
         guess=0.5*guess*(3.0-guess*guess*x);
         guess=0.5*guess*(3.0-guess*guess*x);
         return (f32)(x*guess);
-    } else if (x < 0.0) return __float_nan;
+    } else if (x < 0.0) return __float_nan[0];
     else {
         union {f32 f;u32 u;} value;
         value.f=x;
         s32 category;
-        switch (value.u & 0x7F800000) {
-        case 0x7F800000:category=(value.u & 0x7FFFFF)!=0?1:2;break;
-        case 0:category=(value.u & 0x7FFFFF)!=0?5:3;break;
+        switch ((s32)(value.u & 0x7F800000)) {
+        case 0x7F800000:category=(s32)(value.u & 0x7FFFFF)!=0?1:2;break;
+        case 0:category=(s32)(value.u & 0x7FFFFF)!=0?5:3;break;
         default:category=4;break;
         }
-        if (category == 1) return __float_nan;
+        if (category == 1) return __float_nan[0];
     }
     return x;
 }
 
+static inline void FluidSetVector(FluidVec& value,f32 x,f32 y,f32 z) {value.x=x;value.y=y;value.z=z;}
+static inline void FluidTexCoord(f32 u,f32 v) { *(volatile f32*)0xCC008000=u; *(volatile f32*)0xCC008000=v; }
 static inline void FluidVertex(FluidVec *vertex,FluidUV *uv,f32 sx,f32 sy,u8 alpha) {
-    f32 x=vertex->x*sx;
-    f32 y=vertex->y*sy;
-    f32 z=vertex->z*sx;
-    *(volatile f32 *)0xCC008000=x;
-    *(volatile f32 *)0xCC008000=y;
-    *(volatile f32 *)0xCC008000=z;
+    FluidVec value;
+    FluidSetVector(value,vertex->x,vertex->y,vertex->z);
+    value.x*=sx; value.y*=sy; value.z*=sx;
+    *(volatile f32 *)0xCC008000=value.x;
+    *(volatile f32 *)0xCC008000=value.y;
+    *(volatile f32 *)0xCC008000=value.z;
     *(volatile u8 *)0xCC008000=255;
     *(volatile u8 *)0xCC008000=255;
     *(volatile u8 *)0xCC008000=255;
     *(volatile u8 *)0xCC008000=alpha;
-    *(volatile f32 *)0xCC008000=uv->u;
-    *(volatile f32 *)0xCC008000=uv->v;
+    FluidTexCoord(uv->u,uv->v);
 }
 
 extern "C" void fadeFluidDispSecond(s32 layerId,GStexture *texture,f32 fade,f32 progress) {
+    FluidVec **slot;
+    FluidUV *uv;
+    s32 rowA,rowB,i,j;
+    u32 x;
+    u32 count;
+    s32 alpha;
+    u32 y;
+    GSgfxLayer *layer;
+    u32 stride;
+    f32 value,sx,sy;
 
-    GSgfxLayer *layer=GSgfxLayerFindByID(layerId);
+
+    layer=GSgfxLayerFindByID(layerId);
     FluidVec color;
     FluidVec from;
     FluidVec to;
     from.x=1.0f;from.y=1.0f;from.z=1.0f;
     to.x=0.0f;to.y=0.0f;to.z=0.0f;
     GSlerpGetLinearInterpolationVector(&color,&from,&to,progress);
-    f32 value=(f32)(s32)(255.0f*color.x);
-    s32 alpha=(s32)(value*(1.0f-fade));
+    value=(f32)(s32)(255.0f*color.x);
+    alpha=(s32)(value*(1.0f-fade));
     spriteSetEnv(layerId);
     if (layer->shaderIndex != 1) {
         layer->shaderIndex=1;
@@ -75,17 +87,17 @@ extern "C" void fadeFluidDispSecond(s32 layerId,GStexture *texture,f32 fade,f32 
         layer->texture0=texture;layer->field173C|=1;
         layer->texture1=texture;layer->field17F4|=1;
     }
-    f32 sx=_fadeFluidWork.screenX,sy=_fadeFluidWork.screenY;
-    u32 stride=_fadeFluidWork.width+1;
-    u32 count=stride*2;
-    for (u32 y=0;y<_fadeFluidWork.height;++y) {
+    sx=_fadeFluidWork.screenX;sy=_fadeFluidWork.screenY;
+    stride=_fadeFluidWork.width+1;
+    count=stride*2;
+    for (y=0;y<_fadeFluidWork.height;++y) {
         layer->primitive=0x98;
         layer->beginSurface(count);
-        FluidVec **slot=&_fadeFluidWork.vertices[_fadeFluidSw];
-        FluidUV *uv=_fadeFluidWork.uv;
-        u32 rowA=y*stride,rowB=(y+1)*stride;
-        for (u32 x=0;x<stride;++x) {
-            u32 i=x+rowA,j=x+rowB;
+        slot=&_fadeFluidWork.vertices[_fadeFluidSw];
+        uv=_fadeFluidWork.uv;
+        rowA=(s32)y*(s32)stride;rowB=((s32)y+1)*(s32)stride;
+        for (x=0;x<stride;++x) {
+            i=(s32)x+rowA;j=(s32)x+rowB;
             FluidVertex(&(*slot)[i],&uv[i],sx,sy,alpha);
             FluidVertex(&(*slot)[j],&uv[j],sx,sy,alpha);
         }
@@ -93,16 +105,27 @@ extern "C" void fadeFluidDispSecond(s32 layerId,GStexture *texture,f32 fade,f32 
     }
 }
 extern "C" void fadeFluidDisp(GStexture *texture,f32 fade,f32 progress) {
+    FluidVec **slot;
+    FluidUV *uv;
+    s32 rowA,rowB,i,j;
+    u32 x;
+    u32 count;
+    s32 alpha;
+    u32 y;
+    GSgfxLayer *layer;
+    u32 stride;
+    f32 value,sx,sy;
 
-    GSgfxLayer *layer=GSgfxLayerFindByID(7);
+
+    layer=GSgfxLayerFindByID(7);
     FluidVec color;
     FluidVec from;
     FluidVec to;
     from.x=1.0f;from.y=1.0f;from.z=1.0f;
     to.x=0.0f;to.y=0.0f;to.z=0.0f;
     GSlerpGetLinearInterpolationVector(&color,&from,&to,progress);
-    f32 value=(f32)(s32)(255.0f*color.x);
-    s32 alpha=(s32)(value*(1.0f-fade));
+    value=(f32)(s32)(255.0f*color.x);
+    alpha=(s32)(value*(1.0f-fade));
     spriteSetEnv(7);
     if (layer->shaderIndex != 1) {
         layer->shaderIndex=1;
@@ -124,16 +147,16 @@ extern "C" void fadeFluidDisp(GStexture *texture,f32 fade,f32 progress) {
         layer->texture1=texture;layer->field17F4|=1;
     }
     layer->primitive=0x98;
-    f32 sx=_fadeFluidWork.screenX,sy=_fadeFluidWork.screenY;
-    u32 stride=_fadeFluidWork.width+1;
-    u32 count=stride*2;
-    for (u32 y=0;y<_fadeFluidWork.height;++y) {
+    sx=_fadeFluidWork.screenX;sy=_fadeFluidWork.screenY;
+    stride=_fadeFluidWork.width+1;
+    count=stride*2;
+    for (y=0;y<_fadeFluidWork.height;++y) {
         layer->beginSurface(count);
-        FluidVec **slot=&_fadeFluidWork.vertices[_fadeFluidSw];
-        FluidUV *uv=_fadeFluidWork.uv;
-        u32 rowA=y*stride,rowB=(y+1)*stride;
-        for (u32 x=0;x<stride;++x) {
-            u32 i=x+rowA,j=x+rowB;
+        slot=&_fadeFluidWork.vertices[_fadeFluidSw];
+        uv=_fadeFluidWork.uv;
+        rowA=(s32)y*(s32)stride;rowB=((s32)y+1)*(s32)stride;
+        for (x=0;x<stride;++x) {
+            i=(s32)x+rowA;j=(s32)x+rowB;
             FluidVertex(&(*slot)[i],&uv[i],sx,sy,alpha);
             FluidVertex(&(*slot)[j],&uv[j],sx,sy,alpha);
         }
@@ -155,13 +178,16 @@ extern "C" void fadeFluidSetShockSecond(FluidVec *point,f32 strength) {
     _fadeFluidSetShockSub(x+1,y+1,diagonal);
 }
 extern "C" void fadeFluidEvaluateSecond() {
+    FluidVec *current,*next,*row;
+    u32 stride,x,y;
     f32 a=_fadeFluidWork.a,b=_fadeFluidWork.b,c=_fadeFluidWork.c;
-    u32 stride=_fadeFluidWork.width+1;
-    for (u32 y=1;y<_fadeFluidWork.height;++y) {
-        FluidVec *row=&_fadeFluidWork.vertices[_fadeFluidSw][y*stride];
-        FluidVec *current=row+1;
-        FluidVec *next=&_fadeFluidWork.vertices[1-_fadeFluidSw][y*stride+1];
-        for (u32 x=1;x<_fadeFluidWork.width;++x,++current,++next) {
+    stride=_fadeFluidWork.width+1;
+    for (y=1;y<_fadeFluidWork.height;++y) {
+        s32 rowOffset=(s32)y*(s32)stride;
+        row=&_fadeFluidWork.vertices[_fadeFluidSw][rowOffset];
+        current=row+1;
+        next=&_fadeFluidWork.vertices[1-_fadeFluidSw][rowOffset]+1;
+        for (x=1;x<_fadeFluidWork.width;++x,++current,++next) {
             f32 sides=current[1].z+current[-1].z;
             next->z=c*(row[(s32)x-(s32)stride].z+(sides+row[x+stride].z))+
                 (a*current->z+b*next->z);
@@ -193,28 +219,33 @@ static void _fadeFluidSetShockSub(unsigned long x,unsigned long y,f32 strength) 
 }
 #pragma opt_dead_assignments reset
 extern "C" void fadeFluidEvaluate() {
+    FluidVec *current,*next,*row;
+    FluidVec *current2,*normal2,*tangent2,*row2;
+    u32 stride,x,y;
     f32 a=_fadeFluidWork.a,b=_fadeFluidWork.b,c=_fadeFluidWork.c;
-    u32 stride=_fadeFluidWork.width+1;
-    for (u32 y=1;y<_fadeFluidWork.height;++y) {
-        FluidVec *row=&_fadeFluidWork.vertices[_fadeFluidSw][y*stride];
-        FluidVec *current=row+1;
-        FluidVec *next=&_fadeFluidWork.vertices[1-_fadeFluidSw][y*stride+1];
-        for (u32 x=1;x<_fadeFluidWork.width;++x,++current,++next) {
+    stride=_fadeFluidWork.width+1;
+    for (y=1;y<_fadeFluidWork.height;++y) {
+        s32 rowOffset=(s32)y*(s32)stride;
+        row=&_fadeFluidWork.vertices[_fadeFluidSw][rowOffset];
+        current=row+1;
+        next=&_fadeFluidWork.vertices[1-_fadeFluidSw][rowOffset]+1;
+        for (x=1;x<_fadeFluidWork.width;++x,++current,++next) {
             f32 sides=current[1].z+current[-1].z;
             next->z=c*(row[(s32)x-(s32)stride].z+(sides+row[x+stride].z))+
                 (a*current->z+b*next->z);
         }
     }
     _fadeFluidSw=1-_fadeFluidSw;
-    for (u32 y=1;y<_fadeFluidWork.height;++y) {
-        FluidVec *row=&_fadeFluidWork.vertices[_fadeFluidSw][y*stride];
-        FluidVec *current=row+1;
-        FluidVec *normal=&_fadeFluidWork.normal[y*stride+1];
-        FluidVec *tangent=&_fadeFluidWork.tangent[y*stride+1];
-        for (u32 x=1;x<_fadeFluidWork.width;++x,++current,++normal,++tangent) {
-            normal->x=current[-1].z-current[1].z;
-            normal->y=row[(s32)x-(s32)stride].z-row[x+stride].z;
-            tangent->z=current[1].z-current[-1].z;
+    for (y=1;y<_fadeFluidWork.height;++y) {
+        s32 rowOffset=(s32)y*(s32)stride;
+        row2=&_fadeFluidWork.vertices[_fadeFluidSw][rowOffset];
+        current2=row2+1;
+        normal2=&_fadeFluidWork.normal[rowOffset]+1;
+        tangent2=&_fadeFluidWork.tangent[rowOffset]+1;
+        for (x=1;x<_fadeFluidWork.width;++x,++current2,++normal2,++tangent2) {
+            normal2->x=current2[-1].z-current2[1].z;
+            normal2->y=row2[(s32)x-(s32)stride].z-row2[x+stride].z;
+            tangent2->z=current2[1].z-current2[-1].z;
         }
     }
 }
@@ -244,6 +275,11 @@ extern "C" void fadeFluidQuit() {
     _fadeFluidWork.normal=0;_fadeFluidWork.tangent=0;_fadeFluidWork.uv=0;
 }
 extern "C" void fadeFluidInit(u32 width,u32 height,f32 spacing,f32 delta,f32 speed,f32 damping) {
+    FluidVec *vertex,*copy,*normal,*tangent;
+    s32 x,y;
+    f32 twiceSpacing,vertexY,textureV;
+    f32 inverseU,inverseV;
+    u32 i;
     u32 count=(width+1)*(height+1);
     u32 bytes=count*sizeof(FluidVec);
     _fadeFluidWork.width=width;_fadeFluidWork.height=height;
@@ -256,24 +292,31 @@ extern "C" void fadeFluidInit(u32 width,u32 height,f32 spacing,f32 delta,f32 spe
     _fadeFluidWork.tangent=(FluidVec *)_fadeFluidDoMalloc(bytes);
     _fadeFluidWork.uv=(FluidUV *)_fadeFluidDoMalloc(count*sizeof(FluidUV));
     f32 limit=(spacing/(2.0f*delta))*FluidSqrt(2.0f+damping);
-    if (!(speed>0.0f) || !(speed<limit)) {
+    if (!(0.0f<speed && speed<limit)) {
         OSReport("Warning: fadeFluid c parm. Limit Over!! -> 0.0f < %f < %f\n",speed,limit);
         speed=limit-0.000001f;
     }
     _fadeFluidWork.spacing=spacing;_fadeFluidWork.speed=speed;_fadeFluidWork.damping=damping;
     fadeFluidCalcParms(delta);
-    for (u32 y=0;y<=height;++y) {
-        for (u32 x=0;x<=width;++x) {
-            u32 i=x+y*(width+1);
-            FluidVec *vertex=&_fadeFluidWork.vertices[0][i];
-            vertex->x=spacing*(f32)x;vertex->y=spacing*(f32)y;vertex->z=0.0f;
-            _fadeFluidWork.vertices[1][i]=*vertex;
-            FluidVec *normal=&_fadeFluidWork.normal[i];
-            normal->x=0.0f;normal->y=0.0f;normal->z=2.0f*spacing;
-            FluidVec *tangent=&_fadeFluidWork.tangent[i];
-            tangent->x=2.0f*spacing;tangent->y=0.0f;tangent->z=0.0f;
-            _fadeFluidWork.uv[i].u=(1.0f/(f32)_fadeFluidWork.width)*(f32)x;
-            _fadeFluidWork.uv[i].v=(1.0f/(f32)_fadeFluidWork.height)*(f32)y;
+    twiceSpacing=2.0f*spacing;
+    inverseU=1.0f/(f32)_fadeFluidWork.width;
+    inverseV=1.0f/(f32)_fadeFluidWork.height;
+    i=0;
+    for (y=0;y<=height;++y) {
+        vertexY=spacing*(f32)y;
+        textureV=inverseV*(f32)y;
+        for (x=0;x<=width;++i,++x) {
+            vertex=&_fadeFluidWork.vertices[0][i];
+            vertex->x=spacing*(f32)x;vertex->y=vertexY;vertex->z=0.0f;
+            copy=&_fadeFluidWork.vertices[1][i];
+            vertex=&_fadeFluidWork.vertices[0][i];
+            copy->x=vertex->x;copy->y=vertex->y;copy->z=vertex->z;
+            normal=&_fadeFluidWork.normal[i];
+            normal->x=0.0f;normal->y=0.0f;normal->z=twiceSpacing;
+            tangent=&_fadeFluidWork.tangent[i];
+            tangent->x=twiceSpacing;tangent->y=0.0f;tangent->z=0.0f;
+            _fadeFluidWork.uv[i].u=inverseU*(f32)x;
+            _fadeFluidWork.uv[i].v=textureV;
         }
     }
 }

@@ -142,6 +142,14 @@ GStexture* GStextureCreate(u16,u16,s32,s32,u8);
 }
 static inline void* shapeFilePointer(u8* base,u32 offset) { return base+offset; }
 static inline void shapeRelocateCurve(u8* base,GsShapeCurvePoint*& curve) { curve=(GsShapeCurvePoint*)shapeFilePointer(base,(u32)curve); }
+static inline void shapeAccumulateTextureStages(GsShapeRender* render,void* mapping,int index,u8& stages) {
+    stages++;
+    if(index<2) {
+        u16 texture=*(u16*)((u8*)mapping+4);
+        if(((GsShapeTextureLink*)render->textures)[texture].entry->usesExtraStage) stages+=2;
+        else stages++;
+    }
+}
 bool GsShapeRender::LoadShapeRender(void* file) {
     u8* base=(u8*)file;
     GsShapeFileHeader* header=(GsShapeFileHeader*)file;
@@ -152,13 +160,14 @@ bool GsShapeRender::LoadShapeRender(void* file) {
     default: layer=GS_SHAPE_LAYER_DEFAULT; break;
     }
     animation=(GsShapeFileAnimation*)shapeFilePointer(base,header->animationOffset);
-    u32* keyOffsets=(u32*)shapeFilePointer(base,animation->keysOffset);
+    u32* offsets=(u32*)shapeFilePointer(base,animation->keysOffset);
     keyCount=animation->keyCount;
-    keys=(GsKeyObject*)GSmemAlloc(keyCount*sizeof(GsKeyObject));
+    keys=(GsKeyObject*)GSmemAlloc(animation->keyCount*sizeof(GsKeyObject));
     u16 maxU=0,maxV=0,maxTwist=0,maxGradation=0;
-    for(int i=0;i<keyCount;i++) {
+    u32* keyCursor=offsets;
+    for(int i=0;i<keyCount;i++,keyCursor++) {
         GsKeyObject* key=&keys[i];
-        key->entry=(GsShapeKeyEntry*)shapeFilePointer(base,keyOffsets[i]);
+        key->entry=(GsShapeKeyEntry*)shapeFilePointer(base,*keyCursor);
         key->frames=(tagGsFilePrimKeyFrame**)shapeFilePointer(base,(u32)key->entry->frames);
         GsShapeKeyEntry* entry=key->entry;
         for(int j=0;j<key->entry->frameCount;j++) {
@@ -200,12 +209,12 @@ bool GsShapeRender::LoadShapeRender(void* file) {
         }
     }
     GsShapeFileTable* objectTable=(GsShapeFileTable*)shapeFilePointer(base,header->objectsOffset);
-    u32* objectOffsets=(u32*)shapeFilePointer(base,objectTable->entriesOffset);
+    offsets=(u32*)shapeFilePointer(base,objectTable->entriesOffset);
     objectCount=objectTable->count;
     objects=(GsShapeObject*)GSmemAlloc(objectCount*sizeof(GsShapeObject));
     u8 needsRefraction=0;
     for(int i=0;i<objectCount;i++) {
-        tagGsFilePrimObjectEntry* entry=(tagGsFilePrimObjectEntry*)shapeFilePointer(base,objectOffsets[i]);
+        tagGsFilePrimObjectEntry* entry=(tagGsFilePrimObjectEntry*)shapeFilePointer(base,offsets[i]);
         objects[i].entry=entry;
         entry->vertices=(Vec*)shapeFilePointer(base,(u32)entry->vertices);
         entry->colors=(tagGScol4ub*)shapeFilePointer(base,(u32)entry->colors);
@@ -216,26 +225,20 @@ bool GsShapeRender::LoadShapeRender(void* file) {
         memset(objects[i].drawBuffers,0,sizeof(objects[i].drawBuffers));
     }
     GsShapeFileTable* textureTable=(GsShapeFileTable*)shapeFilePointer(base,header->texturesOffset);
-    u32* textureOffsets=(u32*)shapeFilePointer(base,textureTable->entriesOffset);
+    offsets=(u32*)shapeFilePointer(base,textureTable->entriesOffset);
     textureCount=textureTable->count;
     if(textureCount) textures=GSmemAlloc(textureCount*sizeof(GsShapeTextureLink));
     else textures=0;
-    GsShapeTextureLink* textureLinks=(GsShapeTextureLink*)textures;
     for(int i=0;i<textureCount;i++) {
-        GsShapeFileTexture* entry=(GsShapeFileTexture*)shapeFilePointer(base,textureOffsets[i]);
-        textureLinks[i].entry=entry;
-        textureLinks[i].texture=GStextureLoad(shapeFilePointer(base,entry->imageOffset));
-        GStextureSetWrap(textureLinks[i].texture,1,1);
+        GsShapeFileTexture* entry=(GsShapeFileTexture*)shapeFilePointer(base,offsets[i]);
+        ((GsShapeTextureLink*)textures)[i].entry=entry;
+        ((GsShapeTextureLink*)textures)[i].texture=GStextureLoad(shapeFilePointer(base,entry->imageOffset));
+        GStextureSetWrap(((GsShapeTextureLink*)textures)[i].texture,1,1);
     }
     for(int i=0;i<objectCount;i++) {
         u8 stages=0;
         for(int j=0;j<objects[i].entry->textureCount;j++) {
-            stages++;
-            if(j<2) {
-                u32 texture=*(u32*)((u8*)objects[i].entry->textures[j]+4);
-                if(textureLinks[texture].entry->usesExtraStage) stages+=2;
-                else stages++;
-            }
+            shapeAccumulateTextureStages(this,objects[i].entry->textures[j],j,stages);
         }
         if(stages) stages++;
         objects[i].reserved45C[0]=stages;
@@ -245,10 +248,9 @@ bool GsShapeRender::LoadShapeRender(void* file) {
         int attributes[4]={13,14,15,16};
         object->vertexArrays[0]=0; object->vertexArrays[1]=0; object->vertexArrays[2]=0;
         object->vertexArrays[3]=0; object->vertexArrays[4]=0; object->vertexArrays[5]=0;
-        GSgfxVF* vf=(GSgfxVF*)object->vertexFormat;
-        GSgfxVFInit(vf); GSgfxVFCreate(vf);
-        GSgfxVFSetElement(vf,9,1,4,0); GSgfxVFSetElement(vf,11,1,5,0);
-        for(int j=0;j<entry->textureCount;j++) GSgfxVFSetElement(vf,attributes[j],1,4,0);
+        GSgfxVFInit((GSgfxVF*)object->vertexFormat); GSgfxVFCreate((GSgfxVF*)object->vertexFormat);
+        GSgfxVFSetElement((GSgfxVF*)object->vertexFormat,9,1,4,0); GSgfxVFSetElement((GSgfxVF*)object->vertexFormat,11,1,5,0);
+        for(int j=0;j<entry->textureCount;j++) GSgfxVFSetElement((GSgfxVF*)object->vertexFormat,attributes[j],1,4,0);
         object->displayList=0; object->MakeDisplayListShape();
     }
     if(maxU) { deformCountU=maxU; deformU=(f32*)GSmemAlloc(deformCountU*4); }
@@ -307,10 +309,9 @@ void GsShapeRender::Update(f32 time,s16 id) {
             object->vertexArrays[0]=vertices;
             u8* colors=vertices+count*12;
             object->vertexArrays[1]=colors;
-            if(0<primitive->textureCount) object->vertexArrays[2]=colors+count*4;
-            if(1<primitive->textureCount) object->vertexArrays[3]=colors+count*12;
-            if(2<primitive->textureCount) object->vertexArrays[4]=colors+count*20;
-            if(3<primitive->textureCount) object->vertexArrays[5]=colors+count*28;
+            for(int j=0;j<4;j++) {
+                if(j<primitive->textureCount) { int stride=j*8+4; object->vertexArrays[j+2]=colors+count*stride; }
+            }
         } else {
             object->vertexArrays[0]=0; object->vertexArrays[1]=0; object->vertexArrays[2]=0;
             object->vertexArrays[3]=0; object->vertexArrays[4]=0; object->vertexArrays[5]=0;
@@ -335,6 +336,7 @@ void GsShapeRender::Update(f32 time,s16 id) {
         key->GetShapeMatrix(&key->shapeMatrix,&key->transformMatrix,primitive,animation->transformCount,animation->transformOrder,first,second,t);
         int textureDeform; if(channel->channelFlags[9]==1 && channel->channelFlags[10]==0) textureDeform=1; else textureDeform=0;
         int textureTwist; if(channel->channelFlags[5]==1 && channel->channelFlags[6]==0) textureTwist=1; else textureTwist=0;
+        bool deformTexture=textureDeform!=0,twistTexture=textureTwist!=0;
         for(u8 texture=0;texture<primitive->textureCount;texture++) {
             if((textureDeform==1 || textureTwist==1) && (!refractTexture || texture!=0)) {
                 if(textureDeform) {
@@ -342,41 +344,52 @@ void GsShapeRender::Update(f32 time,s16 id) {
                     key->GetDeformParameterV(deformV,first,second,t);
                 }
                 if(textureTwist) key->GetTwistParameter(twist,first,second,t);
-                object->DeformTextureCoord(texture,textureDeform!=0,deformU,deformV,textureTwist!=0,twist);
+                object->DeformTextureCoord(texture,deformTexture,deformU,deformV,twistTexture,twist);
             }
             if(primitive->shapeType==10 && primitive->textureCount) {
                 GsShapePair offset=key->GetTextureOffset(first,second,t,0);
-                f32 offsetU=offset.u, offsetV=offset.v;
                 GsShapePair scale=key->GetTextureScale(first,second,t,0);
-                offsetU*=scale.u; offsetV*=scale.v;
-                object->WaveTextureCoord(texture,offsetU,offsetV,&key->shapeMatrix,false);
+                offset.u*=scale.u; offset.v*=scale.v;
+                object->WaveTextureCoord(texture,offset.u,offset.v,&key->shapeMatrix,false);
             }
-            GsShapeTextureMapping* mapping=(GsShapeTextureMapping*)object->entry->textures[texture];
-            GSmtx* matrix=&key->textureMatrices[texture];
-            if(primitive->shapeType==8 && texture==0) memcpy(matrix,&mtxIdent,sizeof(GSmtx));
-            else if(channel->channelFlags[12+texture]==1) {
-                GsShapePair offset=key->GetTextureOffset(first,second,t,texture);
-                f32 offsetU=offset.u, offsetV=offset.v;
-                GsShapePair scale=key->GetTextureScale(first,second,t,texture);
+            u32 textureIndex=texture;
+            GsShapeTextureMapping* mapping=(GsShapeTextureMapping*)object->entry->textures[textureIndex];
+            if(primitive->shapeType==8 && texture==0) memcpy(&key->textureMatrices[textureIndex],&mtxIdent,sizeof(GSmtx));
+            else if(channel->channelFlags[12+textureIndex]==1) {
+                f32 offsetU,offsetV,scaleU,scaleV;
+                if(channel->channelFlags[12+textureIndex]==1) {
+                    GsShapePair offset=key->GetTextureOffset(first,second,t,texture);
+                    offsetU=offset.u; offsetV=offset.v;
+                    GsShapePair scale=key->GetTextureScale(first,second,t,texture);
+                    scaleU=scale.u; scaleV=scale.v;
+                }
                 if(first->textureSwapAxes[texture]) {
-                    matrix->matrix[0][0]=0.0f; matrix->matrix[0][1]=1.0f; matrix->matrix[0][2]=0.0f; matrix->matrix[0][3]=0.0f;
-                    matrix->matrix[1][0]=1.0f; matrix->matrix[1][1]=0.0f; matrix->matrix[1][2]=0.0f; matrix->matrix[1][3]=0.0f;
-                    matrix->matrix[2][0]=0.0f; matrix->matrix[2][1]=0.0f; matrix->matrix[2][2]=1.0f; matrix->matrix[2][3]=0.0f;
                     if(!mapping->scaleBeforeOffset) {
+                        GSmtx* matrix=&key->textureMatrices[textureIndex];
+                        matrix->matrix[0][0]=0.0f; matrix->matrix[0][1]=1.0f; matrix->matrix[0][2]=0.0f; matrix->matrix[0][3]=0.0f;
+                        matrix->matrix[1][0]=1.0f; matrix->matrix[1][1]=0.0f; matrix->matrix[1][2]=0.0f; matrix->matrix[1][3]=0.0f;
+                        matrix->matrix[2][0]=0.0f; matrix->matrix[2][1]=0.0f; matrix->matrix[2][2]=1.0f; matrix->matrix[2][3]=0.0f;
                         PSMTXTransApply(matrix->matrix,matrix->matrix,-offsetU,-offsetV,0.0f);
-                        PSMTXScaleApply(matrix->matrix,matrix->matrix,scale.u,scale.v,0.0f);
+                        PSMTXScaleApply(matrix->matrix,matrix->matrix,scaleU,scaleV,0.0f);
                     } else {
-                        PSMTXScaleApply(matrix->matrix,matrix->matrix,scale.u,scale.v,0.0f);
+                    GSmtx* matrix=&key->textureMatrices[textureIndex];
+                        matrix->matrix[0][0]=0.0f; matrix->matrix[0][1]=1.0f; matrix->matrix[0][2]=0.0f; matrix->matrix[0][3]=0.0f;
+                        matrix->matrix[1][0]=1.0f; matrix->matrix[1][1]=0.0f; matrix->matrix[1][2]=0.0f; matrix->matrix[1][3]=0.0f;
+                        matrix->matrix[2][0]=0.0f; matrix->matrix[2][1]=0.0f; matrix->matrix[2][2]=1.0f; matrix->matrix[2][3]=0.0f;
+                        PSMTXScaleApply(matrix->matrix,matrix->matrix,scaleU,scaleV,0.0f);
                         PSMTXTransApply(matrix->matrix,matrix->matrix,-offsetU,-offsetV,0.0f);
                     }
                 } else if(!mapping->scaleBeforeOffset) {
+                    GSmtx* matrix=&key->textureMatrices[textureIndex];
                     PSMTXTrans(matrix->matrix,-offsetU,-offsetV,0.0f);
-                    PSMTXScaleApply(matrix->matrix,matrix->matrix,scale.u,scale.v,0.0f);
+                    PSMTXScaleApply(matrix->matrix,matrix->matrix,scaleU,scaleV,0.0f);
                 } else {
-                    PSMTXScale(matrix->matrix,scale.u,scale.v,0.0f);
+                    GSmtx* matrix=&key->textureMatrices[textureIndex];
+                    PSMTXScale(matrix->matrix,scaleU,scaleV,0.0f);
                     PSMTXTransApply(matrix->matrix,matrix->matrix,-offsetU,-offsetV,0.0f);
                 }
             } else {
+                GSmtx* matrix=&key->textureMatrices[textureIndex];
                 PSMTXScale(matrix->matrix,mapping->maxU-mapping->minU,mapping->maxV-mapping->minV,0.0f);
                 PSMTXTransApply(matrix->matrix,matrix->matrix,mapping->minU,mapping->minV,0.0f);
             }
@@ -399,14 +412,14 @@ void GsShapeRender::Update(f32 time,s16 id) {
         }
         tagGScol4ub color=key->GetTextureColor(first,second,t,0);
         object->reserved45C[1]=color.r; object->reserved45C[2]=color.g; object->reserved45C[3]=color.b; object->reserved45C[4]=color.a;
-        color=key->GetTextureColorLow(first,second,t,0);
-        object->reserved45C[5]=color.r; object->reserved45C[6]=color.g; object->reserved45C[7]=color.b; object->reserved45C[8]=color.a;
+        tagGScol4ub colorLow=key->GetTextureColorLow(first,second,t,0);
+        object->reserved45C[5]=colorLow.r; object->reserved45C[6]=colorLow.g; object->reserved45C[7]=colorLow.b; object->reserved45C[8]=colorLow.a;
         object->reserved45C[8]=255;
         if(primitive->textureCount>1) {
-            color=key->GetTextureColor(first,second,t,1);
-            object->reserved45C[9]=color.r; object->reserved45C[10]=color.g; object->reserved45C[11]=color.b; object->reserved45C[12]=color.a;
-            color=key->GetTextureColorLow(first,second,t,1);
-            object->reserved45C[13]=color.r; object->reserved45C[14]=color.g; object->reserved45C[15]=color.b; object->reserved45C[16]=color.a;
+            tagGScol4ub colorHigh=key->GetTextureColor(first,second,t,1);
+            object->reserved45C[9]=colorHigh.r; object->reserved45C[10]=colorHigh.g; object->reserved45C[11]=colorHigh.b; object->reserved45C[12]=colorHigh.a;
+            tagGScol4ub colorHighLow=key->GetTextureColorLow(first,second,t,1);
+            object->reserved45C[13]=colorHighLow.r; object->reserved45C[14]=colorHighLow.g; object->reserved45C[15]=colorHighLow.b; object->reserved45C[16]=colorHighLow.a;
         }
     }
 }

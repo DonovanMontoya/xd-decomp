@@ -25,7 +25,8 @@ void peModelContainer::Stop() {
 static inline u8 modelVisible(peModelContainer *container) {
  if(!container->active)return 0;
  u32 flags=container->model->flags;
- if(!container->count || g_render_pass!=1)return 0;
+ if(!container->count)return 0;
+ if(g_render_pass!=1)return 0;
  switch(((ParticleLayerState*)g_current_layer)->unk28) {
  case 2:if(flags&2)return 0;break;
  case 4:if(!(flags&2))return 0;break;
@@ -35,7 +36,7 @@ static inline u8 modelVisible(peModelContainer *container) {
 }
 static inline void setModelMatrix(ModelJObj *jobj,Mtx matrix) {
  if(!jobj)__assert("jobj.h",0x495,"jobj");
- if(!matrix)__assert("jobj.h",0x496,"mtx");
+ if((u32)matrix==0)__assert("jobj.h",0x496,"mtx");
  PSMTXCopy(matrix,jobj->matrix);jobj->flags|=0x03800000;
  if(jobj) {
   if(!jobj)__assert("jobj.h",0x25d,"jobj");
@@ -44,6 +45,7 @@ static inline void setModelMatrix(ModelJObj *jobj,Mtx matrix) {
   if(!dirty)HSD_JObjSetMtxDirtySub(jobj);
  }
 }
+#pragma opt_loop_invariants off
 void peModelContainer::Render() {
  Mtx transform,rotation;
  if(active&&modelVisible(this)) {
@@ -73,22 +75,24 @@ void peModelContainer::Render() {
      switch(g_render_pass) {
      case 0:mask=1;break;
      case 1:mask=6;break;
-     default:node=(peModelNode*)node->next;continue;
+     default:goto nextNode;
      }
      setModelMatrix(jobj,transform);
      if(definition->duration>0.00001f) {
-      f32 rate=GSgfxVideoGetVsyncRate();
-      HSD_JObjReqAnimAll(jobj,(f32)fmod((node->life-node->time)*rate,definition->duration));
+      f32 rate=GSgfxVideoGetVsyncRate();f32 elapsed=node->life-node->time;
+      HSD_JObjReqAnimAll(jobj,(f32)fmod(elapsed*rate,definition->duration));
       HSD_JObjAnimAll(jobj);HSD_JObjDispAll(jobj,0,mask,0);
      }
     }
    }
+nextNode:
    node=(peModelNode*)node->next;
   }
   if(!(model->flags&0x40))InvalidateState__10GSgfxLayerFv(g_current_layer);
   particleEngineSetDefaultRenderState(1);
  }
 }
+#pragma opt_loop_invariants reset
 void peModelContainer::Update(f32 time) {
  if(active) {
   peModelNode *node=(peModelNode*)nodes;

@@ -130,26 +130,26 @@ void GSthreadTerminateGroup(u32 groupId) {
 void GSthreadSetArgs(GSthread* thread, s32 count, ...) {
     va_list ap;
     s32* stack;
-    s32* regs;
     s32 i;
     s32 n;
     s32 off;
     if (thread != 0 && thread->running != 1) {
         stack = thread->stack;
-        regs = (s32*)thread->regState;
+        s32* regs = (s32*)thread->regState;
         va_start(ap, count);
+        off = 3;
         n = 8;
         if (count < 8) {
             n = count;
         }
         for (i = 0; i < n; i++) {
-            regs[i + 3] = va_arg(ap, s32);
+            regs[off++] = va_arg(ap, s32);
         }
         if (count > 8) {
             regs[1] -= (count - i) * 4;
             off = (((u32)regs[1] >> 2) + 2);
             for (i = 8; i < count; i++) {
-                stack[off] = va_arg(ap, s32);
+                stack[(u32)off] = va_arg(ap, s32);
                 off++;
             }
         }

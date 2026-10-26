@@ -856,8 +856,20 @@ extern "C" u64 gamedatasaveBiosGetMemcardID(void *);
 
 inline u64 memcardCurrentID(void *pack)
 {
-    if(pack==0) return gamedatasaveBiosGetMemcardID(gamedatasaveBiosGetPtr(savedataGetStatus(0,1)));
+    if(pack==0) return gamedatasaveBiosGetMemcardID(gamedatasaveBiosGetPtr(savedataGetStatus(pack,1)));
     return gamedatasaveBiosGetMemcardID((u8 *)_memcardGetMultiSaveDataToSTRUCT(pack,1)+8);
+}
+
+static inline void advanceMemcardHeaderKey() {
+    const s32 increments[4] = {0x43, 0x29, 0x17, 0x13};
+    s32 key0 = _memcard_encrypt_key[0] + increments[0];
+    s32 key1 = _memcard_encrypt_key[1] + increments[1];
+    s32 key2 = _memcard_encrypt_key[2] + increments[2];
+    s32 key3 = _memcard_encrypt_key[3] + increments[3];
+    _memcard_encrypt_key[1] = ((key3<<8)&0xF000) | ((key2<<4)&0xF00) | (key1&0xF0) | ((key0>>4)&0xF);
+    _memcard_encrypt_key[0] = ((key3<<12)&0xF000) | ((key2<<8)&0xF00) | ((key1<<4)&0xF0) | (key0&0xF);
+    _memcard_encrypt_key[2] = ((key3<<4)&0xF000) | (key2&0xF00) | ((key1>>4)&0xF0) | ((key0>>8)&0xF);
+    _memcard_encrypt_key[3] = (key3&0xF000) | ((key2>>4)&0xF00) | (((u16)key1>>8)&0xF0) | ((key0>>12)&0xF);
 }
 
 inline void decryptMemcardHeader(void *buffer)
@@ -867,12 +879,17 @@ inline void decryptMemcardHeader(void *buffer)
     _memcard_encrypt_key[1]=data[1];
     _memcard_encrypt_key[2]=data[2];
     _memcard_encrypt_key[3]=data[3];
+    s32 byteOffset=8;
     for(s32 word=4;word<0xFC;word+=4) {
-        data[word]-=_memcard_encrypt_key[0];
-        data[word+1]-=_memcard_encrypt_key[1];
-        data[word+2]-=_memcard_encrypt_key[2];
-        data[word+3]-=_memcard_encrypt_key[3];
-        advanceMemcardKey();
+        s32 second=(word+1)*2;
+        *(u16*)((u8*)data+byteOffset)-=_memcard_encrypt_key[0];
+        s32 third=(word+2)*2;
+        s32 fourth=(word+3)*2;
+        byteOffset+=8;
+        *(u16*)((u8*)data+second)-=_memcard_encrypt_key[1];
+        *(u16*)((u8*)data+third)-=_memcard_encrypt_key[2];
+        *(u16*)((u8*)data+fourth)-=_memcard_encrypt_key[3];
+        advanceMemcardHeaderKey();
     }
 }
 
@@ -883,33 +900,27 @@ struct MemcardSaveHeader {
     u8 payload[0x1F8];
 };
 
+#pragma push
+#pragma opt_loop_invariants off
 static s32 _memcardExamineHeader()
 {
     s32 sequence=0;
     s32 selected=-1;
-    MemcardSaveHeader *header=(MemcardSaveHeader *)((u8 *)_memcardStatusPtr->buf50+0x28000);
-    u8 valid=0;
-    if(header->valid[0]==1 && header->valid[1]==1 && header->valid[2]==1) valid=1;
-    if(valid==0) {
-        _memcardStatusPtr->msg=0x13;
-        return 0x2B;
-    }
-    if(header->sequence>0) {
-        sequence=header->sequence;
-        selected=0;
-        if(header->sequence>_memcardStatusPtr->limit) _memcardStatusPtr->limit=header->sequence;
-    }
-    header=(MemcardSaveHeader *)((u8 *)_memcardStatusPtr->buf50+0x28200);
-    valid=0;
-    if(header->valid[0]==1 && header->valid[1]==1 && header->valid[2]==1) valid=1;
-    if(valid==0) {
-        _memcardStatusPtr->msg=0x13;
-        return 0x2B;
-    }
-    if(header->sequence>sequence) {
-        sequence=header->sequence;
-        selected=1;
-        if(header->sequence>_memcardStatusPtr->limit) _memcardStatusPtr->limit=header->sequence;
+    MemcardSaveHeader *header;
+    s32 offset=0x28000;
+    for(s32 i=0;i<2;i++,offset+=0x200) {
+        header=(MemcardSaveHeader *)((u8 *)_memcardStatusPtr->buf50+offset);
+        u8 valid=0;
+        if(header->valid[0]==1 && header->valid[1]==1 && header->valid[2]==1) valid=1;
+        if(valid==0) {
+            _memcardStatusPtr->msg=0x13;
+            return 0x2B;
+        }
+        if(header->sequence>sequence) {
+            sequence=header->sequence;
+            selected=i;
+            if(header->sequence>_memcardStatusPtr->limit) _memcardStatusPtr->limit=header->sequence;
+        }
     }
     _memcardStatusPtr->index=selected;
     switch(_memcardStatusPtr->state) {
@@ -964,6 +975,8 @@ static s32 _memcardExamineHeader()
     _memcardStatusPtr->msg=0x13;
     return 0x2B;
 }
+
+#pragma pop
 
 // Card operations advance until an asynchronous request needs another frame.
 extern "C" {
@@ -2017,7 +2030,12 @@ struct MemcardSaveBios {
     u16 flags;
     u32 values[16];
 };
-typedef Pokemon MemcardSavePokemon;
+struct MemcardSavePokemon : Pokemon {
+    MemcardSavePokemon& operator=(const MemcardSavePokemon& other) {
+        memcpy(this,&other,sizeof(Pokemon));
+        return *this;
+    }
+};
 struct MemcardSaveBox {
     u32 header[4];
     u16 flags;
@@ -2030,7 +2048,7 @@ struct MemcardSaveParty {
     MemcardSavePokemon pokemon;
 };
 struct MemcardSavePartyGroup {
-    MemcardSavePokemon pokemon[5];
+    MemcardSavePokemon first,second,third,fourth,fifth;
     u8 flags;
 };
 
@@ -2043,8 +2061,8 @@ typedef char MemcardPartySize[sizeof(MemcardSaveParty)==0xCC?1:-1];
 typedef char MemcardPartyGroupSize[sizeof(MemcardSavePartyGroup)==0x3D8?1:-1];
 
 void _memcardDuplicateSaveData_multi(void* buffer) {
-    void* floorData;
     u32 floorSize;
+    void* floorData;
     s8 order[16];
     u8* data=(u8*)buffer;
     u16* header=(u16*)buffer;
@@ -2091,7 +2109,7 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
     u32 offset=0xA0;
     s16 count=15;
     while(count!=0) {
-        s16 selected=HSD_Rand()%count;
+        s16 selected=(s32)(u16)HSD_Rand()%count;
         s8* entry=&order[selected];
         s8 section=*entry;
         if((u32)section<=15) {
@@ -2109,7 +2127,7 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
                 u8* src=(u8*)savedataGetStatus(0,3);
                 MemcardSaveBox* boxDst=(MemcardSaveBox*)dst;
                 MemcardSaveBox* boxSrc=(MemcardSaveBox*)src;
-                do { *boxDst++=*boxSrc++; } while((u8*)boxDst<dst+0xB860);
+                do { *boxDst=*boxSrc; ++boxDst;++boxSrc; } while((u8*)boxDst<dst+0xB860);
                 *(MemcardWords<235>*)(dst+0xB860)=*(MemcardWords<235>*)(src+0xB860);
                 offset+=0xBC60;
                 *(u32*)(dst+0xBC0C)=*(u32*)(src+0xBC0C);
@@ -2200,7 +2218,7 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
                 MemcardSavePartyGroup* dst=(MemcardSavePartyGroup*)(data+0xA0+offset);
                 MemcardSavePartyGroup* end=(MemcardSavePartyGroup*)((u8*)dst+0x2298);
                 MemcardSavePartyGroup* src=(MemcardSavePartyGroup*)savedataGetStatus(0,21);
-                do { *dst++=*src++; }while(dst<end);
+                do { *dst=*src; ++dst;++src; }while(dst<end);
                 offset+=0x22B0;
                 break;
             }

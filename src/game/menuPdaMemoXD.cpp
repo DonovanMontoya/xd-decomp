@@ -904,6 +904,25 @@ u32 GSmsgGetRect(u32);
 void *__nwa__FUl(u32);
 void __dla__FPv(void *);
 }
+static inline s32 memoCopyWordPrefix(const u16* text, u16* line, s32 endWord) {
+    s32 spaces=0;
+    s32 copied=0;
+    const u16* src=text;
+    u16* dst=line;
+    for (;;) {
+        u32 ch=*src;
+        if(ch==0x20 || ch==0x3000) {
+            if(spaces==endWord)break;
+            *dst=ch;spaces++;
+        } else {
+            if(ch==0)break;
+            *dst=ch;
+        }
+        src++;dst++;copied++;
+    }
+    line[copied]=0;
+    return copied+1;
+}
 void menuPdaMemoXD::PokemonTokuseiSetumei(tagWINDOW_WORK *window,tagSPRITE_WORK *sprite,MEMO_CONTENTS *contents,u16 index)
 {
     CURSOR *cursor=contents->cursor;
@@ -911,7 +930,7 @@ void menuPdaMemoXD::PokemonTokuseiSetumei(tagWINDOW_WORK *window,tagSPRITE_WORK 
     MENU_ITEM *item=menuItemBiosGetPtr(0x7E,sprite->id);
     GSmsgGetGSchar(0x3BBC);
     u8 first=pokemonDataBiosGetTokuseiDataId(data,0);
-    u8 ability=pokemonDataBiosGetTokuseiDataId(data,index);
+    u32 ability=(u8)pokemonDataBiosGetTokuseiDataId(data,index);
     if(index!=0 && ability==first)ability=0;
     if((u16)ability!=0) {
         const u16 *text=GSmsgGetGSchar(pokemonTokuseiDataBiosGetDoc(pokemonTokuseiDataBiosGetPtr(ability)));
@@ -924,30 +943,12 @@ void menuPdaMemoXD::PokemonTokuseiSetumei(tagWINDOW_WORK *window,tagSPRITE_WORK 
         u8 overflow=0;
         s32 copied;
         do {
-            s32 spaces=0;
-            s32 endWord=word;
-            copied=0;
-            const u16 *src=text;
-            u16 *dst=line1;
-            word++;
-            for(;;) {
-                u16 ch=*src;
-                switch(ch) {
-                case 0:goto endPrefix;
-                case 0x20:case 0x3000:
-                    if(spaces==endWord)goto endPrefix;
-                    *dst=ch;spaces++;break;
-                default:*dst=ch;break;
-                }
-                src++;dst++;copied++;
-            }
-endPrefix:
-            line1[copied]=0;
+            copied=memoCopyWordPrefix(text,line1,word++);
             msgctrlSetValue(0x37,line1);
             u32 rect=GSmsgGetRect(0x4276);
             if((rect>>16)<=(u32)item->x)splitWord=word;
-            if(!((rect>>16)<=(u32)item->x))overflow=1;
-        } while((u32)(copied+1)<length);
+            if((u8)((rect>>16)<=(u32)item->x)==0)overflow=1;
+        } while((u32)copied<length);
         if(overflow) {
             s32 spaces=0;
             s32 n1=0;
@@ -957,17 +958,19 @@ endPrefix:
             u32 i=0;
             const u16 *src=text;
             for(;;) {
-                u16 ch=*src;
+                u32 ch=*src;
                 if(ch==0xFFFF) {
                 } else if(ch==0x20 || ch==0x3000) {
                     if(spaces==splitWord-1)secondLine=1;
                     else if(secondLine)line2[n2++]=ch;
                     else line1[n1++]=ch;
                     spaces++;
-                } else if(ch!=0) {
+                } else if(ch==0) {
+                    if(chars<=i)break;
+                } else {
                     if(secondLine)line2[n2++]=ch;
                     else line1[n1++]=ch;
-                } else if(chars<=i)break;
+                }
                 src++;i++;
             }
             line1[n1]=0;line2[n2]=0;
