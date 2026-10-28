@@ -1104,7 +1104,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/render.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/perfbar.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/token.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/project.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/project.cpp", extra_cflags=["-inline deferred,auto"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/halt.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/video.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/gpu.cpp"),
