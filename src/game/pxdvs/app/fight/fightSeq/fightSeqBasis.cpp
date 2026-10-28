@@ -345,7 +345,7 @@ u8 pokemon_GetPokemonWazaPp(Pokemon *,s8);
 u32 pokemon_GetPoolExp(Pokemon *);
 u32 pokemon_GetSeikaku(Pokemon *);
 u8 pokemon_GetTokuseiFlag(Pokemon *);
-void pokemon_SetHp(Pokemon *,u32);
+void pokemon_SetHp(Pokemon *,u16);
 void pokemon_SetPokemonWazaPp(Pokemon *,s8,u32);
 void pokemon_SetPoolExp(Pokemon *,u32);
 s32 soundContinueBGMEX(u32, s32, s32);
@@ -3271,23 +3271,26 @@ loop_6:
 }
 
 void WS_HP_DEC(void) {
-    u8 *seq;
+    // Preserve the original temporary register allocation.
+    struct { u32 hitDamage; } damageState;
+    u32 targetId;
+    u32 zokusei;
+    u8 kind;
     u8 fightType;
+    s32 accumulated;
     FightOutPokemon *attacker;
     u16 wazaId;
-    FightWaza *waza;
-    s32 damage;
-    u8 kind;
-    u32 zokusei;
-    FightOutPokemon *defender;
-    FightOutPokemon *fop;
-    Pokemon *pokemon;
-    s32 hp;
-    u16 maxHp;
-    s32 migawari;
-    u32 targetId;
-    s32 menuId;
     s16 animHp;
+    u16 maxHp;
+    s32 menuId;
+    s32 damage;
+    u8 *seq;
+    FightWaza *waza;
+    s32 hp;
+    FightOutPokemon *defender;
+    s32 migawari;
+    Pokemon *pokemon;
+    FightOutPokemon *fop;
 
     seq = fightSeq_GetWazaSeq();
     fightType = fightFloor_GetFightType(NULL);
@@ -3295,7 +3298,7 @@ void WS_HP_DEC(void) {
     wazaId = fightOutPokemon_GetUseWazaDataId(attacker);
     waza = fightOutPokemon_GetFightWazaPtr(attacker);
     damage = fightWaza_GetDamage(waza);
-    u32 hitDamage = fightWaza_GetHitDamage(waza);
+    damageState.hitDamage = fightWaza_GetHitDamage(waza);
     zokusei = fightWaza_GetZokusei(waza);
     defender = fightTargetGetPtrAsNowFightType(0x12U, NULL);
     if (wazaCheckDarkWaza(wazaId) == 1) {
@@ -3336,16 +3339,18 @@ void WS_HP_DEC(void) {
                 }
             } else {
                 if (hp > damage) {
-                    hitDamage = damage;
+                    damageState.hitDamage = damage;
                     hp -= damage;
                 } else {
-                    hitDamage = hp;
+                    damageState.hitDamage = hp;
                     hp = 0;
                 }
                 if (ServerStatusFlag & 0x20) {
                     ServerStatusFlag &= ~0x20;
                 } else {
-                    fightOutPokemon_SetGamanDamageValue(fop, damage + fightOutPokemon_GetGamanDamageValue(fop));
+                    accumulated = fightOutPokemon_GetGamanDamageValue(fop);
+                    accumulated += damage;
+                    fightOutPokemon_SetGamanDamageValue(fop, accumulated);
                     if (seq[1] == 0x12) {
                         targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId((FightTarget *)attacker, fightType);
                         fightOutPokemon_SetGamanDamageTargetId(fop, targetId);
@@ -3353,16 +3358,16 @@ void WS_HP_DEC(void) {
                         targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId((FightTarget *)defender, fightType);
                         fightOutPokemon_SetGamanDamageTargetId(fop, targetId);
                     }
-                    fightOutPokemonAddFightOutPokemonEnemyDamage(fop, attacker, hitDamage);
+                    fightOutPokemonAddFightOutPokemonEnemyDamage(fop, attacker, damageState.hitDamage);
                 }
                 if (fightOutPokemon_GetKaigaraDamageValue(fop) == 0 && !(ServerStatusFlag & 0x100000)) {
-                    fightOutPokemon_SetKaigaraDamageValue(fop, hitDamage);
+                    fightOutPokemon_SetKaigaraDamageValue(fop, damageState.hitDamage);
                 }
                 switch (kind) {
                 case 1:
                     if (!(ServerStatusFlag & 0x100000) && wazaId != 0xDC) {
-                        fightOutPokemon_SetDamageAtkValue(fop, hitDamage);
-                        fightOutPokemon_SetMyselfDamageAtkValue(fop, hitDamage);
+                        fightOutPokemon_SetDamageAtkValue(fop, damageState.hitDamage);
+                        fightOutPokemon_SetMyselfDamageAtkValue(fop, damageState.hitDamage);
                         if (seq[1] == 0x12) {
                             targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId((FightTarget *)attacker, fightType);
                             fightOutPokemon_SetDamageAtkTargetId(fop, targetId);
@@ -3376,8 +3381,8 @@ void WS_HP_DEC(void) {
                     break;
                 case 2:
                     if (!(ServerStatusFlag & 0x100000)) {
-                        fightOutPokemon_SetDamageSpeValue(fop, hitDamage);
-                        fightOutPokemon_SetMyselfDamageSpeValue(fop, hitDamage);
+                        fightOutPokemon_SetDamageSpeValue(fop, damageState.hitDamage);
+                        fightOutPokemon_SetMyselfDamageSpeValue(fop, damageState.hitDamage);
                         if (seq[1] == 0x12) {
                             targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId((FightTarget *)attacker, fightType);
                             fightOutPokemon_SetDamageSpeTargetId(fop, targetId);
@@ -3392,7 +3397,7 @@ void WS_HP_DEC(void) {
                 }
             }
             ServerStatusFlag &= ~0x100000;
-            fightWaza_SetHitDamage(waza, hitDamage);
+            fightWaza_SetHitDamage(waza, damageState.hitDamage);
             pokemon_SetHp(pokemon, (u16)hp);
             fightSeqCheckSetHensinBuffToMotoPokemon(fop, 0x83U);
             menuId = fightMenuGetFightOutPokemonPtrToStatusMenuId(fop, fightType, 1);
