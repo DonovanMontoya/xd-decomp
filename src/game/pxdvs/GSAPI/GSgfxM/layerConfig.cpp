@@ -50,14 +50,13 @@ s32 Add__16GSgfxLayerConfigFPcUlUlUl14GSgfxLayerTypebbb12GSgfxLayerID16GSgfxLaye
     SetLayerVisibility__10GSgfxLayerFb(layer,data.visible); return layer->id;
 }
 void Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(LayerConfigData* data) {
-    const LayerConfigData* input=data;
-    LayerNode* next;
+    LayerNode* layer;
     LayerNode* p=GetLayerList__10GSgfxLayerFv();
-    while (p) { next=p->next; __dt__10GSgfxLayerFv(p,1); p=next; }
+    while (p) { layer=p->next; __dt__10GSgfxLayerFv(p,1); p=layer; }
     LayerNode* previous=0;
-    const LayerConfigData* current=input;
+    const LayerConfigData* current=data;
     while (current->id!=-1) {
-        LayerNode* layer=findConfigLayer(current->id);
+        layer=findConfigLayer(current->id);
         if (!layer) {
             if (current->id==255) {
                 s32 id=freeConfigLayerID();
