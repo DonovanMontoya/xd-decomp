@@ -3158,17 +3158,17 @@ void WS_CONDCHG(void) {
 }
 
 extern "C" u8 fightSeqCondChgAct(u8 para, u8 type, u8 flags, u8* failure) {
-    u8 bypass;
-    u32 mode;
-    u16 status;
-    s8 delta;
-    FightSide* side;
+    u16 ability;
     FightOutPokemon* target;
+    FightSide* side;
+    s8 delta;
+    u16 status;
     u16 waza;
+    u8 bypass;
+    struct { u8 value; } modeState;
     u8 skipGuard;
     s8 value;
     u8 targetKind;
-    u16 ability;
     bypass = 0;
     skipGuard = 0;
     if (flags & 0x40) {
@@ -3181,17 +3181,17 @@ extern "C" u8 fightSeqCondChgAct(u8 para, u8 type, u8 flags, u8* failure) {
     side = (FightSide*)fightTargetGetPtrAsNowFightType(2, target);
     ability = fightOutPokemonGetTokuseiDataId(target);
     waza = fightOutPokemon_GetUseWazaDataId(target);
-    mode = (u8)flags;
-    flags &= 0xbf;
+    modeState.value = (u8)flags;
+    flags = (u8)modeState.value & 0xbf;
     if (flags & 0x80) bypass = 1;
-    if (mode & 0x20) skipGuard = 1;
+    if (modeState.value & 0x20) skipGuard = 1;
     status = fightSeqCondChgActTypeToPokemonStatusId(type);
     value = (s8)pokemonGetStatus(target, 0, status, 0);
     fightMsgctrlSetValue(0xd, (u32)GSmsgGetGSchar(AbiCntMsgTbl[type]));
     delta = fightSeqCondChgActParaIdToValue(para);
     if (delta < 0) {
         if (fightSideIsJoutaiDataId(side, 0x4c) == 1 && !bypass && waza != 0xae) {
-            if ((u32)(mode & 0x1f) == 1) {
+            if ((u32)(modeState.value & 0x1f) == 1) {
                 if (fightOutPokemon_GetDoClearbodyFlag(target)) fightSeq_JumpWazaSeq(failure);
                 else {
                     fightFloor_SetAppointPokemonPtr(0, target);
@@ -3207,7 +3207,7 @@ extern "C" u8 fightSeqCondChgAct(u8 para, u8 type, u8 flags, u8* failure) {
             return 1;
         }
         if ((ability == 0x1d || ability == 0x49) && !bypass && waza != 0xae) {
-            if ((u32)(mode & 0x1f) == 1) {
+            if ((u32)(modeState.value & 0x1f) == 1) {
                 if (fightOutPokemon_GetDoClearbodyFlag(target)) fightSeq_JumpWazaSeq(failure);
                 else {
                     fightFloor_SetAppointPokemonPtr(0, target);
@@ -3221,7 +3221,7 @@ extern "C" u8 fightSeqCondChgAct(u8 para, u8 type, u8 flags, u8* failure) {
             return 1;
         }
         if (ability == 0x33 && !bypass && status == 0xeb) {
-            if ((u32)(mode & 0x1f) == 1) {
+            if ((u32)(modeState.value & 0x1f) == 1) {
                 fightFloor_SetAppointPokemonPtr(0, target);
                 fightSeq_CallWazaSeq(WAZA_Kairikibasami);
                 fightSeq_JumpWazaSeq(failure);
@@ -3229,14 +3229,14 @@ extern "C" u8 fightSeqCondChgAct(u8 para, u8 type, u8 flags, u8* failure) {
             return 1;
         }
         if (ability == 0x34 && !bypass && status == 0xe6) {
-            if ((u32)(mode & 0x1f) == 1) {
+            if ((u32)(modeState.value & 0x1f) == 1) {
                 fightFloor_SetAppointPokemonPtr(0, target);
                 fightSeq_CallWazaSeq(WAZA_Kairikibasami);
                 fightSeq_JumpWazaSeq(failure);
             }
             return 1;
         }
-        if (ability == 0x13 && !(mode & 0x1f)) return 1;
+        if (ability == 0x13 && !(modeState.value & 0x1f)) return 1;
         if (delta <= -2) fightMsgctrlSetValue(0xe, (u32)GSmsgGetGSchar(0x4f11));
         else fightMsgctrlSetValue(0xe, (u32)GSmsgGetGSchar(0x4f9c));
         fightMsgctrlSetValue(0x41, (u32)GSmsgGetGSchar(0x4f12));
@@ -3253,9 +3253,9 @@ extern "C" u8 fightSeqCondChgAct(u8 para, u8 type, u8 flags, u8* failure) {
     if (value < 0) value = 0;
     if (value > 12) value = 12;
     pokemonSetStatus(target, 0, status, 0, value);
-    if (ServerWork.flags[5] == 2 && (mode & 1))
+    if (ServerWork.flags[5] == 2 && (modeState.value & 1))
         fightFloor_SetAttackPokemonFightWazaJoutaiDataId(0, 0x40);
-    if (ServerWork.flags[5] == 2 && !(mode & 1)) return 1;
+    if (ServerWork.flags[5] == 2 && !(modeState.value & 1)) return 1;
     return 0;
 }
 
