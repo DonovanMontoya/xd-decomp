@@ -1237,7 +1237,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/app/camera/camera.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
 
             # battleGrid
-            Object(NonMatching, "game/pxdvs/app/battleGrid/battleGrid.cpp"),
+            Object(NonMatching, "game/pxdvs/app/battleGrid/battleGrid.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/app/battleGrid/wazaSequenceCamera.cpp", extra_cflags=["-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/battleGrid/wazaSequenceCameraData.cpp"),
             Object(NonMatching, "game/pxdvs/app/battleGrid/battleCamera.cpp"),
