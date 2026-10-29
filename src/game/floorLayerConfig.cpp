@@ -133,16 +133,20 @@ extern "C" void floorLayerConfigLoad(void) {}
 extern "C" s32 floorGetMenuLayerID(void) { return _menu_extra_layer_id; }
 
 extern "C" void floorLayerConfig(u32 floorId, u8 rawType) {
-    const FloorConfig* list = g_floor_layer_config_list;
-    const FloorConfig* current = list;
+    struct {
+        const FloorConfig* list;
+        const FloorConfig* current;
+    } range;
+    range.list = g_floor_layer_config_list;
+    range.current = range.list;
     u32 index = 0;
     for (; index < g_floor_layer_config_count; ++index) {
-        if (floorId == current->id) {
-            Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(list[index].config);
+        if (floorId == range.current->id) {
+            Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(range.list[index].config);
             dbgMenuSetLayerID(GSgfxLayerFindByName_C((char*)"debug menu"));
             return;
         }
-        ++current;
+        ++range.current;
     }
     switch (rawType) {
         case 5:
