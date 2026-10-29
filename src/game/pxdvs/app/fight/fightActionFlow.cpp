@@ -1364,7 +1364,7 @@ u8 deckDataVirtualDB_GetTurnLimit(u16);
 void deckDataVirtualDB_SetFlagData(u16,bool);
 u8 fightSeqItemSeq_AddPoke(Pokemon *,u8,FIGHT_TRAINER *,Hero *);
 extern "C" {
-u16 *GSmsgGetGSchar(u16);
+u16 *GSmsgGetGSchar(u32);
 void GSflagSet(u32,u32);
 void *GSthreadCreate(u32,u32,u32,u32,u32,void (*)());
 u8 GSthreadIsRunning(void *);
@@ -1390,9 +1390,9 @@ u8 fightFloor_GetStockPokemonBallID(void *,u8);
 u32 fightFloor_GetEncountFloorId();
 void fightFloor_SetStockPokemonNum(void *,u8);
 u16 darkpokemonBiosGetScenarioNum();
-s32 darkPokemonGetSnatchSuccessNum(u16);
+u32 darkPokemonGetSnatchSuccessNum();
 u8 fightFloorGetFightTrainerFightPokemonPtrAry(void *,void *,void **,u32,u32);
-void fightCloseAllMenu(u8);
+void fightCloseAllMenu();
 extern u8 WAZA_OkodukaiCheck[],WAZA_KobanCheck[];
 extern void *_gSoundThread;
 
@@ -1503,7 +1503,7 @@ s32 fightActionFlowSyuuryou(void *actor) {
         }
         fightFloor_SetStockPokemonNum(0,0);
         u16 scenario=darkpokemonBiosGetScenarioNum();
-        if(darkPokemonGetSnatchSuccessNum(scenario)==scenario-1)GSflagSet(0x4A7,0);
+        if(darkPokemonGetSnatchSuccessNum()==scenario-1)GSflagSet(0x4A7,0);
     } else {
         if((u8)fightFloor_GetFightKind(0)==0x10 || fightFloor_GetEncountDataId(0)==0x73) {GSflagSet(0x5AA,0);GSflagSet(0x5AC,0);GSflagSet(0x5AB,0);}
         if(fightFloor_GetEncountDataId(0)!=0x15D) {
@@ -1526,7 +1526,7 @@ s32 fightActionFlowSyuuryou(void *actor) {
         }
     }
     fightEnemyTrainerWazaSeqHdl=retainSequence==1?handle:0;
-    fightCloseAllMenu(retainSequence);
+    fightCloseAllMenu();
     return 1;
 }
 }
