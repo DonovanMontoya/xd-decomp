@@ -286,6 +286,10 @@ void Ctrl__10menuPdaDPMFP14tagWINDOW_WORK(DpmWork *arg0, DpmWindow *arg1) {
     }
 }
 
+static inline s32 dpmCursorLast(s32 count) {
+    count -= 1;
+    return count;
+}
 void Cursor__10menuPdaDPMFP14tagWINDOW_WORK(DpmWork *arg0, DpmWindow *arg1) {
     s32 temp_r31;
     DpmCursor *temp_r30;
@@ -294,7 +298,7 @@ void Cursor__10menuPdaDPMFP14tagWINDOW_WORK(DpmWork *arg0, DpmWindow *arg1) {
     s16 temp_r4;
     s16 temp_r5;
     s16 temp_r5_2;
-    s8 temp_r3_3;
+    s32 temp_r3_3;
     u16 temp_r3_2;
     DpmContents *temp_r3;
 
@@ -316,7 +320,7 @@ void Cursor__10menuPdaDPMFP14tagWINDOW_WORK(DpmWork *arg0, DpmWindow *arg1) {
         }
         temp_r30->selected--;
     } else if ((s32)(temp_r3_2 & 2) != 0) {
-        if ((s32)(temp_r29 - 1) != (s32)(temp_r5 + temp_r4)) {
+        if ((s32)(temp_r29 - 1) != (s32)((u32)temp_r5 + (u32)temp_r4)) {
             GSsndPlayNow(0x450);
         }
         temp_r30->selected++;
@@ -330,11 +334,11 @@ void Cursor__10menuPdaDPMFP14tagWINDOW_WORK(DpmWork *arg0, DpmWindow *arg1) {
             temp_r30->selected = 0;
         }
     } else if (temp_r5_2 >= var_r28) {
-        temp_r3_3 = var_r28 - 1;
+        temp_r3_3 = dpmCursorLast(var_r28);
         temp_r30->first = (s16)(temp_r30->first + (temp_r5_2 - temp_r3_3));
-        temp_r30->selected = (s16)temp_r3_3;
+        temp_r30->selected = (s8)temp_r3_3;
         if ((s32)(temp_r30->first + temp_r30->selected) >= temp_r29) {
-            temp_r30->selected = (s16)temp_r3_3;
+            temp_r30->selected = (s8)temp_r3_3;
             temp_r30->first = (s16)(s8)(temp_r29 - var_r28);
         }
     }
