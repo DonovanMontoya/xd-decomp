@@ -167,7 +167,7 @@ extern "C" void fadeFluidSetShockSecond(FluidVec *point,f32 strength) {
     f32 spacing=_fadeFluidWork.spacing;
     u32 x=(u32)(point->x/spacing),y=(u32)(point->y/spacing);
     _fadeFluidSetShockSub(x,y,strength);
-    f32 diagonal=0.25f*strength,adjacent=0.5f*strength;
+    f32 adjacent=0.5f*strength,diagonal=0.25f*strength;
     _fadeFluidSetShockSub(x-1,y-1,diagonal);
     _fadeFluidSetShockSub(x,y-1,adjacent);
     _fadeFluidSetShockSub(x+1,y-1,diagonal);

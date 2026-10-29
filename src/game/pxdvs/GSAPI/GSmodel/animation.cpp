@@ -74,9 +74,8 @@ extern "C" u8 GSmodelIsNullAnimation(GSmodel* m, u32 index) {
 }
 extern "C" {
 static void _modelGetAnimFrameCountCB__FP14_HSD_AnimJointPPvi(HSD_AnimJoint* joint, void** context, s32) {
-    if (!joint) return;
+    if (!joint || !joint->aobjdesc) return;
     HSD_AObjDesc* anim = joint->aobjdesc;
-    if (!anim) return;
     if (anim->end_frame > *(f32*)context) *(f32*)context = anim->end_frame;
 }
 }
@@ -146,12 +145,9 @@ extern "C" void GSmodelGetAnimIndex(GSmodel* m, u32* first, u32* second) {
 }
 extern "C" u8 GSmodelIsBlending(GSmodel* m) { return (m->flags >> 7) & 1; }
 extern "C" void GSmodelSetBlendFactor(GSmodel* m, f32 blend) {
-    if (m->flags & 4) {
-        if (m->flags & 0x80) {
-            if (blend < 0.0f) blend = 0.0f; else if (blend > 1.0f) blend = 1.0f;
-            m->blendFactor = blend;
-        }
-    }
+    if (!(m->flags & 4) || !(m->flags & 0x80)) return;
+    if (blend < 0.0f) blend = 0.0f; else if (blend > 1.0f) blend = 1.0f;
+    m->blendFactor = blend;
 }
 extern "C" void GSmodelSetBlendAnimFrameForce(GSmodel* m, f32 first, f32 second) {
     m->animationRate = 0.0f; m->blendRate = 0.0f;

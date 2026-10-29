@@ -305,9 +305,11 @@ WindowKeyInfo *windowGetPortKeyInfo2(u8 ports) {
     const u8 masks[4]={1,2,4,8};
     static WindowKeyInfo key;
     memset(&key,0,sizeof(key));
-    for(s32 i=0;i<4;++i)if((ports&masks[i])!=0) {
+    for(s32 i=0;i<4;++i) {
         WindowKeyInfo *port=&winSysWork2.portKeys[i];
-        key.on|=port->on;key.off|=port->off;key.trigger|=port->trigger;key.repeat|=port->repeat;key.released|=port->released;
+        if((ports&masks[i])!=0) {
+            key.on|=port->on;key.off|=port->off;key.trigger|=port->trigger;key.repeat|=port->repeat;key.released|=port->released;
+        }
     }
     return &key;
 }
@@ -315,9 +317,11 @@ WindowKeyInfo *windowGetPortKeyInfo(u8 ports) {
     const u8 masks[4]={1,2,4,8};
     static WindowKeyInfo key;
     memset(&key,0,sizeof(key));
-    for(s32 i=0;i<4;++i)if((ports&masks[i])!=0) {
+    for(s32 i=0;i<4;++i) {
         WindowKeyInfo *port=&winSysWork.portKeys[i];
-        key.on|=port->on;key.off|=port->off;key.trigger|=port->trigger;key.repeat|=port->repeat;key.released|=port->released;
+        if((ports&masks[i])!=0) {
+            key.on|=port->on;key.off|=port->off;key.trigger|=port->trigger;key.repeat|=port->repeat;key.released|=port->released;
+        }
     }
     return &key;
 }

@@ -323,7 +323,7 @@ FightOutPokemon * fightSeqSelectDefensePokemonPtr(FightOutPokemon *, u16, u8, vo
 s32 fightAi_HitCheckWazaAboutJoutaiAndType(FIGHT_TRAINER *, FightOutPokemon *, FightOutPokemon *, u16);
 FightOutPokemon * fightAi_SelectDefPoke(FIGHT_TRAINER *, FightOutPokemon *, FightOutPokemon **, u16, u16, s8);
 s16 fightAi_ThreatEnemyValue(FIGHT_TRAINER *, FightOutPokemon *, FightOutPokemon *, s16, u16, s8, s8);
-u8 fightAi_GetWazaCombValue(FightOutPokemon **, u16 *, u8 *);
+s32 fightAi_GetWazaCombValue(FightOutPokemon **, u16 *, u8 *);
 void fightTrainerAiWazaSelectDefensePokemon();
 extern u8 fight_action_data_turn[64];
 extern u8 fight_action_data_waza[16];
@@ -2951,16 +2951,18 @@ u8 _fightAi_CheckDoFightActionStrokeCheckIgnoreWaza__FUs(u16 move) {
     return 0;
 }
 
-u8 fightAi_GetWazaCombValue(FightOutPokemon **pokemon, u16 *damage, u8 *probability) {
+s32 fightAi_GetWazaCombValue(FightOutPokemon **pokemon, u16 *damage, u8 *probability) {
+    struct { u16 *value; } column;
+    Pokemon *records[2];
     u16 total[2] = {0, 0};
     f32 fraction[2] = {0.0f, 0.0f};
     u16 average[2] = {0, 0};
-    Pokemon *records[2];
-    u8 defeated = 0;
     u8 i;
+    u8 defeated = 0;
     for (i = 0; i < 2; i++) {
         if (pokemon[i]) {
-            total[i] = damage[i] + damage[i + 2];
+            column.value = damage + i;
+            total[i] = column.value[2] + column.value[0];
             records[i] = fightOutPokemonGetPokemonPtr(pokemon[i]);
             if (records[i]) {
                 f32 hp = pokemon_GetHp(records[i]);
@@ -2971,20 +2973,22 @@ u8 fightAi_GetWazaCombValue(FightOutPokemon **pokemon, u16 *damage, u8 *probabil
                         defeated++;
                     }
                     average[i] = 0;
-                    if (damage[i] != 0 && damage[i + 2] != 0)
+                    if (column.value[0] != 0 && column.value[2] != 0)
                         average[i] = (probability[0] + probability[1]) / 2;
-                    else if (damage[i] != 0)
+                    else if (column.value[0] != 0)
                         average[i] = probability[0];
-                    else if (damage[i + 2] != 0)
+                    else if (column.value[2] != 0)
                         average[i] = probability[1];
                 }
             }
         }
     }
-    switch (defeated) {
-    case 2: return (probability[0] + probability[1]) / 2;
-    case 1: return (s32)(0.5 * (f64)fraction[0] * (f64)average[0] + 0.5 * (f64)fraction[1] * (f64)average[1]);
-    default: return (s32)(0.25 * (f64)fraction[0] * (f64)average[0] + 0.25 * (f64)fraction[1] * (f64)average[1]);
+    if (defeated == 2) {
+        return (u8)((probability[0] + probability[1]) / 2);
+    } else if (defeated == 1) {
+        return (s32)(0.5 * (f64)fraction[0] * (f64)average[0] + 0.5 * (f64)fraction[1] * (f64)average[1]);
+    } else {
+        return (s32)(0.25 * (f64)fraction[0] * (f64)average[0] + 0.25 * (f64)fraction[1] * (f64)average[1]);
     }
 }
 
@@ -3274,7 +3278,7 @@ void fightAi_CreateAllWazaValid(FIGHT_TRAINER *trainer,FightOutPokemon **attacke
                     if(defense[1]&&hit(trainer,attackers[1],moves[1][second],defense[1])==1&&fightTrainerAiWazaDoWazaHitFunc(trainer,attackers[1],moves[1][second],defense[1])==1)selectedMoves[1]=moves[1][second];else selectedMoves[1]=0;
                 }
             }
-            u8 combination=fightAi_GetWazaCombValue(enemies,&totals[0][0],probability);
+            u8 combination=((u8 (*)(FightOutPokemon **, u16 *, u8 *))fightAi_GetWazaCombValue)(enemies,&totals[0][0],probability);
             result[0]=fightAi_AttackResult(trainer,enemies[0],selectedMoves[0],selectedMoves[1],totals[0][0]+totals[1][0]);
             u8 secondResult=fightAi_AttackResult(trainer,enemies[1],selectedMoves[0],selectedMoves[1],totals[0][1]+totals[1][1]);
             s16 index=firstTarget*8+first*16+second*2+secondTarget;

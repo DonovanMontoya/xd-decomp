@@ -341,9 +341,10 @@ extern "C" s32 GScolsys2ThruGetEventID(GSvec *start,GSvec *end,ThruEvent *events
     PSVECSubtract((Vec *)end,(Vec *)start,&direction);
     f32 length=PSVECMag(&direction);
     if(length<=0.0f) return 0;
+    f32 progress;
     f32 step=radius/length;
     if(step>1.0f) step=1.0f;
-    f32 progress=0.0f;
+    progress=0.0f;
     for(;progress<1.0f && count<4;) {
         f32 t=progress+step;
         if(t>1.0f) t=1.0f;

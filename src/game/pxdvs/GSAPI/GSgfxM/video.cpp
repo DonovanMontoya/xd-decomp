@@ -4,7 +4,7 @@
 struct VideoMode { u32 tv; u16 width,height,xfbHeight,xOrigin,yOrigin,viWidth,viHeight; u8 pad12[2]; u32 xfbMode; u8 field,aa; u8 samples[12][2]; u8 filter[7]; u8 pad39[3]; };
 struct VideoBuffer { s32 state; void *ptr; };
 struct Viewport { float x,y,width,height,nearZ,farZ; };
-struct VideoState { VideoMode mode; VideoBuffer buffers[3]; VideoBuffer * volatile displayed; volatile u8 count; u8 rate,field,pad5b; volatile u16 requestedHeight;u16 maxHeight; s32 vsync,system; void(*callback)(u32); s32 missed,presented; float elapsed,lastElapsed; u8 pad7c[4]; s64 lastTime; volatile s32 lockRate; volatile u8 lockCount; u8 lockActive; u8 pad8e[2]; s32 copyMode,pixelFormat; float yScale; volatile GXColor color; u32 depth; u8 padA4[4]; };
+struct VideoState { VideoMode mode; VideoBuffer buffers[3]; VideoBuffer * volatile displayed; volatile u8 count; u8 rate,field,pad5b; volatile u16 requestedHeight;u16 maxHeight; volatile s32 vsync; s32 system; void(* volatile callback)(u32); s32 missed,presented; float elapsed,lastElapsed; u8 pad7c[4]; s64 lastTime; volatile s32 lockRate; volatile u8 lockCount; u8 lockActive; u8 pad8e[2]; s32 copyMode,pixelFormat; float yScale; volatile GXColor color; u32 depth; u8 padA4[4]; };
 #pragma pack(push,1)
 struct CopyParams { u16 x,y,width,height,stride; u8 padA[2]; s32 format,unused,mode; float scale; u8 clear; u32 color; u8 pad21[3]; u32 depth; };
 #pragma pack(pop)
@@ -42,8 +42,7 @@ static ModeEntry _videoModeList[]={
 static VideoState _videoState; static Viewport _viewport; static u8 _videoDefaultFilter[7]={8,8,10,12,10,8,8}; static void(*_videoOneShotPostCB)(void*);
 inline VideoBuffer *findPointer(void *ptr) { VideoState *scan=&_videoState; s32 i=0;while(i<_videoState.count) {if(scan->buffers[0].ptr==ptr) return &_videoState.buffers[i];scan=(VideoState*)((u8*)scan+8);i++;}return 0; }
 inline VideoBuffer *findState(s32 state) { VideoState *base=&_videoState;VideoState *scan=base;s32 i=0;while(i<base->count) {if(scan->buffers[0].state==state) return &_videoState.buffers[i];scan=(VideoState*)((u8*)scan+8);i++;}return 0; }
-inline VideoBuffer *freeBuffer(bool wait) {
-    if(_videoState.count==3) { findState(4); }
+inline VideoBuffer *waitFree(bool wait) {
     if(_videoState.count==1) return 0;
     GSgfxRenderWaitData data; GSgfxRenderWaitInit__FP19GSgfxRenderWaitData(&data);
     for(;;) { BOOL intr=OSDisableInterrupts(); VideoBuffer *b=findState(3); OSRestoreInterrupts(intr);
@@ -51,6 +50,10 @@ inline VideoBuffer *freeBuffer(bool wait) {
         if(!wait) { GSgfxRenderWaitExit__FP19GSgfxRenderWaitData(&data); return 0; }
         GSgfxRenderWaitTick__FP19GSgfxRenderWaitData(&data);
     }
+}
+inline VideoBuffer *freeBuffer(bool wait) {
+    if(_videoState.count==3) { findState(4); }
+    return waitFree(wait);
 }
 inline void copyParams(CopyParams &p) { p.x=0;p.y=0;p.width=640;p.height=480;p.stride=640;p.format=3;p.unused=0;p.mode=_videoState.copyMode;p.scale=_videoState.yScale;p.clear=1;p.color=*(u32*)&_videoState.color;p.depth=_videoState.depth; }
 extern "C" {
@@ -67,10 +70,10 @@ void GSgfxVideoSetViewport__Fffffb(float x,float y,float right,float bottom,bool
 }
 inline void GSgfx_GCWritePixelFmt(s32 format,u8 depth) {
     static u8 pxf2hw[8]={0,1,2,3,4,4,4,5}; static u8 yuvmap[4]={0,1,2,2};
-    _gcGlobalRegState.depth=depth; _gcGlobalRegState.pixel=pxf2hw[format]; if(format<4) _gcGlobalRegState.f4=0;else _gcGlobalRegState.f4=yuvmap[format-4];gsgfxState->dirty|=0x18;
+    _gcGlobalRegState.pixel=pxf2hw[format]; _gcGlobalRegState.depth=depth; if(format<4) _gcGlobalRegState.f4=0;else _gcGlobalRegState.f4=yuvmap[format-4];gsgfxState->dirty|=0x18;
 }
 void GSgfxVideoSetupNextFrame__Fv() {
-    _videoState.lastElapsed=_videoState.elapsed; _gcGlobalRegState.f1=_videoState.mode.field; _gcGlobalRegState.f0=(_videoState.mode.viHeight>=2*_videoState.mode.xfbHeight); gsgfxState->dirty|=0x1400;
+    u8 f0=(_videoState.mode.viHeight>=2*_videoState.mode.xfbHeight); _videoState.lastElapsed=_videoState.elapsed; _gcGlobalRegState.f1=_videoState.mode.field; _gcGlobalRegState.f0=f0; gsgfxState->dirty|=0x1400;
     if(_videoState.mode.aa==1) GSgfx_GCWritePixelFmt(2,0);else GSgfx_GCWritePixelFmt(_videoState.pixelFormat,0);
     _videoState.field=VIGetNextField(); GSgfxVideoResetViewport__Fb(false); GSgfx_GCFlushState();
 }
@@ -169,7 +172,7 @@ static u8 _videoSetupRenderMode__F14GSgfxVideoMode15GSgfxVideoFrameb16GSgfxVideo
 }
 static void _videoPostRetraceFunc__FUl(u32 count) {
     _videoState.vsync++;
-    if(_videoState.count!=1 && _videoOneShotPostCB) { VideoBuffer *b=freeBuffer(false);if(b) {void(*cb)(void*)=_videoOneShotPostCB;_videoOneShotPostCB=0;cb(b->ptr);} }
+    if(_videoState.count==1) { (void)_videoState.displayed; } else if(_videoOneShotPostCB) { VideoBuffer *b=waitFree(false);if(b) {void(*cb)(void*)=_videoOneShotPostCB;_videoOneShotPostCB=0;cb(b->ptr);} }
     if(_videoState.callback) _videoState.callback(count);
 }
 static void _videoPreRetraceFunc__FUl(u32) {

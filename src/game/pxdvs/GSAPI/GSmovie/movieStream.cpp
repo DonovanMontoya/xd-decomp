@@ -51,11 +51,11 @@ static u32 GetAudioSample(__GSmovieStreaming* movie,s16* left,s16* right,u32 req
         s16* input=audio->current;
         result=count;
         if(!right) {
-            for(u32 n=0; n<count; ++n) { *left++=input[1]; input+=2; }
+            for(count=0;count<result;++count) { *left++=input[1]; input+=2; }
         } else {
-            for(u32 n=0; n<count; ++n) { *right++=input[0]; *left++=input[1]; input+=2; }
+            for(count=0;count<result;++count) { *right++=input[0]; *left++=input[1]; input+=2; }
         }
-        decoder->currentAudio->samples-=count;
+        decoder->currentAudio->samples-=result;
         decoder->currentAudio->current=input;
         if(!decoder->currentAudio->samples) {
             decoder->currentAudio->state[0]=0;

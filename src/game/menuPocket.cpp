@@ -651,7 +651,7 @@ int _actMotaseruNormal(int tab, int index, int *dec) {
 int _actTukauNormal(int tab, int index, int *dec) {
     int result;
     u16 item = _getItemIDFromMenuPos(tab, index);
-    int (*func)(u16, int *) = (int (*)(u16, int *))_getUseFunc(item);
+    int (*func)(u32, int *) = (int (*)(u32, int *))_getUseFunc(item);
     int ret;
     if (func == 0) {
         _infoBeep(0xC374);
