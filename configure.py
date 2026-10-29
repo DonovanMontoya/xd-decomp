@@ -1104,7 +1104,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/render.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/perfbar.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/token.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/project.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/project.cpp", extra_cflags=["-inline deferred,auto"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/halt.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/video.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/gpu.cpp"),
@@ -1115,7 +1115,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/layerFunc.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/renderModule.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/c_func.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/layerConfig.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/layerConfig.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/light_gfxm.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/layerEffect.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/gamecube.cpp"),
@@ -1237,7 +1237,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/app/camera/camera.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
 
             # battleGrid
-            Object(NonMatching, "game/pxdvs/app/battleGrid/battleGrid.cpp"),
+            Object(NonMatching, "game/pxdvs/app/battleGrid/battleGrid.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/app/battleGrid/wazaSequenceCamera.cpp", extra_cflags=["-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/battleGrid/wazaSequenceCameraData.cpp"),
             Object(NonMatching, "game/pxdvs/app/battleGrid/battleCamera.cpp"),

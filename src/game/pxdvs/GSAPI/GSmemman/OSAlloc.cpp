@@ -113,16 +113,25 @@ extern "C" void* OSAllocFromHeap(int heap, register unsigned long size) {
     register GSmemCell* search;
     register int largest;
     register unsigned long leftover;
+    register unsigned char* end;
+    register int searchSize;
+    register int exactSize;
+    register int cellSize;
+    register int candidateSize;
     hd = &HeapArray[heap];
     size += hd->getHeaderSize();
     size = (size + 31) & ~31UL;
     if (hd->method == 1) {
         search = hd->free; cell = 0;
         for (; search; search = search->next) {
-            if ((int)size <= search->getSize()) {
-                if ((int)size == search->getSize()) { cell = search; break; }
+            searchSize = search->size;
+            if ((int)size <= searchSize) {
+                exactSize = search->size;
+                if ((int)size == exactSize) { cell = search; break; }
                 if (cell) {
-                    if (search->getSize() < cell->getSize()) cell = search;
+                    cellSize = cell->size;
+                    candidateSize = search->size;
+                    if (candidateSize < cellSize) cell = search;
                 } else cell = search;
             }
         }
@@ -131,8 +140,10 @@ extern "C" void* OSAllocFromHeap(int heap, register unsigned long size) {
         largest = -1;
         cell = 0;
         for (; search;) {
-            if (largest <= search->getSize()) { largest = search->size; cell = search; }
-            GSmemCell* next = search->getNext();
+            register GSmemCell* next;
+            register int largestSize = search->size;
+            if (largest <= largestSize) { largest = search->size; cell = search; }
+            next = search->getNext();
             search = next;
         }
         if ((int)size > largest) cell = 0;
@@ -168,7 +179,8 @@ extern "C" void* OSAllocFromHeap(int heap, register unsigned long size) {
                 }
                 cell->size = size;
                 newCell->init(leftover);
-                newCell->setArea(cell->getEnd());
+                end = cell->getEnd();
+                newCell->area = end;
             } else {
                 newCell = (GSmemCell*)((unsigned char*)cell + size);
                 cell->size = size; newCell->init(leftover);

@@ -22,7 +22,7 @@ static inline void bindTexture(GSgfxLayer* layer, GStexture* texture) {
     }
 }
 extern "C" {
-void THPGXYuv2RgbDraw(void* arg0, void* arg1, void* arg2, u16 arg3, u16 arg4, s16 arg5, s16 arg6, u16 arg7, s16 arg_sp8) {
+u16 THPGXYuv2RgbDraw(void* arg0, void* arg1, void* arg2, u16 arg3, u16 arg4, s16 arg5, s16 arg6, u16 arg7, s16 arg_sp8) {
     GStexture sp108;
     GStexture sp88;
     GStexture sp8;
@@ -51,7 +51,7 @@ void THPGXYuv2RgbDraw(void* arg0, void* arg1, void* arg2, u16 arg3, u16 arg4, s1
     GXPosition2s16((s16)arg3, (s16)arg4 + arg_sp8);
     GXTexCoord2u8(0, 1);
     thpLayer->endSurface();
-    thpLayer->tokenMark();
+    return thpLayer->tokenMark();
 }
 
 }

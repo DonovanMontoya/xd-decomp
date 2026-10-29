@@ -1110,7 +1110,7 @@ s32 menuPocket2OpenPokemonMenu(u16 item, s32 use) {
     } else {
         kind = 3;
     }
-    result = menuPokemonOpenItemUse(kind, use != 0, item, Data.fightId);
+    result = menuPokemonOpenItemUse(kind, (bool)use, item, Data.fightId);
     if (use == 0) {
         result = -1;
     }

@@ -615,10 +615,10 @@ void menuSubDrawTile(GSgfxLayerID layer, long x, long y, long w, long h, const u
 void menuSubDrawSimpleWindow(GSgfxLayerID layer, long x, long y, long w, long h) {
     GSgfxLayer* l = GSgfxLayerFindByID(layer);
     if (l != 0) {
-        short x0;
-        short y0;
-        short x1;
-        short y1;
+        long y0;
+        long x0;
+        long y2;
+        long x2;
         l->primitive = 0x98;
         l->setRenderStateAndSelect(GSgfxVFBuildTemp(0, 3, 0, 0, 1, 5, 0, 0, 0));
         l->beginSurface(4);
@@ -626,29 +626,31 @@ void menuSubDrawSimpleWindow(GSgfxLayerID layer, long x, long y, long w, long h)
         y0 = y - 10;
         GXPosition2s16(x0, y0);
         GXParam1s32(0xC0);
-        x1 = x + (w + 10);
-        y1 = y + (h + 10);
-        GXPosition2s16(x1, y0);
+        w = w + 10u;
+        w = x + w;
+        h = h + 10u;
+        h = y + h;
+        GXPosition2s16(w, y0);
         GXParam1s32(0xC0);
-        GXPosition2s16(x0, y1);
+        GXPosition2s16(x0, h);
         GXParam1s32(0xC0);
-        GXPosition2s16(x1, y1);
+        GXPosition2s16(w, h);
         GXParam1s32(0xC0);
         l->endSurface();
         l->setLineWidth(6, 0);
         l->primitive = 0xB0;
         l->beginSurface(5);
-        x0 = x - 10;
-        y0 = y - 10;
-        GXPosition2s16(x0, y0);
+        x2 = x - 10;
+        y2 = y - 10;
+        GXPosition2s16(x2, y2);
         GXParam1s32(-1);
-        GXPosition2s16(x1, y0);
+        GXPosition2s16(w, y2);
         GXParam1s32(-1);
-        GXPosition2s16(x1, y1);
+        GXPosition2s16(w, h);
         GXParam1s32(-1);
-        GXPosition2s16(x0, y1);
+        GXPosition2s16(x2, h);
         GXParam1s32(-1);
-        GXPosition2s16(x0, y0);
+        GXPosition2s16(x2, y2);
         GXParam1s32(-1);
         l->endSurface();
     }

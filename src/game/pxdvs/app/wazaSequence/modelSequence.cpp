@@ -667,23 +667,23 @@ void GSparticleGeneratorSetCamera(void*, void*);
 }
 
 void ModelSequence::Update(f32 dt) {
-    void* part;
+    struct { void* value; } partStorage;
     void* cam;
     if ((u32)field64 != 0 && field62 != 0) {
         cam = (void*)camera != 0 ? (void*)camera : GScameraGetActiveCamera();
         if (cam != 0) {
-            part = GSmodelGetPart((_GSmodel*)field64, field62);
-            if (part != 0) {
+            partStorage.value = GSmodelGetPart((_GSmodel*)field64, field62);
+            if (partStorage.value != 0) {
                 GSvec rot;
                 GSvec position;
-                GSpartGetTransform(part, &position, 0, 0);
+                GSpartGetTransform(partStorage.value, &position, 0, 0);
                 SetPosition(&position);
                 GScameraGetRotation(cam, &rot);
                 rot.param1 = 0.0f;
                 rot.param2 = rot.param2 + *(f32*)&pad68;
                 rot.param3 = 0.0f;
                 SetRotation(&rot);
-                GSpartFree(part);
+                GSpartFree(partStorage.value);
             }
         }
     }

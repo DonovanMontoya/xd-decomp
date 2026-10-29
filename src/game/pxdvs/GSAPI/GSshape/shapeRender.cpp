@@ -141,16 +141,10 @@ void GStextureSetWrap(GStexture*,s32,s32);
 GStexture* GStextureCreate(u16,u16,s32,s32,u8);
 }
 static inline void* shapeFilePointer(u8* base,u32 offset) { return base+offset; }
-static inline void shapeRelocateCurve(u8* base,GsShapeCurvePoint*& curve) { curve=(GsShapeCurvePoint*)shapeFilePointer(base,(u32)curve); }
-static inline void shapeAccumulateTextureStages(GsShapeRender* render,void* mapping,int index,u8& stages) {
-    stages++;
-    if(index<2) {
-        u16 texture=*(u16*)((u8*)mapping+4);
-        if(((GsShapeTextureLink*)render->textures)[texture].entry->usesExtraStage) stages+=2;
-        else stages++;
-    }
-}
+static inline void shapeRelocateCurve(u8* base,GsShapeCurvePoint*& curve) { curve=(GsShapeCurvePoint*)((u8*)curve+(u32)base); }
 bool GsShapeRender::LoadShapeRender(void* file) {
+    int i;
+    int j;
     u8* base=(u8*)file;
     GsShapeFileHeader* header=(GsShapeFileHeader*)file;
     active=0; FreeShapeRender();
@@ -160,18 +154,17 @@ bool GsShapeRender::LoadShapeRender(void* file) {
     default: layer=GS_SHAPE_LAYER_DEFAULT; break;
     }
     animation=(GsShapeFileAnimation*)shapeFilePointer(base,header->animationOffset);
-    u32* offsets=(u32*)shapeFilePointer(base,animation->keysOffset);
+    u32* keyOffsets=(u32*)(base+animation->keysOffset);
     keyCount=animation->keyCount;
     keys=(GsKeyObject*)GSmemAlloc(animation->keyCount*sizeof(GsKeyObject));
     u16 maxU=0,maxV=0,maxTwist=0,maxGradation=0;
-    u32* keyCursor=offsets;
-    for(int i=0;i<keyCount;i++,keyCursor++) {
+    for(i=0;i<keyCount;i++) {
         GsKeyObject* key=&keys[i];
-        key->entry=(GsShapeKeyEntry*)shapeFilePointer(base,*keyCursor);
+        key->entry=(GsShapeKeyEntry*)shapeFilePointer(base,keyOffsets[i]);
         key->frames=(tagGsFilePrimKeyFrame**)shapeFilePointer(base,(u32)key->entry->frames);
         GsShapeKeyEntry* entry=key->entry;
-        for(int j=0;j<key->entry->frameCount;j++) {
-            tagGsFilePrimKeyFrame* frame=(tagGsFilePrimKeyFrame*)shapeFilePointer(base,(u32)key->frames[j]);
+        for(j=0;j<key->entry->frameCount;j++) {
+            tagGsFilePrimKeyFrame* frame=(tagGsFilePrimKeyFrame*)(base+(u32)key->frames[j]);
             key->frames[j]=frame;
             shapeRelocateCurve(base,frame->transformCurves[0]); shapeRelocateCurve(base,frame->transformCurves[1]);
             shapeRelocateCurve(base,frame->transformCurves[2]); shapeRelocateCurve(base,frame->transformCurves[3]);
@@ -192,11 +185,11 @@ bool GsShapeRender::LoadShapeRender(void* file) {
                 shapeRelocateCurve(base,frame->textureColorLowCurves[texture*4]); shapeRelocateCurve(base,frame->textureColorLowCurves[texture*4+1]);
                 shapeRelocateCurve(base,frame->textureColorLowCurves[texture*4+2]); shapeRelocateCurve(base,frame->textureColorLowCurves[texture*4+3]);
             }
-            frame->deformU=(f32*)shapeFilePointer(base,(u32)frame->deformU);
-            frame->deformV=(f32*)shapeFilePointer(base,(u32)frame->deformV);
-            frame->twist=(f32*)shapeFilePointer(base,(u32)frame->twist);
-            frame->gradationU=(tagGScol4ub*)shapeFilePointer(base,(u32)frame->gradationU);
-            frame->gradationV=(tagGScol4ub*)shapeFilePointer(base,(u32)frame->gradationV);
+            frame->deformU=(f32*)((u8*)frame->deformU+(u32)base);
+            frame->deformV=(f32*)((u8*)frame->deformV+(u32)base);
+            frame->twist=(f32*)((u8*)frame->twist+(u32)base);
+            frame->gradationU=(tagGScol4ub*)((u8*)frame->gradationU+(u32)base);
+            frame->gradationV=(tagGScol4ub*)((u8*)frame->gradationV+(u32)base);
             if(entry->channelFlags[9]==1 || entry->channelFlags[5]==1 || entry->channelFlags[2]==1 || entry->channelFlags[4]==1) {
                 if(maxU<frame->deformCountU) maxU=frame->deformCountU;
                 if(maxV<frame->deformCountV) maxV=frame->deformCountV;
@@ -209,48 +202,54 @@ bool GsShapeRender::LoadShapeRender(void* file) {
         }
     }
     GsShapeFileTable* objectTable=(GsShapeFileTable*)shapeFilePointer(base,header->objectsOffset);
-    offsets=(u32*)shapeFilePointer(base,objectTable->entriesOffset);
+    u32* objectOffsets=(u32*)shapeFilePointer(base,objectTable->entriesOffset);
     objectCount=objectTable->count;
     objects=(GsShapeObject*)GSmemAlloc(objectCount*sizeof(GsShapeObject));
     u8 needsRefraction=0;
-    for(int i=0;i<objectCount;i++) {
-        tagGsFilePrimObjectEntry* entry=(tagGsFilePrimObjectEntry*)shapeFilePointer(base,offsets[i]);
+    for(i=0;i<objectCount;i++) {
+        tagGsFilePrimObjectEntry* entry=(tagGsFilePrimObjectEntry*)shapeFilePointer(base,objectOffsets[i]);
         objects[i].entry=entry;
-        entry->vertices=(Vec*)shapeFilePointer(base,(u32)entry->vertices);
-        entry->colors=(tagGScol4ub*)shapeFilePointer(base,(u32)entry->colors);
-        entry->textureCoords=(GsShapePair*)shapeFilePointer(base,(u32)entry->textureCoords);
-        if(entry->reserved1C) entry->reserved1C=shapeFilePointer(base,(u32)entry->reserved1C);
-        for(int j=0;j<entry->textureCount;j++) if(entry->textures[j]) entry->textures[j]=shapeFilePointer(base,(u32)entry->textures[j]);
+        entry->vertices=(Vec*)((u8*)entry->vertices+(u32)base);
+        entry->colors=(tagGScol4ub*)((u8*)entry->colors+(u32)base);
+        entry->textureCoords=(GsShapePair*)((u8*)entry->textureCoords+(u32)base);
+        if(entry->reserved1C) entry->reserved1C=(u8*)entry->reserved1C+(u32)base;
+        for(j=0;j<entry->textureCount;j++) if(entry->textures[j]) entry->textures[j]=(u8*)entry->textures[j]+(u32)base;
         if(entry->dynamic==1 && entry->shapeType==8) needsRefraction=1;
         memset(objects[i].drawBuffers,0,sizeof(objects[i].drawBuffers));
     }
     GsShapeFileTable* textureTable=(GsShapeFileTable*)shapeFilePointer(base,header->texturesOffset);
-    offsets=(u32*)shapeFilePointer(base,textureTable->entriesOffset);
+    u32* textureOffsets=(u32*)shapeFilePointer(base,textureTable->entriesOffset);
     textureCount=textureTable->count;
     if(textureCount) textures=GSmemAlloc(textureCount*sizeof(GsShapeTextureLink));
     else textures=0;
-    for(int i=0;i<textureCount;i++) {
-        GsShapeFileTexture* entry=(GsShapeFileTexture*)shapeFilePointer(base,offsets[i]);
+    for(i=0;i<textureCount;i++) {
+        GsShapeFileTexture* entry=(GsShapeFileTexture*)shapeFilePointer(base,textureOffsets[i]);
         ((GsShapeTextureLink*)textures)[i].entry=entry;
         ((GsShapeTextureLink*)textures)[i].texture=GStextureLoad(shapeFilePointer(base,entry->imageOffset));
         GStextureSetWrap(((GsShapeTextureLink*)textures)[i].texture,1,1);
     }
-    for(int i=0;i<objectCount;i++) {
+    for(i=0;i<objectCount;i++) {
         u8 stages=0;
-        for(int j=0;j<objects[i].entry->textureCount;j++) {
-            shapeAccumulateTextureStages(this,objects[i].entry->textures[j],j,stages);
+        for(j=0;j<objects[i].entry->textureCount;j++) {
+            void* tex=objects[i].entry->textures[j];
+            stages++;
+            if(j<2) {
+                u16 texture=*(u16*)((u8*)tex+4);
+                if(((GsShapeTextureLink*)textures)[texture].entry->usesExtraStage) stages+=2;
+                else stages++;
+            }
         }
         if(stages) stages++;
         objects[i].reserved45C[0]=stages;
     }
-    for(int i=0;i<objectCount;i++) {
+    for(i=0;i<objectCount;i++) {
         GsShapeObject* object=&objects[i]; tagGsFilePrimObjectEntry* entry=object->entry;
         int attributes[4]={13,14,15,16};
         object->vertexArrays[0]=0; object->vertexArrays[1]=0; object->vertexArrays[2]=0;
         object->vertexArrays[3]=0; object->vertexArrays[4]=0; object->vertexArrays[5]=0;
         GSgfxVFInit((GSgfxVF*)object->vertexFormat); GSgfxVFCreate((GSgfxVF*)object->vertexFormat);
         GSgfxVFSetElement((GSgfxVF*)object->vertexFormat,9,1,4,0); GSgfxVFSetElement((GSgfxVF*)object->vertexFormat,11,1,5,0);
-        for(int j=0;j<entry->textureCount;j++) GSgfxVFSetElement((GSgfxVF*)object->vertexFormat,attributes[j],1,4,0);
+        for(j=0;j<entry->textureCount;j++) GSgfxVFSetElement((GSgfxVF*)object->vertexFormat,attributes[j],1,4,0);
         object->displayList=0; object->MakeDisplayListShape();
     }
     if(maxU) { deformCountU=maxU; deformU=(f32*)GSmemAlloc(deformCountU*4); }
@@ -259,7 +258,7 @@ bool GsShapeRender::LoadShapeRender(void* file) {
     if(maxGradation) { gradationCount=maxGradation; gradation=(tagGScol4ub*)GSmemAlloc(gradationCount*4); }
     if(needsRefraction==1) refractTexture=GStextureCreate(0,0,0x45,0,0);
     polygonCount=0;
-    for(int i=0;i<objectCount;i++) polygonCount+=objects[i].GetPolygonCount();
+    for(i=0;i<objectCount;i++) polygonCount+=objects[i].GetPolygonCount();
     active=1;
     usedMemory=0; usedMemory+=sizeof(GsShapeRender); usedMemory+=keyCount*sizeof(GsKeyObject);
     usedMemory+=objectCount*sizeof(GsShapeObject); usedMemory+=textureCount*sizeof(GsShapeTextureLink);

@@ -165,255 +165,269 @@ __declspec(weak) void setupTevReg(PSParticle *pp) {
     }
 }
 
-__declspec(weak) void psDispSubAPPSRTPoint(PSParticle *arg0) {
-    union { f64 alignment; u8 bytes[172]; } stack;
-    s16 sx,sy,sz;
-    PSAppSRT *temp_r3;
-    PSAppSRT *temp_r3_2;
-    PSAppSRT *temp_r3_3;
-    PSAppSRT *temp_r6;
-    PSAppSRT *temp_r6_2;
-    PSAppSRT *temp_r6_3;
-    PSGenerator *temp_r30;
-    f32 temp_f0;
-    f32 temp_f1;
-    f32 temp_f25;
-    f32 temp_f25_2;
-    f32 temp_f26;
-    f32 temp_f26_2;
-    f32 temp_f27;
-    f32 temp_f27_2;
-    f32 temp_f28;
-    f32 temp_f29;
-    f32 temp_f30;
-    f32 temp_f30_2;
-    f32 temp_f31;
-    f32 temp_f5;
-    f32 temp_f9;
-    f32 var_f0;
-    f32 var_f1;
-    f32 var_f22;
-    f32 var_f22_2;
-    f32 var_f23;
-    f32 var_f23_2;
-    f32 var_f24;
-    f32 var_f24_2;
-    f32 var_f29;
-    s32 temp_r11;
-    s32 temp_r3_4;
-    s32 temp_r4;
-    s32 temp_r7_2;
-    u16 temp_r5;
-    u32 temp_r0;
-    s32 temp_r12;
-    s32 temp_r30_2;
-    s32 temp_r6_4;
-    s32 temp_r7;
-
-    if ((s32) currentMtx != 0) {
-        currentMtx = 0;
-        GXSetCurrentMtx(0U);
-    }
-    temp_r6 = arg0->appsrt;
-    if ((u8) temp_r6->frame != (u8) psFrameNum) {
-        if ((u8) temp_r6->status != 2) {
-            HSD_MtxSRT((f32 (*)[4]) temp_r6->matrix[0], &temp_r6->scale, &temp_r6->rotation, &temp_r6->translate, 0);
-        }
-        temp_r3 = arg0->appsrt;
-        if ((u8) temp_r3->status == 1) {
-            temp_r3->status = 2;
-        }
-    }
-    arg0->appsrt->frame = psFrameNum;
-    PSMTXCopy((f32 (*)[4]) arg0->appsrt->matrix[0], (f32 (*)[4]) &((f32*)(stack.bytes+0x78))[0]);
-    temp_r6_2 = arg0->appsrt;
-    ((f32*)(stack.bytes+0x78))[3] -= temp_r6_2->translate.x;
-    (*(f32*)(stack.bytes+0x94)) -= temp_r6_2->translate.y;
-    (*(f32*)(stack.bytes+0xA4)) -= temp_r6_2->translate.z;
-    (*(f32*)(stack.bytes+0x3C)) = arg0->velocity.x;
-    (*(f32*)(stack.bytes+0x40)) = arg0->velocity.y;
-    (*(f32*)(stack.bytes+0x44)) = arg0->velocity.z;
-    PSMTXMultVec((f32 (*)[4]) &((f32*)(stack.bytes+0x78))[0], (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-    if ((u8) arg0->appsrt->generatorOwned != 0) {
-        PSMTXMultVec(rvmtxRot, (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-    }
-    temp_f25 = (*(f32*)(stack.bytes+0x3C));
-    temp_f26 = (*(f32*)(stack.bytes+0x40));
-    (*(f32*)(stack.bytes+0x3C)) = arg0->position.x;
-    temp_f27 = (*(f32*)(stack.bytes+0x44));
-    (*(f32*)(stack.bytes+0x40)) = arg0->position.y;
-    (*(f32*)(stack.bytes+0x44)) = arg0->position.z;
-    temp_r3_2 = arg0->appsrt;
-    if ((u8) temp_r3_2->generatorOwned != 0) {
-        PSMTXMultVec((f32 (*)[4]) &((f32*)(stack.bytes+0x78))[0], (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-        PSMTXMultVec(rvmtxRot, (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-        temp_r3_3 = arg0->appsrt;
-        (*(f32*)(stack.bytes+0x3C)) += temp_r3_3->translate.x;
-        (*(f32*)(stack.bytes+0x40)) += temp_r3_3->translate.y;
-        (*(f32*)(stack.bytes+0x44)) += temp_r3_3->translate.z;
-    } else {
-        PSMTXMultVec((f32 (*)[4]) temp_r3_2->matrix[0], (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-    }
-    if (arg0->kind & 4) {
-        temp_r30 = arg0->generator;
-        if (temp_r30 == NULL) {
-            var_f24 = arg0->position.x;
-            var_f23 = arg0->position.y;
-            var_f22 = arg0->position.z;
-        } else {
-            temp_f28 = (f32) sin((f64) arg0->gravity);
-            temp_f27_2 = (f32) sin((f64) arg0->friction);
-            temp_f26_2 = (f32) cos((f64) arg0->gravity);
-            temp_f25_2 = (f32) cos((f64) arg0->friction);
-            temp_f31 = arg0->velocity.z - temp_r30->param1;
-            var_f29 = temp_r30->radius;
-            temp_f30 = arg0->velocity.x - temp_r30->gravity;
-            if (var_f29 < 0.0f) {
-                var_f29 = -var_f29;
-            }
-            var_f1 = temp_r30->angle;
-            if (var_f1 < 0.0f) {
-                var_f1 = -var_f1;
-            }
-            temp_f29 = ((temp_f31 * (f32) tan((f64) var_f1)) + var_f29) * arg0->velocity.y;
-            temp_f30_2 = temp_f29 * (f32) cos((f64) temp_f30);
-            temp_f9 = -temp_f30_2;
-            temp_f5 = temp_f29 * (f32) sin((f64) temp_f30);
-            var_f24 = temp_r30->position.x + ((temp_f30_2 * temp_f25_2) + (temp_f31 * temp_f27_2));
-            var_f23 = temp_r30->position.y + ((temp_f25_2 * (temp_f31 * temp_f28)) + ((temp_f27_2 * (temp_f9 * temp_f28)) + (temp_f5 * temp_f26_2)));
-            var_f22 = temp_r30->position.z + ((temp_f25_2 * (temp_f31 * temp_f26_2)) + ((temp_f27_2 * (temp_f9 * temp_f26_2)) - (temp_f5 * temp_f28)));
-        }
-        temp_r6_3 = arg0->appsrt;
-        HSD_MtxSRT((f32 (*)[4]) &((f32*)(stack.bytes+0x48))[0], &temp_r6_3->scale, &temp_r6_3->rotation, &temp_r6_3->translate, 0);
-        (*(f32*)(stack.bytes+0x30)) = var_f24;
-        (*(f32*)(stack.bytes+0x34)) = var_f23;
-        (*(f32*)(stack.bytes+0x38)) = var_f22;
-        PSMTXMultVec((f32 (*)[4]) &((f32*)(stack.bytes+0x48))[0], (PSVec *) &(*(f32*)(stack.bytes+0x30)), (PSVec *) &(*(f32*)(stack.bytes+0x30)));
-        var_f24_2 = (*(f32*)(stack.bytes+0x30));
-        var_f23_2 = (*(f32*)(stack.bytes+0x34));
-        var_f22_2 = (*(f32*)(stack.bytes+0x38));
-    } else {
-        var_f24_2 = (*(f32*)(stack.bytes+0x3C)) - temp_f25;
-        var_f23_2 = (*(f32*)(stack.bytes+0x40)) - temp_f26;
-        var_f22_2 = (*(f32*)(stack.bytes+0x44)) - temp_f27;
-    }
-    temp_f1 = arg0->size;
-    if (temp_f1 > 42.5) {
-        var_f0 = 255.0f;
-    } else {
-        var_f0 = 6.0f * temp_f1;
-    }
-    temp_r3_4 = (s32) var_f0;
-    if (arg0->kind & 0x100000) {
-        if ((s32) prevLineWidth != (s32) (u8) temp_r3_4) {
-            prevLineWidth = (s32) (u8) temp_r3_4;
-            GXSetLineWidth((u8) temp_r3_4, GX_TO_ONE);
-        }
-        temp_r0 = arg0->kind;
-        temp_r4 = temp_r0 & 0x80000080;
-        switch (temp_r4) {                          /* irregular */
-        case 0x0:
-            temp_r5 = arg0->primCount;
-            if (temp_r5 != 0) {
-                temp_r6_4 = arg0->primTarget[0];
-                temp_r7 = arg0->primTarget[1];
-                temp_r11 = (s32) (arg0->primRemain << 0x10) / (s32) temp_r5;
-                temp_r12 = arg0->primTarget[2];
-                temp_r30_2 = arg0->primTarget[3];
-                (*(s8*)(stack.bytes+0x2C)) = (s8) ((s32) ((temp_r6_4 << 0x10) + (temp_r11 * (arg0->primColor[0] - temp_r6_4))) >> 0x10);
-                (*(u8*)(stack.bytes+0x2D)) = (u8) ((s32) ((temp_r7 << 0x10) + (temp_r11 * (arg0->primColor[1] - temp_r7))) >> 0x10);
-                (*(u8*)(stack.bytes+0x2E)) = (u8) ((s32) ((temp_r12 << 0x10) + (temp_r11 * (arg0->primColor[2] - temp_r12))) >> 0x10);
-                (*(u8*)(stack.bytes+0x2F)) = (u8) ((s32) ((temp_r30_2 << 0x10) + (temp_r11 * (arg0->primColor[3] - temp_r30_2))) >> 0x10);
-            } else {
-                *(u32*)&(*(s8*)(stack.bytes+0x2C)) = (s32) *(u32*)arg0->primColor;
-            }
-            break;
-        case 0x80:
-        case 0x80000080:
-            (*(u8*)(stack.bytes+0x2F)) = 0xFF;
-            (*(u8*)(stack.bytes+0x2E)) = 0xFF;
-            (*(u8*)(stack.bytes+0x2D)) = 0xFF;
-            (*(u8*)(stack.bytes+0x2C)) = 0xFF;
-            break;
-        }
-        if (temp_r0 & 0x400) {
-            GXClearVtxDesc();
-            GXInvalidateVtxCache();
-            GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-            GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-            GXSetVtxDesc(GX_VA_TEX0, GX_INDEX8);
-            GXBegin(GX_LINES, GX_VTXFMT2, 2U);
-        } else {
-            GXClearVtxDesc();
-            GXInvalidateVtxCache();
-            GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-            GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-            GXBegin(GX_LINES, GX_VTXFMT3, 2U);
-        }
-        (*(f32*)(stack.bytes+0x28)) = var_f22_2;
-
-
-        (*(f32*)(stack.bytes+0x24)) = var_f23_2;
-        (*(f32*)(stack.bytes+0x20)) = var_f24_2;
-        sz = PS_FIXED6((*(f32*)(stack.bytes+0x28)));
-        sy = PS_FIXED6((*(f32*)(stack.bytes+0x24)));
-        sx = PS_FIXED6((*(f32*)(stack.bytes+0x20)));
-        *(volatile s16 *)0xCC008000 = sx;
-        *(volatile s16 *)0xCC008000 = sy;
-        *(volatile s16 *)0xCC008000 = sz;
-        temp_r7_2 = (((((*(u8*)(stack.bytes+0x2D)) * 0x10) & 0xF00 & ~0xF000) | (((u8) (*(s8*)(stack.bytes+0x2C)) << 8) & 0xF000)) & ~0xF0) | ((*(u8*)(stack.bytes+0x2E)) & 0xF0);
-        temp_f0 = (f32) (*(u8*)(stack.bytes+0x2F)) * arg0->textureScale;
-        *(volatile s16 *)0xCC008000 = (temp_r7_2 & ~0xF) | (((u32) (s32) temp_f0 >> 4U) & 0xF);
-        if (arg0->kind & 0x400) {
-            *(volatile u8 *)0xCC008000 = 0;
-        }
-        (*(f32*)(stack.bytes+0x1C)) = (*(f32*)(stack.bytes+0x44));
-
-        (*(f32*)(stack.bytes+0x18)) = (*(f32*)(stack.bytes+0x40));
-        (*(f32*)(stack.bytes+0x14)) = (*(f32*)(stack.bytes+0x3C));
-        sz = PS_FIXED6((*(f32*)(stack.bytes+0x1C)));
-        sy = PS_FIXED6((*(f32*)(stack.bytes+0x18)));
-        sx = PS_FIXED6((*(f32*)(stack.bytes+0x14)));
-        *(volatile s16 *)0xCC008000 = sx;
-        *(volatile s16 *)0xCC008000 = sy;
-        *(volatile s16 *)0xCC008000 = sz;
-        *(volatile s16 *)0xCC008000 = (s16) ((((*(u8*)(stack.bytes+0x2F)) >> 4U) & 0xF) | temp_r7_2);
-        if (arg0->kind & 0x400) {
-            *(volatile u8 *)0xCC008000 = 1;
-        }
-    } else {
-        if ((s32) prevPointSize != (s32) (u8) temp_r3_4) {
-            prevPointSize = (s32) (u8) temp_r3_4;
-            GXSetPointSize((u8) temp_r3_4, GX_TO_ONE);
-        }
-        if (arg0->kind & 0x400) {
-            GXClearVtxDesc();
-            GXInvalidateVtxCache();
-            GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-            GXSetVtxDesc(GX_VA_TEX0, GX_INDEX8);
-            GXBegin(GX_POINTS, GX_VTXFMT0, 1U);
-        } else {
-            GXClearVtxDesc();
-            GXInvalidateVtxCache();
-            GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-            GXBegin(GX_POINTS, GX_VTXFMT1, 1U);
-        }
-        (*(f32*)(stack.bytes+0x10)) = (*(f32*)(stack.bytes+0x44));
-
-
-        (*(f32*)(stack.bytes+0xC)) = (*(f32*)(stack.bytes+0x40));
-        (*(f32*)(stack.bytes+0x8)) = (*(f32*)(stack.bytes+0x3C));
-        sz = PS_FIXED6((*(f32*)(stack.bytes+0x10)));
-        sy = PS_FIXED6((*(f32*)(stack.bytes+0xC)));
-        sx = PS_FIXED6((*(f32*)(stack.bytes+0x8)));
-        *(volatile s16 *)0xCC008000 = sx;
-        *(volatile s16 *)0xCC008000 = sy;
-        *(volatile s16 *)0xCC008000 = sz;
-        if (arg0->kind & 0x400) {
-            *(volatile u8 *)0xCC008000 = 1;
-        }
-    }
+static inline void calcTornadoAnchor(PSParticle* pp, f32* x, f32* y, f32* z) {
+    f32 cosb,cosa,sinb,sina,radius;
+    f32 px,py,pz;
+    f32 vx0, vz0;
+    PSGenerator* gp;
+    gp=pp->generator;
+    if(gp==NULL) {*x=pp->position.x;*y=pp->position.y;*z=pp->position.z;return;}
+    sina=(f32)sin((f64)pp->gravity);
+    sinb=(f32)sin((f64)pp->friction);
+    cosa=(f32)cos((f64)pp->gravity);
+    cosb=(f32)cos((f64)pp->friction);
+    vz0=pp->velocity.z-gp->param1;
+    vx0=pp->velocity.x-gp->gravity;
+    radius=gp->radius;if(radius<0.0f)radius=-radius;
+    {f32 angle=gp->angle;if(angle<0.0f)angle=-angle;radius+=vz0*(f32)tan((f64)angle);}
+    radius*=pp->velocity.y;
+    px=radius*(f32)cos((f64)vx0);
+    py=radius*(f32)sin((f64)vx0);
+    pz=vz0;
+    *x=px*cosb+pz*sinb+gp->position.x;
+    *y=-px*sina*sinb+py*cosa+pz*sina*cosb+gp->position.y;
+    *z=-px*cosa*sinb-py*sina+pz*cosa*cosb+gp->position.z;
 }
+static inline void emitParticleColor(u8 r,u8 g,u8 b,u8 a){GXWGFifo.u16=((r<<8)&0xf000)|((g<<4)&0xf00)|(b&0xf0)|(a>>4);}
+
+void HSD_MtxSRT(PSMtx,PSVec*,PSVec*,PSVec*,PSVec*);
+#pragma push
+#pragma optimization_level 3
+void psDispSubAPPSRTPoint(PSParticle *arg0)
+{
+  PSMtx basis;
+  PSMtx originMatrix;
+  PSVec position;
+  PSVec origin;
+  GXColor color;
+  GXColor environment;
+  s32 coordinates[3];
+  PSAppSRT *temp_r3;
+  PSAppSRT *temp_r3_2;
+  PSAppSRT *temp_r3_3;
+  PSAppSRT *temp_r6;
+  PSAppSRT *temp_r6_2;
+  PSAppSRT *temp_r6_3;
+  PSGenerator *temp_r30;
+  f32 temp_f0;
+  f32 temp_f1;
+  f32 temp_f25;
+  f32 temp_f25_2;
+  f32 temp_f26;
+  f32 temp_f26_2;
+  f32 temp_f27;
+  f32 temp_f27_2;
+  f32 temp_f28;
+  f32 temp_f29;
+  f32 temp_f30;
+  f32 temp_f30_2;
+  f32 temp_f31;
+  f32 temp_f5;
+  f32 temp_f9;
+  f32 var_f0;
+  f32 var_f1;
+  f32 var_f29;
+  s32 temp_r11;
+  u8 temp_r3_4;
+  s32 temp_r4;
+  u8 savedAlpha;
+  u16 temp_r7_2;
+  u16 temp_r5;
+  u32 temp_r0;
+  s32 temp_r12;
+  s32 temp_r30_2;
+  s32 temp_r6_4;
+  s32 temp_r7;
+  f32 var_f24_2;
+  f32 var_f23_2;
+  f32 var_f22_2;
+  f32 pointX;
+  f32 pointY;
+  f32 pointZ;
+  if (((s32) currentMtx) != 0)
+  {
+    currentMtx = 0;
+    GXSetCurrentMtx(0U);
+  }
+  temp_r6 = arg0->appsrt;
+  if (((u8) temp_r6->frame) != ((u8) psFrameNum))
+  {
+    if (((u8) temp_r6->status) != 2)
+    {
+      HSD_MtxSRT((f32 (*)[4]) temp_r6->matrix[0], &temp_r6->scale, &temp_r6->rotation, &temp_r6->translate, 0);
+    }
+    temp_r3 = arg0->appsrt;
+    if (((u8) temp_r3->status) == 1)
+    {
+      temp_r3->status = 2;
+    }
+  }
+  arg0->appsrt->frame = psFrameNum;
+  PSMTXCopy((f32 (*)[4]) arg0->appsrt->matrix[0], basis);
+  temp_r6_2 = arg0->appsrt;
+  basis[0][3] -= temp_r6_2->translate.x;
+  basis[1][3] -= temp_r6_2->translate.y;
+  basis[2][3] -= temp_r6_2->translate.z;
+  position.x = arg0->velocity.x;
+  position.y = arg0->velocity.y;
+  position.z = arg0->velocity.z;
+  PSMTXMultVec(basis, &position, &position);
+  if (((u8) arg0->appsrt->generatorOwned) != 0)
+  {
+    PSMTXMultVec(rvmtxRot, &position, &position);
+  }
+  temp_f25 = position.x;
+  temp_f26 = position.y;
+  position.x = arg0->position.x;
+  temp_f27 = position.z;
+  position.y = arg0->position.y;
+  position.z = arg0->position.z;
+  temp_r3_2 = arg0->appsrt;
+  if (((u8) temp_r3_2->generatorOwned) != 0)
+  {
+    PSMTXMultVec(basis, &position, &position);
+    PSMTXMultVec(rvmtxRot, &position, &position);
+    temp_r3_3 = arg0->appsrt;
+    position.x += temp_r3_3->translate.x;
+    position.y += temp_r3_3->translate.y;
+    position.z += temp_r3_3->translate.z;
+  }
+  else
+  {
+    PSMTXMultVec((f32 (*)[4]) temp_r3_2->matrix[0], &position, &position);
+  }
+  {
+    pointX = position.x;
+    pointY = position.y;
+    pointZ = position.z;
+    if (arg0->kind & 4)
+    {
+      calcTornadoAnchor(arg0, &var_f24_2, &var_f23_2, &var_f22_2);
+      temp_r6_3 = arg0->appsrt;
+      HSD_MtxSRT(originMatrix, &temp_r6_3->scale, &temp_r6_3->rotation, &temp_r6_3->translate, 0);
+      origin.x = var_f24_2;
+      origin.y = var_f23_2;
+      origin.z = var_f22_2;
+      PSMTXMultVec(originMatrix, &origin, &origin);
+      var_f24_2 = origin.x;
+      var_f23_2 = origin.y;
+      var_f22_2 = origin.z;
+    }
+    else
+    {
+      var_f24_2 = pointX - temp_f25;
+      var_f23_2 = pointY - temp_f26;
+      var_f22_2 = pointZ - temp_f27;
+    }
+    temp_r3_4 = (arg0->size > 42.5) ? 255.0f : 6.0f * arg0->size;
+    if (arg0->kind & 0x100000)
+    {
+      if (((s32) prevLineWidth) != ((s32) temp_r3_4))
+      {
+        prevLineWidth = temp_r3_4;
+        GXSetLineWidth(temp_r3_4, GX_TO_ONE);
+      }
+      temp_r0 = arg0->kind;
+      temp_r4 = temp_r0 & 0x80000080;
+      switch (temp_r4)
+      {
+        case 0x0:
+
+        case 0x80000000:
+          getColorPrimEnv(arg0, &color, &environment);
+          break;
+
+        case 0x80:
+
+        case 0x80000080:
+          color.a = 0xFF;
+          color.b = 0xFF;
+          color.g = 0xFF;
+          color.r = 0xFF;
+          break;
+
+      }
+
+      if (temp_r0 & 0x400)
+      {
+        GXClearVtxDesc();
+        GXInvalidateVtxCache();
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX8);
+        GXBegin(GX_LINES, GX_VTXFMT2, 2U);
+      }
+      else
+      {
+        GXClearVtxDesc();
+        GXInvalidateVtxCache();
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+        GXBegin(GX_LINES, GX_VTXFMT3, 2U);
+      }
+
+      coordinates[2] = PS_FIXED6(var_f22_2);
+      coordinates[1] = PS_FIXED6(var_f23_2);
+      coordinates[0] = PS_FIXED6(var_f24_2);
+      *((volatile s16 *) 0xCC008000) = coordinates[0];
+      *((volatile s16 *) 0xCC008000) = coordinates[1];
+      *((volatile s16 *) 0xCC008000) = coordinates[2];
+      emitParticleColor(color.r, color.g, color.b, (u8) (((f32) color.a) * arg0->textureScale));
+      if (arg0->kind & 0x400)
+      {
+        *((volatile u8 *) 0xCC008000) = 0;
+      }
+
+      coordinates[2] = PS_FIXED6(pointZ);
+      coordinates[1] = PS_FIXED6(pointY);
+      coordinates[0] = PS_FIXED6(pointX);
+      *((volatile s16 *) 0xCC008000) = coordinates[0];
+      *((volatile s16 *) 0xCC008000) = coordinates[1];
+      *((volatile s16 *) 0xCC008000) = coordinates[2];
+      emitParticleColor(color.r, color.g, color.b, color.a);
+      if (arg0->kind & 0x400)
+      {
+        *((volatile u8 *) 0xCC008000) = 1;
+      }
+    }
+    else
+    {
+      if (((s32) prevPointSize) != ((s32) temp_r3_4))
+      {
+        prevPointSize = temp_r3_4;
+        GXSetPointSize(temp_r3_4, GX_TO_ONE);
+      }
+      if (arg0->kind & 0x400)
+      {
+        GXClearVtxDesc();
+        GXInvalidateVtxCache();
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX8);
+        GXBegin(GX_POINTS, GX_VTXFMT0, 1U);
+      }
+      else
+      {
+        GXClearVtxDesc();
+        GXInvalidateVtxCache();
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXBegin(GX_POINTS, GX_VTXFMT1, 1U);
+      }
+
+      coordinates[2] = PS_FIXED6(pointZ);
+      coordinates[1] = PS_FIXED6(pointY);
+      coordinates[0] = PS_FIXED6(pointX);
+      *((volatile s16 *) 0xCC008000) = coordinates[0];
+      *((volatile s16 *) 0xCC008000) = coordinates[1];
+      *((volatile s16 *) 0xCC008000) = coordinates[2];
+      if (arg0->kind & 0x400)
+      {
+        *((volatile u8 *) 0xCC008000) = 1;
+      }
+    }
+  }
+}
+
+#pragma pop
 
 __declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *arg0) {
     union { f64 alignment; u8 bytes[43]; } stack;

@@ -87,9 +87,11 @@ extern "C" s32 GSgfxProjectFast(Vec* position, Vec* output) {
     if (!g_projCameraMatrix || !g_projProjectMatrix) return 0;
     Vec relative;
     Vec direction;
-    f32 dx = g_projInvCameraMatrix[0][2];
-    f32 dy = g_projInvCameraMatrix[1][2];
-    f32 dz = g_projInvCameraMatrix[2][2];
+    // Preserve the direction component load order of the original projection path.
+    volatile f32 (*inverse)[4] = g_projInvCameraMatrix;
+    f32 dx = inverse[0][2];
+    f32 dy = inverse[1][2];
+    f32 dz = inverse[2][2];
     direction.x = dx;
     direction.y = dy;
     direction.z = dz;
