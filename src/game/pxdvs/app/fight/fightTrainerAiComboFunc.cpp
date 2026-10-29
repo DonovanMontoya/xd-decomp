@@ -4303,8 +4303,8 @@ s32 fightAiCombo_Horobinouta_Irekae2_2(FIGHT_TRAINER *arg0, FightOutPokemon **ar
     return 0;
 }
 
-// NONMATCHING: retail selects an indeterminate tied index when every score is
-// zero. Keep both random draws, but skip that undefined table copy.
+// Retail copies a randomly selected candidate before checking the best score.
+// Both random draws occur even when no action is selected.
 extern "C" s32 fightAiCombo_Batontatti_Zikoanzi_2(FIGHT_TRAINER *trainer,
     FightOutPokemon **allies, u16 allyCount, FightOutPokemon **enemies,
     u16 enemyCount, FightAiAllWazaValid *out, u8 chance)
@@ -4384,7 +4384,7 @@ extern "C" s32 fightAiCombo_Batontatti_Zikoanzi_2(FIGHT_TRAINER *trainer,
                 }
             }
             u16 random = HSD_Rand();
-            if (ties != 0) fightAi_CopyAllWazaValidTable(out, &candidates[indexes[random % ties]]);
+            fightAi_CopyAllWazaValidTable(out, &candidates[indexes[random % ties]]);
             u8 roll = HSD_Rand() % 100;
             if (best != 0 && best + chance > roll) {
                 setComboFuncId__15FightOutPokemonFUc(allies[a], 0x15);
@@ -4430,7 +4430,7 @@ extern "C" s32 fightAiCombo_Batontatti_Zikoanzi_2(FIGHT_TRAINER *trainer,
         }
     }
     u16 random = HSD_Rand();
-    if (ties != 0) fightAi_CopyAllWazaValidTable(out, &candidates[indexes[random % ties]]);
+    fightAi_CopyAllWazaValidTable(out, &candidates[indexes[random % ties]]);
     u8 roll = HSD_Rand() % 100;
     if (best != 0 && best + chance > roll) {
         for (u8 a = 0; a < allyCount; ++a) setComboFuncId__15FightOutPokemonFUc(allies[a], 0x15);
@@ -4439,8 +4439,8 @@ extern "C" s32 fightAiCombo_Batontatti_Zikoanzi_2(FIGHT_TRAINER *trainer,
     return 0;
 }
 
-// NONMATCHING: retail selects an indeterminate tied index when every score is
-// zero. Keep both random draws, but skip that undefined table copy.
+// Retail copies a randomly selected candidate before checking the best score.
+// Both random draws occur even when no action is selected.
 extern "C" s32 fightAiCombo_Batontatti_Nekodamasi_2(FIGHT_TRAINER *trainer,
     FightOutPokemon **allies, u16 allyCount, FightOutPokemon **enemies,
     u16 enemyCount, FightAiAllWazaValid *out, u8 chance)
@@ -4530,7 +4530,7 @@ extern "C" s32 fightAiCombo_Batontatti_Nekodamasi_2(FIGHT_TRAINER *trainer,
                 }
             }
             u16 random = HSD_Rand();
-            if (ties != 0) fightAi_CopyAllWazaValidTable(out, &candidates[indexes[random % ties]]);
+            fightAi_CopyAllWazaValidTable(out, &candidates[indexes[random % ties]]);
             u8 roll = HSD_Rand() % 100;
             if (best != 0 && best + chance > roll) {
                 setComboFuncId__15FightOutPokemonFUc(allies[a], 0x14);
@@ -4579,7 +4579,7 @@ extern "C" s32 fightAiCombo_Batontatti_Nekodamasi_2(FIGHT_TRAINER *trainer,
         }
     }
     u16 random = HSD_Rand();
-    if (ties != 0) fightAi_CopyAllWazaValidTable(out, &candidates[indexes[random % ties]]);
+    fightAi_CopyAllWazaValidTable(out, &candidates[indexes[random % ties]]);
     u8 roll = HSD_Rand() % 100;
     if (best != 0 && best + chance > roll) {
         for (u8 a = 0; a < allyCount; ++a) setComboFuncId__15FightOutPokemonFUc(allies[a], 0x14);
