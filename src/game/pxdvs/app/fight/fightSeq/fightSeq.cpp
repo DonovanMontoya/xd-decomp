@@ -2893,8 +2893,13 @@ void fightSeqPressurePpdecCheckHorobinouta(FightOutPokemon *arg0) {
             temp_r3_2 = fightOutPokemonGetPokemonPtr(arg0);
             temp_r3_3 = pokemonSearchWazaDataId(temp_r3_2, 0xC3U);
             if (temp_r3_3 >= 0) {
-                temp_r3_4 = pokemon_GetPokemonWazaPp(temp_r3_2, (u16) temp_r3_3);
-                pokemon_SetPokemonWazaPp(temp_r3_2, temp_r3_3, (temp_r3 < temp_r3_4 ? (u8)(temp_r3_4 - temp_r3) : 0));
+                temp_r3_4 = ((u8 (*)(Pokemon *, u16))pokemon_GetPokemonWazaPp)(temp_r3_2, (u16) temp_r3_3);
+                if (temp_r3 < temp_r3_4) {
+                    temp_r3_4 -= temp_r3;
+                } else {
+                    temp_r3_4 = 0;
+                }
+                ((void (*)(Pokemon *, u16, u8))pokemon_SetPokemonWazaPp)(temp_r3_2, temp_r3_3, temp_r3_4);
                 fightSeqPpdecMonomane(arg0, (u8) temp_r3_3, 0);
             }
         }
@@ -2913,8 +2918,13 @@ void fightSeqPressurePpdecCheckHuuin(FightOutPokemon *arg0) {
             temp_r3_2 = fightOutPokemonGetPokemonPtr(arg0);
             temp_r3_3 = pokemonSearchWazaDataId(temp_r3_2, 0x11EU);
             if (temp_r3_3 >= 0) {
-                temp_r3_4 = pokemon_GetPokemonWazaPp(temp_r3_2, (u16) temp_r3_3);
-                pokemon_SetPokemonWazaPp(temp_r3_2, temp_r3_3, (temp_r3 < temp_r3_4 ? (u8)(temp_r3_4 - temp_r3) : 0));
+                temp_r3_4 = ((u8 (*)(Pokemon *, u16))pokemon_GetPokemonWazaPp)(temp_r3_2, (u16) temp_r3_3);
+                if (temp_r3 < temp_r3_4) {
+                    temp_r3_4 -= temp_r3;
+                } else {
+                    temp_r3_4 = 0;
+                }
+                ((void (*)(Pokemon *, u16, u8))pokemon_SetPokemonWazaPp)(temp_r3_2, temp_r3_3, temp_r3_4);
                 fightSeqPpdecMonomane(arg0, (u8) temp_r3_3, 0);
             }
         }

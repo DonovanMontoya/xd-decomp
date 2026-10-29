@@ -904,64 +904,78 @@ void fightSeqTurnCheck(void){
 
 extern "C" {
 s32 fightSeqGetWazaDamageHikaePokemon(void *trainer,u16 move,void *attacker,void *defender,u8 critical,WSDamageCallback pre,WSDamageCallback post){
+    FightWaza *waza;
     WSOutPokemonSnapshot attackerSave;
     WSPokemonSnapshot defenderSave;
     WSWazaSnapshot wazaSave;
     u8 workSave[8];
-    void *oldAttacker=fightFloor_GetAttackPokemonPtr(0);
-    u8 *oldSequence=fightSeq_GetWazaSeq();
-    s32 oldStatus=ServerStatusFlag;
-    u8 *source=ServerWork.flags,*destination=workSave;
-    for(s32 i=0;i<8;i++)*destination++=*source++;
+    u8 *oldSequence;
+    void *oldAttacker;
+    s32 oldStatus;
+    u8 *source;
+    u8 *destination;
+    s32 damage;
+    s32 i;
+    oldAttacker=fightFloor_GetAttackPokemonPtr(0);
+    oldSequence=fightSeq_GetWazaSeq();
+    oldStatus=ServerStatusFlag;
+    for(i=0;i<8;i++)workSave[i]=ServerWork.flags[i];
     fightOutPokemonBiosCopy(&attackerSave,attacker);
     pokemonBiosCopy(&defenderSave,fightPokemon_GetPokemonBuffPtr(defender));
     fightFloor_SetAttackPokemonPtr(0,attacker);
-    FightWaza *waza=fightOutPokemon_GetFightWazaPtr(attacker);
+    waza=fightOutPokemon_GetFightWazaPtr(attacker);
     fightWazaBiosCopy(&wazaSave,waza);
     fightWazaInit(waza);fightWazaCreate(waza,0,move,0,0);
     ServerStatusFlag=0;
-    destination=ServerWork.flags;for(s32 i=0;i<8;i++)*destination++=0;
+    for(i=0;i<8;i++)ServerWork.flags[i]=0;
     if(pre)pre(trainer,move,attacker,defender);
     if(critical==1)CriticalCheckHikaePokemon(defender);
     DamageCalcHikaePokemon(defender);
     fightSeqTypeCheckHikaePokemon(defender,1,1,0);
     if(post)post(trainer,move,attacker,defender);
-    s32 damage;
     if(fightWazaIsHit(waza)==1)damage=fightWaza_GetDamage(waza);else damage=0;
     fightFloor_SetAttackPokemonPtr(0,oldAttacker);
     fightWazaBiosCopy(waza,&wazaSave);
     fightSeq_JumpWazaSeq(oldSequence);
     ServerStatusFlag=oldStatus;
-    destination=ServerWork.flags;source=workSave;for(s32 i=0;i<8;i++)*destination++=*source++;
+    for(i=0;i<8;i++)ServerWork.flags[i]=workSave[i];
     fightOutPokemonBiosCopy(attacker,&attackerSave);
     pokemonBiosCopy(fightPokemon_GetPokemonBuffPtr(defender),&defenderSave);
     return damage;
 }
 s32 fightSeqGetNromalWazaDamage(void *trainer,u16 move,void *attacker,void *defender,u8 critical,u8 loss,WSDamageCallback pre,WSDamageCallback post){
-    WSOutPokemonSnapshot attackerSave,defenderSave;
+    FightWaza *waza;
+    WSOutPokemonSnapshot attackerSave;
+    WSOutPokemonSnapshot defenderSave;
     WSWazaSnapshot wazaSave;
     u8 workSave[8];
-    void *oldAttacker=fightFloor_GetAttackPokemonPtr(0);
-    void *oldDefender=fightFloor_GetDefensePokemonPtr(0);
-    u8 *oldSequence=fightSeq_GetWazaSeq();
-    s32 oldStatus=ServerStatusFlag;
-    u8 *source=ServerWork.flags,*destination=workSave;
-    for(s32 i=0;i<8;i++)*destination++=*source++;
+    u8 *oldSequence;
+    void *oldAttacker;
+    void *oldDefender;
+    s32 oldStatus;
+    s32 damage;
+    s32 i;
+    oldAttacker=fightFloor_GetAttackPokemonPtr(0);
+    oldDefender=fightFloor_GetDefensePokemonPtr(0);
+    oldSequence=fightSeq_GetWazaSeq();
+    oldStatus=ServerStatusFlag;
+    for(i=0;i<8;i++)workSave[i]=ServerWork.flags[i];
     fightOutPokemonBiosCopy(&attackerSave,attacker);
     fightOutPokemonBiosCopy(&defenderSave,defender);
     fightFloor_SetAttackPokemonPtr(0,attacker);fightFloor_SetDefensePokemonPtr(0,defender);
-    FightWaza *waza=fightOutPokemon_GetFightWazaPtr(attacker);
+    waza=fightOutPokemon_GetFightWazaPtr(attacker);
     fightWazaBiosCopy(&wazaSave,waza);fightWazaInit(waza);fightWazaCreate(waza,0,move,0,0);
-    ServerStatusFlag=0;destination=ServerWork.flags;for(s32 i=0;i<8;i++)*destination++=0;
+    ServerStatusFlag=0;
+    for(i=0;i<8;i++)ServerWork.flags[i]=0;
     if(pre)pre(trainer,move,attacker,defender);
     if(critical==1)WS_CRITICAL_CHECK();
     WS_DAMAGE_CALC();WS_TYPE_CHECK();if(loss==1)WS_DAMAGE_LOSS();
     if(post)post(trainer,move,attacker,defender);
-    s32 damage;
     if(fightWazaIsHit(waza)==1)damage=fightWaza_GetDamage(waza);else damage=0;
     fightFloor_SetAttackPokemonPtr(0,oldAttacker);fightFloor_SetDefensePokemonPtr(0,oldDefender);
-    fightWazaBiosCopy(waza,&wazaSave);fightSeq_JumpWazaSeq(oldSequence);ServerStatusFlag=oldStatus;
-    destination=ServerWork.flags;source=workSave;for(s32 i=0;i<8;i++)*destination++=*source++;
+    fightWazaBiosCopy(waza,&wazaSave);fightSeq_JumpWazaSeq(oldSequence);
+    ServerStatusFlag=oldStatus;
+    for(i=0;i<8;i++)ServerWork.flags[i]=workSave[i];
     fightOutPokemonBiosCopy(attacker,&attackerSave);fightOutPokemonBiosCopy(defender,&defenderSave);
     return damage;
 }
@@ -978,19 +992,24 @@ extern "C" void fightSeqWazaExec(void *action,u16 move){
         fightFloor_SetAttackMsgId(0,0);fightFloor_SetCriticakMsgId(0,0);fightFloor_SetWazakoukaMsgId(0,0);
         ServerWork.flags[6]=0;lbl_804EB918=0;fightseq_attack_pokemon_joutai_check_buff=0;
         if(fightOutPokemonIsJoutaiDataId(attacker,0x2A)==1 && move!=0xA5){
-            u16 savedMove=fightOutPokemonGetIdBuffJoutaiDataId(attacker,0x2A);
-            u16 slot=fightOutPokemonGetBuffJoutaiDataId(attacker,0x2A);
-            u16 actualMove=pokemon_GetPokemonWazaDataId(fightOutPokemonGetPokemonPtr(attacker),slot);
+            u32 relative;
+            u16 savedMove;
+            void *selected;
+            u16 actualMove;
+            u32 slot;
+            savedMove=fightOutPokemonGetIdBuffJoutaiDataId(attacker,0x2A);
+            slot=fightOutPokemonGetBuffJoutaiDataId(attacker,0x2A);
+            actualMove=pokemon_GetPokemonWazaDataId(fightOutPokemonGetPokemonPtr(attacker),slot);
             if(savedMove!=actualMove)fightOutPokemonInitJoutaiDataId(attacker,0x2A);
-            void *selected=fightSeqSelectDefensePokemonPtr(attacker,actualMove,fightType,0,1,1,-1);
-            u32 relative=fightTargetGetTragetPtrToRelativeHostSideFightTargetId(selected,fightType);
-            fightOutPokemonCreateFightActionAttackWaza(attacker,0,0x13,0,fight_action_data_waza,actualMove,relative,(s8)slot,1);
+            selected=fightSeqSelectDefensePokemonPtr(attacker,actualMove,fightType,0,1,1,-1);
+            relative=fightTargetGetTragetPtrToRelativeHostSideFightTargetId(selected,fightType);
+            ((void (*)(void*,u32,u32,void*,void*,u32,u32,s8,u32))fightOutPokemonCreateFightActionAttackWaza)(attacker,0,0x13,0,fight_action_data_waza,actualMove,relative,(s8)slot,1);
             move=actualMove;fightFloor_SetDefensePokemonPtr(0,selected);
             defender=fightTargetGetPtrAsNowFightType(0x12,0);defenseSide=fightTargetGetPtrAsNowFightType(2,defender);
         }
         if(move==0xA5 || wazaCheckDarkWaza(move)==1)ServerStatusFlag|=0x800;
         if(fightSeqTameWazaCheck(move)==1 && fightOutPokemonIsJoutaiDataId(attacker,0x22)==0){
-            if(sequence==0x97 && fightFloorGetNowTenkouDataId(0,1)==1){
+            if(sequence==0x97 && (u8)fightFloorGetNowTenkouDataId(0,1)==1){
                 void *selected=fightSeqSelectDefensePokemonPtr(attacker,move,fightType,0,0,1,-1);
                 if(selected){defender=selected;fightFloor_SetDefPokemonAndAtkFightWazaTargetId(0,selected);defenseSide=fightTargetGetPtrAsNowFightType(2,selected);}
             }
@@ -1001,7 +1020,7 @@ extern "C" void fightSeqWazaExec(void *action,u16 move){
         if(fightOutPokemonCheckFightOut(defender)==0){
             if(attackSide!=defenseSide || (defender=fightTargetGetPtrAsNowFightType(0xF,attacker),fightOutPokemonCheckFightOut(defender)==0)){
                 defender=fightTargetGetPtrAsNowFightType(0xE,defender);
-                if(!defender || fightOutPokemonCheckFightOut(defender)==0)return;
+                if(defender){if(fightOutPokemonCheckFightOut(defender)==0)return;}else return;
             }
             fightFloor_SetDefPokemonAndAtkFightWazaTargetId(0,defender);
             fightTargetGetPtrAsNowFightType(2,defender);

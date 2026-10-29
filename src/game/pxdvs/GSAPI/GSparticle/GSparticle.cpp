@@ -589,68 +589,38 @@ extern "C" void GSparticleSetGeneratorVisibility(_GSparticleGen *g, bool v) {
 
 extern "C" void GSparticleSetRandomVelocityScaling(_GSparticleGen *g, bool v) {
     peBankX *b = g->bank;
-    if (b) {
-        switch ((u32)g->isBank) {
-        case 0:
-            psSetRandomVelocityScaling(b->ps, v);
-            break;
-        }
-    }
+    if (!b || g->isBank) return;
+    psSetRandomVelocityScaling(b->ps, v);
 }
 
 extern "C" void GSparticleSetNodeScaling(_GSparticleGen *g, bool v) {
     peBankX *b = g->bank;
-    if (b) {
-        switch ((u32)g->isBank) {
-        case 0:
-            psSetNodeScaling(b->ps, v);
-            break;
-        }
-    }
+    if (!b || g->isBank) return;
+    psSetNodeScaling(b->ps, v);
 }
 
 extern "C" void GSparticleSetTornadoScaling(_GSparticleGen *g, bool a, bool c) {
     peBankX *b = g->bank;
-    if (b) {
-        switch ((u32)g->isBank) {
-        case 0:
-            psSetTornadoScaling(b->ps, a, c);
-            break;
-        }
-    }
+    if (!b || g->isBank) return;
+    psSetTornadoScaling(b->ps, a, c);
 }
 
 extern "C" void GSparticleSetParticleTextureScaling(_GSparticleGen *g, bool v) {
     peBankX *b = g->bank;
-    if (b) {
-        switch ((u32)g->isBank) {
-        case 0:
-            psSetParticleTexScaling(b->ps, v);
-            break;
-        }
-    }
+    if (!b || g->isBank) return;
+    psSetParticleTexScaling(b->ps, v);
 }
 
 extern "C" void GSparticleSetOffsetRotationInLocal(_GSparticleGen *g, bool a, bool c) {
     peBankX *b = g->bank;
-    if (b) {
-        switch ((u32)g->isBank) {
-        case 0:
-            psSetOffsetRotationInLocal(b->ps, a, c);
-            break;
-        }
-    }
+    if (!b || g->isBank) return;
+    psSetOffsetRotationInLocal(b->ps, a, c);
 }
 
 extern "C" void GSparticleSetVelocityRotationInLocal(_GSparticleGen *g, bool v) {
     peBankX *b = g->bank;
-    if (b) {
-        switch ((u32)g->isBank) {
-        case 0:
-            psSetVelocityRotationInLocal(b->ps, v);
-            break;
-        }
-    }
+    if (!b || g->isBank) return;
+    psSetVelocityRotationInLocal(b->ps, v);
 }
 
 extern "C" void GSparticleActivateBank(_GSparticleBank *bank) {

@@ -1267,6 +1267,11 @@ void CMenuReliveHall::actionPickup() {
     editAfterDp0VisitorCheck();
 }
 
+static inline bool reliveCursorOnDancer(CMenuReliveHall *h) {
+    int idx = h->cursor->index;
+    return idx < h->stage->getDancerQuantity();
+}
+
 void CMenuReliveHall::aButtomAction() {
     memset(&menuTable, 0, 0xC);
     reserved618 = -1;
@@ -1279,8 +1284,7 @@ void CMenuReliveHall::aButtomAction() {
     case 4:
     case 5: {
         if (catchNotDarkB()) {
-            int idx = cursor->index;
-            if (idx < stage->getDancerQuantity()) {
+            if (reliveCursorOnDancer(this)) {
                 if (cursor->unk14C != 0) {
                     actionChange();
                 } else {
@@ -1292,8 +1296,7 @@ void CMenuReliveHall::aButtomAction() {
                 menuTable = actionMenuCatchDancerOnNone;
             }
         } else {
-            int idx = cursor->index;
-            if (idx < stage->getDancerQuantity()) {
+            if (reliveCursorOnDancer(this)) {
                 if (cursor->unk14C != 0) {
                     actionPickup();
                 } else {
@@ -2180,9 +2183,8 @@ SPokemonView *CMenuReliveHall::getPokemonViewByClockwizePositionWithCatch(int po
         if (picked >= stage->getDancerQuantity()) {
             int quantity = stage->getDancerQuantity();
             picked = cursor->index;
-            int offset = picked - quantity + 1;
-            if (position < offset) return &views[position];
-            if (position == offset) return &views[picked];
+            if (position < picked - quantity + 1) return &views[position];
+            if (position == picked - quantity + 1) return &views[picked];
             return &views[position - 1];
         }
     }
@@ -2287,18 +2289,19 @@ static PocketVec<short> _cursorPositionTblAddPc[2] = {{336, 428}, {379, 428}};
 
 int CMenuReliveHall::cursorMoveDirSearch(PocketVec<short> *positions, int direction, int range) {
     f32 nearest = 1000.0f;
-    int result = -1;
     int current = cursor->index;
+    int result = -1;
     PocketVec<short> origin = positions[current];
     PocketVec<short> candidates[11];
     memcpy(candidates, positions, 36);
     memcpy(candidates + 9, _cursorPositionTblAddPc, 8);
-    int index = 0;
-    do {
+    int index;
+    for (index = 0; index < 11; index++) {
         if (current == 7 && index >= 9) break;
         if (index != cursor->index && candidates[index].x != -1) {
-            long delta = degreeSubHalf(direction, xyxy2dirDegree(candidates[index], origin));
-            if (delta > 0) {} else delta = -delta;
+            long dir = xyxy2dirDegree(candidates[index], origin);
+            long delta = degreeSubHalf(direction, dir);
+            delta = delta > 0 ? delta : -delta;
             if (delta <= range) {
                 f32 distance = xyxy2distance(candidates[index], origin);
                 if (nearest > distance) {
@@ -2307,8 +2310,7 @@ int CMenuReliveHall::cursorMoveDirSearch(PocketVec<short> *positions, int direct
                 }
             }
         }
-        index++;
-    } while (index < 11);
+    }
     if (result >= 9) result = 7;
     return result;
 }
@@ -2562,8 +2564,37 @@ void CMenuReliveHall::drawStatusPanel() {
 
 f32 dirRefresh2PI(f32);
 namespace {
-static inline bool animationAtStart(f32 time) {return time==0.0f;}
+static inline f32 hallClampRate(f32 time) {
+    if (1.0f < time) return 1.0f;
+    else return time;
+}
+
+static inline void hallSetAnimationState(CState* state, s32 next) {
+    state->unk4 = next;
+    memset(state->saved, 0, 0x40);
+}
+
+static inline void setHallCursorRate(CMenuPokemonCursor* cursor, f32 rate) {
+    cursor->unk8 = rate < 1.0f ? rate : 1.0f;
+}
+
+static inline u32& hallAntAnimationFlag(SPokemonView& view) {
+    return view.ant.unk14;
+}
+
+static inline void setHallViewAnimation(CMenuReliveHall* hall, s32 index) {
+    hallAntAnimationFlag(hall->views[index]) = 1;
+}
+
+static inline bool animationTimeEqual(f32 a, f32 b) {
+    return a == b;
+}
+
+static inline bool animationAtStart(const f32& time) {
+    return animationTimeEqual(time, 0.0f);
+}
 void CMenuReliveHall::animationStateUpdate() {
+    f32 rate;
     ((CState*)&animationState)->update();
     switch(animationState) {
     case 0:
@@ -2571,9 +2602,9 @@ void CMenuReliveHall::animationStateUpdate() {
         break;
     case 1: {
         if(animationAtStart(animationTime))animationDataReset();
-        f32 rate=1.0f;
+        rate=1.0f;
         f32 time=animationTime/0.6f;
-        if(1.0f<time){}else rate=time;
+        rate=hallClampRate(time);
         markerAlpha=effectAlpha=starAlpha=lineAlpha=circleAlpha=255.0f*rate;
         for(u32 i=0;i<3;i++)circles[i].setFade(markerAlpha);
         f32 start;
@@ -2585,15 +2616,15 @@ void CMenuReliveHall::animationStateUpdate() {
             for(s32 i=0;i<count;i++)views[i].hidden=isDirRegionInReverseClockwise(dirRefresh2PI(views[i].unk4),start,end)==0;
             views[6].hidden=1;
         }else for(s32 i=0;i<count;i++)views[i].hidden=0;
-        if(rate>=1.0f) {animationFlag=0;memset(animationWork,0,0x40);}
+        if(rate>=1.0f) {hallSetAnimationState((CState*)&animationState,0);}
         break;
     }
     case 2: {
         if(animationAtStart(animationTime)) {starAlpha=0;hitEffect.active=1;}
-        f32 rate=1.0f,time=animationTime/0.2f;
+        rate=1.0f; f32 time=animationTime/0.2f;
         if(time<1.0f)rate=time;
         dancerMoveAnimationAll(rate);
-        if(rate>=1.0f) {animationFlag=3;memset(animationWork,0,0x40);}
+        if(rate>=1.0f) {hallSetAnimationState((CState*)&animationState,3);}
         hitEffect.rate=rate;
         break;
     }
@@ -2601,13 +2632,13 @@ void CMenuReliveHall::animationStateUpdate() {
         s32 alpha=255.0f*animationTime/0.1f;
         if(alpha>255)alpha=255;
         starAlpha=alpha;
-        if(starAlpha>=255) {animationFlag=0;memset(animationWork,0,0x40);}
+        if(starAlpha>=255) {hallSetAnimationState((CState*)&animationState,0);}
         break;
     }
     case 4: {
         s32 alpha=255.0f*animationTime/0.1f;
         lineAlpha=alpha>255?255:alpha;
-        if(alpha>=255) {animationFlag=0;memset(animationWork,0,0x40);}
+        if(alpha>=255) {hallSetAnimationState((CState*)&animationState,0);}
         break;
     }
     case 5: {
@@ -2615,23 +2646,23 @@ void CMenuReliveHall::animationStateUpdate() {
         s32 alpha=255.0f*animationTime/0.1f;
         u8 fade=255-(alpha>255?255:alpha);
         lineAlpha=fade;starAlpha=fade;
-        if(alpha>=255) {animationFlag=0;memset(animationWork,0,0x40);}
+        if(alpha>=255) {hallSetAnimationState((CState*)&animationState,0);}
         break;
     }
     case 6: {
         if(animationAtStart(animationTime))cursor->unk4=3;
         f32 rate=animationTime/0.1f;
-        cursor->unk8=rate<1.0f?rate:1.0f;
+        setHallCursorRate(cursor,rate);
         setCircleSw();
-        if(rate>=1.0f) {animationFlag=0;memset(animationWork,0,0x40);}
+        if(rate>=1.0f) {hallSetAnimationState((CState*)&animationState,0);}
         break;
     }
     case 7: {
-        if(animationAtStart(animationTime)) {cursor->unk4=1;views[cursor->index].ant.unk14=1;hitEffect.active=1;}
-        f32 rate=1.0f,time=animationTime/0.25f;
+        if(animationAtStart(animationTime)) {cursor->unk4=1;setHallViewAnimation(this,cursor->index);hitEffect.active=1;}
+        rate=1.0f; f32 time=animationTime/0.25f;
         if(time<1.0f)rate=time;
-        cursor->unk8=time<1.0f?time:1.0f;
-        if(time>=1.0f) {animationFlag=0;memset(animationWork,0,0x40);}
+        setHallCursorRate(cursor,time);
+        if(time>=1.0f) {hallSetAnimationState((CState*)&animationState,0);}
         hitEffect.rate=rate;
         break;
     }

@@ -2480,6 +2480,7 @@ static void _fadeEffectFourBallInit() {
     _fadeEffect_AdjustParms();
 }
 
+#pragma opt_common_subs off
 bool fadeEffectHookFunction_four_ball(GSgfxLayerID id, bool active, f32 elapsed, f32 duration, f32 elapsedSecond, f32 durationSecond, void* opaque) {
     GSgfxLayer* layer;
     GStexture* texture;
@@ -2509,10 +2510,11 @@ bool fadeEffectHookFunction_four_ball(GSgfxLayerID id, bool active, f32 elapsed,
     _fadeEffectSnapshotFadeFunction(layer, texture, &center, 1.0f, 0.0f, progress, progressSecond);
     _fadeEffectStartTexture(layer, _fadeEffectWork.ballTexture);
     f32 opacity = 1.0f - progress;
-    f32 movement[2], rotation[2];
+    GSvec ballCenter;
+    f32 rotation[2], movement[2];
     movement[0] = _fadeEffectWork.rotation;
-    rotation[0] = 360.0f * (_fadeEffectWork.rotation / 408.40704f);
-    movement[1] = -_fadeEffectWork.rotation;
+    movement[1] = -movement[0];
+    rotation[0] = 360.0f * (movement[0] / 408.40704f);
     rotation[1] = -rotation[0];
     for (int side = 0; side < 2; ++side) {
         FADE_EFFECT_BALL* balls = _fadeEffectBall[side];
@@ -2526,15 +2528,15 @@ bool fadeEffectHookFunction_four_ball(GSgfxLayerID id, bool active, f32 elapsed,
             }
             f32 x = ball->position.param1;
             if (!(x > 770.0f) && !(x < -130.0f)) {
-                center.param1 = x;
+                ballCenter.param1 = x;
                 f32 a = ball->alpha;
-                center.param2 = ball->position.param2;
                 f32 scaled = opacity * a;
-                center.param3 = ball->position.param3;
+                ballCenter.param2 = ball->position.param2;
+                ballCenter.param3 = ball->position.param3;
                 s32 alpha = (s32)scaled;
-                _disp_four_ball(layer, &center, 1.0f, ball->rotation, alpha);
-                center.param2 += 235.0f;
-                _disp_four_ball(layer, &center, 1.0f, ball->rotation, alpha);
+                _disp_four_ball(layer, &ballCenter, 1.0f, ball->rotation, alpha);
+                ballCenter.param2 += 235.0f;
+                _disp_four_ball(layer, &ballCenter, 1.0f, ball->rotation, alpha);
             }
         }
         f32 angle = balls->rotation;
@@ -2550,17 +2552,18 @@ bool fadeEffectHookFunction_four_ball(GSgfxLayerID id, bool active, f32 elapsed,
             balls->position.param1 = x;
         }
         if (!(x > 770.0f) && !(x < -130.0f)) {
-            center.param1 = balls->position.param1;
-            center.param2 = balls->position.param2;
-            center.param3 = balls->position.param3;
-            _disp_four_ball(layer, &center, 1.0f, balls->rotation, (s32)(255.0f * opacity));
-            center.param2 += 235.0f;
-            _disp_four_ball(layer, &center, 1.0f, balls->rotation, (s32)(255.0f * opacity));
+            ballCenter.param1 = balls->position.param1;
+            ballCenter.param2 = balls->position.param2;
+            ballCenter.param3 = balls->position.param3;
+            _disp_four_ball(layer, &ballCenter, 1.0f, balls->rotation, (s32)(255.0f * opacity));
+            ballCenter.param2 += 235.0f;
+            _disp_four_ball(layer, &ballCenter, 1.0f, balls->rotation, (s32)(255.0f * opacity));
         }
     }
     _fadeEffectEnd(layer);
     return active;
 }
+#pragma opt_common_subs reset
 
 static void _fadeDistortionInit() {
     _fadeDistortionWork.columns = 40;
@@ -3057,10 +3060,10 @@ static void _fadeTearOffDraw(GSgfxLayer* layer, u8 alpha, int shift) {
     s16 h;
     u8 half;
     w = _fadeTearOffWork.x;
-    half = (u32)alpha >> 1;
     h = _fadeTearOffWork.y;
     f32 u = (f32)w / 640.0f;
     f32 v = (f32)h / 480.0f;
+    half = (u32)alpha >> 1;
     layer->beginSurface(4);
     f32 zero = 0.0f;
     f32 one = 1.0f;
@@ -3100,13 +3103,14 @@ static void _fadeTearOffDraw(GSgfxLayer* layer, u8 alpha, int shift) {
     GXTexCoord2f32(one, v);
     layer->endSurface();
     layer->beginSurface(3);
-    GXPosition3s16(w + shift * 2, shift * 2, 0);
+    shift *= 2;
+    GXPosition3s16(w + shift, shift, 0);
     *(u8*)0xCC008000 = 255; *(u8*)0xCC008000 = 255; *(u8*)0xCC008000 = 255; *(u8*)0xCC008000 = half;
     GXTexCoord2f32(u, zero);
-    GXPosition3s16(shift * 2 + 640, shift * 2, 0);
+    GXPosition3s16(shift + 640, shift, 0);
     *(u8*)0xCC008000 = 255; *(u8*)0xCC008000 = 255; *(u8*)0xCC008000 = 255; *(u8*)0xCC008000 = half;
     GXTexCoord2f32(one, zero);
-    GXPosition3s16(shift * 2 + 640, h + shift * 2, 0);
+    GXPosition3s16(shift + 640, h + shift, 0);
     *(u8*)0xCC008000 = 255; *(u8*)0xCC008000 = 255; *(u8*)0xCC008000 = 255; *(u8*)0xCC008000 = half;
     GXTexCoord2f32(one, v);
     layer->endSurface();

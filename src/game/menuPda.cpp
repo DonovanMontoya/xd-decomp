@@ -726,8 +726,8 @@ static s32 _SelectCursorPositionCheck(void) {
 }
 
 static s32 _SelectCursorCalcPositon(GSvec2 *out) {
-    f32 stepA = (_menuPdaStatus.unk48 - _menuPdaStatus.unk44) * 0.0625f;
-    f32 stepB = (_menuPdaStatus.unk50 - _menuPdaStatus.unk4C) * 0.0625f;
+    f32 stepA = (_menuPdaStatus.unk48 - _menuPdaStatus.unk44) / 16.0f;
+    f32 stepB = (_menuPdaStatus.unk50 - _menuPdaStatus.unk4C) / 16.0f;
     s32 n;
     s32 i;
     GSvec2 *p;
@@ -738,8 +738,8 @@ static s32 _SelectCursorCalcPositon(GSvec2 *out) {
     for (i = 0; i < 16; i++) {
         f32 ang = (f32)i * stepB + _menuPdaStatus.unk4C;
         p->x = _r2 * (f32)sin(ang) + _center2.x;
-        n++;
         p->y = _r2 * (f32)cos(ang) + _center2.y;
+        n++;
         p++;
     }
     GSvec2 *q = out + n;

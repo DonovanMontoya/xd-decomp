@@ -303,51 +303,63 @@ static u16 *getGoodsList__FiPi(s32 shop, s32 *count) {
 }
 
 static s32 getCouponMsgID__FPUci20MENU_COUPON_MSG_CODEiP16__va_list_struct(u8 *sprite, s32 shop, s32 code, s32 value, va_list args) {
-    s32 key;
-    s32 wait = 1;
-    u16 item = 0;
-    s32 idx = shopData[shop].index;
+    s32 off;
     s32 *msgs;
-    s32 off = code * 4;
+    s32 current;
+    s32 key;
+    s32 wait;
+    u16 item;
+    s32 idx;
+    current = value;
+    item = 0;
+    wait = 1;
+    idx = shopData[shop].index;
+    off = code * 4;
     *sprite = shopExchanger[idx].sprite;
     msgs = shopExchanger[idx].msg;
-    while (value >= 0) {
+    while (current >= 0) {
         if (wait != 0) {
-            key = value;
+            key = current;
             wait = 0;
         } else {
             wait = 1;
-            msgctrlSetValue(key, value);
+            msgctrlSetValue(key, current);
             if (key == 0x2D) {
-                item = value;
+                item = current;
             }
         }
-        value = va_arg(args, s32);
+        current = va_arg(args, s32);
     }
     return _msgIdWazaMachineChange__FUsUl(item, *(s32 *)((u8 *)msgs + off));
 }
 
 static s32 getMsgID__FPUci18MENU_SHOP_MSG_CODEiP16__va_list_struct(u8 *sprite, s32 shop, s32 code, s32 value, va_list args) {
-    s32 key;
-    s32 wait = 1;
-    u16 item = 0;
-    s32 idx = shopData[shop].index;
+    s32 off;
     s32 *msgs;
-    s32 off = code * 4;
+    s32 current;
+    s32 key;
+    s32 wait;
+    u16 item;
+    s32 idx;
+    current = value;
+    item = 0;
+    wait = 1;
+    idx = shopData[shop].index;
+    off = code * 4;
     *sprite = shopSalesman[idx].sprite;
     msgs = shopSalesman[idx].msg;
-    while (value >= 0) {
+    while (current >= 0) {
         if (wait != 0) {
-            key = value;
+            key = current;
             wait = 0;
         } else {
             wait = 1;
-            msgctrlSetValue(key, value);
+            msgctrlSetValue(key, current);
             if (key == 0x2D) {
-                item = value;
+                item = current;
             }
         }
-        value = va_arg(args, s32);
+        current = va_arg(args, s32);
     }
     return _msgIdWazaMachineChange__FUsUl(item, *(s32 *)((u8 *)msgs + off));
 }
@@ -449,7 +461,8 @@ s32 menuShopNumDrawBuyNum(ShopWindow *win, ShopSprite *spr) {
     for (j = 0; j < 1 - i; j++) {
         div *= 10;
     }
-    num = *arg->value / div % 10;
+    num = *arg->value / div;
+    num %= 10;
     msgctrlSetValue(0x34, num);
     GSmsgPrintRight(win->layer, 0, 0, spr->width, spr->height, -1, 0x4270);
     return 0;
@@ -1351,22 +1364,15 @@ static s32 _getIsBattleDiskShopAllSelWithAllSellOutYet__Fv(void) {
 static s32 _getBattleDiskShopID__Fv(void) {
     s32 count;
     u16 ids[9];
-    s32 *tbl;
     s32 j;
     u32 i;
     u16 *goods;
-    tbl = _shopDataBattleDiskTbl;
-    j = 0;
-    i = 0;
-    do {
-        goods = getGoodsList__FiPi(*tbl, &count);
-        ids[j] = goods[0] - 0x215;
-        ids[j + 1] = goods[1] - 0x215;
-        tbl++;
-        ids[j + 2] = goods[2] - 0x215;
-        j += 3;
-        i++;
-    } while (i < 3);
+    for (i = 0; i < 3; i++) {
+        goods = getGoodsList__FiPi(_shopDataBattleDiskTbl[i], &count);
+        for (j = 0; j < 3; j++) {
+            ids[i * 3 + j] = goods[j] - 0x215;
+        }
+    }
     if (deckDataVirtualDB_GetFlagData__FUs(ids[0]) == 0 || deckDataVirtualDB_GetFlagData__FUs(ids[1]) == 0 || deckDataVirtualDB_GetFlagData__FUs(ids[2]) == 0) {
         return 0x10;
     }
