@@ -1222,6 +1222,7 @@ void WS_MIRAIYOCHI(void) {
     u8 *temp_r30;
     FightOutPokemon *temp_r3;
     FightOutPokemon *temp_r3_2;
+    FightWaza* waza;
     u32 temp_r27;
     u16 temp_r26;
     u16 temp_r25;
@@ -1232,17 +1233,17 @@ void WS_MIRAIYOCHI(void) {
     temp_r30 = fightSeq_GetWazaSeq();
     temp_r3 = (FightOutPokemon*)fightTargetGetPtrAsNowFightType(0x11, 0);
     temp_r27 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(temp_r3, temp_r31);
-    temp_r3_2 = (FightOutPokemon*)fightOutPokemon_GetFightWazaPtr(temp_r3);
+    waza = fightOutPokemon_GetFightWazaPtr(temp_r3);
     temp_r26 = fightOutPokemon_GetUseWazaDataId(temp_r3);
-    temp_r25 = fightWaza_GetIryoku((FightWaza*)temp_r3_2);
-    temp_r31 = fightWaza_GetZokusei((FightWaza*)temp_r3_2);
+    temp_r25 = fightWaza_GetIryoku(waza);
+    temp_r31 = fightWaza_GetZokusei(waza);
     temp_r3_2 = (FightOutPokemon*)fightTargetGetPtrAsNowFightType(0x12, 0);
     temp_r24 = fightTargetGetPtrAsNowFightType(2, temp_r3_2);
     if (fightOutPokemonCheckWriteJoutaiDataId(temp_r3_2, 0x34) != 2) {
         fightSeq_JumpWazaSeq(*(u8**)(temp_r30 + 1));
         return;
     }
-    fightOutPokemonWriteJoutaiDataId(temp_r3_2, 0x34, (u16) temp_r27);
+    fightOutPokemonWriteJoutaiDataId(temp_r3_2, 0x34, temp_r27);
     fightOutPokemonSetIdBuffJoutaiDataId(temp_r3_2, 0x34, temp_r26);
     var_r25 = ((s32 (*)(void*, void*, void*, u16, u16, u16))fightSeqWazaDamageCalc)(temp_r3, temp_r3_2, temp_r24, temp_r26, temp_r25, temp_r31);
     if (fightOutPokemonIsJoutaiDataId(temp_r3, 0x32) == 1) {
