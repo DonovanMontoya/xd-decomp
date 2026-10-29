@@ -262,7 +262,7 @@ public:
     f32 calcStarDir(int, int);
     SPokemonView *getPokemonViewByClockwizePositionWithCatch(int);
     int getDirToAisyou(f32);
-    void getCircleColorAisyou(f32 &, f32 &, int &, int);
+    u32 getCircleColorAisyou(f32 &, f32 &, int &, int);
     f32 starTimeFromBorn(f32 &, f32 &, f32);
     void drawStarHitEffect(f32, f32, f32);
     void dancerMoveAnimationOne(SPokemonView &, f32);
@@ -1781,15 +1781,16 @@ int CMenuReliveHall::getDirToAisyou(f32 direction) {
     return -1;
 }
 
-void CMenuReliveHall::getCircleColorAisyou(f32 &start, f32 &end, int &color, int index) {
-    volatile u32 selectedColor;
+u32 CMenuReliveHall::getCircleColorAisyou(f32 &start, f32 &end, int &color, int index) {
+    GSgfxColAu8 selectedColor;
     int quantity = dancerPositionQuantityWithCatch();
     SPokemonView *first = getPokemonViewByClockwizePositionWithCatch(index);
     SPokemonView *second = getPokemonViewByClockwizePositionWithCatch((index + 1) % quantity);
     color = pokemonToAisyou(first->getPokemonWithPickupOverride(), second->getPokemonWithPickupOverride());
-    selectedColor = *(u32 *)&relivehallAisyou2ColorTbl[color];
+    *(u32 *)&selectedColor = *(u32 *)&relivehallAisyou2ColorTbl[color];
     start = first->unk4;
     end = second->unk4;
+    return *(u32 *)&selectedColor;
 }
 
 f32 CMenuReliveHall::starTimeFromBorn(f32 &x, f32 &y, f32 direction) {
