@@ -28,6 +28,7 @@ This variant is maintained here; shared headers remain in extern/musyx.
 #include "musyx/assert.h"
 #include "musyx/hardware.h"
 #include "musyx/macros.h"
+#include "musyx/midictrl.h"
 #include "musyx/sal.h"
 #include "musyx/seq.h"
 #include "musyx/snd.h"
