@@ -1147,11 +1147,10 @@ void _peopleMoveTypeList__FP13tagPeopleWorkb(tagPeopleWork* work, bool loop) {
         if ((work->walkPointIndex >= work->walkPointCount - 1 && work->walkActive == 2) || work->unknown7C[0] != 0) {
             f32 step;
             f32 distance;
-            f32 rate;
             distance = PSVECDistance(peopleBiosGetPosPtr(work), &work->walkTarget);
-            rate = (f32)GSgfxVideoGetVsyncRate();
-            step = speed * (30.0f * (f32)timeGetLastFrameTime() / rate);
-            if (distance < peopleViewerGetPlaySpeedRate(work) * step) arrived = 1;
+            step = speed * (30.0f * (f32)timeGetLastFrameTime() / (f32)GSgfxVideoGetVsyncRate());
+            f32 play = peopleViewerGetPlaySpeedRate(work);
+            if (distance < play * step) arrived = 1;
         } else if (PSVECDistance(peopleBiosGetPosPtr(work), &work->walkTarget) < 5.0f) {
             arrived = 1;
         }
