@@ -42,29 +42,14 @@ void sodateyaReclaim(s32 slot){void *hero=savedataGetStatus(0,2);void *pokemon=h
 void sodateyaRaise(s32 slot){void *pokemon;void *hero=savedataGetStatus(0,2);pokemon=heroBiosGetPokemonPtr(hero,slot);s32 count=heroGetPokeomCount(hero);Sodateya *work=getWork(0);u8 success;if(!pokemon)success=0;else {setLevel(work,pokemonBiosGetLevel(pokemon));u8 *stored=sodateyaGetPokemonPtr(work);if(!stored)success=0;else {if(pokemonIsJoutaiDataId(pokemon,62))pokemonInitJoutaiDataId(pokemon,62);memcpy(stored,pokemon,0xC4);if(pokemonBiosGetDarkFlag(pokemon))work->dp=pokemonBiosGetDp(pokemon);else work->dp=0;void *dark=getDarkPokemon__7PokemonFv(pokemon);if(dark)setPlace__11DarkPokemonF16darkPokemonWhereUc(dark,4,0);setActive(work,1);pokemonInit(pokemon);success=1;}}if(success&&(s32)slot<6){s32 i=slot;while(i<count-1){void *destination=heroBiosGetPokemonPtr(hero,i);pokemon=heroBiosGetPokemonPtr(hero,i+1);if(!pokemonCheckValid(pokemon))break;memcpy(destination,pokemon,0xC4);i++;}pokemonInit(pokemon);}}
 void sodateyaInit(Sodateya *work){work=getWork(work);if(work){setSteps(work,0);work->level=0;work->active=0;}}
 void sodateyaHeroCallBackInit(){_sodateyaHandle=heroMoveAddStepCallback(_sodateyaCallBackFunc__Fl15FootStepCounterl,0);}
-static void _sodateyaCallBackFunc__Fl15FootStepCounterl(s32, s32 arg1, s32 arg2) {
-    u8 sp8;
-    s32 temp_r0_2;
-    s32 var_r3;
-    u16 temp_r0;
-    u16 temp_r3_2;
-    u16 temp_r3_3;
-    u16 temp_r3_4;
-    u16 temp_r3_5;
-    u16 var_r24;
-    u16 var_r24_2;
-    u16 var_r24_3;
+static inline void sodateyaPartyStep(s32 arg1, s32 arg2){
     u16 var_r25;
-    u16 var_r28;
-    u16 var_r31;
-    u32 temp_r3_6;
-    u32 temp_r5;
-    u32 var_r4;
-    u8 *temp_r25;
     u8 *temp_r26;
     u8 *temp_r3;
-    u8 *temp_r3_7;
-
+    u16 var_r24_2;
+    u16 var_r24;
+    u16 temp_r0;
+    u16 var_r28;
     temp_r3 = (u8*)savedataGetStatus(0, 2);
     if (temp_r3 != NULL) {
         for(var_r28=0;var_r28<6U;var_r28++) {
@@ -107,6 +92,24 @@ static void _sodateyaCallBackFunc__Fl15FootStepCounterl(s32, s32 arg1, s32 arg2)
             }
         }
     }
+}
+static void _sodateyaCallBackFunc__Fl15FootStepCounterl(s32, s32 arg1, s32 arg2) {
+    u16 temp_r3_2;
+    s32 temp_r0_2;
+    u32 temp_r3_6;
+    u8 *temp_r3_7;
+    u16 temp_r3_5;
+    u16 temp_r3_4;
+    u16 var_r31;
+    u8 sp8;
+    u32 var_r4;
+    s32 var_r3;
+    u16 temp_r3_3;
+    u32 temp_r5;
+    u8 *temp_r25;
+    u16 var_r24_3;
+
+    sodateyaPartyStep(arg1, arg2);
     if (GSflagGet(4) != 0) {
         var_r31 = (u16)GSflagGet(5);
         if ((u32)var_r31 < 0x2710U) {
