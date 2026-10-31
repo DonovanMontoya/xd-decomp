@@ -105,10 +105,10 @@ void heroMoveAddAutoEvent(s32 a, s32 b, s32 c, s32 d, s32 e) {
 }
 
 static void initFootWork(FOOTWORK* w) {
-    w->a = 0.0f;
-    w->b = 0.0f;
-    w->c = 0.0f;
-    w->d = 0.0f;
+    w->v[0] = 0.0f;
+    w->v[1] = 0.0f;
+    w->v[2] = 0.0f;
+    w->v[3] = 0.0f;
 }
 
 static void setRot(HEROMOVE_MEMBER member, GSvec* rot) {
@@ -738,21 +738,15 @@ static f32 moveLeaderPosition(HEROMOVE_MEMBER member) {
 extern "C" {
 
 s32 heroMoveMain() {
-    unsigned long group;
-    unsigned long res;
-    u32 total = 0;
-    s32 firstIndex,secondIndex,thirdIndex;
-    u8* p1;
-    u8* p2;
-    u8* p3;
-    f32 moved;
-    if (HeroMove.raw[0x3AD] == 0) {
-        HeroMove.raw[0x3AD] = 1;
+    u32 handled = 0;
+    int i;
+    if (!HeroMove.state.started) {
+        HeroMove.state.started = 1;
     }
-    if (dbgMenuIsOpen() != 0) {
+    if (dbgMenuIsOpen()) {
         return 0;
     }
-    if (menuIsCheck(0x23) != 0) {
+    if (menuIsCheck(0x23)) {
         return 0;
     }
     if (floorGetFloorState() == 2 || floorGetFloorState() == 6) {
@@ -761,58 +755,47 @@ s32 heroMoveMain() {
     if (cameraGetType() == 6) {
         return 0;
     }
-    if (menuIsCheck(0xA) != 0) {
+    if (menuIsCheck(0xA)) {
         return 0;
     }
-    if (*(s32*)&HeroMove.raw[0x3A8] > 0) {
-        *(s32*)&HeroMove.raw[0x3A8] -= 1;
+    if (HeroMove.state.lockFrame > 0) {
+        HeroMove.state.lockFrame--;
         return 0;
     }
-    *(u32*)&HeroMove.raw[0x65C] = pokecoloFrameCounter;
-    heroMoveGetResID(&group, &res, (HEROMOVE_MEMBER)heroMoveGetLeader());
-    if (peopleCheckFlag(group, res, 0x80000000) != 0) {
+    HeroMove.state.frameCounter = pokecoloFrameCounter;
+    unsigned long group;
+    unsigned long id;
+    heroMoveGetResID(&group, &id, (HEROMOVE_MEMBER)heroMoveGetLeader());
+    if (peopleCheckFlag(group, id, 0x80000000)) {
         return 0;
     }
-    u32 scriptId=*(u32*)&HeroMove.raw[0x3B4];
-    if (scriptId != 0) {
-        *(u32*)&HeroMove.raw[0x3B4] = 0;
-        floorExecScriptInteger(scriptId, *(s32*)&HeroMove.raw[0x3B8], *(s32*)&HeroMove.raw[0x3BC], *(s32*)&HeroMove.raw[0x3C0], *(s32*)&HeroMove.raw[0x3C4]);
+    u32 script = HeroMove.state.autoEvent[0];
+    if (script != 0) {
+        HeroMove.state.autoEvent[0] = 0;
+        floorExecScriptInteger(script, HeroMove.state.autoEvent[1], HeroMove.state.autoEvent[2], HeroMove.state.autoEvent[3], HeroMove.state.autoEvent[4]);
         return 0;
     }
-    if (heroMoveCallStepCallbackAll() != 0) {
+    if (heroMoveCallStepCallbackAll()) {
         return 0;
     }
-    p3 = (u8*)&HeroMove;
-    firstIndex = 0;
-    while (firstIndex < *(s32*)&HeroMove.raw[0x638]) {
-        total += floorEventExecScript(3, *(u16*)(p3 + 0x3F8));
-        p3 += 0x34;
-        firstIndex++;
+    for (i = 0; i < HeroMove.state.eventCount3; i++) {
+        handled += floorEventExecScript(3, HeroMove.state.events3[i].eventID);
     }
-    p2 = (u8*)&HeroMove;
-    secondIndex = 0;
-    while (secondIndex < *(s32*)&HeroMove.raw[0x640]) {
-        total += floorEventExecScript(2, *(u16*)(p2 + 0x598));
-        p2 += 0x34;
-        secondIndex++;
+    for (i = 0; i < HeroMove.state.eventCount2; i++) {
+        handled += floorEventExecScript(2, HeroMove.state.events2[i].eventID);
     }
-    p1 = (u8*)&HeroMove;
-    thirdIndex = 0;
-    while (thirdIndex < *(s32*)&HeroMove.raw[0x63C]) {
-        total += floorEventExecScript(1, *(u16*)(p1 + 0x4C8));
-        p1 += 0x34;
-        thirdIndex++;
+    for (i = 0; i < HeroMove.state.eventCount1; i++) {
+        handled += floorEventExecScript(1, HeroMove.state.events1[i].eventID);
     }
-    *(s32*)&HeroMove.raw[0x63C] = 0;
-    *(s32*)&HeroMove.raw[0x640] = 0;
-    *(s32*)&HeroMove.raw[0x638] = 0;
-    if (*(u32*)&HeroMove.raw[0x3B4] != 0) {
+    HeroMove.state.eventCount1 = 0;
+    HeroMove.state.eventCount2 = 0;
+    HeroMove.state.eventCount3 = 0;
+    if (HeroMove.state.autoEvent[0] != 0) {
         return 0;
     }
-    if (gimmickBoxIsGimmickMoving() == 0 && total == 0 && peopleCheckFlag(group, res, 0x80000000) == 0) {
-        s32 changed = GSinputButtonsChanged(1);
-        if (GSinputButtonsPressed(1) & changed & 0x1C00) {
-            FloorBgmMask* mask=floorSound_getBgmMaskObj();
+    if (!gimmickBoxIsGimmickMoving() && handled == 0 && !peopleCheckFlag(group, id, 0x80000000)) {
+        if (GSinputButtonsPressed(1) & GSinputButtonsChanged(1) & 0x1C00) {
+            FloorBgmMask* mask = floorSound_getBgmMaskObj();
             if (mask != 0) {
                 mask->stopMask();
             }
@@ -820,10 +803,10 @@ s32 heroMoveMain() {
             return 0;
         }
     }
-    if (pokecoloFrameCounter - *(u32*)&HeroMove.raw[0x65C] > 5) {
-        ((AnalogStickEmu*)&HeroMove.raw[0x654])->init();
+    if ((u32)(pokecoloFrameCounter - HeroMove.state.frameCounter) > 5) {
+        HeroMove.state.analog.init();
     }
-    moved = moveLeader((HEROMOVE_MEMBER)heroMoveGetLeader());
+    f32 moved = moveLeader((HEROMOVE_MEMBER)heroMoveGetLeader());
     procStep((HEROMOVE_MEMBER)heroMoveGetLeader());
     proc1Step(moved);
     return 0;
@@ -1258,45 +1241,41 @@ void* GSmodelGetPart(_GSmodel*,s32);
 void GSpartGetTransform(void*,GSvec*,GSvec*,GSvec*);
 void GSpartFree(void*);
 }
-static void getStep(FOOTSTEP* step,_GSmodel* model,int* parts,FOOTWORK* work) {
+static void getStep(FOOTSTEP* step, _GSmodel* model, int* parts, FOOTWORK* work) {
+    void* part;
+    f32 dt = GSgfxVideoGetLastRenderTime();
     GSvec modelPos;
-    GSvec partPos;
-    f32 heights[4];
-    f32 time, zero;
-    time=GSgfxVideoGetLastRenderTime();
-    GSmodelGetPosition(model,&modelPos);
-    f32* base=heights;
-    f32* height=base;
-    zero=0.0f;
-    int* part=parts;
-    for(s32 i=0;i<4;i++,part++,height++) {
-        step->positions[i].param1=zero;
-        step->positions[i].param2=zero;
-        step->positions[i].param3=zero;
-        *height=zero;
-        if(*part>=0) {
-            void* object=GSmodelGetPart(model,*part);
-            if(object) {
-                GSpartGetTransform(object,&partPos,0,0);
-                GSpartFree(object);
-                *height=partPos.param2-modelPos.param2;
-                step->positions[i].param1=partPos.param1;
-                step->positions[i].param2=partPos.param2;
-                step->positions[i].param3=partPos.param3;
+    GSmodelGetPosition(model, &modelPos);
+    GSvec t;
+    f32 cur[4];
+    for (int i = 0; i < 4; i++) {
+        cur[i] = 0.0f;
+        step->positions[i].param1 = 0.0f;
+        step->positions[i].param2 = 0.0f;
+        step->positions[i].param3 = 0.0f;
+        if (parts[i] >= 0) {
+            part = GSmodelGetPart(model, parts[i]);
+            if (part != 0) {
+                GSpartGetTransform(part, &t, 0, 0);
+                GSpartFree(part);
+                cur[i] = t.param2 - modelPos.param2;
+                step->positions[i].param1 = t.param1;
+                step->positions[i].param2 = t.param2;
+                step->positions[i].param3 = t.param3;
             }
         }
     }
-    f32 threshold=0.5f;
-    zero=0.0f;
-    if(work->a>=threshold && heights[0]<threshold)step->speed[0]=(work->a-heights[0])/time;
-    else step->speed[0]=zero;
-    if(work->b>=threshold && heights[1]<threshold)step->speed[1]=(work->b-heights[1])/time;
-    else step->speed[1]=zero;
-    if(work->c>=threshold && base[2]<threshold)step->speed[2]=(work->c-base[2])/time;
-    else step->speed[2]=zero;
-    if(work->d>=threshold && base[3]<threshold)step->speed[3]=(work->d-base[3])/time;
-    else step->speed[3]=zero;
-    work->a=heights[0];work->b=heights[1];work->c=base[2];work->d=base[3];
+    for (int i = 0; i < 4; i++) {
+        f32 old = work->v[i];
+        if (old >= 0.5f && cur[i] < 0.5f) {
+            step->speed[i] = (old - cur[i]) / dt;
+        } else {
+            step->speed[i] = 0.0f;
+        }
+    }
+    for (int i = 0; i < 4; i++) {
+        work->v[i] = cur[i];
+    }
 }
 
 static void updateLeaderLog() {

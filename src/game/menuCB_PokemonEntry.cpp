@@ -94,7 +94,51 @@ s32 menuCBPokemonEntryDispPokemonFace(s32 x,s32 y,s32 player,s32 index){EntryFac
 enum GSinputDevice {EntryDevice0};
 extern "C" {void toolentryTaisenGetBattlePlayerID(s32);void gbaCommandEntryResult(s32,s32*);void gbaCommandEntryPokemon(s32,u8*);s32 toolentryTaisenSetEtnryPokemonOrder(s32,s32);s32 toolentryTaisengetEtnryPokemonOrderNum(s32);s32 toolentryTaisenDeleteEtnryPokemonOrder(s32);void toolentryTaisenSetEtnryPokemonOrderGBA(s32,u16,s32*);u8 pauseIsPause();void GSsndPlay(u32,s32,s32);s32 GSinputButtonsChanged(s32);s32 GSinputButtonsPressed(s32);u16 *windowGetKeyInfo();void *windowSearchID(s32);s32 toolentryTaisenGetControlerType(s32);u16 toolentryTaisenGetHomePlace(s32);EntryTrainer *menuCBBios_GetTrainer(s32);u8 gbaCommandIsConnected(s32);}
 static void _menuCBPokemonEntryEntCheckGBA(GSinputDevice device,long player){s32 result;u8 pokemon[8];s32 order[6];toolentryTaisenGetBattlePlayerID(player);gbaCommandEntryResult(device,&result);switch(result&0xFF000000){case 0x01000000:{s32 num=toolentryTaisengetEtnryPokemonOrderNum(player);s32 entry=toolentryTaisenSetEtnryPokemonOrder(player,num);if(entry>=0){if(!pauseIsPause())GSsndPlay(0x19,0,0);f32 value=(5-entry)*24;EntryTween*row=&_menuCBPokemonWork.tween[player];row->offset[entry]=value;row->velocity[entry]=0;_menuCBPokemonEntryEntCheckDebug(player);}return;}case (s32)0xFF000000:{s32 old=toolentryTaisengetEtnryPokemonOrderNum(player);if(old!=toolentryTaisenDeleteEtnryPokemonOrder(player) && !pauseIsPause()){GSsndPlay(0x12,0,0);return;}break;}case 0:{s32 count=toolentryTaisenGetEntryPokemonNum(player);gbaCommandEntryPokemon(result,pokemon);for(s32 i=0;i<count;i++)order[i]=pokemon[i];toolentryTaisenSetEtnryPokemonOrderGBA(player,count,order);_menuCBPokemonEntrySetEntryFlag(player,true);return;}case 0x03000000:_menuCBPokemonWork.field22C=0;if(_menuCBPokemonWork.device<0)_menuCBPokemonWork.device=device;break;}}
-static void _menuCBPokemonEntryEntCheck(GSinputDevice device,long player){s32 keys=GSinputButtonsChanged(device);keys=GSinputButtonsPressed(device)&keys;s32 button;toolentryTaisenGetBattlePlayerID(player);if(!pauseIsPause() && !(windowGetKeyInfo()[0]&0x400) && !windowSearchID(0xE2)){if(keys&0x140U){if(keys&0x40U){s32 old=toolentryTaisengetEtnryPokemonOrderNum(player);if(old!=toolentryTaisenDeleteEtnryPokemonOrder(player))GSsndPlay(0x12,0,0);}else if(keys&0x100U){EntryTrainer *trainer=menuCBBios_GetTrainerImmediately(player);s32 num;s32 count=toolentryTaisenGetEntryPokemonNum(player);num=trainer->count;if(num>=(s32)menuCBPokemonEntryPokemonNumMin(player)){for(s32 i=num;i<count;i++){trainer->order[i]=15;trainer->count++;}GSsndPlay(0x11,0,0);}}}else if((keys&0xC0FU) && (button=_menuCBPokemonEntryButtonCheck(keys,player))>=0){s32 entry=toolentryTaisenSetEtnryPokemonOrder(player,button);if(entry>=0){GSsndPlay(0x19,0,0);f32 value=(5-entry)*24;EntryTween*row=&_menuCBPokemonWork.tween[player];row->offset[entry]=value;row->velocity[entry]=0;}}}}
+static inline u32 entryButtons(GSinputDevice dev) { return ((u32(*)(GSinputDevice))GSinputButtonsPressed)(dev) & ((u32(*)(GSinputDevice))GSinputButtonsChanged)(dev); }
+static void _menuCBPokemonEntryEntCheck(GSinputDevice inputDevice, long player) {
+    f32* track;
+    s32 i;
+    u32 buttons;
+    s32 result;
+    s32 count;
+    u8* trainer;
+    s32 num;
+
+    buttons = entryButtons(inputDevice);
+    toolentryTaisenGetBattlePlayerID(player);
+    if (pauseIsPause() == 0 && (*windowGetKeyInfo() & 0x400) == 0 && windowSearchID(0xE2) == 0) {
+        if (buttons & 0x140) {
+            if (buttons & 0x40) {
+                count = toolentryTaisengetEtnryPokemonOrderNum(player);
+                if (count != toolentryTaisenDeleteEtnryPokemonOrder(player)) {
+                    GSsndPlay(0x12, 0, 0);
+                }
+            } else if (buttons & 0x100) {
+                trainer = (u8*)menuCBBios_GetTrainerImmediately(player);
+                num = toolentryTaisenGetEntryPokemonNum(player);
+                i = *(s32*)(trainer + 0x20);
+                if (i >= (u16)menuCBPokemonEntryPokemonNumMin(player)) {
+                    for (; i < num; i++) {
+                        *(s32*)(trainer + 8 + i * 4) = 0xF;
+                        (*(s32*)(trainer + 0x20))++;
+                    }
+                    GSsndPlay(0x11, 0, 0);
+                }
+            }
+        } else if (buttons & 0xC0F) {
+            result = _menuCBPokemonEntryButtonCheck(buttons, player);
+            if (result >= 0) {
+                result = toolentryTaisenSetEtnryPokemonOrder(player, result);
+                if (result >= 0) {
+                    GSsndPlay(0x19, 0, 0);
+                    track = _menuCBPokemonWork.tween[player].offset;
+                    track[result] = (f32)((5 - result) * 0x18);
+                    track[result + 6] = 0.0f;
+                }
+            }
+        }
+    }
+}
 static inline void _menuCBPokemonEntryCheckGBALink(long player){if(_menuCBPokemonEntryGetEntryFlag(player)){s32 type=menuCBBios_GetTrainer(toolentryTaisenGetControlerType(player))->type;if(!(type!=1 && type!=2 && type!=3)){s32 device=toolentryTaisenGetControlerType(player);if(!gbaCommandIsConnected(device)){_menuCBPokemonWork.field22C=0;if(_menuCBPokemonWork.device<0)_menuCBPokemonWork.device=device;}}}}
 static inline void _menuCBPokemonEntryPlayerTask(long player){if(!_menuCBPokemonEntryGetEntryFlag(player)){if(toolentryTaisenGetBattleVersus()==4){s32 type=menuCBBios_GetTrainer(toolentryTaisenGetControlerType(player))->type;if(!(type!=1 && type!=2 && type!=3))_menuCBPokemonEntryEntCheckGBA((GSinputDevice)toolentryTaisenGetControlerType(player),player);else _menuCBPokemonEntryEntCheck((GSinputDevice)toolentryTaisenGetControlerType(player),player);}if(toolentryTaisenGetControlerType(player)==1 && toolentryTaisenGetHomePlace(player)==0){toolentryTaisengetEtnryPokemonOrderNum(player);_menuCBPokemonEntryPokemonNum(player);}}}
 extern "C" void menuCBPokemonEntryButtonTask_20041006(){s32 players=toolentryTaisenGetEntryPlayerNum();toolentryTaisenGetBattleType();toolentryTaisenGetHomePlace(0);toolentryTaisenGetHomePlace(1);toolentryTaisenGetHomePlace(2);toolentryTaisenGetHomePlace(3);for(int player=0;player<players;player++){if(toolentryTaisenGetBattleVersus()==4)_menuCBPokemonEntryCheckGBALink(player);_menuCBPokemonEntryPlayerTask(player);}}

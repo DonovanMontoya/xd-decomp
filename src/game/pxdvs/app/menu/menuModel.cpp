@@ -920,7 +920,7 @@ static s32 _menuModelAdjustCamera(MENU_MODEL* m,bool) {
         m->boundValid=1;
     }
     position.x=0.0f;position.z=0.0f;
-    position.y=-(m->boundMin[1]+m->boundMax[1])*0.5f;
+    position.y=-(m->boundMin[1]+m->boundMax[1])/2.0f;
     PSVECAdd(&position,(Vec*)m->offset,&position);
     GSmodelSetPosition(model,&position);
     if(!m->camera) return 0;

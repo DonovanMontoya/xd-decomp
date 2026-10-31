@@ -210,7 +210,7 @@ static f32 _currentTime;
 static f32 _currentAddTime;
 static s32 _menuCount;
 
-static f64 _gettLastTime(void);
+static f32 _gettLastTime(void);
 static void _menuUpdateKeyInfo(WINDOW_SYS_WORK* a, WINDOW_SYS_WORK* b);
 static u8 _menuGetAgbKeyInfo(s32 port, u16* keys);
 static u8 _menuGetGcKeyInfo(s32 port, u16* keys, u16* keys2);
@@ -471,7 +471,6 @@ void menuDaemon(void) {
     MenuSprite* sprite;
     s32 layer;
     MenuWindow* w;
-    f64 dt;
     f32 total;
     MenuWindow* active;
     WINDOW_SYS_WORK* sys;
@@ -482,9 +481,8 @@ void menuDaemon(void) {
     active = windowSearchID(windowGetActiveID());
     _menuUpdateKeyInfo(&winSysWork, &winSysWork2);
     menuOffScreenDraw();
-    dt = _gettLastTime();
-    total = _currentAddTime + (f32)dt;
-    _currentTime = dt;
+    _currentTime = _gettLastTime();
+    total = _currentAddTime + _currentTime;
     _menuCount++;
     _currentAddTime = total;
     if (total > 1.0f) {
@@ -633,7 +631,7 @@ void menuDaemon(void) {
         }
         if ((node->flags & 2) != 0) {
             s32 layerID = node->layerID;
-            spriteSetOffset(layerID, node->x, node->y);
+            spriteSetOffset(node->layerID, node->x, node->y);
             spriteClearScissor(layerID);
             spriteSetEnv(layerID);
             spriteSetOffset(layer, node->x, node->y);
@@ -680,7 +678,7 @@ f32 menuGetLastTime(void) {
 
 }
 
-static f64 _gettLastTime(void) {
+static f32 _gettLastTime(void) {
     return timeGetLastFrameSec();
 }
 

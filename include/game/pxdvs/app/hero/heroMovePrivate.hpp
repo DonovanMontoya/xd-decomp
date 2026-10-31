@@ -35,9 +35,35 @@ struct HeroMoveMember {
     u8 pad10[0x10];
 };
 
+struct HeroMoveQueuedEvent {
+    GSvec position[3];
+    u32 reserved24[3];
+    u16 eventID;
+    u16 reserved32;
+};
+
 struct HeroMoveWork {
     union {
         u8 raw[0x660];
+        struct {
+            u8 padState[0x3A8];
+            s32 lockFrame;
+            u8 smoothFloorLink;
+            u8 started;
+            u8 stickOverride;
+            s8 stickData[4];
+            u8 pad3B3;
+            u32 autoEvent[5];
+            HeroMoveQueuedEvent events3[4];
+            HeroMoveQueuedEvent events1[4];
+            HeroMoveQueuedEvent events2[4];
+            s32 eventCount3;
+            s32 eventCount1;
+            s32 eventCount2;
+            s32 stepPool[4];
+            AnalogStickEmu analog;
+            s32 frameCounter;
+        } state;
         HeroMoveMember members[4];
         struct {
             u8 pad00[0x8C];
@@ -47,10 +73,7 @@ struct HeroMoveWork {
 };
 
 struct FOOTWORK {
-    f32 a;
-    f32 b;
-    f32 c;
-    f32 d;
+    f32 v[4];
 };
 
 enum FootStepCounter { FOOTSTEP_COUNTER_0, FOOTSTEP_COUNTER_1, FOOTSTEP_COUNTER_2, FOOTSTEP_COUNTER_3 };

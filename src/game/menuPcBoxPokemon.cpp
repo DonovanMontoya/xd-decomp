@@ -1403,33 +1403,44 @@ bool CMenuPokemonLeave::confirmWindow(u32 message,long selected)
 void CMenuPokemonLeave::loop()
 {
     baseAnim.change(1);
-    for(;;) {
+    CMenuPokemonCursor *c;
+    long saved;
+    u16 buf[12];
+    while (true) {
         baseAnim.update();
-        switch(baseAnim.state) {
-        case 0: break;
-        case 1: baseAnim.change(2);break;
-        case 2: stateMainProc();break;
+        switch (baseAnim.state) {
+        case 1:
+            baseAnim.change(2);
+            break;
+        case 2:
+            stateMainProc();
+            break;
         case 3: {
-            Pokemon *pokemon=currentPokemonGetPointer();
-            setStatusAndModelDisplayPokemon(pokemon);
+            Pokemon* cp = currentPokemonGetPointer();
+            setStatusAndModelDisplayPokemon(cp);
             menuPtPlaySe(0x14);
-            pad34B0[0]=1;
+            pad34B0[0] = 1;
             anim.change(3);
-            s32 position=temochiPokemonGetFreePosition();
-            s32 index;
-            if(cursor->isCatchPokemon()) {
-                if(position==6) index=9;
-                else index=position+4;
-            } else index=4;
-            cursor->setPositionIndex(index);
+            int free = temochiPokemonGetFreePosition();
+            long target;
+            if (cursor->isCatchPokemon()) {
+                if (free == 6) {
+                    target = 9;
+                } else {
+                    target = free + 4;
+                }
+            } else {
+                target = 4;
+            }
+            cursor->setPositionIndex(target);
             baseAnim.change(2);
             break;
         }
         case 4: {
-            Pokemon *pokemon=currentPokemonGetPointer();
-            setStatusAndModelDisplayPokemon(pokemon);
+            Pokemon* cp = currentPokemonGetPointer();
+            setStatusAndModelDisplayPokemon(cp);
             menuPtPlaySe(0x15);
-            pad34B0[0]=0;
+            pad34B0[0] = 0;
             anim.change(4);
             cursor->setPositionIndex(10);
             baseAnim.change(2);
@@ -1437,15 +1448,18 @@ void CMenuPokemonLeave::loop()
         }
         case 5: {
             menuPtPlaySe(0x14);
-            u32 items[2];
-            items[0]=0x3C13;
-            items[1]=0x3C14;
-            infoWindow.open(0x3BDA,false);
-            infoWindow.setMsgCtrlValue(0x4D,(u32)PCBOX::getPointer()->getPokemonBoxName(currentBox));
-            long result=actionMenu__9CMetaMenuFPUlill(this,items,2,0x1EC,0x106,0);
+            u32 list[2];
+            list[0] = 0x3C13;
+            list[1] = 0x3C14;
+            infoWindow.open(0x3BDA, false);
+            infoWindow.setMsgCtrlValue(0x4D, (u32)PCBOX::getPointer()->getPokemonBoxName(currentBox));
+            long sel = actionMenu__9CMetaMenuFPUlill(this,list, 2, 0x1EC, 0x106, 0);
             infoWindow.close();
-            if(result==0) baseAnim.change(6);
-            else baseAnim.change(2);
+            if (sel == 0) {
+                baseAnim.change(6);
+            } else {
+                baseAnim.change(2);
+            }
             break;
         }
         case 6:
@@ -1453,80 +1467,101 @@ void CMenuPokemonLeave::loop()
             baseAnim.change(2);
             break;
         case 7:
-            if(cursor->unk14C) directActionExec();
-            else stateActionMenuMainProc();
+            if (cursor->unk14C) {
+                directActionExec();
+            } else {
+                stateActionMenuMainProc();
+            }
             break;
         case 8:
             menuPtPlaySe(0x13);
-            infoMessageDisplay(*(u32 *)baseAnim.saved2);
-            if(((u32 *)baseAnim.saved2)[1]!=0) baseAnim.change(((u32 *)baseAnim.saved2)[1]);
-            else baseAnim.change(2);
+            infoMessageDisplay(((u32 *)baseAnim.saved2)[0]);
+            if (((u32 *)baseAnim.saved2)[1] != 0) {
+                baseAnim.change(((u32 *)baseAnim.saved2)[1]);
+            } else {
+                baseAnim.change(2);
+            }
             break;
-        case 9: stateDepositToPcBoxProc();break;
+        case 9:
+            stateDepositToPcBoxProc();
+            break;
         case 10:
             stateMarkingProc();
             baseAnim.change(2);
             break;
         case 11:
-            if(currentPokemonGetArea()==2 && temochiPokemonLiveQuantity(true)<=0) {
+            if (currentPokemonGetArea() == 2 && temochiPokemonLiveQuantity(true) <= 0) {
                 baseAnim.change(8);
-                *(u32 *)baseAnim.saved=0x3BE3;
-            } else if(currentPokemonGetPointer()->isDarkPokemon()) {
+                ((u32 *)baseAnim.saved)[0] = 0x3BE3;
+                break;
+            }
+            if (currentPokemonGetPointer()->isDarkPokemon()) {
                 baseAnim.change(8);
-                *(u32 *)baseAnim.saved=0x3BE7;
-            } else if(!confirmWindow(0x3BE4,1)) baseAnim.change(2);
-            else baseAnim.change(12);
+                ((u32 *)baseAnim.saved)[0] = 0x3BE7;
+                break;
+            }
+            if (!confirmWindow(0x3BE4, 1)) {
+                baseAnim.change(2);
+            } else {
+                baseAnim.change(0xC);
+            }
             break;
         case 12: {
-            u16 nickname[12];
-            Pokemon *releasePokemon=currentPokemonGetPointer();
-            setStatusAndModelDisplayPokemon(releasePokemon);
-            GScharCpy(nickname,(u16 *)releasePokemon->getNicknamePtr());
-            s32 releaseArea=currentPokemonGetArea();
-            CAnt before=*currentAntGetPointer();
+            int area;
+            Pokemon* p = currentPokemonGetPointer();
+            setStatusAndModelDisplayPokemon(p);
+            GScharCpy(buf, (u16*)p->getNicknamePtr());
+            area = currentPokemonGetArea();
+            CAnt before = *currentAntGetPointer();
             currentPokemonDel(true);
             cursor->setBeforAnt(before);
-            if(releaseArea!=1) cursorUnderPokemonGetAntPointer()->init();
+            if (area != 1) {
+                cursorUnderPokemonGetAntPointer()->init();
+            }
             anim.change(7);
             waitAnimationStateEnd();
             resetStatusAndModelDisplayPokemon();
-            if(releaseArea!=1) hideFlag=1;
-            infoWindow.setMsgCtrlValue(0x32,(u32)nickname);
+            if (area != 1) {
+                hideFlag = 1;
+            }
+            infoWindow.setMsgCtrlValue(0x32, (u32)buf);
             infoMessageDisplay(0x3BE5);
-            infoWindow.setMsgCtrlValue(0x32,(u32)nickname);
+            infoWindow.setMsgCtrlValue(0x32, (u32)buf);
             infoMessageDisplay(0x3BE6);
-            if(releaseArea==2) anim.change(9);
-            else anim.change(0);
+            if (area == 2) {
+                anim.change(9);
+            } else {
+                anim.change(0);
+            }
             baseAnim.change(2);
             break;
         }
         case 13: {
-            CMenuPokemonCursor *c;
-            if(!temochiPokemonAddAble()) {
+            if (!temochiPokemonAddAble()) {
                 baseAnim.change(8);
-                *(u32 *)baseAnim.saved=0x3BD0;
-            } else {
-                if(!cursor->isCatchPokemon()) {
-                    Pokemon *pokemon=cursorUnderPokemonGetPointer();
-                    cursor->setPokemon(pokemon);
-                    cursorUnderPokemonDel();
-                    resetViewAntAll();
-                }
-                s32 oldIndex=cursor->index;
-                pad34B0[0]=1;
-                anim.change(3);
-                cursor->setPositionIndex(searchTemochiPokemonBlankSlot()+4);
-                waitAnimationStateEnd();
-                c=cursor;
-                cursorUnderPokemonSet(c->pokemon.checkValid()?&c->pokemon:0,false);
-                cursor->deletePokemon();
-                resetViewAntAll();
-                waitAtTime(0.1f);
-                pad34B0[0]=0;
-                anim.change(4);
-                cursor->setPositionIndex(oldIndex);
-                baseAnim.change(2);
+                ((u32 *)baseAnim.saved)[0] = 0x3BD0;
+                break;
             }
+            if (!cursor->isCatchPokemon()) {
+                Pokemon* under = cursorUnderPokemonGetPointer();
+                cursor->setPokemon(under);
+                cursorUnderPokemonDel();
+                resetViewAntAll();
+            }
+            saved = cursor->index;
+            pad34B0[0] = 1;
+            anim.change(3);
+            cursor->setPositionIndex(searchTemochiPokemonBlankSlot() + 4);
+            waitAnimationStateEnd();
+            c = cursor;
+            cursorUnderPokemonSet((c->pokemon.checkValid() ? &c->pokemon : 0), false);
+            cursor->deletePokemon();
+            resetViewAntAll();
+            waitAtTime(0.1f);
+            pad34B0[0] = 0;
+            anim.change(4);
+            cursor->setPositionIndex(saved);
+            baseAnim.change(2);
             break;
         }
         case 14:
@@ -1535,29 +1570,35 @@ void CMenuPokemonLeave::loop()
             break;
         case 15:
             baseAnim.change(8);
-            *(u32 *)baseAnim.saved=0x3BD1;
+            ((u32 *)baseAnim.saved)[0] = 0x3BD1;
             break;
         case 16:
-            if(globalState->mode==2) baseAnim.change(18);
-            else if(cursor->isCatchPokemon()) baseAnim.change(15);
-            else {
+            if (globalState->mode == 2) {
+                baseAnim.change(0x12);
+            } else if (cursor->isCatchPokemon()) {
+                baseAnim.change(0xF);
+            } else {
                 menuPtPlaySe(0x14);
-                if(confirmWindow(0x3BDE,0)) baseAnim.change(2);
-                else baseAnim.change(17);
+                if (confirmWindow(0x3BDE, 0)) {
+                    baseAnim.change(2);
+                } else {
+                    baseAnim.change(0x11);
+                }
             }
             break;
-        case 17: {
+        case 17:
+        {
             systemFadeOutSetAndWait(-1.0f);
-            CMenuGlobalState *g=globalState;
-            g->mode=g->current;
-            g->current=0;
+            CMenuGlobalState* g = globalState;
+            g->mode = g->current;
+            g->current = 0;
             return;
         }
         case 18: {
             alphaFadeOutAndWait();
-            CMenuGlobalState *g=globalState;
-            g->mode=g->current;
-            g->current=2;
+            CMenuGlobalState* g = globalState;
+            g->mode = g->current;
+            g->current = 2;
             return;
         }
         }

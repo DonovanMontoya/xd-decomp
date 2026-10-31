@@ -114,122 +114,133 @@ inline GSgfxLayerID primitiveEditorLayer()
     return GS_SHAPE_LAYER_DEFAULT;
 }
 
-extern "C" void shapePrimitiveEditorRender(GSgfxLayerID layerId)
-{
-    u16 i;
-    if (g_primitiveEditorMode && layerId == primitiveEditorLayer()) {
-        switch (g_primitiveAnimation) {
-        case 2:
-            break;
-        case 0: {
-            f32 rate = GSgfxVideoGetVsyncRate();
-            g_primitiveFrameSec += GSgfxVideoGetLastRenderTime() / rate;
-            for (i=0; i<g_shapeRenderNum; i++) {
-                if (g_shapeRender[i]) shapeUpdate(i,g_primitiveFrameSec,g_primitiveInstanceId);
-            }
-            break;
+static inline void _shapeUpdateAll() {
+    for (u16 i = 0; i < g_shapeRenderNum; i++) {
+        if (g_shapeRender[i] != 0) {
+            shapeUpdate(i, g_primitiveFrameSec, g_primitiveInstanceId);
         }
-        case 1:
-            for (i=0; i<g_shapeRenderNum; i++) {
-                if (g_shapeRender[i]) shapeUpdate(i,g_primitiveFrameSec,g_primitiveInstanceId);
+    }
+}
+extern "C" void shapePrimitiveEditorRender(GSgfxLayerID layerId) {
+    GSgfxLayer* layer;
+    s32 usedMemory;
+    s32 instancedMemory;
+    f32 m[3][4];
+    f32 rate;
+    f32 zero = 0.0f;
+    f32 ten = 10.0f;
+
+    if (g_primitiveEditorMode != 0) {
+        if (layerId == primitiveEditorLayer()) {
+            switch (g_primitiveAnimation) {
+            case 0:
+                rate = GSgfxVideoGetVsyncRate();
+                g_primitiveFrameSec += GSgfxVideoGetLastRenderTime() / rate;
+                _shapeUpdateAll();
+                break;
+            case 1:
+                _shapeUpdateAll();
+                if (g_shapeRenderNum != 0) {
+                    GsShapeRender* r = g_shapeRender[0];
+                    if (r != 0 && r->animation != 0 && r->animation->frameRate >= 1) {
+                        g_primitiveFrameSec += 1.0f / r->animation->frameRate;
+                    }
+                }
+                g_primitiveAnimation = 2;
+                break;
+            case 2:
+                break;
             }
-            if (g_shapeRenderNum && g_shapeRender[0] && g_shapeRender[0]->animation) {
-                u32 rate=g_shapeRender[0]->animation->frameRate;
-                if (rate>=1) g_primitiveFrameSec += 1.0f/(f32)rate;
+            layer = GSgfxLayerFindByID(layerId);
+            GScameraLoadActiveCameraMatrix(layerId);
+            PSMTXRotRad(m, 'Y', -1.5707964f);
+            PSMTXTransApply(m, m, 0.0f, 0.1f, 0.0f);
+            layer->matrixStack->pushMult((GSmtx*)m);
+            layer->setRenderStateAndSelect(GSgfxVFGetPredef(0));
+            layer->colorMode = 0;
+            layer->colorDirty |= 2;
+            layer->dirty |= 2;
+            layer->savedColorDirty |= 2;
+            layer->savedDirty |= 2;
+            layer->primitiveType = 0xA8;
+            if (layer->pass != 1) {
+                layer->pass = 1;
+                layer->currentPass = &layer->passes[layer->pass];
             }
-            g_primitiveAnimation=2;
-            break;
-        }
-        GSgfxLayer *layer=GSgfxLayerFindByID(layerId);
-        GScameraLoadActiveCameraMatrix(layerId);
-        GSmtx matrix;
-        PSMTXRotRad(matrix.matrix,'Y',-1.5707964f);
-        PSMTXTransApply(matrix.matrix,matrix.matrix,0.0f,0.1f,0.0f);
-        layer->matrixStack->pushMult(&matrix);
-        layer->setRenderStateAndSelect(GSgfxVFGetPredef(0));
-        layer->colorMode=0;
-        layer->colorDirty |= 2;
-        layer->dirty |= 2;
-        layer->savedColorDirty |= 2;
-        layer->savedDirty |= 2;
-        layer->primitiveType=0xA8;
-        if (layer->pass!=1) {
-            layer->pass=1;
-            layer->currentPass=&layer->passes[layer->pass];
-        }
-        layer->blendMode=1;
-        layer->blendSource=4;
-        layer->blendDestination=5;
-        layer->logicOperation=5;
-        layer->pixelDirty |= 1;
-        layer->dirty |= 0x40;
-        layer->savedPixelDirty |= 1;
-        layer->savedDirty |= 0x40;
-        layer->channelCount=6;
-        layer->channelMask=0;
-        layer->channelDirty |= 4;
-        layer->dirty |= 1;
-        layer->savedChannelDirty |= 4;
-        layer->savedDirty |= 1;
-        layer->beginSurface(6);
-        f32 zero=0.0f;
-        f32 axisLength=10.0f;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile u8 *)0xCC008000 = 255;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 255;
-        *(volatile f32 *)0xCC008000 = axisLength;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile u8 *)0xCC008000 = 255;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 255;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 255;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 255;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile f32 *)0xCC008000 = axisLength;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 255;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 255;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 255;
-        *(volatile u8 *)0xCC008000 = 255;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile f32 *)0xCC008000 = zero;
-        *(volatile f32 *)0xCC008000 = axisLength;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 0;
-        *(volatile u8 *)0xCC008000 = 255;
-        *(volatile u8 *)0xCC008000 = 255;
-        layer->endSurface();
-        s32 used=0;
-        s32 instanced=0;
-        for(i=0;i<g_shapeRenderNum;i++) {
-            GsShapeRender *render=g_shapeRender[i];
-            if(render) {
-                if(render->active==1 && render->animation) render->animation->loop=1;
-                shapeRender(i,g_primitiveInstanceId,layerId);
-                used+=g_shapeRender[i]->GetUsedMemorySizeAll();
-                instanced+=g_shapeRender[i]->GetInstancedMemorySizeAll();
+            layer->blendMode = 1;
+            layer->blendSource = 4;
+            layer->blendDestination = 5;
+            layer->logicOperation = 5;
+            layer->pixelDirty |= 1;
+            layer->dirty |= 0x40;
+            layer->savedPixelDirty |= 1;
+            layer->savedDirty |= 0x40;
+            layer->channelCount = 6;
+            layer->channelMask = 0;
+            layer->channelDirty |= 4;
+            layer->dirty |= 1;
+            layer->savedChannelDirty |= 4;
+            layer->savedDirty |= 1;
+            layer->beginSurface(6);
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            *(volatile f32 *)0xCC008000 = ten;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile f32 *)0xCC008000 = ten;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile f32 *)0xCC008000 = zero;
+            *(volatile f32 *)0xCC008000 = ten;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            *(volatile u8 *)0xCC008000 = 0xFF;
+            layer->endSurface();
+
+            usedMemory = 0;
+            instancedMemory = 0;
+            for (u16 i = 0; i < g_shapeRenderNum; i++) {
+                if (g_shapeRender[i] != 0) {
+                    if (g_shapeRender[i]->active == 1 && g_shapeRender[i]->animation != 0) {
+                        g_shapeRender[i]->animation->loop = 1;
+                    }
+                    shapeRender(i, g_primitiveInstanceId, layerId);
+                    usedMemory += g_shapeRender[i]->GetUsedMemorySizeAll();
+                    instancedMemory += g_shapeRender[i]->GetInstancedMemorySizeAll();
+                }
             }
+            GSprint(primitiveEditorLayer(), 0x226, 0x1E, -1, "%dKB", instancedMemory / 1024);
+            layer->matrixStack->pop();
         }
-        GSprint(primitiveEditorLayer(),0x226,0x1E,~0u,"%dKB",instanced/1024);
-        layer->matrixStack->pop();
     }
 }
 

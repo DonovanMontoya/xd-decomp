@@ -88,6 +88,28 @@ functions. It does not change the license of the rest of this repository.
 | `game/pxdvs/app/fight/fightTrainerAi2.cpp` | `_fightTrainerAiCheckHorobinoutaSub` |
 | `game/maximum/GSAPI/baselib/displayfunc.cpp` | `HSD_JObjDisp` |
 | `game/maximum/GSAPI/baselib/texpdag.cpp` | `assign_reg` |
+| `game/menuPcBoxPokemon.cpp` | `loop__Q230@unnamed@menuPcBoxPokemon_cpp@17CMenuPokemonLeaveFv` |
+| `game/pxdvs/app/hero/heroMove.cpp` | `getStep__FP8FOOTSTEPP8_GSmodelPiP8FOOTWORK`, `heroMoveMain` |
+| `game/pxdvs/app/fade/fade_effect.cpp` | `fadeEffectHookFunction_distortion_zoom__F12GSgfxLayerIDbffffPvb`, `fadeEffectHookFunction_distortion__F12GSgfxLayerIDbffffPv`, `_disp_slide_ball__FP10GSgfxLayerffffi` |
+
+Additional adaptations use XD commit
+`50a8d7284ec86bb82c2a387e335a2099cb1a905c` (CC0, with the same inherited MIT notice):
+
+| Local source (under `src/`) | Newly matched functions |
+| --- | --- |
+| `game/menuCB_PokemonEntry.cpp` | `_menuCBPokemonEntryEntCheck__F13GSinputDevicel` |
+| `game/menuCB_Battle.cpp` | `menuCB_InitBattle` |
+| `game/menuGBAC.cpp` | `_mainFlow__F15_MENU_GBAC_TYPEUlPP4Hero` |
+| `game/menuBingo.cpp` | `menuBattleDeBingoGetEpoint`, `menuBingoSheetBtn`, `setStepMessage__6cBingoFv`, `SetupSheet__6cBingoFUl` |
+| `game/pxdvs/GSAPI/GSmsg/GSmsg.cpp` | `GSmsgFontClose`, `_msgDispRuby__FP13MSG_TASK_WORK`, `_msgGetCodeInfo__FP13MSG_TASK_WORKUsPP12tagFONT_INFO` |
+| `game/pxdvs/app/menu/menu.cpp` | `menuDaemon` |
+| `game/pxdvs/app/menu/menuModel.cpp` | `_menuModelAdjustCamera__FP10MENU_MODELb` |
+| `game/pxdvs/app/floor/floorFieldCameraEditor.cpp` | `floorUpdateFieldCameraEditor` |
+| `game/pxdvs/app/battleGrid/battleCamera.cpp` | `_battleCameraStartRandom__FP13ModelSequence`, `_battleCameraUpdateWaza__Fv` |
+| `game/pxdvs/app/fade/fade_effect.cpp` | `fadeEffectHookFunction_distortion_strip_yoko__F12GSgfxLayerIDbffffPv`, `fadeEffectHookFunction_distortion_strip_tate__F12GSgfxLayerIDbffffPv` |
+| `game/pxdvs/app/flashmenu/flashcalc.cpp` | `flcalcMultiTransformColor` |
+| `game/pxdvs/GSAPI/GSshape/GSshape.cpp` | `shapePrimitiveEditorRender` |
+| `game/pxdvs/GSAPI/GSgfxM/layerState.cpp` | `renderState_NL_VC_T__10GSgfxLayerFUc`, `renderState_NL_NVC_T__10GSgfxLayerFUc` |
 
 ## Colosseum license notice
 

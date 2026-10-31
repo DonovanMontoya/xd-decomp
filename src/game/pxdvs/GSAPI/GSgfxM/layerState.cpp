@@ -35,6 +35,83 @@ void setRenderStateAndSelect__10GSgfxLayerFP7GSgfxVF(void *arg0, void* arg1) {
     layerField<void*>(arg0, 0x199C) = arg1;
 }
 
+struct LayerRenderStageView {
+    u8 reserved[0x1420];
+    struct Stage { u32 mode; u32 reserved[8]; } stages[8];
+    u8 reserved1540[0x44];
+    struct TextureUnit { u32 first, second; } textureUnits[8];
+};
+ABI_OFF(LayerRenderStageView, stages, 0x1420);
+ABI_OFF(LayerRenderStageView, textureUnits, 0x1584);
+static inline void layerRenderMark(void* layer, u32 groups, u32 offset, u32 bit) {
+    layerField<u32>(layer, offset) |= bit;
+    layerField<u32>(layer, 0x16a8) |= groups;
+    layerField<u32>(layer, offset + 0xb8) |= bit;
+    layerField<u32>(layer, 0x1760) |= groups;
+}
+static inline void layerRenderMarkCommon(void* layer, u8 vc, u8 tex, u8 mode) {
+    (void)mode;
+    layerField<u8>(layer, 0xc70) = tex;
+    layerRenderMark(layer, 1, 0x16ac, 1);
+    layerField<u8>(layer, 0xeac) = vc;
+    layerRenderMark(layer, 8, 0x16cc, 1);
+    layerField<u8>(layer, 0x14b0) = 0;
+    layerRenderMark(layer, 0x80, 0x16ec, 1);
+}
+static inline void layerRenderMarkStage(void* layer, u32 i, u32 a, u32 b, u32 c) {
+    u32 bit = 1 << i;
+    ((LayerRenderStageView*)layer)->stages[i].mode = 0;
+    layerField<u32>(layer, 0x16e8) |= bit;
+    layerField<u32>(layer, 0x16a8) |= 8;
+    layerField<u32>(layer, 0x17a0) |= bit;
+    layerField<u32>(layer, 0x1760) |= 8;
+    u32* t = (u32*)((u8*)layer + i * 12);
+    t[0xeb0 / 4] = a;
+    t[0xeb4 / 4] = b;
+    t[0xeb8 / 4] = c;
+}
+void renderState_NL_VC_T__10GSgfxLayerFUc(void* layer, u8 n) {
+    layerField<u8>(layer, 0xdb8) = 1;
+    layerRenderMark(layer, 4, 0x16bc, 1);
+    layerRenderMarkCommon(layer, n, n, 0);
+    cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(layer, 0, 2, 0, 1, 0, 0, 2, 0);
+    for (u8 i = 0; i < n; i++) {
+        tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(layer, i, 1, (i + 4), 0, 0, 0);
+    }
+    for (u8 i = 0; i < n; i++) {
+        layerRenderMarkStage(layer, i, i, i, 4);
+        layerRenderMark(layer, 8, 0x16d0, 1 << i);
+        if (i == 0) {
+            tunitFunc__10GSgfxLayerFUc14GSgfxTunitFunc(layer, i, 0);
+        } else {
+            tunitFunc__10GSgfxLayerFUc14GSgfxTunitFunc(layer, i, 7);
+        }
+        ((LayerRenderStageView*)layer)->textureUnits[i].first = 0;
+        ((LayerRenderStageView*)layer)->textureUnits[i].second = 0;
+        layerRenderMark(layer, 0x20, 0x1704, 1 << i);
+    }
+}
+void renderState_NL_NVC_T__10GSgfxLayerFUc(void* layer, u8 n) {
+    layerField<u8>(layer, 0xdb8) = 0;
+    layerRenderMark(layer, 4, 0x16bc, 1);
+    layerRenderMarkCommon(layer, n, n, 0);
+    u8 i;
+    for (i = 0; i < n; i++) {
+        tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(layer, i, 1, (i + 4), 0, 0, 0);
+    }
+    for (i = 0; i < n; i++) {
+        layerRenderMarkStage(layer, i, i, i, 0xff);
+        layerRenderMark(layer, 8, 0x16d0, 1 << i);
+        if (i == 0) {
+            tunitFunc__10GSgfxLayerFUc14GSgfxTunitFunc(layer, i, 3);
+        } else {
+            tunitFunc__10GSgfxLayerFUc14GSgfxTunitFunc(layer, i, 5);
+        }
+        ((LayerRenderStageView*)layer)->textureUnits[i].first = 0;
+        ((LayerRenderStageView*)layer)->textureUnits[i].second = 0;
+        layerRenderMark(layer, 0x20, 0x1704, 1 << i);
+    }
+}
 void setRenderState__10GSgfxLayerFP7GSgfxVF(void *arg0, void *arg1) {
     u8 temp_r30;
     u8 temp_r31;
@@ -125,136 +202,9 @@ void ResetVertexFormat__10GSgfxLayerFP7GSgfxVF(void *arg0, u32 arg1) {
     }
 }
 
-void renderState_NL_VC_T__10GSgfxLayerFUc(void *arg0, u8 arg1) {
-    s32 sp8;
-    s32 temp_r31;
-    u8 var_r29;
-    u8 var_r30;
-    u8 *temp_r4;
-    u8 *temp_r5;
 
-    layerField<u8>(arg0, 0xDB8) = 1;
-    layerField<u32>(arg0, 0x16BC) = (s32) (layerField<u32>(arg0, 0x16BC) | 1);
-    layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 4);
-    layerField<u32>(arg0, 0x1774) = (s32) (layerField<u32>(arg0, 0x1774) | 1);
-    layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 4);
-    layerField<u8>(arg0, 0xC70) = arg1;
-    layerField<u32>(arg0, 0x16AC) = (s32) (layerField<u32>(arg0, 0x16AC) | 1);
-    layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 1);
-    layerField<u32>(arg0, 0x1764) = (s32) (layerField<u32>(arg0, 0x1764) | 1);
-    layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 1);
-    layerField<u8>(arg0, 0xEAC) = arg1;
-    layerField<u32>(arg0, 0x16CC) = (s32) (layerField<u32>(arg0, 0x16CC) | 1);
-    layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 8);
-    layerField<u32>(arg0, 0x1784) = (s32) (layerField<u32>(arg0, 0x1784) | 1);
-    layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 8);
-    layerField<u8>(arg0, 0x14B0) = 0;
-    layerField<u32>(arg0, 0x16EC) = (s32) (layerField<u32>(arg0, 0x16EC) | 1);
-    layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 0x80);
-    layerField<u32>(arg0, 0x17A4) = (s32) (layerField<u32>(arg0, 0x17A4) | 1);
-    layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x80);
-    sp8 = 0;
-    cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(arg0,0,2,0,1,0,0,2,0);
-    var_r30 = 0;
-    while (var_r30 < arg1) {
-        tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(arg0, var_r30, 1, var_r30 + 4, 0, 0, 0);
-        var_r30 += 1;
-    }
-    var_r29 = 0;
-    while (var_r29 < arg1) {
-        temp_r31 = 1 << var_r29;
-        layerField<s32>(arg0,var_r29*0x24+0x1420) = 0;
-        temp_r5 = static_cast<u8*>(arg0) + (var_r29 * 0xC);
-        layerField<u32>(arg0, 0x16E8) = (s32) (layerField<u32>(arg0, 0x16E8) | temp_r31);
-        layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 8);
-        layerField<u32>(arg0, 0x17A0) = (s32) (layerField<u32>(arg0, 0x17A0) | temp_r31);
-        layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 8);
-        layerField<u32>(temp_r5, 0xEB0) = (s32) var_r29;
-        layerField<u32>(temp_r5, 0xEB4) = (s32) var_r29;
-        layerField<u32>(temp_r5, 0xEB8) = 4;
-        layerField<u32>(arg0, 0x16D0) = (s32) (layerField<u32>(arg0, 0x16D0) | temp_r31);
-        layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 8);
-        layerField<u32>(arg0, 0x1788) = (s32) (layerField<u32>(arg0, 0x1788) | temp_r31);
-        layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 8);
-        if (var_r29 == 0) {
-            tunitFunc__10GSgfxLayerFUc14GSgfxTunitFunc(arg0, var_r29, 0);
-        } else {
-            tunitFunc__10GSgfxLayerFUc14GSgfxTunitFunc(arg0, var_r29, 7);
-        }
-        temp_r4 = static_cast<u8*>(arg0) + (var_r29 * 8);
-        var_r29 += 1;
-        layerField<u32>(temp_r4, 0x1584) = 0;
-        layerField<u32>(temp_r4, 0x1588) = 0;
-        layerField<u32>(arg0, 0x1704) = (s32) (layerField<u32>(arg0, 0x1704) | temp_r31);
-        layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 0x20);
-        layerField<u32>(arg0, 0x17BC) = (s32) (layerField<u32>(arg0, 0x17BC) | temp_r31);
-        layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x20);
-    }
-}
 
-void renderState_NL_NVC_T__10GSgfxLayerFUc(void *arg0, u8 arg1) {
-    s32 temp_r31;
-    u8 var_r29;
-    u8 var_r29_2;
-    u8 *temp_r4;
-    u8 *temp_r5;
 
-    var_r29 = 0;
-    layerField<u8>(arg0, 0xDB8) = 0;
-    layerField<u32>(arg0, 0x16BC) = (s32) (layerField<u32>(arg0, 0x16BC) | 1);
-    layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 4);
-    layerField<u32>(arg0, 0x1774) = (s32) (layerField<u32>(arg0, 0x1774) | 1);
-    layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 4);
-    layerField<u8>(arg0, 0xC70) = arg1;
-    layerField<u32>(arg0, 0x16AC) = (s32) (layerField<u32>(arg0, 0x16AC) | 1);
-    layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 1);
-    layerField<u32>(arg0, 0x1764) = (s32) (layerField<u32>(arg0, 0x1764) | 1);
-    layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 1);
-    layerField<u8>(arg0, 0xEAC) = arg1;
-    layerField<u32>(arg0, 0x16CC) = (s32) (layerField<u32>(arg0, 0x16CC) | 1);
-    layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 8);
-    layerField<u32>(arg0, 0x1784) = (s32) (layerField<u32>(arg0, 0x1784) | 1);
-    layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 8);
-    layerField<u8>(arg0, 0x14B0) = 0;
-    layerField<u32>(arg0, 0x16EC) = (s32) (layerField<u32>(arg0, 0x16EC) | 1);
-    layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 0x80);
-    layerField<u32>(arg0, 0x17A4) = (s32) (layerField<u32>(arg0, 0x17A4) | 1);
-    layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x80);
-    while (var_r29 < arg1) {
-        tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(arg0, var_r29, 1, var_r29 + 4, 0, 0, 0);
-        var_r29 += 1;
-    }
-    var_r29_2 = 0;
-    while (var_r29_2 < arg1) {
-        temp_r31 = 1 << var_r29_2;
-        layerField<s32>(arg0,var_r29_2*0x24+0x1420) = 0;
-        temp_r5 = static_cast<u8*>(arg0) + (var_r29_2 * 0xC);
-        layerField<u32>(arg0, 0x16E8) = (s32) (layerField<u32>(arg0, 0x16E8) | temp_r31);
-        layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 8);
-        layerField<u32>(arg0, 0x17A0) = (s32) (layerField<u32>(arg0, 0x17A0) | temp_r31);
-        layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 8);
-        layerField<u32>(temp_r5, 0xEB0) = (s32) var_r29_2;
-        layerField<u32>(temp_r5, 0xEB4) = (s32) var_r29_2;
-        layerField<u32>(temp_r5, 0xEB8) = 0xFF;
-        layerField<u32>(arg0, 0x16D0) = (s32) (layerField<u32>(arg0, 0x16D0) | temp_r31);
-        layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 8);
-        layerField<u32>(arg0, 0x1788) = (s32) (layerField<u32>(arg0, 0x1788) | temp_r31);
-        layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 8);
-        if (var_r29_2 == 0) {
-            tunitFunc__10GSgfxLayerFUc14GSgfxTunitFunc(arg0, var_r29_2, 3);
-        } else {
-            tunitFunc__10GSgfxLayerFUc14GSgfxTunitFunc(arg0, var_r29_2, 5);
-        }
-        temp_r4 = static_cast<u8*>(arg0) + (var_r29_2 * 8);
-        var_r29_2 += 1;
-        layerField<u32>(temp_r4, 0x1584) = 0;
-        layerField<u32>(temp_r4, 0x1588) = 0;
-        layerField<u32>(arg0, 0x1704) = (s32) (layerField<u32>(arg0, 0x1704) | temp_r31);
-        layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 0x20);
-        layerField<u32>(arg0, 0x17BC) = (s32) (layerField<u32>(arg0, 0x17BC) | temp_r31);
-        layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x20);
-    }
-}
 
 void renderState_NL_NVC_NT__10GSgfxLayerFv(void *arg0) {
     LayerColor sp18;
