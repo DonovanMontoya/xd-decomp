@@ -107,7 +107,7 @@ u8 peopleLineCheck(u32 arg0, u32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg
     if (_peopleGetCrossPoint__FP5GSvecP5GSvecfP5GSvecP5GSvecP5GSvec(&sp34, &spA0, radius, &sp94, &sp88, &sp28) != 0) {
         if (arg2 != 0) {
             GScolsy2UtilGetPointExtentionLine(&sp40, &sp34, &spA0, 0.0001f + radius);
-            if (GScolsys2HitCollision(&sp7C, &sp40, &sp58, 4.0f) != 0) {
+            if (GScolsys2HitCollision(&sp7C, &sp40, 4.0f, &sp58) != 0) {
                 PSVECSubtract(&sp58, &sp40, &sp4C);
                 PSVECAdd(&sp40, &sp4C, &sp40);
             }

@@ -1147,8 +1147,8 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/menu/winMsg.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-use_lmw_stmw on"]),
 
             # zokusei
-            Object(NonMatching, "game/pxdvs/app/zokusei/zokusei.cpp"),
-            Object(NonMatching, "game/pxdvs/app/zokusei/zokuseiBios.cpp", extra_cflags=["-O1,p"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/zokusei/zokusei.cpp", extra_cflags=["-opt level=0"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/zokusei/zokuseiBios.cpp", extra_cflags=["-O1,p", "-opt level=0"]),
 
             # floor
             Object(NonMatching, "game/pxdvs/app/floor/floor.cpp", extra_cflags=["-inline off", "-opt nopeephole", "-str reuse,nopool,readonly"]),

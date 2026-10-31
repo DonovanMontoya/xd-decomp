@@ -1394,7 +1394,7 @@ static void updateLeaderMovement(HEROMOVE_MEMBER member,float* movement) {
 
 extern "C" {
 f32 peopleInfoBiosGetColBallSize(void*);
-s32 GScolsys2HitCollision(GSvec*,GSvec*,GSvec*,f32);
+bool GScolsys2HitCollision(GSvec*,GSvec*,f32,GSvec*);
 void PSVECScale(GSvec*,GSvec*,f32);
 s32 GScolsys2HumanCollision(void*,GSvec*,GSvec*,s32);
 
@@ -1412,7 +1412,7 @@ u8 heroMoveChkHinderClear(s32 member) {
     void* info=peopleInfoBiosGetPtr(object);
     if(!info)return 0;
     f32 memberSize=peopleInfoBiosGetColBallSize(info);
-    if((u8)GScolsys2HitCollision(&memberPosition,&leaderPosition,0,memberSize))return 0;
+    if((u8)GScolsys2HitCollision(&memberPosition,&leaderPosition,memberSize,0))return 0;
     object=getObjID(leader);
     if(object==0xFFFFFFFF)return 0;
     info=peopleInfoBiosGetPtr(object);

@@ -296,7 +296,7 @@ static u32 _searchPeopleColiInfo(GSvec* center, f32 radius, PeopleRangeInfo_t* i
         offset.param2 = 0.0f;
         offset.param3 = radius * (f32)sin(angle);
         PSVECAdd(&offset, center, &info->position);
-        if (GScolsys2HitCollision(center, &info->position, 0, 4.0f)) {
+        if (GScolsys2HitCollision(center, &info->position, 4.0f, 0)) {
             info->hit = 1;
             mask |= 1 << i;
         } else {

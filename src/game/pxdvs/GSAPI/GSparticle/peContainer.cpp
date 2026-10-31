@@ -1,4 +1,5 @@
 #include <game/pxdvs/GSAPI/GSparticle/peContainerPrivate.hpp>
+
 void peRenderContainer::ResetSwap() {}
 void peRenderContainer::InitSwap() {
     if((displayLists[0].flags&1)==1) {tokens[0]=0;displayLists[0].flags|=2;if((displayLists[1].flags&1)==1){tokens[1]=0;displayLists[1].flags|=2;}}
@@ -99,23 +100,58 @@ peRenderContainer::~peRenderContainer() {
         }
     }
 }
-peRenderContainer::peRenderContainer(peEmitterNode* emitter,u32 nodeBytes,u16 maximum,GSgfxVF* format,GSgfxPrimType primitive,u8 vertices,u8 stride,bool doubleBuffer):peContainer(emitter,nodeBytes,maximum),swapped(0),swapIndex(0),renderBytes(0) {
-    u32 aligned=maximum*stride;
-    u32 bytes=aligned;memset(&displayLists[0],0,0x10);memset(&displayLists[1],0,0x10);renderData[0]=0;renderData[1]=0;tokens[0]=0;tokens[1]=0;
-    aligned=(bytes+31)&~31;u32 allocate=aligned;if(doubleBuffer)allocate=aligned*2;
-    u8* data=(u8*)GSmemAllocAlignClr(allocate,32);if(!data)return;
-    u32 indices=maximum*vertices;GSgfxDLCreate(&displayLists[0],primitive,format,(u16)indices);
-    if((displayLists[0].flags&1)!=1){if(data)GSmemFree(data);return;}
-    if(doubleBuffer)GSgfxDLCreate(&displayLists[1],primitive,format,(u16)indices);
-    u32 size=GSmemGetSize(data);
+peRenderContainer::peRenderContainer(peEmitterNode* e, u32 nodeSize, u16 max, GSgfxVF* vf, GSgfxPrimType prim,
+                                     u8 vertsPerNode, u8 bytesPerVert, bool dbl)
+    : peContainer(e, nodeSize, max) {
+    u32 aligned;
+    u32 total = max * bytesPerVert;
+    swapped = 0;
+    swapIndex = 0;
+    renderBytes = 0;
+    memset(&displayLists[0], 0, 0x10);
+    memset(&displayLists[1], 0, 0x10);
+    renderData[0] = 0;
+    renderData[1] = 0;
+    tokens[0] = 0;
+    tokens[1] = 0;
+    aligned = (total + 31) & ~31;
+    u8* mem = (u8*)GSmemAllocAlignClr(dbl ? aligned * 2 : aligned, 0x20);
+    if (!mem) {
+        return;
+    }
+    u32 verts = max * vertsPerNode;
+    GSgfxDLCreate(&displayLists[0], prim, vf, verts);
+    if ((displayLists[0].flags & 1) != 1) {
+        if (mem) {
+            GSmemFree(mem);
+        }
+        return;
+    }
+    if (dbl) {
+        GSgfxDLCreate(&displayLists[1], prim, vf, verts);
+    }
+    u32 sz = GSmemGetSize(mem);
     u32 display0=displayLists[0].size,display1=displayLists[1].size;
     u32 oldDisplay=g_particle_debug_stats.displayList,oldData=g_particle_debug_stats.renderData,oldTotal=g_particle_debug_stats.total;
     g_particle_debug_stats.displayList=display0+(display1+oldDisplay);
-    g_particle_debug_stats.renderData=oldData+size;
-    g_particle_debug_stats.total=size+(display0+display1+oldTotal);
-    if((displayLists[1].flags&1)==1){DCFlushRange(data,aligned*2);renderData[0]=data+0x40000000;renderData[1]=renderData[0]+aligned;}
-    else {DCFlushRange(data,bytes);renderData[0]=data+0x40000000;}
-    renderBytes=bytes;
-    memset((displayLists[0].flags&1)?displayLists[0].data+3:0,255,maximum*(vertices*((displayLists[0].flags&1)?displayLists[0].stride:0)));displayLists[0].flags|=2;
-    if((displayLists[1].flags&1)==1){memset((displayLists[1].flags&1)?displayLists[1].data+3:0,255,maximum*(vertices*((displayLists[1].flags&1)?displayLists[1].stride:0)));displayLists[1].flags|=2;}
+    g_particle_debug_stats.renderData=oldData+sz;
+    g_particle_debug_stats.total=sz+(display0+display1+oldTotal);
+    if ((displayLists[1].flags & 1) == 1) {
+        DCFlushRange(mem, aligned * 2);
+        u8* p = mem + 0x40000000;
+        renderData[0] = p;
+        renderData[1] = p + aligned;
+    } else {
+        DCFlushRange(mem, total);
+        renderData[0] = mem + 0x40000000;
+    }
+    renderBytes = total;
+    char* colors0 = displayLists[0].VertexData(0);
+    memset(colors0, 0xff, max * (vertsPerNode * (u16)((displayLists[0].flags & 1) ? displayLists[0].stride : 0)));
+    displayLists[0].flags |= 2;
+    if ((displayLists[1].flags & 1) == 1) {
+        char* colors1 = displayLists[1].VertexData(0);
+        memset(colors1, 0xff, max * (vertsPerNode * (u16)((displayLists[1].flags & 1) ? displayLists[1].stride : 0)));
+        displayLists[1].flags |= 2;
+    }
 }

@@ -150,7 +150,7 @@ u16 numPeakPSAppSRT;
 u16 g_ps_token;
 
 PSParticle* _psListGetFirst(s32 linkNo);
-PSParticle* _psListNew(PSParticle** head, s32 linkNo);
+PSParticle* _psListNew(PSParticle* parent, s32 linkNo);
 void _psListClear(void);
 void _psLinkInit(int num);
 void psKillAllGenerator(void);
@@ -164,7 +164,7 @@ void psKillGeneratorID(s32 familyId);
 void HSD_JObjUnref(void* jobj);
 void __assert(const char* file, u32 line, const char* msg);
 
-PSParticle* psGenerateParticle0(PSParticle** head, s32 linkNo, s32 bank, void* unused6, s32 unused7,
+PSParticle* psGenerateParticle0(PSParticle* parent, s32 linkNo, s32 bank, void* unused6, s32 unused7,
                                 u32 kind, u16 texGroup, u8* cmdList, s32 life, f32 x, f32 y, f32 z,
                                 f32 vx, f32 vy, f32 vz, f32 size, f32 grav, f32 fric, s32 palflag,
                                 PSGenerator* gp, s32 flgInterpret);
@@ -393,12 +393,12 @@ void psRemoveParticle(void)
     psClearPointJObj();
 }
 
-PSParticle* psGenerateParticle0(PSParticle** head, s32 linkNo, s32 bank, void* unused6, s32 unused7,
+PSParticle* psGenerateParticle0(PSParticle* parent, s32 linkNo, s32 bank, void* unused6, s32 unused7,
                                 u32 kind, u16 texGroup, u8* cmdList, s32 life, f32 x, f32 y, f32 z,
                                 f32 vx, f32 vy, f32 vz, f32 size, f32 grav, f32 fric, s32 palflag,
                                 PSGenerator* gp, s32 flgInterpret)
 {
-    PSParticle* pp = _psListNew(head, linkNo);
+    PSParticle* pp = _psListNew(parent, linkNo);
 
     if (pp == NULL) {
         return NULL;
@@ -486,7 +486,7 @@ PSParticle* psGenerateParticle0(PSParticle** head, s32 linkNo, s32 bank, void* u
     return pp;
 }
 
-PSParticle* psGenerateParticleID0(PSParticle** head, s32 linkNo, s32 bank, s32 id, s32 flgInterpret)
+PSParticle* psGenerateParticleID0(PSParticle* parent, s32 linkNo, s32 bank, s32 id, s32 flgInterpret)
 {
     PSCmdList* cmd;
     PSTexGroup* tex;
@@ -507,7 +507,7 @@ PSParticle* psGenerateParticleID0(PSParticle** head, s32 linkNo, s32 bank, s32 i
     }
     tex = psTexGroupArray[bank][cmd->texGroup];
     palflag = tex != NULL ? tex->palflag : 0;
-    return psGenerateParticle0(head, linkNo, bank, tex, 0, cmd->kind, cmd->texGroup, cmd->cmdList,
+    return psGenerateParticle0(parent, linkNo, bank, tex, 0, cmd->kind, cmd->texGroup, cmd->cmdList,
                                cmd->life, 0.0f, 0.0f, 0.0f, cmd->vx, cmd->vy, cmd->vz, cmd->size,
                                cmd->grav, cmd->fric, palflag, NULL, flgInterpret);
 }

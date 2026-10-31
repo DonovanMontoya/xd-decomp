@@ -34,6 +34,7 @@ Flag groups like `cflags_xd_app_balanced`, `cflags_xd_app_fight` (-O4 instead of
 - Menu units (C++): `-inline noauto -opt nopeephole`, plus `-str reuse,nopool,readonly` when small strings sit 4-byte aligned or in .sdata2.
 - Battle (`fight*`) and script units: `cflags_xd_app_fight`; script `obj*` units also add `-opt nopeephole -str reuse,nopool,readonly`.
 - gimmick: `-O0,p -inline off -fp_contract off`.
+- Type-effectiveness: append `-opt level=0` after `zokusei.cpp`'s normal `-O4,p` or `zokuseiBios.cpp`'s `-O1,p`. This lowers optimization passes while preserving backend defaults; `-O0,p` produces different scheduling.
 - MetroTRK pieces that were originally assembly may be `asm` functions or `.s` files; elsewhere use real C/C++ only.
 
 Find a new unit's recipe early using its trivial functions.

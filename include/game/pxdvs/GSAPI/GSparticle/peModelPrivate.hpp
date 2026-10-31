@@ -19,7 +19,7 @@ extern "C" {
 double fmod(double,double);
 void __assert(const char*,int,const char*);
 s16 shapeCreatePrimitiveInstance(u16);void shapeFreePrimitiveInstance(u16,s16);u32 shapeGetInstancedMemorySizeAll();
-void shapeUpdate(u16,s16,f32);void shapeRender(u16,s16,s32);
+void shapeUpdate(u16,f32,s16);void shapeRender(u16,s16,s32);
 ModelCamera *GScameraGetActiveCamera();void GSlightSetupLights(void*);void HSD_CObjSetCurrent(void*);
 void HSD_StateInvalidate(s32);void HSD_JObjSetMtxDirtySub(ModelJObj*);void HSD_JObjReqAnimAll(ModelJObj*,f32);void HSD_JObjAnimAll(ModelJObj*);void HSD_JObjDispAll(ModelJObj*,void*,u32,u32);
 void InvalidateState__10GSgfxLayerFv(GSgfxLayer*);u8 GSgfxVideoGetVsyncRate();

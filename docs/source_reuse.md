@@ -36,6 +36,7 @@ functions. It does not change the license of the rest of this repository.
 | `game/pxdvs/app/item/itemUse2Pokemon.cpp` | `itemUse2Pokemon` |
 | `game/pxdvs/app/fade/fade_fluid.cpp` | `fadeFluidInit` |
 | `game/pxdvs/app/wazaSequence/billboard.cpp` | `_update__15billboardEffectFf` |
+| `game/pxdvs/app/zokusei/zokusei.cpp` | `zokuseiGetPokemonSpriteID`, `zokuseiGetAisyouValue`, `zokuseiGetWazaJoutaiAsDefenseZokuseiAry`, `zokuseiGetWazaJoutai_PokemonId` |
 | `game/pxdvs/app/fight/fightTrainer.cpp` | `fightTrainerSortFightTrainerDataIdToHeroTemotiPokemon`, `_fightTrainerCreateRndCheckRare__FP4Herob`, `_fightTrainer_GetUnderTakerDarkPoke__FPUcUcUcP4HeroUcUs` |
 | `game/pxdvs/app/fight/fightPokemonBios.cpp` | `__as__15FightOutPokemonFRC15FightOutPokemon` |
 | `game/pxdvs/app/fight/fightSeq/fightSeqWSWaza.cpp` | `CriticalCheckHikaePokemon`, `EscapeNGCheck` |
@@ -218,6 +219,12 @@ The `tobj` layout retains the existing real `HSD_TObjTevAlloc`, `HSD_TlutAlloc`,
 and `HSD_Index2TexMap` copies while emitting the original assertion literals.
 Normal dead stripping removes their unused code and jump table. The complete
 linked unit passes the retail DOL hash check.
+
+The existing `peRenderContainer` constructor was also adapted from
+`src/game/pxdvs/GSAPI/GSparticle/peContainer.cpp` at XD commit
+`50a8d7284ec86bb82c2a387e335a2099cb1a905c`. It restores the native allocation,
+vertex-data initialization, and cached-buffer structure while retaining all
+previously exact functions. The constructor remains partially matching.
 
 ## Colosseum license notice
 
