@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <game/pxdvs/app/waza/wazaStatusAPI.hpp>
 #pragma dont_inline on
 extern "C" {
@@ -351,3 +352,4 @@ block_8:
     }
 }
 }
+#pragma force_active reset

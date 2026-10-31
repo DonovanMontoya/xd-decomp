@@ -1,136 +1,436 @@
-#include <game/pxdvs/GSAPI/GSmodel/GSmodel.hpp>
-#include <game/maximum/GSAPI/baselib/jobj.h>
+#pragma force_active on
+// Deferred code generation emits these definitions in reverse order.
+#include <dolphin/types.h>
+
+#pragma pool_strings off
+
+struct GSvec {
+    f32 x, y, z;
+};
+
+struct Quaternion {
+    f32 x, y, z, w;
+};
+
+struct _HSD_AObj;
+typedef _HSD_AObj HSD_AObj;
+
+typedef struct _HSD_JObj HSD_JObj;
+
+struct _HSD_JObj {
+    u8 unk0[0x8];
+    HSD_JObj* next;
+    HSD_JObj* parent;
+    HSD_JObj* child;
+    u32 flags;
+    u8 unk18[0x4];
+    Quaternion rotate;
+    GSvec scale;
+    GSvec translate;
+    u8 unk44[0x38];
+    HSD_AObj* aobj;
+};
+
+#define JOBJ_MTX_DIRTY (1 << 6)
+#define JOBJ_INSTANCE (1 << 12)
+#define JOBJ_USE_QUATERNION (1 << 17)
+#define JOBJ_USER_DEF_MTX (1 << 23)
+#define JOBJ_MTX_INDEP_SRT (1 << 25)
+
+struct _HSD_Joint;
+
+struct _HSD_SceneModelSet {
+    _HSD_Joint* joint;
+};
+
+struct _GSmodel {
+    u32 flags;
+    _GSmodel* next;
+    _HSD_SceneModelSet* set;
+    HSD_JObj* jobj;
+    HSD_JObj* blendJObj;
+    HSD_JObj* blendDest;
+    u8 unk18[0xB0];
+    struct {
+        u8 unk0[0x18];
+        HSD_AObj* aobj;
+    } partMix[12];
+    f32 blendFactor;
+};
+
 extern "C" {
-void GSgfxRenderWaitForDrawComplete__Fv();
-void HSD_JObjUnref(HSD_JObj*);
-HSD_JObj* HSD_JObjLoadJoint(HSD_Joint*);
-void HSD_JObjSetFlags(HSD_JObj*, u32);
-void HSD_JObjClearFlags(HSD_JObj*, u32);
-void HSD_JObjSetMtxDirtySub(HSD_JObj*);
-void HSD_JObjAnim(HSD_JObj*);
-void modelCalculatePartMix__FP5GSvecP5GSvecUl(GSvec*, GSvec*, u32);
+void __assert(const char* file, s32 line, const char* expr);
+f32 GSmodelGetAnimRate(_GSmodel* model);
+void GSmodelSetAnimRate(_GSmodel* model, f32 rate);
+void HSD_JObjUnref(HSD_JObj* jobj);
+HSD_JObj* HSD_JObjLoadJoint(_HSD_Joint* joint);
+void HSD_JObjSetMtxDirtySub(HSD_JObj* jobj);
+void HSD_JObjSetFlags(HSD_JObj* jobj, u32 flags);
+void HSD_JObjClearFlags(HSD_JObj* jobj, u32 flags);
+void HSD_JObjAnim(HSD_JObj* jobj);
+void HSD_AObjSetRate(HSD_AObj* aobj, f32 rate);
+void EulerToQuat(GSvec* euler, Quaternion* quat);
+void QuatSlerp(Quaternion* a, Quaternion* b, Quaternion* out, f32 t);
 }
-static inline void dirtyJoint(HSD_JObj* joint) {
-    if (!(joint->flags & 0x2000000)) {
-        if (joint && !(u8)HSD_JObjMtxIsDirty(joint)) HSD_JObjSetMtxDirtySub(joint);
+
+void GSgfxRenderWaitForDrawComplete();
+void modelCalculatePartMix(GSvec* value, GSvec* mix, u32 flags);
+
+static void _modelIntpJObjAll(_GSmodel* model, HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, f32 rate);
+static void _modelIntpJObj(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t);
+void modelIntpJObjRotate(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
+static void _modelSetRotateEulerToQuatAll(HSD_JObj* jobj);
+
+extern "C" {
+
+}
+
+extern "C++" {
+static inline bool HSD_JObjMtxIsDirty(HSD_JObj* jobj);
+}
+extern "C++" {
+static inline void HSD_JObjSetMtxDirty(HSD_JObj* jobj);
+}
+extern "C++" {
+static inline void HSD_JObjSetRotation(HSD_JObj* jobj, Quaternion* quat);
+}
+extern "C++" {
+static inline void HSD_JObjGetRotation(HSD_JObj* jobj, Quaternion* quat);
+}
+extern "C++" {
+static inline void HSD_JObjSetScale(HSD_JObj* jobj, GSvec* scale);
+}
+extern "C++" {
+static inline void HSD_JObjGetScale(HSD_JObj* jobj, GSvec* scale);
+}
+extern "C++" {
+static inline void HSD_JObjSetTranslate(HSD_JObj* jobj, GSvec* translate);
+}
+extern "C++" {
+static inline void HSD_JObjGetTranslate(HSD_JObj* jobj, GSvec* translate);
+}
+extern "C++" {
+static inline void _modelIntpScale(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
+}
+extern "C++" {
+static inline void _modelIntpTrans(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
+}
+extern "C" {
+void GSmodelDisableAnimBlend(_GSmodel* model);
+}
+extern "C" {
+void GSmodelEnableAnimBlend(_GSmodel* model);
+}
+extern "C++" {
+void modelCalculateBlendModel(_GSmodel* model, f32 rate);
+}
+extern "C++" {
+static void _modelIntpJObjAll(_GSmodel* model, HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, f32 rate);
+}
+extern "C++" {
+static void _modelIntpJObj(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t);
+}
+extern "C++" {
+void modelIntpJObjRotate(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
+}
+extern "C++" {
+void modelIntpJObjScale(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
+}
+extern "C++" {
+void modelIntpJObjTrans(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
+}
+extern "C++" {
+static void _modelSetRotateEulerToQuatAll(HSD_JObj* jobj);
+}
+
+extern "C++" {
+static inline bool HSD_JObjMtxIsDirty(HSD_JObj* jobj) {
+    bool result;
+    if (!jobj) {
+        __assert("jobj.h", 605, "jobj");
+    }
+    result = false;
+    if (!(jobj->flags & JOBJ_USER_DEF_MTX) && (jobj->flags & JOBJ_MTX_DIRTY)) {
+        result = true;
+    }
+    return result;
+}
+}
+
+extern "C++" {
+static inline void HSD_JObjSetMtxDirty(HSD_JObj* jobj) {
+    if (jobj != 0 && !HSD_JObjMtxIsDirty(jobj)) {
+        HSD_JObjSetMtxDirtySub(jobj);
     }
 }
-static inline void getTranslation(HSD_JObj* joint, GSvec* out) {
-    if (!joint) __assert("jobj.h", 996, "jobj");
-    out->param1 = joint->translate.x; out->param2 = joint->translate.y; out->param3 = joint->translate.z;
 }
-static inline void getScale(HSD_JObj* joint, GSvec* out) {
-    if (!joint) __assert("jobj.h", 849, "jobj");
-    out->param1 = joint->scale.x; out->param2 = joint->scale.y; out->param3 = joint->scale.z;
-}
-static inline void setTranslation(HSD_JObj* joint, GSvec* value) {
-    if (!joint) __assert("jobj.h", 937, "jobj");
-    joint->translate.x = value->param1; joint->translate.y = value->param2; joint->translate.z = value->param3;
-    dirtyJoint(joint);
-}
-static inline void setScale(HSD_JObj* joint, GSvec* value) {
-    if (!joint) __assert("jobj.h", 790, "jobj");
-    joint->scale.x = value->param1; joint->scale.y = value->param2; joint->scale.z = value->param3;
-    dirtyJoint(joint);
-}
-static inline void interpolate(GSvec* a, GSvec* b, GSvec* out, f32 factor, f32 inverse) {
-    out->param1 = a->param1 * inverse + b->param1 * factor;
-    out->param2 = a->param2 * inverse + b->param2 * factor;
-    out->param3 = a->param3 * inverse + b->param3 * factor;
-}
-#pragma fp_contract off
-extern "C" void modelIntpJObjRotate__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjfP5GSvecUl(HSD_JObj* a, HSD_JObj* b, HSD_JObj* out, f32 factor, GSvec* mix, u32 flags) {
-    GSvec ea, eb;
-    HSD_Quaternion result, qa, qb;
-    if (!a) __assert("jobj.h", 733, "jobj");
-    qa = a->rotate;
-    if (!b) __assert("jobj.h", 733, "jobj");
-    qb = b->rotate;
-    ea.param1 = qa.x; ea.param2 = qa.y; ea.param3 = qa.z;
-    eb.param1 = qb.x; eb.param2 = qb.y; eb.param3 = qb.z;
-    if (mix) { modelCalculatePartMix__FP5GSvecP5GSvecUl(&ea, mix, flags); modelCalculatePartMix__FP5GSvecP5GSvecUl(&eb, mix, flags); }
-    EulerToQuat((HSD_Vec3*)&ea, &qa); EulerToQuat((HSD_Vec3*)&eb, &qb);
-    f32 dy = qa.y - qb.y, sy = qa.y + qb.y;
-    f32 dx = qa.x - qb.x, sx = qa.x + qb.x;
-    f32 dz = qa.z - qb.z, sz = qa.z + qb.z;
-    f32 dw = qa.w - qb.w, sw = qa.w + qb.w;
-    if (dw*dw + (dz*dz + (dx*dx + dy*dy)) > sw*sw + (sz*sz + (sx*sx + sy*sy))) {
-        qb.x = -qb.x; qb.y = -qb.y; qb.z = -qb.z; qb.w = -qb.w;
+
+extern "C++" {
+static inline void HSD_JObjSetRotation(HSD_JObj* jobj, Quaternion* quat) {
+    if (!jobj) {
+        __assert("jobj.h", 656, "jobj");
     }
-    QuatSlerp(&qa, &qb, &result, factor);
-    if (!out) __assert("jobj.h", 656, "jobj");
-    out->rotate = result;
-    dirtyJoint(out);
+    jobj->rotate = *quat;
+    if (!(jobj->flags & JOBJ_MTX_INDEP_SRT)) {
+        HSD_JObjSetMtxDirty(jobj);
+    }
 }
-#pragma fp_contract on
-extern "C" void modelIntpJObjScale__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjfP5GSvecUl(HSD_JObj* a, HSD_JObj* b, HSD_JObj* out, f32 factor, GSvec* mix, u32 flags) {
-    f32 inverse = 1.0f - factor;
-    GSvec va, vb, value;
-    getScale(a, &va); getScale(b, &vb);
-    interpolate(&va, &vb, &value, factor, inverse);
-    if (mix) modelCalculatePartMix__FP5GSvecP5GSvecUl(&value, mix, flags);
-    setScale(out, &value);
 }
-extern "C" void modelIntpJObjTrans__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjfP5GSvecUl(HSD_JObj* a, HSD_JObj* b, HSD_JObj* out, f32 factor, GSvec* mix, u32 flags) {
-    f32 inverse = 1.0f - factor;
-    GSvec va, vb, value;
-    getTranslation(a, &va); getTranslation(b, &vb);
-    interpolate(&va, &vb, &value, factor, inverse);
-    if (mix) modelCalculatePartMix__FP5GSvecP5GSvecUl(&value, mix, flags);
-    setTranslation(out, &value);
+
+extern "C++" {
+static inline void HSD_JObjGetRotation(HSD_JObj* jobj, Quaternion* quat) {
+    if (!jobj) {
+        __assert("jobj.h", 733, "jobj");
+    }
+    *quat = jobj->rotate;
 }
-extern "C" {
-static void _modelIntpJObj__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjf(HSD_JObj* a, HSD_JObj* b, HSD_JObj* out, f32 factor) {
-    modelIntpJObjTrans__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjfP5GSvecUl(a, b, out, factor, 0, 0);
-    modelIntpJObjScale__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjfP5GSvecUl(a, b, out, factor, 0, 0);
-    modelIntpJObjRotate__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjfP5GSvecUl(a, b, out, factor, 0, 0);
 }
-static void _modelIntpJObjAll__FP8_GSmodelP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjff(GSmodel* model, HSD_JObj* a, HSD_JObj* b, HSD_JObj* out, f32 factor, f32 rate) {
-    if (a && b && out) {
-        u8 partAnimation = 0;
-        if (out->aobj) {
-            for (u32 i = 0; i < 8; ++i) if (model->partAnimations[i].animation == out->aobj) { partAnimation = 1; break; }
-        }
-        if (partAnimation) {
-            HSD_JObjClearFlags(out, 0x20000); HSD_AObjSetRate(out->aobj, rate); HSD_JObjAnim(out);
-        } else _modelIntpJObj__FP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjf(a, b, out, factor);
-        if (!(a->flags & 0x1000)) {
-            a = a->child; b = b->child; out = out->child;
-            while (a) {
-                _modelIntpJObjAll__FP8_GSmodelP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjff(model, a, b, out, factor, rate);
-                a = a->next; b = b->next; out = out->next;
+
+extern "C++" {
+static inline void HSD_JObjSetScale(HSD_JObj* jobj, GSvec* scale) {
+    if (!jobj) {
+        __assert("jobj.h", 790, "jobj");
+    }
+    jobj->scale = *scale;
+    if (!(jobj->flags & JOBJ_MTX_INDEP_SRT)) {
+        HSD_JObjSetMtxDirty(jobj);
+    }
+}
+}
+
+extern "C++" {
+static inline void HSD_JObjGetScale(HSD_JObj* jobj, GSvec* scale) {
+    if (!jobj) {
+        __assert("jobj.h", 849, "jobj");
+    }
+    *scale = jobj->scale;
+}
+}
+
+extern "C++" {
+static inline void HSD_JObjSetTranslate(HSD_JObj* jobj, GSvec* translate) {
+    if (!jobj) {
+        __assert("jobj.h", 937, "jobj");
+    }
+    jobj->translate = *translate;
+    if (!(jobj->flags & JOBJ_MTX_INDEP_SRT)) {
+        HSD_JObjSetMtxDirty(jobj);
+    }
+}
+}
+
+extern "C++" {
+static inline void HSD_JObjGetTranslate(HSD_JObj* jobj, GSvec* translate) {
+    if (!jobj) {
+        __assert("jobj.h", 996, "jobj");
+    }
+    *translate = jobj->translate;
+}
+}
+
+extern "C++" {
+static inline void _modelIntpScale(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
+    f32 s = 1.0f - t;
+    GSvec va;
+    GSvec vb;
+    GSvec scale;
+
+    HSD_JObjGetScale(a, &va);
+    HSD_JObjGetScale(b, &vb);
+    scale.x = va.x * s + vb.x * t;
+    scale.y = va.y * s + vb.y * t;
+    scale.z = va.z * s + vb.z * t;
+    if (mix != 0) {
+        modelCalculatePartMix(&scale, mix, mixFlags);
+    }
+    HSD_JObjSetScale(dst, &scale);
+}
+}
+
+extern "C++" {
+static inline void _modelIntpTrans(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
+    f32 s = 1.0f - t;
+    GSvec va;
+    GSvec vb;
+    GSvec translate;
+
+    HSD_JObjGetTranslate(a, &va);
+    HSD_JObjGetTranslate(b, &vb);
+    translate.x = va.x * s + vb.x * t;
+    translate.y = va.y * s + vb.y * t;
+    translate.z = va.z * s + vb.z * t;
+    if (mix != 0) {
+        modelCalculatePartMix(&translate, mix, mixFlags);
+    }
+    HSD_JObjSetTranslate(dst, &translate);
+}
+}
+
+extern "C++" {
+static void _modelSetRotateEulerToQuatAll(HSD_JObj* jobj) {
+    HSD_JObj* child;
+
+    if (jobj == 0) {
+        return;
+    }
+    HSD_JObjSetFlags(jobj, JOBJ_USE_QUATERNION);
+    if (jobj->flags & JOBJ_INSTANCE) {
+        return;
+    }
+    for (child = jobj->child; child != 0; child = child->next) {
+        _modelSetRotateEulerToQuatAll(child);
+    }
+}
+}
+
+extern "C++" {
+void modelIntpJObjTrans(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
+    f32 s = 1.0f - t;
+    GSvec va;
+    GSvec vb;
+    GSvec translate;
+
+    HSD_JObjGetTranslate(a, &va);
+    HSD_JObjGetTranslate(b, &vb);
+    translate.x = va.x * s + vb.x * t;
+    translate.y = va.y * s + vb.y * t;
+    translate.z = va.z * s + vb.z * t;
+    if (mix != 0) {
+        modelCalculatePartMix(&translate, mix, mixFlags);
+    }
+    HSD_JObjSetTranslate(dst, &translate);
+}
+}
+
+extern "C++" {
+void modelIntpJObjScale(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
+    f32 s = 1.0f - t;
+    GSvec va;
+    GSvec vb;
+    GSvec scale;
+
+    HSD_JObjGetScale(a, &va);
+    HSD_JObjGetScale(b, &vb);
+    scale.x = va.x * s + vb.x * t;
+    scale.y = va.y * s + vb.y * t;
+    scale.z = va.z * s + vb.z * t;
+    if (mix != 0) {
+        modelCalculatePartMix(&scale, mix, mixFlags);
+    }
+    HSD_JObjSetScale(dst, &scale);
+}
+}
+
+extern "C++" {
+void modelIntpJObjRotate(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
+    GSvec ea;
+    GSvec eb;
+    Quaternion result;
+    Quaternion qa;
+    Quaternion qb;
+
+    HSD_JObjGetRotation(a, &qa);
+    HSD_JObjGetRotation(b, &qb);
+    ea.x = qa.x;
+    ea.y = qa.y;
+    ea.z = qa.z;
+    eb.x = qb.x;
+    eb.y = qb.y;
+    eb.z = qb.z;
+    if (mix != 0) {
+        modelCalculatePartMix(&ea, mix, mixFlags);
+        modelCalculatePartMix(&eb, mix, mixFlags);
+    }
+    EulerToQuat(&ea, &qa);
+    EulerToQuat(&eb, &qb);
+    if ((qa.x - qb.x) * (qa.x - qb.x) + (qa.y - qb.y) * (qa.y - qb.y) + (qa.z - qb.z) * (qa.z - qb.z) + (qa.w - qb.w) * (qa.w - qb.w) >
+        (qa.x + qb.x) * (qa.x + qb.x) + (qa.y + qb.y) * (qa.y + qb.y) + (qa.z + qb.z) * (qa.z + qb.z) + (qa.w + qb.w) * (qa.w + qb.w)) {
+        qb.x = -qb.x;
+        qb.y = -qb.y;
+        qb.z = -qb.z;
+        qb.w = -qb.w;
+    }
+    QuatSlerp(&qa, &qb, &result, t);
+    HSD_JObjSetRotation(dst, &result);
+}
+}
+
+extern "C++" {
+static void _modelIntpJObj(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t) {
+    _modelIntpTrans(a, b, dst, t, 0, 0);
+    _modelIntpScale(a, b, dst, t, 0, 0);
+    modelIntpJObjRotate(a, b, dst, t, 0, 0);
+}
+}
+
+#pragma dont_inline on
+extern "C++" {
+static void _modelIntpJObjAll(_GSmodel* model, HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, f32 rate) {
+    HSD_AObj* aobj;
+    u8 animated;
+
+    if (a == 0 || b == 0 || dst == 0) {
+        return;
+    }
+    aobj = dst->aobj;
+    animated = 0;
+    if (aobj != 0) {
+        for (int i = 0; i < 8; i++) {
+            if (model->partMix[i].aobj == aobj) {
+                animated = 1;
+                break;
             }
         }
     }
-}
-static void _modelSetRotateEulerToQuatAll__FP9_HSD_JObj(HSD_JObj* joint) {
-    if (joint) {
-        HSD_JObjSetFlags(joint, 0x20000);
-        if (!(joint->flags & 0x1000)) {
-            for (HSD_JObj* child = joint->child; child; child = child->next) _modelSetRotateEulerToQuatAll__FP9_HSD_JObj(child);
+    if (animated) {
+        HSD_JObjClearFlags(dst, JOBJ_USE_QUATERNION);
+        HSD_AObjSetRate(dst->aobj, rate);
+        HSD_JObjAnim(dst);
+    } else {
+        _modelIntpJObj(a, b, dst, t);
+    }
+    if (!(a->flags & JOBJ_INSTANCE)) {
+        HSD_JObj* ca;
+        HSD_JObj* cb;
+        HSD_JObj* cd;
+        for (ca = a->child, cb = b->child, cd = dst->child; ca != 0; ca = ca->next, cb = cb->next, cd = cd->next) {
+            _modelIntpJObjAll(model, ca, cb, cd, t, rate);
         }
     }
 }
-void GSmodelDisableAnimBlend(GSmodel* model) {
+}
+#pragma dont_inline reset
+
+extern "C++" {
+void modelCalculateBlendModel(_GSmodel* model, f32 rate) {
+    if (model->blendDest != 0) {
+        _modelIntpJObjAll(model, model->jobj, model->blendJObj, model->blendDest, model->blendFactor, rate);
+        model->flags &= ~0x200;
+    }
+}
+}
+
+extern "C" {
+void GSmodelEnableAnimBlend(_GSmodel* model) {
+    if (model->blendDest == 0) {
+        model->blendJObj = HSD_JObjLoadJoint(model->set->joint);
+        model->blendDest = HSD_JObjLoadJoint(model->set->joint);
+        _modelSetRotateEulerToQuatAll(model->blendDest);
+    }
+}
+}
+
+extern "C" {
+void GSmodelDisableAnimBlend(_GSmodel* model) {
     f32 rate = GSmodelGetAnimRate(model);
     model->flags &= ~0x80;
-    if (model->blendJoint) {
-        GSmodelSetAnimRate(model, rate); GSgfxRenderWaitForDrawComplete__Fv();
-        HSD_JObjUnref(model->animationBlendJoint); HSD_JObjUnref(model->blendJoint);
-        model->animationBlendJoint = 0; model->blendJoint = 0;
-    }
-}
-void GSmodelEnableAnimBlend(GSmodel* model) {
-    if (!model->blendJoint) {
-        model->animationBlendJoint = HSD_JObjLoadJoint(model->scene->joint);
-        model->blendJoint = HSD_JObjLoadJoint(model->scene->joint);
-        _modelSetRotateEulerToQuatAll__FP9_HSD_JObj(model->blendJoint);
-    }
-}
-void modelCalculateBlendModel__FP8_GSmodelf(GSmodel* model, f32 rate) {
-    if (model->blendJoint) {
-        _modelIntpJObjAll__FP8_GSmodelP9_HSD_JObjP9_HSD_JObjP9_HSD_JObjff(model, model->joint, model->animationBlendJoint, model->blendJoint, model->blendFactor, rate);
-        model->flags &= ~0x200;
+    if (model->blendDest != 0) {
+        GSmodelSetAnimRate(model, rate);
+        GSgfxRenderWaitForDrawComplete();
+        HSD_JObjUnref(model->blendJObj);
+        HSD_JObjUnref(model->blendDest);
+        model->blendJObj = 0;
+        model->blendDest = 0;
     }
 }
 }

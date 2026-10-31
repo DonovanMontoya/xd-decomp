@@ -1,4 +1,39 @@
+#pragma defer_codegen off
 #include <game/pxdvs/app/evolution/evolutionPrivate.hpp>
+
+extern "C++" { static void restoreCamera(CAM_STORE* cam); }
+extern "C++" { static void storeCamera(CAM_STORE* cam); }
+extern "C++" { static void restoreSound(WORK* work); }
+extern "C++" { static void stopSound(WORK* work); }
+extern "C++" { static u32 getPokemonData(Pokemon* pokemon); }
+extern "C++" { static u32 playPokemonVoice(Pokemon* pokemon); }
+extern "C++" { static int dispMsgYesNo(unsigned long msg, EVOLUTION_WINDOW_TYPE type); }
+extern "C++" { static int getYesNo(EVOLUTION_WINDOW_TYPE type); }
+extern "C++" { static void dispMsg(unsigned long msg, EVOLUTION_WINDOW_TYPE type); }
+extern "C++" { static void closeMsgWin(EVOLUTION_WINDOW_TYPE type); }
+extern "C++" { static void openMsgWin(unsigned long msg, EVOLUTION_WINDOW_TYPE type); }
+extern "C++" { static void waitTime(float seconds); }
+extern "C++" { static u16 getPkxID(Pokemon* pokemon); }
+extern "C++" { static u32 loadSequence(Pokemon* pokemon, int step); }
+extern "C++" { static u8 loadSequenceAfter(WORK* work, Pokemon* pokemon); }
+extern "C++" { static u8 loadSequenceBefore(WORK* work, Pokemon* pokemon); }
+extern "C++" { static void toVisible(WORK* work, int after, int visible); }
+extern "C++" { static int loadAll(WORK* work, Pokemon* before, Pokemon* after); }
+extern "C" { s32 evolutionWazaLearn(Pokemon* pokemon, u16 waza, u8* slot, EVOLUTION_WINDOW_TYPE type, s8 (*callback)(Pokemon*, unsigned short, long), WORK* work); }
+extern "C++" { static s8 cbWazaForget(Pokemon* pokemon, unsigned short waza, long workPtr); }
+extern "C++" { static int doWazaSequence(WORK* work, STEP step, int cancelable, FADE_CTRL fade); }
+extern "C++" { static void wazaSeqEnd(WORK* work); }
+extern "C++" { static int wazaSeqUpdate(WORK* work); }
+extern "C++" { static u32 getStepSeq(WORK* work, STEP step); }
+extern "C++" { static int wazaSeqStart(WORK* work, STEP step); }
+extern "C++" { static int evolutionDemo(WORK* work, int cancelable, Pokemon* before, Pokemon* after); }
+extern "C++" { static int evolution__Main(WORK* work, int cancelable, Pokemon* before, Pokemon* after, unsigned short* wazaIds, long wazaCount, unsigned char* wazaSlots); }
+extern "C" { s32 evolutionStart(Pokemon* before, Pokemon* after, s32 cancelable, u16* wazaIds, s32 wazaCount, u8* wazaSlots); }
+extern "C" { void evolution(); }
+extern "C" { void evolutionExit(); }
+extern "C" { void evolutionMain(); }
+extern "C" { void evolutionInit(); }
+extern "C" { s32 evolutionOpen(Pokemon* before, Pokemon* after, s32 cancelable, u16* wazaIds, s32 wazaCount, u8* wazaSlots); }
 
 struct StepSeqEntry {
     u16 seq;
@@ -47,6 +82,8 @@ static int wazaSeqStart(WORK*, STEP);
 static int evolutionDemo(WORK*, int, Pokemon*, Pokemon*);
 static int evolution__Main(WORK*, int, Pokemon*, Pokemon*, unsigned short*, long, unsigned char*);
 
+#pragma force_active on
+extern "C++" {
 static void restoreCamera(CAM_STORE* cam) {
     cameraSetType(2);
     cameraSetPosition(cam->pos);
@@ -55,7 +92,8 @@ static void restoreCamera(CAM_STORE* cam) {
     cameraSetTargetOfs(cam->targetOfs);
     cameraSetFov(cam->fov);
 }
-
+}
+extern "C++" {
 static void storeCamera(CAM_STORE* cam) {
     f32 pos[3];
     f32 rot[3];
@@ -85,7 +123,8 @@ static void storeCamera(CAM_STORE* cam) {
     cam->targetOfs[2] = targetOfs[2];
     cam->fov = fov;
 }
-
+}
+extern "C++" {
 static void restoreSound(WORK* work) {
     if (work->bgmId != 0) {
         soundOpenPlay(work->bgmId, 0x32, (u8)work->bgmVolume);
@@ -96,7 +135,8 @@ static void restoreSound(WORK* work) {
         GSsndSetPushVolumeID(work->envId, &work->envPush);
     }
 }
-
+}
+extern "C++" {
 static void stopSound(WORK* work) {
     s32 bgm;
     s32 env;
@@ -124,7 +164,8 @@ static void stopSound(WORK* work) {
     work->bgmVolume = bgmVolume;
     work->envVolume = envVolume;
 }
-
+}
+extern "C++" {
 static u32 getPokemonData(Pokemon* pokemon) {
     if (pokemon == 0) {
         return 0;
@@ -134,7 +175,8 @@ static u32 getPokemonData(Pokemon* pokemon) {
     }
     return pokemonDataBiosGetPtr(pokemonBiosGetPokemonDataId(pokemon));
 }
-
+}
+extern "C++" {
 static u32 playPokemonVoice(Pokemon* pokemon) {
     u32 data = getPokemonData(pokemon);
     u16 voice;
@@ -145,7 +187,8 @@ static u32 playPokemonVoice(Pokemon* pokemon) {
     GSsndPlayNow(voice);
     return voice;
 }
-
+}
+extern "C++" {
 static int dispMsgYesNo(unsigned long msg, EVOLUTION_WINDOW_TYPE type) {
     s32 answer;
     openMsgWin(msg, type);
@@ -160,19 +203,22 @@ static int dispMsgYesNo(unsigned long msg, EVOLUTION_WINDOW_TYPE type) {
         return 2;
     }
 }
-
+}
+extern "C++" {
 static int getYesNo(EVOLUTION_WINDOW_TYPE type) {
     if (type == EVOLUTION_WINDOW_FIELD) {
         return (s8)menuSubOpenYesNoField();
     }
     return (s8)menuSubOpenYesNo(0, -1, -1, 0);
 }
-
+}
+extern "C++" {
 static void dispMsg(unsigned long msg, EVOLUTION_WINDOW_TYPE type) {
     openMsgWin(msg, type);
     closeMsgWin(type);
 }
-
+}
+extern "C++" {
 static void closeMsgWin(EVOLUTION_WINDOW_TYPE type) {
     if (type == EVOLUTION_WINDOW_FIELD) {
         winMsgCloseField(1);
@@ -180,7 +226,8 @@ static void closeMsgWin(EVOLUTION_WINDOW_TYPE type) {
     }
     winMsgClose(1);
 }
-
+}
+extern "C++" {
 static void openMsgWin(unsigned long msg, EVOLUTION_WINDOW_TYPE type) {
     if (type == EVOLUTION_WINDOW_FIELD) {
         winMsgOpenField(msg, 1, 0);
@@ -188,7 +235,8 @@ static void openMsgWin(unsigned long msg, EVOLUTION_WINDOW_TYPE type) {
     }
     winMsgOpen(2, msg, 1, 0);
 }
-
+}
+extern "C++" {
 static void waitTime(float seconds) {
     float elapsed = 0.0f;
     while (elapsed < 60.0f * seconds) {
@@ -196,7 +244,8 @@ static void waitTime(float seconds) {
         elapsed += (float)timeGetLastFrameTime();
     }
 }
-
+}
+extern "C++" {
 static u16 getPkxID(Pokemon* pokemon) {
     u16 id;
     u16 flag = pokemonGetStatus(pokemon, 0, 0x6E, 0);
@@ -209,7 +258,8 @@ static u16 getPkxID(Pokemon* pokemon) {
     }
     return 0xFFFF;
 }
-
+}
+extern "C++" {
 static u32 loadSequence(Pokemon* pokemon, int step) {
     const StepSeqEntry* entry;
     int i;
@@ -237,7 +287,8 @@ static u32 loadSequence(Pokemon* pokemon, int step) {
     }
     return seq;
 }
-
+}
+extern "C++" {
 static u8 loadSequenceAfter(WORK* work, Pokemon* pokemon) {
     u32 seq = loadSequence(pokemon, 1);
     if (seq == 0) {
@@ -246,7 +297,8 @@ static u8 loadSequenceAfter(WORK* work, Pokemon* pokemon) {
     work->seqAfter = seq;
     return 1;
 }
-
+}
+extern "C++" {
 static u8 loadSequenceBefore(WORK* work, Pokemon* pokemon) {
     u32 seq = loadSequence(pokemon, 0);
     if (seq == 0) {
@@ -255,7 +307,8 @@ static u8 loadSequenceBefore(WORK* work, Pokemon* pokemon) {
     work->seqBefore = seq;
     return 1;
 }
-
+}
+extern "C++" {
 static void toVisible(WORK* work, int after, int visible) {
     u32 seq;
     if (after != 0) {
@@ -265,7 +318,8 @@ static void toVisible(WORK* work, int after, int visible) {
     }
     Sequence_SetVisibility(seq, visible != 0);
 }
-
+}
+extern "C++" {
 static int loadAll(WORK* work, Pokemon* before, Pokemon* after) {
     void* group = GSresGetResourceAllGroup(0x0FB31000);
     if (group != 0) {
@@ -279,9 +333,8 @@ static int loadAll(WORK* work, Pokemon* before, Pokemon* after) {
     }
     return 0;
 }
-
+}
 extern "C" {
-
 s32 evolutionWazaLearn(Pokemon* pokemon, u16 waza, u8* slot, EVOLUTION_WINDOW_TYPE type, s8 (*callback)(Pokemon*, unsigned short, long), WORK* work) {
     s32 idx;
     u16* name;
@@ -331,9 +384,8 @@ learn:
     *slot = idx;
     return 1;
 }
-
 }
-
+extern "C++" {
 static s8 cbWazaForget(Pokemon* pokemon, unsigned short waza, long workPtr) {
     CAM_STORE cam;
     int slot;
@@ -354,7 +406,8 @@ static s8 cbWazaForget(Pokemon* pokemon, unsigned short waza, long workPtr) {
     fadeCheck(1);
     return slot;
 }
-
+}
+extern "C++" {
 static int doWazaSequence(WORK* work, STEP step, int cancelable, FADE_CTRL fade) {
     CAM_STORE cam;
     int elapsed;
@@ -413,24 +466,28 @@ static int doWazaSequence(WORK* work, STEP step, int cancelable, FADE_CTRL fade)
     }
     return -1;
 }
-
+}
+extern "C++" {
 static void wazaSeqEnd(WORK* work) {
     s32 step = work->step;
     WazaSequence_Free(Sequence_GetWaza(getStepSeq(work, (STEP)step), StepSeqTbl[step].seq, 4));
 }
-
+}
+extern "C++" {
 static int wazaSeqUpdate(WORK* work) {
     s32 step = work->step;
     return WazaSequence_IsActive(Sequence_GetWaza(getStepSeq(work, (STEP)step), StepSeqTbl[step].seq, 4)) != 0;
 }
-
+}
+extern "C++" {
 static u32 getStepSeq(WORK* work, STEP step) {
     if (StepSeqTbl[step].useAfter != 0) {
         return work->seqAfter;
     }
     return work->seqBefore;
 }
-
+}
+extern "C++" {
 static int wazaSeqStart(WORK* work, STEP step) {
     if (step < 0 || step >= 5) {
         return 0;
@@ -439,7 +496,8 @@ static int wazaSeqStart(WORK* work, STEP step) {
     work->step = step;
     return 1;
 }
-
+}
+extern "C++" {
 static int evolutionDemo(WORK* work, int cancelable, Pokemon* before, Pokemon* after) {
     int firstFrame;
     u32 voice;
@@ -539,7 +597,8 @@ static int evolutionDemo(WORK* work, int cancelable, Pokemon* before, Pokemon* a
     waitTime(0.5f);
     return 1;
 }
-
+}
+extern "C++" {
 static int evolution__Main(WORK* work, int cancelable, Pokemon* before, Pokemon* after, unsigned short* wazaIds, long wazaCount, unsigned char* wazaSlots) {
     Pokemon copy;
     u8 slot;
@@ -571,9 +630,8 @@ static int evolution__Main(WORK* work, int cancelable, Pokemon* before, Pokemon*
     fadeCheck(1);
     return 1;
 }
-
+}
 extern "C" {
-
 s32 evolutionStart(Pokemon* before, Pokemon* after, s32 cancelable, u16* wazaIds, s32 wazaCount, u8* wazaSlots) {
     WORK work;
     wazaSequenceSysEnableLayerChange();
@@ -583,23 +641,28 @@ s32 evolutionStart(Pokemon* before, Pokemon* after, s32 cancelable, u16* wazaIds
     s32 result = evolution__Main(&work, cancelable, before, after, wazaIds, wazaCount, wazaSlots);
     return (u32)__cntlzw(result) >> 5;
 }
-
+}
+extern "C" {
 void evolution() {
     Parameter.result = evolutionStart(Parameter.before, Parameter.after, Parameter.canCancel, Parameter.wazaIds, Parameter.wazaCount, Parameter.wazaSlots);
     GSfloorPop();
     floorSetFadeScript(0, 0);
 }
-
+}
+extern "C" {
 void evolutionExit() {
 }
-
+}
+extern "C" {
 void evolutionMain() {
     evolution();
 }
-
+}
+extern "C" {
 void evolutionInit() {
 }
-
+}
+extern "C" {
 s32 evolutionOpen(Pokemon* before, Pokemon* after, s32 cancelable, u16* wazaIds, s32 wazaCount, u8* wazaSlots) {
     Parameter.before = before;
     Parameter.after = after;
@@ -612,5 +675,4 @@ s32 evolutionOpen(Pokemon* before, Pokemon* after, s32 cancelable, u16* wazaIds,
     floorWaitForChange();
     return Parameter.result;
 }
-
 }

@@ -1,11 +1,13 @@
 #ifndef FIGHT_TRAINER_AI_WAZA_PRIVATE_HPP
 #define FIGHT_TRAINER_AI_WAZA_PRIVATE_HPP
 #include <global.h>
+struct FIGHT_TRAINER;
+struct FightOutPokemon;
 typedef s32 (*AiWazaFunc)(void*,void*,u16,void*);
 typedef u8 (*AiWazaHitFunc)(void*,void*,u16,void*);
 extern "C" {
 u16 HSD_Rand();u8 dbgMenuFightGetFightTrainerAiLastValueReviseFlag();
-u8 fightAi_FixedActCheck(void*,void*,u16,void*);void *fightAi_GetWazaDataIDFromFixActDef(void*,void*,u8);u16 fightAi_GetWazaDataIDFromFixActWaza(void*,void*,u8);s16 fightAi_ThreatEnemyValue(void*,void*,void*,s32,u8,s32,s32);
+u8 fightAi_FixedActCheck(void*,void*,u16,void*);void *fightAi_GetWazaDataIDFromFixActDef(void*,void*,u8);u16 fightAi_GetWazaDataIDFromFixActWaza(void*,void*,u8);s16 fightAi_ThreatEnemyValue(FIGHT_TRAINER*,FightOutPokemon*,FightOutPokemon*,s16,u16,s8,s8);
 void *fightFloorGetFightOutPokemonPtrToFightTrainerPtr(void*,void*);u16 fightFloorGetFightTrainerFightOutPokemonPtrAry(void*,void*,void**,u8,u8);u16 fightFloorGetValidFightOutPokemonCount(void*,u8,void*,u8);s32 fightFloor_GetFightTypeEntryPokemonNum(void*);s32 fightFloor_GetFightTypeFightoutPokemonNum(void*);s32 fightFloor_GetFightTypeTrainerNum(void*);
 u8 fightOutPokemonCheckFightOut(void*);void fightOutPokemonCreateFightActionAttackWaza(void*,u32,u32,u32,void*,u32,s32,s32,u32);s16 fightOutPokemonGetFightEntryId(void*);void *fightOutPokemonGetPokemonPtr(void*);u8 fightOutPokemon_GetFixAiDef(void*);u8 fightOutPokemon_GetFixAiWaza(void*);void fightOutPokemon_SetFixAiWaza(void*,u8);
 void *fightSeqSelectDefensePokemonPtr(void*,u16,u16,s32(*)(),u8,u8,s32);void fightSideGetHikaeFightPokemonNum(void*,u32,u32,u32);void *fightTargetGetPtr(u32,void*,u16);void *fightTargetGetPtrAsNowFightType(u32,void*);s32 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(void*,u16);

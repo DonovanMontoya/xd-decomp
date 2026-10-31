@@ -168,137 +168,94 @@ static u16 getEvoPokemonItem__FP7PokemonUsP22POKEMON_EVOLUTION_INFO(void *arg0, 
     return var_r28;
 }
 
-static u16 getEvoPokemonLevelUp__FP7PokemonPUsP22POKEMON_EVOLUTION_INFO(void *arg0, u16 *arg1, EvoInfo *arg2) {
-    s32 var_r29;
-    void *temp_r3;
-    u16 var_r27;
-    u8 temp_r24;
-    u16 var_r23;
-    u32 temp_r22,temp_r22_2,temp_r22_3;
-    void *var_r22;
-    u16 temp_r3_2,temp_r3_3,temp_r3_4,temp_r3_5,temp_r3_6,temp_r3_7,temp_r3_8,temp_r3_9,temp_r3_10,temp_r3_11,temp_r3_12;
-    var_r23 = 0;
-    var_r27 = 0;
-    temp_r3 = getPokemonData__FP7Pokemon(arg0);
-    if (temp_r3 == 0U) {
-        return 0xFFFFU;
-    }
-    var_r29 = 0;
-    do {
-        temp_r24 = pokemonDataBiosGetSinkaKind(temp_r3, var_r29);
-        u16 temp_r26 = pokemonDataBiosGetSinkaBuff(temp_r3, var_r29);
-        switch (temp_r24) {
+static u16 getEvoPokemonLevelUp__FP7PokemonPUsP22POKEMON_EVOLUTION_INFO(void* pokemon, u16* extra, EvoInfo* info) {
+    int i;
+    void* data;
+    u16 result = 0;
+    u16 extraSpecies = 0;
+    data = getPokemonData__FP7Pokemon(pokemon);
+    if (!data) return 0xFFFF;
+    for (i = 0; i < 5; i++) {
+        u8 kind = pokemonDataBiosGetSinkaKind(data, i);
+        u16 parameter = pokemonDataBiosGetSinkaBuff(data, i);
+        switch (kind) {
         case 1:
-            if (pokemonBiosGetFriend(arg0) >= 0xDCU) {
-                temp_r3_2 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-                arg2->unk0 = temp_r24;
-                var_r23 = temp_r3_2;
-                arg2->unk2 = temp_r26;
+            if (pokemonBiosGetFriend(pokemon) >= 220) {
+                result = pokemonDataBiosGetSinkaPokemonDataId(data, i);
+                info->unk0 = kind; info->unk2 = parameter;
             }
             break;
         case 2:
-            if ((pokemonBiosGetFriend(arg0) >= 0xDCU) && (getNoon__Fv() == 1)) {
-                temp_r3_3 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-                arg2->unk0 = temp_r24;
-                var_r23 = temp_r3_3;
-                arg2->unk2 = temp_r26;
+            if (pokemonBiosGetFriend(pokemon) >= 220 && getNoon__Fv() == 1) {
+                result = pokemonDataBiosGetSinkaPokemonDataId(data, i);
+                info->unk0 = kind; info->unk2 = parameter;
             }
             break;
         case 3:
-            if ((pokemonBiosGetFriend(arg0) >= 0xDCU) && (getNoon__Fv() == 0)) {
-                temp_r3_4 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-                arg2->unk0 = temp_r24;
-                var_r23 = temp_r3_4;
-                arg2->unk2 = temp_r26;
+            if (pokemonBiosGetFriend(pokemon) >= 220 && getNoon__Fv() == 0) {
+                result = pokemonDataBiosGetSinkaPokemonDataId(data, i);
+                info->unk0 = kind; info->unk2 = parameter;
             }
             break;
         case 4:
-            if ((s32) pokemonBiosGetLevel(arg0) >= (s32)temp_r26) {
-                temp_r3_5 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-                arg2->unk0 = temp_r24;
-                var_r23 = temp_r3_5;
-                arg2->unk2 = temp_r26;
+            if (pokemonBiosGetLevel(pokemon) >= parameter) {
+                result = pokemonDataBiosGetSinkaPokemonDataId(data, i);
+                info->unk0 = kind; info->unk2 = parameter;
             }
             break;
         case 8:
-            if ((s32) pokemonBiosGetLevel(arg0) >= (s32)temp_r26) {
-                temp_r22 = pokemonBiosGetPhyAtk(arg0);
-                if (pokemonBiosGetPhyDef(arg0) < temp_r22) {
-                    temp_r3_6 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-                    arg2->unk0 = temp_r24;
-                    var_r23 = temp_r3_6;
-                    arg2->unk2 = temp_r26;
-                }
+            if (pokemonBiosGetLevel(pokemon) >= parameter) {
+                u32 attack = pokemonBiosGetPhyAtk(pokemon);
+                if (pokemonBiosGetPhyDef(pokemon) < attack) { result = pokemonDataBiosGetSinkaPokemonDataId(data, i);
+                info->unk0 = kind; info->unk2 = parameter; }
             }
             break;
         case 9:
-            if ((s32) pokemonBiosGetLevel(arg0) >= (s32)temp_r26) {
-                temp_r22_2 = pokemonBiosGetPhyAtk(arg0);
-                if (temp_r22_2 == pokemonBiosGetPhyDef(arg0)) {
-                    temp_r3_7 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-                    arg2->unk0 = temp_r24;
-                    var_r23 = temp_r3_7;
-                    arg2->unk2 = temp_r26;
-                }
+            if (pokemonBiosGetLevel(pokemon) >= parameter) {
+                u32 attack = pokemonBiosGetPhyAtk(pokemon);
+                u32 defense = pokemonBiosGetPhyDef(pokemon); if (defense == attack) { result = pokemonDataBiosGetSinkaPokemonDataId(data, i);
+                info->unk0 = kind; info->unk2 = parameter; }
             }
             break;
         case 10:
-            if ((s32) pokemonBiosGetLevel(arg0) >= (s32)temp_r26) {
-                temp_r22_3 = pokemonBiosGetPhyAtk(arg0);
-                if (pokemonBiosGetPhyDef(arg0) > temp_r22_3) {
-                    temp_r3_8 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-                    arg2->unk0 = temp_r24;
-                    var_r23 = temp_r3_8;
-                    arg2->unk2 = temp_r26;
-                }
+            if (pokemonBiosGetLevel(pokemon) >= parameter) {
+                u32 attack = pokemonBiosGetPhyAtk(pokemon);
+                if (pokemonBiosGetPhyDef(pokemon) > attack) { result = pokemonDataBiosGetSinkaPokemonDataId(data, i);
+                info->unk0 = kind; info->unk2 = parameter; }
             }
             break;
         case 11:
-            if (((s32) pokemonBiosGetLevel(arg0) >= (s32)temp_r26) && (getUniqueRandom__FP7Pokemon(arg0) < 5U)) {
-                temp_r3_9 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-                arg2->unk0 = temp_r24;
-                var_r23 = temp_r3_9;
-                arg2->unk2 = temp_r26;
-            }
+            if (pokemonBiosGetLevel(pokemon) >= parameter && getUniqueRandom__FP7Pokemon(pokemon) < 5) { result = pokemonDataBiosGetSinkaPokemonDataId(data, i);
+                info->unk0 = kind; info->unk2 = parameter; }
             break;
         case 12:
-            if (((s32) pokemonBiosGetLevel(arg0) >= (s32)temp_r26) && (getUniqueRandom__FP7Pokemon(arg0) >= 5U)) {
-                temp_r3_10 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-                arg2->unk0 = temp_r24;
-                var_r23 = temp_r3_10;
-                arg2->unk2 = temp_r26;
-            }
+            if (pokemonBiosGetLevel(pokemon) >= parameter && getUniqueRandom__FP7Pokemon(pokemon) >= 5) { result = pokemonDataBiosGetSinkaPokemonDataId(data, i);
+                info->unk0 = kind; info->unk2 = parameter; }
             break;
         case 14:
-            if (((s32) pokemonBiosGetLevel(arg0) >= (s32)temp_r26) && (getTemotiEmptySlotID__Fv() >= 0)) {
-                var_r27 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-            }
+            if (pokemonBiosGetLevel(pokemon) >= parameter && getTemotiEmptySlotID__Fv() >= 0)
+                extraSpecies = pokemonDataBiosGetSinkaPokemonDataId(data, i);
             break;
         case 15:
-            if ((s32) pokemonBiosGetBeautiful(arg0) >= (s32)temp_r26) {
-                temp_r3_11 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-                arg2->unk0 = temp_r24;
-                var_r23 = temp_r3_11;
-                arg2->unk2 = temp_r26;
+            if (pokemonBiosGetBeautiful(pokemon) >= parameter) {
+result = pokemonDataBiosGetSinkaPokemonDataId(data, i);
+                info->unk0 = kind; info->unk2 = parameter;
             }
             break;
         case 16:
-            if (pokemonBiosGetFriend(arg0) >= 0xDCU) {
-                var_r22 = 0;
-                if (fightIsFight() != 0) {void *trainer=fightFloorGetGcHeroFightTrainerPtr(0);if(trainer)var_r22=fightTrainerGetStatus(trainer,0,0x44,0);}
-                if (heroItemCheckHaveItemDataId(var_r22, temp_r26) != 0) {
-                    temp_r3_12 = pokemonDataBiosGetSinkaPokemonDataId(temp_r3, var_r29);
-                    arg2->unk0 = temp_r24;
-                    var_r23 = temp_r3_12;
-                    arg2->unk2 = temp_r26;
+            if (pokemonBiosGetFriend(pokemon) >= 220) {
+                void* hero = 0;
+                void* trainer; if (fightIsFight() && (trainer = fightFloorGetGcHeroFightTrainerPtr(0))) hero = fightTrainerGetStatus(trainer, 0, 0x44, 0);
+                if (heroItemCheckHaveItemDataId(hero, parameter)) {
+result = pokemonDataBiosGetSinkaPokemonDataId(data, i);
+                info->unk0 = kind; info->unk2 = parameter;
                 }
             }
             break;
         }
-        var_r29 += 1;
-    } while ((s32) var_r29 < 5);
-    *arg1 = var_r27;
-    return var_r23;
+    }
+    *extra = extraSpecies;
+    return result;
 }
 
 static u16 getItemSoubiDataID__FP7Pokemon(void *arg0) {

@@ -1,3 +1,5 @@
+#pragma defer_codegen off
+#pragma force_active on
 #include <global.h>
 extern "C" {
 extern s32* savedataGetStatus(u32,u32);
@@ -15,35 +17,13 @@ public:
  u8 getBall(BINGO_DATA_dd_*); u8 getLevel(BINGO_DATA_dd_*); u8 getNo(BINGO_DATA_dd_*);
  static u8 getStaticIdx(u8); static void setStaticIdx(u8,u8); static u8 getStaticResult(); static void setStaticResult(u8); static void decStaticBall(); static u8 getStaticBall(); static void setStaticBall(u8); static s32 getStaticSheet(); static void setStaticNo(u8);
 };
-u8 bingo_bios::mStaticBall; u8 bingo_bios::mStaticIdx[2]; u8 bingo_bios::mStaticNo; u8 bingo_bios::mStaticResult;
+u8 bingo_bios::mStaticNo; u8 bingo_bios::mStaticBall; u8 bingo_bios::mStaticIdx[2]; u8 bingo_bios::mStaticResult;
 u8 bingo_bios::isClearPlus(u32 i){if(i>=*bingo_data_number)return 0;s32* p=savedataGetStatus(0,0x1b);return (u8)((p[1]&(1<<i))!=0);}
+extern "C" void fn_802967E4(bingo_bios*,u32 index){if(index<*bingo_data_number){s32* state=savedataGetStatus(0,0x1b);state[1]|=1<<index;}}
 void bingo_bios::setClear(u32 i){if(i<*bingo_data_number){s32* p=savedataGetStatus(0,0x1b);*p|=1<<(i*2);}}
 void bingo_bios::setSelect(u32 i){s32* p=savedataGetStatus(0,0x1b);*p|=2<<(i*2);}
 u8 bingo_bios::isSelect(u32 i){if(i>=*bingo_data_number)return 0;s32* p=savedataGetStatus(0,0x1b);return (u8)((*p&(2<<(i*2)))!=0);}
 u8 bingo_bios::isClear(u32 i){if(i>=*bingo_data_number)return 0;s32* p=savedataGetStatus(0,0x1b);return (u8)((*p&(1<<(i*2)))!=0);}
-u16 bingo_bios::getScore(BINGO_DATA_dd_* p,u8 i){if(i>=10)return 0;return p->scoreLayout.scores[i];}
-u8 bingo_bios::getGridPos(BINGO_DATA_dd_* p,u32 i){if(i>=3)return 0;return p->raw[0xb1+i*2];}
-u8 bingo_bios::getGridGrid(BINGO_DATA_dd_* p,u32 i){if(i>=3)return 0;return p->raw[0xb0+i*2];}
-u8 bingo_bios::getPanelHoseiVal(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return (u8)p->layout.panels[i].hosei;}
-s32 bingo_bios::getPanelHoseiKind(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return (p->layout.panels[i].hosei>>12)&15;}
-u16 bingo_bios::getPanelWaza(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return p->layout.panels[i].waza;}
-u16 bingo_bios::getPanelNo(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return p->layout.panels[i].number;}
-u8 bingo_bios::getPanelTokusei(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return p->raw[0x25+i*0xa];}
-u8 bingo_bios::getPanelType(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return p->raw[0x24+i*0xa];}
-u8 bingo_bios::getBall(BINGO_DATA_dd_* p){if(p)return p->raw[5];return 0;}
-u8 bingo_bios::getLevel(BINGO_DATA_dd_* p){if(p)return p->raw[3];return 0;}
-u8 bingo_bios::getNo(BINGO_DATA_dd_* p){if(p)return p->raw[0];return 0;}
-u8 bingo_bios::getStaticIdx(u8 i){if(i>=2)return 0;return mStaticIdx[i];}
-void bingo_bios::setStaticIdx(u8 a,u8 b){mStaticIdx[0]=a;mStaticIdx[1]=b;}
-u8 bingo_bios::getStaticResult(){return mStaticResult;}
-void bingo_bios::setStaticResult(u8 v){mStaticResult=v;}
-void bingo_bios::decStaticBall(){if(mStaticBall!=0)mStaticBall-=1;}
-u8 bingo_bios::getStaticBall(){return mStaticBall;}
-void bingo_bios::setStaticBall(u8 v){mStaticBall=v;}
-s32 bingo_bios::getStaticSheet(){if(*bingo_data_number<=mStaticNo)return 0;return bingo_data+mStaticNo*0xb8;}
-void bingo_bios::setStaticNo(u8 v){mStaticNo=v;}
-
-extern "C" void fn_802967E4(bingo_bios*,u32 index){if(index<*bingo_data_number){s32* state=savedataGetStatus(0,0x1b);state[1]|=1<<index;}}
 s32 bingo_bios::getClearLv(){
     s32* state=savedataGetStatus(0,0x1b);
     s32 index=0;
@@ -71,3 +51,24 @@ s32 bingo_bios::getClearLv(){
     }
     return levels[tier];
 }
+u16 bingo_bios::getScore(BINGO_DATA_dd_* p,u8 i){if(i>=10)return 0;return p->scoreLayout.scores[i];}
+u8 bingo_bios::getGridPos(BINGO_DATA_dd_* p,u32 i){if(i>=3)return 0;return p->raw[0xb1+i*2];}
+u8 bingo_bios::getGridGrid(BINGO_DATA_dd_* p,u32 i){if(i>=3)return 0;return p->raw[0xb0+i*2];}
+u8 bingo_bios::getPanelHoseiVal(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return (u8)p->layout.panels[i].hosei;}
+s32 bingo_bios::getPanelHoseiKind(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return (p->layout.panels[i].hosei>>12)&15;}
+u16 bingo_bios::getPanelWaza(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return p->layout.panels[i].waza;}
+u16 bingo_bios::getPanelNo(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return p->layout.panels[i].number;}
+u8 bingo_bios::getPanelTokusei(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return p->raw[0x25+i*0xa];}
+u8 bingo_bios::getPanelType(BINGO_DATA_dd_* p,u32 i){if(i>=14)return 0;return p->raw[0x24+i*0xa];}
+u8 bingo_bios::getBall(BINGO_DATA_dd_* p){if(p)return p->raw[5];return 0;}
+u8 bingo_bios::getLevel(BINGO_DATA_dd_* p){if(p)return p->raw[3];return 0;}
+u8 bingo_bios::getNo(BINGO_DATA_dd_* p){if(p)return p->raw[0];return 0;}
+u8 bingo_bios::getStaticIdx(u8 i){if(i>=2)return 0;return mStaticIdx[i];}
+void bingo_bios::setStaticIdx(u8 a,u8 b){mStaticIdx[0]=a;mStaticIdx[1]=b;}
+u8 bingo_bios::getStaticResult(){return mStaticResult;}
+void bingo_bios::setStaticResult(u8 v){mStaticResult=v;}
+void bingo_bios::decStaticBall(){if(mStaticBall!=0)mStaticBall-=1;}
+u8 bingo_bios::getStaticBall(){return mStaticBall;}
+void bingo_bios::setStaticBall(u8 v){mStaticBall=v;}
+s32 bingo_bios::getStaticSheet(){if(*bingo_data_number<=mStaticNo)return 0;return bingo_data+mStaticNo*0xb8;}
+void bingo_bios::setStaticNo(u8 v){mStaticNo=v;}

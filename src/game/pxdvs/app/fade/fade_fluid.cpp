@@ -1,330 +1,620 @@
-#include <game/pxdvs/app/fade/fadeFluidPrivate.hpp>
+#pragma peephole off
+#include <dolphin/types.h>
+#pragma pool_strings off
+#include <dolphin/gx/GXVert.h>
 
-static FluidWork _fadeFluidWork;
-static s32 _fadeFluidSw;
-static void _fadeFluidDoFree(void *);
-static void *_fadeFluidDoMalloc(unsigned long);
-static void _fadeFluidSetShockSub(unsigned long,unsigned long,f32);
+struct GSgfxVF;
+struct GStexture {
+    u8 unk0[7];
+    u8 unk7;
+};
 
-extern "C" f32 __float_nan[];
-static inline f32 FluidSqrt(f32 x) {
-    if (x > 0.0f) {
-        f64 guess=__frsqrte((f64)x);
-        guess=0.5*guess*(3.0-guess*guess*x);
-        guess=0.5*guess*(3.0-guess*guess*x);
-        guess=0.5*guess*(3.0-guess*guess*x);
-        return (f32)(x*guess);
-    } else if (x < 0.0) return __float_nan[0];
-    else {
-        union {f32 f;u32 u;} value;
-        value.f=x;
-        s32 category;
-        switch ((s32)(value.u & 0x7F800000)) {
-        case 0x7F800000:category=(s32)(value.u & 0x7FFFFF)!=0?1:2;break;
-        case 0:category=(s32)(value.u & 0x7FFFFF)!=0?5:3;break;
-        default:category=4;break;
-        }
-        if (category == 1) return __float_nan[0];
-    }
-    return x;
-}
+struct BlendState {
+    u8 pad[0xbc];
+};
 
-static inline void FluidSetVector(FluidVec& value,f32 x,f32 y,f32 z) {value.x=x;value.y=y;value.z=z;}
-static inline void FluidTexCoord(f32 u,f32 v) { *(volatile f32*)0xCC008000=u; *(volatile f32*)0xCC008000=v; }
-static inline void FluidVertex(FluidVec *vertex,FluidUV *uv,f32 sx,f32 sy,u8 alpha) {
-    FluidVec value;
-    FluidSetVector(value,vertex->x,vertex->y,vertex->z);
-    value.x*=sx; value.y*=sy; value.z*=sx;
-    *(volatile f32 *)0xCC008000=value.x;
-    *(volatile f32 *)0xCC008000=value.y;
-    *(volatile f32 *)0xCC008000=value.z;
-    *(volatile u8 *)0xCC008000=255;
-    *(volatile u8 *)0xCC008000=255;
-    *(volatile u8 *)0xCC008000=255;
-    *(volatile u8 *)0xCC008000=alpha;
-    FluidTexCoord(uv->u,uv->v);
-}
+struct GSlayerCam {
+    u32 pad;
+    u32* data;
+};
 
-extern "C" void fadeFluidDispSecond(s32 layerId,GStexture *texture,f32 fade,f32 progress) {
-    FluidVec **slot;
-    FluidUV *uv;
-    s32 rowA,rowB,i,j;
-    u32 x;
-    u32 count;
-    s32 alpha;
-    u32 y;
-    GSgfxLayer *layer;
-    u32 stride;
-    f32 value,sx,sy;
+class GSgfxLayer {
+public:
+    void setRenderStateAndSelect(struct GSgfxVF* vf);
+    void beginSurface(u16 count);
+    void endSurface();
 
+    u8 pad0[0x28];
+    s32 id;
+    u8 pad2c[0xd54 - 0x2c];
+    s32 projType;
+    f32 proj[6];
+    u8 pad_d70[0xd8c - 0xd70];
+    s32 d8c;
+    u8 pad_d90[0x1644 - 0xd90];
+    s32 blendOp;
+    s32 blendSrc;
+    s32 blendDst;
+    s32 blendLogic;
+    u8 pad_1654[2];
+    u8 colorUpdate;
+    u8 alphaUpdate;
+    u8 zUpdate;
+    u8 pad_1659[3];
+    u8 zEnable;
+    u8 pad_165d[3];
+    s32 zFunc;
+    s32 f1664;
+    s32 f1668;
+    s32 f166c;
+    u8 f1670;
+    u8 f1671;
+    u8 f1672;
+    u8 pad_1673[0x1684 - 0x1673];
+    f32 nearZ;
+    f32 farZ;
+    u8 pad_168c[0x16a6 - 0x168c];
+    u8 f16a6;
+    u8 f16a7;
+    u32 dirty16a8;
+    u32 dirty16ac;
+    u8 pad_16b0[8];
+    u32 dirty16b8;
+    u8 pad_16bc[0x170c - 0x16bc];
+    u32 dirty170c;
+    u8 pad_1710[0x173c - 0x1710];
+    u32 dirty173c;
+    void* tex1740;
+    u8 pad_1744[0x1760 - 0x1744];
+    u32 dirty1760;
+    u32 dirty1764;
+    u8 pad_1768[8];
+    u32 dirty1770;
+    u8 pad_1774[0x17c4 - 0x1774];
+    u32 dirty17c4;
+    u8 pad_17c8[0x17f4 - 0x17c8];
+    u32 dirty17f4;
+    void* tex17f8;
+    u8 pad_17fc[0x1818 - 0x17fc];
+    BlendState blendTable[2];
+    BlendState* curBlend;
+    s32 curBlendIdx;
+    u32 primType;
+    u8 pad_199c[0x19a0 - 0x199c];
+    GSlayerCam* cam;
+};
 
-    layer=GSgfxLayerFindByID(layerId);
-    FluidVec color;
-    FluidVec from;
-    FluidVec to;
-    from.x=1.0f;from.y=1.0f;from.z=1.0f;
-    to.x=0.0f;to.y=0.0f;to.z=0.0f;
-    GSlerpGetLinearInterpolationVector(&color,&from,&to,progress);
-    value=(f32)(s32)(255.0f*color.x);
-    alpha=(s32)(value*(1.0f-fade));
-    spriteSetEnv(layerId);
-    if (layer->shaderIndex != 1) {
-        layer->shaderIndex=1;
-        layer->shader=layer->shaders[layer->shaderIndex];
+struct GSvec {
+    f32 x, y, z;
+    void set(f32 a, f32 b, f32 c) {
+        x = a;
+        y = b;
+        z = c;
     }
-    layer->field1644=1;layer->field1648=4;layer->field164C=5;layer->field1650=5;
-    layer->field170C|=1;layer->field16A8|=0x40;layer->field17C4|=1;layer->field1760|=0x40;
-    layer->field1656=1;layer->field1657=1;layer->field1658=0;
-    layer->field170C|=4;layer->field16A8|=0x40;layer->field17C4|=4;layer->field1760|=0x40;
-    layer->field165C=0;layer->field1660=1;
-    layer->field170C|=8;layer->field16A8|=0x40;layer->field17C4|=8;layer->field1760|=0x40;
-    layer->field1664=7;layer->field1670=0;layer->field1668=0;layer->field166C=7;layer->field1671=0;layer->field1672=1;
-    layer->field170C|=16;layer->field16A8|=0x40;layer->field17C4|=16;layer->field1760|=0x40;
-    layer->fieldD8C=0;
-    layer->field16B8|=2;layer->field16A8|=2;layer->field1770|=2;layer->field1760|=2;
-    layer->setRenderStateAndSelect(GSgfxVFBuildTemp(1,4,0,0,1,5,1,1,4));
-    if (layer->texture0 != texture || layer->texture1 != texture || texture->dirty != 0) {
-        layer->texture0=texture;layer->field173C|=1;
-        layer->texture1=texture;layer->field17F4|=1;
-    }
-    sx=_fadeFluidWork.screenX;sy=_fadeFluidWork.screenY;
-    stride=_fadeFluidWork.width+1;
-    count=stride*2;
-    for (y=0;y<_fadeFluidWork.height;++y) {
-        layer->primitive=0x98;
-        layer->beginSurface(count);
-        slot=&_fadeFluidWork.vertices[_fadeFluidSw];
-        uv=_fadeFluidWork.uv;
-        rowA=(s32)y*(s32)stride;rowB=((s32)y+1)*(s32)stride;
-        for (x=0;x<stride;++x) {
-            i=(s32)x+rowA;j=(s32)x+rowB;
-            FluidVertex(&(*slot)[i],&uv[i],sx,sy,alpha);
-            FluidVertex(&(*slot)[j],&uv[j],sx,sy,alpha);
-        }
-        layer->endSurface();
-    }
-}
-extern "C" void fadeFluidDisp(GStexture *texture,f32 fade,f32 progress) {
-    FluidVec **slot;
-    FluidUV *uv;
-    s32 rowA,rowB,i,j;
-    u32 x;
-    u32 count;
-    s32 alpha;
-    u32 y;
-    GSgfxLayer *layer;
-    u32 stride;
-    f32 value,sx,sy;
+};
 
+struct GSvec2 {
+    f32 x, y;
+};
 
-    layer=GSgfxLayerFindByID(7);
-    FluidVec color;
-    FluidVec from;
-    FluidVec to;
-    from.x=1.0f;from.y=1.0f;from.z=1.0f;
-    to.x=0.0f;to.y=0.0f;to.z=0.0f;
-    GSlerpGetLinearInterpolationVector(&color,&from,&to,progress);
-    value=(f32)(s32)(255.0f*color.x);
-    alpha=(s32)(value*(1.0f-fade));
-    spriteSetEnv(7);
-    if (layer->shaderIndex != 1) {
-        layer->shaderIndex=1;
-        layer->shader=layer->shaders[layer->shaderIndex];
-    }
-    layer->field1644=1;layer->field1648=4;layer->field164C=5;layer->field1650=5;
-    layer->field170C|=1;layer->field16A8|=0x40;layer->field17C4|=1;layer->field1760|=0x40;
-    layer->field1656=1;layer->field1657=1;layer->field1658=0;
-    layer->field170C|=4;layer->field16A8|=0x40;layer->field17C4|=4;layer->field1760|=0x40;
-    layer->field165C=0;layer->field1660=1;
-    layer->field170C|=8;layer->field16A8|=0x40;layer->field17C4|=8;layer->field1760|=0x40;
-    layer->field1664=7;layer->field1670=0;layer->field1668=0;layer->field166C=7;layer->field1671=0;layer->field1672=1;
-    layer->field170C|=16;layer->field16A8|=0x40;layer->field17C4|=16;layer->field1760|=0x40;
-    layer->fieldD8C=0;
-    layer->field16B8|=2;layer->field16A8|=2;layer->field1770|=2;layer->field1760|=2;
-    layer->setRenderStateAndSelect(GSgfxVFBuildTemp(1,4,0,0,1,5,1,1,4));
-    if (layer->texture0 != texture || layer->texture1 != texture || texture->dirty != 0) {
-        layer->texture0=texture;layer->field173C|=1;
-        layer->texture1=texture;layer->field17F4|=1;
-    }
-    layer->primitive=0x98;
-    sx=_fadeFluidWork.screenX;sy=_fadeFluidWork.screenY;
-    stride=_fadeFluidWork.width+1;
-    count=stride*2;
-    for (y=0;y<_fadeFluidWork.height;++y) {
-        layer->beginSurface(count);
-        slot=&_fadeFluidWork.vertices[_fadeFluidSw];
-        uv=_fadeFluidWork.uv;
-        rowA=(s32)y*(s32)stride;rowB=((s32)y+1)*(s32)stride;
-        for (x=0;x<stride;++x) {
-            i=(s32)x+rowA;j=(s32)x+rowB;
-            FluidVertex(&(*slot)[i],&uv[i],sx,sy,alpha);
-            FluidVertex(&(*slot)[j],&uv[j],sx,sy,alpha);
-        }
-        layer->endSurface();
-    }
-}
-extern "C" void fadeFluidSetShockSecond(FluidVec *point,f32 strength) {
-    f32 spacing=_fadeFluidWork.spacing;
-    u32 x=(u32)(point->x/spacing),y=(u32)(point->y/spacing);
-    _fadeFluidSetShockSub(x,y,strength);
-    f32 adjacent=0.5f*strength,diagonal=0.25f*strength;
-    _fadeFluidSetShockSub(x-1,y-1,diagonal);
-    _fadeFluidSetShockSub(x,y-1,adjacent);
-    _fadeFluidSetShockSub(x+1,y-1,diagonal);
-    _fadeFluidSetShockSub(x-1,y,adjacent);
-    _fadeFluidSetShockSub(x+1,y,adjacent);
-    _fadeFluidSetShockSub(x-1,y+1,diagonal);
-    _fadeFluidSetShockSub(x,y+1,adjacent);
-    _fadeFluidSetShockSub(x+1,y+1,diagonal);
-}
-extern "C" void fadeFluidEvaluateSecond() {
-    FluidVec *current,*next,*row;
-    u32 stride,x,y;
-    f32 a=_fadeFluidWork.a,b=_fadeFluidWork.b,c=_fadeFluidWork.c;
-    stride=_fadeFluidWork.width+1;
-    for (y=1;y<_fadeFluidWork.height;++y) {
-        s32 rowOffset=(s32)y*(s32)stride;
-        row=&_fadeFluidWork.vertices[_fadeFluidSw][rowOffset];
-        current=row+1;
-        next=&_fadeFluidWork.vertices[1-_fadeFluidSw][rowOffset]+1;
-        for (x=1;x<_fadeFluidWork.width;++x,++current,++next) {
-            f32 sides=current[1].z+current[-1].z;
-            next->z=c*(row[(s32)x-(s32)stride].z+(sides+row[x+stride].z))+
-                (a*current->z+b*next->z);
-        }
-    }
-    _fadeFluidSw=1-_fadeFluidSw;
-}
-extern "C" void fadeFluidSetShock(FluidVec *point,f32 strength) {
-    f32 spacing=_fadeFluidWork.spacing;
-    u32 x=(u32)(point->x/spacing),y=(u32)(point->y/spacing);
-    _fadeFluidSetShockSub(x,y,strength);
-    strength=strength/2.0f;
-    _fadeFluidSetShockSub(x-1,y-1,strength);
-    _fadeFluidSetShockSub(x,y-1,strength);
-    _fadeFluidSetShockSub(x+1,y-1,strength);
-    _fadeFluidSetShockSub(x-1,y,strength);
-    _fadeFluidSetShockSub(x+1,y,strength);
-    _fadeFluidSetShockSub(x-1,y+1,strength);
-    _fadeFluidSetShockSub(x,y+1,strength);
-    _fadeFluidSetShockSub(x+1,y+1,strength);
-}
-#pragma opt_dead_assignments off
-static void _fadeFluidSetShockSub(unsigned long x,unsigned long y,f32 strength) {
-    if (x<=_fadeFluidWork.width && y<=_fadeFluidWork.height) {
-        u8 *base=(u8 *)_fadeFluidWork.vertices[_fadeFluidSw];
-        f32 *value=(f32 *)(base+(x+y*(_fadeFluidWork.width+1))*12+8);
-        *value-=strength;
-    }
-}
-#pragma opt_dead_assignments reset
-extern "C" void fadeFluidEvaluate() {
-    FluidVec *current,*next,*row;
-    FluidVec *current2,*normal2,*tangent2,*row2;
-    u32 stride,x,y;
-    f32 a=_fadeFluidWork.a,b=_fadeFluidWork.b,c=_fadeFluidWork.c;
-    stride=_fadeFluidWork.width+1;
-    for (y=1;y<_fadeFluidWork.height;++y) {
-        s32 rowOffset=(s32)y*(s32)stride;
-        row=&_fadeFluidWork.vertices[_fadeFluidSw][rowOffset];
-        current=row+1;
-        next=&_fadeFluidWork.vertices[1-_fadeFluidSw][rowOffset]+1;
-        for (x=1;x<_fadeFluidWork.width;++x,++current,++next) {
-            f32 sides=current[1].z+current[-1].z;
-            next->z=c*(row[(s32)x-(s32)stride].z+(sides+row[x+stride].z))+
-                (a*current->z+b*next->z);
-        }
-    }
-    _fadeFluidSw=1-_fadeFluidSw;
-    for (y=1;y<_fadeFluidWork.height;++y) {
-        s32 rowOffset=(s32)y*(s32)stride;
-        row2=&_fadeFluidWork.vertices[_fadeFluidSw][rowOffset];
-        current2=row2+1;
-        normal2=&_fadeFluidWork.normal[rowOffset]+1;
-        tangent2=&_fadeFluidWork.tangent[rowOffset]+1;
-        for (x=1;x<_fadeFluidWork.width;++x,++current2,++normal2,++tangent2) {
-            normal2->x=current2[-1].z-current2[1].z;
-            normal2->y=row2[(s32)x-(s32)stride].z-row2[x+stride].z;
-            tangent2->z=current2[1].z-current2[-1].z;
-        }
-    }
-}
-extern "C" void fadeFluidCalcParms(f32 delta) {
-    f32 speed;
-    f32 ratio;
-    f32 spacing;
-    f32 inverse;
+struct FadeFluidWork {
+    u32 columns;
+    u32 rows;
+    f32 accel;
     f32 damping;
-    speed=_fadeFluidWork.speed;
-    spacing=_fadeFluidWork.spacing;
-    damping=_fadeFluidWork.damping*delta;
-    ratio=(delta*(delta*(speed*speed)))/(spacing*spacing);
-    inverse=1.0f/(2.0f+damping);
-    _fadeFluidWork.a=-((8.0f*ratio)-4.0f)*inverse;
-    _fadeFluidWork.b=inverse*(damping-2.0f);
-    _fadeFluidWork.c=2.0f*ratio*inverse;
+    f32 neighbor;
+    f32 limit;
+    f32 timeStep;
+    f32 cellSize;
+    f32 xScale;
+    f32 yScale;
+    GSvec* heightPage[2];
+    GSvec* velocityX;
+    GSvec* velocityY;
+    GSvec2* texCoord;
+    u8 pad_3C[4];
+};
+
+extern "C" {
+GSgfxLayer* GSgfxLayerFindByID(int id);
+GSgfxVF* GSgfxVFBuildTemp(s32, s32, s32, s32, s32, s32, s32, s32, s32);
+void spriteSetEnv(int layerID);
+void GSlerpGetLinearInterpolationVector(GSvec* out, GSvec* a, GSvec* b, f32 t);
+void GSmemFree(void* ptr);
+void* GSmemAllocAlign(u32 size, u32 align);
+s32 GSmemGetCurrentHeap();
+s32 GSmemSetAllocMethodHeap(s32 heap, s32 method);
+void OSReport(const char* msg, ...);
 }
 
-extern "C" void fadeFluidQuit() {
-    if (_fadeFluidWork.vertices[0]!=0) _fadeFluidDoFree(_fadeFluidWork.vertices[0]);
-    if (_fadeFluidWork.vertices[1]!=0) _fadeFluidDoFree(_fadeFluidWork.vertices[1]);
-    if (_fadeFluidWork.normal!=0) _fadeFluidDoFree(_fadeFluidWork.normal);
-    if (_fadeFluidWork.tangent!=0) _fadeFluidDoFree(_fadeFluidWork.tangent);
-    if (_fadeFluidWork.uv!=0) _fadeFluidDoFree(_fadeFluidWork.uv);
-    _fadeFluidWork.vertices[0]=0;_fadeFluidWork.vertices[1]=0;
-    _fadeFluidWork.normal=0;_fadeFluidWork.tangent=0;_fadeFluidWork.uv=0;
-}
-extern "C" void fadeFluidInit(u32 width,u32 height,f32 spacing,f32 delta,f32 speed,f32 damping) {
-    FluidVec *vertex,*copy,*normal,*tangent;
-    s32 x,y;
-    f32 twiceSpacing,vertexY,textureV;
-    f32 inverseU,inverseV;
-    u32 i;
-    u32 count=(width+1)*(height+1);
-    u32 bytes=count*sizeof(FluidVec);
-    _fadeFluidWork.width=width;_fadeFluidWork.height=height;
-    _fadeFluidWork.screenX=640.0f/(f32)width;
-    _fadeFluidWork.screenY=480.0f/(f32)height;
-    _fadeFluidWork.vertices[0]=(FluidVec *)_fadeFluidDoMalloc(bytes);
-    _fadeFluidWork.vertices[1]=(FluidVec *)_fadeFluidDoMalloc(bytes);
-    _fadeFluidSw=0;
-    _fadeFluidWork.normal=(FluidVec *)_fadeFluidDoMalloc(bytes);
-    _fadeFluidWork.tangent=(FluidVec *)_fadeFluidDoMalloc(bytes);
-    _fadeFluidWork.uv=(FluidUV *)_fadeFluidDoMalloc(count*sizeof(FluidUV));
-    f32 limit=(spacing/(2.0f*delta))*FluidSqrt(2.0f+damping);
-    if (!(0.0f<speed && speed<limit)) {
-        OSReport("Warning: fadeFluid c parm. Limit Over!! -> 0.0f < %f < %f\n",speed,limit);
-        speed=limit-0.000001f;
+extern f32 __float_nan[];
+
+union FadeFloatShape {
+    f32 value;
+    s32 bits;
+};
+
+static inline f32 fadeSqrtf(f32 value) {
+    FadeFloatShape shape;
+    f64 estimate;
+    s32 exponent;
+    s32 fpclass;
+
+    if (value > 0.0f) {
+        const f64 half = 0.5;
+        const f64 three = 3.0;
+
+        estimate = __frsqrte(value);
+        estimate = half * estimate * (three - value * (estimate * estimate));
+        estimate = half * estimate * (three - value * (estimate * estimate));
+        estimate = half * estimate * (three - value * (estimate * estimate));
+        return (f32)(value * estimate);
     }
-    _fadeFluidWork.spacing=spacing;_fadeFluidWork.speed=speed;_fadeFluidWork.damping=damping;
-    fadeFluidCalcParms(delta);
-    twiceSpacing=2.0f*spacing;
-    inverseU=1.0f/(f32)_fadeFluidWork.width;
-    inverseV=1.0f/(f32)_fadeFluidWork.height;
-    i=0;
-    for (y=0;y<=height;++y) {
-        vertexY=spacing*(f32)y;
-        textureV=inverseV*(f32)y;
-        for (x=0;x<=width;++i,++x) {
-            vertex=&_fadeFluidWork.vertices[0][i];
-            vertex->x=spacing*(f32)x;vertex->y=vertexY;vertex->z=0.0f;
-            copy=&_fadeFluidWork.vertices[1][i];
-            vertex=&_fadeFluidWork.vertices[0][i];
-            copy->x=vertex->x;copy->y=vertex->y;copy->z=vertex->z;
-            normal=&_fadeFluidWork.normal[i];
-            normal->x=0.0f;normal->y=0.0f;normal->z=twiceSpacing;
-            tangent=&_fadeFluidWork.tangent[i];
-            tangent->x=twiceSpacing;tangent->y=0.0f;tangent->z=0.0f;
-            _fadeFluidWork.uv[i].u=inverseU*(f32)x;
-            _fadeFluidWork.uv[i].v=textureV;
+    if ((f64)value < 0.0) {
+        return __float_nan[0];
+    }
+
+    shape.value = value;
+    exponent = shape.bits & 0x7F800000;
+    switch (exponent) {
+    case 0x7F800000:
+        fpclass = (shape.bits & 0x007FFFFF) != 0 ? 1 : 2;
+        break;
+    case 0:
+        fpclass = (shape.bits & 0x007FFFFF) != 0 ? 5 : 3;
+        break;
+    default:
+        fpclass = 4;
+        break;
+    }
+    if (fpclass == 1) {
+        return __float_nan[0];
+    }
+    return value;
+}
+
+static FadeFluidWork _fadeFluidWork;
+static u32 _fadeFluidSw;
+
+static void _fadeFluidSetShockSub(u32 x, u32 y, f32 strength);
+static void _fadeFluidDoFree(void* ptr);
+static void* _fadeFluidDoMalloc(u32 size);
+
+extern "C" {
+
+void fadeFluidDispSecond(int layerID, GStexture* tex, f32 progress, f32 blend) {
+    enum TsE { TsE0 };
+    u32 row1;
+    u32 row0;
+    GSgfxLayer* layer = GSgfxLayerFindByID(layerID);
+    GSvec interpolated;
+    GSvec to;
+    GSvec from;
+    enum TsE alpha;
+    u32 x;
+    u32 y;
+
+    to.z = to.y = to.x = 1.0f;
+    from.z = from.y = from.x = 0.0f;
+    GSlerpGetLinearInterpolationVector(&interpolated, &to, &from, blend);
+    alpha = (enum TsE)((s32)(255.0f * interpolated.x));
+    alpha = (enum TsE)((s32)((f32)alpha * (1.0f - progress)));
+    spriteSetEnv(layerID);
+    if (layer->curBlendIdx != 1) {
+        layer->curBlendIdx = 1;
+        layer->curBlend = &layer->blendTable[layer->curBlendIdx];
+    }
+    layer->blendOp = 1;
+    layer->blendSrc = 4;
+    layer->blendDst = 5;
+    layer->blendLogic = 5;
+    layer->dirty170c |= 1;
+    layer->dirty16a8 |= 0x40;
+    layer->dirty17c4 |= 1;
+    layer->dirty1760 |= 0x40;
+    layer->colorUpdate = 1;
+    layer->alphaUpdate = 1;
+    layer->zUpdate = 0;
+    layer->dirty170c |= 4;
+    layer->dirty16a8 |= 0x40;
+    layer->dirty17c4 |= 4;
+    layer->dirty1760 |= 0x40;
+    layer->zEnable = 0;
+    layer->zFunc = 1;
+    layer->dirty170c |= 8;
+    layer->dirty16a8 |= 0x40;
+    layer->dirty17c4 |= 8;
+    layer->dirty1760 |= 0x40;
+    layer->f1664 = 7;
+    layer->f1670 = 0;
+    layer->f1668 = 0;
+    layer->f166c = 7;
+    layer->f1671 = 0;
+    layer->f1672 = 1;
+    layer->dirty170c |= 0x10;
+    layer->dirty16a8 |= 0x40;
+    layer->dirty17c4 |= 0x10;
+    layer->dirty1760 |= 0x40;
+    layer->d8c = 0;
+    layer->dirty16b8 |= 2;
+    layer->dirty16a8 |= 2;
+    layer->dirty1770 |= 2;
+    layer->dirty1760 |= 2;
+    layer->setRenderStateAndSelect(GSgfxVFBuildTemp(1, 4, 0, 0, 1, 5, 1, 1, 4));
+    if (layer->tex1740 != tex || layer->tex17f8 != tex || tex->unk7 != 0) {
+        layer->tex1740 = tex;
+        layer->dirty173c |= 1;
+        layer->tex17f8 = tex;
+        layer->dirty17f4 |= 1;
+    }
+    FadeFluidWork* work = &_fadeFluidWork;
+    f32 xScale = work->xScale;
+    f32 yScale = work->yScale;
+    unsigned int stride = work->columns;
+    stride += 1;
+    for (y = 0; y < work->rows; y++) {
+        layer->primType = 0x98;
+        row0 = stride;
+        layer->beginSurface(stride * 2);
+        row0 *= y;
+        row1 = (y + 1) * stride;
+        for (x = 0; x < stride; x++) {
+            GSvec2* t0 = &work->texCoord[x + row0];
+            GSvec* p1;
+            GSvec2* t1;
+            t1 = &work->texCoord[x + row1];
+            p1 = &work->heightPage[_fadeFluidSw][x + row1];
+            GSvec* p0 = &work->heightPage[_fadeFluidSw][x + row0];
+            GXPosition3f32(p0->x * xScale, p0->y * yScale, p0->z * xScale);
+            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
+            GXTexCoord2f32(t0->x, t0->y);
+            GXPosition3f32(p1->x * xScale, p1->y * yScale, p1->z * xScale);
+            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
+            GXTexCoord2f32(t1->x, t1->y);
+        }
+        layer->endSurface();
+    }
+}
+
+void fadeFluidDisp(GStexture* tex, f32 progress, f32 blend) {
+    enum TsE { TsE0 };
+    GSvec2* t0;
+    u32 row1;
+    GSvec* p0;
+    u32 row0;
+    GSgfxLayer* layer = GSgfxLayerFindByID(7);
+    GSvec interpolated;
+    GSvec to;
+    GSvec from;
+    enum TsE alpha;
+    u32 x;
+    u32 y;
+
+    to.z = to.y = to.x = 1.0f;
+    from.z = from.y = from.x = 0.0f;
+    GSlerpGetLinearInterpolationVector(&interpolated, &to, &from, blend);
+    alpha = (enum TsE)((s32)(255.0f * interpolated.x));
+    alpha = (enum TsE)((s32)((f32)alpha * (1.0f - progress)));
+    spriteSetEnv(7);
+    if (layer->curBlendIdx != 1) {
+        layer->curBlendIdx = 1;
+        layer->curBlend = &layer->blendTable[layer->curBlendIdx];
+    }
+    layer->blendOp = 1;
+    layer->blendSrc = 4;
+    layer->blendDst = 5;
+    layer->blendLogic = 5;
+    layer->dirty170c |= 1;
+    layer->dirty16a8 |= 0x40;
+    layer->dirty17c4 |= 1;
+    layer->dirty1760 |= 0x40;
+    layer->colorUpdate = 1;
+    layer->alphaUpdate = 1;
+    layer->zUpdate = 0;
+    layer->dirty170c |= 4;
+    layer->dirty16a8 |= 0x40;
+    layer->dirty17c4 |= 4;
+    layer->dirty1760 |= 0x40;
+    layer->zEnable = 0;
+    layer->zFunc = 1;
+    layer->dirty170c |= 8;
+    layer->dirty16a8 |= 0x40;
+    layer->dirty17c4 |= 8;
+    layer->dirty1760 |= 0x40;
+    layer->f1664 = 7;
+    layer->f1670 = 0;
+    layer->f1668 = 0;
+    layer->f166c = 7;
+    layer->f1671 = 0;
+    layer->f1672 = 1;
+    layer->dirty170c |= 0x10;
+    layer->dirty16a8 |= 0x40;
+    layer->dirty17c4 |= 0x10;
+    layer->dirty1760 |= 0x40;
+    layer->d8c = 0;
+    layer->dirty16b8 |= 2;
+    layer->dirty16a8 |= 2;
+    layer->dirty1770 |= 2;
+    layer->dirty1760 |= 2;
+    layer->setRenderStateAndSelect(GSgfxVFBuildTemp(1, 4, 0, 0, 1, 5, 1, 1, 4));
+    if (layer->tex1740 != tex || layer->tex17f8 != tex || tex->unk7 != 0) {
+        layer->tex1740 = tex;
+        layer->dirty173c |= 1;
+        layer->tex17f8 = tex;
+        layer->dirty17f4 |= 1;
+    }
+    FadeFluidWork* work = &_fadeFluidWork;
+    f32 xScale = work->xScale;
+    f32 yScale = work->yScale;
+    u32 stride = work->columns + 1;
+    layer->primType = 0x98;
+    for (y = 0; y < work->rows; y++) {
+        row0 = stride;
+        row0 *= y;
+        layer->beginSurface(stride * 2);
+        row1 = (y + 1) * stride;
+        for (x = 0; x < stride; x++) {
+            p0 = &work->heightPage[_fadeFluidSw][x + row0];
+            GSvec* p1 = &work->heightPage[_fadeFluidSw][x + row1];
+            GSvec2* t1 = &work->texCoord[x + row1];
+            t0 = &work->texCoord[x + row0];
+            GXPosition3f32(p0->x * xScale, p0->y * yScale, p0->z * xScale);
+            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
+            GXTexCoord2f32(t0->x, t0->y);
+            GXPosition3f32(p1->x * xScale, p1->y * yScale, p1->z * xScale);
+            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
+            GXTexCoord2f32(t1->x, t1->y);
+        }
+        layer->endSurface();
+    }
+}
+
+void fadeFluidSetShockSecond(GSvec* position, f32 strength) {
+    f32 cellSize = _fadeFluidWork.cellSize;
+    u32 x = position->x / cellSize;
+    u32 y = position->y / cellSize;
+    f32 edge, corner;
+
+    _fadeFluidSetShockSub(x, y, strength);
+    edge = 0.5f * strength;
+    corner = 0.25f * strength;
+    _fadeFluidSetShockSub(x - 1, y - 1, corner);
+    _fadeFluidSetShockSub(x, y - 1, edge);
+    _fadeFluidSetShockSub(x + 1, y - 1, corner);
+    _fadeFluidSetShockSub(x - 1, y, edge);
+    _fadeFluidSetShockSub(x + 1, y, edge);
+    _fadeFluidSetShockSub(x - 1, y + 1, corner);
+    _fadeFluidSetShockSub(x, y + 1, edge);
+    _fadeFluidSetShockSub(x + 1, y + 1, corner);
+}
+
+void fadeFluidEvaluateSecond(void) {
+    FadeFluidWork* fluid = &_fadeFluidWork;
+    GSvec* source;
+    u32 rowStride = fluid->columns + 1;
+    s32 x;
+    s32 y;
+    f32 accel = fluid->accel;
+    f32 damping = fluid->damping;
+    f32 neighbor = fluid->neighbor;
+
+    for (y = 1; y < fluid->rows; y++) {
+        u32 row = y * rowStride;
+        GSvec* destination;
+        source = _fadeFluidWork.heightPage[_fadeFluidSw] + row;
+        destination = _fadeFluidWork.heightPage[1 - _fadeFluidSw] + row;
+
+        for (x = 1; x < fluid->columns; x++) {
+            destination[x].z =
+                accel * source[x].z + damping * destination[x].z +
+                neighbor * (source[x + 1].z + source[x - 1].z + source[x + rowStride].z +
+                            source[x - rowStride].z);
+        }
+    }
+    _fadeFluidSw = 1 - _fadeFluidSw;
+}
+
+void fadeFluidSetShock(GSvec* position, f32 strength) {
+    f32 cellSize = _fadeFluidWork.cellSize;
+    u32 x = position->x / cellSize;
+    u32 y = position->y / cellSize;
+
+    _fadeFluidSetShockSub(x, y, strength);
+    strength *= 0.5f;
+    _fadeFluidSetShockSub(x - 1, y - 1, strength);
+    _fadeFluidSetShockSub(x, y - 1, strength);
+    _fadeFluidSetShockSub(x + 1, y - 1, strength);
+    _fadeFluidSetShockSub(x - 1, y, strength);
+    _fadeFluidSetShockSub(x + 1, y, strength);
+    _fadeFluidSetShockSub(x - 1, y + 1, strength);
+    _fadeFluidSetShockSub(x, y + 1, strength);
+    _fadeFluidSetShockSub(x + 1, y + 1, strength);
+}
+
+}
+
+static void _fadeFluidSetShockSub(u32 x, u32 y, f32 strength) {
+    FadeFluidWork* fluid = &_fadeFluidWork;
+    u32 columns = fluid->columns;
+
+    if (x > columns) {
+        return;
+    }
+    if (y > fluid->rows) {
+        return;
+    }
+
+    ((f32*)fluid->heightPage[_fadeFluidSw])[3 * (x + (y * (columns + 1))) + 2] -= strength;
+}
+
+extern "C" {
+
+void fadeFluidEvaluate(void) {
+    FadeFluidWork* fluid = &_fadeFluidWork;
+    FadeFluidWork* work;
+    u32 rowStride = fluid->columns + 1;
+    GSvec* source;
+    s32 x;
+    s32 y;
+    f32 accel = fluid->accel;
+    f32 damping = fluid->damping;
+    f32 neighbor = fluid->neighbor;
+
+    for (y = 1; y < fluid->rows; y++) {
+        u32 row = y * rowStride;
+        GSvec* destination;
+        source = _fadeFluidWork.heightPage[_fadeFluidSw] + row;
+        destination = _fadeFluidWork.heightPage[1 - _fadeFluidSw] + row;
+
+        for (x = 1; x < fluid->columns; x++) {
+            destination[x].z =
+                accel * source[x].z + damping * destination[x].z +
+                neighbor * (source[x + 1].z + source[x - 1].z + source[x + rowStride].z +
+                            source[x - rowStride].z);
+        }
+    }
+
+    _fadeFluidSw = 1 - _fadeFluidSw;
+    work = &_fadeFluidWork;
+    for (y = 1; y < fluid->rows; y++) {
+        u32 row = y * rowStride;
+        GSvec* height = _fadeFluidWork.heightPage[_fadeFluidSw] + row;
+        GSvec* velocityX = work->velocityX + row;
+        GSvec* velocityY = work->velocityY + row;
+
+        for (x = 1; x < work->columns; x++) {
+            velocityX[x].x = height[x - 1].z - height[x + 1].z;
+            velocityX[x].y = height[x - rowStride].z - height[x + rowStride].z;
+            velocityY[x].z = height[x + 1].z - height[x - 1].z;
         }
     }
 }
-static void _fadeFluidDoFree(void *data) {GSmemFree(data);}
-static void *_fadeFluidDoMalloc(unsigned long size) {
-    void *result;
-    s32 previous=GSmemSetAllocMethodHeap(GSmemGetCurrentHeap(),3);
-    result=GSmemAllocAlign(size,32);
-    GSmemSetAllocMethodHeap(GSmemGetCurrentHeap(),previous);
-    return result;
+
+void fadeFluidCalcParms(f32 dt) {
+    FadeFluidWork* fluid = &_fadeFluidWork;
+    f32 c = fluid->limit;
+    f32 d = fluid->cellSize;
+    f32 c2 = c * c;
+    f32 d2 = d * d;
+    f32 mt = fluid->timeStep * dt;
+    f32 ct = dt * c2;
+    f32 f1 = (dt * ct) / d2;
+    f32 f2 = 1.0f / (2.0f + mt);
+    f32 k1;
+    f32 k2;
+    f32 k3;
+
+    k1 = 4.0f - 8.0f * f1;
+    fluid->accel = k1 * f2;
+    k2 = mt - 2.0f;
+    fluid->damping = f2 * k2;
+    k3 = 2.0f * f1;
+    fluid->neighbor = k3 * f2;
+}
+
+void fadeFluidQuit(void) {
+    FadeFluidWork* fluid0 = &_fadeFluidWork;
+    FadeFluidWork* fluid1;
+    FadeFluidWork* fluid2;
+    FadeFluidWork* fluid3;
+    FadeFluidWork* fluid4;
+
+    if (fluid0->heightPage[0] != 0) {
+        _fadeFluidDoFree(fluid0->heightPage[0]);
+    }
+
+    fluid1 = &_fadeFluidWork;
+    if (fluid1->heightPage[1] != 0) {
+        _fadeFluidDoFree(fluid1->heightPage[1]);
+    }
+
+    fluid2 = &_fadeFluidWork;
+    if (fluid2->velocityX != 0) {
+        _fadeFluidDoFree(fluid2->velocityX);
+    }
+
+    fluid3 = &_fadeFluidWork;
+    if (fluid3->velocityY != 0) {
+        _fadeFluidDoFree(fluid3->velocityY);
+    }
+
+    fluid4 = &_fadeFluidWork;
+    if (fluid4->texCoord != 0) {
+        _fadeFluidDoFree(fluid4->texCoord);
+    }
+
+    fluid0->heightPage[0] = 0;
+    fluid1->heightPage[1] = 0;
+    fluid2->velocityX = 0;
+    fluid3->velocityY = 0;
+    fluid4->texCoord = 0;
+}
+
+inline float fadeFluidInitInline(f32 arg0) { return 2.0f * arg0; }
+
+void fadeFluidInit(u32 columns, u32 rows, f32 cellSize, f32 calcStep, f32 waveLimit, f32 timeStep) {
+    FadeFluidWork* fluid = &_fadeFluidWork;
+    u32 pointCount;
+    u32 vectorBytes;
+    s32 x;
+    s32 y;
+    u32 index;
+    f32 velocity;
+    f32 texStepX;
+    f32 texStepY;
+    f32 maximumLimit;
+
+    fluid->xScale = 640.0f / (f32)columns;
+    pointCount = (columns + 1) * (rows + 1);
+    vectorBytes = pointCount * sizeof(GSvec);
+    fluid->yScale = 480.0f / (f32)rows;
+    fluid->columns = columns;
+    fluid->rows = rows;
+    _fadeFluidWork.heightPage[0] = (GSvec*)_fadeFluidDoMalloc(vectorBytes);
+    _fadeFluidWork.heightPage[1] = (GSvec*)_fadeFluidDoMalloc(vectorBytes);
+    _fadeFluidSw = 0;
+    _fadeFluidWork.velocityX = (GSvec*)_fadeFluidDoMalloc(vectorBytes);
+    _fadeFluidWork.velocityY = (GSvec*)_fadeFluidDoMalloc(vectorBytes);
+    _fadeFluidWork.texCoord = (GSvec2*)_fadeFluidDoMalloc(pointCount * sizeof(GSvec2));
+
+    maximumLimit = (cellSize / (2.0f * calcStep)) * fadeSqrtf(2.0f + timeStep);
+    if (!(0.0f < waveLimit && waveLimit < maximumLimit)) {
+        OSReport("Warning: fadeFluid c parm. Limit Over!! -> 0.0f < %f < %f\n", waveLimit,
+                 maximumLimit);
+        waveLimit = maximumLimit - 1.0e-6f;
+    }
+    _fadeFluidWork.cellSize = cellSize;
+    _fadeFluidWork.limit = waveLimit;
+    _fadeFluidWork.timeStep = timeStep;
+    fadeFluidCalcParms(calcStep);
+
+    velocity = fadeFluidInitInline(cellSize);
+    texStepX = 1.0f / (f32)_fadeFluidWork.columns;
+    texStepY = 1.0f / (f32)fluid->rows;
+    index = 0;
+    for (y = 0; y <= rows; y++) {
+        for (x = 0; x <= columns; x++) {
+            _fadeFluidWork.heightPage[0][index].set(cellSize * (f32)x, cellSize * (f32)y, 0.0f);
+            _fadeFluidWork.heightPage[1][index] = _fadeFluidWork.heightPage[0][index];
+            _fadeFluidWork.velocityX[index].set(0.0f, 0.0f, velocity);
+            _fadeFluidWork.velocityY[index].set(velocity, 0.0f, 0.0f);
+            _fadeFluidWork.texCoord[index].x = texStepX * (f32)x;
+            _fadeFluidWork.texCoord[index].y = texStepY * (f32)y;
+            index++;
+        }
+    }
+}
+
+}
+
+static void _fadeFluidDoFree(void* ptr) {
+    GSmemFree(ptr);
+}
+
+static void* _fadeFluidDoMalloc(u32 size) {
+    void* mem;
+    s32 old = GSmemSetAllocMethodHeap(GSmemGetCurrentHeap(), 3);
+    mem = GSmemAllocAlign(size, 0x20);
+    GSmemSetAllocMethodHeap(GSmemGetCurrentHeap(), old);
+    return mem;
 }

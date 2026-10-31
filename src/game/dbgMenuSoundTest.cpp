@@ -1,6 +1,8 @@
 /* Debug menu entries for the sound test (BGM / SE / ENV / cries). */
 #include <global.h>
 
+#pragma force_active on
+
 extern s32 GSsndGetStatus(u16);
 extern void GSsndClose(u16);
 extern void GSsndSetMasterVolume(s32, s32, s32, s32);
@@ -123,3 +125,5 @@ static void sndPlay(u16 id, s32 bgm) {
         soundOpenPlayEnv(id, 0, 0x7F);
     }
 }
+
+#pragma force_active reset

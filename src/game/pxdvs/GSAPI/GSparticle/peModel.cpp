@@ -64,7 +64,7 @@ void peModelContainer::Render() {
    PSMTXTransApply(transform,transform,node->worldPosition.x,node->worldPosition.y,node->worldPosition.z);
    if(definition->flags&0x40) {
     u16 primitive=definition->resource.primitive-1;
-    shapeUpdate(primitive,node->instance,node->life-node->time);
+    shapeUpdate(primitive,node->life-node->time,node->instance);
     pushMult__16GSgfxMatrixStackFP5GSmtx(((ParticleLayerState*)g_current_layer)->unk19A0,transform);
     shapeRender(primitive,node->instance,((ParticleLayerState*)g_current_layer)->unk28);
     pop__16GSgfxMatrixStackFv(((ParticleLayerState*)g_current_layer)->unk19A0);

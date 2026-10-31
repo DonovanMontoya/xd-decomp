@@ -1,11 +1,17 @@
+#pragma defer_codegen off
+#pragma auto_inline off
 #include "game/maximum/GSAPI/particle/psinterpret.h"
 #define NULL ((void*)0)
 #define fabs __fabs
 static PSByteFloat BYTEF32;
-static inline f32 particleAtan2(f32 y,f32 x) {return (f32)atan2(y,x);}
 
-static u8 *getFloat(u8 *arg0,f32 *arg1);
-static u8 *getTime(u8 *arg0, u16 *arg1);
+
+#include "game/maximum/GSAPI/baselib/math_support.h"
+
+
+
+static u8 * getFloat(u8 *arg0,f32 *arg1);
+static u8 * getTime(u8 *arg0, u16 *arg1);
 static void modifyDirGenBase(PSParticle *arg0, f32 farg0, f32 farg1, f32 farg2, f32 farg3);
 static void modifyDir(PSParticle *arg0, f32 farg0);
 static void setVelToJObj(PSParticle *arg0, PSJObj *arg1);
@@ -13,491 +19,61 @@ static s32 applyForceJObj(PSParticle *arg0, PSJObj *arg1, f32 farg0, f32 farg1);
 static void psApplyVelocityLocalRotation(PSParticle *arg0);
 static void psApplyOffsetLocalRotation(PSParticle *arg0, PSVec *arg1);
 static void psCopyGeneratorData(PSGenerator *arg0, PSGenerator *arg1);
-__declspec(weak) PSParticle *_psListGetNext(PSParticle *arg0);
+PSParticle * _psListGetNext(PSParticle *arg0);
 static void HSD_MTXSRT(f32 (*arg0)[4], PSVec *arg1, PSVec *arg2, PSVec *arg3, s32 arg4);
-__declspec(weak) s32 U8ClampAdd(u8 arg0, f32 farg0);
-static void HSD_JObjSetupMatrix(PSJObj *arg0);
+s32 U8ClampAdd(u8 arg0, f32 farg0);
+static inline void HSD_JObjSetupMatrix(PSJObj *arg0);
 static void HSD_JObjAddTx(PSJObj *arg0, f32 farg0);
 static void HSD_JObjAddTy(PSJObj *arg0, f32 farg0);
 static void HSD_JObjAddTz(PSJObj *arg0, f32 farg0);
-PSParticle *psInterpretParticle0(PSParticle *arg0, PSParticle *arg1);
+PSParticle * psInterpretParticle0(PSParticle *arg0, PSParticle *arg1);
 void psInterpretParticles(u32 arg0);
 
-static u8 *getFloat(u8 *arg0,f32 *arg1) {
-    BYTEF32.bytes[0] = *arg0++;
-    BYTEF32.bytes[1] = *arg0++;
-    BYTEF32.bytes[2] = *arg0++;
-    BYTEF32.bytes[3] = *arg0++;
-    *arg1 = BYTEF32.value;
-    return arg0;
-}
 
-static u8 *getTime(u8 *arg0, u16 *arg1) {
-    *arg1 = *arg0++;
-    if (*arg1 & 0x80) { *arg1 = ((*arg1 << 8) & 0x7F00) + *arg0++; }
-    return arg0;
-}
 
-static void modifyDirGenBase(PSParticle *arg0, f32 farg0, f32 farg1, f32 farg2, f32 farg3) {
-    f32 sp8;
-    PSGenerator *temp_r4;
-    f32 temp_f0;
-    f32 temp_f1_4;
-    f32 temp_f24;
-    f32 temp_f25;
-    f32 temp_f25_2;
-    f32 temp_f25_3;
-    f32 temp_f26;
-    f32 temp_f27;
-    f32 temp_f27_2;
-    f32 temp_f28;
-    f32 temp_f28_2;
-    f32 temp_f29;
-    f32 temp_f2;
-    f32 temp_f2_2;
-    f32 temp_f30;
-    f32 temp_f3;
-    f32 temp_f6;
-    f32 var_f24;
-    f32 var_f24_2;
-    f32 var_f31;
-    f64 temp_f1;
-    f64 temp_f1_2;
-    f64 temp_f1_3;
-    s32 temp_r3;
-    s32 var_r0;
 
-    temp_r4 = arg0->generator;
-    temp_f28 = temp_r4->velocity.z + farg3;
-    temp_f25 = temp_r4->velocity.x + farg1;
-    temp_f27 = temp_r4->velocity.y + farg2;
-    if (fabs(temp_f28) < __float_min[0]) {
 
-        if (temp_f27 >= 0.0f) {
-            var_f24 = 1.5707964f;
-        } else {
-            var_f24 = -1.5707964f;
-        }
-    } else {
-        var_f24 = particleAtan2(temp_f27, temp_f28);
-    }
-    temp_f30 = (f32) sin((f64) var_f24);
-    temp_f29 = (f32) cos((f64) var_f24);
-    temp_f2 = (temp_f27 * temp_f30) + (temp_f28 * temp_f29);
-    if (fabs(temp_f2) < __float_min[0]) {
 
-        if (temp_f25 >= 0.0f) {
-            var_f24_2 = 1.5707964f;
-        } else {
-            var_f24_2 = -1.5707964f;
-        }
-    } else {
-        var_f24_2 = particleAtan2(temp_f25, temp_f2);
-    }
-    temp_f28_2 = (f32) sin((f64) var_f24_2);
-    temp_f27_2 = (f32) cos((f64) var_f24_2);
-    temp_f2_2 = arg0->velocity.x;
-    temp_f0 = arg0->velocity.y;
-    temp_f3 = arg0->velocity.z;
-    var_f31 = (f32)(temp_f3 * temp_f3) + ((f32)(temp_f2_2 * temp_f2_2) + (f32)(temp_f0 * temp_f0));
-    if (var_f31 > 0.0f) {
-        temp_f1 = __frsqrte(var_f31);
-        temp_f1_2 = 0.5 * temp_f1 * -(((f64) var_f31 * (temp_f1 * temp_f1)) - 3.0);
-        temp_f1_3 = 0.5 * temp_f1_2 * -(((f64) var_f31 * (temp_f1_2 * temp_f1_2)) - 3.0);
-        var_f31 = (f32) ((f64) var_f31 * (0.5 * temp_f1_3 * -(((f64) var_f31 * (temp_f1_3 * temp_f1_3)) - 3.0)));
-    } else if (var_f31 < 0.0) {
-        var_f31 = __float_nan[0];
-    } else {
-        sp8 = var_f31;
-        temp_r3 = *(s32*)&sp8 & 0x7F800000;
-        switch (temp_r3) {                          /* irregular */
-        case 0x7F800000:
-            if (*(s32*)&sp8 & 0x7FFFFF) {
-                var_r0 = 1;
-            } else {
-                var_r0 = 2;
-            }
-            break;
-        case 0x0:
-            if (*(s32*)&sp8 & 0x7FFFFF) {
-                var_r0 = 5;
-            } else {
-                var_r0 = 3;
-            }
-            break;
-        default:
-            var_r0 = 4;
-            break;
-        }
-        if (var_r0 == 1) {
-            var_f31 = __float_nan[0];
-        }
-    }
-    temp_f25_2 = (f32) (2.0 * (3.141592653589793 * HSD_Randf()));
-    temp_f24 = var_f31 * (f32) sin((f64) farg0);
-    temp_f25_3 = temp_f24 * (f32) cos((f64) temp_f25_2);
-    temp_f26 = temp_f24 * (f32) sin((f64) temp_f25_2);
-    temp_f6 = var_f31 * (f32) cos((f64) farg0);
-    temp_f1_4 = -temp_f25_3;
-    arg0->velocity.x = (temp_f25_3 * temp_f27_2) + (temp_f6 * temp_f28_2);
-    arg0->velocity.y = (temp_f27_2 * (temp_f6 * temp_f30)) + ((temp_f28_2 * (temp_f1_4 * temp_f30)) + (temp_f26 * temp_f29));
-    arg0->velocity.z = (temp_f27_2 * (temp_f6 * temp_f29)) + ((temp_f28_2 * (temp_f1_4 * temp_f29)) - (temp_f26 * temp_f30));
-}
 
-static void modifyDir(PSParticle *arg0, f32 farg0) {
-    f32 sp8;
-    f32 temp_f1_4;
-    f32 temp_f24;
-    f32 temp_f25;
-    f32 temp_f26;
-    f32 temp_f26_2;
-    f32 temp_f26_3;
-    f32 temp_f27;
-    f32 temp_f28;
-    f32 temp_f28_2;
-    f32 temp_f29;
-    f32 temp_f2;
-    f32 temp_f30;
-    f32 temp_f31;
-    f32 temp_f6;
-    f32 var_f24;
-    f32 var_f24_2;
-    f32 var_f27;
-    f64 temp_f1;
-    f64 temp_f1_2;
-    f64 temp_f1_3;
-    s32 temp_r3;
-    s32 var_r0;
 
-    temp_f26 = arg0->velocity.z;
-    temp_f27 = arg0->velocity.x;
-    temp_f28 = arg0->velocity.y;
-    if (fabs(temp_f26) < __float_min[0]) {
 
-        if (temp_f28 >= 0.0f) {
-            var_f24 = 1.5707964f;
-        } else {
-            var_f24 = -1.5707964f;
-        }
-    } else {
-        var_f24 = particleAtan2(temp_f28, temp_f26);
-    }
-    temp_f31 = (f32) sin((f64) var_f24);
-    temp_f30 = (f32) cos((f64) var_f24);
-    temp_f2 = (temp_f28 * temp_f31) + (temp_f26 * temp_f30);
-    if (fabs(temp_f2) < __float_min[0]) {
 
-        if (temp_f27 >= 0.0f) {
-            var_f24_2 = 1.5707964f;
-        } else {
-            var_f24_2 = -1.5707964f;
-        }
-    } else {
-        var_f24_2 = particleAtan2(temp_f27, temp_f2);
-    }
-    temp_f29 = (f32) sin((f64) var_f24_2);
-    temp_f28_2 = (f32) cos((f64) var_f24_2);
-    var_f27 = (temp_f26 * temp_f26) + ((temp_f27 * temp_f27) + (temp_f28 * temp_f28));
-    if (var_f27 > 0.0f) {
-        temp_f1 = __frsqrte(var_f27);
-        temp_f1_2 = 0.5 * temp_f1 * -(((f64) var_f27 * (temp_f1 * temp_f1)) - 3.0);
-        temp_f1_3 = 0.5 * temp_f1_2 * -(((f64) var_f27 * (temp_f1_2 * temp_f1_2)) - 3.0);
-        var_f27 = (f32) ((f64) var_f27 * (0.5 * temp_f1_3 * -(((f64) var_f27 * (temp_f1_3 * temp_f1_3)) - 3.0)));
-    } else if (var_f27 < 0.0) {
-        var_f27 = __float_nan[0];
-    } else {
-        sp8 = var_f27;
-        temp_r3 = *(s32*)&sp8 & 0x7F800000;
-        switch (temp_r3) {                          /* irregular */
-        case 0x7F800000:
-            if (*(s32*)&sp8 & 0x7FFFFF) {
-                var_r0 = 1;
-            } else {
-                var_r0 = 2;
-            }
-            break;
-        case 0x0:
-            if (*(s32*)&sp8 & 0x7FFFFF) {
-                var_r0 = 5;
-            } else {
-                var_r0 = 3;
-            }
-            break;
-        default:
-            var_r0 = 4;
-            break;
-        }
-        if (var_r0 == 1) {
-            var_f27 = __float_nan[0];
-        }
-    }
-    temp_f26_2 = (f32) (2.0 * (3.141592653589793 * HSD_Randf()));
-    temp_f24 = var_f27 * (f32) sin((f64) farg0);
-    temp_f26_3 = temp_f24 * (f32) cos((f64) temp_f26_2);
-    temp_f25 = temp_f24 * (f32) sin((f64) temp_f26_2);
-    temp_f6 = var_f27 * (f32) cos((f64) farg0);
-    temp_f1_4 = -temp_f26_3;
-    arg0->velocity.x = (temp_f26_3 * temp_f28_2) + (temp_f6 * temp_f29);
-    arg0->velocity.y = (temp_f28_2 * (temp_f6 * temp_f31)) + ((temp_f29 * (temp_f1_4 * temp_f31)) + (temp_f25 * temp_f30));
-    arg0->velocity.z = (temp_f28_2 * (temp_f6 * temp_f30)) + ((temp_f29 * (temp_f1_4 * temp_f30)) - (temp_f25 * temp_f31));
-}
 
-static void setVelToJObj(PSParticle *arg0, PSJObj *arg1) {
-    f32 spC;
-    f32 sp8;
-    f32 temp_f0;
-    f32 temp_f0_2;
-    f32 temp_f1;
-    f32 temp_f1_2;
-    f32 temp_f2;
-    f32 temp_f2_2;
-    f32 temp_f3;
-    f32 temp_f8;
-    f32 var_f0;
-    f32 var_f4;
-    f64 temp_f5;
-    f64 temp_f5_2;
-    f64 temp_f5_3;
-    f64 temp_f5_4;
-    f64 temp_f5_5;
-    f64 temp_f5_6;
-    s32 temp_cr0_eq;
-    s32 temp_r3;
-    s32 temp_r3_2;
-    s32 var_r0;
-    s32 var_r0_2;
-    s32 var_r3;
-    u32 temp_r4;
 
-    if (arg1 != NULL) {
-        if (arg1 != NULL) {
-            if (arg1 == NULL) {
-                __assert("jobj.h", 0x25D, "jobj");
-            }
-            temp_r4 = arg1->flags;
-            var_r3 = 0;
-            if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
-                var_r3 = 1;
-            }
-            if (var_r3 != 0) {
-                HSD_JObjSetupMatrixSub(arg1);
-            }
-        }
-        temp_f1 = (f32)(arg0->velocity.x * arg0->velocity.x);
-        temp_f0 = (f32)(arg0->velocity.y * arg0->velocity.y);
-        temp_f2 = (f32)(arg0->velocity.z * arg0->velocity.z);
-        temp_f1_2 = arg1->matrix[0][3] - arg0->position.x;
-        var_f0 = temp_f2 + (temp_f1 + temp_f0);
-        temp_f2_2 = arg1->matrix[1][3] - arg0->position.y;
-        temp_f3 = arg1->matrix[2][3] - arg0->position.z;
-        if (var_f0 > 0.0f) {
-            temp_f5 = __frsqrte(var_f0);
-            temp_f5_2 = 0.5 * temp_f5 * -(((f64) var_f0 * (temp_f5 * temp_f5)) - 3.0);
-            temp_f5_3 = 0.5 * temp_f5_2 * -(((f64) var_f0 * (temp_f5_2 * temp_f5_2)) - 3.0);
-            var_f0 = (f32) ((f64) var_f0 * (0.5 * temp_f5_3 * -(((f64) var_f0 * (temp_f5_3 * temp_f5_3)) - 3.0)));
-        } else if (var_f0 < 0.0) {
-            var_f0 = __float_nan[0];
-        } else {
-            spC = var_f0;
-            temp_r3 = *(s32*)&spC & 0x7F800000;
-            switch (temp_r3) {                      /* switch 1; irregular */
-            case 0x7F800000:                        /* switch 1 */
-                if (*(s32*)&spC & 0x7FFFFF) {
-                    var_r0 = 1;
-                } else {
-                    var_r0 = 2;
-                }
-                break;
-            case 0x0:                               /* switch 1 */
-                if (*(s32*)&spC & 0x7FFFFF) {
-                    var_r0 = 5;
-                } else {
-                    var_r0 = 3;
-                }
-                break;
-            default:                                /* switch 1 */
-                var_r0 = 4;
-                break;
-            }
-            if (var_r0 == 1) {
-                var_f0 = __float_nan[0];
-            }
-        }
-        temp_f8 = (temp_f3 * temp_f3) + ((temp_f1_2 * temp_f1_2) + (temp_f2_2 * temp_f2_2));
-        if (temp_f8 != 0.0f) {
-            if (temp_f8 > 0.0f) {
-                temp_f5_4 = __frsqrte(temp_f8);
-                temp_f5_5 = 0.5 * temp_f5_4 * -(((f64) temp_f8 * (temp_f5_4 * temp_f5_4)) - 3.0);
-                temp_f5_6 = 0.5 * temp_f5_5 * -(((f64) temp_f8 * (temp_f5_5 * temp_f5_5)) - 3.0);
-                var_f4 = (f32) ((f64) temp_f8 * (0.5 * temp_f5_6 * -(((f64) temp_f8 * (temp_f5_6 * temp_f5_6)) - 3.0)));
-            } else if (temp_f8 < 0.0) {
-                var_f4 = __float_nan[0];
-            } else {
-                sp8 = temp_f8;
-                temp_r3_2 = *(s32*)&sp8 & 0x7F800000;
-                switch (temp_r3_2) {                /* switch 2; irregular */
-                case 0x7F800000:                    /* switch 2 */
-                    if (*(s32*)&sp8 & 0x7FFFFF) {
-                        var_r0_2 = 1;
-                    } else {
-                        var_r0_2 = 2;
-                    }
-                    break;
-                case 0x0:                           /* switch 2 */
-                    if (*(s32*)&sp8 & 0x7FFFFF) {
-                        var_r0_2 = 5;
-                    } else {
-                        var_r0_2 = 3;
-                    }
-                    break;
-                default:                            /* switch 2 */
-                    var_r0_2 = 4;
-                    break;
-                }
-                if (var_r0_2 == 1) {
-                    var_f4 = __float_nan[0];
-                } else {
-                    var_f4 = temp_f8;
-                }
-            }
-            temp_f0_2 = var_f0 / var_f4;
-            arg0->velocity.x = temp_f1_2 * temp_f0_2;
-            arg0->velocity.y = temp_f2_2 * temp_f0_2;
-            arg0->velocity.z = temp_f3 * temp_f0_2;
-        }
-    }
-}
 
-static s32 applyForceJObj(PSParticle *arg0, PSJObj *arg1, f32 farg0, f32 farg1) {
-    f32 temp_f1;
-    f32 temp_f1_2;
-    f32 temp_f2;
-    f32 temp_f4;
-    f32 temp_f5;
-    s32 temp_cr0_eq;
-    s32 var_r3;
-    u32 temp_r4;
 
-    if ((arg1 == NULL) || (farg1 < 0.0f)) {
-        return 0;
-    }
-    if (arg1 != NULL) {
-        if (arg1 == NULL) {
-            __assert("jobj.h", 0x25D, "jobj");
-        }
-        temp_r4 = arg1->flags;
-        var_r3 = 0;
-        if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
-            var_r3 = 1;
-        }
-        if (var_r3 != 0) {
-            HSD_JObjSetupMatrixSub(arg1);
-        }
-    }
-    temp_f4 = arg1->matrix[0][3] - arg0->position.x;
-    temp_f5 = arg1->matrix[1][3] - arg0->position.y;
-    temp_f2 = arg1->matrix[2][3] - arg0->position.z;
-    temp_f1 = (temp_f2 * temp_f2) + ((temp_f4 * temp_f4) + (temp_f5 * temp_f5));
 
-    if (temp_f1 <= (farg1 * farg1)) {
-        return 1;
-    }
-    if (temp_f1 == 0.0f) {
-        return 0;
-    }
-    temp_f1_2 = farg0 / temp_f1;
-    arg0->velocity.x += temp_f1_2 * temp_f4;
-    arg0->velocity.y += temp_f1_2 * temp_f5;
-    arg0->velocity.z += temp_f1_2 * temp_f2;
-    return 0;
-}
 
-static void psApplyVelocityLocalRotation(PSParticle *arg0) {
-    PSVec vec8;
-    f32 sp74[12], sp44[12], sp14[12];
-    PSGenerator *temp_r5;
 
-    temp_r5 = arg0->generator;
-    if (temp_r5 == NULL || !(temp_r5->transformFlags & 4)) return;
-    vec8.x = arg0->velocity.x;
-    vec8.y = arg0->velocity.y;
-    vec8.z = arg0->velocity.z;
-    PSMTXRotRad((f32 (*)[4]) &sp74[0], 0x58, temp_r5->rotation.x);
-    PSMTXRotRad((f32 (*)[4]) &sp44[0], 0x59, arg0->generator->rotation.y);
-    PSMTXRotRad((f32 (*)[4]) &sp14[0], 0x5A, arg0->generator->rotation.z);
-    PSMTXConcat((f32 (*)[4]) &sp44[0], (f32 (*)[4]) &sp74[0], (f32 (*)[4]) &sp74[0]);
-    PSMTXConcat((f32 (*)[4]) &sp14[0], (f32 (*)[4]) &sp74[0], (f32 (*)[4]) &sp74[0]);
-    PSMTXMultVec((f32 (*)[4]) &sp74[0], (PSVec *) &vec8.x, (PSVec *) &vec8.x);
-    arg0->velocity.x = vec8.x;
-    arg0->velocity.y = vec8.y;
-    arg0->velocity.z = vec8.z;
-}
 
-static void psApplyOffsetLocalRotation(PSParticle *arg0, PSVec *arg1) {
-    f32 sp98[12], sp68[12], sp38[12], sp8[12];
-    PSGenerator *temp_r4;
-    u16 temp_r3;
 
-    temp_r4 = arg0->generator;
-    if (temp_r4 == NULL || !(temp_r4->transformFlags & 8)) return;
-    temp_r3 = temp_r4->transformFlags;
-    if (temp_r3 & 0x10) {
-        PSMTXIdentity((f32 (*)[4]) &sp8[0]);
-    } else {
-        PSMTXScale((f32 (*)[4]) &sp8[0], temp_r4->scale.x, temp_r4->scale.y, temp_r4->scale.z);
-    }
-    PSMTXRotRad((f32 (*)[4]) &sp98[0], 0x58, arg0->generator->rotation.x);
-    PSMTXRotRad((f32 (*)[4]) &sp68[0], 0x59, arg0->generator->rotation.y);
-    PSMTXRotRad((f32 (*)[4]) &sp38[0], 0x5A, arg0->generator->rotation.z);
-    PSMTXConcat((f32 (*)[4]) &sp68[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
-    PSMTXConcat((f32 (*)[4]) &sp38[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
-    PSMTXConcat((f32 (*)[4]) &sp8[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
-    PSMTXMultVec((f32 (*)[4]) &sp98[0], arg1, arg1);
-}
 
-static void psCopyGeneratorData(PSGenerator *arg0, PSGenerator *arg1) {
-    if (arg1 == NULL || arg0 == NULL) return;
-    if (arg1->kind & 0x20000000) {
-        arg0->kind |= 0x20000000;
-    }
-    arg0->rotation.x = arg1->rotation.x;
-    arg0->rotation.y = arg1->rotation.y;
-    arg0->rotation.z = arg1->rotation.z;
-    arg0->scale.x = arg1->scale.x;
-    arg0->scale.y = arg1->scale.y;
-    arg0->scale.z = arg1->scale.z;
-    arg0->transformFlags = arg1->transformFlags;
-    arg0->transformFlags &= 0xFFFFFFFD;
-    arg0->jobj = arg1->jobj;
-    if (arg1->transformFlags & 0x1000) {
-        psSetGeneratorAngleRadiusScale(arg0, &arg1->nodeScale, 1U);
-        return;
-    }
-    psSetGeneratorAngleRadiusScale(arg0, &arg1->nodeScale, 0U);
 
-}
 
-__declspec(weak) PSParticle *_psListGetNext(PSParticle *arg0) {
-    return arg0->next;
-}
 
-static void HSD_MTXSRT(f32 (*arg0)[4], PSVec *arg1, PSVec *arg2, PSVec *arg3, s32 arg4) {
-    HSD_MtxSRT(arg0, arg1, arg2, arg3, arg4);
-}
 
-__declspec(weak) s32 U8ClampAdd(u8 arg0, f32 farg0) {
-    f32 var_f1;
 
-    var_f1 = (f32) arg0 + farg0;
-    if (var_f1 < 0.0f) {
-        var_f1 = 0.0f;
-    }
-    if (var_f1 > 255.0f) {
-        var_f1 = 255.0f;
-    }
-    return (s32) var_f1;
-}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+static inline f32 particleAtan2(f32 y,f32 x);
+static inline f32 particleSin(f32 a);
+static inline f32 particleCos(f32 a);
+static inline s32 HSD_JObjMtxIsDirty(PSJObj* arg0);
+static inline f32 particleAtan2(f32 y,f32 x) {return (f32)atan2(y,x);}
+static inline f32 particleSin(f32 a) {return (f32)sin(a);}
+static inline f32 particleCos(f32 a) {return (f32)cos(a);}
 static inline s32 HSD_JObjMtxIsDirty(PSJObj* arg0) {
     s32 var_r3;
     if (arg0 == NULL) __assert("jobj.h", 0x25D, "jobj");
@@ -505,91 +81,33 @@ static inline s32 HSD_JObjMtxIsDirty(PSJObj* arg0) {
     if (!(arg0->flags & 0x800000) && (arg0->flags & 0x40)) var_r3 = 1;
     return var_r3;
 }
-
-static void HSD_JObjSetupMatrix(PSJObj *arg0) {
-    if (arg0 == NULL || !HSD_JObjMtxIsDirty(arg0)) return;
-    HSD_JObjSetupMatrixSub(arg0);
-}
-
-static void HSD_JObjAddTx(PSJObj *arg0, f32 farg0) {
-    s32 temp_cr0_eq;
-    s32 var_r3;
-    u32 temp_r4;
-
-    if (arg0 == NULL) {
-        __assert("jobj.h", 0x455, "jobj");
-    }
-    (*(f32*)((u8*)arg0+0x38)) += farg0;
-    if (!(arg0->flags & 0x02000000)) {
-            if (arg0 != NULL) {
-            if (arg0 == NULL) {
-                __assert("jobj.h", 0x25D, "jobj");
-            }
-            temp_r4 = arg0->flags;
-            var_r3 = 0;
-            if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
-                var_r3 = 1;
-            }
-            if (var_r3 == 0) {
-                HSD_JObjSetMtxDirtySub(arg0);
+void psInterpretParticles(u32 mask) {
+    PSParticle *current, *next, *last, *result;
+    s32 link;
+    for (link = 0; link < 16; link++, mask >>= 1) {
+        if (!(mask & 0x10000)) {
+            last = NULL;
+            current = _psListGetFirst(link);
+            while (current != NULL) {
+                next = current->next;
+                result = psInterpretParticle0(current, last);
+                if (next != NULL) {
+                    if (current->next == next) {
+                        last = current;
+                    } else if (result != next) {
+                        last = result;
+                        while (last->next != next) {
+                            if (last == NULL) __assert("psinterpret.c", 0x82E, "lastPP");
+                            last = last->next;
+                        }
+                    }
+                }
+                current = next;
             }
         }
     }
 }
-
-static void HSD_JObjAddTy(PSJObj *arg0, f32 farg0) {
-    s32 temp_cr0_eq;
-    s32 var_r3;
-    u32 temp_r4;
-
-    if (arg0 == NULL) {
-        __assert("jobj.h", 0x460, "jobj");
-    }
-    (*(f32*)((u8*)arg0+0x3C)) += farg0;
-    if (!(arg0->flags & 0x02000000)) {
-            if (arg0 != NULL) {
-            if (arg0 == NULL) {
-                __assert("jobj.h", 0x25D, "jobj");
-            }
-            temp_r4 = arg0->flags;
-            var_r3 = 0;
-            if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
-                var_r3 = 1;
-            }
-            if (var_r3 == 0) {
-                HSD_JObjSetMtxDirtySub(arg0);
-            }
-        }
-    }
-}
-
-static void HSD_JObjAddTz(PSJObj *arg0, f32 farg0) {
-    s32 temp_cr0_eq;
-    s32 var_r3;
-    u32 temp_r4;
-
-    if (arg0 == NULL) {
-        __assert("jobj.h", 0x46B, "jobj");
-    }
-    (*(f32*)((u8*)arg0+0x40)) += farg0;
-    if (!(arg0->flags & 0x02000000)) {
-            if (arg0 != NULL) {
-            if (arg0 == NULL) {
-                __assert("jobj.h", 0x25D, "jobj");
-            }
-            temp_r4 = arg0->flags;
-            var_r3 = 0;
-            if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
-                var_r3 = 1;
-            }
-            if (var_r3 == 0) {
-                HSD_JObjSetMtxDirtySub(arg0);
-            }
-        }
-    }
-}
-
-PSParticle *psInterpretParticle0(PSParticle *arg0, PSParticle *arg1) {
+PSParticle * psInterpretParticle0(PSParticle *arg0, PSParticle *arg1) {
     PSVec vec48;
     u8 temp_r5_16;
     PSVec vec3C;
@@ -2276,30 +1794,347 @@ command_done:
     }
     return _psListGetNext(arg0);
 }
+static void HSD_JObjAddTz(PSJObj *arg0, f32 farg0) {
+    s32 temp_cr0_eq;
+    s32 var_r3;
+    u32 temp_r4;
 
-void psInterpretParticles(u32 mask) {
-    PSParticle *current, *next, *last, *result;
-    s32 link;
-    for (link = 0; link < 16; link++, mask >>= 1) {
-        if (!(mask & 0x10000)) {
-            last = NULL;
-            current = _psListGetFirst(link);
-            while (current != NULL) {
-                next = current->next;
-                result = psInterpretParticle0(current, last);
-                if (next != NULL) {
-                    if (current->next == next) {
-                        last = current;
-                    } else if (result != next) {
-                        last = result;
-                        while (last->next != next) {
-                            if (last == NULL) __assert("psinterpret.c", 0x82E, "lastPP");
-                            last = last->next;
-                        }
-                    }
-                }
-                current = next;
+    if (arg0 == NULL) {
+        __assert("jobj.h", 0x46B, "jobj");
+    }
+    (*(f32*)((u8*)arg0+0x40)) += farg0;
+    if (!(arg0->flags & 0x02000000)) {
+            if (arg0 != NULL) {
+            if (arg0 == NULL) {
+                __assert("jobj.h", 0x25D, "jobj");
+            }
+            temp_r4 = arg0->flags;
+            var_r3 = 0;
+            if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
+                var_r3 = 1;
+            }
+            if (var_r3 == 0) {
+                HSD_JObjSetMtxDirtySub(arg0);
             }
         }
     }
+}
+static void HSD_JObjAddTy(PSJObj *arg0, f32 farg0) {
+    s32 temp_cr0_eq;
+    s32 var_r3;
+    u32 temp_r4;
+
+    if (arg0 == NULL) {
+        __assert("jobj.h", 0x460, "jobj");
+    }
+    (*(f32*)((u8*)arg0+0x3C)) += farg0;
+    if (!(arg0->flags & 0x02000000)) {
+            if (arg0 != NULL) {
+            if (arg0 == NULL) {
+                __assert("jobj.h", 0x25D, "jobj");
+            }
+            temp_r4 = arg0->flags;
+            var_r3 = 0;
+            if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
+                var_r3 = 1;
+            }
+            if (var_r3 == 0) {
+                HSD_JObjSetMtxDirtySub(arg0);
+            }
+        }
+    }
+}
+static void HSD_JObjAddTx(PSJObj *arg0, f32 farg0) {
+    s32 temp_cr0_eq;
+    s32 var_r3;
+    u32 temp_r4;
+
+    if (arg0 == NULL) {
+        __assert("jobj.h", 0x455, "jobj");
+    }
+    (*(f32*)((u8*)arg0+0x38)) += farg0;
+    if (!(arg0->flags & 0x02000000)) {
+            if (arg0 != NULL) {
+            if (arg0 == NULL) {
+                __assert("jobj.h", 0x25D, "jobj");
+            }
+            temp_r4 = arg0->flags;
+            var_r3 = 0;
+            if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
+                var_r3 = 1;
+            }
+            if (var_r3 == 0) {
+                HSD_JObjSetMtxDirtySub(arg0);
+            }
+        }
+    }
+}
+static inline void HSD_JObjSetupMatrix(PSJObj *arg0) {
+    if (arg0 == NULL || !HSD_JObjMtxIsDirty(arg0)) return;
+    HSD_JObjSetupMatrixSub(arg0);
+}
+/* MSL emits this weak inline implementation before the remaining helpers. */
+inline f32 sqrtf(f32 value) {
+    if(value>0.0f) {
+        double guess=__frsqrte((double)value);
+        guess=0.5*guess*(3.0-guess*guess*value);
+        guess=0.5*guess*(3.0-guess*guess*value);
+        guess=0.5*guess*(3.0-guess*guess*value);
+        return (f32)(value*guess);
+    } else if(value<0.0) return __float_nan[0];
+    else if(hsdFloatClassify(value)==1) return __float_nan[0];
+    return value;
+}
+
+__declspec(weak) s32 U8ClampAdd(u8 arg0, f32 farg0) {
+    f32 var_f1;
+
+    var_f1 = (f32) arg0 + farg0;
+    if (var_f1 < 0.0f) {
+        var_f1 = 0.0f;
+    }
+    if (var_f1 > 255.0f) {
+        var_f1 = 255.0f;
+    }
+    return (s32) var_f1;
+}
+static void HSD_MTXSRT(f32 (*arg0)[4], PSVec *arg1, PSVec *arg2, PSVec *arg3, s32 arg4) {
+    HSD_MtxSRT(arg0, arg1, arg2, arg3, arg4);
+}
+__declspec(weak) PSParticle * _psListGetNext(PSParticle *arg0) {
+    return arg0->next;
+}
+static void psCopyGeneratorData(PSGenerator *arg0, PSGenerator *arg1) {
+    if (arg1 == NULL || arg0 == NULL) return;
+    if (arg1->kind & 0x20000000) {
+        arg0->kind |= 0x20000000;
+    }
+    arg0->rotation.x = arg1->rotation.x;
+    arg0->rotation.y = arg1->rotation.y;
+    arg0->rotation.z = arg1->rotation.z;
+    arg0->scale.x = arg1->scale.x;
+    arg0->scale.y = arg1->scale.y;
+    arg0->scale.z = arg1->scale.z;
+    arg0->transformFlags = arg1->transformFlags;
+    arg0->transformFlags &= 0xFFFFFFFD;
+    arg0->jobj = arg1->jobj;
+    if (arg1->transformFlags & 0x1000) {
+        psSetGeneratorAngleRadiusScale(arg0, &arg1->nodeScale, 1U);
+        return;
+    }
+    psSetGeneratorAngleRadiusScale(arg0, &arg1->nodeScale, 0U);
+
+}
+static void psApplyOffsetLocalRotation(PSParticle *arg0, PSVec *arg1) {
+    f32 sp98[12], sp68[12], sp38[12], sp8[12];
+    PSGenerator *temp_r4;
+    u16 temp_r3;
+
+    temp_r4 = arg0->generator;
+    if (temp_r4 == NULL || !(temp_r4->transformFlags & 8)) return;
+    temp_r3 = temp_r4->transformFlags;
+    if (temp_r3 & 0x10) {
+        PSMTXIdentity((f32 (*)[4]) &sp8[0]);
+    } else {
+        PSMTXScale((f32 (*)[4]) &sp8[0], temp_r4->scale.x, temp_r4->scale.y, temp_r4->scale.z);
+    }
+    PSMTXRotRad((f32 (*)[4]) &sp98[0], 0x58, arg0->generator->rotation.x);
+    PSMTXRotRad((f32 (*)[4]) &sp68[0], 0x59, arg0->generator->rotation.y);
+    PSMTXRotRad((f32 (*)[4]) &sp38[0], 0x5A, arg0->generator->rotation.z);
+    PSMTXConcat((f32 (*)[4]) &sp68[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
+    PSMTXConcat((f32 (*)[4]) &sp38[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
+    PSMTXConcat((f32 (*)[4]) &sp8[0], (f32 (*)[4]) &sp98[0], (f32 (*)[4]) &sp98[0]);
+    PSMTXMultVec((f32 (*)[4]) &sp98[0], arg1, arg1);
+}
+static void psApplyVelocityLocalRotation(PSParticle *arg0) {
+    PSVec vec8;
+    f32 sp74[12], sp44[12], sp14[12];
+    PSGenerator *temp_r5;
+
+    temp_r5 = arg0->generator;
+    if (temp_r5 == NULL || !(temp_r5->transformFlags & 4)) return;
+    vec8.x = arg0->velocity.x;
+    vec8.y = arg0->velocity.y;
+    vec8.z = arg0->velocity.z;
+    PSMTXRotRad((f32 (*)[4]) &sp74[0], 0x58, temp_r5->rotation.x);
+    PSMTXRotRad((f32 (*)[4]) &sp44[0], 0x59, arg0->generator->rotation.y);
+    PSMTXRotRad((f32 (*)[4]) &sp14[0], 0x5A, arg0->generator->rotation.z);
+    PSMTXConcat((f32 (*)[4]) &sp44[0], (f32 (*)[4]) &sp74[0], (f32 (*)[4]) &sp74[0]);
+    PSMTXConcat((f32 (*)[4]) &sp14[0], (f32 (*)[4]) &sp74[0], (f32 (*)[4]) &sp74[0]);
+    PSMTXMultVec((f32 (*)[4]) &sp74[0], (PSVec *) &vec8.x, (PSVec *) &vec8.x);
+    arg0->velocity.x = vec8.x;
+    arg0->velocity.y = vec8.y;
+    arg0->velocity.z = vec8.z;
+}
+static s32 applyForceJObj(PSParticle *arg0, PSJObj *arg1, f32 farg0, f32 farg1) {
+    f32 temp_f1;
+    f32 temp_f1_2;
+    f32 temp_f2;
+    f32 temp_f4;
+    f32 temp_f5;
+    s32 temp_cr0_eq;
+    s32 var_r3;
+    u32 temp_r4;
+
+    if ((arg1 == NULL) || (farg1 < 0.0f)) {
+        return 0;
+    }
+    if (arg1 != NULL) {
+        if (arg1 == NULL) {
+            __assert("jobj.h", 0x25D, "jobj");
+        }
+        temp_r4 = arg1->flags;
+        var_r3 = 0;
+        if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
+            var_r3 = 1;
+        }
+        if (var_r3 != 0) {
+            HSD_JObjSetupMatrixSub(arg1);
+        }
+    }
+    temp_f4 = arg1->matrix[0][3] - arg0->position.x;
+    temp_f5 = arg1->matrix[1][3] - arg0->position.y;
+    temp_f2 = arg1->matrix[2][3] - arg0->position.z;
+    temp_f1 = (temp_f2 * temp_f2) + ((temp_f4 * temp_f4) + (temp_f5 * temp_f5));
+
+    if (temp_f1 <= (farg1 * farg1)) {
+        return 1;
+    }
+    if (temp_f1 == 0.0f) {
+        return 0;
+    }
+    temp_f1_2 = farg0 / temp_f1;
+    arg0->velocity.x += temp_f1_2 * temp_f4;
+    arg0->velocity.y += temp_f1_2 * temp_f5;
+    arg0->velocity.z += temp_f1_2 * temp_f2;
+    return 0;
+}
+#pragma auto_inline on
+static void setVelToJObj(PSParticle* pp, PSJObj* jobj)
+{
+    f32 dx;
+    f32 dy;
+    f32 dz;
+    f32 speed;
+    f32 len;
+
+    if (jobj == NULL) {
+        return;
+    }
+    HSD_JObjSetupMatrix(jobj);
+    dx = jobj->matrix[0][3] - pp->position.x;
+    dy = jobj->matrix[1][3] - pp->position.y;
+    dz = jobj->matrix[2][3] - pp->position.z;
+    speed = sqrtf(pp->velocity.x * pp->velocity.x + pp->velocity.y * pp->velocity.y +
+                  pp->velocity.z * pp->velocity.z);
+    len = dx * dx + dy * dy + dz * dz;
+    if (len == 0.0f) {
+        return;
+    }
+    speed = speed / sqrtf(len);
+    pp->velocity.x = dx * speed;
+    pp->velocity.y = dy * speed;
+    pp->velocity.z = dz * speed;
+}
+static void modifyDir(PSParticle* pp, f32 angle)
+{
+    f32 vx;
+    f32 vy;
+    f32 vz;
+    f32 sx;
+    f32 cx;
+    f32 sy;
+    f32 cy;
+    f32 len;
+    f32 rnd;
+    f32 ry;
+    f32 rx;
+    f32 r;
+    f32 w;
+
+    vx = pp->velocity.x;
+    vy = pp->velocity.y;
+    vz = pp->velocity.z;
+    if (fabs(vz) < __float_min[0]) {
+        rx = vy >= 0.0f ? (f32) 1.5707963267948966 : (f32) -1.5707963267948966;
+    } else {
+        rx = particleAtan2(vy, vz);
+    }
+    sx = particleSin(rx);
+    cx = particleCos(rx);
+    w = vy * sx + vz * cx;
+    if (fabs(w) < __float_min[0]) {
+        ry = vx >= 0.0f ? (f32) 1.5707963267948966 : (f32) -1.5707963267948966;
+    } else {
+        ry = particleAtan2(vx, w);
+    }
+    sy = particleSin(ry);
+    cy = particleCos(ry);
+    len = sqrtf(vx * vx + vy * vy + vz * vz);
+    rnd = 2.0 * (3.141592653589793 * HSD_Randf());
+    r = len * particleSin(angle);
+    vx = r * particleCos(rnd);
+    vy = r * particleSin(rnd);
+    vz = len * particleCos(angle);
+    pp->velocity.x = vx * cy + vz * sy;
+    pp->velocity.y = sy * (-vx * sx) + vy * cx + cy * (vz * sx);
+    pp->velocity.z = sy * (-vx * cx) - vy * sx + cy * (vz * cx);
+}
+static void modifyDirGenBase(PSParticle* pp, f32 angle, f32 x, f32 y, f32 z)
+{
+    f32 vx;
+    f32 vy;
+    f32 vz;
+    f32 sx;
+    f32 cx;
+    f32 sy;
+    f32 cy;
+    f32 len;
+    f32 rnd;
+    f32 r;
+    f32 ry;
+    f32 rx;
+    f32 w;
+
+    vx = pp->generator->velocity.x + x;
+    vy = pp->generator->velocity.y + y;
+    vz = pp->generator->velocity.z + z;
+    if (fabs(vz) < __float_min[0]) {
+        rx = vy >= 0.0f ? (f32) 1.5707963267948966 : (f32) -1.5707963267948966;
+    } else {
+        rx = particleAtan2(vy, vz);
+    }
+    sx = particleSin(rx);
+    cx = particleCos(rx);
+    w = vy * sx + vz * cx;
+    if (fabs(w) < __float_min[0]) {
+        ry = vx >= 0.0f ? (f32) 1.5707963267948966 : (f32) -1.5707963267948966;
+    } else {
+        ry = particleAtan2(vx, w);
+    }
+    sy = particleSin(ry);
+    cy = particleCos(ry);
+    len = sqrtf(pp->velocity.x * pp->velocity.x + pp->velocity.y * pp->velocity.y +
+                pp->velocity.z * pp->velocity.z);
+    rnd = 2.0 * (3.141592653589793 * HSD_Randf());
+    r = len * particleSin(angle);
+    vx = r * particleCos(rnd);
+    vy = r * particleSin(rnd);
+    vz = len * particleCos(angle);
+    pp->velocity.x = vx * cy + vz * sy;
+    pp->velocity.y = sy * (-vx * sx) + vy * cx + cy * (vz * sx);
+    pp->velocity.z = sy * (-vx * cx) - vy * sx + cy * (vz * cx);
+}
+static u8 * getTime(u8 *arg0, u16 *arg1) {
+    *arg1 = *arg0++;
+    if (*arg1 & 0x80) { *arg1 = ((*arg1 << 8) & 0x7F00) + *arg0++; }
+    return arg0;
+}
+static u8 * getFloat(u8 *arg0,f32 *arg1) {
+    BYTEF32.bytes[0] = *arg0++;
+    BYTEF32.bytes[1] = *arg0++;
+    BYTEF32.bytes[2] = *arg0++;
+    BYTEF32.bytes[3] = *arg0++;
+    *arg1 = BYTEF32.value;
+    return arg0;
 }

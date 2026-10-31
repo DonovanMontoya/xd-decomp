@@ -4,15 +4,150 @@ extern "C" {void*memset(void*,int,unsigned long);void*memcpy(void*,const void*,u
 void floorInitFieldCamera(GSfloor_dd_*);
 extern "C" u8 floorFieldCameraEditorGetMode(){return gFieldCameraEditorData.mode;}
 extern "C" void floorReleaseFieldCameraEditor(){floorFieldCameraEditorStopTest();if(gFieldCameraEditorData.application)GSgappTerminate(gFieldCameraEditorData.application);GSmemFree(gFieldCameraEditorData.cameraAllocation);GSmemFree(gFieldCameraEditorData.headerAllocation);memset(&gFieldCameraEditorData,0,sizeof(gFieldCameraEditorData));}
-extern "C" void floorInitFieldCameraEditor(u32 floor){GSfloor_dd_*data=floorDataBiosGetPtr(floor);floorReleaseFieldCameraEditor();if(data){gFieldCameraEditorData.application=GSgappCreate(1,0x7F,0,floorUpdateFieldCameraEditor);if(gFieldCameraEditorData.application){FieldCameraList*header=(FieldCameraList*)GSmemAlloc(8);if(header){gFieldCameraEditorData.list=header;gFieldCameraEditorData.headerAllocation=header;FieldCameraList*original=floorDataBiosGetFieldCameraListPtr(data);gFieldCameraEditorData.floor=floor;gFieldCameraEditorData.originalList=data->cameras;gFieldCameraEditorData.mode=floorFieldCameraGetMode();gFieldCameraEditorData.list->count=&gFieldCameraEditorData.count;if(original){u32 count=*original->count;if(count){u32 size=count*0x34;void*allocation=GSmemAlloc(size);if(allocation){gFieldCameraEditorData.count=count;gFieldCameraEditorData.cameraAllocation=allocation;gFieldCameraEditorData.list->cameras=(FieldCamera*)allocation;memcpy(gFieldCameraEditorData.list->cameras,original->cameras,size);return;}goto fail;}}return;}}}fail:floorReleaseFieldCameraEditor();}
-extern "C" void floorUpdateFieldCameraEditor(){
- FieldCamera*c=gFieldCameraEditorData.selected;GSfloor_dd_*current=floorDataBiosGetPtr(GSfloorGetCurrent());GSfloor_dd_*expected=floorDataBiosGetPtr(gFieldCameraEditorData.floor);if(!current||current!=expected){floorReleaseFieldCameraEditor();return;}if(gFieldCameraEditorData.testing)return;if(!c)return;GSvec position,offset;position.clear();if(cameraGetType()!=5)return;GScameraLoadActiveCameraMatrix(-1);ActiveCamera*camera=GScameraGetActiveCamera();if(!camera)return;GSvecCopy(&position,&camera->position);cameraGetTargetOfs(&offset);
- if(floorFieldCameraEditorGetMode()==1&&!dbgMenuIsOpen()&&!menuIsCheck(0x23)){
- u32 changed=GSinputButtonsChanged(1);if(GSinputButtonsPressed(1)&changed&0x10)c->rectangular^=1;if(c->rectangular){if(GSinputButtonsPressed(1)&0x40){if(GSinputButtonsPressed(1)&0x100)c->angle+=0.1f;else if(GSinputButtonsPressed(1)&0x200)c->angle-=0.1f;}else if(GSinputButtonsPressed(1)&0x20){if(GSinputButtonsPressed(1)&0x100){c->aspect+=0.1f;if(c->aspect>20.0f)c->aspect=20.0f;}else if(GSinputButtonsPressed(1)&0x200){c->aspect-=0.1f;if(c->aspect<1.0f)c->aspect=1.0f;}}}else if(GSinputButtonsPressed(1)&0x100){c->extent+=1.0f;if(c->extent>500.0f)c->extent=500.0f;}else if(GSinputButtonsPressed(1)&0x200){c->extent-=1.0f;if(c->extent<5.0f)c->extent=5.0f;}
- GSgfxLayer*layer=GSgfxLayerFindByID(2);if(layer){GScameraLoadActiveCameraMatrix(2);layer->pixelMode(true,true,false);layer->zCompare(false,(GSgfxZCmpFunc)7);layer->alphaCompare(false,(GSgfxACmpFunc)7,0,(GSgfxAlphaOp)0,(GSgfxACmpFunc)7,0);layer->cullMode((GSgfxCullType)0);layer->blendMode((GSgfxBlendType)1,(GSgfxBlendFactor)4,(GSgfxBlendFactor)1,true);s32 end=0;layer->setRenderStateAndSelect(GSgfxVFBuildTemp(1,4,0,0,1,5,0,0,end));
- if(c->rectangular){layer->primitiveType((GSgfxPrimType)0x80);f32 cosine=std::cosf(c->angle),sine=std::sinf(c->angle),extent=c->extent,depth=c->aspect*extent;layer->beginSurface(4);f32 x=extent*cosine;extent*=sine;sine=depth*sine;cosine=depth*cosine;layer->vertex3f(position.x+x+sine,0.1f+(position.y-offset.y),position.z-extent+cosine);layer->color4u8(128,128,128,128);layer->vertex3f(position.x-x+sine,0.1f+(position.y-offset.y),position.z+extent+cosine);layer->color4u8(128,128,128,128);layer->vertex3f(position.x-x-sine,0.1f+(position.y-offset.y),position.z+extent-cosine);layer->color4u8(128,128,128,128);layer->vertex3f(position.x+x-sine,0.1f+(position.y-offset.y),position.z-extent-cosine);layer->color4u8(128,128,128,128);layer->endSurface();}
- else{layer->primitiveType((GSgfxPrimType)0xA0);layer->beginSurface(18);layer->vertex3f(position.x,0.1f+(position.y-offset.y),position.z);layer->color4u8(128,128,128,128);for(s32 i=0;i<17;i++){f32 angle=0.3926991f*i;f32 sine=std::sinf(angle);f32 z=c->extent*sine+position.z;f32 cosine=std::cosf(angle);layer->vertex3f(c->extent*cosine+position.x,0.1f+(position.y-offset.y),z);layer->color4u8(128,128,128,128);}layer->endSurface();}}}
- c->position.x=position.x;c->position.y=position.y-offset.y;c->position.z=position.z;c->distance=cameraGetDistance();c->height=cameraGetHeight();c->rotation=cameraGetRotY();c->fov=cameraGetFov();
+extern "C" void floorInitFieldCameraEditor(u32 floorID) {
+    void* mem;
+    u32* cams;
+    u32 size;
+    GSfloor_dd_* floor = floorDataBiosGetPtr(floorID);
+    u32 count;
+    void* arr;
+    floorReleaseFieldCameraEditor();
+    if (floor != 0) {
+        gFieldCameraEditorData.application = GSgappCreate(1, 0x7f, 0, floorUpdateFieldCameraEditor);
+        if (gFieldCameraEditorData.application != 0) {
+            mem = GSmemAlloc(8);
+            if (mem != 0) {
+                gFieldCameraEditorData.list = (FieldCameraList*)mem;
+                gFieldCameraEditorData.headerAllocation = mem;
+                cams = (u32*)floorDataBiosGetFieldCameraListPtr(floor);
+                gFieldCameraEditorData.floor = floorID;
+                gFieldCameraEditorData.originalList = floor->cameras;
+                gFieldCameraEditorData.mode = floorFieldCameraGetMode();
+                gFieldCameraEditorData.list->count = &gFieldCameraEditorData.count;
+                if (cams != 0) {
+                    count = *(u32*)cams[0];
+                    if (count != 0) {
+                        size = count * 0x34;
+                        arr = GSmemAlloc(size);
+                        if (arr == 0) {
+                            goto fail;
+                        }
+                        gFieldCameraEditorData.count = count;
+                        gFieldCameraEditorData.cameraAllocation = arr;
+                        gFieldCameraEditorData.list->cameras = (FieldCamera*)arr;
+                        memcpy(gFieldCameraEditorData.list->cameras, (void*)cams[1], size);
+                    }
+                }
+                return;
+            }
+        }
+    }
+fail:
+    floorReleaseFieldCameraEditor();
+}
+extern "C" void floorUpdateFieldCameraEditor() {
+    FieldCamera* st = gFieldCameraEditorData.selected;
+    int i;
+    GSfloor_dd_* a = floorDataBiosGetPtr(GSfloorGetCurrent());
+    GSfloor_dd_* b = floorDataBiosGetPtr(gFieldCameraEditorData.floor);
+    if (a == 0 || a != b) {
+        floorReleaseFieldCameraEditor();
+        return;
+    }
+    if (gFieldCameraEditorData.testing == 0 && st != 0) {
+        GSvec pos;
+        GSvec ofs;
+        pos.clear();
+        if (cameraGetType() == 5) {
+            GScameraLoadActiveCameraMatrix(-1);
+            ActiveCamera* cam = GScameraGetActiveCamera();
+            if (cam != 0) {
+                GSvecCopy(&pos, &cam->position);
+                cameraGetTargetOfs(&ofs);
+                if (floorFieldCameraEditorGetMode() == 1 && dbgMenuIsOpen() == 0 && menuIsCheck(0x23) == 0) {
+                    if (GSinputButtonsPressed(1) & GSinputButtonsChanged(1) & 0x10) {
+                        st->rectangular ^= 1;
+                    }
+                    if (st->rectangular != 0) {
+                        if (GSinputButtonsPressed(1) & 0x40) {
+                            if (GSinputButtonsPressed(1) & 0x100) {
+                                st->angle += 0.1f;
+                            } else if (GSinputButtonsPressed(1) & 0x200) {
+                                st->angle -= 0.1f;
+                            }
+                        } else if (GSinputButtonsPressed(1) & 0x20) {
+                            if (GSinputButtonsPressed(1) & 0x100) {
+                                st->aspect += 0.1f;
+                                if (st->aspect > 20.0f) {
+                                    st->aspect = 20.0f;
+                                }
+                            } else if (GSinputButtonsPressed(1) & 0x200) {
+                                st->aspect -= 0.1f;
+                                if (st->aspect < 1.0f) {
+                                    st->aspect = 1.0f;
+                                }
+                            }
+                        }
+                    } else if (GSinputButtonsPressed(1) & 0x100) {
+                        st->extent += 1.0f;
+                        if (st->extent > 500.0f) {
+                            st->extent = 500.0f;
+                        }
+                    } else if (GSinputButtonsPressed(1) & 0x200) {
+                        st->extent -= 1.0f;
+                        if (st->extent < 5.0f) {
+                            st->extent = 5.0f;
+                        }
+                    }
+                    GSgfxLayer* l = GSgfxLayerFindByID(2);
+                    if (l != 0) {
+                        GScameraLoadActiveCameraMatrix(2);
+                        l->pixelMode(1, 1, 0);
+                        l->zCompare(0, (GSgfxZCmpFunc)7);
+                        l->alphaCompare(0, (GSgfxACmpFunc)7, 0, (GSgfxAlphaOp)0, (GSgfxACmpFunc)7, 0);
+                        l->cullMode((GSgfxCullType)0);
+                        l->blendMode((GSgfxBlendType)1, (GSgfxBlendFactor)4, (GSgfxBlendFactor)1, 1);
+                        l->setRenderStateAndSelect(GSgfxVFBuildTemp(1, 4, 0, 0, 1, 5, 0, 0, 0));
+                        if (st->rectangular != 0) {
+                            l->primitiveType((GSgfxPrimType)0x80);
+                            f32 c = std::cosf(st->angle);
+                            f32 s = std::sinf(st->angle);
+                            f32 r = st->extent;
+                            f32 w = st->aspect * r;
+                            l->beginSurface(4);
+                            l->vertex3f(pos.x + r * c + w * s, 0.1f + (pos.y - ofs.y), (pos.z - r * s) + w * c);
+                            l->color4u8(0x80, 0x80, 0x80, 0x80);
+                            l->vertex3f((pos.x - r * c) + w * s, 0.1f + (pos.y - ofs.y), pos.z + r * s + w * c);
+                            l->color4u8(0x80, 0x80, 0x80, 0x80);
+                            l->vertex3f((pos.x - r * c) - w * s, 0.1f + (pos.y - ofs.y), (pos.z + r * s) - w * c);
+                            l->color4u8(0x80, 0x80, 0x80, 0x80);
+                            l->vertex3f((pos.x + r * c) - w * s, 0.1f + (pos.y - ofs.y), (pos.z - r * s) - w * c);
+                            l->color4u8(0x80, 0x80, 0x80, 0x80);
+                            l->endSurface();
+                        } else {
+                            l->primitiveType((GSgfxPrimType)0xA0);
+                            l->beginSurface(0x12);
+                            l->vertex3f(pos.x, 0.1f + (pos.y - ofs.y), pos.z);
+                            l->color4u8(0x80, 0x80, 0x80, 0x80);
+                            for (i = 0; i < 0x11; i++) {
+                                f32 a = 0.3926991f * (f32)i;
+                                l->vertex3f(st->extent * std::cosf(a) + pos.x, 0.1f + (pos.y - ofs.y), st->extent * std::sinf(a) + pos.z);
+                                l->color4u8(0x80, 0x80, 0x80, 0x80);
+                            }
+                            l->endSurface();
+                        }
+                    }
+                }
+                st->position.x = pos.x;
+                st->position.y = pos.y - ofs.y;
+                st->position.z = pos.z;
+                st->distance = cameraGetDistance();
+                st->height = cameraGetHeight();
+                st->rotation = cameraGetRotY();
+                st->fov = cameraGetFov();
+            }
+        }
+    }
 }
 extern "C" void floorFieldCameraEditorStopTest(){gFieldCameraEditorData.testing=0;if(gFieldCameraEditorData.floor){GSfloor_dd_*data=floorDataBiosGetPtr(gFieldCameraEditorData.floor);if(data){data->cameras=gFieldCameraEditorData.originalList;floorInitFieldCamera(data);}}}
 extern "C" u32 floorFieldCameraEditorGetFloorID(){return gFieldCameraEditorData.floor;}

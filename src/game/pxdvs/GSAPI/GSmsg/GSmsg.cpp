@@ -17,34 +17,44 @@ s32 SJIStoGSchar(u16*, char*);
 extern "C" s32 pokecoloGetCountryCode();
 u32 _msgGetSize(const u16*);
 u32 _msgGetLength(const u16* text) { return (_msgGetSize(text) + 1) / 2 - 1; }
-tagFONT_INFO* _msgGetCodeInfo(MSG_TASK_WORK* task, u16 code, tagFONT_INFO** group) {
-    s32 offset = 0;
-    u16 count = _pMw->fontCount;
-    s32 i = 0;
+tagFONT_INFO* _msgGetCodeInfo(MSG_TASK_WORK* t, u16 code, tagFONT_INFO** out)
+{
+    MsgSystem* mw;
+    s32 n;
     MsgFontSlot* slot;
-    for (; i < count; ++i) {
-        slot = (MsgFontSlot*)((u8*)_pMw->fonts + offset);
-        if (slot->identifier == task->fontID) break;
-        offset += sizeof(MsgFontSlot);
+    s32 i;
+    MsgFontGroup* info;
+    tagFONT_INFO* entries;
+    tagFONT_INFO* e;
+    u32 lo;
+    u32 hi;
+    u32 mid;
+
+    mw = _pMw;
+    n = mw->fontCount;
+    for (i = 0; i < n; i++) {
+        slot = &mw->fonts[i];
+        if (slot->identifier == t->fontID) break;
     }
-    if (i == count) return 0;
-    MsgFontGroup* node = (MsgFontGroup*)slot->data;
-    while (node) {
-        tagFONT_INFO* entries = node->entries;
-        u32 lower = 0;
-        u32 upper = node->count;
-        while (lower < upper) {
-            u32 middle = (lower + upper) >> 1;
-            tagFONT_INFO* entry = &entries[middle];
-            if (entry->code == code) {
-                if (group) *group = (tagFONT_INFO*)node;
-                return entry;
+    if (i == n) return 0;
+
+    info = (MsgFontGroup*)slot->data;
+    while (info != 0) {
+        hi = info->count;
+        entries = info->entries;
+        lo = 0;
+        while (lo < hi) {
+            mid = (lo + hi) / 2;
+            e = &entries[mid];
+            if (e->code == (u32)code) {
+                if (out != 0) *out = (tagFONT_INFO*)info;
+                return e;
             }
-            if (entry->code < code) lower = middle + 1;
-            else upper = middle;
+            if (e->code < code) lo = mid + 1;
+            else hi = mid;
         }
-        if (lower < upper) break;
-        node = node->next;
+        if (lo < hi) break;
+        info = info->next;
     }
     return 0;
 }
@@ -104,39 +114,43 @@ s32 fn_8010B208(const MsgBundle* bundle) {
     return 1;
 }
 #pragma dont_inline off
-u16* GSmsgGetGSchar(u32 identifier) {
-    if (!identifier) return 0;
-    MsgBundle* bundle;
-    u32 textID;
+static inline u16* _msgFindText(u32 key, MsgBundle** outBank)
+{
+    if (!key) return 0;
+    MsgBundle* bank;
+    u32 sub;
     u32 group;
-    bundle = _pMw->bundles;
-    group = identifier >> 20;
-    textID = identifier & 0xfffff;
-    while (bundle) {
-        if (identifier < 60000) {
-            s32 language = pokecoloGetLanguage();
-            s32 bundleLanguage = fn_8010B208(bundle);
-            if (bundleLanguage != language) goto nextBundle;
+    bank = _pMw->bundles;
+    group = key >> 20;
+    sub = key & 0xFFFFF;
+    for (; bank != 0; bank = bank->next) {
+        if (key < 60000 && fn_8010B208(bank) != pokecoloGetLanguage()) {
+            continue;
         }
-        if (bundle->group == group) {
-            MsgDirectoryEntry* directory = bundle->entries;
-            u32 lower = 0;
-            u32 upper = bundle->count;
-            u32 middle;
-            u32 candidate;
-            while (lower < upper) {
-                middle = (lower + upper) >> 1;
-                candidate = directory[middle].identifier;
-                if (candidate == textID) return (u16*)((u8*)bundle + directory[middle].textOffset);
-                if (candidate < textID) lower = middle + 1;
-                else upper = middle;
+        if (bank->group == group) {
+            MsgDirectoryEntry* entries = bank->entries;
+            u32 lo = 0;
+            u32 hi = bank->count;
+            while (lo < hi) {
+                u32 mid = (lo + hi) >> 1;
+                u32 k = entries[mid].identifier;
+                if (k == sub) {
+                    if (outBank) {
+                        *outBank = bank;
+                    }
+                    return (u16*)((u8*)bank + entries[mid].textOffset);
+                }
+                if (k < sub) {
+                    lo = mid + 1;
+                } else {
+                    hi = mid;
+                }
             }
         }
-nextBundle:
-        bundle = bundle->next;
     }
     return 0;
 }
+u16* GSmsgGetGSchar(u32 identifier) { return _msgFindText(identifier, 0); }
 u32 GSmsgGetLength(u32 identifier) {
     if (!identifier) return 0;
     return _msgGetLength(GSmsgGetGSchar(identifier));
@@ -282,35 +296,51 @@ void* GSmsgFontOpen(void* font) {
     }
     return font;
 }
-s32 GSmsgFontClose(void* font) {
-    MsgFontBlob* blob = (MsgFontBlob*)font;
-    s32 i = 0;
-    s32 offset = 0;
+s32 GSmsgFontClose(void* font)
+{
+    MsgFontBlob* blk = (MsgFontBlob*)font;
+    MsgSystem* mw;
+    s32 n;
     MsgFontSlot* slot;
-    for (; i < _pMw->fontCount; ++i) {
-        slot = (MsgFontSlot*)((u8*)_pMw->fonts + offset);
-        if (slot->data != 0 && slot->identifier == blob->identifier) break;
-        offset += sizeof(MsgFontSlot);
-    }
-    if (i != _pMw->fontCount) {
-        MsgFontGroup* group = &blob->group;
-        MsgFontGroup* node = (MsgFontGroup*)slot->data;
-        while (node) {
-            if (node == group) {
-                if (!node->previous && !node->next) {
-                    slot->identifier = 0xffff;
-                    slot->data = 0;
+    MsgFontGroup* p;
+    MsgFontGroup* prev;
+    s32 i;
+
+    while (1) {
+        mw = _pMw;
+        n = mw->fontCount;
+        for (i = 0; i < n; i++) {
+            slot = &mw->fonts[i];
+            if (slot->data != 0) {
+                if (slot->identifier == blk->identifier) break;
+            }
+        }
+        if (i != n) {
+            p = (MsgFontGroup*)slot->data;
+            while (p != 0) {
+                if (p == &blk->group) {
+                    prev = p->previous;
+                    if (prev == 0 && p->next == 0) {
+                        slot->identifier = 0xFFFF;
+                        slot->data = 0;
+                    } else {
+                        if (prev != 0) {
+                            prev->next = p->next;
+                        } else {
+                            slot->data = p->next;
+                        }
+                        if (p->next != 0) {
+                            p->next->previous = p->previous;
+                        }
+                    }
                     break;
                 }
-                if (node->previous) node->previous->next = node->next;
-                else slot->data = node->next;
-                if (node->next) node->next->previous = node->previous;
-                break;
+                p = p->next;
             }
-            node = node->next;
         }
+        if (blk->nextOffset == 0) break;
+        blk = (MsgFontBlob*)((u8*)blk + blk->nextOffset);
     }
-    if (blob->nextOffset) return GSmsgFontClose((u8*)blob + blob->nextOffset);
     return 0;
 }
 
@@ -651,39 +681,7 @@ extern "C" s32 GBAMakeFromGSchar(u8* destination, const u16* source, s32 languag
     }
 }
 #pragma dont_inline off
-static inline u16* _msgFindText(u32 identifier, MsgBundle** found) {
-    if (!identifier) return 0;
-    u32 group = identifier >> 20;
-    u32 textID = identifier & 0xfffff;
-    MsgBundle* bundle = _pMw->bundles;
-    while (bundle) {
-        if (identifier < 60000) {
-            s32 language = pokecoloGetLanguage();
-            s32 bundleLanguage = fn_8010B208(bundle);
-            if (bundleLanguage != language) goto next;
-        }
-        if (bundle->group == group) {
-            u32 middle;
-            u32 upper = bundle->count;
-            u32 lower = 0;
-            MsgDirectoryEntry* directory = bundle->entries;
-            u32 candidate;
-            while (lower < upper) {
-                middle = (lower + upper) >> 1;
-                candidate = directory[middle].identifier;
-                if (candidate == textID) {
-                    if (found) *found = bundle;
-                    return (u16*)((u8*)bundle + directory[middle].textOffset);
-                }
-                if (candidate < textID) lower = middle + 1;
-                else upper = middle;
-            }
-        }
-next:
-        bundle = bundle->next;
-    }
-    return 0;
-}
+
 static inline u16 _msgNextCode(MsgTask* task) {
     u32 code;
     for (;;) {
@@ -848,52 +846,58 @@ static MsgRubyAdjustment _adjustTable[2] = {
     {0x3057, 1.0f, 0.9f, 0.0f, 1.0f},
     {0x304d, 1.0f, 1.0f, 0.0f, -1.0f}
 };
-void _msgDispRuby(MSG_TASK_WORK* task) {
-    f32 scaleX;
-    f32 scaleY;
-    ++task->rubyIndex;
-    s32 denominator = task->rubyBaseCount;
-    u32 numerator = task->rubyCount;
-    u8 previous = task->rubyPosition;
-    f32 savedX = task->cursorX;
-    f32 savedY = task->cursorY;
-    u8 count = (s32)(numerator * task->rubyIndex) / denominator;
-    task->cursorX = task->rubyX;
-    task->cursorY = task->rubyY;
-    u8 remaining = count - previous;
-    const u8* cursor = (const u8*)task->rubyText;
-    while (remaining) {
-        scaleX = task->scaleX;
-        scaleY = task->scaleY;
-        task->scaleX *= 0.5f;
-        task->scaleY *= 0.5f;
-        u32 code = *(const u16*)cursor;
-        cursor += 2;
-        if (code == 0xffff) ++cursor;
-        else {
-            for (s32 i = 0; i < 2; ++i) {
-                MsgRubyAdjustment* adjustment = &_adjustTable[i];
-                if (code == adjustment->code) {
-                    task->scaleX *= adjustment->scaleX;
-                    task->scaleY *= adjustment->scaleY;
-                    task->cursorX += adjustment->x;
-                    task->cursorY += adjustment->y;
+void _msgDispRuby(MSG_TASK_WORK* t)
+{
+    f32 half = 0.5f;
+    f32 sx;
+    f32 sy;
+    f32 saveX;
+    f32 saveY;
+    u8 done;
+    u8 left;
+    const u8* p;
+    t->rubyIndex++;
+    done = t->rubyCount * t->rubyIndex / t->rubyBaseCount;
+    left = done - t->rubyPosition;
+    saveX = t->cursorX;
+    saveY = t->cursorY;
+    t->cursorX = t->rubyX;
+    t->cursorY = t->rubyY;
+    p = (const u8*)t->rubyText;
+    while (left != 0) {
+        u32 code;
+        sx = t->scaleX;
+        sy = t->scaleY;
+        t->scaleX = t->scaleX * half;
+        t->scaleY = t->scaleY * half;
+        code = *(const u16*)p;
+        p += 2;
+        if (code == 0xFFFF) {
+            p += 1;
+        } else {
+            s32 i;
+            for (i = 0; i < 2; i++) {
+                if (code == _adjustTable[i].code) {
+                    t->scaleX = t->scaleX * _adjustTable[i].scaleX;
+                    t->scaleY = t->scaleY * _adjustTable[i].scaleY;
+                    t->cursorX = t->cursorX + _adjustTable[i].x;
+                    t->cursorY = t->cursorY + _adjustTable[i].y;
                 }
             }
-            _msgSetChar(task, code);
-            --remaining;
-            task->cursorX += task->charWidth;
-            task->cursorY = task->rubyY;
+            _msgSetChar(t, code);
+            t->cursorX = t->cursorX + t->charWidth;
+            t->cursorY = t->rubyY;
+            left--;
         }
-        task->scaleX = scaleX;
-        task->scaleY = scaleY;
+        t->scaleX = sx;
+        t->scaleY = sy;
     }
-    task->rubyText = (const u16*)cursor;
-    task->rubyPosition = count;
-    task->rubyX = task->cursorX;
-    task->rubyY = task->cursorY;
-    task->cursorX = savedX;
-    task->cursorY = savedY;
+    t->rubyText = (const u16*)p;
+    t->rubyPosition = done;
+    t->rubyX = t->cursorX;
+    t->rubyY = t->cursorY;
+    t->cursorX = saveX;
+    t->cursorY = saveY;
 }
 
 extern "C" {
@@ -998,7 +1002,7 @@ void _msgMakeTexture(MSG_TASK_WORK *task,u8 *pixels,s16 width,s16 height,s16 bea
 }
 #pragma dont_inline off
 static inline void msgMissingVertex(s16 x,s16 y) {
- *(volatile s16*)0xcc008000=x;*(volatile s16*)0xcc008000=y;*(volatile u8*)0xcc008000=0xff;*(volatile u8*)0xcc008000=0xff;*(volatile u8*)0xcc008000=0xff;*(volatile u8*)0xcc008000=0xff;
+ *(s16*)0xcc008000=x;*(s16*)0xcc008000=y;*(u8*)0xcc008000=0xff;*(u8*)0xcc008000=0xff;*(u8*)0xcc008000=0xff;*(u8*)0xcc008000=0xff;
 }
 #pragma dont_inline off
 void _msgSetChar(MSG_TASK_WORK *task,u16 code) {
@@ -1010,7 +1014,7 @@ void _msgSetChar(MSG_TASK_WORK *task,u16 code) {
   msgMissingVertex(x0,y0);msgMissingVertex(x1,y0);msgMissingVertex(x0,y1);msgMissingVertex(x1,y1);endSurface__10GSgfxLayerFv(_TargetLayer);
   setRenderStateAndSelect__10GSgfxLayerFP7GSgfxVF(_TargetLayer,GSgfxVFBuildTemp(0,3,0,0,1,5,1,1,4));task->charWidth=task->glyphWidth*task->scaleX+2.0f;return;
  }
- u32 data=*(u32*)((u8*)info+4);u8 width=info->data[0];u8 height=info->data[1];u8 *pixels=(u8*)group+*(u32*)((u8*)group+4)+(data&0xffffff);
+ u32 data=*(u32*)((u8*)info+4);s16 width=info->data[0];u8 height=info->data[1];u8 *pixels=(u8*)group+*(u32*)((u8*)group+4)+(data&0xffffff);
  _msgMakeTexture(task,pixels,width,height,(s8)(data>>24));task->charWidth=(s16)width*task->scaleX;
 }
 #include <libc/stdarg.h>

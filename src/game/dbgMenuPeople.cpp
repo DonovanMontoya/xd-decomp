@@ -1,5 +1,7 @@
 #include <global.h>
 
+#pragma force_active on
+
 extern "C" {
 u8 menuIsCheck(s32);
 void menuClose(s32);
@@ -39,3 +41,5 @@ s32 dbgMenuPeopleOpenEdit(void) {
     return 0;
 }
 }
+
+#pragma force_active reset

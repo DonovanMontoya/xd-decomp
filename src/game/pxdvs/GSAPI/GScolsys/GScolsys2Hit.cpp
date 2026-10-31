@@ -1,255 +1,479 @@
-#include <game/pxdvs/GSAPI/GScolsys/GScolsys2HitPrivate.hpp>
-static inline u8 faceContact(Vec *closest,Vec *point,Vec *vertices,Vec *normal,f32 radiusSquared) {
-    Vec crossing;
-    if(GScolsy2UtilGetSidePlanePoint(normal,vertices,point)<0.0f) return 0;
-    GScolsy2UtilGetCpPlanePoint(&crossing,normal,vertices,point);
-    if(PSVECSquareDistance(&crossing,point)>=radiusSquared) return 0;
-    if(!GScolsy2UtilChkInTri(&crossing,vertices,normal)) return 0;
-    *closest=crossing;
-    return 1;
+#include <dolphin/types.h>
+
+struct GSvec {
+    f32 x, y, z;
+};
+
+struct GSmtx {
+    f32 m[3][4];
+};
+
+struct CCD_TRI {
+    GSvec verts[3];
+    GSvec normal;
+    u16 flags;
+    u8 pad32[2];
+};
+
+struct CCD_GRID_CELL {
+    u32 first;
+    u32 count;
+};
+
+struct CCD_HITMDL_HEAD {
+    CCD_TRI* tris;
+    u32 numTris;
+    CCD_GRID_CELL* cells;
+    u32* indices;
+    u16 cellsX;
+    u16 cellsZ;
+    f32 cellWidth;
+    f32 cellDepth;
+    f32 minX;
+    f32 minZ;
+};
+
+struct CCD_OBJ {
+    u8 unk0[0x28];
+    CCD_HITMDL_HEAD* hit;
+    u8 unk2C[8];
+    CCD_HITMDL_HEAD* hitAlt;
+    u8 unk38[4];
+    u16 flags;
+    u8 pad3E[2];
+};
+
+struct CCD_FILEHEAD {
+    CCD_OBJ* objs;
+    u32 numObjs;
+};
+
+extern "C" {
+void PSMTXMultVec(const GSmtx* m, const GSvec* src, GSvec* dst);
+f32 PSVECSquareDistance(const GSvec* a, const GSvec* b);
+f32 PSVECDistance(const GSvec* a, const GSvec* b);
+void PSVECSubtract(const GSvec* a, const GSvec* b, GSvec* ab);
+void PSVECScale(const GSvec* src, GSvec* dst, f32 scale);
+void PSVECAdd(const GSvec* a, const GSvec* b, GSvec* ab);
+CCD_FILEHEAD* GScolsys2GetCCDFileHead(void);
+void GScolsys2GetObjEnable(u32 index, bool* enable);
+void GScolsys2GetObjMatrix(GSmtx* m, u32 index);
+void GScolsys2GetObjRotMatrix(GSmtx* m, u32 index);
+f32 GScolsy2UtilGetSidePlanePoint(GSvec* normal, GSvec* verts, GSvec* point);
+void GScolsy2UtilGetCpPlanePoint(GSvec* out, GSvec* normal, GSvec* verts, GSvec* point);
+bool GScolsy2UtilChkInTri(GSvec* point, GSvec* verts, GSvec* normal);
+f32 GScolsys2UtilGetCpLinePoint(GSvec* out, GSvec* start, GSvec* end, GSvec* point);
+void GScolsy2UtilGetPointExtentionLine(GSvec* out, GSvec* start, GSvec* end, f32 length);
 }
-static inline u8 edgeContact(Vec *closest,Vec *point,Vec *vertices,Vec *normal,u16 flags,f32 radiusSquared) {
-    const u16 masks[3]={1,2,4};
-    Vec crossing;
-    if(GScolsy2UtilGetSidePlanePoint(normal,vertices,point)<0.0f) return 0;
-    Vec *vertex=vertices;
-    for(s32 i=0;i<3;i++,vertex++) {
-        if(flags&masks[i]) {
-            s32 next=i+1;
-            if(next>=3) next=0;
-            f32 rate=GScolsys2UtilGetCpLinePoint(&crossing,vertex,&vertices[next],point);
-            if(!(rate<0.0f) && !(rate>1.0f) && PSVECSquareDistance(&crossing,point)<radiusSquared) {
-                *closest=crossing;
-                return 1;
+
+static inline bool chkFace(GSvec* verts, GSvec* normal, GSvec* pos, f32 radiusSq, GSvec* hit) {
+    GSvec cp;
+
+    if (GScolsy2UtilGetSidePlanePoint(normal, verts, pos) < 0.0f) {
+        return false;
+    }
+    GScolsy2UtilGetCpPlanePoint(&cp, normal, verts, pos);
+    if (PSVECSquareDistance(&cp, pos) >= radiusSq) {
+        return false;
+    }
+    if (GScolsy2UtilChkInTri(&cp, verts, normal) == 0) {
+        return false;
+    }
+    *hit = cp;
+    return true;
+}
+
+static inline bool chkEdges(GSvec* verts, GSvec* normal, GSvec* pos, f32 radiusSq, GSvec* hit, u16 flags) {
+    u16 masks[3] = {1, 2, 4};
+    GSvec cp;
+    s32 i;
+    s32 next;
+    f32 t;
+
+    if (GScolsy2UtilGetSidePlanePoint(normal, verts, pos) < 0.0f) {
+        return false;
+    }
+    for (i = 0; i < 3; i++) {
+        if (flags & masks[i]) {
+            next = i + 1;
+            if (next >= 3) {
+                next = 0;
+            }
+            t = GScolsys2UtilGetCpLinePoint(&cp, &verts[i], &verts[next], pos);
+            if (t < 0.0f || t > 1.0f) {
+                continue;
+            }
+            if (PSVECSquareDistance(&cp, pos) < radiusSq) {
+                *hit = cp;
+                return true;
             }
         }
     }
-    return 0;
+    return false;
 }
-static inline u8 vertexContact(Vec *closest,Vec *point,Vec *vertices,Vec *normal,u16 flags,f32 radiusSquared) {
-    const u16 masks[3]={1,2,4};
-    if(GScolsy2UtilGetSidePlanePoint(normal,vertices,point)<0.0f) return 0;
-    Vec *vertex=vertices;
-    for(s32 i=0;i<3;i++,vertex++) {
-        s32 previous=i+2;
-        if(previous>=3) previous-=3;
-        if((flags&masks[i]) && (flags&masks[previous]) && PSVECSquareDistance(vertex,point)<radiusSquared) {
-            *closest=vertices[i];
-            return 1;
+
+static inline bool chkVerts(GSvec* verts, GSvec* normal, GSvec* pos, f32 radiusSq, GSvec* hit, u16 flags) {
+    u16 masks[3] = {1, 2, 4};
+    s32 i;
+    s32 prev;
+
+    if (GScolsy2UtilGetSidePlanePoint(normal, verts, pos) < 0.0f) {
+        return false;
+    }
+    for (i = 0; i < 3; i++) {
+        prev = i + 2;
+        if (prev >= 3) {
+            prev -= 3;
+        }
+        if ((flags & masks[i]) && (flags & masks[prev])) {
+            if (PSVECSquareDistance(&verts[i], pos) < radiusSq) {
+                *hit = verts[i];
+                return true;
+            }
         }
     }
-    return 0;
+    return false;
 }
-static u8 checkHitFixedMdl(GSvec *point,f32 radius,CCD_HITMDL_HEAD *model,GSvec *out) {
-    Vec closest;
-    s32 minX=(s32)(((point->x-radius)-model->originX)/model->cellWidth);
-    if(minX<0) minX=0;
-    s32 minZ=(s32)(((point->z-radius)-model->originZ)/model->cellDepth);
-    if(minZ<0) minZ=0;
-    s32 maxX=(s32)(((point->x+radius)-model->originX)/model->cellWidth);
-    if(maxX>model->width-1) maxX=model->width-1;
-    s32 maxZ=(s32)(((point->z+radius)-model->originZ)/model->cellDepth);
-    if(maxZ>model->depth-1) maxZ=model->depth-1;
-    f32 radiusSquared=radius*radius;
-    {
-        u8 hit=0;
-        for(s32 z=minZ;z<=maxZ && !hit;z++) {
-            HitCell *cell=&model->cells[minX+z*model->width];
-            for(s32 x=minX;x<=maxX && !hit;x++,cell++) {
-                u32 *index=&model->indices[cell->first];
-                for(u32 i=0;i<cell->count && !hit;i++,index++) {
-                    HitPolygon *polygon=&model->polygons[*index];
-                    hit=faceContact(&closest,(Vec *)point,polygon->vertices,&polygon->normal,radiusSquared);
+
+static f32 unusedClampT(f32 t) {
+    if (t < 0.0f) {
+        return 0.0f;
+    }
+    if (t > 1.0f) {
+        return 1.0f;
+    }
+    return t;
+}
+
+static bool checkHitFixedMdl(GSvec* pos, f32 radius, CCD_HITMDL_HEAD* head, GSvec* hitOut) {
+    GSvec hit;
+    CCD_GRID_CELL* cell;
+    u32* index;
+    CCD_TRI* tri;
+    f32 radiusSq;
+    GSvec min;
+    GSvec max;
+    s32 x0;
+    s32 z0;
+    s32 x1;
+    s32 z1;
+    u32 k;
+    s32 x;
+    s32 z;
+    bool found;
+
+    min.x = pos->x - radius;
+    min.z = pos->z - radius;
+    max.x = pos->x + radius;
+    max.z = pos->z + radius;
+    x0 = (min.x - head->minX) / head->cellWidth;
+    if (x0 < 0) {
+        x0 = 0;
+    }
+    z0 = (min.z - head->minZ) / head->cellDepth;
+    if (z0 < 0) {
+        z0 = 0;
+    }
+    x1 = (max.x - head->minX) / head->cellWidth;
+    if (x1 > head->cellsX - 1) {
+        x1 = head->cellsX - 1;
+    }
+    z1 = (max.z - head->minZ) / head->cellDepth;
+    if (z1 > head->cellsZ - 1) {
+        z1 = head->cellsZ - 1;
+    }
+    radiusSq = radius * radius;
+
+    found = false;
+    for (z = z0; z <= z1 && !found; z++) {
+        cell = head->cells;
+        cell += z * head->cellsX + x0;
+        for (x = x0; x <= x1 && !found; x++, cell++) {
+            index = head->indices;
+            index += cell->first;
+            for (k = 0; k < cell->count && !found; k++, index++) {
+                tri = head->tris;
+                tri += *index;
+                found = chkFace(tri->verts, &tri->normal, pos, radiusSq, &hit);
+            }
+        }
+    }
+    if (found) {
+        if (hitOut == 0) {
+            return true;
+        }
+        GScolsy2UtilGetPointExtentionLine(hitOut, &hit, pos, 0.0001f + radius);
+        return true;
+    }
+
+    found = false;
+    for (z = z0; z <= z1 && !found; z++) {
+        cell = head->cells;
+        cell += z * head->cellsX + x0;
+        for (x = x0; x <= x1 && !found; x++, cell++) {
+            index = head->indices;
+            index += cell->first;
+            for (k = 0; k < cell->count && !found; k++, index++) {
+                tri = head->tris;
+                tri += *index;
+                if (!(tri->flags & 7)) {
+                    continue;
                 }
+                found = chkEdges(tri->verts, &tri->normal, pos, radiusSq, &hit, tri->flags);
             }
         }
-        if(hit) {
-            if(!out) return 1;
-            GScolsy2UtilGetPointExtentionLine((Vec *)out,&closest,(Vec *)point,0.0001f+radius);
-            return 1;
-        }
     }
-    {
-        u8 hit=0;
-        for(s32 z=minZ;z<=maxZ && !hit;z++) {
-            HitCell *cell=&model->cells[minX+z*model->width];
-            for(s32 x=minX;x<=maxX && !hit;x++,cell++) {
-                u32 *index=&model->indices[cell->first];
-                for(u32 i=0;i<cell->count && !hit;i++,index++) {
-                    HitPolygon *polygon=&model->polygons[*index];
-                    if(!(polygon->edgeFlags&7)) continue;
-                    hit=edgeContact(&closest,(Vec *)point,polygon->vertices,&polygon->normal,polygon->edgeFlags,radiusSquared);
+    if (found) {
+        if (hitOut == 0) {
+            return true;
+        }
+        GScolsy2UtilGetPointExtentionLine(hitOut, &hit, pos, 0.0001f + radius);
+        return true;
+    }
+
+    found = false;
+    for (z = z0; z <= z1 && !found; z++) {
+        cell = head->cells;
+        cell += z * head->cellsX + x0;
+        for (x = x0; x <= x1 && !found; x++, cell++) {
+            index = head->indices;
+            index += cell->first;
+            for (k = 0; k < cell->count && !found; k++, index++) {
+                tri = head->tris;
+                tri += *index;
+                if (!(tri->flags & 7)) {
+                    continue;
                 }
+                found = chkVerts(tri->verts, &tri->normal, pos, radiusSq, &hit, tri->flags);
             }
         }
-        if(hit) {
-            if(!out) return 1;
-            GScolsy2UtilGetPointExtentionLine((Vec *)out,&closest,(Vec *)point,0.0001f+radius);
-            return 1;
-        }
     }
-    {
-        u8 hit=0;
-        for(s32 z=minZ;z<=maxZ && !hit;z++) {
-            HitCell *cell=&model->cells[minX+z*model->width];
-            for(s32 x=minX;x<=maxX && !hit;x++,cell++) {
-                u32 *index=&model->indices[cell->first];
-                for(u32 i=0;i<cell->count && !hit;i++,index++) {
-                    HitPolygon *polygon=&model->polygons[*index];
-                    if(!(polygon->edgeFlags&7)) continue;
-                    hit=vertexContact(&closest,(Vec *)point,polygon->vertices,&polygon->normal,polygon->edgeFlags,radiusSquared);
-                }
-            }
+    if (found) {
+        if (hitOut == 0) {
+            return true;
         }
-        if(hit) {
-            if(!out) return 1;
-            GScolsy2UtilGetPointExtentionLine((Vec *)out,&closest,(Vec *)point,0.0001f+radius);
-            return 1;
-        }
+        GScolsy2UtilGetPointExtentionLine(hitOut, &hit, pos, 0.0001f + radius);
+        return true;
     }
-    return 0;
+    return false;
 }
-static u8 checkHitMdl(GSvec *point,f32 radius,CCD_HITMDL_HEAD *model,GSmtx *matrix,GSmtx *rotation,GSvec *out) {
-    Vec triangle[3],normal,closest;
-    f32 radiusSquared=radius*radius;
-    {
-        HitPolygon *polygon=model->polygons;
-        u8 hit=0;
-        for(u32 i=0;i<model->count && !hit;i++,polygon++) {
-            for(s32 j=0;j<3;j++) PSMTXMultVec(matrix->m,&(polygon->vertices)[j],&triangle[j]);
-            PSMTXMultVec(rotation->m,&polygon->normal,&normal);
-            hit=faceContact(&closest,(Vec *)point,triangle,&normal,radiusSquared);
-        }
-        if(hit) {
-            if(!out) return 1;
-            GScolsy2UtilGetPointExtentionLine((Vec *)out,&closest,(Vec *)point,0.0001f+radius);
-            return 1;
-        }
-    }
-    {
-        HitPolygon *polygon=model->polygons;
-        u8 hit=0;
-        for(u32 i=0;i<model->count && !hit;i++,polygon++) {
-            if(!(polygon->edgeFlags&7)) continue;
-            for(s32 j=0;j<3;j++) PSMTXMultVec(matrix->m,&(polygon->vertices)[j],&triangle[j]);
-            PSMTXMultVec(rotation->m,&polygon->normal,&normal);
-            hit=edgeContact(&closest,(Vec *)point,triangle,&normal,polygon->edgeFlags,radiusSquared);
-        }
-        if(hit) {
-            if(!out) return 1;
-            GScolsy2UtilGetPointExtentionLine((Vec *)out,&closest,(Vec *)point,0.0001f+radius);
-            return 1;
-        }
-    }
-    {
-        HitPolygon *polygon=model->polygons;
-        u8 hit=0;
-        for(u32 i=0;i<model->count && !hit;i++,polygon++) {
-            if(!(polygon->edgeFlags&7)) continue;
-            for(s32 j=0;j<3;j++) PSMTXMultVec(matrix->m,&(polygon->vertices)[j],&triangle[j]);
-            PSMTXMultVec(rotation->m,&polygon->normal,&normal);
-            hit=vertexContact(&closest,(Vec *)point,triangle,&normal,polygon->edgeFlags,radiusSquared);
-        }
-        if(hit) {
-            if(!out) return 1;
-            GScolsy2UtilGetPointExtentionLine((Vec *)out,&closest,(Vec *)point,0.0001f+radius);
-            return 1;
-        }
-    }
-    return 0;
-}
-static u8 checkHitCollision(GSvec *start,GSvec *end,f32 radius,GSvec *out,bool npc) {
-    s32 passes,contacts;
+
+static bool checkHitMdl(GSvec* pos, f32 radius, CCD_HITMDL_HEAD* head, GSmtx* mtx, GSmtx* rot, GSvec* hitOut) {
+    GSvec verts[3];
+    GSvec normal;
+    GSvec hit;
+    CCD_TRI* tri;
+    f32 radiusSq;
     u32 i;
-    GSvec *adjusted;
-    HitFile *head;
-    HitObject *object;
-    CCD_HITMDL_HEAD *model;
-    GSmtx matrix,rotation;
-    GSvec point,correction;
-    point.x=end->x;point.y=end->y;point.z=end->z;
-    u8 enabled;
-    head=GScolsys2GetCCDFileHead();
-    adjusted=&correction;
-    if(!out) adjusted=0;
-    passes=0;
-    for(;;) {
-        object=head->objects;
-        contacts=0;
-        for(i=0;i<head->count;i++,object++) {
-            GScolsys2GetObjEnable(i,&enabled);
-            if(enabled) {
-                if(npc) {model=object->npcModel;if(!model) continue;}
-                else {model=object->model;if(!model) continue;}
-                u8 hit;
-                if(object->flags&1) {
-                    GScolsys2GetObjMatrix(matrix.m,i);
-                    GScolsys2GetObjRotMatrix(rotation.m,i);
-                    hit=checkHitMdl(&point,radius,model,&matrix,&rotation,adjusted);
-                } else hit=checkHitFixedMdl(&point,radius,model,adjusted);
-                if(hit) {
-                    if(!out) return 1;
-                    contacts++;
-                    if(adjusted) {
-                        f32 x=adjusted->x,y=adjusted->y,z=adjusted->z;
-                        point.x=x;point.y=y;point.z=z;
-                    }
+    s32 j;
+    bool found;
+
+    radiusSq = radius * radius;
+    tri = head->tris;
+    for (i = 0, found = false; i < head->numTris && !found; i++, tri++) {
+        for (j = 0; j < 3; j++) {
+            PSMTXMultVec(mtx, &tri->verts[j], &verts[j]);
+        }
+        PSMTXMultVec(rot, &tri->normal, &normal);
+        found = chkFace(verts, &normal, pos, radiusSq, &hit);
+    }
+    if (found) {
+        if (hitOut == 0) {
+            return true;
+        }
+        GScolsy2UtilGetPointExtentionLine(hitOut, &hit, pos, 0.0001f + radius);
+        return true;
+    }
+
+    tri = head->tris;
+    for (i = 0, found = false; i < head->numTris && !found; i++, tri++) {
+        if (!(tri->flags & 7)) {
+            continue;
+        }
+        for (j = 0; j < 3; j++) {
+            PSMTXMultVec(mtx, &tri->verts[j], &verts[j]);
+        }
+        PSMTXMultVec(rot, &tri->normal, &normal);
+        found = chkEdges(verts, &normal, pos, radiusSq, &hit, tri->flags);
+    }
+    if (found) {
+        if (hitOut == 0) {
+            return true;
+        }
+        GScolsy2UtilGetPointExtentionLine(hitOut, &hit, pos, 0.0001f + radius);
+        return true;
+    }
+
+    tri = head->tris;
+    for (i = 0, found = false; i < head->numTris && !found; i++, tri++) {
+        if (!(tri->flags & 7)) {
+            continue;
+        }
+        for (j = 0; j < 3; j++) {
+            PSMTXMultVec(mtx, &tri->verts[j], &verts[j]);
+        }
+        PSMTXMultVec(rot, &tri->normal, &normal);
+        found = chkVerts(verts, &normal, pos, radiusSq, &hit, tri->flags);
+    }
+    if (found) {
+        if (hitOut == 0) {
+            return true;
+        }
+        GScolsy2UtilGetPointExtentionLine(hitOut, &hit, pos, 0.0001f + radius);
+        return true;
+    }
+    return false;
+}
+
+static bool checkHitCollision(GSvec* start, GSvec* end, f32 radius, GSvec* hitOut, bool alt) {
+    CCD_OBJ* obj;
+    CCD_FILEHEAD* head;
+    CCD_HITMDL_HEAD* group;
+    s32 iter;
+    s32 hitCount;
+    u32 i;
+    GSvec* tmpPtr;
+    GSvec cur;
+    GSvec tmp;
+    GSmtx mtx;
+    GSmtx rotMtx;
+    bool enable;
+    bool result;
+
+    cur = *end;
+    head = GScolsys2GetCCDFileHead();
+    if (hitOut == 0) {
+        tmpPtr = 0;
+    } else {
+        tmpPtr = &tmp;
+    }
+
+    for (iter = 0; iter < 10; iter++) {
+        obj = head->objs;
+        hitCount = 0;
+        for (i = 0; i < head->numObjs; i++, obj++) {
+            GScolsys2GetObjEnable(i, &enable);
+            if (!enable) {
+                continue;
+            }
+            if (alt) {
+                group = obj->hitAlt;
+                if (group == 0) {
+                    continue;
+                }
+            } else {
+                group = obj->hit;
+                if (group == 0) {
+                    continue;
+                }
+            }
+            if (obj->flags & 1) {
+                GScolsys2GetObjMatrix(&mtx, i);
+                GScolsys2GetObjRotMatrix(&rotMtx, i);
+                result = checkHitMdl(&cur, radius, group, &mtx, &rotMtx, tmpPtr);
+            } else {
+                result = checkHitFixedMdl(&cur, radius, group, tmpPtr);
+            }
+            if (result) {
+                if (hitOut == 0) {
+                    return true;
+                }
+                hitCount++;
+                if (tmpPtr != 0) {
+                    cur = *tmpPtr;
                 }
             }
         }
-        if(contacts<=0 || ++passes>=10) break;
+        if (hitCount <= 0) {
+            break;
+        }
     }
-    if(passes<=0) return 0;
-    *out=point;
-    return 1;
+
+    if (iter <= 0) {
+        return false;
+    }
+    *hitOut = cur;
+    return true;
 }
-extern "C" s32 GScolsys2HitNpcCollision(GSvec *start,GSvec *end,GSvec *out,f32 radius) {
-    Vec last,first,direction;
-    if(!GScolsys2GetCCDFileHead()) return 0;
-    f32 length=PSVECDistance((Vec *)start,(Vec *)end);
-    f32 step=0.0f;
-    if(length>0.0f) {
-        step=radius/length;
-        if(step>1.0f) step=1.0f;
+
+extern "C" {
+bool GScolsys2HitNpcCollision(GSvec* start, GSvec* end, f32 radius, GSvec* hitOut) {
+    GSvec p2;
+    GSvec p1;
+    GSvec dir;
+    f32 step;
+    f32 dist;
+    f32 t2;
+    f32 t;
+
+    if (GScolsys2GetCCDFileHead() == 0) {
+        return false;
     }
-    PSVECSubtract((Vec *)end,(Vec *)start,&direction);
-    f32 next;
-    f32 progress=0.0f;
-    for(;progress<1.0f;) {
-        next=progress+step;
-        if(next>1.0f) next=1.0f;
-        PSVECScale(&direction,&first,progress);
-        PSVECAdd(&first,(Vec *)start,&first);
-        PSVECScale(&direction,&last,next);
-        PSVECAdd(&last,(Vec *)start,&last);
-        if(checkHitCollision((GSvec *)&first,(GSvec *)&last,radius,out,true)) return 1;
-        if(step<=0.0f) break;
-        progress+=step;
+    dist = PSVECDistance(start, end);
+    step = 0.0f;
+    if (dist > step) {
+        step = radius / dist;
+        if (step > 1.0f) {
+            step = 1.0f;
+        }
     }
-    return 0;
+    PSVECSubtract(end, start, &dir);
+    for (t = 0.0f; t < 1.0f; t += step) {
+        t2 = t + step;
+        if (t2 > 1.0f) {
+            t2 = 1.0f;
+        }
+        PSVECScale(&dir, &p1, t);
+        PSVECAdd(&p1, start, &p1);
+        PSVECScale(&dir, &p2, t2);
+        PSVECAdd(&p2, start, &p2);
+        if (checkHitCollision(&p1, &p2, radius, hitOut, true)) {
+            return true;
+        }
+        if (step <= 0.0f) {
+            break;
+        }
+    }
+    return false;
 }
-extern "C" s32 GScolsys2HitCollision(GSvec *start,GSvec *end,GSvec *out,f32 radius) {
-    Vec last,first,direction;
-    if(!GScolsys2GetCCDFileHead()) return 0;
-    f32 length=PSVECDistance((Vec *)start,(Vec *)end);
-    f32 step=0.0f;
-    if(length>0.0f) {
-        step=radius/length;
-        if(step>1.0f) step=1.0f;
+
+bool GScolsys2HitCollision(GSvec* start, GSvec* end, f32 radius, GSvec* hitOut) {
+    GSvec p2;
+    GSvec p1;
+    GSvec dir;
+    f32 step;
+    f32 dist;
+    f32 t2;
+    f32 t;
+
+    if (GScolsys2GetCCDFileHead() == 0) {
+        return false;
     }
-    PSVECSubtract((Vec *)end,(Vec *)start,&direction);
-    f32 next;
-    f32 progress=0.0f;
-    for(;progress<1.0f;) {
-        next=progress+step;
-        if(next>1.0f) next=1.0f;
-        PSVECScale(&direction,&first,progress);
-        PSVECAdd(&first,(Vec *)start,&first);
-        PSVECScale(&direction,&last,next);
-        PSVECAdd(&last,(Vec *)start,&last);
-        if(checkHitCollision((GSvec *)&first,(GSvec *)&last,radius,out,false)) return 1;
-        if(step<=0.0f) break;
-        progress+=step;
+    dist = PSVECDistance(start, end);
+    step = 0.0f;
+    if (dist > step) {
+        step = radius / dist;
+        if (step > 1.0f) {
+            step = 1.0f;
+        }
     }
-    return 0;
+    PSVECSubtract(end, start, &dir);
+    for (t = 0.0f; t < 1.0f; t += step) {
+        t2 = t + step;
+        if (t2 > 1.0f) {
+            t2 = 1.0f;
+        }
+        PSVECScale(&dir, &p1, t);
+        PSVECAdd(&p1, start, &p1);
+        PSVECScale(&dir, &p2, t2);
+        PSVECAdd(&p2, start, &p2);
+        if (checkHitCollision(&p1, &p2, radius, hitOut, false)) {
+            return true;
+        }
+        if (step <= 0.0f) {
+            break;
+        }
+    }
+    return false;
+}
 }

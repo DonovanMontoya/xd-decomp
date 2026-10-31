@@ -1,3 +1,6 @@
+#pragma defer_codegen on
+// Deferred code generation emits these definitions in reverse order.
+#pragma force_active on
 #include <game/pxdvs/GSAPI/GSbound/GSbound.hpp>
 #include <game/pxdvs/GSAPI/GSmodel/GSmodel.hpp>
 #include <libc/string.h>
@@ -8,339 +11,19 @@ void GSmodelGetRootPosition(GSmodel*, Vec*);
 void GSmodelGetRootRotation(GSmodel*, Vec*);
 void GSmodelGetRootScale(GSmodel*, Vec*);
 }
-static inline void boundEulerToQuat(Vec* vector, Quaternion* quaternion) {
-    EulerToQuat((HSD_Vec3*)vector, (HSD_Quaternion*)quaternion);
-}
+
 extern "C" {
-void GSboundGetLocalPosition(GSbound* bound, Vec* position) {
-    Vec minimum, maximum;
-    GSboundGetMinMax(bound, &minimum, &maximum, 0, 0, 0, 0);
-    PSVECAdd(&minimum, &maximum, position);
-    PSVECScale(position, position, 0.5f);
-}
-void GSboundGetWorldPosition(GSbound* bound, Vec* position) {
-    Vec minimum, maximum;
-    GSboundGetMinMax(bound, &minimum, &maximum, 1, 1, 1, 0);
-    PSVECAdd(&minimum, &maximum, position);
-    PSVECScale(position, position, 0.5f);
-}
+
 #pragma dont_inline on
-void GSboundGetMinMax(GSbound* bound, Vec* minimum, Vec* maximum, u8 scale, u8 rotate, u8 translate, u8 skipRoot) {
-    Mtx matrix, rootRotation, modelRotation, firstRotation, secondRotation;
-    Vec vector;
-    Quaternion quaternion, matrixQuaternion;
-    if (bound->flags & 8) {
-        GSboundAnimation* animation = bound->bounds.animated.animations[bound->bounds.animated.index];
-        animation = (GSboundAnimation*)((u8*)animation + (s32)bound->bounds.animated.frame * sizeof(GSboundFrame));
-        *minimum = animation->frames[0].minimum;
-        *maximum = animation->frames[0].maximum;
-    } else {
-        *minimum = bound->bounds.box.minimum;
-        *maximum = bound->bounds.box.maximum;
-    }
-    switch (bound->transformType) {
-    case 1:
-        if (skipRoot || !GSmodelIsRootNullAdded(bound->transform.model)) PSMTXIdentity(matrix);
-        else {
-            GSmodelGetRootScale(bound->transform.model, &vector);
-            PSMTXScale(matrix, vector.x, vector.y, vector.z);
-            GSmodelGetRootRotation(bound->transform.model, &vector);
-            boundEulerToQuat(&vector, &quaternion);
-            PSMTXQuat(rootRotation, &quaternion);
-            PSMTXConcat(rootRotation, matrix, matrix);
-            GSmodelGetRootPosition(bound->transform.model, &vector);
-            PSMTXTransApply(matrix, matrix, vector.x, vector.y, vector.z);
-        }
-        if (scale) {
-            GSmodelGetScale(bound->transform.model, (GSvec*)&vector);
-            PSMTXScaleApply(matrix, matrix, vector.x, vector.y, vector.z);
-        }
-        if (rotate) {
-            GSmodelGetRotation(bound->transform.model, (GSvec*)&vector);
-            boundEulerToQuat(&vector, &quaternion);
-            PSMTXQuat(modelRotation, &quaternion);
-            PSMTXConcat(modelRotation, matrix, matrix);
-        }
-        if (translate) {
-            GSmodelGetPosition(bound->transform.model, (GSvec*)&vector);
-            PSMTXTransApply(matrix, matrix, vector.x, vector.y, vector.z);
-        }
-        PSMTXMultVec(matrix, minimum, minimum);
-        PSMTXMultVec(matrix, maximum, maximum);
-        return;
-    case 2:
-        if (scale && rotate && translate) {
-            PSMTXMultVec(bound->transform.matrix, minimum, minimum);
-            PSMTXMultVec(bound->transform.matrix, maximum, maximum);
-            return;
-        }
-        if (scale && rotate) {
-            PSMTXMultVecSR(bound->transform.matrix, minimum, minimum);
-            PSMTXMultVecSR(bound->transform.matrix, maximum, maximum);
-            return;
-        }
-        if (scale) {
-            MtxPtr source = bound->transform.matrix;
-            f32 x = PSVECMag((Vec*)source[0]);
-            f32 y = PSVECMag((Vec*)source[1]);
-            PSMTXScale(matrix, x, y, PSVECMag((Vec*)source[2]));
-        } else if (rotate) {
-            C_QUATMtx(&matrixQuaternion, bound->transform.matrix);
-            PSMTXQuat(matrix, &matrixQuaternion);
-        }
-        if (translate) {
-            MtxPtr source = bound->transform.matrix;
-            PSMTXTransApply(matrix, matrix, source[0][3], source[1][3], source[2][3]);
-        }
-        PSMTXMultVec(matrix, minimum, minimum);
-        PSMTXMultVec(matrix, maximum, maximum);
-        return;
-    case 3:
-        if (scale) {
-            GSboundTransform* transform = bound->transform.transform;
-            minimum->x *= transform->scale.x;
-            minimum->y *= transform->scale.y;
-            minimum->z *= transform->scale.z;
-            transform = bound->transform.transform;
-            maximum->x *= transform->scale.x;
-            maximum->y *= transform->scale.y;
-            maximum->z *= transform->scale.z;
-        }
-        if (rotate) {
-            PSMTXQuat(firstRotation, &bound->transform.transform->rotation);
-            PSMTXMultVecSR(firstRotation, minimum, minimum);
-            PSMTXQuat(secondRotation, &bound->transform.transform->rotation);
-            PSMTXMultVecSR(secondRotation, maximum, maximum);
-        }
-        if (translate) {
-            PSVECAdd(minimum, &bound->transform.transform->position, minimum);
-            PSVECAdd(maximum, &bound->transform.transform->position, maximum);
-        }
-        return;
-    }
-}
+
 #pragma dont_inline reset
-static inline f32 absDot(Vec* first, Vec* second) {
-    f32 result;
-    if (PSVECDotProduct(first, second) > 0.0f) result = PSVECDotProduct(first, second);
-    else result = -PSVECDotProduct(first, second);
-    return result;
-}
-void GSboundGetShadowSize(Vec* result, GSbound* bound, Vec* from, Vec* to, Vec* direction) {
-    Vec minimum, maximum, right, up, extent;
-    Quaternion quaternion;
-    Vec normal, toFrom, firstCross, secondCross, sizeDifference;
-    Vec corners[4];
-    Mtx rotation;
-    Mtx scaleMatrix;
-    PSVECNormalize(direction, &normal);
-    right = normal;
-    PSVECSubtract(to, from, &toFrom);
-    extent = toFrom;
-    PSVECNormalize(&extent, &extent);
-    PSVECCrossProduct(&right, &extent, &firstCross);
-    up = firstCross;
-    PSVECNormalize(&up, &up);
-    PSVECCrossProduct(&extent, &up, &secondCross);
-    right = secondCross;
-    GSboundGetMinMax(bound, &minimum, &maximum, 1, 0, 0, 0);
-    switch (bound->transformType) {
-    case 1:
-        GSmodelGetRotation(bound->transform.model, (GSvec*)&extent);
-        boundEulerToQuat(&extent, &quaternion);
-        PSMTXQuat(rotation, &quaternion);
-        break;
-    case 2: {
-        PSMTXCopy(bound->transform.matrix, rotation);
-        rotation[0][3] = 0.0f; rotation[1][3] = 0.0f; rotation[2][3] = 0.0f;
-        MtxPtr source = bound->transform.matrix;
-        f32 x = PSVECMag((Vec*)source[0]);
-        f32 y = PSVECMag((Vec*)source[1]);
-        PSMTXScale(scaleMatrix, x, y, PSVECMag((Vec*)source[2]));
-        PSMTXInverse(scaleMatrix, scaleMatrix);
-        PSMTXConcat(scaleMatrix, rotation, rotation);
-        break;
-    }
-    case 3: PSMTXQuat(rotation, &bound->transform.transform->rotation); break;
-    default: PSMTXIdentity(rotation); break;
-    }
-    PSVECSubtract(&maximum, &minimum, &sizeDifference);
-    extent = sizeDifference;
-    if (extent.x < 0.0f) extent.x = -extent.x;
-    if (extent.y < 0.0f) extent.y = -extent.y;
-    if (extent.z < 0.0f) extent.z = -extent.z;
-    f32 a;
-    f32 maxA = 0.0f, maxB = 0.0f;
-    Vec* corner = corners;
-    corners[0] = extent;
-    corners[1] = extent; corners[1].y *= -1.0f;
-    corners[2] = extent; corners[2].x *= -1.0f;
-    corners[3] = extent; corners[3].x *= -1.0f; corners[3].y *= -1.0f;
-    for (s32 i = 0; i < 4; ++i, ++corner) {
-        f32 b;
-        PSMTXMultVec(rotation, corner, corner);
-        if (PSVECDotProduct(corner, &up) > 0.0f) { a = PSVECDotProduct(corner, &up); }
-        else { a = PSVECDotProduct(corner, &up); a = -a; }
-        b = absDot(corner, &right);
-        if (a > maxA) maxA = a;
-        if (b > maxB) maxB = b;
-    }
-    result->x = maxA;
-    result->y = 0.0f;
-    result->z = maxB;
-}
-void GSboundSetAnimFrame(GSbound* bound, f32 frame) {
-    if (bound->flags & 8) {
-        u16 count = bound->bounds.animated.animations[bound->bounds.animated.index]->frameCount;
-        if (frame >= count) frame = count - 1;
-        bound->bounds.animated.frame = frame;
-    }
-}
-void GSboundSetAnimIndex(GSbound* bound, s32 index) {
-    if (bound->flags & 8) { bound->bounds.animated.index = index; bound->bounds.animated.frame = 0.0f; }
-}
-s32 GSboundHasAnimData(GSbound* bound) { return (bound->flags >> 3) & 1; }
-void GSboundAlwaysInView(GSbound* bound, u8 enabled) {
-    if (enabled) bound->flags |= 4;
-    else bound->flags &= ~4;
-}
-void GSboundAddPoint(GSbound* bound, f32 x, f32 y, f32 z) {
-    u16 flags = bound->flags;
-    if (!(flags & 8)) {
-        if (flags & 1) {
-            bound->bounds.box.minimum.x = x; bound->bounds.box.minimum.y = y; bound->bounds.box.minimum.z = z;
-            bound->bounds.box.maximum.x = x; bound->bounds.box.maximum.y = y; bound->bounds.box.maximum.z = z;
-            bound->flags &= ~1;
-            return;
-        }
-        if (x < bound->bounds.box.minimum.x) bound->bounds.box.minimum.x = x;
-        if (y < bound->bounds.box.minimum.y) bound->bounds.box.minimum.y = y;
-        if (z < bound->bounds.box.minimum.z) bound->bounds.box.minimum.z = z;
-        if (x > bound->bounds.box.maximum.x) bound->bounds.box.maximum.x = x;
-        if (y > bound->bounds.box.maximum.y) bound->bounds.box.maximum.y = y;
-        if (z > bound->bounds.box.maximum.z) bound->bounds.box.maximum.z = z;
-    }
-}
-void GSboundReset(GSbound* bound) { if (!(bound->flags & 8)) bound->flags |= 1; }
-void GSboundSetDataPtr(GSbound* bound, s32 type, void* data) {
-    if (!data) { bound->transformType = 0; return; }
-    bound->transformType = type;
-    switch (type) {
-    case 1: case 2: case 3: bound->transform.pointer = data; break;
-    default: bound->transformType = 0; bound->transform.pointer = 0; break;
-    }
-}
-void GSboundFree(GSbound* bound) {
-    bound->transformType = 0;
-    if (bound->flags & 8) { GSmemFree(bound->bounds.animated.animations); bound->bounds.animated.animations = 0; }
-}
-void GSboundCreate(GSbound* bound, GSboundData* data) {
-    memset(bound, 0, sizeof(GSbound));
-    if (!data) { bound->flags |= 1; return; }
-    bound->bounds.animated.data = data;
-    bound->bounds.animated.index = 0;
-    bound->bounds.animated.frame = 0.0f;
-    bound->bounds.animated.animations = (GSboundAnimation**)GSmemAlloc(bound->bounds.animated.data->animationCount * 4);
-    s32 i;
-    u8* cursor = (u8*)(bound->bounds.animated.data + 1);
-    for (i = 0; i < bound->bounds.animated.data->animationCount; ++i) {
-        bound->bounds.animated.animations[i] = (GSboundAnimation*)cursor;
-        cursor += ((GSboundAnimation*)cursor)->frameCount * sizeof(GSboundFrame);
-        cursor += 4;
-    }
-    bound->flags |= 8;
-}
+
 }
 
 extern "C" {
-void GSboundGetSize(GSbound* bound, Vec* size, u8 scale, u8 rotate) {
-    Mtx matrix, inverseScale;
-    Vec minimum, maximum, corner;
-    Quaternion quaternion;
-    Vec difference;
-    Vec saved;
-    GSboundGetMinMax(bound, &minimum, &maximum, scale, 0, 0, 0);
-    PSVECSubtract(&maximum, &minimum, &difference);
-    f32 dx = difference.x, dy = difference.y, dz = difference.z;
-    size->x = dx; size->y = dy; size->z = dz;
-    if (size->x < 0.0f) size->x = -size->x;
-    if (size->y < 0.0f) size->y = -size->y;
-    if (size->z < 0.0f) size->z = -size->z;
-    if (rotate) {
-        switch (bound->transformType) {
-        case 1:
-            GSmodelGetRotation(bound->transform.model, (GSvec*)&corner);
-            boundEulerToQuat(&corner, &quaternion);
-            PSMTXQuat(matrix, &quaternion);
-            break;
-        case 2: {
-            PSMTXCopy(bound->transform.matrix, matrix);
-            matrix[0][3] = 0.0f; matrix[1][3] = 0.0f; matrix[2][3] = 0.0f;
-            MtxPtr source = bound->transform.matrix;
-            Vec lengths;
-            lengths.x = PSVECMag((Vec*)source[0]);
-            lengths.y = PSVECMag((Vec*)source[1]);
-            PSMTXScale(inverseScale, lengths.x, lengths.y, PSVECMag((Vec*)source[2]));
-            PSMTXInverse(inverseScale, inverseScale);
-            PSMTXConcat(inverseScale, matrix, matrix);
-            break;
-        }
-        case 3: PSMTXQuat(matrix, &bound->transform.transform->rotation); break;
-        default: return;
-        }
-        saved.x = size->x; saved.y = size->y; saved.z = size->z;
-        PSMTXMultVec(matrix, size, size);
-        f32* component = &corner.x;
-        for (s32 i = 0; i < 3; ++i, ++component) {
-            corner.x = saved.x; corner.y = saved.y; corner.z = saved.z;
-            *component *= -1.0f;
-            PSMTXMultVec(matrix, &corner, &corner);
-            if (corner.x < 0.0f) corner.x = -corner.x;
-            if (corner.y < 0.0f) corner.y = -corner.y;
-            if (corner.z < 0.0f) corner.z = -corner.z;
-            if (corner.x > size->x) size->x = corner.x;
-            if (corner.y > size->y) size->y = corner.y;
-            if (corner.z > size->z) size->z = corner.z;
-        }
-    }
-}
+
 s32 GSgfxProjectFastList(Vec*, Vec*, s32);
-s32 GSboundIsInViewFast(GSbound* bound) {
-    u8 outsideAll, outsideAny;
-    s32 i;
-    Vec* point;
-    Vec corners[8], projected[8], maximum, minimum;
-    if (bound->flags & 4) return 2;
-    GSboundGetMinMax(bound, &minimum, &maximum, 1, 1, 1, 0);
-    corners[0].x = minimum.x; corners[0].y = minimum.y; corners[0].z = minimum.z;
-    corners[1].x = minimum.x; corners[1].y = minimum.y; corners[1].z = maximum.z;
-    corners[2].x = minimum.x; corners[2].y = maximum.y; corners[2].z = minimum.z;
-    corners[3].x = minimum.x; corners[3].y = maximum.y; corners[3].z = maximum.z;
-    corners[4].x = maximum.x; corners[4].y = minimum.y; corners[4].z = minimum.z;
-    corners[5].x = maximum.x; corners[5].y = minimum.y; corners[5].z = maximum.z;
-    corners[6].x = maximum.x; corners[6].y = maximum.y; corners[6].z = minimum.z;
-    corners[7].x = maximum.x; corners[7].y = maximum.y; corners[7].z = maximum.z;
-    if (GSgfxProjectFastList(corners, projected, 8) != 2) return 2;
-    outsideAny=0;
-    outsideAll=0x1f;
-    i=0;
-    point=projected;
-    for (; i < 8; ++point, ++i) {
-        u8 outside;
-        if (point->x < 0.0f) outside = 1;
-        else if (point->x > 640.0f) outside = 2;
-        else outside = 0;
-        if (point->y < 0.0f) outside |= 4;
-        else if (point->y > 480.0f) outside |= 8;
-        if (point->z == -1.0f) outside |= 16;
-        outsideAny |= outside;
-        outsideAll &= outside;
-    }
-    s32 result;
-    if (!outsideAny) result=2;
-    else { if (outsideAll) result=0; else result=1; }
-    return result;
-}
+
 }
 
 #include <game/pxdvs/GSAPI/GSgfxM/matrixStack.hpp>
@@ -397,6 +80,186 @@ class GSgfxLayer {public:
     void setRenderState(bool,u8,bool);void beginSurface(u16);void endSurface();
 };
 extern "C" {void GScameraLoadActiveCameraMatrix(s32);GSgfxVF* GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);}
+
+static inline void boundEulerToQuat(Vec* vector, Quaternion* quaternion) {
+    EulerToQuat((HSD_Vec3*)vector, (HSD_Quaternion*)quaternion);
+}
+
+static inline f32 absDot(Vec* first, Vec* second) {
+    f32 result;
+    if (PSVECDotProduct(first, second) > 0.0f) result = PSVECDotProduct(first, second);
+    else result = -PSVECDotProduct(first, second);
+    return result;
+}
+
+static inline void _boundGenPointList(Vec* points, Vec* mm)
+{
+    points[0].x = mm[0].x;
+    points[0].y = mm[0].y;
+    points[0].z = mm[0].z;
+    points[1].x = mm[0].x;
+    points[1].y = mm[0].y;
+    points[1].z = mm[1].z;
+    points[2].x = mm[0].x;
+    points[2].y = mm[1].y;
+    points[2].z = mm[0].z;
+    points[3].x = mm[0].x;
+    points[3].y = mm[1].y;
+    points[3].z = mm[1].z;
+    points[4].x = mm[1].x;
+    points[4].y = mm[0].y;
+    points[4].z = mm[0].z;
+    points[5].x = mm[1].x;
+    points[5].y = mm[0].y;
+    points[5].z = mm[1].z;
+    points[6].x = mm[1].x;
+    points[6].y = mm[1].y;
+    points[6].z = mm[0].z;
+    points[7].x = mm[1].x;
+    points[7].y = mm[1].y;
+    points[7].z = mm[1].z;
+}
+
+static inline s32 _boundIsInScreenView(Vec* screen)
+{
+    s32 i;
+    u8 orCode = 0;
+    u8 andCode = 0x1f;
+    for (i = 0; i < 8; i++) {
+        u8 code;
+        if (screen[i].x < 0.0f) {
+            code = 1;
+        } else if (screen[i].x > 640.0f) {
+            code = 2;
+        } else {
+            code = 0;
+        }
+        if (screen[i].y < 0.0f) {
+            code |= 4;
+        } else if (screen[i].y > 480.0f) {
+            code |= 8;
+        }
+        if (screen[i].z == -1.0f) {
+            code |= 0x10;
+        }
+        orCode |= code;
+        andCode &= code;
+    }
+    if (orCode == 0) {
+        return 2;
+    } else if (andCode != 0) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+extern "C" { void GSboundGetShadowSize(Vec* result, GSbound* bound, Vec* from, Vec* to, Vec* direction); }
+extern "C" { void GSboundGetShadowVolume(GSbound* output,GSbound* bound,Vec* light,f32 plane); }
+extern "C" { void GSboundGetLocalPosition(GSbound* bound, Vec* position); }
+extern "C" { void GSboundGetWorldPosition(GSbound* bound, Vec* position); }
+extern "C" { void GSboundGetSize(GSbound* bound, Vec* size, u8 scale, u8 rotate); }
+extern "C" { void GSboundGetMinMax(GSbound* bound, Vec* minimum, Vec* maximum, u8 scale, u8 rotate, u8 translate, u8 skipRoot); }
+extern "C" { void GSboundSetAnimFrame(GSbound* bound, f32 frame); }
+extern "C" { void GSboundSetAnimIndex(GSbound* bound, s32 index); }
+extern "C" { s32 GSboundHasAnimData(GSbound* bound); }
+extern "C++" { void GSboundDraw(GSbound* bound,GSgfxLayer* layer); }
+extern "C" { void GSboundAlwaysInView(GSbound* bound, u8 enabled); }
+extern "C" { s32 GSboundIsInViewFast(GSbound* b); }
+extern "C" { void GSboundAddPoint(GSbound* bound, f32 x, f32 y, f32 z); }
+extern "C" { void GSboundReset(GSbound* bound); }
+extern "C" { void GSboundSetDataPtr(GSbound* bound, s32 type, void* data); }
+extern "C" { void GSboundFree(GSbound* bound); }
+extern "C" { void GSboundCreate(GSbound* bound, GSboundData* data); }
+
+extern "C" {
+void GSboundCreate(GSbound* bound, GSboundData* data) {
+    memset(bound, 0, sizeof(GSbound));
+    if (!data) { bound->flags |= 1; return; }
+    bound->bounds.animated.data = data;
+    bound->bounds.animated.index = 0;
+    bound->bounds.animated.frame = 0.0f;
+    bound->bounds.animated.animations = (GSboundAnimation**)GSmemAlloc(bound->bounds.animated.data->animationCount * 4);
+    s32 i;
+    u8* cursor = (u8*)(bound->bounds.animated.data + 1);
+    for (i = 0; i < bound->bounds.animated.data->animationCount; ++i) {
+        bound->bounds.animated.animations[i] = (GSboundAnimation*)cursor;
+        cursor += ((GSboundAnimation*)cursor)->frameCount * sizeof(GSboundFrame);
+        cursor += 4;
+    }
+    bound->flags |= 8;
+}
+}
+
+extern "C" {
+void GSboundFree(GSbound* bound) {
+    bound->transformType = 0;
+    if (bound->flags & 8) { GSmemFree(bound->bounds.animated.animations); bound->bounds.animated.animations = 0; }
+}
+}
+
+extern "C" {
+void GSboundSetDataPtr(GSbound* bound, s32 type, void* data) {
+    if (!data) { bound->transformType = 0; return; }
+    bound->transformType = type;
+    switch (type) {
+    case 1: case 2: case 3: bound->transform.pointer = data; break;
+    default: bound->transformType = 0; bound->transform.pointer = 0; break;
+    }
+}
+}
+
+extern "C" {
+void GSboundReset(GSbound* bound) { if (!(bound->flags & 8)) bound->flags |= 1; }
+}
+
+extern "C" {
+void GSboundAddPoint(GSbound* bound, f32 x, f32 y, f32 z) {
+    u16 flags = bound->flags;
+    if (!(flags & 8)) {
+        if (flags & 1) {
+            bound->bounds.box.minimum.x = x; bound->bounds.box.minimum.y = y; bound->bounds.box.minimum.z = z;
+            bound->bounds.box.maximum.x = x; bound->bounds.box.maximum.y = y; bound->bounds.box.maximum.z = z;
+            bound->flags &= ~1;
+            return;
+        }
+        if (x < bound->bounds.box.minimum.x) bound->bounds.box.minimum.x = x;
+        if (y < bound->bounds.box.minimum.y) bound->bounds.box.minimum.y = y;
+        if (z < bound->bounds.box.minimum.z) bound->bounds.box.minimum.z = z;
+        if (x > bound->bounds.box.maximum.x) bound->bounds.box.maximum.x = x;
+        if (y > bound->bounds.box.maximum.y) bound->bounds.box.maximum.y = y;
+        if (z > bound->bounds.box.maximum.z) bound->bounds.box.maximum.z = z;
+    }
+}
+}
+
+extern "C" {
+s32 GSboundIsInViewFast(GSbound* b)
+{
+    Vec mm[2];
+    Vec points[8];
+    Vec screen[8];
+
+    if (b->flags & 4) {
+        return 2;
+    }
+    GSboundGetMinMax(b, &mm[0], &mm[1], true, true, true, false);
+    _boundGenPointList(points, mm);
+    if (GSgfxProjectFastList(points, screen, 8) != 2) {
+        return 2;
+    }
+    return _boundIsInScreenView(screen);
+}
+}
+
+extern "C" {
+void GSboundAlwaysInView(GSbound* bound, u8 enabled) {
+    if (enabled) bound->flags |= 4;
+    else bound->flags &= ~4;
+}
+}
+
+extern "C++" {
 void GSboundDraw(GSbound* bound,GSgfxLayer* layer) {
     Mtx matrix,inverseScale,transform,modelRotation,transformRotation;
     Vec size,center,angles;Quaternion quaternion;Vec maximum,minimum;
@@ -634,8 +497,199 @@ void GSboundDraw(GSbound* bound,GSgfxLayer* layer) {
         }
     }
 }
+}
 
-extern "C" void GSboundGetShadowVolume(GSbound* output,GSbound* bound,Vec* light,f32 plane) {
+extern "C" {
+s32 GSboundHasAnimData(GSbound* bound) { return (bound->flags >> 3) & 1; }
+}
+
+extern "C" {
+void GSboundSetAnimIndex(GSbound* bound, s32 index) {
+    if (bound->flags & 8) { bound->bounds.animated.index = index; bound->bounds.animated.frame = 0.0f; }
+}
+}
+
+extern "C" {
+void GSboundSetAnimFrame(GSbound* bound, f32 frame) {
+    if (bound->flags & 8) {
+        u16 count = bound->bounds.animated.animations[bound->bounds.animated.index]->frameCount;
+        if (frame >= count) frame = count - 1;
+        bound->bounds.animated.frame = frame;
+    }
+}
+}
+
+extern "C" {
+void GSboundGetMinMax(GSbound* bound, Vec* minimum, Vec* maximum, u8 scale, u8 rotate, u8 translate, u8 skipRoot) {
+    Mtx matrix, rootRotation, modelRotation, firstRotation, secondRotation;
+    Vec vector;
+    Quaternion quaternion, matrixQuaternion;
+    if (bound->flags & 8) {
+        GSboundAnimation* animation = bound->bounds.animated.animations[bound->bounds.animated.index];
+        animation = (GSboundAnimation*)((u8*)animation + (s32)bound->bounds.animated.frame * sizeof(GSboundFrame));
+        *minimum = animation->frames[0].minimum;
+        *maximum = animation->frames[0].maximum;
+    } else {
+        *minimum = bound->bounds.box.minimum;
+        *maximum = bound->bounds.box.maximum;
+    }
+    switch (bound->transformType) {
+    case 1:
+        if (skipRoot || !GSmodelIsRootNullAdded(bound->transform.model)) PSMTXIdentity(matrix);
+        else {
+            GSmodelGetRootScale(bound->transform.model, &vector);
+            PSMTXScale(matrix, vector.x, vector.y, vector.z);
+            GSmodelGetRootRotation(bound->transform.model, &vector);
+            boundEulerToQuat(&vector, &quaternion);
+            PSMTXQuat(rootRotation, &quaternion);
+            PSMTXConcat(rootRotation, matrix, matrix);
+            GSmodelGetRootPosition(bound->transform.model, &vector);
+            PSMTXTransApply(matrix, matrix, vector.x, vector.y, vector.z);
+        }
+        if (scale) {
+            GSmodelGetScale(bound->transform.model, (GSvec*)&vector);
+            PSMTXScaleApply(matrix, matrix, vector.x, vector.y, vector.z);
+        }
+        if (rotate) {
+            GSmodelGetRotation(bound->transform.model, (GSvec*)&vector);
+            boundEulerToQuat(&vector, &quaternion);
+            PSMTXQuat(modelRotation, &quaternion);
+            PSMTXConcat(modelRotation, matrix, matrix);
+        }
+        if (translate) {
+            GSmodelGetPosition(bound->transform.model, (GSvec*)&vector);
+            PSMTXTransApply(matrix, matrix, vector.x, vector.y, vector.z);
+        }
+        PSMTXMultVec(matrix, minimum, minimum);
+        PSMTXMultVec(matrix, maximum, maximum);
+        return;
+    case 2:
+        if (scale && rotate && translate) {
+            PSMTXMultVec(bound->transform.matrix, minimum, minimum);
+            PSMTXMultVec(bound->transform.matrix, maximum, maximum);
+            return;
+        }
+        if (scale && rotate) {
+            PSMTXMultVecSR(bound->transform.matrix, minimum, minimum);
+            PSMTXMultVecSR(bound->transform.matrix, maximum, maximum);
+            return;
+        }
+        if (scale) {
+            MtxPtr source = bound->transform.matrix;
+            f32 x = PSVECMag((Vec*)source[0]);
+            f32 y = PSVECMag((Vec*)source[1]);
+            PSMTXScale(matrix, x, y, PSVECMag((Vec*)source[2]));
+        } else if (rotate) {
+            C_QUATMtx(&matrixQuaternion, bound->transform.matrix);
+            PSMTXQuat(matrix, &matrixQuaternion);
+        }
+        if (translate) {
+            MtxPtr source = bound->transform.matrix;
+            PSMTXTransApply(matrix, matrix, source[0][3], source[1][3], source[2][3]);
+        }
+        PSMTXMultVec(matrix, minimum, minimum);
+        PSMTXMultVec(matrix, maximum, maximum);
+        return;
+    case 3:
+        if (scale) {
+            GSboundTransform* transform = bound->transform.transform;
+            minimum->x *= transform->scale.x;
+            minimum->y *= transform->scale.y;
+            minimum->z *= transform->scale.z;
+            transform = bound->transform.transform;
+            maximum->x *= transform->scale.x;
+            maximum->y *= transform->scale.y;
+            maximum->z *= transform->scale.z;
+        }
+        if (rotate) {
+            PSMTXQuat(firstRotation, &bound->transform.transform->rotation);
+            PSMTXMultVecSR(firstRotation, minimum, minimum);
+            PSMTXQuat(secondRotation, &bound->transform.transform->rotation);
+            PSMTXMultVecSR(secondRotation, maximum, maximum);
+        }
+        if (translate) {
+            PSVECAdd(minimum, &bound->transform.transform->position, minimum);
+            PSVECAdd(maximum, &bound->transform.transform->position, maximum);
+        }
+        return;
+    }
+}
+}
+
+extern "C" {
+void GSboundGetSize(GSbound* bound, Vec* size, u8 scale, u8 rotate) {
+    Mtx matrix, inverseScale;
+    Vec minimum, maximum, corner;
+    Quaternion quaternion;
+    Vec difference;
+    Vec saved;
+    GSboundGetMinMax(bound, &minimum, &maximum, scale, 0, 0, 0);
+    PSVECSubtract(&maximum, &minimum, &difference);
+    f32 dx = difference.x, dy = difference.y, dz = difference.z;
+    size->x = dx; size->y = dy; size->z = dz;
+    if (size->x < 0.0f) size->x = -size->x;
+    if (size->y < 0.0f) size->y = -size->y;
+    if (size->z < 0.0f) size->z = -size->z;
+    if (rotate) {
+        switch (bound->transformType) {
+        case 1:
+            GSmodelGetRotation(bound->transform.model, (GSvec*)&corner);
+            boundEulerToQuat(&corner, &quaternion);
+            PSMTXQuat(matrix, &quaternion);
+            break;
+        case 2: {
+            PSMTXCopy(bound->transform.matrix, matrix);
+            matrix[0][3] = 0.0f; matrix[1][3] = 0.0f; matrix[2][3] = 0.0f;
+            MtxPtr source = bound->transform.matrix;
+            Vec lengths;
+            lengths.x = PSVECMag((Vec*)source[0]);
+            lengths.y = PSVECMag((Vec*)source[1]);
+            PSMTXScale(inverseScale, lengths.x, lengths.y, PSVECMag((Vec*)source[2]));
+            PSMTXInverse(inverseScale, inverseScale);
+            PSMTXConcat(inverseScale, matrix, matrix);
+            break;
+        }
+        case 3: PSMTXQuat(matrix, &bound->transform.transform->rotation); break;
+        default: return;
+        }
+        saved.x = size->x; saved.y = size->y; saved.z = size->z;
+        PSMTXMultVec(matrix, size, size);
+        f32* component = &corner.x;
+        for (s32 i = 0; i < 3; ++i, ++component) {
+            corner.x = saved.x; corner.y = saved.y; corner.z = saved.z;
+            *component *= -1.0f;
+            PSMTXMultVec(matrix, &corner, &corner);
+            if (corner.x < 0.0f) corner.x = -corner.x;
+            if (corner.y < 0.0f) corner.y = -corner.y;
+            if (corner.z < 0.0f) corner.z = -corner.z;
+            if (corner.x > size->x) size->x = corner.x;
+            if (corner.y > size->y) size->y = corner.y;
+            if (corner.z > size->z) size->z = corner.z;
+        }
+    }
+}
+}
+
+extern "C" {
+void GSboundGetWorldPosition(GSbound* bound, Vec* position) {
+    Vec minimum, maximum;
+    GSboundGetMinMax(bound, &minimum, &maximum, 1, 1, 1, 0);
+    PSVECAdd(&minimum, &maximum, position);
+    PSVECScale(position, position, 0.5f);
+}
+}
+
+extern "C" {
+void GSboundGetLocalPosition(GSbound* bound, Vec* position) {
+    Vec minimum, maximum;
+    GSboundGetMinMax(bound, &minimum, &maximum, 0, 0, 0, 0);
+    PSVECAdd(&minimum, &maximum, position);
+    PSVECScale(position, position, 0.5f);
+}
+}
+
+extern "C" {
+void GSboundGetShadowVolume(GSbound* output,GSbound* bound,Vec* light,f32 plane) {
     Vec corners[8];
     Mtx matrix,modelRotation,transformRotation;
     Vec limits[2],temp,center;
@@ -682,4 +736,71 @@ extern "C" void GSboundGetShadowVolume(GSbound* output,GSbound* bound,Vec* light
             }
         }
     }
+}
+}
+
+extern "C" {
+void GSboundGetShadowSize(Vec* result, GSbound* bound, Vec* from, Vec* to, Vec* direction) {
+    Vec minimum, maximum, right, up, extent;
+    Quaternion quaternion;
+    Vec normal, toFrom, firstCross, secondCross, sizeDifference;
+    Vec corners[4];
+    Mtx rotation;
+    Mtx scaleMatrix;
+    PSVECNormalize(direction, &normal);
+    right = normal;
+    PSVECSubtract(to, from, &toFrom);
+    extent = toFrom;
+    PSVECNormalize(&extent, &extent);
+    PSVECCrossProduct(&right, &extent, &firstCross);
+    up = firstCross;
+    PSVECNormalize(&up, &up);
+    PSVECCrossProduct(&extent, &up, &secondCross);
+    right = secondCross;
+    GSboundGetMinMax(bound, &minimum, &maximum, 1, 0, 0, 0);
+    switch (bound->transformType) {
+    case 1:
+        GSmodelGetRotation(bound->transform.model, (GSvec*)&extent);
+        boundEulerToQuat(&extent, &quaternion);
+        PSMTXQuat(rotation, &quaternion);
+        break;
+    case 2: {
+        PSMTXCopy(bound->transform.matrix, rotation);
+        rotation[0][3] = 0.0f; rotation[1][3] = 0.0f; rotation[2][3] = 0.0f;
+        MtxPtr source = bound->transform.matrix;
+        f32 x = PSVECMag((Vec*)source[0]);
+        f32 y = PSVECMag((Vec*)source[1]);
+        PSMTXScale(scaleMatrix, x, y, PSVECMag((Vec*)source[2]));
+        PSMTXInverse(scaleMatrix, scaleMatrix);
+        PSMTXConcat(scaleMatrix, rotation, rotation);
+        break;
+    }
+    case 3: PSMTXQuat(rotation, &bound->transform.transform->rotation); break;
+    default: PSMTXIdentity(rotation); break;
+    }
+    PSVECSubtract(&maximum, &minimum, &sizeDifference);
+    extent = sizeDifference;
+    if (extent.x < 0.0f) extent.x = -extent.x;
+    if (extent.y < 0.0f) extent.y = -extent.y;
+    if (extent.z < 0.0f) extent.z = -extent.z;
+    f32 a;
+    f32 maxA = 0.0f, maxB = 0.0f;
+    Vec* corner = corners;
+    corners[0] = extent;
+    corners[1] = extent; corners[1].y *= -1.0f;
+    corners[2] = extent; corners[2].x *= -1.0f;
+    corners[3] = extent; corners[3].x *= -1.0f; corners[3].y *= -1.0f;
+    for (s32 i = 0; i < 4; ++i, ++corner) {
+        f32 b;
+        PSMTXMultVec(rotation, corner, corner);
+        if (PSVECDotProduct(corner, &up) > 0.0f) { a = PSVECDotProduct(corner, &up); }
+        else { a = PSVECDotProduct(corner, &up); a = -a; }
+        b = absDot(corner, &right);
+        if (a > maxA) maxA = a;
+        if (b > maxB) maxB = b;
+    }
+    result->x = maxA;
+    result->y = 0.0f;
+    result->z = maxB;
+}
 }

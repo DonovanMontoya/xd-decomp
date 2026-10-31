@@ -25,6 +25,9 @@ GXXE01 retains the original filter opcode order in its MusyX 2.0.3 runtime.
 This variant is maintained here; shared headers remain in extern/musyx.
 */
 
+// Only fmod and floor are used here; their declarations follow below.
+// Exclude unrelated inline square-root definitions from the umbrella header.
+#define _MATH_H_
 #include "musyx/seq.h"
 
 #include "musyx/assert.h"
@@ -294,6 +297,7 @@ static u32 GetPublicId(u32 seqId) {
   return pub_id;
 }
 
+#pragma force_active on
 u32 seqGetPrivateId(u32 seqId) {
   SEQ_INSTANCE* si; // r31
   for (si = seqActiveRoot; si != NULL; si = si->next) {
@@ -308,6 +312,7 @@ u32 seqGetPrivateId(u32 seqId) {
   }
   return SND_ID_ERROR;
 }
+#pragma force_active reset
 
 static void DoPrgChange(SEQ_INSTANCE* seq, u8 prg, u8 midi) {
   seqMIDIPriority[curSeqId][midi] = 0xFFFF;
@@ -354,6 +359,7 @@ static void BuildTransTab(u8* tab, PAGE* page) {
 static void StartPause(SEQ_INSTANCE* si);
 static void InitTrackEvents();
 
+#pragma force_active on
 u32 seqStartPlay(PAGE* norm, PAGE* drum, MIDISETUP* midiSetup, u32* song, SND_PLAYPARA* para,
                  u8 studio, u16 sgid) {
   ARR* arr;              // r27
@@ -524,6 +530,7 @@ u32 seqStartPlay(PAGE* norm, PAGE* drum, MIDISETUP* midiSetup, u32* song, SND_PL
   seqId = GetPublicId(seqId);
   return seqId;
 }
+#pragma force_active reset
 
 #pragma cplusplus off
 double fmod(double x, double y);
@@ -568,6 +575,7 @@ static void RewindMTrack(u8 secIndex, u32 deltaTime) {
   SetTickDelta(cseq->section + secIndex, deltaTime);
 }
 
+#pragma force_active on
 static void StartPause(SEQ_INSTANCE* si) {
   if (si->prev != NULL) {
     si->prev->next = si->next;
@@ -587,7 +595,9 @@ static void StartPause(SEQ_INSTANCE* si) {
   seqPausedRoot = si;
   si->state = 2;
 }
+#pragma force_active reset
 
+#pragma force_active on
 void seqPause(u32 seqId) {
   SEQ_INSTANCE* si; // r31
   seqId = seqGetPrivateId(seqId);
@@ -610,7 +620,9 @@ void seqPause(u32 seqId) {
     }
   }
 }
+#pragma force_active reset
 
+#pragma force_active on
 void seqStop(u32 seqId) {
   SEQ_INSTANCE* si; // r31
 
@@ -657,6 +669,7 @@ void seqStop(u32 seqId) {
     }
   }
 }
+#pragma force_active reset
 
 void seqKillAllInstances() {
   SEQ_INSTANCE* si; // r31
@@ -684,6 +697,7 @@ void seqKillInstancesByGroupID(u16 sgid) {
   }
 }
 
+#pragma force_active on
 void seqSpeed(u32 seqId, u16 speed) {
   u32 i; // r30
 
@@ -700,7 +714,9 @@ void seqSpeed(u32 seqId, u16 speed) {
     seqInstance[seqId].syncCrossInfo.speed2 = speed;
   }
 }
+#pragma force_active reset
 
+#pragma force_active on
 void seqContinue(u32 seqId) {
   struct SEQ_INSTANCE* si; // r31
 
@@ -733,7 +749,9 @@ void seqContinue(u32 seqId) {
     seqInstance[seqId & ~SND_SEQ_CROSSFADE_ID].syncCrossInfo.flags &= ~SND_CROSSFADE_PAUSENEW;
   }
 }
+#pragma force_active reset
 
+#pragma force_active on
 void seqMute(u32 seqId, u32 mask1, u32 mask2) {
   seqId = seqGetPrivateId(seqId);
   if (seqId == SND_SEQ_ERROR_ID) {
@@ -750,7 +768,9 @@ void seqMute(u32 seqId, u32 mask1, u32 mask2) {
     seqInstance[seqId].syncCrossInfo.trackMute2[1] = mask2;
   }
 }
+#pragma force_active reset
 
+#pragma force_active on
 void seqVolume(u8 volume, u16 time, u32 seqId, u8 mode) {
   u32 i;      // r29
   u32 pub_id; // r27
@@ -792,7 +812,9 @@ void seqVolume(u8 volume, u16 time, u32 seqId, u8 mode) {
     }
   }
 }
+#pragma force_active reset
 
+#pragma force_active on
 void seqCrossFade(SND_CROSSFADE* ci, u32* new_seqId, bool8 irq_call) {
   SND_PLAYPARA pp; // r1+0x14
   u32 seqId;       // r29
@@ -890,6 +912,7 @@ void seqCrossFade(SND_CROSSFADE* ci, u32* new_seqId, bool8 irq_call) {
     }
   }
 }
+#pragma force_active reset
 
 static u8* GetStreamValue(u8* stream, u16* deltaTime, s16* deltaData) {
   u8 b1; // r31
@@ -972,6 +995,7 @@ static u16 HandleStream(SEQ_STREAM* stream) {
   return stream->value;
 }
 
+#pragma force_active on
 static SEQ_EVENT* GenerateNextTrackEvent(u8 trackId) {
   TRACK* track;    // r29
   CPAT* pattern;   // r31
@@ -1071,6 +1095,7 @@ static SEQ_EVENT* GenerateNextTrackEvent(u8 trackId) {
 
   return NULL;
 }
+#pragma force_active reset
 
 static void InsertGlobalEvent(SEQ_SECTION* section, SEQ_EVENT* event) {
   SEQ_EVENT* el;      // r31
@@ -1114,6 +1139,7 @@ static SEQ_EVENT* GetGlobalEvent(SEQ_SECTION* section) {
   return ev;
 }
 
+#pragma force_active on
 static SEQ_EVENT* HandleEvent(SEQ_EVENT* event, u8 secIndex, bool* loopFlag) {
   CPAT* pa;          // r26
   NOTE_DATA* pe;     // r24
@@ -1238,7 +1264,9 @@ static SEQ_EVENT* HandleEvent(SEQ_EVENT* event, u8 secIndex, bool* loopFlag) {
 
   return GenerateNextTrackEvent(event->trackId);
 }
+#pragma force_active reset
 
+#pragma force_active on
 static void InitTrackEvents() {
   u32 i;         // r31
   SEQ_EVENT* ev; // r30
@@ -1257,6 +1285,7 @@ static void InitTrackEvents() {
     }
   }
 }
+#pragma force_active reset
 
 static void InitTrackEventsSection(u8 secIndex) {
   u32 i;         // r31
@@ -1277,6 +1306,7 @@ static void InitTrackEventsSection(u8 secIndex) {
   }
 }
 
+#pragma force_active on
 static bool HandleTrackEvents(u8 secIndex, u32 deltaTime) {
   SEQ_EVENT* ev;        // r29
   bool loopFlag;        // r1+0x10
@@ -1308,7 +1338,9 @@ static bool HandleTrackEvents(u8 secIndex, u32 deltaTime) {
 
   return TRUE;
 }
+#pragma force_active reset
 
+#pragma force_active on
 void seqHandle(u32 deltaTime) {
   u32 x;                // r29
   u32 i;                // r31
@@ -1387,7 +1419,9 @@ void seqHandle(u32 deltaTime) {
     si = nextSi;
   }
 }
+#pragma force_active reset
 
+#pragma force_active on
 void seqInit() {
   u32 i; // r31
   u32 j; // r29
@@ -1412,3 +1446,4 @@ void seqInit() {
   ClearNotes();
   InitPublicIds();
 }
+#pragma force_active reset

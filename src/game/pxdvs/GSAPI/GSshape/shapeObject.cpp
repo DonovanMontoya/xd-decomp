@@ -603,62 +603,65 @@ extern "C" void GSgfxVFSetArray(void*, s32, s32, void*, u8, u32);
 extern "C" void dlDraw__10GSgfxLayerFP7GSgfxDL(GSgfxLayer*, void*);
 extern "C" void beginSurface__10GSgfxLayerFUs(GSgfxLayer*, u16);
 extern "C" void endSurface__10GSgfxLayerFv(GSgfxLayer*);
-extern "C" void DrawShapeGfx__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject* self, GSgfxLayer* layer, s16, u8) {
-    u16 vertexCount;
-    u16 textureCount;
-    u16 columns;
-    s32 i;
-    bool ready;
-    columns = self->entry->segmentsU + 1;
-    textureCount = self->entry->textureCount;
-    vertexCount = self->entry->vertexCount;
-    u32 attributes[4] = {13, 14, 15, 16};
+#pragma push
+#pragma dont_inline off
+static inline bool shapeSetupVF(GsShapeObject* self, u16 n) {
+    const int attrs[4] = {13, 14, 15, 16};
     if (self->vertexArrays[0] == 0) {
-        ready = false;
-        goto done;
+        return false;
     }
     if (self->vertexArrays[0] != 0) {
-        GSgfxVFSetArray(self->vertexFormat, 9, 3, self->vertexArrays[0], 12, vertexCount * 12);
+        GSgfxVFSetArray(self->vertexFormat, 9, 3, self->vertexArrays[0], 12, n * 12);
     } else {
-        ready = false;
-        goto done;
+        return false;
     }
     if (self->vertexArrays[1] != 0) {
-        GSgfxVFSetArray(self->vertexFormat, 11, 3, self->vertexArrays[1], 4, vertexCount * 4);
+        GSgfxVFSetArray(self->vertexFormat, 11, 3, self->vertexArrays[1], 4, n * 4);
     } else {
-        ready = false;
-        goto done;
+        return false;
     }
-    for (i = 0; i < self->entry->textureCount; ++i) {
-        if (self->vertexArrays[2 + i] != 0) {
-            GSgfxVFSetArray(self->vertexFormat, attributes[i], 3, self->vertexArrays[2 + i], 8, vertexCount * 8);
+    int i;
+    for (i = 0; i < self->entry->textureCount; i++) {
+        if (self->vertexArrays[i + 2] != 0) {
+            GSgfxVFSetArray(self->vertexFormat, attrs[i], 3, self->vertexArrays[i + 2], 8, n * 8);
         } else {
-            ready = false;
-            goto done;
+            return false;
         }
     }
-    ready = true;
-done:
-    if (ready) {
-        u16 row;
-        *(u32*)((u8*)layer + 0x199c) = (u32)self->vertexFormat;
-        *(u32*)((u8*)layer + 0x1998) = 0x98;
-        u32 vertexTotal = columns * 2;
-        for (row = 0; row < self->entry->segmentsV; ++row) {
-            u16 column;
-            u16 base = row * columns;
-            beginSurface__10GSgfxLayerFUs(layer, vertexTotal);
-            u16 next = (row + 1) * columns;
-            for (column = 0; column < columns; ++column) {
-                u16 first = column + base;
-                u16 second = column + next;
-                u16 j;
-                GXWGFifo.u16 = first;
-                GXWGFifo.u16 = first;
-                for (j = 0; j < textureCount; ++j) GXWGFifo.u16 = first;
-                GXWGFifo.u16 = second;
-                GXWGFifo.u16 = second;
-                for (j = 0; j < textureCount; ++j) GXWGFifo.u16 = second;
+    return true;
+}
+#pragma pop
+extern "C" void DrawShapeGfx__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject* self, GSgfxLayer* layer, s16 s, u8 c) {
+    u16 b;
+    u16 a;
+    u16 i;
+    u16 base0;
+    u16 texN = self->entry->textureCount;
+    u16 n = self->entry->segmentsU + 1;
+    bool ok = shapeSetupVF(self, self->entry->vertexCount);
+    u16 j;
+    u16 k;
+    u16 base1;
+    if (ok) {
+        layer->vertexFormat = self->vertexFormat;
+        layer->primitive = 0x98;
+        for (i = 0; i < self->entry->segmentsV; i++) {
+            base0 = i * n;
+            beginSurface__10GSgfxLayerFUs(layer, n * 2);
+            base1 = (i + 1) * n;
+            for (j = 0; j < n; j++) {
+                a = j + base0;
+                b = j + base1;
+                GXWGFifo.u16 = a;
+                GXWGFifo.u16 = a;
+                for (k = 0; k < texN; k++) {
+                    GXWGFifo.u16 = a;
+                }
+                GXWGFifo.u16 = b;
+                GXWGFifo.u16 = b;
+                for (k = 0; k < texN; k++) {
+                    GXWGFifo.u16 = b;
+                }
             }
             endSurface__10GSgfxLayerFv(layer);
         }

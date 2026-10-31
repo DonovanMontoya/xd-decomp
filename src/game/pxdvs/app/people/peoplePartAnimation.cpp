@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <game/pxdvs/app/people/runtime.hpp>
 #include <libc/stddef.h>
 struct _GSmodel;
@@ -11,7 +12,7 @@ u8 peopleBiosCheckFlag(tagPeopleWork*,u32);
 GSpart* GSmodelGetPart(_GSmodel*,s32);
 void GSpartStopAnimIndex(GSpart*,s32);
 void GSpartFree(GSpart*);
-s32 GSpartSetAnimIndex(GSpart*,s32,f32,GSmodelAnimType);
+s32 GSpartSetAnimIndex(GSpart*,s32,s32,f32);
 void GSmodelSetKeepPartAnimFlag(_GSmodel*,u32);
 void GSmodelLinkTexAnimToAnim(_GSmodel*,u32);
 void GSmodelSetTexAnimIndex(_GSmodel*,u32);
@@ -81,8 +82,9 @@ static s32 _peoplePartAnimationStartAnimation(_GSmodel* model,s8 partIndex,int a
     if(partIndex>=0){
         GSpart* part=GSmodelGetPart(model,partIndex);
         if(!part)return -1;
-        index=GSpartSetAnimIndex(part,animation,frame,type);
+        index=GSpartSetAnimIndex(part,animation,type,frame);
         GSpartFree(part);
     }
     return index;
 }
+#pragma force_active reset

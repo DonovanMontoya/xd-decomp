@@ -1,3 +1,4 @@
+#pragma force_active on
 /* Debug menu entries for editing the hero (money, coupons, party Pokemon). */
 #include <global.h>
 
@@ -77,3 +78,5 @@ DBG_HERO_SELECT(3)
 DBG_HERO_SELECT(2)
 DBG_HERO_SELECT(1)
 DBG_HERO_SELECT(0)
+
+#pragma force_active reset

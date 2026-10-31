@@ -27,7 +27,7 @@ void GSmaterialGetModulate(GSmaterial*, GXColor*);
 void GSmaterialResetAlpha(GSmaterial*);
 void GSmaterialStoreAlpha(GSmaterial*);
 void GSmaterialSetEnvMapBlendValue(GSmaterial*, f32);
-void GSmaterialSetEnvMapParams(GSmaterial*, s32, s32, GStexture*, f32);
+void GSmaterialSetEnvMapParams(GSmaterial*, s32, s32, f32, GStexture*);
 void GSmaterialSetModulate(GSmaterial*, GXColor*);
 void GSmaterialSetColorChannels(GSmaterial*, u8*);
 void GSmaterialSetAlpha(GSmaterial*, f32);

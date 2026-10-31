@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <global.h>
 static void* _fightTargetGetTargetPtrToFightSidePtr(void*,u16);
 
@@ -6,48 +7,21 @@ extern "C" {
 extern u8 fight_target_data[];
 extern u32 fight_target_data_number;
 
-u8 fightTargetDataBiosGetRelativeFlag(void* data) {
-    if (data == 0) return 0;
-    return *((u8*)data + 1);
-}
+u8 fightTargetDataBiosGetRelativeFlag(void* data);
 
-u32 fightTargetDataBiosGetBuff(void* data) {
-    if (data == 0) return 0;
-    return *(u32*)((u8*)data + 4);
-}
+u32 fightTargetDataBiosGetBuff(void* data);
 
-u8 fightTargetDataBiosGetStatusKid(u8* data) {
-    if (data == 0) return 0;
-    return *data;
-}
+u8 fightTargetDataBiosGetStatusKid(u8* data);
 
-void* fightTargetDataBiosGetPtr(u16 id) {
-    if (id >= fight_target_data_number) return 0;
-    return fight_target_data + id * 8;
-}
+void* fightTargetDataBiosGetPtr(u16 id);
 
-void *fightTargetGetPtr(u16,void*,u16);
+void* fightTargetGetPtr(u16,void*,u16);
 u8 fightFloor_GetFightType(void*);
-s32 fightTargetIsHostSide(void *target,u16 type) {
- void *host=fightTargetGetPtr(4,0,type);
- if(host==0){return 0;}else{
- void *side=fightTargetGetPtr(2,target,type);
- if(side==0){return 0;}else{return side==host?1:0;}}
-}
-void *fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(u16 id,u16 type) {
- void *host=fightTargetGetPtr(4,0,type); if(!host)return 0;
- void *result=fightTargetGetPtr(id,host,type); if(!result)result=0; return result;
-}
-u16 fightTargetGetTragetPtrToRelativeFightTargetId(void *base,void *target,u16 type) {
- for(u16 i=0;i<fight_target_data_number;i++) {
-  if(i!=0) {void *data=fightTargetDataBiosGetPtr(i); if(data && fightTargetDataBiosGetRelativeFlag(data)!=0 && fightTargetGetPtr(i,base,type)==target) return i;}
- }return 0;
-}
-u16 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(void *target,u16 type) {
- void *host=fightTargetGetPtr(4,0,type);
- if(host==0){return 0;}else{return fightTargetGetTragetPtrToRelativeFightTargetId(host,target,type);}
-}
-void *fightTargetGetPtrAsNowFightType(u16 id,void *base) {return fightTargetGetPtr(id,base,fightFloor_GetFightType(0));}
+s32 fightTargetIsHostSide(void *target,u16 type);
+void* fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(u16 id,u16 type);
+u16 fightTargetGetTragetPtrToRelativeFightTargetId(void *base,void *target,u16 type);
+u16 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(void *target,u16 type);
+void* fightTargetGetPtrAsNowFightType(u16 id,void *base);
 }
 extern "C" {
 void* fightFloorGetNowPtr();
@@ -73,6 +47,47 @@ void* fightFloor_GetAppointTrainerPtr(void*);
 void* fightFloor_GetAppointWazaPtr(void*);
 void* fightFloor_GetAppointSidePtr(void*);
 void* fightFloor_GetAppointItemPtr(void*);
+void* fightTargetGetPtr(u16 id,void* base,u16 type);
+}
+static void* _fightTargetGetTargetPtrToFightSidePtr(void* target,u16 type);
+
+extern "C" {
+s32 fightTargetIsHostSide(void *target,u16 type) {
+ void *host=fightTargetGetPtr(4,0,type);
+ if(host==0){return 0;}else{
+ void *side=fightTargetGetPtr(2,target,type);
+ if(side==0){return 0;}else{return side==host?1:0;}}
+}
+void* fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(u16 id,u16 type) {
+ void *host=fightTargetGetPtr(4,0,type); if(!host)return 0;
+ void *result=fightTargetGetPtr(id,host,type); if(!result)result=0; return result;
+}
+u16 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(void *target,u16 type) {
+ void *host=fightTargetGetPtr(4,0,type);
+ if(host==0){return 0;}else{return fightTargetGetTragetPtrToRelativeFightTargetId(host,target,type);}
+}
+u16 fightTargetGetTragetPtrToRelativeFightTargetId(void *base,void *target,u16 type) {
+ for(u16 i=0;i<fight_target_data_number;i++) {
+  if(i!=0) {void *data=fightTargetDataBiosGetPtr(i); if(data && fightTargetDataBiosGetRelativeFlag(data)!=0 && fightTargetGetPtr(i,base,type)==target) return i;}
+ }return 0;
+}
+u8 fightTargetDataBiosGetRelativeFlag(void* data) {
+    if (data == 0) return 0;
+    return *((u8*)data + 1);
+}
+u32 fightTargetDataBiosGetBuff(void* data) {
+    if (data == 0) return 0;
+    return *(u32*)((u8*)data + 4);
+}
+u8 fightTargetDataBiosGetStatusKid(u8* data) {
+    if (data == 0) return 0;
+    return *data;
+}
+void* fightTargetDataBiosGetPtr(u16 id) {
+    if (id >= fight_target_data_number) return 0;
+    return fight_target_data + id * 8;
+}
+void* fightTargetGetPtrAsNowFightType(u16 id,void *base) {return fightTargetGetPtr(id,base,fightFloor_GetFightType(0));}
 void* fightTargetGetPtr(u16 id,void* base,u16 type){
     u16 trainerIndex;
     u16 sideIndex;
@@ -167,3 +182,6 @@ static void* _fightTargetGetTargetPtrToFightSidePtr(void* target,u16 type){
     }
     return 0;
 }
+extern "C" {
+}
+#pragma force_active reset

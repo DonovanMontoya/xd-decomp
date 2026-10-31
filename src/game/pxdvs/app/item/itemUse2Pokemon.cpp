@@ -1,120 +1,395 @@
-#include <game/pxdvs/app/item/itemUse2PokemonPrivate.hpp>
+#include <dolphin/types.h>
+
+class Pokemon;
+class FightPokemon;
+class FightOutPokemon;
+class FightTrainer;
+class FIGHT_FLOOR;
+class FIGHT_SIDE;
+class PokemonData;
+class PokemonGrowDataBios;
+
+struct ITEMUSE2POKEMON_LOG1 {
+    s32 type;
+    u16 value;
+    u16 extra;
+};
+
+extern "C" {
+FIGHT_FLOOR* fightFloorGetNowPtr(void);
+void* GSmemAlloc(u32 size);
+void GSmemFree(void* ptr);
+void* memcpy(void* dst, const void* src, u32 n);
+FightTrainer* fightFloorGetFightPokemonPtrToFightTrainerPtr(FIGHT_FLOOR* floor, FightPokemon* pokemon);
+FightOutPokemon* fightTrainerCheckFightPokemonFightOut(FightTrainer* trainer, FightPokemon* fp);
+void fightSeqCheckSetMotoPokemonToHensinBuff(FightOutPokemon* p, u16 id);
+u8 fightOutPokemonCheckWriteJoutaiDataId(FightOutPokemon* fop, u16 id);
+void fightOutPokemonInitJoutaiDataId(FightOutPokemon* fop, u16 id);
+u8 fightOutPokemonIsJoutaiDataId(FightOutPokemon* fop, u16 id);
+void fightOutPokemonWriteJoutaiDataId(FightOutPokemon* fop, u16 id, u32 value);
+Pokemon* fightPokemonGetPokemonPtr(FightPokemon* fp);
+u32 fightPokemonBiosGetMotoPokemonPtr(FightPokemon* p);
+u8 fightSideCheckWriteJoutaiDataId(FIGHT_SIDE* side, u16 id);
+void fightSideWriteJoutaiDataId(FIGHT_SIDE* side, u16 id, u16 value);
+void* fightTargetGetPtrAsNowFightType(u16 slotType, void* ptr);
+u32 itemDataBiosGetItemEffectParam(u8* p);
+u32 itemDataBiosGetItemSoubiDataId(u8* p);
+u8* itemDataBiosGetPtr(u16 index);
+void itemParamConvertOrigFormat(u8* dst, u8* src);
+u8* itemParamGetPtr(u32 idx);
+u8 itemParamGetMeromeroFlag(u8* p);
+u8 itemParamGetCriticalFlag(u8* p);
+u8 itemParamGetAttackUp(u8* p);
+u8 itemParamGetDefenceUp(u8* p);
+u8 itemParamGetQuickUp(u8* p);
+u8 itemParamGetHitUp(u8* p);
+u8 itemParamGetSpAttackUp(u8* p);
+u8 itemParamGetGuardFlag(u8* p);
+u8 itemParamGetLevelUpFlag(u8* p);
+u8 itemParamGetSleepFlag(u8* p);
+u8 itemParamGetPoisonFlag(u8* p);
+u8 itemParamGetBurnFlag(u8* p);
+u8 itemParamGetFreezeFlag(u8* p);
+u8 itemParamGetParalyzeFlag(u8* p);
+u8 itemParamGetConfuseFlag(u8* p);
+u8 itemParamGetPPMaxUpFlag(u8* p);
+u8 itemParamGetPPMaxFullFlag(u8* p);
+u8 itemParamGetHPEffortUp(u8* p);
+u8 itemParamGetAttackEffortUp(u8* p);
+u8 itemParamGetDefenceEffortUp(u8* p);
+u8 itemParamGetQuickEffortUp(u8* p);
+u8 itemParamGetSpDefenceEffortUp(u8* p);
+u8 itemParamGetSpAttackEffortUp(u8* p);
+u8 itemParamGetHPUp(u8* p);
+bool itemParamGetReviveFlag(u8* p);
+u8 itemParamGetPPUp(u8* p);
+u8 itemParamGetPPSelectFlag(u8* p);
+u8 itemParamGetEvolutionFlag(u8* p);
+s8 itemParamGetFriend1Up(u8* p);
+s8 itemParamGetFriend2Up(u8* p);
+s8 itemParamGetFriend3Up(u8* p);
+u8 pokemonBiosGetCatchBallId(Pokemon* poke);
+u16 pokemonBiosGetFriend(Pokemon* poke);
+u16 pokemonBiosGetHp(Pokemon* poke);
+u16 pokemonBiosGetItemDataId(Pokemon* poke);
+u8 pokemonBiosGetLevel(Pokemon* poke);
+u16 pokemonBiosGetMaxHp(Pokemon* poke);
+u16 pokemonBiosGetMaxHpEffort(Pokemon* poke);
+u16 pokemonBiosGetNimblenessEffort(Pokemon* poke);
+u16 pokemonBiosGetPhyAtkEffort(Pokemon* poke);
+u16 pokemonBiosGetPhyDefEffort(Pokemon* poke);
+u16 pokemonBiosGetPokemonDataId(Pokemon* poke);
+u16 pokemonBiosGetPokemonWazaDataId(Pokemon* poke, u32 wazaNum);
+u8 pokemonBiosGetPokemonWazaPp(Pokemon* poke, u32 wazaNum);
+u8 pokemonBiosGetPokemonWazaPpCount(Pokemon* poke, u32 wazaNum);
+u16 pokemonBiosGetSpeAtkEffort(Pokemon* poke);
+u16 pokemonBiosGetSpeDefEffort(Pokemon* poke);
+void pokemonBiosSetExp(Pokemon* poke, u32 data);
+void pokemonBiosSetFriend(Pokemon* poke, u16 data);
+void pokemonBiosSetHp(Pokemon* poke, u16 data);
+void pokemonBiosSetPokemonWazaPp(Pokemon* poke, u32 wazaNum, u8 data);
+void pokemonBiosSetPokemonWazaPpCount(Pokemon* poke, u32 wazaNum, u8 count);
+u8 pokemonDataBiosGetGrowDataId(PokemonData* pdata);
+PokemonData* pokemonDataBiosGetPtr(u16 pokeNum);
+u8 pokemonGetDarkPokemonLevel(Pokemon* pokemon);
+u32 pokemonGetStatus(void* ptr, u16 pokemonDataId, u16 kind, u16 index);
+int pokemonGrowDataBiosGetExp(PokemonGrowDataBios* data, u8 level);
+PokemonGrowDataBios* pokemonGrowDataBiosGetPtr(u8 index);
+void pokemonInitJoutaiDataId(Pokemon* pokemon, u16 joutaiDataId);
+u8 pokemonIsDarkPokemon(Pokemon* pokemon);
+bool pokemonIsJoutaiDataId(Pokemon* pokemon, u16 joutaiDataId);
+void pokemonResetBasisStatus(Pokemon* pokemon);
+void pokemonSetStatus(void* ptr, u16 pokemonDataId, u16 kind, u16 index, u32 value);
+bool pokemonWazaCheckValid(Pokemon* pokemon, u32 wazaNum);
+u8 pokemonWazaGetMaxPP(Pokemon* pokemon, u32 wazaNum);
+u32 pokemon_GetPoolFriend(Pokemon* poke);
+u8 wazaCheckDarkWaza(u16 wazaID);
+u8 wazaDB_GetPp(u16 id);
+}
+
+struct POKEMON_EVOLUTION_INFO {
+    u8 kind;
+    u8 reserved;
+    u16 parameter;
+};
+extern "C" u16 pokemonEvolutionCheck(Pokemon*, s32, u16, u16*, POKEMON_EVOLUTION_INFO*);
+
+extern "C" s32 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1* log, Pokemon* pokemon, FightPokemon* fightPokemon, u16 itemDataId, u8 moveSlot);
 
 extern "C" {
 
-s16 itemUse2PokemonSimulation(ITEMUSE2POKEMON_LOG1 *arg0, void *arg1, void *arg2, u16 arg3, u8 arg4) {
-    void *temp_r3_2;
-    void *temp_r3;
-    s16 temp_r29;
-
-    temp_r3 = fightFloorGetNowPtr();
-    if (temp_r3 == 0) {
+s32 itemUse2PokemonSimulation(ITEMUSE2POKEMON_LOG1* a, Pokemon* b, FightPokemon* c, u16 d, u8 e) {
+    void* saved;
+    FIGHT_FLOOR* floor;
+    s32 result;
+    floor = fightFloorGetNowPtr();
+    if (floor == 0) {
         return 0;
     }
-    temp_r3_2 = GSmemAlloc(0xE318U);
-    memcpy(temp_r3_2, temp_r3, 0xE318U);
-    temp_r29 = itemUse2Pokemon(arg0, arg1, arg2, arg3, arg4);
-    memcpy(temp_r3, temp_r3_2, 0xE318U);
-    GSmemFree(temp_r3_2);
-    return temp_r29;
+    saved = GSmemAlloc(0xE318);
+    memcpy(saved, floor, 0xE318);
+    result = itemUse2Pokemon(a, b, c, d, e);
+    memcpy(floor, saved, 0xE318);
+    GSmemFree(saved);
+    return result;
 }
 
-static s16 friendXUp__FP7PokemonP12FightPokemonScUsUs(void* pokemon, void* fightPokemon, s8 adjustment, u16 minimum, u16 maximum) {
-    s32 value;
-    u32 original;
-    if (pokemonIsDarkPokemon(pokemon) && pokemonGetDarkPokemonLevel(pokemon) < 3) return 0;
-    if (pokemonIsDarkPokemon(pokemon)) original = (u16)pokemon_GetPoolFriend(pokemon);
-    else original = (u16)pokemonBiosGetFriend(pokemon);
-    if (pokemonIsDarkPokemon(pokemon)) value = (u16)pokemon_GetPoolFriend(pokemon);
-    else value = 0;
-    s32 total = value + (u16)pokemonBiosGetFriend(pokemon);
-    if (total < minimum || total >= maximum) return 0;
-    value = adjustment;
-    if (value > 0) {
-        void* data = itemDataBiosGetPtr(pokemonBiosGetItemDataId(pokemon));
-        u16 held;
-        if (data == 0) held = 0;
-        else held = itemDataBiosGetItemSoubiDataId(data);
-        if (held == 0x1b) value = value * 150 / 100;
-        if (pokemonBiosGetCatchBallId(pokemon) == 11) value++;
+}
+
+static s16 friendXUp(Pokemon* pokemon, FightPokemon* fightPokemon, s8 change, u16 lower, u16 upper) {
+    FightOutPokemon* trainer;
+    s32 adjusted;
+    s32 newFriend;
+    s32 oldFriend;
+    s32 effective;
+
+    if (pokemonIsDarkPokemon(pokemon) && pokemonGetDarkPokemonLevel(pokemon) < 3) {
+        return 0;
     }
-    if (pokemonIsDarkPokemon(pokemon)) value = value * 80 / 100;
-    value = original + value;
-    if (value > 255) value = 255;
-    if (value < 0) value = 0;
+
     if (pokemonIsDarkPokemon(pokemon)) {
-        pokemonSetStatus(pokemon,0,0xc7,0,value);
-        void* out;
-        if (fightPokemon == 0) out = 0;
-        else out = fightTrainerCheckFightPokemonFightOut(fightFloorGetFightPokemonPtrToFightTrainerPtr(0,fightPokemon),fightPokemon);
-        if (out) fightSeqCheckSetMotoPokemonToHensinBuff(out,0xc7);
+        oldFriend = (u16)pokemon_GetPoolFriend(pokemon);
     } else {
-        pokemonBiosSetFriend(pokemon,(u16)value);
-        void* out;
-        if (fightPokemon == 0) out = 0;
-        else out = fightTrainerCheckFightPokemonFightOut(fightFloorGetFightPokemonPtrToFightTrainerPtr(0,fightPokemon),fightPokemon);
-        if (out) fightSeqCheckSetMotoPokemonToHensinBuff(out,0x99);
+        oldFriend = pokemonBiosGetFriend(pokemon);
     }
-    return (s16)(value-original);
-}
-
-
-static inline void* getFightOutPokemon(void* fightPokemon) {
-    void* out;
-    if (fightPokemon == 0) out = 0;
-    else {
-        void* trainer = fightFloorGetFightPokemonPtrToFightTrainerPtr(0, fightPokemon);
-        out = fightTrainerCheckFightPokemonFightOut(trainer, fightPokemon);
+    if (pokemonIsDarkPokemon(pokemon)) {
+        effective = (u16)pokemon_GetPoolFriend(pokemon);
+    } else {
+        effective = 0;
     }
-    return out;
+    effective += pokemonBiosGetFriend(pokemon);
+    if (effective < lower || effective >= upper) {
+        return 0;
+    }
+
+    adjusted = change;
+    if (adjusted > 0) {
+        u8* item = itemDataBiosGetPtr(pokemonBiosGetItemDataId(pokemon));
+        if ((u16)(item == 0 ? 0 : itemDataBiosGetItemSoubiDataId(item)) == 0x1B) {
+            adjusted = adjusted * 150 / 100;
+        }
+        if (pokemonBiosGetCatchBallId(pokemon) == 0xB) {
+            adjusted++;
+        }
+    }
+    if (pokemonIsDarkPokemon(pokemon)) {
+        adjusted = adjusted * 80 / 100;
+    }
+
+    newFriend = oldFriend + adjusted;
+    if (newFriend > 0xFF) {
+        newFriend = 0xFF;
+    }
+    if (newFriend < 0) {
+        newFriend = 0;
+    }
+
+    if (pokemonIsDarkPokemon(pokemon)) {
+        pokemonSetStatus(pokemon, 0, 0xC7, 0, newFriend);
+        if (fightPokemon == 0) {
+            trainer = 0;
+        } else {
+            trainer = fightTrainerCheckFightPokemonFightOut(
+                fightFloorGetFightPokemonPtrToFightTrainerPtr(0, fightPokemon), fightPokemon);
+        }
+        if (trainer != 0) {
+            fightSeqCheckSetMotoPokemonToHensinBuff(trainer, 0xC7);
+        }
+    } else {
+        pokemonBiosSetFriend(pokemon, newFriend);
+        if (fightPokemon == 0) {
+            trainer = 0;
+        } else {
+            trainer = fightTrainerCheckFightPokemonFightOut(
+                fightFloorGetFightPokemonPtrToFightTrainerPtr(0, fightPokemon), fightPokemon);
+        }
+        if (trainer != 0) {
+            fightSeqCheckSetMotoPokemonToHensinBuff(trainer, 0x99);
+        }
+    }
+    return newFriend - oldFriend;
 }
 
-static inline void setHensinBuff(void* fightPokemon, u16 id) {
-    void* out = getFightOutPokemon(fightPokemon);
-    if (out) fightSeqCheckSetMotoPokemonToHensinBuff(out, id);
+static inline void peopleItemUseLogAdd(ITEMUSE2POKEMON_LOG1* log, s16* logCount, s32 type, u16 value) {
+    s16 count = *logCount;
+
+    if (count < 0x20) {
+        log[count].type = type;
+        log[count].value = value;
+        log[count].extra = 0;
+        *logCount = count + 1;
+    }
 }
 
-static inline void addLog(ITEMUSE2POKEMON_LOG1* log, s16* count, s32 key, s16 a, s16 b) {
-    s16 n = *count;
+static void hpRecover(ITEMUSE2POKEMON_LOG1* log, s16* logCount, Pokemon* pokemon, u8 recovery, bool revive,
+                      u16 amount, FightPokemon* fightPokemon) {
+    u16 oldHp;
+    u16 maxHp;
+    u16 newHp;
+    u16 recoveryAmount;
+    u8 revived;
+    FightOutPokemon* trainer;
+    u16 value;
+
+    revived = 0;
+    oldHp = pokemonBiosGetHp(pokemon);
+    maxHp = pokemonBiosGetMaxHp(pokemon);
+    if (oldHp >= maxHp) {
+        return;
+    }
+
+    switch (recovery) {
+    case 0xFF:
+        recoveryAmount = maxHp;
+        break;
+    case 0xFE:
+        recoveryAmount = maxHp / 2;
+        if (recoveryAmount == 0) {
+            recoveryAmount = 1;
+        }
+        break;
+    case 0xFD:
+        recoveryAmount = amount;
+        break;
+    default:
+        recoveryAmount = recovery;
+        break;
+    }
+    if (recoveryAmount == 0) {
+        return;
+    }
+
+    if (oldHp == 0) {
+        if (revive == 0) {
+            return;
+        }
+        revived = 1;
+    } else if (revive != 0) {
+        return;
+    }
+
+    newHp = oldHp + recoveryAmount;
+    if (newHp > maxHp) {
+        newHp = maxHp;
+    }
+    pokemonBiosSetHp(pokemon, newHp);
+
+    if (fightPokemon == 0) {
+        trainer = 0;
+    } else {
+        trainer = fightTrainerCheckFightPokemonFightOut(
+            fightFloorGetFightPokemonPtrToFightTrainerPtr(0, fightPokemon), fightPokemon);
+    }
+    if (trainer != 0) {
+        fightSeqCheckSetMotoPokemonToHensinBuff(trainer, 0x83);
+    }
+
+    if (revived != 0) {
+        peopleItemUseLogAdd(log, logCount, 0x16, 0);
+    }
+    value = newHp - oldHp;
+    peopleItemUseLogAdd(log, logCount, 0x15, value);
+}
+
+static inline u8* itemUseGetParam(u16 itemDataId) {
+    u8* item;
+    u32 effect;
+
+    item = itemDataBiosGetPtr(itemDataId);
+    if (item == 0) {
+        return 0;
+    }
+    effect = itemDataBiosGetItemEffectParam(item);
+    if ((u8)effect == 0) {
+        return 0;
+    }
+    return itemParamGetPtr(effect);
+}
+
+static inline Pokemon* itemUseGetPokemon(FightPokemon* fightPokemon) {
+    if (fightPokemon == 0) {
+        return 0;
+    }
+    return fightPokemonGetPokemonPtr(fightPokemon);
+}
+
+static inline FightOutPokemon* itemUseGetFightOut(FightPokemon* fightPokemon) {
+    FightTrainer* trainer;
+
+    if (fightPokemon == 0) {
+        return 0;
+    }
+    trainer = fightFloorGetFightPokemonPtrToFightTrainerPtr(0, fightPokemon);
+    return fightTrainerCheckFightPokemonFightOut(trainer, fightPokemon);
+}
+
+static inline void itemUseNotify(FightPokemon* fightPokemon, s32 id) {
+    FightOutPokemon* fightOut;
+
+    fightOut = itemUseGetFightOut(fightPokemon);
+    if (fightOut != 0) {
+        fightSeqCheckSetMotoPokemonToHensinBuff(fightOut, id);
+    }
+}
+
+static inline void itemUseAddLog(ITEMUSE2POKEMON_LOG1* log, s16* count, s32 type, s16 value, s16 extra) {
+    s16 n;
+
+    n = *count;
     if (n < 0x20) {
-        log->e[n].key = key;
-        log->e[n].a = a;
-        log->e[n].b = b;
+        log[n].type = type;
+        log[n].value = value;
+        log[n].extra = extra;
         *count = n + 1;
     }
 }
 
-static inline u8 rankUp(void* fightPokemon, u16 id, u8 amount) {
-    void* out = getFightOutPokemon(fightPokemon);
-    u8 now;
-    u8 value;
-    if (out == 0) return 0;
-    now = pokemonGetStatus(out, 0, id, 0);
-    if (now >= 12) return 0;
-    value = now + amount;
-    if (value > 12) value = 12;
-    pokemonSetStatus(out, 0, id, 0, value);
-    setHensinBuff(fightPokemon, 0x99);
-    return value - now;
+#define ITEMUSE_ADD_LOG(log, count, logType, logValue, logExtra) \
+    do {                                                         \
+        s16 n_ = *(count);                                       \
+        if (n_ < 0x20) {                                         \
+            (log)[n_].type = (logType);                          \
+            (log)[n_].value = (logValue);                        \
+            (log)[n_].extra = (logExtra);                        \
+            *(count) = n_ + 1;                                   \
+        }                                                        \
+    } while (0)
+
+static inline u8 itemUseStatUp(FightPokemon* fightPokemon, u32 statusId, u8 boost) {
+    u8 oldStage;
+    u8 newStage;
+    FightOutPokemon* fightOut;
+
+    fightOut = itemUseGetFightOut(fightPokemon);
+    if (fightOut == 0) {
+        return 0;
+    }
+    oldStage = pokemonGetStatus(fightOut, 0, statusId, 0);
+    if (oldStage >= 0xC) {
+        return 0;
+    }
+    newStage = oldStage + boost;
+    if (newStage > 0xC) {
+        newStage = 0xC;
+    }
+    pokemonSetStatus(fightOut, 0, statusId, 0, newStage);
+    itemUseNotify(fightPokemon, 0x99);
+    return newStage - oldStage;
 }
 
-static inline u16 levelUp(ITEMUSE2POKEMON_LOG1* log, s16* count, void* pokemon) {
-    u8 level;
-    u16 oldMaxHp;
-    u16 newMaxHp;
-    if (pokemonIsDarkPokemon(pokemon)) return 0;
-    level = pokemonBiosGetLevel(pokemon);
-    if (level >= 100) return 0;
-    oldMaxHp = pokemonBiosGetMaxHp(pokemon);
-    pokemonBiosSetExp(pokemon, pokemonGrowDataBiosGetExp(pokemonGrowDataBiosGetPtr(pokemonDataBiosGetGrowDataId(pokemonDataBiosGetPtr(pokemonBiosGetPokemonDataId(pokemon)))), level + 1));
-    pokemonResetBasisStatus(pokemon);
-    newMaxHp = pokemonBiosGetMaxHp(pokemon);
-    addLog(log, count, 8, 0, 0);
-    return newMaxHp - oldMaxHp;
+static inline void itemUseStatUpLog(ITEMUSE2POKEMON_LOG1* log, s16* count, FightPokemon* fightPokemon, u32 statusId,
+                                    u8 boost, s32 type) {
+    u8 delta;
+
+    if ((delta = itemUseStatUp(fightPokemon, statusId, boost)) != 0) {
+        itemUseAddLog(log, count, type, delta, 0);
+    }
 }
 
-static inline u16 getEffortTotal(void* pokemon) {
-    s32 total = pokemonBiosGetMaxHpEffort(pokemon);
+static inline u16 itemUseEffortTotal(Pokemon* pokemon) {
+    u16 total;
+
+    total = pokemonBiosGetMaxHpEffort(pokemon);
     total += pokemonBiosGetPhyAtkEffort(pokemon);
     total += pokemonBiosGetPhyDefEffort(pokemon);
     total += pokemonBiosGetSpeAtkEffort(pokemon);
@@ -123,341 +398,433 @@ static inline u16 getEffortTotal(void* pokemon) {
     return total;
 }
 
-static inline s16 effortUp(void* pokemon, void* fightPokemon, u16 id, u8 amount) {
+static inline s16 itemUseEffortUp(Pokemon* pokemon, FightPokemon* fightPokemon, u32 statusId, u8 boost) {
     u16 total;
-    u16 now;
-    u16 value;
-    u16 sum;
-    total = getEffortTotal(pokemon);
-    if (total >= 510) return -1;
-    now = pokemonGetStatus(pokemon, 0, id, 0);
-    if (now >= 100) return 0;
-    value = now + amount;
-    if (value > 100) value = 100;
-    sum = (u16)(total - now) + value;
-    if (sum > 510) value -= sum - 510;
-    pokemonSetStatus(pokemon, 0, id, 0, value);
-    pokemonResetBasisStatus(pokemon);
-    setHensinBuff(fightPokemon, id);
-    return (u16)(value - now);
-}
+    u16 oldEffort;
+    u16 newEffort;
+    u16 newTotal;
 
-static inline u8 effortItem(ITEMUSE2POKEMON_LOG1* log, s16* count, void* pokemon, void* fightPokemon, u16 id, u8 amount, s32 key) {
-    s16 result = effortUp(pokemon, fightPokemon, id, amount);
-    if (result < 0) return 0;
-    if (result == 0) return 1;
-    addLog(log, count, key, result, 0);
-    return 1;
-}
-
-static inline u8 ppRecover(void* pokemon, u8 slot, u8 amount) {
-    u16 waza;
-    u8 max;
-    u8 now;
-    u8 value;
-    waza = pokemonBiosGetPokemonWazaDataId(pokemon, slot);
-    if (waza == 0x176) return 0;
-    if (wazaCheckDarkWaza(waza)) return 0;
-    max = pokemonWazaGetMaxPP(pokemon, slot);
-    now = pokemonBiosGetPokemonWazaPp(pokemon, slot);
-    if (now >= max) return 0;
-    value = now + amount;
-    if (value > max) value = max;
-    pokemonBiosSetPokemonWazaPp(pokemon, slot, value);
-    return value - now;
-}
-
-static inline void ppMaxUp(ITEMUSE2POKEMON_LOG1* log, s16* count, void* pokemon, u8 slot) {
-    u16 waza = pokemonBiosGetPokemonWazaDataId(pokemon, slot);
-    if (waza != 0x176 && !wazaCheckDarkWaza(waza) && pokemonWazaCheckValid(pokemon, slot) && wazaDB_GetPp(waza) >= 5) {
-        u8 ppCount = pokemonBiosGetPokemonWazaPpCount(pokemon, slot);
-        if (ppCount < 3) {
-            u8 oldMax = pokemonWazaGetMaxPP(pokemon, slot);
-            u8 diff;
-            pokemonBiosSetPokemonWazaPpCount(pokemon, slot, ppCount + 1);
-            diff = pokemonWazaGetMaxPP(pokemon, slot) - oldMax;
-            pokemonBiosSetPokemonWazaPp(pokemon, slot, pokemonBiosGetPokemonWazaPp(pokemon, slot) + diff);
-            addLog(log, count, 0x12, diff, slot);
-        }
+    total = itemUseEffortTotal(pokemon);
+    if (total >= 0x1FE) {
+        return -1;
     }
-}
-
-static inline void ppMaxFull(ITEMUSE2POKEMON_LOG1* log, s16* count, void* pokemon, u8 slot) {
-    u16 waza = pokemonBiosGetPokemonWazaDataId(pokemon, slot);
-    if (waza != 0x176 && !wazaCheckDarkWaza(waza) && wazaDB_GetPp(waza) >= 5 && pokemonBiosGetPokemonWazaPpCount(pokemon, slot) < 3) {
-        u8 oldMax = pokemonWazaGetMaxPP(pokemon, slot);
-        u8 diff;
-        pokemonBiosSetPokemonWazaPpCount(pokemon, slot, 3);
-        diff = pokemonWazaGetMaxPP(pokemon, slot) - oldMax;
-        if (diff) {
-            pokemonBiosSetPokemonWazaPp(pokemon, slot, pokemonBiosGetPokemonWazaPp(pokemon, slot) + diff);
-        }
-        addLog(log, count, 0x1D, diff, slot);
-    }
-}
-
-static inline s16 friendUp(ITEMUSE2POKEMON_LOG1* log, s16* count, void* pokemon, void* fightPokemon, s8 amount, u16 minimum, u16 maximum) {
-    s16 result;
-    if (*count <= 0) return 0;
-    result = friendXUp__FP7PokemonP12FightPokemonScUsUs(pokemon, fightPokemon, amount, minimum, maximum);
-    if (result == 0) return 0;
-    addLog(log, count, 0x1E, result, 0);
-    return result;
-}
-
-static inline ItemParam* getItemParam(u16 itemId) {
-    void* data = itemDataBiosGetPtr(itemId);
-    u8 paramId;
-    if (data == 0) return 0;
-    paramId = itemDataBiosGetItemEffectParam(data);
-    if (paramId == 0) return 0;
-    return itemParamGetPtr(paramId);
-}
-
-static void hpRecover__FP20ITEMUSE2POKEMON_LOG1PsP7PokemonUcbUsP12FightPokemon(ITEMUSE2POKEMON_LOG1 *log, s16 *count, void *pokemon, u8 amount, u8 revive, u16 bonus, void *fightPokemon) {
-    u16 hp;
-    u16 max;
-    u16 value;
-    int old;
-    u8 revived;
-    revived = 0;
-    hp = pokemonBiosGetHp(pokemon);
-    max = pokemonBiosGetMaxHp(pokemon);
-    if (hp >= max) return;
-    switch (amount) {
-    case 0xFF:
-        value = max;
-        break;
-    case 0xFE:
-        value = max / 2;
-        if (value == 0) value = 1;
-        break;
-    case 0xFD:
-        value = bonus;
-        break;
-    default:
-        value = amount;
-        break;
-    }
-    if (value == 0) return;
-    if (hp == 0) {
-        if (revive == 0) return;
-        revived = 1;
-    } else if (revive != 0) {
-        return;
-    }
-    old = hp;
-    hp = hp + value;
-    if (hp > max) hp = max;
-    pokemonBiosSetHp(pokemon, hp);
-    setHensinBuff(fightPokemon, 0x83);
-    if (revived) addLog(log, count, 0x16, 0, 0);
-    {
-        u16 recovered = hp - old;
-        addLog(log, count, 0x15, recovered, 0);
-    }
-}
-
-s16 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1 *log, void *pokemon, void *fightPokemon, u16 itemId, u8 slot) {
-    static u32 origRamSeedParam[2] = { 0, 0 };
-    ItemParam seedParam;
-    EvolutionInfo evoInfo;
-    s16 count;
-    u16 evoId;
-    ItemParam *param;
-    u16 hpBonus;
-    u8 amount;
-    s8 friendAmount;
-    s16 friendResult;
-    void *out;
-    u8 poison;
-    u8 fightOutCured;
-
-    hpBonus = 0;
-    count = 0;
-    if (itemId != 0xAF) {
-        param = getItemParam(itemId);
-    } else {
-        itemParamConvertOrigFormat(&seedParam, origRamSeedParam);
-        param = &seedParam;
-    }
-    if (param == 0) {
+    oldEffort = pokemonGetStatus(pokemon, 0, statusId, 0);
+    if (oldEffort >= 0x64) {
         return 0;
     }
-    if (fightPokemon != 0) {
-        pokemon = fightPokemon == 0 ? 0 : fightPokemonGetPokemonPtr(fightPokemon);
+    newEffort = oldEffort + boost;
+    if (newEffort > 0x64) {
+        newEffort = 0x64;
     }
-    if (itemParamGetMeromeroFlag(param)) {
-        out = getFightOutPokemon(fightPokemon);
-        if (out && fightOutPokemonIsJoutaiDataId(out, 0xA)) {
-            fightOutPokemonInitJoutaiDataId(out, 0xA);
-            setHensinBuff(fightPokemon, 0x7C);
-            addLog(log, &count, 0, 0, 0);
-        }
+    newTotal = total - oldEffort;
+    newTotal = newTotal + newEffort;
+    if (newTotal > 0x1FE) {
+        newEffort -= newTotal - 0x1FE;
     }
-    if (itemParamGetCriticalFlag(param)) {
-        out = getFightOutPokemon(fightPokemon);
-        if (out && fightOutPokemonCheckWriteJoutaiDataId(out, 0xF) == 2) {
-            fightOutPokemonWriteJoutaiDataId(out, 0xF, 0);
-            setHensinBuff(fightPokemon, 0x7C);
-            setHensinBuff(fightPokemon, 0x99);
-            addLog(log, &count, 1, 0, 0);
-        }
-    }
-    if ((amount = itemParamGetAttackUp(param))) {
-        u8 up = rankUp(fightPokemon, 0xE6, amount);
-        if (up) addLog(log, &count, 2, up, 0);
-    }
-    if ((amount = itemParamGetDefenceUp(param))) {
-        u8 up = rankUp(fightPokemon, 0xE7, amount);
-        if (up) addLog(log, &count, 3, up, 0);
-    }
-    if ((amount = itemParamGetQuickUp(param))) {
-        u8 up = rankUp(fightPokemon, 0xEA, amount);
-        if (up) addLog(log, &count, 4, up, 0);
-    }
-    if ((amount = itemParamGetHitUp(param))) {
-        u8 up = rankUp(fightPokemon, 0xEB, amount);
-        if (up) addLog(log, &count, 5, up, 0);
-    }
-    if ((amount = itemParamGetSpAttackUp(param))) {
-        u8 up = rankUp(fightPokemon, 0xE8, amount);
-        if (up) addLog(log, &count, 6, up, 0);
-    }
-    if (itemParamGetGuardFlag(param)) {
-        out = getFightOutPokemon(fightPokemon);
-        if (out) {
-            void* side = fightTargetGetPtrAsNowFightType(2, out);
-            if (fightSideCheckWriteJoutaiDataId(side, 0x4C) == 2) {
-                fightSideWriteJoutaiDataId(side, 0x4C, 0);
-                setHensinBuff(fightPokemon, 0x99);
-                addLog(log, &count, 7, 5, 0);
-            }
-        }
-    }
-    if (itemParamGetLevelUpFlag(param)) {
-        hpBonus = levelUp(log, &count, pokemon);
-    }
-    if (itemParamGetSleepFlag(param)) {
-        fightOutCured = 0;
-        if (pokemonIsJoutaiDataId(pokemon, 8)) {
-            pokemonInitJoutaiDataId(pokemon, 8);
-            out = getFightOutPokemon(fightPokemon);
-            if (out) {
-                fightOutPokemonInitJoutaiDataId(out, 0x17);
-                fightOutCured = 1;
-            }
-            setHensinBuff(fightPokemon, 0x7C);
-            addLog(log, &count, 9, 0, 0);
-            if (fightOutCured) addLog(log, &count, 0xA, 0, 0);
-        }
-    }
-    if (itemParamGetPoisonFlag(param)) {
-        poison = 0;
-        fightOutCured = 0;
-        if (pokemonIsJoutaiDataId(pokemon, 3)) {
-            pokemonInitJoutaiDataId(pokemon, 3);
-            poison = 1;
-        }
-        if (pokemonIsJoutaiDataId(pokemon, 4)) {
-            pokemonInitJoutaiDataId(pokemon, 4);
-            fightOutCured = 1;
-        }
-        setHensinBuff(fightPokemon, 0x7C);
-        if (poison) addLog(log, &count, 0xB, 0, 0);
-        if (fightOutCured) addLog(log, &count, 0xC, 0, 0);
-    }
-    if (itemParamGetBurnFlag(param) && pokemonIsJoutaiDataId(pokemon, 6)) {
-        pokemonInitJoutaiDataId(pokemon, 6);
-        setHensinBuff(fightPokemon, 0x7C);
-        addLog(log, &count, 0xE, 0, 0);
-    }
-    if (itemParamGetFreezeFlag(param) && pokemonIsJoutaiDataId(pokemon, 7)) {
-        pokemonInitJoutaiDataId(pokemon, 7);
-        setHensinBuff(fightPokemon, 0x7C);
-        addLog(log, &count, 0xF, 0, 0);
-    }
-    if (itemParamGetParalyzeFlag(param) && pokemonIsJoutaiDataId(pokemon, 5)) {
-        pokemonInitJoutaiDataId(pokemon, 5);
-        setHensinBuff(fightPokemon, 0x7C);
-        addLog(log, &count, 0x10, 0, 0);
-    }
-    if (itemParamGetConfuseFlag(param)) {
-        out = getFightOutPokemon(fightPokemon);
-        if (out && fightOutPokemonIsJoutaiDataId(out, 9)) {
-            fightOutPokemonInitJoutaiDataId(out, 9);
-            setHensinBuff(fightPokemon, 0x7C);
-            addLog(log, &count, 0x11, 0, 0);
-        }
-    }
-    if (itemParamGetPPMaxUpFlag(param)) {
-        ppMaxUp(log, &count, pokemon, slot);
-    }
-    if ((amount = itemParamGetHPEffortUp(param))) {
-        u8 ok;
-        if (pokemonBiosGetPokemonDataId(pokemon) == 0x12F) {
-            ok = 1;
-        } else {
-            ok = effortItem(log, &count, pokemon, fightPokemon, 0x8D, amount, 0x13);
-        }
-        if (!ok) return 0;
-    }
-    if ((amount = itemParamGetAttackEffortUp(param))) {
-        if (!effortItem(log, &count, pokemon, fightPokemon, 0x8E, amount, 0x14)) return 0;
-    }
-    if ((amount = itemParamGetHPUp(param))) {
-        u8 revive = itemParamGetReviveFlag(param);
-        hpRecover__FP20ITEMUSE2POKEMON_LOG1PsP7PokemonUcbUsP12FightPokemon(log, &count, pokemon, amount, revive, hpBonus, fightPokemon);
-    }
-    if ((amount = itemParamGetPPUp(param))) {
-        u8 select;
-        void* target;
-        if (itemParamGetPPSelectFlag(param)) select = slot;
-        else select = 0xFF;
-        target = pokemon;
-        if (pokemonIsJoutaiDataId(pokemon, 0x10) || pokemonIsJoutaiDataId(pokemon, 0x31)) {
-            target = fightPokemonBiosGetMotoPokemonPtr(fightPokemon);
-        }
-        if (select != 0xFF) {
-            u8 up = ppRecover(target, select, amount);
-            if (up) addLog(log, &count, 0x17, up, select);
-        } else {
-            u8 i;
-            for (i = 0; i < 4; i++) {
-                u8 up = ppRecover(target, i, amount);
-                if (up) addLog(log, &count, 0x17, up, i);
-            }
-        }
-    }
-    if (itemParamGetEvolutionFlag(param) && !pokemonIsDarkPokemon(pokemon)) {
-        u16 evo = pokemonEvolutionCheck(pokemon, 1, itemId, &evoId, &evoInfo);
-        if (evo || evoId) addLog(log, &count, 0x18, evo, evoId);
-    }
-    if ((amount = itemParamGetDefenceEffortUp(param))) {
-        if (!effortItem(log, &count, pokemon, fightPokemon, 0x8F, amount, 0x19)) return 0;
-    }
-    if ((amount = itemParamGetQuickEffortUp(param))) {
-        if (!effortItem(log, &count, pokemon, fightPokemon, 0x92, amount, 0x1A)) return 0;
-    }
-    if ((amount = itemParamGetSpDefenceEffortUp(param))) {
-        if (!effortItem(log, &count, pokemon, fightPokemon, 0x91, amount, 0x1B)) return 0;
-    }
-    if ((amount = itemParamGetSpAttackEffortUp(param))) {
-        if (!effortItem(log, &count, pokemon, fightPokemon, 0x90, amount, 0x1C)) return 0;
-    }
-    if (itemParamGetPPMaxFullFlag(param)) {
-        ppMaxFull(log, &count, pokemon, slot);
-    }
-    friendResult = 0;
-    if ((friendAmount = itemParamGetFriend1Up(param))) {
-        friendResult = friendUp(log, &count, pokemon, fightPokemon, friendAmount, 0, 100);
-    }
-    if (friendResult == 0 && (friendAmount = itemParamGetFriend2Up(param))) {
-        friendResult = friendUp(log, &count, pokemon, fightPokemon, friendAmount, 100, 200);
-    }
-    if (friendResult == 0 && (friendAmount = itemParamGetFriend3Up(param))) {
-        friendUp(log, &count, pokemon, fightPokemon, friendAmount, 200, 0xFFFF);
-    }
-    return count;
+    pokemonSetStatus(pokemon, 0, statusId, 0, newEffort);
+    pokemonResetBasisStatus(pokemon);
+    itemUseNotify(fightPokemon, statusId);
+    return (u16)(newEffort - oldEffort);
 }
+
+static inline u8 itemUseEffortUpLog(ITEMUSE2POKEMON_LOG1* log, s16* count, Pokemon* pokemon,
+                                    FightPokemon* fightPokemon, u32 statusId, u8 boost, s32 type) {
+    s16 gained;
+
+    gained = itemUseEffortUp(pokemon, fightPokemon, statusId, boost);
+    if (gained < 0) {
+        return false;
+    }
+    if (gained == 0) {
+        return true;
+    }
+    itemUseAddLog(log, count, type, gained, 0);
+    return true;
+}
+
+static inline u8 itemUsePPUp(Pokemon* pokemon, s32 slot, u8 boost) {
+    u16 wazaDataId;
+    u8 maxPp;
+    u8 oldPp;
+    u8 newPp;
+
+    wazaDataId = pokemonBiosGetPokemonWazaDataId(pokemon, slot);
+    if (wazaDataId == 0x176) {
+        return 0;
+    }
+    if (wazaCheckDarkWaza(wazaDataId)) {
+        return 0;
+    }
+    maxPp = pokemonWazaGetMaxPP(pokemon, slot);
+    oldPp = pokemonBiosGetPokemonWazaPp(pokemon, slot);
+    if (oldPp >= maxPp) {
+        return 0;
+    }
+    newPp = oldPp + boost;
+    if (newPp > maxPp) {
+        newPp = maxPp;
+    }
+    pokemonBiosSetPokemonWazaPp(pokemon, slot, newPp);
+    return newPp - oldPp;
+}
+
+static inline void itemUsePPRecover(ITEMUSE2POKEMON_LOG1* log, s16* count, Pokemon* pokemon,
+                                    FightPokemon* fightPokemon, u8* itemParam, u8 moveSlot, u8 boost) {
+    Pokemon* target;
+    u8 slot;
+    u8 i;
+    u8 delta;
+
+    if (itemParamGetPPSelectFlag(itemParam)) {
+        slot = moveSlot;
+    } else {
+        slot = 0xFF;
+    }
+    target = pokemon;
+    if (pokemonIsJoutaiDataId(pokemon, 0x10) || pokemonIsJoutaiDataId(pokemon, 0x31)) {
+        target = (Pokemon*)fightPokemonBiosGetMotoPokemonPtr(fightPokemon);
+    }
+    if (slot != 0xFF) {
+        if ((delta = itemUsePPUp(target, slot, boost)) != 0) {
+            ITEMUSE_ADD_LOG(log, count, 0x17, delta, slot);
+        }
+    } else {
+        for (i = 0; i < 4; i++) {
+            if ((delta = itemUsePPUp(target, i, boost)) != 0) {
+                ITEMUSE_ADD_LOG(log, count, 0x17, delta, i);
+            }
+        }
+    }
+}
+
+static inline void itemUsePPMaxUp(ITEMUSE2POKEMON_LOG1* log, s16* count, Pokemon* pokemon, u8 slot) {
+    u16 wazaDataId;
+    u8 ppCount;
+    u8 maxPp;
+    u8 delta;
+    u8 pp;
+
+    wazaDataId = pokemonBiosGetPokemonWazaDataId(pokemon, slot);
+    if (wazaDataId != 0x176 && !wazaCheckDarkWaza(wazaDataId) && pokemonWazaCheckValid(pokemon, slot) &&
+        wazaDB_GetPp(wazaDataId) >= 5) {
+        ppCount = pokemonBiosGetPokemonWazaPpCount(pokemon, slot);
+        if (ppCount < 3) {
+            maxPp = pokemonWazaGetMaxPP(pokemon, slot);
+            pokemonBiosSetPokemonWazaPpCount(pokemon, slot, ppCount + 1);
+            delta = pokemonWazaGetMaxPP(pokemon, slot) - maxPp;
+            pp = pokemonBiosGetPokemonWazaPp(pokemon, slot);
+            pp += delta;
+            pokemonBiosSetPokemonWazaPp(pokemon, slot, pp);
+            itemUseAddLog(log, count, 0x12, delta, slot);
+        }
+    }
+}
+
+static inline void itemUsePPMaxFull(ITEMUSE2POKEMON_LOG1* log, s16* count, Pokemon* pokemon, u8 slot) {
+    u16 wazaDataId;
+    u8 maxPp;
+    u8 delta;
+    u8 pp;
+
+    wazaDataId = pokemonBiosGetPokemonWazaDataId(pokemon, slot);
+    if (wazaDataId != 0x176 && !wazaCheckDarkWaza(wazaDataId) && wazaDB_GetPp(wazaDataId) >= 5 &&
+        pokemonBiosGetPokemonWazaPpCount(pokemon, slot) < 3) {
+        maxPp = pokemonWazaGetMaxPP(pokemon, slot);
+        pokemonBiosSetPokemonWazaPpCount(pokemon, slot, 3);
+        delta = pokemonWazaGetMaxPP(pokemon, slot) - maxPp;
+        if (delta != 0) {
+            pp = pokemonBiosGetPokemonWazaPp(pokemon, slot);
+            pp += delta;
+            pokemonBiosSetPokemonWazaPp(pokemon, slot, pp);
+        }
+        itemUseAddLog(log, count, 0x1D, delta, slot);
+    }
+}
+
+static inline void itemUseCureSleep(ITEMUSE2POKEMON_LOG1* log, s16* count, Pokemon* pokemon,
+                                    FightPokemon* fightPokemon) {
+    u8 wokeUp = 0;
+    FightOutPokemon* fightOut;
+
+    if (pokemonIsJoutaiDataId(pokemon, 8)) {
+        pokemonInitJoutaiDataId(pokemon, 8);
+        fightOut = itemUseGetFightOut(fightPokemon);
+        if (fightOut != 0) {
+            fightOutPokemonInitJoutaiDataId(fightOut, 0x17);
+            wokeUp = 1;
+        }
+        itemUseNotify(fightPokemon, 0x7C);
+        itemUseAddLog(log, count, 9, 0, 0);
+        if (wokeUp) {
+            itemUseAddLog(log, count, 0xA, 0, 0);
+        }
+    }
+}
+
+static inline void itemUseCurePoison(ITEMUSE2POKEMON_LOG1* log, s16* count, Pokemon* pokemon,
+                                     FightPokemon* fightPokemon) {
+    u8 poisonCleared = 0;
+    u8 badPoisonCleared = 0;
+
+    if (pokemonIsJoutaiDataId(pokemon, 3)) {
+        pokemonInitJoutaiDataId(pokemon, 3);
+        poisonCleared = 1;
+    }
+    if (pokemonIsJoutaiDataId(pokemon, 4)) {
+        pokemonInitJoutaiDataId(pokemon, 4);
+        badPoisonCleared = 1;
+    }
+    itemUseNotify(fightPokemon, 0x7C);
+    if (poisonCleared) {
+        itemUseAddLog(log, count, 0xB, 0, 0);
+    }
+    if (badPoisonCleared) {
+        itemUseAddLog(log, count, 0xC, 0, 0);
+    }
+}
+
+static inline void itemUseGuardSpec(ITEMUSE2POKEMON_LOG1* log, s16* count, FightPokemon* fightPokemon) {
+    FightOutPokemon* fightOut;
+    FIGHT_SIDE* side;
+
+    fightOut = itemUseGetFightOut(fightPokemon);
+    if (fightOut != 0) {
+        side = (FIGHT_SIDE*)fightTargetGetPtrAsNowFightType(2, fightOut);
+        if (fightSideCheckWriteJoutaiDataId(side, 0x4C) == 2) {
+            fightSideWriteJoutaiDataId(side, 0x4C, 0);
+            itemUseNotify(fightPokemon, 0x99);
+            itemUseAddLog(log, count, 7, 5, 0);
+        }
+    }
+}
+
+static inline void itemUseEvolve(ITEMUSE2POKEMON_LOG1* log, s16* count, Pokemon* pokemon, u16 itemDataId,
+                                 POKEMON_EVOLUTION_INFO* evolutionMode) {
+    u16 evolutionSpecies;
+    u16 evolution;
+
+    evolution = pokemonEvolutionCheck(pokemon, 1, itemDataId, &evolutionSpecies, evolutionMode);
+    if (evolution != 0 || evolutionSpecies != 0) {
+        itemUseAddLog(log, count, 0x18, evolution, evolutionSpecies);
+    }
+}
+
+static inline u16 itemUseLevelUp(ITEMUSE2POKEMON_LOG1* log, s16* count, Pokemon* pokemon) {
+    u8 level;
+    u16 oldMaxHp;
+    u16 newMaxHp;
+
+    if (pokemonIsDarkPokemon(pokemon)) {
+        return 0;
+    }
+    level = pokemonBiosGetLevel(pokemon);
+    if (level >= 100) {
+        return 0;
+    }
+    oldMaxHp = pokemonBiosGetMaxHp(pokemon);
+    pokemonBiosSetExp(pokemon, pokemonGrowDataBiosGetExp(
+                                   pokemonGrowDataBiosGetPtr(pokemonDataBiosGetGrowDataId(
+                                       pokemonDataBiosGetPtr(pokemonBiosGetPokemonDataId(pokemon)))),
+                                   level + 1));
+    pokemonResetBasisStatus(pokemon);
+    newMaxHp = pokemonBiosGetMaxHp(pokemon);
+    itemUseAddLog(log, count, 8, 0, 0);
+    return newMaxHp - oldMaxHp;
+}
+
+static inline s16 itemUseFriendUp(ITEMUSE2POKEMON_LOG1* log, s16* count, Pokemon* pokemon,
+                                  FightPokemon* fightPokemon, s8 delta, u16 minFriend, u16 maxFriend) {
+    s16 gained;
+
+    if (*count <= 0) {
+        return 0;
+    }
+    gained = friendXUp(pokemon, fightPokemon, delta, minFriend, maxFriend);
+    if (gained == 0) {
+        return 0;
+    }
+    itemUseAddLog(log, count, 0x1E, gained, 0);
+    return gained;
+}
+
+extern "C" s32 itemUse2Pokemon(ITEMUSE2POKEMON_LOG1* log, Pokemon* pokemon, FightPokemon* fightPokemon, u16 itemDataId, u8 moveSlot) {
+    static u8 origRamSeedParam[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    POKEMON_EVOLUTION_INFO evolutionMode;
+    s16 logCount;
+    u8 convertedParam[0x18];
+    u8* itemParam;
+    FightOutPokemon* fightOut;
+    u16 hpAmount;
+    u8 boost;
+    s8 friendBoost;
+    s16 friendDelta;
+    u8 ok;
+
+    hpAmount = 0;
+    logCount = 0;
+
+    if (itemDataId != 0xAF) {
+        itemParam = itemUseGetParam(itemDataId);
+    } else {
+        itemParamConvertOrigFormat(convertedParam, origRamSeedParam);
+        itemParam = convertedParam;
+    }
+    if (itemParam == 0) {
+        return 0;
+    }
+
+    if (fightPokemon != 0) {
+        pokemon = itemUseGetPokemon(fightPokemon);
+    }
+
+    if (itemParamGetMeromeroFlag(itemParam)) {
+        fightOut = itemUseGetFightOut(fightPokemon);
+        if (fightOut != 0 && fightOutPokemonIsJoutaiDataId(fightOut, 0xA)) {
+            fightOutPokemonInitJoutaiDataId(fightOut, 0xA);
+            itemUseNotify(fightPokemon, 0x7C);
+            itemUseAddLog(log, &logCount, 0, 0, 0);
+        }
+    }
+
+    if (itemParamGetCriticalFlag(itemParam)) {
+        fightOut = itemUseGetFightOut(fightPokemon);
+        if (fightOut != 0 && fightOutPokemonCheckWriteJoutaiDataId(fightOut, 0xF) == 2) {
+            fightOutPokemonWriteJoutaiDataId(fightOut, 0xF, 0);
+            itemUseNotify(fightPokemon, 0x7C);
+            itemUseNotify(fightPokemon, 0x99);
+            itemUseAddLog(log, &logCount, 1, 0, 0);
+        }
+    }
+
+    if ((boost = itemParamGetAttackUp(itemParam)) != 0) {
+        itemUseStatUpLog(log, &logCount, fightPokemon, 0xE6, boost, 2);
+    }
+    if ((boost = itemParamGetDefenceUp(itemParam)) != 0) {
+        itemUseStatUpLog(log, &logCount, fightPokemon, 0xE7, boost, 3);
+    }
+    if ((boost = itemParamGetQuickUp(itemParam)) != 0) {
+        itemUseStatUpLog(log, &logCount, fightPokemon, 0xEA, boost, 4);
+    }
+    if ((boost = itemParamGetHitUp(itemParam)) != 0) {
+        itemUseStatUpLog(log, &logCount, fightPokemon, 0xEB, boost, 5);
+    }
+    if ((boost = itemParamGetSpAttackUp(itemParam)) != 0) {
+        itemUseStatUpLog(log, &logCount, fightPokemon, 0xE8, boost, 6);
+    }
+
+    if (itemParamGetGuardFlag(itemParam)) {
+        itemUseGuardSpec(log, &logCount, fightPokemon);
+    }
+
+    if (itemParamGetLevelUpFlag(itemParam)) {
+        hpAmount = itemUseLevelUp(log, &logCount, pokemon);
+    }
+
+    if (itemParamGetSleepFlag(itemParam)) {
+        itemUseCureSleep(log, &logCount, pokemon, fightPokemon);
+    }
+
+    if (itemParamGetPoisonFlag(itemParam)) {
+        itemUseCurePoison(log, &logCount, pokemon, fightPokemon);
+    }
+
+    if (itemParamGetBurnFlag(itemParam) && pokemonIsJoutaiDataId(pokemon, 6)) {
+        pokemonInitJoutaiDataId(pokemon, 6);
+        itemUseNotify(fightPokemon, 0x7C);
+        itemUseAddLog(log, &logCount, 0xE, 0, 0);
+    }
+    if (itemParamGetFreezeFlag(itemParam) && pokemonIsJoutaiDataId(pokemon, 7)) {
+        pokemonInitJoutaiDataId(pokemon, 7);
+        itemUseNotify(fightPokemon, 0x7C);
+        itemUseAddLog(log, &logCount, 0xF, 0, 0);
+    }
+    if (itemParamGetParalyzeFlag(itemParam) && pokemonIsJoutaiDataId(pokemon, 5)) {
+        pokemonInitJoutaiDataId(pokemon, 5);
+        itemUseNotify(fightPokemon, 0x7C);
+        itemUseAddLog(log, &logCount, 0x10, 0, 0);
+    }
+
+    if (itemParamGetConfuseFlag(itemParam)) {
+        fightOut = itemUseGetFightOut(fightPokemon);
+        if (fightOut != 0 && fightOutPokemonIsJoutaiDataId(fightOut, 9)) {
+            fightOutPokemonInitJoutaiDataId(fightOut, 9);
+            itemUseNotify(fightPokemon, 0x7C);
+            itemUseAddLog(log, &logCount, 0x11, 0, 0);
+        }
+    }
+
+    if (itemParamGetPPMaxUpFlag(itemParam)) {
+        itemUsePPMaxUp(log, &logCount, pokemon, moveSlot);
+    }
+
+    if ((boost = itemParamGetHPEffortUp(itemParam)) != 0) {
+        if (pokemonBiosGetPokemonDataId(pokemon) == 0x12F) {
+            ok = true;
+        } else {
+            ok = itemUseEffortUpLog(log, &logCount, pokemon, fightPokemon, 0x8D, boost, 0x13);
+        }
+        if (!ok) {
+            return 0;
+        }
+    }
+    if ((boost = itemParamGetAttackEffortUp(itemParam)) != 0) {
+        if (!itemUseEffortUpLog(log, &logCount, pokemon, fightPokemon, 0x8E, boost, 0x14)) {
+            return 0;
+        }
+    }
+
+    if ((boost = itemParamGetHPUp(itemParam)) != 0) {
+        bool revive = itemParamGetReviveFlag(itemParam);
+        hpRecover(log, &logCount, pokemon, boost, revive, hpAmount, fightPokemon);
+    }
+
+    if ((boost = itemParamGetPPUp(itemParam)) != 0) {
+        itemUsePPRecover(log, &logCount, pokemon, fightPokemon, itemParam, moveSlot, boost);
+    }
+
+    if (itemParamGetEvolutionFlag(itemParam) && !pokemonIsDarkPokemon(pokemon)) {
+        itemUseEvolve(log, &logCount, pokemon, itemDataId, &evolutionMode);
+    }
+
+    if ((boost = itemParamGetDefenceEffortUp(itemParam)) != 0) {
+        if (!itemUseEffortUpLog(log, &logCount, pokemon, fightPokemon, 0x8F, boost, 0x19)) {
+            return 0;
+        }
+    }
+    if ((boost = itemParamGetQuickEffortUp(itemParam)) != 0) {
+        if (!itemUseEffortUpLog(log, &logCount, pokemon, fightPokemon, 0x92, boost, 0x1A)) {
+            return 0;
+        }
+    }
+    if ((boost = itemParamGetSpDefenceEffortUp(itemParam)) != 0) {
+        if (!itemUseEffortUpLog(log, &logCount, pokemon, fightPokemon, 0x91, boost, 0x1B)) {
+            return 0;
+        }
+    }
+    if ((boost = itemParamGetSpAttackEffortUp(itemParam)) != 0) {
+        if (!itemUseEffortUpLog(log, &logCount, pokemon, fightPokemon, 0x90, boost, 0x1C)) {
+            return 0;
+        }
+    }
+
+    if (itemParamGetPPMaxFullFlag(itemParam)) {
+        itemUsePPMaxFull(log, &logCount, pokemon, moveSlot);
+    }
+
+    friendDelta = 0;
+    if ((friendBoost = itemParamGetFriend1Up(itemParam)) != 0) {
+        friendDelta = itemUseFriendUp(log, &logCount, pokemon, fightPokemon, friendBoost, 0, 100);
+    }
+    if (friendDelta == 0) {
+        if ((friendBoost = itemParamGetFriend2Up(itemParam)) != 0) {
+            friendDelta = itemUseFriendUp(log, &logCount, pokemon, fightPokemon, friendBoost, 100, 200);
+        }
+    }
+    if (friendDelta == 0) {
+        if ((friendBoost = itemParamGetFriend3Up(itemParam)) != 0) {
+            itemUseFriendUp(log, &logCount, pokemon, fightPokemon, friendBoost, 200, 0xFFFF);
+        }
+    }
+
+    return logCount;
 }

@@ -1,29 +1,25 @@
 #include <game/pxdvs/app/waza/wazaLayout.hpp>
 
-// Index fields in units of their stored type, keeping the row and field offsets together.
-#define TYPE_FIELD(type, field, id) \
-    ((type*)zokusei_data)[(id) * (sizeof(TypeRecord) / sizeof(type)) + \
-                        offsetof(TypeRecord, field) / sizeof(type)]
-
+#pragma force_active on
 extern "C" {
 u16 zokuseiBiosGetSmallSpriteID(u16 id) {
     if (id >= *zokusei_data_number) return 0;
-    return TYPE_FIELD(u16, smallSprite, id);
+    return zokusei_data[id].smallSprite;
 }
 
 u16 zokuseiBiosGetSpriteID(u16 id) {
     if (id >= *zokusei_data_number) return 0;
-    return TYPE_FIELD(u16, sprite, id);
+    return zokusei_data[id].sprite;
 }
 
 u8 zokuseiBiosGetWazaKind(u16 id) {
     if (id >= *zokusei_data_number) return 0;
-    return TYPE_FIELD(u8, kind, id);
+    return zokusei_data[id].kind;
 }
 
 u32 zokuseiBiosGetName(u16 id) {
     if (id >= *zokusei_data_number) return 0;
-    return TYPE_FIELD(u32, name, id);
+    return zokusei_data[id].name;
 }
 
 u16 zokuseiBiosGetWazaJoutai(u32 attack, u32 defense) {
@@ -33,4 +29,4 @@ u16 zokuseiBiosGetWazaJoutai(u32 attack, u32 defense) {
 }
 }
 
-#undef TYPE_FIELD
+#pragma force_active reset

@@ -1,4 +1,11 @@
 #include <dolphin/mtx.h>
+static inline f32 colEdgeSide(f32 ez, f32 ex, f32 z, f32 x, f32 pz, f32 px)
+{
+    ez -= z;
+    ex -= x;
+    return ex * (pz - z) - ez * (px - x);
+}
+#define COL_ABS(x) ((x) > 0.0f ? (x) : -(x))
 extern "C" {
 u8 GScolsys2UtilGetCpPlaneLine(Vec *out, f32 *rate, Vec *normal, Vec *plane, Vec *start, Vec *end) {
     Vec delta;
@@ -33,50 +40,99 @@ void GScolsy2UtilGetPointExtentionLine(Vec *out, Vec *start, Vec *end, f32 dista
         PSVECAdd(&delta, start, out);
     }
 }
-u8 GScolsy2UtilChkInTri(Vec *point, Vec *triangle, Vec *normal) {
-    Vec projected[3];
-    f32 ax = normal->x > 0.0f ? normal->x : -normal->x;
-    f32 ay = normal->y > 0.0f ? normal->y : -normal->y;
-    f32 az = normal->z > 0.0f ? normal->z : -normal->z;
-    f32 orientation;
-    s32 a, b;
-    if (ax < ay) {
-        if (ay < az) { orientation = normal->z; a = 0; b = 1; }
-        else { orientation = normal->y; a = 2; b = 0; }
-    } else if (ax > az) { orientation = -normal->x; a = 2; b = 1; }
-    else { orientation = normal->z; a = 0; b = 1; }
-    if (orientation < 0.0f) {
-        projected[0].x = ((f32 *)&triangle[0])[a]; projected[0].y = ((f32 *)&triangle[0])[b];
-        projected[1].x = ((f32 *)&triangle[1])[a]; projected[1].y = ((f32 *)&triangle[1])[b];
-        projected[2].x = ((f32 *)&triangle[2])[a]; projected[2].y = ((f32 *)&triangle[2])[b];
+BOOL GScolsy2UtilChkInTri(Vec* point, Vec* verts, Vec* normal)
+{
+    Vec pts[3];
+    f32 absX;
+    f32 absY;
+    f32 absZ;
+    f32 facing;
+    s32 u;
+    s32 v;
+    f32 minY;
+    f32 minX;
+    f32 maxY;
+    f32 maxX;
+    f32 px;
+    f32 py;
+    s32 i;
+    s32 next;
+
+    absX = COL_ABS(normal->x);
+    absY = COL_ABS(normal->y);
+    absZ = COL_ABS(normal->z);
+    if (absX < absY) {
+        if (absY < absZ) {
+            facing = normal->z;
+            u = 0;
+            v = 1;
+        } else {
+            facing = normal->y;
+            u = 2;
+            v = 0;
+        }
+    } else if (absX > absZ) {
+        facing = -normal->x;
+        u = 2;
+        v = 1;
     } else {
-        projected[0].x = ((f32 *)&triangle[2])[a]; projected[0].y = ((f32 *)&triangle[2])[b];
-        projected[1].x = ((f32 *)&triangle[1])[a]; projected[1].y = ((f32 *)&triangle[1])[b];
-        projected[2].x = ((f32 *)&triangle[0])[a]; projected[2].y = ((f32 *)&triangle[0])[b];
+        facing = normal->z;
+        u = 0;
+        v = 1;
     }
-    Vec minimum, maximum;
-    minimum.x = minimum.y = 1000000.0f;
-    maximum.x = maximum.y = -1000000.0f;
-    Vec query;
-    query.x = ((f32 *)point)[a];
-    query.y = ((f32 *)point)[b];
-    for (s32 i=0; i<3; i++) {
-        if (minimum.x > projected[i].x) minimum.x = projected[i].x;
-        if (minimum.y > projected[i].y) minimum.y = projected[i].y;
-        if (maximum.x < projected[i].x) maximum.x = projected[i].x;
-        if (maximum.y < projected[i].y) maximum.y = projected[i].y;
+
+    if (facing < 0.0f) {
+        for (i = 0; i < 3; i++) {
+            pts[i].x = (&verts[i].x)[u];
+            pts[i].y = (&verts[i].x)[v];
+        }
+    } else {
+        for (i = 0; i < 3; i++) {
+            pts[i].x = (&verts[2 - i].x)[u];
+            pts[i].y = (&verts[2 - i].x)[v];
+        }
     }
-    if (minimum.x > query.x || minimum.y > query.y || maximum.x < query.x || maximum.y < query.y) return 0;
-    for (s32 i=0; i<3; i++) {
-        s32 next = i+1;
-        if (next >= 3) next = 0;
-        Vec displacement, edge;
-        displacement.x = query.x - projected[i].x;
-        displacement.y = query.y - projected[i].y;
-        edge.y = projected[next].y - projected[i].y;
-        edge.x = projected[next].x - projected[i].x;
-        f32 cross = edge.y * displacement.x;
-        if (edge.x * displacement.y - cross > 0.0f) return 0;
+
+    minX = minY = 1000000.0f;
+    maxX = maxY = -1000000.0f;
+    px = (&point->x)[u];
+    py = (&point->x)[v];
+    for (i = 0; i < 3; i++) {
+        f32 x;
+        f32 y;
+
+        x = pts[i].x;
+        if (minX > x) {
+            minX = x;
+        }
+        y = pts[i].y;
+        if (minY > y) {
+            minY = y;
+        }
+        if (maxX < x) {
+            maxX = x;
+        }
+        if (maxY < y) {
+            maxY = y;
+        }
+    }
+    if (minX > px || minY > py || maxX < px || maxY < py) {
+        return 0;
+    }
+
+    for (i = 0; i < 3; i++) {
+        f32 x;
+        f32 y;
+
+        next = i + 1;
+        if (next >= 3) {
+            next = 0;
+        }
+        x = pts[i].x;
+        y = pts[i].y;
+        if (colEdgeSide(pts[next].y, pts[next].x, y, x, py, px) > 0.0f) {
+            return 0;
+        }
     }
     return 1;
 }

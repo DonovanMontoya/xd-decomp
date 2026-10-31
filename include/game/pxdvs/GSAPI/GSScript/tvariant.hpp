@@ -38,6 +38,6 @@ struct tigaArrayFixed {
 };
 typedef char VariantSizeCheck[sizeof(tigaVariant) == 8 ? 1 : -1];
 extern tigaVariant _dummyValue;
-s32 tigaErrMessage(const char*);
+void tigaErrMessage(const char*);
 }
 #endif

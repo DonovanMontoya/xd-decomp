@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <global.h>
 
 struct GamedataAttest { u8 ver; u8 gen; u8 area; u8 langarea; };
@@ -14,3 +15,4 @@ void gamedataAttestBiosCopy(GamedataAttest* d, GamedataAttest* s) { if (d && s) 
 void gamedataBiosSetGamedataAtttestPtr(GamedataAttest* d, GamedataAttest* s) { if (!d || !s) return; { d->ver=s->ver; d->gen=s->gen; d->area=s->area; d->langarea=s->langarea; } }
 GamedataAttest* gamedataBiosGetGamedataAtttestPtr(GamedataAttest* p) { if (p != 0) return p; return 0; }
 }
+#pragma force_active reset

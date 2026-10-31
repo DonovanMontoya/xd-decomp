@@ -1,3 +1,6 @@
+#pragma defer_codegen on
+#pragma force_active on
+#pragma dollar_identifiers on
 #include <game/menuPocketLayout.hpp>
 
 extern "C" {
@@ -7,10 +10,10 @@ void winMsgOpen(s32, u32, s32, s32);
 void winMsgOpenWithSE(s32, s32, s32, s32, u8);
 void winMsgClose(s32);
 void msgctrlSetValue(s32, s32);
-MENU_ITEM_dd_ *menuItemBiosGetPtr(s32, u32);
+MENU_ITEM_dd_* menuItemBiosGetPtr(s32, u32);
 s32 heroGetStatus(Hero *, s32, s32);
-u32 *heroItemGetItemKindToItemAryPtr(Hero *, u8, u16 *, u16 *, s32, s32);
-u32 *heroHizukiItemGetItemAryPtr(Hero *, u16 *, s32, s32, s32);
+u32* heroItemGetItemKindToItemAryPtr(Hero *, u8, u16 *, u16 *, s32, s32);
+u32* heroHizukiItemGetItemAryPtr(Hero *, u16 *, s32, s32, s32);
 void heroItemDecItemDataId(Hero *, u16, u16, s16);
 u32 itemDataBiosGetPtr(u16);
 u16 itemDataBiosGetPrice(u32);
@@ -63,11 +66,11 @@ void menuSubCursorAnimeStart(void);
 void menuSubCursorAnimeValGet(void *, s32 *);
 void menuSubDrawCursorBack2(s32, s32, s32, s16, s16, u8, s32, s32);
 void windowDrawSpriteCursor(s32, s16, s32, tagWINDOW_WORK *, s32, s32, s32, void *, s32);
-void *fightTrainerBiosGetFightPokemonPtr(s32, s32);
-void *fightPokemonGetPokemonPtr(void *);
-Hero *fightTrainerBiosGetHeroPtr(s32);
-void *memset(void *, int, u32);
-void *memmove(void *, const void *, u32);
+void* fightTrainerBiosGetFightPokemonPtr(s32, s32);
+void* fightPokemonGetPokemonPtr(void *);
+Hero* fightTrainerBiosGetHeroPtr(s32);
+void* memset(void *, int, u32);
+void* memmove(void *, const void *, u32);
 u16 menuPocketCologne(s32);
 void menuPocketBattleDiskMain(s32, s32, Hero *);
 s32 menuPocketInputNumber(tagWINDOW_WORK *, s32, s32, u16, s32, s32, s32);
@@ -82,7 +85,7 @@ void menuCloseSync(s32, s32);
 
 void menuPocketToolFloatToZero(f32 &, f32);
 
-PocketData Data;
+
 struct PocketScriptEntry {
     u16 id;
     u16 reserved;
@@ -93,6 +96,7 @@ struct PocketScriptWork {
     s32 count;
 };
 PocketScriptWork menuPocketWork;
+PocketData Data;
 
 void menuPtPlaySe(u32);
 
@@ -109,58 +113,48 @@ int _actSuteruNormal(int, int, int *);
 u8 _getItemDeposit(u16 item);
 
 const SActionMenuItem ActionMenuDouguField[] = {
-    { 0x4292, _actTukauNormal, 0, 0 },
-    { 0x4293, _actMotaseruNormal, 2, 0 },
-    { 0x4294, _actSuteruNormal, 0, 0 },
-    { 0x4295, 0, 0, 0 },
-    { 0, 0, 0, 0 }
+    { 0x4292, _actTukauNormal, 0 },
+    { 0x4293, _actMotaseruNormal, 2 },
+    { 0x4294, _actSuteruNormal, 0 },
+    { 0x4295, 0, 0 }
 };
 const SActionMenuItem ActionMenuBallField[] = {
-    { 0x4293, _actMotaseruNormal, 0, 0 },
-    { 0x4294, _actSuteruNormal, 0, 0 },
-    { 0x4295, 0, 0, 0 },
-    { 0, 0, 0, 0 }
+    { 0x4293, _actMotaseruNormal, 0 },
+    { 0x4294, _actSuteruNormal, 0 },
+    { 0x4295, 0, 0 }
 };
 const SActionMenuItem ActionMenuWazaMachineField[] = {
-    { 0x4292, _actTukauNormal, 0, 0 },
-    { 0x4293, _actMotaseruNormal, 0, 0 },
-    { 0x4295, 0, 0, 0 },
-    { 0, 0, 0, 0 }
+    { 0x4292, _actTukauNormal, 0 },
+    { 0x4293, _actMotaseruNormal, 0 },
+    { 0x4295, 0, 0 }
 };
 const SActionMenuItem ActionMenuKinomiField[] = {
-    { 0x4292, _actTukauNormal, 0, 0 },
-    { 0x4293, _actMotaseruNormal, 0, 0 },
-    { 0x4294, _actSuteruNormal, 0, 0 },
-    { 0x4295, 0, 0, 0 },
-    { 0, 0, 0, 0 }
+    { 0x4292, _actTukauNormal, 0 },
+    { 0x4293, _actMotaseruNormal, 0 },
+    { 0x4294, _actSuteruNormal, 0 },
+    { 0x4295, 0, 0 }
 };
 const SActionMenuItem ActionMenuTaisetuField[] = {
-    { 0x4292, _actTukauNormal, 0, 0 },
-    { 0x4295, 0, 0, 0 },
-    { 0, 0, 0, 0 }
+    { 0x4292, _actTukauNormal, 0 },
+    { 0x4295, 0, 0 }
 };
 const SActionMenuItem ActionMenuDouguBattle[] = {
-    { 0x4292, _actTukauNormal, 1, 0 },
-    { 0x4295, 0, 0, 0 },
-    { 0, 0, 0, 0 }
+    { 0x4292, _actTukauNormal, 1 },
+    { 0x4295, 0, 0 }
 };
 const SActionMenuItem ActionMenuBallBattle[] = {
-    { 0x4292, _actTukauNormal, 0, 0 },
-    { 0x4295, 0, 0, 0 },
-    { 0, 0, 0, 0 }
+    { 0x4292, _actTukauNormal, 0 },
+    { 0x4295, 0, 0 }
 };
 const SActionMenuItem ActionMenuWazaMachineBattle[] = {
-    { 0x4295, 0, 0, 0 },
-    { 0, 0, 0, 0 }
+    { 0x4295, 0, 0 }
 };
 const SActionMenuItem ActionMenuKinomiBattle[] = {
-    { 0x4292, _actTukauNormal, 0, 0 },
-    { 0x4295, 0, 0, 0 },
-    { 0, 0, 0, 0 }
+    { 0x4292, _actTukauNormal, 0 },
+    { 0x4295, 0, 0 }
 };
 const SActionMenuItem ActionMenuTaisetuBattle[] = {
-    { 0x4295, 0, 0, 0 },
-    { 0, 0, 0, 0 }
+    { 0x4295, 0, 0 }
 };
 
 const PocketTab TabTbl[5] = {
@@ -178,41 +172,15 @@ bool fn_8002208C(tagWINDOW_WORK *);
 bool fn_80022128(tagWINDOW_WORK *);
 }
 
-bool fn_8002208C(tagWINDOW_WORK *win) {
-    CURSOR cursor;
-    s32 index;
-    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
-    if (Data.swapIndex >= 0) {
-        return false;
-    }
-    index = cursor.first + cursor.selected;
-    if (_getItemIDFromMenuPos(win->selected, index) == 0 && index == 0) {
-        return false;
-    }
-    return true;
-}
+bool fn_8002208C(tagWINDOW_WORK *win);
 
-bool fn_80022128(tagWINDOW_WORK *win) {
-    CURSOR cursor;
-    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
-    if (_getItemIDFromMenuPos(win->selected, cursor.first + cursor.selected) == 0 && Data.swapIndex < 0) {
-        return false;
-    }
-    return true;
-}
+bool fn_80022128(tagWINDOW_WORK *win);
 
 namespace {
 
-void _infoOnly(u32 msg) {
-    winMsgOpen(2, msg, 1, 0);
-    winMsgClose(1);
-}
+void _infoOnly(u32 msg);
 
-void _infoBeep(u32 msg) {
-    menuPtPlaySe(0x13);
-    winMsgOpen(2, msg, 1, 0);
-    winMsgClose(1);
-}
+void _infoBeep(u32 msg);
 
 struct ActMenuResizeWorkEntry {
     u32 id;
@@ -232,222 +200,44 @@ ActMenuResizeWorkEntry ActMenuResizeWork[7] = {
     { 0xD9, 0, 0, 0 }
 };
 
-void _setActMenuResizeWork() {
-    u32 i;
-    for (i = 0; i < 7; i++) {
-        ActMenuResizeWork[i].width = menuItemBiosGetPtr(0x2C, ActMenuResizeWork[i].id)->y;
-        ActMenuResizeWork[i].height = menuItemBiosGetPtr(0x2C, ActMenuResizeWork[i].id)->height;
-    }
-}
+void _setActMenuResizeWork();
 
-s32 _getMoney() {
-    return heroGetStatus(Data.hero, 0xC, 0);
-}
+s32 _getMoney();
 
-void _sortItemsThisTab(u8 tab) {
-    Data.hero->itemSort(tab);
-}
+void _sortItemsThisTab(u8 tab);
 
-void _decItem(u16 item, int tab, int index, int num) {
-    heroItemDecItemDataId(Data.hero, item, num, index);
-}
+void _decItem(u16 item, int tab, int index, int num);
 
-s32 _getItemPrice(int item) {
-    return itemDataBiosGetPrice(itemDataBiosGetPtr(item));
-}
+s32 _getItemPrice(int item);
 
-u32 (*_getUseFunc(u32 item))(u32) {
-    u32 data = itemDataBiosGetPtr(item);
-    if (Data.mode == 0) {
-        return (u32 (*)(u32))itemDataBiosGetFieldUseFunc(data);
-    }
-    return (u32 (*)(u32))itemDataBiosGetBattleUseFunc(data);
-}
+typedef u32 (*PocketUseFunc)(u32);
+PocketUseFunc _getUseFunc(u32 item);
 
-int _makeActMenu(SActionMenuItem *dst, int max, int tab, int index) {
-    u32 data;
-    u8 battleUse;
-    const PocketTab *tabEntry;
-    const SActionMenuItem *src;
-    const SActionMenuItem *p;
-    const SActionMenuItem *q;
-    SActionMenuItem *out;
-    int n;
-    int count;
-    int i;
-    data = itemDataBiosGetPtr(_getItemIDFromMenuPos(tab, index));
-    if (itemDataBiosGetBattleUseFunc(data) != 0) {
-        battleUse = 1;
-    } else {
-        battleUse = 0;
-    }
-    tabEntry = &TabTbl[Data.tab];
-    if (Data.mode == 1 || Data.mode == 6) {
-        src = tabEntry->battle;
-    } else if (Data.mode == 0) {
-        src = tabEntry->field;
-    }
-    q = src;
-    n = 0;
-    while (q->func != 0) {
-        q++;
-        n++;
-    }
-    p = src;
-    out = dst;
-    count = 0;
-    for (i = 0; i < n + 1; i++, p++) {
-        if (((p->flags & 1) == 0 || battleUse != 0) && (itemDataBiosGetImportant(data) == 0 || (p->flags & 2) == 0)) {
-            count++;
-            out->msg = p->msg;
-            out->func = p->func;
-            out->flags = p->flags;
-            out->flags = 0;
-            out++;
-        }
-    }
-    return count;
-}
+int _makeActMenu(SActionMenuItem *menu, int max, int tab, int menuPos);
 
-void _setExplanationMsgID(u32 msg) {
-    Data.msg = msg;
-}
+void _setExplanationMsgID(u32 msg);
 
-u32 _getItemNameMsg(u32 item) {
-    return itemDataBiosGetName(itemDataBiosGetPtr(item));
-}
+u32 _getItemNameMsg(u32 item);
 
-u32 _getItemInstMsg(u32 item) {
-    return itemDataBiosGetDoc(itemDataBiosGetPtr(item));
-}
+u32 _getItemInstMsg(u32 item);
 
 }
 
 namespace {
 
 #pragma opt_dead_assignments off
-u16 _getItemIDFromMenuPos(int tab, int pos) {
-    u16 count;
-    u32 *ary;
-    int found;
-    int i;
-    Hero *hero = Data.hero;
-    ary = heroItemGetItemKindToItemAryPtr(hero, TabTbl[tab].kind, &count, 0, 0, 0);
-    found = -1;
-    for (i = 0; i < count; i++, ary++) {
-        if (itemCheckValid(ary) != 0) {
-            found++;
-            if (found >= pos) {
-                return itemBiosGetItemDataId(ary);
-            }
-        }
-    }
-    return 0;
-}
+u16 _getItemIDFromMenuPos(int tab, int pos);
 #pragma opt_dead_assignments reset
 
-u16 _getItemNumFromMenuPos(int tab, int pos) {
-    u16 count;
-    u32 *ary;
-    int i;
-    int found;
-    int kind = TabTbl[tab].kind;
-    if (kind >= 0) {
-        ary = heroItemGetItemKindToItemAryPtr(Data.hero, kind, &count, 0, 0, 0);
-    } else {
-        ary = heroHizukiItemGetItemAryPtr(Data.hero, &count, 0, 0, 0);
-    }
-    found = -1;
-    for (i = 0; i < count; i++, ary++) {
-        if (itemCheckValid(ary) != 0) {
-            found++;
-            if (found >= pos) {
-                return itemBiosGetNum(ary);
-            }
-        }
-    }
-    return 0;
-}
+u16 _getItemNumFromMenuPos(int tab, int pos);
 
-int _getStockMaxFromTagID(int tab) {
-    u16 stock;
-    heroItemGetItemKindToItemAryPtr(Data.hero, TabTbl[tab].kind, 0, &stock, 0, 0);
-    return stock;
-}
+int _getStockMaxFromTagID(int tab);
 
-int _getNbItemSlot(int tab) {
-    u16 count;
-    u32 *ary;
-    int i;
-    int n;
-    int kind = TabTbl[tab].kind;
-    if (kind >= 0) {
-        ary = heroItemGetItemKindToItemAryPtr(Data.hero, kind, &count, 0, 0, 0);
-    } else {
-        ary = heroHizukiItemGetItemAryPtr(Data.hero, &count, 0, 0, 0);
-    }
-    n = 0;
-    for (i = 0; i < count; i++, ary++) {
-        if (itemCheckValid(ary) != 0) {
-            n++;
-        }
-    }
-    return n;
-}
+int _getNbItemSlot(int tab);
 
-int _actionMenuOpen(const SActionMenuItem *items, int count) {
-    const SActionMenuItem *args[2];
-    int result;
-    args[0] = items;
-    *(int *)&args[1] = count;
-    result = menuOpenCustom(0x2D, windowGetActiveID(), 0, 0, 1, 1, args);
-    menuClose(0x2D);
-    menuCloseSync(0x2D, 1);
-    if (result == -1) {
-        return -1;
-    }
-    if (result < 0 || result >= count) {
-        return -1;
-    }
-    return result;
-}
+int _actionMenuOpen(const SActionMenuItem *items, int count);
 
-int _openNumberInputMenu(int init, int max, int digits, int price) {
-    s32 params[3];
-    s32 mode[1];
-    s32 menu;
-    s32 result;
-    s32 num;
-    if (max < 0) {
-        return 0;
-    }
-    if (price > 0) {
-        if (digits == 2) {
-            menu = 0x30;
-            mode[0] = 1;
-        } else {
-            menu = 0x31;
-            mode[0] = 2;
-        }
-    } else if (digits == 2) {
-        menu = 0x2E;
-        mode[0] = 1;
-    } else {
-        menu = 0x2F;
-        mode[0] = 2;
-    }
-    params[0] = menu;
-    params[1] = max;
-    params[2] = price;
-    Data.num = init;
-    result = menuOpenCustom(menu, windowGetActiveID(), mode, 0, 1, 1, params);
-    menuClose(menu);
-    menuCloseSync(menu, 1);
-    if (result == -1 || (num = Data.num) == 0) {
-        num = -1;
-    }
-    return num;
-}
+int _openNumberInputMenu(int init, int max, int digits, int price);
 
 }
 
@@ -457,49 +247,11 @@ int _execDeposit(int tab, u16 item, int index);
 u8 _depositPC(u16 item, int num);
 u8 _IsSortAble(tagWINDOW_WORK *win);
 u8 _IsIrekaeAble(tagWINDOW_WORK *win);
-int _swapItemSlot(int, int, int);
+void _swapItemSlot(int, int, int);
 
-u8 _depositPC(u16 item, int num) {
-    if (pcboxGetItemCapacity(0, item) < num) {
-        return 0;
-    }
-    pcboxAddItem(0, item, num);
-    return 1;
-}
+u8 _depositPC(u16 item, int num);
 
-int _execDeposit(int tab, u16 item, int index) {
-    int digits;
-    int num;
-    if (_getItemDeposit(item) == 0) {
-        msgctrlSetValue(0x2D, item);
-        _infoBeep(0xC37B);
-        return 0;
-    }
-    if ((u8)TabTbl[Data.tab].kind != 5) {
-        _setExplanationMsgID(0x3AAC);
-        if (_getStockMaxFromTagID(tab) > 0x64) {
-            digits = 3;
-        } else {
-            digits = 2;
-        }
-        num = _openNumberInputMenu(1, _getItemNumFromMenuPos(tab, index), digits, 0);
-    } else {
-        num = 1;
-    }
-    if (num < 0) {
-        return 0;
-    }
-    if (_depositPC(item, num) == 0) {
-        msgctrlSetValue(0x2D, item);
-        _infoBeep(0x3AC0);
-        return 0;
-    }
-    _decItem(item, TabTbl[Data.tab].kind, index, num);
-    msgctrlSetValue(0x2D, item);
-    msgctrlSetValue(0x2F, num);
-    _infoOnly(0xC37C);
-    return 1;
-}
+int _execDeposit(int tab, u16 item, int index);
 
 }
 
@@ -507,523 +259,54 @@ extern "C" s32 menuShopGetMsgID(u8 *, s32, s32, s32, ...);
 
 namespace {
 
-int _execSell(int tab, u16 item, int index) {
-    u8 sprite;
-    int shop = Data.shop;
-    int price = _getItemPrice(item);
-    int digits;
-    int half;
-    int num;
-    int cost;
-    int answer;
-    if (price <= 0) {
-        menuPtPlaySe(0x13);
-        winMsgOpenWithSE(2, menuShopGetMsgID(&sprite, shop, 0xB, 0x2D, item, -1), 1, 0, sprite);
-        winMsgClose(1);
-        return 0;
-    }
-    _setExplanationMsgID(menuShopGetMsgID(&sprite, shop, 0xD, 0x2D, item, -1));
-    if (_getStockMaxFromTagID(tab) > 0x64) {
-        digits = 3;
-    } else {
-        digits = 2;
-    }
-    num = _openNumberInputMenu(1, _getItemNumFromMenuPos(tab, index), digits, half = price / 2);
-    if (num < 0) {
-        return 0;
-    }
-    cost = half * num;
-    winMsgOpenWithSE(2, menuShopGetMsgID(&sprite, shop, 9, 0x4B, cost, -1), 1, 0, sprite);
-    answer = menuSubOpenYesNo(0, -1, -1, 0);
-    if (answer == 1 || answer == -1) {
-        winMsgClose(1);
-        return 0;
-    }
-    _decItem(item, TabTbl[Data.tab].kind, index, num);
-    GSsndPlay(0x1A, 0, 0);
-    heroAddPokedoru(Data.hero, cost);
-    _infoOnly(menuShopGetMsgID(&sprite, shop, 0xA, 0x2D, item, 0x4B, cost, -1));
-    return 1;
-}
+int _execSell(int tab, u16 item, int index);
 
-u8 _execGive(int tab, u16 item, int index) {
-    if (itemDataBiosGetImportant(itemDataBiosGetPtr(item)) != 0) {
-        msgctrlSetValue(0x2D, item);
-        _infoBeep(0xC37A);
-        return 0;
-    }
-    Data.lastSlot = index;
-    return 1;
-}
+u8 _execGive(int tab, u16 item, int index);
 
-int _swapItemSlot(int kind, int from, int to) {
-    u16 count;
-    u16 saved[2];
-    u32 *ary;
-    u32 *src;
-    u32 *dst;
-    if (from != to) {
-        if (from == to - 1) {
-            return 0;
-        }
-        ary = heroItemGetItemKindToItemAryPtr(Data.hero, kind, &count, 0, 0, 0);
-        src = ary + from;
-        *(u32 *)saved = *src;
-        if (from != count - 1) {
-            memmove(src, src + 1, (count - from - 1) * 4);
-        }
-        if (from < to) {
-            to--;
-        }
-        dst = ary + to;
-        memmove(dst + 1, dst, (count - to - 1) * 4);
-        ((u16 *)dst)[0] = saved[0];
-        ((u16 *)dst)[1] = saved[1];
-    }
-    return 0;
-}
+struct ItemSlot { u16 id, n; };
+void _swapItemSlot(int kind, int from, int to);
 
-bool _openPokemonMenuForGiveItem(u16 item, u8 kind, u8 index) {
-    menuCloseCustom(0x2C, 0, 1);
-    Data.pokemonSlot = menuPokemonOpenItemGive(kind, index, item, 0);
-    menuOffScreenSetPriority(0);
-    menuPokemonClose();
-    return Data.pokemonSlot >= 0;
-}
+bool _openPokemonMenuForGiveItem(u16 item, u8 kind, u8 index);
 
-u8 _getItemKind(int item) {
-    return itemDataBiosGetKind(itemDataBiosGetPtr(item));
-}
+u8 _getItemKind(int item);
 
-u8 _getItemDeposit(u16 item) {
-    return itemDataBiosGetDeposit(itemDataBiosGetPtr(item));
-}
+u8 _getItemDeposit(u16 item);
 
-int _actSuteruNormal(int tab, int index, int *dec) {
-    const SActionMenuItem yesNo[2] = { { 0x426A, 0, 0, 0 }, { 0x426B, 0, 0, 0 } };
-    int digits;
-    int num;
-    u16 item;
-    int answer;
-    _setExplanationMsgID(0x3AAA);
-    if (_getStockMaxFromTagID(tab) > 0x64) {
-        digits = 3;
-    } else {
-        digits = 2;
-    }
-    num = _openNumberInputMenu(1, _getItemNumFromMenuPos(tab, index), digits, 0);
-    if (num < 0) {
-        *dec = 0;
-        return 0;
-    }
-    item = _getItemIDFromMenuPos(tab, index);
-    msgctrlSetValue(0x2D, item);
-    msgctrlSetValue(0x2F, num);
-    _setExplanationMsgID(0x3AAB);
-    answer = _actionMenuOpen(yesNo, 2);
-    if (answer == 1 || answer == -1) {
-        *dec = 0;
-        return 0;
-    }
-    msgctrlSetValue(0x2D, item);
-    msgctrlSetValue(0x2F, num);
-    _infoOnly(0xC379);
-    *dec = num;
-    return 0;
-}
+int _actSuteruNormal(int tab, int index, int *dec);
 
-int _actMotaseruNormal(int tab, int index, int *dec) {
-    u16 item = _getItemIDFromMenuPos(tab, index);
-    if (itemDataBiosGetHidenMachineNo(itemDataBiosGetPtr(item)) != 0xFF) {
-        msgctrlSetValue(0x2D, item);
-        _infoBeep(0xC37A);
-        *dec = 0;
-        return 0;
-    }
-    u8 kind = _getItemKind(item);
-    if (_openPokemonMenuForGiveItem(item, kind, index) == 0) {
-        return 1;
-    }
-    *dec = 0;
-    return 0;
-}
+int _actMotaseruNormal(int tab, int index, int *dec);
 
-int _actTukauNormal(int tab, int index, int *dec) {
-    int result;
-    u16 item = _getItemIDFromMenuPos(tab, index);
-    int (*func)(u32, int *) = (int (*)(u32, int *))_getUseFunc(item);
-    int ret;
-    if (func == 0) {
-        _infoBeep(0xC374);
-        *dec = 0;
-        return 1;
-    }
-    result = func(item, dec);
-    switch (result) {
-    case 0:
-        ret = 0;
-        break;
-    case 1:
-        ret = 1;
-        break;
-    case 2:
-        if (tab == 4 && item != 0x1F6) {
-            ret = 0;
-        } else {
-            ret = 2;
-        }
-        break;
-    }
-    return ret;
-}
+int _actTukauNormal(int tab, int index, int *dec);
 
 }
 
 namespace {
 
-int _execActionMenu(int tab, u16 item, int index, u16 *used) {
-    SActionMenuItem items[5];
-    int dec;
-    int count;
-    int sel;
-    int result;
-    u16 cologne;
-    u32 id;
-    int (*func)(u16, int *);
-    *used = 0;
-    if (Data.mode == 0) {
-        if (item == 0x215) {
-            _setExplanationMsgID(0x3C1B);
-            menuPocketBattleDiskMain(-1, Data.fightId, Data.hero);
-            return 1;
-        }
-        if (item == 0x200) {
-            _setExplanationMsgID(0x3AB8);
-            cologne = menuPocketCologne(-1);
-            id = cologne;
-            if (id == 0) {
-                return 1;
-            }
-            *used = cologne;
-            func = (int (*)(u16, int *))_getUseFunc(id);
-            if (func == 0) {
-                _infoBeep(0xC374);
-                return 0;
-            }
-            if (func(id, &dec) == 2) {
-                if (dec > 0) {
-                    _decItem(cologne, 6, -1, dec);
-                }
-                return 2;
-            }
-            return 1;
-        }
-    }
-    count = _makeActMenu(items, 4, tab, index);
-    _setExplanationMsgID(0x4296);
-    sel = _actionMenuOpen(items, count);
-    if (sel < 0) {
-        return 1;
-    }
-    if (items[sel].func == 0) {
-        return 1;
-    }
-    result = items[sel].func(tab, index, &dec);
-    switch (result) {
-    case 0:
-        if (dec > 0) {
-            _decItem(item, TabTbl[Data.tab].kind, index, dec);
-        }
-        Data.lastSlot = index;
-        return 0;
-    case 1:
-        return 1;
-    case 2:
-        if (dec > 0) {
-            _decItem(item, TabTbl[Data.tab].kind, index, dec);
-        }
-        return 2;
-    default:
-        return 0;
-    }
-}
+int _execActionMenu(int tab, u16 item, int index, u16 *used);
 
-int _afterDecideItem(int mode, int tab, u16 item, int index, u16 *used) {
-    u16 cologne = 0;
-    int result;
-    int ret = mode;
-    switch (mode) {
-    case 0:
-    case 1:
-    case 6:
-        result = _execActionMenu(tab, item, index, &cologne);
-        if (result == 2) {
-            ret = 1;
-        } else if (mode == 0) {
-            ret = 0;
-        } else if (result == 0) {
-            ret = 1;
-        } else {
-            ret = 0;
-        }
-        break;
-    case 5:
-    case 2:
-        if (_execGive(tab, item, index) != 0) {
-            ret = 1;
-        } else {
-            ret = 0;
-        }
-        break;
-    case 3:
-        _execSell(tab, item, index);
-        ret = 0;
-        break;
-    case 4:
-        _execDeposit(tab, item, index);
-        ret = 0;
-        break;
-    }
-    *used = cologne;
-    return ret;
-}
+int _afterDecideItem(int mode, int tab, u16 item, int index, u16 *used);
 
-u8 _IsSortAble(tagWINDOW_WORK *win) {
-    if (Data.mode == 3 || Data.mode == 4 || Data.mode == 5) {
-        return 0;
-    }
-    return TabTbl[win->selected].sortable;
-}
+u8 _IsSortAble(tagWINDOW_WORK *win);
 
-u8 _IsIrekaeAble(tagWINDOW_WORK *win) {
-    if (Data.mode == 3 || Data.mode == 4 || Data.mode == 5) {
-        return 0;
-    }
-    return TabTbl[win->selected].irekae;
-}
+u8 _IsIrekaeAble(tagWINDOW_WORK *win);
 
-u16 _selectItem(int &index, long *param) {
-    CURSOR cursor;
-    int tab;
-    Data.swapIndex = -1;
-    tab = menuOpenCustom(0x2C, windowGetActiveID(), param, 0, 1, 0);
-    if (tab == -1) {
-        return 0;
-    }
-    Data.tab = tab;
-    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[tab].cursorId);
-    index = cursor.first + cursor.selected;
-    return _getItemIDFromMenuPos(tab, index);
-}
+u16 _selectItem(int& pos, long* param);
 
 }
 
 namespace {
 
-void _printItemDouguBall(GSgfxLayerID layer, int x, int y, int tab, int index) {
-    s16 w;
-    s32 stock;
-    u32 msg = _getItemNameMsg(_getItemIDFromMenuPos(tab, index));
-    if (msg != 0) {
-        GSmsgPrint2(layer, x, y, -1, msg);
-    }
-    stock = _getStockMaxFromTagID(tab);
-    msgctrlSetValue(0x34, stock);
-    w = GSmsgGetRect(0x4270) >> 16;
-    w += (s16)(GSmsgGetRect(0x428F) >> 16);
-    GSmsgPrint2(layer, (x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w, y, -1, 0x428F);
-    msgctrlSetValue(0x34, _getItemNumFromMenuPos(tab, index));
-    w = GSmsgGetRect(0x4270) >> 16;
-    GSmsgPrint2(layer, ((x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w) + 1, y, -1, 0x4270);
-}
+void _printItemDouguBall(GSgfxLayerID layer, int x, int y, int tab, int index);
 
-void _printItemWazaMachine(GSgfxLayerID layer, int x, int y, int tab, int index) {
-    u32 data;
-    u8 hiden;
-    int pos;
-    u8 machineNo;
-    int number;
-    u8 hidenNo;
-    u32 msg;
-    u32 nameMsg;
-    s32 stock;
-    s16 w;
-    data = itemDataBiosGetPtr(_getItemIDFromMenuPos(tab, index));
-    machineNo = itemDataBiosGetWazaMachineNo(data);
-    number = machineNo + 1;
-    hiden = itemDataBiosGetHidenMachineNo(data);
-    hidenNo = hiden + 1;
-    if (hiden != 0xFF) {
-        msg = 0x3AA0;
-    } else {
-        msg = 0x3A9F;
-    }
-    GSmsgPrint2(layer, x, y, -1, msg);
-    pos = x + (GSmsgGetRect(msg) >> 16);
-    if (hiden != 0xFF) {
-        msgctrlSetValue(0x34, hidenNo);
-        GSmsgPrint2(layer, pos, y, -1, 0x4270);
-        pos += GSmsgGetRect(0x4270) >> 16;
-    } else {
-        if (number < 10) {
-            msgctrlSetValue(0x34, 0);
-            GSmsgPrint2(layer, pos, y, -1, 0x4270);
-            pos += GSmsgGetRect(0x4270) >> 16;
-        }
-        msgctrlSetValue(0x34, number);
-        GSmsgPrint2(layer, pos, y, -1, 0x4270);
-        pos += GSmsgGetRect(0x4270) >> 16;
-    }
-    nameMsg = wazaDataBiosGetName(wazaDataBiosGetPtr(itemDataBiosGetWazaIDByWazaMachineNo(machineNo)));
-    GSmsgPrint2(layer, pos + 9, y, -1, nameMsg);
-    stock = _getStockMaxFromTagID(tab);
-    msgctrlSetValue(0x34, stock);
-    w = GSmsgGetRect(0x4270) >> 16;
-    w += (s16)(GSmsgGetRect(0x428F) >> 16);
-    GSmsgPrint2(layer, (x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w, y, -1, 0x428F);
-    msgctrlSetValue(0x34, _getItemNumFromMenuPos(tab, index));
-    w = GSmsgGetRect(0x4270) >> 16;
-    GSmsgPrint2(layer, ((x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w) + 1, y, -1, 0x4270);
-}
+void _printItemWazaMachine(GSgfxLayerID layer, int x, int y, int tab, int index);
 
-void _printItemKinomi(GSgfxLayerID layer, int x, int y, int tab, int index) {
-    int pos;
-    s32 stock;
-    u32 nameMsg;
-    u16 item;
-    u8 number;
-    s16 w;
-    GSmsgPrint2(layer, x, y, -1, 0x3A9F);
-    pos = x + (GSmsgGetRect(0x3A9F) >> 16);
-    item = _getItemIDFromMenuPos(tab, index);
-    number = itemDataBiosGetKinomiNo(item) + 1;
-    if (number < 10) {
-        msgctrlSetValue(0x34, 0);
-        GSmsgPrint2(layer, pos, y, -1, 0x4270);
-        pos += GSmsgGetRect(0x4270) >> 16;
-    }
-    msgctrlSetValue(0x34, number);
-    GSmsgPrint2(layer, pos, y, -1, 0x4270);
-    pos += GSmsgGetRect(0x4270) >> 16;
-    nameMsg = _getItemNameMsg(item);
-    GSmsgPrint2(layer, pos + 9, y, -1, nameMsg);
-    stock = _getStockMaxFromTagID(tab);
-    msgctrlSetValue(0x34, stock);
-    w = GSmsgGetRect(0x4270) >> 16;
-    w += (s16)(GSmsgGetRect(0x428F) >> 16);
-    GSmsgPrint2(layer, (x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w, y, -1, 0x428F);
-    msgctrlSetValue(0x34, _getItemNumFromMenuPos(tab, index));
-    w = GSmsgGetRect(0x4270) >> 16;
-    GSmsgPrint2(layer, ((x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w) + 1, y, -1, 0x4270);
-}
+void _printItemKinomi(GSgfxLayerID layer, int x, int y, int tab, int index);
 
-void _printItemTaisetsu(GSgfxLayerID layer, int x, int y, int tab, int index) {
-    u32 msg = _getItemNameMsg(_getItemIDFromMenuPos(tab, index));
-    if (msg != 0) {
-        GSmsgPrint2(layer, x, y, -1, msg);
-    }
-}
+void _printItemTaisetsu(GSgfxLayerID layer, int x, int y, int tab, int index);
 
-void _printItemList(GSgfxLayerID layer, int x, int tab, CURSOR &cursor) {
-    int nb;
-    int y;
-    const PocketTab *entry;
-    int pos;
-    int limit;
-    int scroll;
-    int i;
-    int start;
-    entry = &TabTbl[tab];
-    nb = _getNbItemSlot(tab);
-    pos = cursor.first;
-    start = 0;
-    limit = 9;
-    scroll = 0;
-    if (Data.curPos != 0.0f && Data.isScroll != 0) {
-        if (Data.curPos < 0.0f) {
-            pos--;
-            start = -1;
-        } else {
-            limit = 10;
-        }
-        scroll = (int)Data.curPos;
-    }
-    y = start * 30;
-    for (i = start; i < limit && pos < nb; y += 30, i++, pos++) {
-        if (pos >= 0) {
-            entry->print(layer, x, y - scroll, tab, pos);
-        }
-    }
-    if (i < limit) {
-        GSmsgPrint2(layer, x, i * 30 - scroll, -1, Data.mode == 4 ? 0x3BBA : 0x3A9E);
-    }
-}
+void _printItemList(GSgfxLayerID layer, int x, int tab, CURSOR &pos);
 
-u16 _menuPocketLoop() {
-    s16 cursorState[2];
-    s32 params[1];
-    CURSOR cursor;
-    int index;
-    s16 raw[2];
-    u16 used;
-    u16 item;
-    int result;
-    s32 *param;
-    int i;
-    memset(cursorState, 0, 4);
-    if (Data.mode == 6) {
-        cursorState[1] = 1;
-    } else {
-        *(u32 *)raw = cursorBiosGetPos(2);
-        cursorState[0] = raw[0];
-        cursorState[1] = raw[1];
-    }
-    param = params;
-    params[0] = cursorState[1];
-    for (i = 0; i < 5; i++) {
-        *(u32 *)&cursor = cursorBiosGetPos(TabTbl[i].cursorId);
-        if (cursor.first + cursor.selected >= _getNbItemSlot(i) + 1) {
-            static CURSOR czero = { 0, 0 };
-            CURSOR zero = czero;
-            cursorBiosSetPos(TabTbl[i].cursorId, (s32 *)&zero);
-        }
-    }
-    if (Data.resizeInit == 0) {
-        _setActMenuResizeWork();
-    }
-    index = 0;
-    for (;;) {
-        Data.selecting = 1;
-        item = _selectItem(index, (long *)param);
-        Data.selecting = 0;
-        param = 0;
-        if (item == 0) {
-            break;
-        }
-        result = _afterDecideItem(Data.mode, Data.tab, item, index, &used);
-        if (used != 0) {
-            item = used;
-        }
-        switch (result) {
-        case 0:
-            break;
-        case 1:
-            goto done;
-        }
-    }
-done:
-    menuCloseCustom(0x2C, 0, 1);
-    if (Data.mode == 4) {
-        fadeSet(3, 0.5f);
-        fadeCheck(1);
-    }
-    if (Data.floorPop != 0) {
-        menuOffScreenSetPriority(1);
-        GSfloorPop();
-        floorSetFadeScript(0, 0);
-    }
-    return item;
-}
+u16 _menuPocketLoop();
 
 }
 
@@ -1063,84 +346,215 @@ struct PocketActArg {
 
 extern "C" {
 
-s32 menuPocket2PrintExplanation(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    u32 msg;
-    cursorBiosGetPos(TabTbl[win->selected].cursorId);
-    msg = Data.msg;
-    if (msg != 0) {
-        GSmsgPrint2(winSpriteGetLayerID(win, spr), 0, 0, -1, msg);
+s32 menuPocket2PrintExplanation(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+void menuPocket2GetHero(Hero **hero, s32 *fightId);
+
+s32 menuPocket2GetCurrentTemochiPokemonSlotID(void);
+
+void menuPocket2GetTemochiPokemon(u16 slot, void **pokemon, void **fight);
+
+void menuPocket2ClosePokemonMenu(s32 slot);
+
+s32 menuPocket2OpenPokemonMenu(u16 item, s32 use);
+
+s32 menuPocket2PrintPrice(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2NumCtrl(tagWINDOW_WORK *win);
+
+s32 menuPocket2DrawTitleLR(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+void menuPocket2Button(tagWINDOW_WORK *win);
+
+s32 menuPocket2DrawRHelpText(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2DrawXHelpText(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2DrawRHelp(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2DrawXHelp(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2PrintMoney(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2DrawMoneyBack(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2DrawMoney(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+int menuPocket2PrintNumMenu(tagWINDOW_WORK* w, tagSPRITE_WORK* sp);
+
+int menuPocket2PrintItemKind(tagWINDOW_WORK* w, tagSPRITE_WORK* sp);
+
+s32 menuPocket2PrintItemList(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2DrawActionMenu(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2DrawActionCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2DrawNumMenuCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2DrawLineCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2DrawBallCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+static f32 duration$2229;
+static s8 init$2230;
+int menuPocket2DrawExchangeCursor(tagWINDOW_WORK* w, tagSPRITE_WORK* sp);
+
+s32 menuPocket2Cursor(tagWINDOW_WORK *win);
+
+s32 menuPocket2DrawActiveTab(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+void menuPocketMain(void);
+
+void menuPocket2Call(s32 mode, s32 shop, Hero *hero);
+
+u8 menuPocket2GetLastSlotID(void);
+
+}
+
+int _actionMenuLineHeight(tagWINDOW_WORK *win);
+
+extern "C" {
+
+s32 menuPocket2DrawActionCursorLine(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2ActionCursor(tagWINDOW_WORK *win);
+
+s32 menuPocket2ActionCtrl(tagWINDOW_WORK *win);
+
+s32 menuPocket2DrawRollDown(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2DrawRollUp(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocketInputNumber(tagWINDOW_WORK *win, s32 num, s32 max, u16 key, s32 digits, s32 se, s32 unused);
+
+s32 menuPocket2NumCursor(tagWINDOW_WORK *win);
+
+void menuPocketClearItemScript(void);
+
+s32 menuPocket2GetItemScript(u16 id);
+
+void menuPocket2AddItemScript(u16 id, u32 value);
+
+}
+
+extern "C" {
+
+s32 menuPocket2DrawActionText(tagWINDOW_WORK *win, tagSPRITE_WORK *spr);
+
+s32 menuPocket2Ctrl(tagWINDOW_WORK *win);
+
+u16 menuPocket2Open(s32 mode, s32 *slot, s32 arg);
+
+}
+
+
+void menuPocket2AddItemScript(u16 id, u32 value) {
+    PocketScriptEntry *p;
+    s32 i;
+    for (i = 0; i < 8; i++) {
+        p = &menuPocketWork.entries[i];
+        if (p->id == id && p->value == value) {
+            return;
+        }
     }
-    return 0;
-}
-
-void menuPocket2GetHero(Hero **hero, s32 *fightId) {
-    *hero = Data.hero;
-    *fightId = Data.fightId;
-}
-
-s32 menuPocket2GetCurrentTemochiPokemonSlotID(void) {
-    return Data.pokemonSlot = Data.pokemonSlot2;
-}
-
-void menuPocket2GetTemochiPokemon(u16 slot, void **pokemon, void **fight) {
-    void *f;
-    void *p;
-    if (Data.mode == 1 || Data.mode == 6) {
-        f = fightTrainerBiosGetFightPokemonPtr(Data.fightId, slot);
-        p = fightPokemonGetPokemonPtr(f);
-    } else {
-        p = (void *)heroGetStatus(Data.hero, 3, slot);
-        f = 0;
+    if (menuPocketWork.count < 7) {
+        menuPocketWork.entries[menuPocketWork.count].id = (u16)id;
+        menuPocketWork.entries[menuPocketWork.count].value = value;
+        menuPocketWork.count++;
     }
-    *pokemon = p;
-    *fight = f;
 }
 
-void menuPocket2ClosePokemonMenu(s32 slot) {
-    Data.pokemonSlot = slot;
-    menuPokemonClose();
-}
-
-s32 menuPocket2OpenPokemonMenu(u16 item, s32 use) {
-    s32 kind;
-    s32 result;
-    menuCloseCustom(0x2C, 0, 1);
-    if (Data.mode == 1 || Data.mode == 6) {
-        kind = 4;
-    } else {
-        kind = 3;
-    }
-    result = menuPokemonOpenItemUse(kind, (bool)use, item, Data.fightId);
-    if (use == 0) {
-        result = -1;
+s32 menuPocket2GetItemScript(u16 id) {
+    s32 result = -1;
+    PocketScriptEntry *p = menuPocketWork.entries;
+    s32 i;
+    for (i = 0; i < menuPocketWork.count; p++, i++) {
+        if (id == p->id) {
+            result = menuPocketWork.entries[i].value;
+            break;
+        }
     }
     return result;
 }
 
-s32 menuPocket2PrintPrice(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    s16 w;
-    s32 price = ((PocketNumArg *)(void *)win->parameters[0])->price;
-    if (price <= 0) {
-        return 0;
-    }
-    msgctrlSetValue(0x50, price * Data.num);
-    w = GSmsgGetRect(0x434F) >> 16;
-    GSmsgPrint2(winSpriteGetLayerID(win, spr), spr->width - w, 0, -1, 0x434F);
-    return 0;
+void menuPocketClearItemScript(void) {
+    memset(&menuPocketWork, 0, 0x40);
+    menuPocketWork.count = 0;
 }
 
-s32 menuPocket2NumCtrl(tagWINDOW_WORK *win) {
-    s32 *arg = (s32 *)(void *)win->parameters[0];
+u8 menuPocket2GetLastSlotID(void) {
+    return Data.lastSlot;
+}
+
+u16 menuPocket2Open(s32 mode, s32 *slot, s32 arg) {
+    s32 value;
+    memset(&Data, 0, 0x4C);
+    Data.mode = mode;
+    if (mode == 1 || mode == 6) {
+        Data.fightId = arg;
+        Data.hero = fightTrainerBiosGetHeroPtr(arg);
+        value = *slot;
+        Data.pokemonSlot = value;
+        Data.pokemonSlot2 = value;
+        if (value < 0 || value >= 5) {
+            Data.pokemonSlot = 0;
+        }
+    } else {
+        Data.hero = (Hero *)arg;
+        Data.pokemonSlot = -1;
+    }
+    Data.floorPop = 1;
+    GSfloorPush(0x38F);
+    floorSetFadeScript(0, 0);
+    floorWaitForChange();
+    if (Data.result == 0) {
+        return 0;
+    }
+    if (slot != 0) {
+        *slot = Data.pokemonSlot;
+    }
+    return Data.result;
+}
+
+void menuPocket2Call(s32 mode, s32 shop, Hero *hero) {
+    memset(&Data, 0, 0x4C);
+    Data.mode = mode;
+    Data.hero = hero;
+    Data.shop = shop;
+    _menuPocketLoop();
+}
+
+void menuPocketMain(void) {
+    Data.result = _menuPocketLoop();
+}
+
+s32 menuPocket2Ctrl(tagWINDOW_WORK *win) {
+    CURSOR cursor;
     switch (win->phase) {
     case 0:
         if (win->step == 0) {
-            winSeqSetMenu(*arg, 0x70);
+            menuPtPlaySe(0x14);
+            winSeqSetMenu(0x2C, 0x60);
+            *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
+            _setExplanationMsgID(_getItemInstMsg(_getItemIDFromMenuPos(win->selected, cursor.first + cursor.selected)));
             win->step = 1;
+            menuSubCursorAnimeInit();
         }
+        break;
+    case 2:
+        menuPocketToolFloatToZero(Data.tabScroll, 23.0f);
+        menuPocketToolFloatToZero(Data.curPos, 7.0f);
+        Data.rollTime += 0.033333335f;
+        if (Data.rollTime > 1.0f) {
+            Data.rollTime = 0.0f;
+        }
+        menuSubCursorAnimeMain();
         break;
     case 3:
         if (win->step == 0) {
-            winSeqSetMenu(*arg, 0x74);
+            menuPtPlaySe(0x15);
+            winSeqSetMenu(0x2C, 0x64);
             win->step = 1;
         }
         break;
@@ -1148,31 +562,46 @@ s32 menuPocket2NumCtrl(tagWINDOW_WORK *win) {
     return 0;
 }
 
-s32 menuPocket2DrawTitleLR(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    winSpriteSetDisp(spr, (u32)((6 - Data.mode) | (Data.mode - 6)) >> 31);
+s32 menuPocket2DrawActiveTab(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    if (spr->id == TabTbl[win->selected].unk8) {
+        spr->color.value = 0xFFFFFFFF;
+    } else {
+        spr->color.channels.alpha = 0;
+    }
     return 0;
 }
 
-void menuPocket2Button(tagWINDOW_WORK *win) {
-    if (Data.swapIndex >= 0 || winSeqCheckMove(win->menu) != 0) {
-        return;
+s32 menuPocket2DrawMoney(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    if (Data.mode != 3) {
+        spr->color.channels.alpha = 0;
+    } else {
+        spr->color.channels.alpha = 0xFF;
     }
-    if ((windowGetKeyTrg() & 0x10) != 0) {
-        menuPtPlaySe(0x11);
-    }
-    menuButtonNormal(win);
-}
-
-s32 menuPocket2DrawRHelpText(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    u32 disp = 0;
-    if (_IsSortAble(win) != 0 && Data.selecting != 0 && fn_8002208C(win) != 0) {
-        disp = 1;
-    }
-    winSpriteSetDisp(spr, disp);
     return 0;
 }
 
-s32 menuPocket2DrawXHelpText(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+s32 menuPocket2DrawMoneyBack(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    if (Data.mode != 3) {
+        spr->color.channels.alpha = 0;
+    } else {
+        spr->color.channels.alpha = 0xFF;
+    }
+    return 0;
+}
+
+s32 menuPocket2PrintMoney(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    s16 w;
+    s32 money = _getMoney();
+    if (Data.mode != 3) {
+        return 0;
+    }
+    msgctrlSetValue(0x50, money);
+    w = GSmsgGetRect(0x434E) >> 16;
+    GSmsgPrint2(winSpriteGetLayerID(win, spr), spr->width - w, 0, -1, 0x434E);
+    return 0;
+}
+
+s32 menuPocket2DrawXHelp(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
     u32 disp = 0;
     if (_IsIrekaeAble(win) != 0 && Data.selecting != 0 && fn_80022128(win) != 0) {
         disp = 1;
@@ -1190,7 +619,7 @@ s32 menuPocket2DrawRHelp(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
     return 0;
 }
 
-s32 menuPocket2DrawXHelp(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+s32 menuPocket2DrawXHelpText(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
     u32 disp = 0;
     if (_IsIrekaeAble(win) != 0 && Data.selecting != 0 && fn_80022128(win) != 0) {
         disp = 1;
@@ -1199,297 +628,23 @@ s32 menuPocket2DrawXHelp(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
     return 0;
 }
 
-s32 menuPocket2PrintMoney(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    s16 w;
-    s32 money = _getMoney();
-    if (Data.mode != 3) {
-        return 0;
+s32 menuPocket2DrawRHelpText(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    u32 disp = 0;
+    if (_IsSortAble(win) != 0 && Data.selecting != 0 && fn_8002208C(win) != 0) {
+        disp = 1;
     }
-    msgctrlSetValue(0x50, money);
-    w = GSmsgGetRect(0x434E) >> 16;
-    GSmsgPrint2(winSpriteGetLayerID(win, spr), spr->width - w, 0, -1, 0x434E);
+    winSpriteSetDisp(spr, disp);
     return 0;
 }
 
-s32 menuPocket2DrawMoneyBack(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    if (Data.mode != 3) {
-        spr->color.channels.alpha = 0;
-    } else {
-        spr->color.channels.alpha = 0xFF;
+void menuPocket2Button(tagWINDOW_WORK *win) {
+    if (Data.swapIndex >= 0 || winSeqCheckMove(win->menu) != 0) {
+        return;
     }
-    return 0;
-}
-
-s32 menuPocket2DrawMoney(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    if (Data.mode != 3) {
-        spr->color.channels.alpha = 0;
-    } else {
-        spr->color.channels.alpha = 0xFF;
+    if ((windowGetKeyTrg() & 0x10) != 0) {
+        menuPtPlaySe(0x11);
     }
-    return 0;
-}
-
-s32 menuPocket2PrintNumMenu(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    s32 *arg = (s32 *)win->parameters[0];
-    u32 i;
-    const s32 *p;
-    s32 idx;
-    s32 j;
-    s32 div;
-    for (i = 0; i < 4; i++) {
-        if (arg[0] == MenuPocket2Num[i].menu) {
-            break;
-        }
-    }
-    if (i >= 4) {
-        return 0;
-    }
-    p = MenuPocket2Num[i].items;
-    for (idx = 0; idx < MenuPocket2Num[i].count; idx++, p += 3) {
-        if ((s16)spr->id == *p) {
-            break;
-        }
-    }
-    if (idx >= MenuPocket2Num[i].count) {
-        return 0;
-    }
-    div = 1;
-    for (j = 0; j < MenuPocket2Num[i].count - idx - 1; j++) {
-        div *= 10;
-    }
-    msgctrlSetValue(0x34, Data.num / div % 10);
-    GSmsgPrintRight(winSpriteGetLayerID(win, spr), 0, 0, spr->width, spr->height, -1, 0x4270);
-    return 0;
-}
-
-s32 menuPocket2PrintItemKind(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    MENU_ITEM_dd_ *area;
-    MENU_ITEM_dd_ *self;
-    s16 w;
-    s32 msg;
-    s32 half;
-    s16 tw;
-    area = menuItemBiosGetPtr(win->menu, 0xB7);
-    self = menuItemBiosGetPtr(win->menu, spr->id);
-    spriteSetScissor(winSpriteGetLayerID(win, spr), area->x - self->x, area->y - self->y, area->width, area->height);
-    w = spr->width;
-    msg = TabTbl[win->selected].unk14;
-    half = w / 2;
-    tw = GSmsgGetRect(msg) >> 16;
-    GSmsgPrint2(winSpriteGetLayerID(win, spr), (s32)Data.tabScroll + (half - tw / 2), 0, -1, msg);
-    if (Data.tabScroll != 0.0f) {
-        s32 idx;
-        f32 off;
-        s32 msg2;
-        s16 tw2;
-        if (Data.tabScroll > 0.0f) {
-            idx = win->selected - 1;
-            if (idx < 0) {
-                idx = 4;
-            }
-            off = Data.tabScroll - (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
-        } else {
-            idx = win->selected + 1;
-            if ((u32)idx >= 5) {
-                idx = 0;
-            }
-            off = Data.tabScroll + (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
-        }
-        const PocketTab *tab2 = (const PocketTab *)((u8 *)TabTbl + idx * 32);
-        msg2 = tab2->unk14;
-        tw2 = GSmsgGetRect(msg2) >> 16;
-        GSmsgPrint2(winSpriteGetLayerID(win, spr), (s32)off + (half - tw2 / 2), 0, -1, msg2);
-    }
-    spriteClearScissor(winSpriteGetLayerID(win, spr));
-    spriteSetEnv(winSpriteGetLayerID(win, spr));
-    return 0;
-}
-
-s32 menuPocket2PrintItemList(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    CURSOR cursor;
-    CURSOR cursor2;
-    MENU_ITEM_dd_ *area;
-    MENU_ITEM_dd_ *self;
-    area = menuItemBiosGetPtr(win->menu, 0xB6);
-    self = menuItemBiosGetPtr(win->menu, spr->id);
-    spriteSetScissor(winSpriteGetLayerID(win, spr), area->x - self->x, area->y - self->y, area->width, area->height);
-    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
-    _printItemList((GSgfxLayerID)winSpriteGetLayerID(win, spr), (s32)Data.tabScroll, win->selected, cursor);
-    if (Data.tabScroll != 0.0f) {
-        s32 idx;
-        f32 off;
-        if (Data.tabScroll > 0.0f) {
-            idx = win->selected - 1;
-            if (idx < 0) {
-                idx = 4;
-            }
-            off = Data.tabScroll - (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
-        } else {
-            idx = win->selected + 1;
-            if ((u32)idx >= 5) {
-                idx = 0;
-            }
-            off = Data.tabScroll + (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
-        }
-        *(u32 *)&cursor2 = cursorBiosGetPos(TabTbl[(u32)idx].cursorId);
-        _printItemList((GSgfxLayerID)winSpriteGetLayerID(win, spr), (s32)off, idx, cursor2);
-    }
-    spriteClearScissor(winSpriteGetLayerID(win, spr));
-    spriteSetEnv(winSpriteGetLayerID(win, spr));
-    return 0;
-}
-
-s32 menuPocket2DrawActionMenu(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    PocketActArg *arg = (PocketActArg *)win->parameters[0];
-    u32 i;
-    if (arg->count < 4) {
-        for (i = 0; i < 7; i++) {
-            if ((u32)spr->id == ActMenuResizeWork[i].id) {
-                break;
-            }
-        }
-        if (i < 7) {
-            ActMenuResizeWorkEntry *e;
-            s32 off;
-            off = (4 - arg->count) * _actionMenuLineHeight(win);
-            spr->y = off + ActMenuResizeWork[i].width;
-            if (ActMenuResizeWork[i].flag != 0) {
-                spr->height = ActMenuResizeWork[i].height - off;
-            }
-        }
-    }
-    return 0;
-}
-
-s32 menuPocket2DrawActionCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    const s32 ids[4] = {0xDC, 0xDB, 0xDA, 0xD9};
-    s32 idx = win->selected + (4 - ((PocketActArg *)win->parameters[0])->count);
-    if (idx < 0 || idx >= 4) {
-        return 0;
-    }
-    if ((s16)spr->id == ids[idx]) {
-        PocketVec<s32> pos = {0, 0};
-        s32 anim = -1;
-        if (win->menu == windowGetActiveID()) {
-            menuSubCursorAnimeValGet(&pos, &anim);
-        }
-        windowDrawSpriteCursor(0, 0, -1, win, 0xC2, 0, winSpriteGetLayerID(win, spr), &pos, anim);
-    }
-    winSpriteSetDisp(spr, 0);
-    return 0;
-}
-
-s32 menuPocket2DrawNumMenuCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    s32 *arg = (s32 *)win->parameters[0];
-    u32 i;
-    for (i = 0; i < 4; i++) {
-        if (arg[0] == MenuPocket2Num[i].menu) {
-            break;
-        }
-    }
-    if (i >= 4) {
-        return 0;
-    }
-    if (win->selected < 0 || !(win->selected < MenuPocket2Num[i].count)) {
-        return 0;
-    }
-    const s32 *p = MenuPocket2Num[i].items + win->selected * 3;
-    if (p[1] == (s16)spr->id || p[2] == (s16)spr->id) {
-        spr->color.channels.alpha = 0xFF;
-    } else {
-        spr->color.channels.alpha = 0;
-    }
-    return 0;
-}
-
-s32 menuPocket2DrawLineCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    CURSOR cursor;
-    s32 y;
-    u8 visible;
-    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
-    if (Data.swapIndex >= 0) {
-        y = (Data.swapIndex - cursor.first) * 0x1E;
-        if (Data.isScroll != 0) {
-            y -= (s32)Data.curPos;
-        }
-        visible = 0;
-        if (y >= 0 && y < 0x10E) {
-            visible = 1;
-        }
-    } else {
-        y = cursor.selected * 0x1E;
-        if (Data.isScroll == 0) {
-            y += (s32)Data.curPos;
-        }
-        visible = 1;
-    }
-    if (Data.tabScroll != 0.0f) {
-        visible = 0;
-    }
-    if (visible != 0) {
-        s32 iy = menuItemBiosGetPtr(win->menu, spr->id)->y;
-        spr->y = iy + y;
-        if (Data.swapIndex >= 0) {
-            MENU_ITEM_dd_ *item;
-            winSpriteSetDisp(spr, 0);
-            item = menuItemBiosGetPtr(win->menu, spr->id);
-            menuSubDrawCursorBack2(winSpriteGetLayerID(win, spr), 0, 0, item->width, item->height,
-                                   spr->color.channels.alpha, 1, 1);
-        } else {
-            winSpriteSetDisp(spr, 1);
-        }
-    } else {
-        winSpriteSetDisp(spr, 0);
-    }
-    return 0;
-}
-
-s32 menuPocket2DrawBallCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    CURSOR cursor;
-    s32 y;
-    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
-    y = cursor.selected * 0x1E;
-    if (Data.isScroll == 0) {
-        y += (s16)Data.curPos;
-    }
-    if (((Data.swapIndex >= 0) ^ (spr->id == 0xB1)) != 0 && Data.tabScroll == 0.0f) {
-        PocketVec<s32> pos = {0, 0};
-        s32 anim = -1;
-        if (win->menu == windowGetActiveID()) {
-            menuSubCursorAnimeValGet(&pos, &anim);
-        }
-        windowDrawSpriteCursor(0, y, -1, win, 0xC2, 0, winSpriteGetLayerID(win, spr), &pos, anim);
-    }
-    winSpriteSetDisp(spr, 0);
-    return 0;
-}
-
-s32 menuPocket2DrawExchangeCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    CURSOR cursor;
-    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
-    s32 y = cursor.selected * 0x1E;
-    f32 t;
-    if (Data.isScroll == 0) {
-        y += (s16)Data.curPos;
-    }
-    if (Data.swapIndex >= 0) {
-        s32 iy = menuItemBiosGetPtr(win->menu, spr->id)->y;
-        spr->y = iy + y;
-        winSpriteSetDisp(spr, 1);
-        static f32 duration = 0.5f;
-        Data.anim += timeGetLastFrameSec();
-        if (Data.anim > duration) {
-            Data.anim = 0.0f;
-        }
-        t = Data.anim / duration;
-        if (t > 0.5f) {
-            t = 1.0f - t;
-        }
-        spr->color.channels.alpha = (u8)(155.0f * (t * 2.0f) + 100.0f);
-    } else {
-        winSpriteSetDisp(spr, 0);
-    }
-    return 0;
+    menuButtonNormal(win);
 }
 
 s32 menuPocket2Cursor(tagWINDOW_WORK *win) {
@@ -1618,48 +773,220 @@ s32 menuPocket2Cursor(tagWINDOW_WORK *win) {
     return 0;
 }
 
-s32 menuPocket2DrawActiveTab(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    if (spr->id == TabTbl[win->selected].unk8) {
-        spr->color.value = 0xFFFFFFFF;
+s32 menuPocket2DrawLineCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    CURSOR cursor;
+    s32 y;
+    u8 visible;
+    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
+    if (Data.swapIndex >= 0) {
+        y = (Data.swapIndex - cursor.first) * 0x1E;
+        if (Data.isScroll != 0) {
+            y -= (s32)Data.curPos;
+        }
+        visible = 0;
+        if (y >= 0 && y < 0x10E) {
+            visible = 1;
+        }
+    } else {
+        y = cursor.selected * 0x1E;
+        if (Data.isScroll == 0) {
+            y += (s32)Data.curPos;
+        }
+        visible = 1;
+    }
+    if (Data.tabScroll != 0.0f) {
+        visible = 0;
+    }
+    if (visible != 0) {
+        s32 iy = menuItemBiosGetPtr(win->menu, spr->id)->y;
+        spr->y = iy + y;
+        if (Data.swapIndex >= 0) {
+            MENU_ITEM_dd_ *item;
+            winSpriteSetDisp(spr, 0);
+            item = menuItemBiosGetPtr(win->menu, spr->id);
+            menuSubDrawCursorBack2(winSpriteGetLayerID(win, spr), 0, 0, item->width, item->height,
+                                   spr->color.channels.alpha, 1, 1);
+        } else {
+            winSpriteSetDisp(spr, 1);
+        }
+    } else {
+        winSpriteSetDisp(spr, 0);
+    }
+    return 0;
+}
+
+s32 menuPocket2DrawBallCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    CURSOR cursor;
+    s32 y;
+    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
+    y = cursor.selected * 0x1E;
+    if (Data.isScroll == 0) {
+        y += (s16)Data.curPos;
+    }
+    if (((Data.swapIndex >= 0) ^ (spr->id == 0xB1)) != 0 && Data.tabScroll == 0.0f) {
+        PocketVec<s32> pos = {0, 0};
+        s32 anim = -1;
+        if (win->menu == windowGetActiveID()) {
+            menuSubCursorAnimeValGet(&pos, &anim);
+        }
+        windowDrawSpriteCursor(0, y, -1, win, 0xC2, 0, winSpriteGetLayerID(win, spr), &pos, anim);
+    }
+    winSpriteSetDisp(spr, 0);
+    return 0;
+}
+
+int menuPocket2DrawExchangeCursor(tagWINDOW_WORK* w, tagSPRITE_WORK* sp)
+{
+    CURSOR pos = ((CURSOR (*)(u32))cursorBiosGetPos)(TabTbl[w->selected].cursorId);
+    int y = pos.selected * 30;
+    if (Data.isScroll == 0) {
+        y += (s16)Data.curPos;
+    }
+    if (Data.swapIndex >= 0) {
+        MENU_ITEM_dd_ * item = menuItemBiosGetPtr(w->menu, sp->id);
+        sp->y = item->y + y;
+        winSpriteSetDisp(sp, 1);
+        if (init$2230 == 0) {
+            duration$2229 = 0.5f;
+            init$2230 = 1;
+        }
+        Data.anim += timeGetLastFrameSec();
+        if (Data.anim > duration$2229) {
+            Data.anim = 0.0f;
+        }
+        f32 t = Data.anim / duration$2229;
+        if (t > 0.5f) {
+            t = 1.0f - t;
+        }
+        t *= 2.0f;
+        sp->color.channels.alpha = 155.0f * t + 100.0f;
+    } else {
+        winSpriteSetDisp(sp, 0);
+    }
+    return 0;
+}
+
+s32 menuPocket2DrawRollUp(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    CURSOR cursor;
+    if (Data.selecting == 0) {
+        return 0;
+    }
+    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
+    if (cursor.first > 0) {
+        spr->color.channels.alpha = (u8)(255.0f * (1.0f - Data.rollTime));
     } else {
         spr->color.channels.alpha = 0;
     }
     return 0;
 }
 
-void menuPocketMain(void) {
-    Data.result = _menuPocketLoop();
+s32 menuPocket2DrawTitleLR(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    winSpriteSetDisp(spr, (u32)((6 - Data.mode) | (Data.mode - 6)) >> 31);
+    return 0;
 }
 
-void menuPocket2Call(s32 mode, s32 shop, Hero *hero) {
-    memset(&Data, 0, 0x4C);
-    Data.mode = mode;
-    Data.hero = hero;
-    Data.shop = shop;
-    _menuPocketLoop();
-}
-
-u8 menuPocket2GetLastSlotID(void) {
-    return Data.lastSlot;
-}
-
-}
-
-int _actionMenuLineHeight(tagWINDOW_WORK *win) {
-    MENU_ITEM_dd_ *a = menuItemBiosGetPtr(win->menu, 0xDA);
-    int h = a->y - menuItemBiosGetPtr(win->menu, 0xD9)->y;
-    if (h < 0) {
-        h = -h;
+s32 menuPocket2DrawRollDown(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    CURSOR cursor;
+    if (Data.selecting == 0) {
+        return 0;
     }
-    return h;
+    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
+    if (cursor.first + 9 < _getNbItemSlot(win->selected) + 1) {
+        spr->color.channels.alpha = (u8)(255.0f * (1.0f - Data.rollTime));
+    } else {
+        spr->color.channels.alpha = 0;
+    }
+    return 0;
 }
 
-extern "C" {
+int menuPocket2PrintItemKind(tagWINDOW_WORK* w, tagSPRITE_WORK* sp)
+{
+    int tab;
+    MENU_ITEM_dd_ * area = menuItemBiosGetPtr(w->menu, 0xB7);
+    MENU_ITEM_dd_ * base = menuItemBiosGetPtr(w->menu, sp->id);
+    f32 off;
+    s16 tw2;
+    u32 title2;
+    spriteSetScissor(winSpriteGetLayerID(w, sp), area->x - base->x, area->y - base->y, area->width, area->height);
+    int center = sp->width / 2;
+    u32 title = TabTbl[w->selected].unk14;
+    s16 tw;
+    tw = GSmsgGetRect(title) >> 16;
+    GSmsgPrint2(winSpriteGetLayerID(w, sp), (int)Data.tabScroll + (center - tw / 2), 0, -1, title);
+    if (Data.tabScroll != 0.0f) {
+        if (Data.tabScroll > 0.0f) {
+            tab = w->selected - 1;
+            if (tab < 0) {
+                tab = 4;
+            }
+            off = Data.tabScroll - (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
+        } else {
+            tab = w->selected + 1;
+            if ((u32)tab >= 5) {
+                tab = 0;
+            }
+            off = Data.tabScroll + (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
+        }
+        title2 = TabTbl[tab].unk14;
+        tw2 = GSmsgGetRect(title2) >> 16;
+        GSmsgPrint2(winSpriteGetLayerID(w, sp), (int)off + (center - tw2 / 2), 0, -1, title2);
+    }
+    spriteClearScissor(winSpriteGetLayerID(w, sp));
+    spriteSetEnv(winSpriteGetLayerID(w, sp));
+    return 0;
+}
 
-s32 menuPocket2DrawActionCursorLine(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    int offset = 4 - ((PocketActArg *)win->parameters[0])->count;
-    MENU_ITEM_dd_ *item = menuItemBiosGetPtr(win->menu, spr->id);
-    spr->y = item->y + (win->selected + offset) * _actionMenuLineHeight(win);
+s32 menuPocket2PrintItemList(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    CURSOR cursor;
+    CURSOR cursor2;
+    MENU_ITEM_dd_ *area;
+    MENU_ITEM_dd_ *self;
+    area = menuItemBiosGetPtr(win->menu, 0xB6);
+    self = menuItemBiosGetPtr(win->menu, spr->id);
+    spriteSetScissor(winSpriteGetLayerID(win, spr), area->x - self->x, area->y - self->y, area->width, area->height);
+    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
+    _printItemList((GSgfxLayerID)winSpriteGetLayerID(win, spr), (s32)Data.tabScroll, win->selected, cursor);
+    if (Data.tabScroll != 0.0f) {
+        s32 idx;
+        f32 off;
+        if (Data.tabScroll > 0.0f) {
+            idx = win->selected - 1;
+            if (idx < 0) {
+                idx = 4;
+            }
+            off = Data.tabScroll - (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
+        } else {
+            idx = win->selected + 1;
+            if ((u32)idx >= 5) {
+                idx = 0;
+            }
+            off = Data.tabScroll + (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
+        }
+        *(u32 *)&cursor2 = cursorBiosGetPos(TabTbl[(u32)idx].cursorId);
+        _printItemList((GSgfxLayerID)winSpriteGetLayerID(win, spr), (s32)off, idx, cursor2);
+    }
+    spriteClearScissor(winSpriteGetLayerID(win, spr));
+    spriteSetEnv(winSpriteGetLayerID(win, spr));
+    return 0;
+}
+
+s32 menuPocket2ActionCtrl(tagWINDOW_WORK *win) {
+    switch (win->phase) {
+    case 0:
+        if (win->step == 0) {
+            winSeqSetMenu(0x2D, 0x68);
+            Data.anim = 0.0f;
+            win->step = 1;
+            menuSubCursorAnimeInit();
+        }
+        break;
+    case 3:
+        if (win->step == 0) {
+            winSeqSetMenu(0x2D, 0x6C);
+            win->step = 1;
+        }
+        break;
+    }
     return 0;
 }
 
@@ -1689,19 +1016,91 @@ s32 menuPocket2ActionCursor(tagWINDOW_WORK *win) {
     return 0;
 }
 
-s32 menuPocket2ActionCtrl(tagWINDOW_WORK *win) {
+int _actionMenuLineHeight(tagWINDOW_WORK *win) {
+    MENU_ITEM_dd_ *a = menuItemBiosGetPtr(win->menu, 0xDA);
+    int h = a->y - menuItemBiosGetPtr(win->menu, 0xD9)->y;
+    if (h < 0) {
+        h = -h;
+    }
+    return h;
+}
+
+s32 menuPocket2DrawActionMenu(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    PocketActArg *arg = (PocketActArg *)win->parameters[0];
+    u32 i;
+    if (arg->count < 4) {
+        for (i = 0; i < 7; i++) {
+            if ((u32)spr->id == ActMenuResizeWork[i].id) {
+                break;
+            }
+        }
+        if (i < 7) {
+            ActMenuResizeWorkEntry *e;
+            s32 off;
+            off = (4 - arg->count) * _actionMenuLineHeight(win);
+            spr->y = off + ActMenuResizeWork[i].width;
+            if (ActMenuResizeWork[i].flag != 0) {
+                spr->height = ActMenuResizeWork[i].height - off;
+            }
+        }
+    }
+    return 0;
+}
+
+s32 menuPocket2DrawActionText(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    const s32 ids[4] = { 0xE0, 0xDF, 0xDE, 0xDD };
+    PocketActArg *arg = (PocketActArg *)win->parameters[0];
+    int i = 0;
+    for (; i < 4; i++) {
+        if (spr->id == ids[i]) {
+            break;
+        }
+    }
+    i -= 4 - arg->count;
+    if (i < 0 || i >= arg->count) {
+        return 0;
+    }
+    GSmsgPrint2(winSpriteGetLayerID(win, spr), 0, 0, -1, arg->items[i].msg);
+    return 0;
+}
+
+s32 menuPocket2DrawActionCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    const s32 ids[4] = {0xDC, 0xDB, 0xDA, 0xD9};
+    s32 idx = win->selected + (4 - ((PocketActArg *)win->parameters[0])->count);
+    if (idx < 0 || idx >= 4) {
+        return 0;
+    }
+    if ((s16)spr->id == ids[idx]) {
+        PocketVec<s32> pos = {0, 0};
+        s32 anim = -1;
+        if (win->menu == windowGetActiveID()) {
+            menuSubCursorAnimeValGet(&pos, &anim);
+        }
+        windowDrawSpriteCursor(0, 0, -1, win, 0xC2, 0, winSpriteGetLayerID(win, spr), &pos, anim);
+    }
+    winSpriteSetDisp(spr, 0);
+    return 0;
+}
+
+s32 menuPocket2DrawActionCursorLine(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    int offset = 4 - ((PocketActArg *)win->parameters[0])->count;
+    MENU_ITEM_dd_ *item = menuItemBiosGetPtr(win->menu, spr->id);
+    spr->y = item->y + (win->selected + offset) * _actionMenuLineHeight(win);
+    return 0;
+}
+
+s32 menuPocket2NumCtrl(tagWINDOW_WORK *win) {
+    s32 *arg = (s32 *)(void *)win->parameters[0];
     switch (win->phase) {
     case 0:
         if (win->step == 0) {
-            winSeqSetMenu(0x2D, 0x68);
-            Data.anim = 0.0f;
+            winSeqSetMenu(*arg, 0x70);
             win->step = 1;
-            menuSubCursorAnimeInit();
         }
         break;
     case 3:
         if (win->step == 0) {
-            winSeqSetMenu(0x2D, 0x6C);
+            winSeqSetMenu(*arg, 0x74);
             win->step = 1;
         }
         break;
@@ -1709,31 +1108,19 @@ s32 menuPocket2ActionCtrl(tagWINDOW_WORK *win) {
     return 0;
 }
 
-s32 menuPocket2DrawRollDown(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    CURSOR cursor;
-    if (Data.selecting == 0) {
+s32 menuPocket2NumCursor(tagWINDOW_WORK *win) {
+    s32 *arg = (s32 *)win->parameters[0];
+    u16 key = windowGetKeyRepeat();
+    u32 i;
+    for (i = 0; i < 4; i++) {
+        if (arg[0] == MenuPocket2Num[i].menu) {
+            break;
+        }
+    }
+    if (i >= 4) {
         return 0;
     }
-    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
-    if (cursor.first + 9 < _getNbItemSlot(win->selected) + 1) {
-        spr->color.channels.alpha = (u8)(255.0f * (1.0f - Data.rollTime));
-    } else {
-        spr->color.channels.alpha = 0;
-    }
-    return 0;
-}
-
-s32 menuPocket2DrawRollUp(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    CURSOR cursor;
-    if (Data.selecting == 0) {
-        return 0;
-    }
-    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
-    if (cursor.first > 0) {
-        spr->color.channels.alpha = (u8)(255.0f * (1.0f - Data.rollTime));
-    } else {
-        spr->color.channels.alpha = 0;
-    }
+    Data.num = menuPocketInputNumber(win, Data.num, arg[1], key, MenuPocket2Num[i].count, 0x10, 0x44D);
     return 0;
 }
 
@@ -1817,9 +1204,62 @@ s32 menuPocketInputNumber(tagWINDOW_WORK *win, s32 num, s32 max, u16 key, s32 di
     return num;
 }
 
-s32 menuPocket2NumCursor(tagWINDOW_WORK *win) {
+int menuPocket2PrintNumMenu(tagWINDOW_WORK* w, tagSPRITE_WORK* sp)
+{
+    PocketNumArg* param;
+    u32 i;
+    const s32* row;
+    int j;
+    s32 k;
+    int power;
+    int digit;
+
+    param = (PocketNumArg*)w->parameters[0];
+    for (i = 0; i < 4; i++) {
+        if (param->menu == MenuPocket2Num[i].menu) {
+            break;
+        }
+    }
+    if (i >= 4) {
+        return 0;
+    }
+    row = MenuPocket2Num[i].items;
+    j = 0;
+    while (j < MenuPocket2Num[i].count) {
+        if (sp->id == row[0]) {
+            break;
+        }
+        j++;
+        row += 3;
+    }
+    if (j >= MenuPocket2Num[i].count) {
+        return 0;
+    }
+    power = 1;
+    for (k = 0; k < MenuPocket2Num[i].count - j - 1; k++) {
+        power *= 10;
+    }
+    digit = Data.num / power;
+    digit %= 10;
+    msgctrlSetValue(0x34, digit);
+    GSmsgPrintRight(winSpriteGetLayerID(w, sp), 0, 0, sp->width, sp->height, -1, 0x4270);
+    return 0;
+}
+
+s32 menuPocket2PrintPrice(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    s16 w;
+    s32 price = ((PocketNumArg *)(void *)win->parameters[0])->price;
+    if (price <= 0) {
+        return 0;
+    }
+    msgctrlSetValue(0x50, price * Data.num);
+    w = GSmsgGetRect(0x434F) >> 16;
+    GSmsgPrint2(winSpriteGetLayerID(win, spr), spr->width - w, 0, -1, 0x434F);
+    return 0;
+}
+
+s32 menuPocket2DrawNumMenuCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
     s32 *arg = (s32 *)win->parameters[0];
-    u16 key = windowGetKeyRepeat();
     u32 i;
     for (i = 0; i < 4; i++) {
         if (arg[0] == MenuPocket2Num[i].menu) {
@@ -1829,126 +1269,965 @@ s32 menuPocket2NumCursor(tagWINDOW_WORK *win) {
     if (i >= 4) {
         return 0;
     }
-    Data.num = menuPocketInputNumber(win, Data.num, arg[1], key, MenuPocket2Num[i].count, 0x10, 0x44D);
+    if (win->selected < 0 || !(win->selected < MenuPocket2Num[i].count)) {
+        return 0;
+    }
+    const s32 *p = MenuPocket2Num[i].items + win->selected * 3;
+    if (p[1] == (s16)spr->id || p[2] == (s16)spr->id) {
+        spr->color.channels.alpha = 0xFF;
+    } else {
+        spr->color.channels.alpha = 0;
+    }
     return 0;
 }
 
-void menuPocketClearItemScript(void) {
-    memset(&menuPocketWork, 0, 0x40);
-    menuPocketWork.count = 0;
-}
-
-s32 menuPocket2GetItemScript(u16 id) {
-    s32 result = -1;
-    PocketScriptEntry *p = menuPocketWork.entries;
-    s32 i;
-    for (i = 0; i < menuPocketWork.count; p++, i++) {
-        if (id == p->id) {
-            result = menuPocketWork.entries[i].value;
-            break;
-        }
+s32 menuPocket2OpenPokemonMenu(u16 item, s32 use) {
+    s32 kind;
+    s32 result;
+    menuCloseCustom(0x2C, 0, 1);
+    if (Data.mode == 1 || Data.mode == 6) {
+        kind = 4;
+    } else {
+        kind = 3;
+    }
+    result = menuPokemonOpenItemUse(kind, (bool)use, item, Data.fightId);
+    if (use == 0) {
+        result = -1;
     }
     return result;
 }
 
-void menuPocket2AddItemScript(u16 id, u32 value) {
-    PocketScriptEntry *p;
-    s32 i;
-    for (i = 0; i < 8; i++) {
-        p = &menuPocketWork.entries[i];
-        if (p->id == id && p->value == value) {
-            return;
+void menuPocket2ClosePokemonMenu(s32 slot) {
+    Data.pokemonSlot = slot;
+    menuPokemonClose();
+}
+
+void menuPocket2GetTemochiPokemon(u16 slot, void **pokemon, void **fight) {
+    void *f;
+    void *p;
+    if (Data.mode == 1 || Data.mode == 6) {
+        f = fightTrainerBiosGetFightPokemonPtr(Data.fightId, slot);
+        p = fightPokemonGetPokemonPtr(f);
+    } else {
+        p = (void *)heroGetStatus(Data.hero, 3, slot);
+        f = 0;
+    }
+    *pokemon = p;
+    *fight = f;
+}
+
+s32 menuPocket2GetCurrentTemochiPokemonSlotID(void) {
+    return Data.pokemonSlot = Data.pokemonSlot2;
+}
+
+void menuPocket2GetHero(Hero **hero, s32 *fightId) {
+    *hero = Data.hero;
+    *fightId = Data.fightId;
+}
+
+s32 menuPocket2PrintExplanation(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
+    u32 msg;
+    cursorBiosGetPos(TabTbl[win->selected].cursorId);
+    msg = Data.msg;
+    if (msg != 0) {
+        GSmsgPrint2(winSpriteGetLayerID(win, spr), 0, 0, -1, msg);
+    }
+    return 0;
+}
+
+namespace {
+u8 _IsIrekaeAble(tagWINDOW_WORK *win) {
+    if (Data.mode == 3 || Data.mode == 4 || Data.mode == 5) {
+        return 0;
+    }
+    return TabTbl[win->selected].irekae;
+}
+}
+
+namespace {
+u8 _IsSortAble(tagWINDOW_WORK *win) {
+    if (Data.mode == 3 || Data.mode == 4 || Data.mode == 5) {
+        return 0;
+    }
+    return TabTbl[win->selected].sortable;
+}
+}
+
+namespace {
+u16 _menuPocketLoop() {
+    s16 cursorState[2];
+    s32 params[1];
+    CURSOR cursor;
+    int index;
+    s16 raw[2];
+    u16 used;
+    u16 item;
+    int result;
+    s32 *param;
+    int i;
+    memset(cursorState, 0, 4);
+    if (Data.mode == 6) {
+        cursorState[1] = 1;
+    } else {
+        *(u32 *)raw = cursorBiosGetPos(2);
+        cursorState[0] = raw[0];
+        cursorState[1] = raw[1];
+    }
+    param = params;
+    params[0] = cursorState[1];
+    for (i = 0; i < 5; i++) {
+        *(u32 *)&cursor = cursorBiosGetPos(TabTbl[i].cursorId);
+        if (cursor.first + cursor.selected >= _getNbItemSlot(i) + 1) {
+            static CURSOR czero = { 0, 0 };
+            CURSOR zero = czero;
+            cursorBiosSetPos(TabTbl[i].cursorId, (s32 *)&zero);
         }
     }
-    if (menuPocketWork.count < 7) {
-        menuPocketWork.entries[menuPocketWork.count].id = (u16)id;
-        menuPocketWork.entries[menuPocketWork.count].value = value;
-        menuPocketWork.count++;
+    if (Data.resizeInit == 0) {
+        _setActMenuResizeWork();
     }
-}
-
-}
-
-extern "C" {
-
-s32 menuPocket2DrawActionText(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    const s32 ids[4] = { 0xE0, 0xDF, 0xDE, 0xDD };
-    PocketActArg *arg = (PocketActArg *)win->parameters[0];
-    int i = 0;
-    for (; i < 4; i++) {
-        if (spr->id == ids[i]) {
+    index = 0;
+    for (;;) {
+        Data.selecting = 1;
+        item = _selectItem(index, (long *)param);
+        Data.selecting = 0;
+        param = 0;
+        if (item == 0) {
             break;
         }
+        result = _afterDecideItem(Data.mode, Data.tab, item, index, &used);
+        if (used != 0) {
+            item = used;
+        }
+        switch (result) {
+        case 0:
+            break;
+        case 1:
+            goto done;
+        }
     }
-    i -= 4 - arg->count;
-    if (i < 0 || i >= arg->count) {
-        return 0;
+done:
+    menuCloseCustom(0x2C, 0, 1);
+    if (Data.mode == 4) {
+        fadeSet(3, 0.5f);
+        fadeCheck(1);
     }
-    GSmsgPrint2(winSpriteGetLayerID(win, spr), 0, 0, -1, arg->items[i].msg);
-    return 0;
+    if (Data.floorPop != 0) {
+        menuOffScreenSetPriority(1);
+        GSfloorPop();
+        floorSetFadeScript(0, 0);
+    }
+    return item;
+}
 }
 
-s32 menuPocket2Ctrl(tagWINDOW_WORK *win) {
-    CURSOR cursor;
-    switch (win->phase) {
-    case 0:
-        if (win->step == 0) {
-            menuPtPlaySe(0x14);
-            winSeqSetMenu(0x2C, 0x60);
-            *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
-            _setExplanationMsgID(_getItemInstMsg(_getItemIDFromMenuPos(win->selected, cursor.first + cursor.selected)));
-            win->step = 1;
-            menuSubCursorAnimeInit();
+namespace {
+u16 _selectItem(int& pos, long* param)
+{
+    Data.swapIndex = -1;
+    int tab = menuOpenCustom(0x2C, windowGetActiveID(), param, 0, 1, 0);
+    if (tab == -1) {
+        return 0;
+    }
+    Data.tab = tab;
+    CURSOR cp = ((CURSOR (*)(u32))cursorBiosGetPos)(TabTbl[tab].cursorId);
+    pos = cp.first + cp.selected;
+    return _getItemIDFromMenuPos(tab, pos);
+}
+}
+
+namespace {
+#pragma opt_dead_assignments off
+u16 _getItemIDFromMenuPos(int tab, int pos) {
+    u16 count;
+    u32 *ary;
+    int found;
+    int i;
+    Hero *hero = Data.hero;
+    ary = heroItemGetItemKindToItemAryPtr(hero, TabTbl[tab].kind, &count, 0, 0, 0);
+    found = -1;
+    for (i = 0; i < count; i++, ary++) {
+        if (itemCheckValid(ary) != 0) {
+            found++;
+            if (found >= pos) {
+                return itemBiosGetItemDataId(ary);
+            }
         }
+    }
+    return 0;
+}
+#pragma opt_dead_assignments reset
+}
+
+namespace {
+u32 _getItemInstMsg(u32 item) {
+    return itemDataBiosGetDoc(itemDataBiosGetPtr(item));
+}
+}
+
+namespace {
+void _setExplanationMsgID(u32 msg) {
+    Data.msg = msg;
+}
+}
+
+namespace {
+void _printItemList(GSgfxLayerID layer, int x, int tab, CURSOR &pos)
+{
+    int y = 0;
+    const PocketTab *tabData = &TabTbl[tab];
+    int num = _getNbItemSlot(tab);
+    int index = pos.first;
+    int first = 0;
+    int rows = 9;
+    int scroll = 0;
+
+    if (0.0f != Data.curPos && Data.isScroll != 0) {
+        if (Data.curPos < 0.0f) {
+            index--;
+            first = -1;
+        } else {
+            rows = 10;
+        }
+        scroll = (int)Data.curPos;
+    }
+
+    y = first * 30;
+
+    int i = first;
+
+    while (i < rows && index < num) {
+        if (index >= 0) {
+            tabData->print(layer, x, y - scroll, tab, index);
+        }
+        y += 30;
+        i++;
+        index++;
+    }
+
+    if (i < rows) {
+        int yPos = i * 30 - scroll;
+
+        GSmsgPrint2(layer, x, yPos, -1, Data.mode == 4 ? 0x3BBA : 0x3A9E);
+    }
+}
+}
+
+namespace {
+void _printItemTaisetsu(GSgfxLayerID layer, int x, int y, int tab, int index) {
+    u32 msg = _getItemNameMsg(_getItemIDFromMenuPos(tab, index));
+    if (msg != 0) {
+        GSmsgPrint2(layer, x, y, -1, msg);
+    }
+}
+}
+
+namespace {
+void _printItemKinomi(GSgfxLayerID layer, int x, int y, int tab, int index) {
+    int pos;
+    s32 stock;
+    u32 nameMsg;
+    u16 item;
+    u8 number;
+    s16 w;
+    GSmsgPrint2(layer, x, y, -1, 0x3A9F);
+    pos = x + (GSmsgGetRect(0x3A9F) >> 16);
+    item = _getItemIDFromMenuPos(tab, index);
+    number = itemDataBiosGetKinomiNo(item) + 1;
+    if (number < 10) {
+        msgctrlSetValue(0x34, 0);
+        GSmsgPrint2(layer, pos, y, -1, 0x4270);
+        pos += GSmsgGetRect(0x4270) >> 16;
+    }
+    msgctrlSetValue(0x34, number);
+    GSmsgPrint2(layer, pos, y, -1, 0x4270);
+    pos += GSmsgGetRect(0x4270) >> 16;
+    nameMsg = _getItemNameMsg(item);
+    GSmsgPrint2(layer, pos + 9, y, -1, nameMsg);
+    stock = _getStockMaxFromTagID(tab);
+    msgctrlSetValue(0x34, stock);
+    w = GSmsgGetRect(0x4270) >> 16;
+    w += (s16)(GSmsgGetRect(0x428F) >> 16);
+    GSmsgPrint2(layer, (x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w, y, -1, 0x428F);
+    msgctrlSetValue(0x34, _getItemNumFromMenuPos(tab, index));
+    w = GSmsgGetRect(0x4270) >> 16;
+    GSmsgPrint2(layer, ((x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w) + 1, y, -1, 0x4270);
+}
+}
+
+namespace {
+void _printItemWazaMachine(GSgfxLayerID layer, int x, int y, int tab, int index) {
+    u32 data;
+    u8 hiden;
+    int pos;
+    u8 machineNo;
+    int number;
+    u8 hidenNo;
+    u32 msg;
+    u32 nameMsg;
+    s32 stock;
+    s16 w;
+    data = itemDataBiosGetPtr(_getItemIDFromMenuPos(tab, index));
+    machineNo = itemDataBiosGetWazaMachineNo(data);
+    number = machineNo + 1;
+    hiden = itemDataBiosGetHidenMachineNo(data);
+    hidenNo = hiden + 1;
+    if (hiden != 0xFF) {
+        msg = 0x3AA0;
+    } else {
+        msg = 0x3A9F;
+    }
+    GSmsgPrint2(layer, x, y, -1, msg);
+    pos = x + (GSmsgGetRect(msg) >> 16);
+    if (hiden != 0xFF) {
+        msgctrlSetValue(0x34, hidenNo);
+        GSmsgPrint2(layer, pos, y, -1, 0x4270);
+        pos += GSmsgGetRect(0x4270) >> 16;
+    } else {
+        if (number < 10) {
+            msgctrlSetValue(0x34, 0);
+            GSmsgPrint2(layer, pos, y, -1, 0x4270);
+            pos += GSmsgGetRect(0x4270) >> 16;
+        }
+        msgctrlSetValue(0x34, number);
+        GSmsgPrint2(layer, pos, y, -1, 0x4270);
+        pos += GSmsgGetRect(0x4270) >> 16;
+    }
+    nameMsg = wazaDataBiosGetName(wazaDataBiosGetPtr(itemDataBiosGetWazaIDByWazaMachineNo(machineNo)));
+    GSmsgPrint2(layer, pos + 9, y, -1, nameMsg);
+    stock = _getStockMaxFromTagID(tab);
+    msgctrlSetValue(0x34, stock);
+    w = GSmsgGetRect(0x4270) >> 16;
+    w += (s16)(GSmsgGetRect(0x428F) >> 16);
+    GSmsgPrint2(layer, (x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w, y, -1, 0x428F);
+    msgctrlSetValue(0x34, _getItemNumFromMenuPos(tab, index));
+    w = GSmsgGetRect(0x4270) >> 16;
+    GSmsgPrint2(layer, ((x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w) + 1, y, -1, 0x4270);
+}
+}
+
+namespace {
+void _printItemDouguBall(GSgfxLayerID layer, int x, int y, int tab, int index) {
+    s16 w;
+    s32 stock;
+    u32 msg = _getItemNameMsg(_getItemIDFromMenuPos(tab, index));
+    if (msg != 0) {
+        GSmsgPrint2(layer, x, y, -1, msg);
+    }
+    stock = _getStockMaxFromTagID(tab);
+    msgctrlSetValue(0x34, stock);
+    w = GSmsgGetRect(0x4270) >> 16;
+    w += (s16)(GSmsgGetRect(0x428F) >> 16);
+    GSmsgPrint2(layer, (x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w, y, -1, 0x428F);
+    msgctrlSetValue(0x34, _getItemNumFromMenuPos(tab, index));
+    w = GSmsgGetRect(0x4270) >> 16;
+    GSmsgPrint2(layer, ((x + menuItemBiosGetPtr(0x2C, 0xB4)->width) - w) + 1, y, -1, 0x4270);
+}
+}
+
+namespace {
+int _actTukauNormal(int tab, int index, int *dec) {
+    int result;
+    u16 item = _getItemIDFromMenuPos(tab, index);
+    int (*func)(u32, int *) = (int (*)(u32, int *))_getUseFunc(item);
+    int ret;
+    if (func == 0) {
+        _infoBeep(0xC374);
+        *dec = 0;
+        return 1;
+    }
+    result = func(item, dec);
+    switch (result) {
+    case 0:
+        ret = 0;
+        break;
+    case 1:
+        ret = 1;
         break;
     case 2:
-        menuPocketToolFloatToZero(Data.tabScroll, 23.0f);
-        menuPocketToolFloatToZero(Data.curPos, 7.0f);
-        Data.rollTime += 0.033333335f;
-        if (Data.rollTime > 1.0f) {
-            Data.rollTime = 0.0f;
-        }
-        menuSubCursorAnimeMain();
-        break;
-    case 3:
-        if (win->step == 0) {
-            menuPtPlaySe(0x15);
-            winSeqSetMenu(0x2C, 0x64);
-            win->step = 1;
+        if (tab == 4 && item != 0x1F6) {
+            ret = 0;
+        } else {
+            ret = 2;
         }
         break;
+    }
+    return ret;
+}
+}
+
+namespace {
+int _actMotaseruNormal(int tab, int index, int *dec) {
+    u16 item = _getItemIDFromMenuPos(tab, index);
+    if (itemDataBiosGetHidenMachineNo(itemDataBiosGetPtr(item)) != 0xFF) {
+        msgctrlSetValue(0x2D, item);
+        _infoBeep(0xC37A);
+        *dec = 0;
+        return 0;
+    }
+    u8 kind = _getItemKind(item);
+    if (_openPokemonMenuForGiveItem(item, kind, index) == 0) {
+        return 1;
+    }
+    *dec = 0;
+    return 0;
+}
+}
+
+namespace {
+bool _openPokemonMenuForGiveItem(u16 item, u8 kind, u8 index) {
+    menuCloseCustom(0x2C, 0, 1);
+    Data.pokemonSlot = menuPokemonOpenItemGive(kind, index, item, 0);
+    menuOffScreenSetPriority(0);
+    menuPokemonClose();
+    return Data.pokemonSlot >= 0;
+}
+}
+
+namespace {
+int _actSuteruNormal(int tab, int index, int *dec) {
+    const SActionMenuItem yesNo[2] = { { 0x426A, 0, 0 }, { 0x426B, 0, 0 } };
+    int digits;
+    int num;
+    u16 item;
+    int answer;
+    _setExplanationMsgID(0x3AAA);
+    if (_getStockMaxFromTagID(tab) > 0x64) {
+        digits = 3;
+    } else {
+        digits = 2;
+    }
+    num = _openNumberInputMenu(1, _getItemNumFromMenuPos(tab, index), digits, 0);
+    if (num < 0) {
+        *dec = 0;
+        return 0;
+    }
+    item = _getItemIDFromMenuPos(tab, index);
+    msgctrlSetValue(0x2D, item);
+    msgctrlSetValue(0x2F, num);
+    _setExplanationMsgID(0x3AAB);
+    answer = _actionMenuOpen(yesNo, 2);
+    if (answer == 1 || answer == -1) {
+        *dec = 0;
+        return 0;
+    }
+    msgctrlSetValue(0x2D, item);
+    msgctrlSetValue(0x2F, num);
+    _infoOnly(0xC379);
+    *dec = num;
+    return 0;
+}
+}
+
+namespace {
+int _getNbItemSlot(int tab) {
+    u16 count;
+    u32 *ary;
+    int i;
+    int n;
+    int kind = TabTbl[tab].kind;
+    if (kind >= 0) {
+        ary = heroItemGetItemKindToItemAryPtr(Data.hero, kind, &count, 0, 0, 0);
+    } else {
+        ary = heroHizukiItemGetItemAryPtr(Data.hero, &count, 0, 0, 0);
+    }
+    n = 0;
+    for (i = 0; i < count; i++, ary++) {
+        if (itemCheckValid(ary) != 0) {
+            n++;
+        }
+    }
+    return n;
+}
+}
+
+namespace {
+u32 _getItemNameMsg(u32 item) {
+    return itemDataBiosGetName(itemDataBiosGetPtr(item));
+}
+}
+
+namespace {
+int _getStockMaxFromTagID(int tab) {
+    u16 stock;
+    heroItemGetItemKindToItemAryPtr(Data.hero, TabTbl[tab].kind, 0, &stock, 0, 0);
+    return stock;
+}
+}
+
+namespace {
+u16 _getItemNumFromMenuPos(int tab, int pos) {
+    u16 count;
+    u32 *ary;
+    int i;
+    int found;
+    int kind = TabTbl[tab].kind;
+    if (kind >= 0) {
+        ary = heroItemGetItemKindToItemAryPtr(Data.hero, kind, &count, 0, 0, 0);
+    } else {
+        ary = heroHizukiItemGetItemAryPtr(Data.hero, &count, 0, 0, 0);
+    }
+    found = -1;
+    for (i = 0; i < count; i++, ary++) {
+        if (itemCheckValid(ary) != 0) {
+            found++;
+            if (found >= pos) {
+                return itemBiosGetNum(ary);
+            }
+        }
     }
     return 0;
 }
-
-u16 menuPocket2Open(s32 mode, s32 *slot, s32 arg) {
-    s32 value;
-    memset(&Data, 0, 0x4C);
-    Data.mode = mode;
-    if (mode == 1 || mode == 6) {
-        Data.fightId = arg;
-        Data.hero = fightTrainerBiosGetHeroPtr(arg);
-        value = *slot;
-        Data.pokemonSlot = value;
-        Data.pokemonSlot2 = value;
-        if (value < 0 || value >= 5) {
-            Data.pokemonSlot = 0;
-        }
-    } else {
-        Data.hero = (Hero *)arg;
-        Data.pokemonSlot = -1;
-    }
-    Data.floorPop = 1;
-    GSfloorPush(0x38F);
-    floorSetFadeScript(0, 0);
-    floorWaitForChange();
-    if (Data.result == 0) {
-        return 0;
-    }
-    if (slot != 0) {
-        *slot = Data.pokemonSlot;
-    }
-    return Data.result;
 }
 
+namespace {
+PocketUseFunc _getUseFunc(u32 item) {
+    u32 data = itemDataBiosGetPtr(item);
+    if (Data.mode == 0) {
+        return (u32 (*)(u32))itemDataBiosGetFieldUseFunc(data);
+    }
+    return (u32 (*)(u32))itemDataBiosGetBattleUseFunc(data);
+}
+}
+
+namespace {
+u8 _getItemDeposit(u16 item) {
+    return itemDataBiosGetDeposit(itemDataBiosGetPtr(item));
+}
+}
+
+namespace {
+u8 _getItemKind(int item) {
+    return itemDataBiosGetKind(itemDataBiosGetPtr(item));
+}
+}
+
+namespace {
+s32 _getItemPrice(int item) {
+    return itemDataBiosGetPrice(itemDataBiosGetPtr(item));
+}
+}
+
+namespace {
+int _openNumberInputMenu(int init, int max, int digits, int price) {
+    s32 params[3];
+    s32 mode[1];
+    s32 menu;
+    s32 result;
+    s32 num;
+    if (max < 0) {
+        return 0;
+    }
+    if (price > 0) {
+        if (digits == 2) {
+            menu = 0x30;
+            mode[0] = 1;
+        } else {
+            menu = 0x31;
+            mode[0] = 2;
+        }
+    } else if (digits == 2) {
+        menu = 0x2E;
+        mode[0] = 1;
+    } else {
+        menu = 0x2F;
+        mode[0] = 2;
+    }
+    params[0] = menu;
+    params[1] = max;
+    params[2] = price;
+    Data.num = init;
+    result = menuOpenCustom(menu, windowGetActiveID(), mode, 0, 1, 1, params);
+    menuClose(menu);
+    menuCloseSync(menu, 1);
+    if (result == -1 || (num = Data.num) == 0) {
+        num = -1;
+    }
+    return num;
+}
+}
+
+namespace {
+int _actionMenuOpen(const SActionMenuItem *items, int count) {
+    const SActionMenuItem *args[2];
+    int result;
+    args[0] = items;
+    *(int *)&args[1] = count;
+    result = menuOpenCustom(0x2D, windowGetActiveID(), 0, 0, 1, 1, args);
+    menuClose(0x2D);
+    menuCloseSync(0x2D, 1);
+    if (result == -1) {
+        return -1;
+    }
+    if (result < 0 || result >= count) {
+        return -1;
+    }
+    return result;
+}
+}
+
+namespace {
+void _decItem(u16 item, int tab, int index, int num) {
+    heroItemDecItemDataId(Data.hero, item, num, index);
+}
+}
+
+namespace {
+void _sortItemsThisTab(u8 tab) {
+    Data.hero->itemSort(tab);
+}
+}
+
+namespace {
+void _swapItemSlot(int kind, int from, int to)
+{
+    u16 count;
+    if (from == to || from == to - 1) {
+        return;
+    }
+    ItemSlot* items = (ItemSlot*)heroItemGetItemKindToItemAryPtr(Data.hero, kind, &count, 0, 0, 0);
+    ItemSlot saved = items[from];
+    if (from != count - 1) {
+        memmove(items + from, items + from + 1, (count - from - 1) * 4);
+    }
+    if (from < to) {
+        to--;
+    }
+    memmove(items + to + 1, items + to, (count - to - 1) * 4);
+    items[to].id = saved.id;
+    items[to].n = saved.n;
+}
+}
+
+namespace {
+s32 _getMoney() {
+    return heroGetStatus(Data.hero, 0xC, 0);
+}
+}
+
+namespace {
+u8 _depositPC(u16 item, int num) {
+    if (pcboxGetItemCapacity(0, item) < num) {
+        return 0;
+    }
+    pcboxAddItem(0, item, num);
+    return 1;
+}
+}
+
+namespace {
+int _afterDecideItem(int mode, int tab, u16 item, int index, u16 *used) {
+    u16 cologne = 0;
+    int result;
+    int ret = mode;
+    switch (mode) {
+    case 0:
+    case 1:
+    case 6:
+        result = _execActionMenu(tab, item, index, &cologne);
+        if (result == 2) {
+            ret = 1;
+        } else if (mode == 0) {
+            ret = 0;
+        } else if (result == 0) {
+            ret = 1;
+        } else {
+            ret = 0;
+        }
+        break;
+    case 5:
+    case 2:
+        if (_execGive(tab, item, index) != 0) {
+            ret = 1;
+        } else {
+            ret = 0;
+        }
+        break;
+    case 3:
+        _execSell(tab, item, index);
+        ret = 0;
+        break;
+    case 4:
+        _execDeposit(tab, item, index);
+        ret = 0;
+        break;
+    }
+    *used = cologne;
+    return ret;
+}
+}
+
+namespace {
+int _execActionMenu(int tab, u16 item, int index, u16 *used) {
+    SActionMenuItem items[5];
+    int dec;
+    int count;
+    int sel;
+    int result;
+    u16 cologne;
+    u32 id;
+    int (*func)(u16, int *);
+    *used = 0;
+    if (Data.mode == 0) {
+        if (item == 0x215) {
+            _setExplanationMsgID(0x3C1B);
+            menuPocketBattleDiskMain(-1, Data.fightId, Data.hero);
+            return 1;
+        }
+        if (item == 0x200) {
+            _setExplanationMsgID(0x3AB8);
+            cologne = menuPocketCologne(-1);
+            id = cologne;
+            if (id == 0) {
+                return 1;
+            }
+            *used = cologne;
+            func = (int (*)(u16, int *))_getUseFunc(id);
+            if (func == 0) {
+                _infoBeep(0xC374);
+                return 0;
+            }
+            if (func(id, &dec) == 2) {
+                if (dec > 0) {
+                    _decItem(cologne, 6, -1, dec);
+                }
+                return 2;
+            }
+            return 1;
+        }
+    }
+    count = _makeActMenu(items, 4, tab, index);
+    _setExplanationMsgID(0x4296);
+    sel = _actionMenuOpen(items, count);
+    if (sel < 0) {
+        return 1;
+    }
+    if (items[sel].func == 0) {
+        return 1;
+    }
+    result = items[sel].func(tab, index, &dec);
+    switch (result) {
+    case 0:
+        if (dec > 0) {
+            _decItem(item, TabTbl[Data.tab].kind, index, dec);
+        }
+        Data.lastSlot = index;
+        return 0;
+    case 1:
+        return 1;
+    case 2:
+        if (dec > 0) {
+            _decItem(item, TabTbl[Data.tab].kind, index, dec);
+        }
+        return 2;
+    default:
+        return 0;
+    }
+}
+}
+
+namespace {
+u8 _execGive(int tab, u16 item, int index) {
+    if (itemDataBiosGetImportant(itemDataBiosGetPtr(item)) != 0) {
+        msgctrlSetValue(0x2D, item);
+        _infoBeep(0xC37A);
+        return 0;
+    }
+    Data.lastSlot = index;
+    return 1;
+}
+}
+
+namespace {
+int _execSell(int tab, u16 item, int index) {
+    u8 sprite;
+    int shop = Data.shop;
+    int price = _getItemPrice(item);
+    int digits;
+    int half;
+    int num;
+    int cost;
+    int answer;
+    if (price <= 0) {
+        menuPtPlaySe(0x13);
+        winMsgOpenWithSE(2, menuShopGetMsgID(&sprite, shop, 0xB, 0x2D, item, -1), 1, 0, sprite);
+        winMsgClose(1);
+        return 0;
+    }
+    _setExplanationMsgID(menuShopGetMsgID(&sprite, shop, 0xD, 0x2D, item, -1));
+    if (_getStockMaxFromTagID(tab) > 0x64) {
+        digits = 3;
+    } else {
+        digits = 2;
+    }
+    num = _openNumberInputMenu(1, _getItemNumFromMenuPos(tab, index), digits, half = price / 2);
+    if (num < 0) {
+        return 0;
+    }
+    cost = half * num;
+    winMsgOpenWithSE(2, menuShopGetMsgID(&sprite, shop, 9, 0x4B, cost, -1), 1, 0, sprite);
+    answer = menuSubOpenYesNo(0, -1, -1, 0);
+    if (answer == 1 || answer == -1) {
+        winMsgClose(1);
+        return 0;
+    }
+    _decItem(item, TabTbl[Data.tab].kind, index, num);
+    GSsndPlay(0x1A, 0, 0);
+    heroAddPokedoru(Data.hero, cost);
+    _infoOnly(menuShopGetMsgID(&sprite, shop, 0xA, 0x2D, item, 0x4B, cost, -1));
+    return 1;
+}
+}
+
+namespace {
+int _execDeposit(int tab, u16 item, int index) {
+    int digits;
+    int num;
+    if (_getItemDeposit(item) == 0) {
+        msgctrlSetValue(0x2D, item);
+        _infoBeep(0xC37B);
+        return 0;
+    }
+    if ((u8)TabTbl[Data.tab].kind != 5) {
+        _setExplanationMsgID(0x3AAC);
+        if (_getStockMaxFromTagID(tab) > 0x64) {
+            digits = 3;
+        } else {
+            digits = 2;
+        }
+        num = _openNumberInputMenu(1, _getItemNumFromMenuPos(tab, index), digits, 0);
+    } else {
+        num = 1;
+    }
+    if (num < 0) {
+        return 0;
+    }
+    if (_depositPC(item, num) == 0) {
+        msgctrlSetValue(0x2D, item);
+        _infoBeep(0x3AC0);
+        return 0;
+    }
+    _decItem(item, TabTbl[Data.tab].kind, index, num);
+    msgctrlSetValue(0x2D, item);
+    msgctrlSetValue(0x2F, num);
+    _infoOnly(0xC37C);
+    return 1;
+}
+}
+
+namespace {
+void _setActMenuResizeWork() {
+    u32 i;
+    for (i = 0; i < 7; i++) {
+        ActMenuResizeWork[i].width = menuItemBiosGetPtr(0x2C, ActMenuResizeWork[i].id)->y;
+        ActMenuResizeWork[i].height = menuItemBiosGetPtr(0x2C, ActMenuResizeWork[i].id)->height;
+    }
+}
+}
+
+namespace {
+int _makeActMenu(SActionMenuItem *menu, int max, int tab, int menuPos)
+{
+    u32 data = itemDataBiosGetPtr(_getItemIDFromMenuPos(tab, menuPos));
+    u8 usable;
+
+    if (itemDataBiosGetBattleUseFunc(data) != 0) {
+        usable = 1;
+    } else {
+        usable = 0;
+    }
+
+    int mode = Data.mode;
+    const PocketTab *tabData = &TabTbl[Data.tab];
+    const SActionMenuItem *src;
+
+    if (mode == 1 || mode == 6) {
+        src = tabData->battle;
+    } else if (mode == 0) {
+        src = tabData->field;
+    }
+
+    int num = 0;
+
+    while (src[num].func != 0) {
+        num++;
+    }
+    num++;
+
+    int count = 0;
+
+    for (int i = 0; i < num; i++) {
+        if ((src[i].flags & 1) && !usable) {
+            continue;
+        }
+        if (itemDataBiosGetImportant(data) != 0 && (src[i].flags & 2)) {
+            continue;
+        }
+        menu[count] = src[i];
+        menu[count].flags = 0;
+        count++;
+    }
+    return count;
+}
+}
+
+namespace {
+void _infoBeep(u32 msg) {
+    menuPtPlaySe(0x13);
+    winMsgOpen(2, msg, 1, 0);
+    winMsgClose(1);
+}
+}
+
+namespace {
+void _infoOnly(u32 msg) {
+    winMsgOpen(2, msg, 1, 0);
+    winMsgClose(1);
+}
+}
+
+bool fn_80022128(tagWINDOW_WORK *win) {
+    CURSOR cursor;
+    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
+    if (_getItemIDFromMenuPos(win->selected, cursor.first + cursor.selected) == 0 && Data.swapIndex < 0) {
+        return false;
+    }
+    return true;
+}
+
+bool fn_8002208C(tagWINDOW_WORK *win) {
+    CURSOR cursor;
+    s32 index;
+    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
+    if (Data.swapIndex >= 0) {
+        return false;
+    }
+    index = cursor.first + cursor.selected;
+    if (_getItemIDFromMenuPos(win->selected, index) == 0 && index == 0) {
+        return false;
+    }
+    return true;
+}
+
+#pragma defer_codegen off
+
+extern "C" {
+u16 item_ball_sort[12] = {
+    0x4, 0x3, 0x2, 0xA, 0x9, 0x8, 0x7, 0x6, 0xC, 0xB, 0x1, 0x5,
+};
+u16 item_dougu_sort[128] = {
+    0xD, 0x16, 0x15, 0x14, 0x13, 0x1A, 0x1B, 0x1C, 0x1D, 0xE, 0x12, 0x11,
+    0xF, 0x10, 0x17, 0x26, 0x18, 0x19, 0x1E, 0x1F, 0x20, 0x21, 0x2D, 0x22,
+    0x23, 0x24, 0x25, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51,
+    0x27, 0x28, 0x29, 0x2A, 0x2B, 0x55, 0x56, 0x53, 0x54, 0x3F, 0x40, 0x41,
+    0x43, 0x46, 0x42, 0x44, 0x45, 0x47, 0x5F, 0x60, 0x61, 0x62, 0x5D, 0x5E,
+    0xB4, 0xB9, 0x2C, 0xBD, 0xB6, 0xB5, 0xB8, 0xC3, 0xC5, 0xBE, 0xC2, 0xC8,
+    0xDB, 0xB3, 0xB7, 0xBB, 0xC4, 0xBA, 0xC6, 0xD9, 0xD7, 0xD1, 0xD0, 0xCD,
+    0xD4, 0xCF, 0xD3, 0xCB, 0xD2, 0xD6, 0xBC, 0xCC, 0xD5, 0xD8, 0xCE, 0xC7,
+    0xDC, 0xDD, 0xC9, 0xCA, 0xE1, 0xE0, 0xDE, 0xDF, 0xDA, 0xC0, 0xC1, 0xBF,
+    0xFE, 0xFF, 0x100, 0x101, 0x102, 0x6E, 0x6D, 0x6C, 0x6B, 0x6A, 0x68, 0x67,
+    0x6F, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x1FF,
+};
+u32 item_ball_sort_number = 12;
+u32 item_dougu_sort_number = 128;
 }

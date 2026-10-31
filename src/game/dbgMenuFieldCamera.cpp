@@ -1,5 +1,7 @@
 #include <global.h>
 
+#pragma force_active on
+
 extern "C" {
 u8 menuIsCheck(s32);
 s32 menuOpenCustom(s32, s32, s32, s32, s32, s32, ...);
@@ -31,3 +33,5 @@ s32 dbgMenuFieldCameraChangeDisp(void) {
     return 0;
 }
 }
+
+#pragma force_active reset

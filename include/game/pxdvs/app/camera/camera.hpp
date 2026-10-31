@@ -10,14 +10,14 @@ public:
     u8 reserved09[3];
     f32 speed, acceleration, brakeTime, duration, elapsed;
     T startPosition, endPosition, currentPosition;
-    CameraAnimation();
-    void start(const T*, const T*, f32);
-    void stop();
-    u8 isMove() const;
-    u8 update(f32);
-    u8 updateAcceleration(f32);
-    void setAcceleration(f32);
     const T* getCurrentPos() const;
+    void setAcceleration(f32);
+    u8 updateAcceleration(f32);
+    u8 update(f32);
+    u8 isMove() const;
+    void stop();
+    void start(const T*, const T*, f32);
+    CameraAnimation();
 };
 // The original unit stores one scalar and four vector interpolators inline.
 typedef char CameraScalarAnimationSizeCheck[sizeof(CameraAnimation<f32>) == 0x2c ? 1 : -1];

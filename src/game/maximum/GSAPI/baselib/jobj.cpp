@@ -1,3 +1,5 @@
+// Preserve the original recursive traversal expansion depth.
+#pragma inline_max_size(575)
 /* XD joint traversal, animation attachment and matrix construction. */
 #include "game/maximum/GSAPI/baselib/jobj.h"
 typedef char jobj_flags_offset_check[(unsigned long)&((HSD_JObj*)0)->flags == 0x14 ? 1 : -1];
@@ -46,10 +48,6 @@ void OSReport(const char*,...);
 void* HSD_IDGetDataFromTable(void*,unsigned int,void*);
 void HSD_IDRemoveByIDFromTable(void*,unsigned int);
 
-static int JObjInit(HSD_Class* o);
-static void JObjReleaseChild(HSD_JObj* jobj);
-static void JObjRelease(HSD_Class* o);
-static void JObjAmnesia(HSD_ClassInfo* info);
 void HSD_JObjUnref(HSD_JObj* jobj);
 void HSD_JObjUnrefThis(HSD_JObj* jobj);
 static inline HSD_JObj* HSD_JObjGetPrev(HSD_JObj* jobj);
@@ -187,7 +185,7 @@ static inline int iref_DEC(HSD_JObj* o);
 static inline void iref_INC(HSD_JObj* o);
 static inline void HSD_JObjRef(HSD_JObj* o);
 static inline float fabsf_bitwise(float x);
-void HSD_JObjSetMtxDirty(HSD_JObj* jobj);
+inline void HSD_JObjSetMtxDirty(HSD_JObj* jobj);
 static inline void HSD_JObjSetTranslateX(HSD_JObj* jobj, float x);
 static inline void HSD_JObjSetTranslateY(HSD_JObj* jobj, float y);
 static inline void HSD_JObjSetTranslateZ(HSD_JObj* jobj, float z);
@@ -239,15 +237,10 @@ int PSMTXInverse(HSD_Mtx,HSD_Mtx);
 static inline void setupInstanceMtx(HSD_Mtx view, HSD_JObj* jobj, HSD_Mtx out);
 void HSD_JObjDispAll(HSD_JObj* jobj, HSD_Mtx view, unsigned int flags, unsigned int rendermode);
 
-/* Keep attachment helpers available before compiling the recursive traversal.
- * Deferred compilation changes the original nested inlining here. */
-static inline void setFlagMtxDirty(HSD_JObj* jobj)
-{
-    if (jobj != NULL) {
-        if (!HSD_JObjMtxIsDirty(jobj)) {
-            HSD_JObjSetMtxDirtySub(jobj);
-        }
-    }
+/* Keep the SDK inline visible before recursive flag and attachment traversal. */
+inline void HSD_JObjSetMtxDirty(HSD_JObj* jobj) {
+    if (jobj == NULL || HSD_JObjMtxIsDirty(jobj)) return;
+    HSD_JObjSetMtxDirtySub(jobj);
 }
 
 #pragma defer_codegen off
@@ -274,7 +267,7 @@ inline void HSD_JObjSetFlags(HSD_JObj* jobj, u32 flags)
 {
     if (jobj != NULL) {
         if ((jobj->flags ^ flags) & JOBJ_CLASSICAL_SCALE) {
-            setFlagMtxDirty(jobj);
+            HSD_JObjSetMtxDirty(jobj);
         }
         jobj->flags |= flags;
     }
@@ -284,7 +277,7 @@ inline void HSD_JObjClearFlags(HSD_JObj* jobj, u32 arg1)
 {
     if (jobj != NULL) {
         if ((jobj->flags ^ arg1) & JOBJ_CLASSICAL_SCALE) {
-            setFlagMtxDirty(jobj);
+            HSD_JObjSetMtxDirty(jobj);
         }
         jobj->flags &= ~arg1;
     }
@@ -857,29 +850,11 @@ inline void HSD_JObjReqAnimByFlags(HSD_JObj* jobj, u32 flags, f32 frame)
 void HSD_JObjReqAnimAllByFlags(HSD_JObj* jobj, u32 flags, f32 frame)
 {
     if (jobj != NULL) {
-        {
-            bool has_dobj;
-            if (jobj != NULL) {
-                if (flags & 1) HSD_AObjReqAnim(jobj->aobj, frame);
-                if (jobj->flags & (JOBJ_PTCL | JOBJ_SPLINE)) has_dobj = false;
-                else has_dobj = true;
-                if (has_dobj) HSD_DObjReqAnimAllByFlags(jobj->u.dobj, frame, flags);
-                HSD_RObjReqAnimAllByFlags(jobj->robj, frame, flags);
-            }
-        }
+        HSD_JObjReqAnimByFlags(jobj, flags, frame);
         if (!(jobj->flags & JOBJ_INSTANCE)) {
             HSD_JObj* child = jobj->child;
             while (child != NULL) {
-                if (child != NULL) {
-                    HSD_JObjReqAnimByFlags(child, flags, frame);
-                    if (!(child->flags & JOBJ_INSTANCE)) {
-                        HSD_JObj* grandchild = child->child;
-                        while (grandchild != NULL) {
-                            HSD_JObjReqAnimAllByFlags(grandchild, flags, frame);
-                            grandchild = grandchild->next;
-                        }
-                    }
-                }
+                HSD_JObjReqAnimAllByFlags(child, flags, frame);
                 child = child->next;
             }
         }
@@ -1243,22 +1218,26 @@ static inline void setupInstanceMtx(HSD_Mtx view, HSD_JObj* jobj, HSD_Mtx out) {
     }
 }
 
-void HSD_JObjDispAll(HSD_JObj* jobj, HSD_Mtx view, unsigned int flags, unsigned int rendermode) {
-    if (jobj) {
-        if (jobj->flags & JOBJ_INSTANCE) {
-            if (!(jobj->flags & JOBJ_HIDDEN)) {
-                HSD_Mtx instance;
-                setupInstanceMtx(view,jobj,instance);
-                HSD_JObjDispAll(jobj->child,instance,flags,rendermode);
-            }
-        } else {
-            if (jobj->flags & (flags << 18)) HSD_JObjDisp(jobj,view,flags,rendermode);
-            if (jobj->flags & (flags << 28)) {
-                HSD_JObj* child = jobj->child;
-                while (child) {
-                    HSD_JObjDispAll(child,view,flags,rendermode);
-                    child = child->next;
-                }
+void HSD_JObjDispAll(HSD_JObj* jobj, HSD_Mtx vmtx, u32 flags, u32 rendermode)
+{
+    HSD_Mtx mtx;
+
+    if (jobj == NULL) {
+        return;
+    }
+    if (jobj->flags & JOBJ_INSTANCE) {
+        if (jobj->flags & JOBJ_HIDDEN) {
+            return;
+        }
+        setupInstanceMtx(vmtx, jobj, mtx);
+        HSD_JObjDispAll(jobj->child, mtx, flags, rendermode);
+    } else {
+        if (jobj->flags & (flags << 18)) {
+            HSD_JObjDisp(jobj, vmtx, flags, rendermode);
+        }
+        if (jobj->flags & (flags << 28)) {
+            for (jobj = jobj->child; jobj != NULL; jobj = jobj->next) {
+                HSD_JObjDispAll(jobj, vmtx, flags, rendermode);
             }
         }
     }
@@ -1505,14 +1484,7 @@ u32 HSD_JObjGetFlags(HSD_JObj* jobj)
 
 
 
-void HSD_JObjSetMtxDirty(HSD_JObj* jobj)
-{
-    if (jobj != NULL) {
-        switch (HSD_JObjMtxIsDirty(jobj)) {
-        case false: HSD_JObjSetMtxDirtySub(jobj); break;
-        }
-    }
-}
+
 
 /* Stripped from the DOL; its strings still occupy .rodata. */
 void HSD_JObjDumpStat(HSD_JObj* jobj, int depth, int index)

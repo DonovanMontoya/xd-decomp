@@ -153,474 +153,366 @@ void battleCameraStartRandom(u8 simple) {
 
 }  // extern "C"
 
-static void _battleCameraStartRandom(ModelSequence *sequence) {
-    static u8 old_pos_pattern[2] = {12, 12};
-    f32 fovLowA, fovHighA;
-    f32 fovLowB, fovHighB;
+static inline f32 Lerp(f32 a, f32 b, f32 t) {
+    f32 d = b - a;
+    return d * t + a;
+}
+
+static inline f32 RotAdd(f32 min, f32 max, f32 base, f32 t) {
+    f32 d = max - min;
+    return d * t + (base + min);
+}
+
+static inline f32 RotSub(f32 min, f32 max, f32 base, f32 t) {
+    f32 d = max - min;
+    return (base - min) - d * t;
+}
+
+static inline void DoPreset(GSvec* t, GSvec* a, GSvec* b, f32 time, f32 fov) {
+    f32 s = battleGridGetUnscaledDistance(true);
+    s = battleGridGetDistance(true) / s;
+    PSVECScale(a, a, s);
+    PSVECScale(b, b, s);
+    if (HSD_Randf() < 0.5f) {
+        cameraSetType(2);
+        cameraSetPosition(a);
+        cameraMovePosition(2, b, time);
+        cameraSetFov(fov);
+        cameraSetTargetPos(t);
+        cameraSetTargetOfs(&zeroVector);
+    } else {
+        cameraSetType(2);
+        cameraSetPosition(b);
+        cameraMovePosition(2, a, time);
+        cameraSetFov(fov);
+        cameraSetTargetPos(t);
+        cameraSetTargetOfs(&zeroVector);
+    }
+}
+
+static inline void DoTracked(GSvec* t, GSvec* a, GSvec* b, f32 fov) {
+    f32 r = HSD_Randf();
+    cameraSetType(2);
+    cameraSetPosition(a);
+    cameraMovePosition(2, b, 3.0f + r);
+    cameraSetFov(fov);
+    cameraSetTargetPos(t);
+    cameraSetTargetOfs(&zeroVector);
+}
+
+static inline void StopWazaCamera(void) {
+    if (wazaSequenceSysIsValidWaza(gActiveWazaSequenceCamera)) {
+        if (wazaSequenceCameraAnim(gActiveWazaSequenceCamera) != 0) {
+            cameraStopAnime();
+        }
+    }
+    gActiveWazaSequenceCamera = 0;
+}
+
+static void _battleCameraStartRandom(ModelSequence* seq) {
     wazaSequenceCameraParams params;
-    GSvec cameraPosition;
-    GSvec posA;
-    GSvec posB;
-    GSvec target;
-    u8 nonTrainerActive;
-    u8 *history;
+    GSvec cur;
+    GSvec a;
+    GSvec b;
+    GSvec t;
     u8 pattern;
-    u8 retry;
+    u8 nonTrainerActive;
+    bool again;
     bool isTrainer;
-    s32 fovMask;
+    int flags;
+    f32 dir;
+    f32 d1;
+    f32 d0;
+    f32 dur;
+    f32 dist1;
+    f32 rot2;
+    f32 fov2;
+    f32 dist2;
+    f32 fov1;
+    f32 height;
+    f32 rot1;
+    f32 r;
+    f32 d;
+    f32 lo;
+    f32 lowA, highA, lowB, highB;
+    static u8 old_pos_pattern[2] = {12, 12};
+
     isTrainer = fightFloor_GetTrainer(0) != 0;
     nonTrainerActive = fightPokemonGetNonTrainerPokemonIsActiveFlag();
-    fovMask = 0;
-    if (g_enable_battle_camera == 0) return;
-    if (!(wazaSequenceSysIsValidSequence(sequence) && sequence->visible != 0)) {
-        sequence = 0;
+    flags = 0;
+    if (!g_enable_battle_camera) {
+        return;
+    }
+    if (!wazaSequenceSysIsValidSequence(seq) || seq->visible == 0) {
+        seq = 0;
     }
     battleCameraResetOffsets();
     switch (g_mode) {
+    case 2:
+        StopWazaCamera();
+        break;
     case 1:
     case 3:
         break;
-    case 2:
-        if (wazaSequenceSysIsValidWaza(gActiveWazaSequenceCamera) != 0 && wazaSequenceCameraAnim(gActiveWazaSequenceCamera) != 0) {
-            cameraStopAnime();
-        }
-        gActiveWazaSequenceCamera = 0;
-        break;
     }
     g_mode = 1;
-    retry = 1;
-    history = old_pos_pattern;
-    while (retry) {
-        bool useTrainerSet = (sequence == 0 || sequence->isPokemon == 0);
-        s32 range = 12;
-        if (useTrainerSet) range = 10;
-        pattern = (u16)HSD_Rand() % range;
-        if (pattern != old_pos_pattern[0] && pattern != history[1]) {
-            retry = 0;
+    again = true;
+    while (again) {
+        bool noParent = (seq == 0 || seq->isPokemon == 0);
+        pattern = (u16)HSD_Rand() % (noParent ? 10 : 12);
+        if (pattern != old_pos_pattern[0] && pattern != old_pos_pattern[1]) {
+            again = false;
         }
-        if (isTrainer == 0 && pattern == 3) {
-            retry = 1;
+        if (!isTrainer && pattern == 3) {
+            again = true;
         }
     }
-    history[1] = old_pos_pattern[0];
+    old_pos_pattern[1] = old_pos_pattern[0];
     old_pos_pattern[0] = pattern;
-    if (sequence != 0 && sequence->isPokemon == 0) {
-        switch (battleGridGetNumPokemonsForTrainer(sequence)) {
+    if (seq != 0 && seq->isPokemon == 0) {
+        switch (battleGridGetNumPokemonsForTrainer(seq)) {
         case 1:
-            fovMask = 7;
+            flags = 7;
             break;
         case 2:
-            fovMask = 1;
+            flags = 1;
             break;
         }
     }
-    if (sequence != 0) {
-        _wazaSequenceCameraCalculateParams(sequence, fovMask, &params);
+    if (seq != 0) {
+        _wazaSequenceCameraCalculateParams(seq, flags, &params);
     }
-    f32 heightSquared;
-    f32 distanceFar;
-    f32 rotationStart;
-    f32 distanceNear;
-    f32 height;
-    f32 rotationEnd;
     switch (pattern) {
-    case 0: {
-        target.param1 = 0.0f;
-        target.param2 = 0.0f;
-        target.param3 = 0.0f;
-        posA.param1 = -20.0f;
-        posA.param2 = 27.5f;
-        posA.param3 = 110.0f;
-        posB.param1 = 20.0f;
-        posB.param2 = 27.5f;
-        posB.param3 = 110.0f;
-        f32 ratio = battleGridGetUnscaledDistance(1);
-        ratio = battleGridGetDistance(1) / ratio;
-        PSVECScale(&posA, &posA, ratio);
-        PSVECScale(&posB, &posB, ratio);
+    case 0:
+        t.param3 = t.param2 = t.param1 = 0.0f;
+        a.param1 = -20.0f; a.param2 = 27.5f; a.param3 = 110.0f;
+        b.param1 = 20.0f; b.param2 = 27.5f; b.param3 = 110.0f;
+        DoPreset(&t, &a, &b, 4.0f, 60.0f);
+        return;
+    case 1:
+        t.param3 = t.param2 = t.param1 = 0.0f;
+        a.param1 = 110.0f; a.param2 = 27.5f; a.param3 = 0.0f;
+        b.param1 = 110.0f; b.param2 = 27.5f; b.param3 = 20.0f;
+        DoPreset(&t, &a, &b, 2.5f, 60.0f);
+        return;
+    case 2:
+        t.param3 = t.param2 = t.param1 = 0.0f;
+        a.param1 = -110.0f; a.param2 = 27.5f; a.param3 = 20.0f;
+        b.param1 = -110.0f; b.param2 = 27.5f; b.param3 = 0.0f;
+        DoPreset(&t, &a, &b, 2.5f, 60.0f);
+        return;
+    case 3:
+        t.param3 = t.param2 = t.param1 = 0.0f;
+        a.param1 = -65.0f; a.param2 = 27.5f; a.param3 = 100.0f;
+        b.param1 = -100.0f; b.param2 = 27.5f; b.param3 = 65.0f;
+        DoPreset(&t, &a, &b, 4.0f, 60.0f);
+        return;
+    case 4:
+        t.param3 = t.param2 = t.param1 = 0.0f;
+        a.param1 = 100.0f; a.param2 = 27.5f; a.param3 = 65.0f;
+        b.param1 = 65.0f; b.param2 = 27.5f; b.param3 = 100.0f;
+        DoPreset(&t, &a, &b, 4.0f, 60.0f);
+        return;
+    case 5:
+        if ((isTrainer || nonTrainerActive) && HSD_Randf() < 0.5f) {
+            dir = -1.0f;
+        } else {
+            dir = 1.0f;
+        }
+        d1 = battleGridGetDistance(true);
+        t.param1 = -d1 * dir; t.param2 = 5.0f; t.param3 = 0.0f;
+        a.param1 = d1 * dir; a.param2 = 5.0f; a.param3 = d1;
+        b.param1 = 0.2f * d1 * dir; b.param2 = 5.0f; b.param3 = d1;
+        DoTracked(&t, &a, &b, 40.0f);
+        return;
+    case 6:
         if (HSD_Randf() < 0.5f) {
-            cameraSetType(2);
-            cameraSetPosition(&posA);
-            cameraMovePosition(2, &posB, 4.0f);
-            cameraSetFov(60.0f);
-            cameraSetTargetPos(&target);
-            cameraSetTargetOfs(&zeroVector);
+            dir = -1.0f;
         } else {
-            cameraSetType(2);
-            cameraSetPosition(&posB);
-            cameraMovePosition(2, &posA, 4.0f);
-            cameraSetFov(60.0f);
-            cameraSetTargetPos(&target);
-            cameraSetTargetOfs(&zeroVector);
+            dir = 1.0f;
         }
+        d1 = battleGridGetDistance(true);
+        d0 = battleGridGetDistance(false);
+        t.param1 = -d0 * dir; t.param2 = 0.0f; t.param3 = 0.0f;
+        a.param1 = dir * (d1 + d0); a.param2 = 5.0f; a.param3 = 0.7f * d1;
+        b.param1 = dir * (d1 + d0); b.param2 = 5.0f; b.param3 = 0.7f * -d1;
+        DoTracked(&t, &a, &b, 30.0f);
         return;
-    }
-    case 1: {
-        target.param1 = 0.0f;
-        target.param2 = 0.0f;
-        target.param3 = 0.0f;
-        posA.param1 = 110.0f;
-        posA.param2 = 27.5f;
-        posA.param3 = 0.0f;
-        posB.param1 = 110.0f;
-        posB.param2 = 27.5f;
-        posB.param3 = 20.0f;
-        f32 ratio = battleGridGetUnscaledDistance(1);
-        ratio = battleGridGetDistance(1) / ratio;
-        PSVECScale(&posA, &posA, ratio);
-        PSVECScale(&posB, &posB, ratio);
-        if (HSD_Randf() < 0.5f) {
-            cameraSetType(2);
-            cameraSetPosition(&posA);
-            cameraMovePosition(2, &posB, 2.5f);
-            cameraSetFov(60.0f);
-            cameraSetTargetPos(&target);
-            cameraSetTargetOfs(&zeroVector);
+    case 7:
+        if ((isTrainer || nonTrainerActive) && HSD_Randf() < 0.5f) {
+            dir = -1.0f;
         } else {
-            cameraSetType(2);
-            cameraSetPosition(&posB);
-            cameraMovePosition(2, &posA, 2.5f);
-            cameraSetFov(60.0f);
-            cameraSetTargetPos(&target);
-            cameraSetTargetOfs(&zeroVector);
+            dir = 1.0f;
         }
+        d1 = battleGridGetDistance(true);
+        d0 = battleGridGetDistance(false);
+        t.param1 = -d0 * dir; t.param2 = 5.0f; t.param3 = 0.0f;
+        a.param1 = 0.0f; a.param2 = 5.0f; a.param3 = 0.7f * d1;
+        b.param1 = 0.0f; b.param2 = 5.0f; b.param3 = 0.7f * -d1;
+        DoTracked(&t, &a, &b, 60.0f);
         return;
-    }
-    case 2: {
-        target.param1 = 0.0f;
-        target.param2 = 0.0f;
-        target.param3 = 0.0f;
-        posA.param1 = -110.0f;
-        posA.param2 = 27.5f;
-        posA.param3 = 20.0f;
-        posB.param1 = -110.0f;
-        posB.param2 = 27.5f;
-        posB.param3 = 0.0f;
-        f32 ratio = battleGridGetUnscaledDistance(1);
-        ratio = battleGridGetDistance(1) / ratio;
-        PSVECScale(&posA, &posA, ratio);
-        PSVECScale(&posB, &posB, ratio);
-        if (HSD_Randf() < 0.5f) {
-            cameraSetType(2);
-            cameraSetPosition(&posA);
-            cameraMovePosition(2, &posB, 2.5f);
-            cameraSetFov(60.0f);
-            cameraSetTargetPos(&target);
-            cameraSetTargetOfs(&zeroVector);
-        } else {
-            cameraSetType(2);
-            cameraSetPosition(&posB);
-            cameraMovePosition(2, &posA, 2.5f);
-            cameraSetFov(60.0f);
-            cameraSetTargetPos(&target);
-            cameraSetTargetOfs(&zeroVector);
-        }
-        return;
-    }
-    case 3: {
-        target.param1 = 0.0f;
-        target.param2 = 0.0f;
-        target.param3 = 0.0f;
-        posA.param1 = -65.0f;
-        posA.param2 = 27.5f;
-        posA.param3 = 100.0f;
-        posB.param1 = -100.0f;
-        posB.param2 = 27.5f;
-        posB.param3 = 65.0f;
-        f32 ratio = battleGridGetUnscaledDistance(1);
-        ratio = battleGridGetDistance(1) / ratio;
-        PSVECScale(&posA, &posA, ratio);
-        PSVECScale(&posB, &posB, ratio);
-        if (HSD_Randf() < 0.5f) {
-            cameraSetType(2);
-            cameraSetPosition(&posA);
-            cameraMovePosition(2, &posB, 4.0f);
-            cameraSetFov(60.0f);
-            cameraSetTargetPos(&target);
-            cameraSetTargetOfs(&zeroVector);
-        } else {
-            cameraSetType(2);
-            cameraSetPosition(&posB);
-            cameraMovePosition(2, &posA, 4.0f);
-            cameraSetFov(60.0f);
-            cameraSetTargetPos(&target);
-            cameraSetTargetOfs(&zeroVector);
-        }
-        return;
-    }
-    case 4: {
-        target.param1 = 0.0f;
-        target.param2 = 0.0f;
-        target.param3 = 0.0f;
-        posA.param1 = 100.0f;
-        posA.param2 = 27.5f;
-        posA.param3 = 65.0f;
-        posB.param1 = 65.0f;
-        posB.param2 = 27.5f;
-        posB.param3 = 100.0f;
-        f32 ratio = battleGridGetUnscaledDistance(1);
-        ratio = battleGridGetDistance(1) / ratio;
-        PSVECScale(&posA, &posA, ratio);
-        PSVECScale(&posB, &posB, ratio);
-        if (HSD_Randf() < 0.5f) {
-            cameraSetType(2);
-            cameraSetPosition(&posA);
-            cameraMovePosition(2, &posB, 4.0f);
-            cameraSetFov(60.0f);
-            cameraSetTargetPos(&target);
-            cameraSetTargetOfs(&zeroVector);
-        } else {
-            cameraSetType(2);
-            cameraSetPosition(&posB);
-            cameraMovePosition(2, &posA, 4.0f);
-            cameraSetFov(60.0f);
-            cameraSetTargetPos(&target);
-            cameraSetTargetOfs(&zeroVector);
-        }
-        return;
-    }
-    case 5: {
-        f32 side;
-        if ((isTrainer != 0 || nonTrainerActive != 0) && HSD_Randf() < 0.5f) {
-            side = -1.0f;
-        } else {
-            side = 1.0f;
-        }
-        f32 distance = battleGridGetDistance(1);
-        target.param1 = -distance * side;
-        target.param2 = 4.0f;
-        target.param3 = 0.0f;
-        posA.param1 = distance * side;
-        posA.param2 = 4.0f;
-        posA.param3 = distance;
-        posB.param1 = 0.2f * distance * side;
-        posB.param2 = 4.0f;
-        posB.param3 = distance;
-        f32 extra = HSD_Randf();
-        cameraSetType(2);
-        cameraSetPosition(&posA);
-        cameraMovePosition(2, &posB, 3.0f + extra);
-        cameraSetFov(40.0f);
-        cameraSetTargetPos(&target);
-        cameraSetTargetOfs(&zeroVector);
-        return;
-    }
-    case 6: {
-        f32 side;
-        if (HSD_Randf() < 0.5f) {
-            side = -1.0f;
-        } else {
-            side = 1.0f;
-        }
-        f32 near = battleGridGetDistance(1);
-        f32 far = battleGridGetDistance(0);
-        target.param1 = -far * side;
-        target.param2 = 0.0f;
-        target.param3 = 0.0f;
-        posA.param1 = side * (near + far);
-        posA.param2 = 4.0f;
-        posA.param3 = 0.7f * near;
-        posB.param1 = side * (near + far);
-        posB.param2 = 4.0f;
-        posB.param3 = 0.7f * -near;
-        f32 extra = HSD_Randf();
-        cameraSetType(2);
-        cameraSetPosition(&posA);
-        cameraMovePosition(2, &posB, 3.0f + extra);
-        cameraSetFov(30.0f);
-        cameraSetTargetPos(&target);
-        cameraSetTargetOfs(&zeroVector);
-        return;
-    }
-    case 7: {
-        f32 side;
-        if ((isTrainer != 0 || nonTrainerActive != 0) && HSD_Randf() < 0.5f) {
-            side = -1.0f;
-        } else {
-            side = 1.0f;
-        }
-        f32 near = battleGridGetDistance(1);
-        f32 far = battleGridGetDistance(0);
-        target.param1 = -far * side;
-        target.param2 = 4.0f;
-        target.param3 = 0.0f;
-        posA.param1 = 0.0f;
-        posA.param2 = 4.0f;
-        posA.param3 = 0.7f * near;
-        posB.param1 = 0.0f;
-        posB.param2 = 4.0f;
-        posB.param3 = 0.7f * -near;
-        f32 extra = HSD_Randf();
-        cameraSetType(2);
-        cameraSetPosition(&posA);
-        cameraMovePosition(2, &posB, 3.0f + extra);
-        cameraSetFov(60.0f);
-        cameraSetTargetPos(&target);
-        cameraSetTargetOfs(&zeroVector);
-        return;
-    }
     case 8: {
-        f32 far;
-        f32 side;
-        f32 heightA;
-        f32 heightB;
-        f32 near;
-        heightA = 2.0f * HSD_Randf() + 4.0f;
-        heightB = 2.0f * HSD_Randf() + 4.0f;
-        f32 flip = HSD_Randf();
-        if (flip < 0.5f) heightA *= -1.0f;
-        if (!(flip < 0.5f)) heightB *= -1.0f;
-        if (HSD_Randf() < 0.5f) {
-            side = -1.0f;
-        } else {
-            side = 1.0f;
+        f32 hiA = 2.0f * HSD_Randf() + 5.0f;
+        f32 hiB = 2.0f * HSD_Randf() + 5.0f;
+        r = HSD_Randf();
+        if (r < 0.5f) {
+            hiA *= -1.0f;
         }
-        near = battleGridGetDistance(1);
-        far = battleGridGetDistance(0);
-        target.param1 = -near * side;
-        target.param2 = 0.0f;
-        target.param3 = 0.0f;
-        posA.param1 = side * (near + far);
-        posA.param2 = 4.0f;
-        posA.param3 = heightA;
-        posB.param1 = side * (near + far);
-        posB.param2 = 20.0f;
-        posB.param3 = heightB;
-        f32 extra = HSD_Randf();
-        cameraSetType(2);
-        cameraSetPosition(&posA);
-        cameraMovePosition(2, &posB, 3.0f + extra);
-        cameraSetFov(20.0f);
-        cameraSetTargetPos(&target);
-        cameraSetTargetOfs(&zeroVector);
+        if (!(r < 0.5f)) {
+            hiB *= -1.0f;
+        }
+        if (HSD_Randf() < 0.5f) {
+            dir = -1.0f;
+        } else {
+            dir = 1.0f;
+        }
+        d1 = battleGridGetDistance(true);
+        d0 = battleGridGetDistance(false);
+        t.param1 = -d1 * dir; t.param2 = 0.0f; t.param3 = 0.0f;
+        a.param1 = dir * (d1 + d0); a.param2 = 5.0f; a.param3 = hiA;
+        b.param1 = a.param1; b.param2 = 20.0f; b.param3 = hiB;
+        DoTracked(&t, &a, &b, 20.0f);
         return;
     }
-    case 9: {
-        f32 side;
+    case 9:
         if (HSD_Randf() < 0.5f) {
-            side = -1.0f;
+            dir = -1.0f;
         } else {
-            side = 1.0f;
+            dir = 1.0f;
         }
-        f32 near = battleGridGetDistance(1);
-        f32 far = battleGridGetDistance(0);
-        target.param1 = -far * side;
-        target.param2 = 4.0f;
-        target.param3 = 0.0f;
-        posA.param1 = side * (near + far);
-        posA.param2 = 2.0f;
-        posA.param3 = 0.25f * near;
-        posB.param1 = side * (near + far);
-        posB.param2 = 2.0f;
-        posB.param3 = 0.25f * -near;
-        f32 extra = HSD_Randf();
-        cameraSetType(2);
-        cameraSetPosition(&posA);
-        cameraMovePosition(2, &posB, 3.0f + extra);
-        cameraSetFov(15.0f);
-        cameraSetTargetPos(&target);
-        cameraSetTargetOfs(&zeroVector);
+        d1 = battleGridGetDistance(true);
+        d0 = battleGridGetDistance(false);
+        t.param1 = -d0 * dir; t.param2 = 5.0f; t.param3 = 0.0f;
+        a.param1 = dir * (d1 + d0); a.param2 = 2.0f; a.param3 = 0.25f * d1;
+        b.param1 = dir * (d1 + d0); b.param2 = 2.0f; b.param3 = 0.25f * -d1;
+        DoTracked(&t, &a, &b, 15.0f);
         return;
-    }
     case 10:
-        { f32 rnd = HSD_Randf(); f32 lo = params.distanceMin; f32 diff = params.distanceMax - lo; distanceFar = diff * rnd + lo; }
-        { f32 rnd = HSD_Randf(); f32 lo = params.distanceMin; f32 diff = params.distanceMax - lo; distanceNear = diff * rnd + lo; }
-        if (distanceFar < distanceNear) {
-            f32 swap = distanceNear;
-            distanceNear = distanceFar;
-            distanceFar = swap;
+        r = HSD_Randf();
+        lo = params.distanceMin;
+        d = params.distanceMax - lo;
+        dist1 = d * r + lo;
+        r = HSD_Randf();
+        lo = params.distanceMin;
+        d = params.distanceMax - lo;
+        dist2 = d * r + lo;
+        if (dist1 < dist2) {
+            f32 tmp = dist2;
+            dist2 = dist1;
+            dist1 = tmp;
         }
-        { f32 rnd = HSD_Randf(); f32 lo = params.heightMin; f32 diff = params.heightMax - lo; height = diff * rnd + lo; }
-        if (sequence->flipped != 0) {
-            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = (params.baseRotation - a) - diff * rnd; }
-            rotationStart = rotationEnd;
+        height = Lerp(params.heightMin, params.heightMax, HSD_Randf());
+        if (seq->flipped != 0) {
+            rot2 = rot1 = RotSub(params.rotationA, params.rotationB, params.baseRotation, HSD_Randf());
         } else {
-            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = diff * rnd + (params.baseRotation + a); }
-            rotationStart = rotationEnd;
+            rot2 = rot1 = RotAdd(params.rotationA, params.rotationB, params.baseRotation, HSD_Randf());
         }
         break;
     case 11:
-        { f32 rnd = HSD_Randf(); f32 lo = params.distanceMin; f32 diff = params.distanceMax - lo; distanceNear = diff * rnd + lo; }
-        distanceFar = distanceNear;
-        { f32 rnd = HSD_Randf(); f32 lo = params.heightMin; f32 diff = params.heightMax - lo; height = diff * rnd + lo; }
-        if (sequence->flipped != 0) {
-            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationStart = (params.baseRotation - a) - diff * rnd; }
-            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = (params.baseRotation - a) - diff * rnd; }
+        dist1 = dist2 = Lerp(params.distanceMin, params.distanceMax, HSD_Randf());
+        height = Lerp(params.heightMin, params.heightMax, HSD_Randf());
+        if (seq->flipped != 0) {
+            r = HSD_Randf();
+            lo = params.rotationA;
+            d = params.rotationB - lo;
+            rot2 = (params.baseRotation - lo) - d * r;
+            rot1 = RotSub(params.rotationA, params.rotationB, params.baseRotation, HSD_Randf());
         } else {
-            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationStart = diff * rnd + (params.baseRotation + a); }
-            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = diff * rnd + (params.baseRotation + a); }
+            r = HSD_Randf();
+            lo = params.rotationA;
+            d = params.rotationB - lo;
+            rot2 = d * r + (params.baseRotation + lo);
+            rot1 = RotAdd(params.rotationA, params.rotationB, params.baseRotation, HSD_Randf());
         }
         break;
     default:
-        { f32 rnd = HSD_Randf(); f32 lo = params.distanceMin; f32 diff = params.distanceMax - lo; distanceNear = diff * rnd + lo; }
-        distanceFar = distanceNear;
-        { f32 rnd = HSD_Randf(); f32 lo = params.heightMin; f32 diff = params.heightMax - lo; height = diff * rnd + lo; }
-        if (sequence->flipped != 0) {
-            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = (params.baseRotation - a) - diff * rnd; }
-            rotationStart = rotationEnd;
+        dist1 = dist2 = Lerp(params.distanceMin, params.distanceMax, HSD_Randf());
+        height = Lerp(params.heightMin, params.heightMax, HSD_Randf());
+        if (seq->flipped != 0) {
+            rot2 = rot1 = RotSub(params.rotationA, params.rotationB, params.baseRotation, HSD_Randf());
         } else {
-            { f32 rnd = HSD_Randf(); f32 a = params.rotationA; f32 diff = params.rotationB - a; rotationEnd = diff * rnd + (params.baseRotation + a); }
-            rotationStart = rotationEnd;
+            rot2 = rot1 = RotAdd(params.rotationA, params.rotationB, params.baseRotation, HSD_Randf());
         }
         break;
     }
-    heightSquared = height * height;
-    _wazaSequenceCameraGetFOVRange(&params, &fovLowA, &fovHighA, hsdSqrt(distanceFar * distanceFar + heightSquared));
-    _wazaSequenceCameraGetFOVRange(&params, &fovLowB, &fovHighB, hsdSqrt(distanceNear * distanceNear + heightSquared));
-    f32 fovStart;
-    f32 fovEnd;
+
+    {
+        f32 hsq = height;
+        hsq *= height;
+        _wazaSequenceCameraGetFOVRange(&params, &lowA, &highA, hsdSqrt(dist1 * dist1 + hsq));
+        _wazaSequenceCameraGetFOVRange(&params, &lowB, &highB, hsdSqrt(dist2 * dist2 + hsq));
+    }
     switch ((u8)((u16)HSD_Rand() % 3)) {
     case 1:
-        { f32 rnd = HSD_Randf(); f32 lo = fovLowA; f32 diff = fovHighA - lo; fovStart = diff * rnd + lo; }
-        { f32 rnd = HSD_Randf(); f32 lo = fovLowB; f32 diff = fovHighB - lo; fovEnd = diff * rnd + lo; }
-        if (fovStart < fovEnd) {
-            f32 swap = fovEnd;
-            fovEnd = fovStart;
-            fovStart = swap;
+        r = HSD_Randf();
+        fov2 = lowA;
+        d = highA - fov2;
+        fov2 = d * r + fov2;
+        r = HSD_Randf();
+        fov1 = lowB;
+        d = highB - fov1;
+        fov1 = d * r + fov1;
+        if (fov2 < fov1) {
+            f32 tmp = fov1;
+            fov1 = fov2;
+            fov2 = tmp;
         }
         break;
     case 2:
-        { f32 rnd = HSD_Randf(); f32 lo = fovLowA; f32 diff = fovHighA - lo; fovStart = diff * rnd + lo; }
-        { f32 rnd = HSD_Randf(); f32 lo = fovLowB; f32 diff = fovHighB - lo; fovEnd = diff * rnd + lo; }
-        if (fovStart > fovEnd) {
-            f32 swap = fovEnd;
-            fovEnd = fovStart;
-            fovStart = swap;
+        r = HSD_Randf();
+        fov2 = lowA;
+        d = highA - fov2;
+        fov2 = d * r + fov2;
+        r = HSD_Randf();
+        fov1 = lowB;
+        d = highB - fov1;
+        fov1 = d * r + fov1;
+        if (fov2 > fov1) {
+            f32 tmp = fov1;
+            fov1 = fov2;
+            fov2 = tmp;
         }
         break;
-    case 0:
-    default:
-        { f32 rnd = HSD_Randf(); f32 lo = fovLowA; f32 diff = fovHighA - lo; fovEnd = diff * rnd + lo; }
-        fovStart = fovEnd;
+    case 0:    default:
+        fov2 = fov1 = Lerp(lowA, highA, HSD_Randf());
         break;
     }
-    f32 duration = 3.0f + HSD_Randf();
+    dur = HSD_Randf();
+    dur = dur + 3.0f;
     cameraMoveStop();
     cameraSetType(7);
     fn_80196A14(1);
-    _GSmodel *model = sequence->model;
-    u32 targetId = sequence->field3C;
-    cameraSetTargetExt(20000, targetId, model != 0 ? (u16)GSmodelCenterNull(model) : 0);
+    {
+        _GSmodel* model = seq->model;
+        u32 id = seq->field3C;
+        u32 part;
+        if (model != 0) {
+            part = GSmodelCenterNull(model);
+        } else {
+            part = 0;
+        }
+        cameraSetTargetExt(20000, id, part);
+    }
     cameraRefreshTargetPos();
     cameraSetTargetExt(0, 0, -1);
-    cameraSetDistance(distanceFar);
+    cameraSetDistance(dist1);
     cameraSetHeight(height);
-    cameraSetRotY(rotationStart);
-    cameraSetFov(fovStart);
+    cameraSetRotY(rot2);
+    cameraSetFov(fov2);
     cameraUpdate();
-    cameraGetPosition(&cameraPosition);
-    cameraGetTargetPos(&target);
-    PSVECSubtract(&cameraPosition, &target, &cameraPosition);
-    cameraPosition.param2 = 0.0f;
-    PSVECScale(&cameraPosition, &cameraPosition, distanceNear / distanceFar);
-    cameraPosition.param2 = height;
-    PSVECAdd(&cameraPosition, &target, &cameraPosition);
-    cameraMovePosition(7, &cameraPosition, duration);
-    cameraMoveRotationXYZ(7, 0.0f, rotationEnd, 0.0f, duration);
-    cameraMoveFov(7, fovEnd, duration);
-    cameraMovePositionAcc(duration * (0.25f / (f32)GSgfxVideoGetVsyncRate()));
-    cameraMoveRotationAcc(duration * (0.25f / (f32)GSgfxVideoGetVsyncRate()));
-    cameraMoveFovAcc(duration * (0.25f / (f32)GSgfxVideoGetVsyncRate()));
+    cameraGetPosition(&cur);
+    cameraGetTargetPos(&t);
+    PSVECSubtract(&cur, &t, &cur);
+    cur.param2 = 0.0f;
+    PSVECScale(&cur, &cur, dist2 / dist1);
+    cur.param2 = height;
+    PSVECAdd(&cur, &t, &cur);
+    cameraMovePosition(7, &cur, dur);
+    cameraMoveRotationXYZ(7, 0.0f, rot1, 0.0f, dur);
+    cameraMoveFov(7, fov1, dur);
+    cameraMovePositionAcc(dur * (0.25f / (f32)GSgfxVideoGetVsyncRate()));
+    cameraMoveRotationAcc(dur * (0.25f / (f32)GSgfxVideoGetVsyncRate()));
+    cameraMoveFovAcc(dur * (0.25f / (f32)GSgfxVideoGetVsyncRate()));
 }
 
 extern "C" void battleCameraStartWaza(WazaSequence *waza) {
@@ -815,48 +707,58 @@ extern "C" void battleCameraStartWaza(WazaSequence *waza) {
     }
 }
 
-static void _battleCameraUpdateWaza() {
-    CameraFovKey *key = gFOVlist;
-    ModelSequence *sequence;
-    u16 frames;
-    if (wazaSequenceSysIsValidWaza(gActiveWazaSequenceCamera) != 0 && wazaSequenceCameraAnim(gActiveWazaSequenceCamera) == 0) {
-        sequence = asModel(gActiveWazaSequenceCamera->owner);
-        frames = __OSf32tou16(0.5f + GSgfxVideoGetLastRenderTime());
-        _GSmodel *model = sequence->model;
-        s32 joint;
-        WazaSequence *cam = gActiveWazaSequenceCamera;
-        if (model == 0) {
-            joint = 0;
-        } else if (cam != 0) {
-            ModelRecord *record = &sequence->records[sequence->wazaIndex];
-            if ((((TemplateExpFileHeader *)record)->flags & 0x20) || wazaSequenceJointIndex(cam) == 0x10) {
-                joint = GSmodelCenterNull(model);
-            } else {
-                joint = record->joints[wazaSequenceJointIndex(cam)];
-            }
+static inline u32 GetTargetPart(ModelSequence* ms, WazaSequence* active) {
+    u32 part;
+    if (ms->model == 0) {
+        part = 0;
+    } else if (active != 0) {
+        ModelRecord* sec = &ms->records[ms->wazaIndex];
+        if ((((TemplateExpFileHeader*)sec)->flags & 0x20) || wazaSequenceJointIndex(active) == 0x10) {
+            part = (u16)GSmodelCenterNull(ms->model);
         } else {
-            joint = GSmodelCenterNull(model);
+            part = sec->joints[wazaSequenceJointIndex(active)];
         }
-        if (!(wazaSequenceFlags(gActiveWazaSequenceCamera) & 0x40000000)) {
-            void *part = GSmodelGetPart(sequence->model, joint);
-            if (part != 0) {
-                GSvec partPosition;
-                GSvec sequencePosition;
-                GSpartGetTransform(part, &partPosition, 0, 0);
-                sequence->NullSequence::GetPosition(&sequencePosition);
-                PSVECSubtract(&partPosition, &sequencePosition, &partPosition);
-                cameraMoveTargetOfs(7, &partPosition, 0.25f);
-                GSpartFree(part);
+    } else {
+        part = GSmodelCenterNull(ms->model);
+    }
+    return part;
+}
+
+static void _battleCameraUpdateWaza(void) {
+    ModelSequence* ms;
+    CameraFovKey* key = gFOVlist;
+    f32 t;
+    int i;
+
+    if (wazaSequenceSysIsValidWaza(gActiveWazaSequenceCamera) && wazaSequenceCameraAnim(gActiveWazaSequenceCamera) == 0) {
+        ms = gActiveWazaSequenceCamera->owner->type == 1 ? (ModelSequence*)gActiveWazaSequenceCamera->owner : 0;
+        {
+            f32 frames = 0.5f + GSgfxVideoGetLastRenderTime();
+            u16 frameCount = __OSf32tou16(frames);
+            u32 part = GetTargetPart(ms, gActiveWazaSequenceCamera);
+            if (!(wazaSequenceFlags(gActiveWazaSequenceCamera) & 0x40000000)) {
+                void* partObj = GSmodelGetPart(ms->model, part);
+                if (partObj != 0) {
+                    GSvec ofs;
+                    GSvec cur;
+                    GSpartGetTransform(partObj, &ofs, 0, 0);
+                    ms->NullSequence::GetPosition(&cur);
+                    PSVECSubtract(&ofs, &cur, &ofs);
+                    cameraMoveTargetOfs(7, &ofs, 0.25f);
+                    GSpartFree(partObj);
+                }
             }
+            t = gCurrentFOVTime + (f32)frameCount / (f32)GSgfxVideoGetVsyncRate();
+            gCurrentFOVTime = t;
         }
-        gCurrentFOVTime = gCurrentFOVTime + (f32)frames / (f32)GSgfxVideoGetVsyncRate();
-        for (s32 i = 0; i < 2; i++, key++) {
-            if (gCurrentFOVTime <= key->startTime) {
+        for (i = 0; i < 2; i++, key++) {
+            if (t <= key->startTime) {
                 gCurrentFOV = key->startFov;
                 break;
             }
-            if (gCurrentFOVTime <= key->endTime) {
-                gCurrentFOV = GSlerpGetLinearInterpolationFloat(key->startFov, key->endFov, (gCurrentFOVTime - key->startTime) / (key->endTime - key->startTime));
+            if (t <= key->endTime) {
+                gCurrentFOV = GSlerpGetLinearInterpolationFloat(key->startFov, key->endFov,
+                                                                (t - key->startTime) / (key->endTime - key->startTime));
                 break;
             }
             gCurrentFOV = key->endFov;

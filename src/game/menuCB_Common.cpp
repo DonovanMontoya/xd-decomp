@@ -1,4 +1,6 @@
 #include <game/menuCB_CommonPrivate.hpp>
+
+#pragma force_active on
 extern "C" {
 s32 winMsgCheck(u32);
 void winMsgClose(u32);
@@ -66,3 +68,5 @@ void menuCB_InitMenu(s32 menu){
     _CBC.depth=0;
 }
 }
+
+#pragma force_active reset

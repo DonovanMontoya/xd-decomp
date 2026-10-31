@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <game/pxdvs/app/people/runtime.hpp>
 extern "C" {
 u8 GSmodelIsNullAnimation(void *,s32);
@@ -32,3 +33,4 @@ u8 tagPeopleWork::isWalkStartMotion() const {
 u8 tagPeopleWork::isAlwayBlendChara() const {
  if(object==0x16C90400 || object==0x169E0400 || object==0x169F0400 || object==0x16A00400 || object==0x20250400 || object==0x1EE20400 || object==0x16C70400 || object==0x195B0400 || object==0x1A7C0400 || object==0x19540400)return 1;return 0;
 }
+#pragma force_active reset

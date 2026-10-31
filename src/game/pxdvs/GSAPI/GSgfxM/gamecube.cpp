@@ -295,32 +295,72 @@ void GSgfx_GCWriteTevIndBumpST(s32 stage, s32 indirectStage, s32 matrix) {
     GCSetTevIndirect(stage + 2, indirectStage, GX_ITF_8, GX_ITB_NONE, GX_ITM_OFF, GX_ITW_OFF, GX_ITW_OFF, 1, 0, GX_ITBA_OFF);
 }
 
-void GSgfx_GCWriteTevIndTile(s32 stage, s32 indirectStage, u16 tileSizeS, u16 tileSizeT, u16 spacingS, u16 spacingT, u8 format, s32 matrix, s32 bias, s32 alpha) {
-    u8 wrapS;
-    u8 wrapT;
-    switch (tileSizeS) {
-    case 256: wrapS = 1; break;
-    case 128: wrapS = 2; break;
-    case 64: wrapS = 3; break;
-    case 32: wrapS = 4; break;
-    case 16: wrapS = 5; break;
+static inline void GCTileWriteBP(u32 v) {
+    GXWGFifo.u8 = 0x61;
+    GXWGFifo.u32 = v;
+}
+static inline void GCTileWriteIndTexMtx(u32 id, f32* m, s32 scaleExp) {
+    s32 mtx[6];
+    u32 reg;
+    s8 scale;
+    mtx[5] = (int)(1024.0f * m[5]) & 0x7FF;
+    mtx[4] = (int)(1024.0f * m[2]) & 0x7FF;
+    mtx[3] = (int)(1024.0f * m[4]) & 0x7FF;
+    mtx[2] = (int)(1024.0f * m[1]) & 0x7FF;
+    mtx[1] = (int)(1024.0f * m[3]) & 0x7FF;
+    mtx[0] = (int)(1024.0f * m[0]) & 0x7FF;
+    scale = scaleExp + 17;
+    GCTileWriteBP(mtx[0] | (mtx[1] << 11) | ((scale & 3) << 22) | ((id + 6) << 24));
+    GCTileWriteBP(mtx[2] | (mtx[3] << 11) | (((scale >> 2) & 3) << 22) | ((id + 7) << 24));
+    GCTileWriteBP(mtx[4] | (mtx[5] << 11) | (((scale >> 4) & 3) << 22) | ((id + 8) << 24));
+}
+static inline void GCTileSetTevIndirect(u32 stage, u8 indId, u8 fmt, u8 bias, u8 mtx, u8 ws, u8 wt, u8 addPrev, u8 utc,
+                                  u8 alpha) {
+    gsgfxState->tevIndirect[stage].indirect.stage = indId;
+    gsgfxState->tevIndirect[stage].indirect.format = fmt;
+    gsgfxState->tevIndirect[stage].indirect.bias = bias;
+    gsgfxState->tevIndirect[stage].indirect.alpha = alpha;
+    gsgfxState->tevIndirect[stage].indirect.matrix = mtx;
+    gsgfxState->tevIndirect[stage].indirect.wrapS = ws;
+    gsgfxState->tevIndirect[stage].indirect.wrapT = wt;
+    gsgfxState->tevIndirect[stage].indirect.originalLod = utc;
+    gsgfxState->tevIndirect[stage].indirect.addPrevious = addPrev;
+    gsgfxState->dirtyGroups[10] |= 1 << stage;
+    gsgfxState->indirectMode[stage] = 2;
+}
+void GSgfx_GCWriteTevIndTile(u32 stage, u8 indId, u16 sizeS, u16 sizeT, u16 spaceS, u16 spaceT, u32 fmt, s32 mtx,
+                             u32 bias, u32 alpha) {
+    u32 ws, wt, id;
+    f32 m[6];
+    switch (sizeS) {
+    case 0x100: ws = 1; break;
+    case 0x80: ws = 2; break;
+    case 0x40: ws = 3; break;
+    case 0x20: ws = 4; break;
+    case 0x10: ws = 5; break;
     default: return;
     }
-    switch (tileSizeT) {
-    case 256: wrapT = 1; break;
-    case 128: wrapT = 2; break;
-    case 64: wrapT = 3; break;
-    case 32: wrapT = 4; break;
-    case 16: wrapT = 5; break;
+    switch (sizeT) {
+    case 0x100: wt = 1; break;
+    case 0x80: wt = 2; break;
+    case 0x40: wt = 3; break;
+    case 0x20: wt = 4; break;
+    case 0x10: wt = 5; break;
     default: return;
     }
-    f32 offset[2][3];
-    offset[0][0] = spacingS / 1024.0f;
-    offset[0][1] = offset[0][2] = 0.0f;
-    offset[1][1] = spacingT / 1024.0f;
-    offset[1][0] = offset[1][2] = 0.0f;
-    GCSetIndTexMtx(static_cast<GXIndTexMtxID>(matrix), offset, 10);
-    GCSetTevIndirect(stage, indirectStage, (u8)format, (u8)bias, (GXIndTexMtxID)matrix, (u8)wrapS, (u8)wrapT, 0, 1, (GXIndTexAlphaSel)alpha);
+    m[0] = spaceS / 1024.0f;
+    m[4] = spaceT / 1024.0f;
+    m[1] = 0.0f;
+    m[2] = 0.0f;
+    m[3] = 0.0f;
+    m[5] = 0.0f;
+    switch (mtx) {
+    case 1: id = 0; break;
+    case 2: id = 3; break;
+    case 3: id = 6; break;
+    }
+    GCTileWriteIndTexMtx(id, m, 10);
+    GCTileSetTevIndirect(stage, (u16)indId, fmt, bias, mtx, ws, wt, 0, 1, alpha);
 }
 
 void GSgfx_GCWriteIndTexMtx(GXIndTexMtxID index, const f32 offset[2][3], s8 scaleExp) {

@@ -53,38 +53,19 @@ extern "C" void flcalcCreateCxform(FlashCxform *p, u32 color) {
     p->unk0 = a;
 }
 
-extern "C" s32 flcalcMultiTransformColor(FlashCxform *arg0, u32 arg1) {
-    u32 var_r4;
-    u32 var_r5;
-    u32 var_r6;
-    u32 var_r7;
-
-    var_r5 = arg0->unk6 + ((u32) ((arg1 >> 0x18U) * arg0->unk4) >> 8U);
-    if (var_r5 < 0xFFU) {
-
-    } else {
-        var_r5 = 0xFF;
-    }
-    var_r6 = arg0->unkA + ((u32) (((arg1 & 0xFF0000U)>>16) * arg0->unk8) >> 8U);
-    if (var_r6 < 0xFFU) {
-
-    } else {
-        var_r6 = 0xFF;
-    }
-    var_r4 = arg0->unkE + ((u32) (((arg1 & 0xFF00U)>>8) * arg0->unkC) >> 8U);
-    if (var_r4 < 0xFFU) {
-
-    } else {
-        var_r4 = 0xFF;
-    }
-    var_r7 = arg0->unk2 + ((u32) ((arg1&0xFFU) * arg0->unk0) >> 8U);
-    if (var_r7 < 0xFFU) {
-
-    } else {
-        var_r7 = 0xFF;
-    }
-    return (var_r4 << 8) | ((var_r6 << 0x10) | (var_r7 | (var_r5 << 0x18)));
+#define FLCALC_CLAMP(x) ((x) < 0xFF ? (x) : 0xFF)
+extern "C" s32 flcalcMultiTransformColor(FlashCxform* ct, u32 color) {
+    u32 cr = color >> 24;
+    u32 cg = (color >> 16) & 0xFF;
+    u32 cb = (color >> 8) & 0xFF;
+    u32 ca = color & 0xFF;
+    u32 r = FLCALC_CLAMP(((cr * ct->unk4) >> 8) + ct->unk6);
+    u32 g = FLCALC_CLAMP(((cg * ct->unk8) >> 8) + ct->unkA);
+    u32 b = FLCALC_CLAMP(((cb * ct->unkC) >> 8) + ct->unkE);
+    u32 a = FLCALC_CLAMP(((ca * ct->unk0) >> 8) + ct->unk2);
+    return a | (r << 24) | (g << 16) | (b << 8);
 }
+#undef FLCALC_CLAMP
 
 extern "C" void flcalcUnitCxform(FlashCxform *arg0) {
     arg0->unk4 = 0x100;

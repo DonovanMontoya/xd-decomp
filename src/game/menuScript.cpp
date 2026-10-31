@@ -883,58 +883,46 @@ static void _wazaOshieCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
     winSpriteSetDisp(sprite, false);
 }
 
-extern "C" void menuScriptTutorialCursor(tagWINDOW_WORK *win) {
-    s16 sel;
-    s32 vis;
-    s32 num;
-    u16 key;
-windowGetKeyInfo();
-    num = *tutorialdata_number;
-    vis = 8;
-    if (num < 8) {
-        vis = num;
+extern "C" void menuScriptTutorialCursor(tagWINDOW_WORK* w)
+{
+    windowGetKeyInfo();
+    s32 total = *tutorialdata_number;
+    int vis = 8;
+    if (total < 8) {
+        vis = total;
     }
-    key = windowGetKeyRepeat();
+    u32 rep = ((u32(*)())windowGetKeyRepeat)();
     CURSOR c = cursorBiosGetPos(0xE);
     if (vis != 0) {
-        if ((key & 1) != 0) {
-            c.selected -= 1;
-        } else if ((key & 2) != 0) {
-            c.selected += 1;
+        if ((u16)rep & 1) {
+            c.selected--;
+        } else if ((u16)rep & 2) {
+            c.selected++;
         }
-        sel = c.selected;
-        if (sel < 0) {
+        if (c.selected < 0) {
+            c.first += c.selected;
             c.selected = 0;
-            c.first += sel;
             if (c.first < 0) {
                 c.first = 0;
                 c.selected = 0;
             }
-        } else if (sel >= vis) {
-            s8 last;
-            s16 nf = c.first + (sel - (vis - 1));
-            last = vis - 1;
-            c.selected = last;
-            c.first = nf;
-            if (nf + last >= num) {
-                c.selected = last;
-                c.first = (s8)(num - vis);
+        } else if (c.selected >= vis) {
+            c.first += c.selected - (vis - 1);
+            c.selected = (s8)(vis - 1);
+            if (c.first + c.selected >= total) {
+                c.selected = (s8)(vis - 1);
+                c.first = (s8)(total - vis);
             }
         }
     }
-    s32 select;
-    s16 curSelected = c.selected;
-    if (curSelected == (s8)(*tutorialdata_number - 1)) {
-        select = -1;
+    if (c.selected == (s8)(*tutorialdata_number - 1)) {
+        _tutorialSelect = -1;
     } else {
-        select = curSelected + c.first;
+        _tutorialSelect = c.selected + c.first;
     }
-    _tutorialSelect = select;
-    win->pos.first = c.first;
-    win->pos.selected = curSelected;
-    CURSOR tmp;
-    *(s32 *)&tmp = *(s32 *)&c;
-    cursorBiosSetPos(0xE, &tmp);
+    w->pos.first = c.first;
+    w->pos.selected = c.selected;
+    ((CURSOR(*)(s32,CURSOR))cursorBiosSetPos)(0xE, c);
 }
 
 

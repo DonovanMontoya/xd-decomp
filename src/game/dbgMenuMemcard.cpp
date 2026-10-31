@@ -1,5 +1,6 @@
 /* Debug menu entries for saving/loading save data to/from the debug file system. */
 #include <global.h>
+#pragma force_active on
 
 extern u8 GSdvdOpenTest(const char*);
 extern u32 GSdvdOpen(const char*);
@@ -25,8 +26,8 @@ extern void winMsgOpen(s32, s32, s32, s32);
 
 extern void* now_savedata_ptr;
 
-static void* dbgMenuSaveData;
 static void* bk_savedataPtr;
+static void* dbgMenuSaveData;
 
 static const char* saveFileName[10] = {
     "HDSaveData1.DSV1",
@@ -160,3 +161,5 @@ s32 dbgMenuMemcardSave(void) {
     memcardTaskCall(0xB, 2, 0);
     return 0;
 }
+
+#pragma force_active reset

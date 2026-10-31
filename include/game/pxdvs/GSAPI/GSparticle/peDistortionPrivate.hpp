@@ -15,7 +15,7 @@ struct peDistortionContainer:peRenderContainer {
 typedef char DistNodeSize[sizeof(peDistortionNode)==0x48?1:-1];
 typedef char DistContainerSize[sizeof(peDistortionContainer)==0x78?1:-1];
 extern "C" {extern GSgfxVF g_vertex_format;extern Vec g_CameraUpDir,g_CameraSideDir,xAxisVector,yAxisVector;
- void GSgfxVFSetArray(GSgfxVF*,s32,s32,void*,u8,u32);void particleEngineSetupTevStages(u8,u8,u8);
+ void GSgfxVFSetArray(GSgfxVF*,s32,s32,void*,u8,u32);void particleEngineSetupTevStages(u8,bool,bool);
  void dlDraw__10GSgfxLayerFP7GSgfxDL(GSgfxLayer*,GSgfxDL*);void GSboundAddPoint(void*,f32,f32,f32);
 }
 #endif

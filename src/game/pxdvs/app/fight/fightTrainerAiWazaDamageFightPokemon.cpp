@@ -261,710 +261,81 @@ s32 fightTrainerAiWazaDamageFightPokemon000(FIGHT_TRAINER* trainer, FightOutPoke
 s32 fightTrainerAiWazaDamageFightPokemonNull(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender);
 static s32 _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER*, u16, FightOutPokemon*, FightPokemon*);
 
+}
+
+#pragma force_active on
+
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon217(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return 0;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon216(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return 0;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon215(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return 0;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon214(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return 0;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon213(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return 0;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon212(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return 0;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon211(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return 0;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon210(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return 0;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon209(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return fightTrainerAiWazaDamageFightPokemon002(trainer, attacker, move, defender);
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon208(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return 0;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon207(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon206(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return 0;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon205(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return 0;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon204(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
 }
-
-s32 fightTrainerAiWazaDamageFightPokemon202(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
 }
-
-s32 fightTrainerAiWazaDamageFightPokemon201(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon200(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon004(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon199(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon198(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon197(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon195(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon194(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon193(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon192(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon191(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon188(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon187(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon186(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon185(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon184(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon183(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon182(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon181(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon180(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon179(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon178(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon177(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon176(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon175(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon174(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon172(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon171(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon170(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon168(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon167(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon166(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon165(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon164(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon160(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon159(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon158(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon156(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon155(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon153(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon152(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon151(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon039(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon150(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon149(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon147(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon146(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon145(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon039(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon144(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon143(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon142(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon140(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon139(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon138(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon137(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon136(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon134(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon132(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon133(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon132(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon130(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 20;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon129(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon128(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender) * 2;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon127(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon125(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon124(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon120(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon119(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon118(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon116(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon115(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon114(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon113(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon112(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon111(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon109(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon108(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon107(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon106(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon105(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon103(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon102(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon100(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 5;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon097(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon095(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon094(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon093(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon092(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon090(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon089(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon086(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon085(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon084(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon083(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon082(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon081(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon080(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon079(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon078(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon077(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender) * 2;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon076(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon075(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon039(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon073(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon072(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon071(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon070(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon069(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon068(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon067(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon066(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon065(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon062(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon060(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon059(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon058(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon057(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon054(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon053(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon052(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon051(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon050(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon049(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon048(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon047(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon046(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon045(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon044(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender) * 2;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon043(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon042(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon041(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 40;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon040(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon039(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon036(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon035(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon034(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon033(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon031(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon030(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon029(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender) * 3;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon028(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon027(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon026(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon025(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon024(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon023(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon020(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon019(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon018(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon017(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon016(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon013(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon011(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon010(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon009(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon008(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon007(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon006(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon005(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon004(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon003(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon002(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon001(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-s32 fightTrainerAiWazaDamageFightPokemon000(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-}
-
-s32 fightTrainerAiWazaDamageFightPokemonNull(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    return 0;
-}
-
-static s32 _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER* trainer, u16 move, FightOutPokemon* attacker, FightPokemon* defender) {
-    return fightSeqGetWazaDamageHikaePokemon(trainer, move, attacker, defender, 0, 0, 0);
-}
-
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon203(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     s32 var_r3;
     u8 temp_r31;
@@ -976,7 +347,8 @@ s32 fightTrainerAiWazaDamageFightPokemon203(FIGHT_TRAINER *arg0, FightOutPokemon
     }
     return var_r3;
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon203SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     FightWaza *temp_r3;
     u16 var_r4;
@@ -997,11 +369,43 @@ static void _fightTrainerAiWazaDamageFightPokemon203SubPre__FP13FIGHT_TRAINERUsP
     }
     fightWaza_SetZokusei(temp_r3, var_r4);
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon202(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon201(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon200(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon004(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon199(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon198(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon197(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon196(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     return fightSeqGetWazaDamageHikaePokemon(arg0, arg2, arg1, arg3, 0, _fightTrainerAiWazaDamageFightPokemon196SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon, 0);
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon196SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     FightWaza *temp_r31;
     u16 iryoku;
@@ -1010,11 +414,38 @@ static void _fightTrainerAiWazaDamageFightPokemon196SubPre__FP13FIGHT_TRAINERUsP
     iryoku = fightSeqGetKetaguriIryoku(pokemonDB_GetWeight(fightTrainerAiGetFightOutPokemonPokemonDataId(arg0, arg2)));
     fightWaza_SetIryoku(temp_r31, iryoku);
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon195(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon194(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon193(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon192(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon191(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon190(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     return fightSeqGetWazaDamageHikaePokemon(arg0, arg2, arg1, arg3, 0, _fightTrainerAiWazaDamageFightPokemon190SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon, 0);
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon190SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     FightWaza *temp_r29;
     u16 temp_r30;
@@ -1032,7 +463,93 @@ static void _fightTrainerAiWazaDamageFightPokemon190SubPre__FP13FIGHT_TRAINERUsP
     }
     fightWaza_SetIryoku(temp_r29, var_r4);
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon189(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    s32 attackerHp = (u16)fightTrainerAiGetFightOutPokemonNowHp(trainer, attacker);
+    s32 defenderHp = (u16)pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(defender));
+    if (attackerHp >= defenderHp) {
+        return 0;
+    }
+    return defenderHp - attackerHp;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon188(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon187(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon186(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon185(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon184(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon183(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon182(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon181(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon180(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon179(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon178(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon177(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon176(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon175(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon174(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon173(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u32 arg2, FightPokemon *arg3) {
     s32 temp_r30;
     u32 temp_r31;
@@ -1046,7 +563,23 @@ s32 fightTrainerAiWazaDamageFightPokemon173(FIGHT_TRAINER *arg0, FightOutPokemon
     }
     return 0;
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon172(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon171(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon170(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon169(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     s32 var_r31;
 
@@ -1056,8 +589,35 @@ s32 fightTrainerAiWazaDamageFightPokemon169(FIGHT_TRAINER *arg0, FightOutPokemon
     }
     return var_r31;
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon168(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon167(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon166(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon165(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon164(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+#pragma push
 #pragma opt_propagation off
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon162(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     s16 var_r31;
     s16 var_r0;
@@ -1073,8 +633,9 @@ s32 fightTrainerAiWazaDamageFightPokemon162(FIGHT_TRAINER *arg0, FightOutPokemon
     var_r31 = 1 << var_r0;
     return -((s32) fightTrainerAiGetFightOutPokemonMaxHp(arg0, arg1) / var_r31);
 }
-#pragma opt_propagation reset
-
+}
+#pragma pop
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon161(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     s16 var_r31;
 
@@ -1084,11 +645,38 @@ s32 fightTrainerAiWazaDamageFightPokemon161(FIGHT_TRAINER *arg0, FightOutPokemon
     }
     return var_r31 * _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(arg0, arg2, arg1, arg3);
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon160(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon159(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon158(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon157(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     return -((fightTrainerAiGetFightOutPokemonMaxHp(arg0, arg1) >> 1U) & 0x7FFF);
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon156(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon155(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon154(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     FightPokemon *sp8[24];
     u16 temp_r31;
@@ -1111,7 +699,33 @@ s32 fightTrainerAiWazaDamageFightPokemon154(FIGHT_TRAINER *arg0, FightOutPokemon
     }
     return var_r28;
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon153(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon152(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon151(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon039(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon150(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon149(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon148(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     s32 var_r31;
     u32 temp_r31;
@@ -1126,11 +740,68 @@ s32 fightTrainerAiWazaDamageFightPokemon148(FIGHT_TRAINER *arg0, FightOutPokemon
     }
     return var_r31;
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon147(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon146(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon145(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon039(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon144(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon143(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon142(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon140(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon139(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon138(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon137(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon136(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon135(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     return fightSeqGetWazaDamageHikaePokemon(arg0, arg2, arg1, arg3, 0, _fightTrainerAiWazaDamageFightPokemon135SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon, 0);
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon135SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     u16 spA;
     u16 sp8;
@@ -1141,7 +812,18 @@ static void _fightTrainerAiWazaDamageFightPokemon135SubPre__FP13FIGHT_TRAINERUsP
     fightWaza_SetIryoku(temp_r31, spA);
     fightWaza_SetZokusei(temp_r31, sp8);
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon134(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon132(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon133(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon132(trainer, attacker, move, defender);
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon132(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     s32 var_r0;
     u8 temp_r3;
@@ -1156,19 +838,53 @@ s32 fightTrainerAiWazaDamageFightPokemon132(FIGHT_TRAINER *arg0, FightOutPokemon
     }
     return -var_r0;
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon130(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 20;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon129(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon128(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender) * 2;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon127(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon126(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     return fightSeqGetWazaDamageHikaePokemon(arg0, arg2, arg1, arg3, 0, _fightTrainerAiWazaDamageFightPokemon126SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon, 0);
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon126SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     fightWaza_SetIryoku(fightOutPokemon_GetFightWazaPtr(arg2), 0x46U);
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon125(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon124(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon123(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     return fightSeqGetWazaDamageHikaePokemon(arg0, arg2, arg1, arg3, 0, _fightTrainerAiWazaDamageFightPokemon123SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon, 0);
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon123SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     FightWaza *temp_r3;
     u16 iryoku;
@@ -1178,19 +894,23 @@ static void _fightTrainerAiWazaDamageFightPokemon123SubPre__FP13FIGHT_TRAINERUsP
     iryoku = fightSeqGetYatuatariIryoku(fightTrainerAiGetFightOutPokemonFriend(arg0, arg2));
     fightWaza_SetIryoku(temp_r3, iryoku);
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon122(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     return fightSeqGetWazaDamageHikaePokemon(arg0, arg2, arg1, arg3, 0, _fightTrainerAiWazaDamageFightPokemon122SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon, 0);
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon122SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     fightWaza_SetIryoku(fightOutPokemon_GetFightWazaPtr(arg2), 0x28U);
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon121(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     return fightSeqGetWazaDamageHikaePokemon(arg0, arg2, arg1, arg3, 0, _fightTrainerAiWazaDamageFightPokemon121SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon, 0);
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon121SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     FightWaza *temp_r3;
     u16 iryoku;
@@ -1200,11 +920,28 @@ static void _fightTrainerAiWazaDamageFightPokemon121SubPre__FP13FIGHT_TRAINERUsP
     iryoku = fightSeqGetOngaesiIryoku(fightTrainerAiGetFightOutPokemonFriend(arg0, arg2));
     fightWaza_SetIryoku(temp_r3, iryoku);
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon120(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon119(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon118(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon117(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     return fightSeqGetWazaDamageHikaePokemon(arg0, arg2, arg1, arg3, 0, _fightTrainerAiWazaDamageFightPokemon117SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon, 0);
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon117SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     FightWaza *temp_r3;
     u16 var_r30;
@@ -1216,7 +953,63 @@ static void _fightTrainerAiWazaDamageFightPokemon117SubPre__FP13FIGHT_TRAINERUsP
     }
     fightWaza_SetIryoku(temp_r3, var_r30);
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon116(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon115(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon114(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon113(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon112(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon111(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon109(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon108(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon107(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon106(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon105(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon104(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     s32 temp_r31;
     s32 temp_r31_2;
@@ -1226,23 +1019,51 @@ s32 fightTrainerAiWazaDamageFightPokemon104(FIGHT_TRAINER *arg0, FightOutPokemon
     temp_r31 = temp_r31 + fightSeqGetWazaDamageHikaePokemon(arg0, arg2, arg1, arg3, 0, _fightTrainerAiWazaDamageFightPokemon104SubPre3__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon, 0);
     return temp_r31;
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon104SubPre3__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     fightWaza_SetIryoku(fightOutPokemon_GetFightWazaPtr(arg2), 0x1EU);
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon104SubPre2__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     fightWaza_SetIryoku(fightOutPokemon_GetFightWazaPtr(arg2), 0x14U);
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon104SubPre1__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     fightWaza_SetIryoku(fightOutPokemon_GetFightWazaPtr(arg2), 0xAU);
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon103(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon102(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon101(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    u16 hp = pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(defender));
+    s32 damage = _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+    if (hp <= damage) damage = hp - 1;
+    return damage;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon100(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 5;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon099(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     return fightSeqGetWazaDamageHikaePokemon(arg0, arg2, arg1, arg3, 0, _fightTrainerAiWazaDamageFightPokemon099SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon, 0);
 }
-
+}
+extern "C" {
 static void _fightTrainerAiWazaDamageFightPokemon099SubPre__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER *arg0, u16 arg1, FightOutPokemon *arg2, FightPokemon *arg3) {
     FightWaza *temp_r31;
     u16 temp_r30;
@@ -1253,48 +1074,453 @@ static void _fightTrainerAiWazaDamageFightPokemon099SubPre__FP13FIGHT_TRAINERUsP
     maxHp = fightTrainerAiGetFightOutPokemonMaxHp(arg0, arg2);
     fightWaza_SetIryoku(temp_r31, (u16) fightSeqGetJitabataIryoku(temp_r30, maxHp));
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon098(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
     return (s32) pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(arg3));
 }
-
-s32 fightTrainerAiWazaDamageFightPokemon088(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
-    return (s32) fightTrainerAiGetFightOutPokemonLevel(arg0, arg1);
 }
-
-s32 fightTrainerAiWazaDamageFightPokemon087(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
-    return (s32) fightTrainerAiGetFightOutPokemonLevel(arg0, arg1);
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon097(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
 }
-
-s32 fightTrainerAiWazaDamageFightPokemon038(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
-    return (s32) pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(arg3));
 }
-
-s32 fightTrainerAiWazaDamageFightPokemon037(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
-    return -(s32) fightTrainerAiGetFightOutPokemonMaxHp(arg0, arg1);
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon095(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
 }
-
-s32 fightTrainerAiWazaDamageFightPokemon032(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
-    return -((fightTrainerAiGetFightOutPokemonMaxHp(arg0, arg1) >> 1U) & 0x7FFF);
 }
-
-s32 fightTrainerAiWazaDamageFightPokemon189(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    s32 attackerHp = (u16)fightTrainerAiGetFightOutPokemonNowHp(trainer, attacker);
-    s32 defenderHp = (u16)pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(defender));
-    if (attackerHp >= defenderHp) {
-        return 0;
-    }
-    return defenderHp - attackerHp;
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon094(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
 }
-s32 fightTrainerAiWazaDamageFightPokemon101(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
-    u16 hp = pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(defender));
-    s32 damage = _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
-    if (hp <= damage) damage = hp - 1;
-    return damage;
 }
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon093(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon092(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaDamageFightPokemon091(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
     s32 attackerHp = (u16)fightTrainerAiGetFightOutPokemonNowHp(trainer, attacker);
     u16 defenderHp = pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(defender));
     return defenderHp - (s32)(attackerHp + defenderHp) / 2;
 }
 }
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon090(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon089(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon088(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
+    return (s32) fightTrainerAiGetFightOutPokemonLevel(arg0, arg1);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon087(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
+    return (s32) fightTrainerAiGetFightOutPokemonLevel(arg0, arg1);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon086(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon085(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon084(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon083(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon082(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon081(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon080(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon079(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon078(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon077(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender) * 2;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon076(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon075(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon039(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon073(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon072(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon071(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon070(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon069(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon068(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon067(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon066(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon065(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon062(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon060(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon059(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon058(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon057(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon054(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon053(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon052(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon051(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon050(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon049(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon048(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon047(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon046(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon045(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon044(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender) * 2;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon043(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon042(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon041(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 40;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon040(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon039(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon038(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
+    return (s32) pokemon_GetHp(fightPokemon_GetPokemonBuffPtr(arg3));
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon037(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
+    return -(s32) fightTrainerAiGetFightOutPokemonMaxHp(arg0, arg1);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon036(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon035(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon034(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon033(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon032(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightPokemon *arg3) {
+    return -((fightTrainerAiGetFightOutPokemonMaxHp(arg0, arg1) >> 1U) & 0x7FFF);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon031(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon030(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon029(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender) * 3;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon028(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon027(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon026(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon025(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon024(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon023(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon020(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon019(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon018(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon017(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon016(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon013(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon011(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon010(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon009(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon008(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon007(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon006(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon005(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon004(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon003(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon002(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return fightTrainerAiWazaDamageFightPokemon000(trainer, attacker, move, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon001(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemon000(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(trainer, move, attacker, defender);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaDamageFightPokemonNull(FIGHT_TRAINER* trainer, FightOutPokemon* attacker, u16 move, FightPokemon* defender) {
+    return 0;
+}
+}
+extern "C" {
+static s32 _fightTrainerAiWazaDamageFightPokemonNormal__FP13FIGHT_TRAINERUsP15FightOutPokemonP12FightPokemon(FIGHT_TRAINER* trainer, u16 move, FightOutPokemon* attacker, FightPokemon* defender) {
+    return fightSeqGetWazaDamageHikaePokemon(trainer, move, attacker, defender, 0, 0, 0);
+}
+}
+
+#pragma force_active reset

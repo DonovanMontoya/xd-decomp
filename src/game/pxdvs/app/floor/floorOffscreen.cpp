@@ -1,5 +1,16 @@
+#pragma defer_codegen off
 #include <game/pxdvs/app/floor/floorOffscreenPrivate.hpp>
 #include <libc/string.h>
+
+extern "C" { bool floorMoviePlay(u32 movie,u32 mode,bool looping,u32 target,u16 width,u16 height); }
+extern "C" { void floorOffscreenPlayWait(); }
+extern "C" { void* floorGetActiveOffscreenTexture(); }
+extern "C" { bool floorSetOffscreenIndex(s32 index); }
+extern "C" { void floorReleaseOffscreen(); }
+extern "C" { void floorUpdateOffscreen(); }
+extern "C" { void floorInitOffscreen(FloorOffscreenRoot* root); }
+extern "C++" { static void _floorFreeOffscreenData(); }
+extern "C" { void floorOffscreenMainInit(); }
 static FloorOffscreenData _userOffData;
 static s32 _lastOffIdx=-1;
 static FloorOffscreenData* _offRootDataPtr;
@@ -27,6 +38,11 @@ void GSmodelSetAnimIndex(void*,u32);
 void GSmodelStartAnimation(void*);
 void GSmodelForceAnimTransformUpdate(void*);
 #pragma dont_inline on
+
+}
+
+#pragma force_active on
+extern "C" {
 bool floorMoviePlay(u32 movie,u32 mode,bool looping,u32 target,u16 width,u16 height){
     _floorFreeOffscreenData();
     _offData=&_userOffData;
@@ -45,11 +61,17 @@ bool floorMoviePlay(u32 movie,u32 mode,bool looping,u32 target,u16 width,u16 hei
     _lastOffIdx=1000;
     return true;
 }
+}
+extern "C" {
 void floorOffscreenPlayWait(){
     if(_offData==0||_offMdl!=0)return;
     GSmoviePlayWait(_offData->source);
 }
+}
+extern "C" {
 void* floorGetActiveOffscreenTexture(){return _offTex;}
+}
+extern "C" {
 bool floorSetOffscreenIndex(s32 index){
     if(_lastOffIdx==index)return true;
     _floorFreeOffscreenData();
@@ -77,8 +99,14 @@ bool floorSetOffscreenIndex(s32 index){
     _lastOffIdx=index;
     return true;
 }
+}
+extern "C" {
 void floorReleaseOffscreen(){_floorFreeOffscreenData();_offRootDataPtr=0;_offRootDataCnt=0;}
+}
+extern "C" {
 void floorUpdateOffscreen(){if(!_offData||!_offMdl)return;GSmodelForceAnimTransformUpdate(_offMdl);}
+}
+extern "C" {
 void floorInitOffscreen(FloorOffscreenRoot* root){
     if(root->data){
         _offRootDataPtr=(*root->data)->records;
@@ -88,8 +116,8 @@ void floorInitOffscreen(FloorOffscreenRoot* root){
         }
     }
 }
-void floorOffscreenMainInit(){}
 }
+extern "C++" {
 static void _floorFreeOffscreenData(){
     if(_offData){
         if(_offData->kind==1)GSmovieStop(_offData->source);
@@ -98,4 +126,8 @@ static void _floorFreeOffscreenData(){
         if(_offMdl){GSmodelFree(_offMdl);_offMdl=0;}
         _offCam=0;_offData=0;_lastOffIdx=-1;
     }
+}
+}
+extern "C" {
+void floorOffscreenMainInit(){}
 }

@@ -23,10 +23,9 @@ extern "C" void GSmodelRecalculateBound(BoundModel *model) {
 }
 static void _modelBoundPObj(_HSD_PObj *pobj,GSmtx *unused,GSmtx *matrix,GSmtx *matrices,void *model) {
  static BoundCallbacks cblist={_modelBoundBeginSurface,0,_modelBoundVertex,0,0};
- BoundCallbacks *callbacks=&cblist;
  BoundContext context;
- context.model=(BoundModel*)model;context.matrices=matrices;context.matrix=matrix;
- GSgfxParseDisplayList(pobj->attributes,pobj->displayList,pobj->displayListSize<<5,callbacks,&context);
+ context.model=(BoundModel*)model;context.matrix=matrix;context.matrices=matrices;
+ GSgfxParseDisplayList(pobj->attributes,pobj->displayList,pobj->displayListSize<<5,&cblist,&context);
 }
 static inline int initialMatrixIndex() {return 0;}
 static void _modelBoundVertex(u32 flags,void *attribute,void *data) {

@@ -1,3 +1,5 @@
+#pragma force_active on
+#pragma defer_codegen on
 #include <game/pxdvs/app/floor/floorPrivate.hpp>
 #include <libc/string.h>
 static void _fsysLoadCallbak(s32,void*,s32);
@@ -16,10 +18,10 @@ void menuFightCloseAll();
 static u8 fight_action[0x30];
 static FloorModuleInterface _floorModuleFight;
 static u8 _menuCtrlHero[0x978];
-static u16 _fight_encount_data_id;
-static u16 _fight_result_id;
 static void* _gsthread_ptr_fight_main;
 static u8 _is_fight_flag;
+static u16 _fight_result_id;
+static u16 _fight_encount_data_id;
 static u8 _old_fight_debug_menu_flag;
 static u8 gOldCameraType;
 u32 dbgEffLoadFsysGroupID;
@@ -62,122 +64,121 @@ void fightSetFightEncountDataId(u16);
 u16 fightGetFightEncountDataId();
 void fightSetGsthreadPtrFightMain(void*);
 void fightFreeResourceID(s32 group,u32 resource);
-void fightFreeResourceDeclArchive() {
-    fightFreeResourceID(0x842,0x18503400);
-    fightFreeResourceID(0x842,0x184e3400);
-    fightFreeResourceID(0x842,0x184f3400);
-    fightFreeResourceID(0x842,0x18513400);
-    fightFreeResourceID(0x842,0x184b3400);
-    fightFreeResourceID(0x842,0x184c3400);
-    fightFreeResourceID(0x842,0x195f3400);
-    fightFreeResourceID(0x842,0x184d3400);
-}
-void fightFreeResourceID(s32 group,u32 resource) {
-    u32 localized;
-    if(pokecoloGetCountryCode()==2) {
-        switch(resource) {
-        case 0x184b3400:localized=0x22523400;break;
-        case 0x184c3400:localized=0x22533400;break;
-        case 0x184d3400:localized=0x22543400;break;
-        case 0x184e3400:localized=0x22553400;break;
-        case 0x184f3400:localized=0x22563400;break;
-        case 0x18503400:localized=0x22573400;break;
-        case 0x18513400:localized=0x22583400;break;
-        case 0x195f3400:localized=0x22593400;break;
-        default:return;
-        }
-    } else localized=resource;
-    GSresFreeResource(group,localized);
-}
-bool fightReadResourceID(s32 group,u32 resource) {
-    if(group==0)group=0x842;
-    if(pokecoloGetCountryCode()==2) {
-        switch(resource) {
-        case 0x184b3400:resource=0x22523400;break;
-        case 0x184c3400:resource=0x22533400;break;
-        case 0x184d3400:resource=0x22543400;break;
-        case 0x184e3400:resource=0x22553400;break;
-        case 0x184f3400:resource=0x22563400;break;
-        case 0x18503400:resource=0x22573400;break;
-        case 0x18513400:resource=0x22583400;break;
-        case 0x195f3400:resource=0x22593400;break;
-        default:return 0;
-        }
-        GSresFreeResource(group,0x22583400);
-    } else GSresFreeResource(group,0x18513400);
-    GSfsysFreeCache(group);
-    if(GSresGetResource(group,resource))return 0;
-    GSfsysReadIDEXWait(group,resource,_fsysLoadCallbak,0,resource);
-    GSfsysFree(group);
-    return GSresGetResource(group,resource)!=0;
-}
+void fightFreeResourceDeclArchive();
+void fightFreeResourceID(s32 group,u32 resource);
+bool fightReadResourceID(s32 group,u32 resource);
 void* fightEncountDataBiosGetPtr(u16);
 u16 fightEncountDataBiosGetFightDeckGrpId(void*,u8);
-void fightFreeDeck(u16 encounter) {
-    void* data=fightEncountDataBiosGetPtr(encounter);
-    for(u8 i=0;i<4;++i){
-        switch(fightEncountDataBiosGetFightDeckGrpId(data,i)) {
-        case 1:fightFreeResourceID(0x842,0x18503400);break;
-        case 2:fightFreeResourceID(0x842,0x184e3400);break;
-        case 3:fightFreeResourceID(0x842,0x184f3400);break;
-        case 4:fightFreeResourceID(0x842,0x18513400);break;
-        case 5:fightFreeResourceID(0x842,0x184b3400);break;
-        case 6:fightFreeResourceID(0x842,0x184c3400);break;
-        case 7:fightFreeResourceID(0x842,0x195f3400);break;
-        }
-    }
+void fightFreeDeck(u16 encounter);
+u8 fightReadDeck(u16 encounter);
+void fightSetMenuCtrlHero(const void* hero);
+void* fightGetMenuCtrlHero();
 }
-u8 fightReadDeck(u16 encounter) {
-    void* data;
-    u8 i;
-    u8 loaded=0;
-    data=fightEncountDataBiosGetPtr(encounter);
-    // Unhandled deck groups retain the result from the previous iteration.
-    bool result;
-    for(i=0;i<4;++i){
-        switch(fightEncountDataBiosGetFightDeckGrpId(data,i)) {
-        case 1:result=fightReadResourceID(0x842,0x18503400);break;
-        case 2:result=fightReadResourceID(0x842,0x184e3400);break;
-        case 3:result=fightReadResourceID(0x842,0x184f3400);break;
-        case 4:result=fightReadResourceID(0x842,0x18513400);break;
-        case 5:result=fightReadResourceID(0x842,0x184b3400);break;
-        case 6:result=fightReadResourceID(0x842,0x184c3400);break;
-        case 7:result=fightReadResourceID(0x842,0x195f3400);break;
-        }
-        if(result==1)loaded=1;
-    }
-    return loaded;
+static void _fsysLoadCallbak(s32,void*,s32);
+static const char* _fightGetModuleName();
+extern "C" FloorModuleInterface* fightGetFloorModule();
+static u32 _fightGetUID();
+static u32 _fightGetStateSize(FloorStateMode mode);
+static void _fightRestoreStateData(FloorStateMode mode,void* data,u32 size);
+static void _fightMakeStateData(FloorStateMode mode,void* data,u32 size);
+extern "C" void fightCloseAllMenu();
+static void _fightFree(unsigned int,FloorEnterMode mode);
+static void _fightFinalize(unsigned int,FloorEnterMode mode);
+static void _fightInitialize(unsigned int,FloorEnterMode);
+extern "C" {
+void fightSetFightEncountDataId(u16 id);
+u16 fightGetFightEncountDataId();
+void fightSetGsthreadPtrFightMain(void* thread);
+void fightSetFightResultId(u16 id);
+u16 fightGetFightResultId();
+void fightSetFightFlag(u8 flag);
+u8 fightIsFight();
 }
-void fightSetMenuCtrlHero(const void* hero){memcpy(_menuCtrlHero,hero,sizeof(_menuCtrlHero));}
-void* fightGetMenuCtrlHero(){return _menuCtrlHero;}
+struct FightVirtualDeckHeader { u8 reserved[4]; u16 floor; };
+FightVirtualDeckHeader* deckDataVirtual_GetPtr(u16);
+extern "C" {
+FIGHT_ENCOUNT* fightEncountGetStrObj();
+u16 getField__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
+u8 getFightMode__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
+u8 getDestroyFlag__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
+u32 getRoundNo__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
+u8 getTrainerKind__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
+u16 getMsg__13FIGHT_ENCOUNTCFUc(FIGHT_ENCOUNT *,u8);
+u8 fightEncountDataBiosGetFightKind(void *);
+u16 fightEncountDataBiosGetDiskId(void *);
+void fightEncountDataBiosSetFightFloorDataId(void *,u16);
+u16 fightEncountDataBiosGetFightFloorDataId(void *);
+s32 HSD_Rand();
+void fightEncountDataBiosSetFightTrainerDataId(void *,u8,u32);
+void fightEncountDataBiosSetFightKind(void *,u8);
+void fightEncountDataBiosSetZenmetuFlag(void *,u8);
+void fightEncountDataBiosSetSyoukaiWzxDataId(void *,u32);
+u32 fightEncountDataBiosGetFightTrainerDataId(void *,u8);
+void fightTrainerDB_SetSerihuMsgId(u32,u8,u16);
+void fightTrainerDB_SetKindDataId(u32,u8);
+extern s8 underTakerDeckRand;
+void fightDataRewrite();
 }
-static void _fsysLoadCallbak(s32,void*,s32){}
-static const char* _fightGetModuleName(){return "fight";}
-extern "C" FloorModuleInterface* fightGetFloorModule(){return &_floorModuleFight;}
-static u32 _fightGetUID(){return 0x12;}
-static u32 _fightGetStateSize(FloorStateMode mode){if(mode==2)return fightGSfloorGetPushDataSize();return 0;}
-static void _fightRestoreStateData(FloorStateMode mode,void* data,u32 size){if(mode==2)fightGSfloorPopData(data,size);}
-static void _fightMakeStateData(FloorStateMode mode,void* data,u32 size){if(mode==2)fightGSfloorPushData(data,size);}
-extern "C" void fightCloseAllMenu(){menuFightCloseAll();}
-static void _fightFree(unsigned int,FloorEnterMode mode){if(mode==1)fightGSfloorFree();}
-static void _fightFinalize(unsigned int,FloorEnterMode mode){
-    if(mode!=1){
-        GSthreadTerminateGroup(GSfloorGetCurrentFloorGroupID());
-        GSthreadTerminateGroup(GSfloorGetCurrentFloorGroupID());
-        fightCloseAllMenu();
-        cameraSetType(gOldCameraType);
-        u32 sound=fightFloor_GetEnvSndId(0);
-        if(sound)soundStop(sound,0);
-        soundOpenPlay(8,0,0xff);
-        if(UserWork){GSmemFree(UserWork);UserWork=0;}
-        dbgMenuSetEnable(_old_fight_debug_menu_flag);
-        fightSetFightFlag(0);
-        fightFreeDeck(fightGetFightEncountDataId());
-        fightSetFightEncountDataId(0);
-        msgctrlSetValue(0x59,0x1772);
-        GSlogWrite("---------- fight end !! ---------- \n");
-    }
+
+extern "C" {
+void* fightFloorGetNowPtr();
+u8 fightFloor_GetFightType(u32);
+s8 fightFloor_GetStatusMenuCnt(u8);
+void fightFloor_SetStatusMenuCnt(u8,s8);
+u8 menuIsCheck(u32);
+void menuCloseCustom(u32,s32,s32);
+void fightMenuCloseMsg();
+struct FightServerWork { u8 reserved[7]; u8 messageState; };
+extern FightServerWork ServerWork;
+extern s16 msgFrame;
 }
+static void _fightUpdate(unsigned int,FloorEnterMode);
+extern "C" void fightInit();
+extern "C" void __sinit_fight_cpp();
+
+extern "C" {
+extern "C" void __sinit_fight_cpp() {}
+}
+extern "C" {
+u8 fightIsFight(){return _is_fight_flag;}
+}
+extern "C" {
+void fightSetFightFlag(u8 flag){_is_fight_flag=flag;}
+}
+extern "C" {
+u16 fightGetFightResultId(){return _fight_result_id;}
+}
+extern "C" {
+void fightSetFightResultId(u16 id){_fight_result_id=id;}
+}
+extern "C" {
+void fightSetGsthreadPtrFightMain(void* thread){_gsthread_ptr_fight_main=thread;}
+}
+extern "C" {
+u16 fightGetFightEncountDataId(){return _fight_encount_data_id;}
+}
+extern "C" {
+void fightSetFightEncountDataId(u16 id){_fight_encount_data_id=id;}
+}
+extern "C" {
+extern "C" void fightInit() {
+    fightSetFightFlag(0);
+    fightSetFightResultId(0);
+    fightSetFightEncountDataId(0);
+    fightSetGsthreadPtrFightMain(0);
+    FloorModuleInterface_clear(&_floorModuleFight);
+    _floorModuleFight.pre=_fightInitialize;
+    _floorModuleFight.normal=_fightUpdate;
+    _floorModuleFight.post=_fightFinalize;
+    _floorModuleFight.free=_fightFree;
+    _floorModuleFight.saveState=_fightMakeStateData;
+    _floorModuleFight.loadState=_fightRestoreStateData;
+    _floorModuleFight.getStateSize=_fightGetStateSize;
+    _floorModuleFight.getStateID=_fightGetUID;
+    _floorModuleFight.getName=_fightGetModuleName;
+}
+}
+extern "C++" {
 static void _fightInitialize(unsigned int,FloorEnterMode){
     if(GSfloorIsPop()){
         dbgMenuClose();dbgMenuSetEnable(0);return;
@@ -205,38 +206,185 @@ static void _fightInitialize(unsigned int,FloorEnterMode){
     _gsthread_ptr_fight_main=GSthreadCreate(0x14,GSfloorGetCurrentFloorGroupID(),0x4000,1,0,fightMain);
     GSthreadSetName(_gsthread_ptr_fight_main,"fightMain");
 }
-extern "C" {
-void fightSetFightEncountDataId(u16 id){_fight_encount_data_id=id;}
-u16 fightGetFightEncountDataId(){return _fight_encount_data_id;}
-void fightSetGsthreadPtrFightMain(void* thread){_gsthread_ptr_fight_main=thread;}
-void fightSetFightResultId(u16 id){_fight_result_id=id;}
-u16 fightGetFightResultId(){return _fight_result_id;}
-void fightSetFightFlag(u8 flag){_is_fight_flag=flag;}
-u8 fightIsFight(){return _is_fight_flag;}
 }
-struct FightVirtualDeckHeader { u8 reserved[4]; u16 floor; };
-FightVirtualDeckHeader *deckDataVirtual_GetPtr(u16);
+extern "C++" {
+static void _fightUpdate(unsigned int,FloorEnterMode) {
+    fightFloorGetNowPtr();
+    fightFloor_GetFightType(0);
+    u8 menuIds[4]={0x37,0x38,0x40,0x41};
+    u8 menu;
+    s32 next;
+    u8* work;
+    for(u8 i=0;i<4;++i) {
+        menu=menuIds[i];
+        s8 count=fightFloor_GetStatusMenuCnt(menu);
+        if(count>=0) {
+            next=count-1;
+            fightFloor_SetStatusMenuCnt(menu,next);
+            if((s8)next<=0) {
+                if(!menuIsCheck(menu)) return;
+                menuCloseCustom(menu,2,0);
+                fightFloor_SetStatusMenuCnt(menu,-1);
+            }
+        }
+    }
+    work=(u8*)&ServerWork;
+    if(work[7]==2) {
+        if(msgFrame--<=0) {
+            fightMenuCloseMsg();
+            work[7]=0;
+        }
+    }
+}
+}
+extern "C++" {
+static void _fightFinalize(unsigned int,FloorEnterMode mode){
+    if(mode!=1){
+        GSthreadTerminateGroup(GSfloorGetCurrentFloorGroupID());
+        GSthreadTerminateGroup(GSfloorGetCurrentFloorGroupID());
+        fightCloseAllMenu();
+        cameraSetType(gOldCameraType);
+        u32 sound=fightFloor_GetEnvSndId(0);
+        if(sound)soundStop(sound,0);
+        soundOpenPlay(8,0,0xff);
+        if(UserWork){GSmemFree(UserWork);UserWork=0;}
+        dbgMenuSetEnable(_old_fight_debug_menu_flag);
+        fightSetFightFlag(0);
+        fightFreeDeck(fightGetFightEncountDataId());
+        fightSetFightEncountDataId(0);
+        msgctrlSetValue(0x59,0x1772);
+        GSlogWrite("---------- fight end !! ---------- \n");
+    }
+}
+}
+extern "C++" {
+static void _fightFree(unsigned int,FloorEnterMode mode){if(mode==1)fightGSfloorFree();}
+}
 extern "C" {
-FIGHT_ENCOUNT *fightEncountGetStrObj();
-u16 getField__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
-u8 getFightMode__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
-u8 getDestroyFlag__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
-u32 getRoundNo__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
-u8 getTrainerKind__13FIGHT_ENCOUNTCFv(FIGHT_ENCOUNT *);
-u16 getMsg__13FIGHT_ENCOUNTCFUc(FIGHT_ENCOUNT *,u8);
-u8 fightEncountDataBiosGetFightKind(void *);
-u16 fightEncountDataBiosGetDiskId(void *);
-void fightEncountDataBiosSetFightFloorDataId(void *,u16);
-u16 fightEncountDataBiosGetFightFloorDataId(void *);
-s32 HSD_Rand();
-void fightEncountDataBiosSetFightTrainerDataId(void *,u8,u32);
-void fightEncountDataBiosSetFightKind(void *,u8);
-void fightEncountDataBiosSetZenmetuFlag(void *,u8);
-void fightEncountDataBiosSetSyoukaiWzxDataId(void *,u32);
-u32 fightEncountDataBiosGetFightTrainerDataId(void *,u8);
-void fightTrainerDB_SetSerihuMsgId(u32,u8,u16);
-void fightTrainerDB_SetKindDataId(u32,u8);
-extern s8 underTakerDeckRand;
+extern "C" void fightCloseAllMenu(){menuFightCloseAll();}
+}
+extern "C++" {
+static void _fightMakeStateData(FloorStateMode mode,void* data,u32 size){if(mode==2)fightGSfloorPushData(data,size);}
+}
+extern "C++" {
+static void _fightRestoreStateData(FloorStateMode mode,void* data,u32 size){if(mode==2)fightGSfloorPopData(data,size);}
+}
+extern "C++" {
+static u32 _fightGetStateSize(FloorStateMode mode){if(mode==2)return fightGSfloorGetPushDataSize();return 0;}
+}
+extern "C++" {
+static u32 _fightGetUID(){return 0x12;}
+}
+extern "C" {
+extern "C" FloorModuleInterface* fightGetFloorModule(){return &_floorModuleFight;}
+}
+extern "C++" {
+static const char* _fightGetModuleName(){return "fight";}
+}
+extern "C++" {
+static void _fsysLoadCallbak(s32,void*,s32){}
+}
+extern "C" {
+void* fightGetMenuCtrlHero(){return _menuCtrlHero;}
+}
+extern "C" {
+void fightSetMenuCtrlHero(const void* hero){memcpy(_menuCtrlHero,hero,sizeof(_menuCtrlHero));}
+}
+extern "C" {
+u8 fightReadDeck(u16 encounter) {
+    void* data;
+    u8 i;
+    u8 loaded=0;
+    data=fightEncountDataBiosGetPtr(encounter);
+    // Unhandled deck groups retain the result from the previous iteration.
+    bool result;
+    for(i=0;i<4;++i){
+        switch(fightEncountDataBiosGetFightDeckGrpId(data,i)) {
+        case 1:result=fightReadResourceID(0x842,0x18503400);break;
+        case 2:result=fightReadResourceID(0x842,0x184e3400);break;
+        case 3:result=fightReadResourceID(0x842,0x184f3400);break;
+        case 4:result=fightReadResourceID(0x842,0x18513400);break;
+        case 5:result=fightReadResourceID(0x842,0x184b3400);break;
+        case 6:result=fightReadResourceID(0x842,0x184c3400);break;
+        case 7:result=fightReadResourceID(0x842,0x195f3400);break;
+        }
+        if(result==1)loaded=1;
+    }
+    return loaded;
+}
+}
+extern "C" {
+void fightFreeDeck(u16 encounter) {
+    void* data=fightEncountDataBiosGetPtr(encounter);
+    for(u8 i=0;i<4;++i){
+        switch(fightEncountDataBiosGetFightDeckGrpId(data,i)) {
+        case 1:fightFreeResourceID(0x842,0x18503400);break;
+        case 2:fightFreeResourceID(0x842,0x184e3400);break;
+        case 3:fightFreeResourceID(0x842,0x184f3400);break;
+        case 4:fightFreeResourceID(0x842,0x18513400);break;
+        case 5:fightFreeResourceID(0x842,0x184b3400);break;
+        case 6:fightFreeResourceID(0x842,0x184c3400);break;
+        case 7:fightFreeResourceID(0x842,0x195f3400);break;
+        }
+    }
+}
+}
+extern "C" {
+bool fightReadResourceID(s32 group,u32 resource) {
+    if(group==0)group=0x842;
+    if(pokecoloGetCountryCode()==2) {
+        switch(resource) {
+        case 0x184b3400:resource=0x22523400;break;
+        case 0x184c3400:resource=0x22533400;break;
+        case 0x184d3400:resource=0x22543400;break;
+        case 0x184e3400:resource=0x22553400;break;
+        case 0x184f3400:resource=0x22563400;break;
+        case 0x18503400:resource=0x22573400;break;
+        case 0x18513400:resource=0x22583400;break;
+        case 0x195f3400:resource=0x22593400;break;
+        default:return 0;
+        }
+        GSresFreeResource(group,0x22583400);
+    } else GSresFreeResource(group,0x18513400);
+    GSfsysFreeCache(group);
+    if(GSresGetResource(group,resource))return 0;
+    GSfsysReadIDEXWait(group,resource,_fsysLoadCallbak,0,resource);
+    GSfsysFree(group);
+    return GSresGetResource(group,resource)!=0;
+}
+}
+extern "C" {
+void fightFreeResourceID(s32 group,u32 resource) {
+    u32 localized;
+    if(pokecoloGetCountryCode()==2) {
+        switch(resource) {
+        case 0x184b3400:localized=0x22523400;break;
+        case 0x184c3400:localized=0x22533400;break;
+        case 0x184d3400:localized=0x22543400;break;
+        case 0x184e3400:localized=0x22553400;break;
+        case 0x184f3400:localized=0x22563400;break;
+        case 0x18503400:localized=0x22573400;break;
+        case 0x18513400:localized=0x22583400;break;
+        case 0x195f3400:localized=0x22593400;break;
+        default:return;
+        }
+    } else localized=resource;
+    GSresFreeResource(group,localized);
+}
+}
+extern "C" {
+void fightFreeResourceDeclArchive() {
+    fightFreeResourceID(0x842,0x18503400);
+    fightFreeResourceID(0x842,0x184e3400);
+    fightFreeResourceID(0x842,0x184f3400);
+    fightFreeResourceID(0x842,0x18513400);
+    fightFreeResourceID(0x842,0x184b3400);
+    fightFreeResourceID(0x842,0x184c3400);
+    fightFreeResourceID(0x842,0x195f3400);
+    fightFreeResourceID(0x842,0x184d3400);
+}
+}
+extern "C" {
 void fightDataRewrite() {
     FIGHT_ENCOUNT *settings;
     void *data;
@@ -300,60 +448,7 @@ void fightDataRewrite() {
 }
 }
 
-extern "C" {
-void *fightFloorGetNowPtr();
-u8 fightFloor_GetFightType(u32);
-s8 fightFloor_GetStatusMenuCnt(u8);
-void fightFloor_SetStatusMenuCnt(u8,s8);
-u8 menuIsCheck(u32);
-void menuCloseCustom(u32,s32,s32);
-void fightMenuCloseMsg();
-struct FightServerWork { u8 reserved[7]; u8 messageState; };
-extern FightServerWork ServerWork;
-extern s16 msgFrame;
-}
-static void _fightUpdate(unsigned int,FloorEnterMode) {
-    fightFloorGetNowPtr();
-    fightFloor_GetFightType(0);
-    u8 menuIds[4]={0x37,0x38,0x40,0x41};
-    u8 menu;
-    s32 next;
-    u8* work;
-    for(u8 i=0;i<4;++i) {
-        menu=menuIds[i];
-        s8 count=fightFloor_GetStatusMenuCnt(menu);
-        if(count>=0) {
-            next=count-1;
-            fightFloor_SetStatusMenuCnt(menu,next);
-            if((s8)next<=0) {
-                if(!menuIsCheck(menu)) return;
-                menuCloseCustom(menu,2,0);
-                fightFloor_SetStatusMenuCnt(menu,-1);
-            }
-        }
-    }
-    work=(u8*)&ServerWork;
-    if(work[7]==2) {
-        if(msgFrame--<=0) {
-            fightMenuCloseMsg();
-            work[7]=0;
-        }
-    }
-}
-extern "C" void fightInit() {
-    fightSetFightFlag(0);
-    fightSetFightResultId(0);
-    fightSetFightEncountDataId(0);
-    fightSetGsthreadPtrFightMain(0);
-    FloorModuleInterface_clear(&_floorModuleFight);
-    _floorModuleFight.pre=_fightInitialize;
-    _floorModuleFight.normal=_fightUpdate;
-    _floorModuleFight.post=_fightFinalize;
-    _floorModuleFight.free=_fightFree;
-    _floorModuleFight.saveState=_fightMakeStateData;
-    _floorModuleFight.loadState=_fightRestoreStateData;
-    _floorModuleFight.getStateSize=_fightGetStateSize;
-    _floorModuleFight.getStateID=_fightGetUID;
-    _floorModuleFight.getName=_fightGetModuleName;
-}
-extern "C" void __sinit_fight_cpp() {}
+// Register the retail startup routine with the runtime initialization table.
+__declspec(section ".ctors") static void (*const fightInitializers[])(void) = {
+    __sinit_fight_cpp,
+};

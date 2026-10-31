@@ -1,6 +1,8 @@
 #include <game/menuSubLayout.hpp>
 #include <libc/string.h>
 
+#pragma force_active on
+
 struct BattleDiskMenuItem {
     u8 reserved0[6];
     s16 x;
@@ -221,84 +223,83 @@ u16 menuPocketBattleDiskMain(s32 unused, s32 hero, s32 owner) {
 
 namespace {
 
-void _controlCursor(void) {
-    s16 old[2];
-    u16 keys = windowGetKeyRepeat();
-    u32 se = 0;
-    s32 count = Data.itemCount + 1;
-    s32 pages = (count + 7) / 8;
-    if (Data.offset == 0.0f) {
-        if (Data.active == 0) {
-            return;
-        }
-        *(s32*)old = *(s32*)&Data.scroll;
-        if (keys & 8) {
-            s16 last = count - 8;
-            if (pages == 1) {
-                Data.cursor = count - 1;
-            } else if (Data.scroll == last) {
-                Data.cursor = 7;
-            } else {
-                s16 next = Data.scroll + 8;
-                Data.scroll = next;
-                if (next > last) {
-                    Data.scroll = last;
-                }
-            }
-            if (old[0] != Data.scroll || old[1] != Data.cursor) {
-                menuPtPlaySe(0x44D);
-            }
-        } else if (keys & 4) {
-            if (Data.scroll == 0) {
-                Data.cursor = 0;
-            } else {
-                s16 prev = Data.scroll - 8;
-                Data.scroll = prev;
-                if (prev < 0) {
-                    Data.scroll = 0;
-                }
-            }
-            if (old[0] != Data.scroll || old[1] != Data.cursor) {
-                menuPtPlaySe(0x44D);
-            }
-        } else if (keys & 2) {
-            s16 next = Data.cursor + 1;
-            Data.cursor = next;
-            if (next + Data.scroll >= count) {
-                Data.cursor = next - 1;
-            } else {
-                if (next >= 8) {
-                    Data.scroll = Data.scroll + 1;
-                    se = 0x10;
-                    Data.cursor = next - 1;
-                    Data.moveDown = 1;
-                } else {
-                    se = 0x10;
-                    Data.moveDown = 0;
-                }
-                Data.offset = -30.0f;
+void _controlCursor(void)
+{
+    u16 key = windowGetKeyRepeat();
+    u32 sound = 0;
+    s32 total = Data.itemCount + 1;
+    s32 pageCount = (total + 7) / 8;
+
+    if (0.0f != Data.offset || Data.active == 0) {
+        return;
+    }
+
+    struct CursorPair { s16 x, y; };
+    CursorPair oldCursor = *(CursorPair*)&Data.scroll;
+    if ((key & 8) != 0) {
+        s16 lastTop = (s16)(total - 8);
+        if (pageCount == 1) {
+            Data.cursor = (s16)(total - 1);
+        } else if (Data.scroll == lastTop) {
+            Data.cursor = 7;
+        } else {
+            Data.scroll += 8;
+            if (Data.scroll > lastTop) {
+                Data.scroll = (s16)lastTop;
             }
         }
-        if ((keys & 1) && (Data.cursor > 0 || Data.scroll > 0)) {
-            s16 prev = Data.cursor - 1;
-            Data.cursor = prev;
-            if (prev < 0) {
-                Data.cursor = 0;
-                se = 0x10;
-                Data.scroll = Data.scroll - 1;
+        if (oldCursor.x != Data.scroll || oldCursor.y != Data.cursor) {
+            menuPtPlaySe(0x44D);
+        }
+    } else if ((key & 4) != 0) {
+        if (Data.scroll == 0) {
+            Data.cursor = 0;
+        } else {
+            Data.scroll -= 8;
+            if (Data.scroll < 0) {
+                Data.scroll = 0;
+            }
+        }
+        if (oldCursor.x != Data.scroll || oldCursor.y != Data.cursor) {
+            menuPtPlaySe(0x44D);
+        }
+    } else if ((key & 2) != 0) {
+        ++Data.cursor;
+        if (Data.cursor + Data.scroll >= total) {
+            --Data.cursor;
+        } else {
+            if (Data.cursor >= 8) {
+                ++Data.scroll;
+                --Data.cursor;
+                sound = 0x10;
                 Data.moveDown = 1;
             } else {
-                se = 0x10;
+                sound = 0x10;
                 Data.moveDown = 0;
             }
-            Data.offset = 30.0f;
+            Data.offset = -30.0f;
         }
-        if (old[0] != Data.scroll || old[1] != Data.cursor) {
-            menuSubCursorAnimeStart();
+    }
+
+    if ((key & 1) != 0 && (Data.cursor > 0 || Data.scroll > 0)) {
+        --Data.cursor;
+        if (Data.cursor < 0) {
+            Data.cursor = 0;
+            --Data.scroll;
+            sound = 0x10;
+            Data.moveDown = 1;
+        } else {
+            sound = 0x10;
+            Data.moveDown = 0;
         }
-        if (se != 0) {
-            menuPtPlaySe(se);
-        }
+        Data.offset = 30.0f;
+    }
+
+    if (oldCursor.x != Data.scroll || oldCursor.y != Data.cursor) {
+        menuSubCursorAnimeStart();
+    }
+    if (sound != 0) {
+        menuPtPlaySe(sound);
     }
 }
 
@@ -408,3 +409,5 @@ u32 getItemNameMsg(unsigned long id) {
 }
 
 }
+
+#pragma force_active reset

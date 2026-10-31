@@ -1,4 +1,5 @@
 #include "pxdvs/GSAPI/GSgfxM/layer_private.h"
+#pragma force_active on
 
 extern "C" {
 LayerNode* GSgfxLayerFindByID(s32);
@@ -8,7 +9,7 @@ void Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(LayerConfigData*);
 void dbgMenuSetLayerID(s32);
 }
 
-extern "C" s32 _menu_extra_layer_id;
+extern "C" { s32 _menu_extra_layer_id; }
 
 extern "C" char* g_layer_names[8] = {
     "background", "background distortion", "main", "main distortion",
@@ -77,7 +78,7 @@ static LayerConfigData _M6_out_bf_layer_config[] = {
     LAYER_ROW(-1, 0, 0, 0, 0, 0, 0),
 };
 struct FloorConfig { LayerConfigData* config; u32 id; };
-static const FloorConfig _floor_layer_config_list[] = {
+static FloorConfig _floor_layer_config_list[] = {
     {_M6_layer_config, 0x99}, {_M6_out_bf_layer_config, 0x21E}, {_evolution_layer_config, 0x386}
 };
 static LayerConfigData* g_empty_layer_config = _empty_layer_config;
@@ -87,48 +88,7 @@ static LayerConfigData* g_menu_layer_config = _menu_layer_config;
 static const FloorConfig* g_floor_layer_config_list = _floor_layer_config_list;
 static u32 g_floor_layer_config_count = 3;
 
-struct FloorLayerConfigInitializer {
-    FloorLayerConfigInitializer() {
-        _empty_layer_config[0].name = g_layer_names[2];
-        _map_layer_config[0].name = g_layer_names[0];
-        _map_layer_config[1].name = g_layer_names[2];
-        _map_layer_config[2].name = g_layer_names[4];
-        _map_layer_config[3].name = g_layer_names[6];
-        _map_layer_config[4].name = g_layer_names[7];
-        _fight_layer_config[0].name = g_layer_names[0];
-        _fight_layer_config[1].name = g_layer_names[1];
-        _fight_layer_config[2].name = g_layer_names[2];
-        _fight_layer_config[3].name = g_layer_names[3];
-        _fight_layer_config[4].name = g_layer_names[4];
-        _fight_layer_config[5].name = g_layer_names[5];
-        _fight_layer_config[6].name = g_layer_names[6];
-        _fight_layer_config[7].name = g_layer_names[7];
-        _menu_layer_config[0].name = g_layer_names[0];
-        _menu_layer_config[2].name = g_layer_names[2];
-        _menu_layer_config[3].name = g_layer_names[4];
-        _menu_layer_config[4].name = g_layer_names[6];
-        _menu_layer_config[5].name = g_layer_names[7];
-        _evolution_layer_config[0].name = g_layer_names[0];
-        _evolution_layer_config[1].name = g_layer_names[2];
-        _evolution_layer_config[2].name = g_layer_names[4];
-        _evolution_layer_config[3].name = g_layer_names[6];
-        _evolution_layer_config[4].name = g_layer_names[7];
-        _M6_layer_config[0].name = g_layer_names[0];
-        _M6_layer_config[1].name = g_layer_names[2];
-        _M6_layer_config[2].name = g_layer_names[4];
-        _M6_layer_config[3].name = g_layer_names[6];
-        _M6_layer_config[4].name = g_layer_names[7];
-        _M6_out_bf_layer_config[0].name = g_layer_names[0];
-        _M6_out_bf_layer_config[1].name = g_layer_names[1];
-        _M6_out_bf_layer_config[2].name = g_layer_names[2];
-        _M6_out_bf_layer_config[3].name = g_layer_names[3];
-        _M6_out_bf_layer_config[4].name = g_layer_names[4];
-        _M6_out_bf_layer_config[5].name = g_layer_names[5];
-        _M6_out_bf_layer_config[6].name = g_layer_names[6];
-        _M6_out_bf_layer_config[7].name = g_layer_names[7];
-    }
-};
-static FloorLayerConfigInitializer g_floorLayerConfigInitializer;
+
 extern "C" void floorLayerConfigLoad(void) {}
 extern "C" s32 floorGetMenuLayerID(void) { return _menu_extra_layer_id; }
 
@@ -176,3 +136,50 @@ extern "C" void floorLayerConfig(u32 floorId, u8 rawType) {
     }
     dbgMenuSetLayerID(GSgfxLayerFindByName_C((char*)"debug menu"));
 }
+
+extern "C" void __sinit_floorLayerConfig_cpp() {
+        _empty_layer_config[0].name = g_layer_names[2];
+        _map_layer_config[0].name = g_layer_names[0];
+        _map_layer_config[1].name = g_layer_names[2];
+        _map_layer_config[2].name = g_layer_names[4];
+        _map_layer_config[3].name = g_layer_names[6];
+        _map_layer_config[4].name = g_layer_names[7];
+        _fight_layer_config[0].name = g_layer_names[0];
+        _fight_layer_config[1].name = g_layer_names[1];
+        _fight_layer_config[2].name = g_layer_names[2];
+        _fight_layer_config[3].name = g_layer_names[3];
+        _fight_layer_config[4].name = g_layer_names[4];
+        _fight_layer_config[5].name = g_layer_names[5];
+        _fight_layer_config[6].name = g_layer_names[6];
+        _fight_layer_config[7].name = g_layer_names[7];
+        _menu_layer_config[0].name = g_layer_names[0];
+        _menu_layer_config[2].name = g_layer_names[2];
+        _menu_layer_config[3].name = g_layer_names[4];
+        _menu_layer_config[4].name = g_layer_names[6];
+        _menu_layer_config[5].name = g_layer_names[7];
+        _evolution_layer_config[0].name = g_layer_names[0];
+        _evolution_layer_config[1].name = g_layer_names[2];
+        _evolution_layer_config[2].name = g_layer_names[4];
+        _evolution_layer_config[3].name = g_layer_names[6];
+        _evolution_layer_config[4].name = g_layer_names[7];
+        _M6_layer_config[0].name = g_layer_names[0];
+        _M6_layer_config[1].name = g_layer_names[2];
+        _M6_layer_config[2].name = g_layer_names[4];
+        _M6_layer_config[3].name = g_layer_names[6];
+        _M6_layer_config[4].name = g_layer_names[7];
+        _M6_out_bf_layer_config[0].name = g_layer_names[0];
+        _M6_out_bf_layer_config[1].name = g_layer_names[1];
+        _M6_out_bf_layer_config[2].name = g_layer_names[2];
+        _M6_out_bf_layer_config[3].name = g_layer_names[3];
+        _M6_out_bf_layer_config[4].name = g_layer_names[4];
+        _M6_out_bf_layer_config[5].name = g_layer_names[5];
+        _M6_out_bf_layer_config[6].name = g_layer_names[6];
+        _M6_out_bf_layer_config[7].name = g_layer_names[7];
+}
+
+// Register the layer-name initialization with runtime startup.
+__declspec(section ".ctors") static void (*const floorLayerInitializers[])(void) = {
+    __sinit_floorLayerConfig_cpp,
+};
+
+#pragma force_active reset

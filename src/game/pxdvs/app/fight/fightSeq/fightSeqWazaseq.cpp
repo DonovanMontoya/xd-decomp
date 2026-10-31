@@ -2215,7 +2215,10 @@ void WS_TEXTURE2(void) {
         fightSeq_JumpWazaSeq(*(u8**)(seq + 1));
         return;
     }
-    value = buf[(u16)(HSD_Rand() % count)];
+    u16 rnd = HSD_Rand();
+    s32* selected = buf;
+    selected += (u16)(rnd % count);
+    value = *selected;
     if (value < 0) {
         fightSeq_JumpWazaSeq(*(u8**)(seq + 1));
         return;
@@ -2952,7 +2955,9 @@ jump:
         return;
     }
     rnd = HSD_Rand();
-    zokusei = buf[(u8)(rnd % count)];
+    s32* selected = buf;
+    selected += (u8)(rnd % count);
+    zokusei = *selected;
     if (zokusei < 0) {
         goto jump;
     }

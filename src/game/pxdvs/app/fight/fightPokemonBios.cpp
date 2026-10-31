@@ -1,670 +1,836 @@
-#include <game/pxdvs/app/pokemon/pokemonFightRecords.hpp>
+#include <dolphin/types.h>
 
-#include <libc/stddef.h>
-#include <libc/string.h>
-template <typename T> struct FightCopyValue { T value; };
-template <int N> struct FightCopyWords { u32 words[N]; };
-struct FightEnemyBiosLayout {
-    FightOutPokemon* target;
-    u16 oumuWazaDataId, initHp, damage, reserved0A;
+extern "C" void* memcpy(void*, const void*, u32);
+struct Pokemon {
+    u8 data[0xC4];
+    Pokemon& operator=(const Pokemon& o) {
+        memcpy(this, &o, 0xC4);
+        return *this;
+    }
 };
-typedef char EnemyBiosSize[sizeof(FightEnemyBiosLayout) == sizeof(FightOutPokemonEnemy) ? 1 : -1];
-typedef char HensinMotoOffset[offsetof(FightOutPokemon, hensinMotoPkxId) == 0x7b8 ? 1 : -1];
+struct u64x { u32 a, b; };
+struct Joutai16 { u32 w[4]; };
+struct ArrA { u64x v[4]; };
+struct ArrB { Joutai16 v[32]; };
+struct ArrJ { Joutai16 v[0x34]; };
+struct FightWazaBuf { u32 w[43]; };
+struct FightItemBuf { u32 w[2]; };
+struct ActionBuf { u32 w[12]; };
+struct EnemySlot { u32 target; u16 oumuWaza; u16 initHp; u16 damage; u16 pad; };
 
+struct FightPokemon {
+    u32 moto;
+    Pokemon buff;
+    Joutai16 joutai[1];
+    s16 entryId;
+    u8 darkOut0;
+    u8 darkOut1;
+    u8 darkOut2;
+    u8 darkOut3;
+    u16 pad;
+};
+
+struct FightOutPokemon {
+    u32 moto;
+    u32 fightPokemon;
+    FightPokemon hensin;
+    ArrA a;
+    ArrB b;
+    ArrJ joutai;
+    FightWazaBuf waza;
+    FightWazaBuf keepWaza;
+    FightItemBuf item;
+    u32 x7a8;
+    u32 sequence;
+    u8 abi0, abi1, abi2, abi3, abi4, abi5, abi6, abi7;
+    u16 hensinMotoPkxId;
+    u16 s7ba;
+    u16 turnCount;
+    s16 meet[12];
+    ActionBuf action;
+    u16 zokusei[2];
+    u16 tokusei;
+    u32 wazaMenuCur;
+    u8 g0, g1, g2, g3;
+    u16 sketch, lastSelect, lastUse, lastRecv, hitWaza, hitZ;
+    s16 gamanValue;
+    u16 gamanTarget, oumu, s82a;
+    u8 namake, successCnt;
+    u16 usedItem, stockItem, s832;
+    s16 damageAtkValue;
+    u16 damageAtkTarget;
+    s16 damageSpeValue;
+    u16 damageSpeTarget;
+    u8 flag0; u8 flag1; u8 flag2; u8 flag3; u8 flag4; u8 flag5; u8 flag6; u8 flag7; u8 flag8; u8 flag9; u8 flag10; u8 flag11; u8 flag12; u8 flag13; u8 flag14; u8 flag15; u8 flag16; u8 flag17; u8 flag18; u8 flag19; u8 flag20;
+    u32 kaigara;
+    s16 myAtkValue;
+    u16 myAtkTarget;
+    s16 mySpeValue;
+    u16 mySpeTarget;
+    u8 kizetu, u861;
+    s16 irekaeTarget;
+    EnemySlot enemy[4];
+};
+
+#pragma optimize_for_size on
 extern "C" {
-FightOutPokemon* __as__15FightOutPokemonFRC15FightOutPokemon(FightOutPokemon*, const FightOutPokemon*);
-void fightOutPokemonBiosCopy(FightOutPokemon* target, const FightOutPokemon* source) {
-    if (target && source) __as__15FightOutPokemonFRC15FightOutPokemon(target, source);
-}
-
-FightOutPokemon* __as__15FightOutPokemonFRC15FightOutPokemon(FightOutPokemon* target, const FightOutPokemon* source) {
-    target->motoFightPokemon = source->motoFightPokemon;
-    target->fightPokemon = source->fightPokemon;
-    target->fightPokemonHensinBuff.motoPokemon = source->fightPokemonHensinBuff.motoPokemon;
-    memcpy(&target->fightPokemonHensinBuff.pokemonBuff, &source->fightPokemonHensinBuff.pokemonBuff, 0xc4);
-    *(FightCopyWords<4>*)&target->fightPokemonHensinBuff.state.joutai = *(const FightCopyWords<4>*)&source->fightPokemonHensinBuff.state.joutai;
-    target->fightPokemonHensinBuff.state.entryId = source->fightPokemonHensinBuff.state.entryId;
-    target->fightPokemonHensinBuff.state.catchEntryFlag = source->fightPokemonHensinBuff.state.catchEntryFlag;
-    target->fightPokemonHensinBuff.state.levelUpFlag = source->fightPokemonHensinBuff.state.levelUpFlag;
-    target->fightPokemonHensinBuff.state.darkOutFlag = source->fightPokemonHensinBuff.state.darkOutFlag;
-    target->fightPokemonHensinBuff.state.hokakuFlag = source->fightPokemonHensinBuff.state.hokakuFlag;
-    target->fightPokemonHensinBuff.state.reserved0de = source->fightPokemonHensinBuff.state.reserved0de;
-    *(FightCopyWords<8>*)&target->fightPokemonHensinBuff.state.reserved0e0 = *(const FightCopyWords<8>*)&source->fightPokemonHensinBuff.state.reserved0e0;
-    *(FightCopyWords<128>*)&target->fightPokemonHensinBuff.state.aiDamage = *(const FightCopyWords<128>*)&source->fightPokemonHensinBuff.state.aiDamage;
-    *(FightCopyWords<208>*)&target->joutai = *(const FightCopyWords<208>*)&source->joutai;
-    *(FightCopyWords<43>*)&target->fightWaza = *(const FightCopyWords<43>*)&source->fightWaza;
-    *(FightCopyWords<43>*)&target->keepFightWaza = *(const FightCopyWords<43>*)&source->keepFightWaza;
-    *(FightCopyWords<3>*)&target->fightItem = *(const FightCopyWords<3>*)&source->fightItem;
-    target->sequence = source->sequence;
-    target->abicntPhyAtk = source->abicntPhyAtk;
-    target->abicntPhyDef = source->abicntPhyDef;
-    target->abicntSpeAtk = source->abicntSpeAtk;
-    target->abicntSpeDef = source->abicntSpeDef;
-    target->abicntNimbleness = source->abicntNimbleness;
-    target->abicntAverage = source->abicntAverage;
-    target->abicntAvoid = source->abicntAvoid;
-    target->reserved7b7 = source->reserved7b7;
-    target->hensinMotoPkxId = source->hensinMotoPkxId;
-    target->reserved7ba = source->reserved7ba;
-    target->fightoutTurnCount = source->fightoutTurnCount;
-    *(FightCopyWords<6>*)&target->meetEnemyFightPokemonEntryId = *(const FightCopyWords<6>*)&source->meetEnemyFightPokemonEntryId;
-    *(FightCopyWords<12>*)&target->fightActionBuff = *(const FightCopyWords<12>*)&source->fightActionBuff;
-    *(FightCopyWords<1>*)&target->zokuseiDataId = *(const FightCopyWords<1>*)&source->zokuseiDataId;
-    *(FightCopyValue<u16>*)&target->tokuseiDataId = *(const FightCopyValue<u16>*)&source->tokuseiDataId;
-    *(FightCopyValue<u32>*)&target->wazaMenuCur = *(const FightCopyValue<u32>*)&source->wazaMenuCur;
-    *(FightCopyValue<u8>*)&target->comboFuncId = *(const FightCopyValue<u8>*)&source->comboFuncId;
-    *(FightCopyValue<u8>*)&target->fixAiWaza = *(const FightCopyValue<u8>*)&source->fixAiWaza;
-    *(FightCopyValue<u8>*)&target->fixAiDef = *(const FightCopyValue<u8>*)&source->fixAiDef;
-    target->reserved817[0] = source->reserved817[0];
-    *(FightCopyValue<u16>*)&target->sketchWazaDataId = *(const FightCopyValue<u16>*)&source->sketchWazaDataId;
-    *(FightCopyValue<u16>*)&target->lastSelectWazaDataId = *(const FightCopyValue<u16>*)&source->lastSelectWazaDataId;
-    *(FightCopyValue<u16>*)&target->lastUseWazaDataId = *(const FightCopyValue<u16>*)&source->lastUseWazaDataId;
-    *(FightCopyValue<u16>*)&target->lastReceiveWazaTargetDataId = *(const FightCopyValue<u16>*)&source->lastReceiveWazaTargetDataId;
-    *(FightCopyValue<u16>*)&target->hitWazaDataId = *(const FightCopyValue<u16>*)&source->hitWazaDataId;
-    *(FightCopyValue<u16>*)&target->hitWazaZokuseiDataId = *(const FightCopyValue<u16>*)&source->hitWazaZokuseiDataId;
-    *(FightCopyValue<s16>*)&target->gamanDamageValue = *(const FightCopyValue<s16>*)&source->gamanDamageValue;
-    *(FightCopyValue<u16>*)&target->gamanDamageTargetId = *(const FightCopyValue<u16>*)&source->gamanDamageTargetId;
-    *(FightCopyValue<u16>*)&target->oumuWazaDataId = *(const FightCopyValue<u16>*)&source->oumuWazaDataId;
-    *(FightCopyValue<u16>*)&target->oumuWazaAllyDataId = *(const FightCopyValue<u16>*)&source->oumuWazaAllyDataId;
-    *(FightCopyValue<u8>*)&target->namakeFlag = *(const FightCopyValue<u8>*)&source->namakeFlag;
-    *(FightCopyValue<u8>*)&target->successCnt = *(const FightCopyValue<u8>*)&source->successCnt;
-    *(FightCopyValue<u16>*)&target->usedItemDataId = *(const FightCopyValue<u16>*)&source->usedItemDataId;
-    *(FightCopyValue<u16>*)&target->stockItemDataId = *(const FightCopyValue<u16>*)&source->stockItemDataId;
-    *(u16*)target->reserved832 = *(const u16*)source->reserved832;
-    *(FightCopyValue<s16>*)&target->damageAtkValue = *(const FightCopyValue<s16>*)&source->damageAtkValue;
-    *(FightCopyValue<u16>*)&target->damageAtkTargetId = *(const FightCopyValue<u16>*)&source->damageAtkTargetId;
-    *(FightCopyValue<s16>*)&target->damageSpeValue = *(const FightCopyValue<s16>*)&source->damageSpeValue;
-    *(FightCopyValue<u16>*)&target->damageSpeTargetId = *(const FightCopyValue<u16>*)&source->damageSpeTargetId;
-    *(FightCopyValue<u8>*)&target->mahiNoAttackFlag = *(const FightCopyValue<u8>*)&source->mahiNoAttackFlag;
-    *(FightCopyValue<u8>*)&target->konranMyselfAttackFlag = *(const FightCopyValue<u8>*)&source->konranMyselfAttackFlag;
-    *(FightCopyValue<u8>*)&target->outWazaKoukanaiFlag = *(const FightCopyValue<u8>*)&source->outWazaKoukanaiFlag;
-    *(FightCopyValue<u8>*)&target->tameWazaFlag = *(const FightCopyValue<u8>*)&source->tameWazaFlag;
-    *(FightCopyValue<u8>*)&target->itemNigeruFlag = *(const FightCopyValue<u8>*)&source->itemNigeruFlag;
-    *(FightCopyValue<u8>*)&target->huuinNoAttackFlag = *(const FightCopyValue<u8>*)&source->huuinNoAttackFlag;
-    *(FightCopyValue<u8>*)&target->meroMeroNoAttackFlag = *(const FightCopyValue<u8>*)&source->meroMeroNoAttackFlag;
-    *(FightCopyValue<u8>*)&target->kanashibariNoAttackFlag = *(const FightCopyValue<u8>*)&source->kanashibariNoAttackFlag;
-    *(FightCopyValue<u8>*)&target->chouhatsuNoAttackFlag = *(const FightCopyValue<u8>*)&source->chouhatsuNoAttackFlag;
-    *(FightCopyValue<u8>*)&target->ichamonNoAttackFlag = *(const FightCopyValue<u8>*)&source->ichamonNoAttackFlag;
-    *(FightCopyValue<u8>*)&target->hirumuNoAttackFlag = *(const FightCopyValue<u8>*)&source->hirumuNoAttackFlag;
-    *(FightCopyValue<u8>*)&target->passPpdecFlag = *(const FightCopyValue<u8>*)&source->passPpdecFlag;
-    *(FightCopyValue<u8>*)&target->fightActionFlag = *(const FightCopyValue<u8>*)&source->fightActionFlag;
-    *(FightCopyValue<u8>*)&target->doClearbodyFlag = *(const FightCopyValue<u8>*)&source->doClearbodyFlag;
-    *(FightCopyValue<u8>*)&target->receivesWazaHiraishinFlag = *(const FightCopyValue<u8>*)&source->receivesWazaHiraishinFlag;
-    *(FightCopyValue<u8>*)&target->vanishoffFlag = *(const FightCopyValue<u8>*)&source->vanishoffFlag;
-    *(FightCopyValue<u8>*)&target->doIkakuFlag = *(const FightCopyValue<u8>*)&source->doIkakuFlag;
-    *(FightCopyValue<u8>*)&target->doTraceFlag = *(const FightCopyValue<u8>*)&source->doTraceFlag;
-    *(FightCopyValue<u8>*)&target->noPressureFlag = *(const FightCopyValue<u8>*)&source->noPressureFlag;
-    *(FightCopyValue<u8>*)&target->irekaetaFlag = *(const FightCopyValue<u8>*)&source->irekaetaFlag;
-    *(FightCopyValue<u8>*)&target->itemKoraetaFlag = *(const FightCopyValue<u8>*)&source->itemKoraetaFlag;
-    *(FightCopyValue<s32>*)&target->kaigaraDamageValue = *(const FightCopyValue<s32>*)&source->kaigaraDamageValue;
-    *(FightCopyValue<s16>*)&target->myselfDamageAtkValue = *(const FightCopyValue<s16>*)&source->myselfDamageAtkValue;
-    *(FightCopyValue<u16>*)&target->myselfDamageAtkTargetId = *(const FightCopyValue<u16>*)&source->myselfDamageAtkTargetId;
-    *(FightCopyValue<s16>*)&target->myselfDamageSpeValue = *(const FightCopyValue<s16>*)&source->myselfDamageSpeValue;
-    *(FightCopyValue<u16>*)&target->myselfDamageSpeTargetId = *(const FightCopyValue<u16>*)&source->myselfDamageSpeTargetId;
-    *(FightCopyValue<u8>*)&target->kizetuFlag = *(const FightCopyValue<u8>*)&source->kizetuFlag;
-    *(FightCopyValue<u8>*)&target->unknown861 = *(const FightCopyValue<u8>*)&source->unknown861;
-    *(FightCopyValue<s16>*)&target->irekaeTargetEntryId = *(const FightCopyValue<s16>*)&source->irekaeTargetEntryId;
-    *(FightCopyWords<12>*)&target->enemy = *(const FightCopyWords<12>*)&source->enemy;
-    return target;
-}
 
+void fightOutPokemonBiosCopy(FightOutPokemon* dst, const FightOutPokemon* src) {
+    if (dst == 0) { return; }
+    if (src == 0) { return; }
+    *dst = *src;
+}
 
-void fightOutPokemonBiosSetOumuWazaDataId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->oumuWazaDataId = value;
+void fightOutPokemonBiosSetOumuWazaDataId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x828) = v;
 }
 
-void fightOutPokemonBiosSetGamanDamageTargetId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->gamanDamageTargetId = value;
+void fightOutPokemonBiosSetGamanDamageTargetId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x826) = v;
 }
 
-void fightOutPokemonBiosSetGamanDamageValue(FightOutPokemon* poke, s16 value) {
-    if (poke != nullptr) poke->gamanDamageValue = value;
+void fightOutPokemonBiosSetGamanDamageValue(u8* p, s16 v) {
+    if (p == 0) return;
+    *(s16*)(p + 0x824) = v;
 }
 
-void fightOutPokemonBiosSetHitWazaZokuseiDataId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->hitWazaZokuseiDataId = value;
+void fightOutPokemonBiosSetHitWazaZokuseiDataId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x822) = v;
 }
 
-void fightOutPokemonBiosSetHitWazaDataId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->hitWazaDataId = value;
+void fightOutPokemonBiosSetHitWazaDataId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x820) = v;
 }
 
-void fightOutPokemonBiosSetLastReceiveWazaTargetDataId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->lastReceiveWazaTargetDataId = value;
+void fightOutPokemonBiosSetLastReceiveWazaTargetDataId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x81e) = v;
 }
 
-void fightOutPokemonBiosSetLastUseWazaDataId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->lastUseWazaDataId = value;
+void fightOutPokemonBiosSetLastUseWazaDataId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x81c) = v;
 }
 
-void fightOutPokemonBiosSetLastSelectWazaDataId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->lastSelectWazaDataId = value;
+void fightOutPokemonBiosSetLastSelectWazaDataId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x81a) = v;
 }
 
-void fightOutPokemonBiosSetSketchWazaDataId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->sketchWazaDataId = value;
+void fightOutPokemonBiosSetSketchWazaDataId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x818) = v;
 }
 
-FightWaza* fightOutPokemonBiosGetKeepFightWazaPtr(FightOutPokemon* poke) {
-    if (poke == nullptr) { return nullptr; } else { return &poke->keepFightWaza; }
+void* fightOutPokemonBiosGetKeepFightWazaPtr(u8* p) {
+    if (p == 0) return 0;
+    return p + 0x6f4;
 }
 
-u16 fightOutPokemonBiosGetOumuWazaDataId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->oumuWazaDataId; }
+u16 fightOutPokemonBiosGetOumuWazaDataId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x828);
 }
 
-u16 fightOutPokemonBiosGetGamanDamageTargetId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->gamanDamageTargetId; }
+u16 fightOutPokemonBiosGetGamanDamageTargetId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x826);
 }
 
-int fightOutPokemonBiosGetGamanDamageValue(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->gamanDamageValue; }
+s16 fightOutPokemonBiosGetGamanDamageValue(u8* p) {
+    if (p == 0) return 0;
+    return *(s16*)(p + 0x824);
 }
 
-u16 fightOutPokemonBiosGetHitWazaZokuseiDataId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 9; } else { return poke->hitWazaZokuseiDataId; }
+u16 fightOutPokemonBiosGetHitWazaZokuseiDataId(u8* p) {
+    if (p == 0) return 9;
+    return *(u16*)(p + 0x822);
 }
 
-u16 fightOutPokemonBiosGetHitWazaDataId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->hitWazaDataId; }
+u16 fightOutPokemonBiosGetHitWazaDataId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x820);
 }
 
-u16 fightOutPokemonBiosGetLastReceiveWazaTargetDataId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->lastReceiveWazaTargetDataId; }
+u16 fightOutPokemonBiosGetLastReceiveWazaTargetDataId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x81e);
 }
 
-u16 fightOutPokemonBiosGetLastUseWazaDataId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->lastUseWazaDataId; }
+u16 fightOutPokemonBiosGetLastUseWazaDataId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x81c);
 }
 
-u16 fightOutPokemonBiosGetLastSelectWazaDataId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->lastSelectWazaDataId; }
+u16 fightOutPokemonBiosGetLastSelectWazaDataId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x81a);
 }
 
-u16 fightOutPokemonBiosGetSketchWazaDataId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->sketchWazaDataId; }
+u16 fightOutPokemonBiosGetSketchWazaDataId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x818);
 }
 
-FightOutPokemonEnemy* fightOutPokemonBiosGetFightOutPokemonEnemyPtr(FightOutPokemon* poke,u16 index) {
-    if (poke == nullptr) return nullptr;
-    if (index >= 4) return nullptr;
-    return &poke->enemy[index];
+void fightOutPokemonEnemyBiosSetDamage(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x8) = v;
 }
 
-void fightOutPokemonBiosSetIrekaeTargetEntryId(FightOutPokemon* poke, s16 value) {
-    if (poke != nullptr) poke->irekaeTargetEntryId = value;
+void fightOutPokemonEnemyBiosSetInitHp(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x6) = v;
 }
 
-int fightOutPokemonBiosGetIrekaeTargetEntryId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return -1; } else { return poke->irekaeTargetEntryId; }
+void fightOutPokemonEnemyBiosSetOumuWazaDataId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x4) = v;
 }
 
-void fightOutPokemonBiosSetKizetuFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->kizetuFlag = value;
+void fightOutPokemonEnemyBiosSetTargetFightOutPokemonPtr(u8* p, u32 v) {
+    if (p == 0) return;
+    *(u32*)(p + 0x0) = v;
 }
 
-u8 fightOutPokemonBiosGetKizetuFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->kizetuFlag; }
+u16 fightOutPokemonEnemyBiosGetDamage(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x8);
 }
 
-void fightOutPokemonBiosSetMyselfDamageSpeTargetId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->myselfDamageSpeTargetId = value;
+u16 fightOutPokemonEnemyBiosGetInitHp(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x6);
 }
 
-void fightOutPokemonBiosSetMyselfDamageSpeValue(FightOutPokemon* poke, s16 value) {
-    if (poke != nullptr) poke->myselfDamageSpeValue = value;
+u16 fightOutPokemonEnemyBiosGetOumuWazaDataId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x4);
 }
 
-void fightOutPokemonBiosSetMyselfDamageAtkTargetId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->myselfDamageAtkTargetId = value;
+u32 fightOutPokemonEnemyBiosGetTargetFightOutPokemonPtr(u8* p) {
+    if (p == 0) return 0;
+    return *(u32*)(p + 0x0);
 }
 
-void fightOutPokemonBiosSetMyselfDamageAtkValue(FightOutPokemon* poke, s16 value) {
-    if (poke != nullptr) poke->myselfDamageAtkValue = value;
+void* fightOutPokemonBiosGetFightOutPokemonEnemyPtr(u8* p, u16 i) {
+    if (p == 0) return 0;
+    if (i >= 4) return 0;
+    return p + 0x864 + i * 12;
 }
 
-void fightOutPokemonBiosSetKaigaraDamageValue(FightOutPokemon* poke, s32 value) {
-    if (poke != nullptr) poke->kaigaraDamageValue = value;
+void fightOutPokemonBiosSetIrekaeTargetEntryId(u8* p, s16 v) {
+    if (p == 0) return;
+    *(s16*)(p + 0x862) = v;
 }
 
-void fightOutPokemonBiosSetItemKoraetaFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->itemKoraetaFlag = value;
+s16 fightOutPokemonBiosGetIrekaeTargetEntryId(u8* p) {
+    if (p == 0) return -1;
+    return *(s16*)(p + 0x862);
 }
 
-void fightOutPokemonBiosSetIrekaetaFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->irekaetaFlag = value;
+void fightOutPokemonBiosSetKizetuFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x860) = v;
 }
 
-void fightOutPokemonBiosSetNoPressureFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->noPressureFlag = value;
+u8 fightOutPokemonBiosGetKizetuFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x860);
 }
 
-void fightOutPokemonBiosSetDoTraceFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->doTraceFlag = value;
+void fightOutPokemonBiosSetMyselfDamageSpeTargetId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x85e) = v;
 }
 
-void fightOutPokemonBiosSetDoIkakuFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->doIkakuFlag = value;
+void fightOutPokemonBiosSetMyselfDamageSpeValue(u8* p, s16 v) {
+    if (p == 0) return;
+    *(s16*)(p + 0x85c) = v;
 }
 
-void fightOutPokemonBiosSetVanishoffFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->vanishoffFlag = value;
+void fightOutPokemonBiosSetMyselfDamageAtkTargetId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x85a) = v;
 }
 
-void fightOutPokemonBiosSetReceivesWazaHiraishinFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->receivesWazaHiraishinFlag = value;
+void fightOutPokemonBiosSetMyselfDamageAtkValue(u8* p, s16 v) {
+    if (p == 0) return;
+    *(s16*)(p + 0x858) = v;
 }
 
-void fightOutPokemonBiosSetDoClearbodyFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->doClearbodyFlag = value;
+void fightOutPokemonBiosSetKaigaraDamageValue(u8* p, u32 v) {
+    if (p == 0) return;
+    *(u32*)(p + 0x854) = v;
 }
 
-void fightOutPokemonBiosSetFightActionFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->fightActionFlag = value;
+void fightOutPokemonBiosSetItemKoraetaFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x850) = v;
 }
 
-void fightOutPokemonBiosSetPassPpdecFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->passPpdecFlag = value;
+void fightOutPokemonBiosSetIrekaetaFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x84f) = v;
 }
 
-void fightOutPokemonBiosSetHirumuNoAttackFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->hirumuNoAttackFlag = value;
+void fightOutPokemonBiosSetNoPressureFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x84e) = v;
 }
 
-void fightOutPokemonBiosSetIchamonNoAttackFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->ichamonNoAttackFlag = value;
+void fightOutPokemonBiosSetDoTraceFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x84d) = v;
 }
 
-void fightOutPokemonBiosSetChouhatsuNoAttackFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->chouhatsuNoAttackFlag = value;
+void fightOutPokemonBiosSetDoIkakuFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x84c) = v;
 }
 
-void fightOutPokemonBiosSetKanashibariNoAttackFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->kanashibariNoAttackFlag = value;
+void fightOutPokemonBiosSetVanishoffFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x84b) = v;
 }
 
-void fightOutPokemonBiosSetMeroMeroNoAttackFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->meroMeroNoAttackFlag = value;
+void fightOutPokemonBiosSetReceivesWazaHiraishinFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x84a) = v;
 }
 
-void fightOutPokemonBiosSetHuuinNoAttackFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->huuinNoAttackFlag = value;
+void fightOutPokemonBiosSetDoClearbodyFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x849) = v;
 }
 
-void fightOutPokemonBiosSetItemNigeruFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->itemNigeruFlag = value;
+void fightOutPokemonBiosSetFightActionFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x848) = v;
 }
 
-void fightOutPokemonBiosSetTameWazaFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->tameWazaFlag = value;
+void fightOutPokemonBiosSetPassPpdecFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x847) = v;
 }
 
-void fightOutPokemonBiosSetOutWazaKoukanaiFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->outWazaKoukanaiFlag = value;
+void fightOutPokemonBiosSetHirumuNoAttackFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x846) = v;
 }
 
-void fightOutPokemonBiosSetKonranMyselfAttackFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->konranMyselfAttackFlag = value;
+void fightOutPokemonBiosSetIchamonNoAttackFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x845) = v;
 }
 
-void fightOutPokemonBiosSetMahiNoAttackFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->mahiNoAttackFlag = value;
+void fightOutPokemonBiosSetChouhatsuNoAttackFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x844) = v;
 }
 
-int fightOutPokemonBiosGetMyselfDamageSpeValue(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->myselfDamageSpeValue; }
+void fightOutPokemonBiosSetKanashibariNoAttackFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x843) = v;
 }
 
-int fightOutPokemonBiosGetMyselfDamageAtkValue(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->myselfDamageAtkValue; }
+void fightOutPokemonBiosSetMeroMeroNoAttackFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x842) = v;
 }
 
-s32 fightOutPokemonBiosGetKaigaraDamageValue(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->kaigaraDamageValue; }
+void fightOutPokemonBiosSetHuuinNoAttackFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x841) = v;
 }
 
-u8 fightOutPokemonBiosGetItemKoraetaFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->itemKoraetaFlag; }
+void fightOutPokemonBiosSetItemNigeruFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x840) = v;
 }
 
-u8 fightOutPokemonBiosGetIrekaetaFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->irekaetaFlag; }
+void fightOutPokemonBiosSetTameWazaFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x83f) = v;
 }
 
-u8 fightOutPokemonBiosGetNoPressureFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->noPressureFlag; }
+void fightOutPokemonBiosSetOutWazaKoukanaiFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x83e) = v;
 }
 
-u8 fightOutPokemonBiosGetDoTraceFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->doTraceFlag; }
+void fightOutPokemonBiosSetKonranMyselfAttackFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x83d) = v;
 }
 
-u8 fightOutPokemonBiosGetDoIkakuFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->doIkakuFlag; }
+void fightOutPokemonBiosSetMahiNoAttackFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x83c) = v;
 }
 
-u8 fightOutPokemonBiosGetVanishoffFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->vanishoffFlag; }
+u16 fightOutPokemonBiosGetMyselfDamageSpeTargetId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x85e);
 }
 
-u8 fightOutPokemonBiosGetReceivesWazaHiraishinFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->receivesWazaHiraishinFlag; }
+s16 fightOutPokemonBiosGetMyselfDamageSpeValue(u8* p) {
+    if (p == 0) return 0;
+    return *(s16*)(p + 0x85c);
 }
 
-u8 fightOutPokemonBiosGetDoClearbodyFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->doClearbodyFlag; }
+u16 fightOutPokemonBiosGetMyselfDamageAtkTargetId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x85a);
 }
 
-u8 fightOutPokemonBiosGetFightActionFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->fightActionFlag; }
+s16 fightOutPokemonBiosGetMyselfDamageAtkValue(u8* p) {
+    if (p == 0) return 0;
+    return *(s16*)(p + 0x858);
 }
 
-u8 fightOutPokemonBiosGetPassPpdecFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->passPpdecFlag; }
+u32 fightOutPokemonBiosGetKaigaraDamageValue(u8* p) {
+    if (p == 0) return 0;
+    return *(u32*)(p + 0x854);
 }
 
-u8 fightOutPokemonBiosGetTameWazaFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->tameWazaFlag; }
+u8 fightOutPokemonBiosGetItemKoraetaFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x850);
 }
 
-u8 fightOutPokemonBiosGetKonranMyselfAttackFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->konranMyselfAttackFlag; }
+u8 fightOutPokemonBiosGetIrekaetaFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x84f);
 }
 
-u32* fightOutPokemonBiosGetWazaMenuCurPtr(FightOutPokemon* poke) {
-    if (poke == nullptr) { return nullptr; } else { return &poke->wazaMenuCur; }
+u8 fightOutPokemonBiosGetNoPressureFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x84e);
 }
 
-void fightOutPokemonBiosSetTokuseiDataId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->tokuseiDataId = value;
+u8 fightOutPokemonBiosGetDoTraceFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x84d);
 }
 
-u16 fightOutPokemonBiosGetTokuseiDataId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->tokuseiDataId; }
+u8 fightOutPokemonBiosGetDoIkakuFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x84c);
 }
 
-void fightOutPokemonBiosSetZokuseiDataId(FightOutPokemon* poke,u8 index,u16 value) {
-    if (poke == nullptr) return;
-    if (index >= 2) return;
-    poke->zokuseiDataId[index] = value;
+u8 fightOutPokemonBiosGetVanishoffFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x84b);
 }
 
-u16 fightOutPokemonBiosGetZokuseiDataId(FightOutPokemon* poke,u8 index) {
-    if (poke == nullptr) return 0;
-    if (index >= 2) return 0;
-    return poke->zokuseiDataId[index];
+u8 fightOutPokemonBiosGetReceivesWazaHiraishinFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x84a);
 }
 
-FightActionBuff* fightOutPokemonBiosGetFightActionBuffPtr(FightOutPokemon* poke) {
-    if (poke == nullptr) { return nullptr; } else { return &poke->fightActionBuff; }
+u8 fightOutPokemonBiosGetDoClearbodyFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x849);
 }
 
-void fightOutPokemonBiosSetMeetEnemyFightPokemonEntryId(FightOutPokemon* poke,u8 index,s16 value) {
-    if (poke == nullptr) return;
-    if (index >= 12) return;
-    poke->meetEnemyFightPokemonEntryId[index] = value;
+u8 fightOutPokemonBiosGetFightActionFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x848);
 }
 
-int fightOutPokemonBiosGetMeetEnemyFightPokemonEntryId(FightOutPokemon* poke,u8 index) {
-    if (poke == nullptr) return -1;
-    if (index >= 12) return -1;
-    return poke->meetEnemyFightPokemonEntryId[index];
+u8 fightOutPokemonBiosGetPassPpdecFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x847);
 }
 
-void fightOutPokemonBiosSetDamageSpeTargetId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->damageSpeTargetId = value;
+u8 fightOutPokemonBiosGetHirumuNoAttackFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x846);
 }
 
-void fightOutPokemonBiosSetDamageSpeValue(FightOutPokemon* poke, s16 value) {
-    if (poke != nullptr) poke->damageSpeValue = value;
+u8 fightOutPokemonBiosGetIchamonNoAttackFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x845);
 }
 
-void fightOutPokemonBiosSetDamageAtkTargetId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->damageAtkTargetId = value;
+u8 fightOutPokemonBiosGetChouhatsuNoAttackFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x844);
 }
 
-void fightOutPokemonBiosSetDamageAtkValue(FightOutPokemon* poke, s16 value) {
-    if (poke != nullptr) poke->damageAtkValue = value;
+u8 fightOutPokemonBiosGetKanashibariNoAttackFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x843);
 }
 
-void fightOutPokemonBiosSetSuccessCnt(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->successCnt = value;
+u8 fightOutPokemonBiosGetMeroMeroNoAttackFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x842);
 }
 
-void fightOutPokemonBiosSetStockItemDataId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->stockItemDataId = value;
+u8 fightOutPokemonBiosGetHuuinNoAttackFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x841);
 }
 
-void fightOutPokemonBiosSetUsedItemDataId(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->usedItemDataId = value;
+u8 fightOutPokemonBiosGetItemNigeruFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x840);
 }
 
-void fightOutPokemonBiosSetNamakeFlag(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->namakeFlag = value;
+u8 fightOutPokemonBiosGetTameWazaFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x83f);
 }
 
-u16 fightOutPokemonBiosGetDamageSpeTargetId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->damageSpeTargetId; }
+u8 fightOutPokemonBiosGetOutWazaKoukanaiFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x83e);
 }
 
-int fightOutPokemonBiosGetDamageSpeValue(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->damageSpeValue; }
+u8 fightOutPokemonBiosGetKonranMyselfAttackFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x83d);
 }
 
-u16 fightOutPokemonBiosGetDamageAtkTargetId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->damageAtkTargetId; }
+u8 fightOutPokemonBiosGetMahiNoAttackFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x83c);
 }
 
-int fightOutPokemonBiosGetDamageAtkValue(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->damageAtkValue; }
+void* fightOutPokemonBiosGetWazaMenuCurPtr(u8* p) {
+    if (p == 0) return 0;
+    return p + 0x810;
 }
 
-u8 fightOutPokemonBiosGetSuccessCnt(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->successCnt; }
+void fightOutPokemonBiosSetTokuseiDataId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x80c) = v;
 }
 
-u16 fightOutPokemonBiosGetStockItemDataId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->stockItemDataId; }
+u16 fightOutPokemonBiosGetTokuseiDataId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x80c);
 }
 
-u16 fightOutPokemonBiosGetUsedItemDataId(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->usedItemDataId; }
+void fightOutPokemonBiosSetZokuseiDataId(u8* p, u8 i, u16 v) {
+    if (p == 0) return;
+    if (i >= 2) return;
+    ((u16*)(p + 0x808))[i] = v;
 }
 
-u8 fightOutPokemonBiosGetNamakeFlag(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->namakeFlag; }
+u16 fightOutPokemonBiosGetZokuseiDataId(u8* p, u8 i) {
+    if (p == 0) return 0;
+    if (i >= 2) return 0;
+    return ((u16*)(p + 0x808))[i];
 }
 
-void fightOutPokemonBiosSetSequencePtr(FightOutPokemon* poke, void* value) {
-    if (poke != nullptr) poke->sequence = value;
+void* fightOutPokemonBiosGetFightActionBuffPtr(u8* p) {
+    if (p == 0) return 0;
+    return p + 0x7d8;
 }
 
-void* fightOutPokemonBiosGetSequencePtr(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->sequence; }
+void fightOutPokemonBiosSetMeetEnemyFightPokemonEntryId(u8* p, u8 i, s16 v) {
+    if (p == 0) return;
+    if (i >= 12) return;
+    ((s16*)(p + 0x7be))[i] = v;
 }
 
-void fightOutPokemonBiosSetFightoutTurnCount(FightOutPokemon* poke, u16 value) {
-    if (poke != nullptr) poke->fightoutTurnCount = value;
+s16 fightOutPokemonBiosGetMeetEnemyFightPokemonEntryId(u8* p, u8 i) {
+    if (p == 0) return -1;
+    if (i >= 12) return -1;
+    return ((s16*)(p + 0x7be))[i];
 }
 
-void fightOutPokemonBiosSetAbicntAverage(FightOutPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->abicntAverage = value;
+void fightOutPokemonBiosSetDamageSpeTargetId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x83a) = v;
 }
 
-void fightOutPokemonBiosSetFightPokemonPtr(FightOutPokemon* poke, FightPokemon* value) {
-    if (poke != nullptr) poke->fightPokemon = value;
+void fightOutPokemonBiosSetDamageSpeValue(u8* p, s16 v) {
+    if (p == 0) return;
+    *(s16*)(p + 0x838) = v;
 }
 
-void fightOutPokemonBiosSetMotoFightPokemonPtr(FightOutPokemon* poke, FightPokemon* value) {
-    if (poke != nullptr) poke->motoFightPokemon = value;
+void fightOutPokemonBiosSetDamageAtkTargetId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x836) = v;
 }
 
-void fightPokemonBiosSetHokakuFlag(FightPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->state.hokakuFlag = value;
+void fightOutPokemonBiosSetDamageAtkValue(u8* p, s16 v) {
+    if (p == 0) return;
+    *(s16*)(p + 0x834) = v;
 }
 
-u8 fightPokemonBiosGetHokakuFlag(FightPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->state.hokakuFlag; }
+void fightOutPokemonBiosSetSuccessCnt(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x82d) = v;
 }
 
-void fightPokemonBiosSetDarkOutFlag(FightPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->state.darkOutFlag = value;
+void fightOutPokemonBiosSetStockItemDataId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x830) = v;
 }
 
-void fightPokemonBiosSetLevelUpFlag(FightPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->state.levelUpFlag = value;
+void fightOutPokemonBiosSetUsedItemDataId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x82e) = v;
 }
 
-void fightPokemonBiosSetCatchEntryFlag(FightPokemon* poke, u8 value) {
-    if (poke != nullptr) poke->state.catchEntryFlag = value;
+void fightOutPokemonBiosSetNamakeFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x82c) = v;
 }
 
-void fightPokemonBiosSetEntryId(FightPokemon* poke, s16 value) {
-    if (poke != nullptr) poke->state.entryId = value;
+u16 fightOutPokemonBiosGetDamageSpeTargetId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x83a);
 }
 
-void fightPokemonBiosSetMotoPokemonPtr(FightPokemon* poke, Pokemon* value) {
-    if (poke != nullptr) poke->motoPokemon = value;
+s16 fightOutPokemonBiosGetDamageSpeValue(u8* p) {
+    if (p == 0) return 0;
+    return *(s16*)(p + 0x838);
 }
 
-u16 fightOutPokemonBiosGetFightoutTurnCount(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->fightoutTurnCount; }
+u16 fightOutPokemonBiosGetDamageAtkTargetId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x836);
 }
 
-u8 fightOutPokemonBiosGetAbicntAvoid(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->abicntAvoid; }
+s16 fightOutPokemonBiosGetDamageAtkValue(u8* p) {
+    if (p == 0) return 0;
+    return *(s16*)(p + 0x834);
 }
 
-u8 fightOutPokemonBiosGetAbicntAverage(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->abicntAverage; }
+u8 fightOutPokemonBiosGetSuccessCnt(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x82d);
 }
 
-u8 fightOutPokemonBiosGetAbicntNimbleness(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->abicntNimbleness; }
+u16 fightOutPokemonBiosGetStockItemDataId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x830);
 }
 
-u8 fightOutPokemonBiosGetAbicntSpeDef(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->abicntSpeDef; }
+u16 fightOutPokemonBiosGetUsedItemDataId(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x82e);
 }
 
-u8 fightOutPokemonBiosGetAbicntSpeAtk(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->abicntSpeAtk; }
+u8 fightOutPokemonBiosGetNamakeFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x82c);
 }
 
-u8 fightOutPokemonBiosGetAbicntPhyDef(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->abicntPhyDef; }
+void fightOutPokemonBiosSetSequencePtr(u8* p, u32 v) {
+    if (p == 0) return;
+    *(u32*)(p + 0x7ac) = v;
 }
 
-u8 fightOutPokemonBiosGetAbicntPhyAtk(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->abicntPhyAtk; }
+u32 fightOutPokemonBiosGetSequencePtr(u8* p) {
+    if (p == 0) return 0;
+    return *(u32*)(p + 0x7ac);
 }
 
-FightItem* fightOutPokemonBiosGetFightItemPtr(FightOutPokemon* poke) {
-    if (poke == nullptr) { return nullptr; } else { return &poke->fightItem; }
+void fightOutPokemonBiosSetFightoutTurnCount(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x7bc) = v;
 }
 
-FightWaza* fightOutPokemonBiosGetFightWazaPtr(FightOutPokemon* poke) {
-    if (poke == nullptr) { return nullptr; } else { return &poke->fightWaza; }
+void fightOutPokemonBiosSetHensinMotoPkxId(u8* p, u16 v) {
+    if (p == 0) return;
+    *(u16*)(p + 0x7b8) = v;
 }
 
-FightJoutai* fightOutPokemonBiosGetFightoutJoutaiPtr(FightOutPokemon* poke,u16 index) {
-    if (poke == nullptr) return nullptr;
-    if (index >= 52) return nullptr;
-    return &poke->joutai[index];
+void fightOutPokemonBiosSetAbicntAvoid(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x7b6) = v;
 }
 
-FightPokemon* fightOutPokemonBiosGetFightPokemonHensinBuffPtr(FightOutPokemon* poke) {
-    if (poke == nullptr) { return nullptr; } else { return &poke->fightPokemonHensinBuff; }
+void fightOutPokemonBiosSetAbicntAverage(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x7b5) = v;
 }
 
-FightPokemon* fightOutPokemonBiosGetFightPokemonPtr(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->fightPokemon; }
+void fightOutPokemonBiosSetAbicntNimbleness(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x7b4) = v;
 }
 
-FightPokemon* fightOutPokemonBiosGetMotoFightPokemonPtr(FightOutPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->motoFightPokemon; }
+void fightOutPokemonBiosSetAbicntSpeDef(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x7b3) = v;
 }
 
-u8 fightPokemonBiosGetDarkOutFlag(FightPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->state.darkOutFlag; }
+void fightOutPokemonBiosSetAbicntSpeAtk(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x7b2) = v;
 }
 
-u8 fightPokemonBiosGetLevelUpFlag(FightPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->state.levelUpFlag; }
+void fightOutPokemonBiosSetAbicntPhyDef(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x7b1) = v;
 }
 
-u8 fightPokemonBiosGetCatchEntryFlag(FightPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->state.catchEntryFlag; }
+void fightOutPokemonBiosSetAbicntPhyAtk(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0x7b0) = v;
 }
 
-int fightPokemonBiosGetEntryId(FightPokemon* poke) {
-    if (poke == nullptr) { return -1; } else { return poke->state.entryId; }
+void fightOutPokemonBiosSetFightPokemonPtr(u8* p, u32 v) {
+    if (p == 0) return;
+    *(u32*)(p + 0x4) = v;
 }
 
-FightJoutai* fightPokemonBiosGetFightJoutaiPtr(FightPokemon* poke,u16 index) {
-    if (poke == nullptr) return nullptr;
-    if (index >= 1) return nullptr;
-    return &poke->state.joutai[index];
+void fightOutPokemonBiosSetMotoFightPokemonPtr(u8* p, u32 v) {
+    if (p == 0) return;
+    *(u32*)(p + 0x0) = v;
 }
 
-Pokemon* fightPokemonBiosGetPokemonBuffPtr(FightPokemon* poke) {
-    if (poke == nullptr) { return nullptr; } else { return &poke->pokemonBuff; }
+void fightPokemonBiosSetHokakuFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0xdd) = v;
 }
 
-Pokemon* fightPokemonBiosGetMotoPokemonPtr(FightPokemon* poke) {
-    if (poke == nullptr) { return 0; } else { return poke->motoPokemon; }
+u8 fightPokemonBiosGetHokakuFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0xdd);
 }
 
+void fightPokemonBiosSetDarkOutFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0xdc) = v;
+}
 
-void fightOutPokemonEnemyBiosSetDamage(FightOutPokemonEnemy* enemy, u16 value) { if (enemy) ((FightEnemyBiosLayout*)enemy)->damage = value; }
+void fightPokemonBiosSetLevelUpFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0xdb) = v;
+}
 
-u16 fightOutPokemonEnemyBiosGetDamage(FightOutPokemonEnemy* enemy) { if (enemy == nullptr) { return 0; } else { return ((FightEnemyBiosLayout*)enemy)->damage; } }
+void fightPokemonBiosSetCatchEntryFlag(u8* p, u8 v) {
+    if (p == 0) return;
+    *(u8*)(p + 0xda) = v;
+}
 
-void fightOutPokemonEnemyBiosSetInitHp(FightOutPokemonEnemy* enemy, u16 value) { if (enemy) ((FightEnemyBiosLayout*)enemy)->initHp = value; }
+void fightPokemonBiosSetEntryId(u8* p, s16 v) {
+    if (p == 0) return;
+    *(s16*)(p + 0xd8) = v;
+}
 
-u16 fightOutPokemonEnemyBiosGetInitHp(FightOutPokemonEnemy* enemy) { if (enemy == nullptr) { return 0; } else { return ((FightEnemyBiosLayout*)enemy)->initHp; } }
+void fightPokemonBiosSetMotoPokemonPtr(u8* p, u32 v) {
+    if (p == 0) return;
+    *(u32*)(p + 0x0) = v;
+}
 
-void fightOutPokemonEnemyBiosSetOumuWazaDataId(FightOutPokemonEnemy* enemy, u16 value) { if (enemy) ((FightEnemyBiosLayout*)enemy)->oumuWazaDataId = value; }
+u16 fightOutPokemonBiosGetFightoutTurnCount(u8* p) {
+    if (p == 0) return 0;
+    return *(u16*)(p + 0x7bc);
+}
 
-u16 fightOutPokemonEnemyBiosGetOumuWazaDataId(FightOutPokemonEnemy* enemy) { if (enemy == nullptr) { return 0; } else { return ((FightEnemyBiosLayout*)enemy)->oumuWazaDataId; } }
+u8 fightOutPokemonBiosGetAbicntAvoid(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x7b6);
+}
 
-void fightOutPokemonEnemyBiosSetTargetFightOutPokemonPtr(FightOutPokemonEnemy* enemy, FightOutPokemon* value) { if (enemy) ((FightEnemyBiosLayout*)enemy)->target = value; }
+u8 fightOutPokemonBiosGetAbicntAverage(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x7b5);
+}
 
-FightOutPokemon* fightOutPokemonEnemyBiosGetTargetFightOutPokemonPtr(FightOutPokemonEnemy* enemy) { if (enemy == nullptr) { return 0; } else { return ((FightEnemyBiosLayout*)enemy)->target; } }
+u8 fightOutPokemonBiosGetAbicntNimbleness(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x7b4);
+}
 
-u16 fightOutPokemonBiosGetMyselfDamageSpeTargetId(FightOutPokemon* poke) { if (poke == nullptr) { return 0; } else { return poke->myselfDamageSpeTargetId; } }
+u8 fightOutPokemonBiosGetAbicntSpeDef(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x7b3);
+}
 
-u16 fightOutPokemonBiosGetMyselfDamageAtkTargetId(FightOutPokemon* poke) { if (poke == nullptr) { return 0; } else { return poke->myselfDamageAtkTargetId; } }
+u8 fightOutPokemonBiosGetAbicntSpeAtk(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x7b2);
+}
 
-u8 fightOutPokemonBiosGetHirumuNoAttackFlag(FightOutPokemon* poke) { if (poke == nullptr) { return 0; } else { return poke->hirumuNoAttackFlag; } }
+u8 fightOutPokemonBiosGetAbicntPhyDef(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x7b1);
+}
 
-u8 fightOutPokemonBiosGetIchamonNoAttackFlag(FightOutPokemon* poke) { if (poke == nullptr) { return 0; } else { return poke->ichamonNoAttackFlag; } }
+u8 fightOutPokemonBiosGetAbicntPhyAtk(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0x7b0);
+}
 
-u8 fightOutPokemonBiosGetChouhatsuNoAttackFlag(FightOutPokemon* poke) { if (poke == nullptr) { return 0; } else { return poke->chouhatsuNoAttackFlag; } }
+void* fightOutPokemonBiosGetFightItemPtr(u8* p) {
+    if (p == 0) return 0;
+    return p + 0x7a0;
+}
 
-u8 fightOutPokemonBiosGetKanashibariNoAttackFlag(FightOutPokemon* poke) { if (poke == nullptr) { return 0; } else { return poke->kanashibariNoAttackFlag; } }
+void* fightOutPokemonBiosGetFightWazaPtr(u8* p) {
+    if (p == 0) return 0;
+    return p + 0x648;
+}
 
-u8 fightOutPokemonBiosGetMeroMeroNoAttackFlag(FightOutPokemon* poke) { if (poke == nullptr) { return 0; } else { return poke->meroMeroNoAttackFlag; } }
+void* fightOutPokemonBiosGetFightoutJoutaiPtr(u8* p, u16 i) {
+    if (p == 0) return 0;
+    if (i >= 0x34) return 0;
+    return p + 0x308 + i * 16;
+}
 
-u8 fightOutPokemonBiosGetHuuinNoAttackFlag(FightOutPokemon* poke) { if (poke == nullptr) { return 0; } else { return poke->huuinNoAttackFlag; } }
+void* fightOutPokemonBiosGetFightPokemonHensinBuffPtr(u8* p) {
+    if (p == 0) return 0;
+    return p + 0x8;
+}
 
-u8 fightOutPokemonBiosGetItemNigeruFlag(FightOutPokemon* poke) { if (poke == nullptr) { return 0; } else { return poke->itemNigeruFlag; } }
+u32 fightOutPokemonBiosGetFightPokemonPtr(u8* p) {
+    if (p == 0) return 0;
+    return *(u32*)(p + 0x4);
+}
 
-u8 fightOutPokemonBiosGetOutWazaKoukanaiFlag(FightOutPokemon* poke) { if (poke == nullptr) { return 0; } else { return poke->outWazaKoukanaiFlag; } }
+u32 fightOutPokemonBiosGetMotoFightPokemonPtr(u8* p) {
+    if (p == 0) return 0;
+    return *(u32*)(p + 0x0);
+}
 
-u8 fightOutPokemonBiosGetMahiNoAttackFlag(FightOutPokemon* poke) { if (poke == nullptr) { return 0; } else { return poke->mahiNoAttackFlag; } }
+u8 fightPokemonBiosGetDarkOutFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0xdc);
+}
 
-void fightOutPokemonBiosSetHensinMotoPkxId(FightOutPokemon* poke, u16 value) { if (poke) poke->hensinMotoPkxId = value; }
+u8 fightPokemonBiosGetLevelUpFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0xdb);
+}
 
-void fightOutPokemonBiosSetAbicntAvoid(FightOutPokemon* poke, u8 value) { if (poke) poke->abicntAvoid = value; }
+u8 fightPokemonBiosGetCatchEntryFlag(u8* p) {
+    if (p == 0) return 0;
+    return *(u8*)(p + 0xda);
+}
 
-void fightOutPokemonBiosSetAbicntNimbleness(FightOutPokemon* poke, u8 value) { if (poke) poke->abicntNimbleness = value; }
+s16 fightPokemonBiosGetEntryId(u8* p) {
+    if (p == 0) return -1;
+    return *(s16*)(p + 0xd8);
+}
 
-void fightOutPokemonBiosSetAbicntSpeDef(FightOutPokemon* poke, u8 value) { if (poke) poke->abicntSpeDef = value; }
+void* fightPokemonBiosGetFightJoutaiPtr(u8* p, u16 i) {
+    if (p == 0) return 0;
+    if (i >= 1) return 0;
+    return p + 0xc8 + i * 16;
+}
 
-void fightOutPokemonBiosSetAbicntSpeAtk(FightOutPokemon* poke, u8 value) { if (poke) poke->abicntSpeAtk = value; }
+void* fightPokemonBiosGetPokemonBuffPtr(u8* p) {
+    if (p == 0) return 0;
+    return p + 0x4;
+}
 
-void fightOutPokemonBiosSetAbicntPhyDef(FightOutPokemon* poke, u8 value) { if (poke) poke->abicntPhyDef = value; }
+u32 fightPokemonBiosGetMotoPokemonPtr(u8* p) {
+    if (p == 0) return 0;
+    return *(u32*)(p + 0x0);
+}
 
-void fightOutPokemonBiosSetAbicntPhyAtk(FightOutPokemon* poke, u8 value) { if (poke) poke->abicntPhyAtk = value; }
 }

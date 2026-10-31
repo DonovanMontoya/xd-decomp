@@ -289,7 +289,7 @@ static inline f32 SizeScaleOf(const ModelSequence* seq) {
 f32 ModelSequence::GetModelScale(bool fixed) const {
     f32 scale = SizeScaleOf(this);
     if (!fixed) {
-        return menuModelGetScale(isPokemon, id);
+        return menuModelGetScale(scale, isPokemon, id);
     }
     return scale;
 }

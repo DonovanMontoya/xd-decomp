@@ -6,9 +6,6 @@ inline void *operator new(unsigned long, void *p) {
 }
 
 class GSgfxLayer;
-struct SF32 {
-    f32 v;
-};
 enum GSgfxLayerID { GSgfxLayerID_Default = 0 };
 
 extern "C" {
@@ -51,7 +48,7 @@ void cameraSetType(s32);
 void msgctrlSetValue(s32, const void *);
 GSgfxLayer *GSgfxLayerFindByID(s32);
 void GSprimSetLineWidth(f32);
-void GSprimDraw2DLine(GSgfxColAu8 *, GSgfxColAu8 *, SF32, SF32, SF32, SF32);
+void GSprimDraw2DLine(f32, f32, f32, f32, const GSgfxColAu8 *, const GSgfxColAu8 *);
 void menuDrawReliveUpdate();
 MENU_ITEM_dd_ *menuItemBiosGetPtr(s32, s16);
 tagWINDOW_WORK *windowSearchID(s32);
@@ -1869,13 +1866,14 @@ void CMenuReliveHall::drawVsitorLine(long aisyou, SPokemonView *view) {
             f32 s = offset * (f32)sin(angle);
             f32 c = (f32)cos(angle);
             GSgfxColAu8 c1 = color, c2 = color;
-            SF32 bx, by, ax, ay;
-            ax.v = fcirclePosition.x + s;
-            bx.v = x + s;
+            PocketVec<f32> b, a;
+            a.x = fcirclePosition.x + s;
+            b.x = x + s;
             f32 d = offset * -c;
-            ay.v = fcirclePosition.y + d;
-            by.v = y + d;
-            GSprimDraw2DLine(&c1, &c2, ax, ay, bx, by);
+            a.y = fcirclePosition.y + d;
+            b.y = y + d;
+            PocketVec<f32> first = a, second = b;
+            GSprimDraw2DLine(first.x, first.y, second.x, second.y, &c1, &c2);
             w += 0.5f;
         }
     }

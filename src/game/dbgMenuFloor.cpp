@@ -1,6 +1,8 @@
 /* Debug menu entries for jumping between floors. */
 #include <global.h>
 
+#pragma force_active on
+
 typedef struct DbgFloorChange {
     s32 from;
     s32 to;
@@ -312,3 +314,5 @@ s32 dbgMenuFloorCheck(void) {
     }
     return 1;
 }
+
+#pragma force_active reset

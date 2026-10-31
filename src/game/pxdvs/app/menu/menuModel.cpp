@@ -123,7 +123,8 @@ void menuModelSetScale(f32 scale) {
     _menuModelScaleMultiValue = scale;
 }
 
-f32 menuModelGetScale(f32 value) {
+// Callers also supply model metadata; scaling uses only the float value.
+f32 menuModelGetScale(f32 value, s32, s32) {
     return value * _menuModelScaleMultiValue;
 }
 
@@ -920,7 +921,7 @@ static s32 _menuModelAdjustCamera(MENU_MODEL* m,bool) {
         m->boundValid=1;
     }
     position.x=0.0f;position.z=0.0f;
-    position.y=-(m->boundMin[1]+m->boundMax[1])*0.5f;
+    position.y=-(m->boundMin[1]+m->boundMax[1])/2.0f;
     PSVECAdd(&position,(Vec*)m->offset,&position);
     GSmodelSetPosition(model,&position);
     if(!m->camera) return 0;

@@ -1,6 +1,8 @@
 /* Debug menu entries for viewing and editing game flags. */
 #include <global.h>
 
+#pragma force_active on
+
 typedef struct DbgFlagData {
     s16 unk0;
     s16 unk2;
@@ -88,33 +90,31 @@ static const char* _dbgMenuFlagInfoGetMsg(s32 index);
 static s8 _dbgMenuFlagGetMenuNum(void* window, s32* width);
 
 void dbgMenuFlagInfoDraw(DbgMenuWindow* window) {
-    u8 dispMax;
     s32 height;
+    s32 disp;
     s32 count;
     s32 y;
     s32 i;
-    u32 color;
-
+    s32 color;
     y = 0x28;
-    dispMax = menuDataBiosGetDispMax(window->menu);
+    disp = menuDataBiosGetDispMax(window->menu);
     count = flag_data_number->count;
-
-    if (count > dispMax) {
-        count = dispMax;
+    if (count > disp) {
+        count = disp;
     }
     height = count * 13;
     menuSubDrawSimpleWindow(window->layer, 0x1E, 0x28, 0x7D, height);
     if (_dbgMenuFlagCursor.base > 0) {
         menuSubDrawTriangle(window->layer, 0x46, 0x21, 0x5A, 0x21, 0x50, 0x17);
     }
-    if ((u32)(flag_data_number->count - _dbgMenuFlagCursor.base) > dispMax) {
+    if ((u32)(flag_data_number->count - _dbgMenuFlagCursor.base) > disp) {
         menuSubDrawTriangle(window->layer, 0x46, height + 0x2F, 0x5A, height + 0x2F, 0x50, height + 0x39);
     }
     for (i = 0; i < count; i++) {
         if (_dbgMenuFlagCursor.sel == i) {
             color = 0xFF0000FF;
         } else {
-            color = 0xFFFFFFFF;
+            color = -1;
         }
         GSprint(window->layer, 0x1E, y, color, _dbgMenuFlagInfoGetMsg(i + _dbgMenuFlagCursor.base));
         GSprint(window->layer, 0x82, y, color, "%d", GSflagGet(i + _dbgMenuFlagCursor.base));
@@ -333,3 +333,5 @@ static s8 _dbgMenuFlagGetMenuNum(void* window, s32* width) {
     }
     return count;
 }
+
+#pragma force_active reset

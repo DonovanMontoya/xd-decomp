@@ -1,3 +1,5 @@
+#pragma force_active on
+// Deferred code generation emits these definitions in reverse order.
 /* XD joint display traversal and robust billboard transforms. */
 #include "game/maximum/GSAPI/baselib/displayfunc.h"
 #include "game/maximum/GSAPI/baselib/pobj.h"
@@ -22,9 +24,7 @@ void HSD_Panic(const char*,int,const char*);
 void HSD_JObjSetCurrent(HSD_JObj*);
 void HSD_LObjSetupSpecularInit(Mtx);
 HSD_CObj* HSD_CObjGetCurrent(void);
-static inline void HSD_MtxColVec(MtxPtr m,int c,Vec* v) { v->x=m[0][c]; v->y=m[1][c]; v->z=m[2][c]; }
-static inline void HSD_MtxSetColVec(MtxPtr m,int c,Vec* v) { m[0][c]=v->x; m[1][c]=v->y; m[2][c]=v->z; }
-static inline float HSD_MtxColMag(MtxPtr m,int c) { return hsdSqrt(m[0][c]*m[0][c]+m[1][c]*m[1][c]+m[2][c]*m[2][c]); }
+
 static void (*sptcl_callback)(int,int,int,HSD_JObj*);
 static void mkVBillBoardMtx(HSD_JObj* jobj, MtxPtr src, MtxPtr dst);
 static void mkHBillBoardMtx(HSD_JObj* jobj, MtxPtr src, MtxPtr dst);
@@ -35,34 +35,79 @@ static inline HSD_JObj* HSD_JObjFindSkeleton(HSD_JObj* jobj);
 MtxPtr _HSD_mkEnvelopeModelNodeMtx(HSD_JObj* m, MtxPtr mtx);
 void HSD_JObjDispSub(HSD_JObj* jobj, MtxPtr vmtx, MtxPtr pmtx,
                      HSD_TrspMask trsp_mask, unsigned int rendermode);
-void _HSD_DispForgetMemory(void* lo,void* hi) { }
-void HSD_JObjSetSPtclCallback(void (*func)(int,int,int,HSD_JObj*)) { sptcl_callback=func; }
+
 typedef struct XD_JObjInfo { HSD_ClassInfo parent; void* load; void* make_mtx; void (*make_pmtx)(HSD_JObj*,Mtx,Mtx); void (*disp)(HSD_JObj*,Mtx,Mtx,unsigned int,unsigned int); } XD_JObjInfo;
 #define JMETHOD(o) ((XD_JObjInfo*)(o)->object.class_info)
-void HSD_JObjDisp(HSD_JObj* jobj,MtxPtr vmtx,unsigned int trsp_mask,unsigned int rendermode) {
-    if (jobj==0) return;
-    if (union_type_dobj(jobj)) {
-        Mtx mtx;
-        unsigned int xlu_bits;
-        if (jobj->flags & 0x10) return;
-        xlu_bits=jobj->flags & (trsp_mask<<18);
-        if (xlu_bits==0) return;
-        HSD_JObjSetupMatrix(jobj);
-        if (vmtx==0) vmtx=HSD_CObjGetCurrent()->view_mtx;
-        JMETHOD(jobj)->make_pmtx(jobj,vmtx,mtx);
-        if (xlu_bits&0x40000) JMETHOD(jobj)->disp(jobj,vmtx,mtx,1,rendermode);
-        if (xlu_bits&0x100000) JMETHOD(jobj)->disp(jobj,vmtx,mtx,4,rendermode);
-        if (xlu_bits&0x80000) JMETHOD(jobj)->disp(jobj,vmtx,mtx,2,rendermode);
-    } else if ((jobj->flags&JOBJ_PTCL) && sptcl_callback) {
-        HSD_SList* list;
-        for(list=jobj->u.ptcl;list;list=list->next) {
-            unsigned int value=(unsigned int)list->data;
-            if(value&0x80000000) sptcl_callback(0,value&63,(value>>6)&0xffffff,jobj);
-            list->data=(void*)((unsigned int)list->data&0x7fffffff);
+
+/* XD normalizes billboard axes and handles degenerate cross products. */
+
+static inline void HSD_MtxColVec(MtxPtr m,int c,Vec* v);
+static inline void HSD_MtxSetColVec(MtxPtr m,int c,Vec* v);
+static inline float HSD_MtxColMag(MtxPtr m,int c);
+void _HSD_DispForgetMemory(void* lo,void* hi);
+void HSD_JObjSetSPtclCallback(void (*func)(int,int,int,HSD_JObj*));
+inline void HSD_JObjDispDObj(HSD_JObj* jobj, MtxPtr vmtx, HSD_TrspMask trsp_mask,
+                      unsigned int rendermode);
+void HSD_JObjDisp(HSD_JObj* jobj, MtxPtr vmtx, HSD_TrspMask trsp_mask,
+                  unsigned int rendermode);
+static void mkVBillBoardMtx(HSD_JObj* jobj, MtxPtr src, MtxPtr dst);
+static void mkHBillBoardMtx(HSD_JObj* jobj, MtxPtr src, MtxPtr dst);
+static void mkBillBoardMtx(HSD_JObj* jobj, MtxPtr src, MtxPtr dst);
+static void mkRBillBoardMtx(HSD_JObj* jobj, MtxPtr src, MtxPtr dst);
+void HSD_JObjMakePositionMtx(HSD_JObj* jobj, Mtx vmtx, Mtx pmtx);
+static inline HSD_JObj* HSD_JObjFindSkeleton(HSD_JObj* jobj);
+MtxPtr _HSD_mkEnvelopeModelNodeMtx(HSD_JObj* m, MtxPtr mtx);
+void HSD_JObjDispSub(HSD_JObj* jobj, MtxPtr vmtx, MtxPtr pmtx,
+                     HSD_TrspMask trsp_mask, unsigned int rendermode);
+
+static inline void HSD_MtxColVec(MtxPtr m,int c,Vec* v) { v->x=m[0][c]; v->y=m[1][c]; v->z=m[2][c]; }
+
+static inline void HSD_MtxSetColVec(MtxPtr m,int c,Vec* v) { m[0][c]=v->x; m[1][c]=v->y; m[2][c]=v->z; }
+
+static inline float HSD_MtxColMag(MtxPtr m,int c) { return hsdSqrt(m[0][c]*m[0][c]+m[1][c]*m[1][c]+m[2][c]*m[2][c]); }
+
+inline void HSD_JObjDispDObj(HSD_JObj* jobj, MtxPtr vmtx, HSD_TrspMask trsp_mask,
+                      unsigned int rendermode)
+{
+    HSD_CObj* cobj;
+    Mtx mtx;
+
+    if ((jobj->flags & 0x10) == 0) {
+        unsigned int xlu_bits = jobj->flags & (trsp_mask << 18);
+        if (xlu_bits != 0) {
+            HSD_JObjSetupMatrix(jobj);
+
+            if (vmtx == 0) {
+                cobj = HSD_CObjGetCurrent();
+                vmtx = cobj->view_mtx;
+            }
+
+            JMETHOD(jobj)->make_pmtx(jobj, vmtx, mtx);
+            if ((xlu_bits & 0x40000) != 0) {
+                JMETHOD(jobj)->disp(jobj, vmtx, mtx, 1,
+                                            rendermode);
+            }
+            if ((xlu_bits & 0x100000) != 0) {
+                JMETHOD(jobj)->disp(jobj, vmtx, mtx, 4, rendermode);
+            }
+            if ((xlu_bits & 0x80000) != 0) {
+                JMETHOD(jobj)->disp(jobj, vmtx, mtx, 2, rendermode);
+            }
         }
     }
 }
-/* XD normalizes billboard axes and handles degenerate cross products. */
+
+static inline HSD_JObj* HSD_JObjFindSkeleton(HSD_JObj* jobj)
+{
+    HSD_ASSERT(325, jobj);
+    for (; jobj; jobj = jobj->parent) {
+        if (jobj->flags & (JOBJ_SKELETON | JOBJ_SKELETON_ROOT)) {
+            return jobj;
+        }
+    }
+    return NULL;
+}
+
 static void mkVBillBoardMtx(HSD_JObj* jobj, MtxPtr src, MtxPtr dst)
 {
     Vec pos, ax, ay, az, ny;
@@ -90,6 +135,7 @@ static void mkVBillBoardMtx(HSD_JObj* jobj, MtxPtr src, MtxPtr dst)
         HSD_MtxSetColVec(dst,3,&pos);
     } else MTXCopy(src,dst);
 }
+
 static void mkHBillBoardMtx(HSD_JObj* jobj, MtxPtr src, MtxPtr dst)
 {
     Vec pos, ax, ay, az, nx;
@@ -117,6 +163,7 @@ static void mkHBillBoardMtx(HSD_JObj* jobj, MtxPtr src, MtxPtr dst)
         HSD_MtxSetColVec(dst,3,&pos);
     } else MTXCopy(src,dst);
 }
+
 static void mkBillBoardMtx(HSD_JObj* jobj, MtxPtr src, MtxPtr dst)
 {
     Vec ax, ay, az, pos;
@@ -191,17 +238,6 @@ void HSD_JObjMakePositionMtx(HSD_JObj* jobj, Mtx vmtx, Mtx pmtx)
     }
 }
 
-static inline HSD_JObj* HSD_JObjFindSkeleton(HSD_JObj* jobj)
-{
-    HSD_ASSERT(325, jobj);
-    for (; jobj; jobj = jobj->parent) {
-        if (jobj->flags & (JOBJ_SKELETON | JOBJ_SKELETON_ROOT)) {
-            return jobj;
-        }
-    }
-    return NULL;
-}
-
 MtxPtr _HSD_mkEnvelopeModelNodeMtx(HSD_JObj* m, MtxPtr mtx)
 {
     if (m->flags & JOBJ_SKELETON_ROOT) {
@@ -254,3 +290,28 @@ void HSD_JObjDispSub(HSD_JObj* jobj, MtxPtr vmtx, MtxPtr pmtx,
     HSD_DObjSetCurrent(NULL);
     HSD_JObjSetCurrent(NULL);
 }
+
+void HSD_JObjDisp(HSD_JObj* jobj, MtxPtr vmtx, HSD_TrspMask trsp_mask,
+                  unsigned int rendermode)
+{
+    if (jobj != 0) {
+        if (union_type_dobj(jobj)) {
+            HSD_JObjDispDObj(jobj, vmtx, trsp_mask, rendermode);
+        } else if ((jobj->flags & JOBJ_PTCL) && sptcl_callback != 0) {
+            HSD_SList* sp;
+            for (sp = jobj->u.ptcl; sp != 0; sp = sp->next) {
+                if ((((unsigned int) sp->data) & 0x80000000) != 0) {
+                    unsigned int bank = 63 & ((unsigned int) sp->data);
+                    unsigned int offset = (((unsigned int) sp->data) >> 6) &
+                                 0xffffff;
+                    (*sptcl_callback)(0, bank, offset, jobj);
+                }
+                sp->data = (void*) ((unsigned int) sp->data & 0x7fffffff);
+            }
+        }
+    }
+}
+
+void HSD_JObjSetSPtclCallback(void (*func)(int,int,int,HSD_JObj*)) { sptcl_callback=func; }
+
+void _HSD_DispForgetMemory(void* lo,void* hi) { }

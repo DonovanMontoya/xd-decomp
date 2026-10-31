@@ -105,56 +105,64 @@ void GSsplineAddControlVectorValue(GSspline *spline, SplineVector *vector, f32 v
     }
 }
 
-GSspline* GSsplineCreate(s32 mode, s32 dataType, u8 capacity) {
-    GSspline* spline = 0;
+GSspline * GSsplineCreate(s32 interpolation, s32 dataType, u8 count)
+{
+    GSspline *spline = 0;
+    void *data;
     const char* errors = (const char*)&diagnostics;
-    if (capacity < 2) {
-        GSlogWrite(errors + 0x260);
+
+    if (count < 2) {
+        GSlogWrite(errors + 608);
         return 0;
     }
-    if ((mode == 1 || mode == 2) && (capacity - 1) % 3 != 0) {
-        if (capacity == 2) {
-            GSlogWrite(errors + 0x298);
-            mode = 0;
+
+    if ((interpolation == 1 || interpolation == 2) && (count - 1) % 3 != 0) {
+        if (count == 2) {
+            GSlogWrite(errors + 664);
+            interpolation = 0;
         } else {
-            GSlogWrite(errors + 0x2E8);
-            mode = 3;
+            GSlogWrite(errors + 744);
+            interpolation = 3;
         }
-    } else if (capacity == 2 && mode != 0) {
-        mode = 0;
-        GSlogWrite(errors + 0x33C);
+    } else if (count == 2 && interpolation != 0) {
+        interpolation = 0;
+        GSlogWrite(errors + 828);
     }
-    void* allocated = GSmemAlloc(sizeof(GSspline));
-    if (allocated) {
-        spline = (GSspline*)allocated;
-        spline->selfAllocation = allocated;
-        spline->mode = mode;
+
+    data = GSmemAlloc(sizeof(GSspline));
+    if (data) {
+        spline = (GSspline*)data;
+        spline->selfAllocation = data;
+        spline->mode = interpolation;
         spline->dataType = dataType;
         spline->count = 0;
         spline->valueCount = 0;
-        switch (mode) {
+
+        switch (interpolation) {
         case 0:
             if (dataType == 1) {
-                f32* data = (f32*)GSmemAlloc(capacity * 16);
+                data = GSmemAlloc(count * (sizeof(SplineVector) + sizeof(f32)));
                 if (data) {
                     spline->dataAllocation = data;
                     spline->controlPoints = data;
+                    data = (SplineVector *)data + count;
                     spline->workspace = 0;
-                    spline->values = (f32*)((SplineVector*)data + capacity);
-                    spline->capacity = capacity;
+                    spline->values = (f32 *)data;
+                    spline->capacity = count;
                     spline->dataType = 1;
                 } else {
                     GSmemFree(spline->selfAllocation);
                     spline = 0;
                 }
             } else {
-                f32* data = (f32*)GSmemAlloc(capacity * 8);
+                data = GSmemAlloc(count * 2 * sizeof(f32));
                 if (data) {
                     spline->dataAllocation = data;
                     spline->controlPoints = data;
+                    data = (f32 *)data + count;
                     spline->workspace = 0;
-                    spline->values = (f32*)(data + capacity);
-                    spline->capacity = capacity;
+                    spline->values = (f32 *)data;
+                    spline->capacity = count;
                     spline->dataType = 0;
                 } else {
                     GSmemFree(spline->selfAllocation);
@@ -165,26 +173,28 @@ GSspline* GSsplineCreate(s32 mode, s32 dataType, u8 capacity) {
         case 1:
         case 2:
             if (dataType == 1) {
-                f32* data = (f32*)GSmemAlloc(capacity * 12 + ((capacity + 2) / 3) * 4);
+                data = GSmemAlloc(count * sizeof(SplineVector) + ((count + 2) / 3) * sizeof(f32));
                 if (data) {
                     spline->dataAllocation = data;
                     spline->controlPoints = data;
+                    data = (SplineVector *)data + count;
                     spline->workspace = 0;
-                    spline->values = (f32*)((SplineVector*)data + capacity);
-                    spline->capacity = capacity;
+                    spline->values = (f32 *)data;
+                    spline->capacity = count;
                     spline->dataType = 1;
                 } else {
                     GSmemFree(spline->selfAllocation);
                     spline = 0;
                 }
             } else {
-                f32* data = (f32*)GSmemAlloc((capacity + (capacity + 2) / 3) * 4);
+                data = GSmemAlloc((count + (count + 2) / 3) * sizeof(f32));
                 if (data) {
                     spline->dataAllocation = data;
                     spline->controlPoints = data;
+                    data = (f32 *)data + count;
                     spline->workspace = 0;
-                    spline->values = (f32*)(data + capacity);
-                    spline->capacity = capacity;
+                    spline->values = (f32 *)data;
+                    spline->capacity = count;
                     spline->dataType = 0;
                 } else {
                     GSmemFree(spline->selfAllocation);
@@ -194,30 +204,32 @@ GSspline* GSsplineCreate(s32 mode, s32 dataType, u8 capacity) {
             break;
         default:
             if (dataType == 1) {
-                f32* data = (f32*)GSmemAlloc(capacity * 20);
+                data = GSmemAlloc(count * (sizeof(SplineVector) + 2 * sizeof(f32)));
                 if (data) {
                     spline->dataAllocation = data;
                     spline->controlPoints = data;
-                    f32* workspace = (f32*)((SplineVector*)data + capacity);
-                    spline->workspace = workspace;
-                    workspace += capacity;
-                    spline->values = workspace;
-                    spline->capacity = capacity;
+                    spline->workspace = (f32 *)((SplineVector *)data + count);
+                    spline->values = (f32 *)((SplineVector *)data + count) + count;
+                    spline->capacity = count;
                     spline->dataType = 1;
                 } else {
                     GSmemFree(spline->selfAllocation);
                     spline = 0;
                 }
             } else {
-                f32* data = (f32*)GSmemAlloc((capacity * 3)*sizeof(f32));
+                data = GSmemAlloc(count * 3 * sizeof(f32));
                 if (data) {
+                    u8 *cursor;
+                    u32 offset;
+
                     spline->dataAllocation = data;
-                    f32* workspace = data + capacity;
                     spline->controlPoints = data;
-                    spline->workspace = workspace;
-                    workspace += capacity;
-                    spline->values = workspace;
-                    spline->capacity = capacity;
+                    offset = (u32)count * sizeof(f32);
+                    cursor = (u8 *)data + offset;
+                    spline->workspace = (f32 *)cursor;
+                    cursor += offset;
+                    spline->values = (f32 *)cursor;
+                    spline->capacity = count;
                     spline->dataType = 0;
                 } else {
                     GSmemFree(spline->selfAllocation);

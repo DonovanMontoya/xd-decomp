@@ -15,7 +15,7 @@ void sndStreamMixParameterEx(u32, u8, u32, u8, u8, u8);
 static void _sndStreamPrepareGetData_Exec(GSsndStream*, GSsndStream*, u32);
 static void _sndStreamPrepareGetData_GetOldData(GSsndStream*, GSsndStream*, u32);
 static void _sndStreamPrepareGetData_GetNewData(GSsndStream*, GSsndStream*, u32);
-static void _sndStreamPrepareGetDataCallback(u8, u8, GSsndStream*);
+static void _sndStreamPrepareGetDataCallback(u8, u32, void*);
 static void _sndStreamPrepareGetDataCallback_Exec(GSsndStream*, GSsndStream*, GSsndStreamBufferState*, u32, u32);
 static void _sndStreamARAMUpdate(GSsndStream*, GSsndStreamBufferState*);
 u32 _sndStreamNibble_HeaderOFF2ON(u32 samples) { f64 value = samples; value *= 8.0 / 7.0; return (u32)value; }
@@ -51,11 +51,11 @@ static void _sndStreamPrepareGetData_GetNewData(GSsndStream* stream, GSsndStream
     else offset = first->pendingBytes;
     if (!first->header.loop && stream->readOffset >= first->header.reserved[3]) {
         memset(destination, 0, 0x8000);
-        _sndStreamPrepareGetDataCallback(0, half, stream);
+        ((void (*)(u8, u8, GSsndStream*))_sndStreamPrepareGetDataCallback)(0, half, stream);
         return;
     }
     if (!GSfsysStreamGetData(first->identifier, first->resource, destination, 0x8000, offset,
-        _sndStreamPrepareGetDataCallback, half, stream)) state->state = oldState;
+        (void (*)(u8, u8, GSsndStream*))_sndStreamPrepareGetDataCallback, half, stream)) state->state = oldState;
 }
 static void _sndStreamPrepareGetDataCallback_Exec(GSsndStream* stream, GSsndStream* first, GSsndStreamBufferState* state, u32 offset, u32 half) {
     u8 bufferHalf = half;
@@ -149,33 +149,51 @@ void _sndStreamGetDataCallback_ACTIVATE(u8, u8, GSsndStream* stream) {
     }
 }
 #pragma opt_propagation reset
-static void _sndStreamPrepareGetDataCallback(u8, u8 half_, GSsndStream* userData) {
-    u32 half = half_;
-    GSsndStream* stream = userData;
-    GSsndStream *first, *second;
-    GSsndStreamBufferState* state;
-    u32 headerPosition;
-    if (stream->first) { first = stream->first; second = stream; }
-    else { first = stream; second = stream->second; }
-    state = &first->buffers[stream->channel];
-    u32 start = _sndStreamNibble_HeaderOFF2ON(stream->readOffset);
-    u32 end = start + 0x10000;
-    u32 loopStart;
-    if (first->header.loop == 1 && first->header.reserved31 == 1 && start <= (loopStart = first->header.loopStart - 2) && loopStart < end)
-        headerPosition = _sndStreamNibble_GetHeaderPos((u16)loopStart);
-    else headerPosition = 0;
-    stream->readOffset += stream->sampleCount >> 1;
-    if (first->header.loop == 1 && stream->readOffset >= first->header.loopEndSamples) {
-        stream->readOffset = first->header.loopStartSamples; first->header.reserved31 = 1;
+static void _sndStreamPrepareGetDataCallback(u8 result, u32 halfArg, void* arg) {
+    GSsndStream* s = (GSsndStream*)arg;
+    GSsndStream* master;
+    GSsndStream* other;
+    GSsndStreamBufferState* ch;
+    u32 headerPos;
+    u8 half;
+    u32 pos;
+    u32 header;
+    u32 end;
+
+    half = halfArg;
+
+    if (s->first != NULL) {
+        master = s->first;
+        other = s;
+    } else {
+        master = s;
+        other = s->second;
     }
-    stream->active = 1;
-    if (first->active && second->active) {
-        first->pendingBytes += first->bufferSize;
-        if (first->pendingBytes >= (first->header.reserved[4] & 0x3ffffffe)) first->pendingBytes = 0;
-        else if (first->pendingBytes >= GSfsysStreamGetCacheSize()) first->pendingBytes = 0;
-        second->active = 0; first->active = 0;
+    ch = &master->buffers[s->channel];
+    pos = _sndStreamNibble_HeaderOFF2ON(s->readOffset);
+    end = pos + 0x10000;
+    if (master->header.loop == 1 && master->header.reserved31 == 1 && (header = master->header.loopStart - 2, pos <= header) && header < end) {
+        headerPos = _sndStreamNibble_GetHeaderPos((u16)header);
+    } else {
+        headerPos = 0;
     }
-    _sndStreamPrepareGetDataCallback_Exec(stream, first, state, headerPosition, half);
+    s->readOffset += s->sampleCount / 2;
+    if (master->header.loop == 1 && s->readOffset >= master->header.loopEndSamples) {
+        s->readOffset = master->header.loopStartSamples;
+        master->header.reserved31 = 1;
+    }
+    s->active = 1;
+    if (master->active && other->active) {
+        master->pendingBytes += master->bufferSize;
+        if (master->pendingBytes >= (master->header.reserved[4] & 0x3FFFFFFE)) {
+            master->pendingBytes = 0;
+        } else if (master->pendingBytes >= GSfsysStreamGetCacheSize()) {
+            master->pendingBytes = 0;
+        }
+        other->active = 0;
+        master->active = 0;
+    }
+    _sndStreamPrepareGetDataCallback_Exec(s, master, ch, headerPos, half);
 }
 extern GSsndDescriptor* snd_data;
 void sndStreamDeactivate(u32);

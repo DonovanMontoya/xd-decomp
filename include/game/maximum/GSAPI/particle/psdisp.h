@@ -14,7 +14,7 @@ void psDispSubAPPSRTPoint(PSParticle*); PSParticle* psDispSubPointTrail(PSPartic
 void psDispSubMakePolygon(PSParticle*,u32*,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32);
 void setupChanReg(PSParticle*); void setupTevReg(PSParticle*);
 void psSetupTev(PSParticle*); void psSetupTevCommon(void); void psSetupTevInvalidState(void);
-PSCamera* HSD_CObjGetCurrent(void); f32 (*HSD_CObjGetViewingMtx(PSCamera*))[4];
+PSCamera* HSD_CObjGetCurrent(void); void HSD_CObjGetViewingMtx(PSCamera*,PSMtx);
 void HSD_FogSet(void*); u32 HSD_LObjGetLightMaskAttnFunc(void); u32 HSD_LObjGetLightMaskDiffuse(void); void* HSD_LObjGetActiveByID(u32);
 void HSD_MulColor(GXColor*,GXColor*,GXColor*); void HSD_StateInvalidate(u32);
 void HSD_MtxGetRotationMtx(PSMtx,PSMtx,s32,s32); void PSMTXRotAxisRad(PSMtx,PSVec*,f32);

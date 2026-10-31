@@ -17,7 +17,7 @@ template <class T>
 struct PocketVec {
     T x;
     T y;
-    static const PocketVec zero;
+    static PocketVec zero;
 };
 
 class CAnt {
@@ -290,6 +290,7 @@ public:
     void localWindowCreateAll();
     void localWindowSetTable(long *);
     static CMetaMenu *pCurrentMenu;
+    static long defautlLocalWindowOpenTable[];
     void alphaFadeOutAndWait();
     void alphaFadeUpdate();
     void alphaFadeOutKick();

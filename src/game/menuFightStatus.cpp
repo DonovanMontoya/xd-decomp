@@ -4,23 +4,25 @@ struct MENU_POKEMON_STATUS {u8 pad0[0x16];u8 special,pad17;s16 maxHP,hp;u32 maxE
 struct StatusTween {s16 hp,frames,timer;u16 levelUp;u32 exp;s16 expFrames,expTimer;};
 static f32 menuStatusOldTime,menuStatusTime;
 extern "C" {tagWINDOW_WORK *windowSearchID(s32);StatusTween *windowGetFreeWork(tagWINDOW_WORK*);MENU_POKEMON_STATUS *windowGetAllocPtr(tagWINDOW_WORK*);MENU_POKEMON_STATUS *windowAllocMemory(tagWINDOW_WORK*,s32);void GSthreadSwitch();void GSsndPlayNow(u32);void GSsndStopNow(u32);f32 timeGetLastFrameSec();u8 fightKind_CheckFightKind(s32);s32 menuFightGetStatus();void menuFightSetStatus(s32);void menuFightSetSeq();void *menuSeqBiosGetPtr(s32);}
-static void menuUpdateStatusTime(){f32 time=timeGetLastFrameSec();if(time!=menuStatusOldTime){menuStatusOldTime=time;menuStatusTime+=time;}}
+static void menuUpdateStatusTime();
 extern "C" {
-s32 menuFightStatusWaitAnimeEXP(s32 id,u8 wait){for(;;){tagWINDOW_WORK *w=windowSearchID(id);if(!w)return 0;if(windowGetFreeWork(w)->expFrames==0)return 0;if(wait)GSthreadSwitch();else return 1;}}
-void menuFightStatusStartAnimEXP(s32 id,u32 exp){tagWINDOW_WORK *w=windowSearchID(id);if(w){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);StatusTween *t=windowGetFreeWork(w);u32 diff;if(exp>status->exp)diff=exp-status->exp;else diff=status->exp-exp;t->expFrames=(s16)((diff*100)/status->maxEXP);if(t->expFrames<15)t->expFrames=15;t->exp=status->exp;status->exp=exp;t->expTimer=0;if(exp==status->maxEXP)t->levelUp=1;GSsndPlayNow(0x24);}}
-s32 menuFightStatusWaitAnimeHP(s32 id,u8 wait){for(;;){tagWINDOW_WORK *w=windowSearchID(id);if(!w)return 0;if(windowGetFreeWork(w)->frames==0)return 0;if(wait)GSthreadSwitch();else return 1;}}
-void menuFightStatusStartAnimHP(s32 id,s16 hp){tagWINDOW_WORK *w=windowSearchID(id);if(w){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);StatusTween *t=windowGetFreeWork(w);s32 diff=status->hp-hp;if(diff<0)diff=-diff;t->frames=(s16)((diff*100)/status->maxHP);if(t->frames<=0)t->frames=1;t->hp=status->hp;status->hp=hp;t->timer=0;}}
-void menuFightStatusSetActive(){}
-void menuFightStatusSetHP(s32 id,s16 hp){tagWINDOW_WORK *w=windowSearchID(id);if(w)windowGetAllocPtr(w)->hp=hp;}
-s32 menuFightStatusCtrl(tagWINDOW_WORK *w){StatusTween *t=windowGetFreeWork(w);u32 reset=0;if(w->phase==0){MENU_POKEMON_STATUS *status=windowAllocMemory(w,0x30);if(status){memcpy(status,(void*)w->parameters[0],0x30);if(fightKind_CheckFightKind(13))status->special=1;if(fightKind_CheckFightKind(14))status->special=1;if(fightKind_CheckFightKind(15))status->special=1;if(menuFightGetStatus())menuFightSetSeq();}}else if(w->phase==1 && menuFightGetStatus()){if(*(void**)((u8*)w+0x2C)==menuSeqBiosGetPtr(0x1A5))reset=1;if(*(void**)((u8*)w+0x2C)==menuSeqBiosGetPtr(0x1A9))reset=1;if(reset)menuFightSetStatus(0);}windowGetAllocPtr(w);if(t->frames){t->timer+= (s32)(60.0f*timeGetLastFrameSec());if(t->timer>t->frames)t->frames=0;}if(t->expFrames){t->expTimer+=(s32)(60.0f*timeGetLastFrameSec());if(t->expTimer>t->expFrames){t->expFrames=0;GSsndStopNow(0x24);}}menuUpdateStatusTime();return 0;}
+s32 menuFightStatusWaitAnimeEXP(s32 id,u8 wait);
+void menuFightStatusStartAnimEXP(s32 id,u32 exp);
+s32 menuFightStatusWaitAnimeHP(s32 id,u8 wait);
+void menuFightStatusStartAnimHP(s32 id,s16 hp);
+void menuFightStatusSetActive();
+void menuFightStatusSetHP(s32 id,s16 hp);
+s32 menuFightStatusCtrl(tagWINDOW_WORK *w);
 }
 extern "C" void winSpriteSetDisp(tagSPRITE_WORK*,s32);
-extern "C" void menuFightDrawCheckDark(tagWINDOW_WORK *w,tagSPRITE_WORK *sprite){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);s16 id=sprite->id;u8 special=status->special;s32 show=1;switch(id){case 0xD3:case 0xD4:case 0xDB:case 0xDC:case 0xEE:if(status->pad24[5])show=0;else show=1;break;case 0xD5:case 0xD6:case 0xDD:case 0xDE:case 0xDF:case 0xE0:case 0xE1:case 0xE2:case 0xE3:case 0xE4:case 0xE5:case 0xE6:case 0xEF:if(status->pad24[5])show=1;else show=0;break;}switch(id){case 0xD4:case 0xD6:case 0xDB:case 0xDC:case 0xDD:case 0xDE:case 0xDF:case 0xE0:case 0xE1:case 0xE2:case 0xE3:case 0xE4:case 0xE5:case 0xE6:if(special==1)show=0;break;}winSpriteSetDisp(sprite,show);}
+extern "C" void menuFightDrawCheckDark(tagWINDOW_WORK *w,tagSPRITE_WORK *sprite);
 
 extern "C" {u16 *GSmsgGetGSchar(u32);void msgctrlSetValue(s32,u32);u32 GSmsgGetRect(u32);s32 winSpriteGetLayerID(tagWINDOW_WORK*,tagSPRITE_WORK*);void GSmsgPrint2(s32,s32,s32,u32,u32);DeckDarkPokemon *deckGetDeckDarkPokemon(u32);}
-static s32 menuFightDrawDarkPanel(tagWINDOW_WORK *w,tagSPRITE_WORK *s,Pokemon *pokemon,MENU_POKEMON_STATUS*){if(pokemon && pokemon->isDarkPokemon()){msgctrlSetValue(0x37,(u32)GSmsgGetGSchar(0x4443));s16 width=GSmsgGetRect(0x4278)>>16;GSmsgPrint2(winSpriteGetLayerID(w,s),(s16)(s->width-width),0,w->alpha|0xFFFFFF00,0x4278);msgctrlSetValue(0x5F,deckGetDeckDarkPokemon(pokemon->getDarkPokemon()->getDarkPokemonID())->getPlayerLevel());s16 x=(s->width-width)-(GSmsgGetRect(0x4272)>>16);GSmsgPrint2(winSpriteGetLayerID(w,s),x,1,w->alpha|0xFFFFFF00,0x4272);return 1;}return 0;}
+static s32 menuFightDrawDarkPanel(tagWINDOW_WORK *w,tagSPRITE_WORK *s,Pokemon *pokemon,MENU_POKEMON_STATUS*);
 
 #include <dolphin/gx.h>
+
+#pragma force_active on
 struct GSgfxVF;
 struct GSgfxLayer {
     u8 reserved[0xD34];u8 blendType;u8 reservedD35[3];u32 blendValue;
@@ -54,6 +56,23 @@ double sin(double);
 static inline void fifoPosition2s16(s16 x,s16 y){*(s16*)0xCC008000=x;*(s16*)0xCC008000=y;}
 static inline void fifoColor1u32(u32 c){*(u32*)0xCC008000=c;}
 static inline void fifoColor4u8(u8 r,u8 g,u8 b,u8 a){*(u8*)0xCC008000=r;*(u8*)0xCC008000=g;*(u8*)0xCC008000=b;*(u8*)0xCC008000=a;}
+extern "C" void menuFightDrawParam(tagWINDOW_WORK* w,tagSPRITE_WORK* s);
+
+
+
+
+s32 menuFightStatusWaitAnimeEXP(s32 id,u8 wait){for(;;){tagWINDOW_WORK *w=windowSearchID(id);if(!w)return 0;if(windowGetFreeWork(w)->expFrames==0)return 0;if(wait)GSthreadSwitch();else return 1;}}
+
+void menuFightStatusStartAnimEXP(s32 id,u32 exp){tagWINDOW_WORK *w=windowSearchID(id);if(w){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);StatusTween *t=windowGetFreeWork(w);u32 diff;if(exp>status->exp)diff=exp-status->exp;else diff=status->exp-exp;t->expFrames=(s16)((diff*100)/status->maxEXP);if(t->expFrames<15)t->expFrames=15;t->exp=status->exp;status->exp=exp;t->expTimer=0;if(exp==status->maxEXP)t->levelUp=1;GSsndPlayNow(0x24);}}
+
+s32 menuFightStatusWaitAnimeHP(s32 id,u8 wait){for(;;){tagWINDOW_WORK *w=windowSearchID(id);if(!w)return 0;if(windowGetFreeWork(w)->frames==0)return 0;if(wait)GSthreadSwitch();else return 1;}}
+
+void menuFightStatusStartAnimHP(s32 id,s16 hp){tagWINDOW_WORK *w=windowSearchID(id);if(w){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);StatusTween *t=windowGetFreeWork(w);s32 diff=status->hp-hp;if(diff<0)diff=-diff;t->frames=(s16)((diff*100)/status->maxHP);if(t->frames<=0)t->frames=1;t->hp=status->hp;status->hp=hp;t->timer=0;}}
+
+void menuFightStatusSetActive(){}
+
+void menuFightStatusSetHP(s32 id,s16 hp){tagWINDOW_WORK *w=windowSearchID(id);if(w)windowGetAllocPtr(w)->hp=hp;}
+
 extern "C" void menuFightDrawParam(tagWINDOW_WORK* w,tagSPRITE_WORK* s){
     static f32 cFlash=0.0f;
     s32 exp;
@@ -200,3 +219,13 @@ drawLevel:
         }break;
     }
 }
+
+static s32 menuFightDrawDarkPanel(tagWINDOW_WORK *w,tagSPRITE_WORK *s,Pokemon *pokemon,MENU_POKEMON_STATUS*){if(pokemon && pokemon->isDarkPokemon()){msgctrlSetValue(0x37,(u32)GSmsgGetGSchar(0x4443));s16 width=GSmsgGetRect(0x4278)>>16;GSmsgPrint2(winSpriteGetLayerID(w,s),(s16)(s->width-width),0,w->alpha|0xFFFFFF00,0x4278);msgctrlSetValue(0x5F,deckGetDeckDarkPokemon(pokemon->getDarkPokemon()->getDarkPokemonID())->getPlayerLevel());s16 x=(s->width-width)-(GSmsgGetRect(0x4272)>>16);GSmsgPrint2(winSpriteGetLayerID(w,s),x,1,w->alpha|0xFFFFFF00,0x4272);return 1;}return 0;}
+
+extern "C" void menuFightDrawCheckDark(tagWINDOW_WORK *w,tagSPRITE_WORK *sprite){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);s16 id=sprite->id;u8 special=status->special;s32 show=1;switch(id){case 0xD3:case 0xD4:case 0xDB:case 0xDC:case 0xEE:if(status->pad24[5])show=0;else show=1;break;case 0xD5:case 0xD6:case 0xDD:case 0xDE:case 0xDF:case 0xE0:case 0xE1:case 0xE2:case 0xE3:case 0xE4:case 0xE5:case 0xE6:case 0xEF:if(status->pad24[5])show=1;else show=0;break;}switch(id){case 0xD4:case 0xD6:case 0xDB:case 0xDC:case 0xDD:case 0xDE:case 0xDF:case 0xE0:case 0xE1:case 0xE2:case 0xE3:case 0xE4:case 0xE5:case 0xE6:if(special==1)show=0;break;}winSpriteSetDisp(sprite,show);}
+
+s32 menuFightStatusCtrl(tagWINDOW_WORK *w){StatusTween *t=windowGetFreeWork(w);u32 reset=0;if(w->phase==0){MENU_POKEMON_STATUS *status=windowAllocMemory(w,0x30);if(status){memcpy(status,(void*)w->parameters[0],0x30);if(fightKind_CheckFightKind(13))status->special=1;if(fightKind_CheckFightKind(14))status->special=1;if(fightKind_CheckFightKind(15))status->special=1;if(menuFightGetStatus())menuFightSetSeq();}}else if(w->phase==1 && menuFightGetStatus()){if(*(void**)((u8*)w+0x2C)==menuSeqBiosGetPtr(0x1A5))reset=1;if(*(void**)((u8*)w+0x2C)==menuSeqBiosGetPtr(0x1A9))reset=1;if(reset)menuFightSetStatus(0);}windowGetAllocPtr(w);if(t->frames){t->timer+= (s32)(60.0f*timeGetLastFrameSec());if(t->timer>t->frames)t->frames=0;}if(t->expFrames){t->expTimer+=(s32)(60.0f*timeGetLastFrameSec());if(t->expTimer>t->expFrames){t->expFrames=0;GSsndStopNow(0x24);}}menuUpdateStatusTime();return 0;}
+
+static void menuUpdateStatusTime(){f32 time=timeGetLastFrameSec();if(time!=menuStatusOldTime){menuStatusOldTime=time;menuStatusTime+=time;}}
+
+#pragma force_active reset

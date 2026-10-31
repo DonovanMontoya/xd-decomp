@@ -12,7 +12,11 @@ enum GSgfxPrimType { PARTICLE_PRIMITIVE_DEFAULT };
 enum GSgfxLayerID { PARTICLE_LAYER_DEFAULT };
 enum GSgfxTunitKReg {PARTICLE_KREG_DEFAULT};
 struct GSgfxLayer {u16 tokenMark();void SetLayerVisibility(bool);void tunitKRegSel(u8,GSgfxTunitKReg);};
-struct GSgfxDL {u16 flags,stride;u8* data;u32 size,reserved;};
+struct GSgfxDL {u16 flags,stride;u8* data;u32 size,reserved;
+    char* VertexData(u16 vertex) { if (!(flags & 1)) return 0; return (char*)data + vertex * stride + 3; }
+    GSgfxVF* VertexFormat() { if (!(flags & 1)) return 0; return (GSgfxVF*)reserved; }
+    void Invalidate() { flags |= 2; }
+};
 struct ParticleDebugStats {u32 bank,node,displayList,renderData,reserved10,total,reserved18[3];};
 struct peContainer {
     peEmitterNode* owner;peContainer* next;u8* memory;peNode* freeNodes;peNode* nodes;u16 count,capacity;u8 dirty,active;u8 reserved1a[2];

@@ -1,3 +1,5 @@
+#pragma defer_codegen on
+#pragma force_active on
 #include <dolphin/types.h>
 struct _MENUCBWORK {s32 field0,field4,type;};
 struct BattleResultCB {u8 pad[0xAFE0];s32 selected;u8 padAFE4[0x7C];s32 fieldB060;};
@@ -8,11 +10,234 @@ u32 lbl_8032EAFC[3]={0x4300,0x4301,0x4303};
 static u32 submenu_msg1[2]={0x4300,0x4303};
 u32 lbl_804E7F48[2]={0x4300,0x4303};
 extern "C" {s32 GSinputGetSubType(s32);u8 GSinputIsConnected(s32);void GSthreadSwitch();u16 fightGetFightResultId();u8 gbaCommandIsConnected(s32);void menuSetEnablePort(u8);s32 menuSubOpenSelect3(s32,u32*,s32,s32,s32,s32,s32,s32,s32);s32 menuSubOpenSelect_gba(s32,u32*,s32,s32,s32,s32,s32,s32,s32);void msgctrlSetValue(s32,s32);s32 pokecoloGetCountryCode();void toolentryCopyHero();s32 toolentryTaisenGetBattleMode();s32 toolentryTaisenGetBattleType();s32 toolentryTaisenGetControlerType(s32);s32 toolentryTaisenGetEntryPlayerNum();u16 toolentryTaisenGetHomePlace(s32);void winMsgClose(s32);void winMsgOpen(s32,u32,s32,s32);}
-static u16 _menuCB_BattleResultGetHomePlace(){if(toolentryTaisenGetBattleType()==2)return toolentryTaisenGetHomePlace(0)!=0;return 0;}
-static u16 _menuCBResultGetHomePlace(){if(toolentryTaisenGetBattleType()==2)return toolentryTaisenGetHomePlace(0)!=0;return 0;}
-static u8 _menuCBResultCheckController1sub(){if(GSinputIsConnected(1))return GSinputGetSubType(1)==0;return 0;}
-static void _menuCBResultCheckController1(){s32 run=1;do{if(_menuCBResultCheckController1sub())run=0;else GSthreadSwitch();}while(run);}
+static u16 _menuCB_BattleResultGetHomePlace();
+static u16 _menuCBResultGetHomePlace();
+static u8 _menuCBResultCheckController1sub();
+static void _menuCBResultCheckController1();
+static s32 _menuCBResultCheckGBAPort();
+static s32 _menuCB_BattleResultTonikaku(_MENUCBWORK*);
+static s32 _menuCB_BattleResultTaisen(_MENUCBWORK *work);
+extern "C" void menuCB_BattleResult(_MENUCBWORK *work);
+
+
 static s32 _menuCBResultCheckGBAPort(){s32 players=toolentryTaisenGetEntryPlayerNum();toolentryTaisenGetBattleMode();s32 controller;s32 i;for(i=0;i<players;i++){u16 home=toolentryTaisenGetHomePlace(i);controller=toolentryTaisenGetControlerType(i);if(controller && ((u16)(home-1)<=1 || home==3) && !gbaCommandIsConnected(controller))return controller;}return 2;}
+
+static u8 _menuCBResultCheckController1sub(){if(GSinputIsConnected(1))return GSinputGetSubType(1)==0;return 0;}
+
+static void _menuCBResultCheckController1(){s32 run=1;do{if(_menuCBResultCheckController1sub())run=0;else GSthreadSwitch();}while(run);}
+
+static u16 _menuCBResultGetHomePlace(){if(toolentryTaisenGetBattleType()==2)return toolentryTaisenGetHomePlace(0)!=0;return 0;}
+
 static s32 _menuCB_BattleResultTonikaku(_MENUCBWORK*){_CB.selected=0;_CB.fieldB060=0;_CB.selected=menuSubOpenSelect3(0,submenu_msg1,2,0x3E,0x89,0,2,1,1);if(_CB.selected==-1)_CB.selected=1;switch(_CB.selected){case 0:toolentryCopyHero();return 0xB1;case 1:default:return -1;}}
-static s32 _menuCB_BattleResultTaisen(_MENUCBWORK *work){u32 home;s32 run;s32 next;s32 result=-1;u16 fightResult=fightGetFightResultId();u8 abort=0;menuSetEnablePort(0);for(;;){switch(fightResult){case 1:{menuSetEnablePort(1);if(!_menuCB_BattleResultGetHomePlace()){s32 port=_menuCBResultCheckGBAPort();msgctrlSetValue(0x2F,port);winMsgOpen(2,0x442B,1,1);winMsgClose(1);abort=1;}else{_menuCBResultCheckGBAPort();winMsgOpen(2,0x442D,1,1);_menuCBResultCheckController1();winMsgClose(1);abort=1;}}break;}if(abort)return 0xA9;_CB.selected=0;_CB.fieldB060=0;menuSetEnablePort(1);winMsgOpen(2,0x42FF,1,1);if(work->type!=2){switch(pokecoloGetCountryCode()){case 0:_CB.selected=menuSubOpenSelect_gba(0,submenu_msg2,3,0x3E,0x89,0,3,1,1);break;case 1:case 2:_CB.selected=menuSubOpenSelect_gba(0,lbl_804E7F48,2,0x3E,0x89,0,2,1,1);break;}if(_CB.selected==-2){fightResult=1;continue;}if(_CB.selected==-1)_CB.selected=2;switch(pokecoloGetCountryCode()){case 0:switch(_CB.selected){case 0:result=0;break;case 1:result=2;break;case 2:result=-1;break;}break;case 1:case 2:switch(_CB.selected){case 0:result=0;break;case 1:default:result=-1;break;}break;}}else{switch(pokecoloGetCountryCode()){case 0:_CB.selected=menuSubOpenSelect_gba(0,submenu_msg3,4,0x3E,0x89,0,4,1,1);break;case 1:case 2:_CB.selected=menuSubOpenSelect_gba(0,lbl_8032EAFC,3,0x3E,0x89,0,3,1,1);break;}if(_CB.selected==-2){fightResult=1;continue;}if(_CB.selected==-1)_CB.selected=3;switch(pokecoloGetCountryCode()){case 0:switch(_CB.selected){case 0:result=0;break;case 1:result=1;break;case 2:result=2;break;case 3:default:result=-1;break;}break;case 1:case 2:switch(_CB.selected){case 0:result=0;break;case 1:result=1;break;case 2:default:result=-1;break;}break;}}break;}switch(result){case 0:next=0xB1;break;case 1:next=0xAC;break;case 2:next=0xA9;break;case -1:default:next=-1;break;}winMsgClose(1);if(next==-1 || next==0xA9){s32 state=0;run=1;home=(u16)_menuCBResultGetHomePlace();do{switch(state){case 0:if((s32)home==0)state=1;else state=2;break;case 1:winMsgOpen(2,0x442C,1,1);winMsgClose(1);state=4;break;case 2:winMsgOpen(2,0x442D,1,1);_menuCBResultCheckController1();winMsgClose(1);if(_menuCBResultCheckController1sub())state=4;else state=3;break;case 3:winMsgOpen(2,0x4436,1,1);_menuCBResultCheckController1();winMsgClose(1);state=4;break;case 4:run=0;break;}}while(run);}menuCBBattleStartResID=0;return next;}
+
+static u16 _menuCB_BattleResultGetHomePlace(){if(toolentryTaisenGetBattleType()==2)return toolentryTaisenGetHomePlace(0)!=0;return 0;}
+
+static s32 _menuCB_BattleResultTaisen(_MENUCBWORK *work)
+{
+    s32 homePlace = -1;
+    u16 battleResult = fightGetFightResultId();
+    u8 shown = 0;
+    s32 state;
+    s32 menuID;
+
+    menuSetEnablePort(0);
+
+    for (;;) {
+        switch (battleResult) {
+        case 1: {
+            menuSetEnablePort(1);
+
+            if (_menuCB_BattleResultGetHomePlace() == 0) {
+                s32 gbaPort = _menuCBResultCheckGBAPort();
+
+                msgctrlSetValue(0x2F, gbaPort);
+                winMsgOpen(2, 0x442B, 1, 1);
+                winMsgClose(1);
+                shown = 1;
+            } else {
+                _menuCBResultCheckGBAPort();
+                winMsgOpen(2, 0x442D, 1, 1);
+                _menuCBResultCheckController1();
+                winMsgClose(1);
+                shown = 1;
+            }
+            break;
+        }
+        }
+        if (shown != 0) {
+            return 0xA9;
+        }
+
+        _CB.selected = 0;
+        _CB.fieldB060 = 0;
+        menuSetEnablePort(1);
+        winMsgOpen(2, 0x42FF, 1, 1);
+
+        if (work->type != 2) {
+            switch (pokecoloGetCountryCode()) {
+            case 0:
+                _CB.selected = menuSubOpenSelect_gba(
+                    0, submenu_msg2, 3, 0x3E, 0x89, 0, 3, 1, 1);
+                break;
+            case 1:
+            case 2:
+                _CB.selected = menuSubOpenSelect_gba(
+                    0, lbl_804E7F48, 2, 0x3E, 0x89, 0, 2, 1, 1);
+                break;
+            }
+            if (_CB.selected == -2) {
+                battleResult = 1;
+                continue;
+            }
+            if (_CB.selected == -1) {
+                _CB.selected = 2;
+            }
+            switch (pokecoloGetCountryCode()) {
+            case 0:
+                switch (_CB.selected) {
+                case 0:
+                    homePlace = 0;
+                    break;
+                case 1:
+                    homePlace = 2;
+                    break;
+                case 2:
+                    homePlace = -1;
+                    break;
+                }
+                break;
+            case 1:
+            case 2:
+                switch (_CB.selected) {
+                case 0:
+                    homePlace = 0;
+                    break;
+                case 1:
+                default:
+                    homePlace = -1;
+                    break;
+                }
+                break;
+            }
+        } else {
+            /* Four players: as many choices as there are players. */
+            switch (pokecoloGetCountryCode()) {
+            case 0:
+                _CB.selected = menuSubOpenSelect_gba(
+                    0, submenu_msg3, 4, 0x3E, 0x89, 0, 4, 1, 1);
+                break;
+            case 1:
+            case 2:
+                _CB.selected = menuSubOpenSelect_gba(
+                    0, lbl_8032EAFC, 3, 0x3E, 0x89, 0, 3, 1, 1);
+                break;
+            }
+            if (_CB.selected == -2) {
+                battleResult = 1;
+                continue;
+            }
+            if (_CB.selected == -1) {
+                _CB.selected = 3;
+            }
+            switch (pokecoloGetCountryCode()) {
+            case 0:
+                switch (_CB.selected) {
+                case 0:
+                    homePlace = 0;
+                    break;
+                case 1:
+                    homePlace = 1;
+                    break;
+                case 2:
+                    homePlace = 2;
+                    break;
+                case 3:
+                default:
+                    homePlace = -1;
+                    break;
+                }
+                break;
+            case 1:
+            case 2:
+                switch (_CB.selected) {
+                case 0:
+                    homePlace = 0;
+                    break;
+                case 1:
+                    homePlace = 1;
+                    break;
+                case 2:
+                default:
+                    homePlace = -1;
+                    break;
+                }
+                break;
+            }
+        }
+
+        switch (homePlace) {
+        case 0:
+            menuID = 0xB1;
+            break;
+        case 1:
+            menuID = 0xAC;
+            break;
+        case 2:
+            menuID = 0xA9;
+            break;
+        case -1:
+        default:
+            menuID = -1;
+            break;
+        }
+
+        winMsgClose(1);
+
+        if (menuID == -1 || menuID == 0xA9) {
+            state = 0;
+            s32 running = 1;
+            u16 port = ((s32 (*)())_menuCBResultGetHomePlace)();
+
+            do {
+                switch (state) {
+                case 0:
+                    if ((s32)port == 0) {
+                        state = 1;
+                    } else {
+                        state = 2;
+                    }
+                    break;
+                case 1:
+                    winMsgOpen(2, 0x442C, 1, 1);
+                    winMsgClose(1);
+                    state = 4;
+                    break;
+                case 2:
+                    winMsgOpen(2, 0x442D, 1, 1);
+                    _menuCBResultCheckController1();
+                    winMsgClose(1);
+                    if (_menuCBResultCheckController1sub() != 0) {
+                        state = 4;
+                    } else {
+                        state = 3;
+                    }
+                    break;
+                case 3:
+                    winMsgOpen(2, 0x4436, 1, 1);
+                    _menuCBResultCheckController1();
+                    winMsgClose(1);
+                    state = 4;
+                    break;
+                case 4:
+                    running = 0;
+                    break;
+                }
+            } while (running != 0);
+        }
+
+        menuCBBattleStartResID = 0;
+        return menuID;
+    }
+}
+
 extern "C" void menuCB_BattleResult(_MENUCBWORK *work){switch(toolentryTaisenGetBattleMode()){case 0:break;case 1:_menuCB_BattleResultTonikaku(work);return;}_menuCB_BattleResultTaisen(work);{}}

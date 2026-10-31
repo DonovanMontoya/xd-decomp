@@ -125,9 +125,20 @@ void GSgfxVideoInit__FUcUs14GSgfxVideoMode(u8 count,u16 height,s32 mode) {
     if(count==0 || count>3 || height>528) return;
     VIInit();_videoState.count=count;_videoState.requestedHeight=height;_videoState.callback=0;_videoState.vsync=0;_videoOneShotPostCB=0;
     _videoSetupRenderMode__F14GSgfxVideoMode15GSgfxVideoFrameb16GSgfxVideoFilterb(mode,1,false,1,false);
-    switch(mode) {case 0:_videoState.maxHeight=480;break;default:_videoState.maxHeight=528;break;case 3:_videoState.maxHeight=480;break;}
-    u32 area=((_videoState.mode.width+15)&0xfff0)*_videoState.maxHeight; s32 bytes=area*2; u32 words=area>>1;
-    for(s32 i=0;i<3;i++) { VideoBuffer *b=&_videoState.buffers[i];if(i<_videoState.count) { b->ptr=GSmemAlloc(bytes);b->state=3;u32 *p=(u32*)b->ptr;for(u32 j=0;j<words;j++) *p++=0x10801080;DCFlushRange(b->ptr,bytes); }else {b->ptr=0;b->state=0;} }
+    switch (mode) {
+    case 0:
+        _videoState.maxHeight = 480;
+        break;
+    case 1:
+    case 2:
+        _videoState.maxHeight = 528;
+        break;
+    case 3:
+        _videoState.maxHeight = 480;
+        break;
+    }
+    u32 area=((_videoState.mode.width+15)&0xfff0)*_videoState.maxHeight; u32 bytes=area*2; u32 words=bytes/sizeof(u32);
+    for(s32 i=0;i<3;i++) { if(i<_videoState.count) { u32 *data=(u32*)GSmemAlloc(bytes);_videoState.buffers[i].ptr=data;_videoState.buffers[i].state=3;u32 *p=data;u32 j=words;while(j--) *p++=0x10801080;DCFlushRange(data,bytes); }else {_videoState.buffers[i].ptr=0;_videoState.buffers[i].state=0;} }
     VISetPreRetraceCallback(_videoPreRetraceFunc__FUl);VISetPostRetraceCallback(_videoPostRetraceFunc__FUl);_videoState.buffers[0].state=1;VISetNextFrameBuffer(_videoState.buffers[0].ptr);_videoState.displayed=&_videoState.buffers[0];
     _videoState.copyMode=0;_videoState.color.r=0;_videoState.color.g=0;_videoState.color.b=0;_videoState.color.a=0;_videoState.depth=0xffffff;_videoState.pixelFormat=0;_videoState.missed=0;_videoState.presented=0;_videoState.elapsed=0;_videoState.lastElapsed=0;_videoState.lastTime=OSGetTime();_videoState.lockRate=0;_videoState.lockCount=0;_videoState.lockActive=0;
     VISetBlack(1);VIConfigure((GXRenderModeObj*)&_videoState.mode);VIFlush();VIWaitForRetrace();VIWaitForRetrace();

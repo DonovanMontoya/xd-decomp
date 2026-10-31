@@ -199,7 +199,7 @@ extern "C" void peopleTalkMsg(u32 arg0, u32 arg1, s32 arg2) {
 }
 
 struct FloorEventTreasure{u8 displayType:3,rewardType:3,reservedFlags:2;};
-extern "C" {GSvec*peopleBiosGetPosPtr(tagPeopleWork*);bool peopleBiosCheckFlag(tagPeopleWork*,u32);f32 peopleInfoBiosGetColBallSize(PeopleInfo*);void peopleGetPos(u32,u32,GSvec*);void peopleGetNeckPos(u32,u32,GSvec*);void peopleBiosGetRot(tagPeopleWork*,GSvec*);u8 heroMoveIsMember(s32);void heroMoveGetResID(u32*,u32*,s32);u8 floorCharacterBiosGetTalkStartType(FloorCharacter*);u8 floorCharacterBiosGetTalkWallThrough(FloorCharacter*);FloorEventTreasure*floorEventGetTresureList(u32);f32 PSVECDistance(GSvec*,GSvec*);f32 peopleVecCalcRotY(GSvec*,GSvec*,f32);u8 gimmickBoxIsPushBoxFloor();u8 GScolsys2HitCollision(GSvec*,GSvec*,s32,f32);u8 peopleInsideCheck(GSvec*,GSvec*,GSvec*,f32);double fabs(double);void GSlogWritef(const char*,...);}
+extern "C" {GSvec*peopleBiosGetPosPtr(tagPeopleWork*);bool peopleBiosCheckFlag(tagPeopleWork*,u32);f32 peopleInfoBiosGetColBallSize(PeopleInfo*);void peopleGetPos(u32,u32,GSvec*);void peopleGetNeckPos(u32,u32,GSvec*);void peopleBiosGetRot(tagPeopleWork*,GSvec*);u8 heroMoveIsMember(s32);void heroMoveGetResID(u32*,u32*,s32);u8 floorCharacterBiosGetTalkStartType(FloorCharacter*);u8 floorCharacterBiosGetTalkWallThrough(FloorCharacter*);FloorEventTreasure*floorEventGetTresureList(u32);f32 PSVECDistance(GSvec*,GSvec*);f32 peopleVecCalcRotY(GSvec*,GSvec*,f32);u8 gimmickBoxIsPushBoxFloor();bool GScolsys2HitCollision(GSvec*,GSvec*,f32,GSvec*);u8 peopleInsideCheck(GSvec*,GSvec*,GSvec*,f32);double fabs(double);void GSlogWritef(const char*,...);}
 #define fabs __fabs
 extern "C" tagPeopleWork*peopleTalkCheck(u32 group,u32 resource,f32 unused,f32 angleLimit){
  GSvec target,member,origin,rotation;
@@ -234,7 +234,7 @@ extern "C" tagPeopleWork*peopleTalkCheck(u32 group,u32 resource,f32 unused,f32 a
   info=peopleInfoBiosGetPtr(person->object);if(!info)continue;peopleGetNeckPos(person->group,person->resource,&target);distance=PSVECDistance(&origin,&target);if(distance>radius+peopleGetTalkDistance(person->group,person->resource)+peopleInfoBiosGetColBallSize(info))continue;
   angle=peopleVecCalcRotY(&origin,&target,hero->targetRotation);if((f32)fabs(angle)>limit)continue;if(gimmickBoxIsPushBoxFloor()&&(s32)(origin.param2/10.0f)!=(s32)(target.param2/10.0f))continue;
   if(character)checkWall=floorCharacterBiosGetTalkWallThrough(character)==0;else{treasure=floorEventGetTresureList(person->resource);if(treasure&&treasure->displayType==1){peopleBiosGetRot(person,&rotation);if((f32)fabs(peopleVecCalcRotY(&target,&origin,rotation.param2))>2.0943952f)continue;}checkWall=0;}
-  if(checkWall&&GScolsys2HitCollision(&origin,&target,0,radius))continue;if(hasMember&&peopleInsideCheck(&origin,&target,&member,peopleInfoBiosGetColBallSize(info)))continue;
+  if(checkWall&&GScolsys2HitCollision(&origin,&target,radius,0))continue;if(hasMember&&peopleInsideCheck(&origin,&target,&member,peopleInfoBiosGetColBallSize(info)))continue;
   score=distance*distance*(f32)fabs(angle)/2.0f;GSlogWritef("talk ->  people(%d,%d)  len =%.2f  ang =%.2f  area =%.2f\n",person->group,person->resource,distance,angle,score);
   replace=0;if(score<bestScore)replace=1;else if(score==bestScore){magnitude=(f32)fabs(angle);oldMagnitude=(f32)fabs(bestAngle);if(oldMagnitude<magnitude)replace=1;else if(oldMagnitude==magnitude&&angle>0.0f)replace=1;}if(replace){bestScore=score;best=person;bestAngle=angle;}
  }

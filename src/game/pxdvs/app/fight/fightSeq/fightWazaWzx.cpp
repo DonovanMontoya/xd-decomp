@@ -199,26 +199,25 @@ u32 fightWazaWzxVariationFuncKetaguri(u16, FightOutPokemon* poke) {
     return 0;
 }
 
-void fightWazaWzxTypeFuncHuuin(u16 waza, FightOutPokemon* atk, FightOutPokemon* def, u16 mode, u32 var) {
-    u32 v = var;
-    u8 type = fightFloor_GetFightType(0);
-    FightOutPokemon* a = fightTargetGetPtr(0xf, atk, type);
-    FightOutPokemon* b = fightTargetGetPtr(0x10, atk, type);
-    fightOutPokemonLoadWazaEffect(atk, waza, 1, v);
-    fightOutPokemonLoadWazaEffect(a, waza, 2, v);
-    fightOutPokemonLoadWazaEffect(b, waza, 2, v);
+void fightWazaWzxTypeFuncHuuin(u16 waza, FightOutPokemon* user, FightOutPokemon* a, u16 mode, bool flag) {
+    u8 fightType = fightFloor_GetFightType(0);
+    a = fightTargetGetPtr(0xf, user, fightType);
+    FightOutPokemon* b = fightTargetGetPtr(0x10, user, fightType);
+    ((void(*)(FightOutPokemon*,u16,u32,bool))fightOutPokemonLoadWazaEffect)(user, waza, 1, flag);
+    ((void(*)(FightOutPokemon*,u16,u32,bool))fightOutPokemonLoadWazaEffect)(a, waza, 2, flag);
+    ((void(*)(FightOutPokemon*,u16,u32,bool))fightOutPokemonLoadWazaEffect)(b, waza, 2, flag);
     if (fightOutPokemonCheckFightOut(a) == 1 && fightOutPokemonCheckFightOut(b) == 1) {
-        _fightWazaWxzfightOutPokemonWazaEffectAtk(atk, waza, true);
+        _fightWazaWxzfightOutPokemonWazaEffectAtk(user, waza, true);
         _fightWazaWxzfightOutPokemonWazaEffectDef(a, waza, true);
         _fightWazaWxzfightOutPokemonWazaEffectDef(b, waza, false);
     } else if (fightOutPokemonCheckFightOut(b) == 1) {
-        _fightWazaWxzfightOutPokemonWazaEffectAtk(atk, waza, true);
+        _fightWazaWxzfightOutPokemonWazaEffectAtk(user, waza, true);
         _fightWazaWxzfightOutPokemonWazaEffectDef(b, waza, false);
     } else if (fightOutPokemonCheckFightOut(a) == 1) {
-        _fightWazaWxzfightOutPokemonWazaEffectAtk(atk, waza, true);
+        _fightWazaWxzfightOutPokemonWazaEffectAtk(user, waza, true);
         _fightWazaWxzfightOutPokemonWazaEffectDef(a, waza, false);
     } else {
-        _fightWazaWxzfightOutPokemonWazaEffectAtk(atk, waza, true);
+        _fightWazaWxzfightOutPokemonWazaEffectAtk(user, waza, true);
     }
 }
 

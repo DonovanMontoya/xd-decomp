@@ -1,3 +1,5 @@
+#pragma defer_codegen off
+#pragma force_active on
 #include <game/pxdvs/GSAPI/GSmodel/GSmodel.hpp>
 #include <game/pxdvs/GSAPI/GSpart/GSpart.hpp>
 extern "C" {

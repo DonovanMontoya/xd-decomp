@@ -190,6 +190,46 @@ static inline void calcTornadoAnchor(PSParticle* pp, f32* x, f32* y, f32* z) {
 }
 static inline void emitParticleColor(u8 r,u8 g,u8 b,u8 a){GXWGFifo.u16=((r<<8)&0xf000)|((g<<4)&0xf00)|(b&0xf0)|(a>>4);}
 
+inline f32 sinf(f32 x) { return (f32)sin(x); }
+inline f32 cosf(f32 x) { return (f32)cos(x); }
+inline f32 tanf(f32 x) { return (f32)tan(x); }
+static inline f32 atan2f(f32 y,f32 x) { return (f32)atan2(y,x); }
+static inline void reuseCalcTornadoLastPos(PSParticle* pp, f32* x, f32* y, f32* z)
+{
+    f32 px, py, pz;
+    f32 sina, sinb, cosa, cosb;
+    PSGenerator* gp;
+    f32 radius;
+    f32 vx0;
+    f32 vz0;
+
+    gp = pp->generator;
+    if (gp == NULL) {
+        *x = pp->position.x;
+        *y = pp->position.y;
+        *z = pp->position.z;
+        return;
+    }
+
+    sina = sinf(pp->gravity);
+    sinb = sinf(pp->friction);
+    cosa = cosf(pp->gravity);
+    cosb = cosf(pp->friction);
+
+    vz0 = pp->velocity.z - gp->param1;
+    vx0 = pp->velocity.x - gp->gravity;
+
+    radius = gp->radius < 0.0f ? -gp->radius : gp->radius;
+    radius += vz0 * tanf(gp->angle < 0.0f ? -gp->angle : gp->angle);
+    radius *= pp->velocity.y;
+    px = radius * cosf(vx0);
+    py = radius * sinf(vx0);
+    pz = vz0;
+
+    *x = px * cosb + pz * sinb + gp->position.x;
+    *y = -px * sina * sinb + py * cosa + pz * sina * cosb + gp->position.y;
+    *z = -px * cosa * sinb - py * sina + pz * cosa * cosb + gp->position.z;
+}
 void HSD_MtxSRT(PSMtx,PSVec*,PSVec*,PSVec*,PSVec*);
 #pragma push
 #pragma optimization_level 3
@@ -577,364 +617,223 @@ __declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *arg0) {
     return arg0;
 }
 
-__declspec(weak) void psDispSubAppSRT(PSParticle *arg0, u32 *arg1) {
-    union { f64 alignment; u8 bytes[236]; } stack;
-    PSAppSRT *temp_r3;
-    PSAppSRT *temp_r3_10;
-    PSAppSRT *temp_r3_2;
-    PSAppSRT *temp_r3_3;
-    PSAppSRT *temp_r3_5;
-    PSAppSRT *temp_r3_6;
-    PSAppSRT *temp_r3_9;
-    PSAppSRT *temp_r4;
-    PSAppSRT *temp_r6;
-    PSAppSRT *temp_r6_2;
-    PSAppSRT *temp_r7;
-    PSGenerator *temp_r28;
-    f32 (*temp_r3_11)[4];
-    f32 (*temp_r3_12)[4];
-    f32 (*temp_r3_8)[4];
-    f32 temp_f0;
-    f32 temp_f0_2;
-    f32 temp_f0_3;
-    f32 temp_f0_4;
-    f32 temp_f10;
-    f32 temp_f10_2;
-    f32 temp_f14;
-    f32 temp_f14_2;
-    f32 temp_f14_3;
-    f32 temp_f15;
-    f32 temp_f15_2;
-    f32 temp_f16;
-    f32 temp_f16_2;
-    f32 temp_f17;
-    f32 temp_f17_2;
-    f32 temp_f18;
-    f32 temp_f18_2;
-    f32 temp_f19;
-    f32 temp_f19_2;
-    f32 temp_f1;
-    f32 temp_f1_2;
-    f32 temp_f1_3;
-    f32 temp_f1_4;
-    f32 temp_f20;
-    f32 temp_f21;
-    f32 temp_f22;
-    f32 temp_f23;
-    f32 temp_f24;
-    f32 temp_f25;
-    f32 temp_f2;
-    f32 temp_f2_2;
-    f32 temp_f2_3;
-    f32 temp_f3;
-    f32 temp_f3_2;
-    f32 temp_f3_3;
-    f32 temp_f3_4;
-    f32 temp_f3_5;
-    f32 temp_f4;
-    f32 temp_f4_2;
-    f32 temp_f4_3;
-    f32 temp_f4_4;
-    f32 temp_f5;
-    f32 temp_f6;
-    f32 temp_f6_2;
-    f32 temp_f6_3;
-    f32 temp_f6_4;
-    f32 temp_f6_5;
-    f32 temp_f7;
-    f32 temp_f7_2;
-    f32 temp_f8;
-    f32 temp_f8_2;
-    f32 temp_f9;
-    f32 temp_f9_2;
-    f32 temp_f9_3;
-    f32 var_f0;
-    f32 var_f0_2;
-    f32 var_f18;
-    f32 var_f19;
-    f32 var_f1;
-    f32 var_f1_2;
-    f32 var_f1_3;
-    f32 var_f1_4;
-    f32 var_f1_5;
-    f32 var_f1_6;
-    f32 var_f1_7;
-    f32 var_f26;
-    f32 var_f27;
-    f32 var_f28;
-    f32 var_f29;
-    f32 var_f2;
-    f32 var_f30;
-    f32 var_f31;
-    f32 var_f5;
-    f32 var_f5_2;
-    f32 var_f5_3;
-    f32 var_f6;
-    u32 temp_r3_4;
-    void *temp_r3_7;
-    void *temp_r6_3;
+__declspec(weak) void psDispSubAppSRT(PSParticle* pp, u32* texform)
+{
+    PSMtx mtx;
+    PSVec v;
+    f32 right_x;
+    f32 up_x;
+    f32 right_y;
+    f32 up_y;
+    f32 right_z;
+    f32 up_z;
+    f32 x;
+    f32 y;
+    f32 z;
+    f32 vx;
+    f32 vy;
+    f32 vz;
+    f32 angle;
+    f32 dir_x;
+    f32 dir_y;
+    PSGenerator* gp;
 
-    temp_r6 = arg0->appsrt;
-    if ((u8) temp_r6->frame != (u8) psFrameNum) {
-        if ((u8) temp_r6->status != 2) {
-            HSD_MtxSRT((f32 (*)[4]) temp_r6->matrix[0], &temp_r6->scale, &temp_r6->rotation, &temp_r6->translate, 0);
+    if (pp->appsrt->frame != psFrameNum) {
+        if (pp->appsrt->status != 2) {
+            HSD_MtxSRT(pp->appsrt->matrix, &pp->appsrt->scale, &pp->appsrt->rotation,
+                       &pp->appsrt->translate, NULL);
         }
-        temp_r3 = arg0->appsrt;
-        if ((u8) temp_r3->status == 1) {
-            temp_r3->status = 2;
+        if (pp->appsrt->status == 1) {
+            pp->appsrt->status = 2;
         }
     }
-    arg0->appsrt->frame = psFrameNum;
-    PSMTXCopy((f32 (*)[4]) arg0->appsrt->matrix[0], (f32 (*)[4]) &((f32*)(stack.bytes+0xA8))[0]);
-    temp_r6_2 = arg0->appsrt;
-    ((f32*)(stack.bytes+0xA8))[3] -= temp_r6_2->translate.x;
-    (*(f32*)(stack.bytes+0xC4)) -= temp_r6_2->translate.y;
-    (*(f32*)(stack.bytes+0xD4)) -= temp_r6_2->translate.z;
-    (*(f32*)(stack.bytes+0x3C)) = arg0->velocity.x;
-    (*(f32*)(stack.bytes+0x40)) = arg0->velocity.y;
-    (*(f32*)(stack.bytes+0x44)) = arg0->velocity.z;
-    PSMTXMultVec((f32 (*)[4]) &((f32*)(stack.bytes+0xA8))[0], (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-    if (((u8) arg0->appsrt->generatorOwned != 0) && !(arg0->kind & 4)) {
-        PSMTXMultVec(rvmtxRot, (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
+    pp->appsrt->frame = psFrameNum;
+    PSMTXCopy(pp->appsrt->matrix, mtx);
+    mtx[0][3] -= pp->appsrt->translate.x;
+    mtx[1][3] -= pp->appsrt->translate.y;
+    mtx[2][3] -= pp->appsrt->translate.z;
+    v.x = pp->velocity.x;
+    v.y = pp->velocity.y;
+    v.z = pp->velocity.z;
+    PSMTXMultVec(mtx, &v, &v);
+    if (pp->appsrt->generatorOwned != 0 && !(pp->kind & 4)) {
+        PSMTXMultVec(rvmtxRot, &v, &v);
     }
-    temp_f22 = (*(f32*)(stack.bytes+0x3C));
-    temp_f21 = (*(f32*)(stack.bytes+0x40));
-    (*(f32*)(stack.bytes+0x3C)) = arg0->position.x;
-    temp_f20 = (*(f32*)(stack.bytes+0x44));
-    (*(f32*)(stack.bytes+0x40)) = arg0->position.y;
-    (*(f32*)(stack.bytes+0x44)) = arg0->position.z;
-    temp_r3_2 = arg0->appsrt;
-    if ((u8) temp_r3_2->generatorOwned != 0) {
-        PSMTXMultVec((f32 (*)[4]) &((f32*)(stack.bytes+0xA8))[0], (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-        PSMTXMultVec(rvmtxRot, (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-        temp_r3_3 = arg0->appsrt;
-        (*(f32*)(stack.bytes+0x3C)) += temp_r3_3->translate.x;
-        (*(f32*)(stack.bytes+0x40)) += temp_r3_3->translate.y;
-        (*(f32*)(stack.bytes+0x44)) += temp_r3_3->translate.z;
+    vx = v.x;
+    vy = v.y;
+    vz = v.z;
+    v.x = pp->position.x;
+    v.y = pp->position.y;
+    v.z = pp->position.z;
+    if (pp->appsrt->generatorOwned != 0) {
+        PSMTXMultVec(mtx, &v, &v);
+        PSMTXMultVec(rvmtxRot, &v, &v);
+        v.x += pp->appsrt->translate.x;
+        v.y += pp->appsrt->translate.y;
+        v.z += pp->appsrt->translate.z;
     } else {
-        PSMTXMultVec((f32 (*)[4]) temp_r3_2->matrix[0], (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
+        PSMTXMultVec(pp->appsrt->matrix, &v, &v);
     }
-    temp_f25 = (*(f32*)(stack.bytes+0x3C));
-    temp_f24 = (*(f32*)(stack.bytes+0x40));
-    temp_f23 = (*(f32*)(stack.bytes+0x44));
-    if (arg1 != NULL) {
-        temp_r4 = arg0->appsrt;
-        PSMTXScale((f32 (*)[4]) &((f32*)(stack.bytes+0x78))[0], temp_r4->scale.x, temp_r4->scale.y, 1.0f);
-        PSMTXConcat(rvmtx, (f32 (*)[4]) &((f32*)(stack.bytes+0x78))[0], (f32 (*)[4]) &((f32*)(stack.bytes+0x78))[0]);
-        temp_f6 = arg0->size;
-        var_f31 = ((f32*)(stack.bytes+0x78))[0] * temp_f6;
-        var_f30 = -((f32*)(stack.bytes+0x78))[1] * temp_f6;
-        var_f29 = (*(f32*)(stack.bytes+0x88)) * temp_f6;
-        var_f28 = -(*(f32*)(stack.bytes+0x8C)) * temp_f6;
-        var_f27 = (*(f32*)(stack.bytes+0x98)) * temp_f6;
-        var_f26 = -(*(f32*)(stack.bytes+0x9C)) * temp_f6;
-    } else {
-        temp_r7 = arg0->appsrt;
-        temp_r6_3 = vmtx;
-        temp_f3 = (*(f32*)((u8*)temp_r6_3+0x1C));
-        temp_f2 = temp_r7->scale.x + (*(f32*)((u8*)temp_r6_3+0xC));
-        temp_f4 = (*(f32*)((u8*)temp_r6_3+0x2C));
-        (*(f32*)(stack.bytes+0x30)) = temp_f2;
-        temp_f1 = temp_r7->scale.y;
-        (*(f32*)(stack.bytes+0x38)) = temp_f4;
-        (*(f32*)(stack.bytes+0x24)) = temp_f2;
-        (*(f32*)(stack.bytes+0x34)) = temp_f1 + temp_f3;
-        (*(f32*)(stack.bytes+0x28)) = -temp_f1 + temp_f3;
-        (*(f32*)(stack.bytes+0x2C)) = temp_f4;
-        PSMTXMultVec(rvmtx, (PSVec *) &(*(f32*)(stack.bytes+0x30)), (PSVec *) &(*(f32*)(stack.bytes+0x30)));
-        temp_f3_2 = arg0->size;
-        var_f31 = (*(f32*)(stack.bytes+0x30)) * temp_f3_2;
-        var_f29 = (*(f32*)(stack.bytes+0x34)) * temp_f3_2;
-        var_f27 = (*(f32*)(stack.bytes+0x38)) * temp_f3_2;
-        PSMTXMultVec(rvmtx, (PSVec *) &(*(f32*)(stack.bytes+0x24)), (PSVec *) &(*(f32*)(stack.bytes+0x24)));
-        temp_f3_3 = arg0->size;
-        var_f30 = (*(f32*)(stack.bytes+0x24)) * temp_f3_3;
-        var_f28 = (*(f32*)(stack.bytes+0x28)) * temp_f3_3;
-        var_f26 = (*(f32*)(stack.bytes+0x2C)) * temp_f3_3;
-    }
-    temp_r28 = arg0->generator;
-    if ((temp_r28 != NULL) && (temp_r28->transformFlags & 0x20)) {
-        temp_f0 = temp_r28->scale.x;
-        temp_f1_2 = temp_r28->scale.y;
-        temp_f2_2 = temp_r28->scale.z;
-        var_f31 *= temp_f0;
-        var_f30 *= temp_f0;
-        var_f29 *= temp_f1_2;
-        var_f28 *= temp_f1_2;
-        var_f27 *= temp_f2_2;
-        var_f26 *= temp_f2_2;
-    }
-    temp_r3_4 = arg0->kind;
-    if ((temp_r3_4 & 0x100000) || (temp_r3_4 & 0x200000)) {
-        if (prj[0] == 0.0f) {
-            if (temp_r3_4 & 4) {
-                if (temp_r28 == NULL) {
-                    var_f5 = arg0->position.x;
-                    var_f1 = arg0->position.y;
-                    var_f0 = arg0->position.z;
-                } else {
-                    temp_f17 = (f32) sin((f64) arg0->gravity);
-                    temp_f16 = (f32) sin((f64) arg0->friction);
-                    temp_f15 = (f32) cos((f64) arg0->gravity);
-                    temp_f14 = (f32) cos((f64) arg0->friction);
-                    temp_f19 = arg0->velocity.z - temp_r28->param1;
-                    var_f18 = temp_r28->radius;
-                    (*(f32*)(stack.bytes+0xE4)) = arg0->velocity.x - temp_r28->gravity;
-                    if (var_f18 < 0.0f) {
-                        var_f18 = -var_f18;
-                    }
-                    var_f1_2 = temp_r28->angle;
-                    if (var_f1_2 < 0.0f) {
-                        var_f1_2 = -var_f1_2;
-                    }
-                    temp_f18 = ((temp_f19 * (f32) tan((f64) var_f1_2)) + var_f18) * arg0->velocity.y;
-                    (*(f32*)(stack.bytes+0xE0)) = temp_f18 * (f32) cos((f64) (*(f32*)(stack.bytes+0xE4)));
-                    temp_f9 = -(*(f32*)(stack.bytes+0xE0));
-                    temp_f6_2 = temp_f18 * (f32) sin((f64) (*(f32*)(stack.bytes+0xE4)));
-                    var_f5 = temp_r28->position.x + (((*(f32*)(stack.bytes+0xE0)) * temp_f14) + (temp_f19 * temp_f16));
-                    var_f1 = temp_r28->position.y + ((temp_f14 * (temp_f19 * temp_f17)) + ((temp_f16 * (temp_f9 * temp_f17)) + (temp_f6_2 * temp_f15)));
-                    var_f0 = temp_r28->position.z + ((temp_f14 * (temp_f19 * temp_f15)) + ((temp_f16 * (temp_f9 * temp_f15)) - (temp_f6_2 * temp_f17)));
-                }
-                (*(f32*)(stack.bytes+0x3C)) = var_f5;
-                (*(f32*)(stack.bytes+0x40)) = var_f1;
-                (*(f32*)(stack.bytes+0x44)) = var_f0;
-                temp_r3_5 = arg0->appsrt;
-                if ((u8) temp_r3_5->generatorOwned != 0) {
-                    PSMTXMultVec((f32 (*)[4]) &((f32*)(stack.bytes+0xA8))[0], (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-                    PSMTXMultVec(rvmtxRot, (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-                    temp_r3_6 = arg0->appsrt;
-                    (*(f32*)(stack.bytes+0x3C)) += temp_r3_6->translate.x;
-                    (*(f32*)(stack.bytes+0x40)) += temp_r3_6->translate.y;
-                    (*(f32*)(stack.bytes+0x44)) += temp_r3_6->translate.z;
-                } else {
-                    PSMTXMultVec((f32 (*)[4]) temp_r3_5->matrix[0], (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-                }
-                var_f5_2 = (*(f32*)(stack.bytes+0x3C));
-                var_f1_3 = (*(f32*)(stack.bytes+0x40));
-                var_f6 = (*(f32*)(stack.bytes+0x44));
-            } else {
-                var_f5_2 = temp_f25 - temp_f22;
-                var_f1_3 = temp_f24 - temp_f21;
-                var_f6 = temp_f23 - temp_f20;
-            }
-            temp_r3_7 = vmtx;
-            temp_f4_2 = (*(f32*)((u8*)temp_r3_7+0x24));
-            temp_f7 = (*(f32*)((u8*)temp_r3_7+0x20));
-            temp_f9_2 = (*(f32*)((u8*)temp_r3_7+0x28));
-            temp_f10 = (*(f32*)((u8*)temp_r3_7+0x2C));
-            temp_f8 = temp_f10 + ((temp_f9_2 * temp_f23) + ((temp_f7 * temp_f25) + (temp_f4_2 * temp_f24)));
-            if (temp_f8 != 0.0f) {
-                temp_f8_2 = -1.0f / temp_f8;
-                temp_f0_2 = temp_f10 + ((temp_f9_2 * var_f6) + ((temp_f7 * var_f5_2) + (temp_f4_2 * var_f1_3)));
-                if (temp_f0_2 != 0.0f) {
-                    temp_f7_2 = -1.0f / temp_f0_2;
-                    temp_r3_8 = pvmtx;
-                    temp_f10_2 = temp_r3_8[0][1];
-                    temp_f14_2 = temp_r3_8[1][1];
-                    temp_f2_3 = temp_r3_8[1][0];
-                    temp_f0_3 = temp_r3_8[0][2];
-                    temp_f3_4 = temp_r3_8[1][2];
-                    temp_f1_3 = temp_r3_8[0][3];
-                    temp_f4_3 = temp_r3_8[1][3];
-                    var_f1_4 = (temp_f8_2 * (temp_f1_3 + ((temp_f0_3 * temp_f23) + ((pvmtx[0][0] * temp_f25) + (temp_f10_2 * temp_f24))))) - (temp_f7_2 * (temp_f1_3 + ((temp_f0_3 * var_f6) + ((pvmtx[0][0] * var_f5_2) + (temp_f10_2 * var_f1_3)))));
-                    var_f2 = (temp_f8_2 * (temp_f4_3 + ((temp_f3_4 * temp_f23) + ((temp_f2_3 * temp_f25) + (temp_f14_2 * temp_f24))))) - (temp_f7_2 * (temp_f4_3 + ((temp_f3_4 * var_f6) + ((temp_f2_3 * var_f5_2) + (temp_f14_2 * var_f1_3)))));
-                    goto block_49;
-                }
-            }
-            goto block_56;
-        }
-        if (temp_r3_4 & 4) {
-            if (temp_r28 == NULL) {
-                var_f5_3 = arg0->position.x;
-                var_f1_5 = arg0->position.y;
-                var_f0_2 = arg0->position.z;
-            } else {
-                temp_f14_3 = (f32) sin((f64) arg0->gravity);
-                temp_f15_2 = (f32) sin((f64) arg0->friction);
-                temp_f16_2 = (f32) cos((f64) arg0->gravity);
-                temp_f17_2 = (f32) cos((f64) arg0->friction);
-                temp_f18_2 = arg0->velocity.z - temp_r28->param1;
-                var_f19 = temp_r28->radius;
-                (*(f32*)(stack.bytes+0xDC)) = arg0->velocity.x - temp_r28->gravity;
-                if (var_f19 < 0.0f) {
-                    var_f19 = -var_f19;
-                }
-                var_f1_6 = temp_r28->angle;
-                if (var_f1_6 < 0.0f) {
-                    var_f1_6 = -var_f1_6;
-                }
-                temp_f19_2 = ((temp_f18_2 * (f32) tan((f64) var_f1_6)) + var_f19) * arg0->velocity.y;
-                (*(f32*)(stack.bytes+0xD8)) = temp_f19_2 * (f32) cos((f64) (*(f32*)(stack.bytes+0xDC)));
-                temp_f9_3 = -(*(f32*)(stack.bytes+0xD8));
-                temp_f6_3 = temp_f19_2 * (f32) sin((f64) (*(f32*)(stack.bytes+0xDC)));
-                var_f5_3 = temp_r28->position.x + (((*(f32*)(stack.bytes+0xD8)) * temp_f17_2) + (temp_f18_2 * temp_f15_2));
-                var_f1_5 = temp_r28->position.y + ((temp_f17_2 * (temp_f18_2 * temp_f14_3)) + ((temp_f15_2 * (temp_f9_3 * temp_f14_3)) + (temp_f6_3 * temp_f16_2)));
-                var_f0_2 = temp_r28->position.z + ((temp_f17_2 * (temp_f18_2 * temp_f16_2)) + ((temp_f15_2 * (temp_f9_3 * temp_f16_2)) - (temp_f6_3 * temp_f14_3)));
-            }
-            (*(f32*)(stack.bytes+0x3C)) = var_f5_3;
-            (*(f32*)(stack.bytes+0x40)) = var_f1_5;
-            (*(f32*)(stack.bytes+0x44)) = var_f0_2;
-            temp_r3_9 = arg0->appsrt;
-            if ((u8) temp_r3_9->generatorOwned != 0) {
-                PSMTXMultVec((f32 (*)[4]) &((f32*)(stack.bytes+0xA8))[0], (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-                PSMTXMultVec(rvmtxRot, (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-                temp_r3_10 = arg0->appsrt;
-                (*(f32*)(stack.bytes+0x3C)) += temp_r3_10->translate.x;
-                (*(f32*)(stack.bytes+0x40)) += temp_r3_10->translate.y;
-                (*(f32*)(stack.bytes+0x44)) += temp_r3_10->translate.z;
-            } else {
-                PSMTXMultVec((f32 (*)[4]) temp_r3_9->matrix[0], (PSVec *) &(*(f32*)(stack.bytes+0x3C)), (PSVec *) &(*(f32*)(stack.bytes+0x3C)));
-            }
-            temp_r3_11 = pvmtx;
-            temp_f6_4 = temp_f24 - (*(f32*)(stack.bytes+0x40));
-            temp_f5 = temp_f25 - (*(f32*)(stack.bytes+0x3C));
-            temp_f6_5 = temp_f23 - (*(f32*)(stack.bytes+0x44));
-            var_f1_4 = (temp_r3_11[0][2] * temp_f6_5) + ((pvmtx[0][0] * temp_f5) + (temp_r3_11[0][1] * temp_f6_4));
-            var_f2 = (temp_r3_11[1][2] * temp_f6_5) + ((temp_r3_11[1][0] * temp_f5) + (temp_r3_11[1][1] * temp_f6_4));
-        } else {
-            temp_r3_12 = pvmtx;
-            var_f1_4 = (temp_r3_12[0][2] * temp_f20) + ((pvmtx[0][0] * temp_f22) + (temp_r3_12[0][1] * temp_f21));
-            var_f2 = (temp_r3_12[1][2] * temp_f20) + ((temp_r3_12[1][0] * temp_f22) + (temp_r3_12[1][1] * temp_f21));
-        }
-block_49:
-        if (fabs(var_f2) < __float_min[0]) {
+    x = v.x;
+    y = v.y;
+    z = v.z;
+    if (texform != NULL) {
+        PSMtx smtx;
 
-            if (var_f1_4 >= 0.0f) {
-                var_f1_7 = 1.5707964f;
+        PSMTXScale(smtx, pp->appsrt->scale.x, pp->appsrt->scale.y, 1.0f);
+        PSMTXConcat(rvmtx, smtx, smtx);
+        right_x = smtx[0][0] * pp->size;
+        up_x = -smtx[0][1] * pp->size;
+        right_y = smtx[1][0] * pp->size;
+        up_y = -smtx[1][1] * pp->size;
+        right_z = smtx[2][0] * pp->size;
+        up_z = -smtx[2][1] * pp->size;
+    } else {
+        PSVec r;
+        PSVec u;
+
+        r.x = pp->appsrt->scale.x + vmtx[0][3];
+        r.y = pp->appsrt->scale.y + vmtx[1][3];
+        r.z = vmtx[2][3];
+        u.x = pp->appsrt->scale.x + vmtx[0][3];
+        u.y = -pp->appsrt->scale.y + vmtx[1][3];
+        u.z = vmtx[2][3];
+        PSMTXMultVec(rvmtx, &r, &r);
+        right_x = r.x * pp->size;
+        right_y = r.y * pp->size;
+        right_z = r.z * pp->size;
+        PSMTXMultVec(rvmtx, &u, &u);
+        up_x = u.x * pp->size;
+        up_y = u.y * pp->size;
+        up_z = u.z * pp->size;
+    }
+    gp = pp->generator;
+    if (gp != NULL && (gp->transformFlags & 0x20)) {
+        right_x *= gp->scale.x;
+        up_x *= gp->scale.x;
+        right_y *= gp->scale.y;
+        up_y *= gp->scale.y;
+        right_z *= gp->scale.z;
+        up_z *= gp->scale.z;
+    }
+    if ((pp->kind & 0x100000) || (pp->kind & 0x200000)) {
+        if (0.0f == prj[0]) {
+            f32 prev_x;
+            f32 prev_y;
+            f32 prev_z;
+            f32 w1inv;
+            f32 w1;
+            f32 w0inv;
+            f32 w0;
+
+            if (pp->kind & 4) {
+                reuseCalcTornadoLastPos(pp, &prev_x, &prev_y, &prev_z);
+                v.x = prev_x;
+                v.y = prev_y;
+                v.z = prev_z;
+                if (pp->appsrt->generatorOwned != 0) {
+                    PSMTXMultVec(mtx, &v, &v);
+                    PSMTXMultVec(rvmtxRot, &v, &v);
+                    v.x += pp->appsrt->translate.x;
+                    v.y += pp->appsrt->translate.y;
+                    v.z += pp->appsrt->translate.z;
+                } else {
+                    PSMTXMultVec(pp->appsrt->matrix, &v, &v);
+                }
+                prev_x = v.x;
+                prev_y = v.y;
+                prev_z = v.z;
             } else {
-                var_f1_7 = -1.5707964f;
+                prev_x = x - vx;
+                prev_y = y - vy;
+                prev_z = z - vz;
             }
+            w0 = vmtx[2][3] + (vmtx[2][2] * z + (vmtx[2][0] * x + vmtx[2][1] * y));
+            if (0.0f == w0) {
+                goto no_direction;
+            }
+            w0inv = -1.0f / w0;
+            w1 = vmtx[2][3] + (vmtx[2][2] * prev_z +
+                               (vmtx[2][0] * prev_x + vmtx[2][1] * prev_y));
+            if (0.0f == w1) {
+                goto no_direction;
+            }
+            w1inv = -1.0f / w1;
+            dir_x = w0inv * (pvmtx[0][3] + (pvmtx[0][2] * z +
+                                            (pvmtx[0][0] * x + pvmtx[0][1] * y))) -
+                    w1inv * (pvmtx[0][3] + (pvmtx[0][2] * prev_z +
+                                            (pvmtx[0][0] * prev_x +
+                                             pvmtx[0][1] * prev_y)));
+            dir_y = w0inv * (pvmtx[1][3] + (pvmtx[1][2] * z +
+                                            (pvmtx[1][0] * x + pvmtx[1][1] * y))) -
+                    w1inv * (pvmtx[1][3] + (pvmtx[1][2] * prev_z +
+                                            (pvmtx[1][0] * prev_x +
+                                             pvmtx[1][1] * prev_y)));
+        } else if (pp->kind & 4) {
+            f32 prev_x;
+            f32 prev_y;
+            f32 prev_z;
+            f32 dx;
+            f32 dy;
+            f32 dz;
+
+            reuseCalcTornadoLastPos(pp, &prev_x, &prev_y, &prev_z);
+            v.x = prev_x;
+            v.y = prev_y;
+            v.z = prev_z;
+            if (pp->appsrt->generatorOwned != 0) {
+                PSMTXMultVec(mtx, &v, &v);
+                PSMTXMultVec(rvmtxRot, &v, &v);
+                v.x += pp->appsrt->translate.x;
+                v.y += pp->appsrt->translate.y;
+                v.z += pp->appsrt->translate.z;
+            } else {
+                PSMTXMultVec(pp->appsrt->matrix, &v, &v);
+            }
+            dx = x - v.x;
+            dy = y - v.y;
+            dz = z - v.z;
+            dir_x = pvmtx[0][2] * dz + (pvmtx[0][0] * dx + pvmtx[0][1] * dy);
+            dir_y = pvmtx[1][2] * dz + (pvmtx[1][0] * dx + pvmtx[1][1] * dy);
         } else {
-            var_f1_7 = (f32) atan2((f64) var_f1_4, (f64) var_f2);
+            dir_x = pvmtx[0][2] * vz + (pvmtx[0][0] * vx + pvmtx[0][1] * vy);
+            dir_y = pvmtx[1][2] * vz + (pvmtx[1][0] * vx + pvmtx[1][1] * vy);
         }
-        if (arg0->kind & 0x200000) {
-            var_f1_7 += arg0->rotate;
+        if (fabs(dir_y) < (__float_min[0])) {
+            angle = (dir_x >= 0.0f) ? 1.5707964f : -1.5707964f;
+        } else {
+            angle = atan2f(dir_x, dir_y);
+        }
+        if (pp->kind & 0x200000) {
+            angle += pp->rotate;
         }
     } else {
-block_56:
-        var_f1_7 = arg0->rotate;
+    no_direction:
+        angle = pp->rotate;
     }
-    if (fabs(var_f1_7) > 0.01) {
-        (*(f32*)(stack.bytes+0x18)) = (var_f29 * var_f26) - (var_f27 * var_f28);
-        (*(f32*)(stack.bytes+0x1C)) = (var_f27 * var_f30) - (var_f31 * var_f26);
-        (*(f32*)(stack.bytes+0x20)) = (var_f31 * var_f28) - (var_f29 * var_f30);
-        PSMTXRotAxisRad((f32 (*)[4]) &((f32*)(stack.bytes+0x48))[0], (PSVec *) &(*(f32*)(stack.bytes+0x18)), var_f1_7);
-        temp_f4_4 = ((*(f32*)(stack.bytes+0x58)) * var_f31) + ((*(f32*)(stack.bytes+0x5C)) * var_f29);
-        temp_f1_4 = ((*(f32*)(stack.bytes+0x58)) * var_f30) + ((*(f32*)(stack.bytes+0x5C)) * var_f28);
-        temp_f3_5 = ((*(f32*)(stack.bytes+0x68)) * var_f31) + ((*(f32*)(stack.bytes+0x6C)) * var_f29);
-        temp_f0_4 = ((*(f32*)(stack.bytes+0x68)) * var_f30) + ((*(f32*)(stack.bytes+0x6C)) * var_f28);
-        var_f31 = (((f32*)(stack.bytes+0x48))[2] * var_f27) + ((((f32*)(stack.bytes+0x48))[0] * var_f31) + (((f32*)(stack.bytes+0x48))[1] * var_f29));
-        var_f29 = ((*(f32*)(stack.bytes+0x60)) * var_f27) + temp_f4_4;
-        var_f27 = ((*(f32*)(stack.bytes+0x70)) * var_f27) + temp_f3_5;
-        var_f30 = (((f32*)(stack.bytes+0x48))[2] * var_f26) + ((((f32*)(stack.bytes+0x48))[0] * var_f30) + (((f32*)(stack.bytes+0x48))[1] * var_f28));
-        var_f28 = ((*(f32*)(stack.bytes+0x60)) * var_f26) + temp_f1_4;
-        var_f26 = ((*(f32*)(stack.bytes+0x70)) * var_f26) + temp_f0_4;
+    if (fabs(angle) > 0.01) {
+        PSMtx rmtx;
+        PSVec axis;
+        f32 rx = right_x;
+        f32 ry = right_y;
+        f32 rz = right_z;
+        f32 ux = up_x;
+        f32 uy = up_y;
+        f32 uz = up_z;
+
+        axis.x = ry * uz - rz * uy;
+        axis.y = rz * ux - rx * uz;
+        axis.z = rx * uy - ry * ux;
+        PSMTXRotAxisRad(rmtx, &axis, angle);
+        right_x = rmtx[0][2] * rz + (rmtx[0][0] * rx + rmtx[0][1] * ry);
+        right_y = rmtx[1][2] * rz + (rmtx[1][0] * rx + rmtx[1][1] * ry);
+        right_z = rmtx[2][2] * rz + (rmtx[2][0] * rx + rmtx[2][1] * ry);
+        up_x = rmtx[0][2] * uz + (rmtx[0][0] * ux + rmtx[0][1] * uy);
+        up_y = rmtx[1][2] * uz + (rmtx[1][0] * ux + rmtx[1][1] * uy);
+        up_z = rmtx[2][2] * uz + (rmtx[2][0] * ux + rmtx[2][1] * uy);
     }
-    (*(f32*)(stack.bytes+0x8)) = var_f27;
-    (*(f32*)(stack.bytes+0xC)) = var_f30;
-    (*(f32*)(stack.bytes+0x10)) = var_f28;
-    (*(f32*)(stack.bytes+0x14)) = var_f26;
-    psDispSubMakePolygon(arg0, arg1, temp_f25, temp_f24, temp_f23, temp_f22, temp_f21, temp_f20, var_f31, var_f29, (*(f32*)(stack.bytes+0x8)), (*(f32*)(stack.bytes+0xC)), (*(f32*)(stack.bytes+0x10)), (*(f32*)(stack.bytes+0x14)));
+    psDispSubMakePolygon(pp, texform, x, y, z, vx, vy, vz, right_x, right_y,
+                         right_z, up_x, up_y, up_z);
 }
 
 __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5, f32 farg6, f32 farg7, f32 arg_sp8, f32 arg_spC, f32 arg_sp10, f32 arg_sp14) {
@@ -1537,270 +1436,147 @@ loop_126:
     }
 }
 
-__declspec(weak) void psDispSub(PSParticle *arg0, u32 *arg1) {
-    union { f64 alignment; u8 bytes[84]; } stack;
-    PSGenerator *temp_r28;
-    f32 (*temp_r3_4)[4];
-    f32 (*temp_r3_5)[4];
-    f32 (*temp_r3_6)[4];
-    f32 temp_f0;
-    f32 temp_f0_2;
-    f32 temp_f0_3;
-    f32 temp_f10;
-    f32 temp_f10_2;
-    f32 temp_f11;
-    f32 temp_f11_2;
-    f32 temp_f12;
-    f32 temp_f13;
-    f32 temp_f13_2;
-    f32 temp_f16;
-    f32 temp_f16_2;
-    f32 temp_f17;
-    f32 temp_f17_2;
-    f32 temp_f17_3;
-    f32 temp_f17_4;
-    f32 temp_f18;
-    f32 temp_f18_2;
-    f32 temp_f19;
-    f32 temp_f19_2;
-    f32 temp_f19_3;
-    f32 temp_f1;
-    f32 temp_f1_2;
-    f32 temp_f20;
-    f32 temp_f20_2;
-    f32 temp_f21;
-    f32 temp_f21_2;
-    f32 temp_f22;
-    f32 temp_f22_2;
-    f32 temp_f2;
-    f32 temp_f2_2;
-    f32 temp_f30;
-    f32 temp_f3;
-    f32 temp_f3_2;
-    f32 temp_f3_3;
-    f32 temp_f3_4;
-    f32 temp_f4;
-    f32 temp_f4_2;
-    f32 temp_f4_3;
-    f32 temp_f4_4;
-    f32 temp_f4_5;
-    f32 temp_f5;
-    f32 temp_f5_2;
-    f32 temp_f5_3;
-    f32 temp_f5_4;
-    f32 temp_f5_5;
-    f32 temp_f5_6;
-    f32 temp_f6;
-    f32 temp_f6_2;
-    f32 temp_f6_3;
-    f32 temp_f7;
-    f32 temp_f7_2;
-    f32 temp_f7_3;
-    f32 temp_f9;
-    f32 temp_f9_2;
-    f32 temp_f9_3;
-    f32 var_f16;
-    f32 var_f18;
-    f32 var_f1;
-    f32 var_f1_2;
-    f32 var_f1_3;
-    f32 var_f1_4;
-    f32 var_f1_5;
-    f32 var_f23;
-    f32 var_f24;
-    f32 var_f25;
-    f32 var_f26;
-    f32 var_f27;
-    f32 var_f28;
-    f32 var_f2;
-    f32 var_f4;
-    f32 var_f4_2;
-    f32 var_f5;
-    f32 var_f8;
-    f32 var_f9;
-    u32 temp_r3_2;
-    void *temp_r3;
-    void *temp_r3_3;
+__declspec(weak) void psDispSub(PSParticle* pp, u32* texform)
+{
+    f32 x;
+    f32 y;
+    f32 z;
+    f32 right_x;
+    f32 up_x;
+    f32 right_y;
+    f32 up_y;
+    f32 right_z;
+    f32 up_z;
+    f32 angle;
+    f32 dir_x;
+    f32 dir_y;
+    PSGenerator* gp;
 
-    temp_f0 = arg0->position.x;
-    var_f1 = arg0->position.y;
-    temp_f2 = arg0->position.z;
-    temp_f30 = var_f1;
-    if (arg1 != NULL) {
-        temp_r3 = rvmtx;
-        temp_f9 = arg0->size;
-        var_f28 = rvmtx[0][0] * temp_f9;
-        var_f27 = -(*(f32*)((u8*)temp_r3+0x4)) * temp_f9;
-        var_f26 = (*(f32*)((u8*)temp_r3+0x10)) * temp_f9;
-        var_f25 = -(*(f32*)((u8*)temp_r3+0x14)) * temp_f9;
-        var_f24 = (*(f32*)((u8*)temp_r3+0x20)) * temp_f9;
-        var_f23 = -(*(f32*)((u8*)temp_r3+0x24)) * temp_f9;
+    x = pp->position.x;
+    y = pp->position.y;
+    z = pp->position.z;
+    if (texform != NULL) {
+        right_x = rvmtx[0][0] * pp->size;
+        up_x = -rvmtx[0][1] * pp->size;
+        right_y = rvmtx[1][0] * pp->size;
+        up_y = -rvmtx[1][1] * pp->size;
+        right_z = rvmtx[2][0] * pp->size;
+        up_z = -rvmtx[2][1] * pp->size;
     } else {
-        temp_f6 = arg0->size;
-        var_f28 = rx0 * temp_f6;
-        var_f27 = rx1 * temp_f6;
-        var_f26 = ry0 * temp_f6;
-        var_f25 = ry1 * temp_f6;
-        var_f24 = rz0 * temp_f6;
-        var_f23 = rz1 * temp_f6;
+        right_x = rx0 * pp->size;
+        up_x = rx1 * pp->size;
+        right_y = ry0 * pp->size;
+        up_y = ry1 * pp->size;
+        right_z = rz0 * pp->size;
+        up_z = rz1 * pp->size;
     }
-    temp_r28 = arg0->generator;
-    if ((temp_r28 != NULL) && (temp_r28->transformFlags & 0x20)) {
-        temp_f3 = temp_r28->scale.x;
-        temp_f4 = temp_r28->scale.y;
-        temp_f5 = temp_r28->scale.z;
-        var_f28 *= temp_f3;
-        var_f27 *= temp_f3;
-        var_f26 *= temp_f4;
-        var_f25 *= temp_f4;
-        var_f24 *= temp_f5;
-        var_f23 *= temp_f5;
+    gp = pp->generator;
+    if (gp != NULL && (gp->transformFlags & 0x20)) {
+        right_x *= gp->scale.x;
+        up_x *= gp->scale.x;
+        right_y *= gp->scale.y;
+        up_y *= gp->scale.y;
+        right_z *= gp->scale.z;
+        up_z *= gp->scale.z;
     }
-    temp_r3_2 = arg0->kind;
-    if ((temp_r3_2 & 0x100000) || (temp_r3_2 & 0x200000)) {
-        if (prj[0] == 0.0f) {
-            if (temp_r3_2 & 4) {
-                if (temp_r28 == NULL) {
-                    var_f8 = temp_f0;
-                    var_f4 = var_f1;
-                    var_f9 = temp_f2;
-                } else {
-                    temp_f22 = (f32) sin((f64) arg0->gravity);
-                    temp_f21 = (f32) sin((f64) arg0->friction);
-                    temp_f20 = (f32) cos((f64) arg0->gravity);
-                    temp_f19 = (f32) cos((f64) arg0->friction);
-                    temp_f18 = arg0->velocity.z - temp_r28->param1;
-                    var_f16 = temp_r28->radius;
-                    temp_f17 = arg0->velocity.x - temp_r28->gravity;
-                    if (var_f16 < 0.0f) {
-                        var_f16 = -var_f16;
-                    }
-                    var_f1_2 = temp_r28->angle;
-                    if (var_f1_2 < 0.0f) {
-                        var_f1_2 = -var_f1_2;
-                    }
-                    temp_f16 = ((temp_f18 * (f32) tan((f64) var_f1_2)) + var_f16) * arg0->velocity.y;
-                    temp_f17_2 = temp_f16 * (f32) cos((f64) temp_f17);
-                    temp_f9_2 = -temp_f17_2;
-                    temp_f5_2 = temp_f16 * (f32) sin((f64) temp_f17);
-                    var_f8 = temp_r28->position.x + ((temp_f17_2 * temp_f19) + (temp_f18 * temp_f21));
-                    var_f4 = temp_r28->position.y + ((temp_f19 * (temp_f18 * temp_f22)) + ((temp_f21 * (temp_f9_2 * temp_f22)) + (temp_f5_2 * temp_f20)));
-                    var_f9 = temp_r28->position.z + ((temp_f19 * (temp_f18 * temp_f20)) + ((temp_f21 * (temp_f9_2 * temp_f20)) - (temp_f5_2 * temp_f22)));
-                }
-            } else {
-                var_f8 = temp_f0 - arg0->velocity.x;
-                var_f4 = var_f1 - arg0->velocity.y;
-                var_f9 = temp_f2 - arg0->velocity.z;
-            }
-            temp_r3_3 = vmtx;
-            temp_f0_2 = arg0->position.y;
-            temp_f7 = (*(f32*)((u8*)temp_r3_3+0x24));
-            temp_f10 = (*(f32*)((u8*)temp_r3_3+0x20));
-            temp_f1 = arg0->position.x;
-            temp_f12 = (*(f32*)((u8*)temp_r3_3+0x28));
-            temp_f2_2 = arg0->position.z;
-            temp_f13 = (*(f32*)((u8*)temp_r3_3+0x2C));
-            temp_f11 = temp_f13 + ((temp_f12 * temp_f2_2) + ((temp_f10 * temp_f1) + (temp_f7 * temp_f0_2)));
-            if (temp_f11 != 0.0f) {
-                temp_f11_2 = -1.0f / temp_f11;
-                temp_f3_2 = temp_f13 + ((temp_f12 * var_f9) + ((temp_f10 * var_f8) + (temp_f7 * var_f4)));
-                if (temp_f3_2 != 0.0f) {
-                    temp_f10_2 = -1.0f / temp_f3_2;
-                    temp_r3_4 = pvmtx;
-                    temp_f13_2 = temp_r3_4[0][1];
-                    temp_f19_2 = temp_r3_4[1][1];
-                    temp_f5_3 = temp_r3_4[1][0];
-                    temp_f3_3 = temp_r3_4[0][2];
-                    temp_f6_2 = temp_r3_4[1][2];
-                    temp_f4_2 = temp_r3_4[0][3];
-                    temp_f7_2 = temp_r3_4[1][3];
-                    var_f1_3 = (temp_f11_2 * (temp_f4_2 + ((temp_f3_3 * temp_f2_2) + ((pvmtx[0][0] * temp_f1) + (temp_f13_2 * temp_f0_2))))) - (temp_f10_2 * (temp_f4_2 + ((temp_f3_3 * var_f9) + ((pvmtx[0][0] * var_f8) + (temp_f13_2 * var_f4)))));
-                    var_f2 = (temp_f11_2 * (temp_f7_2 + ((temp_f6_2 * temp_f2_2) + ((temp_f5_3 * temp_f1) + (temp_f19_2 * temp_f0_2))))) - (temp_f10_2 * (temp_f7_2 + ((temp_f6_2 * var_f9) + ((temp_f5_3 * var_f8) + (temp_f19_2 * var_f4)))));
-                    goto block_31;
-                }
-            }
-            goto block_38;
-        }
-        if (temp_r3_2 & 4) {
-            if (temp_r28 == NULL) {
-                var_f4_2 = temp_f0;
-                var_f5 = temp_f2;
-            } else {
-                temp_f19_3 = (f32) sin((f64) arg0->gravity);
-                temp_f20_2 = (f32) sin((f64) arg0->friction);
-                temp_f21_2 = (f32) cos((f64) arg0->gravity);
-                temp_f22_2 = (f32) cos((f64) arg0->friction);
-                temp_f16_2 = arg0->velocity.z - temp_r28->param1;
-                var_f18 = temp_r28->radius;
-                temp_f17_3 = arg0->velocity.x - temp_r28->gravity;
-                if (var_f18 < 0.0f) {
-                    var_f18 = -var_f18;
-                }
-                var_f1_4 = temp_r28->angle;
-                if (var_f1_4 < 0.0f) {
-                    var_f1_4 = -var_f1_4;
-                }
-                temp_f18_2 = ((temp_f16_2 * (f32) tan((f64) var_f1_4)) + var_f18) * arg0->velocity.y;
-                temp_f17_4 = temp_f18_2 * (f32) cos((f64) temp_f17_3);
-                temp_f9_3 = -temp_f17_4;
-                temp_f5_4 = temp_f18_2 * (f32) sin((f64) temp_f17_3);
-                var_f4_2 = temp_r28->position.x + ((temp_f17_4 * temp_f22_2) + (temp_f16_2 * temp_f20_2));
-                var_f1 = temp_r28->position.y + ((temp_f22_2 * (temp_f16_2 * temp_f19_3)) + ((temp_f20_2 * (temp_f9_3 * temp_f19_3)) + (temp_f5_4 * temp_f21_2)));
-                var_f5 = temp_r28->position.z + ((temp_f22_2 * (temp_f16_2 * temp_f21_2)) + ((temp_f20_2 * (temp_f9_3 * temp_f21_2)) - (temp_f5_4 * temp_f19_3)));
-            }
-            temp_r3_5 = pvmtx;
-            temp_f7_3 = arg0->position.y - var_f1;
-            temp_f6_3 = arg0->position.x - var_f4_2;
-            temp_f5_5 = arg0->position.z - var_f5;
-            var_f1_3 = (temp_r3_5[0][2] * temp_f5_5) + ((pvmtx[0][0] * temp_f6_3) + (temp_r3_5[0][1] * temp_f7_3));
-            var_f2 = (temp_r3_5[1][2] * temp_f5_5) + ((temp_r3_5[1][0] * temp_f6_3) + (temp_r3_5[1][1] * temp_f7_3));
-        } else {
-            temp_r3_6 = pvmtx;
-            temp_f4_3 = arg0->velocity.y;
-            temp_f5_6 = arg0->velocity.x;
-            temp_f4_4 = arg0->velocity.z;
-            var_f1_3 = (temp_r3_6[0][2] * temp_f4_4) + ((pvmtx[0][0] * temp_f5_6) + (temp_r3_6[0][1] * temp_f4_3));
-            var_f2 = (temp_r3_6[1][2] * temp_f4_4) + ((temp_r3_6[1][0] * temp_f5_6) + (temp_r3_6[1][1] * temp_f4_3));
-        }
-block_31:
-        if (fabs(var_f2) < __float_min[0]) {
+    if ((pp->kind & 0x100000) || (pp->kind & 0x200000)) {
+        if (0.0f == prj[0]) {
+            f32 prev_x;
+            f32 prev_y;
+            f32 prev_z;
+            f32 w1inv;
+            f32 w1;
+            f32 w0inv;
+            f32 w0;
 
-            if (var_f1_3 >= 0.0f) {
-                var_f1_5 = 1.5707964f;
+            if (pp->kind & 4) {
+                reuseCalcTornadoLastPos(pp, &prev_x, &prev_y, &prev_z);
             } else {
-                var_f1_5 = -1.5707964f;
+                prev_x = pp->position.x - pp->velocity.x;
+                prev_y = pp->position.y - pp->velocity.y;
+                prev_z = pp->position.z - pp->velocity.z;
             }
+            w0 = vmtx[2][3] +
+                 (vmtx[2][2] * pp->position.z +
+                  (vmtx[2][0] * pp->position.x + vmtx[2][1] * pp->position.y));
+            if (0.0f == w0) {
+                goto no_direction;
+            }
+            w0inv = -1.0f / w0;
+            w1 = vmtx[2][3] + (vmtx[2][2] * prev_z +
+                               (vmtx[2][0] * prev_x + vmtx[2][1] * prev_y));
+            if (0.0f == w1) {
+                goto no_direction;
+            }
+            w1inv = -1.0f / w1;
+            dir_x = w0inv * (pvmtx[0][3] + (pvmtx[0][2] * pp->position.z +
+                                            (pvmtx[0][0] * pp->position.x +
+                                             pvmtx[0][1] * pp->position.y))) -
+                    w1inv * (pvmtx[0][3] + (pvmtx[0][2] * prev_z +
+                                            (pvmtx[0][0] * prev_x +
+                                             pvmtx[0][1] * prev_y)));
+            dir_y = w0inv * (pvmtx[1][3] + (pvmtx[1][2] * pp->position.z +
+                                            (pvmtx[1][0] * pp->position.x +
+                                             pvmtx[1][1] * pp->position.y))) -
+                    w1inv * (pvmtx[1][3] + (pvmtx[1][2] * prev_z +
+                                            (pvmtx[1][0] * prev_x +
+                                             pvmtx[1][1] * prev_y)));
+        } else if (pp->kind & 4) {
+            f32 prev_x;
+            f32 prev_y;
+            f32 prev_z;
+            f32 dx;
+            f32 dy;
+            f32 dz;
+
+            reuseCalcTornadoLastPos(pp, &prev_x, &prev_y, &prev_z);
+            dx = pp->position.x - prev_x;
+            dy = pp->position.y - prev_y;
+            dz = pp->position.z - prev_z;
+            dir_x = pvmtx[0][2] * dz + (pvmtx[0][0] * dx + pvmtx[0][1] * dy);
+            dir_y = pvmtx[1][2] * dz + (pvmtx[1][0] * dx + pvmtx[1][1] * dy);
         } else {
-            var_f1_5 = (f32) atan2((f64) var_f1_3, (f64) var_f2);
+            dir_x = pvmtx[0][2] * pp->velocity.z +
+                    (pvmtx[0][0] * pp->velocity.x + pvmtx[0][1] * pp->velocity.y);
+            dir_y = pvmtx[1][2] * pp->velocity.z +
+                    (pvmtx[1][0] * pp->velocity.x + pvmtx[1][1] * pp->velocity.y);
         }
-        if (arg0->kind & 0x200000) {
-            var_f1_5 += arg0->rotate;
+        if (fabs(dir_y) < (__float_min[0])) {
+            angle = (dir_x >= 0.0f) ? 1.5707964f : -1.5707964f;
+        } else {
+            angle = atan2f(dir_x, dir_y);
+        }
+        if (pp->kind & 0x200000) {
+            angle += pp->rotate;
         }
     } else {
-block_38:
-        var_f1_5 = arg0->rotate;
+    no_direction:
+        angle = pp->rotate;
     }
-    if (fabs(var_f1_5) > 0.01) {
-        (*(f32*)(stack.bytes+0x18)) = (var_f26 * var_f23) - (var_f24 * var_f25);
-        (*(f32*)(stack.bytes+0x1C)) = (var_f24 * var_f27) - (var_f28 * var_f23);
-        (*(f32*)(stack.bytes+0x20)) = (var_f28 * var_f25) - (var_f26 * var_f27);
-        PSMTXRotAxisRad((f32 (*)[4]) &((f32*)(stack.bytes+0x24))[0], (PSVec *) &(*(f32*)(stack.bytes+0x18)), var_f1_5);
-        temp_f4_5 = ((*(f32*)(stack.bytes+0x34)) * var_f28) + ((*(f32*)(stack.bytes+0x38)) * var_f26);
-        temp_f1_2 = ((*(f32*)(stack.bytes+0x34)) * var_f27) + ((*(f32*)(stack.bytes+0x38)) * var_f25);
-        temp_f3_4 = ((*(f32*)(stack.bytes+0x44)) * var_f28) + ((*(f32*)(stack.bytes+0x48)) * var_f26);
-        temp_f0_3 = ((*(f32*)(stack.bytes+0x44)) * var_f27) + ((*(f32*)(stack.bytes+0x48)) * var_f25);
-        var_f28 = (((f32*)(stack.bytes+0x24))[2] * var_f24) + ((((f32*)(stack.bytes+0x24))[0] * var_f28) + (((f32*)(stack.bytes+0x24))[1] * var_f26));
-        var_f26 = ((*(f32*)(stack.bytes+0x3C)) * var_f24) + temp_f4_5;
-        var_f24 = ((*(f32*)(stack.bytes+0x4C)) * var_f24) + temp_f3_4;
-        var_f27 = (((f32*)(stack.bytes+0x24))[2] * var_f23) + ((((f32*)(stack.bytes+0x24))[0] * var_f27) + (((f32*)(stack.bytes+0x24))[1] * var_f25));
-        var_f25 = ((*(f32*)(stack.bytes+0x3C)) * var_f23) + temp_f1_2;
-        var_f23 = ((*(f32*)(stack.bytes+0x4C)) * var_f23) + temp_f0_3;
+    if (fabs(angle) > 0.01) {
+        PSMtx mtx;
+        PSVec axis;
+        f32 rx = right_x;
+        f32 ry = right_y;
+        f32 rz = right_z;
+        f32 ux = up_x;
+        f32 uy = up_y;
+        f32 uz = up_z;
+
+        axis.x = ry * uz - rz * uy;
+        axis.y = rz * ux - rx * uz;
+        axis.z = rx * uy - ry * ux;
+        PSMTXRotAxisRad(mtx, &axis, angle);
+        right_x = mtx[0][2] * rz + (mtx[0][0] * rx + mtx[0][1] * ry);
+        right_y = mtx[1][2] * rz + (mtx[1][0] * rx + mtx[1][1] * ry);
+        right_z = mtx[2][2] * rz + (mtx[2][0] * rx + mtx[2][1] * ry);
+        up_x = mtx[0][2] * uz + (mtx[0][0] * ux + mtx[0][1] * uy);
+        up_y = mtx[1][2] * uz + (mtx[1][0] * ux + mtx[1][1] * uy);
+        up_z = mtx[2][2] * uz + (mtx[2][0] * ux + mtx[2][1] * uy);
     }
-    (*(f32*)(stack.bytes+0x8)) = var_f24;
-    (*(f32*)(stack.bytes+0xC)) = var_f27;
-    (*(f32*)(stack.bytes+0x10)) = var_f25;
-    (*(f32*)(stack.bytes+0x14)) = var_f23;
-    psDispSubMakePolygon(arg0, arg1, temp_f0, temp_f30, temp_f2, arg0->velocity.x, arg0->velocity.y, arg0->velocity.z, var_f28, var_f26, (*(f32*)(stack.bytes+0x8)), (*(f32*)(stack.bytes+0xC)), (*(f32*)(stack.bytes+0x10)), (*(f32*)(stack.bytes+0x14)));
+    psDispSubMakePolygon(pp, texform, x, y, z, pp->velocity.x, pp->velocity.y,
+                         pp->velocity.z, right_x, right_y, right_z, up_x, up_y,
+                         up_z);
 }
 
 static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3) {
@@ -1958,7 +1734,7 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
                         GXSetTevColor(GX_TEVREG2, *(GXColor*)&colorMat);
                         prevBlendMode = -1;
                         GXSetZCompLoc(0U);
-                        HSD_CObjGetViewingMtx(HSD_CObjGetCurrent());
+                        HSD_CObjGetViewingMtx(HSD_CObjGetCurrent(), vmtx);
                         PSMTXInverse(vmtx, rvmtx);
                         if (prj[0] == 0.0f) {
                             temp_f2 = temp_r28[0][2];

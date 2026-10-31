@@ -48,7 +48,7 @@ struct BDiskMenuData {
 struct Pokemon;
 struct Hero {
     u8 reserved0[0x978];
-    Hero();
+    Hero() {}
     static Hero* getHeroPtr();
     Pokemon* getPokemon(long);
 };

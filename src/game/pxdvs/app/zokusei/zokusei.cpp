@@ -1,11 +1,144 @@
 #include <global.h>
+
+struct PokemonData;
+
 extern "C" {
-extern u32 *pokemon_data_number,*zokusei_data_number;
-u8 pokemonDB_GetZokuseiDataId(u32,u16);u8 pokemonDataBiosGetZokuseiDataId(void*,u16);u16 zokuseiBiosGetSpriteID(u16);u16 zokuseiBiosGetWazaJoutai(u32,u32);
-u32 zokuseiGetPokemonSpriteID(void *volatile pokemon,u16 slot){u16 index=slot;if(index>=2)return 0;return zokuseiBiosGetSpriteID(pokemonDataBiosGetZokuseiDataId(pokemon,index));}
-s32 zokuseiGetAisyouValue(u16 attack,volatile u8 offense,u8 filter){s32 result=0;u16 type=0;for(;type<*zokusei_data_number;type++){if(type==9)continue;if(offense==1){u16 value=zokuseiBiosGetWazaJoutai(attack,type);if(value==0x43){if(filter!=1)result-=10;}else if(value==0x42){if(filter!=1)result-=10;}else if(value==0x41){if(filter!=2)result+=10;}}else{u16 value=zokuseiBiosGetWazaJoutai(type,attack);if(value==0x43){if(filter!=2)result+=10;}else if(value==0x42){if(filter!=2)result+=10;}else if(value==0x41){if(filter!=1)result-=10;}}}return result;}
-static inline u16 evaluate(u16 attack,const u16 *types,u16 count){u16 weakness=0,resistance=0,index=0;for(;index<count;index++){if(types[index]==9)continue;u16 value=zokuseiBiosGetWazaJoutai(attack,types[index]);if(value==0x43)return 0x43;else if(value==0x41)weakness++;else if(value==0x42)resistance++;}if(weakness==0&&resistance==0)return 0x3f;if(weakness==resistance)return 0x3f;if(weakness>resistance)return 0x41;return 0x42;}
-u16 zokuseiGetWazaJoutaiAsDefenseZokuseiAry(volatile u16 attack,const u16 *types,volatile u16 count){u16 index;u16 weakness=0,resistance=0;index=0;for(;index<count;index++){if(types[index]==9)continue;u16 value=zokuseiBiosGetWazaJoutai(attack,types[index]);if(value==0x43)return 0x43;else if(value==0x41)weakness++;else if(value==0x42)resistance++;}if(weakness==0&&resistance==0)return 0x3f;if(weakness==resistance)return 0x3f;if(weakness>resistance)return 0x41;return 0x42;}
-u16 zokuseiGetWazaJoutai_PokemonId(u16 attack,u16 pokemon){u16 types[2];u16 count=0;u8 slot=0;if(pokemon>*pokemon_data_number)return 0;for(;slot<2;slot++){u8 type=pokemonDB_GetZokuseiDataId(pokemon,slot);if(type!=9)types[count++]=type;}u16 result=evaluate(attack,types,count);return result;}
-u16 zokuseiGetWazaJoutai(volatile u16 attack,volatile u16 defense){return zokuseiBiosGetWazaJoutai(attack,defense);}
+u8 pokemonDB_GetZokuseiDataId(u16, u16);
+u8 pokemonDataBiosGetZokuseiDataId(PokemonData*, u16);
+u16 zokuseiBiosGetSpriteID(u16);
+u16 zokuseiBiosGetWazaJoutai(u32, u32);
+extern u32* pokemon_data_number;
+extern u32* zokusei_data_number;
+s32 zokuseiGetWazaJoutaiAsDefenseZokuseiAry(u16, u16*, u16);
+
+static inline u16 _getWazaJoutai(u16 id, u16 target) {
+    return zokuseiBiosGetWazaJoutai(id, target);
+}
+
+#pragma force_active on
+u16 zokuseiGetPokemonSpriteID(PokemonData* pdata, u16 index) {
+    if (index >= 2) {
+        return 0;
+    }
+    return zokuseiBiosGetSpriteID(pokemonDataBiosGetZokuseiDataId(pdata, index));
+}
+#pragma force_active reset
+
+#pragma force_active on
+s32 zokuseiGetAisyouValue(u16 type, u8 attack, u8 side) {
+    s32 value;
+    u16 result;
+    u16 i;
+    u16 code1;
+    u16 code2;
+
+    value = 0;
+    for (i = 0; i < *zokusei_data_number; i++) {
+        if (i == 9) {
+            continue;
+        }
+        if (attack == 1) {
+            code1 = zokuseiBiosGetWazaJoutai(type, i);
+            result = code1;
+            if (result == 0x43) {
+                if (side != 1) {
+                    value -= 10;
+                }
+            } else if (result == 0x42) {
+                if (side != 1) {
+                    value -= 10;
+                }
+            } else if (result == 0x41) {
+                if (side != 2) {
+                    value += 10;
+                }
+            }
+        } else {
+            code2 = zokuseiBiosGetWazaJoutai(i, type);
+            result = code2;
+            if (result == 0x43) {
+                if (side != 2) {
+                    value += 10;
+                }
+            } else if (result == 0x42) {
+                if (side != 2) {
+                    value += 10;
+                }
+            } else if (result == 0x41) {
+                if (side != 1) {
+                    value -= 10;
+                }
+            }
+        }
+    }
+    return value;
+}
+#pragma force_active reset
+
+#pragma force_active on
+s32 zokuseiGetWazaJoutaiAsDefenseZokuseiAry(u16 type, u16* arr, u16 count) {
+    u16 i;
+    u16 countA = 0;
+    u16 countB = 0;
+    u16 e;
+    u16 result;
+
+    for (i = 0; i < count; i++) {
+        if (arr[i] == 9) {
+            continue;
+        }
+        e = arr[i];
+        result = _getWazaJoutai(type, e);
+        if (result == 0x43) {
+            return 0x43;
+        }
+        if (result == 0x41) {
+            countA++;
+            continue;
+        }
+        if (result == 0x42) {
+            countB++;
+        }
+    }
+    if (countA == 0 && countB == 0) {
+        return 0x3f;
+    }
+    if (countA == countB) {
+        return 0x3f;
+    }
+    if (countA > countB) {
+        return 0x41;
+    }
+    return 0x42;
+}
+#pragma force_active reset
+
+#pragma force_active on
+s32 zokuseiGetWazaJoutai_PokemonId(u16 type, u16 pokemon) {
+    u16 types[4];
+    u16 count;
+    u8 i;
+    u16 id;
+
+    if (pokemon > *pokemon_data_number) {
+        return 0;
+    }
+    count = 0;
+    for (i = 0; i < 2; i++) {
+        id = pokemonDB_GetZokuseiDataId(pokemon, i);
+        if (id != 9) {
+            types[count] = id;
+            count++;
+        }
+    }
+    return zokuseiGetWazaJoutaiAsDefenseZokuseiAry(type, types, count);
+}
+#pragma force_active reset
+
+#pragma force_active on
+u16 zokuseiGetWazaJoutai(u16 id, u16 target) {
+    return zokuseiBiosGetWazaJoutai(id, target);
+}
+#pragma force_active reset
+
 }

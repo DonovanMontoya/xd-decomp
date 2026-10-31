@@ -285,7 +285,7 @@ s32 _fightTrainerAiWazaSubDefensePokemon__FP13FIGHT_TRAINERP15FightOutPokemonUsP
         void *enemy=enemies[i];
         if(enemy&&fightOutPokemonGetFightEntryId(enemy)>=0){
             fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0,enemy);
-            scores[i]=((s16(*)(void*,void*,void*,s16,u16,s8,s8))fightAi_ThreatEnemyValue)(trainer,pokemon,enemy,-1,1,canHit[i],canKnockout[i]);
+            scores[i]=fightAi_ThreatEnemyValue(static_cast<FIGHT_TRAINER*>(trainer),static_cast<FightOutPokemon*>(pokemon),static_cast<FightOutPokemon*>(enemy),-1,1,canHit[i],canKnockout[i]);
             if(dbgMenuFightGetFightTrainerAiLastValueReviseFlag()==1)scores[i]=fightTrainerAiAddValue(scores[i],(HSD_Rand()%(revise*2+1))-revise);
         }
     }

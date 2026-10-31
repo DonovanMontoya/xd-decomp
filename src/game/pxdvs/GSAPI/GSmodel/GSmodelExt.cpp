@@ -398,7 +398,7 @@ extern "C" void GSmodelEnableEnvMap(GSmodel* model, s32 source, s32 mode, f32 bl
                 count = model->materialCount;
                 material = model->materials;
                 for (; i < count; ++i, ++material) {
-                    GSmaterialSetEnvMapParams(material, source, mode, texture, blend);
+                    GSmaterialSetEnvMapParams(material, source, mode, blend, texture);
                     GSmaterialEnableExtension(material, 4);
                 }
             }

@@ -36,7 +36,7 @@ f32 GScolsy2UtilGetSidePlanePoint(GSvec*,GSvec*,GSvec*);
 void GScolsy2UtilGetCpPlanePoint(GSvec*,GSvec*,GSvec*,GSvec*);
 s32 GScolsy2UtilChkInTri(GSvec*,GSvec*,GSvec*);
 void GScolsy2UtilGetPointExtentionLine(GSvec*,GSvec*,GSvec*,f32);
-u8 GScolsys2HitCollision(GSvec*,GSvec*,GSvec*,f32);
+bool GScolsys2HitCollision(GSvec*,GSvec*,f32,GSvec*);
 u8 peopleLineCheck(u32,u32,f32,f32,f32,f32,u8);
 u8 peopleRectCheck(u32,u32,f32,f32,f32,f32);
 static u8 _peopleGetCrossPoint__FP5GSvecP5GSvecfP5GSvecP5GSvecP5GSvec(GSvec*,GSvec*,f32,GSvec*,GSvec*,GSvec*);

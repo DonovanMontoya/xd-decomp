@@ -1,4 +1,6 @@
 #include <game/menuPdaDPMonitorLayout.hpp>
+
+#pragma force_active on
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -81,6 +83,15 @@ static inline void dpmColor(u8 alpha) {
 }
 static inline void dpmTexcoord(f32 u, f32 v) {
     volatile DpmFifo *fifo = (volatile DpmFifo *)0xcc008000;
+    fifo->floatValue = u;
+    fifo->floatValue = v;
+}
+
+static inline void dpmVertex(DpmWindow *window, s16 x, s16 y, f32 u, f32 v) {
+    DpmFifo *fifo = (DpmFifo *)0xcc008000;
+    *(s16 *)fifo = x;
+    *(s16 *)fifo = y;
+    dpmColor(window->alpha);
     fifo->floatValue = u;
     fifo->floatValue = v;
 }
@@ -362,6 +373,7 @@ void SetViewFlag__10menuPdaDPMFP6CURSOR(DpmWork *arg0, DpmCursor *arg1) {
 void DispPokemonModel__10menuPdaDPMFP14tagWINDOW_WORKP14tagSPRITE_WORKP12DPM_CONTENTS(
     DpmWork *arg0, DpmWindow *arg1, DpmSprite *arg2, DpmContents *arg3) {
     f32 angle[3];
+    f32 zero, one;
     DpmItem *item;
     DpmTexture *texture;
     DpmLayer *layer;
@@ -389,18 +401,12 @@ void DispPokemonModel__10menuPdaDPMFP14tagWINDOW_WORKP14tagSPRITE_WORKP12DPM_CON
                     layer->dirtyB |= 1;
                 }
                 beginSurface__10GSgfxLayerFUs(layer, 4);
-                dpmPosition(0, 0);
-                dpmColor(arg1->alpha);
-                dpmTexcoord(0.0f, 0.0f);
-                dpmPosition(arg2->width, 0);
-                dpmColor(arg1->alpha);
-                dpmTexcoord(1.0f, 0.0f);
-                dpmPosition(0, arg2->height);
-                dpmColor(arg1->alpha);
-                dpmTexcoord(0.0f, 1.0f);
-                dpmPosition(arg2->width, arg2->height);
-                dpmColor(arg1->alpha);
-                dpmTexcoord(1.0f, 1.0f);
+                zero = 0.0f;
+                one = 1.0f;
+                dpmVertex(arg1, 0, 0, zero, zero);
+                dpmVertex(arg1, arg2->width, 0, one, zero);
+                dpmVertex(arg1, 0, arg2->height, zero, one);
+                dpmVertex(arg1, arg2->width, arg2->height, one, one);
                 endSurface__10GSgfxLayerFv(layer);
             }
         }
@@ -586,3 +592,5 @@ DpmPokemon *GetPokemonPointer__10menuPdaDPMFl(DpmWork *arg0, s32 arg1) {
 #ifdef __cplusplus
 }
 #endif
+
+#pragma force_active reset

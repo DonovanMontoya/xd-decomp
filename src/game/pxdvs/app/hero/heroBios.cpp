@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <game/pxdvs/app/hero/heroBiosLayout.hpp>
 #pragma dont_inline on
 extern "C" {
@@ -49,3 +50,4 @@ u32 heroBiosGetRnd(HeroBiosLayout* p){if(p==0){return 0;}else{return p->rnd;}}
 u16* heroBiosGetNamePtr(HeroBiosLayout* p){if(p==0){return 0;}else{return (u16*)p;}}
 void heroBiosCopy(HeroBiosLayout* dst,const HeroBiosLayout* src){if(dst&&src)memcpy(dst,src,0x978);}
 }
+#pragma force_active reset

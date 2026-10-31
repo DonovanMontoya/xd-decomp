@@ -17,7 +17,7 @@ ninja all_source progress build/GXXE01/report.json
 python3 tools/update_readme_progress.py build/GXXE01/report.json   # refresh README badges
 ```
 
-Progress is `matched_code` in `build/GXXE01/report.json` (out of 3,042,576 code bytes). On a laptop, prefer `nice -n 19 ninja -j4`. If `main.dol: OK` doesn't print because the DOL was up to date, verify with `sha1sum build/GXXE01/main.dol`. CI only checks configuration; full builds need the private disc image.
+Progress is `matched_code` in `build/GXXE01/report.json` (out of 3,042,580 code bytes). On a laptop, prefer `nice -n 19 ninja -j4`. If `main.dol: OK` doesn't print because the DOL was up to date, verify with `sha1sum build/GXXE01/main.dol`. CI only checks configuration; full builds need the private disc image.
 
 ## Layout
 
@@ -34,6 +34,7 @@ Flag groups like `cflags_xd_app_balanced`, `cflags_xd_app_fight` (-O4 instead of
 - Menu units (C++): `-inline noauto -opt nopeephole`, plus `-str reuse,nopool,readonly` when small strings sit 4-byte aligned or in .sdata2.
 - Battle (`fight*`) and script units: `cflags_xd_app_fight`; script `obj*` units also add `-opt nopeephole -str reuse,nopool,readonly`.
 - gimmick: `-O0,p -inline off -fp_contract off`.
+- Type-effectiveness: append `-opt level=0` after `zokusei.cpp`'s normal `-O4,p` or `zokuseiBios.cpp`'s `-O1,p`. This lowers optimization passes while preserving backend defaults; `-O0,p` produces different scheduling.
 - MetroTRK pieces that were originally assembly may be `asm` functions or `.s` files; elsewhere use real C/C++ only.
 
 Find a new unit's recipe early using its trivial functions.
@@ -54,8 +55,9 @@ nice -n 19 python3 build/xd40/xd.py asm     game/menuFight SYMBOL
 ## Matching notes
 
 - Symbol names must match exactly. Mangled names imply the exact C++ signature; use `extern "C"` for plain names. Function-local statics must match the `name$NNNN` symbols.
-- Off-by-N `.rodata`/`.sdata2` offsets usually come from string-pool layout. The original may keep literals from functions the linker stripped; re-add a plausible function at the right source position.
-- Known blockers: register-allocation-only diffs, `$NNNN` static numbering, `psq_l`/`psq_st` quantized conversions, `ServerWork` accessed via r13 without a relocation, and `dolphin_trk` (matches, but linking it breaks the DOL hash).
+- Off-by-N `.rodata`/`.sdata2` offsets usually come from string-pool layout. Retain linker-stripped helper bodies only with original-source or independent API evidence; do not invent helpers or padding just to position literals.
+- Preserve retail behavior in partial functions as well as exact ones. A higher fuzzy score does not validate a change: compare FIFO write order, field offsets, argument register classes, narrowing, and signed arithmetic against the target.
+- Known blockers: register-allocation-only diffs, `$NNNN` static numbering, `psq_l`/`psq_st` quantized conversions, `ServerWork` accessed via r13 without a relocation.
 - Writing functions that have no code yet gives far more progress than polishing near-misses.
 
 ## Contribution conventions

@@ -97,7 +97,7 @@ void PSVECNormalize(GSvec*, GSvec*);
 void PSVECCrossProduct(GSvec*, GSvec*, GSvec*);
 u8 peopleInsideCheck(GSvec*, GSvec*, GSvec*, f32);
 s32 GScolsys2UtilGetCpPlaneLine(GSvec*, f32*, GSvec*, GSvec*, GSvec*, GSvec*);
-u8 GScolsys2HitCollision(GSvec*, GSvec*, s32, f32);
+bool GScolsys2HitCollision(GSvec*, GSvec*, f32, GSvec*);
 s32 menuGetCursorFromItemID(s32, s32);
 void cursorBiosSetPos(s32, CursorPos*);
 void menuFieldMain(s32);

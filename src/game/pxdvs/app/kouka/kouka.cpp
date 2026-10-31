@@ -1,68 +1,105 @@
+#pragma force_active on
 #include <dolphin/types.h>
 
 extern "C" {
-u16 koukaDataBiosGetLink(u32);
-u16 koukaLinkDataBiosGetKouka(u32, u32);
-u8 koukaDataBiosGetStatusKind(u32);
-u16 koukaDataBiosGetStatus(u32);
-s16 koukaDataBiosGetValue(u32, u32);
-u32 koukaDataBiosGetVar(u32);
-s32 statusGetStatus(u8, s32, u8, u16, u16);
-s32 statusSetStatus(u8, s32, u8, u16, s32, s32);
-s32 fightFloorGetStatus(u8, s32, u16, u8);
-s32 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(void*, u16);
+u8 koukaDataBiosGetStatusKind(u32 id);
+u16 koukaDataBiosGetStatus(u32 id);
+s16 koukaDataBiosGetValue(u32 id, u32 index);
+u8 koukaDataBiosGetVar(u32 id);
+u16 koukaDataBiosGetLink(u32 id);
+u16 koukaLinkDataBiosGetKouka(u32 id, u32 index);
+s32 statusGetStatus(u8 statusKind, void* fightPokemon, u16, u16, u16);
+s32 statusSetStatus(u8 statusKind, void* fightPokemon, u16, u16, void* target, s32 value);
+u32 fightFloorGetStatus(s32, s32, s32, s32);
+void* fightTargetGetTragetPtrToRelativeHostSideFightTargetId(void* target, u16 id);
 }
 
-static s32 _koukaOneExec(unsigned long, void*, void*, long*);
+static inline s16 koukaGetBaseValue(u32 id) {
+    return koukaDataBiosGetValue(id, 0);
+}
 
-extern "C" void koukaExec(unsigned long id, void* target, void* data, long* result) {
-    if (result != 0) _koukaOneExec(id, target, data, result);
-    else _koukaOneExec(id, target, data, 0);
-    u16 link = koukaDataBiosGetLink(id);
+static s32 _koukaOneExec(u32 id, void* fightPokemon, void* target, s32* out);
+
+extern "C" void koukaExec(u32 id, void* fightPokemon, void* target, s32* out) {
+    u16 link;
+    u16 i;
+    if (out != NULL) {
+        _koukaOneExec(id, fightPokemon, target, out);
+    } else {
+        _koukaOneExec(id, fightPokemon, target, 0);
+    }
+    link = koukaDataBiosGetLink(id);
     if (link != 0) {
-        u16 i = 0;
-        while (i < 8) {
+        for (i = 0; i < 8; i++) {
             if (koukaLinkDataBiosGetKouka(link, i) != 0) {
-                if (result != 0) _koukaOneExec(id, target, data, result + (i + 1));
-                else _koukaOneExec(id, target, data, 0);
+                if (out != NULL) {
+                    _koukaOneExec(id, fightPokemon, target, &out[i + 1]);
+                } else {
+                    _koukaOneExec(id, fightPokemon, target, 0);
+                }
             }
-            ++i;
         }
     }
 }
 
-static s32 _koukaOneExec(unsigned long id, void* target, void* data, long* result) {
-    if (id == 0) return 0;
-    u8 statusKind = koukaDataBiosGetStatusKind(id);
-    u16 status = koukaDataBiosGetStatus(id);
-    s16 value = koukaDataBiosGetValue(id, 0);
-    s16 divisor = koukaDataBiosGetValue(id, 1);
-    u8 operation = koukaDataBiosGetVar(id);
-    s32 current = statusGetStatus(statusKind, (s32)target, 0, status, (u16)value);
-    if (operation == 0 || operation == 2 || operation == 3) {
-        if (value == -1) {
-            s32 adjusted = statusGetStatus(statusKind, (s32)target, 0, divisor, 0);
-            value = (s16)(adjusted / 2);
+static s32 _koukaOneExec(u32 id, void* fightPokemon, void* target, s32* out) {
+    u16 status;
+    u8 statusKind;
+    s16 value0;
+    s16 value1;
+    u32 var;
+    s32 current;
+    s32 result;
+    s32 ret;
+
+    if (id == 0) {
+        return 0;
+    }
+    statusKind = koukaDataBiosGetStatusKind(id);
+    status = koukaDataBiosGetStatus(id);
+    value0 = koukaGetBaseValue(id);
+    value1 = koukaDataBiosGetValue(id, 1);
+    var = koukaDataBiosGetVar(id);
+    current = statusGetStatus(statusKind, fightPokemon, 0, status, value0);
+    if (var == 0 || var == 2 || var == 3) {
+        if (value0 == -1) {
+            value0 = statusGetStatus(statusKind, fightPokemon, 0, value1, 0) / 2;
+        } else if (value0 == -2) {
+            value0 = statusGetStatus(statusKind, fightPokemon, 0, value1, 0);
+        } else if (value0 < 0 || value1 < 0) {
+            return 0;
         }
-        else if (value == -2) value = (s16)statusGetStatus(statusKind, (s32)target, 0, divisor, 0);
-        else if (value < 0 || divisor < 0) return 0;
     }
-    s32 calculated;
-    switch (operation) {
-    case 0: calculated = value; break;
-    case 1: calculated = current * value / divisor; break;
-    case 2: calculated = current + value; break;
-    case 3: calculated = current - value; break;
-    case 4: calculated = current + current * value / divisor; break;
-    case 5: calculated = current - current * value / divisor; break;
-    default: return 0;
+    switch ((s32)var) {
+    case 0:
+        result = value0;
+        break;
+    case 1:
+        result = current * value0 / value1;
+        break;
+    case 2:
+        result = current + value0;
+        break;
+    case 3:
+        result = current - value0;
+        break;
+    case 4:
+        result = current + current * value0 / value1;
+        break;
+    case 5:
+        result = current - current * value0 / value1;
+        break;
+    default:
+        return 0;
     }
-    s32 recipient;
-    if (data != 0) {
-        u16 relative = fightFloorGetStatus(0, 0, 0x14, 0);
-        recipient = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(data, relative);
-    } else recipient = 0;
-    s32 set = statusSetStatus(statusKind, (s32)target, 0, status, recipient, calculated);
-    if (result != 0) *result = calculated;
-    return set;
+    ret = statusSetStatus(statusKind, fightPokemon, 0, status,
+                          target != NULL ? fightTargetGetTragetPtrToRelativeHostSideFightTargetId(
+                                               target, fightFloorGetStatus(0, 0, 0x14, 0))
+                                         : 0,
+                          result);
+    if (out != NULL) {
+        *out = result;
+    }
+    return ret;
 }
+#pragma force_active reset

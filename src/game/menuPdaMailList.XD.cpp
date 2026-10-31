@@ -1,4 +1,6 @@
 #include <game/menuPdaMailListLayout.hpp>
+
+#pragma force_active on
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -77,6 +79,81 @@ static u32 _getSenderName__Fl(s32 index);
 static u32 _getSubject__Fl(s32 index);
 static u16 _getMailID__Fl(s32 index);
 u32 pdaMailGetMailID(s32 arg0);
+void menuPdaMailListSortExit(void);
+
+s32 menuPdaMailListSortInit(s32 arg0);
+
+void menuPdaMailListButtonXD(PdaMailWindow *arg0);
+
+s32 menuPdaMailListCursorXD(PdaMailWindow *arg0);
+
+s32 menuPdaMailListCallBack(PdaMailWindow *arg0, PdaMailSprite *arg1);
+
+static void _pdaMailListDownCursor__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
+                                                                        PdaMailSprite *arg1);
+
+static void _pdaMailListUpCursor__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
+                                                                      PdaMailSprite *arg1);
+
+static void _pdaMailListCursor__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
+                                                                    PdaMailSprite *arg1);
+
+static void _pdaMailListScrollBar__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
+                                                                       PdaMailSprite *arg1);
+
+s32 menuPdaMailListCtrlXD(PdaMailWindow *arg0);
+
+s32 menuPdaMailListSubXD(s32 arg0, PdaMailCursor *arg1);
+
+void menuPdaMailListXD(void);
+
+static void _menuPdaMailListXDInit__Fv(void);
+
+static void _menuPdaMailListMain__FP14tagWINDOW_WORK(PdaMailWindow *arg0);
+
+static void _menuPdaMailListCalcPosition__FP6CURSOR(PdaMailCursor *arg0);
+
+static void _menuPdaMailListPosition__Fv(void);
+
+static void _menuPdaMailCalc__FPfff(f32 *position, f32 target, f32 speed);
+
+static s32 _pdaMailListDraw__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
+                                                                 PdaMailSprite *arg1);
+
+static s32 _pdaMailListPageBunbo__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
+                                                                      PdaMailSprite *arg1);
+
+static s32 _pdaMailListPageBunshi__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
+                                                                       PdaMailSprite *arg1);
+
+static void _pdaMailListPage__FP14tagWINDOW_WORKP14tagSPRITE_WORK(PdaMailWindow *arg0,
+                                                                  PdaMailSprite *arg1);
+
+static void _menuClose__Fl(s32 arg0);
+
+static void _sortReceive__FPUs(u16 *arg0);
+
+static void _pdaMailSort__Fv(void);
+
+static void _setCursor__F6CURSOR(const PdaMailCursor *arg0);
+
+static u32 _getCursor__Fv(void);
+
+static u32 _getSenderName__Fl(s32 index);
+
+static u32 _getSubject__Fl(s32 index);
+
+static u16 _getMailID__Fl(s32 index);
+
+u32 pdaMailGetMailID(s32 arg0);
+
+#ifdef __cplusplus
+}
+#endif
+
+
+
+
 void menuPdaMailListSortExit(void) {
     if (_sortwork != 0) {
         if (_sortwork != 0) {
@@ -542,6 +619,4 @@ u32 pdaMailGetMailID(s32 arg0) {
     return _sortwork[arg0];
 }
 
-#ifdef __cplusplus
-}
-#endif
+#pragma force_active reset
