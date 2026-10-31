@@ -70,11 +70,19 @@ static void _movieStreamTHPPlayerPrepareGetDataCallback(s32, void* arg, s32) {
         }
     }
 }
+static inline __GSmovieStreaming* findMovieStream(u32 handle) {
+    __GSmovieStreaming* streams=_movieStreaming;
+    u32 count=_maxStreaming;
+    for(u32 i=0;i<count;++i) {
+        if(streams[i].state && handle==streams[i].handle) return &streams[i];
+    }
+    return 0;
+}
 static inline void movieContinueOne(u32 handle) {
-    if(_initFlag) {__GSmovieStreaming* movie=findMovie(handle);if(movie)movie->decoder->paused=0;}
+    if(_initFlag) {__GSmovieStreaming* movie=findMovieStream(handle);if(movie)movie->decoder->paused=0;}
 }
 static inline void moviePauseOne(u32 handle) {
-    if(_initFlag) {__GSmovieStreaming* movie=findMovie(handle);if(movie)movie->decoder->paused=1;}
+    if(_initFlag) {__GSmovieStreaming* movie=findMovieStream(handle);if(movie)movie->decoder->paused=1;}
 }
 extern "C" {
 void GSmovieAllContinue() {

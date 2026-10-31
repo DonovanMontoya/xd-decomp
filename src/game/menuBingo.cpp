@@ -33,7 +33,6 @@ struct BINGO_DATA_dd_ {
 class bingo_bios {
 public:
     bool isClearPlus(u32 index);
-    void setClearPlus(u32 index);
     void setClear(u32 index);
     static void setSelect(u32 index);
     bool isSelect(u32 index);
@@ -375,6 +374,7 @@ struct CursorPos {
 };
 
 extern "C" s32 fn_80091B98(void);
+extern "C" void fn_802967E4(bingo_bios* bios, u32 index);
 
 struct MenuItemX {
     u8 pad[8];
@@ -2158,7 +2158,7 @@ void menuBingoMain(void) {
                 }
                 if (gBingo.mode != 0) {
                     u8 no = BIOS->getNo(gBingo.sheet);
-                    BIOS->setClearPlus(no - 1);
+                    fn_802967E4(BIOS, no - 1);
                 } else {
                     u8 no = BIOS->getNo(gBingo.sheet);
                     BIOS->setClear(no - 1);

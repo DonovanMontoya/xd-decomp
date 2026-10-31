@@ -58,15 +58,16 @@ static void _sndStreamPrepareGetData_GetNewData(GSsndStream* stream, GSsndStream
         (void (*)(u8, u8, GSsndStream*))_sndStreamPrepareGetDataCallback, half, stream)) state->state = oldState;
 }
 static void _sndStreamPrepareGetDataCallback_Exec(GSsndStream* stream, GSsndStream* first, GSsndStreamBufferState* state, u32 offset, u32 half) {
+    GSsndStreamBufferState* selected;
     u8 bufferHalf = half;
-    GSsndStreamBufferState* selected = (GSsndStreamBufferState*)((u8*)state + bufferHalf * 4);
+    selected = (GSsndStreamBufferState*)((u8*)state + bufferHalf * 4);
     u32 length = 0x8000 - offset;
-    u8* buffer = (u8*)stream->buffer;
     u32 position = selected->readOffset;
-    void* source = buffer + 0x10000 + offset;
+    void* source = (u8*)stream->buffer + 0x10000;
+    source = (u8*)source + offset;
     void* destination;
-    if (half) destination = buffer + position + (stream->bufferSize >> 1);
-    else destination = buffer + position;
+    if (bufferHalf) destination = (u8*)stream->buffer + (stream->bufferSize >> 1) + position;
+    else destination = (u8*)stream->buffer + position;
     if (position + length > 0x8000) {
         length = 0x8000 - position;
         state->length = offset + length; state->state = 3;
@@ -74,8 +75,8 @@ static void _sndStreamPrepareGetDataCallback_Exec(GSsndStream* stream, GSsndStre
     memcpy(destination, source, length);
     selected->readOffset += length;
     if (selected->readOffset >= 0x8000) {
-        selected->readOffset = 0; (&state->ready)[half] = 1;
-    } else (&state->ready)[half] = 0;
+        selected->readOffset = 0; (&state->ready)[bufferHalf] = 1;
+    } else (&state->ready)[bufferHalf] = 0;
 }
 static void _sndStreamARAMUpdate(GSsndStream* stream, GSsndStreamBufferState* state) {
     u32 offset;
