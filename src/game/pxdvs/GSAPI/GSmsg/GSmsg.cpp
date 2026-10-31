@@ -250,18 +250,15 @@ void* GSmsgFontOpen(void* font) {
     for (;;) {
         identifier = blob->identifier;
         if (identifier == 0xffff) return 0;
-        i = 0;
-        offset = 0;
         count = _pMw->fontCount;
-        for (; i < count; ++i) {
-            slot = (MsgFontSlot*)((u8*)_pMw->fonts + offset);
-            if (slot->data != 0 && slot->identifier == identifier) break;
-            offset += sizeof(MsgFontSlot);
+        for (i = 0; i < count; ++i) {
+            slot = &_pMw->fonts[i];
+            if (slot->data != 0 && slot->identifier == blob->identifier) break;
         }
         if (i == count) {
             i = 0;
             offset = 0;
-            for (; i < count; ++i) {
+            for (; i < _pMw->fontCount; ++i) {
                 slot = (MsgFontSlot*)((u8*)_pMw->fonts + offset);
                 if (slot->data == 0) {
                     MsgFontGroup* group = &blob->group;
