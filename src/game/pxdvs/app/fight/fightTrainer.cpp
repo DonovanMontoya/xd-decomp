@@ -1692,9 +1692,9 @@ static void _fightTrainerCreateDeckWildPoke(u16 id, Hero* hero) {
     s32 esabaIndex;
     u8 k;
     EsabaPokemonTable* table;
-    u32 maxLevel;
+    u8 maxLevel;
     u8 minLevel;
-    u32 levelRnd;
+    u16 levelRnd;
     Pokemon pokemon;
     u16 item0;
     u16 item1;

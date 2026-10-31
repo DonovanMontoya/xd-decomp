@@ -55,7 +55,8 @@ nice -n 19 python3 build/xd40/xd.py asm     game/menuFight SYMBOL
 ## Matching notes
 
 - Symbol names must match exactly. Mangled names imply the exact C++ signature; use `extern "C"` for plain names. Function-local statics must match the `name$NNNN` symbols.
-- Off-by-N `.rodata`/`.sdata2` offsets usually come from string-pool layout. The original may keep literals from functions the linker stripped; re-add a plausible function at the right source position.
+- Off-by-N `.rodata`/`.sdata2` offsets usually come from string-pool layout. Retain linker-stripped helper bodies only with original-source or independent API evidence; do not invent helpers or padding just to position literals.
+- Preserve retail behavior in partial functions as well as exact ones. A higher fuzzy score does not validate a change: compare FIFO write order, field offsets, argument register classes, narrowing, and signed arithmetic against the target.
 - Known blockers: register-allocation-only diffs, `$NNNN` static numbering, `psq_l`/`psq_st` quantized conversions, `ServerWork` accessed via r13 without a relocation.
 - Writing functions that have no code yet gives far more progress than polishing near-misses.
 
