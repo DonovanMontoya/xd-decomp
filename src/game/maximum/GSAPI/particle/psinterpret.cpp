@@ -70,25 +70,7 @@ void psInterpretParticles(u32 arg0);
 static inline f32 particleAtan2(f32 y,f32 x);
 static inline f32 particleSin(f32 a);
 static inline f32 particleCos(f32 a);
-static u8 * getFloat(u8 *arg0,f32 *arg1);
-static u8 * getTime(u8 *arg0, u16 *arg1);
-static void modifyDirGenBase(PSParticle* pp, f32 angle, f32 x, f32 y, f32 z);
-static void modifyDir(PSParticle* pp, f32 angle);
-static void setVelToJObj(PSParticle* pp, PSJObj* jobj);
-static s32 applyForceJObj(PSParticle *arg0, PSJObj *arg1, f32 farg0, f32 farg1);
-static void psApplyVelocityLocalRotation(PSParticle *arg0);
-static void psApplyOffsetLocalRotation(PSParticle *arg0, PSVec *arg1);
-static void psCopyGeneratorData(PSGenerator *arg0, PSGenerator *arg1);
-PSParticle * _psListGetNext(PSParticle *arg0);
-static void HSD_MTXSRT(f32 (*arg0)[4], PSVec *arg1, PSVec *arg2, PSVec *arg3, s32 arg4);
-s32 U8ClampAdd(u8 arg0, f32 farg0);
 static inline s32 HSD_JObjMtxIsDirty(PSJObj* arg0);
-static inline void HSD_JObjSetupMatrix(PSJObj *arg0);
-static void HSD_JObjAddTx(PSJObj *arg0, f32 farg0);
-static void HSD_JObjAddTy(PSJObj *arg0, f32 farg0);
-static void HSD_JObjAddTz(PSJObj *arg0, f32 farg0);
-PSParticle * psInterpretParticle0(PSParticle *arg0, PSParticle *arg1);
-void psInterpretParticles(u32 mask);
 static inline f32 particleAtan2(f32 y,f32 x) {return (f32)atan2(y,x);}
 static inline f32 particleSin(f32 a) {return (f32)sin(a);}
 static inline f32 particleCos(f32 a) {return (f32)cos(a);}

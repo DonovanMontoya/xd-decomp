@@ -123,7 +123,8 @@ void menuModelSetScale(f32 scale) {
     _menuModelScaleMultiValue = scale;
 }
 
-f32 menuModelGetScale(f32 value) {
+// Callers also supply model metadata; scaling uses only the float value.
+f32 menuModelGetScale(f32 value, s32, s32) {
     return value * _menuModelScaleMultiValue;
 }
 

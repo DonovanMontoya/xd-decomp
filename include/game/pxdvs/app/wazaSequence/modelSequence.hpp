@@ -235,7 +235,7 @@ void GSparticleSetBankVisibility(void*, u8);
 void GSparticleSetGeneratorVisibility(void*, u8);
 void GSparticleDestroyAllGenerators(void*, bool);
 s32 GSmodelGetAnimType(_GSmodel*);
-f32 menuModelGetScale(u8, u16);
+f32 menuModelGetScale(f32, s32, s32);
 void GSmodelSetDontResetPartAnimFlag(_GSmodel*, u8);
 }
 void* wazaSequenceSysGetSleepParticle();

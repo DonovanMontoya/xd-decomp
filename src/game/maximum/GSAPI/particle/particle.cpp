@@ -71,8 +71,8 @@ struct PSParticle {
  u16 ambColCount;
  u16 rotateCount;
  u8 pad60[4];
- f32 sizeTarget;
  f32 rotateTarget;
+ f32 trail;
  u16 primColRemain;
  u16 envColRemain;
  u8 pad70[8];
@@ -85,7 +85,7 @@ struct PSParticle {
  u8 ambRGB;
  u8 ambA;
  u8 pad84[4];
- f32 trail;
+ f32 textureScale;
  PSGenerator* owner;
  void* appSRT;
 };
@@ -461,8 +461,8 @@ PSParticle* psGenerateParticle0(PSParticle** head, s32 linkNo, s32 bank, void* u
     pp->aCmpRemain = 0;
     pp->aCmpCount = 0;
     pp->rotateCount = 0;
+    pp->trail = 0.0f;
     pp->rotateTarget = 0.0f;
-    pp->sizeTarget = 0.0f;
     pp->rotate = 0.0f;
     pp->owner = gp;
     if (gp != NULL) {
@@ -477,7 +477,7 @@ PSParticle* psGenerateParticle0(PSParticle** head, s32 linkNo, s32 bank, void* u
     pp->ambColCount = 0;
     pp->ambRGB = 0xFF;
     pp->ambA = 0xFF;
-    pp->trail = 1.0f;
+    pp->textureScale = 1.0f;
 
     if (flgInterpret) {
         psInterpretParticle0(pp, NULL);

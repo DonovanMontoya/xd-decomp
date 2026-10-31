@@ -1002,7 +1002,7 @@ void _msgMakeTexture(MSG_TASK_WORK *task,u8 *pixels,s16 width,s16 height,s16 bea
 }
 #pragma dont_inline off
 static inline void msgMissingVertex(s16 x,s16 y) {
- *(volatile s16*)0xcc008000=x;*(volatile s16*)0xcc008000=y;*(volatile u8*)0xcc008000=0xff;*(volatile u8*)0xcc008000=0xff;*(volatile u8*)0xcc008000=0xff;*(volatile u8*)0xcc008000=0xff;
+ *(s16*)0xcc008000=x;*(s16*)0xcc008000=y;*(u8*)0xcc008000=0xff;*(u8*)0xcc008000=0xff;*(u8*)0xcc008000=0xff;*(u8*)0xcc008000=0xff;
 }
 #pragma dont_inline off
 void _msgSetChar(MSG_TASK_WORK *task,u16 code) {
@@ -1014,7 +1014,7 @@ void _msgSetChar(MSG_TASK_WORK *task,u16 code) {
   msgMissingVertex(x0,y0);msgMissingVertex(x1,y0);msgMissingVertex(x0,y1);msgMissingVertex(x1,y1);endSurface__10GSgfxLayerFv(_TargetLayer);
   setRenderStateAndSelect__10GSgfxLayerFP7GSgfxVF(_TargetLayer,GSgfxVFBuildTemp(0,3,0,0,1,5,1,1,4));task->charWidth=task->glyphWidth*task->scaleX+2.0f;return;
  }
- u32 data=*(u32*)((u8*)info+4);u8 width=info->data[0];u8 height=info->data[1];u8 *pixels=(u8*)group+*(u32*)((u8*)group+4)+(data&0xffffff);
+ u32 data=*(u32*)((u8*)info+4);s16 width=info->data[0];u8 height=info->data[1];u8 *pixels=(u8*)group+*(u32*)((u8*)group+4)+(data&0xffffff);
  _msgMakeTexture(task,pixels,width,height,(s8)(data>>24));task->charWidth=(s16)width*task->scaleX;
 }
 #include <libc/stdarg.h>

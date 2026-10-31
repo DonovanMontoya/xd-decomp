@@ -187,7 +187,7 @@ the retail DOL hash check; the license notice below applies.
 
 The natural recursive bodies for `HSD_JObjReqAnimAllByFlags` and
 `HSD_JObjDispAll` were restored from XD commit
-`50a8d7284ec86bb82c2a387e335a2099cb1a905c`. A scoped inline-size recipe also
+`50a8d7284ec86bb82c2a387e335a2099cb1a905c`. A filewide inline-size recipe also
 matches `HSD_JObjSetMtxDirtySub`, retaining all earlier exact functions. The unit
 remains nonmatching pending its complete linked layout.
 

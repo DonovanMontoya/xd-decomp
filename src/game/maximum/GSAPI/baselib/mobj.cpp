@@ -35,12 +35,8 @@ typedef char MObjInfoSizeCheck[sizeof(HSD_MObjInfo)==0x54?1:-1];
 #define TEX_LIGHTMAP_AMBIENT (0x1 << 6)
 #define TEX_LIGHTMAP_EXT (0x1 << 7)
 #define TEX_LIGHTMAP_SHADOW (0x1 << 8)
-#define TEX_LIGHTMAP_MASK                                                     \
 HSD_MObj* HSD_MObjAlloc(void);
 HSD_Material* HSD_MaterialAlloc(void);
-HSD_MObj* HSD_MObjAlloc(void);
-HSD_Material* HSD_MaterialAlloc(void);
-static void MObjInfoInit(void);
 static void MObjAmnesia(HSD_ClassInfo* info);
 static void MObjRelease(HSD_Class* o);
 void HSD_MObjDeleteShadowTexture(HSD_TObj* tobj);
@@ -70,35 +66,7 @@ void HSD_MObjSetCurrent(HSD_MObj* mobj);
 
 static inline float clamp01(float v);
 static inline u8 material_byte(float v);
-HSD_MObj* HSD_MObjAlloc(void);
-HSD_Material* HSD_MaterialAlloc(void);
-static void MObjInfoInit(void);
-static void MObjAmnesia(HSD_ClassInfo* info);
-static void MObjRelease(HSD_Class* o);
-void HSD_MObjDeleteShadowTexture(HSD_TObj* tobj);
-void HSD_MObjAddShadowTexture(HSD_TObj* tobj);
-void HSD_MObjRemove(HSD_MObj* mobj);
-void HSD_MObjAddTObjNext(HSD_MObj* mobj, HSD_TObj* tobj, HSD_TObj* next);
-void HSD_MObjAddTObj(HSD_MObj* mobj, HSD_TObj* tobj);
-HSD_TObj* HSD_MObjGetTObj(HSD_MObj* mobj);
 void HSD_MObjSetAlpha(HSD_MObj* mobj, float alpha);
-void HSD_MObjUnset(HSD_MObj* mobj, u32 rendermode);
-void HSD_MObjSetup(HSD_MObj* mobj, u32 rendermode);
-static void MObjSetupTev(HSD_MObj* mobj, HSD_TObj* tobj, u32 arg2);
-void HSD_MObjCompileTev(HSD_MObj* mobj);
-static HSD_TExp* MObjMakeTExp(HSD_MObj* mobj, HSD_TObj* tobj_top, HSD_TExp** list);
-HSD_MObj* HSD_MObjLoadDesc(HSD_MObjDesc* mobjdesc);
-void HSD_MObjSetDefaultClass(HSD_ClassInfo* info);
-static int MObjLoad(HSD_MObj* mobj, HSD_MObjDesc* desc);
-void HSD_MObjAnim(HSD_MObj* mobj);
-static void MObjUpdateFunc(void* obj, enum_t type, HSD_ObjData* val);
-void HSD_MObjReqAnimByFlags(HSD_MObj* mobj, f32 startframe, u32 flags);
-void HSD_MObjAddAnim(HSD_MObj* mobj, HSD_MatAnim* matanim);
-void HSD_MObjRemoveAnimByFlags(HSD_MObj* mobj, u32 flags);
-void HSD_MObjClearFlags(HSD_MObj* mobj, u32 flags);
-void HSD_MObjSetFlags(HSD_MObj* mobj, u32 flags);
-u32 HSD_MObjGetFlags(HSD_MObj* mobj);
-void HSD_MObjSetCurrent(HSD_MObj* mobj);
 
 static inline float clamp01(float v) { return v <= 0.0F ? 0.0F : v >= 1.0F ? 1.0F : v; }
 

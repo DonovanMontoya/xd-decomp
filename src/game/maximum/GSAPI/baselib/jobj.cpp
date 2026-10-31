@@ -48,10 +48,6 @@ void OSReport(const char*,...);
 void* HSD_IDGetDataFromTable(void*,unsigned int,void*);
 void HSD_IDRemoveByIDFromTable(void*,unsigned int);
 
-static int JObjInit(HSD_Class* o);
-static void JObjReleaseChild(HSD_JObj* jobj);
-static void JObjRelease(HSD_Class* o);
-static void JObjAmnesia(HSD_ClassInfo* info);
 void HSD_JObjUnref(HSD_JObj* jobj);
 void HSD_JObjUnrefThis(HSD_JObj* jobj);
 static inline HSD_JObj* HSD_JObjGetPrev(HSD_JObj* jobj);
