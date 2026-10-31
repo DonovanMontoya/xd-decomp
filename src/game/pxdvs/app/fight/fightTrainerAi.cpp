@@ -2276,7 +2276,7 @@ u8 fightAi_WazaSuccessProbability(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, Fi
     }
     temp_r22 = fightPokemon_GetPokemonBuffPtr(fightOutPokemon_GetFightPokemonPtr(arg1));
     var_r31 = wazaDB_GetAvg(arg3);
-    temp_r23 = (u16) (pokemon_GetNimbleness(temp_r22));
+    temp_r23 = ((u16 (*)(Pokemon *)) pokemon_GetNimbleness)(temp_r22);
     for (var_r30 = 0; var_r30 < 2U; var_r30++) {
         temp_r3 = arg2[var_r30];
         if (temp_r3 != NULL) {
