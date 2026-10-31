@@ -3068,21 +3068,27 @@ s16 fightAi_ThreatEnemyValue(FIGHT_TRAINER *trainer,FightOutPokemon *attacker,Fi
 }
 
 s32 _fightTrainerAiSortFirstSelectPokemonArySubSelect__FP13FIGHT_TRAINERP4HeroPP7PokemonUsUcPP7Pokemon(FIGHT_TRAINER *trainer,Hero *hero,Pokemon **selected,u16 selectedCount,u8 mode,Pokemon **out) {
-    AiFightPokemonRecord first,second;
+    u16 i;
+    FightPokemon *secondFight;
+    u16 j;
+    u32 count;
+    Pokemon *candidate;
+    AiFightPokemonRecord first;
+    AiFightPokemonRecord second;
+    FightPokemon *firstFight;
     fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(trainer));
-    for(u16 i=0;i<6;i++)out[i]=0;
-    FightPokemon *firstFight=fightTrainer_GetFightPokemonPtr(trainer,0);
+    for(i=0;i<6;i++)out[i]=0;
+    firstFight=fightTrainer_GetFightPokemonPtr(trainer,0);
     if(!firstFight)return 0;
-    FightPokemon *secondFight=fightTrainer_GetFightPokemonPtr(trainer,1);
+    secondFight=fightTrainer_GetFightPokemonPtr(trainer,1);
     if(!secondFight)return 0;
     first = *(AiFightPokemonRecord*)firstFight;
     second = *(AiFightPokemonRecord*)secondFight;
-    for(u16 i=0;i<selectedCount;i++){}
-    u32 count=0;
-    for(u16 i=0;i<6;i++){
-        Pokemon *candidate=heroGetStatus(hero,3,i);
+    for(i=0;i<selectedCount;i++){}
+    count=0;
+    for(i=0;i<6;i++){
+        candidate=heroGetStatus(hero,3,i);
         if(candidate&&pokemonCheckValid(candidate)!=0&&pokemonCheckFightOut(candidate)!=0){
-            u16 j;
             for(j=0;j<selectedCount;j++)if(selected[j]&&selected[j]==candidate)break;
             if(j>=selectedCount){
                 fightPokemonCreate(trainer,firstFight,candidate,fightFloorGetFightPokemonEntryCntInc(0));
