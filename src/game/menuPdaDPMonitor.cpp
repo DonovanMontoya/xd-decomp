@@ -1,4 +1,6 @@
 #include <game/menuPdaDPMonitorLayout.hpp>
+
+#pragma force_active on
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -590,3 +592,5 @@ DpmPokemon *GetPokemonPointer__10menuPdaDPMFl(DpmWork *arg0, s32 arg1) {
 #ifdef __cplusplus
 }
 #endif
+
+#pragma force_active reset

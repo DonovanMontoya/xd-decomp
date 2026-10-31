@@ -1,5 +1,7 @@
 #include <global.h>
 
+#pragma force_active on
+
 extern "C" {
 s32 heroGetStatus(s32, s32, s32);
 u8 pokemonIsDarkPokemon(s32);
@@ -16,3 +18,5 @@ s32 dbgMenuRelive(void) {
     return 0;
 }
 }
+
+#pragma force_active reset

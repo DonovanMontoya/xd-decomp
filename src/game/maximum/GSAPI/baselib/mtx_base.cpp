@@ -244,6 +244,51 @@ void HSD_MkRotationMtx(HSD_Mtx arg0, HSD_Vec3* arg1)
     arg0[2][3] = 0;
 }
 
+// Original scale helper is stripped; its shared double constants remain.
+void HSD_MtxGetScaleMelee(HSD_Mtx arg0, HSD_Vec3* arg1)
+{
+    double scale;
+    HSD_Vec3 vec1;
+    HSD_Vec3 vec2;
+    HSD_Vec3 vec3;
+    HSD_Vec3 vec4;
+
+    vec1.x = arg0[0][0];
+    vec1.y = arg0[1][0];
+    vec1.z = arg0[2][0];
+
+    arg1->x = PSVECMag(&vec1);
+    PSVECNormalize(&vec1, &vec1);
+
+    vec2.x = arg0[0][1];
+    vec2.y = arg0[1][1];
+    vec2.z = arg0[2][1];
+
+    PSVECScale(&vec1, &vec4, PSVECDotProduct(&vec1, &vec2));
+    PSVECSubtract(&vec2, &vec4, &vec2);
+    arg1->y = PSVECMag(&vec2);
+    PSVECNormalize(&vec2, &vec2);
+
+    vec3.x = arg0[0][2];
+    vec3.y = arg0[1][2];
+    vec3.z = arg0[2][2];
+
+    PSVECScale(&vec2, &vec4, PSVECDotProduct(&vec2, &vec3));
+    PSVECSubtract(&vec3, &vec4, &vec3);
+    PSVECScale(&vec1, &vec4, PSVECDotProduct(&vec1, &vec3));
+    PSVECSubtract(&vec3, &vec4, &vec3);
+    arg1->z = PSVECMag(&vec3);
+    PSVECNormalize(&vec3, &vec3);
+    PSVECCrossProduct(&vec2, &vec3, &vec4);
+
+    if (PSVECDotProduct(&vec1, &vec4) < 0.0) {
+        scale = -1.0;
+        arg1->x *= scale;
+        arg1->y *= scale;
+        arg1->z *= scale;
+    }
+}
+
 void HSD_MtxGetScale(HSD_Mtx m, HSD_Vec3* out) {
     float square;
     float inverse_length;

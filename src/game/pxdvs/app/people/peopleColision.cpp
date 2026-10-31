@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <game/pxdvs/app/people/peopleColisionPrivate.hpp>
 
 extern "C" {
@@ -287,3 +288,4 @@ u8 peopleRectCheck(u32 arg0, u32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg
 }
 /* Warning: struct PeopleInfo is not defined (only forward-declared) */
 }
+#pragma force_active reset

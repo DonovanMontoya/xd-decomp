@@ -535,34 +535,33 @@ static u32 wazaSequenceSysLoadResource(unsigned long group, unsigned long id) {
     return loadResourceInline(group, id);
 }
 
-static void wazaSequenceSysFreeSequenceResource(ModelSequence* seq) {
-    u16 g;
-    u16 group = seq->resourceGroup;
-    if (group != 0) {
-        s32 count = 0;
-        Sequence* p = g_Sequences;
-        for (; p != 0; p = p->next) {
-            ModelSequence* m = Sequence_AsModel(p);
-            if (m != 0 && group == m->resourceGroup) {
-                count++;
-            }
-        }
-        if (count == 1) {
-            g = group;
-            while (GSfsysGetStatus(g) == 1) {
-                GSthreadSwitch();
-            }
-            GSresFreeGroup(group);
-            GSfsysFree(group);
-        }
-    }
-}
-
 static inline void waitResourceLoad(u32 group) {
     while (((s32(*)(u32))GSfsysGetStatus)(group) == 1) {
         GSthreadSwitch();
     }
 }
+static void wazaSequenceSysFreeSequenceResource(ModelSequence* seq) {
+    if (seq->resourceGroup != 0) {
+        u16 id = seq->resourceGroup;
+        Sequence* s;
+        int count;
+        ModelSequence* m;
+        count = 0;
+        for (s = g_Sequences; s != 0; s = s->next) {
+            m = Sequence_AsModel(s);
+            if (m != 0 && id == m->resourceGroup) {
+                count++;
+            }
+        }
+        if (count == 1) {
+            waitResourceLoad(id);
+            ((void(*)(u32))GSresFreeGroup)(id);
+            ((void(*)(u32))GSfsysFree)(id);
+        }
+    }
+}
+
+
 static inline void freeWazaRes(u16 id) {
     if (id != 0) {
         int count;

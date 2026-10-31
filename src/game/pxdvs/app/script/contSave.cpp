@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <global.h>
 
 extern "C" {
@@ -43,3 +44,4 @@ extern "C" s32 scriptBattleMountainEnd(s32) {
 extern "C" s32 scriptContinueSave() {
     return _coutineSave();
 }
+#pragma force_active reset

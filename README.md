@@ -1,7 +1,7 @@
 # Pokémon XD: Gale of Darkness Decompilation
 
 <!-- progress:start -->
-![US code matched: 85.27%](https://img.shields.io/static/v1?label=US%20code%20matched&message=85.27%25&color=blue) ![US data matched: 34.68%](https://img.shields.io/static/v1?label=US%20data%20matched&message=34.68%25&color=blue)
+![US code matched: 85.33%](https://img.shields.io/static/v1?label=US%20code%20matched&message=85.33%25&color=blue) ![US data matched: 34.70%](https://img.shields.io/static/v1?label=US%20data%20matched&message=34.70%25&color=blue)
 <!-- progress:end -->
 
 A matching decompilation of **Pokémon XD: Gale of Darkness** for the Nintendo GameCube.

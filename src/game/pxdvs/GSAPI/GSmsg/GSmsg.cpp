@@ -114,39 +114,43 @@ s32 fn_8010B208(const MsgBundle* bundle) {
     return 1;
 }
 #pragma dont_inline off
-u16* GSmsgGetGSchar(u32 identifier) {
-    if (!identifier) return 0;
-    MsgBundle* bundle;
-    u32 textID;
+static inline u16* _msgFindText(u32 key, MsgBundle** outBank)
+{
+    if (!key) return 0;
+    MsgBundle* bank;
+    u32 sub;
     u32 group;
-    bundle = _pMw->bundles;
-    group = identifier >> 20;
-    textID = identifier & 0xfffff;
-    while (bundle) {
-        if (identifier < 60000) {
-            s32 language = pokecoloGetLanguage();
-            s32 bundleLanguage = fn_8010B208(bundle);
-            if (bundleLanguage != language) goto nextBundle;
+    bank = _pMw->bundles;
+    group = key >> 20;
+    sub = key & 0xFFFFF;
+    for (; bank != 0; bank = bank->next) {
+        if (key < 60000 && fn_8010B208(bank) != pokecoloGetLanguage()) {
+            continue;
         }
-        if (bundle->group == group) {
-            MsgDirectoryEntry* directory = bundle->entries;
-            u32 lower = 0;
-            u32 upper = bundle->count;
-            u32 middle;
-            u32 candidate;
-            while (lower < upper) {
-                middle = (lower + upper) >> 1;
-                candidate = directory[middle].identifier;
-                if (candidate == textID) return (u16*)((u8*)bundle + directory[middle].textOffset);
-                if (candidate < textID) lower = middle + 1;
-                else upper = middle;
+        if (bank->group == group) {
+            MsgDirectoryEntry* entries = bank->entries;
+            u32 lo = 0;
+            u32 hi = bank->count;
+            while (lo < hi) {
+                u32 mid = (lo + hi) >> 1;
+                u32 k = entries[mid].identifier;
+                if (k == sub) {
+                    if (outBank) {
+                        *outBank = bank;
+                    }
+                    return (u16*)((u8*)bank + entries[mid].textOffset);
+                }
+                if (k < sub) {
+                    lo = mid + 1;
+                } else {
+                    hi = mid;
+                }
             }
         }
-nextBundle:
-        bundle = bundle->next;
     }
     return 0;
 }
+u16* GSmsgGetGSchar(u32 identifier) { return _msgFindText(identifier, 0); }
 u32 GSmsgGetLength(u32 identifier) {
     if (!identifier) return 0;
     return _msgGetLength(GSmsgGetGSchar(identifier));
@@ -677,39 +681,7 @@ extern "C" s32 GBAMakeFromGSchar(u8* destination, const u16* source, s32 languag
     }
 }
 #pragma dont_inline off
-static inline u16* _msgFindText(u32 identifier, MsgBundle** found) {
-    if (!identifier) return 0;
-    u32 group = identifier >> 20;
-    u32 textID = identifier & 0xfffff;
-    MsgBundle* bundle = _pMw->bundles;
-    while (bundle) {
-        if (identifier < 60000) {
-            s32 language = pokecoloGetLanguage();
-            s32 bundleLanguage = fn_8010B208(bundle);
-            if (bundleLanguage != language) goto next;
-        }
-        if (bundle->group == group) {
-            u32 middle;
-            u32 upper = bundle->count;
-            u32 lower = 0;
-            MsgDirectoryEntry* directory = bundle->entries;
-            u32 candidate;
-            while (lower < upper) {
-                middle = (lower + upper) >> 1;
-                candidate = directory[middle].identifier;
-                if (candidate == textID) {
-                    if (found) *found = bundle;
-                    return (u16*)((u8*)bundle + directory[middle].textOffset);
-                }
-                if (candidate < textID) lower = middle + 1;
-                else upper = middle;
-            }
-        }
-next:
-        bundle = bundle->next;
-    }
-    return 0;
-}
+
 static inline u16 _msgNextCode(MsgTask* task) {
     u32 code;
     for (;;) {

@@ -1,5 +1,7 @@
 #include <dolphin/types.h>
 
+#pragma force_active on
+
 struct Attest;
 struct FIGHT_FLOOR;
 struct FightFloor;
@@ -726,3 +728,5 @@ static u16 _swap16(unsigned short p0) {
 }
 
 }
+
+#pragma force_active reset

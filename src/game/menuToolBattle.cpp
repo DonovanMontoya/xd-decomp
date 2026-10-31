@@ -1,4 +1,6 @@
 #include <dolphin/types.h>
+
+#pragma force_active on
 struct BattleControl {s32 unk0;s32 unk4;s32 unk8;u8 padC[45040];s32 unkAFFC;u8 padB000[320];s32 unkB140;u8 padB144[44];s32 unkB170;s32 unkB174;s32 unkB178;u8 padB17C[8];s32 unkB184;u8 padB188[20];s32 unkB19C;u8 padB1A0[68];s16 unkB1E4;};
 struct SaveStatus {u8 pad[0x959];u8 unk959;};
 extern "C" {extern BattleControl _CB;u8 FlashSystemIsLastFrame(u32);void FlashSystemSetLoopFlag(u32,s32);void FlashSystemSetNowFrameLabel(u32,const char*);void FlashSystemSetPlayFrameLabel(u32,const char*,const char*);u8 GSfloorIsFloorPushed();void GSfloorPop();void GSfsysFree(s32);void GSfsysReadWait(s32);void GSresFreeGroup(s32);void GSthreadSwitch();void fightFreeResourceID(u32,u32);u16 fightGetFightResultId();u8 fightReadResourceID(u32,u32);void menuCBBattleEndSetPokemonHP();void menuCBBattleStartInit(BattleControl*,s32);void menuCBBattleStartTrainerFaceFree();void menuCBBattleStartTrainerLoadTex();void menuCBBios_CurrentlyWorkingToolBattleSet(s32);void menuCBPokemonEntryLoadTex();void menuCBPokemonEntryPokemonFaceFree();s32 menuCB_Battle(BattleControl*);u8 menuCB_BattleBA_PokemonEntryNum();s32 menuCB_BattleResult(BattleControl*);void menuCB_GBADisconnectedErrorJob();void menuCB_InitBattle(BattleControl*);void menuCB_MenuRollback(s32);s32 menuCB_PokemonEntry(BattleControl*);void menuCB_SE_Play(s32);void menuCBpokemonFaceReadWait();void menuCBtrainerFaceReadWait();void menuCloseCustom(s32,s32,s32);u8 menuIsCheck(s32);void menuOpen(s32,s32);u8 pauseIsPause();SaveStatus*savedataGetStatus(s32,s32);void toolentryCopyHero();u8 winSeqCheckMove(s32);u16*windowGetKeyInfo();}
@@ -278,3 +280,5 @@ extern "C" void menuToolBattleInit(void) {
     }
     GSfsysReadWait(0x14);
 }
+
+#pragma force_active reset

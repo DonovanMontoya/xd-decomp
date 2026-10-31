@@ -1,5 +1,7 @@
 #include <game/menuCB_BiosLayout.hpp>
 
+#pragma force_active on
+
 extern "C" {
 void *memcpy(void *, const void *, u32);
 void *menuCB_RuleTitleNameGet(s32);
@@ -555,3 +557,5 @@ void menuCBBios_LockContext(void)
     stbCB_Lock = 1;
 }
 }
+
+#pragma force_active reset

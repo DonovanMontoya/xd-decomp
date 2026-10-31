@@ -1,6 +1,8 @@
 #include <dolphin/os.h>
 #include <game/agbCommunicationPrivate.hpp>
 
+#pragma force_active on
+
 static AgbWork _gba_wk[4];
 static char gba_filenames[0x100];
 static u8 gba_pokemon_buf[4][0x278];
@@ -1599,3 +1601,5 @@ void AGB_FileBuffFree() {
     jbBuf1 = 0;
 }
 }
+
+#pragma force_active reset

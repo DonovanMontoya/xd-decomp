@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <game/pxdvs/app/people/runtime.hpp>
 #include <libc/stddef.h>
 struct _GSmodel;
@@ -86,3 +87,4 @@ static s32 _peoplePartAnimationStartAnimation(_GSmodel* model,s8 partIndex,int a
     }
     return index;
 }
+#pragma force_active reset

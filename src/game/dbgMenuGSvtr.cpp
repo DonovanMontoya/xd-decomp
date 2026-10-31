@@ -1,6 +1,8 @@
 /* Debug menu entries for the GS video/capture tool. */
 #include <global.h>
 
+#pragma force_active on
+
 extern "C" {
 void GSgfxCaptureMovieStart(s32);
 void GSgfxCaptureMovieStop(void);
@@ -95,3 +97,5 @@ s32 dbgMenuGSvtrChangeActive(void) {
 }
 
 }
+
+#pragma force_active reset

@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <game/pxdvs/app/people/runtime.hpp>
 #include <game/pxdvs/GSAPI/GSmodel/GSmodel.hpp>
 extern "C" {
@@ -237,3 +238,4 @@ bool isFollower__13tagPeopleWorkCFv(tagPeopleWork* work) {
 }
 bool isHero__13tagPeopleWorkCFv(tagPeopleWork* work) { return work->resource == 100; }
 }
+#pragma force_active reset

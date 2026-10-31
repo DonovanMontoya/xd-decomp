@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <dolphin/types.h>
 
 extern "C" {
@@ -101,3 +102,4 @@ static s32 _koukaOneExec(u32 id, void* fightPokemon, void* target, s32* out) {
     }
     return ret;
 }
+#pragma force_active reset

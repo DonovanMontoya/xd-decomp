@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <game/pxdvs/app/effects/blurPrivate.hpp>
 #include <dolphin/os/OSFastCast.h>
 #include <dolphin/gx/GXVert.h>
@@ -109,3 +110,4 @@ void blurEffect::RenderFB(GSgfxLayer*arg1) {
 }
 
 u8 blurEffectRenderFBCallback(GStexture*texture,unsigned long,void*data){blurEffect*effect=(blurEffect*)data;effect->ready=texture==effect->texture;return effect->ready;}
+#pragma force_active reset

@@ -1,6 +1,8 @@
 /* Debug menu entries for viewing and editing game flags. */
 #include <global.h>
 
+#pragma force_active on
+
 typedef struct DbgFlagData {
     s16 unk0;
     s16 unk2;
@@ -331,3 +333,5 @@ static s8 _dbgMenuFlagGetMenuNum(void* window, s32* width) {
     }
     return count;
 }
+
+#pragma force_active reset

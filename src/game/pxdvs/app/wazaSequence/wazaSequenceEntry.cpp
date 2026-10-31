@@ -258,7 +258,7 @@ bool SoundEntry::Start() {
         }
         f32 vol = volume;
         u8 ch = field36;
-        emitter = GSsndCreateEmitterParam(handle, pos, zeroVector, 0x7F, ch, vol, pan);
+        emitter = ((u32(*)(u32,f32*,f32*,f32,f32,u8,u8))GSsndCreateEmitterParam)(handle, pos, zeroVector, vol, pan, 0x7F, ch);
         if (emitter != 0) {
             state = 1;
             time = startTime;

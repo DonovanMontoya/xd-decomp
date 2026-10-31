@@ -1,5 +1,7 @@
 #include <game/menuSubLayout.hpp>
 
+#pragma force_active on
+
 struct OPDEMO_SE_SEQUENCE_dd_ {
     u16 frame;
     u16 reserved2;
@@ -226,9 +228,214 @@ static s32 _progressive_mode_change = -1;
 
 extern "C" {
 
+void fn_80085E3C(tagWINDOW_WORK* win);
+
+void menuOpeningDemoExit(void);
+
+void menuOpeningDemoMain(void);
+
+void menuOpeningDemoInit(void);
+
+}
+
+static unsigned long _menuOpeningDemo_SE(unsigned long index);
+
+extern "C" {
+
+void fn_8008617C(void);
+
+void menuStaffRollExit(void);
+
+void* savedataGetStatus(void*, s32);
+void gamedatasaveSetStatus(void*, s32, u32);
+u32 gamedatasaveGetStatus(void*, s32);
+void* memcardMemAllocForSavedata();
+void memcardMemFreeForSavedata(void*);
+s32 memcardTaskCall(s32,s32,s32);
+u32 heroGetStatus(void*,s32,s32);
+s8 menuSubOpenYesNo(s32,s32,s32,s32);
+s32 fn_801E3C5C(s32);
+u8 pauseIsPause();
+double pokecoloGetFrameTime();
+double lbl_804EA9F0;
+
+void menuStaffRollMain(void);
+
+void menuStaffRollInit(void);
+
+void menuEndingDemoExit(void);
+
+void menuEndingDemoMain(void);
+
+void menuEndingDemoInit(void);
+
+void menuAutoDemoExit(void);
+
+void menuAutoDemoMain(void);
+
+void menuAutoDemoInit(void);
+
+}
+
+static unsigned long _menuAutoDemo_SE(unsigned long index);
+
+static unsigned long _PlaySE(OPDEMO_SE_SEQUENCE_dd_* seq, unsigned long count, unsigned long index);
+
+extern "C" {
+
+void menuBattleDemoExit(void);
+
+void menuBattleDemoMain(void);
+
+void menuBattleDemoInit(void);
+
+void menuGeniusExit(void);
+
+void menuGeniusMain(void);
+
+void menuGeniusInit(void);
+
+void menuTpcExit(void);
+
+void menuTpcMain(void);
+
+void menuTpcInit(void);
+
+void menuNintendoExit(void);
+
+void menuNintendoMain(void);
+
+void menuNintendoInit(void);
+
+void menuNintendo(void);
+
+}
+
+extern "C" {
+
+void fn_80085E88(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite);
+
+void menuNintendoWarningCtrl(tagWINDOW_WORK* w);
+
+void menuNintendoWarningHook(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite);
+
+void fn_800860E8(tagWINDOW_WORK* win);
+
+void menuNintendoWarningButton(tagWINDOW_WORK* win);
+
+}
+
+static void _menuNintendoWarningButtonNormal(tagWINDOW_WORK* win);
+
+static void _setTexture(GStexture* texture, GSvec2* pos, GSvec2* uv, GSgfxColAu8 color);
+
+static void _setTextureWindow(tagWINDOW_WORK* w, tagSPRITE_WORK* sp, GStexture* tex);
+
+extern "C" {
+
+void menuNintendoWarning(void);
+
+}
+
+static void _NintendoExit(void);
+
+static void _ProgressiveModeChange(void);
+
+static void _NintendoMain(void);
+
+static void _NormalModeSeq(void);
+
+static void _NintendoInit(void);
+
+static void _NintendoWarningExit(void);
+
+static void _NintendoWarningMain(void);
+
+static void _NintendoWarningInit(void);
+
+void menuGSfsysInitWait(void);
+
+void menuGSfsysInit(void);
+
+static void _menuGSfsysInitWait(void);
+
+static void _menuGSfsysInit(void);
+
+static int _menuGSfsysInitThread(void*);
+
+static void _menuSetScreenFilter(bool on);
+
+static void _menuSoundReadWaveWait(void);
+
+static void _menuSoundReadWave(unsigned long a, unsigned long b, unsigned long c, unsigned long d);
+
+static int _menuSoundReadWaveThread(void* arg);
+
+static void _menuWait(float seconds);
+
+extern "C" {
+
+void fn_80087314(u8 flag);
+
+void fn_80087254(void);
+
+}
+
+static void _ProgressiveModeMain(void);
+
+static void _ProgressiveModeSeq(void);
+
+static s8 _ProgressiveModeYesNo(short x, short y, long initial);
+
+
+
+
 void fn_80085E3C(tagWINDOW_WORK* win) {
     if (win != 0 && (windowGetKeyInfo()->trigger & 0x10)) {
         win->finished = 1;
+    }
+}
+
+void fn_80085E88(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
+    s32 cursor;
+    u32 msg;
+    u32 color;
+    msg = 0;
+    color = *((u8*)win + 0x93) | ~0xFF;
+    cursor = *(s32*)&win->pos;
+    switch (sprite->id) {
+    case 0xA2:
+        msg = 0x4A43;
+        break;
+    case 0xA3:
+        msg = 0x4A44;
+        break;
+    case 0x9E:
+        if (((s16*)&cursor)[1] == 0) {
+            winSpriteSetDisp(sprite, 1);
+        } else {
+            winSpriteSetDisp(sprite, 0);
+        }
+        break;
+    case 0x9F:
+        if (((s16*)&cursor)[1] == 1) {
+            winSpriteSetDisp(sprite, 1);
+        } else {
+            winSpriteSetDisp(sprite, 0);
+        }
+        break;
+    case 0xA4:
+        msg = 0x4A45;
+        break;
+    case 0xA5:
+        msg = 0x4A46;
+        break;
+    default:
+        msg = 0;
+        break;
+    }
+    if (msg != 0) {
+        GSmsgPrintRect(winSpriteGetLayerID(win, sprite), 0, -2, sprite->width, sprite->height, color, msg);
     }
 }
 
@@ -255,13 +462,26 @@ void menuOpeningDemoInit(void) {
     soundOpenPlay(8, 0, 0x7F);
 }
 
-}
-
 static unsigned long _menuOpeningDemo_SE(unsigned long index) {
     return _PlaySE(_opening_se_sequence, 3, index);
 }
 
-extern "C" {
+void fn_800860E8(tagWINDOW_WORK* win) {
+    switch (win->phase) {
+    case 0:
+        if (win->step == 0) {
+            winSeqSetMenu(win->menu, 0x1D4);
+            win->step = 1;
+        }
+        break;
+    case 3:
+        if (win->step == 0) {
+            winSeqSetMenu(win->menu, 0x1D8);
+            win->step = 1;
+        }
+        break;
+    }
+}
 
 void fn_8008617C(void) {
 }
@@ -270,19 +490,6 @@ void menuStaffRollExit(void) {
     fadeSet(3, 0.0f);
     fadeCheck(1);
 }
-
-void* savedataGetStatus(void*, s32);
-void gamedatasaveSetStatus(void*, s32, u32);
-u32 gamedatasaveGetStatus(void*, s32);
-void* memcardMemAllocForSavedata();
-void memcardMemFreeForSavedata(void*);
-s32 memcardTaskCall(s32,s32,s32);
-u32 heroGetStatus(void*,s32,s32);
-s8 menuSubOpenYesNo(s32,s32,s32,s32);
-s32 fn_801E3C5C(s32);
-u8 pauseIsPause();
-double pokecoloGetFrameTime();
-double lbl_804EA9F0;
 
 void menuStaffRollMain(void) {
     u32 id;
@@ -412,8 +619,6 @@ void menuAutoDemoInit(void) {
     soundOpenPlay(8, 0, 0x7F);
 }
 
-}
-
 static unsigned long _menuAutoDemo_SE(unsigned long index) {
     return _PlaySE(_se_sequence, 0x21, index);
 }
@@ -427,8 +632,6 @@ static unsigned long _PlaySE(OPDEMO_SE_SEQUENCE_dd_* seq, unsigned long count, u
     }
     return index;
 }
-
-extern "C" {
 
 void menuBattleDemoExit(void) {
 }
@@ -507,53 +710,6 @@ void menuNintendo(void) {
     _NintendoExit();
 }
 
-}
-
-extern "C" {
-
-void fn_80085E88(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
-    s32 cursor;
-    u32 msg;
-    u32 color;
-    msg = 0;
-    color = *((u8*)win + 0x93) | ~0xFF;
-    cursor = *(s32*)&win->pos;
-    switch (sprite->id) {
-    case 0xA2:
-        msg = 0x4A43;
-        break;
-    case 0xA3:
-        msg = 0x4A44;
-        break;
-    case 0x9E:
-        if (((s16*)&cursor)[1] == 0) {
-            winSpriteSetDisp(sprite, 1);
-        } else {
-            winSpriteSetDisp(sprite, 0);
-        }
-        break;
-    case 0x9F:
-        if (((s16*)&cursor)[1] == 1) {
-            winSpriteSetDisp(sprite, 1);
-        } else {
-            winSpriteSetDisp(sprite, 0);
-        }
-        break;
-    case 0xA4:
-        msg = 0x4A45;
-        break;
-    case 0xA5:
-        msg = 0x4A46;
-        break;
-    default:
-        msg = 0;
-        break;
-    }
-    if (msg != 0) {
-        GSmsgPrintRect(winSpriteGetLayerID(win, sprite), 0, -2, sprite->width, sprite->height, color, msg);
-    }
-}
-
 void menuNintendoWarningCtrl(tagWINDOW_WORK* w)
 {
     f32 dt = timeGetLastFrameSec();
@@ -603,6 +759,20 @@ void menuNintendoWarningCtrl(tagWINDOW_WORK* w)
     }
 }
 
+void menuNintendoWarningButton(tagWINDOW_WORK* win) {
+    if (_warningSeq == 2) {
+        _menuNintendoWarningButtonNormal(win);
+    } else if (_warningSeq == 3) {
+        win->finished = 1;
+    }
+}
+
+static void _menuNintendoWarningButtonNormal(tagWINDOW_WORK* win) {
+    if (win != 0 && (windowGetKeyInfo()->trigger & 0xFF0) != 0) {
+        win->finished = 1;
+    }
+}
+
 void menuNintendoWarningHook(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
     f32 matrix[4][4];
     LogoMatrixSlot* slot;
@@ -643,7 +813,8 @@ void menuNintendoWarningHook(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
             if (_warningTimer > 1.0f) {
                 _warningTimer = 0.0f;
             }
-            sprite->color.channels.alpha = (u8)(255.0f * (f32)sin(3.1415927f * _warningTimer));
+            f32 opacity = (f32)sin(3.1415927f * _warningTimer);
+            sprite->color.channels.alpha = (u8)(255.0f * opacity);
             winSpriteSetDisp(sprite, 1);
             {
                 GStexture* tex = (GStexture*)GSresGetResourceAllGroup(0x215A1200);
@@ -657,44 +828,6 @@ void menuNintendoWarningHook(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
         _setTextureWindow(win, sprite, (GStexture*)GSresGetResourceAllGroup(0x21591200));
         return;
     }
-}
-
-void fn_800860E8(tagWINDOW_WORK* win) {
-    switch (win->phase) {
-    case 0:
-        if (win->step == 0) {
-            winSeqSetMenu(win->menu, 0x1D4);
-            win->step = 1;
-        }
-        break;
-    case 3:
-        if (win->step == 0) {
-            winSeqSetMenu(win->menu, 0x1D8);
-            win->step = 1;
-        }
-        break;
-    }
-}
-
-void menuNintendoWarningButton(tagWINDOW_WORK* win) {
-    if (_warningSeq == 2) {
-        _menuNintendoWarningButtonNormal(win);
-    } else if (_warningSeq == 3) {
-        win->finished = 1;
-    }
-}
-
-}
-
-static void _menuNintendoWarningButtonNormal(tagWINDOW_WORK* win) {
-    if (win != 0 && (windowGetKeyInfo()->trigger & 0xFF0) != 0) {
-        win->finished = 1;
-    }
-}
-
-static void _setTexture(GStexture* texture, GSvec2* pos, GSvec2* uv, GSgfxColAu8 color) {
-    GSgfxColAu8 copy = color;
-    GSprimDraw2DTexQuad4V(pos, uv, texture, &copy);
 }
 
 static void _setTextureWindow(tagWINDOW_WORK* w, tagSPRITE_WORK* sp, GStexture* tex)
@@ -731,14 +864,15 @@ static void _setTextureWindow(tagWINDOW_WORK* w, tagSPRITE_WORK* sp, GStexture* 
     _setTexture(tex, pos, uv, col);
 }
 
-extern "C" {
+static void _setTexture(GStexture* texture, GSvec2* pos, GSvec2* uv, GSgfxColAu8 color) {
+    GSgfxColAu8 copy = color;
+    GSprimDraw2DTexQuad4V(pos, uv, texture, &copy);
+}
 
 void menuNintendoWarning(void) {
     _NintendoWarningInit();
     _NintendoWarningMain();
     _NintendoWarningExit();
-}
-
 }
 
 static void _NintendoExit(void) {
@@ -783,6 +917,90 @@ static void _NormalModeSeq(void) {
     GSthreadSwitch();
     fadeCheck(1);
     _menuWait(2.0f);
+}
+
+void fn_80087254(void) {
+    s32 input;
+    _progressive_mode_change = -1;
+    VIWaitForRetrace();
+    VIWaitForRetrace();
+    if (((OSGetResetCode() & 0x80000000) != 0 ? 1 : 0) == 0) {
+        do {
+            GSthreadSwitch();
+            GSinputReadStart();
+            input = GSinputRead(1);
+            GSinputReadEnd();
+        } while (input != 0);
+        GSinputReadStart();
+        if ((GSinputButtonsPressed(1) & 0x200) != 0) {
+            fn_80087314(0);
+        } else if (VIGetDTVStatus() == 1) {
+            fn_80087314(1);
+        } else {
+            fn_80087314(0);
+        }
+        GSinputReadEnd();
+    }
+}
+
+void fn_80087314(u8 flag) {
+    _progressive_mode_change = (flag == 1) ? 1 : 0;
+    fadeCheck(1);
+    _menuWait(2.0f);
+}
+
+static void _ProgressiveModeMain(void) {
+    _progressive_mode_change = -1;
+    VIWaitForRetrace();
+    VIWaitForRetrace();
+    if (((OSGetResetCode() & 0x80000000) != 0 ? 1 : 0) == 0) {
+        if (VIGetDTVStatus() == 1) {
+            if (OSGetProgressiveMode() == 1) {
+                _ProgressiveModeSeq();
+                return;
+            }
+            GSthreadSwitch();
+            GSinputReadStart();
+            if ((GSinputButtonsPressed(1) & 0x200) != 0) {
+                _ProgressiveModeSeq();
+            } else {
+                _NormalModeSeq();
+            }
+            GSinputReadEnd();
+            return;
+        }
+        _NormalModeSeq();
+        OSSetProgressiveMode(0);
+        return;
+    }
+    _NormalModeSeq();
+}
+
+static void _ProgressiveModeSeq(void) {
+    GSthreadSwitch();
+    winMsgOpen(1, 0x4A39, 1, 1);
+    if (_ProgressiveModeYesNo(0x2D, 0xBE, 0) == 0) {
+        if (((OSGetResetCode() & 0x80000000) != 0 ? 1 : 0) == 1) {
+            if (OSGetProgressiveMode() == 0) {
+                _progressive_mode_change = 1;
+            }
+        } else {
+            _progressive_mode_change = 1;
+        }
+        winMsgOpen(1, 0x4A3A, 1, 1);
+        _menuWait(2.0f);
+    } else {
+        if (((OSGetResetCode() & 0x80000000) != 0 ? 1 : 0) == 1) {
+            if (OSGetProgressiveMode() == 1) {
+                _progressive_mode_change = 0;
+            }
+        } else {
+            _progressive_mode_change = 0;
+        }
+        winMsgOpen(1, 0x4A3B, 1, 1);
+        _menuWait(2.0f);
+    }
+    winMsgClose(1);
 }
 
 static void _NintendoInit(void) {
@@ -861,6 +1079,40 @@ static void _menuSetScreenFilter(bool on) {
     GSgfxVideoSetFilter(filt_off);
 }
 
+static s8 _ProgressiveModeYesNo(short x, short y, long initial) {
+    f32 timer;
+    s8 prev;
+    s8 result;
+    s16 selected;
+    if (initial != 0) {
+        initial = 1;
+    }
+    menuOpenCustom(0x35, windowGetActiveID(), &initial, 8, 0, 0);
+    if (x >= 0 && y >= 0) {
+        menuSetPosition(0x35, x, y);
+    }
+    timer = 0.0f;
+    prev = -1;
+    while (timer < 10.0f) {
+        if (windowCheckCursor(0x35, 0) == 0) {
+            result = windowGetValue(0x35);
+            break;
+        }
+        selected = windowSearchID(0x35)->pos.selected;
+        if (prev != selected) {
+            timer = 0.0f;
+            prev = (s8)selected;
+        }
+        GSthreadSwitch();
+        timer += GSgfxVideoGetLastRenderTime() / (f32)GSgfxVideoGetVsyncRate();
+    }
+    if (timer >= 10.0f) {
+        result = (s8)windowSearchID(0x35)->pos.selected;
+    }
+    menuCloseCustom(0x35, 0, 1);
+    return result;
+}
+
 static void _menuSoundReadWaveWait(void) {
     while (_sound_wave_complete != 0) {
         GSthreadSwitch();
@@ -903,124 +1155,4 @@ static void _menuWait(float seconds) {
     }
 }
 
-extern "C" {
-
-void fn_80087314(u8 flag) {
-    _progressive_mode_change = (flag == 1) ? 1 : 0;
-    fadeCheck(1);
-    _menuWait(2.0f);
-}
-
-void fn_80087254(void) {
-    s32 input;
-    _progressive_mode_change = -1;
-    VIWaitForRetrace();
-    VIWaitForRetrace();
-    if (((OSGetResetCode() & 0x80000000) != 0 ? 1 : 0) == 0) {
-        do {
-            GSthreadSwitch();
-            GSinputReadStart();
-            input = GSinputRead(1);
-            GSinputReadEnd();
-        } while (input != 0);
-        GSinputReadStart();
-        if ((GSinputButtonsPressed(1) & 0x200) != 0) {
-            fn_80087314(0);
-        } else if (VIGetDTVStatus() == 1) {
-            fn_80087314(1);
-        } else {
-            fn_80087314(0);
-        }
-        GSinputReadEnd();
-    }
-}
-
-}
-
-static void _ProgressiveModeMain(void) {
-    _progressive_mode_change = -1;
-    VIWaitForRetrace();
-    VIWaitForRetrace();
-    if (((OSGetResetCode() & 0x80000000) != 0 ? 1 : 0) == 0) {
-        if (VIGetDTVStatus() == 1) {
-            if (OSGetProgressiveMode() == 1) {
-                _ProgressiveModeSeq();
-                return;
-            }
-            GSthreadSwitch();
-            GSinputReadStart();
-            if ((GSinputButtonsPressed(1) & 0x200) != 0) {
-                _ProgressiveModeSeq();
-            } else {
-                _NormalModeSeq();
-            }
-            GSinputReadEnd();
-            return;
-        }
-        _NormalModeSeq();
-        OSSetProgressiveMode(0);
-        return;
-    }
-    _NormalModeSeq();
-}
-
-static void _ProgressiveModeSeq(void) {
-    GSthreadSwitch();
-    winMsgOpen(1, 0x4A39, 1, 1);
-    if (_ProgressiveModeYesNo(0x2D, 0xBE, 0) == 0) {
-        if (((OSGetResetCode() & 0x80000000) != 0 ? 1 : 0) == 1) {
-            if (OSGetProgressiveMode() == 0) {
-                _progressive_mode_change = 1;
-            }
-        } else {
-            _progressive_mode_change = 1;
-        }
-        winMsgOpen(1, 0x4A3A, 1, 1);
-        _menuWait(2.0f);
-    } else {
-        if (((OSGetResetCode() & 0x80000000) != 0 ? 1 : 0) == 1) {
-            if (OSGetProgressiveMode() == 1) {
-                _progressive_mode_change = 0;
-            }
-        } else {
-            _progressive_mode_change = 0;
-        }
-        winMsgOpen(1, 0x4A3B, 1, 1);
-        _menuWait(2.0f);
-    }
-    winMsgClose(1);
-}
-
-static s8 _ProgressiveModeYesNo(short x, short y, long initial) {
-    f32 timer;
-    s8 prev;
-    s8 result;
-    s16 selected;
-    if (initial != 0) {
-        initial = 1;
-    }
-    menuOpenCustom(0x35, windowGetActiveID(), &initial, 8, 0, 0);
-    if (x >= 0 && y >= 0) {
-        menuSetPosition(0x35, x, y);
-    }
-    timer = 0.0f;
-    prev = -1;
-    while (timer < 10.0f) {
-        if (windowCheckCursor(0x35, 0) == 0) {
-            result = windowGetValue(0x35);
-            break;
-        }
-        selected = windowSearchID(0x35)->pos.selected;
-        if (prev != selected) {
-            timer = 0.0f;
-            prev = (s8)selected;
-        }
-        GSthreadSwitch();
-        timer += GSgfxVideoGetLastRenderTime() / (f32)GSgfxVideoGetVsyncRate();
-    }
-    if (timer >= 10.0f) {
-        result = (s8)windowSearchID(0x35)->pos.selected;
-    }
-    menuCloseCustom(0x35, 0, 1);
-    return result;
-}
+#pragma force_active reset

@@ -3,6 +3,8 @@
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 
+#pragma force_active on
+
 struct tagWINDOW_WORK;
 
 typedef struct DbgMenuKeyInfo {
@@ -149,6 +151,193 @@ static s32 _getDPStatus(long index);
 
 extern "C" {
 
+s32 dbgMenuMenuReliveHallDisp(void);
+
+}
+
+static s32 _getWorldMapFlagData(long index);
+
+static void _setWorldMapFlagData(long index, long value);
+
+extern "C" {
+
+s32 dbgMenuMenuTestUsohachi2(void);
+
+s32 dbgMenuMenuTestUsohachi(void);
+
+s32 dbgMenuMenuTestWorlMapShow(void);
+
+s32 dbgMenuMenuWorldMapCursor(DbgMenuWindow* window);
+
+s32 dbgMenuMenuTestWorlMapFlagSet(void);
+
+s32 dbgMenuEsabaDebugCursor(DbgMenuWindow* window);
+
+s32 dbgMenuUnderTakerebugCursor(DbgMenuWindow* window);
+
+s32 dbgMenuMenuTestNintendoWarning(void);
+
+u32 dbgMenuMenuUnderTakerIconAppear(void);
+
+s32 dbgMenuMenuUnderTakerIconFlagOnOff(void);
+
+s32 dbgMenuMenuUnderTakerIconOnOff(void);
+
+s32 dbgMenuMenuUnderTakerDisp(void);
+
+s32 dbgMenuMenuUnderTakerOnOff(void);
+
+s32 dbgMenuMenuTestInfoRelive(void);
+
+s32 dbgMenuMenuTestInfoEsa(void);
+
+s32 dbgMenuMenuEsabaDisp(void);
+
+u32 dbgMenuMenuTestEsabaPokemon(void);
+
+}
+
+static void _pokemonCreate(Pokemon* pokemon, u16 id, u32 trainerRnd);
+
+static void _esabaSetPokemon(long place, long id);
+
+extern "C" {
+
+s32 dbgMenuMenuTestEsabaGet(void);
+
+s32 dbgMenuMenuTestEsabaPut(void);
+
+s32 dbgMenuMenuTestEsabaSet(void);
+
+s32 dbgMenuMenuSetPlace(DbgMenuWindow* window, s32 place);
+
+s32 dbgMenuMenuMoveDemo(DbgMenuWindow* window, s32 demo);
+
+s32 dbgMenuMenuTestMewWazaMenu(void);
+
+s32 dbgMenuMenuTestOrreColosseumMenu(void);
+
+s32 dbgMenuMenuTestWazaOshieBasanMenu(void);
+
+s32 dbgMenuMenuTestWazaOshieMeijinMenu(DbgMenuWindow* window, s32 type);
+
+s32 dbgMenuMenuTestTutorialMenu(void);
+
+s32 dbgMenuMenuTestEeveeMenu(void);
+
+s32 dbgMenuMenuTestPdaAddFunc(void);
+
+s32 dbgMenuMenuTestMailRead(void);
+
+s32 dbgMenuMenuTestMailReceive(void);
+
+s32 dbgMenuMenuTestPdaSyougou(void);
+
+s32 dbgMenuMenuTestPdaMR(void);
+
+s32 dbgMenuMenuTestPdaEsa(void);
+
+s32 dbgMenuMenuTestPdaDPM(void);
+
+s32 dbgMenuMenuTestPdaEnable(void);
+
+}
+
+static void _dbgMenuMenuTestPdaFlagSet(u32 flag);
+
+static void testD2Present(D2PRESENT_MODE mode);
+
+extern "C" {
+
+#pragma opt_dead_assignments off
+s32 dbgMenuMenuTestD2Present(s32 menu);
+#pragma opt_dead_assignments reset
+
+s32 dbgMenuMenuTestWorlMapSetAllFlag(void);
+
+s32 dbgMenuEntrySnatchListRelive(void);
+
+}
+
+static void _debugPokemonCreate(Pokemon* pokemon, u16 id);
+
+extern "C" {
+
+s32 dbgMenuEntrySnatchListSuccess(void);
+
+s32 dbgMenuEntrySnatchListAll(void);
+
+s32 dbgMenuEntrySnatchList(void);
+
+}
+
+static u16 _getDPPokemonID(long index);
+
+static void _setDPStatus(long index, darkPokemonStatus status);
+
+static s32 _getDPStatus(long index);
+
+extern "C" {
+
+s32 dbgMenuMenuTestTeacherMemo(void);
+
+s32 dbgMenuMenuTestCompleteMemo(void);
+
+s32 dbgMenuMenuTestAddPokemonMemo(void);
+
+s32 dbgMenuMenuTestEnableMemo(void);
+
+}
+
+#pragma opt_common_subs off
+static void testEvolution(void);
+#pragma opt_common_subs reset
+
+extern "C" {
+
+s32 dbgMenuMenuTestEvolution(void);
+
+s32 dbgMenuMenuTestWazaMenu(void);
+
+s32 dbgMenuMenuTestPokemonChangeMenu(void);
+
+s32 dbgMenuMenuTestPCBox(void);
+
+s32 dbgMenuMenuTestRelivehallTutorialMenu(void);
+
+s32 dbgMenuMenuTestPcBoxPokemonSetFull(void);
+
+s32 dbgMenuMenuTestReliveHallPokemonSetBest(void);
+
+s32 dbgMenuMenuTestReliveHallPokemonSet1(void);
+
+s32 dbgMenuMenuTestReliveHallPokemonSet0(void);
+
+s32 dbgMenuMenuTestHologramMenu(void);
+
+s32 dbgMenuMenuTestReliveHallMenu(void);
+
+s32 dbgMenuMenuTestBingoClear(void);
+
+s32 dbgMenuMenuTestBingoSelect(void);
+
+s32 dbgMenuMenuTestBingo(void);
+
+s32 dbgMenuMenuTestBattleDiskExec(void);
+
+s32 dbgMenuMenuTestBattleDisk(void);
+
+s32 dbgMenuMenuTestPokemonMenu(s32 menu);
+
+s32 dbgMenuMenuTestShopMenu(s32 menu);
+
+s32 dbgMenuMenuTestNameEntryMenu(s32 menu);
+
+}
+
+
+
+
 s32 dbgMenuMenuReliveHallDisp(void) {
     if (menuIsCheck(0x108)) {
         menuClose(0x108);
@@ -156,8 +345,6 @@ s32 dbgMenuMenuReliveHallDisp(void) {
         menuOpenCustom(0x108, 0, 0, 0, 1, 0);
     }
     return 0;
-}
-
 }
 
 static s32 _getWorldMapFlagData(long index) {
@@ -172,8 +359,6 @@ static void _setWorldMapFlagData(long index, long value) {
         GSflagSet(worldmapXD_data[index].flag, value);
     }
 }
-
-extern "C" {
 
 s32 dbgMenuMenuTestUsohachi2(void) {
     menuScriptUsohachi2();
@@ -396,8 +581,6 @@ u32 dbgMenuMenuTestEsabaPokemon(void) {
     return (u32)result >> 31;
 }
 
-}
-
 static void _pokemonCreate(Pokemon* pokemon, u16 id, u32 trainerRnd) {
     s32 rnd;
 
@@ -410,8 +593,6 @@ static void _pokemonCreate(Pokemon* pokemon, u16 id, u32 trainerRnd) {
 static void _esabaSetPokemon(long place, long id) {
     esabaSetPokemon(_esabaPlace, _esabaSelectPokemon);
 }
-
-extern "C" {
 
 s32 dbgMenuMenuTestEsabaGet(void) {
     esabaGet(_esabaPlace);
@@ -544,8 +725,6 @@ s32 dbgMenuMenuTestPdaEnable(void) {
     return 1;
 }
 
-}
-
 static void _dbgMenuMenuTestPdaFlagSet(u32 flag) {
     u32 value = GSflagTest(flag);
 
@@ -565,8 +744,6 @@ static void _dbgMenuMenuTestPdaFlagSet(u32 flag) {
 static void testD2Present(D2PRESENT_MODE mode) {
     d2presentOpen(mode);
 }
-
-extern "C" {
 
 #pragma opt_dead_assignments off
 s32 dbgMenuMenuTestD2Present(s32 menu) {
@@ -602,8 +779,6 @@ s32 dbgMenuEntrySnatchListRelive(void) {
     return 1;
 }
 
-}
-
 static void _debugPokemonCreate(Pokemon* pokemon, u16 id) {
     s32 rnd;
     s32 trainerRnd;
@@ -614,8 +789,6 @@ static void _debugPokemonCreate(Pokemon* pokemon, u16 id) {
     pokemonBiosSetRnd(pokemon, rnd);
     pokemonBiosSetCatchTrainerRnd(pokemon, trainerRnd);
 }
-
-extern "C" {
 
 s32 dbgMenuEntrySnatchListSuccess(void) {
     Pokemon pokemon;
@@ -661,8 +834,6 @@ s32 dbgMenuEntrySnatchList(void) {
     return 1;
 }
 
-}
-
 static u16 _getDPPokemonID(long index) {
     return darkPokemonGetDarkPokemon((u16)index)->getPokemonID();
 }
@@ -684,8 +855,6 @@ static s32 _getDPStatus(long index) {
     }
     return 0;
 }
-
-extern "C" {
 
 s32 dbgMenuMenuTestTeacherMemo(void) {
     memoDataSetMemoFlag(0);
@@ -714,8 +883,6 @@ s32 dbgMenuMenuTestEnableMemo(void) {
     return 1;
 }
 
-}
-
 #pragma opt_common_subs off
 static void testEvolution(void) {
     Pokemon* before = (Pokemon*)heroGetStatus(0, 3, 0);
@@ -740,8 +907,6 @@ static void testEvolution(void) {
     }
 }
 #pragma opt_common_subs reset
-
-extern "C" {
 
 s32 dbgMenuMenuTestEvolution(void) {
     GSthreadCreate(1, GSfloorGetCurrentFloorGroupID(), 0x4000, 1, 1, testEvolution);
@@ -898,4 +1063,4 @@ s32 dbgMenuMenuTestNameEntryMenu(s32 menu) {
     return 0;
 }
 
-}
+#pragma force_active reset

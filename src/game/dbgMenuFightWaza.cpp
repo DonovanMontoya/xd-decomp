@@ -1,6 +1,8 @@
 /* Debug menu entry for editing a waza (move) in the fight debug menu. */
 #include <global.h>
 
+#pragma force_active on
+
 typedef struct DbgWazaData {
     s32 data[14];
 } DbgWazaData;
@@ -77,3 +79,5 @@ s32 dbgMenuFightWazaEditSub(u16 id) {
     menuCloseCustom(0x20, 0, 1);
     return 1;
 }
+
+#pragma force_active reset

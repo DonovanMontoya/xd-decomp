@@ -224,6 +224,64 @@ s32 fightTrainerAiWazaValueHittyuu(FIGHT_TRAINER *, FightOutPokemon *, u16, Figh
 s32 fightTrainerAiWazaValueTuujouIryoku(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
 s32 fightTrainerAiWazaValueNull(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
 
+u32 fightOutPokemonMaxHpWaruValue(FightOutPokemon *, u16);
+u32 fightOutPokemonNowHpWaruValue(FightOutPokemon *, u16);
+u16 fightTrainer_GetFightTrainerDataId(FIGHT_TRAINER *);
+s32 fightTrainerAiDB_GetWazaAvgValue(u16);
+u16 fightFloorGetFightTrainerFightPokemonPtrAry(void *, FIGHT_TRAINER *, FightPokemon **, u8, u8);
+Pokemon *fightPokemonGetPokemonPtr(FightPokemon *);
+u16 fightTrainerAiGetFightPokemonPokemonDataId(FIGHT_TRAINER *, FightPokemon *);
+u8 fightTrainerAiIsFightPokemonJoutaiNormal(FIGHT_TRAINER *, FightPokemon *);
+u8 fightTrainerAiIsFightPokemonJoutaiDataId(FIGHT_TRAINER *, FightPokemon *, u16);
+u8 fightTrainerAiIsFightPokemonTokuseiDataId(FIGHT_TRAINER *, FightPokemon *, u16);
+u8 fightTrainerAiIsFightPokemonZokuseiDataId(FIGHT_TRAINER *, FightPokemon *, u16);
+FightPokemon *fightOutPokemon_GetMotoFightPokemonPtr(FightOutPokemon *);
+u8 fightOutPokemon_GetNamakeFlag(FightOutPokemon *);
+s16 fightSideGetCountAsJoutaiDataId(FightSide *, u16);
+u16 fightTrainerAiCheckOumu(FIGHT_TRAINER *, FightOutPokemon *);
+u32 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(FightOutPokemon *, u8);
+FIGHT_TRAINER *fightFloorGetFightOutPokemonPtrToFightTrainerPtr(void *, FightOutPokemon *);
+FightPokemon *fightTrainerSearchIrekaeFightPokemon(FIGHT_TRAINER *, u16 *);
+u16 tikeiDataBiosGetFightKoukaId(u32);
+u8 fightAi_GetTokuseiHaveFlag(FIGHT_TRAINER *, FightOutPokemon *, u16);
+Pokemon *fightOutPokemonGetPokemonPtr(FightOutPokemon *);
+u8 pokemonIsDarkPokemon(Pokemon *);
+u8 wazaCheckDarkWaza(u16);
+FightPokemon *getFightPokemonPtr__15FightOutPokemonFv(FightOutPokemon *);
+u8 _fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(FIGHT_TRAINER *, FightOutPokemon *, u8, u8);
+s8 _fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(FIGHT_TRAINER *, FightOutPokemon *);
+u8 _fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(FIGHT_TRAINER *, FightOutPokemon **, u16, u8, u8);
+u8 _fightTrainerAiWazaValueIsAllyHaveWazaDataId__FP13FIGHT_TRAINERP15FightOutPokemonUs(FIGHT_TRAINER *, FightOutPokemon *, u16);
+
+typedef u8 (*StatCheck)(FIGHT_TRAINER *, FightOutPokemon *);
+typedef s32 (*WazaValueFunc)(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
+WazaValueFunc wazaDB_GetFightTrainerAiWazaValueFuncPtr(u16);
+extern u16 joutaiIzyouWazaTbl[];
+extern u16 KonranWazaTbl[];
+extern u16 moukakeiTbl[];
+extern u16 statusUpKinomiTbl[];
+extern u32 *waza_data_number;
+s32 _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *, s32, u8, u16, u16, u16, u16, StatCheck);
+u8 fightTrainerAiIsFightOutPokemonPhyAtkCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
+u8 fightTrainerAiIsFightOutPokemonPhyDefCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
+u8 fightTrainerAiIsFightOutPokemonSpeAtkCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
+u8 fightTrainerAiIsFightOutPokemonSpeDefCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
+u8 fightTrainerAiIsFightOutPokemonNimblenessCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
+u8 fightTrainerAiIsFightOutPokemonAvoidCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
+
+#ifdef __cplusplus
+}
+#endif
+
+#pragma force_active on
+static inline WazaValueFunc fai_GetFunc(u16 id) {
+    WazaValueFunc f = wazaDB_GetFightTrainerAiWazaValueFuncPtr(id);
+    if (f == 0) {
+        f = fightTrainerAiWazaValueNull;
+    }
+    return f;
+}
+extern "C" {
 s32 fightTrainerAiWazaValueMeromero(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -233,7 +291,8 @@ s32 fightTrainerAiWazaValueMeromero(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, 
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueDarkPanic(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -243,7 +302,123 @@ s32 fightTrainerAiWazaValueDarkPanic(FIGHT_TRAINER *arg0, FightOutPokemon *arg1,
     }
     return var_r31;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueDarkMist(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp18[8];
+    u16 sp8[8];
+    s32 temp_r24;
+    s32 var_r23;
+    u16 temp_r26;
+    u16 temp_r3;
+    u16 var_r22;
+    u16 var_r21;
+    u8 var_r20;
 
+    var_r23 = 0;
+    temp_r26 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 1U, 1U);
+    temp_r24 = fightTrainerAiDB_GetWazaAvgValue(fightTrainer_GetFightTrainerDataId(arg0));
+    var_r20 = 0;
+    var_r22 = 0;
+    while (var_r22 < temp_r26) {
+        temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, *(FightOutPokemon **)((u8 *)sp18 + ((var_r22 * 4) & 0x3FFFC)), sp8, 0U, 1U);
+        if (temp_r3 != 0) {
+            var_r21 = 0;
+            while (var_r21 < temp_r3) {
+                if (wazaDB_GetAvg(*(u16 *)((u8 *)sp8 + ((var_r21 * 2) & 0x1FFFE))) < (u8) temp_r24) {
+                    var_r20 = 1;
+                } else {
+                    var_r21 += 1;
+                    continue;
+                }
+
+                break;
+            }
+        }
+        var_r22 += 1;
+        continue;
+
+        break;
+    }
+    if (var_r20 != 0) {
+        var_r23 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x282U);
+    }
+    if (fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3) <= 5U) {
+        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x283U);
+    }
+    return var_r23;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueDarkHalf(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp28[8];
+    FightOutPokemon *sp8[8];
+    u16 var_r31;
+    s32 temp_r28;
+    u32 temp_r27;
+    u32 temp_r27_2;
+    u8 var_r22;
+    s32 temp_r26;
+    u16 temp_r25;
+    u16 var_r22_2;
+    u8 var_r25;
+    u16 temp_r24;
+    s32 var_r23;
+
+    temp_r25 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp28, 1U, 1U);
+    temp_r24 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
+    var_r31 = 0;
+    var_r22 = 0;
+    while ((s32) var_r22 < (s32) temp_r24) {
+        temp_r28 = (var_r22 * 4) & 0x3FC;
+        temp_r27 = fightOutPokemonMaxHpWaruValue(*(FightOutPokemon **)((u8 *)sp8 + temp_r28), 1U);
+        s32 nowHp = fightOutPokemonNowHpWaruValue(*(FightOutPokemon **)((u8 *)sp8 + temp_r28), 2U);
+        var_r31 += (s32) ((u16) temp_r27 * (u16)nowHp) / 100;
+        var_r22 += 1;
+        continue;
+
+        break;
+    }
+    var_r22_2 = 0;
+    var_r25 = 0;
+    while ((s32) var_r25 < (s32) temp_r25) {
+        temp_r26 = (var_r25 * 4) & 0x3FC;
+        temp_r27_2 = fightOutPokemonMaxHpWaruValue(*(FightOutPokemon **)((u8 *)sp28 + temp_r26), 1U);
+        s32 nowHp2 = fightOutPokemonNowHpWaruValue(*(FightOutPokemon **)((u8 *)sp28 + temp_r26), 2U);
+        var_r22_2 += (s32) ((u16) temp_r27_2 * (u16)nowHp2) / 100;
+        var_r25 += 1;
+        continue;
+
+        break;
+    }
+    var_r23 = fightTrainerAiAddValue(0, (((s32) var_r31 / (s32) var_r22_2) - 1) * fightTrainerGetStatus(0, 0x27FU, 0x3EU, 0U));
+    var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x280U);
+    if (fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3) <= 5U) {
+        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x281U);
+    }
+    return var_r23;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueDarkEnd(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u32 temp_r29;
+    u32 temp_r29_2;
+    u16 temp_r28;
+    s32 var_r28;
+    u16 temp_r27;
+
+    temp_r29 = fightOutPokemonMaxHpWaruValue(arg3, 1U);
+    temp_r27 = (u16) ((s32) ((u16) temp_r29 * fightTrainerAiWazaDoWazaDamageFunc(arg0, arg1, arg2, arg3, 1U)) / 100);
+    temp_r29_2 = fightOutPokemonMaxHpWaruValue(arg1, 1U);
+    temp_r28 = fightOutPokemonNowHpWaruValue(arg1, 2U);
+    var_r28 = fightTrainerAiAddValue(0, (((s32) temp_r27 / (s32) (u16) ((s32) ((u16) temp_r29_2 * temp_r28) / 100)) - 1) * fightTrainerGetStatus(0, 0x27DU, 0x3EU, 0U));
+    if (fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3) <= 5U) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x27EU);
+    }
+    return var_r28;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueDarkRemove(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
     FightSide *temp_r3;
@@ -255,7 +430,8 @@ s32 fightTrainerAiWazaValueDarkRemove(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueDarkHold(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightOutPokemon *sp8[8];
     s32 var_r29;
@@ -362,7 +538,54 @@ s32 fightTrainerAiWazaValueDarkHold(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, 
     }
     return var_r29;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueDarkWeather(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightPokemon *sp8[24];
+    u16 var_r26;
+    s32 var_r30;
+    u16 temp_r26;
+    u16 var_r25;
+    u8 temp_r31;
 
+    var_r30 = 0;
+    temp_r31 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 0U);
+    temp_r26 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 1U, 1U);
+    if (temp_r31 != 5) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x19AU);
+    }
+    var_r25 = 0;
+    while (var_r25 < temp_r26) {
+        if (pokemonIsDarkPokemon(fightPokemonGetPokemonPtr(*(FightPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC)))) == 1) {
+            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x19BU);
+        } else {
+            var_r25 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r26 = 0;
+    while (var_r26 < temp_r26) {
+        if (fightTrainerAiGetFightPokemonPokemonDataId(arg0, *(FightPokemon **)((u8 *)sp8 + ((var_r26 * 4) & 0x3FFFC))) == 0x181) {
+            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x19CU);
+        } else {
+            var_r26 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (temp_r31 == 5) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x19DU);
+    }
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x16FU, 0) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x19EU);
+    }
+    return var_r30;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueHuuin(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightOutPokemon *sp8[8];
     s32 var_r30;
@@ -381,7 +604,48 @@ s32 fightTrainerAiWazaValueHuuin(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16
     }
     return var_r30;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueMahi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r30;
+    u8 var_r29;
 
+    var_r30 = 0;
+    var_r29 = 0;
+    while (var_r29 < 0x12U) {
+        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)joutaiIzyouWazaTbl + ((var_r29 * 2) & 0x1FE)), arg3) == 1) {
+            var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x18DU);
+        } else {
+            var_r29 += 1;
+            continue;
+        }
+
+        break;
+    }
+    return var_r30;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKonran(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r30;
+    u8 var_r29;
+
+    var_r30 = 0;
+    var_r29 = 0;
+    while (var_r29 < 5U) {
+        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)KonranWazaTbl + ((var_r29 * 2) & 0x1FE)), arg3) == 1) {
+            var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x18DU);
+        } else {
+            var_r29 += 1;
+            continue;
+        }
+
+        break;
+    }
+    return var_r30;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueYumekui(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
     s32 var_r31_2;
@@ -399,7 +663,8 @@ s32 fightTrainerAiWazaValueYumekui(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueKawarawari(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
     FightSide *temp_r3;
@@ -414,7 +679,8 @@ s32 fightTrainerAiWazaValueKawarawari(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTeiryouDameeji(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -424,7 +690,8 @@ s32 fightTrainerAiWazaValueTeiryouDameeji(FIGHT_TRAINER *arg0, FightOutPokemon *
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueHikarinokabe(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r28;
     u16 temp_r29;
@@ -446,7 +713,8 @@ s32 fightTrainerAiWazaValueHikarinokabe(FIGHT_TRAINER *arg0, FightOutPokemon *ar
     }
     return var_r28;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueRihurekutaa(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r28;
     u16 temp_r29;
@@ -468,7 +736,99 @@ s32 fightTrainerAiWazaValueRihurekutaa(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r28;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueOnibi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp8[8];
+    s32 var_r31;
+    u16 temp_r24;
+    u16 temp_r25;
+    u16 temp_r26;
+    u16 temp_r28;
+    u16 temp_r3;
+    u16 var_r24;
+    u16 var_r23;
 
+    var_r31 = 0;
+    temp_r24 = fightTrainerAiGetFightOutPokemonSpeAtk(arg0, arg3);
+    temp_r25 = fightTrainerAiGetFightOutPokemonPhyAtk(arg0, arg3);
+    temp_r26 = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg3);
+    temp_r28 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
+    var_r23 = 0;
+    while (var_r23 < temp_r28) {
+        temp_r3 = fightTrainerAiGetFightOutPokemonPokemonDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r23 * 4) & 0x3FFFC)));
+        if ((temp_r3 == 0xCA) || (temp_r3 == 0x168) || (temp_r3 == 0x12F) || (temp_r3 == 0xD5)) {
+            var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x260U);
+        } else {
+            var_r23 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (temp_r25 > temp_r24) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x261U);
+    }
+    if (temp_r26 == 0x11F) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x262U);
+    }
+    var_r24 = 0;
+    while (var_r24 < 0x12U) {
+        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)joutaiIzyouWazaTbl + ((var_r24 * 2) & 0x1FFFE)), arg3) == 1) {
+            var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x263U);
+        } else {
+            var_r24 += 1;
+            continue;
+        }
+
+        break;
+    }
+    return var_r31;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueDoku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp8[8];
+    s32 var_r26;
+    u16 temp_r27;
+    u16 temp_r29;
+    u16 temp_r3;
+    u16 var_r27;
+    u16 var_r25;
+
+    var_r26 = 0;
+    temp_r29 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
+    temp_r27 = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg3);
+    var_r25 = 0;
+    while (var_r25 < temp_r29) {
+        temp_r3 = fightTrainerAiGetFightOutPokemonPokemonDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC)));
+        if ((temp_r3 == 0xCA) || (temp_r3 == 0x168) || (temp_r3 == 0x12F) || (temp_r3 == 0xD5)) {
+            var_r26 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x25DU);
+        } else {
+            var_r25 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (temp_r27 == 0x11F) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x25EU);
+    }
+    var_r27 = 0;
+    while (var_r27 < 0x12U) {
+        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)joutaiIzyouWazaTbl + ((var_r27 * 2) & 0x1FFFE)), arg3) == 1) {
+            var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x18DU);
+        } else {
+            var_r27 += 1;
+            continue;
+        }
+
+        break;
+    }
+    return var_r26;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueBatontatti(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -478,7 +838,267 @@ s32 fightTrainerAiWazaValueBatontatti(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return var_r31;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueHaradaiko(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    s32 var_r31;
 
+    sp8 = 0x25A;
+    spC = 0;
+    sp10 = fightTrainerAiIsFightOutPokemonPhyAtkCntTakai;
+    var_r31 = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, 0U, 0x258U, 0x259U, sp8, spC, sp10);
+    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, -1) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x25BU);
+    }
+    return var_r31;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueMarukunaru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u16 sp18[8];
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    s32 temp_r3;
+    u16 temp_r30;
+    u16 temp_r4;
+    u16 var_r6;
+    u8 temp_r8;
+
+    temp_r30 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, arg1, sp18, 0U, 1U);
+    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntPhyDef(arg0, arg1);
+    sp8 = 0x256;
+    spC = 0x257;
+    sp10 = fightTrainerAiIsFightOutPokemonPhyDefCntTakai;
+    temp_r3 = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x254U, 0U, sp8, spC, sp10);
+    for (var_r6 = 0; var_r6 < temp_r30; var_r6++) {
+        temp_r4 = sp18[var_r6];
+        if (temp_r4 == 0xCD || temp_r4 == 0x12D) {
+            return fightTrainerAiAddValueByAddsubDataId(temp_r3, arg0, 0x255U);
+        }
+    }
+    return temp_r3;
+}
+}
+#pragma push
+#pragma opt_lifetimes off
+extern "C" {
+s32 fightTrainerAiWazaValueMeisou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    s32 value;
+    u8 abilityCount;
+
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
+    sp8 = 0x252;
+    spC = 0x253;
+    sp10 = fightTrainerAiIsFightOutPokemonSpeAtkCntTakai;
+    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x250U, 0x251U, sp8, spC, sp10);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
+    sp8 = 0x252;
+    spC = 0;
+    sp10 = fightTrainerAiIsFightOutPokemonSpeDefCntTakai;
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x250U, 0U, sp8, spC, sp10);
+}
+}
+#pragma pop
+#pragma push
+#pragma opt_lifetimes off
+extern "C" {
+s32 fightTrainerAiWazaValueRyuunomai(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    s32 value;
+    u8 abilityCount;
+
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSubayasa(arg0, arg1);
+    sp8 = 0x24E;
+    spC = 0x24F;
+    sp10 = fightTrainerAiIsFightOutPokemonPhyAtkCntTakai;
+    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x24CU, 0x24DU, sp8, spC, sp10);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSubayasa(arg0, arg1);
+    sp8 = 0x24E;
+    spC = 0;
+    sp10 = fightTrainerAiIsFightOutPokemonNimblenessCntTakai;
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x24CU, 0U, sp8, spC, sp10);
+}
+}
+#pragma pop
+#pragma push
+#pragma opt_lifetimes off
+extern "C" {
+s32 fightTrainerAiWazaValueBirudoAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    s32 value;
+    u8 abilityCount;
+
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(arg0, arg1);
+    sp8 = 0x24A;
+    spC = 0x24B;
+    sp10 = fightTrainerAiIsFightOutPokemonPhyAtkCntTakai;
+    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x248U, 0x249U, sp8, spC, sp10);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(arg0, arg1);
+    sp8 = 0x24A;
+    spC = 0;
+    sp10 = fightTrainerAiIsFightOutPokemonPhyDefCntTakai;
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x248U, 0U, sp8, spC, sp10);
+}
+}
+#pragma pop
+#pragma push
+#pragma opt_lifetimes off
+extern "C" {
+s32 fightTrainerAiWazaValueKosumopawaa(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    s32 value;
+    u8 abilityCount;
+
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
+    sp8 = 0x246;
+    spC = 0x247;
+    sp10 = fightTrainerAiIsFightOutPokemonPhyDefCntTakai;
+    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x244U, 0x245U, sp8, spC, sp10);
+    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
+    sp8 = 0x246;
+    spC = 0;
+    sp10 = fightTrainerAiIsFightOutPokemonSpeDefCntTakai;
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x244U, 0U, sp8, spC, sp10);
+}
+}
+#pragma pop
+extern "C" {
+s32 fightTrainerAiWazaValueKaihirituAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    u8 temp_r8;
+
+    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg1);
+    sp8 = 0x242;
+    spC = 0x243;
+    sp10 = fightTrainerAiIsFightOutPokemonAvoidCntTakai;
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x240U, 0x241U, sp8, spC, sp10);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueDowasure(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    u8 temp_r8;
+
+    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
+    sp8 = 0x23E;
+    spC = 0x23F;
+    sp10 = fightTrainerAiIsFightOutPokemonSpeDefCntTakai;
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x23CU, 0x23DU, sp8, spC, sp10);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueTokukouAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    u8 temp_r8;
+
+    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntSpeAtk(arg0, arg1);
+    sp8 = 0x23A;
+    spC = 0x23B;
+    sp10 = fightTrainerAiIsFightOutPokemonSpeAtkCntTakai;
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x238U, 0x239U, sp8, spC, sp10);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKousokuidou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    u8 temp_r8;
+
+    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntSubayasa(arg0, arg1);
+    sp8 = 0x236;
+    spC = 0x237;
+    sp10 = fightTrainerAiIsFightOutPokemonNimblenessCntTakai;
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x234U, 0x235U, sp8, spC, sp10);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueBougyoAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    u8 temp_r8;
+
+    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntPhyDef(arg0, arg1);
+    sp8 = 0x232;
+    spC = 0x233;
+    sp10 = fightTrainerAiIsFightOutPokemonPhyDefCntTakai;
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x230U, 0x231U, sp8, spC, sp10);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKougekiAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
+    s32 spC;
+    s32 sp8;
+    u8 temp_r8;
+
+    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(arg0, arg1);
+    sp8 = 0x22E;
+    spC = 0x22F;
+    sp10 = fightTrainerAiIsFightOutPokemonPhyAtkCntTakai;
+    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x22CU, 0x22DU, sp8, spC, sp10);
+}
+}
+extern "C" {
+s32 _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(FIGHT_TRAINER *trainer, FightOutPokemon *user, u16 move, FightOutPokemon *target, s32 value, u8 stages, u16 low, u16 ally, u16 high, u16 perStage, StatCheck check) {
+    s32 count;
+    if (low != 0 && check(trainer, user) == 0) value = fightTrainerAiAddValueByAddsubDataId(value, trainer, low);
+    if (ally != 0 && _fightTrainerAiWazaValueIsAllyHaveWazaDataId__FP13FIGHT_TRAINERP15FightOutPokemonUs(trainer, user, 0x10A) == 1) value = fightTrainerAiAddValueByAddsubDataId(value, trainer, ally);
+    if (high != 0 && check(trainer, user) == 1) value = fightTrainerAiAddValueByAddsubDataId(value, trainer, high);
+    if (perStage != 0) {
+        count = stages - 6;
+        if (count < 0) count = 0;
+        value = fightTrainerAiAddValue(value, count * fightTrainerAiValueAddsubDB_GetValue(perStage));
+    }
+    return value;
+}
+}
+extern "C" {
+u8 _fightTrainerAiWazaValueIsAllyHaveWazaDataId__FP13FIGHT_TRAINERP15FightOutPokemonUs(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2) {
+    FightOutPokemon *sp18[8];
+    u16 sp8[8];
+    FightOutPokemon *temp_r4;
+    u16 temp_r31;
+    u16 temp_r3;
+    u16 var_r29;
+    u16 var_r6;
+
+    temp_r31 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 1U, 1U);
+    for (var_r29 = 0; var_r29 < temp_r31; ++var_r29) {
+        temp_r4 = sp18[var_r29];
+        if (arg1 != temp_r4) {
+            temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, temp_r4, sp8, 0U, 1U);
+            if (temp_r3 != 0) {
+                for (var_r6 = 0; var_r6 < temp_r3; ++var_r6) {
+                    if (arg2 == sp8[var_r6]) return 1U;
+                }
+            }
+        }
+    }
+    return 0U;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValuetorikku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
     u16 temp_r3;
@@ -493,7 +1113,8 @@ s32 fightTrainerAiWazaValuetorikku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueSukirusuwappu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -506,7 +1127,75 @@ s32 fightTrainerAiWazaValueSukirusuwappu(FIGHT_TRAINER *arg0, FightOutPokemon *a
     }
     return var_r31;
 }
-
+}
+extern "C" {
+s32 fightTrainerAiWazaValueMamoru(FIGHT_TRAINER* t, FightOutPokemon* self, u16 waza, FightOutPokemon* target) {
+    FightOutPokemon* ary[8];
+    u16 wazaAry[8];
+    u8 allyJisin;
+    u8 allyJibaku;
+    u8 queuedJisin;
+    u8 queuedJibaku;
+    s32 handle;
+    u16 count;
+    u16 i;
+    u16 j;
+    WazaValueFunc func;
+    handle = 0;
+    allyJisin = 0;
+    allyJibaku = 0;
+    queuedJisin = 0;
+    queuedJibaku = 0;
+    count = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, t, ary, 1, 1);
+    u16 last = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(t, self);
+    fightTrainerAiGetFightOutPokemonLastUseWazaDataId(t, target);
+    for (i = 0; i < count; i++) {
+        if (self == ary[i]) continue;
+        u16 n = fightTrainerAiGetFightOutPokemonWazaDataIdAry(t, ary[i], wazaAry, 0, 1);
+        if (n == 0) continue;
+        for (j = 0; j < n; j++) {
+            func = wazaDB_GetFightTrainerAiWazaValueFuncPtr(wazaAry[j]);
+            if (func == 0) func = fightTrainerAiWazaValueNull;
+            if (func == fightTrainerAiWazaValueJisin) allyJisin = 1;
+            if (func == fightTrainerAiWazaValueJibaku) allyJibaku = 1;
+        }
+    }
+    for (i = 0; i < *waza_data_number; i++) {
+        func = wazaDB_GetFightTrainerAiWazaValueFuncPtr(i);
+        if (func == 0) func = fightTrainerAiWazaValueNull;
+        if ((func == fightTrainerAiWazaValueJisin || func == fightTrainerAiWazaValueJibaku) && fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, t, 1, 1, i, 0) == 1) {
+            if (func == fightTrainerAiWazaValueJisin) queuedJisin = 1;
+            if (func == fightTrainerAiWazaValueJibaku) queuedJibaku = 1;
+        }
+    }
+    if (allyJisin == 1 || allyJibaku == 1) handle = fightTrainerAiAddValueByAddsubDataId(0, t, 0x21f);
+    if (queuedJisin == 1 || queuedJibaku == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x220);
+    if (fightTrainerAiIsFightOutPokemonTokuseiDataId(t, self, 3) == 1 && fightTrainerAiIsWazaTypeId(t, last, 4) == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x221);
+    if ((last == 0xb6 || last == 0xc5) && fightOutPokemon_GetSuccessCnt(self) != 0) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x222);
+    if (fightTrainerAiIsFightOutPokemonZokuseiDataId(t, self, 7) == 1) {
+        if (allyJibaku == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x223);
+        if (queuedJibaku == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x224);
+    }
+    if (fightTrainerAiIsFightOutPokemonZokuseiDataId(t, self, 2) == 1 || fightTrainerAiIsFightOutPokemonTokuseiDataId(t, self, 0x1a) == 1 || fightTrainerAiIsFightOutPokemonTokuseiDataId(t, self, 0x19) == 1) {
+        if (allyJisin == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x225);
+        if (queuedJisin == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x226);
+    }
+    for (i = 0; i < count; i++) {
+        if (self == ary[i]) continue;
+        u16 n = fightTrainerAiGetFightOutPokemonWazaDataIdAry(t, ary[i], wazaAry, 0, 1);
+        if (n == 0) continue;
+        for (j = 0; j < n; j++) {
+            if (wazaAry[j] == 0x10a) {
+                handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x227);
+                break;
+            }
+        }
+        if (j < n) break;
+    }
+    return handle;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTakuwaeru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s16 var_r3;
     s32 var_r31;
@@ -526,7 +1215,8 @@ s32 fightTrainerAiWazaValueTakuwaeru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1,
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueJyuuden(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u16 sp8[4];
     s32 var_r29;
@@ -553,14 +1243,174 @@ s32 fightTrainerAiWazaValueJyuuden(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u
     }
     return var_r29;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueNemuriKoudou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
 
+    var_r31 = 0;
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 8U) == 1) {
+        if (_fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(arg0, arg1) == 0) {
+            var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x218U);
+        }
+        if (_fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(arg0, arg1) == 1) {
+            var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x219U);
+        }
+    }
+    return var_r31;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueMigawari(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u16 sp8[8];
+    s32 temp_r0;
+    s32 var_r26;
+    u16 temp_r0_2;
+    u16 temp_r30;
+    u16 temp_r31;
+    u32 temp_r27;
+    s32 temp_r28;
+    u32 temp_r29;
+    u8 var_r22;
+    u8 var_r5;
+
+    var_r26 = 0;
+    temp_r27 = fightOutPokemonMaxHpWaruValue(arg1, 1U);
+    temp_r28 = fightOutPokemonNowHpWaruValue(arg1, 1U);
+    temp_r29 = fightOutPokemonMaxHpWaruValue(arg1, 4U);
+    temp_r30 = fightTrainerAiGetFightOutPokemonSoubiItemSoubiDataId(arg0, arg1);
+    temp_r31 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, arg1, sp8, 0U, 1U);
+    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.8f, 1) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x214U);
+    }
+    var_r22 = 0;
+    while (var_r22 < 4U) {
+        if (fightAi_GetTokuseiHaveFlag(arg0, arg1, *(u16 *)((u8 *)moukakeiTbl + ((var_r22 * 2) & 0x1FE))) == 1) {
+            u16 threshold = fightOutPokemonMaxHpWaruValue(arg1, 3U);
+            temp_r0 = (u16) temp_r28 - (u16) temp_r29;
+            if ((temp_r0 <= threshold) && (temp_r0 > 0)) {
+                var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x215U);
+            }
+        } else {
+            var_r22 += 1;
+            continue;
+        }
+
+        break;
+    }
+    temp_r28 = (u16) temp_r28 - (u16) temp_r29;
+    if ((temp_r28 <= (s32) ((s32) ((u16) temp_r27 * 0x14) / 100)) && (temp_r28 > 0)) {
+        temp_r29 = 0;
+        while ((s32) (u8)temp_r29 < (s32) temp_r31) {
+            temp_r0_2 = *(u16 *)((u8 *)sp8 + (((u8)temp_r29 * 2) & 0x1FE));
+            if ((temp_r0_2 == 0xAF) || (temp_r0_2 == 0xB3)) {
+                var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x216U);
+            }
+            temp_r29 += 1;
+            continue;
+
+            break;
+        }
+    }
+    if ((temp_r28 <= (s32)(u16) fightOutPokemonMaxHpWaruValue(arg1, 4U)) && (temp_r28 > 0)) {
+        var_r5 = 0;
+        while (var_r5 < 7U) {
+            if (temp_r30 == (u16) *(u16 *)((u8 *)statusUpKinomiTbl + ((var_r5 * 2) & 0x1FE))) {
+                var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x217U);
+            } else {
+                var_r5 += 1;
+                continue;
+            }
+
+            break;
+        }
+    }
+    return var_r26;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueSawagu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp18[8];
+    u16 sp8[8];
+    u16 var_r31;
+    u16 temp_r30;
+    u16 var_r30;
+    s32 var_r29;
+    u16 temp_r24;
+    u16 var_r23;
+    FightOutPokemon *temp_r4;
+    FightOutPokemon *temp_r4_2;
+    u16 temp_r3;
+    u16 temp_r3_2;
+
+    var_r29 = 0;
+    temp_r3 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 1U, 1U);
+    temp_r30 = temp_r3;
+    temp_r24 = temp_r3;
+    var_r31 = 0;
+    while (var_r31 < temp_r24) {
+        temp_r4 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r31 * 4) & 0x3FFFC));
+        if ((arg1 != temp_r4) && (_fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(arg0, temp_r4) == 0)) {
+            var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x211U);
+        } else {
+            var_r31 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r30 = 0;
+    while (var_r30 < temp_r30) {
+        temp_r4_2 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r30 * 4) & 0x3FFFC));
+        if ((arg1 != temp_r4_2) && (temp_r3_2 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, temp_r4_2, sp8, 0U, 1U), ((temp_r3_2 == 0) == 0))) {
+            var_r23 = 0;
+            while (var_r23 < temp_r3_2) {
+                if ((u16) *(u16 *)((u8 *)sp8 + ((var_r23 * 2) & 0x1FFFE)) == 0x9C) {
+                    var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x212U);
+                } else {
+                    var_r23 += 1;
+                    continue;
+                }
+
+                break;
+            }
+            if (var_r23 >= temp_r3_2) {
+                goto block_15;
+            }
+        } else {
+block_15:
+            var_r30 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (_fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(arg0, arg3) == 0) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x213U);
+    }
+    return var_r29;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueOomugaesi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u16 temp_r3;
+
+    temp_r3 = fightTrainerAiCheckOumu(arg0, arg1);
+    if ((temp_r3 != arg2) && (temp_r3 != 0)) {
+        return fightTrainerAiWazaDoWazaValueFunc(arg0, arg1, temp_r3, arg3);
+    }
+    return 0;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueRandamuSentaku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 temp_r31;
 
     temp_r31 = fightTrainerGetStatus(0, 0x210U, 0x3EU, 0U);
     return fightTrainerAiAddValue(0, HSD_Rand() % (temp_r31 + 1));
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueHurahuradansu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightOutPokemon *sp8[8];
     FightOutPokemon *temp_r4;
@@ -614,7 +1464,31 @@ s32 fightTrainerAiWazaValueHurahuradansu(FIGHT_TRAINER *arg0, FightOutPokemon *a
     }
     return var_r30;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueMakibisi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
+    FightSide *temp_r3;
+    s16 var_r3;
 
+    var_r31 = 0;
+    temp_r3 = fightTargetGetPtrAsNowFightType(2U, arg3);
+    if (fightSideIsJoutaiDataId(temp_r3, 0x4AU) == 1) {
+        var_r3 = fightSideGetCountAsJoutaiDataId(temp_r3, 0x4AU);
+    } else {
+        var_r3 = 0;
+    }
+    if (var_r3 == 0) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x209U);
+    } else if (var_r3 == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x20AU);
+    } else if (var_r3 == 2) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x20BU);
+    }
+    return var_r31;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueRisaikuru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -624,7 +1498,265 @@ s32 fightTrainerAiWazaValueRisaikuru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1,
     }
     return var_r31;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueSiroikiri(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 (*var_r3)(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
+    s32 var_r31;
+    u16 temp_r3;
 
+    var_r31 = 0;
+    temp_r3 = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg3);
+    if ((temp_r3 != 0) && (temp_r3 != 0xFFFF) && (temp_r3 != 0x176) && (temp_r3 != 0x163)) {
+        var_r3 = wazaDB_GetFightTrainerAiWazaValueFuncPtr(temp_r3);
+        if (var_r3 == 0) {
+            var_r3 = fightTrainerAiWazaValueNull;
+        }
+        if ((var_r3 == fightTrainerAiWazaValueSubayasaDaun) || (var_r3 == fightTrainerAiWazaValueKougekiDaun) || (var_r3 == fightTrainerAiWazaValueBougyoDaun) || (var_r3 == fightTrainerAiWazaValueTokubouDaun) || (var_r3 == fightTrainerAiWazaValueMeityuuDaun) || (var_r3 == fightTrainerAiWazaValueKaihiDaun) || (var_r3 == fightTrainerAiWazaValueKusuguruDaun)) {
+            var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x207U);
+        }
+    }
+    return var_r31;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueJikoanji(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
+
+    var_r31 = 0;
+    if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg3, 8U, 9U) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x203U);
+    }
+    if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg3, 0xAU, 0xCU) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x204U);
+    }
+    if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg3, 3U, 4U) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x205U);
+    }
+    if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg3, 0U, 2U) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x206U);
+    }
+    return var_r31;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKuroikiri(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp28[8];
+    FightOutPokemon *sp8[8];
+    s32 var_r29;
+    u16 temp_r28;
+    u16 temp_r3;
+
+    var_r29 = 0;
+    temp_r28 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp28, 1U, 1U);
+    temp_r3 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
+    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp8, temp_r3, 8U, 9U) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1FBU);
+    }
+    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp28, temp_r28, 3U, 4U) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x1FCU);
+    }
+    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp8, temp_r3, 0xAU, 0xCU) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x1FDU);
+    }
+    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp28, temp_r28, 0U, 2U) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x1FEU);
+    }
+    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp28, temp_r28, 8U, 9U) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x1FFU);
+    }
+    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp8, temp_r3, 3U, 4U) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x200U);
+    }
+    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp28, temp_r28, 0xAU, 0xCU) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x201U);
+    }
+    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp8, temp_r3, 0U, 2U) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x202U);
+    }
+    return var_r29;
+}
+}
+extern "C" {
+u8 _fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(FIGHT_TRAINER *arg0, FightOutPokemon **arg1, u16 arg2, u8 arg3, u8 arg4) {
+    u16 var_r30;
+
+    for (var_r30 = 0; var_r30 < arg2; ++var_r30) {
+        if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg1[var_r30], arg3, arg4) == 1) return 1U;
+    }
+    return 0U;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueTedasuke(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp18[8];
+    u16 sp8[8];
+    u16 temp_r31;
+    s32 var_r30;
+    s32 temp_r27;
+    u8 var_r25;
+    u16 var_r24;
+    u16 var_r24_2;
+    u16 var_r24_3;
+    u16 var_r23_2;
+    u16 var_r23_3;
+    u16 var_r22_2;
+    u8 var_r22;
+    FightOutPokemon *temp_r4;
+    FightOutPokemon *temp_r4_2;
+    FightOutPokemon *temp_r4_3;
+    FightOutPokemon *temp_r3_2;
+    FightOutPokemon *temp_r3_4;
+    u16 temp_r3;
+    u16 temp_r3_5;
+    u16 var_r23;
+    void *temp_r3_3;
+
+    var_r30 = 0;
+    temp_r31 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 1U, 1U);
+    var_r22 = 0;
+    var_r23 = 0;
+    while (var_r23 < (u32) *waza_data_number) {
+        if ((var_r23 != 0) && (var_r23 != 0x176) && (var_r23 != 0x163) && (fightTrainerAiIsWazaTypeId(arg0, var_r23, 1U) != 0) && (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, var_r23, 0) == 1)) {
+            var_r22 = 1;
+        }
+        var_r23 += 1;
+        continue;
+
+        break;
+    }
+    if (var_r22 == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1F5U);
+    }
+    var_r23_2 = 0;
+    while (var_r23_2 < temp_r31) {
+        temp_r4 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r23_2 * 4) & 0x3FFFC));
+        if (arg1 != temp_r4) {
+            temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, temp_r4, sp8, 0U, 1U);
+            if (temp_r3 != 0) {
+                var_r22_2 = 0;
+                while (var_r22_2 < temp_r3) {
+                    if (fightTrainerAiIsWazaTypeId(arg0, *(u16 *)((u8 *)sp8 + ((var_r22_2 * 2) & 0x1FFFE)), 1U) != 0) {
+                        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F6U);
+                    } else {
+                        var_r22_2 += 1;
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+        }
+        var_r23_2 += 1;
+        continue;
+
+        break;
+    }
+    var_r25 = 1;
+    var_r23_3 = 0;
+    while (var_r23_3 < temp_r31) {
+        temp_r27 = (var_r23_3 * 4) & 0x3FFFC;
+        temp_r3_2 = *(FightOutPokemon **)((u8 *)sp18 + temp_r27);
+        if ((arg1 != temp_r3_2) && (temp_r3_3 = fightOutPokemon_GetFightActionBuffPtr(temp_r3_2), ((temp_r3_3 == 0) == 0)) && (fightActionCheckValid(temp_r3_3) != 0)) {
+            if (fightActionGetKindDataId(temp_r3_3) != 0x13) {
+                var_r25 = 0;
+            } else if ((temp_r3_5 = fightOutPokemonGetUseWazaDataId(*(FightOutPokemon **)((u8 *)sp18 + temp_r27)), fightTrainerAiIsWazaTypeId(arg0, temp_r3_5, 1U) == 0)) {
+                var_r25 = 0;
+            } else {
+                goto block_29;
+            }
+        } else {
+block_29:
+            var_r23_3 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (var_r25 == 0) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F7U);
+    }
+    var_r24 = 0;
+    while (var_r24 < temp_r31) {
+        temp_r4_2 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r24 * 4) & 0x3FFFC));
+        if ((arg1 != temp_r4_2) && (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, temp_r4_2, 0x12U) == 1)) {
+            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F8U);
+        } else {
+            var_r24 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r24_2 = 0;
+    while (var_r24_2 < temp_r31) {
+        temp_r3_4 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r24_2 * 4) & 0x3FFFC));
+        if ((arg1 != temp_r3_4) && (fightOutPokemon_GetNamakeFlag(temp_r3_4) != 0)) {
+            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F9U);
+        } else {
+            var_r24_2 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r24_3 = 0;
+    while (var_r24_3 < temp_r31) {
+        temp_r4_3 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r24_3 * 4) & 0x3FFFC));
+        if ((arg1 != temp_r4_3) && (_fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(arg0, temp_r4_3) == 0)) {
+            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1FAU);
+        } else {
+            var_r24_3 += 1;
+            continue;
+        }
+
+        break;
+    }
+    return var_r30;
+}
+}
+extern "C" {
+s8 _fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(FIGHT_TRAINER *arg0, FightOutPokemon *arg1) {
+    s32 temp_r31;
+    s32 temp_r5;
+
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 8U) == 0) {
+        return -1;
+    }
+    temp_r5 = fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg1, 0x30U) == 1 ? 1 : 0;
+    temp_r31 = temp_r5 + 1;
+    s32 now = fightOutPokemonGetNowKaisuuJoutaiDataId(arg1, 8U, temp_r5); temp_r31 = now + temp_r31;
+    s32 turns = fightOutPokemonGetKaisuuJoutaiDataId(arg1, 8U);
+if ((s8)temp_r31 >= turns) { return 1; } else { return 0; }
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKyouseikoutai(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightSide *temp_r3;
+    s16 var_r31;
+    s32 var_r30;
+
+    var_r30 = 0;
+    temp_r3 = fightTargetGetPtrAsNowFightType(2U, arg3);
+    if (fightSideIsJoutaiDataId(temp_r3, 0x4AU) == 1) {
+        var_r31 = fightSideGetCountAsJoutaiDataId(temp_r3, 0x4AU);
+    } else {
+        var_r31 = 0;
+    }
+    if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg3, 8U, 0xCU) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1F1U);
+    }
+    if (var_r31 == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F2U);
+    } else if (var_r31 == 2) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F3U);
+    } else if (var_r31 == 3) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F4U);
+    }
+    return var_r30;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueYokodori(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r26;
     FightOutPokemon *sp8[8];
@@ -660,7 +1792,8 @@ s32 fightTrainerAiWazaValueYokodori(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, 
     }
     return var_r26;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueKonoyubitomare(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightOutPokemon *sp2C[8];
     FightOutPokemon *spC[8];
@@ -736,7 +1869,8 @@ s32 fightTrainerAiWazaValueKonoyubitomare(FIGHT_TRAINER *arg0, FightOutPokemon *
     }
     return var_r21;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueKoukanKinsi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r29;
 
@@ -773,7 +1907,8 @@ s32 fightTrainerAiWazaValueKoukanKinsi(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r29;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueKanasibari(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
     u16 temp_r30;
@@ -785,7 +1920,23 @@ s32 fightTrainerAiWazaValueKanasibari(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return var_r31;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueMitizure(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
 
+    var_r31 = 0;
+    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.1f, -1) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1DFU);
+    } else if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.3f, -1) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1DEU);
+    } else if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, -1) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1DDU);
+    }
+    return var_r31;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueUrami(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
     u16 temp_r3;
@@ -803,7 +1954,84 @@ s32 fightTrainerAiWazaValueUrami(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16
     }
     return var_r31;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueOdareru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r27;
+    u16 temp_r28;
+    u16 temp_r29;
+    u16 temp_r29_2;
+    u8 var_r28;
 
+    var_r27 = 0;
+    temp_r29 = fightTrainerAiGetFightOutPokemonSpeAtk(arg0, arg3);
+    temp_r28 = fightTrainerAiGetFightOutPokemonPhyAtk(arg0, arg3);
+    temp_r29_2 = fightTrainerAiGetFightOutPokemonPhyDef(arg0, arg3);
+    if (temp_r28 > temp_r29) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1D6U);
+    }
+    if (temp_r28 > temp_r29_2) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D7U);
+    }
+    if (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x14U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D8U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D9U);
+    }
+    var_r28 = 0;
+    while (var_r28 < 5U) {
+        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)KonranWazaTbl + ((var_r28 * 2) & 0x1FE)), arg3) == 1) {
+            var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1DAU);
+        } else {
+            var_r28 += 1;
+            continue;
+        }
+
+        break;
+    }
+    return var_r27;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueIbaru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r27;
+    u16 temp_r28;
+    u16 temp_r29;
+    u16 temp_r29_2;
+    u8 var_r28;
+
+    var_r27 = 0;
+    temp_r29 = fightTrainerAiGetFightOutPokemonSpeAtk(arg0, arg3);
+    temp_r28 = fightTrainerAiGetFightOutPokemonPhyAtk(arg0, arg3);
+    temp_r29_2 = fightTrainerAiGetFightOutPokemonPhyDef(arg0, arg3);
+    if (temp_r29 > temp_r28) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1D1U);
+    }
+    if (temp_r28 > temp_r29_2) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D2U);
+    }
+    if (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x14U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D3U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D4U);
+    }
+    var_r28 = 0;
+    while (var_r28 < 5U) {
+        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)KonranWazaTbl + ((var_r28 * 2) & 0x1FE)), arg3) == 1) {
+            var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D5U);
+        } else {
+            var_r28 += 1;
+            continue;
+        }
+
+        break;
+    }
+    return var_r27;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueAnkooru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
     u16 temp_r30;
@@ -815,7 +2043,19 @@ s32 fightTrainerAiWazaValueAnkooru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u
     }
     return var_r31;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueIkarinomaeba(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
 
+    var_r31 = 0;
+    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg3, 0.5f, 1) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1CFU);
+    }
+    return var_r31;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueKusuguruDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r28;
     u16 temp_r29;
@@ -839,7 +2079,57 @@ s32 fightTrainerAiWazaValueKusuguruDaun(FIGHT_TRAINER *arg0, FightOutPokemon *ar
     }
     return var_r28;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKaihiDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp18[8];
+    u16 sp8[8];
+    s32 temp_r25;
+    s32 var_r24;
+    u16 temp_r27;
+    u16 temp_r3;
+    u16 var_r23;
+    u16 var_r22;
+    u8 var_r21;
 
+    var_r24 = 0;
+    temp_r27 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 1U, 1U);
+    temp_r25 = fightTrainerAiDB_GetWazaAvgValue(fightTrainer_GetFightTrainerDataId(arg0));
+    if (fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3) >= 7U) {
+        var_r24 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1CAU);
+    }
+    if (fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3) <= 5U) {
+        var_r24 = fightTrainerAiAddValueByAddsubDataId(var_r24, arg0, 0x1CBU);
+    }
+    var_r21 = 0;
+    var_r23 = 0;
+    while (var_r23 < temp_r27) {
+        temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, *(FightOutPokemon **)((u8 *)sp18 + ((var_r23 * 4) & 0x3FFFC)), sp8, 0U, 1U);
+        if (temp_r3 != 0) {
+            var_r22 = 0;
+            while (var_r22 < temp_r3) {
+                if (wazaDB_GetAvg(*(u16 *)((u8 *)sp8 + ((var_r22 * 2) & 0x1FFFE))) < (u8) temp_r25) {
+                    var_r21 = 1;
+                } else {
+                    var_r22 += 1;
+                    continue;
+                }
+
+                break;
+            }
+        }
+        var_r23 += 1;
+        continue;
+
+        break;
+    }
+    if (var_r21 != 0) {
+        var_r24 = fightTrainerAiAddValueByAddsubDataId(var_r24, arg0, 0x1C9U);
+    }
+    return var_r24;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueMeityuuDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -849,7 +2139,8 @@ s32 fightTrainerAiWazaValueMeityuuDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTokubouDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r30;
     u16 temp_r31;
@@ -866,9 +2157,40 @@ s32 fightTrainerAiWazaValueTokubouDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r30;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueBougyoDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp8[8];
+    u16 num;
+    s32 value;
+    u16 phy;
+    u16 spe;
+    u8 i;
+    u8 cnt;
 
-
-
+    value = 0;
+    num = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
+    cnt = 0;
+    for (i = 0; i < num; i++) {
+        phy = fightTrainerAiGetFightOutPokemonPhyDef(arg0, sp8[i]);
+        spe = fightTrainerAiGetFightOutPokemonSpeDef(arg0, sp8[i]);
+        if (phy > spe) {
+            cnt++;
+        }
+    }
+    if (phy > spe) {
+        value = fightTrainerAiAddValue(0, cnt * fightTrainerGetStatus(0, 0x1C4U, 0x3EU, 0U));
+    }
+    cnt = 0;
+    for (i = 0; i < num; i++) {
+        if (fightTrainerAiGetFightOutPokemonAbiCntPhyDef(arg0, sp8[i]) <= 4) {
+            cnt++;
+        }
+    }
+    return fightTrainerAiAddValue(value, cnt * fightTrainerGetStatus(0, 0x1C5U, 0x3EU, 0U));
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueKougekiDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r30;
     u16 temp_r31;
@@ -885,7 +2207,8 @@ s32 fightTrainerAiWazaValueKougekiDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r30;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueSubayasaDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightOutPokemon *sp8[8];
     u16 temp_r31;
@@ -910,7 +2233,8 @@ s32 fightTrainerAiWazaValueSubayasaDaun(FIGHT_TRAINER *arg0, FightOutPokemon *ar
     }
     return fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1C1U);
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueGamusyara(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 temp_r31;
     u16 temp_r31_2;
@@ -920,7 +2244,8 @@ s32 fightTrainerAiWazaValueGamusyara(FIGHT_TRAINER *arg0, FightOutPokemon *arg1,
     temp_r31 = temp_r31 * fightTrainerGetStatus(0, 0x1BFU, 0x3EU, 0U);
     return fightTrainerAiAddValue(0, temp_r31);
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueItamiwake(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 temp_r31;
     s32 var_r30;
@@ -940,7 +2265,8 @@ s32 fightTrainerAiWazaValueItamiwake(FIGHT_TRAINER *arg0, FightOutPokemon *arg1,
     }
     return var_r30;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueAkumu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -950,11 +2276,181 @@ s32 fightTrainerAiWazaValueAkumu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16
     }
     return var_r31;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueRokkuon(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r30;
+    u32 temp_r31;
 
+    var_r30 = 0;
+    temp_r31 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(arg1, fightFloor_GetFightType(0));
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1DU) == 0) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1B8U);
+    }
+    if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1DU) == 1) && ((u16) temp_r31 == fightOutPokemonGetUserFightTargetIdJoutaiDataId(arg3, 0x1DU))) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1B9U);
+    }
+    return var_r30;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueNoroi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r30;
+    u8 temp_r3;
+
+    var_r30 = 0;
+    temp_r3 = fightTrainerAiIsFightOutPokemonZokuseiDataId(arg0, arg1, 7U);
+    if ((temp_r3 == 1) && (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, 1) == 1)) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1B3U);
+    } else if ((temp_r3 == 1) && (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.25f, -1) == 1)) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1B4U);
+    }
+    if ((temp_r3 == 0) && (fightTrainerAiIsFightOutPokemonAllAbiCntTakai(arg0, arg1) == 0)) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1B5U);
+    }
+    if (temp_r3 == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1B6U);
+    }
+    if ((temp_r3 == 0) && (fightTrainerAiIsFightOutPokemonAllAbiCntTakai(arg0, arg1) == 1)) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1B7U);
+    }
+    return var_r30;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueToriaezutukae(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     return fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1B2U);
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKoraeru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp1C[8];
+    u16 spC[8];
+    u16 sp8[2];
+    u8 temp_r30;
+    u16 temp_r28;
+    u16 temp_r27;
+    u16 var_r24;
+    s32 var_r23;
+    u16 var_r22;
+    u8 var_r20;
+    u16 var_r21;
+    u16 temp_r18;
+    u16 temp_r16;
+    u16 var_r16;
+    u8 var_r16_2;
+    FightOutPokemon *temp_r4;
+    s32 (*var_r3)(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
+    s32 (*var_r3_2)(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
+    u16 temp_r3;
 
+    var_r23 = 0;
+    temp_r30 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 1U);
+    temp_r16 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp1C, 1U, 1U);
+    temp_r18 = fightTrainerAiGetFightOutPokemonZokuseiDataIdAry(arg0, arg3, sp8);
+    temp_r27 = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg1);
+    temp_r28 = fightTrainerAiGetFightOutPokemonSoubiItemSoubiDataId(arg0, arg1);
+    var_r20 = 0;
+    var_r21 = 0;
+    while (var_r21 < temp_r18) {
+        if (fightTrainerAiGetFightOutPokemonZokuseiDataIdWazaJoutaiDataId(arg0, arg1, *(u16 *)((u8 *)sp8 + ((var_r21 * 2) & 0x1FFFE)), fightTrainerAiGetWazaIryoku(arg0, arg2)) == 0x41) {
+            var_r20 = 1;
+        } else {
+            var_r21 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (var_r20 == 1) {
+        var_r23 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1A9U);
+    }
+    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, -1) == 1) {
+        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1AAU);
+    }
+    var_r24 = 0;
+    while (var_r24 < temp_r16) {
+        temp_r4 = *(FightOutPokemon **)((u8 *)sp1C + ((var_r24 * 4) & 0x3FFFC));
+        if ((arg1 != temp_r4) && (temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, temp_r4, spC, 0U, 1U), ((temp_r3 == 0) == 0))) {
+            var_r22 = 0;
+            while (var_r22 < temp_r3) {
+                var_r3 = wazaDB_GetFightTrainerAiWazaValueFuncPtr(*(u16 *)((u8 *)spC + ((var_r22 * 2) & 0x1FFFE)));
+                if (var_r3 == 0) {
+                    var_r3 = fightTrainerAiWazaValueNull;
+                }
+                if ((var_r3 == fightTrainerAiWazaValueJisin) || (var_r3 == fightTrainerAiWazaValueJibaku)) {
+                    var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1ABU);
+                } else {
+                    var_r22 += 1;
+                    continue;
+                }
+
+                break;
+            }
+            if (var_r22 >= temp_r3) {
+                goto block_21;
+            }
+        } else {
+block_21:
+            var_r24 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r16 = 0;
+    while (var_r16 < (u32) *waza_data_number) {
+        var_r3_2 = wazaDB_GetFightTrainerAiWazaValueFuncPtr(var_r16);
+        if (var_r3_2 == 0) {
+            var_r3_2 = fightTrainerAiWazaValueNull;
+        }
+        if (((var_r3_2 == fightTrainerAiWazaValueJisin) || (var_r3_2 == fightTrainerAiWazaValueJibaku)) && (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, var_r16, 0) == 1)) {
+            var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1ACU);
+        } else {
+            var_r16 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r16_2 = 0;
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 6U) == 1) {
+        var_r16_2 = 1;
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 3U) == 1) {
+        var_r16_2 = 1;
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 4U) == 1) {
+        var_r16_2 = 1;
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 5U) == 1) {
+        var_r16_2 = 1;
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x18U) == 1) {
+        var_r16_2 = 1;
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1CU) == 1) {
+        var_r16_2 = 1;
+    }
+    if (var_r16_2 == 1) {
+        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1ADU);
+    }
+    if ((temp_r27 == 0xCB) && (fightOutPokemon_GetSuccessCnt(arg1) != 0)) {
+        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1AEU);
+    }
+    if ((temp_r28 != 0x11) && (temp_r28 != 0xF)) {
+        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1AFU);
+    }
+    if (fightTrainerAiGetFightOutPokemonNowHp(arg0, arg1) == 1) {
+        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1B0U);
+    }
+    if ((temp_r30 == 4) || (temp_r30 == 3)) {
+        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1B1U);
+    }
+    return var_r23;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueMiyaburu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -970,7 +2466,8 @@ s32 fightTrainerAiWazaValueMiyaburu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, 
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueMajikkukooto(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -980,7 +2477,8 @@ s32 fightTrainerAiWazaValueMajikkukooto(FIGHT_TRAINER *arg0, FightOutPokemon *ar
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueMiraakooto(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightOutPokemon *sp8[8];
     s32 temp_r30_2;
@@ -1013,7 +2511,8 @@ s32 fightTrainerAiWazaValueMiraakooto(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return var_r28;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueKauntaa(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightOutPokemon *sp8[8];
     s32 temp_r30_2;
@@ -1046,7 +2545,31 @@ s32 fightTrainerAiWazaValueKauntaa(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u
     }
     return var_r28;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueAroma(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightPokemon *sp8[24];
+    s32 var_r29;
+    u16 temp_r31;
+    u16 var_r28;
 
+    var_r29 = 0;
+    temp_r31 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 1U, 1U);
+    var_r28 = 0;
+    while (var_r28 < temp_r31) {
+        if (fightTrainerAiIsFightPokemonJoutaiNormal(arg0, *(FightPokemon **)((u8 *)sp8 + ((var_r28 * 4) & 0x3FFFC))) == 0) {
+            var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1A0U);
+        } else {
+            var_r28 += 1;
+            continue;
+        }
+
+        break;
+    }
+    return var_r29;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueRihuressyu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1056,7 +2579,312 @@ s32 fightTrainerAiWazaValueRihuressyu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return var_r31;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueSunaarasi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightPokemon *sp28[24];
+    FightOutPokemon *sp8[8];
+    s32 temp_r27;
+    s32 var_r29;
+    u16 temp_r25;
+    u16 temp_r31;
+    u16 var_r24;
+    u16 var_r24_2;
+    u16 var_r23;
+    u8 temp_r30;
 
+    var_r29 = 0;
+    temp_r30 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 0U);
+    temp_r31 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp28, 1U, 1U);
+    temp_r25 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
+    if (temp_r30 != 3) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x194U);
+    }
+    var_r23 = 0;
+    while (var_r23 < temp_r31) {
+        temp_r27 = (var_r23 * 4) & 0x3FFFC;
+        if ((fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp28 + temp_r27), 5U) == 1) || (fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp28 + temp_r27), 4U) == 1) || (fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp28 + temp_r27), 8U) == 1) || (fightTrainerAiIsFightPokemonTokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp28 + temp_r27), 8U) == 1)) {
+            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x195U);
+        } else {
+            var_r23 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r24 = 0;
+    while (var_r24 < temp_r25) {
+        if (fightTrainerAiGetFightOutPokemonPokemonDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r24 * 4) & 0x3FFFC))) == 0x12F) {
+            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x196U);
+        } else {
+            var_r24 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r24_2 = 0;
+    while (var_r24_2 < temp_r31) {
+        if (fightTrainerAiGetFightPokemonPokemonDataId(arg0, *(FightPokemon **)((u8 *)sp28 + ((var_r24_2 * 4) & 0x3FFFC))) == 0x181) {
+            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x197U);
+        } else {
+            var_r24_2 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (temp_r30 == 3) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x198U);
+    }
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0xF1U, 0) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x199U);
+    }
+    return var_r29;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueArare(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightPokemon *sp28[24];
+    FightOutPokemon *sp8[8];
+    s32 var_r29;
+    u16 temp_r25;
+    u16 temp_r31;
+    u16 var_r25;
+    u16 var_r25_2;
+    u16 var_r24;
+    u8 temp_r30;
+
+    var_r29 = 0;
+    temp_r30 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 0U);
+    temp_r31 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp28, 1U, 1U);
+    temp_r25 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
+    if (temp_r30 != 4) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x18EU);
+    }
+    var_r24 = 0;
+    while (var_r24 < temp_r31) {
+        if (fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp28 + ((var_r24 * 4) & 0x3FFFC)), 0xFU) == 1) {
+            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x18FU);
+        } else {
+            var_r24 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r25 = 0;
+    while (var_r25 < temp_r25) {
+        if (fightTrainerAiGetFightOutPokemonPokemonDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC))) == 0x12F) {
+            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x190U);
+        } else {
+            var_r25 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r25_2 = 0;
+    while (var_r25_2 < temp_r31) {
+        if (fightTrainerAiGetFightPokemonPokemonDataId(arg0, *(FightPokemon **)((u8 *)sp28 + ((var_r25_2 * 4) & 0x3FFFC))) == 0x181) {
+            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x191U);
+        } else {
+            var_r25_2 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (temp_r30 == 4) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x192U);
+    }
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0xF1U, 0) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x193U);
+    }
+    return var_r29;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueNihonbare(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightPokemon *sp8[24];
+    s32 temp_r28;
+    s32 var_r30;
+    u16 temp_r26;
+    u16 var_r25;
+    u16 var_r24;
+    u8 temp_r31;
+
+    var_r30 = 0;
+    temp_r31 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 0U);
+    temp_r26 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 1U, 1U);
+    if (temp_r31 != 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x189U);
+    }
+    var_r24 = 0;
+    while (var_r24 < temp_r26) {
+        temp_r28 = (var_r24 * 4) & 0x3FFFC;
+        if ((fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0xAU) == 1) || (fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0xCU) == 1) || (fightTrainerAiIsFightPokemonTokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0x22U) == 1)) {
+            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x18AU);
+        } else {
+            var_r24 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r25 = 0;
+    while (var_r25 < temp_r26) {
+        if (fightTrainerAiGetFightPokemonPokemonDataId(arg0, *(FightPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC))) == 0x181) {
+            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x18BU);
+        } else {
+            var_r25 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (temp_r31 == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x18CU);
+    }
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0xF1U, 0) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x18DU);
+    }
+    return var_r30;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueAmagoi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightPokemon *sp8[24];
+    s32 temp_r28;
+    s32 var_r30;
+    u16 temp_r26;
+    u16 var_r25;
+    u16 var_r24;
+    u8 temp_r31;
+
+    var_r30 = 0;
+    temp_r31 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 0U);
+    temp_r26 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 1U, 1U);
+    if (temp_r31 != 2) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x184U);
+    }
+    var_r24 = 0;
+    while (var_r24 < temp_r26) {
+        temp_r28 = (var_r24 * 4) & 0x3FFFC;
+        if ((fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0xBU) == 1) || (fightTrainerAiIsFightPokemonTokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0x21U) == 1) || (fightTrainerAiIsFightPokemonTokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0x2CU) == 1)) {
+            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x185U);
+        } else {
+            var_r24 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r25 = 0;
+    while (var_r25 < temp_r26) {
+        if (fightTrainerAiGetFightPokemonPokemonDataId(arg0, *(FightPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC))) == 0x181) {
+            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x186U);
+        } else {
+            var_r25 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (temp_r31 == 2) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x187U);
+    }
+    return var_r30;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueNemurare(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightPokemon *sp8[24];
+    u16 temp_r29;
+    u16 var_r28;
+    s32 var_r27;
+    u16 var_r26;
+
+    var_r27 = 0;
+    temp_r29 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 0U, 1U);
+    if (fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg3) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x181U);
+    }
+    var_r26 = 0;
+    while (var_r26 < temp_r29) {
+        if ((fightOutPokemon_GetMotoFightPokemonPtr(arg3) != sp8[var_r26]) && (fightTrainerAiIsFightPokemonJoutaiDataId(arg0, sp8[var_r26], 8U) == 1)) {
+            var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x182U);
+        } else {
+            var_r26 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r28 = 0;
+    while (var_r28 < 0x12U) {
+        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)joutaiIzyouWazaTbl + ((var_r28 * 2) & 0x1FFFE)), arg3) == 1) {
+            var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x183U);
+        } else {
+            var_r28 += 1;
+            continue;
+        }
+
+        break;
+    }
+    return var_r27;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueNemuru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
+    u16 temp_r3;
+
+    var_r31 = 0;
+    temp_r3 = fightTrainerAiGetFightOutPokemonSoubiItemSoubiDataId(arg0, arg1);
+    if ((temp_r3 == 3) || (temp_r3 == 9)) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x17DU);
+    }
+    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.55f, -1) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x17EU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg1) == 0) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x17FU);
+    }
+    return fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x180U);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKaihuku2(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
+
+    var_r31 = 0;
+    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, -1) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x17CU);
+    }
+    return var_r31;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKaihuku1(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r30;
+    u8 temp_r3;
+
+    var_r30 = 0;
+    temp_r3 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 1U);
+    if (temp_r3 == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x179U);
+    }
+    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, -1) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x17AU);
+    }
+    if ((temp_r3 == 2) || (temp_r3 == 4) || (temp_r3 == 3)) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x17BU);
+    }
+    return var_r30;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueKituke(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1069,7 +2897,55 @@ s32 fightTrainerAiWazaValueKituke(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u1
     }
     return var_r31;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueOiuti(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u16 sp8;
+    FIGHT_TRAINER *temp_r3;
+    s32 var_r28;
+    u8 var_r31;
 
+    var_r28 = 0;
+    var_r31 = fightTrainerAiCheckFightFloorCheckFightActionFightOutPokemonIrekaeSelect(arg0, 0, arg3, 0);
+    temp_r3 = fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0, arg3);
+    sp8 = 0;
+    if (fightTrainerSearchIrekaeFightPokemon(temp_r3, &sp8) == 0) {
+        var_r31 = 1;
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 3U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x16DU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 4U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x16EU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 6U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x16FU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1CU) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x170U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x171U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0xAU) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x172U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x18U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x173U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1EU) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x174U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x26U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x175U);
+    }
+    if (var_r31 != 0) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x176U);
+    }
+    return var_r28;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueUezaabooru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r30;
     u8 temp_r3;
@@ -1093,7 +2969,8 @@ s32 fightTrainerAiWazaValueUezaabooru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return var_r30;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueSizennotikara(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u16 temp_r3;
 
@@ -1103,7 +2980,47 @@ s32 fightTrainerAiWazaValueSizennotikara(FIGHT_TRAINER *arg0, FightOutPokemon *a
     }
     return 0;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueHimitunotikara(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
+    u8 temp_r3;
 
+    var_r31 = 0;
+    temp_r3 = tikeiDataBiosGetFightKoukaId(fightFloor_GetTikeiDataId(0));
+    switch (temp_r3) {
+    case 2:
+        var_r31 = fightTrainerAiWazaValueTuikaDoku(arg0, arg1, arg2, arg3);
+        break;
+    case 1:
+        var_r31 = fightTrainerAiWazaValueTuikaNemuri(arg0, arg1, arg2, arg3);
+        break;
+    case 27:
+        var_r31 = fightTrainerAiWazaValueTuikouMeityuuDaun(arg0, arg1, arg2, arg3);
+        break;
+    case 23:
+        var_r31 = fightTrainerAiWazaValueTuikouBougyoDaun(arg0, arg1, arg2, arg3);
+        break;
+    case 22:
+        var_r31 = fightTrainerAiWazaValueOororabiimu(arg0, arg1, arg2, arg3);
+        break;
+    case 24:
+        var_r31 = fightTrainerAiWazaValueTuikouSubayasaDaun(arg0, arg1, arg2, arg3);
+        break;
+    case 7:
+        var_r31 = fightTrainerAiWazaValueTuikouKonran(arg0, arg1, arg2, arg3);
+        break;
+    case 8:
+        var_r31 = fightTrainerAiWazaValueTuikaHirumi(arg0, arg1, arg2, arg3);
+        break;
+    case 5:
+        var_r31 = fightTrainerAiWazaValueTuikaMahi(arg0, arg1, arg2, arg3);
+        break;
+    }
+    return var_r31;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueItigekihissatu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1113,7 +3030,8 @@ s32 fightTrainerAiWazaValueItigekihissatu(FIGHT_TRAINER *arg0, FightOutPokemon *
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueZennouryokuappu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1123,7 +3041,8 @@ s32 fightTrainerAiWazaValueZennouryokuappu(FIGHT_TRAINER *arg0, FightOutPokemon 
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTuikaKougekiAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 temp_r31;
     s32 var_r30;
@@ -1140,7 +3059,8 @@ s32 fightTrainerAiWazaValueTuikaKougekiAppu(FIGHT_TRAINER *arg0, FightOutPokemon
     }
     return var_r30;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueHaganenotubasa(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1153,7 +3073,8 @@ s32 fightTrainerAiWazaValueHaganenotubasa(FIGHT_TRAINER *arg0, FightOutPokemon *
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueSaikobuusuto(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r29;
     u16 temp_r3;
@@ -1177,7 +3098,8 @@ s32 fightTrainerAiWazaValueSaikobuusuto(FIGHT_TRAINER *arg0, FightOutPokemon *ar
     }
     return var_r29;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueBakadikara(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r29;
     u16 temp_r3;
@@ -1201,7 +3123,8 @@ s32 fightTrainerAiWazaValueBakadikara(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return var_r29;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueOobaahiito(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r30;
     u8 temp_r3;
@@ -1222,7 +3145,8 @@ s32 fightTrainerAiWazaValueOobaahiito(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return var_r30;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueHatakiotosu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1235,7 +3159,8 @@ s32 fightTrainerAiWazaValueHatakiotosu(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueDouguUbau(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u16 temp_r31;
     s32 var_r30;
@@ -1260,7 +3185,8 @@ s32 fightTrainerAiWazaValueDouguUbau(FIGHT_TRAINER *arg0, FightOutPokemon *arg1,
     }
     return var_r30;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueSooraabiimu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r30;
     u8 temp_r3;
@@ -1281,7 +3207,8 @@ s32 fightTrainerAiWazaValueSooraabiimu(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r30;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueToraiatakku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1300,7 +3227,8 @@ s32 fightTrainerAiWazaValueToraiatakku(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueDokudokunokiba(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1316,7 +3244,8 @@ s32 fightTrainerAiWazaValueDokudokunokiba(FIGHT_TRAINER *arg0, FightOutPokemon *
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValuePoizunteeru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightSide *temp_r31;
     s32 var_r27;
@@ -1342,7 +3271,8 @@ s32 fightTrainerAiWazaValuePoizunteeru(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r27;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTuikaDoku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r30;
     s32 temp_r29_2;
@@ -1364,7 +3294,8 @@ s32 fightTrainerAiWazaValueTuikaDoku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1,
     }
     return var_r30;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueHandou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1377,7 +3308,90 @@ s32 fightTrainerAiWazaValueHandou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u1
     }
     return fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x134U);
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueTuikaNemuri(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightPokemon *sp8[24];
+    u16 temp_r28;
+    s32 temp_r27;
+    s32 temp_r27_2;
+    s32 var_r26;
+    s32 temp_r26;
+    u16 var_r25;
+    FightPokemon *temp_r4;
 
+    temp_r28 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 0U, 1U);
+    temp_r26 = fightTrainerAiGetWazaAddKoukaAvg(arg0, arg2);
+    var_r26 = fightTrainerAiAddValue(0, (s32) temp_r26 / fightTrainerGetStatus(0, 0x12FU, 0x3EU, 0U));
+    var_r25 = 0;
+    while (var_r25 < temp_r28) {
+        FightPokemon* original = fightOutPokemon_GetMotoFightPokemonPtr(arg3);
+        temp_r4 = *(FightPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC));
+        if ((original != temp_r4) && (fightTrainerAiIsFightPokemonJoutaiDataId(arg0, temp_r4, 8U) == 1)) {
+            temp_r27 = fightTrainerAiGetWazaAddKoukaAvg(arg0, arg2);
+            var_r26 = fightTrainerAiAddValue(var_r26, (s32) temp_r27 / fightTrainerGetStatus(0, 0x130U, 0x3EU, 0U));
+        } else {
+            var_r25 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if ((fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg3) == 0) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0xFU) == 1) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x13U) == 1)) {
+        temp_r27_2 = fightTrainerAiGetWazaAddKoukaAvg(arg0, arg2);
+        var_r26 = fightTrainerAiAddValue(var_r26, (s32) temp_r27_2 / fightTrainerGetStatus(0, 0x131U, 0x3EU, 0U));
+    }
+    return var_r26;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueBakuretuPanti(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
+    u32 temp_r31;
+
+    var_r31 = 0;
+    temp_r31 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(arg1, fightFloor_GetFightType(0));
+    if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1DU) == 1) && ((u16) temp_r31 == fightOutPokemonGetUserFightTargetIdJoutaiDataId(arg3, 0x1DU))) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x12AU);
+    }
+    var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x12BU);
+    if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x14U) == 1)) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x12DU);
+    }
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x12CU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x14U) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x12EU);
+    }
+    return var_r31;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueDenjihou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp8[8];
+    s32 var_r29;
+    u32 temp_r30;
+
+    temp_r30 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(arg1, fightFloor_GetFightType(0));
+    fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 1U, 1U);
+    var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x125U);
+    if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1DU) == 1) && ((u16) temp_r30 == fightOutPokemonGetUserFightTargetIdJoutaiDataId(arg3, 0x1DU))) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x126U);
+    }
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x127U);
+    }
+    if ((fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg3) == 0) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 7U) == 1) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x13U) == 1)) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x128U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x14U) == 1) {
+        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x129U);
+    }
+    return var_r29;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTuikaMahi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r30;
     s32 temp_r29_3;
@@ -1399,7 +3413,58 @@ s32 fightTrainerAiWazaValueTuikaMahi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1,
     }
     return var_r30;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueTuikaKoori(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightPokemon *sp28[24];
+    FightOutPokemon *sp8[8];
+    u16 outNum;
+    u16 pokeNum;
+    s32 value;
+    s32 avg;
+    u16 j;
+    u16 i;
+    u8 cnt;
 
+    outNum = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
+    pokeNum = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp28, 0U, 1U);
+    cnt = 0;
+    for (i = 0; i < outNum; i++) {
+        if (fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, sp8[i]) == 1) {
+            cnt++;
+        }
+    }
+    value = fightTrainerAiAddValue(0, cnt * fightTrainerGetStatus(0, 0x11CU, 0x3EU, 0U));
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
+        value = fightTrainerAiAddValueByAddsubDataId(value, arg0, 0x11DU);
+    }
+    for (i = 0; i < pokeNum; i++) {
+        if (fightOutPokemon_GetMotoFightPokemonPtr(arg3) != sp28[i] && fightTrainerAiIsFightPokemonJoutaiDataId(arg0, sp28[i], 7U) == 1) {
+            avg = fightTrainerAiGetWazaAddKoukaAvg(arg0, arg2);
+            value = fightTrainerAiAddValue(value, avg / fightTrainerGetStatus(0, 0x11EU, 0x3EU, 0U));
+            break;
+        }
+    }
+    if ((fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg3) == 0) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x28U) == 1) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x13U) == 1)) {
+        avg = fightTrainerAiGetWazaAddKoukaAvg(arg0, arg2);
+        value = fightTrainerAiAddValue(value, avg / fightTrainerGetStatus(0, 0x11FU, 0x3EU, 0U));
+    }
+    cnt = 0;
+    for (i = 0; i < outNum; i++) {
+        if ((fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg3) == 0) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x28U) == 1) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x13U) == 1) || (fightTrainerAiIsFightOutPokemonZokuseiDataId(arg0, arg3, 0xFU) == 1)) {
+            cnt++;
+        }
+    }
+    value = fightTrainerAiAddValue(value, cnt * fightTrainerGetStatus(0, 0x11FU, 0x3EU, 0U));
+    for (j = 0; j < outNum; j++) {
+        if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, sp8[j], 0x14U) == 1) {
+            value = fightTrainerAiAddValueByAddsubDataId(value, arg0, 0x120U);
+        }
+    }
+    return value;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueBureizukikku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightSide *temp_r31;
     u8 temp_r3;
@@ -1430,7 +3495,8 @@ s32 fightTrainerAiWazaValueBureizukikku(FIGHT_TRAINER *arg0, FightOutPokemon *ar
     }
     return var_r28;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueJikokaitou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 temp_r30;
     s32 temp_r28;
@@ -1459,7 +3525,58 @@ s32 fightTrainerAiWazaValueJikokaitou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return var_r28;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueHonoonouzu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    u16 sp8;
+    FIGHT_TRAINER *temp_r3;
+    s32 var_r28;
+    u8 var_r31;
 
+    var_r28 = 0;
+    var_r31 = fightTrainerAiCheckFightFloorCheckFightActionFightOutPokemonIrekaeSelect(arg0, 0, arg3, 0);
+    temp_r3 = fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0, arg3);
+    sp8 = 0;
+    if (fightTrainerSearchIrekaeFightPokemon(temp_r3, &sp8) == 0) {
+        var_r31 = 1;
+    }
+    if (var_r31 == 0) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x104U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 3U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x105U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 4U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x106U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 6U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x107U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1CU) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x108U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x109U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0xAU) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x10AU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x18U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x10BU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1EU) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x10CU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 7U) == 1) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x10DU);
+    }
+    if (var_r31 != 0) {
+        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x10EU);
+    }
+    return var_r28;
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueIryokuHonoo(FIGHT_TRAINER* t, FightOutPokemon* self, u16 waza, FightOutPokemon* target) {
     FightOutPokemon* ary[8];
     s32 handle = 0;
@@ -1487,7 +3604,8 @@ s32 fightTrainerAiWazaValueIryokuHonoo(FIGHT_TRAINER* t, FightOutPokemon* self, 
     }
     return handle;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTuikouKonran(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r29;
     s32 temp_r31;
@@ -1514,7 +3632,8 @@ s32 fightTrainerAiWazaValueTuikouKonran(FIGHT_TRAINER *arg0, FightOutPokemon *ar
     }
     return var_r29;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueDorokake(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1533,7 +3652,8 @@ s32 fightTrainerAiWazaValueDorokake(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, 
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTuikouMeityuuDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 temp_r30;
     s32 var_r28;
@@ -1560,7 +3680,8 @@ s32 fightTrainerAiWazaValueTuikouMeityuuDaun(FIGHT_TRAINER *arg0, FightOutPokemo
     }
     return var_r28;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTuikouTokubouDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r28;
     s32 temp_r30;
@@ -1587,7 +3708,8 @@ s32 fightTrainerAiWazaValueTuikouTokubouDaun(FIGHT_TRAINER *arg0, FightOutPokemo
     }
     return var_r28;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTuikouTokukouDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1606,7 +3728,8 @@ s32 fightTrainerAiWazaValueTuikouTokukouDaun(FIGHT_TRAINER *arg0, FightOutPokemo
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueKogoerukaze(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightOutPokemon *sp28[8];
     FightOutPokemon *sp8[8];
@@ -1685,7 +3808,8 @@ s32 fightTrainerAiWazaValueKogoerukaze(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r29;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueKanarazuSubayasaDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightOutPokemon *sp28[8];
     FightOutPokemon *sp8[8];
@@ -1723,7 +3847,8 @@ s32 fightTrainerAiWazaValueKanarazuSubayasaDaun(FIGHT_TRAINER *arg0, FightOutPok
     }
     return var_r27;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTuikouSubayasaDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightOutPokemon *sp8[8];
     u16 temp_r31;
@@ -1773,7 +3898,8 @@ s32 fightTrainerAiWazaValueTuikouSubayasaDaun(FIGHT_TRAINER *arg0, FightOutPokem
     }
     return var_r30;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTuikouBougyoDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r28;
     s32 temp_r30;
@@ -1800,7 +3926,8 @@ s32 fightTrainerAiWazaValueTuikouBougyoDaun(FIGHT_TRAINER *arg0, FightOutPokemon
     }
     return var_r28;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueOororabiimu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
     s32 temp_r30;
@@ -1821,7 +3948,8 @@ s32 fightTrainerAiWazaValueOororabiimu(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueNekodamasi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1839,7 +3967,8 @@ s32 fightTrainerAiWazaValueNekodamasi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return var_r31;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueGoddobaado(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r31;
 
@@ -1852,7 +3981,8 @@ s32 fightTrainerAiWazaValueGoddobaado(FIGHT_TRAINER *arg0, FightOutPokemon *arg1
     }
     return fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0xC5U);
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueTuikaHirumi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     s32 var_r27;
     s32 temp_r30;
@@ -1898,1530 +4028,8 @@ s32 fightTrainerAiWazaValueTuikaHirumi(FIGHT_TRAINER *arg0, FightOutPokemon *arg
     }
     return var_r27;
 }
-
-s32 fightTrainerAiWazaValueKorogaru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 temp_r31;
-    s32 var_r30;
-
-    var_r30 = 0;
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1AU) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0xA3U);
-    }
-    temp_r31 = fightTrainerAiGetFightOutPokemonNowHpPercentage(arg0, arg1);
-    return fightTrainerAiAddValueByAddsubDataId(fightTrainerAiAddValue(var_r30, (s32) temp_r31 / fightTrainerGetStatus(0, 0xA4U, 0x3EU, 0U)), arg0, 0xA5U);
 }
-
-s32 fightTrainerAiWazaValueTobihaneru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp18[8];
-    u16 sp8[8];
-    s32 var_r27;
-    u16 temp_r28;
-    u16 temp_r3;
-    u16 var_r23;
-    u16 var_r22;
-    u8 var_r21;
-
-    var_r27 = 0;
-    temp_r28 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 0U, 1U);
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 3U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x83U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 4U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x84U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 6U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x85U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 5U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x86U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x87U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0xAU) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x88U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x18U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x89U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1EU) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8AU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1CU) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8BU);
-    }
-    if (fightTrainerAiCmpFightOutPokemonSubayasa(arg0, arg1, arg3) > 0) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8CU);
-    }
-    var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8DU);
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 3U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8FU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 4U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x90U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 6U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x91U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 5U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x92U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 9U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x93U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0xAU) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x94U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x18U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x95U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1EU) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x96U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1CU) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x97U);
-    }
-    var_r23 = 0;
-    while (var_r23 < temp_r28) {
-        temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, *(FightOutPokemon **)((u8 *)sp18 + ((var_r23 * 4) & 0x3FFFC)), sp8, 0U, 0U);
-        if (temp_r3 != 0) {
-            var_r21 = 0;
-            var_r22 = 0;
-            while (var_r22 < temp_r3) {
-                if (fightTrainerAiCheckJoutaiKieWazaHitWazaDataId(arg0, 0x1F, *(u16 *)((u8 *)sp8 + ((var_r22 * 2) & 0x1FFFE))) == 1) {
-                    var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x98U);
-                    var_r21 = 1;
-                } else {
-                    var_r22 += 1;
-                    continue;
-                }
-
-                break;
-            }
-            if (var_r21 != 1) {
-                goto block_46;
-            }
-        } else {
-block_46:
-            var_r23 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1DU) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x99U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x14U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8EU);
-    }
-    return var_r27;
-}
-
-s32 fightTrainerAiWazaValueSorawotobu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp18[8];
-    u16 sp8[8];
-    u16 var_r29;
-    u16 temp_r27;
-    s32 var_r26;
-    u16 var_r23;
-    u16 var_r22;
-    u8 var_r21;
-    u16 temp_r3;
-
-    var_r26 = 0;
-    var_r29 = 0;
-    temp_r27 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 0U, 1U);
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 3U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x6EU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 4U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x6FU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 6U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x70U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 5U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x71U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x72U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0xAU) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x73U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x18U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x74U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1EU) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x75U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1CU) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x76U);
-    }
-    if (fightTrainerAiCmpFightOutPokemonSubayasa(arg0, arg1, arg3) > 0) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x77U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 3U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x78U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 4U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x79U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 6U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7AU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 5U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7BU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 9U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7CU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0xAU) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7DU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x18U) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7EU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1EU) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7FU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1CU) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x80U);
-    }
-    if (arg2 == 0x13 || arg2 == 0x154) {
-        var_r29 = 0x1F;
-    } else if (arg2 == 0x5B) {
-        var_r29 = 0x20;
-    } else if (arg2 == 0x123) {
-        var_r29 = 0x21;
-    }
-    var_r23 = 0;
-    while (var_r23 < temp_r27) {
-        temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, *(FightOutPokemon **)((u8 *)sp18 + ((var_r23 * 4) & 0x3FFFC)), sp8, 0U, 0U);
-        if (temp_r3 != 0) {
-            var_r21 = 0;
-            var_r22 = 0;
-            while (var_r22 < temp_r3) {
-                if (fightTrainerAiCheckJoutaiKieWazaHitWazaDataId(arg0, var_r29, *(u16 *)((u8 *)sp8 + ((var_r22 * 2) & 0x1FFFE))) == 1) {
-                    var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x81U);
-                    var_r21 = 1;
-                } else {
-                    var_r22 += 1;
-                    continue;
-                }
-
-                break;
-            }
-            if (var_r21 != 1) {
-                goto block_53;
-            }
-        } else {
-block_53:
-            var_r23 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1DU) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x82U);
-    }
-    return var_r26;
-}
-
-s32 fightTrainerAiWazaValueAbareru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-    s32 var_r31_2;
-    u16 temp_r3;
-
-    var_r31_2 = 0;
-    if (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg1, 0x14U) == 1) {
-        var_r31_2 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x6AU);
-    }
-    temp_r3 = fightTrainerAiGetFightOutPokemonSoubiItemSoubiDataId(arg0, arg1);
-    if ((temp_r3 == 8) || (temp_r3 == 9)) {
-        var_r31_2 = fightTrainerAiAddValueByAddsubDataId(var_r31_2, arg0, 0x6BU);
-    }
-    var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31_2, arg0, 0x6DU);
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x6CU);
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueKyuusyuu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 temp_r31;
-    s32 var_r30;
-    u16 temp_r30;
-
-    temp_r30 = fightTrainerAiGetFightOutPokemonNowHp(arg0, arg1);
-    temp_r31 = fightTrainerAiWazaDoWazaDamageFunc(arg0, arg1, arg2, arg3, 1U);
-    var_r30 = fightTrainerAiAddValue(0, (s32) ((s32) ((temp_r31 / 2) * 0x64) / (s32) temp_r30) / fightTrainerGetStatus(0, 0x67U, 0x3EU, 0U));
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x68U);
-    }
-    if (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x40U) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x69U);
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValueRokettoZutuki(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    return fightTrainerAiAddValueByAddsubDataId(fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x65U), arg0, 0x66U);
-}
-
-s32 fightTrainerAiWazaValueKamaitati(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-    FightSide *temp_r29;
-    u8 temp_r3;
-
-    var_r31 = 0;
-    temp_r29 = fightTargetGetPtrAsNowFightType(2U, arg3);
-    temp_r3 = fightTrainerAiGetFightOutPokemonAbiCntPhyDef(arg0, arg3);
-    if (temp_r3 > 6U) {
-        var_r31 = fightTrainerAiAddValue(0, (temp_r3 - 6) * fightTrainerGetStatus(0, 0x62U, 0x3EU, 0U));
-    }
-    var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x64U);
-    if (fightSideIsJoutaiDataId(temp_r29, 0x48U) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x63U);
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueKiaipanti(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp8[8];
-    s32 var_r26;
-    u16 temp_r26;
-    u16 var_r26_2;
-    u16 var_r24;
-    u8 temp_r31;
-
-    var_r26 = 0;
-    temp_r31 = fightTrainerAiCheckFightFloorCheckFightActionFightOutPokemonIrekaeSelect(arg0, 0, arg3, 0);
-    temp_r26 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
-    if (fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg1) == 0x117) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x5DU);
-    }
-    var_r24 = 0;
-    while (var_r24 < temp_r26) {
-        if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r24 * 4) & 0x3FFFC)), 8U) == 1) {
-            var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x5EU);
-        } else {
-            var_r24 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r26_2 = 0;
-    while (var_r26_2 < temp_r26) {
-        if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r26_2 * 4) & 0x3FFFC)), 7U) == 1) {
-            var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x5FU);
-        } else {
-            var_r26_2 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x61U);
-    if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x26U) == 1) && (temp_r31 != 0)) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x60U);
-    }
-    return var_r26;
-}
-
-s32 fightTrainerAiWazaValueAteminage(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r30;
-    u8 temp_r3;
-    u8 temp_r3_2;
-
-    var_r30 = 0;
-    temp_r3 = fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3);
-    if (temp_r3 > 6U) {
-        var_r30 = fightTrainerAiAddValue(0, (temp_r3 - 6) * fightTrainerGetStatus(0, 0x5AU, 0x3EU, 0U));
-    }
-    temp_r3_2 = fightTrainerAiGetFightOutPokemonAbiCntAvg(arg0, arg1);
-    if (temp_r3_2 < 6U) {
-        var_r30 = fightTrainerAiAddValue(var_r30, (6 - temp_r3_2) * fightTrainerGetStatus(0, 0x5BU, 0x3EU, 0U));
-    }
-    return fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x5CU);
-}
-
-s32 fightTrainerAiWazaValueRibenji(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-    u16 temp_r3;
-
-    var_r31 = 0;
-    temp_r3 = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg3);
-    if ((temp_r3 != 0) && (temp_r3 != 0xFFFF) && (temp_r3 != 0x176) && (temp_r3 != 0x163) && (fightTrainerAiIsWazaTypeId(arg0, temp_r3, 1U) == 1)) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x58U);
-    }
-    return fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x59U);
-}
-
-s32 fightTrainerAiWazaValueTokubetuYuusen(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    return fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x57U);
-}
-
-s32 fightTrainerAiWazaValueKouPuraioritii(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-
-    var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x55U);
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x56U);
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueSpeKuritikaru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r30;
-    FightSide *temp_r29;
-    u8 temp_r3;
-
-    temp_r29 = fightTargetGetPtrAsNowFightType(2U, arg3);
-    var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x51U);
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x52U);
-    }
-    temp_r3 = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg3);
-    if (temp_r3 > 6U) {
-        var_r30 = fightTrainerAiAddValue(var_r30, (temp_r3 - 6) * fightTrainerGetStatus(0, 0x53U, 0x3EU, 0U));
-    }
-    if (fightSideIsJoutaiDataId(temp_r29, 0x49U) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x54U);
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValuePhyKuritikaru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r30;
-    FightSide *temp_r29;
-    u8 temp_r3;
-
-    temp_r29 = fightTargetGetPtrAsNowFightType(2U, arg3);
-    var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x4DU);
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x4EU);
-    }
-    temp_r3 = fightTrainerAiGetFightOutPokemonAbiCntPhyDef(arg0, arg3);
-    if (temp_r3 > 6U) {
-        var_r30 = fightTrainerAiAddValue(var_r30, (temp_r3 - 6) * fightTrainerGetStatus(0, 0x4FU, 0x3EU, 0U));
-    }
-    if (fightSideIsJoutaiDataId(temp_r29, 0x48U) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x50U);
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValueHittyuu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r30;
-    u8 temp_r3;
-    u8 temp_r3_2;
-
-    var_r30 = 0;
-    temp_r3 = fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3);
-    if (temp_r3 > 6U) {
-        var_r30 = fightTrainerAiAddValue(0, (temp_r3 - 6) * fightTrainerGetStatus(0, 0x4AU, 0x3EU, 0U));
-    }
-    temp_r3_2 = fightTrainerAiGetFightOutPokemonAbiCntAvg(arg0, arg1);
-    if (temp_r3_2 < 6U) {
-        var_r30 = fightTrainerAiAddValue(var_r30, (6 - temp_r3_2) * fightTrainerGetStatus(0, 0x4BU, 0x3EU, 0U));
-    }
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x4CU);
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValueTuujouIryoku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-
-    var_r31 = 0;
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x49U);
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueNull(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    return 0;
-}
-
-
-
-
-
-
-u32 fightOutPokemonMaxHpWaruValue(FightOutPokemon *, u16);
-u32 fightOutPokemonNowHpWaruValue(FightOutPokemon *, u16);
-u16 fightTrainer_GetFightTrainerDataId(FIGHT_TRAINER *);
-s32 fightTrainerAiDB_GetWazaAvgValue(u16);
-u16 fightFloorGetFightTrainerFightPokemonPtrAry(void *, FIGHT_TRAINER *, FightPokemon **, u8, u8);
-Pokemon *fightPokemonGetPokemonPtr(FightPokemon *);
-u16 fightTrainerAiGetFightPokemonPokemonDataId(FIGHT_TRAINER *, FightPokemon *);
-u8 fightTrainerAiIsFightPokemonJoutaiNormal(FIGHT_TRAINER *, FightPokemon *);
-u8 fightTrainerAiIsFightPokemonJoutaiDataId(FIGHT_TRAINER *, FightPokemon *, u16);
-u8 fightTrainerAiIsFightPokemonTokuseiDataId(FIGHT_TRAINER *, FightPokemon *, u16);
-u8 fightTrainerAiIsFightPokemonZokuseiDataId(FIGHT_TRAINER *, FightPokemon *, u16);
-FightPokemon *fightOutPokemon_GetMotoFightPokemonPtr(FightOutPokemon *);
-u8 fightOutPokemon_GetNamakeFlag(FightOutPokemon *);
-s16 fightSideGetCountAsJoutaiDataId(FightSide *, u16);
-u16 fightTrainerAiCheckOumu(FIGHT_TRAINER *, FightOutPokemon *);
-u32 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(FightOutPokemon *, u8);
-FIGHT_TRAINER *fightFloorGetFightOutPokemonPtrToFightTrainerPtr(void *, FightOutPokemon *);
-FightPokemon *fightTrainerSearchIrekaeFightPokemon(FIGHT_TRAINER *, u16 *);
-u16 tikeiDataBiosGetFightKoukaId(u32);
-u8 fightAi_GetTokuseiHaveFlag(FIGHT_TRAINER *, FightOutPokemon *, u16);
-Pokemon *fightOutPokemonGetPokemonPtr(FightOutPokemon *);
-u8 pokemonIsDarkPokemon(Pokemon *);
-u8 wazaCheckDarkWaza(u16);
-FightPokemon *getFightPokemonPtr__15FightOutPokemonFv(FightOutPokemon *);
-u8 _fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(FIGHT_TRAINER *, FightOutPokemon *, u8, u8);
-s8 _fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(FIGHT_TRAINER *, FightOutPokemon *);
-u8 _fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(FIGHT_TRAINER *, FightOutPokemon **, u16, u8, u8);
-u8 _fightTrainerAiWazaValueIsAllyHaveWazaDataId__FP13FIGHT_TRAINERP15FightOutPokemonUs(FIGHT_TRAINER *, FightOutPokemon *, u16);
-
-s32 fightTrainerAiWazaValueDarkMist(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp18[8];
-    u16 sp8[8];
-    s32 temp_r24;
-    s32 var_r23;
-    u16 temp_r26;
-    u16 temp_r3;
-    u16 var_r22;
-    u16 var_r21;
-    u8 var_r20;
-
-    var_r23 = 0;
-    temp_r26 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 1U, 1U);
-    temp_r24 = fightTrainerAiDB_GetWazaAvgValue(fightTrainer_GetFightTrainerDataId(arg0));
-    var_r20 = 0;
-    var_r22 = 0;
-    while (var_r22 < temp_r26) {
-        temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, *(FightOutPokemon **)((u8 *)sp18 + ((var_r22 * 4) & 0x3FFFC)), sp8, 0U, 1U);
-        if (temp_r3 != 0) {
-            var_r21 = 0;
-            while (var_r21 < temp_r3) {
-                if (wazaDB_GetAvg(*(u16 *)((u8 *)sp8 + ((var_r21 * 2) & 0x1FFFE))) < (u8) temp_r24) {
-                    var_r20 = 1;
-                } else {
-                    var_r21 += 1;
-                    continue;
-                }
-
-                break;
-            }
-        }
-        var_r22 += 1;
-        continue;
-
-        break;
-    }
-    if (var_r20 != 0) {
-        var_r23 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x282U);
-    }
-    if (fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3) <= 5U) {
-        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x283U);
-    }
-    return var_r23;
-}
-
-s32 fightTrainerAiWazaValueDarkHalf(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp28[8];
-    FightOutPokemon *sp8[8];
-    u16 var_r31;
-    s32 temp_r28;
-    u32 temp_r27;
-    u32 temp_r27_2;
-    u8 var_r22;
-    s32 temp_r26;
-    u16 temp_r25;
-    u16 var_r22_2;
-    u8 var_r25;
-    u16 temp_r24;
-    s32 var_r23;
-
-    temp_r25 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp28, 1U, 1U);
-    temp_r24 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
-    var_r31 = 0;
-    var_r22 = 0;
-    while ((s32) var_r22 < (s32) temp_r24) {
-        temp_r28 = (var_r22 * 4) & 0x3FC;
-        temp_r27 = fightOutPokemonMaxHpWaruValue(*(FightOutPokemon **)((u8 *)sp8 + temp_r28), 1U);
-        s32 nowHp = fightOutPokemonNowHpWaruValue(*(FightOutPokemon **)((u8 *)sp8 + temp_r28), 2U);
-        var_r31 += (s32) ((u16) temp_r27 * (u16)nowHp) / 100;
-        var_r22 += 1;
-        continue;
-
-        break;
-    }
-    var_r22_2 = 0;
-    var_r25 = 0;
-    while ((s32) var_r25 < (s32) temp_r25) {
-        temp_r26 = (var_r25 * 4) & 0x3FC;
-        temp_r27_2 = fightOutPokemonMaxHpWaruValue(*(FightOutPokemon **)((u8 *)sp28 + temp_r26), 1U);
-        s32 nowHp2 = fightOutPokemonNowHpWaruValue(*(FightOutPokemon **)((u8 *)sp28 + temp_r26), 2U);
-        var_r22_2 += (s32) ((u16) temp_r27_2 * (u16)nowHp2) / 100;
-        var_r25 += 1;
-        continue;
-
-        break;
-    }
-    var_r23 = fightTrainerAiAddValue(0, (((s32) var_r31 / (s32) var_r22_2) - 1) * fightTrainerGetStatus(0, 0x27FU, 0x3EU, 0U));
-    var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x280U);
-    if (fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3) <= 5U) {
-        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x281U);
-    }
-    return var_r23;
-}
-
-s32 fightTrainerAiWazaValueDarkEnd(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u32 temp_r29;
-    u32 temp_r29_2;
-    u16 temp_r28;
-    s32 var_r28;
-    u16 temp_r27;
-
-    temp_r29 = fightOutPokemonMaxHpWaruValue(arg3, 1U);
-    temp_r27 = (u16) ((s32) ((u16) temp_r29 * fightTrainerAiWazaDoWazaDamageFunc(arg0, arg1, arg2, arg3, 1U)) / 100);
-    temp_r29_2 = fightOutPokemonMaxHpWaruValue(arg1, 1U);
-    temp_r28 = fightOutPokemonNowHpWaruValue(arg1, 2U);
-    var_r28 = fightTrainerAiAddValue(0, (((s32) temp_r27 / (s32) (u16) ((s32) ((u16) temp_r29_2 * temp_r28) / 100)) - 1) * fightTrainerGetStatus(0, 0x27DU, 0x3EU, 0U));
-    if (fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3) <= 5U) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x27EU);
-    }
-    return var_r28;
-}
-
-s32 fightTrainerAiWazaValueDarkWeather(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightPokemon *sp8[24];
-    u16 var_r26;
-    s32 var_r30;
-    u16 temp_r26;
-    u16 var_r25;
-    u8 temp_r31;
-
-    var_r30 = 0;
-    temp_r31 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 0U);
-    temp_r26 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 1U, 1U);
-    if (temp_r31 != 5) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x19AU);
-    }
-    var_r25 = 0;
-    while (var_r25 < temp_r26) {
-        if (pokemonIsDarkPokemon(fightPokemonGetPokemonPtr(*(FightPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC)))) == 1) {
-            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x19BU);
-        } else {
-            var_r25 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r26 = 0;
-    while (var_r26 < temp_r26) {
-        if (fightTrainerAiGetFightPokemonPokemonDataId(arg0, *(FightPokemon **)((u8 *)sp8 + ((var_r26 * 4) & 0x3FFFC))) == 0x181) {
-            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x19CU);
-        } else {
-            var_r26 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (temp_r31 == 5) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x19DU);
-    }
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x16FU, 0) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x19EU);
-    }
-    return var_r30;
-}
-
-u8 _fightTrainerAiWazaValueIsAllyHaveWazaDataId__FP13FIGHT_TRAINERP15FightOutPokemonUs(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2) {
-    FightOutPokemon *sp18[8];
-    u16 sp8[8];
-    FightOutPokemon *temp_r4;
-    u16 temp_r31;
-    u16 temp_r3;
-    u16 var_r29;
-    u16 var_r6;
-
-    temp_r31 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 1U, 1U);
-    for (var_r29 = 0; var_r29 < temp_r31; ++var_r29) {
-        temp_r4 = sp18[var_r29];
-        if (arg1 != temp_r4) {
-            temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, temp_r4, sp8, 0U, 1U);
-            if (temp_r3 != 0) {
-                for (var_r6 = 0; var_r6 < temp_r3; ++var_r6) {
-                    if (arg2 == sp8[var_r6]) return 1U;
-                }
-            }
-        }
-    }
-    return 0U;
-}
-
-s32 fightTrainerAiWazaValueNemuriKoudou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-
-    var_r31 = 0;
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 8U) == 1) {
-        if (_fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(arg0, arg1) == 0) {
-            var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x218U);
-        }
-        if (_fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(arg0, arg1) == 1) {
-            var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x219U);
-        }
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueSawagu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp18[8];
-    u16 sp8[8];
-    u16 var_r31;
-    u16 temp_r30;
-    u16 var_r30;
-    s32 var_r29;
-    u16 temp_r24;
-    u16 var_r23;
-    FightOutPokemon *temp_r4;
-    FightOutPokemon *temp_r4_2;
-    u16 temp_r3;
-    u16 temp_r3_2;
-
-    var_r29 = 0;
-    temp_r3 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 1U, 1U);
-    temp_r30 = temp_r3;
-    temp_r24 = temp_r3;
-    var_r31 = 0;
-    while (var_r31 < temp_r24) {
-        temp_r4 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r31 * 4) & 0x3FFFC));
-        if ((arg1 != temp_r4) && (_fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(arg0, temp_r4) == 0)) {
-            var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x211U);
-        } else {
-            var_r31 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r30 = 0;
-    while (var_r30 < temp_r30) {
-        temp_r4_2 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r30 * 4) & 0x3FFFC));
-        if ((arg1 != temp_r4_2) && (temp_r3_2 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, temp_r4_2, sp8, 0U, 1U), ((temp_r3_2 == 0) == 0))) {
-            var_r23 = 0;
-            while (var_r23 < temp_r3_2) {
-                if ((u16) *(u16 *)((u8 *)sp8 + ((var_r23 * 2) & 0x1FFFE)) == 0x9C) {
-                    var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x212U);
-                } else {
-                    var_r23 += 1;
-                    continue;
-                }
-
-                break;
-            }
-            if (var_r23 >= temp_r3_2) {
-                goto block_15;
-            }
-        } else {
-block_15:
-            var_r30 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (_fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(arg0, arg3) == 0) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x213U);
-    }
-    return var_r29;
-}
-
-s32 fightTrainerAiWazaValueOomugaesi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u16 temp_r3;
-
-    temp_r3 = fightTrainerAiCheckOumu(arg0, arg1);
-    if ((temp_r3 != arg2) && (temp_r3 != 0)) {
-        return fightTrainerAiWazaDoWazaValueFunc(arg0, arg1, temp_r3, arg3);
-    }
-    return 0;
-}
-
-s32 fightTrainerAiWazaValueMakibisi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-    FightSide *temp_r3;
-    s16 var_r3;
-
-    var_r31 = 0;
-    temp_r3 = fightTargetGetPtrAsNowFightType(2U, arg3);
-    if (fightSideIsJoutaiDataId(temp_r3, 0x4AU) == 1) {
-        var_r3 = fightSideGetCountAsJoutaiDataId(temp_r3, 0x4AU);
-    } else {
-        var_r3 = 0;
-    }
-    if (var_r3 == 0) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x209U);
-    } else if (var_r3 == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x20AU);
-    } else if (var_r3 == 2) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x20BU);
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueJikoanji(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-
-    var_r31 = 0;
-    if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg3, 8U, 9U) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x203U);
-    }
-    if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg3, 0xAU, 0xCU) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x204U);
-    }
-    if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg3, 3U, 4U) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x205U);
-    }
-    if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg3, 0U, 2U) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x206U);
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueKuroikiri(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp28[8];
-    FightOutPokemon *sp8[8];
-    s32 var_r29;
-    u16 temp_r28;
-    u16 temp_r3;
-
-    var_r29 = 0;
-    temp_r28 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp28, 1U, 1U);
-    temp_r3 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
-    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp8, temp_r3, 8U, 9U) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1FBU);
-    }
-    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp28, temp_r28, 3U, 4U) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x1FCU);
-    }
-    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp8, temp_r3, 0xAU, 0xCU) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x1FDU);
-    }
-    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp28, temp_r28, 0U, 2U) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x1FEU);
-    }
-    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp28, temp_r28, 8U, 9U) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x1FFU);
-    }
-    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp8, temp_r3, 3U, 4U) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x200U);
-    }
-    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp28, temp_r28, 0xAU, 0xCU) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x201U);
-    }
-    if (_fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(arg0, sp8, temp_r3, 0U, 2U) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x202U);
-    }
-    return var_r29;
-}
-
-u8 _fightTrainerAiWazaValueKuroikiriSubAbiCntCheck__FP13FIGHT_TRAINERPP15FightOutPokemonUsUcUc(FIGHT_TRAINER *arg0, FightOutPokemon **arg1, u16 arg2, u8 arg3, u8 arg4) {
-    u16 var_r30;
-
-    for (var_r30 = 0; var_r30 < arg2; ++var_r30) {
-        if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg1[var_r30], arg3, arg4) == 1) return 1U;
-    }
-    return 0U;
-}
-
-s8 _fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(FIGHT_TRAINER *arg0, FightOutPokemon *arg1) {
-    s32 temp_r31;
-    s32 temp_r5;
-
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 8U) == 0) {
-        return -1;
-    }
-    temp_r5 = fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg1, 0x30U) == 1 ? 1 : 0;
-    temp_r31 = temp_r5 + 1;
-    s32 now = fightOutPokemonGetNowKaisuuJoutaiDataId(arg1, 8U, temp_r5); temp_r31 = now + temp_r31;
-    s32 turns = fightOutPokemonGetKaisuuJoutaiDataId(arg1, 8U);
-if ((s8)temp_r31 >= turns) { return 1; } else { return 0; }
-}
-
-s32 fightTrainerAiWazaValueKyouseikoutai(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightSide *temp_r3;
-    s16 var_r31;
-    s32 var_r30;
-
-    var_r30 = 0;
-    temp_r3 = fightTargetGetPtrAsNowFightType(2U, arg3);
-    if (fightSideIsJoutaiDataId(temp_r3, 0x4AU) == 1) {
-        var_r31 = fightSideGetCountAsJoutaiDataId(temp_r3, 0x4AU);
-    } else {
-        var_r31 = 0;
-    }
-    if (_fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(arg0, arg3, 8U, 0xCU) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1F1U);
-    }
-    if (var_r31 == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F2U);
-    } else if (var_r31 == 2) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F3U);
-    } else if (var_r31 == 3) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F4U);
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValueMitizure(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-
-    var_r31 = 0;
-    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.1f, -1) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1DFU);
-    } else if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.3f, -1) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1DEU);
-    } else if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, -1) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1DDU);
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueIkarinomaeba(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-
-    var_r31 = 0;
-    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg3, 0.5f, 1) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1CFU);
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueKaihiDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp18[8];
-    u16 sp8[8];
-    s32 temp_r25;
-    s32 var_r24;
-    u16 temp_r27;
-    u16 temp_r3;
-    u16 var_r23;
-    u16 var_r22;
-    u8 var_r21;
-
-    var_r24 = 0;
-    temp_r27 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 1U, 1U);
-    temp_r25 = fightTrainerAiDB_GetWazaAvgValue(fightTrainer_GetFightTrainerDataId(arg0));
-    if (fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3) >= 7U) {
-        var_r24 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1CAU);
-    }
-    if (fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3) <= 5U) {
-        var_r24 = fightTrainerAiAddValueByAddsubDataId(var_r24, arg0, 0x1CBU);
-    }
-    var_r21 = 0;
-    var_r23 = 0;
-    while (var_r23 < temp_r27) {
-        temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, *(FightOutPokemon **)((u8 *)sp18 + ((var_r23 * 4) & 0x3FFFC)), sp8, 0U, 1U);
-        if (temp_r3 != 0) {
-            var_r22 = 0;
-            while (var_r22 < temp_r3) {
-                if (wazaDB_GetAvg(*(u16 *)((u8 *)sp8 + ((var_r22 * 2) & 0x1FFFE))) < (u8) temp_r25) {
-                    var_r21 = 1;
-                } else {
-                    var_r22 += 1;
-                    continue;
-                }
-
-                break;
-            }
-        }
-        var_r23 += 1;
-        continue;
-
-        break;
-    }
-    if (var_r21 != 0) {
-        var_r24 = fightTrainerAiAddValueByAddsubDataId(var_r24, arg0, 0x1C9U);
-    }
-    return var_r24;
-}
-
-s32 fightTrainerAiWazaValueBougyoDaun(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp8[8];
-    u16 num;
-    s32 value;
-    u16 phy;
-    u16 spe;
-    u8 i;
-    u8 cnt;
-
-    value = 0;
-    num = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
-    cnt = 0;
-    for (i = 0; i < num; i++) {
-        phy = fightTrainerAiGetFightOutPokemonPhyDef(arg0, sp8[i]);
-        spe = fightTrainerAiGetFightOutPokemonSpeDef(arg0, sp8[i]);
-        if (phy > spe) {
-            cnt++;
-        }
-    }
-    if (phy > spe) {
-        value = fightTrainerAiAddValue(0, cnt * fightTrainerGetStatus(0, 0x1C4U, 0x3EU, 0U));
-    }
-    cnt = 0;
-    for (i = 0; i < num; i++) {
-        if (fightTrainerAiGetFightOutPokemonAbiCntPhyDef(arg0, sp8[i]) <= 4) {
-            cnt++;
-        }
-    }
-    return fightTrainerAiAddValue(value, cnt * fightTrainerGetStatus(0, 0x1C5U, 0x3EU, 0U));
-}
-
-s32 fightTrainerAiWazaValueRokkuon(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r30;
-    u32 temp_r31;
-
-    var_r30 = 0;
-    temp_r31 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(arg1, fightFloor_GetFightType(0));
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1DU) == 0) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1B8U);
-    }
-    if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1DU) == 1) && ((u16) temp_r31 == fightOutPokemonGetUserFightTargetIdJoutaiDataId(arg3, 0x1DU))) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1B9U);
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValueNoroi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r30;
-    u8 temp_r3;
-
-    var_r30 = 0;
-    temp_r3 = fightTrainerAiIsFightOutPokemonZokuseiDataId(arg0, arg1, 7U);
-    if ((temp_r3 == 1) && (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, 1) == 1)) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1B3U);
-    } else if ((temp_r3 == 1) && (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.25f, -1) == 1)) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1B4U);
-    }
-    if ((temp_r3 == 0) && (fightTrainerAiIsFightOutPokemonAllAbiCntTakai(arg0, arg1) == 0)) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1B5U);
-    }
-    if (temp_r3 == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1B6U);
-    }
-    if ((temp_r3 == 0) && (fightTrainerAiIsFightOutPokemonAllAbiCntTakai(arg0, arg1) == 1)) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1B7U);
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValueAroma(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightPokemon *sp8[24];
-    s32 var_r29;
-    u16 temp_r31;
-    u16 var_r28;
-
-    var_r29 = 0;
-    temp_r31 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 1U, 1U);
-    var_r28 = 0;
-    while (var_r28 < temp_r31) {
-        if (fightTrainerAiIsFightPokemonJoutaiNormal(arg0, *(FightPokemon **)((u8 *)sp8 + ((var_r28 * 4) & 0x3FFFC))) == 0) {
-            var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1A0U);
-        } else {
-            var_r28 += 1;
-            continue;
-        }
-
-        break;
-    }
-    return var_r29;
-}
-
-s32 fightTrainerAiWazaValueSunaarasi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightPokemon *sp28[24];
-    FightOutPokemon *sp8[8];
-    s32 temp_r27;
-    s32 var_r29;
-    u16 temp_r25;
-    u16 temp_r31;
-    u16 var_r24;
-    u16 var_r24_2;
-    u16 var_r23;
-    u8 temp_r30;
-
-    var_r29 = 0;
-    temp_r30 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 0U);
-    temp_r31 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp28, 1U, 1U);
-    temp_r25 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
-    if (temp_r30 != 3) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x194U);
-    }
-    var_r23 = 0;
-    while (var_r23 < temp_r31) {
-        temp_r27 = (var_r23 * 4) & 0x3FFFC;
-        if ((fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp28 + temp_r27), 5U) == 1) || (fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp28 + temp_r27), 4U) == 1) || (fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp28 + temp_r27), 8U) == 1) || (fightTrainerAiIsFightPokemonTokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp28 + temp_r27), 8U) == 1)) {
-            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x195U);
-        } else {
-            var_r23 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r24 = 0;
-    while (var_r24 < temp_r25) {
-        if (fightTrainerAiGetFightOutPokemonPokemonDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r24 * 4) & 0x3FFFC))) == 0x12F) {
-            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x196U);
-        } else {
-            var_r24 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r24_2 = 0;
-    while (var_r24_2 < temp_r31) {
-        if (fightTrainerAiGetFightPokemonPokemonDataId(arg0, *(FightPokemon **)((u8 *)sp28 + ((var_r24_2 * 4) & 0x3FFFC))) == 0x181) {
-            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x197U);
-        } else {
-            var_r24_2 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (temp_r30 == 3) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x198U);
-    }
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0xF1U, 0) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x199U);
-    }
-    return var_r29;
-}
-
-s32 fightTrainerAiWazaValueArare(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightPokemon *sp28[24];
-    FightOutPokemon *sp8[8];
-    s32 var_r29;
-    u16 temp_r25;
-    u16 temp_r31;
-    u16 var_r25;
-    u16 var_r25_2;
-    u16 var_r24;
-    u8 temp_r30;
-
-    var_r29 = 0;
-    temp_r30 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 0U);
-    temp_r31 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp28, 1U, 1U);
-    temp_r25 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
-    if (temp_r30 != 4) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x18EU);
-    }
-    var_r24 = 0;
-    while (var_r24 < temp_r31) {
-        if (fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp28 + ((var_r24 * 4) & 0x3FFFC)), 0xFU) == 1) {
-            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x18FU);
-        } else {
-            var_r24 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r25 = 0;
-    while (var_r25 < temp_r25) {
-        if (fightTrainerAiGetFightOutPokemonPokemonDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC))) == 0x12F) {
-            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x190U);
-        } else {
-            var_r25 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r25_2 = 0;
-    while (var_r25_2 < temp_r31) {
-        if (fightTrainerAiGetFightPokemonPokemonDataId(arg0, *(FightPokemon **)((u8 *)sp28 + ((var_r25_2 * 4) & 0x3FFFC))) == 0x181) {
-            var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x191U);
-        } else {
-            var_r25_2 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (temp_r30 == 4) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x192U);
-    }
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0xF1U, 0) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x193U);
-    }
-    return var_r29;
-}
-
-s32 fightTrainerAiWazaValueNihonbare(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightPokemon *sp8[24];
-    s32 temp_r28;
-    s32 var_r30;
-    u16 temp_r26;
-    u16 var_r25;
-    u16 var_r24;
-    u8 temp_r31;
-
-    var_r30 = 0;
-    temp_r31 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 0U);
-    temp_r26 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 1U, 1U);
-    if (temp_r31 != 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x189U);
-    }
-    var_r24 = 0;
-    while (var_r24 < temp_r26) {
-        temp_r28 = (var_r24 * 4) & 0x3FFFC;
-        if ((fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0xAU) == 1) || (fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0xCU) == 1) || (fightTrainerAiIsFightPokemonTokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0x22U) == 1)) {
-            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x18AU);
-        } else {
-            var_r24 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r25 = 0;
-    while (var_r25 < temp_r26) {
-        if (fightTrainerAiGetFightPokemonPokemonDataId(arg0, *(FightPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC))) == 0x181) {
-            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x18BU);
-        } else {
-            var_r25 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (temp_r31 == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x18CU);
-    }
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0xF1U, 0) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x18DU);
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValueAmagoi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightPokemon *sp8[24];
-    s32 temp_r28;
-    s32 var_r30;
-    u16 temp_r26;
-    u16 var_r25;
-    u16 var_r24;
-    u8 temp_r31;
-
-    var_r30 = 0;
-    temp_r31 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 0U);
-    temp_r26 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 1U, 1U);
-    if (temp_r31 != 2) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x184U);
-    }
-    var_r24 = 0;
-    while (var_r24 < temp_r26) {
-        temp_r28 = (var_r24 * 4) & 0x3FFFC;
-        if ((fightTrainerAiIsFightPokemonZokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0xBU) == 1) || (fightTrainerAiIsFightPokemonTokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0x21U) == 1) || (fightTrainerAiIsFightPokemonTokuseiDataId(arg0, *(FightPokemon **)((u8 *)sp8 + temp_r28), 0x2CU) == 1)) {
-            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x185U);
-        } else {
-            var_r24 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r25 = 0;
-    while (var_r25 < temp_r26) {
-        if (fightTrainerAiGetFightPokemonPokemonDataId(arg0, *(FightPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC))) == 0x181) {
-            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x186U);
-        } else {
-            var_r25 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (temp_r31 == 2) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x187U);
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValueNemuru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-    u16 temp_r3;
-
-    var_r31 = 0;
-    temp_r3 = fightTrainerAiGetFightOutPokemonSoubiItemSoubiDataId(arg0, arg1);
-    if ((temp_r3 == 3) || (temp_r3 == 9)) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x17DU);
-    }
-    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.55f, -1) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x17EU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg1) == 0) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x17FU);
-    }
-    return fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x180U);
-}
-
-s32 fightTrainerAiWazaValueKaihuku2(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-
-    var_r31 = 0;
-    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, -1) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x17CU);
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueKaihuku1(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r30;
-    u8 temp_r3;
-
-    var_r30 = 0;
-    temp_r3 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 1U);
-    if (temp_r3 == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x179U);
-    }
-    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, -1) == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x17AU);
-    }
-    if ((temp_r3 == 2) || (temp_r3 == 4) || (temp_r3 == 3)) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x17BU);
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValueOiuti(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u16 sp8;
-    FIGHT_TRAINER *temp_r3;
-    s32 var_r28;
-    u8 var_r31;
-
-    var_r28 = 0;
-    var_r31 = fightTrainerAiCheckFightFloorCheckFightActionFightOutPokemonIrekaeSelect(arg0, 0, arg3, 0);
-    temp_r3 = fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0, arg3);
-    sp8 = 0;
-    if (fightTrainerSearchIrekaeFightPokemon(temp_r3, &sp8) == 0) {
-        var_r31 = 1;
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 3U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x16DU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 4U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x16EU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 6U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x16FU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1CU) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x170U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x171U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0xAU) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x172U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x18U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x173U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1EU) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x174U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x26U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x175U);
-    }
-    if (var_r31 != 0) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x176U);
-    }
-    return var_r28;
-}
-
-s32 fightTrainerAiWazaValueTuikaNemuri(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightPokemon *sp8[24];
-    u16 temp_r28;
-    s32 temp_r27;
-    s32 temp_r27_2;
-    s32 var_r26;
-    s32 temp_r26;
-    u16 var_r25;
-    FightPokemon *temp_r4;
-
-    temp_r28 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 0U, 1U);
-    temp_r26 = fightTrainerAiGetWazaAddKoukaAvg(arg0, arg2);
-    var_r26 = fightTrainerAiAddValue(0, (s32) temp_r26 / fightTrainerGetStatus(0, 0x12FU, 0x3EU, 0U));
-    var_r25 = 0;
-    while (var_r25 < temp_r28) {
-        FightPokemon* original = fightOutPokemon_GetMotoFightPokemonPtr(arg3);
-        temp_r4 = *(FightPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC));
-        if ((original != temp_r4) && (fightTrainerAiIsFightPokemonJoutaiDataId(arg0, temp_r4, 8U) == 1)) {
-            temp_r27 = fightTrainerAiGetWazaAddKoukaAvg(arg0, arg2);
-            var_r26 = fightTrainerAiAddValue(var_r26, (s32) temp_r27 / fightTrainerGetStatus(0, 0x130U, 0x3EU, 0U));
-        } else {
-            var_r25 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if ((fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg3) == 0) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0xFU) == 1) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x13U) == 1)) {
-        temp_r27_2 = fightTrainerAiGetWazaAddKoukaAvg(arg0, arg2);
-        var_r26 = fightTrainerAiAddValue(var_r26, (s32) temp_r27_2 / fightTrainerGetStatus(0, 0x131U, 0x3EU, 0U));
-    }
-    return var_r26;
-}
-
-s32 fightTrainerAiWazaValueBakuretuPanti(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-    u32 temp_r31;
-
-    var_r31 = 0;
-    temp_r31 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(arg1, fightFloor_GetFightType(0));
-    if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1DU) == 1) && ((u16) temp_r31 == fightOutPokemonGetUserFightTargetIdJoutaiDataId(arg3, 0x1DU))) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x12AU);
-    }
-    var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x12BU);
-    if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x14U) == 1)) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x12DU);
-    }
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x12CU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x14U) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x12EU);
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueDenjihou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp8[8];
-    s32 var_r29;
-    u32 temp_r30;
-
-    temp_r30 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(arg1, fightFloor_GetFightType(0));
-    fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 1U, 1U);
-    var_r29 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x125U);
-    if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1DU) == 1) && ((u16) temp_r30 == fightOutPokemonGetUserFightTargetIdJoutaiDataId(arg3, 0x1DU))) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x126U);
-    }
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x127U);
-    }
-    if ((fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg3) == 0) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 7U) == 1) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x13U) == 1)) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x128U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x14U) == 1) {
-        var_r29 = fightTrainerAiAddValueByAddsubDataId(var_r29, arg0, 0x129U);
-    }
-    return var_r29;
-}
-
-s32 fightTrainerAiWazaValueTuikaKoori(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightPokemon *sp28[24];
-    FightOutPokemon *sp8[8];
-    u16 outNum;
-    u16 pokeNum;
-    s32 value;
-    s32 avg;
-    u16 j;
-    u16 i;
-    u8 cnt;
-
-    outNum = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
-    pokeNum = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp28, 0U, 1U);
-    cnt = 0;
-    for (i = 0; i < outNum; i++) {
-        if (fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, sp8[i]) == 1) {
-            cnt++;
-        }
-    }
-    value = fightTrainerAiAddValue(0, cnt * fightTrainerGetStatus(0, 0x11CU, 0x3EU, 0U));
-    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
-        value = fightTrainerAiAddValueByAddsubDataId(value, arg0, 0x11DU);
-    }
-    for (i = 0; i < pokeNum; i++) {
-        if (fightOutPokemon_GetMotoFightPokemonPtr(arg3) != sp28[i] && fightTrainerAiIsFightPokemonJoutaiDataId(arg0, sp28[i], 7U) == 1) {
-            avg = fightTrainerAiGetWazaAddKoukaAvg(arg0, arg2);
-            value = fightTrainerAiAddValue(value, avg / fightTrainerGetStatus(0, 0x11EU, 0x3EU, 0U));
-            break;
-        }
-    }
-    if ((fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg3) == 0) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x28U) == 1) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x13U) == 1)) {
-        avg = fightTrainerAiGetWazaAddKoukaAvg(arg0, arg2);
-        value = fightTrainerAiAddValue(value, avg / fightTrainerGetStatus(0, 0x11FU, 0x3EU, 0U));
-    }
-    cnt = 0;
-    for (i = 0; i < outNum; i++) {
-        if ((fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg3) == 0) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x28U) == 1) || (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x13U) == 1) || (fightTrainerAiIsFightOutPokemonZokuseiDataId(arg0, arg3, 0xFU) == 1)) {
-            cnt++;
-        }
-    }
-    value = fightTrainerAiAddValue(value, cnt * fightTrainerGetStatus(0, 0x11FU, 0x3EU, 0U));
-    for (j = 0; j < outNum; j++) {
-        if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, sp8[j], 0x14U) == 1) {
-            value = fightTrainerAiAddValueByAddsubDataId(value, arg0, 0x120U);
-        }
-    }
-    return value;
-}
-
-s32 fightTrainerAiWazaValueHonoonouzu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u16 sp8;
-    FIGHT_TRAINER *temp_r3;
-    s32 var_r28;
-    u8 var_r31;
-
-    var_r28 = 0;
-    var_r31 = fightTrainerAiCheckFightFloorCheckFightActionFightOutPokemonIrekaeSelect(arg0, 0, arg3, 0);
-    temp_r3 = fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0, arg3);
-    sp8 = 0;
-    if (fightTrainerSearchIrekaeFightPokemon(temp_r3, &sp8) == 0) {
-        var_r31 = 1;
-    }
-    if (var_r31 == 0) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x104U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 3U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x105U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 4U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x106U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 6U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x107U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1CU) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x108U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x109U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0xAU) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x10AU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x18U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x10BU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1EU) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x10CU);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 7U) == 1) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x10DU);
-    }
-    if (var_r31 != 0) {
-        var_r28 = fightTrainerAiAddValueByAddsubDataId(var_r28, arg0, 0x10EU);
-    }
-    return var_r28;
-}
-
+extern "C" {
 s32 fightTrainerAiWazaValueJisin(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightPokemon *sp58[24];
     FightOutPokemon *sp38[8];
@@ -3552,7 +4160,8 @@ block_23:
     }
     return var_r25;
 }
-
+}
+extern "C" {
 s32 fightTrainerAiWazaValueSokubaku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     u16 sp8;
     FIGHT_TRAINER *temp_r3;
@@ -3598,7 +4207,21 @@ s32 fightTrainerAiWazaValueSokubaku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, 
     }
     return var_r28;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKorogaru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 temp_r31;
+    s32 var_r30;
 
+    var_r30 = 0;
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1AU) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0xA3U);
+    }
+    temp_r31 = fightTrainerAiGetFightOutPokemonNowHpPercentage(arg0, arg1);
+    return fightTrainerAiAddValueByAddsubDataId(fightTrainerAiAddValue(var_r30, (s32) temp_r31 / fightTrainerGetStatus(0, 0xA4U, 0x3EU, 0U)), arg0, 0xA5U);
+}
+}
+extern "C" {
 s32 fightTrainerAiWazaValueJibaku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
     FightPokemon *sp58[24];
     FightOutPokemon *sp38[8];
@@ -3740,7 +4363,462 @@ block_23:
     }
     return var_r24;
 }
+}
+extern "C" {
+s32 fightTrainerAiWazaValueTobihaneru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp18[8];
+    u16 sp8[8];
+    s32 var_r27;
+    u16 temp_r28;
+    u16 temp_r3;
+    u16 var_r23;
+    u16 var_r22;
+    u8 var_r21;
 
+    var_r27 = 0;
+    temp_r28 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 0U, 1U);
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 3U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x83U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 4U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x84U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 6U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x85U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 5U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x86U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x87U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0xAU) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x88U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x18U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x89U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1EU) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8AU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1CU) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8BU);
+    }
+    if (fightTrainerAiCmpFightOutPokemonSubayasa(arg0, arg1, arg3) > 0) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8CU);
+    }
+    var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8DU);
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 3U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8FU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 4U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x90U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 6U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x91U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 5U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x92U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 9U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x93U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0xAU) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x94U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x18U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x95U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1EU) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x96U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1CU) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x97U);
+    }
+    var_r23 = 0;
+    while (var_r23 < temp_r28) {
+        temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, *(FightOutPokemon **)((u8 *)sp18 + ((var_r23 * 4) & 0x3FFFC)), sp8, 0U, 0U);
+        if (temp_r3 != 0) {
+            var_r21 = 0;
+            var_r22 = 0;
+            while (var_r22 < temp_r3) {
+                if (fightTrainerAiCheckJoutaiKieWazaHitWazaDataId(arg0, 0x1F, *(u16 *)((u8 *)sp8 + ((var_r22 * 2) & 0x1FFFE))) == 1) {
+                    var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x98U);
+                    var_r21 = 1;
+                } else {
+                    var_r22 += 1;
+                    continue;
+                }
+
+                break;
+            }
+            if (var_r21 != 1) {
+                goto block_46;
+            }
+        } else {
+block_46:
+            var_r23 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1DU) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x99U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x14U) == 1) {
+        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x8EU);
+    }
+    return var_r27;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueSorawotobu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp18[8];
+    u16 sp8[8];
+    u16 var_r29;
+    u16 temp_r27;
+    s32 var_r26;
+    u16 var_r23;
+    u16 var_r22;
+    u8 var_r21;
+    u16 temp_r3;
+
+    var_r26 = 0;
+    var_r29 = 0;
+    temp_r27 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 0U, 1U);
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 3U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x6EU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 4U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x6FU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 6U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x70U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 5U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x71U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x72U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0xAU) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x73U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x18U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x74U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1EU) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x75U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x1CU) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x76U);
+    }
+    if (fightTrainerAiCmpFightOutPokemonSubayasa(arg0, arg1, arg3) > 0) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x77U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 3U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x78U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 4U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x79U);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 6U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7AU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 5U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7BU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 9U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7CU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0xAU) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7DU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x18U) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7EU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1EU) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x7FU);
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1CU) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x80U);
+    }
+    if (arg2 == 0x13 || arg2 == 0x154) {
+        var_r29 = 0x1F;
+    } else if (arg2 == 0x5B) {
+        var_r29 = 0x20;
+    } else if (arg2 == 0x123) {
+        var_r29 = 0x21;
+    }
+    var_r23 = 0;
+    while (var_r23 < temp_r27) {
+        temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, *(FightOutPokemon **)((u8 *)sp18 + ((var_r23 * 4) & 0x3FFFC)), sp8, 0U, 0U);
+        if (temp_r3 != 0) {
+            var_r21 = 0;
+            var_r22 = 0;
+            while (var_r22 < temp_r3) {
+                if (fightTrainerAiCheckJoutaiKieWazaHitWazaDataId(arg0, var_r29, *(u16 *)((u8 *)sp8 + ((var_r22 * 2) & 0x1FFFE))) == 1) {
+                    var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x81U);
+                    var_r21 = 1;
+                } else {
+                    var_r22 += 1;
+                    continue;
+                }
+
+                break;
+            }
+            if (var_r21 != 1) {
+                goto block_53;
+            }
+        } else {
+block_53:
+            var_r23 += 1;
+            continue;
+        }
+
+        break;
+    }
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1DU) == 1) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x82U);
+    }
+    return var_r26;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueAbareru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
+    s32 var_r31_2;
+    u16 temp_r3;
+
+    var_r31_2 = 0;
+    if (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg1, 0x14U) == 1) {
+        var_r31_2 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x6AU);
+    }
+    temp_r3 = fightTrainerAiGetFightOutPokemonSoubiItemSoubiDataId(arg0, arg1);
+    if ((temp_r3 == 8) || (temp_r3 == 9)) {
+        var_r31_2 = fightTrainerAiAddValueByAddsubDataId(var_r31_2, arg0, 0x6BU);
+    }
+    var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31_2, arg0, 0x6DU);
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x6CU);
+    }
+    return var_r31;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKyuusyuu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 temp_r31;
+    s32 var_r30;
+    u16 temp_r30;
+
+    temp_r30 = fightTrainerAiGetFightOutPokemonNowHp(arg0, arg1);
+    temp_r31 = fightTrainerAiWazaDoWazaDamageFunc(arg0, arg1, arg2, arg3, 1U);
+    var_r30 = fightTrainerAiAddValue(0, (s32) ((s32) ((temp_r31 / 2) * 0x64) / (s32) temp_r30) / fightTrainerGetStatus(0, 0x67U, 0x3EU, 0U));
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x68U);
+    }
+    if (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x40U) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x69U);
+    }
+    return var_r30;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueRokettoZutuki(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    return fightTrainerAiAddValueByAddsubDataId(fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x65U), arg0, 0x66U);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKamaitati(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
+    FightSide *temp_r29;
+    u8 temp_r3;
+
+    var_r31 = 0;
+    temp_r29 = fightTargetGetPtrAsNowFightType(2U, arg3);
+    temp_r3 = fightTrainerAiGetFightOutPokemonAbiCntPhyDef(arg0, arg3);
+    if (temp_r3 > 6U) {
+        var_r31 = fightTrainerAiAddValue(0, (temp_r3 - 6) * fightTrainerGetStatus(0, 0x62U, 0x3EU, 0U));
+    }
+    var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x64U);
+    if (fightSideIsJoutaiDataId(temp_r29, 0x48U) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x63U);
+    }
+    return var_r31;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKiaipanti(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    FightOutPokemon *sp8[8];
+    s32 var_r26;
+    u16 temp_r26;
+    u16 var_r26_2;
+    u16 var_r24;
+    u8 temp_r31;
+
+    var_r26 = 0;
+    temp_r31 = fightTrainerAiCheckFightFloorCheckFightActionFightOutPokemonIrekaeSelect(arg0, 0, arg3, 0);
+    temp_r26 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
+    if (fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg1) == 0x117) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x5DU);
+    }
+    var_r24 = 0;
+    while (var_r24 < temp_r26) {
+        if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r24 * 4) & 0x3FFFC)), 8U) == 1) {
+            var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x5EU);
+        } else {
+            var_r24 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r26_2 = 0;
+    while (var_r26_2 < temp_r26) {
+        if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r26_2 * 4) & 0x3FFFC)), 7U) == 1) {
+            var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x5FU);
+        } else {
+            var_r26_2 += 1;
+            continue;
+        }
+
+        break;
+    }
+    var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x61U);
+    if ((fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 0x26U) == 1) && (temp_r31 != 0)) {
+        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x60U);
+    }
+    return var_r26;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueAteminage(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r30;
+    u8 temp_r3;
+    u8 temp_r3_2;
+
+    var_r30 = 0;
+    temp_r3 = fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3);
+    if (temp_r3 > 6U) {
+        var_r30 = fightTrainerAiAddValue(0, (temp_r3 - 6) * fightTrainerGetStatus(0, 0x5AU, 0x3EU, 0U));
+    }
+    temp_r3_2 = fightTrainerAiGetFightOutPokemonAbiCntAvg(arg0, arg1);
+    if (temp_r3_2 < 6U) {
+        var_r30 = fightTrainerAiAddValue(var_r30, (6 - temp_r3_2) * fightTrainerGetStatus(0, 0x5BU, 0x3EU, 0U));
+    }
+    return fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x5CU);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueRibenji(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
+    u16 temp_r3;
+
+    var_r31 = 0;
+    temp_r3 = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg3);
+    if ((temp_r3 != 0) && (temp_r3 != 0xFFFF) && (temp_r3 != 0x176) && (temp_r3 != 0x163) && (fightTrainerAiIsWazaTypeId(arg0, temp_r3, 1U) == 1)) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x58U);
+    }
+    return fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x59U);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueTokubetuYuusen(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    return fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x57U);
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueKouPuraioritii(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
+
+    var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x55U);
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x56U);
+    }
+    return var_r31;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueSpeKuritikaru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r30;
+    FightSide *temp_r29;
+    u8 temp_r3;
+
+    temp_r29 = fightTargetGetPtrAsNowFightType(2U, arg3);
+    var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x51U);
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x52U);
+    }
+    temp_r3 = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg3);
+    if (temp_r3 > 6U) {
+        var_r30 = fightTrainerAiAddValue(var_r30, (temp_r3 - 6) * fightTrainerGetStatus(0, 0x53U, 0x3EU, 0U));
+    }
+    if (fightSideIsJoutaiDataId(temp_r29, 0x49U) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x54U);
+    }
+    return var_r30;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValuePhyKuritikaru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r30;
+    FightSide *temp_r29;
+    u8 temp_r3;
+
+    temp_r29 = fightTargetGetPtrAsNowFightType(2U, arg3);
+    var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x4DU);
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x4EU);
+    }
+    temp_r3 = fightTrainerAiGetFightOutPokemonAbiCntPhyDef(arg0, arg3);
+    if (temp_r3 > 6U) {
+        var_r30 = fightTrainerAiAddValue(var_r30, (temp_r3 - 6) * fightTrainerGetStatus(0, 0x4FU, 0x3EU, 0U));
+    }
+    if (fightSideIsJoutaiDataId(temp_r29, 0x48U) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x50U);
+    }
+    return var_r30;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueHittyuu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r30;
+    u8 temp_r3;
+    u8 temp_r3_2;
+
+    var_r30 = 0;
+    temp_r3 = fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg3);
+    if (temp_r3 > 6U) {
+        var_r30 = fightTrainerAiAddValue(0, (temp_r3 - 6) * fightTrainerGetStatus(0, 0x4AU, 0x3EU, 0U));
+    }
+    temp_r3_2 = fightTrainerAiGetFightOutPokemonAbiCntAvg(arg0, arg1);
+    if (temp_r3_2 < 6U) {
+        var_r30 = fightTrainerAiAddValue(var_r30, (6 - temp_r3_2) * fightTrainerGetStatus(0, 0x4BU, 0x3EU, 0U));
+    }
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
+        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x4CU);
+    }
+    return var_r30;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueTuujouIryoku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    s32 var_r31;
+
+    var_r31 = 0;
+    if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, 0x10EU, arg1) == 1) {
+        var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x49U);
+    }
+    return var_r31;
+}
+}
+extern "C" {
+s32 fightTrainerAiWazaValueNull(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
+    return 0;
+}
+}
+extern "C" {
 u8 _fightTrainerAiWazaValueAbiCntCheck__FP13FIGHT_TRAINERP15FightOutPokemonUcUc(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u8 arg2, u8 arg3) {
     u8 stats[7];
     u8 temp_r0;
@@ -3763,944 +4841,6 @@ while (var_r6 < 7U) {
     }
     return 0U;
 }
-
-
-
-
-
-
-typedef u8 (*StatCheck)(FIGHT_TRAINER *, FightOutPokemon *);
-typedef s32 (*WazaValueFunc)(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
-WazaValueFunc wazaDB_GetFightTrainerAiWazaValueFuncPtr(u16);
-extern u16 joutaiIzyouWazaTbl[];
-extern u16 KonranWazaTbl[];
-extern u16 moukakeiTbl[];
-extern u16 statusUpKinomiTbl[];
-extern u32 *waza_data_number;
-s32 _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *, s32, u8, u16, u16, u16, u16, StatCheck);
-u8 fightTrainerAiIsFightOutPokemonPhyAtkCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
-u8 fightTrainerAiIsFightOutPokemonPhyDefCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
-u8 fightTrainerAiIsFightOutPokemonSpeAtkCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
-u8 fightTrainerAiIsFightOutPokemonSpeDefCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
-u8 fightTrainerAiIsFightOutPokemonNimblenessCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
-u8 fightTrainerAiIsFightOutPokemonAvoidCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
-
-s32 fightTrainerAiWazaValueMahi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r30;
-    u8 var_r29;
-
-    var_r30 = 0;
-    var_r29 = 0;
-    while (var_r29 < 0x12U) {
-        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)joutaiIzyouWazaTbl + ((var_r29 * 2) & 0x1FE)), arg3) == 1) {
-            var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x18DU);
-        } else {
-            var_r29 += 1;
-            continue;
-        }
-
-        break;
-    }
-    return var_r30;
 }
 
-s32 fightTrainerAiWazaValueKonran(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r30;
-    u8 var_r29;
-
-    var_r30 = 0;
-    var_r29 = 0;
-    while (var_r29 < 5U) {
-        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)KonranWazaTbl + ((var_r29 * 2) & 0x1FE)), arg3) == 1) {
-            var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x18DU);
-        } else {
-            var_r29 += 1;
-            continue;
-        }
-
-        break;
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValueOnibi(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp8[8];
-    s32 var_r31;
-    u16 temp_r24;
-    u16 temp_r25;
-    u16 temp_r26;
-    u16 temp_r28;
-    u16 temp_r3;
-    u16 var_r24;
-    u16 var_r23;
-
-    var_r31 = 0;
-    temp_r24 = fightTrainerAiGetFightOutPokemonSpeAtk(arg0, arg3);
-    temp_r25 = fightTrainerAiGetFightOutPokemonPhyAtk(arg0, arg3);
-    temp_r26 = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg3);
-    temp_r28 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
-    var_r23 = 0;
-    while (var_r23 < temp_r28) {
-        temp_r3 = fightTrainerAiGetFightOutPokemonPokemonDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r23 * 4) & 0x3FFFC)));
-        if ((temp_r3 == 0xCA) || (temp_r3 == 0x168) || (temp_r3 == 0x12F) || (temp_r3 == 0xD5)) {
-            var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x260U);
-        } else {
-            var_r23 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (temp_r25 > temp_r24) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x261U);
-    }
-    if (temp_r26 == 0x11F) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x262U);
-    }
-    var_r24 = 0;
-    while (var_r24 < 0x12U) {
-        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)joutaiIzyouWazaTbl + ((var_r24 * 2) & 0x1FFFE)), arg3) == 1) {
-            var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x263U);
-        } else {
-            var_r24 += 1;
-            continue;
-        }
-
-        break;
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueDoku(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp8[8];
-    s32 var_r26;
-    u16 temp_r27;
-    u16 temp_r29;
-    u16 temp_r3;
-    u16 var_r27;
-    u16 var_r25;
-
-    var_r26 = 0;
-    temp_r29 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp8, 0U, 1U);
-    temp_r27 = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg3);
-    var_r25 = 0;
-    while (var_r25 < temp_r29) {
-        temp_r3 = fightTrainerAiGetFightOutPokemonPokemonDataId(arg0, *(FightOutPokemon **)((u8 *)sp8 + ((var_r25 * 4) & 0x3FFFC)));
-        if ((temp_r3 == 0xCA) || (temp_r3 == 0x168) || (temp_r3 == 0x12F) || (temp_r3 == 0xD5)) {
-            var_r26 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x25DU);
-        } else {
-            var_r25 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (temp_r27 == 0x11F) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x25EU);
-    }
-    var_r27 = 0;
-    while (var_r27 < 0x12U) {
-        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)joutaiIzyouWazaTbl + ((var_r27 * 2) & 0x1FFFE)), arg3) == 1) {
-            var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x18DU);
-        } else {
-            var_r27 += 1;
-            continue;
-        }
-
-        break;
-    }
-    return var_r26;
-}
-
-s32 fightTrainerAiWazaValueHaradaiko(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    s32 var_r31;
-
-    sp8 = 0x25A;
-    spC = 0;
-    sp10 = fightTrainerAiIsFightOutPokemonPhyAtkCntTakai;
-    var_r31 = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, 0U, 0x258U, 0x259U, sp8, spC, sp10);
-    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, -1) == 1) {
-        var_r31 = fightTrainerAiAddValueByAddsubDataId(var_r31, arg0, 0x25BU);
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueMarukunaru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u16 sp18[8];
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    s32 temp_r3;
-    u16 temp_r30;
-    u16 temp_r4;
-    u16 var_r6;
-    u8 temp_r8;
-
-    temp_r30 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, arg1, sp18, 0U, 1U);
-    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntPhyDef(arg0, arg1);
-    sp8 = 0x256;
-    spC = 0x257;
-    sp10 = fightTrainerAiIsFightOutPokemonPhyDefCntTakai;
-    temp_r3 = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x254U, 0U, sp8, spC, sp10);
-    for (var_r6 = 0; var_r6 < temp_r30; var_r6++) {
-        temp_r4 = sp18[var_r6];
-        if (temp_r4 == 0xCD || temp_r4 == 0x12D) {
-            return fightTrainerAiAddValueByAddsubDataId(temp_r3, arg0, 0x255U);
-        }
-    }
-    return temp_r3;
-}
-
-#pragma push
-#pragma opt_lifetimes off
-s32 fightTrainerAiWazaValueMeisou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    s32 value;
-    u8 abilityCount;
-
-    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
-    sp8 = 0x252;
-    spC = 0x253;
-    sp10 = fightTrainerAiIsFightOutPokemonSpeAtkCntTakai;
-    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x250U, 0x251U, sp8, spC, sp10);
-    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
-    sp8 = 0x252;
-    spC = 0;
-    sp10 = fightTrainerAiIsFightOutPokemonSpeDefCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x250U, 0U, sp8, spC, sp10);
-}
-#pragma pop
-
-#pragma push
-#pragma opt_lifetimes off
-s32 fightTrainerAiWazaValueRyuunomai(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    s32 value;
-    u8 abilityCount;
-
-    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSubayasa(arg0, arg1);
-    sp8 = 0x24E;
-    spC = 0x24F;
-    sp10 = fightTrainerAiIsFightOutPokemonPhyAtkCntTakai;
-    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x24CU, 0x24DU, sp8, spC, sp10);
-    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSubayasa(arg0, arg1);
-    sp8 = 0x24E;
-    spC = 0;
-    sp10 = fightTrainerAiIsFightOutPokemonNimblenessCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x24CU, 0U, sp8, spC, sp10);
-}
-#pragma pop
-
-#pragma push
-#pragma opt_lifetimes off
-s32 fightTrainerAiWazaValueBirudoAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    s32 value;
-    u8 abilityCount;
-
-    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(arg0, arg1);
-    sp8 = 0x24A;
-    spC = 0x24B;
-    sp10 = fightTrainerAiIsFightOutPokemonPhyAtkCntTakai;
-    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x248U, 0x249U, sp8, spC, sp10);
-    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(arg0, arg1);
-    sp8 = 0x24A;
-    spC = 0;
-    sp10 = fightTrainerAiIsFightOutPokemonPhyDefCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x248U, 0U, sp8, spC, sp10);
-}
-#pragma pop
-
-#pragma push
-#pragma opt_lifetimes off
-s32 fightTrainerAiWazaValueKosumopawaa(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    s32 value;
-    u8 abilityCount;
-
-    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
-    sp8 = 0x246;
-    spC = 0x247;
-    sp10 = fightTrainerAiIsFightOutPokemonPhyDefCntTakai;
-    value = _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, abilityCount, 0x244U, 0x245U, sp8, spC, sp10);
-    abilityCount = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
-    sp8 = 0x246;
-    spC = 0;
-    sp10 = fightTrainerAiIsFightOutPokemonSpeDefCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, value, abilityCount, 0x244U, 0U, sp8, spC, sp10);
-}
-#pragma pop
-
-s32 fightTrainerAiWazaValueKaihirituAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    u8 temp_r8;
-
-    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntAvd(arg0, arg1);
-    sp8 = 0x242;
-    spC = 0x243;
-    sp10 = fightTrainerAiIsFightOutPokemonAvoidCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x240U, 0x241U, sp8, spC, sp10);
-}
-
-s32 fightTrainerAiWazaValueDowasure(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    u8 temp_r8;
-
-    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntSpeDef(arg0, arg1);
-    sp8 = 0x23E;
-    spC = 0x23F;
-    sp10 = fightTrainerAiIsFightOutPokemonSpeDefCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x23CU, 0x23DU, sp8, spC, sp10);
-}
-
-s32 fightTrainerAiWazaValueTokukouAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    u8 temp_r8;
-
-    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntSpeAtk(arg0, arg1);
-    sp8 = 0x23A;
-    spC = 0x23B;
-    sp10 = fightTrainerAiIsFightOutPokemonSpeAtkCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x238U, 0x239U, sp8, spC, sp10);
-}
-
-s32 fightTrainerAiWazaValueKousokuidou(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    u8 temp_r8;
-
-    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntSubayasa(arg0, arg1);
-    sp8 = 0x236;
-    spC = 0x237;
-    sp10 = fightTrainerAiIsFightOutPokemonNimblenessCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x234U, 0x235U, sp8, spC, sp10);
-}
-
-s32 fightTrainerAiWazaValueBougyoAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    u8 temp_r8;
-
-    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntPhyDef(arg0, arg1);
-    sp8 = 0x232;
-    spC = 0x233;
-    sp10 = fightTrainerAiIsFightOutPokemonPhyDefCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x230U, 0x231U, sp8, spC, sp10);
-}
-
-s32 fightTrainerAiWazaValueKougekiAppu(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u8 (*sp10)(FIGHT_TRAINER *, FightOutPokemon *);
-    s32 spC;
-    s32 sp8;
-    u8 temp_r8;
-
-    temp_r8 = fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(arg0, arg1);
-    sp8 = 0x22E;
-    spC = 0x22F;
-    sp10 = fightTrainerAiIsFightOutPokemonPhyAtkCntTakai;
-    return _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(arg0, arg1, arg2, arg3, 0, temp_r8, 0x22CU, 0x22DU, sp8, spC, sp10);
-}
-
-s32 _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(FIGHT_TRAINER *trainer, FightOutPokemon *user, u16 move, FightOutPokemon *target, s32 value, u8 stages, u16 low, u16 ally, u16 high, u16 perStage, StatCheck check) {
-    s32 count;
-    if (low != 0 && check(trainer, user) == 0) value = fightTrainerAiAddValueByAddsubDataId(value, trainer, low);
-    if (ally != 0 && _fightTrainerAiWazaValueIsAllyHaveWazaDataId__FP13FIGHT_TRAINERP15FightOutPokemonUs(trainer, user, 0x10A) == 1) value = fightTrainerAiAddValueByAddsubDataId(value, trainer, ally);
-    if (high != 0 && check(trainer, user) == 1) value = fightTrainerAiAddValueByAddsubDataId(value, trainer, high);
-    if (perStage != 0) {
-        count = stages - 6;
-        if (count < 0) count = 0;
-        value = fightTrainerAiAddValue(value, count * fightTrainerAiValueAddsubDB_GetValue(perStage));
-    }
-    return value;
-}
-
-static inline WazaValueFunc fai_GetFunc(u16 id) {
-    WazaValueFunc f = wazaDB_GetFightTrainerAiWazaValueFuncPtr(id);
-    if (f == 0) {
-        f = fightTrainerAiWazaValueNull;
-    }
-    return f;
-}
-
-s32 fightTrainerAiWazaValueMamoru(FIGHT_TRAINER* t, FightOutPokemon* self, u16 waza, FightOutPokemon* target) {
-    FightOutPokemon* ary[8];
-    u16 wazaAry[8];
-    u8 allyJisin;
-    u8 allyJibaku;
-    u8 queuedJisin;
-    u8 queuedJibaku;
-    s32 handle;
-    u16 count;
-    u16 i;
-    u16 j;
-    WazaValueFunc func;
-    handle = 0;
-    allyJisin = 0;
-    allyJibaku = 0;
-    queuedJisin = 0;
-    queuedJibaku = 0;
-    count = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, t, ary, 1, 1);
-    u16 last = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(t, self);
-    fightTrainerAiGetFightOutPokemonLastUseWazaDataId(t, target);
-    for (i = 0; i < count; i++) {
-        if (self == ary[i]) continue;
-        u16 n = fightTrainerAiGetFightOutPokemonWazaDataIdAry(t, ary[i], wazaAry, 0, 1);
-        if (n == 0) continue;
-        for (j = 0; j < n; j++) {
-            func = wazaDB_GetFightTrainerAiWazaValueFuncPtr(wazaAry[j]);
-            if (func == 0) func = fightTrainerAiWazaValueNull;
-            if (func == fightTrainerAiWazaValueJisin) allyJisin = 1;
-            if (func == fightTrainerAiWazaValueJibaku) allyJibaku = 1;
-        }
-    }
-    for (i = 0; i < *waza_data_number; i++) {
-        func = wazaDB_GetFightTrainerAiWazaValueFuncPtr(i);
-        if (func == 0) func = fightTrainerAiWazaValueNull;
-        if ((func == fightTrainerAiWazaValueJisin || func == fightTrainerAiWazaValueJibaku) && fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, t, 1, 1, i, 0) == 1) {
-            if (func == fightTrainerAiWazaValueJisin) queuedJisin = 1;
-            if (func == fightTrainerAiWazaValueJibaku) queuedJibaku = 1;
-        }
-    }
-    if (allyJisin == 1 || allyJibaku == 1) handle = fightTrainerAiAddValueByAddsubDataId(0, t, 0x21f);
-    if (queuedJisin == 1 || queuedJibaku == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x220);
-    if (fightTrainerAiIsFightOutPokemonTokuseiDataId(t, self, 3) == 1 && fightTrainerAiIsWazaTypeId(t, last, 4) == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x221);
-    if ((last == 0xb6 || last == 0xc5) && fightOutPokemon_GetSuccessCnt(self) != 0) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x222);
-    if (fightTrainerAiIsFightOutPokemonZokuseiDataId(t, self, 7) == 1) {
-        if (allyJibaku == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x223);
-        if (queuedJibaku == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x224);
-    }
-    if (fightTrainerAiIsFightOutPokemonZokuseiDataId(t, self, 2) == 1 || fightTrainerAiIsFightOutPokemonTokuseiDataId(t, self, 0x1a) == 1 || fightTrainerAiIsFightOutPokemonTokuseiDataId(t, self, 0x19) == 1) {
-        if (allyJisin == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x225);
-        if (queuedJisin == 1) handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x226);
-    }
-    for (i = 0; i < count; i++) {
-        if (self == ary[i]) continue;
-        u16 n = fightTrainerAiGetFightOutPokemonWazaDataIdAry(t, ary[i], wazaAry, 0, 1);
-        if (n == 0) continue;
-        for (j = 0; j < n; j++) {
-            if (wazaAry[j] == 0x10a) {
-                handle = fightTrainerAiAddValueByAddsubDataId(handle, t, 0x227);
-                break;
-            }
-        }
-        if (j < n) break;
-    }
-    return handle;
-}
-
-s32 fightTrainerAiWazaValueMigawari(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    u16 sp8[8];
-    s32 temp_r0;
-    s32 var_r26;
-    u16 temp_r0_2;
-    u16 temp_r30;
-    u16 temp_r31;
-    u32 temp_r27;
-    s32 temp_r28;
-    u32 temp_r29;
-    u8 var_r22;
-    u8 var_r5;
-
-    var_r26 = 0;
-    temp_r27 = fightOutPokemonMaxHpWaruValue(arg1, 1U);
-    temp_r28 = fightOutPokemonNowHpWaruValue(arg1, 1U);
-    temp_r29 = fightOutPokemonMaxHpWaruValue(arg1, 4U);
-    temp_r30 = fightTrainerAiGetFightOutPokemonSoubiItemSoubiDataId(arg0, arg1);
-    temp_r31 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, arg1, sp8, 0U, 1U);
-    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.8f, 1) == 1) {
-        var_r26 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x214U);
-    }
-    var_r22 = 0;
-    while (var_r22 < 4U) {
-        if (fightAi_GetTokuseiHaveFlag(arg0, arg1, *(u16 *)((u8 *)moukakeiTbl + ((var_r22 * 2) & 0x1FE))) == 1) {
-            u16 threshold = fightOutPokemonMaxHpWaruValue(arg1, 3U);
-            temp_r0 = (u16) temp_r28 - (u16) temp_r29;
-            if ((temp_r0 <= threshold) && (temp_r0 > 0)) {
-                var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x215U);
-            }
-        } else {
-            var_r22 += 1;
-            continue;
-        }
-
-        break;
-    }
-    temp_r28 = (u16) temp_r28 - (u16) temp_r29;
-    if ((temp_r28 <= (s32) ((s32) ((u16) temp_r27 * 0x14) / 100)) && (temp_r28 > 0)) {
-        temp_r29 = 0;
-        while ((s32) (u8)temp_r29 < (s32) temp_r31) {
-            temp_r0_2 = *(u16 *)((u8 *)sp8 + (((u8)temp_r29 * 2) & 0x1FE));
-            if ((temp_r0_2 == 0xAF) || (temp_r0_2 == 0xB3)) {
-                var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x216U);
-            }
-            temp_r29 += 1;
-            continue;
-
-            break;
-        }
-    }
-    if ((temp_r28 <= (s32)(u16) fightOutPokemonMaxHpWaruValue(arg1, 4U)) && (temp_r28 > 0)) {
-        var_r5 = 0;
-        while (var_r5 < 7U) {
-            if (temp_r30 == (u16) *(u16 *)((u8 *)statusUpKinomiTbl + ((var_r5 * 2) & 0x1FE))) {
-                var_r26 = fightTrainerAiAddValueByAddsubDataId(var_r26, arg0, 0x217U);
-            } else {
-                var_r5 += 1;
-                continue;
-            }
-
-            break;
-        }
-    }
-    return var_r26;
-}
-
-s32 fightTrainerAiWazaValueSiroikiri(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 (*var_r3)(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
-    s32 var_r31;
-    u16 temp_r3;
-
-    var_r31 = 0;
-    temp_r3 = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg3);
-    if ((temp_r3 != 0) && (temp_r3 != 0xFFFF) && (temp_r3 != 0x176) && (temp_r3 != 0x163)) {
-        var_r3 = wazaDB_GetFightTrainerAiWazaValueFuncPtr(temp_r3);
-        if (var_r3 == 0) {
-            var_r3 = fightTrainerAiWazaValueNull;
-        }
-        if ((var_r3 == fightTrainerAiWazaValueSubayasaDaun) || (var_r3 == fightTrainerAiWazaValueKougekiDaun) || (var_r3 == fightTrainerAiWazaValueBougyoDaun) || (var_r3 == fightTrainerAiWazaValueTokubouDaun) || (var_r3 == fightTrainerAiWazaValueMeityuuDaun) || (var_r3 == fightTrainerAiWazaValueKaihiDaun) || (var_r3 == fightTrainerAiWazaValueKusuguruDaun)) {
-            var_r31 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x207U);
-        }
-    }
-    return var_r31;
-}
-
-s32 fightTrainerAiWazaValueTedasuke(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp18[8];
-    u16 sp8[8];
-    u16 temp_r31;
-    s32 var_r30;
-    s32 temp_r27;
-    u8 var_r25;
-    u16 var_r24;
-    u16 var_r24_2;
-    u16 var_r24_3;
-    u16 var_r23_2;
-    u16 var_r23_3;
-    u16 var_r22_2;
-    u8 var_r22;
-    FightOutPokemon *temp_r4;
-    FightOutPokemon *temp_r4_2;
-    FightOutPokemon *temp_r4_3;
-    FightOutPokemon *temp_r3_2;
-    FightOutPokemon *temp_r3_4;
-    u16 temp_r3;
-    u16 temp_r3_5;
-    u16 var_r23;
-    void *temp_r3_3;
-
-    var_r30 = 0;
-    temp_r31 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp18, 1U, 1U);
-    var_r22 = 0;
-    var_r23 = 0;
-    while (var_r23 < (u32) *waza_data_number) {
-        if ((var_r23 != 0) && (var_r23 != 0x176) && (var_r23 != 0x163) && (fightTrainerAiIsWazaTypeId(arg0, var_r23, 1U) != 0) && (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, var_r23, 0) == 1)) {
-            var_r22 = 1;
-        }
-        var_r23 += 1;
-        continue;
-
-        break;
-    }
-    if (var_r22 == 1) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1F5U);
-    }
-    var_r23_2 = 0;
-    while (var_r23_2 < temp_r31) {
-        temp_r4 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r23_2 * 4) & 0x3FFFC));
-        if (arg1 != temp_r4) {
-            temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, temp_r4, sp8, 0U, 1U);
-            if (temp_r3 != 0) {
-                var_r22_2 = 0;
-                while (var_r22_2 < temp_r3) {
-                    if (fightTrainerAiIsWazaTypeId(arg0, *(u16 *)((u8 *)sp8 + ((var_r22_2 * 2) & 0x1FFFE)), 1U) != 0) {
-                        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F6U);
-                    } else {
-                        var_r22_2 += 1;
-                        continue;
-                    }
-
-                    break;
-                }
-            }
-        }
-        var_r23_2 += 1;
-        continue;
-
-        break;
-    }
-    var_r25 = 1;
-    var_r23_3 = 0;
-    while (var_r23_3 < temp_r31) {
-        temp_r27 = (var_r23_3 * 4) & 0x3FFFC;
-        temp_r3_2 = *(FightOutPokemon **)((u8 *)sp18 + temp_r27);
-        if ((arg1 != temp_r3_2) && (temp_r3_3 = fightOutPokemon_GetFightActionBuffPtr(temp_r3_2), ((temp_r3_3 == 0) == 0)) && (fightActionCheckValid(temp_r3_3) != 0)) {
-            if (fightActionGetKindDataId(temp_r3_3) != 0x13) {
-                var_r25 = 0;
-            } else if ((temp_r3_5 = fightOutPokemonGetUseWazaDataId(*(FightOutPokemon **)((u8 *)sp18 + temp_r27)), fightTrainerAiIsWazaTypeId(arg0, temp_r3_5, 1U) == 0)) {
-                var_r25 = 0;
-            } else {
-                goto block_29;
-            }
-        } else {
-block_29:
-            var_r23_3 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (var_r25 == 0) {
-        var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F7U);
-    }
-    var_r24 = 0;
-    while (var_r24 < temp_r31) {
-        temp_r4_2 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r24 * 4) & 0x3FFFC));
-        if ((arg1 != temp_r4_2) && (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, temp_r4_2, 0x12U) == 1)) {
-            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F8U);
-        } else {
-            var_r24 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r24_2 = 0;
-    while (var_r24_2 < temp_r31) {
-        temp_r3_4 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r24_2 * 4) & 0x3FFFC));
-        if ((arg1 != temp_r3_4) && (fightOutPokemon_GetNamakeFlag(temp_r3_4) != 0)) {
-            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1F9U);
-        } else {
-            var_r24_2 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r24_3 = 0;
-    while (var_r24_3 < temp_r31) {
-        temp_r4_3 = *(FightOutPokemon **)((u8 *)sp18 + ((var_r24_3 * 4) & 0x3FFFC));
-        if ((arg1 != temp_r4_3) && (_fightTrainerAiWazaValueIsFightOutPokemonNeoki__FP13FIGHT_TRAINERP15FightOutPokemon(arg0, temp_r4_3) == 0)) {
-            var_r30 = fightTrainerAiAddValueByAddsubDataId(var_r30, arg0, 0x1FAU);
-        } else {
-            var_r24_3 += 1;
-            continue;
-        }
-
-        break;
-    }
-    return var_r30;
-}
-
-s32 fightTrainerAiWazaValueOdareru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r27;
-    u16 temp_r28;
-    u16 temp_r29;
-    u16 temp_r29_2;
-    u8 var_r28;
-
-    var_r27 = 0;
-    temp_r29 = fightTrainerAiGetFightOutPokemonSpeAtk(arg0, arg3);
-    temp_r28 = fightTrainerAiGetFightOutPokemonPhyAtk(arg0, arg3);
-    temp_r29_2 = fightTrainerAiGetFightOutPokemonPhyDef(arg0, arg3);
-    if (temp_r28 > temp_r29) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1D6U);
-    }
-    if (temp_r28 > temp_r29_2) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D7U);
-    }
-    if (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x14U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D8U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D9U);
-    }
-    var_r28 = 0;
-    while (var_r28 < 5U) {
-        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)KonranWazaTbl + ((var_r28 * 2) & 0x1FE)), arg3) == 1) {
-            var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1DAU);
-        } else {
-            var_r28 += 1;
-            continue;
-        }
-
-        break;
-    }
-    return var_r27;
-}
-
-s32 fightTrainerAiWazaValueIbaru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r27;
-    u16 temp_r28;
-    u16 temp_r29;
-    u16 temp_r29_2;
-    u8 var_r28;
-
-    var_r27 = 0;
-    temp_r29 = fightTrainerAiGetFightOutPokemonSpeAtk(arg0, arg3);
-    temp_r28 = fightTrainerAiGetFightOutPokemonPhyAtk(arg0, arg3);
-    temp_r29_2 = fightTrainerAiGetFightOutPokemonPhyDef(arg0, arg3);
-    if (temp_r29 > temp_r28) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1D1U);
-    }
-    if (temp_r28 > temp_r29_2) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D2U);
-    }
-    if (fightTrainerAiIsFightOutPokemonTokuseiDataId(arg0, arg3, 0x14U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D3U);
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg3, 9U) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D4U);
-    }
-    var_r28 = 0;
-    while (var_r28 < 5U) {
-        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)KonranWazaTbl + ((var_r28 * 2) & 0x1FE)), arg3) == 1) {
-            var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x1D5U);
-        } else {
-            var_r28 += 1;
-            continue;
-        }
-
-        break;
-    }
-    return var_r27;
-}
-
-s32 fightTrainerAiWazaValueKoraeru(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightOutPokemon *sp1C[8];
-    u16 spC[8];
-    u16 sp8[2];
-    u8 temp_r30;
-    u16 temp_r28;
-    u16 temp_r27;
-    u16 var_r24;
-    s32 var_r23;
-    u16 var_r22;
-    u8 var_r20;
-    u16 var_r21;
-    u16 temp_r18;
-    u16 temp_r16;
-    u16 var_r16;
-    u8 var_r16_2;
-    FightOutPokemon *temp_r4;
-    s32 (*var_r3)(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
-    s32 (*var_r3_2)(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
-    u16 temp_r3;
-
-    var_r23 = 0;
-    temp_r30 = fightTrainerAiGetFightFloorNowTenkouDataId(arg0, 0, 1U);
-    temp_r16 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, sp1C, 1U, 1U);
-    temp_r18 = fightTrainerAiGetFightOutPokemonZokuseiDataIdAry(arg0, arg3, sp8);
-    temp_r27 = fightTrainerAiGetFightOutPokemonLastUseWazaDataId(arg0, arg1);
-    temp_r28 = fightTrainerAiGetFightOutPokemonSoubiItemSoubiDataId(arg0, arg1);
-    var_r20 = 0;
-    var_r21 = 0;
-    while (var_r21 < temp_r18) {
-        if (fightTrainerAiGetFightOutPokemonZokuseiDataIdWazaJoutaiDataId(arg0, arg1, *(u16 *)((u8 *)sp8 + ((var_r21 * 2) & 0x1FFFE)), fightTrainerAiGetWazaIryoku(arg0, arg2)) == 0x41) {
-            var_r20 = 1;
-        } else {
-            var_r21 += 1;
-            continue;
-        }
-
-        break;
-    }
-    if (var_r20 == 1) {
-        var_r23 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x1A9U);
-    }
-    if (fightTrainerAiIsFightOutPokemonNokoriHp(arg0, arg1, 0.5f, -1) == 1) {
-        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1AAU);
-    }
-    var_r24 = 0;
-    while (var_r24 < temp_r16) {
-        temp_r4 = *(FightOutPokemon **)((u8 *)sp1C + ((var_r24 * 4) & 0x3FFFC));
-        if ((arg1 != temp_r4) && (temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, temp_r4, spC, 0U, 1U), ((temp_r3 == 0) == 0))) {
-            var_r22 = 0;
-            while (var_r22 < temp_r3) {
-                var_r3 = wazaDB_GetFightTrainerAiWazaValueFuncPtr(*(u16 *)((u8 *)spC + ((var_r22 * 2) & 0x1FFFE)));
-                if (var_r3 == 0) {
-                    var_r3 = fightTrainerAiWazaValueNull;
-                }
-                if ((var_r3 == fightTrainerAiWazaValueJisin) || (var_r3 == fightTrainerAiWazaValueJibaku)) {
-                    var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1ABU);
-                } else {
-                    var_r22 += 1;
-                    continue;
-                }
-
-                break;
-            }
-            if (var_r22 >= temp_r3) {
-                goto block_21;
-            }
-        } else {
-block_21:
-            var_r24 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r16 = 0;
-    while (var_r16 < (u32) *waza_data_number) {
-        var_r3_2 = wazaDB_GetFightTrainerAiWazaValueFuncPtr(var_r16);
-        if (var_r3_2 == 0) {
-            var_r3_2 = fightTrainerAiWazaValueNull;
-        }
-        if (((var_r3_2 == fightTrainerAiWazaValueJisin) || (var_r3_2 == fightTrainerAiWazaValueJibaku)) && (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, var_r16, 0) == 1)) {
-            var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1ACU);
-        } else {
-            var_r16 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r16_2 = 0;
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 6U) == 1) {
-        var_r16_2 = 1;
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 3U) == 1) {
-        var_r16_2 = 1;
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 4U) == 1) {
-        var_r16_2 = 1;
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 5U) == 1) {
-        var_r16_2 = 1;
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x18U) == 1) {
-        var_r16_2 = 1;
-    }
-    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(arg0, arg1, 0x1CU) == 1) {
-        var_r16_2 = 1;
-    }
-    if (var_r16_2 == 1) {
-        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1ADU);
-    }
-    if ((temp_r27 == 0xCB) && (fightOutPokemon_GetSuccessCnt(arg1) != 0)) {
-        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1AEU);
-    }
-    if ((temp_r28 != 0x11) && (temp_r28 != 0xF)) {
-        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1AFU);
-    }
-    if (fightTrainerAiGetFightOutPokemonNowHp(arg0, arg1) == 1) {
-        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1B0U);
-    }
-    if ((temp_r30 == 4) || (temp_r30 == 3)) {
-        var_r23 = fightTrainerAiAddValueByAddsubDataId(var_r23, arg0, 0x1B1U);
-    }
-    return var_r23;
-}
-
-s32 fightTrainerAiWazaValueNemurare(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    FightPokemon *sp8[24];
-    u16 temp_r29;
-    u16 var_r28;
-    s32 var_r27;
-    u16 var_r26;
-
-    var_r27 = 0;
-    temp_r29 = fightFloorGetFightTrainerFightPokemonPtrAry(0, arg0, sp8, 0U, 1U);
-    if (fightTrainerAiIsFightOutPokemonJoutaiNormal(arg0, arg3) == 1) {
-        var_r27 = fightTrainerAiAddValueByAddsubDataId(0, arg0, 0x181U);
-    }
-    var_r26 = 0;
-    while (var_r26 < temp_r29) {
-        if ((fightOutPokemon_GetMotoFightPokemonPtr(arg3) != sp8[var_r26]) && (fightTrainerAiIsFightPokemonJoutaiDataId(arg0, sp8[var_r26], 8U) == 1)) {
-            var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x182U);
-        } else {
-            var_r26 += 1;
-            continue;
-        }
-
-        break;
-    }
-    var_r28 = 0;
-    while (var_r28 < 0x12U) {
-        if (fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(0, arg0, 1U, 1U, *(u16 *)((u8 *)joutaiIzyouWazaTbl + ((var_r28 * 2) & 0x1FFFE)), arg3) == 1) {
-            var_r27 = fightTrainerAiAddValueByAddsubDataId(var_r27, arg0, 0x183U);
-        } else {
-            var_r28 += 1;
-            continue;
-        }
-
-        break;
-    }
-    return var_r27;
-}
-
-
-
-
-s32 fightTrainerAiWazaValueHimitunotikara(FIGHT_TRAINER *arg0, FightOutPokemon *arg1, u16 arg2, FightOutPokemon *arg3) {
-    s32 var_r31;
-    u8 temp_r3;
-
-    var_r31 = 0;
-    temp_r3 = tikeiDataBiosGetFightKoukaId(fightFloor_GetTikeiDataId(0));
-    switch (temp_r3) {
-    case 2:
-        var_r31 = fightTrainerAiWazaValueTuikaDoku(arg0, arg1, arg2, arg3);
-        break;
-    case 1:
-        var_r31 = fightTrainerAiWazaValueTuikaNemuri(arg0, arg1, arg2, arg3);
-        break;
-    case 27:
-        var_r31 = fightTrainerAiWazaValueTuikouMeityuuDaun(arg0, arg1, arg2, arg3);
-        break;
-    case 23:
-        var_r31 = fightTrainerAiWazaValueTuikouBougyoDaun(arg0, arg1, arg2, arg3);
-        break;
-    case 22:
-        var_r31 = fightTrainerAiWazaValueOororabiimu(arg0, arg1, arg2, arg3);
-        break;
-    case 24:
-        var_r31 = fightTrainerAiWazaValueTuikouSubayasaDaun(arg0, arg1, arg2, arg3);
-        break;
-    case 7:
-        var_r31 = fightTrainerAiWazaValueTuikouKonran(arg0, arg1, arg2, arg3);
-        break;
-    case 8:
-        var_r31 = fightTrainerAiWazaValueTuikaHirumi(arg0, arg1, arg2, arg3);
-        break;
-    case 5:
-        var_r31 = fightTrainerAiWazaValueTuikaMahi(arg0, arg1, arg2, arg3);
-        break;
-    }
-    return var_r31;
-}
-
-
-
-#ifdef __cplusplus
-}
-#endif
+#pragma force_active reset

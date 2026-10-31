@@ -2,6 +2,8 @@
 #include <game/pxdvs/app/hero/hero.hpp>
 #include <global.h>
 
+#pragma force_active on
+
 struct DbgScreenFilter {
     u8 v[7];
 };
@@ -79,6 +81,111 @@ static const char* _dbgMenuMovieTestGetStr(unsigned long index);
 
 extern "C" {
 
+s32 dbgMenuGetRootMenu(void);
+
+s32 dbgMenuPeopleViewerRintoOnOff(void);
+s32 dbgMenuPeopleViewerMouthOnOff(void);
+s32 dbgMenuPeopleViewerEyeOnOff(void);
+s32 dbgMenuPeopleViewerAnim(void);
+s32 dbgMenuPeopleViewerPlaySpeed(void);
+s32 dbgMenuPeopleViewerMotion(void);
+s32 dbgMenuPeopleViewerChara(void);
+
+s32 dbgMenuSoundVolumeDisp(void);
+
+s32 dbgMenuGSresDumpGroup(void);
+
+s32 dbgMenuDbgPokemonGet(void);
+
+s32 dbgMenuSetHeroStyleSnatch(void);
+
+s32 dbgMenuSetHeroStyleVisor(void);
+
+s32 dbgMenuSetHeroStyleNormal(void);
+
+s32 dbgMenuScriptFlagAllClear(void);
+
+s32 dbgMenuKleinPTin(void);
+
+s32 dbgMenuGirlPTin(void);
+
+s32 dbgMenuManaPTin(void);
+
+s32 dbgMenuPTout(void);
+
+s32 dbgMenuScriptLightEdt(void);
+
+s32 dbgMenuScriptHumanColision(void);
+
+s32 dbgMenuScriptSoundTest(void);
+
+s32 dbgMenuScriptYesNoMsgTest(void);
+
+s32 dbgMenuScriptMsgTest(void);
+
+s32 dbgMenuScriptDispLine(void);
+
+s32 debugMenuChangeAMemInfo(void);
+
+s32 dbgMenuMovieTest(void);
+
+}
+
+static const char* _dbgMenuMovieTestGetStr(unsigned long index);
+
+extern "C" {
+
+s32 dbgMenuSetPAL60(void);
+
+s32 dbgMenuSetPAL50(void);
+
+s32 dbgMenuGSmemOptimize(void);
+
+s32 dbgMenuGSmemDispMap(void);
+
+s32 dbgMenuGSmemCheck(void);
+
+s32 dbgMenuScreenFilterHi(void);
+
+s32 dbgMenuScreenFilterMed(void);
+
+s32 dbgMenuScreenFilterLow(void);
+
+s32 dbgMenuScreenFilterDefault(void);
+
+s32 dbgMenuScreenFilterOff(void);
+
+s32 dbgMenuFrameLockToggle(void);
+
+s32 dbgMenuFrameRate15(void);
+
+s32 dbgMenuFrameRate20(void);
+
+s32 dbgMenuFrameRate30(void);
+
+s32 dbgMenuFrameRate60(void);
+
+s32 dbgMenuSendAllMail(void);
+
+s32 dbgMenuSendMail(void);
+
+s32 dbgMenuColisionDisp(s32 id);
+
+s32 debugMenuColorBarDisp(void);
+
+s32 debugMenuShadowBorderDisp(void);
+
+s32 debugMenuNodrawArea(void);
+
+s32 debugMenuChangeMemInfo(void);
+
+s32 debugMenuChangePerfBar(void);
+
+}
+
+
+
+
 s32 dbgMenuGetRootMenu(void) {
     switch (pokecoloGetRomVersion()) {
     case 2:
@@ -90,11 +197,17 @@ s32 dbgMenuGetRootMenu(void) {
 }
 
 s32 dbgMenuPeopleViewerRintoOnOff(void) { return 0; }
+
 s32 dbgMenuPeopleViewerMouthOnOff(void) { return 0; }
+
 s32 dbgMenuPeopleViewerEyeOnOff(void) { return 0; }
+
 s32 dbgMenuPeopleViewerAnim(void) { return 0; }
+
 s32 dbgMenuPeopleViewerPlaySpeed(void) { return 0; }
+
 s32 dbgMenuPeopleViewerMotion(void) { return 0; }
+
 s32 dbgMenuPeopleViewerChara(void) { return 0; }
 
 s32 dbgMenuSoundVolumeDisp(void) {
@@ -403,8 +516,6 @@ s32 dbgMenuMovieTest(void) {
     return 0;
 }
 
-}
-
 static const char* _dbgMenuMovieTestGetStr(unsigned long index) {
     static const char* test_movie_str[16] = {
         "tv_news_common",
@@ -431,8 +542,6 @@ static const char* _dbgMenuMovieTestGetStr(unsigned long index) {
     GScharMakeFromSJIS(strbuf, test_movie_str[index]);
     return strbuf;
 }
-
-extern "C" {
 
 s32 dbgMenuSetPAL60(void) {
     GSgfxVideoSetMode(2, 1, 0, 1, 0);
@@ -623,4 +732,4 @@ s32 debugMenuChangePerfBar(void) {
     return 0;
 }
 
-}
+#pragma force_active reset

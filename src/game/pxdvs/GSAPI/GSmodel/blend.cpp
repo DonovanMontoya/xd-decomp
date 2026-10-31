@@ -1,4 +1,5 @@
-
+#pragma force_active on
+// Deferred code generation emits these definitions in reverse order.
 #include <dolphin/types.h>
 
 #pragma pool_strings off
@@ -80,7 +81,69 @@ static void _modelIntpJObj(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t);
 void modelIntpJObjRotate(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
 static void _modelSetRotateEulerToQuatAll(HSD_JObj* jobj);
 
+extern "C" {
 
+}
+
+extern "C++" {
+static inline bool HSD_JObjMtxIsDirty(HSD_JObj* jobj);
+}
+extern "C++" {
+static inline void HSD_JObjSetMtxDirty(HSD_JObj* jobj);
+}
+extern "C++" {
+static inline void HSD_JObjSetRotation(HSD_JObj* jobj, Quaternion* quat);
+}
+extern "C++" {
+static inline void HSD_JObjGetRotation(HSD_JObj* jobj, Quaternion* quat);
+}
+extern "C++" {
+static inline void HSD_JObjSetScale(HSD_JObj* jobj, GSvec* scale);
+}
+extern "C++" {
+static inline void HSD_JObjGetScale(HSD_JObj* jobj, GSvec* scale);
+}
+extern "C++" {
+static inline void HSD_JObjSetTranslate(HSD_JObj* jobj, GSvec* translate);
+}
+extern "C++" {
+static inline void HSD_JObjGetTranslate(HSD_JObj* jobj, GSvec* translate);
+}
+extern "C++" {
+static inline void _modelIntpScale(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
+}
+extern "C++" {
+static inline void _modelIntpTrans(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
+}
+extern "C" {
+void GSmodelDisableAnimBlend(_GSmodel* model);
+}
+extern "C" {
+void GSmodelEnableAnimBlend(_GSmodel* model);
+}
+extern "C++" {
+void modelCalculateBlendModel(_GSmodel* model, f32 rate);
+}
+extern "C++" {
+static void _modelIntpJObjAll(_GSmodel* model, HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, f32 rate);
+}
+extern "C++" {
+static void _modelIntpJObj(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t);
+}
+extern "C++" {
+void modelIntpJObjRotate(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
+}
+extern "C++" {
+void modelIntpJObjScale(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
+}
+extern "C++" {
+void modelIntpJObjTrans(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags);
+}
+extern "C++" {
+static void _modelSetRotateEulerToQuatAll(HSD_JObj* jobj);
+}
+
+extern "C++" {
 static inline bool HSD_JObjMtxIsDirty(HSD_JObj* jobj) {
     bool result;
     if (!jobj) {
@@ -92,13 +155,17 @@ static inline bool HSD_JObjMtxIsDirty(HSD_JObj* jobj) {
     }
     return result;
 }
+}
 
+extern "C++" {
 static inline void HSD_JObjSetMtxDirty(HSD_JObj* jobj) {
     if (jobj != 0 && !HSD_JObjMtxIsDirty(jobj)) {
         HSD_JObjSetMtxDirtySub(jobj);
     }
 }
+}
 
+extern "C++" {
 static inline void HSD_JObjSetRotation(HSD_JObj* jobj, Quaternion* quat) {
     if (!jobj) {
         __assert("jobj.h", 656, "jobj");
@@ -108,14 +175,18 @@ static inline void HSD_JObjSetRotation(HSD_JObj* jobj, Quaternion* quat) {
         HSD_JObjSetMtxDirty(jobj);
     }
 }
+}
 
+extern "C++" {
 static inline void HSD_JObjGetRotation(HSD_JObj* jobj, Quaternion* quat) {
     if (!jobj) {
         __assert("jobj.h", 733, "jobj");
     }
     *quat = jobj->rotate;
 }
+}
 
+extern "C++" {
 static inline void HSD_JObjSetScale(HSD_JObj* jobj, GSvec* scale) {
     if (!jobj) {
         __assert("jobj.h", 790, "jobj");
@@ -125,14 +196,18 @@ static inline void HSD_JObjSetScale(HSD_JObj* jobj, GSvec* scale) {
         HSD_JObjSetMtxDirty(jobj);
     }
 }
+}
 
+extern "C++" {
 static inline void HSD_JObjGetScale(HSD_JObj* jobj, GSvec* scale) {
     if (!jobj) {
         __assert("jobj.h", 849, "jobj");
     }
     *scale = jobj->scale;
 }
+}
 
+extern "C++" {
 static inline void HSD_JObjSetTranslate(HSD_JObj* jobj, GSvec* translate) {
     if (!jobj) {
         __assert("jobj.h", 937, "jobj");
@@ -142,14 +217,18 @@ static inline void HSD_JObjSetTranslate(HSD_JObj* jobj, GSvec* translate) {
         HSD_JObjSetMtxDirty(jobj);
     }
 }
+}
 
+extern "C++" {
 static inline void HSD_JObjGetTranslate(HSD_JObj* jobj, GSvec* translate) {
     if (!jobj) {
         __assert("jobj.h", 996, "jobj");
     }
     *translate = jobj->translate;
 }
+}
 
+extern "C++" {
 static inline void _modelIntpScale(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
     f32 s = 1.0f - t;
     GSvec va;
@@ -166,7 +245,9 @@ static inline void _modelIntpScale(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 
     }
     HSD_JObjSetScale(dst, &scale);
 }
+}
 
+extern "C++" {
 static inline void _modelIntpTrans(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
     f32 s = 1.0f - t;
     GSvec va;
@@ -183,40 +264,107 @@ static inline void _modelIntpTrans(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 
     }
     HSD_JObjSetTranslate(dst, &translate);
 }
-
-extern "C" {
-
-void GSmodelDisableAnimBlend(_GSmodel* model) {
-    f32 rate = GSmodelGetAnimRate(model);
-    model->flags &= ~0x80;
-    if (model->blendDest != 0) {
-        GSmodelSetAnimRate(model, rate);
-        GSgfxRenderWaitForDrawComplete();
-        HSD_JObjUnref(model->blendJObj);
-        HSD_JObjUnref(model->blendDest);
-        model->blendJObj = 0;
-        model->blendDest = 0;
-    }
 }
 
-void GSmodelEnableAnimBlend(_GSmodel* model) {
-    if (model->blendDest == 0) {
-        model->blendJObj = HSD_JObjLoadJoint(model->set->joint);
-        model->blendDest = HSD_JObjLoadJoint(model->set->joint);
-        _modelSetRotateEulerToQuatAll(model->blendDest);
+extern "C++" {
+static void _modelSetRotateEulerToQuatAll(HSD_JObj* jobj) {
+    HSD_JObj* child;
+
+    if (jobj == 0) {
+        return;
+    }
+    HSD_JObjSetFlags(jobj, JOBJ_USE_QUATERNION);
+    if (jobj->flags & JOBJ_INSTANCE) {
+        return;
+    }
+    for (child = jobj->child; child != 0; child = child->next) {
+        _modelSetRotateEulerToQuatAll(child);
     }
 }
-
 }
 
-void modelCalculateBlendModel(_GSmodel* model, f32 rate) {
-    if (model->blendDest != 0) {
-        _modelIntpJObjAll(model, model->jobj, model->blendJObj, model->blendDest, model->blendFactor, rate);
-        model->flags &= ~0x200;
+extern "C++" {
+void modelIntpJObjTrans(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
+    f32 s = 1.0f - t;
+    GSvec va;
+    GSvec vb;
+    GSvec translate;
+
+    HSD_JObjGetTranslate(a, &va);
+    HSD_JObjGetTranslate(b, &vb);
+    translate.x = va.x * s + vb.x * t;
+    translate.y = va.y * s + vb.y * t;
+    translate.z = va.z * s + vb.z * t;
+    if (mix != 0) {
+        modelCalculatePartMix(&translate, mix, mixFlags);
     }
+    HSD_JObjSetTranslate(dst, &translate);
+}
+}
+
+extern "C++" {
+void modelIntpJObjScale(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
+    f32 s = 1.0f - t;
+    GSvec va;
+    GSvec vb;
+    GSvec scale;
+
+    HSD_JObjGetScale(a, &va);
+    HSD_JObjGetScale(b, &vb);
+    scale.x = va.x * s + vb.x * t;
+    scale.y = va.y * s + vb.y * t;
+    scale.z = va.z * s + vb.z * t;
+    if (mix != 0) {
+        modelCalculatePartMix(&scale, mix, mixFlags);
+    }
+    HSD_JObjSetScale(dst, &scale);
+}
+}
+
+extern "C++" {
+void modelIntpJObjRotate(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
+    GSvec ea;
+    GSvec eb;
+    Quaternion result;
+    Quaternion qa;
+    Quaternion qb;
+
+    HSD_JObjGetRotation(a, &qa);
+    HSD_JObjGetRotation(b, &qb);
+    ea.x = qa.x;
+    ea.y = qa.y;
+    ea.z = qa.z;
+    eb.x = qb.x;
+    eb.y = qb.y;
+    eb.z = qb.z;
+    if (mix != 0) {
+        modelCalculatePartMix(&ea, mix, mixFlags);
+        modelCalculatePartMix(&eb, mix, mixFlags);
+    }
+    EulerToQuat(&ea, &qa);
+    EulerToQuat(&eb, &qb);
+    if ((qa.x - qb.x) * (qa.x - qb.x) + (qa.y - qb.y) * (qa.y - qb.y) + (qa.z - qb.z) * (qa.z - qb.z) + (qa.w - qb.w) * (qa.w - qb.w) >
+        (qa.x + qb.x) * (qa.x + qb.x) + (qa.y + qb.y) * (qa.y + qb.y) + (qa.z + qb.z) * (qa.z + qb.z) + (qa.w + qb.w) * (qa.w + qb.w)) {
+        qb.x = -qb.x;
+        qb.y = -qb.y;
+        qb.z = -qb.z;
+        qb.w = -qb.w;
+    }
+    QuatSlerp(&qa, &qb, &result, t);
+    HSD_JObjSetRotation(dst, &result);
+}
+}
+
+extern "C++" {
+static void _modelIntpJObj(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t) {
+    _modelIntpTrans(a, b, dst, t, 0, 0);
+    _modelIntpScale(a, b, dst, t, 0, 0);
+    modelIntpJObjRotate(a, b, dst, t, 0, 0);
+}
 }
 
 #pragma dont_inline on
+extern "C++" {
 static void _modelIntpJObjAll(_GSmodel* model, HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, f32 rate) {
     HSD_AObj* aobj;
     u8 animated;
@@ -250,92 +398,39 @@ static void _modelIntpJObjAll(_GSmodel* model, HSD_JObj* a, HSD_JObj* b, HSD_JOb
         }
     }
 }
-
+}
 #pragma dont_inline reset
 
-static void _modelIntpJObj(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t) {
-    _modelIntpTrans(a, b, dst, t, 0, 0);
-    _modelIntpScale(a, b, dst, t, 0, 0);
-    modelIntpJObjRotate(a, b, dst, t, 0, 0);
+extern "C++" {
+void modelCalculateBlendModel(_GSmodel* model, f32 rate) {
+    if (model->blendDest != 0) {
+        _modelIntpJObjAll(model, model->jobj, model->blendJObj, model->blendDest, model->blendFactor, rate);
+        model->flags &= ~0x200;
+    }
+}
 }
 
-void modelIntpJObjRotate(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
-    GSvec ea;
-    GSvec eb;
-    Quaternion result;
-    Quaternion qa;
-    Quaternion qb;
-
-    HSD_JObjGetRotation(a, &qa);
-    HSD_JObjGetRotation(b, &qb);
-    ea.x = qa.x;
-    ea.y = qa.y;
-    ea.z = qa.z;
-    eb.x = qb.x;
-    eb.y = qb.y;
-    eb.z = qb.z;
-    if (mix != 0) {
-        modelCalculatePartMix(&ea, mix, mixFlags);
-        modelCalculatePartMix(&eb, mix, mixFlags);
+extern "C" {
+void GSmodelEnableAnimBlend(_GSmodel* model) {
+    if (model->blendDest == 0) {
+        model->blendJObj = HSD_JObjLoadJoint(model->set->joint);
+        model->blendDest = HSD_JObjLoadJoint(model->set->joint);
+        _modelSetRotateEulerToQuatAll(model->blendDest);
     }
-    EulerToQuat(&ea, &qa);
-    EulerToQuat(&eb, &qb);
-    if ((qa.x - qb.x) * (qa.x - qb.x) + (qa.y - qb.y) * (qa.y - qb.y) + (qa.z - qb.z) * (qa.z - qb.z) + (qa.w - qb.w) * (qa.w - qb.w) >
-        (qa.x + qb.x) * (qa.x + qb.x) + (qa.y + qb.y) * (qa.y + qb.y) + (qa.z + qb.z) * (qa.z + qb.z) + (qa.w + qb.w) * (qa.w + qb.w)) {
-        qb.x = -qb.x;
-        qb.y = -qb.y;
-        qb.z = -qb.z;
-        qb.w = -qb.w;
-    }
-    QuatSlerp(&qa, &qb, &result, t);
-    HSD_JObjSetRotation(dst, &result);
+}
 }
 
-void modelIntpJObjScale(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
-    f32 s = 1.0f - t;
-    GSvec va;
-    GSvec vb;
-    GSvec scale;
-
-    HSD_JObjGetScale(a, &va);
-    HSD_JObjGetScale(b, &vb);
-    scale.x = va.x * s + vb.x * t;
-    scale.y = va.y * s + vb.y * t;
-    scale.z = va.z * s + vb.z * t;
-    if (mix != 0) {
-        modelCalculatePartMix(&scale, mix, mixFlags);
+extern "C" {
+void GSmodelDisableAnimBlend(_GSmodel* model) {
+    f32 rate = GSmodelGetAnimRate(model);
+    model->flags &= ~0x80;
+    if (model->blendDest != 0) {
+        GSmodelSetAnimRate(model, rate);
+        GSgfxRenderWaitForDrawComplete();
+        HSD_JObjUnref(model->blendJObj);
+        HSD_JObjUnref(model->blendDest);
+        model->blendJObj = 0;
+        model->blendDest = 0;
     }
-    HSD_JObjSetScale(dst, &scale);
 }
-
-void modelIntpJObjTrans(HSD_JObj* a, HSD_JObj* b, HSD_JObj* dst, f32 t, GSvec* mix, u32 mixFlags) {
-    f32 s = 1.0f - t;
-    GSvec va;
-    GSvec vb;
-    GSvec translate;
-
-    HSD_JObjGetTranslate(a, &va);
-    HSD_JObjGetTranslate(b, &vb);
-    translate.x = va.x * s + vb.x * t;
-    translate.y = va.y * s + vb.y * t;
-    translate.z = va.z * s + vb.z * t;
-    if (mix != 0) {
-        modelCalculatePartMix(&translate, mix, mixFlags);
-    }
-    HSD_JObjSetTranslate(dst, &translate);
-}
-
-static void _modelSetRotateEulerToQuatAll(HSD_JObj* jobj) {
-    HSD_JObj* child;
-
-    if (jobj == 0) {
-        return;
-    }
-    HSD_JObjSetFlags(jobj, JOBJ_USE_QUATERNION);
-    if (jobj->flags & JOBJ_INSTANCE) {
-        return;
-    }
-    for (child = jobj->child; child != 0; child = child->next) {
-        _modelSetRotateEulerToQuatAll(child);
-    }
 }

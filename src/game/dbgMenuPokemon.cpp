@@ -1,5 +1,7 @@
 #include <dolphin/types.h>
 
+#pragma force_active on
+
 typedef struct DbgMenuPokemonKeyInfo {
     u16 held;
     u16 unk2;
@@ -1263,3 +1265,5 @@ static s32 dbgMenuPokemonEditSubGetTotalEffort(s32 pokemon) {
 #ifdef __cplusplus
 }
 #endif
+
+#pragma force_active reset

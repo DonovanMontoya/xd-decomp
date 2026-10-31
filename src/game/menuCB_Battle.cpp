@@ -1,5 +1,7 @@
 #include <dolphin/types.h>
 
+#pragma force_active on
+
 #pragma peephole off
 
 struct Hero {
@@ -311,3 +313,5 @@ s32 menuCB_InitBattle(BattleWork* work) {
 
 static void _menuCBBattle_DeleteAllItem(Hero* hero) {
 }
+
+#pragma force_active reset

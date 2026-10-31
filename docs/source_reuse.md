@@ -110,6 +110,18 @@ Additional adaptations use XD commit
 | `game/pxdvs/app/flashmenu/flashcalc.cpp` | `flcalcMultiTransformColor` |
 | `game/pxdvs/GSAPI/GSshape/GSshape.cpp` | `shapePrimitiveEditorRender` |
 | `game/pxdvs/GSAPI/GSgfxM/layerState.cpp` | `renderState_NL_VC_T__10GSgfxLayerFUc`, `renderState_NL_NVC_T__10GSgfxLayerFUc` |
+| `game/pxdvs/GSAPI/GSmsg/GSmsg.cpp` | `GSmsgGetGSchar` |
+| `game/pxdvs/app/wazaSequence/wazaSequenceSys.cpp` | `wazaSequenceSysFreeSequenceResource__FP13ModelSequence` |
+| `game/pxdvs/app/wazaSequence/wazaSequenceEntry.cpp` | `Start__10SoundEntryFv` |
+| `game/pxdvs/app/fight/fightTrainerAi.cpp` | `fightAi_SelectDefPoke`, `fightAi_AttackResult` |
+
+Two unused math helpers were also restored from the Colosseum checkpoint above:
+`HSD_MtxGetScaleMelee` in `src/hsd/mtx.c`, adapted in
+`src/game/maximum/GSAPI/baselib/mtx_base.cpp`, and `HSD_QuatLib_8037ECE0` in
+`src/hsd/quatlib.c`, adapted as `QuatFromAxisAngle` in
+`src/game/maximum/GSAPI/baselib/quatlib.cpp`. Their shared literals restore the
+retail data layout; the linker strips the unused helper code. Both linked units
+were verified against the retail DOL hash.
 
 ## Colosseum license notice
 

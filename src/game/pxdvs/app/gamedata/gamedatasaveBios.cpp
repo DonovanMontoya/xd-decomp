@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 #pragma dont_inline on
 extern "C" {
@@ -32,3 +33,4 @@ void gamedatasaveBiosSetPtr(GamedataSaveRecord* dst,const GamedataSavePayload* s
 GamedataSavePayload* gamedatasaveBiosGetPtr(GamedataSaveRecord* p){if(p==0)return 0;return &p->payload;}
 void gamedatasaveInit(GamedataSaveRecord* p){GamedataSavePayload* pl; if(p==0)pl=0; else pl=&p->payload; if(pl)pl->parChecksum=0;}
 }
+#pragma force_active reset

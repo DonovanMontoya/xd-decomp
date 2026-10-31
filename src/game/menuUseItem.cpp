@@ -3,6 +3,8 @@
 #include <game/pxdvs/app/hero/hero.hpp>
 #include <game/menuSubLayout.hpp>
 
+#pragma force_active on
+
 struct ItemCraneMemo {
     u16 item;
     u16 index;
@@ -160,6 +162,79 @@ s32 menuUseItemScriptCologn(u32 item, s32 slot);
 s32 menuUseItemWPointUp(u32 item, s32* out);
 }
 
+static u32 getPokemonData(Pokemon* pokemon);
+
+static u16 playPokemonVoice(Pokemon* pokemon);
+
+static void waitTime(float seconds);
+
+static s32 dispMsgYesNo(unsigned long msg);
+
+static void dispMsg(unsigned long msg);
+
+static void playRecoverSE(unsigned long item);
+
+static void wazaLean(Pokemon* pokemon, unsigned short move, unsigned char slot);
+
+static s8 cbForgetWazaSelect(Pokemon* pokemon, unsigned short move, long slot);
+
+static s32 wazaMachineProc(Pokemon* pokemon, int machine);
+
+static void getLogMsgBattle(unsigned short* buf, int len, ITEMUSE2POKEMON_LOG1* log, short count, Pokemon* pokemon);
+
+static void getLogMsgField(unsigned short* buf, int len, ITEMUSE2POKEMON_LOG1* log, short count, Pokemon* pokemon);
+
+static void getPokemonLvupStatus(MENU_LVUP_STATUS* status, Pokemon* pokemon);
+
+static void getDifLvupStatus(MENU_LVUP_STATUS* out, MENU_LVUP_STATUS* a, MENU_LVUP_STATUS* b);
+
+extern "C" {
+
+s32 menuUseItemEventUsohachiPhoto(u32 item, s32* out);
+
+s32 menuUseItemEventMirraboradar(u32 item, s32* out);
+
+s32 menuUseItemEventCraneMemo(u32 item, s32* out);
+
+s32 menuUseItemEventNotConsum(u32 item, s32* out);
+
+s32 menuUseItemBattleNazonomi(u32 item, s32* out);
+
+s32 menuUseItemFieldNazonomi(u32 item, s32* out);
+
+s32 menuUseItemStatusUp(u32 item, s32* out);
+
+s32 menuUseItemCologn(u32 item, s32* out);
+
+s32 menuUseItemEvolution(u32 item, s32* out);
+
+s32 menuUseItemSkill(u32 item, s32* out);
+
+s32 menuUseItemRecovery(u32 item, s32* out);
+
+s32 menuUseItemAlldeathRcv(u32 item, s32* out);
+
+s32 menuUseItemPPRecovery(u32 item, s32* out);
+
+s32 menuUseItemBattleBall(u32 item, s32* out);
+
+s32 menuUseItemListLVUp(u32 item, s32* out);
+
+s32 menuUseItemWPointUp(u32 item, s32* out);
+
+s32 menuUseItemScriptCologn(u32 item, s32 slot);
+
+s32 menuUseItemNoPokecolo(u32 item, s32* out);
+
+s32 menuUseItemNoEffects(u32 item, s32* out);
+
+s32 menuUseItemDummy(u32 item, s32* out);
+
+}
+
+
+
+
 static u32 getPokemonData(Pokemon* pokemon) {
     if (pokemon == 0) {
         return 0;
@@ -191,111 +266,11 @@ static void waitTime(float seconds) {
     }
 }
 
-static s32 dispMsgYesNo(unsigned long msg) {
-    s8 answer;
-    winMsgOpen(2, msg, 1, 0);
-    answer = menuSubOpenYesNo(0, -1, -1, 0);
-    winMsgClose(1);
-    switch (answer) {
-    case 0:
-        return 0;
-    case 1:
-        return 1;
-    default:
-        return 2;
-    }
-}
-
-static void dispMsg(unsigned long msg) {
-    switch (msg) {
-    case 0xC368:
-    case 0xC369:
-    case 0xC371:
-    case 0xC372:
-        GSsndPlayNow(0x13);
-        break;
-    }
-    if (windowSearchID(0x4C) == 0) {
-        winMsgOpen(2, msg, 1, 0);
-    } else {
-        winMsgOpen(2, msg, 0, 0);
-        do {
-            menuOffScreenSetPriority(0);
-            GSthreadSwitch();
-        } while (winMsgCheck() != 0);
-    }
-    winMsgClose(1);
-}
-
 static void playRecoverSE(unsigned long item) {
     s32 index;
     u16 local[5] = {0x27,0x28,0x29,0x2A,0x2B};
     for(index=0;index<5;index++){if(item==local[index])break;}
     GSsndPlayNow(index<5?0x20:0x1F);
-}
-
-static void wazaLean(Pokemon* pokemon, unsigned short move, unsigned char slot) {
-    s32 soubi;
-    pokemonWazaCreate(pokemon, slot, move);
-    soubi = pokemonGetSoubiItemSoubiDataId(pokemon);
-    pokemonGetFriendFormPokemonFriendFilterId(pokemon, soubi, 4);
-}
-
-static s8 cbForgetWazaSelect(Pokemon* pokemon, unsigned short move, long slot) {
-    s32 result;
-    fadeSet(3, 0.5f);
-    fadeCheck(1);
-    result = menuPokemonStatusOpenWazaMachine(pokemon, move);
-    if (result >= 4) {
-        result = -1;
-    }
-    fadeSet(2, 0.5f);
-    fadeCheck(1);
-    return result;
-}
-
-static s32 wazaMachineProc(Pokemon* pokemon, int machine) {
-    u8 slot;
-    u16 moveCopy;
-    s32 i;
-    s32 learned;
-    u16 move;
-    menuOffScreenSetPriority(0);
-    if (pokemonIsDarkPokemon(pokemon)) {
-        dispMsg(0xC371);
-        return 0;
-    }
-    move = itemDataBiosGetWazaIDByWazaMachineNo(machine);
-    moveCopy = move;
-    i = 0;
-    for (;;) {
-        if (moveCopy == pokemonBiosGetPokemonWazaDataId(pokemon, i)) {
-            break;
-        }
-        i++;
-        if (i >= 4) {
-            break;
-        }
-    }
-    if (i < 4) {
-        s32 nick = pokemonBiosGetNicknamePtr(pokemon);
-        msgctrlSetValue(0x32, nick);
-        msgctrlSetValue(0x39, (u16)move);
-        dispMsg(0xC368);
-        return 0;
-    }
-    pokemonBiosGetPokemonDataId(pokemon);
-    if (pokemonDataBiosGetWazaMcn(pokemonDataBiosGetPtr(), machine) == 0) {
-        msgctrlSetValue(0x32, pokemonBiosGetNicknamePtr(pokemon));
-        msgctrlSetValue(0x39, (u16)move);
-        dispMsg(0xC369);
-        return 0;
-    }
-    learned = evolutionWazaLearn(pokemon, move, &slot, 1, cbForgetWazaSelect, 0);
-    if (learned != 0) {
-        wazaLean(pokemon, move, slot);
-    }
-    return learned;
 }
 
 static void getLogMsgBattle(unsigned short* buf, int len, ITEMUSE2POKEMON_LOG1* log, short count, Pokemon* pokemon) {
@@ -436,25 +411,41 @@ static void getLogMsgField(unsigned short* buf, int len, ITEMUSE2POKEMON_LOG1* l
     GSmsgMakeGScharStr(buf, len + 1, msg);
 }
 
-static void getPokemonLvupStatus(MENU_LVUP_STATUS* status, Pokemon* pokemon) {
-    status->hp = pokemonGetStatus(pokemon, 0, 0x87, 0);
-    status->attack = pokemonGetStatus(pokemon, 0, 0x88, 0);
-    status->defense = pokemonGetStatus(pokemon, 0, 0x89, 0);
-    status->spDefense = pokemonGetStatus(pokemon, 0, 0x8A, 0);
-    status->speed = pokemonGetStatus(pokemon, 0, 0x8B, 0);
-    status->spAttack = pokemonGetStatus(pokemon, 0, 0x8C, 0);
+static s32 dispMsgYesNo(unsigned long msg) {
+    s8 answer;
+    winMsgOpen(2, msg, 1, 0);
+    answer = menuSubOpenYesNo(0, -1, -1, 0);
+    winMsgClose(1);
+    switch (answer) {
+    case 0:
+        return 0;
+    case 1:
+        return 1;
+    default:
+        return 2;
+    }
 }
 
-static void getDifLvupStatus(MENU_LVUP_STATUS* out, MENU_LVUP_STATUS* a, MENU_LVUP_STATUS* b) {
-    out->hp = a->hp - b->hp;
-    out->attack = a->attack - b->attack;
-    out->defense = a->defense - b->defense;
-    out->spDefense = a->spDefense - b->spDefense;
-    out->speed = a->speed - b->speed;
-    out->spAttack = a->spAttack - b->spAttack;
+static void dispMsg(unsigned long msg) {
+    switch (msg) {
+    case 0xC368:
+    case 0xC369:
+    case 0xC371:
+    case 0xC372:
+        GSsndPlayNow(0x13);
+        break;
+    }
+    if (windowSearchID(0x4C) == 0) {
+        winMsgOpen(2, msg, 1, 0);
+    } else {
+        winMsgOpen(2, msg, 0, 0);
+        do {
+            menuOffScreenSetPriority(0);
+            GSthreadSwitch();
+        } while (winMsgCheck() != 0);
+    }
+    winMsgClose(1);
 }
-
-extern "C" {
 
 s32 menuUseItemEventUsohachiPhoto(u32 item, s32* out) {
     *out = 0;
@@ -543,6 +534,79 @@ s32 menuUseItemBattleNazonomi(u32 item, s32* out) {
     }
 }
 
+s32 menuUseItemBattleBall(u32 item, s32* out) {
+    Hero* hero;
+    s32 ball;
+    Pokemon* pokemon;
+    u32 slot;
+    s32 total;
+    u8 stock;
+    s32 i;
+    s32 boxes;
+    u8 kind;
+    total = 0;
+    stock = fightFloor_GetStockPokemonNum(0);
+    i = 0;
+    do {
+        menuPocket2GetTemochiPokemon(i, &pokemon, &slot);
+        if (pokemonCheckValid(pokemon) == 0) {
+            total++;
+        }
+        i++;
+    } while (i < 6);
+    boxes = pcboxGetNbPokemonBox();
+    i = 0;
+    while (i < boxes) {
+        s8 empty = pcboxGetPokemonBoxNbEmptySlot(0, i);
+        i++;
+        total += empty;
+    }
+    if (total < stock + 1) {
+        dispMsg(0x4F8B);
+        return 1;
+    }
+    menuPocket2GetHero(&hero, &ball);
+    kind = fightFloor_GetFightKind(fightFloorGetNowPtr());
+    if (hero->getHeroStyle() != 2 && kind != 0xC && kind != 0xD) {
+        dispMsg(0x5000);
+        return 1;
+    }
+    if (fightTrainerIsSelectedItemBall(ball) != 0) {
+        dispMsg(0xC378);
+        return 1;
+    }
+    *out = 0;
+    return 0;
+}
+
+s32 menuUseItemStatusUp(u32 item, s32* out) {
+    ITEMUSE2POKEMON_LOG1 log;
+    u16 msg[0x42];
+    Pokemon* pokemon;
+    u32 slot;
+    s16 count;
+    menuPocket2GetTemochiPokemon(menuPocket2GetCurrentTemochiPokemonSlotID(), &pokemon, &slot);
+    if (pokemonIsJoutaiDataId(pokemon, 0x3E)) {
+        s32 nick = pokemonBiosGetNicknamePtr(pokemon);
+        msgctrlSetValue(0x32, nick);
+        dispMsg(0xC372);
+        return 1;
+    }
+    count = itemUse2Pokemon(&log, pokemon, slot, item, 0);
+    if (count > 0) {
+        playRecoverSE(item);
+        menuPokemonUpdate();
+    }
+    getLogMsgBattle(msg, 0x40, &log, count, pokemon);
+    msgctrlSetValue(0x4D, (s32)msg);
+    dispMsg(0x4289);
+    if (count > 0) {
+        *out = 1;
+        return 0;
+    }
+    return 1;
+}
+
 s32 menuUseItemFieldNazonomi(u32 item, s32* out) {
     ItemParam param;
     itemParamConvertOrigFormat(&param, &origRamSeedParam_field);
@@ -575,30 +639,166 @@ s32 menuUseItemFieldNazonomi(u32 item, s32* out) {
     }
 }
 
-s32 menuUseItemStatusUp(u32 item, s32* out) {
-    ITEMUSE2POKEMON_LOG1 log;
-    u16 msg[0x42];
-    Pokemon* pokemon;
-    u32 slot;
-    s16 count;
-    menuPocket2GetTemochiPokemon(menuPocket2GetCurrentTemochiPokemonSlotID(), &pokemon, &slot);
-    if (pokemonIsJoutaiDataId(pokemon, 0x3E)) {
+static void wazaLean(Pokemon* pokemon, unsigned short move, unsigned char slot) {
+    s32 soubi;
+    pokemonWazaCreate(pokemon, slot, move);
+    soubi = pokemonGetSoubiItemSoubiDataId(pokemon);
+    pokemonGetFriendFormPokemonFriendFilterId(pokemon, soubi, 4);
+}
+
+static s32 wazaMachineProc(Pokemon* pokemon, int machine) {
+    u8 slot;
+    u16 moveCopy;
+    s32 i;
+    s32 learned;
+    u16 move;
+    menuOffScreenSetPriority(0);
+    if (pokemonIsDarkPokemon(pokemon)) {
+        dispMsg(0xC371);
+        return 0;
+    }
+    move = itemDataBiosGetWazaIDByWazaMachineNo(machine);
+    moveCopy = move;
+    i = 0;
+    for (;;) {
+        if (moveCopy == pokemonBiosGetPokemonWazaDataId(pokemon, i)) {
+            break;
+        }
+        i++;
+        if (i >= 4) {
+            break;
+        }
+    }
+    if (i < 4) {
         s32 nick = pokemonBiosGetNicknamePtr(pokemon);
         msgctrlSetValue(0x32, nick);
-        dispMsg(0xC372);
+        msgctrlSetValue(0x39, (u16)move);
+        dispMsg(0xC368);
+        return 0;
+    }
+    pokemonBiosGetPokemonDataId(pokemon);
+    if (pokemonDataBiosGetWazaMcn(pokemonDataBiosGetPtr(), machine) == 0) {
+        msgctrlSetValue(0x32, pokemonBiosGetNicknamePtr(pokemon));
+        msgctrlSetValue(0x39, (u16)move);
+        dispMsg(0xC369);
+        return 0;
+    }
+    learned = evolutionWazaLearn(pokemon, move, &slot, 1, cbForgetWazaSelect, 0);
+    if (learned != 0) {
+        wazaLean(pokemon, move, slot);
+    }
+    return learned;
+}
+
+s32 menuUseItemSkill(u32 item, s32* out) {
+    Pokemon* pokemon;
+    u32 slot;
+    s32 itemData;
+    u32 move;
+    u8 machine;
+    u8 hiden;
+    u32 msg;
+    s32 menu;
+    s32 answer;
+    s32 learned;
+    itemData = itemDataBiosGetPtr(item);
+    machine = itemDataBiosGetWazaMachineNo((void*)itemData);
+    move = itemDataBiosGetWazaIDByWazaMachineNo(machine);
+    GSsndPlayNow(0x23);
+    hiden = itemDataBiosGetHidenMachineNo(itemData);
+    if (hiden != 0xFF) {
+        msg = 0xC376;
+    } else {
+        msg = 0xC375;
+    }
+    msgctrlSetValue(0x39, move);
+    dispMsg(msg);
+    answer = dispMsgYesNo(0xC377);
+    if (answer == 1 || answer == 2) {
         return 1;
     }
-    count = itemUse2Pokemon(&log, pokemon, slot, item, 0);
-    if (count > 0) {
-        playRecoverSE(item);
-        menuPokemonUpdate();
+    menu = menuPocket2OpenPokemonMenu(item, 1);
+    if (menu >= 0) {
+        menuPocket2GetTemochiPokemon(menu, &pokemon, &slot);
+        learned = wazaMachineProc(pokemon, machine);
     }
-    getLogMsgBattle(msg, 0x40, &log, count, pokemon);
-    msgctrlSetValue(0x4D, (s32)msg);
-    dispMsg(0x4289);
-    if (count > 0) {
-        *out = 1;
+    menuOffScreenSetPriority(0);
+    menuPocket2ClosePokemonMenu(menu);
+    if (menu >= 0 && learned != 0) {
+        if (hiden != 0xFF) {
+            *out = 0;
+        } else {
+            *out = 1;
+        }
         return 0;
+    }
+    return 1;
+}
+
+s32 menuUseItemScriptCologn(u32 item, s32 slot) {
+    struct CologneMsg {
+        u16 item;
+        u16 reserved;
+        s32 first;
+        s32 second;
+    };
+    CologneMsg table[3] = {
+        {0x201, 0, 0xC3B6, 0xC3B8},
+        {0x202, 0, 0xC3BC, 0xC3B9},
+        {0x203, 0, 0xC3BD, 0xC3BA},
+    };
+    Pokemon* pokemon;
+    u32 slotOut;
+    s32 index;
+    s32 offset;
+    s32 i;
+    u16 voice;
+    u16 id;
+    f32 remaining;
+    menuPocket2GetTemochiPokemon(slot, &pokemon, &slotOut);
+    if (pokemonCheckValid(pokemon) == 0) {
+        return 1;
+    }
+    for(index=0;index<3;index++){if((u16)item==table[index].item)break;}
+    if (index >= 3) {
+        return 1;
+    }
+    {
+        s32 nick = pokemonBiosGetNicknamePtr(pokemon);
+        msgctrlSetValue(0x32, nick);
+    }
+    msgctrlSetValue(0x2D, item);
+    offset = index * 12;
+    dispMsg(*(s32*)((u8*)&table[0].first + offset));
+    GSsndPlayVolume(0x444, 0, 0xFF, 0);
+    if (gamedatasaveGetStatus(0, 9) == 0) {
+        i = 0;
+        do {
+            GSinputMotorStart(1, 0, 0xFF, 0x15, 0);
+            waitTime(1.0f);
+            i++;
+        } while (i < 2);
+        GSinputMotorStart(1, 0, 0xFF, 0x30, 0);
+        waitTime(1.6f);
+    }
+    voice = playPokemonVoice(pokemon);
+    while (GSsndGetStatus(voice) == 2) {
+        GSthreadSwitch();
+    }
+    msgctrlSetValue(0x32, pokemonBiosGetNicknamePtr(pokemon));
+    dispMsg(0xC3B7);
+    if (pokemonIsJoutaiDataId(pokemon, 0x3E)) {
+        pokemonInitJoutaiDataId(pokemon, 0x3E);
+        dispMsg(0xC3BE);
+    }
+    if (pokemonGetDp(pokemon) > 0.0f && pokemon->getPokemonDataId() != 0xF9) {
+        pokemonAddDpFormPokemonDpFilterId(pokemon, item, 4);
+        msgctrlSetValue(0x32, pokemonBiosGetNicknamePtr(pokemon));
+        dispMsg(*(s32*)((u8*)&table[0].second + offset));
+        remaining=pokemonGetDp(pokemon);
+        if (!remaining) {
+            reliveHallInfomationPokemonDP0(pokemon);
+        }
     }
     return 1;
 }
@@ -657,92 +857,177 @@ s32 menuUseItemEvolution(u32 item, s32* out) {
     return 1;
 }
 
-s32 menuUseItemSkill(u32 item, s32* out) {
-    Pokemon* pokemon;
-    u32 slot;
-    s32 itemData;
-    u32 move;
-    u8 machine;
-    u8 hiden;
-    u32 msg;
-    s32 menu;
-    s32 answer;
-    s32 learned;
-    itemData = itemDataBiosGetPtr(item);
-    machine = itemDataBiosGetWazaMachineNo((void*)itemData);
-    move = itemDataBiosGetWazaIDByWazaMachineNo(machine);
-    GSsndPlayNow(0x23);
-    hiden = itemDataBiosGetHidenMachineNo(itemData);
-    if (hiden != 0xFF) {
-        msg = 0xC376;
-    } else {
-        msg = 0xC375;
-    }
-    msgctrlSetValue(0x39, move);
-    dispMsg(msg);
-    answer = dispMsgYesNo(0xC377);
-    if (answer == 1 || answer == 2) {
-        return 1;
-    }
-    menu = menuPocket2OpenPokemonMenu(item, 1);
-    if (menu >= 0) {
-        menuPocket2GetTemochiPokemon(menu, &pokemon, &slot);
-        learned = wazaMachineProc(pokemon, machine);
-    }
-    menuOffScreenSetPriority(0);
-    menuPocket2ClosePokemonMenu(menu);
-    if (menu >= 0 && learned != 0) {
-        if (hiden != 0xFF) {
-            *out = 0;
-        } else {
-            *out = 1;
-        }
-        return 0;
-    }
-    return 1;
-}
-
-s32 menuUseItemRecovery(u32 item, s32* out) {
+s32 menuUseItemWPointUp(u32 item, s32* out) {
     ITEMUSE2POKEMON_LOG1 log;
     u16 msg[0x42];
     Pokemon* pokemon;
     u32 slot;
     s32 menu;
     s16 count;
-    menu = menuPocket2OpenPokemonMenu(item, 1);
-    if (menu >= 0) {
-        menuPocket2GetTemochiPokemon(menu, &pokemon, &slot);
-        if (pokemonIsJoutaiDataId(pokemon, 0x3E) == 0) {
-            count = itemUse2Pokemon(&log, pokemon, slot, item, 0);
-            if (count > 0) {
-                playRecoverSE(item);
-                menuPokemonUpdate();
+    s32 selected;
+    s32 flag;
+    u16 waza;
+    flag = 0;
+    for (;;) {
+        menu = menuPocket2OpenPokemonMenu(item, 1);
+        if (menu >= 0) {
+            menuPocket2GetTemochiPokemon(menu, &pokemon, &slot);
+            if (pokemonIsJoutaiDataId(pokemon, 0x3E) != 0) {
+                flag = 1;
+            } else {
+                selected = menuPokemonOpenWazaLight(menu);
+                menuPokemonCloseWazaLight();
+                if (selected < 0) {
+                    continue;
+                }
             }
-            getLogMsgField(msg, 0x40, &log, count, pokemon);
-            msgctrlSetValue(0x4D, (s32)msg);
-            dispMsg(0x4289);
-        } else {
+        }
+        break;
+    }
+    if (menu >= 0) {
+        if (flag != 0) {
             s32 nick = pokemonBiosGetNicknamePtr(pokemon);
             msgctrlSetValue(0x32, nick);
             dispMsg(0xC372);
             count = 0;
+        } else {
+            waza = pokemonBiosGetPokemonWazaDataId(pokemon, selected);
+            if (waza > 0x163 && waza < 0x176) {
+                dispMsg(0xC374);
+                count = 0;
+            } else {
+                count = itemUse2Pokemon(&log, pokemon, slot, item, selected);
+                if (count > 0) {
+                    playRecoverSE(item);
+                    menuPokemonUpdate();
+                }
+                msgctrlSetValue(0x4D, (s32)msg);
+                msgctrlSetValue(0x39, waza);
+                getLogMsgField(msg, 0x40, &log, count, pokemon);
+                dispMsg(0x4289);
+            }
         }
     }
     menuOffScreenSetPriority(0);
     menuPocket2ClosePokemonMenu(menu);
     if (menu >= 0 && count > 0) {
-        switch ((s32)item) {
-        case 0x27:
-        case 0x28:
-        case 0x29:
-        case 0x2A:
-        case 0x2B:
-            *out = 0;
+        *out = 1;
+        return 0;
+    }
+    return 1;
+}
+
+static void getPokemonLvupStatus(MENU_LVUP_STATUS* status, Pokemon* pokemon) {
+    status->hp = pokemonGetStatus(pokemon, 0, 0x87, 0);
+    status->attack = pokemonGetStatus(pokemon, 0, 0x88, 0);
+    status->defense = pokemonGetStatus(pokemon, 0, 0x89, 0);
+    status->spDefense = pokemonGetStatus(pokemon, 0, 0x8A, 0);
+    status->speed = pokemonGetStatus(pokemon, 0, 0x8B, 0);
+    status->spAttack = pokemonGetStatus(pokemon, 0, 0x8C, 0);
+}
+
+static void getDifLvupStatus(MENU_LVUP_STATUS* out, MENU_LVUP_STATUS* a, MENU_LVUP_STATUS* b) {
+    out->hp = a->hp - b->hp;
+    out->attack = a->attack - b->attack;
+    out->defense = a->defense - b->defense;
+    out->spDefense = a->spDefense - b->spDefense;
+    out->speed = a->speed - b->speed;
+    out->spAttack = a->spAttack - b->spAttack;
+}
+
+static s8 cbForgetWazaSelect(Pokemon* pokemon, unsigned short move, long slot) {
+    s32 result;
+    fadeSet(3, 0.5f);
+    fadeCheck(1);
+    result = menuPokemonStatusOpenWazaMachine(pokemon, move);
+    if (result >= 4) {
+        result = -1;
+    }
+    fadeSet(2, 0.5f);
+    fadeCheck(1);
+    return result;
+}
+
+s32 menuUseItemListLVUp(u32 item, s32* out) {
+    ITEMUSE2POKEMON_LOG1 log;
+    MENU_LVUP_STATUS diff;
+    MENU_LVUP_STATUS before;
+    MENU_LVUP_STATUS after;
+    Pokemon* pokemon;
+    u32 slot;
+    u8 evolveWork[4];
+    u16 evolveId;
+    u8 learnSlot;
+    u8 oboeIndex;
+    s32 menu;
+    s16 count;
+    u16 evolved;
+    u8 level;
+    u16 move;
+    oboeIndex = 0;
+    menu = menuPocket2OpenPokemonMenu(item, 1);
+    if (menu >= 0) {
+        menuPocket2GetTemochiPokemon(menu, &pokemon, &slot);
+        if (pokemonIsDarkPokemon(pokemon) == 0) {
+            getPokemonLvupStatus(&before, pokemon);
+            count = itemUse2Pokemon(&log, pokemon, slot, item, 0);
+            if (count > 0) {
+                menuPokemonUpdate();
+            } else {
+                count = 0;
+            }
+        } else {
+            count = -1;
+        }
+        switch (count) {
+        case 0:
+            dispMsg(0xC374);
+            break;
+        case -1:
+            dispMsg(0xC371);
             break;
         default:
-            *out = 1;
+            menuOffScreenSetPriority(0);
+            soundOpenPlayME(0x3C7, 0, 0xFF);
+            {
+                s32 nick = pokemonBiosGetNicknamePtr(pokemon);
+                msgctrlSetValue(0x32, nick);
+            }
+            level=pokemonBiosGetLevel(pokemon);
+            msgctrlSetValue(0x2F,(u8)level);
+            dispMsg(0xC367);
+            getPokemonLvupStatus(&after, pokemon);
+            getDifLvupStatus(&diff, &after, &before);
+            diff.flag = 1;
+            winMsgOpenLevelUpFiledStatus(&diff, 1);
+            after.flag = 0;
+            winMsgOpenLevelUpFiledStatus(&after, 1);
+            winMsgCloseLevelUpStatus(1);
+            level = pokemonBiosGetLevel(pokemon);
+            oboeIndex = 0;
+            while ((u16)(move = pokemonGetOboeWazaDataId(pokemon, level, &oboeIndex)) != 0) {
+                if (pokemonSearchWazaDataId(pokemon, move) == -1 && evolutionWazaLearn(pokemon, move, &learnSlot, 1, cbForgetWazaSelect, 0) != 0) {
+                    pokemonWazaCreate(pokemon, learnSlot, move);
+                }
+                oboeIndex++;
+            }
+            evolved = pokemonEvolutionCheck(pokemon, 0, 0, &evolveId, evolveWork);
             break;
         }
+    }
+    menuOffScreenSetPriority(0);
+    menuPocket2ClosePokemonMenu(menu);
+    if (menu >= 0 && count > 0) {
+        if (evolved != 0) {
+            fadeSet(3, 0.5f);
+            fadeCheck(1);
+            menuOffScreenSetDisp(0);
+            pokemonEvolutionAll(pokemon, evolved, evolveId, evolveWork, 0, 1, 1, 0);
+            menuOffScreenSetDisp(1);
+            fadeSet(2, 0.5f);
+            fadeCheck(1);
+        }
+        *out = 1;
         return 0;
     }
     return 1;
@@ -844,260 +1129,48 @@ s32 menuUseItemPPRecovery(u32 item, s32* out) {
     return 1;
 }
 
-s32 menuUseItemBattleBall(u32 item, s32* out) {
-    Hero* hero;
-    s32 ball;
-    Pokemon* pokemon;
-    u32 slot;
-    s32 total;
-    u8 stock;
-    s32 i;
-    s32 boxes;
-    u8 kind;
-    total = 0;
-    stock = fightFloor_GetStockPokemonNum(0);
-    i = 0;
-    do {
-        menuPocket2GetTemochiPokemon(i, &pokemon, &slot);
-        if (pokemonCheckValid(pokemon) == 0) {
-            total++;
-        }
-        i++;
-    } while (i < 6);
-    boxes = pcboxGetNbPokemonBox();
-    i = 0;
-    while (i < boxes) {
-        s8 empty = pcboxGetPokemonBoxNbEmptySlot(0, i);
-        i++;
-        total += empty;
-    }
-    if (total < stock + 1) {
-        dispMsg(0x4F8B);
-        return 1;
-    }
-    menuPocket2GetHero(&hero, &ball);
-    kind = fightFloor_GetFightKind(fightFloorGetNowPtr());
-    if (hero->getHeroStyle() != 2 && kind != 0xC && kind != 0xD) {
-        dispMsg(0x5000);
-        return 1;
-    }
-    if (fightTrainerIsSelectedItemBall(ball) != 0) {
-        dispMsg(0xC378);
-        return 1;
-    }
-    *out = 0;
-    return 0;
-}
-
-s32 menuUseItemListLVUp(u32 item, s32* out) {
-    ITEMUSE2POKEMON_LOG1 log;
-    MENU_LVUP_STATUS diff;
-    MENU_LVUP_STATUS before;
-    MENU_LVUP_STATUS after;
-    Pokemon* pokemon;
-    u32 slot;
-    u8 evolveWork[4];
-    u16 evolveId;
-    u8 learnSlot;
-    u8 oboeIndex;
-    s32 menu;
-    s16 count;
-    u16 evolved;
-    u8 level;
-    u16 move;
-    oboeIndex = 0;
-    menu = menuPocket2OpenPokemonMenu(item, 1);
-    if (menu >= 0) {
-        menuPocket2GetTemochiPokemon(menu, &pokemon, &slot);
-        if (pokemonIsDarkPokemon(pokemon) == 0) {
-            getPokemonLvupStatus(&before, pokemon);
-            count = itemUse2Pokemon(&log, pokemon, slot, item, 0);
-            if (count > 0) {
-                menuPokemonUpdate();
-            } else {
-                count = 0;
-            }
-        } else {
-            count = -1;
-        }
-        switch (count) {
-        case 0:
-            dispMsg(0xC374);
-            break;
-        case -1:
-            dispMsg(0xC371);
-            break;
-        default:
-            menuOffScreenSetPriority(0);
-            soundOpenPlayME(0x3C7, 0, 0xFF);
-            {
-                s32 nick = pokemonBiosGetNicknamePtr(pokemon);
-                msgctrlSetValue(0x32, nick);
-            }
-            level=pokemonBiosGetLevel(pokemon);
-            msgctrlSetValue(0x2F,(u8)level);
-            dispMsg(0xC367);
-            getPokemonLvupStatus(&after, pokemon);
-            getDifLvupStatus(&diff, &after, &before);
-            diff.flag = 1;
-            winMsgOpenLevelUpFiledStatus(&diff, 1);
-            after.flag = 0;
-            winMsgOpenLevelUpFiledStatus(&after, 1);
-            winMsgCloseLevelUpStatus(1);
-            level = pokemonBiosGetLevel(pokemon);
-            oboeIndex = 0;
-            while ((u16)(move = pokemonGetOboeWazaDataId(pokemon, level, &oboeIndex)) != 0) {
-                if (pokemonSearchWazaDataId(pokemon, move) == -1 && evolutionWazaLearn(pokemon, move, &learnSlot, 1, cbForgetWazaSelect, 0) != 0) {
-                    pokemonWazaCreate(pokemon, learnSlot, move);
-                }
-                oboeIndex++;
-            }
-            evolved = pokemonEvolutionCheck(pokemon, 0, 0, &evolveId, evolveWork);
-            break;
-        }
-    }
-    menuOffScreenSetPriority(0);
-    menuPocket2ClosePokemonMenu(menu);
-    if (menu >= 0 && count > 0) {
-        if (evolved != 0) {
-            fadeSet(3, 0.5f);
-            fadeCheck(1);
-            menuOffScreenSetDisp(0);
-            pokemonEvolutionAll(pokemon, evolved, evolveId, evolveWork, 0, 1, 1, 0);
-            menuOffScreenSetDisp(1);
-            fadeSet(2, 0.5f);
-            fadeCheck(1);
-        }
-        *out = 1;
-        return 0;
-    }
-    return 1;
-}
-
-s32 menuUseItemWPointUp(u32 item, s32* out) {
+s32 menuUseItemRecovery(u32 item, s32* out) {
     ITEMUSE2POKEMON_LOG1 log;
     u16 msg[0x42];
     Pokemon* pokemon;
     u32 slot;
     s32 menu;
     s16 count;
-    s32 selected;
-    s32 flag;
-    u16 waza;
-    flag = 0;
-    for (;;) {
-        menu = menuPocket2OpenPokemonMenu(item, 1);
-        if (menu >= 0) {
-            menuPocket2GetTemochiPokemon(menu, &pokemon, &slot);
-            if (pokemonIsJoutaiDataId(pokemon, 0x3E) != 0) {
-                flag = 1;
-            } else {
-                selected = menuPokemonOpenWazaLight(menu);
-                menuPokemonCloseWazaLight();
-                if (selected < 0) {
-                    continue;
-                }
-            }
-        }
-        break;
-    }
+    menu = menuPocket2OpenPokemonMenu(item, 1);
     if (menu >= 0) {
-        if (flag != 0) {
+        menuPocket2GetTemochiPokemon(menu, &pokemon, &slot);
+        if (pokemonIsJoutaiDataId(pokemon, 0x3E) == 0) {
+            count = itemUse2Pokemon(&log, pokemon, slot, item, 0);
+            if (count > 0) {
+                playRecoverSE(item);
+                menuPokemonUpdate();
+            }
+            getLogMsgField(msg, 0x40, &log, count, pokemon);
+            msgctrlSetValue(0x4D, (s32)msg);
+            dispMsg(0x4289);
+        } else {
             s32 nick = pokemonBiosGetNicknamePtr(pokemon);
             msgctrlSetValue(0x32, nick);
             dispMsg(0xC372);
             count = 0;
-        } else {
-            waza = pokemonBiosGetPokemonWazaDataId(pokemon, selected);
-            if (waza > 0x163 && waza < 0x176) {
-                dispMsg(0xC374);
-                count = 0;
-            } else {
-                count = itemUse2Pokemon(&log, pokemon, slot, item, selected);
-                if (count > 0) {
-                    playRecoverSE(item);
-                    menuPokemonUpdate();
-                }
-                msgctrlSetValue(0x4D, (s32)msg);
-                msgctrlSetValue(0x39, waza);
-                getLogMsgField(msg, 0x40, &log, count, pokemon);
-                dispMsg(0x4289);
-            }
         }
     }
     menuOffScreenSetPriority(0);
     menuPocket2ClosePokemonMenu(menu);
     if (menu >= 0 && count > 0) {
-        *out = 1;
-        return 0;
-    }
-    return 1;
-}
-
-s32 menuUseItemScriptCologn(u32 item, s32 slot) {
-    struct CologneMsg {
-        u16 item;
-        u16 reserved;
-        s32 first;
-        s32 second;
-    };
-    CologneMsg table[3] = {
-        {0x201, 0, 0xC3B6, 0xC3B8},
-        {0x202, 0, 0xC3BC, 0xC3B9},
-        {0x203, 0, 0xC3BD, 0xC3BA},
-    };
-    Pokemon* pokemon;
-    u32 slotOut;
-    s32 index;
-    s32 offset;
-    s32 i;
-    u16 voice;
-    u16 id;
-    f32 remaining;
-    menuPocket2GetTemochiPokemon(slot, &pokemon, &slotOut);
-    if (pokemonCheckValid(pokemon) == 0) {
-        return 1;
-    }
-    for(index=0;index<3;index++){if((u16)item==table[index].item)break;}
-    if (index >= 3) {
-        return 1;
-    }
-    {
-        s32 nick = pokemonBiosGetNicknamePtr(pokemon);
-        msgctrlSetValue(0x32, nick);
-    }
-    msgctrlSetValue(0x2D, item);
-    offset = index * 12;
-    dispMsg(*(s32*)((u8*)&table[0].first + offset));
-    GSsndPlayVolume(0x444, 0, 0xFF, 0);
-    if (gamedatasaveGetStatus(0, 9) == 0) {
-        i = 0;
-        do {
-            GSinputMotorStart(1, 0, 0xFF, 0x15, 0);
-            waitTime(1.0f);
-            i++;
-        } while (i < 2);
-        GSinputMotorStart(1, 0, 0xFF, 0x30, 0);
-        waitTime(1.6f);
-    }
-    voice = playPokemonVoice(pokemon);
-    while (GSsndGetStatus(voice) == 2) {
-        GSthreadSwitch();
-    }
-    msgctrlSetValue(0x32, pokemonBiosGetNicknamePtr(pokemon));
-    dispMsg(0xC3B7);
-    if (pokemonIsJoutaiDataId(pokemon, 0x3E)) {
-        pokemonInitJoutaiDataId(pokemon, 0x3E);
-        dispMsg(0xC3BE);
-    }
-    if (pokemonGetDp(pokemon) > 0.0f && pokemon->getPokemonDataId() != 0xF9) {
-        pokemonAddDpFormPokemonDpFilterId(pokemon, item, 4);
-        msgctrlSetValue(0x32, pokemonBiosGetNicknamePtr(pokemon));
-        dispMsg(*(s32*)((u8*)&table[0].second + offset));
-        remaining=pokemonGetDp(pokemon);
-        if (!remaining) {
-            reliveHallInfomationPokemonDP0(pokemon);
+        switch ((s32)item) {
+        case 0x27:
+        case 0x28:
+        case 0x29:
+        case 0x2A:
+        case 0x2B:
+            *out = 0;
+            break;
+        default:
+            *out = 1;
+            break;
         }
+        return 0;
     }
     return 1;
 }
@@ -1117,4 +1190,4 @@ s32 menuUseItemDummy(u32 item, s32* out) {
     return 1;
 }
 
-}
+#pragma force_active reset

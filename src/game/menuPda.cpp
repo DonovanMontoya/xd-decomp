@@ -1,6 +1,9 @@
+#pragma defer_codegen on
 #include <dolphin/types.h>
 #include <dolphin/gx/GXVert.h>
 #include <libc/stdio.h>
+
+#pragma force_active on
 
 #pragma peephole off
 #pragma pool_strings off
@@ -1372,3 +1375,5 @@ void menuPdaScript(u8 flag) {
 }
 
 }
+
+#pragma force_active reset

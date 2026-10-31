@@ -1,5 +1,7 @@
 #include <game/floorReadPrivate.hpp>
 
+#pragma force_active on
+
 static FloorPostCallManager _postFuncManager;
 static u8 _floorReadingResource;
 
@@ -537,3 +539,5 @@ void FloorPostCallManager::add(u32 a, u32 b, u32 c, void *(*func)(u32, u32, u32)
 FloorPostCallManager::FloorPostCallManager() {
     memset(this, 0, sizeof(*this));
 }
+
+#pragma force_active reset

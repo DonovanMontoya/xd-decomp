@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <global.h>
 
 extern "C" {
@@ -39,3 +40,5 @@ s32 dbgMenuCameraSetType(s32 unused, s32 type) {
     return 0;
 }
 }
+
+#pragma force_active reset

@@ -1,5 +1,7 @@
 #include <global.h>
 
+#pragma force_active on
+
 extern "C" {
 void fadeSet(s32, f32);
 void fadeCheck(s32);
@@ -58,3 +60,5 @@ s32 dbgMenuMsgCheck(void) {
     return 1;
 }
 }
+
+#pragma force_active reset

@@ -1,6 +1,8 @@
 /* Debug menu entries for the waza viewer launcher. */
 #include <global.h>
 
+#pragma force_active on
+
 typedef struct DbgWazaViewerData {
     u8 unk0[0x16];
     u8 unk16;
@@ -64,3 +66,5 @@ s32 dbgMenuWazaMain(void) {
     return 1;
 }
 }
+
+#pragma force_active reset
