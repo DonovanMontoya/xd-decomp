@@ -258,31 +258,19 @@ void fadeFluidDispSecond(int layerID, GStexture* tex, f32 progress, f32 blend) {
         layer->beginSurface(stride * 2);
         row0 *= y;
         row1 = (y + 1) * stride;
-        for (x = 0; x < (u8)stride; x++) {
+        for (x = 0; x < stride; x++) {
             GSvec2* t0 = &work->texCoord[x + row0];
             GSvec* p1;
             GSvec2* t1;
             t1 = &work->texCoord[x + row1];
             p1 = &work->heightPage[_fadeFluidSw][x + row1];
             GSvec* p0 = &work->heightPage[_fadeFluidSw][x + row0];
-            GXWGFifo.f32 = p0->y * yScale;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.f32 = p0->z * xScale;
-            GXWGFifo.f32 = p0->x * xScale;
-            GXWGFifo.f32 = p1->y * yScale;
-            GXWGFifo.u8 = (u8)alpha;
-            GXWGFifo.f32 = t0->x;
-            GXWGFifo.f32 = t0->y;
-            GXWGFifo.f32 = p1->z * xScale;
-            GXWGFifo.f32 = p1->x * xScale;
-            GXWGFifo.f32 = t1->x;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.u8 = (u8)alpha;
-            GXWGFifo.f32 = t1->y;
+            GXPosition3f32(p0->x * xScale, p0->y * yScale, p0->z * xScale);
+            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
+            GXTexCoord2f32(t0->x, t0->y);
+            GXPosition3f32(p1->x * xScale, p1->y * yScale, p1->z * xScale);
+            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
+            GXTexCoord2f32(t1->x, t1->y);
         }
         layer->endSurface();
     }
@@ -365,29 +353,17 @@ void fadeFluidDisp(GStexture* tex, f32 progress, f32 blend) {
         row0 *= y;
         layer->beginSurface(stride * 2);
         row1 = (y + 1) * stride;
-        for (x = 0; x < (u8)stride; x++) {
+        for (x = 0; x < stride; x++) {
             p0 = &work->heightPage[_fadeFluidSw][x + row0];
             GSvec* p1 = &work->heightPage[_fadeFluidSw][x + row1];
             GSvec2* t1 = &work->texCoord[x + row1];
             t0 = &work->texCoord[x + row0];
-            GXWGFifo.f32 = p0->y * yScale;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.u8 = (u8)alpha;
-            GXWGFifo.f32 = t0->y;
-            GXWGFifo.f32 = p0->x * xScale;
-            GXWGFifo.f32 = t0->x;
-            GXWGFifo.f32 = p0->z * xScale;
-            GXWGFifo.f32 = p1->x * xScale;
-            GXWGFifo.f32 = p1->y * yScale;
-            GXWGFifo.f32 = t1->x;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.u8 = 0xFF;
-            GXWGFifo.u8 = (u8)alpha;
-            GXWGFifo.f32 = t1->y;
-            GXWGFifo.f32 = p1->z * xScale;
+            GXPosition3f32(p0->x * xScale, p0->y * yScale, p0->z * xScale);
+            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
+            GXTexCoord2f32(t0->x, t0->y);
+            GXPosition3f32(p1->x * xScale, p1->y * yScale, p1->z * xScale);
+            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
+            GXTexCoord2f32(t1->x, t1->y);
         }
         layer->endSurface();
     }

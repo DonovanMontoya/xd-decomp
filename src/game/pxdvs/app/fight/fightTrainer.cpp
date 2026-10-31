@@ -1930,7 +1930,7 @@ void fightTrainerCreateFightTrainerDataIdToHero(u16 id, s32 allowNoAi, Hero* her
     if (encountId == 0) {
         encountId = fightGetFightEncountDataId();
     }
-    fightKind = fightEncountDataBiosGetFightKind(fightEncountDataBiosGetPtr((u8)encountId));
+    fightKind = fightEncountDataBiosGetFightKind(fightEncountDataBiosGetPtr(encountId));
     if (hero == 0) {
         return;
     }
