@@ -1,3 +1,4 @@
+#pragma defer_codegen off
 #include "game/maximum/GSAPI/baselib/fog.h"
 
 #include <libc/string.h>
@@ -15,6 +16,13 @@ static inline HSD_FogAdj* FogGetAdj(HSD_Fog* fog) { return fog ? fog->fog_adj : 
 static inline unsigned int AdjGetFlags(HSD_FogAdj* adj) { return adj ? adj->flags : 0; }
 static inline int AdjGetCenter(HSD_FogAdj* adj) { return adj ? adj->center : -1; }
 static inline int AdjGetWidth(HSD_FogAdj* adj) { return adj ? adj->width : -1; }
+
+void HSD_FogSet(HSD_Fog* fog);
+
+#pragma force_active on
+// Keep the original readonly zero and identity constants in their retained order.
+static const float fogZero = 0.0F;
+static const float fogIdentity = 1.0F;
 void HSD_FogSet(HSD_Fog* fog)
 {
     float mtx[4][4];
@@ -28,8 +36,9 @@ void HSD_FogSet(HSD_Fog* fog)
     int center;
     int width;
     if (fog == 0) {
+        float zero = *(const volatile float*)&fogZero;
         FogColor black = {0};
-        GXSetFog(0, 0.0F, 0.0F, 0.0F, 0.0F, black);
+        GXSetFog(0, zero, zero, zero, zero, black);
         return;
     }
     cobj = HSD_CObjGetCurrent();
@@ -62,7 +71,7 @@ void HSD_FogSet(HSD_Fog* fog)
                 mtx[0][0] = proj[1]; mtx[0][3] = proj[2];
                 mtx[1][1] = proj[3]; mtx[1][3] = proj[4];
                 mtx[2][2] = proj[5]; mtx[2][3] = proj[6];
-                mtx[3][3] = 1.0F;
+                mtx[3][3] = *(const volatile float*)&fogIdentity;
                 break;
             }
         }

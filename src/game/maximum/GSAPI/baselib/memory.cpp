@@ -1,15 +1,6 @@
+#include "game/maximum/GSAPI/baselib/initialize.h"
 extern "C" {
-typedef void *(*HSDAllocCallback)(unsigned int, unsigned int, unsigned int);
-typedef void (*HSDFreeCallback)(void *);
-typedef int (*HSDMemCheckCallback)(void *);
-
-struct MemCallbacks {
-    HSDAllocCallback alloc;
-    HSDFreeCallback free;
-    void *callback2;
-    void *callback3;
-    HSDMemCheckCallback checkOwn;
-};
+typedef HSD_MemoryCallbacks MemCallbacks;
 
 static MemCallbacks __mem_cb;
 
@@ -24,10 +15,10 @@ void HSD_Free(void *ptr) {
 }
 
 int _HSD_MemCheckOwn(void *ptr) {
-    return __mem_cb.checkOwn(ptr);
+    return __mem_cb.check_own(ptr);
 }
 
-void _HSD_MemSetCallbacks(const MemCallbacks *callbacks, unsigned int size) {
+void _HSD_MemSetCallbacks(MemCallbacks *callbacks, unsigned int size) {
     if (size != sizeof(MemCallbacks)) {
         __assert("memory.c", 19, "size == sizeof(__mem_cb)");
     }

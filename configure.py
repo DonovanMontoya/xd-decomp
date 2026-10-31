@@ -838,7 +838,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/dbgMenuFloor.cpp", extra_cflags=["-lang c", "-opt nopeephole", "-inline noauto", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/dbgMenuGSgfx.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/dbgMenuGSvtr.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
-            Object(NonMatching, "game/dbgMenuMemcard.cpp", extra_cflags=["-lang c", "-opt nopeephole", "-inline noauto", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/dbgMenuMemcard.cpp", extra_cflags=["-lang c", "-opt nopeephole", "-inline noauto", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/dbgMenuMsg.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/dbgMenuPeople.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/dbgMenuSoundTest.cpp", extra_cflags=["-lang c", "-opt nopeephole", "-inline noauto", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
@@ -846,9 +846,9 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/dbgMenuWaza.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/dbgMenuFightTrainer.cpp", extra_cflags=["-lang c", "-opt nopeephole", "-inline noauto", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/dbgMenuFightWaza.cpp", extra_cflags=["-lang c", "-opt nopeephole", "-inline noauto", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/dbgMenuLog.cpp", extra_cflags=["-lang c", "-opt nopeephole", "-inline noauto", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/dbgMenuLog.cpp", extra_cflags=["-lang c", "-opt nopeephole", "-inline noauto", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/dbgMenuFieldCamera.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
-            Object(NonMatching, "game/dbgMenuItemCreate.cpp", extra_cflags=["-lang c", "-opt nopeephole", "-inline noauto", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/dbgMenuItemCreate.cpp", extra_cflags=["-lang c", "-opt nopeephole", "-inline noauto", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/dbgMenuRelive.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/dbgMenuToolBattle.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/dbgMenuSub.cpp", extra_cflags=["-opt nopeephole", "-inline noauto", "-str reuse,nopool,readonly"]),
@@ -948,9 +948,9 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/character.cpp"),
             Object(NonMatching, "game/relglobal.c"),
             Object(MatchingFor("GXXE01"), "game/pause.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
-            Object(NonMatching, "game/time.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
+            Object(MatchingFor("GXXE01"), "game/time.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/main.cpp", extra_cflags=["-opt nopeephole"]),
-            Object(NonMatching, "game/sysvars.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/sysvars.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/flashmenuTest.cpp", extra_cflags=["-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/gbaPokemon.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/gbaCommand.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
@@ -959,7 +959,7 @@ config.libs = [
             Object(NonMatching, "game/pokecolo.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pokeconv.cpp", extra_cflags=["-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/wazaconv.cpp", extra_cflags=["-opt nopeephole"]),
-            Object(NonMatching, "game/floorLayerConfig.cpp", extra_cflags=["-opt nopeephole", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/floorLayerConfig.cpp", extra_cflags=["-opt nopeephole", "-str reuse,nopool,readonly"]),
         ]
     },
     {
@@ -997,8 +997,8 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSmodel/GSmodel.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/GSmodelExt.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSmodel/parse.cpp", extra_cflags=["-inline deferred,noauto", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSmodel/part.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSmodel/save_state.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/part.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/save_state.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSmodel/shadow.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/bank.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
 
@@ -1060,7 +1060,7 @@ config.libs = [
 
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSflag/GSflag.cpp", extra_cflags=["-inline noauto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSbound/GSbound.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSvtr/GSvtr.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSvtr/GSvtr.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
 
             # GSmovie
             Object(NonMatching, "game/pxdvs/GSAPI/GSmovie/movieStream.cpp", cflags=cflags_xd_app_balanced),
@@ -1423,7 +1423,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/people/peopleInfoBios.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/people/peopleBios.cpp"),
             Object(NonMatching, "game/pxdvs/app/people/people.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/app/people/peopleViewer.cpp", extra_cflags=["-inline noauto", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/people/peopleViewer.cpp", extra_cflags=["-inline noauto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/people/peoplePartAnimation.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/people/peopleSave.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/people/peopleTalk.cpp", extra_cflags=["-inline noauto"]),
@@ -1481,11 +1481,11 @@ config.libs = [
         "objects": [
             # hsdparticle_gs
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/particle/pslist.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
-            Object(NonMatching, "game/maximum/GSAPI/particle/particle.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
+            Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/particle/particle.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/particle/psappsrt.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(NonMatching, "game/maximum/GSAPI/particle/psdisp.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/particle/psdisptev.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
-            Object(NonMatching, "game/maximum/GSAPI/particle/psinterpret.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
+            Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/particle/psinterpret.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(NonMatching, "game/maximum/GSAPI/particle/generator.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
 
             # hsdbase_gs
@@ -1498,7 +1498,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/displayfunc.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/dobj.cpp", extra_cflags=["-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/fobj.cpp", extra_cflags=['-DMUST_MATCH', '-lang c', '-inline auto,deferred', '-str reuse,nopool,readonly']),
-            Object(NonMatching, "game/maximum/GSAPI/baselib/fog.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
+            Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/fog.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/hash.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/id.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/initialize.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
@@ -1521,7 +1521,7 @@ config.libs = [
             Object(NonMatching, "game/maximum/GSAPI/baselib/texp.cpp", extra_cflags=["-str reuse,nopool,readonly", "-lang c", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/texpdag.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(NonMatching, "game/maximum/GSAPI/baselib/texpopt.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
-            Object(NonMatching, "game/maximum/GSAPI/baselib/tobj.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
+            Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/tobj.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/util.cpp", extra_cflags=["-str reuse,nopool,readonly", "-lang c", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/aobj.cpp", extra_cflags=['-lang c', '-str reuse,nopool,readonly', '-inline auto,deferred', '-lang c++']),
         ]
@@ -1532,8 +1532,8 @@ config.libs = [
         "cflags": cflags_runtime,
         "progress_category": "game",
         "objects": [
-            Object(NonMatching, "game/maximum/app/bingo/bingoBios.cpp", cflags=cflags_xd_app_balanced),
-            Object(NonMatching, "game/maximum/app/gimmick/gimmickBox.cpp", cflags=cflags_xd_gimmick),
+            Object(MatchingFor("GXXE01"), "game/maximum/app/bingo/bingoBios.cpp", cflags=cflags_xd_app_balanced),
+            Object(MatchingFor("GXXE01"), "game/maximum/app/gimmick/gimmickBox.cpp", cflags=cflags_xd_gimmick),
         ]
     },
 ]

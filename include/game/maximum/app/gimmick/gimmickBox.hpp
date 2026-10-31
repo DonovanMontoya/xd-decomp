@@ -8,17 +8,8 @@ struct GSvec {
     f32 z;
     GSvec();
     GSvec(f32 x_, f32 y_, f32 z_);
-    GSvec(const GSvec& o) {
-        x = o.x;
-        y = o.y;
-        z = o.z;
-    }
-    GSvec& operator=(const GSvec& o) {
-        x = o.x;
-        y = o.y;
-        z = o.z;
-        return *this;
-    }
+    GSvec(const GSvec& o);
+    GSvec& operator=(const GSvec& o);
 };
 
 struct tagPeopleWork {
@@ -44,9 +35,7 @@ struct tagPeopleWork {
 extern "C" {
 f32 C_VECDistance(const GSvec*, const GSvec*);
 
-inline f32 GSvecDistance(const GSvec* a, const GSvec* b) {
-    return C_VECDistance(a, b);
-}
+f32 GSvecDistance(const GSvec* a, const GSvec* b);
 }
 
 enum M_STICK_DIRECTION { M_STICK_NONE, M_STICK_1, M_STICK_2, M_STICK_3, M_STICK_4 };

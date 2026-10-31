@@ -99,7 +99,7 @@ static int hsd_heap = -1;
 static struct {
     unsigned int total, system, xfb, gxfifo, heap;
 } memReport;
-static void* _HSD_MemAllocDefaultCB(unsigned int);
+static void* _HSD_MemAllocDefaultCB(unsigned int size, unsigned int alignment, unsigned int flags);
 static void _HSD_MemFreeDefaultCB(void*);
 static int _HSD_MemGetRemainDefaultCB(void);
 static void _HSD_MemClearDefaultCB(void);
@@ -162,7 +162,7 @@ void HSD_OSInit(void)
         }
     }
 }
-static void* _HSD_MemAllocDefaultCB(unsigned int size)
+static void* _HSD_MemAllocDefaultCB(unsigned int size, unsigned int alignment, unsigned int flags)
 {
     void* addr;
     if (size == 0) return 0;

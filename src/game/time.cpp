@@ -1,3 +1,4 @@
+#pragma defer_codegen off
 #include <global.h>
 
 extern "C" {
@@ -6,6 +7,13 @@ f32 GSgfxVideoGetLastRenderTime();
 u8 GSgfxVideoGetVsyncRate();
 }
 
+// This unused API retains the shared zero and conversion literals.
+extern "C" f32 timeGetVsyncRate() {
+    if (pauseIsPause()) return 0.0f;
+    return GSgfxVideoGetVsyncRate();
+}
+
+#pragma force_active on
 extern "C" s32 timeGetLastFrameTime() {
     u32 paused = pauseIsPause();
     if (paused != 0) return 0;

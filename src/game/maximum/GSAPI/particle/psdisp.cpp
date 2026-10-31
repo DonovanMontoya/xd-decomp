@@ -1734,7 +1734,7 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
                         GXSetTevColor(GX_TEVREG2, *(GXColor*)&colorMat);
                         prevBlendMode = -1;
                         GXSetZCompLoc(0U);
-                        HSD_CObjGetViewingMtx(HSD_CObjGetCurrent());
+                        HSD_CObjGetViewingMtx(HSD_CObjGetCurrent(), vmtx);
                         PSMTXInverse(vmtx, rvmtx);
                         if (prj[0] == 0.0f) {
                             temp_f2 = temp_r28[0][2];

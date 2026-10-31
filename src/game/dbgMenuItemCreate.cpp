@@ -1,5 +1,6 @@
 /* Debug menu entry for creating items in the bag. */
 #include <global.h>
+#pragma force_active on
 
 typedef struct DbgMenuKeyInfo {
     u8 unk0[6];
@@ -21,8 +22,8 @@ extern DbgMenuKeyInfo* windowGetKeyInfo(void);
 
 extern s32* item_data_index_number;
 
-static s32 Num;
 static s32 ItemID;
+static s32 Num;
 
 static void nbItemCtrl(void) {
     DbgMenuKeyInfo* key = windowGetKeyInfo();
@@ -122,3 +123,5 @@ void menuDbgItemCreate(void) {
     menuClose(0x24);
     menuCloseSync(0x24, 1);
 }
+
+#pragma force_active reset

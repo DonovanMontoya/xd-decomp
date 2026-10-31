@@ -189,7 +189,7 @@ static inline int iref_DEC(HSD_JObj* o);
 static inline void iref_INC(HSD_JObj* o);
 static inline void HSD_JObjRef(HSD_JObj* o);
 static inline float fabsf_bitwise(float x);
-void HSD_JObjSetMtxDirty(HSD_JObj* jobj);
+inline void HSD_JObjSetMtxDirty(HSD_JObj* jobj);
 static inline void HSD_JObjSetTranslateX(HSD_JObj* jobj, float x);
 static inline void HSD_JObjSetTranslateY(HSD_JObj* jobj, float y);
 static inline void HSD_JObjSetTranslateZ(HSD_JObj* jobj, float z);
@@ -241,15 +241,10 @@ int PSMTXInverse(HSD_Mtx,HSD_Mtx);
 static inline void setupInstanceMtx(HSD_Mtx view, HSD_JObj* jobj, HSD_Mtx out);
 void HSD_JObjDispAll(HSD_JObj* jobj, HSD_Mtx view, unsigned int flags, unsigned int rendermode);
 
-/* Keep attachment helpers available before compiling the recursive traversal.
- * Deferred compilation changes the original nested inlining here. */
-static inline void setFlagMtxDirty(HSD_JObj* jobj)
-{
-    if (jobj != NULL) {
-        if (!HSD_JObjMtxIsDirty(jobj)) {
-            HSD_JObjSetMtxDirtySub(jobj);
-        }
-    }
+/* Keep the SDK inline visible before recursive flag and attachment traversal. */
+inline void HSD_JObjSetMtxDirty(HSD_JObj* jobj) {
+    if (jobj == NULL || HSD_JObjMtxIsDirty(jobj)) return;
+    HSD_JObjSetMtxDirtySub(jobj);
 }
 
 #pragma defer_codegen off
@@ -276,7 +271,7 @@ inline void HSD_JObjSetFlags(HSD_JObj* jobj, u32 flags)
 {
     if (jobj != NULL) {
         if ((jobj->flags ^ flags) & JOBJ_CLASSICAL_SCALE) {
-            setFlagMtxDirty(jobj);
+            HSD_JObjSetMtxDirty(jobj);
         }
         jobj->flags |= flags;
     }
@@ -286,7 +281,7 @@ inline void HSD_JObjClearFlags(HSD_JObj* jobj, u32 arg1)
 {
     if (jobj != NULL) {
         if ((jobj->flags ^ arg1) & JOBJ_CLASSICAL_SCALE) {
-            setFlagMtxDirty(jobj);
+            HSD_JObjSetMtxDirty(jobj);
         }
         jobj->flags &= ~arg1;
     }
@@ -1493,14 +1488,7 @@ u32 HSD_JObjGetFlags(HSD_JObj* jobj)
 
 
 
-void HSD_JObjSetMtxDirty(HSD_JObj* jobj)
-{
-    if (jobj != NULL) {
-        switch (HSD_JObjMtxIsDirty(jobj)) {
-        case false: HSD_JObjSetMtxDirtySub(jobj); break;
-        }
-    }
-}
+
 
 /* Stripped from the DOL; its strings still occupy .rodata. */
 void HSD_JObjDumpStat(HSD_JObj* jobj, int depth, int index)

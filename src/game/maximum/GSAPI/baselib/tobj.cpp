@@ -127,9 +127,7 @@ static inline void TObjSetupTevModulateShadow(HSD_TObj* shadow);
 static inline void SetupEmbossBumpTev(HSD_TObj* bump);
 void HSD_TObjSetupVolatileTev(HSD_TObj* tobj, u32 rendermode);
 static inline int DifferentTluts(HSD_Tlut* t0, HSD_Tlut* t1);
-static HSD_TexLODDesc default_lod$1465 = {
-            GX_LIN_MIP_LIN, 0.0F, GX_FALSE, GX_FALSE, GX_ANISO_1,
-        };
+
 
 void HSD_TObjSetup(HSD_TObj* tobj);
 static inline GXTexGenSrc HSD_TexCoordID2TexGenSrc(GXTexCoordID coord);
@@ -146,7 +144,7 @@ static void TObjMakeTExp(HSD_TObj* tobj, u32 lightmap, u32 lightmap_done,
                          HSD_TExp** c, HSD_TExp** a, HSD_TExp** list);
 s32 HSD_TObjAssignResources(HSD_TObj* tobj_top);
 static inline u32 HSD_TexMapID2PTTexMtx(GXTexMapID id);
-static inline GXTexMapID HSD_Index2TexMap(u32 index);
+GXTexMapID HSD_Index2TexMap(u32 index);
 static inline GXTexCoordID HSD_Index2TexCoord(u32 index);
 GXTexMtx HSD_Index2TexMtx(u32 index);
 static void MakeTextureMtx(HSD_TObj* tobj);
@@ -166,13 +164,15 @@ typedef int enum_t;
 void HSD_Free(void*); void* HSD_Alloc(int); void hsdFreeMemPiece(void*,int);
 
 HSD_TObj* HSD_TObjAlloc(void);
-static HSD_TObjInfo* default_class;
 HSD_TObj* tobj_head;
+static HSD_TObjInfo* default_class;
 static void TObjInfoInit(void);
 static int TObjInit(HSD_Class*);
 static void TObjRelease(HSD_Class*);
 static void TObjAmnesia(HSD_ClassInfo*);
 HSD_TObjInfo hsdTObj = { TObjInfoInit };
+static HSD_Mtx zero$583 = { 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F,
+                                0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F };
 extern HSD_ClassInfo hsdObj;
 
 #define TOBJ_ANIM 0x10
@@ -227,8 +227,8 @@ void HSD_TObjTevRemove(HSD_TObjTev* tev);
 void HSD_ImageDescFree(HSD_ImageDesc* idesc);
 
 static inline float clamp_unit(float value);
-static inline HSD_Tlut* HSD_TlutAlloc(void);
-static inline HSD_TObjTev* HSD_TObjTevAlloc(void);
+HSD_Tlut* HSD_TlutAlloc(void);
+HSD_TObjTev* HSD_TObjTevAlloc(void);
 static inline HSD_TObjInfo* HSD_TObjGetDefaultClass(void);
 static inline HSD_TexAnim* lookupTextureAnim(s32 id, HSD_TexAnim* texanim);
 static inline void HSD_TObjReqAnimByFlags(HSD_TObj* tobj, f32 startframe, u32 flags);
@@ -260,19 +260,9 @@ static inline u8 Float2Color(float value) {
     return 255.0F * clamped;
 }
 
-static inline HSD_Tlut* HSD_TlutAlloc(void) {
-    HSD_Tlut* tlut = hsdAllocMemPiece(sizeof(HSD_Tlut));
-    HSD_ASSERT(2204, tlut);
-    memset(tlut, 0, sizeof(HSD_Tlut));
-    return tlut;
-}
 
-static inline HSD_TObjTev* HSD_TObjTevAlloc(void) {
-    HSD_TObjTev* tev = hsdAllocMemPiece(sizeof(HSD_TObjTev));
-    HSD_ASSERT(2247, tev);
-    memset(tev, 0, sizeof(HSD_TObjTev));
-    return tev;
-}
+
+
 
 static inline HSD_TObjInfo* HSD_TObjGetDefaultClass(void) { return default_class ? default_class : &hsdTObj; }
 
@@ -381,30 +371,7 @@ static inline u32 HSD_TexMapID2PTTexMtx(GXTexMapID id)
     return 0;
 }
 
-static inline GXTexMapID HSD_Index2TexMap(u32 index)
-{
-    switch (index) {
-    case 0:
-        return GX_TEXMAP0;
-    case 1:
-        return GX_TEXMAP1;
-    case 2:
-        return GX_TEXMAP2;
-    case 3:
-        return GX_TEXMAP3;
-    case 4:
-        return GX_TEXMAP4;
-    case 5:
-        return GX_TEXMAP5;
-    case 6:
-        return GX_TEXMAP6;
-    case 7:
-        return GX_TEXMAP7;
-    default:
-        HSD_ASSERT(2050, 0);
-    }
-    return GX_TEXMAP0;
-}
+
 
 static inline GXTexCoordID HSD_Index2TexCoord(u32 index)
 {
@@ -544,6 +511,9 @@ static inline void SetupEmbossBumpTev(HSD_TObj* bump)
     tevdesc.u.tevconf.clr_clamp = GX_ENABLE;
     HSD_SetupTevStage(&tevdesc);
 }
+static HSD_TexLODDesc default_lod$1465 = {
+            GX_LIN_MIP_LIN, 0.0F, GX_FALSE, GX_FALSE, GX_ANISO_1,
+        };
 
 static inline int DifferentTluts(HSD_Tlut* t0, HSD_Tlut* t1)
 {
@@ -576,6 +546,114 @@ static inline GXTexGenSrc HSD_TexCoordID2TexGenSrc(GXTexCoordID coord)
     return GX_TG_TEXCOORD0;
 }
 
+
+/* Keep the class prefix and standalone header helpers in retail emission order. */
+#pragma auto_inline off
+#pragma defer_codegen off
+static void TObjInfoInit(void) {
+    hsdInitClassInfo((HSD_ClassInfo*)&hsdTObj,&hsdObj,"sysdolphin_base_library","hsd_tobj",sizeof(HSD_TObjInfo),sizeof(HSD_TObjRuntime));
+    hsdTObj.parent.init = TObjInit;
+    hsdTObj.parent.release = TObjRelease;
+    hsdTObj.parent.amnesia = TObjAmnesia;
+    hsdTObj.load = TObjLoad;
+    hsdTObj.make_texp = TObjMakeTExp;
+    hsdTObj.make_mtx = MakeTextureMtx;
+    hsdTObj.update = TObjUpdateFunc;
+}
+static void TObjAmnesia(HSD_ClassInfo* info)
+{
+    if (info == HSD_CLASS_INFO(default_class)) {
+        default_class = NULL;
+    }
+    if (info == HSD_CLASS_INFO(&hsdTObj)) {
+        tobj_head = NULL;
+    }
+    HSD_PARENT_INFO(&hsdTObj)->amnesia(info);
+}
+static void TObjRelease(HSD_Class* o)
+{
+    HSD_TObj* tobj = ((HSD_TObj*)o);
+
+    HSD_AObjRemove(tobj->aobj);
+    HSD_TlutRemove(tobj->tlut);
+    HSD_TObjTevRemove(TOBJ_EXT(tobj)->tev);
+    if (TOBJ_EXT(tobj)->tluttbl) {
+        int i;
+        for (i = 0; TOBJ_EXT(tobj)->tluttbl[i]; i++) {
+            HSD_TlutRemove(TOBJ_EXT(tobj)->tluttbl[i]);
+        }
+        HSD_Free(TOBJ_EXT(tobj)->tluttbl);
+    }
+
+    HSD_PARENT_INFO(&hsdTObj)->release(o);
+}
+static int TObjInit(HSD_Class* o) {
+    int status = HSD_PARENT_INFO(&hsdTObj)->init(o);
+    if (status >= 0) {
+        HSD_TObj* tobj = (HSD_TObj*)o;
+        status = 0;
+        TOBJ_PACKED(tobj)->anim_id = 0xffff;
+    }
+    return status;
+}
+void HSD_ImageDescRemove(HSD_ImageDesc* idesc) { hsdFreeMemPiece(idesc,sizeof(HSD_ImageDesc)); }
+void HSD_ImageDescFree(HSD_ImageDesc* idesc)
+{
+    hsdFreeMemPiece(idesc, sizeof(HSD_ImageDesc));
+}
+HSD_ImageDesc* HSD_ImageDescAlloc(void)
+{
+    HSD_ImageDesc* idesc = hsdAllocMemPiece(sizeof(HSD_ImageDesc));
+    HSD_ASSERT(2290, idesc);
+    memset(idesc, 0, sizeof(HSD_ImageDesc));
+    return idesc;
+}
+#pragma auto_inline on
+HSD_TObjTev* HSD_TObjTevAlloc(void) {
+    HSD_TObjTev* tev = hsdAllocMemPiece(sizeof(HSD_TObjTev));
+    HSD_ASSERT(2247, tev);
+    memset(tev, 0, sizeof(HSD_TObjTev));
+    return tev;
+}
+HSD_Tlut* HSD_TlutAlloc(void) {
+    HSD_Tlut* tlut = hsdAllocMemPiece(sizeof(HSD_Tlut));
+    HSD_ASSERT(2204, tlut);
+    memset(tlut, 0, sizeof(HSD_Tlut));
+    return tlut;
+}
+HSD_TObj* HSD_TObjAlloc(void)
+{
+    HSD_TObj* new = hsdNew(&HSD_TObjGetDefaultClass()->parent);
+    HSD_ASSERT(2175, new);
+    return new;
+}
+GXTexMapID HSD_Index2TexMap(u32 index)
+{
+    switch (index) {
+    case 0:
+        return GX_TEXMAP0;
+    case 1:
+        return GX_TEXMAP1;
+    case 2:
+        return GX_TEXMAP2;
+    case 3:
+        return GX_TEXMAP3;
+    case 4:
+        return GX_TEXMAP4;
+    case 5:
+        return GX_TEXMAP5;
+    case 6:
+        return GX_TEXMAP6;
+    case 7:
+        return GX_TEXMAP7;
+    default:
+        HSD_ASSERT(2050, 0);
+    }
+    return GX_TEXMAP0;
+}
+
+#pragma defer_codegen on
+#pragma auto_inline on
 void HSD_TObjRemoveAnim(HSD_TObj* tobj)
 {
     if (tobj == NULL) {
@@ -965,9 +1043,8 @@ static void TObjSetupMtx(HSD_TObj* tobj)
 
             GXLoadTexMtxImm(mtx, tobj->mtxid, GX_MTX3x4);
         } else {
-            static HSD_Mtx zero = { 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F,
-                                0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F };
-            GXLoadTexMtxImm(zero, tobj->mtxid, GX_MTX3x4);
+
+            GXLoadTexMtxImm(zero$583, tobj->mtxid, GX_MTX3x4);
         }
     } break;
 
@@ -1690,76 +1767,4 @@ void HSD_TObjAddNext(HSD_TObj* tobj, HSD_TObj* next) {
     if (!tobj || !next) return;
     next->next = tobj->next;
     tobj->next = next;
-}
-
-HSD_TObj* HSD_TObjAlloc(void)
-{
-    HSD_TObj* new = hsdNew(&HSD_TObjGetDefaultClass()->parent);
-    HSD_ASSERT(2175, new);
-    return new;
-}
-
-HSD_ImageDesc* HSD_ImageDescAlloc(void)
-{
-    HSD_ImageDesc* idesc = hsdAllocMemPiece(sizeof(HSD_ImageDesc));
-    HSD_ASSERT(2290, idesc);
-    memset(idesc, 0, sizeof(HSD_ImageDesc));
-    return idesc;
-}
-
-void HSD_ImageDescFree(HSD_ImageDesc* idesc)
-{
-    hsdFreeMemPiece(idesc, sizeof(HSD_ImageDesc));
-}
-
-void HSD_ImageDescRemove(HSD_ImageDesc* idesc) { hsdFreeMemPiece(idesc,sizeof(HSD_ImageDesc)); }
-
-static int TObjInit(HSD_Class* o) {
-    int status = HSD_PARENT_INFO(&hsdTObj)->init(o);
-    if (status >= 0) {
-        HSD_TObj* tobj = (HSD_TObj*)o;
-        status = 0;
-        TOBJ_PACKED(tobj)->anim_id = 0xffff;
-    }
-    return status;
-}
-
-static void TObjRelease(HSD_Class* o)
-{
-    HSD_TObj* tobj = ((HSD_TObj*)o);
-
-    HSD_AObjRemove(tobj->aobj);
-    HSD_TlutRemove(tobj->tlut);
-    HSD_TObjTevRemove(TOBJ_EXT(tobj)->tev);
-    if (TOBJ_EXT(tobj)->tluttbl) {
-        int i;
-        for (i = 0; TOBJ_EXT(tobj)->tluttbl[i]; i++) {
-            HSD_TlutRemove(TOBJ_EXT(tobj)->tluttbl[i]);
-        }
-        HSD_Free(TOBJ_EXT(tobj)->tluttbl);
-    }
-
-    HSD_PARENT_INFO(&hsdTObj)->release(o);
-}
-
-static void TObjAmnesia(HSD_ClassInfo* info)
-{
-    if (info == HSD_CLASS_INFO(default_class)) {
-        default_class = NULL;
-    }
-    if (info == HSD_CLASS_INFO(&hsdTObj)) {
-        tobj_head = NULL;
-    }
-    HSD_PARENT_INFO(&hsdTObj)->amnesia(info);
-}
-
-static void TObjInfoInit(void) {
-    hsdInitClassInfo((HSD_ClassInfo*)&hsdTObj,&hsdObj,"sysdolphin_base_library","hsd_tobj",sizeof(HSD_TObjInfo),sizeof(HSD_TObjRuntime));
-    hsdTObj.parent.init = TObjInit;
-    hsdTObj.parent.release = TObjRelease;
-    hsdTObj.parent.amnesia = TObjAmnesia;
-    hsdTObj.load = TObjLoad;
-    hsdTObj.make_texp = TObjMakeTExp;
-    hsdTObj.make_mtx = MakeTextureMtx;
-    hsdTObj.update = TObjUpdateFunc;
 }

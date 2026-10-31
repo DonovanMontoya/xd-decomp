@@ -1,5 +1,6 @@
 /* Debug menu window that displays the GS log. */
 #include <global.h>
+#pragma force_active on
 
 typedef struct DbgMenuKeyInfo {
     u8 unk0[4];
@@ -28,8 +29,8 @@ extern DbgMenuKeyInfo* windowGetKeyInfo(void);
 extern s32 windowGetParam(DbgMenuWindow*, s32);
 extern void windowSetParam(DbgMenuWindow*, s32, s32);
 
-static s32 _viewStartLine;
 static u8 _calcStartLine;
+static s32 _viewStartLine;
 
 s32 dbgMenuLogDraw(DbgMenuWindow* window) {
     DbgLogColor color = { 0, 0, 0, 0x80 };
@@ -109,3 +110,5 @@ s32 dbgMenuLogChangeDisp(void) {
     }
     return 0;
 }
+
+#pragma force_active reset

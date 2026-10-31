@@ -17,7 +17,7 @@ ninja all_source progress build/GXXE01/report.json
 python3 tools/update_readme_progress.py build/GXXE01/report.json   # refresh README badges
 ```
 
-Progress is `matched_code` in `build/GXXE01/report.json` (out of 3,042,576 code bytes). On a laptop, prefer `nice -n 19 ninja -j4`. If `main.dol: OK` doesn't print because the DOL was up to date, verify with `sha1sum build/GXXE01/main.dol`. CI only checks configuration; full builds need the private disc image.
+Progress is `matched_code` in `build/GXXE01/report.json` (out of 3,042,580 code bytes). On a laptop, prefer `nice -n 19 ninja -j4`. If `main.dol: OK` doesn't print because the DOL was up to date, verify with `sha1sum build/GXXE01/main.dol`. CI only checks configuration; full builds need the private disc image.
 
 ## Layout
 

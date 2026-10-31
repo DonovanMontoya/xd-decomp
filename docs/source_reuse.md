@@ -197,6 +197,28 @@ preserves the retail diagnostic string order; the linker removes its unused
 code. The module initializer remains an ordinary local aggregate. The complete
 linked unit passes the retail DOL hash check.
 
+## Particle interpreter and retained runtime helpers
+
+`modifyDirGenBase`, `modifyDir`, and `setVelToJObj` in
+`game/maximum/GSAPI/particle/psinterpret.cpp` were adapted from
+`src/game/psinterpret.c` at Colosseum commit
+`e354ba3f0475ac50af3b7d9dccc1f2855be8369c` (MIT). The native vector fields and
+actual double-precision trigonometric calls replace temporary register-shaped
+expressions. The retained weak SDK `sqrtf` body is identical to the existing
+runtime implementation; normal duplicate removal restores the exact literal
+pool and linked retail DOL.
+
+`timeGetVsyncRate` was restored from `src/game/time.cpp` at XD commit
+`7a84160273832d34c35258b06c113533e767221a`. Its paused frame-rate conversion
+retains the zero and integer-conversion literals shared by the two surviving
+time functions. The unused function is stripped, and the linked unit passes the
+retail DOL hash check.
+
+The `tobj` layout retains the existing real `HSD_TObjTevAlloc`, `HSD_TlutAlloc`,
+and `HSD_Index2TexMap` copies while emitting the original assertion literals.
+Normal dead stripping removes their unused code and jump table. The complete
+linked unit passes the retail DOL hash check.
+
 ## Colosseum license notice
 
 ```text

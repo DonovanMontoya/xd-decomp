@@ -16,38 +16,75 @@ void GSgappSetName(u32,const char*);
 void GSgfxRenderPause(); void GSgfxRenderUnpause();
 void* GSresGetResourceAllGroup(u32);
 void GSthreadExecuteGroup(u32);
-void GSvtrSlowPlay() { _vtrState=4; _vtrBlockState=3; _vtrSlowPlayFrame=0; }
-void GSvtrSingleStep() { _vtrState=3; _vtrBlockState=3; }
-void GSvtrPlay() { _vtrState=2; _vtrBlockState=3; }
-void GSvtrPause() { _vtrState=1; if(_vtrBlockState!=2) _vtrBlockState=1; }
-u8 GSvtrGetInfoDisp() { return _vtrTexDisp; }
-void GSvtrSetInfoDisp(u8 display,u8 border) { _vtrTexDisp=display; _vtrTexDispBorder=border; }
-s32 GSvtrGetState() { return _vtrState; }
-u8 GSvtrIsActive() { return _vtrEnabled; }
+void GSvtrSlowPlay();
+void GSvtrSingleStep();
+void GSvtrPlay();
+void GSvtrPause();
+u8 GSvtrGetInfoDisp();
+void GSvtrSetInfoDisp(u8 display,u8 border);
+s32 GSvtrGetState();
+u8 GSvtrIsActive();
 static inline void _vtrUnblockAll() { u32 i; u32* h; h=_vtrGSgappHdlList; for(i=0;i<_vtrGSgappCount;i++,h++) if(*h) GSgappUnblock(*h); }
-void GSvtrDisable() {
-    _vtrState = 0; _vtrEnabled = 0;
-    _vtrUnblockAll();
-    if(_vtrGSgfxIsPaused==1) { GSgfxRenderUnpause(); _vtrGSgfxIsPaused=0; }
-}
-void GSvtrEnable() { _vtrEnabled=1; _vtrState=2; _vtrBlockState=3; }
-void GSvtrLoadTexture() { _vtrTex=GSresGetResourceAllGroup(0x0ab21200); }
-u8 GSvtrRegisterGSgapp(u32 handle) {
-    if(_vtrGSgappCount+1>=4) return 0;
-    u32* item=_vtrGSgappHdlList;
-    for(s32 i=0;i<4;++i,++item) {
-        if(!*item) { *item=handle; ++_vtrGSgappCount; return 1; }
-    }
-    return 0;
-}
-void GSvtrInit() {
-    _vtrEnabled=0; _vtrState=0; _vtrGSgappCount=0; _vtrTex=0; _vtrTexDisp=1;
-    memset(_vtrGSgappHdlList,0,sizeof(_vtrGSgappHdlList));
-    u32 handle=GSgappCreate(1,0xfd,10,_vtrUpdateFunc);
-    GSgappSetName(handle,"GSvtr");
-}
+void GSvtrDisable();
+void GSvtrEnable();
+void GSvtrLoadTexture();
+u8 GSvtrRegisterGSgapp(u32 handle);
+void GSvtrInit();
 }
 static inline void _vtrBlockAll() { u32 i; u32* h; h=_vtrGSgappHdlList; for(i=0;i<_vtrGSgappCount;i++,h++) if(*h) GSgappBlock(*h); }
+static void _vtrUpdateFunc(unsigned long,unsigned long);
+struct GSgfxLayer {
+    u8 reserved00[0x28]; s32 id; u8 reserved2c[0x1644-0x2c]; u32 blendMode,blendSource,blendDestination,blendLogic;
+    u8 reserved1654[0x16a8-0x1654]; u32 dirty;
+    u8 reserved16ac[0x170c-0x16ac]; u32 pixelDirty;
+    u8 reserved1710[0x1760-0x1710]; u32 savedDirty;
+    u8 reserved1764[0x17c4-0x1764]; u32 savedPixelDirty;
+    u8 reserved17c8[0x1818-0x17c8]; u8 shaders[2][0xbc]; void* shader; s32 shaderIndex;
+};
+extern "C" {
+GSgfxLayer* GSgfxLayerFindByID(u32);
+void GSprimSetup2DRender__FP10GSgfxLayer(GSgfxLayer*);
+void GSprimDraw2DQuad(f32,f32,f32,f32,const void*);
+void GSprimDraw2DTexQuad(f32,f32,f32,f32,void*,const void*);
+void GSprint(s32,s32,s32,s32,const char*,...);
+}
+static void _vtrTexDispFunc();
+
+#pragma force_active on
+#pragma defer_codegen on
+extern "C++" {
+static void _vtrTexDispFunc() {
+    struct Color {u8 r,g,b,a;};
+    Color border={255,0,0,255};
+    Color color={255,255,255,255};
+    if(!_vtrEnabled || !_vtrTexDisp) return;
+    if(!_vtrTex) return;
+    {
+    GSgfxLayer* layer=GSgfxLayerFindByID(7);
+    if(layer) {
+        GSprimSetup2DRender__FP10GSgfxLayer(layer);
+        if(layer->shaderIndex!=1) { layer->shaderIndex=1; layer->shader=&layer->shaders[layer->shaderIndex]; }
+        layer->blendMode=1; layer->blendSource=1; layer->blendDestination=0; layer->blendLogic=5;
+        layer->pixelDirty|=1; layer->dirty|=0x40; layer->savedPixelDirty|=1; layer->savedDirty|=0x40;
+        if(_vtrTexDispBorder) { Color c=border; GSprimDraw2DQuad(6,24,634,68,&c); }
+        Color c=color; GSprimDraw2DTexQuad(12,28,628,64,_vtrTex,&c);
+        switch(_vtrState) {
+        case 0: GSprint(layer->id,560,44,-1,"???"); break;
+        case 1: GSprint(layer->id,560,44,-1,"Pause"); break;
+        case 2: GSprint(layer->id,560,44,-1,"Play"); break;
+        case 3:
+            switch(_vtrBlockState) {
+            case 0: case 1: GSprint(layer->id,560,44,-1,"SStep"); break;
+            case 2: case 3: GSprint(layer->id,560,44,-1,"Pause"); break;
+            }
+            break;
+        case 4: GSprint(layer->id,560,44,-1,"Slow"); break;
+        }
+    }
+}
+}
+}
+extern "C++" {
 static void _vtrUpdateFunc(unsigned long,unsigned long) {
     if(_vtrEnabled) {
         _vtrTexDispFunc();
@@ -84,48 +121,59 @@ static void _vtrUpdateFunc(unsigned long,unsigned long) {
         if(_vtrBlockState==2) { GSthreadExecuteGroup(0xe38f910b); GSthreadExecuteGroup(0x175f4322); }
     }
 }
-struct GSgfxLayer {
-    u8 reserved00[0x28]; s32 id; u8 reserved2c[0x1644-0x2c]; u32 blendMode,blendSource,blendDestination,blendLogic;
-    u8 reserved1654[0x16a8-0x1654]; u32 dirty;
-    u8 reserved16ac[0x170c-0x16ac]; u32 pixelDirty;
-    u8 reserved1710[0x1760-0x1710]; u32 savedDirty;
-    u8 reserved1764[0x17c4-0x1764]; u32 savedPixelDirty;
-    u8 reserved17c8[0x1818-0x17c8]; u8 shaders[2][0xbc]; void* shader; s32 shaderIndex;
-};
+}
 extern "C" {
-GSgfxLayer* GSgfxLayerFindByID(u32);
-void GSprimSetup2DRender__FP10GSgfxLayer(GSgfxLayer*);
-void GSprimDraw2DQuad(f32,f32,f32,f32,const void*);
-void GSprimDraw2DTexQuad(f32,f32,f32,f32,void*,const void*);
-void GSprint(s32,s32,s32,s32,const char*,...);
+void GSvtrInit() {
+    _vtrEnabled=0; _vtrState=0; _vtrGSgappCount=0; _vtrTex=0; _vtrTexDisp=1;
+    memset(_vtrGSgappHdlList,0,sizeof(_vtrGSgappHdlList));
+    u32 handle=GSgappCreate(1,0xfd,10,_vtrUpdateFunc);
+    GSgappSetName(handle,"GSvtr");
 }
-static void _vtrTexDispFunc() {
-    struct Color {u8 r,g,b,a;};
-    Color border={255,0,0,255};
-    Color color={255,255,255,255};
-    if(!_vtrEnabled || !_vtrTexDisp) return;
-    if(!_vtrTex) return;
-    {
-    GSgfxLayer* layer=GSgfxLayerFindByID(7);
-    if(layer) {
-        GSprimSetup2DRender__FP10GSgfxLayer(layer);
-        if(layer->shaderIndex!=1) { layer->shaderIndex=1; layer->shader=&layer->shaders[layer->shaderIndex]; }
-        layer->blendMode=1; layer->blendSource=1; layer->blendDestination=0; layer->blendLogic=5;
-        layer->pixelDirty|=1; layer->dirty|=0x40; layer->savedPixelDirty|=1; layer->savedDirty|=0x40;
-        if(_vtrTexDispBorder) { Color c=border; GSprimDraw2DQuad(6,24,634,68,&c); }
-        Color c=color; GSprimDraw2DTexQuad(12,28,628,64,_vtrTex,&c);
-        switch(_vtrState) {
-        case 0: GSprint(layer->id,560,44,-1,"???"); break;
-        case 1: GSprint(layer->id,560,44,-1,"Pause"); break;
-        case 2: GSprint(layer->id,560,44,-1,"Play"); break;
-        case 3:
-            switch(_vtrBlockState) {
-            case 0: case 1: GSprint(layer->id,560,44,-1,"SStep"); break;
-            case 2: case 3: GSprint(layer->id,560,44,-1,"Pause"); break;
-            }
-            break;
-        case 4: GSprint(layer->id,560,44,-1,"Slow"); break;
-        }
+}
+extern "C" {
+u8 GSvtrRegisterGSgapp(u32 handle) {
+    if(_vtrGSgappCount+1>=4) return 0;
+    u32* item=_vtrGSgappHdlList;
+    for(s32 i=0;i<4;++i,++item) {
+        if(!*item) { *item=handle; ++_vtrGSgappCount; return 1; }
     }
+    return 0;
 }
+}
+extern "C" {
+void GSvtrLoadTexture() { _vtrTex=GSresGetResourceAllGroup(0x0ab21200); }
+}
+extern "C" {
+void GSvtrEnable() { _vtrEnabled=1; _vtrState=2; _vtrBlockState=3; }
+}
+extern "C" {
+void GSvtrDisable() {
+    _vtrState = 0; _vtrEnabled = 0;
+    _vtrUnblockAll();
+    if(_vtrGSgfxIsPaused==1) { GSgfxRenderUnpause(); _vtrGSgfxIsPaused=0; }
+}
+}
+extern "C" {
+u8 GSvtrIsActive() { return _vtrEnabled; }
+}
+extern "C" {
+s32 GSvtrGetState() { return _vtrState; }
+}
+extern "C" {
+void GSvtrSetInfoDisp(u8 display,u8 border) { _vtrTexDisp=display; _vtrTexDispBorder=border; }
+}
+extern "C" {
+u8 GSvtrGetInfoDisp() { return _vtrTexDisp; }
+}
+extern "C" {
+void GSvtrPause() { _vtrState=1; if(_vtrBlockState!=2) _vtrBlockState=1; }
+}
+extern "C" {
+void GSvtrPlay() { _vtrState=2; _vtrBlockState=3; }
+}
+extern "C" {
+void GSvtrSingleStep() { _vtrState=3; _vtrBlockState=3; }
+}
+extern "C" {
+void GSvtrSlowPlay() { _vtrState=4; _vtrBlockState=3; _vtrSlowPlayFrame=0; }
 }

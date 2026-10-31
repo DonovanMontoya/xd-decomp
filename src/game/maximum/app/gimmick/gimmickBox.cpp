@@ -1,3 +1,4 @@
+#pragma defer_codegen off
 extern "C" int sprintf(char*, const char*, ...);
 #include <game/maximum/app/gimmick/gimmickBox.hpp>
 
@@ -73,7 +74,7 @@ float sqrtf(float);
 float sinf(float);
 float cosf(float);
 inline float fabsf(float x) { return (float)fabs(x); }
-inline float fmodf(float x, float y) { return (float)fmod(x, y); }
+float fmodf(float x, float y);
 }
 
 static void _gimmickBoxSetJumpPosYs();
@@ -112,11 +113,130 @@ extern "C" {
 u8 gimmickBoxIsPushBoxFloor(void);
 void gimmickBoxFloorInit(void);
 
+}
+
+extern "C" {
+
+}
+
+extern "C" {
+
+}
+
+GimmickBoxPushData pd;
+
+extern "C" {
+
+}
+
+extern "C" {
+
+}
+
+extern "C" {
+
+}
+
+extern "C" {
+
+}
+
+extern "C" {
+
+}
+
+extern "C" {
+
+}
+
+#define GB_CANJUMP_CHECK(FLAG)                                                    \
+    dst.y = pd.kenPos.y;                                                          \
+    dst.y = GScolsys2HumanGetWalkHighest(&dst);                                   \
+    near = std::fabsf((pd.kenPos.y - dst.y) - 10.0f) < 3.0f;                      \
+    dst.y = 10.0f;                                                                \
+    onBox = _gimmickBoxIsOnBoxPos(&dst);                                          \
+    if (near && !onBox) {                                                         \
+        *flags |= FLAG;                                                           \
+    } else {                                                                      \
+        ok = 0;                                                                   \
+    }
+
+#define GB_JUMP_CHECK(FLAG)                                                       \
+    p2.y = pd.kenPos.y;                                                           \
+    p2.y = GScolsys2HumanGetWalkHighest(&p2);                                     \
+    near = std::fabsf((pd.kenPos.y - p2.y) - 10.0f) < 3.0f;                       \
+    p2.y = 10.0f;                                                                 \
+    onBox = _gimmickBoxIsOnBoxPos(&p2);                                           \
+    if (near && !onBox) {                                                         \
+        blocked = 1;                                                              \
+        flags |= FLAG;                                                            \
+    }
+
+#define GB_JUMP_CHECK2(FLAG)                                                       \
+    p2.y = pd.kenPos.y;                                                           \
+    p2.y = GScolsys2HumanGetWalkHighest(&p2);                                     \
+    near = std::fabsf((pd.kenPos.y - p2.y) - 10.0f) < 3.0f;                       \
+    p2.y = 10.0f;                                                                 \
+    onBox = _gimmickBoxIsOnBoxPos(&p2);                                           \
+    if (near && !onBox) {                                                         \
+        blocked |= 1;                                                              \
+        flags |= FLAG;                                                            \
+    }
+
+extern "C" { s32 gimmickBoxPop(void); }
+extern "C" { u8 gimmickBoxIsBox(tagPeopleWork* people); }
+extern "C++" { static void _gimmickBoxSetJumpPosYs(); }
+extern "C" { void gimmickBoxDrawString(s32 x, s32 y, const char* str); }
+extern "C" { void gimmickBoxDrawInt(s32 x, s32 y, s32 value); }
+extern "C" { void gimmickBoxDrawFloat(s32 x, s32 y, f32 value); }
+extern "C" { u8 gimmickBoxIsPushBoxFloor(void); }
+extern "C++" { static u8 _gimmickBoxBoxMoveStart(tagPeopleWork* people, f32 dx, f32 dz); }
+extern "C" { s32 gimmickBoxFixDistanceForPushBox(f32 dx, f32 dz, f32* dist, tagPeopleWork* people); }
+extern "C" { void gimmickBoxPushBox(u32 ken); }
+extern "C++" { static u8 _gimmickBoxTranslateKenToBoxPushPosition(); }
+extern "C++" { static u8 _gimmickBoxRoatateKenToBoxPushRotationReady(); }
+extern "C++" { static u8 _gimmickBoxRoatateKenToBoxPushRotation(); }
+extern "C++" { static void _gimmickBoxPushBoxComplete(); }
+extern "C++" { static void _gimmickBoxSetBoxAndKenToPushPosition(tagPeopleWork* people, f32 vx, f32 vz); }
+extern "C++" { static void _gimmickBoxMoveBox(tagPeopleWork* people); }
+extern "C++" { static void _gimmickBoxReadyAndMoveBox(tagPeopleWork* people); }
+extern "C++" { static s32 _gimmickBoxWalkMotion(); }
+extern "C++" { static u8 _gimmickBoxPushStartMotion(); }
+extern "C++" { static u8 _gimmickBoxPushEndMotion(); }
+extern "C++" { static void _gimmickBoxGetDirection(M_STICK_DIRECTION dir, f32* x, f32* z, f32* angle); }
+extern "C++" { static u8 _gimmickBoxCanBoxMove(GSvec* from, GSvec* to); }
+extern "C++" { static f32 _gimmickBoxGetFixDistanceBoxAndPeople(f32 dx, f32 dz); }
+extern "C++" { static void _gimmickBoxSetBoxDirection(f32 dx, f32 dz); }
+extern "C" { f32 gimmickBoxGetFrameCount(tagPeopleWork* people, s32 anim); }
+extern "C++" { static u8 _gimmickBoxInit(); }
+extern "C++" { static u8 _gimmickBoxIsJumpOK(GSvec* p); }
+extern "C++" { static void _gimmickBoxJump(); }
+extern "C++" { static u8 _gimmickBoxJumpMotion(); }
+extern "C++" { static u8 _gimmickBoxIsOnBox(f32 x, f32 z, f32 y, f32 bx, f32 bz); }
+extern "C" { s32 gimmickBoxOnBox(u32 ken, GSvec* prev, GSvec* pos); }
+extern "C++" { static u8 _gimmickBoxIsOnBoxPos(GSvec* pos); }
+extern "C++" { static s32 _gimmickBoxAllowAcrossPrevention(s32 n); }
+extern "C++" { static u8 _gimmickBoxCanJump(f32 ang, u8* flags); }
+extern "C++" { static s32 _gimmickBoxGetPeopleNum(); }
+extern "C" { s32 gimmickBoxSetKenShadowOnBoxIfOnBoxFloor(tagPeopleWork* ken, u32* list, s32* count); }
+extern "C" { s32 gimmickBoxGetMotion(s32* motion, s8* flag); }
+extern "C" { s32 gimmickBoxIsGimmickMoving(void); }
+extern "C" { f32 gimmickBoxGetBoxHeight(void); }
+extern "C++" { static M_STICK_DIRECTION _gimmickBoxCheckStickDirection(); }
+extern "C" { void gimmickBoxFloorInit(void); }
+extern "C" { void gimmickSetMotion(s32 a, s32 b, s32 anim, s32 frame, u8 loop); }
+extern "C++" { static void _gimmickBoxRotateToAngle(f32 angle, f32 rate); }
+extern "C++" { static f32 adjust2PI(f32 a); }
+extern "C++" { static f32 adjustNear8(f32 a); }
+
+#pragma force_active on
+extern "C" {
 s32 gimmickBoxPop(void) {
     gimmickBoxFloorInit();
     return 1;
 }
-
+}
+extern "C" {
 u8 gimmickBoxIsBox(tagPeopleWork* people) {
     if (!gimmickBoxIsPushBoxFloor()) {
         return 0;
@@ -129,31 +249,8 @@ u8 gimmickBoxIsBox(tagPeopleWork* people) {
     }
     return 0;
 }
-
-void gimmickBoxDrawString(s32 x, s32 y, const char* str) {
-    GSprint(dbgMenuGetLayerID(), x * 13 + 20, y * 13 + 20, -1, str);
 }
-
-void gimmickBoxDrawInt(s32 x, s32 y, s32 value) {
-    char buf[1024];
-    sprintf(buf, "%d", value);
-    GSprint(dbgMenuGetLayerID(), x * 13 + 20, y * 13 + 20, -1, buf);
-}
-
-void gimmickBoxDrawFloat(s32 x, s32 y, f32 value) {
-    char buf[1024];
-    sprintf(buf, "%f", value);
-    GSprint(dbgMenuGetLayerID(), x * 13 + 20, y * 13 + 20, -1, buf);
-}
-
-u8 gimmickBoxIsPushBoxFloor(void) {
-    if (pd.state == 1) {
-        return 1;
-    }
-    return 0;
-}
-}
-
+extern "C++" {
 static void _gimmickBoxSetJumpPosYs() {
     s32 i;
     s32 n;
@@ -178,7 +275,35 @@ static void _gimmickBoxSetJumpPosYs() {
         }
     }
 }
-
+}
+extern "C" {
+void gimmickBoxDrawString(s32 x, s32 y, const char* str) {
+    GSprint(dbgMenuGetLayerID(), x * 13 + 20, y * 13 + 20, -1, str);
+}
+}
+extern "C" {
+void gimmickBoxDrawInt(s32 x, s32 y, s32 value) {
+    char buf[1024];
+    sprintf(buf, "%d", value);
+    GSprint(dbgMenuGetLayerID(), x * 13 + 20, y * 13 + 20, -1, buf);
+}
+}
+extern "C" {
+void gimmickBoxDrawFloat(s32 x, s32 y, f32 value) {
+    char buf[1024];
+    sprintf(buf, "%f", value);
+    GSprint(dbgMenuGetLayerID(), x * 13 + 20, y * 13 + 20, -1, buf);
+}
+}
+extern "C" {
+u8 gimmickBoxIsPushBoxFloor(void) {
+    if (pd.state == 1) {
+        return 1;
+    }
+    return 0;
+}
+}
+extern "C++" {
 static u8 _gimmickBoxBoxMoveStart(tagPeopleWork* people, f32 dx, f32 dz) {
     f32 vx;
     f32 vz;
@@ -194,7 +319,7 @@ static u8 _gimmickBoxBoxMoveStart(tagPeopleWork* people, f32 dx, f32 dz) {
     }
     return 0;
 }
-
+}
 extern "C" {
 s32 gimmickBoxFixDistanceForPushBox(f32 dx, f32 dz, f32* dist, tagPeopleWork* people) {
     u8 near;
@@ -227,7 +352,6 @@ s32 gimmickBoxFixDistanceForPushBox(f32 dx, f32 dz, f32* dist, tagPeopleWork* pe
     return 1;
 }
 }
-
 extern "C" {
 void gimmickBoxPushBox(u32 ken) {
     s32 i;
@@ -250,7 +374,7 @@ void gimmickBoxPushBox(u32 ken) {
     }
 }
 }
-
+extern "C++" {
 static u8 _gimmickBoxTranslateKenToBoxPushPosition() {
     f32 vx;
     f32 vz;
@@ -287,7 +411,8 @@ static u8 _gimmickBoxTranslateKenToBoxPushPosition() {
     }
     return done;
 }
-
+}
+extern "C++" {
 static u8 _gimmickBoxRoatateKenToBoxPushRotationReady() {
     switch (pd.dir) {
     case M_STICK_3:
@@ -329,7 +454,8 @@ static u8 _gimmickBoxRoatateKenToBoxPushRotationReady() {
     }
     return 1;
 }
-
+}
+extern "C++" {
 static u8 _gimmickBoxRoatateKenToBoxPushRotation() {
     f32 angle;
     _gimmickBoxGetDirection(pd.dir, 0, 0, &angle);
@@ -342,7 +468,8 @@ static u8 _gimmickBoxRoatateKenToBoxPushRotation() {
     }
     return 0;
 }
-
+}
+extern "C++" {
 static void _gimmickBoxPushBoxComplete() {
     pd.box = 0;
     pd.flagWalk = 0;
@@ -355,7 +482,8 @@ static void _gimmickBoxPushBoxComplete() {
     sound_flag = 0;
     peopleSetMotionType(pd.ken, 1);
 }
-
+}
+extern "C++" {
 static void _gimmickBoxSetBoxAndKenToPushPosition(tagPeopleWork* people, f32 vx, f32 vz) {
     pd.kenPos.x = pd.boxPos.x - vx * pd.pushDist;
     pd.kenPos.z = pd.boxPos.z - vz * pd.pushDist;
@@ -363,7 +491,11 @@ static void _gimmickBoxSetBoxAndKenToPushPosition(tagPeopleWork* people, f32 vx,
     peopleBiosSetPos(people, &pd.boxPos);
     peopleBiosSetPos(pd.ken, &pd.kenPos);
 }
-
+}
+extern "C++" {
+// Shared movement tolerance and angle parameters retain the original readonly pool.
+static const f32 sBoxMotionMaximum[] = {0.00001f};
+static const f32 sBoxMotionMinimum[] = {-0.00001f};
 static void _gimmickBoxMoveBox(tagPeopleWork* people) {
     f32 vx;
     f32 vz;
@@ -392,7 +524,8 @@ static void _gimmickBoxMoveBox(tagPeopleWork* people) {
     }
     _gimmickBoxSetBoxAndKenToPushPosition(people, vx, vz);
 }
-
+}
+extern "C++" {
 static void _gimmickBoxReadyAndMoveBox(tagPeopleWork* people) {
     if (people->model != 0) {
         peopleBiosGetPos(pd.ken, &pd.kenPos);
@@ -406,13 +539,15 @@ static void _gimmickBoxReadyAndMoveBox(tagPeopleWork* people) {
         }
     }
 }
-
+}
+extern "C++" {
 static s32 _gimmickBoxWalkMotion() {
     peopleSetMotion(0, 100, 5, (s32)pd.walkCnt, 1);
     pd.walkCnt += (30.0f * timeGetLastFrameTime()) / GSgfxVideoGetVsyncRate();
     return 0;
 }
-
+}
+extern "C++" {
 static u8 _gimmickBoxPushStartMotion() {
     if (pd.pushStartCnt < pd.pushStartFrames) {
         gimmickSetMotion(0, 100, 0x1F, (s32)pd.pushStartCnt, 0);
@@ -421,7 +556,8 @@ static u8 _gimmickBoxPushStartMotion() {
     }
     return 1;
 }
-
+}
+extern "C++" {
 static u8 _gimmickBoxPushEndMotion() {
     if (pd.pushEndCnt < pd.pushEndFrames) {
         gimmickSetMotion(0, 100, 0x21, (s32)pd.pushEndCnt, 0);
@@ -430,7 +566,8 @@ static u8 _gimmickBoxPushEndMotion() {
     }
     return 1;
 }
-
+}
+extern "C++" {
 static void _gimmickBoxGetDirection(M_STICK_DIRECTION dir, f32* x, f32* z, f32* angle) {
     f32 vx = 0.0f;
     f32 vz = 0.0f;
@@ -463,9 +600,9 @@ static void _gimmickBoxGetDirection(M_STICK_DIRECTION dir, f32* x, f32* z, f32* 
         *angle = a;
     }
 }
-
-GimmickBoxPushData pd;
-
+}
+extern "C++" {
+namespace std { __declspec(weak) float fmodf(float x, float y) { return (float)fmod(x, y); } }
 static u8 _gimmickBoxCanBoxMove(GSvec* from, GSvec* to) {
     s32 i;
     u8 ok;
@@ -486,7 +623,8 @@ static u8 _gimmickBoxCanBoxMove(GSvec* from, GSvec* to) {
     }
     return ok;
 }
-
+}
+extern "C++" {
 static f32 _gimmickBoxGetFixDistanceBoxAndPeople(f32 dx, f32 dz) {
     f32 ox;
     f32 oz;
@@ -519,7 +657,8 @@ static f32 _gimmickBoxGetFixDistanceBoxAndPeople(f32 dx, f32 dz) {
     rz = oz + az;
     return std::sqrtf(rx * rx + rz * rz);
 }
-
+}
+extern "C++" {
 static void _gimmickBoxSetBoxDirection(f32 dx, f32 dz) {
     if (std::fabsf(dx) > std::fabsf(dz)) {
         if (dx > 0.0f) {
@@ -535,7 +674,7 @@ static void _gimmickBoxSetBoxDirection(f32 dx, f32 dz) {
     }
     pd.dir = M_STICK_4;
 }
-
+}
 extern "C" {
 f32 gimmickBoxGetFrameCount(tagPeopleWork* people, s32 anim) {
     u32 model;
@@ -546,65 +685,10 @@ f32 gimmickBoxGetFrameCount(tagPeopleWork* people, s32 anim) {
     return count;
 }
 }
-
-static s32 _gimmickBoxGetPeopleNum() {
-    s32 i;
-    tagPeopleWork* p;
-    for (i = 0; i < peopleBiosGetMaxNum(); i++) {
-        p = peopleBiosGetWorkPtr(i);
-        if (p == 0) {
-            return i;
-        }
-    }
-    return peopleBiosGetMaxNum();
-}
-
-extern "C" {
-s32 gimmickBoxIsGimmickMoving(void) {
-    if (pd.state == 1 && (pd.flagPush || pd.flagWalk || pd.flagJump)) {
-        return 1;
-    }
-    return 0;
-}
-
-f32 gimmickBoxGetBoxHeight(void) {
-    return 10.0f;
-}
-}
-
-static void _gimmickBoxRotateToAngle(f32 angle, f32 rate) {
-    pd.ken->rotFlag = 1;
-    pd.ken->angle = angle;
-    pd.ken->rate = rate;
-}
-
-static f32 adjust2PI(f32 a) {
-    return std::fmodf(6.2831855f + a, 6.2831855f);
-}
-
-extern "C" {
-s32 gimmickBoxGetMotion(s32* motion, s8* flag) {
-    if (pd.state == 1) {
-        if (pd.flagStart) {
-            *motion = 0x1F;
-            *flag = 0;
-            return 1;
-        }
-        if (pd.flagPush) {
-            *motion = 0x20;
-            *flag = 1;
-            return 1;
-        }
-        if (pd.flagWalk) {
-            *motion = 5;
-            *flag = 0;
-            return 1;
-        }
-    }
-    return 0;
-}
-}
-
+extern "C++" {
+static const f32 sBoxFullTurn[] = {6.2831855f};
+static const f32 sBoxEighthTurn[] = {0.7853982f};
+static const f32 sBoxThreeEighthTurn[] = {2.3561945f};
 static u8 _gimmickBoxInit() {
     pd.ken = peopleSearchID(peopleGetHumanID(0, 100));
     if (pd.ken == 0) {
@@ -636,239 +720,165 @@ static u8 _gimmickBoxInit() {
     pd.peopleNum = _gimmickBoxGetPeopleNum();
     return 1;
 }
-
+}
+extern "C++" {
 static u8 _gimmickBoxIsJumpOK(GSvec* p) {
     if (GScolsys2HumanGetWalkHighest(p) <= 2.0f && !_gimmickBoxIsOnBoxPos(p)) {
         return 1;
     }
     return 0;
 }
-
-static u8 _gimmickBoxIsOnBox(f32 x, f32 z, f32 y, f32 bx, f32 bz) {
-    f32 dx = x - bx;
-    f32 dz = z - bz;
-    f32 r;
-    f32 d;
-    f32 adx;
-    f32 adz;
-    f32 dist;
-    adx = std::fabsf(dx);
-    adz = std::fabsf(dz);
-    if (adx > pd.kenRadius && adz > pd.kenRadius) {
-        d = _gimmickBoxGetFixDistanceBoxAndPeople(dx, dz);
-    } else {
-        r = y + pd.kenRadius;
-        if (adx < adz) {
-            d = std::sqrtf(r * r + dx * dx);
+}
+extern "C++" {
+__declspec(weak) GSvec::GSvec(const GSvec& o) { x=o.x; y=o.y; z=o.z; }
+static void _gimmickBoxJump() {
+    f32 ang;
+    f32 r2;
+    f32 stepFix;
+    f32 oldY;
+    f32 rad;
+    f32 base;
+    f32 s;
+    f32 c;
+    u8 flags;
+    bool near;
+    u8 onBox;
+    bool blocked;
+    void* info;
+    u8 still;
+    u8 stopped;
+    s8 unused;
+    u8 canFlags;
+    static f32 angle;
+    if (pd.flagJump == 0) {
+        peopleBiosGetPos(pd.ken, &pd.kenPos);
+        if (pd.kenPos.y < 10.0f) {
+            return;
+        }
+        GSvec rot;
+        peopleBiosGetRot(pd.ken, &rot);
+        unused = 0;
+        still = 0;
+        if (GSvecDistance(peopleBiosGetPrevPosPtr(pd.ken), peopleBiosGetPosPtr(pd.ken)) < sBoxMotionMaximum[0]) {
+            if (GSvecDistance(peopleBiosGetPrevPosPtr(pd.ken), peopleBiosGetPosPtr(pd.ken)) > sBoxMotionMinimum[0]) {
+                still = 1;
+            }
+        }
+        stopped = still;
+        if (stopped) {
+            ang = rot.y;
         } else {
-            d = std::sqrtf(r * r + dz * dz);
+            ang = peopleVecCalcRotY(peopleBiosGetPrevPosPtr(pd.ken), peopleBiosGetPosPtr(pd.ken), 0.0f);
         }
-    }
-    dist = std::sqrtf(dx * dx + dz * dz);
-    if (dist >= d) {
-        return 0;
-    }
-    return 1;
-}
-
-extern "C" {
-s32 gimmickBoxOnBox(u32 ken, GSvec* prev, GSvec* pos) {
-    s32 i;
-    tagPeopleWork* p;
-    GSvec* bp;
-    if (pd.state == 1 && ken == (u32)pd.ken && (prev->y - 10.0f) < 0.00001f && (prev->y - 10.0f) > -0.00001f) {
-        for (i = 0; i < pd.peopleNum; i++) {
-            p = peopleBiosGetWorkPtr(i);
-            if (p != 0 && p->model != 0 && p->id == 0x11A40400) {
-                bp = peopleBiosGetPosPtr(p);
-                if (_gimmickBoxIsOnBox(pos->x, pos->z, 0.0f, peopleBiosGetPosPtr(p)->x, bp->z)) {
-                    pos->y = 10.0f;
-                    return 1;
-                }
-            }
+        angle = ang;
+        info = peopleInfoBiosGetPtr(pd.ken->id);
+        if (info != 0) {
+            rad = peopleInfoBiosGetColBallSize(info);
+        } else {
+            rad = 3.5f;
         }
-    }
-    return 0;
-}
-}
-
-static u8 _gimmickBoxIsOnBoxPos(GSvec* pos) {
-    s32 i;
-    tagPeopleWork* p;
-    GSvec* bp;
-    if (pos->y == 10.0f) {
-        for (i = 0; i < pd.peopleNum; i++) {
-            p = peopleBiosGetWorkPtr(i);
-            if (p != 0 && p->model != 0 && p->id == 0x11A40400) {
-                bp = peopleBiosGetPosPtr(p);
-                if (_gimmickBoxIsOnBox(pos->x, pos->z, 0.0f, peopleBiosGetPosPtr(p)->x, bp->z)) {
-                    return 1;
-                }
-            }
+        GSvec p1;
+        GSvec p2;
+        blocked = 0;
+        flags = 0;
+        f32 unusedStep = (30.0f * timeGetLastFrameTime()) / GSgfxVideoGetVsyncRate();
+        GSvec np;
+        s = std::sinf(ang);
+        c = std::cosf(ang);
+        peopleBiosGetPos(pd.ken, &pd.kenPos);
+        np = pd.kenPos;
+        np.x += s * pd.ken->speed;
+        np.z += c * pd.ken->speed;
+        GSvec prevCopy(*peopleBiosGetPrevPosPtr(pd.ken));
+        p2 = np;
+        prevCopy.y += 6.0f;
+        p2.y += 6.0f;
+        oldY = pd.kenPos.y;
+        pd.kenPos.y = oldY;
+        if (GScolsys2HitCollision(&prevCopy, &p2, pd.boxRadius * m_radius_fix2, &pd.kenPos)) {
+            pd.kenPos.y = oldY;
+            return;
         }
-    }
-    return 0;
-}
-
-static s32 _gimmickBoxAllowAcrossPrevention(s32 n) {
-    peopleBiosGetPos(pd.ken, &pd.kenPos);
-    GSvec a = pd.kenPos;
-    GSvec b = pd.kenPos;
-    GSvec c = pd.kenPos;
-    GSvec d = pd.kenPos;
-    s32 count;
-    a.x -= 4.0f;
-    a.z += 4.0f;
-    b.x += 4.0f;
-    b.z += 4.0f;
-    c.x -= 4.0f;
-    c.z -= 4.0f;
-    d.x += 4.0f;
-    d.z -= 4.0f;
-    count = 0;
-    if (!_gimmickBoxIsJumpOK(&a)) {
-        count++;
-    }
-    if (!_gimmickBoxIsJumpOK(&b)) {
-        count++;
-    }
-    if (!_gimmickBoxIsJumpOK(&c)) {
-        count++;
-    }
-    if (!_gimmickBoxIsJumpOK(&d)) {
-        count++;
-    }
-    if (count >= n) {
-        return 1;
-    }
-    return 0;
-}
-
-static f32 adjustNear8(f32 a) {
-    a = adjust2PI(a);
-    if (a < 0.3926991f || a > 5.8904862f) {
-        return 0.0f;
-    }
-    if (a > 5.105088f) {
-        return 5.497787f;
-    }
-    if (a > 4.3196898f) {
-        return 4.712389f;
-    }
-    if (a > 3.5342917f) {
-        return 3.9269907f;
-    }
-    if (a > 2.7488935f) {
-        return 3.1415927f;
-    }
-    if (a > 1.9634954f) {
-        return 2.3561945f;
-    }
-    if (a > 1.1780972f) {
-        return 1.5707964f;
-    }
-    return 0.7853982f;
-}
-
-extern "C" {
-void gimmickBoxFloorInit(void) {
-    s32 i;
-    tagPeopleWork* p;
-    pd.state = 0;
-    pd.peopleNum = peopleBiosGetMaxNum();
-    for (i = 0; i < pd.peopleNum; i++) {
-        p = peopleBiosGetWorkPtr(i);
-        if (p == 0) {
-            break;
+        pd.kenPos.y = oldY;
+        static f32 fix_rr = rad * m_radius_fix;
+        p2 = pd.kenPos;
+        p2.x -= fix_rr;
+        GB_JUMP_CHECK(4)
+        p2 = pd.kenPos;
+        p2.x += fix_rr;
+        GB_JUMP_CHECK(8)
+        p2 = pd.kenPos;
+        p2.z -= fix_rr;
+        GB_JUMP_CHECK(1)
+        p2 = pd.kenPos;
+        p2.z += fix_rr;
+        GB_JUMP_CHECK2(2)
+        r2 = 0.701f * fix_rr;
+        p2 = pd.kenPos;
+        p2.x -= r2;
+        p2.z -= r2;
+        GB_JUMP_CHECK(0x10)
+        p2 = pd.kenPos;
+        p2.x += r2;
+        p2.z -= r2;
+        GB_JUMP_CHECK(0x20)
+        p2 = pd.kenPos;
+        p2.x -= r2;
+        p2.z += r2;
+        GB_JUMP_CHECK(0x40)
+        p2 = pd.kenPos;
+        p2.x += r2;
+        p2.z += r2;
+        GB_JUMP_CHECK(0x80)
+        if (near && !onBox) {
+            blocked = 1;
         }
-        if (p->active) {
-            if (p->id == 0x11A40400) {
-                peopleBiosSetFlags(p, 0x100000);
-                if (_gimmickBoxInit()) {
-                    pd.state = 1;
-                }
-            } else if (p->id == 0x1F380400) {
-                pd.state = 2;
-            }
+        if (!blocked) {
+            return;
         }
-    }
-}
-
-void gimmickSetMotion(s32 a, s32 b, s32 anim, s32 frame, u8 loop) {
-    tagPeopleWork* p;
-    u32 model;
-    if (frame == 0 && anim != 5 && anim >= 0) {
-        p = peopleSearchID(peopleGetHumanID(a, b));
-        if (p != 0) {
-            model = peopleBiosGetModelPtr(p);
-            if (model != 0) {
-                p->motion = anim;
-                p->f12C = 0.0f;
-                GSmodelSetAnimIndex(model, anim);
-                GSmodelSetAnimFrame(model, (f32)frame);
-                GSmodelSetAnimRate(model, 0.5f);
-                GSmodelSetTexAnimIndex(model, anim);
-                GSmodelSetTexAnimFrame(model, (f32)frame);
-                GSmodelSetTexAnimRate(model, 0.5f);
-                if (loop) {
-                    GSmodelSetAnimType(model, 1);
-                } else {
-                    GSmodelSetAnimType(model, 0);
-                }
-                if (frame == 0) {
-                    GSmodelStartAnimation(model);
-                }
-            }
-        }
-    }
-}
-}
-
-extern "C" {
-s32 gimmickBoxSetKenShadowOnBoxIfOnBoxFloor(tagPeopleWork* ken, u32* list, s32* count) {
-    f32 dx;
-    f32 dz;
-    s32 found;
-    s32 i;
-    u32 model;
-    u8 near;
-    u8 isNear;
-    tagPeopleWork* p;
-    if (pd.state == 0) {
-        return 0;
-    }
-    if (ken->id != heroMoveGetKenObjID()) {
-        return 0;
-    }
-    found = 0;
-    for (i = 0; i < pd.peopleNum; i++) {
-        p = peopleBiosGetWorkPtr(i);
-        if (p != 0 && p->active && ken != 0 && ken->model != 0 && p != 0 && p->model != 0) {
-            dx = std::fabsf(peopleBiosGetPosPtr(ken)->x - peopleBiosGetPosPtr(p)->x);
-            dz = std::fabsf(peopleBiosGetPosPtr(ken)->z - peopleBiosGetPosPtr(p)->z);
-            near = 0;
-            if (dx < 20.0f && dz < 20.0f) {
-                near = 1;
-            }
-            isNear = near;
-            if (isNear && (p->id == 0x11A40400 || p->id == 0x1F380400)) {
-                model = peopleBiosGetModelPtr(p);
-                if (model != 0) {
-                    if (*count < 7) {
-                        (*count)++;
-                    } else {
-                        GSlogWrite("gimmickBox.cpp : receiveList over flow.\n");
+        canFlags = 0;
+        if (!_gimmickBoxCanJump(ang, &canFlags)) {
+            ang = adjustNear8(ang);
+            base = ang;
+            if (!_gimmickBoxCanJump(ang, &canFlags)) {
+                static f32 step_fix = 1.0f;
+                stepFix = step_fix;
+                while (stepFix <= 90.0f) {
+                    ang = adjust2PI(base - 0.017453292f * stepFix);
+                    if (_gimmickBoxCanJump(ang, &canFlags)) {
+                        goto jumpOK;
                     }
-                    list[*count - 1] = model;
-                    found = 1;
+                    ang = adjust2PI(base + 0.017453292f * stepFix);
+                    if (_gimmickBoxCanJump(ang, &canFlags)) {
+                        goto jumpOK;
+                    }
+                    stepFix += step_fix;
                 }
+                GSvecCopy(peopleBiosGetPosPtr(pd.ken), peopleBiosGetPrevPosPtr(pd.ken));
+                pd.ken->f28 = 0.0f;
+                peopleUpdateAnimation(pd.ken, 1);
+                return;
             }
         }
+    jumpOK:
+        pd.jumpAngle = ang;
+        pd.jumpCnt = 0.0f;
+        pd.flagJump = 1;
+        pd.jumpBaseY = pd.kenPos.y;
+        peopleSetFlagOn(0, 100, 8);
+        peopleRotateToAngle(0, 100, ang, 1.0f);
     }
-    return found;
+    if (_gimmickBoxJumpMotion()) {
+        pd.flagJump = 0;
+        peopleSetFlagOff(0, 100, 8);
+        peopleSetPos(0, 100, &pd.kenPos);
+        peopleSetMotionType(pd.ken, 1);
+    }
 }
 }
-
+extern "C++" {
+__declspec(weak) GSvec& GSvec::operator=(const GSvec& o) { x=o.x; y=o.y; z=o.z; return *this; }
+extern "C" { __declspec(weak) f32 GSvecDistance(const GSvec* a,const GSvec* b) { return C_VECDistance(a,b); } }
 static u8 _gimmickBoxJumpMotion() {
     s32 animIndex;
     s32 animFlag;
@@ -921,7 +931,267 @@ static u8 _gimmickBoxJumpMotion() {
     }
     return 1;
 }
-
+}
+extern "C++" {
+static u8 _gimmickBoxIsOnBox(f32 x, f32 z, f32 y, f32 bx, f32 bz) {
+    f32 dx = x - bx;
+    f32 dz = z - bz;
+    f32 r;
+    f32 d;
+    f32 adx;
+    f32 adz;
+    f32 dist;
+    adx = std::fabsf(dx);
+    adz = std::fabsf(dz);
+    if (adx > pd.kenRadius && adz > pd.kenRadius) {
+        d = _gimmickBoxGetFixDistanceBoxAndPeople(dx, dz);
+    } else {
+        r = y + pd.kenRadius;
+        if (adx < adz) {
+            d = std::sqrtf(r * r + dx * dx);
+        } else {
+            d = std::sqrtf(r * r + dz * dz);
+        }
+    }
+    dist = std::sqrtf(dx * dx + dz * dz);
+    if (dist >= d) {
+        return 0;
+    }
+    return 1;
+}
+}
+extern "C" {
+s32 gimmickBoxOnBox(u32 ken, GSvec* prev, GSvec* pos) {
+    s32 i;
+    tagPeopleWork* p;
+    GSvec* bp;
+    if (pd.state == 1 && ken == (u32)pd.ken && (prev->y - 10.0f) < sBoxMotionMaximum[0] && (prev->y - 10.0f) > sBoxMotionMinimum[0]) {
+        for (i = 0; i < pd.peopleNum; i++) {
+            p = peopleBiosGetWorkPtr(i);
+            if (p != 0 && p->model != 0 && p->id == 0x11A40400) {
+                bp = peopleBiosGetPosPtr(p);
+                if (_gimmickBoxIsOnBox(pos->x, pos->z, 0.0f, peopleBiosGetPosPtr(p)->x, bp->z)) {
+                    pos->y = 10.0f;
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+}
+extern "C++" {
+static u8 _gimmickBoxIsOnBoxPos(GSvec* pos) {
+    s32 i;
+    tagPeopleWork* p;
+    GSvec* bp;
+    if (pos->y == 10.0f) {
+        for (i = 0; i < pd.peopleNum; i++) {
+            p = peopleBiosGetWorkPtr(i);
+            if (p != 0 && p->model != 0 && p->id == 0x11A40400) {
+                bp = peopleBiosGetPosPtr(p);
+                if (_gimmickBoxIsOnBox(pos->x, pos->z, 0.0f, peopleBiosGetPosPtr(p)->x, bp->z)) {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+}
+extern "C++" {
+static s32 _gimmickBoxAllowAcrossPrevention(s32 n) {
+    peopleBiosGetPos(pd.ken, &pd.kenPos);
+    GSvec a = pd.kenPos;
+    GSvec b = pd.kenPos;
+    GSvec c = pd.kenPos;
+    GSvec d = pd.kenPos;
+    s32 count;
+    a.x -= 4.0f;
+    a.z += 4.0f;
+    b.x += 4.0f;
+    b.z += 4.0f;
+    c.x -= 4.0f;
+    c.z -= 4.0f;
+    d.x += 4.0f;
+    d.z -= 4.0f;
+    count = 0;
+    if (!_gimmickBoxIsJumpOK(&a)) {
+        count++;
+    }
+    if (!_gimmickBoxIsJumpOK(&b)) {
+        count++;
+    }
+    if (!_gimmickBoxIsJumpOK(&c)) {
+        count++;
+    }
+    if (!_gimmickBoxIsJumpOK(&d)) {
+        count++;
+    }
+    if (count >= n) {
+        return 1;
+    }
+    return 0;
+}
+}
+extern "C++" {
+static u8 _gimmickBoxCanJump(f32 ang, u8* flags) {
+    GSvec dst;
+    f32 step = (30.0f * timeGetLastFrameTime()) / GSgfxVideoGetVsyncRate();
+    GSvec np;
+    f32 s = std::sinf(ang);
+    f32 c = std::cosf(ang);
+    f32 oldY;
+    f32 r;
+    f32 r2;
+    u8 ok;
+    bool near;
+    u8 onBox;
+    np = pd.kenPos;
+    np.x += step * (8.0f * s);
+    np.z += step * (8.0f * c);
+    peopleBiosGetPos(pd.ken, &pd.kenPos);
+    GSvec cur(pd.kenPos);
+    dst = np;
+    cur.y += 6.0f;
+    dst.y += 6.0f;
+    oldY = pd.kenPos.y;
+    if (GScolsys2HitCollision(&cur, &dst, pd.boxRadius * m_radius_fix2, &pd.kenPos)) {
+        pd.kenPos.y = oldY;
+        return 0;
+    }
+    pd.kenPos.y = oldY;
+    ok = 1;
+    *flags = 0;
+    r = pd.boxRadius * m_radius_fix;
+    r2 = 0.701f * r;
+    dst = np;
+    dst.x -= r;
+    GB_CANJUMP_CHECK(4)
+    dst = np;
+    dst.x += r;
+    GB_CANJUMP_CHECK(8)
+    dst = np;
+    dst.z -= r;
+    GB_CANJUMP_CHECK(1)
+    dst = np;
+    dst.z += r;
+    GB_CANJUMP_CHECK(2)
+    dst = np;
+    dst.x -= r2;
+    dst.z -= r2;
+    GB_CANJUMP_CHECK(0x10)
+    dst = np;
+    dst.x += r2;
+    dst.z -= r2;
+    GB_CANJUMP_CHECK(0x20)
+    dst = np;
+    dst.x -= r2;
+    dst.z += r2;
+    GB_CANJUMP_CHECK(0x40)
+    dst = np;
+    dst.x += r2;
+    dst.z += r2;
+    GB_CANJUMP_CHECK(0x80)
+    if (*flags == 0xFF) {
+        return 1;
+    }
+    return 0;
+}
+}
+extern "C++" {
+static s32 _gimmickBoxGetPeopleNum() {
+    s32 i;
+    tagPeopleWork* p;
+    for (i = 0; i < peopleBiosGetMaxNum(); i++) {
+        p = peopleBiosGetWorkPtr(i);
+        if (p == 0) {
+            return i;
+        }
+    }
+    return peopleBiosGetMaxNum();
+}
+}
+extern "C" {
+s32 gimmickBoxSetKenShadowOnBoxIfOnBoxFloor(tagPeopleWork* ken, u32* list, s32* count) {
+    f32 dx;
+    f32 dz;
+    s32 found;
+    s32 i;
+    u32 model;
+    u8 near;
+    u8 isNear;
+    tagPeopleWork* p;
+    if (pd.state == 0) {
+        return 0;
+    }
+    if (ken->id != heroMoveGetKenObjID()) {
+        return 0;
+    }
+    found = 0;
+    for (i = 0; i < pd.peopleNum; i++) {
+        p = peopleBiosGetWorkPtr(i);
+        if (p != 0 && p->active && ken != 0 && ken->model != 0 && p != 0 && p->model != 0) {
+            dx = std::fabsf(peopleBiosGetPosPtr(ken)->x - peopleBiosGetPosPtr(p)->x);
+            dz = std::fabsf(peopleBiosGetPosPtr(ken)->z - peopleBiosGetPosPtr(p)->z);
+            near = 0;
+            if (dx < 20.0f && dz < 20.0f) {
+                near = 1;
+            }
+            isNear = near;
+            if (isNear && (p->id == 0x11A40400 || p->id == 0x1F380400)) {
+                model = peopleBiosGetModelPtr(p);
+                if (model != 0) {
+                    if (*count < 7) {
+                        (*count)++;
+                    } else {
+                        GSlogWrite("gimmickBox.cpp : receiveList over flow.\n");
+                    }
+                    list[*count - 1] = model;
+                    found = 1;
+                }
+            }
+        }
+    }
+    return found;
+}
+}
+extern "C" {
+s32 gimmickBoxGetMotion(s32* motion, s8* flag) {
+    if (pd.state == 1) {
+        if (pd.flagStart) {
+            *motion = 0x1F;
+            *flag = 0;
+            return 1;
+        }
+        if (pd.flagPush) {
+            *motion = 0x20;
+            *flag = 1;
+            return 1;
+        }
+        if (pd.flagWalk) {
+            *motion = 5;
+            *flag = 0;
+            return 1;
+        }
+    }
+    return 0;
+}
+}
+extern "C" {
+s32 gimmickBoxIsGimmickMoving(void) {
+    if (pd.state == 1 && (pd.flagPush || pd.flagWalk || pd.flagJump)) {
+        return 1;
+    }
+    return 0;
+}
+}
+extern "C" {
+f32 gimmickBoxGetBoxHeight(void) {
+    return 10.0f;
+}
+}
+extern "C++" {
 static M_STICK_DIRECTION _gimmickBoxCheckStickDirection() {
     s32 leader;
     f32 ang;
@@ -1072,247 +1342,97 @@ static M_STICK_DIRECTION _gimmickBoxCheckStickDirection() {
     }
     return M_STICK_NONE;
 }
-
-#define GB_CANJUMP_CHECK(FLAG)                                                    \
-    dst.y = pd.kenPos.y;                                                          \
-    dst.y = GScolsys2HumanGetWalkHighest(&dst);                                   \
-    near = std::fabsf((pd.kenPos.y - dst.y) - 10.0f) < 3.0f;                      \
-    dst.y = 10.0f;                                                                \
-    onBox = _gimmickBoxIsOnBoxPos(&dst);                                          \
-    if (near && !onBox) {                                                         \
-        *flags |= FLAG;                                                           \
-    } else {                                                                      \
-        ok = 0;                                                                   \
-    }
-
-static u8 _gimmickBoxCanJump(f32 ang, u8* flags) {
-    GSvec dst;
-    f32 step = (30.0f * timeGetLastFrameTime()) / GSgfxVideoGetVsyncRate();
-    GSvec np;
-    f32 s = std::sinf(ang);
-    f32 c = std::cosf(ang);
-    f32 oldY;
-    f32 r;
-    f32 r2;
-    u8 ok;
-    bool near;
-    u8 onBox;
-    np = pd.kenPos;
-    np.x += step * (8.0f * s);
-    np.z += step * (8.0f * c);
-    peopleBiosGetPos(pd.ken, &pd.kenPos);
-    GSvec cur(pd.kenPos);
-    dst = np;
-    cur.y += 6.0f;
-    dst.y += 6.0f;
-    oldY = pd.kenPos.y;
-    if (GScolsys2HitCollision(&cur, &dst, pd.boxRadius * m_radius_fix2, &pd.kenPos)) {
-        pd.kenPos.y = oldY;
-        return 0;
-    }
-    pd.kenPos.y = oldY;
-    ok = 1;
-    *flags = 0;
-    r = pd.boxRadius * m_radius_fix;
-    r2 = 0.701f * r;
-    dst = np;
-    dst.x -= r;
-    GB_CANJUMP_CHECK(4)
-    dst = np;
-    dst.x += r;
-    GB_CANJUMP_CHECK(8)
-    dst = np;
-    dst.z -= r;
-    GB_CANJUMP_CHECK(1)
-    dst = np;
-    dst.z += r;
-    GB_CANJUMP_CHECK(2)
-    dst = np;
-    dst.x -= r2;
-    dst.z -= r2;
-    GB_CANJUMP_CHECK(0x10)
-    dst = np;
-    dst.x += r2;
-    dst.z -= r2;
-    GB_CANJUMP_CHECK(0x20)
-    dst = np;
-    dst.x -= r2;
-    dst.z += r2;
-    GB_CANJUMP_CHECK(0x40)
-    dst = np;
-    dst.x += r2;
-    dst.z += r2;
-    GB_CANJUMP_CHECK(0x80)
-    if (*flags == 0xFF) {
-        return 1;
-    }
-    return 0;
 }
-
-#define GB_JUMP_CHECK(FLAG)                                                       \
-    p2.y = pd.kenPos.y;                                                           \
-    p2.y = GScolsys2HumanGetWalkHighest(&p2);                                     \
-    near = std::fabsf((pd.kenPos.y - p2.y) - 10.0f) < 3.0f;                       \
-    p2.y = 10.0f;                                                                 \
-    onBox = _gimmickBoxIsOnBoxPos(&p2);                                           \
-    if (near && !onBox) {                                                         \
-        blocked = 1;                                                              \
-        flags |= FLAG;                                                            \
-    }
-
-#define GB_JUMP_CHECK2(FLAG)                                                       \
-    p2.y = pd.kenPos.y;                                                           \
-    p2.y = GScolsys2HumanGetWalkHighest(&p2);                                     \
-    near = std::fabsf((pd.kenPos.y - p2.y) - 10.0f) < 3.0f;                       \
-    p2.y = 10.0f;                                                                 \
-    onBox = _gimmickBoxIsOnBoxPos(&p2);                                           \
-    if (near && !onBox) {                                                         \
-        blocked |= 1;                                                              \
-        flags |= FLAG;                                                            \
-    }
-
-
-static void _gimmickBoxJump() {
-    f32 ang;
-    f32 r2;
-    f32 stepFix;
-    f32 oldY;
-    f32 rad;
-    f32 base;
-    f32 s;
-    f32 c;
-    u8 flags;
-    bool near;
-    u8 onBox;
-    bool blocked;
-    void* info;
-    u8 still;
-    u8 stopped;
-    s8 unused;
-    u8 canFlags;
-    static f32 angle;
-    if (pd.flagJump == 0) {
-        peopleBiosGetPos(pd.ken, &pd.kenPos);
-        if (pd.kenPos.y < 10.0f) {
-            return;
+extern "C" {
+void gimmickBoxFloorInit(void) {
+    s32 i;
+    tagPeopleWork* p;
+    pd.state = 0;
+    pd.peopleNum = peopleBiosGetMaxNum();
+    for (i = 0; i < pd.peopleNum; i++) {
+        p = peopleBiosGetWorkPtr(i);
+        if (p == 0) {
+            break;
         }
-        GSvec rot;
-        peopleBiosGetRot(pd.ken, &rot);
-        unused = 0;
-        still = 0;
-        if (GSvecDistance(peopleBiosGetPrevPosPtr(pd.ken), peopleBiosGetPosPtr(pd.ken)) < 0.00001f) {
-            if (GSvecDistance(peopleBiosGetPrevPosPtr(pd.ken), peopleBiosGetPosPtr(pd.ken)) > -0.00001f) {
-                still = 1;
-            }
-        }
-        stopped = still;
-        if (stopped) {
-            ang = rot.y;
-        } else {
-            ang = peopleVecCalcRotY(peopleBiosGetPrevPosPtr(pd.ken), peopleBiosGetPosPtr(pd.ken), 0.0f);
-        }
-        angle = ang;
-        info = peopleInfoBiosGetPtr(pd.ken->id);
-        if (info != 0) {
-            rad = peopleInfoBiosGetColBallSize(info);
-        } else {
-            rad = 3.5f;
-        }
-        GSvec p1;
-        GSvec p2;
-        blocked = 0;
-        flags = 0;
-        f32 unusedStep = (30.0f * timeGetLastFrameTime()) / GSgfxVideoGetVsyncRate();
-        GSvec np;
-        s = std::sinf(ang);
-        c = std::cosf(ang);
-        peopleBiosGetPos(pd.ken, &pd.kenPos);
-        np = pd.kenPos;
-        np.x += s * pd.ken->speed;
-        np.z += c * pd.ken->speed;
-        GSvec prevCopy(*peopleBiosGetPrevPosPtr(pd.ken));
-        p2 = np;
-        prevCopy.y += 6.0f;
-        p2.y += 6.0f;
-        oldY = pd.kenPos.y;
-        pd.kenPos.y = oldY;
-        if (GScolsys2HitCollision(&prevCopy, &p2, pd.boxRadius * m_radius_fix2, &pd.kenPos)) {
-            pd.kenPos.y = oldY;
-            return;
-        }
-        pd.kenPos.y = oldY;
-        static f32 fix_rr = rad * m_radius_fix;
-        p2 = pd.kenPos;
-        p2.x -= fix_rr;
-        GB_JUMP_CHECK(4)
-        p2 = pd.kenPos;
-        p2.x += fix_rr;
-        GB_JUMP_CHECK(8)
-        p2 = pd.kenPos;
-        p2.z -= fix_rr;
-        GB_JUMP_CHECK(1)
-        p2 = pd.kenPos;
-        p2.z += fix_rr;
-        GB_JUMP_CHECK2(2)
-        r2 = 0.701f * fix_rr;
-        p2 = pd.kenPos;
-        p2.x -= r2;
-        p2.z -= r2;
-        GB_JUMP_CHECK(0x10)
-        p2 = pd.kenPos;
-        p2.x += r2;
-        p2.z -= r2;
-        GB_JUMP_CHECK(0x20)
-        p2 = pd.kenPos;
-        p2.x -= r2;
-        p2.z += r2;
-        GB_JUMP_CHECK(0x40)
-        p2 = pd.kenPos;
-        p2.x += r2;
-        p2.z += r2;
-        GB_JUMP_CHECK(0x80)
-        if (near && !onBox) {
-            blocked = 1;
-        }
-        if (!blocked) {
-            return;
-        }
-        canFlags = 0;
-        if (!_gimmickBoxCanJump(ang, &canFlags)) {
-            ang = adjustNear8(ang);
-            base = ang;
-            if (!_gimmickBoxCanJump(ang, &canFlags)) {
-                static f32 step_fix = 1.0f;
-                stepFix = step_fix;
-                while (stepFix <= 90.0f) {
-                    ang = adjust2PI(base - 0.017453292f * stepFix);
-                    if (_gimmickBoxCanJump(ang, &canFlags)) {
-                        goto jumpOK;
-                    }
-                    ang = adjust2PI(base + 0.017453292f * stepFix);
-                    if (_gimmickBoxCanJump(ang, &canFlags)) {
-                        goto jumpOK;
-                    }
-                    stepFix += step_fix;
+        if (p->active) {
+            if (p->id == 0x11A40400) {
+                peopleBiosSetFlags(p, 0x100000);
+                if (_gimmickBoxInit()) {
+                    pd.state = 1;
                 }
-                GSvecCopy(peopleBiosGetPosPtr(pd.ken), peopleBiosGetPrevPosPtr(pd.ken));
-                pd.ken->f28 = 0.0f;
-                peopleUpdateAnimation(pd.ken, 1);
-                return;
+            } else if (p->id == 0x1F380400) {
+                pd.state = 2;
             }
         }
-    jumpOK:
-        pd.jumpAngle = ang;
-        pd.jumpCnt = 0.0f;
-        pd.flagJump = 1;
-        pd.jumpBaseY = pd.kenPos.y;
-        peopleSetFlagOn(0, 100, 8);
-        peopleRotateToAngle(0, 100, ang, 1.0f);
     }
-    if (_gimmickBoxJumpMotion()) {
-        pd.flagJump = 0;
-        peopleSetFlagOff(0, 100, 8);
-        peopleSetPos(0, 100, &pd.kenPos);
-        peopleSetMotionType(pd.ken, 1);
+}
+}
+extern "C" {
+void gimmickSetMotion(s32 a, s32 b, s32 anim, s32 frame, u8 loop) {
+    tagPeopleWork* p;
+    u32 model;
+    if (frame == 0 && anim != 5 && anim >= 0) {
+        p = peopleSearchID(peopleGetHumanID(a, b));
+        if (p != 0) {
+            model = peopleBiosGetModelPtr(p);
+            if (model != 0) {
+                p->motion = anim;
+                p->f12C = 0.0f;
+                GSmodelSetAnimIndex(model, anim);
+                GSmodelSetAnimFrame(model, (f32)frame);
+                GSmodelSetAnimRate(model, 0.5f);
+                GSmodelSetTexAnimIndex(model, anim);
+                GSmodelSetTexAnimFrame(model, (f32)frame);
+                GSmodelSetTexAnimRate(model, 0.5f);
+                if (loop) {
+                    GSmodelSetAnimType(model, 1);
+                } else {
+                    GSmodelSetAnimType(model, 0);
+                }
+                if (frame == 0) {
+                    GSmodelStartAnimation(model);
+                }
+            }
+        }
     }
+}
+}
+extern "C++" {
+static void _gimmickBoxRotateToAngle(f32 angle, f32 rate) {
+    pd.ken->rotFlag = 1;
+    pd.ken->angle = angle;
+    pd.ken->rate = rate;
+}
+}
+extern "C++" {
+static f32 adjust2PI(f32 a) {
+    return std::fmodf(sBoxFullTurn[0] + a, sBoxFullTurn[0]);
+}
+}
+extern "C++" {
+static f32 adjustNear8(f32 a) {
+    a = adjust2PI(a);
+    if (a < 0.3926991f || a > 5.8904862f) {
+        return 0.0f;
+    }
+    if (a > 5.105088f) {
+        return 5.497787f;
+    }
+    if (a > 4.3196898f) {
+        return 4.712389f;
+    }
+    if (a > 3.5342917f) {
+        return 3.9269907f;
+    }
+    if (a > 2.7488935f) {
+        return 3.1415927f;
+    }
+    if (a > 1.9634954f) {
+        return sBoxThreeEighthTurn[0];
+    }
+    if (a > 1.1780972f) {
+        return 1.5707964f;
+    }
+    return sBoxEighthTurn[0];
+}
 }

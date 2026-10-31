@@ -5,13 +5,13 @@ typedef enum HSD_InitParam {
     HSD_INIT_HEAP_ARENA,
     HSD_INIT_MEMORY_CALLBACKS
 } HSD_InitParam;
-typedef void* (*HSD_AllocCallback)(unsigned int);
+typedef void* (*HSD_AllocCallback)(unsigned int, unsigned int, unsigned int);
 typedef void (*HSD_FreeCallback)(void*);
 typedef void (*HSD_ClearCallback)(void);
 typedef int (*HSD_RemainCallback)(void);
 typedef int (*HSD_OwnCallback)(void*);
 typedef struct HSD_MemoryCallbacks {
-    void* (*alloc)(unsigned int);
+    void* (*alloc)(unsigned int, unsigned int, unsigned int);
     void (*free)(void*);
     void (*clear)(void);
     int (*get_remain)(void);

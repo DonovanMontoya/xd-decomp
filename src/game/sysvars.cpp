@@ -1,5 +1,6 @@
 #include <game/sysvarsPrivate.hpp>
 #include <libc/string.h>
+#pragma force_active on
 extern "C" {
 int stricmp(const char *, const char *);
 int atoi(const char *);
@@ -10,7 +11,7 @@ void GSprimDraw2DQuad(f32, f32, f32, f32, const void *);
 void GSprimSetTextColor(const void *);
 void GSprimSetTextWidth(f32);
 void GSprimSetTextSize(f32, f32);
-void GSprimWriteStr(const char *, f32, f32, ...);
+void GSprimWriteStr(f32, f32, const char *, ...);
 }
 struct GSgfxLayer;
 void GSprimSetup2DRender(GSgfxLayer *);
@@ -96,18 +97,18 @@ extern "C" void sysvarsShowDebug() {
         for (sysvarsFuncEntry *entry = _sysvarsFuncList; entry->name; entry++) {
             switch (entry->type) {
             case 0: case 1:
-                GSprimWriteStr("%s=%d", 100.0f, y, entry->name, *(s32 *)entry->data);
+                GSprimWriteStr(100.0f, y, "%s=%d", entry->name, *(s32 *)entry->data);
                 break;
             case 2:
-                GSprimWriteStr("%s=%f", 100.0f, y, entry->name, *(f32 *)entry->data);
+                GSprimWriteStr(100.0f, y, "%s=%f", entry->name, *(f32 *)entry->data);
                 break;
             case 3:
-                GSprimWriteStr("%s=%s", 100.0f, y, entry->name, (char *)entry->data);
+                GSprimWriteStr(100.0f, y, "%s=%s", entry->name, (char *)entry->data);
                 break;
             }
             y += 14.0f;
         }
-        GSprimWriteStr("%d", 500.0f, 400.0f, frames / 60);
+        GSprimWriteStr(500.0f, 400.0f, "%d", frames / 60);
         GSgfxRender();
     } while (frames-- != 0);
     GSgfxGPUSetMode(2);
@@ -183,3 +184,5 @@ static void _sysvarsGSmemSize(void *data, char *value) {
     if (!stricmp(value, "24")) *(s32 *)data = 24;
     else if (!stricmp(value, "48")) *(s32 *)data = 48;
 }
+
+#pragma force_active reset
