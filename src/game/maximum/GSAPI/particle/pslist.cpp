@@ -106,61 +106,100 @@ s32 _psLinkInit(s32 count) {
 }
 
 
-PSParticle* particleSort(s32 link, PSParticle** edgeOut, PSParticle** xluOut) {
-    struct Bucket { PSParticle* head; PSParticle* tail; } buckets[16];
-    PSParticle* current = activeParticle[link];
+PSParticle* particleSort(s32 linkNo, PSParticle** texEdge, PSParticle** xlu)
+{
+    struct Bucket { PSParticle* head; PSParticle* tail; };
+    struct Bucket buckets[16];
+    PSParticle* pp;
     PSParticle* next;
-    PSParticle* edge;
-    PSParticle* xlu;
-    PSParticle** edgeTail;
-    PSParticle** xluTail;
-    PSParticle* head;
-    s32 bucket, i;
-    u32 kind;
-    if (!sortDirty[link]) {
-        if (current == NULL) { *edgeOut=NULL; *xluOut=NULL; return NULL; }
-        if (current->kind & 8) *edgeOut = current;
-        else *edgeOut = NULL;
-        *xluOut = activeParticleXLU[link];
-        return current;
+    PSParticle* head0;
+    PSParticle* head1;
+    PSParticle** tail0;
+    PSParticle** tail1;
+    PSParticle* result;
+    s32 idx;
+    s32 i;
+
+    pp = activeParticle[linkNo];
+    if (sortDirty[linkNo] == 0) {
+        if (pp == NULL) {
+            *texEdge = NULL;
+            *xlu = NULL;
+            return NULL;
+        }
+        if (pp->kind & 8) {
+            *texEdge = pp;
+        } else {
+            *texEdge = NULL;
+        }
+        *xlu = activeParticleXLU[linkNo];
+        return pp;
     }
-    sortDirty[link] = 0;
-    if (current == NULL) { activeParticleXLU[link]=NULL; *edgeOut=NULL; *xluOut=NULL; return NULL; }
+
+    sortDirty[linkNo] = 0;
+    if (pp == NULL) {
+        activeParticleXLU[linkNo] = NULL;
+        *texEdge = NULL;
+        *xlu = NULL;
+        return NULL;
+    }
+
     memset(buckets, 0, sizeof(buckets));
-    kind = current->kind;
-    bucket = ((kind >> 25) & 7) + ((((kind >> 3) & 1) ^ 1) * 8);
-    buckets[bucket].head = current;
-    next = current->next;
-    while (next != NULL) {
-        if ((current->kind ^ next->kind) & 0x0E000008) {
-            buckets[bucket].tail = current;
-            kind = next->kind;
-            bucket = ((kind >> 25) & 7) + ((((kind >> 3) & 1) ^ 1) * 8);
-            if (buckets[bucket].head == NULL) buckets[bucket].head = next;
-            else buckets[bucket].tail->next = next;
+    idx = ((pp->kind >> 25) & 7) + (((pp->kind & 8) ? 0 : 1) * 8);
+    buckets[idx].head = pp;
+    for (next = pp->next; next != NULL; next = next->next) {
+        if ((pp->kind ^ next->kind) & 0x0E000008) {
+            buckets[idx].tail = pp;
+            idx = ((next->kind >> 25) & 7) + (((next->kind & 8) ? 0 : 1) * 8);
+            if (buckets[idx].head == NULL) {
+                buckets[idx].head = next;
+            } else {
+                buckets[idx].tail->next = next;
+            }
         }
-        current = next; next = next->next;
+        pp = next;
     }
-    buckets[bucket].tail = current;
-    edgeTail = NULL; edge = NULL; xluTail = NULL; xlu = NULL;
-    for (i=0;i<8;i++) {
+    buckets[idx].tail = pp;
+
+    tail0 = NULL;
+    head0 = NULL;
+    tail1 = NULL;
+    head1 = NULL;
+    for (i = 0; i < 8; i++) {
         if (buckets[i].head != NULL) {
-            if (edge == NULL) edge = buckets[i].head;
-            else *edgeTail = buckets[i].head;
-            edgeTail = &buckets[i].tail->next;
+            if (head0 == NULL) {
+                head0 = buckets[i].head;
+            } else {
+                *tail0 = buckets[i].head;
+            }
+            tail0 = &buckets[i].tail->next;
         }
     }
-    for (i=8;i<16;i++) {
+    for (i = 8; i < 16; i++) {
         if (buckets[i].head != NULL) {
-            if (xlu == NULL) xlu = buckets[i].head;
-            else *xluTail = buckets[i].head;
-            xluTail = &buckets[i].tail->next;
+            if (head1 == NULL) {
+                head1 = buckets[i].head;
+            } else {
+                *tail1 = buckets[i].head;
+            }
+            tail1 = &buckets[i].tail->next;
         }
     }
-    head = NULL;
-    if (edgeTail != NULL) { head=edge; *edgeTail=xlu; }
-    if (xluTail != NULL) { if (head == NULL) head=xlu; *xluTail=NULL; }
-    activeParticle[link]=head; activeParticleXLU[link]=xlu;
-    *edgeOut=edge; *xluOut=xlu;
-    return head;
+
+    result = NULL;
+    if (tail0 != NULL) {
+        result = head0;
+        *tail0 = head1;
+    }
+    if (tail1 != NULL) {
+        if (result == NULL) {
+            result = head1;
+        }
+        *tail1 = NULL;
+    }
+    activeParticle[linkNo] = result;
+    activeParticleXLU[linkNo] = head1;
+    *texEdge = head0;
+    *xlu = head1;
+    return result;
 }

@@ -8,7 +8,57 @@ _GSparticleGen*GSparticleCreateGenerator(_GSparticleBank*,u16,s32);void GSmodelS
 }
 billboardEffect::~billboardEffect(){Stop();if(bank)GSparticleFree(bank);if(modelResource)GSresFreeResource(20000,modelResource);if(particleResource)GSresFreeResource(20000,particleResource);}
 void billboardEffect::_stop(){if(bank)GSparticleDestroyAllGenerators(bank,1);if(model){GSmodelStopAnimation(model);GSmodelStopTexAnimation(model);GSmodelSetVisibility(model,0);}}
-bool billboardEffect::_update(f32){GSvec position;GSvec scale;GSvec look;GSvec direction;GSvec size;f32 fov,nearPlane,aspect,farPlane;GScamera*camera=cameraGetActive();bool active=false;position.param1=0;position.param2=0;position.param3=0;scale.param1=1;scale.param2=1;scale.param3=1;if(camera){GScameraLoadActiveCameraMatrix(6);GScameraGetPosition(camera,&position);GScameraGetLookAt(camera,&direction,&look);PSVECSubtract(&look,&position,&direction);PSVECNormalize(&direction,&direction);GScameraGetPerspective(camera,&fov,&aspect,&nearPlane,&farPlane);fov=0.017453292f*fov;nearPlane+=1.0f;fov*=0.5f;f32 tangent=tan(fov);scale.param3=0;scale.param2=2.0f*nearPlane*tangent;scale.param1=scale.param2*aspect;PSVECScale(&direction,&direction,nearPlane);PSVECAdd(&position,&direction,&position);}if(generator&&GSparticleGetGeneratorLife(generator)){GSparticleSetGeneratorPosition(generator,&position);active=true;}if(model&&((GSmodelCanAnimate(model)&&!GSmodelHasAnimationEnded(model))||(GSmodelCanTexAnimate(model)&&!GSmodelHasTexAnimationEnded(model)))){GSboundGetSize(GSmodelGetBound(model),&size,0,0);scale.param1/=size.param1;scale.param2/=size.param2;GSmodelSetPosition(model,&position);GSmodelSetScale(model,&scale);active=true;}return active;}
+bool billboardEffect::_update(f32 dt) {
+    GScamera* cam = cameraGetActive();
+    bool result = false;
+    GSvec pos;
+    GSvec scale;
+    GSvec target;
+    GSvec lookAt;
+    GSvec size;
+    f32 fov, near, aspect, far;
+
+    pos.param1 = 0.0f;
+    pos.param2 = 0.0f;
+    pos.param3 = 0.0f;
+    scale.param1 = 1.0f;
+    scale.param2 = 1.0f;
+    scale.param3 = 1.0f;
+    if (cam != 0) {
+        GScameraLoadActiveCameraMatrix(6);
+        GScameraGetPosition(cam, &pos);
+        GScameraGetLookAt(cam, &lookAt, &target);
+        PSVECSubtract(&target, &pos, &lookAt);
+        PSVECNormalize(&lookAt, &lookAt);
+        GScameraGetPerspective(cam, &fov, &aspect, &near, &far);
+        near += 1.0f;
+        fov = 0.017453292f * fov;
+        fov *= 0.5f;
+        scale.param2 = 2.0f * near * (f32)tan(fov);
+        scale.param1 = scale.param2 * aspect;
+        scale.param3 = 0.0f;
+        PSVECScale(&lookAt, &lookAt, near);
+        PSVECAdd(&pos, &lookAt, &pos);
+    }
+    if (generator != 0) {
+        if (GSparticleGetGeneratorLife(generator) != 0) {
+            GSparticleSetGeneratorPosition(generator, &pos);
+            result = true;
+        }
+    }
+    if (model != 0) {
+        if ((GSmodelCanAnimate(model) && !GSmodelHasAnimationEnded(model)) ||
+            (GSmodelCanTexAnimate(model) && !GSmodelHasTexAnimationEnded(model))) {
+            GSboundGetSize(GSmodelGetBound(model), &size, 0, 0);
+            scale.param1 = scale.param1 / size.param1;
+            scale.param2 = scale.param2 / size.param2;
+            GSmodelSetPosition(model, &pos);
+            GSmodelSetScale(model, &scale);
+            result = true;
+        }
+    }
+    return result;
+}
 bool billboardEffect::_start(){if(!model&&!bank)return false;if(bank)generator=GSparticleCreateGenerator(bank,generatorIndex,1);if(model){s32 layer[]={6};GSmodelSetVisibility(model,1);GSmodelSetBoundCheck(model,0);GSmodelSetRenderLayer(model,1,layer);if(GSmodelCanAnimate(model)){GSmodelSetAnimIndex(model,animation);GSmodelSetAnimType(model,type);GSmodelSetAnimRate(model,0.5f);GSmodelSetAnimFrame(model,0);GSmodelStartAnimation(model);}if(GSmodelCanTexAnimate(model)){GSmodelSetTexAnimIndex(model,animation);GSmodelSetTexAnimType(model,type);GSmodelSetTexAnimRate(model,0.5f);GSmodelSetTexAnimFrame(model,0);GSmodelStartTexAnimation(model);}}return true;}
 struct BillboardRecord{u32 length,modelID,pad8,padC,animation,generator,type,pad1C;};
 billboardEffect::billboardEffect(u8**data){u32 resource;BillboardRecord*record=(BillboardRecord*)*data;animation=record->animation;switch(record->type){case 0:type=0;break;case 1:type=1;break;}generatorIndex=record->generator;*data+=32;*data=(u8*)(((u32)*data+31)&~31);model=0;bank=0;generator=0;modelResource=0;resource=record->modelID;if(resource){modelResource=wazaSequenceSysGetResID();loadModel(resource,20000,0,modelResource);GSresIsUniqueID(20000,modelResource,0);model=(GSmodel*)GSresGetResource(20000,modelResource);if(model)GSmodelSetVisibility(model,0);}*data+=(record->length+31)&~31;particleResource=0;}

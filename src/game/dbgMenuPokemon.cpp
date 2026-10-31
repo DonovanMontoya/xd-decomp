@@ -37,72 +37,59 @@ DbgMenuPokemonKeyInfo* windowGetKeyInfo(void);
 extern "C" {
 #endif
 
-void dbgMenuPokemonEditButton(DbgMenuPokemonWindow* win) {
-    u32 pokemon = win->pokemon;
-    s32* out = win->out;
-    if (win != 0) {
-        s32 t = windowGetKeyInfo()->trigger;
-        s32 h = windowGetKeyInfo()->held;
-        u16 trigger = t;
-        u16 held = h;
-        s32 delta;
-        s32 item;
-        s32 up;
-        s32 down;
-        s32 shoulder;
-        if ((trigger & 0x20) != 0) {
-            win->value = -1;
-            win->finished = 1;
-            return;
-        }
-        if ((trigger & 0x10) != 0) {
-            win->value = -2;
-            win->finished = 1;
-            return;
-        }
-        if (pokemon == 0) {
-            win->value = -1;
-            win->finished = 1;
-            return;
-        }
-        up = trigger & 0x80;
-        delta = 0;
-        if (up != 0 && (held & 0x200) != 0 && (held & 0x400) != 0) {
-            delta = 100;
+void dbgMenuPokemonEditButton(DbgMenuPokemonWindow* window) {
+    u32 pokemon = window->pokemon;
+    s32* out = window->out;
+    u16 repeat;
+    u16 held;
+    s32 delta;
+    s32 id;
+
+    if (window != 0) {
+        repeat = (u16)windowGetKeyInfo()->trigger;
+        held = (u16)windowGetKeyInfo()->held;
+        if (((repeat & 0x20) != 0)) {
+            window->value = -1;
+            window->finished = 1;
+        } else if (((repeat & 0x10) != 0)) {
+            window->value = -2;
+            window->finished = 1;
+        } else if (pokemon == 0) {
+            window->value = -1;
+            window->finished = 1;
         } else {
-            down = trigger & 0x40;
-            if (down != 0 && (held & 0x200) != 0 && (held & 0x400) != 0) {
+            delta = 0;
+            if (((repeat & 0x80) != 0) && ((held & 0x200) != 0) && ((held & 0x400) != 0)) {
+                delta = 100;
+            } else if (((repeat & 0x40) != 0) && ((held & 0x200) != 0) && ((held & 0x400) != 0)) {
                 delta = -100;
-            } else if (up != 0 && (held & 0x200) != 0) {
+            } else if (((repeat & 0x80) != 0) && ((held & 0x200) != 0)) {
                 delta = 10;
-            } else if (down != 0 && (held & 0x200) != 0) {
+            } else if (((repeat & 0x40) != 0) && ((held & 0x200) != 0)) {
                 delta = -10;
-            } else if (up != 0) {
+            } else if (((repeat & 0x80) != 0)) {
                 delta = 1;
-            } else if (down != 0) {
+            } else if (((repeat & 0x40) != 0)) {
                 delta = -1;
+            } else if (((repeat & 0x100) != 0) && ((held & 0x200) != 0)) {
+                delta = 0xFFFF;
+            } else if (((repeat & 0x100) != 0)) {
+                delta = -0xFFFF;
+            }
+            if (!pokemonCheckValid(pokemon)) {
+                window->selected = 0;
+                id = 0x16;
             } else {
-                shoulder = trigger & 0x100;
-                if (shoulder != 0 && (held & 0x200) != 0) {
-                    delta = 0xFFFF;
-                } else if (shoulder != 0) {
-                    delta = -0xFFFF;
+                menuDataBiosGetPtr(window->menu);
+                id = menuGetCursorItemID(window->menu);
+            }
+            if (delta != 0) {
+                if (out != 0) {
+                    *out = delta;
                 }
+                window->value = id;
+                window->finished = 1;
             }
-        }
-        if (pokemonCheckValid(pokemon) == 0) {
-            item = 0x16;
-            win->selected = 0;
-        } else {
-            menuDataBiosGetPtr(win->menu);
-            item = menuGetCursorItemID(win->menu);
-        }
-        if (delta != 0) {
-            if (out != 0) {
-                *out = delta;
-            }
-            win->value = item;
-            win->finished = 1;
         }
     }
 }

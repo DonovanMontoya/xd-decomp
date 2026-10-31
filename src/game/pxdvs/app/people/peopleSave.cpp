@@ -1,197 +1,293 @@
-#include <game/pxdvs/app/people/peopleSavePrivate.hpp>
+#include <dolphin/types.h>
+#include <libc/string.h>
 
-static void _makeAnywaySaveData(GSBinWriteStream*);
-static void _peopleRestoreAnywaySaveData(GSBinReadStream*);
+#pragma pool_strings off
 
-extern "C" u32 peopleGetAnywaySaveSize() {
-    GSBinWriteSizeStream stream;
+struct GSvec { f32 x, y, z; };
+struct GSmodel;
+struct PeopleState {
+    bool active, display, flag2, flag3;
+    u32 flags, groupID, peopleID, objectID;
+    u8 pad14[0x20];
+    f32 angle, targetAngle;
+    u8 pad3C[0xC];
+    u8 moveType, mode, flag4A, motion;
+    f32 speed;
+    GSvec position, destination;
+    u16 pointCount, pointIndex;
+    GSvec* points;
+    u8 pad70[0x2C];
+    GSvec savedPosition;
+    u8 padA8[0x10];
+    u8 targetType;
+    u8 padB9[3];
+    GSvec targetPosition;
+    u8 padC8[0x24];
+    u32 targetGroupID, targetPeopleID;
+    u8 padF4[0x5C];
+    bool flag150;
+};
+struct tagPeopleWork {
+    u8 used, saveFlags;
+    u8 pad2[6];
+    GSmodel* model;
+    PeopleState state;
+};
+struct SavedFlags {
+    u8 active:1, display:1, flag2:1, flag150:1, flag3:1, flag4A:1, unused0:2;
+    u8 moveType:3, motion:3, mode:2;
+    u8 targetType:2, unused2:6;
+    u8 unused3[2];
+};
+
+extern "C" {
+void* GSmemAllocClr(u32);
+void GSmemFree(void*);
+s32 peopleBiosGetMaxNum();
+tagPeopleWork* peopleBiosGetWorkPtr(s32);
+void peopleClose(u32, u32, u8);
+void peopleOpen(u32, u32, u32);
+void peopleAddCollision(u32, u32);
+tagPeopleWork* peopleGet(u32, u32);
+void peopleSetDisp(u32, u32, bool);
+GSvec* GSmodelGetPositionPtr(GSmodel*);
+GSvec* GSmodelGetRotationPtr(GSmodel*);
+void GSmodelSetPosition(GSmodel*, GSvec*);
+void GSmodelSetRotation(GSmodel*, GSvec*);
+void GSlogWrite(const char*, ...);
+void heroMoveTermEvent();
+void gimmickBoxPop();
+}
+
+class GSBinReadStream {
+public:
+    u8* begin;
+    u8* current;
+    s32 size;
+    GSBinReadStream(void* data, s32 length) { begin = current = (u8*)data; size = length; }
+    u8 read8() { return *current++; }
+    u16 read16() { u16 n = ((u16)current[0] << 8) | (u16)current[1]; current += 2; return n; }
+    u32 read32() { u8* p = current; u32 n = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]; current += 4; return n; }
+    f32 readFloat() { union { u32 n; f32 f; f64 align; } value; value.n = read32(); return value.f; }
+    void read(void* dst, u32 n) { memcpy(dst, current, n); current += n; }
+    s32 tell() const { return current - begin; }
+    void seek(s32 n) { current = begin + n; }
+};
+class GSBinWriteStream {
+public:
+    u8* begin;
+    u8* current;
+    s32 size;
+    void* allocation;
+    u8 writing;
+    GSBinWriteStream() { current = 0; allocation = 0; begin = 0; size = 0; writing = 0; }
+    GSBinWriteStream(void* data, s32 length) { allocation = 0; current = (u8*)data; begin = (u8*)data; size = length; writing = 1; }
+    ~GSBinWriteStream() { if (allocation) GSmemFree(allocation); }
+    void countOnly() { current = 0; allocation = 0; begin = 0; size = 0x10000000; writing = 0; }
+    void write8(u8 n) { if (!writing) current++; else *current++ = n; }
+    void write16(u16 n) { if (!writing) current += 2; else { *current++ = n >> 8; *current++ = n; } }
+    void write32(u32 n) { if (!writing) current += 4; else { *current++ = n >> 24; *current++ = n >> 16; *current++ = n >> 8; *current++ = n; } }
+    void writeFloat(f32 n) { union { u32 n; f32 f; f64 align; } value; value.f = n; write32(value.n); }
+    void write(const void* p, u32 n) { if (writing) memcpy(current, p, n); current += n; }
+    s32 tell() const { return current - begin; }
+    void seek(s32 n) { current = begin + n; }
+};
+
+static void _makeAnywaySaveData(GSBinWriteStream* stream);
+
+extern "C" {
+s32 peopleGetAnywaySaveSize() {
+    GSBinWriteStream stream;
+    stream.countOnly();
     _makeAnywaySaveData(&stream);
-    return stream.getWriteSize();
+    return stream.tell();
+}
 }
 
 static void _peopleRestoreAnywaySaveData(GSBinReadStream* stream) {
-    PeopleSaveFlags flags;
-    tagPeopleWork* work;
-    PeopleSavedState* saved;
-    u8 count=stream->readU8();
-    u32 records=stream->cur-stream->start;
-    for(s32 i=0;i<peopleBiosGetMaxNum();++i) {
-        work=peopleBiosGetWorkPtr(i);
-        if(work)work->unknown01[0]=0;
+    s32 i, j;
+    PeopleState* state;
+    tagPeopleWork* people;
+    SavedFlags flags;
+    u8 count = stream->read8();
+    s32 start = stream->tell();
+    for (i = 0; i < peopleBiosGetMaxNum(); i++) {
+        people = peopleBiosGetWorkPtr(i);
+        if (people) people->saveFlags = 0;
     }
-    for(s32 i=0;i<count;++i) {
-        if(stream->readU8()) {
-            s32 j;
-            u32 resource;
-            u32 group;
-            u16 size;
-            u32 start;
-            start=stream->cur-stream->start;
-            size=stream->readU16();
-            memcpy(&flags,stream->cur,5);stream->cur+=5;
-            stream->cur+=4;
-            group=stream->readU32();
-            resource=stream->readU32();
-            stream->cur+=4;
-            for(j=0;j<peopleBiosGetMaxNum();++j) {
-                work=peopleBiosGetWorkPtr(j);
-                saved=(PeopleSavedState*)&work->state;
-                if(work->used && group==saved->group && resource==saved->resource) {
-                    work->unknown01[0]|=1;
+    for (j = 0; j < count; j++) {
+        if (stream->read8()) {
+            s32 startRecord = stream->tell();
+            u16 length = stream->read16();
+            stream->read(&flags, sizeof(flags));
+            stream->read32();
+            u32 group = stream->read32();
+            u32 id = stream->read32();
+            stream->read32();
+            for (i = 0; i < peopleBiosGetMaxNum(); i++) {
+                people = peopleBiosGetWorkPtr(i);
+                state = &people->state;
+                if (people->used && group == state->groupID && id == state->peopleID) {
+                    people->saveFlags |= 1;
                     break;
                 }
             }
-            stream->cur=stream->start+start+size;
+            stream->seek(startRecord + length);
         }
     }
-    for(s32 i=0;i<peopleBiosGetMaxNum();++i) {
-        work=peopleBiosGetWorkPtr(i);
-        saved=(PeopleSavedState*)&work->state;
-        if(!(work->unknown01[0]&1))peopleClose(saved->group,saved->resource,1);
+    for (i = 0; i < peopleBiosGetMaxNum(); i++) {
+        people = peopleBiosGetWorkPtr(i);
+        state = &people->state;
+        if (!(people->saveFlags & 1)) peopleClose(state->groupID, state->peopleID, 1);
     }
-    stream->cur=stream->start+records;
-    for(s32 i=0;i<count;++i) {
-        if(stream->readU8()) {
-            stream->cur+=2;
-            memcpy(&flags,stream->cur,5);stream->cur+=5;
-            u32 state=stream->readU32();
-            u32 group=stream->readU32();
-            u32 resource=stream->readU32();
-            u32 object=stream->readU32();
-            s32 j;
-            bool found=false;
-            for(j=0;j<peopleBiosGetMaxNum();++j) {
-                work=peopleBiosGetWorkPtr(j);
-                saved=(PeopleSavedState*)&work->state;
-                if(work->used && group==saved->group && resource==saved->resource) {found=true;break;}
+    stream->seek(start);
+    for (j = 0; j < count; j++) {
+        if (stream->read8()) {
+            stream->read16();
+            stream->read(&flags, sizeof(flags));
+            u32 savedFlags = stream->read32();
+            u32 group = stream->read32();
+            u32 id = stream->read32();
+            u32 object = stream->read32();
+            u8 found = 0;
+            for (i = 0; i < peopleBiosGetMaxNum(); i++) {
+                people = peopleBiosGetWorkPtr(i);
+                state = &people->state;
+                if (people->used && group == state->groupID && id == state->peopleID) { found = 1; break; }
             }
-            if(!found) {
-                peopleOpen(group,resource,object);
-                peopleAddCollision(group,resource);
-                work=peopleGet(group,resource);
-                saved=(PeopleSavedState*)&work->state;
+            if (!found) {
+                peopleOpen(group, id, object);
+                peopleAddCollision(group, id);
+                people = peopleGet(group, id);
+                state = &people->state;
             }
-            u32 oldObject=saved->object;
-            GSmodel* model=work->model;
-            saved->state=flags.state;
-            saved->visible=flags.visible;
-            saved->unknown0E=flags.unknown0E;
-            saved->running=flags.running;
-            saved->collisionEnabled=flags.collision;
-            saved->walkPaused=flags.paused;
-            saved->walkActive=flags.active;
-            saved->savedWalkMode=flags.mode;
-            saved->walkPhase=flags.phase;
-            saved->neckEnabled=flags.neck;
-            saved->flags=state;saved->group=group;saved->resource=resource;saved->object=object;
-            if(oldObject!=saved->object) {
-                GSlogWrite("people %d (%08x) : objID error (%08x, %08x)\n",i,saved->resource,oldObject,saved->object);
-                saved->object=oldObject;
+            u32 oldObject = state->objectID;
+            GSmodel* model = people->model;
+            state->active = flags.active;
+            state->display = flags.display;
+            state->flag2 = flags.flag2;
+            state->flag150 = flags.flag150;
+            state->flag3 = flags.flag3;
+            state->flag4A = flags.flag4A;
+            state->moveType = flags.moveType;
+            state->motion = flags.motion;
+            state->mode = flags.mode;
+            state->targetType = flags.targetType;
+            state->flags = savedFlags;
+            state->groupID = group;
+            state->peopleID = id;
+            state->objectID = object;
+            if (oldObject != state->objectID) {
+                GSlogWrite("people %d (%08x) : objID error (%08x, %08x)\n", j, state->peopleID, oldObject, state->objectID);
+                state->objectID = oldObject;
             }
-            // Both copies of speed are present in the original format.
-            saved->moveSpeed=stream->readFloat();
-            saved->savedWalkMode=stream->readU8();
-            saved->moveSpeed=stream->readFloat();
-            memcpy(&saved->walkStartPosition,stream->cur,12);stream->cur+=12;
-            memcpy(&saved->walkTarget,stream->cur,12);stream->cur+=12;
-            saved->walkPointCount=stream->readU8();
-            if(saved->walkPointCount) {
-                saved->walkPointIndex=stream->readU8();
-                saved->walkPoints=(GSvec*)GSmemAllocClr(saved->walkPointCount*12);
-                for(s32 j=0;j<saved->walkPointCount;++j) {
-                    memcpy(&saved->walkPoints[j],stream->cur,12);stream->cur+=12;
-                }
+            state->speed = stream->readFloat();
+            state->motion = stream->read8();
+            state->speed = stream->readFloat();
+            stream->read(&state->position, sizeof(GSvec));
+            stream->read(&state->destination, sizeof(GSvec));
+            state->pointCount = stream->read8();
+            if (state->pointCount) {
+                state->pointIndex = stream->read8();
+                state->points = (GSvec*)GSmemAllocClr(state->pointCount * sizeof(GSvec));
+                for (s32 j = 0; j < state->pointCount; j++) stream->read(&state->points[j], sizeof(GSvec));
             }
-            switch(saved->neckEnabled) {
-            case 1: saved->neckTargetGroup=stream->readU32();saved->neckTargetResource=stream->readU32();break;
-            case 2: memcpy(&saved->neckTargetPosition,stream->cur,12);stream->cur+=12;break;
+            switch (state->targetType) {
+            case 1: state->targetGroupID = stream->read32(); state->targetPeopleID = stream->read32(); break;
+            case 2: stream->read(&state->targetPosition, sizeof(GSvec)); break;
             }
-            if(model) {
-                memcpy(GSmodelGetPositionPtr(model),stream->cur,12);stream->cur+=12;
-                memcpy(&saved->previousPosition,stream->cur,12);stream->cur+=12;
-                saved->targetRotation=stream->readFloat();
-                saved->rotationProgress=stream->readFloat();
-                GSmodelGetRotationPtr(model)->param2=saved->targetRotation;
+            if (model) {
+                stream->read(GSmodelGetPositionPtr(model), sizeof(GSvec));
+                stream->read(&state->savedPosition, sizeof(GSvec));
+                state->angle = stream->readFloat();
+                state->targetAngle = stream->readFloat();
+                GSmodelGetRotationPtr(model)->y = state->angle;
                 GSmodelGetPositionPtr(model);
-                GSmodelSetPosition(model,GSmodelGetPositionPtr(model));
-                GSmodelSetRotation(model,GSmodelGetRotationPtr(model));
-                peopleSetDisp(saved->group,saved->resource,saved->visible);
+                GSmodelSetPosition(model, GSmodelGetPositionPtr(model));
+                GSmodelSetRotation(model, GSmodelGetRotationPtr(model));
+                peopleSetDisp(state->groupID, state->peopleID, state->display);
             } else {
-                // Retail consumes four floats here, assigning the same field.
-                saved->targetRotation=stream->readFloat();
-                saved->targetRotation=stream->readFloat();
-                saved->targetRotation=stream->readFloat();
-                saved->targetRotation=stream->readFloat();
+                state->angle = stream->readFloat(); state->angle = stream->readFloat();
+                state->angle = stream->readFloat(); state->angle = stream->readFloat();
             }
         }
     }
 }
-extern "C" void peopleRestoreAnywaySaveData(void* data,u32 size) {
-    GSBinReadStream stream(data,size);
-    GSBinReadStream* reader=&stream;
-    u16 version=reader->cur[1];version|=reader->cur[0]<<8;reader->cur+=2;
-    if(version==0x103 && reader->readU8()==4) {
-        _peopleRestoreAnywaySaveData(reader);
-        heroMoveTermEvent();gimmickBoxPop();
+
+extern "C" {
+void peopleRestoreAnywaySaveData(void* data, s32 size) {
+    GSBinReadStream object(data, size);
+    GSBinReadStream* stream = &object;
+    if (stream->read16() == 0x103 && stream->read8() == 4) {
+        _peopleRestoreAnywaySaveData(stream);
+        heroMoveTermEvent();
+        gimmickBoxPop();
     }
 }
-extern "C" void peopleMakeAnywaySaveData(void* data,u32 size) {
-    GSBinWriteStream stream(data,size);
+void peopleMakeAnywaySaveData(void* data, s32 size) {
+    GSBinWriteStream stream(data, size);
     _makeAnywaySaveData(&stream);
 }
+}
+
 static void _makeAnywaySaveData(GSBinWriteStream* stream) {
     GSmodel* model;
-    s32 count=peopleBiosGetMaxNum();
-    stream->writeU16(0x103);stream->writeU8(4);stream->writeU8(count);
-    for(s32 i=0;i<peopleBiosGetMaxNum();++i) {
-        tagPeopleWork* work=peopleBiosGetWorkPtr(i);
-        if(!work->used || (work->resource&0xFFFF0000)==0x7FFE0000) {
-            stream->writeU8(0);
+    s32 count = peopleBiosGetMaxNum();
+    stream->write16(0x103);
+    stream->write8(4);
+    stream->write8(count);
+    for (s32 i = 0; i < peopleBiosGetMaxNum(); i++) {
+        tagPeopleWork* people = peopleBiosGetWorkPtr(i);
+        PeopleState* state = &people->state;
+        if (!people->used || (state->peopleID & 0xFFFF0000) == 0x7FFE0000) {
+            stream->write8(0);
         } else {
-            stream->writeU8(1);
-            u32 start=stream->getWriteSize();
-            stream->writeU16(0);
-            // Spare bits were not initialized by the retail writer.
-            PeopleSaveFlags flags;
-            model=work->model;
-            flags.state=work->state;flags.visible=work->visible;flags.unknown0E=work->unknown0E;
-            flags.running=work->running;flags.collision=work->collisionEnabled;flags.paused=work->walkPaused;
-            flags.active=work->walkActive;flags.mode=work->savedWalkMode;flags.phase=work->walkPhase;
-            flags.neck=work->neckEnabled;
-            stream->writeBytes(&flags,5);
-            stream->writeU32(work->flags);stream->writeU32(work->group);
-            stream->writeU32(work->resource);stream->writeU32(work->object);
-            stream->writeFloat(work->moveSpeed);stream->writeU8(work->savedWalkMode);
-            stream->writeFloat(work->moveSpeed);
-            stream->writeBytes(&work->walkStartPosition,12);stream->writeBytes(&work->walkTarget,12);
-            stream->writeU8(work->walkPointCount);
-            if(work->walkPointCount) {
-                stream->writeU8(work->walkPointIndex);
-                for(s32 j=0;j<work->walkPointCount;++j)stream->writeBytes(&work->walkPoints[j],12);
+            stream->write8(1);
+            s32 start = stream->tell();
+            stream->write16(0);
+            model = people->model;
+            SavedFlags flags;
+            flags.active = state->active;
+            flags.display = state->display;
+            flags.flag2 = state->flag2;
+            flags.flag150 = state->flag150;
+            flags.flag3 = state->flag3;
+            flags.flag4A = state->flag4A;
+            flags.moveType = state->moveType;
+            flags.motion = state->motion;
+            flags.mode = state->mode;
+            flags.targetType = state->targetType;
+            stream->write(&flags, sizeof(flags));
+            stream->write32(state->flags);
+            stream->write32(state->groupID);
+            stream->write32(state->peopleID);
+            stream->write32(state->objectID);
+            stream->writeFloat(state->speed);
+            stream->write8(state->motion);
+            stream->writeFloat(state->speed);
+            stream->write(&state->position, sizeof(GSvec));
+            stream->write(&state->destination, sizeof(GSvec));
+            stream->write8(state->pointCount);
+            if (state->pointCount) {
+                stream->write8(state->pointIndex);
+                for (s32 j = 0; j < state->pointCount; j++) stream->write(&state->points[j], sizeof(GSvec));
             }
-            switch(work->neckEnabled) {
-            case 1: stream->writeU32(work->neckTargetGroup);stream->writeU32(work->neckTargetResource);break;
-            case 2: stream->writeBytes(&work->neckTargetPosition,12);break;
+            switch (state->targetType) {
+            case 1: stream->write32(state->targetGroupID); stream->write32(state->targetPeopleID); break;
+            case 2: stream->write(&state->targetPosition, sizeof(GSvec)); break;
             }
-            if(model) {
-                stream->writeBytes(GSmodelGetPositionPtr(model),12);
-                stream->writeBytes(&work->previousPosition,12);
-                stream->writeFloat(GSmodelGetRotationPtr(model)->param2);
-                stream->writeFloat(work->rotationProgress);
+            if (model) {
+                stream->write(GSmodelGetPositionPtr(model), sizeof(GSvec));
+                stream->write(&state->savedPosition, sizeof(GSvec));
+                stream->writeFloat(GSmodelGetRotationPtr(model)->y);
+                stream->writeFloat(state->targetAngle);
             } else {
-                for(s32 j=20;j>0;--j)stream->writeU8(0);
+                for (s32 j = 20; j > 0; j--) stream->write8(0);
             }
-            s32 end;
-            u16 length;
-            end=stream->getWriteSize();
-            stream->cur=stream->start+start;
-            if(!stream->writing)stream->cur+=2;
-            else {
-                length=end-start;
-                *stream->cur++=length>>8;
-                *stream->cur++=length;
-            }
-            stream->cur=stream->start+end;
+            int end = stream->tell();
+            stream->seek(start);
+            stream->write16(end - start);
+            stream->seek(end);
             GSmodelGetPositionPtr(model);
         }
     }

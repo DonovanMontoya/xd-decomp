@@ -76,12 +76,26 @@ peContainer::peContainer(peEmitterNode* emitter,u32 nodeBytes,u16 maximum):owner
     dirty=1;
 }
 peRenderContainer::~peRenderContainer() {
-    if((displayLists[0].flags&1)==1) {
-        g_particle_debug_stats.displayList-=displayLists[0].size;g_particle_debug_stats.total-=displayLists[0].size;GSgfxDLFree(&displayLists[0]);
-        if((displayLists[1].flags&1)==1){g_particle_debug_stats.displayList-=displayLists[1].size;g_particle_debug_stats.total-=displayLists[1].size;GSgfxDLFree(&displayLists[1]);}
-        if(renderData[0]) {
-            renderData[0]-=0x40000000;u32 size=GSmemGetSize(renderData[0]);u32 total=g_particle_debug_stats.total;u32 data=g_particle_debug_stats.renderData;g_particle_debug_stats.total=total-size;g_particle_debug_stats.renderData=data-size;
-            if(renderData[0]){GSmemFree(renderData[0]);renderData[0]=0;}
+    if ((displayLists[0].flags & 1) == 1) {
+        u32 s = displayLists[0].size;
+        g_particle_debug_stats.displayList -= s;
+        g_particle_debug_stats.total -= s;
+        GSgfxDLFree(&displayLists[0]);
+        if ((displayLists[1].flags & 1) == 1) {
+            u32 s2 = displayLists[1].size;
+            g_particle_debug_stats.displayList -= s2;
+            g_particle_debug_stats.total -= s2;
+            GSgfxDLFree(&displayLists[1]);
+        }
+        if (renderData[0]) {
+            renderData[0] = (u8*)((u32)renderData[0] - 0x40000000);
+            u32 sz = GSmemGetSize(renderData[0]);
+            g_particle_debug_stats.renderData -= sz;
+            g_particle_debug_stats.total -= sz;
+            if (renderData[0]) {
+                GSmemFree(renderData[0]);
+                renderData[0] = 0;
+            }
         }
     }
 }

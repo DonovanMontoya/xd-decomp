@@ -705,66 +705,89 @@ s32 msgctrlCR(MsgCtx* c) {
 }
 
 }
-static u16* _msgctrlMakeDigit(u16* buf, s32 size, volatile u32 value, s32 type) {
-    u8 negative = 0;
+static u16* _msgctrlMakeDigit(u16* buf, s32 len, u32 val, s32 mode)
+{
+    u32* pv = &val;
+    u8 neg = 0;
     u32 base = 10;
     s32 count = 0;
     s32 minDigits = 1;
-    u16* table;
-    s32 index = size - 1;
-    buf[index] = 0;
-    switch (type) {
-    case 0: case 5: case 6:
-        if ((s32)value < 0) {
-            value = -(s32)value;
-            negative = 1;
+    u16* digits;
+    len--;
+    buf[len] = 0;
+    switch (mode) {
+    case 0:
+    case 5:
+    case 6:
+        if ((s32)*pv < 0) {
+            *pv = -(s32)*pv;
+            neg = 1;
         }
         break;
-    case 2: case 8:
+    case 2:
+    case 8:
         minDigits = 10;
         break;
-    case 3: case 9:
+    case 3:
+    case 9:
         base = 16;
         minDigits = 8;
         break;
+    case 1:
+    case 4:
+    case 7:
     case 10:
         break;
     }
-    switch (type) {
-    case 0: case 1: case 2: case 3: case 4:
-        if (pokecoloGetCountryCode() == 0) table = full_digit_code;
-        else table = half_digit_code;
+    switch (mode) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+        if (pokecoloGetCountryCode() == 0) {
+            digits = full_digit_code;
+        } else {
+            digits = half_digit_code;
+        }
         break;
     case 5:
-        table = full_digit_code;
+        digits = full_digit_code;
         break;
     default:
-        table = half_digit_code;
+        digits = half_digit_code;
         break;
     }
-    while (value != 0) {
-        if ((type == 4 || type == 10) && count != 0 && count % 3 == 0) {
+    while (val != 0) {
+        if ((mode == 4 || mode == 10) && count != 0 && count % 3 == 0) {
             switch (pokecoloGetLanguage()) {
             case 3:
             case 6:
-                buf[--index] = 0x2E;
+                buf[--len] = 0x2E;
                 break;
             case 4:
             case 5:
                 break;
             case 2:
             default:
-                buf[--index] = 0x2C;
+                buf[--len] = 0x2C;
                 break;
             }
         }
-        buf[--index] = table[value % base];
-        value /= base;
-        ++count;
+        u32 v = val;
+        len--;
+        count++;
+        val = v / base;
+        buf[len] = digits[v - val * base];
     }
-    for (; count < minDigits; ++count) buf[--index] = table[0];
-    if (negative != 0) buf[--index] = 0x2D;
-    return &buf[index];
+    for (; count < minDigits; count++) {
+        buf[--len] = digits[0];
+    }
+    if (neg) {
+        len--;
+        buf[len] = 0x2D;
+    }
+    return buf + len;
 }
 extern "C" {
 

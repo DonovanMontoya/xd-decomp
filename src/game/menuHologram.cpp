@@ -1072,10 +1072,9 @@ ModelSlot *CMenuHologram::modelPokemonSetScale(long index)
     return slot;
 }
 
-void CMenuHologram::modelVisitorSetYPosition(long index)
+void CMenuHologram::modelVisitorSetYPosition(long n)
 {
-    ModelSlot *slot = &slots[index];
-    f32 pos[3];
+    ModelSlot* slot = &slots[n];
     u16 id = stage->getVisitorPointer()->getPokemonDataId();
     f32 y = 0.0f;
     switch (id) {
@@ -1091,12 +1090,11 @@ void CMenuHologram::modelVisitorSetYPosition(long index)
     case 0x14B:
         y = -20.0f;
         break;
-    case 0x14C:
+    case 0x52:
         y = 0.0f;
         break;
     case 0x169:
-        break;
-    case 0x16A:
+        y = 0.0f;
         break;
     case 0x15:
         y = -2.0f;
@@ -1119,7 +1117,7 @@ void CMenuHologram::modelVisitorSetYPosition(long index)
     case 0x47:
         y = -6.5f;
         break;
-    case 0x52:
+    case 0x16A:
         y = 0.0f;
         break;
     case 0x15D:
@@ -1129,8 +1127,9 @@ void CMenuHologram::modelVisitorSetYPosition(long index)
         y = -6.5f;
         break;
     }
-    pos[1] = y;
+    f32 pos[3];
     pos[0] = 0.0f;
+    pos[1] = y;
     pos[2] = 0.0f;
     Sequence_SetPosition(slot->sequence, pos);
 }

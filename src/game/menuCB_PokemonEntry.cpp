@@ -8,7 +8,7 @@ struct EntryTrainer {u32 field0;s32 type;u32 order[6];s32 count;u32 field24;s32 
 struct EntryPlayerView{u8 pad0[0x3C];s32 controller;u8 pad40[0x12E0];};
 struct EntryCB {union {u8 bytes[0xB4C0];EntryPlayerView players[4];struct {u8 pad0[4];s32 mode;u8 pad8[45016];s32 selected;u8 padAFE4[124];s32 selectionDone;u8 padB064[160];s32 fieldB104;s32 state;u8 padB10C[4];s32 fieldB110;u8 padB114[140];s32 cancel;u8 padB1A4[692];s16 activeCount[4][6];s8 active[4][6];} fields;};};
 extern EntryCB _CB;extern u8 *pGCB;u16 uToolPokemon_faceId;
-extern "C" {u8 menuCBRule_DEOKISISUCamouflage();u16 menuGBACGetRomVer(u16);u16 menuCBBios_ParticipationPokemonMax();u16 toolentryTaisenGetPokemonNum(s32);u16 toolentryTaisenGetEntryPokemonNum(s32);s32 toolentryTaisenGetBattleType();s32 toolentryTaisenGetBattleVersus();EntryTrainer *menuCBBios_GetTrainerFromVersusBattleID(s32);EntryTrainer *menuCBBios_GetTrainerImmediately(s32);s32 menuCBTrainerBios_GetControlerID(EntryTrainer*);void *menuCBBios_GetHeroImmediately(s32);void gbaCommandSendWazaText(s32,void*);void gbaCommandEntryRequest(s32,u32,u32,s32);void toolentryTaisenInitPokemonOrder(s32);s32 toolentryTaisenGetEntryPlayerNum();void menuFaceLoad_Tool(s32,s32(*)(void*),s32);s32 menuCBBattleStartGetStatus();Pokemon *toolentryTaisenGetPokemonPtr(s32,s32);Pokemon *toolentryTaisenGetEntryPokemonPtr(s32,s32);u16 menuFaceGetID2(Pokemon*,u8);s32 pokemonGetStatus(Pokemon*,s32,s32,s32);void menuFaceDispFromID(s32,s32,u16);void menuCBPokemonEntryTexWorkInit();u16 menuCBPokemonEntryPokemonNumMin(s32);}
+extern "C" {u8 menuCBRule_DEOKISISUCamouflage();u16 menuGBACGetRomVer(u16);u16 menuCBBios_ParticipationPokemonMax();u16 toolentryTaisenGetPokemonNum(s32);u16 toolentryTaisenGetEntryPokemonNum(s32);s32 toolentryTaisenGetBattleType();s32 toolentryTaisenGetBattleVersus();EntryTrainer *menuCBBios_GetTrainerFromVersusBattleID(s32);EntryTrainer *menuCBBios_GetTrainerImmediately(s32);s32 menuCBTrainerBios_GetControlerID();void *menuCBBios_GetHeroImmediately(s32);void gbaCommandSendWazaText(s32,void*);void gbaCommandEntryRequest(s32,u32,u32,s32);void toolentryTaisenInitPokemonOrder(s32);s32 toolentryTaisenGetEntryPlayerNum();void menuFaceLoad_Tool(s32,s32(*)(void*),s32);s32 menuCBBattleStartGetStatus();Pokemon *toolentryTaisenGetPokemonPtr(s32,s32);Pokemon *toolentryTaisenGetEntryPokemonPtr(s32,s32);u16 menuFaceGetID2(Pokemon*,u8);s32 pokemonGetStatus(Pokemon*,s32,s32,s32);void menuFaceDispFromID(s32,s32,u16);void menuCBPokemonEntryTexWorkInit();u16 menuCBPokemonEntryPokemonNumMin(s32);}
 static u8 _menuCB_pokemonGetDeoxysSel(u16 player,bool camouflage){
  u8 result=0;
  u16 controller=_CB.players[player].controller-1;
@@ -46,7 +46,43 @@ static void _menuCBPokemonEntryDispPosition(){switch(toolentryTaisenGetBattleTyp
 static u8 _menuCBPokemonEntryAllPlayer(){s32 count=1;s32 versus=toolentryTaisenGetBattleVersus();s32 type=toolentryTaisenGetBattleType();switch(type){case 0:case 1:if(versus==4){count=2;_menuCBPokemonWork.playerCount=4;}else{count=2;_menuCBPokemonWork.playerCount=versus;}break;case 2:count=4;_menuCBPokemonWork.playerCount=4;break;}for(s32 i=0;i<count;i++)if(!_menuCBPokemonEntryGetEntryFlag(i))return 0;return 1;}
 static EntryFace *_menuCBPokemonEntryGetFaceBase(long player,long index){return &_menuCBPokemonWork.faces[player][index];}
 static s32 _menuCBPokemonEntryLoadCallBack(void *data){s32 more=1;toolentryTaisenGetEntryPlayerNum();toolentryTaisenGetBattleType();if(data)*(s8*)data=1;Pokemon *pokemon;do{if(_menuCBPokemonWork.loadIndex==24){more=0;_menuCBPokemonWork.readFlag=1;pokemon=0;}else{s32 player=_menuCBPokemonWork.loadIndex/6;s32 index=_menuCBPokemonWork.loadIndex%6;if(menuCBBattleStartGetStatus()==0)pokemon=toolentryTaisenGetPokemonPtr(player,index);else if(toolentryTaisenGetEntryPokemonNum(player)<=index)pokemon=0;else pokemon=toolentryTaisenGetEntryPokemonPtr(player,index);EntryFace *face=_menuCBPokemonEntryGetFaceBase(player,index);u16 id=menuFaceGetID2(pokemon,_menuCB_pokemonGetDeoxysSel(player,true));if(id && pokemonGetStatus(pokemon,0,0x6E,0)){more=0;face->enabled=1;face->id=id;uToolPokemon_faceId=id;_menuCBPokemonWork.loadIndex++;}else{face->enabled=0;_menuCBPokemonWork.loadIndex++;}}}while(more);return (s32)pokemon;}
-static void _menuCBPokemonEntryWorkInit(){s32 j;u32 min;s32 type=toolentryTaisenGetBattleType();s32 players=toolentryTaisenGetEntryPlayerNum();_menuCBPokemonWork.field22C=1;_menuCBPokemonWork.device=-1;_menuCBPokemonWork.field220=0;_menuCBPokemonWork.field224=0;_menuCBPokemonWork.loadIndex=0;_menuCBPokemonWork.position=0;_menuCBPokemonWork.field0=0;_menuCBPokemonWork.fieldC=0;s32 mode;s32 controller;s32 i;for(i=0;i<players;i++){EntryTrainer *trainer=menuCBBios_GetTrainerImmediately(i);controller=menuCBTrainerBios_GetControlerID(trainer);void *hero=menuCBBios_GetHeroImmediately(i);_menuCBPokemonEntrySetEntryFlag(i,false);if(trainer->type){gbaCommandSendWazaText(controller,hero);if(type==1)mode=2;else mode=1;min=menuCBPokemonEntryPokemonNumMin(i);gbaCommandEntryRequest(controller,_menuCBPokemonEntryPokemonNum(i),min,mode);}}for(j=0;j<4;j++)toolentryTaisenInitPokemonOrder(j);_menuCBPokemonEntryWork();_menuCBPokemonEntryDispPosition();}
+static void _menuCBPokemonEntryWorkInit(void) {
+    void* hero;
+    s32 pad;
+    s32 j;
+    s32 type = toolentryTaisenGetBattleType();
+    s32 count = toolentryTaisenGetEntryPlayerNum();
+    s32 i;
+    _menuCBPokemonWork.field22C = 1;
+    _menuCBPokemonWork.device = -1;
+    _menuCBPokemonWork.field220 = 0.0f;
+    _menuCBPokemonWork.field224 = 0;
+    _menuCBPokemonWork.loadIndex = 0;
+    _menuCBPokemonWork.position = 0;
+    _menuCBPokemonWork.field0 = 0;
+    _menuCBPokemonWork.fieldC = 0;
+    for (i = 0; i < count; i++) {
+        void* trainer = menuCBBios_GetTrainerImmediately(i);
+        pad = menuCBTrainerBios_GetControlerID();
+        hero = menuCBBios_GetHeroImmediately(i);
+        _menuCBPokemonEntrySetEntryFlag(i, false);
+        if (*(s32*)((u8*)trainer + 4) != 0) {
+            s32 mode;
+            gbaCommandSendWazaText(pad, hero);
+            if (type == 1) {
+                mode = 2;
+            } else {
+                mode = 1;
+            }
+            gbaCommandEntryRequest(pad, (s32)(_menuCBPokemonEntryPokemonNum(i)), (u16)(menuCBPokemonEntryPokemonNumMin(i)), mode);
+        }
+    }
+    for (j = 0; j < 4; j++) {
+        toolentryTaisenInitPokemonOrder(j);
+    }
+    _menuCBPokemonEntryWork();
+    _menuCBPokemonEntryDispPosition();
+}
 extern "C" {
 u16 menuCBPokemonEntryPokemonNumMin(s32 player){u8 *rule;u16 min;s32 idx=*(s32*)(pGCB+0xC);rule=pGCB+0x10000;rule+=idx*0x90;if(*(s16*)(rule-0x66CC)==0)min=*(s16*)(rule-0x66CE);else min=1;u16 count=_menuCBPokemonEntryPokemonNum(player);if(count<min)return count;return min;}
 void menuCBPokemonEntryTexWorkInit(){_menuCBPokemonWork.loadIndex=0;_menuCBPokemonWork.readFlag=0;for(s32 i=0;i<4;i++){EntryFace*row=&_menuCBPokemonWork.faces[i][0];for(s32 j=0;j<6;j++){EntryFace*face=row+j;face->enabled=0;face->loaded=0;}}}

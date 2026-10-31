@@ -8,34 +8,37 @@ static void _menuCB_FlashEnd_WINLOSE(void) {
     }
 }
 
-static void _menuCB_FlashStart_WINLOSE(void) {
-    const char *temp_r3;
-    u16 temp_r3_2;
-
-    temp_r3 = "winlose_start";
-    temp_r3_2 = fightGetFightResultId();
-    switch(temp_r3_2){
-    case 2:case 5:FlashSystemSetPlayFrameLabel(0x21543000,"winlose_start","winlose_stop");FlashSystemSetNowFrameLabel(0x21543000,"winlose_start");goto labelReady;
-    case 3:case 4:FlashSystemSetPlayFrameLabel(0x21543000,"losewin_start","losewin_stop");FlashSystemSetNowFrameLabel(0x21543000,"losewin_start");goto labelReady;
-    case 8:default:break;
+static void _menuCB_FlashStart_WINLOSE() {
+    switch (fightGetFightResultId()) {
+    case 5:
+    case 2:
+        FlashSystemSetPlayFrameLabel(0x21543000, "winlose_start", "winlose_stop");
+        FlashSystemSetNowFrameLabel(0x21543000, "winlose_start");
+        break;
+    case 3:
+    case 4:
+        FlashSystemSetPlayFrameLabel(0x21543000, "losewin_start", "losewin_stop");
+        FlashSystemSetNowFrameLabel(0x21543000, "losewin_start");
+        break;
+    case 6:
+    case 7:
+    default:
+        FlashSystemSetPlayFrameLabel(0x21543000, "draw_start", "draw_stop");
+        FlashSystemSetNowFrameLabel(0x21543000, "draw_start");
+        break;
     }
-    FlashSystemSetPlayFrameLabel(0x21543000,"draw_start","draw_stop");FlashSystemSetNowFrameLabel(0x21543000,"draw_start");
-labelReady:
     FlashSystemSetLoopFlag(0x21543000, 0);
     _CB.unkB178 = 1;
     menuOpen(0x110, 0);
     menuCB_SE_Play(0x5E0);
-loop_10:
-    GSthreadSwitch();
-    if (FlashSystemIsLastFrame(0x21543000) == 0) {
-        goto loop_10;
-    }
-    if (pauseIsPause() == 0) {
-        _CB.unkB1E4 = (s16) (_CB.unkB1E4 - 1);
-    }
-    if (((s16) _CB.unkB1E4 != 0) && ((s32) (windowGetKeyInfo()[2] & 0x20) == 0)) {
-        goto loop_10;
-    }
+    do {
+        do {
+            GSthreadSwitch();
+        } while (!FlashSystemIsLastFrame(0x21543000));
+        if (!pauseIsPause()) {
+            _CB.unkB1E4--;
+        }
+    } while (_CB.unkB1E4 != 0 && (windowGetKeyInfo()[2] & 0x20) == 0);
 }
 
 static void _menuCB_FlashEnd_VS(bool arg0) {
@@ -98,18 +101,16 @@ extern "C" void menuToolBattleExit(void) {
 }
 
 extern "C" void menuToolBattleMain(void) {
-    s32 var_r25;
-    s32 var_r3;
-    u8 temp_r26;
-    u8 var_r27;
-    SaveStatus *temp_r3;
+    u8 loop = 1;
+    s32 res;
+    u8 saved;
+    u8* status;
 
-    var_r27 = 1;
-    _menuCB_FlashStart(1U);
-    temp_r3 = savedataGetStatus(0, 2);
-    temp_r26 = temp_r3->unk959;
-    temp_r3->unk959 = 0U;
-    while (var_r27 != 0) {
+    _menuCB_FlashStart(true);
+    status = (u8*)savedataGetStatus(0, 2);
+    saved = status[0x959];
+    status[0x959] = 0;
+    while (loop) {
         menuCBBios_CurrentlyWorkingToolBattleSet(1);
         menuCBBattleStartInit(&_CB, 0);
         _CB.unkB19C = 0;
@@ -120,157 +121,153 @@ extern "C" void menuToolBattleMain(void) {
         menuCBBattleStartTrainerFaceFree();
         menuCBBattleStartTrainerLoadTex();
         menuCBtrainerFaceReadWait();
-        if ((s32) _CB.unk8 == 2) {
+        if (_CB.unk8 == 2) {
             menuOpen(0xB1, 0);
-            _menuCB_FlashStart_VS(1U);
+            _menuCB_FlashStart_VS(true);
             menuOpen(0x103, 0);
             menuOpen(0xB2, 1);
-            _menuCB_FlashEnd_VS(0U);
+            _menuCB_FlashEnd_VS(false);
             menuCloseCustom(0xB2, 0, 0);
             menuCloseCustom(0x103, 0, 0);
             menuCloseCustom(0xB1, 0, 1);
-        } else if (menuCB_BattleBA_PokemonEntryNum() != 0) {
+        } else if (menuCB_BattleBA_PokemonEntryNum()) {
             menuOpen(0xB1, 0);
-            _menuCB_FlashStart_VS(1U);
+            _menuCB_FlashStart_VS(true);
             menuOpen(0x103, 0);
             menuOpen(0xB3, 1);
-            _menuCB_FlashEnd_VS(0U);
+            _menuCB_FlashEnd_VS(false);
             menuCloseCustom(0xB3, 0, 0);
             menuCloseCustom(0x103, 0, 0);
             menuCloseCustom(0xB1, 0, 1);
         } else {
             menuOpen(0xB1, 0);
-            _menuCB_FlashStart_VS(1U);
+            _menuCB_FlashStart_VS(true);
             menuOpen(0x103, 0);
             menuOpen(0xB4, 1);
-            if ((s32) _CB.unk4 != 1) {
-                _menuCB_FlashEnd_VS(0U);
+            if (_CB.unk4 != 1) {
+                _menuCB_FlashEnd_VS(false);
                 menuCloseCustom(0xB4, 0, 0);
                 menuCloseCustom(0x103, 0, 0);
                 menuCloseCustom(0xB1, 0, 1);
             }
         }
-        if ((s32) _CB.unkB19C != 0) {
+        if (_CB.unkB19C != 0) {
             menuCB_GBADisconnectedErrorJob();
             menuCB_MenuRollback(0xA9);
+            break;
+        }
+        if (_CB.unk4 == 1) {
+            res = 0;
         } else {
-            if ((s32) _CB.unk4 == 1) {
-                var_r3 = 0;
-            } else {
-                var_r3 = menuCB_PokemonEntry(&_CB);
+            res = menuCB_PokemonEntry(&_CB);
+        }
+        switch (res) {
+        case 0xA9:
+            menuCB_MenuRollback(res);
+            goto done;
+        case 0xB1:
+        default:
+            break;
+        }
+        GSfsysFree(0x14);
+        GSresFreeGroup(0x14);
+        _CB.unkB184 = 1;
+        _CB.unk0 = menuCB_Battle(&_CB);
+        _CB.unkB184 = 0;
+        _menuCB_FlashStart(false);
+        menuCBBattleEndSetPokemonHP();
+        menuCBBattleStartInit(&_CB, 1);
+        _CB.unkB19C = 0;
+        _CB.unkB1E4 = 0xB4;
+        menuCBPokemonEntryPokemonFaceFree();
+        menuCBPokemonEntryLoadTex();
+        menuCBpokemonFaceReadWait();
+        menuCBBattleStartTrainerFaceFree();
+        menuCBBattleStartTrainerLoadTex();
+        menuCBtrainerFaceReadWait();
+        menuCB_SE_Play(0x14);
+        if (_CB.unk8 == 2) {
+            menuOpen(0xB1, 0);
+            _menuCB_FlashStart_VS(false);
+            menuOpen(0x103, 0);
+            menuOpen(0xB2, 1);
+            _menuCB_FlashStart_WINLOSE();
+            res = menuCB_BattleResult(&_CB);
+            _menuCB_FlashEnd_VS(true);
+            _menuCB_FlashEnd_WINLOSE();
+            if (res != 0xB1) {
+                _menuCB_FlashEnd();
             }
-            switch (var_r3) {                       /* switch 1; irregular */
-            case 0xA9:                              /* switch 1 */
-                menuCB_MenuRollback(var_r3);
-                break;
-            default:                                /* switch 1 */
-            case 0xB1:                              /* switch 1 */
-                GSfsysFree(0x14);
-                GSresFreeGroup(0x14);
-                _CB.unkB184 = 1;
-                _CB.unk0 = menuCB_Battle(&_CB);
-                _CB.unkB184 = 0;
-                _menuCB_FlashStart(0U);
-                menuCBBattleEndSetPokemonHP();
-                menuCBBattleStartInit(&_CB, 1);
-                _CB.unkB19C = 0;
-                _CB.unkB1E4 = 0xB4;
-                menuCBPokemonEntryPokemonFaceFree();
-                menuCBPokemonEntryLoadTex();
-                menuCBpokemonFaceReadWait();
-                menuCBBattleStartTrainerFaceFree();
-                menuCBBattleStartTrainerLoadTex();
-                menuCBtrainerFaceReadWait();
-                menuCB_SE_Play(0x14);
-                if ((s32) _CB.unk8 == 2) {
-                    menuOpen(0xB1, 0);
-                    _menuCB_FlashStart_VS(0U);
-                    menuOpen(0x103, 0);
-                    menuOpen(0xB2, 1);
-                    _menuCB_FlashStart_WINLOSE();
-                    var_r25 = menuCB_BattleResult(&_CB);
-                    _menuCB_FlashEnd_VS(1U);
-                    _menuCB_FlashEnd_WINLOSE();
-                    if (var_r25 != 0xB1) {
-                        _menuCB_FlashEnd();
-                    }
-                    menuCloseCustom(0xB2, 0, 0);
-                    menuCloseCustom(0x103, 0, 0);
-                    menuCloseCustom(0xB1, 0, 1);
-                } else if (menuCB_BattleBA_PokemonEntryNum() != 0) {
-                    menuOpen(0xB1, 0);
-                    _menuCB_FlashStart_VS(0U);
-                    menuOpen(0x103, 0);
-                    menuOpen(0xB3, 1);
-                    _menuCB_FlashStart_WINLOSE();
-                    var_r25 = menuCB_BattleResult(&_CB);
-                    _menuCB_FlashEnd_VS(1U);
-                    _menuCB_FlashEnd_WINLOSE();
-                    if (var_r25 != 0xB1) {
-                        _menuCB_FlashEnd();
-                    }
-                    menuCloseCustom(0xB3, 0, 0);
-                    menuCloseCustom(0x103, 0, 0);
-                    menuCloseCustom(0xB1, 0, 1);
-                } else {
-                    menuOpen(0xB1, 0);
-                    _menuCB_FlashStart_VS(0U);
-                    menuOpen(0x103, 0);
-                    menuOpen(0xB4, 1);
-                    _menuCB_FlashStart_WINLOSE();
-                    var_r25 = menuCB_BattleResult(&_CB);
-                    _menuCB_FlashEnd_VS(1U);
-                    _menuCB_FlashEnd_WINLOSE();
-                    if (var_r25 != 0xB1) {
-                        _menuCB_FlashEnd();
-                    }
-                    menuCloseCustom(0xB4, 0, 0);
-                    menuCloseCustom(0x103, 0, 0);
-                    menuCloseCustom(0xB1, 0, 1);
+            menuCloseCustom(0xB2, 0, 0);
+            menuCloseCustom(0x103, 0, 0);
+            menuCloseCustom(0xB1, 0, 1);
+        } else if (menuCB_BattleBA_PokemonEntryNum()) {
+            menuOpen(0xB1, 0);
+            _menuCB_FlashStart_VS(false);
+            menuOpen(0x103, 0);
+            menuOpen(0xB3, 1);
+            _menuCB_FlashStart_WINLOSE();
+            res = menuCB_BattleResult(&_CB);
+            _menuCB_FlashEnd_VS(true);
+            _menuCB_FlashEnd_WINLOSE();
+            if (res != 0xB1) {
+                _menuCB_FlashEnd();
+            }
+            menuCloseCustom(0xB3, 0, 0);
+            menuCloseCustom(0x103, 0, 0);
+            menuCloseCustom(0xB1, 0, 1);
+        } else {
+            menuOpen(0xB1, 0);
+            _menuCB_FlashStart_VS(false);
+            menuOpen(0x103, 0);
+            menuOpen(0xB4, 1);
+            _menuCB_FlashStart_WINLOSE();
+            res = menuCB_BattleResult(&_CB);
+            _menuCB_FlashEnd_VS(true);
+            _menuCB_FlashEnd_WINLOSE();
+            if (res != 0xB1) {
+                _menuCB_FlashEnd();
+            }
+            menuCloseCustom(0xB4, 0, 0);
+            menuCloseCustom(0x103, 0, 0);
+            menuCloseCustom(0xB1, 0, 1);
+        }
+        if (res == 0xB1 || res == 0xAC) {
+            if (_CB.unk4 != 1) {
+                if (_CB.unkAFFC == 6) {
+                    menuCB_InitBattle(&_CB);
                 }
-                if ((var_r25 == 0xB1) || (var_r25 == 0xAC)) {
-                    if ((s32) _CB.unk4 != 1) {
-                        if ((s32) _CB.unkAFFC == 6) {
-                            menuCB_InitBattle(&_CB);
-                        }
-                    } else {
-                        menuCB_InitBattle(&_CB);
-                    }
-                    if ((s32) _CB.unkB19C != 0) {
-                        menuCB_GBADisconnectedErrorJob();
-                        menuCB_MenuRollback(0xA9);
-                    } else {
-                        goto block_36;
-                    }
-                } else {
-block_36:
-                    switch (var_r25) {              /* switch 2; irregular */
-                    case 177:                       /* switch 2 */
-                        toolentryCopyHero();
-                        break;
-                    default:                        /* switch 2 */
-                    case 172:                       /* switch 2 */
-                    case 169:                       /* switch 2 */
-                    case -1:                        /* switch 2 */
-                        menuCB_MenuRollback(var_r25);
-                        var_r27 = 0;
-                        break;
-                    }
-                    continue;
-                }
+            } else {
+                menuCB_InitBattle(&_CB);
+            }
+            if (_CB.unkB19C != 0) {
+                menuCB_GBADisconnectedErrorJob();
+                menuCB_MenuRollback(0xA9);
                 break;
             }
         }
-        break;
+        switch (res) {
+        case 0xB1:
+            toolentryCopyHero();
+            break;
+        default:
+        case 0xAC:
+        case 0xA9:
+        case -1:
+            menuCB_MenuRollback(res);
+            loop = 0;
+            break;
+        }
     }
+done:
     _menuCB_FlashEnd();
     menuCBBattleStartTrainerFaceFree();
-    savedataGetStatus(0, 2)->unk959 = temp_r26;
-    if (GSfloorIsFloorPushed() != 0) {
+    ((u8*)savedataGetStatus(0, 2))[0x959] = saved;
+    if (GSfloorIsFloorPushed()) {
         GSfloorPop();
-        return;
+    } else {
+        GSfloorPop();
     }
-    GSfloorPop();
 }
 
 extern "C" void menuToolBattleInit(void) {
