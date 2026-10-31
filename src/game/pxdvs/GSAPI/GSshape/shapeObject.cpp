@@ -97,31 +97,35 @@ void GsShapeObject::SetVertexColorAlpha(int mode,int shape,f32 alpha,bool) {
     }
 }
 void GsShapeObject::SetVertexColorGradation(u8 axis,const tagGScol4ub* colors,int shape,f32 alpha,bool) {
-    void* array=vertexArrays[1];
+    int column;
+    int columns;
+    void* array;
+    int row;
+    int rows;
+    tagGScol4ub* out;
+    array=vertexArrays[1];
     if(!array) return;
-    tagGScol4ub* out=(tagGScol4ub*)array;
-    int columns=entry->segmentsU+1,rows=entry->segmentsV+1;
+    out=(tagGScol4ub*)array;
+    columns=entry->segmentsU+1;rows=entry->segmentsV+1;
     if(shape==2 || shape==4) {
-        for(int row=0;row<rows;row++) {
-            const tagGScol4ub* columnColor=colors;
-            for(int column=0;column<columns;column++,columnColor++,out++) {
-                if(axis==0) { out->r=columnColor->r; out->g=columnColor->g; out->b=columnColor->b; out->a=alpha*columnColor->a; }
+        for(row=0;row<rows;row++) {
+            for(column=0;column<columns;column++,out++) {
+                if(axis==0) { out->r=colors[column].r; out->g=colors[column].g; out->b=colors[column].b; out->a=alpha*colors[column].a; }
                 else { out->r=colors[row].r; out->g=colors[row].g; out->b=colors[row].b; out->a=alpha*colors[row].a; }
             }
         }
         return;
     }
-    for(int row=0;row<rows;row++) {
-        const tagGScol4ub* columnColor=colors;
-        for(int column=0;column<columns;column++,columnColor++,out++) {
+    for(row=0;row<rows;row++) {
+        for(column=0;column<columns;column++,out++) {
             if(axis==0) {
-                out->r=alpha*(columnColor->r*(columnColor->a/255.0f));
-                out->g=alpha*(columnColor->g*(columnColor->a/255.0f));
-                out->b=alpha*(columnColor->b*(columnColor->a/255.0f)); out->a=columnColor->a;
+                out->r=alpha*(colors[column].r*(colors[column].a/255.0f));
+                out->g=alpha*(colors[column].g*(colors[column].a/255.0f));
+                out->b=alpha*(colors[column].b*(colors[column].a/255.0f)); out->a=((tagGScol4ub*)&colors[column])->a;
             } else {
                 out->r=alpha*(colors[row].r*(colors[row].a/255.0f));
                 out->g=alpha*(colors[row].g*(colors[row].a/255.0f));
-                out->b=alpha*(colors[row].b*(colors[row].a/255.0f)); out->a=colors[row].a;
+                out->b=alpha*(colors[row].b*(colors[row].a/255.0f)); out->a=((tagGScol4ub*)&colors[row])->a;
             }
         }
     }
@@ -1186,8 +1190,8 @@ extern "C" bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShap
  Mtx transform,rotation;PSMTXCopy(second->matrix,transform);PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);
  Vec *normals;Vec *positions;tagGScol4ub *colors;int i;int count;
  normals=(Vec*)self->entry->reserved1C;count=self->entry->vertexCount;positions=self->entry->vertices;colors=(tagGScol4ub*)self->vertexArrays[1];i=0;
- for(;i<count;++normals,++positions,++colors,++i) {
-  Vec normalInput,position,normal,view;normalInput.x=normals->x;normalInput.y=normals->y;normalInput.z=normals->z;position.x=positions->x;position.y=positions->y;position.z=positions->z;PSMTXMultVecSR(transform,&normalInput,&normal);PSMTXMultVec(transform,&position,&view);f32 viewZ=view.z;view.z=viewZ-distance;
+ for(;i<count;++i) {
+  Vec normalInput,position,normal,view;normalInput.x=normals[i].x;normalInput.y=normals[i].y;normalInput.z=normals[i].z;position.x=positions[i].x;position.y=positions[i].y;position.z=positions[i].z;PSMTXMultVecSR(transform,&normalInput,&normal);PSMTXMultVec(transform,&position,&view);f32 viewZ=view.z;view.z=viewZ-distance;
   f32 weight;
   if(self->entry->colorMode==1) {normal.y=0.0f;view.y=0.0f;
    if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
@@ -1200,7 +1204,7 @@ extern "C" bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShap
    }else if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
   else weight=1.0f;
   if(viewZ>0.0f&&distance>0.00001f){f32 attenuation;if(viewZ>distance)attenuation=0.0f;else attenuation=(distance-viewZ)/distance;weight*=attenuation;}
-  switch(self->entry->shapeType){case 2:case 8:case 10:((u8*)self->vertexArrays[1])[(i*4+3)]=weight*colors->a;break;default:((u8*)self->vertexArrays[1])[(i*4+0)]=weight*colors->r;((u8*)self->vertexArrays[1])[(i*4+1)]=weight*colors->g;((u8*)self->vertexArrays[1])[(i*4+2)]=weight*colors->b;break;}
+  switch(self->entry->shapeType){case 2:case 8:case 10:((u8*)self->vertexArrays[1])[(i*4+3)]=weight*colors[i].a;break;default:((u8*)self->vertexArrays[1])[(i*4+0)]=weight*colors[i].r;((u8*)self->vertexArrays[1])[(i*4+1)]=weight*colors[i].g;((u8*)self->vertexArrays[1])[(i*4+2)]=weight*colors[i].b;break;}
  }
  return true;
 }
