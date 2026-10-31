@@ -16,7 +16,6 @@ struct SActionMenuItem {
     u32 msg;
     int (*func)(int, int, int *);
     u16 flags;
-    u16 reserved;
 };
 
 enum GSgfxLayerID { GSGFX_LAYER_ID_DUMMY };

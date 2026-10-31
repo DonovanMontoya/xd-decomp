@@ -142,11 +142,42 @@ commit `f5cb7af499cba4ab5af02b03abc7f537b89a9ef4` (CC0):
 - `WS_WKC_ACT`: `src/game/app/fight/fightSeq/fightSeqBasis.cpp`.
 - `fightSeqSoubiItemCheckTurn` and `fightSeqFightOutPokemonTokuseiCheckWazaHitAfter`:
   `src/game/app/fight/fightSeq/fightSeq.cpp`.
+- `fightSeqCallExec`: `src/game/app/fight/fightSeq/fightSeqWSWaza.cpp`.
 
 Local adaptations retain the existing types and symbols, with narrow call views
 where the retail parameter or return widths differ. Referenced sequence symbols,
 relocation offsets, and initializer bytes were checked against the retail object;
 all previously exact functions remain exact.
+
+## Additional menu and particle routines
+
+Focused bodies were adapted from
+[Decomp-Robot/pokemon-xd](https://github.com/Decomp-Robot/pokemon-xd/tree/b74b73e67debf8b4c7a7277f424650918bb94834),
+commit `b74b73e67debf8b4c7a7277f424650918bb94834` (CC0):
+
+- `dbgMenuFight`, `menuPocketBattleDisk`, `menuPcBoxDouguNew`, `menuNameEntry`,
+  `menuPocket`, `menuPokemon`, `menuPokemonStatus`, `menuBattleDisk`, and
+  `menuPocketTool`: matching draw, cursor, action, and list routines in the
+  corresponding menu sources.
+- `menuCB_BattleResult`: `_menuCB_BattleResultTaisen`, named `menuCBResultMain`
+  in the donor.
+- `GSparticle`: `GSparticlePreUpdate` and `GSparticleLoad`.
+- `GSspline`: `GSsplineCreate`.
+- `peParticle`: particle depth sorting, container and node rendering, and start.
+- `peBank`: `peBankFreeFile`.
+- `GSinput`: `_inputUpdateMotors`, including the volatile motor state types.
+
+Adaptations preserve the existing unit layouts and symbols. Narrow prototype,
+member padding, and constant-table corrections follow the retail object. Every
+previously exact function remains exact; complete linked units additionally pass
+the retail DOL hash check.
+
+The existing `HSD_MObjAlloc` and `HSD_MaterialAlloc` helper emission was restored
+using `src/hsd/mobj.c` from
+[dougchansan/pkmn-colosseum](https://github.com/dougchansan/pkmn-colosseum/blob/e354ba3f0475ac50af3b7d9dccc1f2855be8369c/src/hsd/mobj.c),
+commit `e354ba3f0475ac50af3b7d9dccc1f2855be8369c` (MIT). The linker removes the
+unused helpers while retaining their shared literal pool. The linked unit passes
+the retail DOL hash check; the license notice below applies.
 
 ## Colosseum license notice
 

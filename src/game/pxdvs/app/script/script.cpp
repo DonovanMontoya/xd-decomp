@@ -9,10 +9,10 @@ static void _scriptEventWaitMotion(_GSmodel*);
 static void _scriptEventSetMotion(_GSmodel*, s16, f32);
 
 extern "C" {
-static glowEffect* m_glow;
 static s32 _scriptEventColID = -1;
 static GSvec _vHizukiWalkkPos[3];
 static s32 _vHizukiWalkPosCount;
+static glowEffect* m_glow;
 
 u8 scriptSoundOpenPlayME(u32 id, u32 time, u8 flag)
 {

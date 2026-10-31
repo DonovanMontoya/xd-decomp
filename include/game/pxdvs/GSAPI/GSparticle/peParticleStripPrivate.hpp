@@ -9,5 +9,5 @@ struct peParticleStripContainer:peRenderContainer {_peParticleStrip *definition;
 };
 typedef char StripNodeSize[sizeof(peParticleStripNode)==0x40?1:-1];
 typedef char StripContainerSize[sizeof(peParticleStripContainer)==0x60?1:-1];
-extern "C" {extern GSgfxVF g_vertex_format,g_ext_vertex_format;void GSgfxVFSetArray(GSgfxVF*,s32,s32,void*,u8,u32);void particleEngineSetupTevStages(u8,u8,u8);void dlDraw__10GSgfxLayerFP7GSgfxDL(GSgfxLayer*,GSgfxDL*);void GSboundAddPoint(void*,f32,f32,f32);double fmod(double,double);}
+extern "C" {extern GSgfxVF g_vertex_format,g_ext_vertex_format;void GSgfxVFSetArray(GSgfxVF*,s32,s32,void*,u8,u32);void particleEngineSetupTevStages(u8,bool,bool);void dlDraw__10GSgfxLayerFP7GSgfxDL(GSgfxLayer*,GSgfxDL*);void GSboundAddPoint(void*,f32,f32,f32);double fmod(double,double);}
 #endif

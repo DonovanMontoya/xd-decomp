@@ -20,12 +20,13 @@ struct InputDevice {
     f32 smoothLeftX, smoothLeftY, smoothRightX, smoothRightY;
     s8 leftX, leftY, rightX, rightY;
     s32 motorState;
-    u32 motorIntensity, motorDuration;
+    volatile u32 motorIntensity;
+    u32 motorDuration;
     u8 motorFade;
 };
 static InputDevice _inputData[4];
-static s32 _padMotorLevel[4];
-static u32 _padRumble[4];
+static volatile s32 _padMotorLevel[4];
+static volatile u32 _padRumble[4];
 static u8 _padMotorFlag = 1;
 static u8 _inputInitRead;
 static s32 _padCallbackCount;
@@ -230,7 +231,7 @@ void GSinputInit() {
     }
     PADSetAnalogMode(0);
     PADInit();
-    PADControlAllMotors(_padRumble);
+    PADControlAllMotors((u32*)_padRumble);
     PADRecalibrate(_padResetBits);
     SISetSamplingRate(11);
     PADSetSamplingCallback(_inputPadCallback);
@@ -250,42 +251,82 @@ static void _inputPadCallback() {
     _inputUpdateMotors();
     ++_padCallbackCount;
 }
-static void _inputUpdateMotors() {
-    u8 changed = 0;
-    for (s32 i = 0; i < 4; ++i) {
-        InputDevice* device = _inputFindDevice(i + 1);
-        if (device && device->error == 0) {
-            switch (device->motorState) {
-            case 1:
-                if (device->motorIntensity > 3600 && _padRumble[i] != PAD_MOTOR_RUMBLE) {
-                    changed = 1;
+static void _inputUpdateMotors(void)
+{
+    s32 i;
+    u8 update = 0;
+
+    for (i = 0; i < 4; i++) {
+        InputDevice* pad = _inputFindDevice(i + 1);
+
+        if (pad == 0) {
+            continue;
+        }
+        if (pad->error != 0) {
+            continue;
+        }
+        switch (pad->motorState) {
+        case 1:
+            if (pad->motorIntensity > 3600) {
+                if (_padRumble[i] != PAD_MOTOR_RUMBLE) {
                     _padRumble[i] = PAD_MOTOR_RUMBLE;
-                } else if (device->motorIntensity < 100 && _padRumble[i] != PAD_MOTOR_STOP) {
-                    changed = 1;
-                    _padRumble[i] = PAD_MOTOR_STOP;
-                } else {
-                    _padMotorLevel[i] += device->motorIntensity;
-                    if (_padMotorLevel[i] > 3600) {
-                        _padMotorLevel[i] = 0;
-                        if (_padRumble[i] != PAD_MOTOR_RUMBLE) { changed = 1; _padRumble[i] = PAD_MOTOR_RUMBLE; }
-                    } else if (_padRumble[i] != PAD_MOTOR_STOP) { changed = 1; _padRumble[i] = PAD_MOTOR_STOP; }
+                    update = 1;
+                    break;
                 }
-                break;
-            case 2:
-                if (_padRumble[i] != PAD_MOTOR_STOP) { changed = 1; _padRumble[i] = PAD_MOTOR_STOP; }
-                break;
-            case 3:
-                if (_padRumble[i] != PAD_MOTOR_STOP_HARD) { changed = 1; _padRumble[i] = PAD_MOTOR_STOP_HARD; }
-                break;
             }
-            if (device->motorDuration && --device->motorDuration == 0) device->motorState = 2;
-            if (device->motorFade) {
-                if (device->motorIntensity < device->motorFade) { device->motorState = 2; device->motorFade = 0; }
-                else device->motorIntensity -= device->motorFade;
+            if (pad->motorIntensity < 100) {
+                if (_padRumble[i] != PAD_MOTOR_STOP) {
+                    _padRumble[i] = PAD_MOTOR_STOP;
+                    update = 1;
+                    break;
+                }
+            }
+            _padMotorLevel[i] += pad->motorIntensity;
+            if (_padMotorLevel[i] > 3600) {
+                _padMotorLevel[i] = 0;
+                if (_padRumble[i] != PAD_MOTOR_RUMBLE) {
+                    _padRumble[i] = PAD_MOTOR_RUMBLE;
+                    update = 1;
+                    break;
+                }
+            } else {
+                if (_padRumble[i] != PAD_MOTOR_STOP) {
+                    _padRumble[i] = PAD_MOTOR_STOP;
+                    update = 1;
+                    break;
+                }
+            }
+            break;
+        case 2:
+            if (_padRumble[i] != PAD_MOTOR_STOP) {
+                _padRumble[i] = PAD_MOTOR_STOP;
+                update = 1;
+            }
+            break;
+        case 3:
+            if (_padRumble[i] != PAD_MOTOR_STOP_HARD) {
+                _padRumble[i] = PAD_MOTOR_STOP_HARD;
+                update = 1;
+            }
+            break;
+        }
+        if (pad->motorDuration != 0) {
+            if (--pad->motorDuration == 0) {
+                pad->motorState = 2;
+            }
+        }
+        if (pad->motorFade != 0) {
+            if (pad->motorIntensity < pad->motorFade) {
+                pad->motorState = 2;
+                pad->motorFade = 0;
+            } else {
+                pad->motorIntensity -= pad->motorFade;
             }
         }
     }
-    if (changed) PADControlAllMotors(_padRumble);
+    if (update != 0) {
+        PADControlAllMotors((u32*)_padRumble);
+    }
 }
 static void _inputDoRepeat(InputDevice* device) {
     u32 pressed = device->current.button;

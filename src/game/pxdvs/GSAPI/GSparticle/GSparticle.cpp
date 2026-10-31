@@ -100,7 +100,7 @@ void particleEnginePostUpdate(void);
 u8 GScameraIsValid(u32);
 void *GScameraGetActiveCamera(void);
 void *memset(void *, int, unsigned long);
-void particleEngineUpdate(u8, f32);
+void particleEngineUpdate(f32);
 void psDispBeginFrame(void);
 void psExecGenerator(int);
 void *psGeneratorGetCamera(psGenX *);
@@ -129,7 +129,7 @@ void psSetToken(s16);
 void GSlogWrite(const char *, ...);
 void *GSmemAllocClr(u32);
 void DCFlushRange(void *, u32);
-void *peBankLoadFile(void *, void *);
+void *peBankLoadFile(void *);
 void psInitDataBank(s32, void *, void *, void *, s32);
 void GSvecMakeFromQuat(void *, f32 *);
 void psLinkChildGensToJObj(void *, void *);
@@ -428,90 +428,104 @@ static inline void *_genGetCamera(_GSparticleGen *g) {
 
 static void _particleUpdateAttachment(_GSparticleGen *g);
 
-static void _particlePreUpdate(f32 dt) {
-    static f32 sysdolRemain = 0.0f;
-    u32 steps;
+static inline void GSparticleBankApplyCamera(_GSparticleBank* bank, void* camera) {
+    _GSparticleGen* gen;
+    u8 count;
+    if (bank == 0 || bank->reserved0 == 0) return;
+    bank->camera = camera;
+    count = bank->count;
+    gen = bank->gens;
+    while (count-- != 0) {
+        if (gen->bank != 0) _genSetCamera(gen, camera);
+        gen++;
+    }
+}
+static void _particlePreUpdate(f32 delta)
+{
+    u32 bankIndex;
+    u32 slot;
+    u32 perfbar;
+    u32 ticks;
+    _GSparticleGen *gen;
+    _GSparticleBank *bank;
+    void *camera;
+    u32 cameraCount;
     u32 i;
-    u32 j;
-    s32 perf;
-    perf = GSgfxPerfbarCPUEntry(0x800080);
-    memset(g_particle_cameras, 0, 0x10);
+
+    static f32 sysdolRemain = 0.0f;
+
+    perfbar = GSgfxPerfbarCPUEntry(0x800080);
+    memset(g_particle_cameras, 0, sizeof(g_particle_cameras));
     g_particle_cameras_count = 0;
-    for (i = 0; i < (u32)_particleBankStructCount; i++) {
-        _GSparticleBank *bank = &((_GSparticleBank *)_particleBankStructList)[i];
-        if (bank->reserved0 == 1) {
-            _GSparticleGen *g;
-            if (bank->camera != 0 && !GScameraIsValid((u32)bank->camera)) {
-                if (bank != 0 && bank->reserved0 != 0) {
-                    u8 n;
-                    bank->camera = 0;
-                    n = bank->count;
-                    g = bank->gens;
-                    while (n--) {
-                        if (g->bank != 0) {
-                            _genSetCamera(g, 0);
-                        }
-                        g++;
+
+    for (bankIndex = 0; bankIndex < _particleBankStructCount; bankIndex++) {
+        bank = &((_GSparticleBank*)_particleBankStructList)[bankIndex];
+        if (bank->reserved0 != 1) continue;
+
+        if (bank->camera != 0 && !GScameraIsValid((u32)bank->camera))
+            GSparticleBankApplyCamera(bank, 0);
+
+        gen = bank->gens;
+        for (slot = 0; slot < bank->count; slot++, gen++) {
+            if (gen->bank == 0) continue;
+
+            _particleUpdateAttachment(gen);
+            camera = _genGetCamera(gen);
+
+            if (GScameraIsValid((u32)camera)) {
+                bool found = false;
+
+                cameraCount = g_particle_cameras_count;
+                for (i = 0; i < cameraCount; i++) {
+                    if (g_particle_cameras[i] == camera) {
+                        found = true;
+                        break;
                     }
                 }
-            }
-            g = bank->gens;
-            for (j = 0; j < bank->count; j++, g++) {
-                if (g->bank != 0) {
-                    void *cam;
-                    _particleUpdateAttachment(g);
-                    cam = _genGetCamera(g);
-                    if (GScameraIsValid((u32)cam)) {
-                        u8 found = 0;
-                        u32 k;
-                        for (k = 0; k < (u32)g_particle_cameras_count; k++) {
-                            if (g_particle_cameras[k] == cam) {
-                                found = 1;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            g_particle_cameras[g_particle_cameras_count] = cam;
-                            g_particle_cameras_count++;
-                        }
-                    } else {
-                        _genSetCamera(g, 0);
-                    }
+                if (!found) {
+                    g_particle_cameras[cameraCount] = camera;
+                    g_particle_cameras_count++;
                 }
+            } else {
+                _genSetCamera(gen, 0);
             }
         }
     }
-    steps = (u32)dt;
-    sysdolRemain = sysdolRemain + (dt - (f32)steps);
+
+    /* The delta adds up to whole engine ticks, the fraction left over is
+     * carried to the next frame. */
+    ticks = (u32)delta;
+    sysdolRemain += delta - (f32)ticks;
     if (sysdolRemain >= 1.0f) {
         u32 extra = (u32)sysdolRemain;
-        steps += extra;
-        sysdolRemain = sysdolRemain - (f32)extra;
+
+        sysdolRemain -= (f32)extra;
+        ticks += extra;
     }
-    if (GSgfxVideoGetVsyncRate() == 0x32) {
+
+    /* A 50Hz display feeds the engine fewer frames than the 60 ticks a second
+     * it runs on, so every fifth frame is stepped twice. */
+    if (GSgfxVideoGetVsyncRate() == 50) {
         _particlePALFrameCount++;
         if (_particlePALFrameCount >= 5) {
-            steps++;
             _particlePALFrameCount = 0;
+            ticks++;
         }
     }
-    {
-        void *camera = GScameraGetActiveCamera();
-        if (camera != 0 && GScameraIsValid((u32)camera)) {
-            u32 n;
-            psSetBillboardCamera(((psCtl **)camera)[2]);
-            for (n = 0; n < steps; n++) {
-                psInterpretParticles(0);
-                psExecGenerator(0);
-            }
+
+    camera = GScameraGetActiveCamera();
+    if (camera != 0 && GScameraIsValid((u32)camera)) {
+        psSetBillboardCamera(((GSgfxCamX*)camera)->obj);
+        for (i = 0; i < ticks; i++) {
+            psInterpretParticles(0);
+            psExecGenerator(0);
         }
     }
-    {
-        u8 rate = GSgfxVideoGetVsyncRate();
-        particleEngineUpdate(rate, dt / (f32)rate);
-    }
+
+    particleEngineUpdate(delta / (f32)GSgfxVideoGetVsyncRate());
     psDispBeginFrame();
-    GSgfxPerfbarCPUEntry(perf);
+
+    GSgfxPerfbarCPUEntry(perfbar);
 }
 
 extern "C" void GSparticleGeneratorSetCamera(_GSparticleGen *g, void *cam) {
@@ -1083,88 +1097,100 @@ static inline u8 _findBankId(void) {
  return 0xff;
 }
 
-extern "C" _GSparticleBank *GSparticleLoad(void *file) {
-    GptHdr *hdr = (GptHdr *)file;
-    u8 id;
-    _GSparticleBank *bank = _findFreeBank();
-    if (bank == 0) {
-        return 0;
-    }
-    id=_findBankId();
-    if (id == 0xff) {
-        return 0;
-    }
+static inline _GSparticleBank* _particleAllocBank() { return _findFreeBank(); }
+extern "C" _GSparticleBank * GSparticleLoad(void *fileData)
+{
+    _GSparticleBank *bank;
+    u32 i;
+    u8 bankID;
+
+    bank = _particleAllocBank();
+
+    if (bank == 0) return 0;
+
+    bankID = _findBankId();
+    if (bankID == 0xff) return 0;
+
     bank->camera = 0;
     bank->gens = 0;
     bank->disabled = 0;
-    if (hdr->magic == 0x1F056DA) {
-        if (hdr->w4 != 0x30002) {
-            return 0;
-        }
+
+    if (((GptHdr *)fileData)->magic == 0x01f056da) {
+        /* The packed emitter format carries one engine bank per slot, and the
+         * file hands the bank data over itself. */
+        GptHdr *file = (GptHdr *)fileData;
+
+        if (file->w4 != 0x30002) return 0;
+
         bank->loaded = 1;
         bank->count = 0x10;
-        bank->gens = (_GSparticleGen *)GSmemAllocClr(0x3c0);
-        if (bank->gens == 0) {
-            return 0;
+        bank->gens = (_GSparticleGen *)GSmemAllocClr(
+            0x10 * sizeof(_GSparticleGen));
+        if (bank->gens == 0) return 0;
+
+        for (i = 0; i < 0x10; i++) {
+            bank->gens[i].isBank = 1;
         }
-        bank->gens[0].isBank = 1;
-        bank->gens[1].isBank = 1;
-        bank->gens[2].isBank = 1;
-        bank->gens[3].isBank = 1;
-        bank->gens[4].isBank = 1;
-        bank->gens[5].isBank = 1;
-        bank->gens[6].isBank = 1;
-        bank->gens[7].isBank = 1;
-        bank->gens[8].isBank = 1;
-        bank->gens[9].isBank = 1;
-        bank->gens[10].isBank = 1;
-        bank->gens[11].isBank = 1;
-        bank->gens[12].isBank = 1;
-        bank->gens[13].isBank = 1;
-        bank->gens[14].isBank = 1;
-        _GSparticleGen* gens=bank->gens;gens[15].isBank = 1;
-        bank->file = peBankLoadFile(file, gens);
-        if (bank->file == 0) {
-            goto fail;
-        }
+
+        bank->file = peBankLoadFile(fileData);
+        if (bank->file == 0) goto fail;
     } else {
+        /* A generator file spreads over a bank of slots whose generator tag
+         * stays clear. */
+        GptHdr *file = (GptHdr *)fileData;
+        s32 dataVersion;
+
         bank->loaded = 0;
         bank->count = 0x40;
-        bank->gens = (_GSparticleGen *)GSmemAllocClr(0xf00);
-        if (bank->gens == 0) {
-            return 0;
-        }
-        switch (hdr->magic) {
+        bank->gens = (_GSparticleGen *)GSmemAllocClr(
+            0x40 * sizeof(_GSparticleGen));
+        if (bank->gens == 0) return 0;
+
+        switch (file->magic) {
         case 0x47505430:
             GSlogWrite("GSparticle: ***************************************************************************\n");
             GSlogWrite("GSparticle: ************* version 0 .gpt files are no longer supported ****************\n");
             GSlogWrite("GSparticle: ***************************************************************************\n");
             goto fail;
+
         default:
             GSlogWrite("GSparticle: unknown version\n");
             goto fail;
+
         case 0x47505431:
-            hdr->w4 += (u32)file;
-            hdr->w8 += (u32)file;
-            hdr->w10 += (u32)file;
-            if ((s32)*(u16 *)hdr->w4 != 0x43) {
-                GSlogWrite("GSparticle: version mismatch between system(%d) and ptcl-file(%d)", 0x43, *(u16 *)hdr->w4);
+            /* The sections of the file are addressed through the header. */
+            file->w4 += (u32)fileData;
+            file->w8 += (u32)fileData;
+            file->w10 += (u32)fileData;
+
+            dataVersion = *(u16 *)file->w4;
+            if (dataVersion != 0x43) {
+                GSlogWrite("GSparticle: version mismatch between system(%d) and ptcl-file(%d)",
+                            0x43, dataVersion);
                 goto fail;
             }
-            bank->file = file;
-            DCFlushRange((void *)hdr->w8, (hdr->size + 0x1f) & ~0x1f);
-            psInitDataBank(id, (void *)hdr->w4, (void *)hdr->w8, (void *)hdr->w10, 0);
+
+            bank->file = fileData;
+            DCFlushRange((void *)file->w8,
+                         (file->size + 32 - 1) &
+                             ~(32 - 1));
+            psInitDataBank(bankID, (void *)file->w4,
+                           (void *)file->w8, (void *)file->w10, 0);
             break;
         }
     }
+
     bank->reserved0 = 1;
-    bank->kind = id;
+    bank->kind = bankID;
+
     return bank;
+
 fail:
     if (bank->gens != 0) {
         GSmemFree(bank->gens);
         bank->gens = 0;
     }
+
     return 0;
 }
 

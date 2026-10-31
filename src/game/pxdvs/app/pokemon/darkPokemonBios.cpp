@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <global.h>
 extern "C" {
 extern u32 darkPokemonGetDarkPokemon(u32);
@@ -31,8 +32,33 @@ extern void addStatus__11DarkPokemonF17darkPokemonStatus(u32,s32);
 extern s32 darkPokemonBiosGetInitDarkPoint(u16);
 u16* darkPokemonListBiosGetDPList(u16);
 extern u32 darkPokemonList[]; extern u32 darkPokemonList_number;
-u16* darkPokemonListBiosGetDPList(u16 i){if(i>=darkPokemonList_number)return 0;return (u16*)darkPokemonList+i;}
+u16* darkPokemonListBiosGetDPList(u16 i);
+u16 darkPokemonListBiosGetPokemonID(u32 id);
+s32 darkpokemonBiosGetScenarioNum(void);
+u16 darkPokemonBiosGetSteps(u16 i);
+void darkPokemonBiosSetSteps(u16 i,u16 v);
+void darkPokemonBiosSetInfomation(u16 i,u8 v);
+s32 darkPokemonBiosGetRnd(u16 i);
+void darkPokemonBiosSetRnd(u16 i,s32 v);
+s8 darkPokemonBiosGetStatusRnd(u16 i,u8 n);
+void darkPokemonBiosSetStatusRnd(u16 i,u8 n,u8 v);
+s32 darkPokemonBiosGetFightFlag(u16 i);
+void darkPokemonBiosSetFightFlag(u16 i);
+s32 darkPokemonBiosGetSnatchSuccessFlag(u16 i);
+s32 darkPokemonBiosGetReliveFlag(u16 i);
+void darkPokemonBiosSetReliveFlag(u16 i);
+s32 darkPokemonBiosGetInformationFlag(u16 i);
+void darkPokemonBiosSetInformationFlag(u16 i,s32 v);
+s32 darkPokemonBiosGetTemotiDarkWaza(u16 i,s8 w);
+s32 darkPokemonBiosGetLevel(u16 i);
+s32 darkPokemonBiosGetHokakuritu(u16 i);
+s32 darkPokemonBiosGetDarkPoint(s32 id);
+s32 darkPokemonBiosGetInitDarkPoint(u16 i);
+}
+
+extern "C" {
 u16 darkPokemonListBiosGetPokemonID(u32 id){u16* (*getList)(u32)=(u16*(*)(u32))darkPokemonListBiosGetDPList;u16* p=getList(id);if(p!=0)return *p;return 0;}
+u16* darkPokemonListBiosGetDPList(u16 i){if(i>=darkPokemonList_number)return 0;return (u16*)darkPokemonList+i;}
 s32 darkpokemonBiosGetScenarioNum(void){u16 i;s32 n=0;for(i=0;i<deckGetDarkPokemonSize();i++){u32 p=deckGetDeckDarkPokemon(i);if(p!=0&&isScenarioPokemon__15DeckDarkPokemonCFv(p)!=0)n++;}return n;}
 u16 darkPokemonBiosGetSteps(u16 i){u32 p=darkPokemonGetDarkPokemon(i);if(p==0)return 0;return getWalkCount__11DarkPokemonCFv(p);}
 void darkPokemonBiosSetSteps(u16 i,u16 v){u32 p=darkPokemonGetDarkPokemon(i);if(p!=0)setWalkCount__11DarkPokemonFUl(p,v);}
@@ -54,3 +80,4 @@ s32 darkPokemonBiosGetHokakuritu(u16 i){u32 p=deckGetDeckDarkPokemon(i);if(p!=0)
 s32 darkPokemonBiosGetDarkPoint(s32 id){return ((s32(*)(s32))darkPokemonBiosGetInitDarkPoint)(id);}
 s32 darkPokemonBiosGetInitDarkPoint(u16 i){u32 p=deckGetDeckDarkPokemon(i);if(p!=0)return getInitDarkPoint__15DeckDarkPokemonCFv(p);return 0;}
 }
+#pragma force_active reset

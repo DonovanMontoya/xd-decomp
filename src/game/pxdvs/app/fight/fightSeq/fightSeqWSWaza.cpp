@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <dolphin/types.h>
 
 #pragma auto_inline off
@@ -1365,98 +1366,114 @@ void fightSeqWazaExec(void* floor, u16 wazaId) {
     fightMenuCloseMsg();
 }
 
-void fightSeqCallExec(void* floor) {
-    u16 msgId;
-    u8 kaijo;
-    u8 hyper;
-    FightOutPokemon* attack;
-    u8 fightType;
-    u8 abicnt;
-    FIGHT_TRAINER* trainer;
-    u8 kakuritu;
+extern "C" void fightSeqCallExec(void)
+{
+    FightOutPokemon *attacker;
+    FIGHT_TRAINER *trainer;
+    s32 msgId;
+    u8 wokeFromSleep;
+    u8 endedHyperMode;
+    u8 raisedAccuracy;
+    u16 fightType;
+    u8 callProbability;
+    u16 rand;
 
-    kaijo = 0;
-    hyper = 0;
-    abicnt = 0;
-    fightType = fightFloor_GetFightType(0);
-    attack = fightFloor_GetAttackPokemonPtr(0);
-    trainer = fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0, attack);
-    fightSeqSpecificationActionCounterInit(attack);
-    if (pokemonIsDarkPokemon(fightOutPokemonGetPokemonPtr(attack)) == 1) {
-        kakuritu = pokemonGetDarkPokemonCallKakuritu(fightOutPokemonGetPokemonPtr(attack));
-        if (fightOutPokemonIsJoutaiDataId(attack, 0x3E) == 1) {
-            if ((u16)HSD_Rand() % 100 < kakuritu) {
-                msgId = 0x4FD3;
-                hyper = 1;
-                if (fightOutPokemonIsJoutaiDataId(attack, 8) == 1) {
-                    kaijo = 1;
+    wokeFromSleep = 0;
+    endedHyperMode = 0;
+    raisedAccuracy = 0;
+    fightType = ((u8(*)(void*))fightFloor_GetFightType)(0);
+    attacker = fightFloor_GetAttackPokemonPtr(0);
+    trainer = fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0, attacker);
+
+    fightSeqSpecificationActionCounterInit(attacker);
+
+    if (pokemonIsDarkPokemon(fightOutPokemonGetPokemonPtr(attacker)) == 1) {
+        callProbability = pokemonGetDarkPokemonCallKakuritu(fightOutPokemonGetPokemonPtr(attacker));
+
+        if (fightOutPokemonIsJoutaiDataId(attacker, 62) == 1) {
+            rand = HSD_Rand();
+            if (rand % 100 < (u8)callProbability) {
+                msgId = 20435;
+                endedHyperMode = 1;
+                if (fightOutPokemonIsJoutaiDataId(attacker, 8) == 1) {
+                    wokeFromSleep = 1;
                 }
             } else {
-                msgId = 0x4FD4;
-                if (fightOutPokemonIsJoutaiDataId(attack, 8) == 1 && (u16)HSD_Rand() % 100 < kakuritu / 2) {
-                    kaijo = 1;
+                msgId = 20436;
+                if (fightOutPokemonIsJoutaiDataId(attacker, 8) == 1) {
+                    rand = HSD_Rand();
+                    if (rand % 100 < ((callProbability >> 1) & 0x7F)) {
+                        wokeFromSleep = 1;
+                    }
                 }
             }
-        } else if (fightOutPokemonIsJoutaiDataId(attack, 8) == 1) {
-            msgId = 0x4FD2;
-            kaijo = 1;
         } else {
-            abicnt = 1;
+            if (fightOutPokemonIsJoutaiDataId(attacker, 8) == 1) {
+                msgId = 20434;
+                wokeFromSleep = 1;
+            } else {
+                raisedAccuracy = 1;
+            }
         }
-    } else if (fightOutPokemonIsJoutaiDataId(attack, 8) == 1) {
-        msgId = 0x4FD2;
-        kaijo = 1;
     } else {
-        abicnt = 1;
-    }
-    if (abicnt == 1) {
-        abicnt = fightOutPokemon_GetAbicntAverage(attack);
-        if (abicnt < 0xC) {
-            msgId = 0x4F13;
-            GSmsgGetGSchar(wazaGetStatus(0, 0xDB, 1, 0));
-            fightMsgctrlSetValue(0xD, GSmsgGetGSchar(0x4F79));
-            fightMsgctrlSetValue(0xE, GSmsgGetGSchar(0x4F9C));
-            fightMsgctrlSetValue(0x41, GSmsgGetGSchar(0x4F10));
-            fightOutPokemon_SetAbicntAverage(attack, abicnt + 1);
-            abicnt = 1;
+        if (fightOutPokemonIsJoutaiDataId(attacker, 8) == 1) {
+            msgId = 20434;
+            wokeFromSleep = 1;
         } else {
-            msgId = 0x4F18;
-            abicnt = 0;
+            raisedAccuracy = 1;
         }
     }
+
+    if (raisedAccuracy == 1) {
+        u8 abicnt = fightOutPokemon_GetAbicntAverage(attacker);
+
+        if (abicnt < 12) {
+            msgId = 20243;
+            GSmsgGetGSchar(wazaGetStatus(0, 219, 1, 0));
+            fightMsgctrlSetValue(13, (u32)GSmsgGetGSchar(20345));
+            fightMsgctrlSetValue(14, (u32)GSmsgGetGSchar(20380));
+            fightMsgctrlSetValue(65, (u32)GSmsgGetGSchar(20240));
+            raisedAccuracy = 1;
+            fightOutPokemon_SetAbicntAverage(attacker, abicnt + 1);
+        } else {
+            msgId = 20248;
+            raisedAccuracy = 0;
+        }
+    }
+
     fightTrainerCallEffect(trainer, 0);
-    fightOutPokemonDarkPokemonKaijoEffect(attack, kaijo, hyper, abicnt, 0, 0);
-    fightMsgctrlSetValue(0x13, fightTrainerGetNamePtr(trainer));
+    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 0);
+    fightMsgctrlSetValue(19, (u32)fightTrainerGetNamePtr(trainer));
     fightMainAllCamera(1, 0);
-    fightMenuOpenMsg(0x4FD0);
-    fightMainWaitFrame(0x40);
+    fightMenuOpenMsg(20432);
+    fightMainWaitFrame(64);
     fightMenuCloseMsg();
     fightTrainerCallEffect(trainer, 1);
-    fightMenuFightOutPokemonOpenStatusMenu(attack, fightType, 1);
-    fightMenuFightOutPokemonCloseStatusMenuAnotherMine(0, attack, fightType, 0, 1);
-    fightMenuOpenMsg(0x4FD1);
+    fightMenuFightOutPokemonOpenStatusMenu(attacker, fightType, 1);
+    fightMenuFightOutPokemonCloseStatusMenuAnotherMine(0, attacker, fightType, 0, 1);
+    fightMenuOpenMsg(20433);
     fightTrainerCallEffect(trainer, 2);
     fightMenuCloseMsg();
-    if (kaijo == 1) {
-        fightOutPokemonInitJoutaiDataId(attack, 8);
-        fightOutPokemonInitJoutaiDataId(attack, 0x17);
-        fightSeqCheckSetHensinBuffToMotoPokemon(attack, 0x7C);
+    if (wokeFromSleep == 1) {
+        fightOutPokemonInitJoutaiDataId(attacker, 8);
+        fightOutPokemonInitJoutaiDataId(attacker, 23);
+        fightSeqCheckSetHensinBuffToMotoPokemon(attacker, 124);
     }
-    if (hyper == 1) {
-        fightOutPokemonInitJoutaiDataId(attack, 0x3E);
-        fightSeqCheckSetHensinBuffToMotoPokemon(attack, 0xC8);
-        if (fightOutPokemonIsGcHeroFightOutPokemon(attack) == 1 &&
-            pokemon_GetPokemonDataId(fightOutPokemonGetPokemonPtr(attack)) != 0xF9) {
-            pokemonAddDpFormPokemonDpFilterId(fightOutPokemonGetPokemonPtr(attack), 0, 2);
-            fightSeqCheckSetHensinBuffToMotoPokemon(attack, 0xC5);
+    if (endedHyperMode == 1) {
+        fightOutPokemonInitJoutaiDataId(attacker, 62);
+        fightSeqCheckSetHensinBuffToMotoPokemon(attacker, 200);
+        if (fightOutPokemonIsGcHeroFightOutPokemon(attacker) == 1
+            && pokemon_GetPokemonDataId(fightOutPokemonGetPokemonPtr(attacker)) != 249) {
+            pokemonAddDpFormPokemonDpFilterId(fightOutPokemonGetPokemonPtr(attacker), 0, 2);
+            fightSeqCheckSetHensinBuffToMotoPokemon(attacker, 197);
         }
     }
-    fightOutPokemonDarkPokemonKaijoEffect(attack, kaijo, hyper, abicnt, msgId, 1);
-    fightOutPokemonDarkPokemonKaijoEffect(attack, kaijo, hyper, abicnt, 0, 2);
+    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, msgId, 1);
+    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 2);
     fightMenuCloseMsg();
-    fightMenuFightOutPokemonCloseStatusMenu(attack, fightType, 0);
+    fightMenuFightOutPokemonCloseStatusMenu(attacker, fightType, 0);
     fightTrainerCallEffect(trainer, 3);
-    fightOutPokemonDarkPokemonKaijoEffect(attack, kaijo, hyper, abicnt, 0, 3);
+    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 3);
     wazaSequenceSysFreeAllWaza();
     fightMenuAllFightTrainerCloseStatusMenu(0);
     fightMenuAllFightOutPokemonCloseStatusMenu(0);
@@ -1701,3 +1718,5 @@ static u8 _fightSeqClearOneSelfTurnCountSub(void* pokemon, u16 fightType, void* 
     fightOutPokemonInitOneSelfTurn((FightOutPokemon*)pokemon);
     return 1;
 }
+
+#pragma force_active reset

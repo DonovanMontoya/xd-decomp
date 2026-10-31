@@ -13,8 +13,9 @@ void HSD_TObjRemoveAnimAll(HSD_TObj*); void HSD_TObjAddAnimAll(HSD_TObj*,HSD_Tex
 void HSD_TObjAnimAll(HSD_TObj*); HSD_TObj* HSD_TObjLoadDesc(HSD_TObjDesc*); void HSD_TObjRemoveAll(HSD_TObj*); void HSD_TObjAddNext(HSD_TObj*,HSD_TObj*);
 s32 HSD_TObjAssignResources(HSD_TObj*); void HSD_TObjSetupVolatileTev(HSD_TObj*,u32); void HSD_TObjSetup(HSD_TObj*); void HSD_TObjSetupTextureCoordGen(HSD_TObj*);
 void HSD_StateInitTev(void); void HSD_SetMaterialColor(GXColor,GXColor,GXColor,float); void HSD_SetMaterialShininess(float); void HSD_SetupRenderModeWithCustomPE(u32,HSD_PEDesc*);
-static HSD_ClassInfo* default_class; static HSD_MObj* current_mobj;
-HSD_TObj *tobj_toon, *tobj_shadows;
+HSD_TObj *tobj_shadows, *tobj_toon;
+static HSD_MObj* current_mobj;
+static HSD_ClassInfo* default_class;
 static void MObjInfoInit(void);
 HSD_MObjInfo hsdMObj = { MObjInfoInit };
 typedef char MObjSizeCheck[sizeof(HSD_MObj)==0x20?1:-1];

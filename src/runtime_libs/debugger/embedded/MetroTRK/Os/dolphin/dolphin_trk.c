@@ -1,3 +1,4 @@
+#pragma force_active on
 #include "TRK_MINNOW_DOLPHIN/ppc/Generic/targimpl.h"
 #include "TRK_MINNOW_DOLPHIN/Os/dolphin/dolphin_trk.h"
 
@@ -24,7 +25,7 @@ u32 TRKTargetTranslate(u32 addr);
 
 static u32 lc_base;
 
-static const u32 TRK_ISR_OFFSETS[15] = {
+static u32 TRK_ISR_OFFSETS[15] = {
     0x00000100, 0x00000200, 0x00000300, 0x00000400, 0x00000500,
     0x00000600, 0x00000700, 0x00000800, 0x00000900, 0x00000C00,
     0x00000D00, 0x00000F00, 0x00001300, 0x00001400, 0x00001700,
@@ -75,6 +76,7 @@ asm void InitMetroTRK() {
     blr
 L_84A0:
     b TRK_main
+    blr
     // clang-format on
 }
 
@@ -122,6 +124,84 @@ L_8534:
     // clang-format on
 }
 
+void TRK__write_aram(register u8* src, u32 aram, u32* len);
+
+void TRK__read_aram(register u8* dst, u32 aram, u32* len);
+
+int TRKInitializeTarget(void);
+
+void __TRK_copy_vectors(void);
+
+u32 TRKTargetTranslate(u32 addr);
+
+void EnableMetroTRKInterrupts(void);
+
+void EnableMetroTRKInterrupts(void) {
+    EnableEXI2Interrupts();
+}
+u32 TRKTargetTranslate(u32 addr) {
+    if (addr >= lc_base && addr < lc_base + 0x4000 && (gTRKCPUState.Extended1.DBAT3U & 3)) {
+        return addr;
+    }
+    if (addr >= 0x7E000000 && addr <= 0x80000000) {
+        return addr;
+    }
+    return (addr & 0x3FFFFFFF) | 0x80000000;
+}
+void __TRK_copy_vectors(void) {
+    int i;
+    u32 mask;
+    u32 dest;
+    u32 offset;
+    u32* p;
+
+    if (lc_base <= 0x44 && lc_base + 0x4000 > 0x44 && (gTRKCPUState.Extended1.DBAT3U & 3)) {
+        p = (u32*)0x44;
+    } else {
+        p = (u32*)0x80000044;
+    }
+    mask = *p;
+    for (i = 0; i <= 14; i++) {
+        if ((mask & (1 << i)) && i != 4) {
+            offset = TRK_ISR_OFFSETS[i];
+            dest = TRKTargetTranslate(offset);
+            TRK_memcpy((void*)dest, gTRKInterruptVectorTable + offset, 0x100);
+            TRK_flush_cache(dest, 0x100);
+        }
+    }
+}
+int TRKInitializeTarget(void) {
+    gTRKState.isStopped = 1;
+    gTRKState.msr = __TRK_get_MSR();
+    lc_base = 0xE0000000;
+    return 0;
+}
+void TRK__read_aram(register u8* dst, u32 aram, u32* len) {
+    register u32 ofs;
+    u32 start, size, nlines, i;
+    u16 intr;
+
+    if (aram < 0x4000 || (aram + *len) > 0x8000000) {
+        return;
+    }
+    start = aram & ~0x1F;
+    size = *len + (aram & 0x1F);
+    size = (size + 0x1F) & ~0x1F;
+    ofs = 0;
+    for (; ofs < size; ofs += 0x20) {
+            DCBI(ofs, dst);
+    }
+    while (ARGetDMAStatus() != 0) {
+    }
+    intr = __ARGetInterruptStatus();
+    __ARClearInterrupt();
+    ARStartDMA(1, (u32)dst, start, size);
+    while (__ARGetInterruptStatus() == 0) {
+    }
+    if (intr == 0) {
+        __ARClearInterrupt();
+    }
+}
 void TRK__write_aram(register u8* src, u32 aram, u32* len) {
     u8 buf[0x20] __attribute__((aligned(32)));
     u16 intr;
@@ -185,73 +265,4 @@ void TRK__write_aram(register u8* src, u32 aram, u32* len) {
     }
 }
 
-void TRK__read_aram(register u8* dst, u32 aram, u32* len) {
-    register u32 ofs;
-    u32 start, size, nlines, i;
-    u16 intr;
-
-    if (aram < 0x4000 || (aram + *len) > 0x8000000) {
-        return;
-    }
-    start = aram & ~0x1F;
-    size = *len + (aram & 0x1F);
-    size = (size + 0x1F) & ~0x1F;
-    ofs = 0;
-    for (; ofs < size; ofs += 0x20) {
-            DCBI(ofs, dst);
-    }
-    while (ARGetDMAStatus() != 0) {
-    }
-    intr = __ARGetInterruptStatus();
-    __ARClearInterrupt();
-    ARStartDMA(1, (u32)dst, start, size);
-    while (__ARGetInterruptStatus() == 0) {
-    }
-    if (intr == 0) {
-        __ARClearInterrupt();
-    }
-}
-
-int TRKInitializeTarget(void) {
-    gTRKState.isStopped = 1;
-    gTRKState.msr = __TRK_get_MSR();
-    lc_base = 0xE0000000;
-    return 0;
-}
-
-void __TRK_copy_vectors(void) {
-    int i;
-    u32 mask;
-    u32 dest;
-    u32 offset;
-    u32* p;
-
-    if (lc_base <= 0x44 && lc_base + 0x4000 > 0x44 && (gTRKCPUState.Extended1.DBAT3U & 3)) {
-        p = (u32*)0x44;
-    } else {
-        p = (u32*)0x80000044;
-    }
-    mask = *p;
-    for (i = 0; i <= 14; i++) {
-        if ((mask & (1 << i)) && i != 4) {
-            offset = TRK_ISR_OFFSETS[i];
-            dest = TRKTargetTranslate(offset);
-            TRK_memcpy((void*)dest, gTRKInterruptVectorTable + offset, 0x100);
-            TRK_flush_cache(dest, 0x100);
-        }
-    }
-}
-
-u32 TRKTargetTranslate(u32 addr) {
-    if (addr >= lc_base && addr < lc_base + 0x4000 && (gTRKCPUState.Extended1.DBAT3U & 3)) {
-        return addr;
-    }
-    if (addr >= 0x7E000000 && addr <= 0x80000000) {
-        return addr;
-    }
-    return (addr & 0x3FFFFFFF) | 0x80000000;
-}
-
-void EnableMetroTRKInterrupts(void) {
-    EnableEXI2Interrupts();
-}
+#pragma force_active reset

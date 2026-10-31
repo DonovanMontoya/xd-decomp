@@ -224,7 +224,7 @@ void particleEngineSetupBlendMode(u32 arg0) {
     }
 }
 
-void particleEngineSetupTevStages(u8 arg0, u8 arg1, u8 arg2) {
+void particleEngineSetupTevStages(u8 arg0, bool arg1, bool arg2) {
     s32 sp8;
 
     static u8 extensionSetup=0;

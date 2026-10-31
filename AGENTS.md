@@ -55,7 +55,7 @@ nice -n 19 python3 build/xd40/xd.py asm     game/menuFight SYMBOL
 
 - Symbol names must match exactly. Mangled names imply the exact C++ signature; use `extern "C"` for plain names. Function-local statics must match the `name$NNNN` symbols.
 - Off-by-N `.rodata`/`.sdata2` offsets usually come from string-pool layout. The original may keep literals from functions the linker stripped; re-add a plausible function at the right source position.
-- Known blockers: register-allocation-only diffs, `$NNNN` static numbering, `psq_l`/`psq_st` quantized conversions, `ServerWork` accessed via r13 without a relocation, and `dolphin_trk` (matches, but linking it breaks the DOL hash).
+- Known blockers: register-allocation-only diffs, `$NNNN` static numbering, `psq_l`/`psq_st` quantized conversions, `ServerWork` accessed via r13 without a relocation.
 - Writing functions that have no code yet gives far more progress than polishing near-misses.
 
 ## Contribution conventions

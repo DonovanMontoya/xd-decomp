@@ -193,6 +193,6 @@ void cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCuni
 u32 GScameraGetActiveCamera();u8 GScameraIsValid(u32);MtxPtr GScameraGetMatrixPtr(u32);void GScameraLoadCameraMatrix(u32,s32);void GScameraLoadActiveCameraMatrix(s32);void GScameraGetPosition(u32,Vec*);void GSgfxProjectSetupCameraParameters(u32);
 void peBankUpdate(EngineBank*,f32);void peBankRender(EngineBank*);
 void GSgfxVFInit(GSgfxVF*);void GSgfxVFCreate(GSgfxVF*);void GSgfxVFSetElement(GSgfxVF*,u32,u32,u32,u32);void GSgfxVFSetArray(GSgfxVF*,u32,u32,void*,u32,s32);
-void particleEngineSetupTevStages(u8,u8,u8);void particleEngineSetDefaultRenderState(u8);
+void particleEngineSetupTevStages(u8,bool,bool);void particleEngineSetDefaultRenderState(u8);
 }
 #endif

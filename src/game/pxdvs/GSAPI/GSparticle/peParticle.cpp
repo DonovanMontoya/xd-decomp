@@ -28,60 +28,134 @@ void peParticleContainer::Stop() {
 extern "C" {
 extern s32 g_render_pass;
 void GSgfxVFSetArray(GSgfxVF*,s32,s32,void*,u8,u32);
-void particleEngineSetupTevStages(u32,u32,s32);
+void particleEngineSetupTevStages(u8,bool,bool);
 void particleEngineSetupBlendMode(u32);
 void particleEngineSetupTexture(u8,void*,s32,s32,s32,s32);
 void dlDraw__10GSgfxLayerFP7GSgfxDL(GSgfxLayer*,GSgfxDL*);
 }
 static inline u32 &layerWord(u32 offset) {return *(u32*)((u8*)g_current_layer+offset);}
-static inline u8 visible(peParticleContainer* c) {
-    if(!c->active)return 0;
-    if(!c->count)return 0;
-    if(g_render_pass!=1)return 0;
-    u32 flags=c->particle->flags;
-    switch(layerWord(0x28)){
-    case 0:if(flags&0x8000000)return 1;break;
-    case 2:if(flags&0x10000000)return 1;if(!(flags&0xf8000800))return 1;break;
-    case 4:if(flags&0x800)return 1;break;
-    case 1:if(flags&0x20000000)return 1;break;
-    case 3:if(flags&0x40000000)return 1;break;
-    case 5:if(flags&0x80000000)return 1;break;
-    default:return 0;}
-    return 0;
-}
-void peParticleContainer::Render() {
-    if(active&&visible(this)) {
-        ResolveMultipleSwap();u32 flags=particle->flags;u32 extended=(flags>>25)&1;
-        if(flags&0x200) {
-            u8* layer=(u8*)g_current_layer;
-            *(u32*)(layer+0xd8c)=2;*(u32*)(layer+0x16b8)|=2;*(u32*)(layer+0x16a8)|=2;*(u32*)(layer+0x1770)|=2;*(u32*)(layer+0x1760)|=2;
-        } else {
-            u8* layer=(u8*)g_current_layer;
-            *(u32*)(layer+0xd8c)=0;*(u32*)(layer+0x16b8)|=2;*(u32*)(layer+0x16a8)|=2;*(u32*)(layer+0x1770)|=2;*(u32*)(layer+0x1760)|=2;
-        }
-        particleEngineSetupBlendMode(flags&7);
-        GSgfxDL *list=&displayLists[swapIndex];u8 *data=(u8*)renderData[swapIndex];GSgfxVF *format=(list->flags&1)?(GSgfxVF*)list->reserved:0;
-        if(extended) {
-            GSgfxVFSetArray(format,9,3,data,4,renderBytes);GSgfxVFSetArray(format,11,3,data+0x30,4,renderBytes);GSgfxVFSetArray(format,12,3,data+0x34,4,renderBytes);GSgfxVFSetArray(format,13,3,uv,4,0x20);
-        } else {
-            GSgfxVFSetArray(format,9,3,data,4,renderBytes);GSgfxVFSetArray(format,11,3,data+0x30,4,renderBytes);GSgfxVFSetArray(format,13,3,uv,4,0x20);
-        }
-        if(flags&0x100000) {
-            particleEngineSetupTevStages(0,extended,0xc00000==(flags&0xc00000)?1:0);
-            layerWord(0x1998)=0x80;layerWord(0x199c)=(u32)format;
-            peParticleNode* node=(peParticleNode*)nodes;
-            while(node){node->Render(particle,&displayLists[swapIndex],(char*)renderData[swapIndex]);node=(peParticleNode*)node->next;}
-        } else {
-            particleEngineSetupTevStages(0,extended,0);
-            s32 wrapT=0;if(flags&0x100)wrapT=2;
-            void* texture=particle->texture;
-            s32 clampS=(flags>>12)&3;s32 clampT=(flags>>14)&3;
-            s32 wrapS=0;if(flags&0x80)wrapS=2;
-            particleEngineSetupTexture(0,texture,clampS,clampT,wrapS,wrapT);
-            dlDraw__10GSgfxLayerFP7GSgfxDL(g_current_layer,&displayLists[swapIndex]);
-        }
-        MarkForSwap();
+inline bool peParticleContainer::RenderForLayer()
+{
+    if (!active)
+        return false;
+    if (!count)
+        return false;
+    if (g_render_pass != 1)
+        return false;
+    u32 flags = particle->flags;
+    switch (layerWord(0x28)) {
+    case 0:
+        if (flags & 0x08000000)
+            return true;
+        break;
+    case 2:
+        if (flags & 0x10000000)
+            return true;
+        if (!(flags & 0xF8000800))
+            return true;
+        break;
+    case 4:
+        if (flags & 0x800)
+            return true;
+        break;
+    case 1:
+        if (flags & 0x20000000)
+            return true;
+        break;
+    case 3:
+        if (flags & 0x40000000)
+            return true;
+        break;
+    case 5:
+        if (flags & 0x80000000)
+            return true;
+        break;
+    default:
+        return false;
     }
+    return false;
+}
+inline bool ParticleDepthOutOfOrder(peParticleNode *first, peParticleNode *second)
+{
+    if (first->depth == second->depth)
+        return false;
+    if (first->sortIndex < second->sortIndex)
+        return first->depth < second->depth;
+    return first->depth > second->depth;
+}
+inline void peParticleNode::SetDisplayIndex(GSgfxDL *displayList, u16 displayIndex,
+                                            u16 renderFloats, bool extended)
+{
+    sortIndex = displayIndex;
+    u16 corner;
+    u16 renderIndex = index * renderFloats;
+    u16 *indices = (u16 *)displayList->VertexData(displayIndex * 4);
+    corner = 0;
+    for (; corner < 4; ++corner) {
+        *indices++ = renderIndex + corner * 3;
+        *indices++ = renderIndex;
+        if (extended)
+            *indices++ = renderIndex;
+        *indices++ = corner * 2;
+    }
+}
+
+enum ParticleTextureFilter { PARTICLE_NEAREST=0, PARTICLE_LINEAR=2 };
+static inline ParticleTextureFilter particleMinimumFilter(u32 flags) { if(flags&0x80)return PARTICLE_LINEAR;return PARTICLE_NEAREST; }
+static inline void particleCullMode(GSgfxLayer* pointer, u32 mode) {
+    u8* layer=(u8*)pointer;
+    *(u32*)(layer+0xd8c)=mode;
+    *(u32*)(layer+0x16b8)|=2;*(u32*)(layer+0x16a8)|=2;
+    *(u32*)(layer+0x1770)|=2;*(u32*)(layer+0x1760)|=2;
+}
+void peParticleContainer::Render()
+{
+    if (!active)
+        return;
+    if (!RenderForLayer())
+        return;
+    ResolveMultipleSwap();
+    u32 flags = particle->flags;
+    bool extended = (flags & 0x02000000) != 0;
+    if (flags & 0x200)
+        particleCullMode(g_current_layer,2);
+    else
+        particleCullMode(g_current_layer,0);
+    particleEngineSetupBlendMode(flags & 0x7);
+    char *renderData = (char*)this->renderData[swapIndex];
+    GSgfxVF *format = displayLists[swapIndex].VertexFormat();
+    if (extended) {
+        GSgfxVFSetArray(format, 9, 3, renderData, 4, renderBytes);
+        GSgfxVFSetArray(format, 11, 3, (renderData + 0x30), 4, renderBytes);
+        GSgfxVFSetArray(format, 12, 3, (renderData + 0x34), 4, renderBytes);
+        GSgfxVFSetArray(format, 13, 3, uv, 4, sizeof(uv));
+    } else {
+        GSgfxVFSetArray(format, 9, 3, renderData, 4, renderBytes);
+        GSgfxVFSetArray(format, 11, 3, (renderData + 0x30), 4, renderBytes);
+        GSgfxVFSetArray(format, 13, 3, uv, 4, sizeof(uv));
+    }
+    if (flags & 0x100000) {
+        particleEngineSetupTevStages(0, extended,
+                                    (flags & 0xC00000) == 0xC00000);
+        layerWord(0x1998) = 0x80;
+        layerWord(0x199c) = (u32)format;
+        for (peParticleNode *node = (peParticleNode *)nodes; node;
+             node = (peParticleNode *)node->next)
+            node->Render(particle, &displayLists[swapIndex], (char*)this->renderData[swapIndex]);
+    } else {
+        particleEngineSetupTevStages(0, extended, false);
+        u32 magFilter = 0;
+        if (flags & 0x100)
+            magFilter = 2;
+        void *texture = particle->texture;
+        u32 wrapS = (flags >> 12) & 3;
+        u32 wrapT = (flags >> 14) & 3;
+        particleEngineSetupTexture(0, texture, wrapS, wrapT,
+                                   particleMinimumFilter(flags),
+                                   magFilter);
+        dlDraw__10GSgfxLayerFP7GSgfxDL(g_current_layer, &displayLists[swapIndex]);
+    }
+    MarkForSwap();
 }
 u16 peParticleContainer::Emit(u16 requested) {
     if(!active)return 0;
@@ -102,44 +176,48 @@ static inline s32 previousLiveParticle(peParticleContainer* container,s32 index)
  while(index>0) {--index;if(container->sorted[index]->live)return index;}
  return -1;
 }
-void peParticleContainer::DepthSort() {
-    s32 sortSlot,rewriteSlot,position,previous;peParticleNode *node,*before,*rewriteNode;u8 changed,move;u32 extended;GSgfxDL* list;u16 vertex,*indices,j,uv;
-    if(active && (particle->flags&0x80000) && count>=2 && sorted) {
-        changed=0;
-        for(sortSlot=1;sortSlot<(s32)capacity;++sortSlot) {
-            node=sorted[sortSlot];
-            if(node->live) {
-                position=sortSlot;
-                while((previous=previousLiveParticle(this,position))>=0) {
-                    before=sorted[previous];
-                    if(before->depth==node->depth)move=0;
-                    else if(before->sortIndex<node->sortIndex)move=before->depth<node->depth;
-                    else move=before->depth>node->depth;
-                    if(!move)break;
-                    sorted[position]=before;position=previous;changed=1;
-                }
-                sorted[position]=node;
+void peParticleContainer::DepthSort()
+{
+    if (active && (particle->flags & 0x80000) &&
+        count >= 2 && sorted) {
+        peParticleNode *node;
+        int index;
+        int position;
+        bool changed;
+        int previous;
+        changed = false;
+        for (index = 1; index < capacity; ++index) {
+            node = sorted[index];
+            if (!node->live)
+                continue;
+            position = index;
+            while ((previous = PreviousActive(position)) >= 0) {
+                peParticleNode *before = sorted[previous];
+                if (!ParticleDepthOutOfOrder(before, node))
+                    break;
+                sorted[position] = before;
+                position = previous;
+                changed = true;
             }
+            sorted[position] = node;
         }
-        if(changed) {
-            extended=(particle->flags>>25)&1;
-            list=&displayLists[swapIndex];
-            for(rewriteSlot=0;rewriteSlot<(s32)capacity;++rewriteSlot) {
-                rewriteNode=sorted[rewriteSlot];
-                if(rewriteNode->live && rewriteNode->sortIndex!=(u16)rewriteSlot) {
-                    rewriteNode->sortIndex=rewriteSlot;
-                    vertex=rewriteNode->index*(u16)((extended!=0)+13);
-                    indices=(list->flags&1)?(u16*)(list->data+((u16)((u16)rewriteSlot*4)*list->stride)+3):0;
-                    j=0;
-                    if(extended) {
-                        for(;j<4;++j){uv=j*2;indices[0]=vertex+j*3;indices[1]=vertex;indices[2]=vertex;indices[3]=uv;indices+=4;}
-                    } else {
-                        for(;j<4;++j){uv=j*2;indices[0]=vertex+j*3;indices[1]=vertex;indices[2]=uv;indices+=3;}
-                    }
-                }
-            }
-            list->flags|=2;dirty=1;
+        if (!changed)
+            return;
+        u32 flags;
+        GSgfxDL *displayList;
+        bool extended;
+        flags = particle->flags;
+        displayList = &displayLists[swapIndex];
+        extended = (flags & 0x02000000) != 0;
+        u16 renderFloats = 13 + (extended != 0);
+        for (index = 0; index < capacity; ++index) {
+            peParticleNode *node = sorted[index];
+            if (!node->live || node->sortIndex == (u16)index)
+                continue;
+            node->SetDisplayIndex(displayList, index, renderFloats, extended);
         }
+        displayList->Invalidate();
+        this->dirty = true;
     }
 }
 
@@ -197,39 +275,49 @@ static inline void setupParticleTexture(u8 unit,void* texture,u32 flags) {
     s32 minFilter=0;if(flags&0x80)minFilter=2;
     particleEngineSetupTexture(unit,texture,wrapS,wrapT,minFilter,magFilter);
 }
-void peParticleNode::Start(peEmitterNode* emitter,_peParticle* definition,GSgfxDL* list,_EmitParams* params) {
-    u32 flags=definition->flags;
-    u32 extended=(flags>>25)&1;
-    if((list->flags&1)==1) {
-        peNode::Start(emitter,params);
-        reserved35=0;
-        live=1;
-        f32 random=HSD_Randf();
-        width=definition->rangeX*random;
-        height=definition->rangeY*random;
-        width=width+definition->sizeX;
-        height=height+definition->sizeY;
-        if(flags&0x40)rotation=6.2831855f*HSD_Randf();
-        else rotation=0.0f;
-        if((flags&0x20)&&HSD_Randf()<0.5f)reserved35|=1;
-        angle=definition->angle;
-        angularSpeed=definition->angularRange*HSD_Randf()+definition->angularMin;
-        if((flags&0x300000)==0x300000) {
-            u16 frames=*(u32*)definition->texture;
-            f32 scaled=__OSu16tof32(&frames)*HSD_Randf();
-            texture=__OSf32tou8(scaled);
-        } else texture=0;
-        u16 slot=(u16)(sortIndex<<2);
-        u16 vertex=index*(u8)((extended!=0)+13);
-        u16* indices=(list->flags&1)?(u16*)(list->data+(slot*list->stride)+3):0;
-        u16 i=0;
-        if(extended) {
-            for(;i<4;++i){u16 uv=i*2;indices[0]=vertex+i*3;indices[1]=vertex;indices[2]=vertex;indices[3]=uv;indices+=4;}
-        } else {
-            for(;i<4;++i){u16 uv=i*2;indices[0]=vertex+i*3;indices[1]=vertex;indices[2]=uv;indices+=3;}
-        }
-        list->flags|=2;
+static inline f32 Unsigned16ToFloat(u16 value) { f32 result; OSu16tof32(&value, &result); return result; }
+static inline u8 FloatToUnsigned8(f32 value) { u8 result; OSf32tou8(&value, &result); return result; }
+void peParticleNode::Start(peEmitterNode *parent, _peParticle *particle,
+                           GSgfxDL *displayList, _EmitParams *params)
+{
+    u8 words;
+    u16 *indices;
+    u16 firstIndex;
+    u16 corner;
+    u32 flags = particle->flags;
+    bool extended = (flags & 0x02000000) != 0;
+    if ((displayList->flags & 1) != 1) return;
+    peNode::Start(parent, params);
+    reserved35 = 0;
+    live = true;
+    f32 random = HSD_Randf();
+    width = particle->rangeX * random;
+    height = particle->rangeY * random;
+    width += particle->sizeX;
+    height += particle->sizeY;
+    if (flags & 0x40)
+        rotation = 6.2831855f * HSD_Randf();
+    else
+        rotation = 0.0f;
+    if ((flags & 0x20) && HSD_Randf() < 0.5f)
+        reserved35 |= 1;
+    angle = particle->angle;
+    angularSpeed = particle->angularRange * HSD_Randf() + particle->angularMin;
+    if ((flags & 0x300000) == 0x300000)
+        texture = FloatToUnsigned8(Unsigned16ToFloat(((ParticleAnimation*)particle->texture)->count) * HSD_Randf());
+    else
+        texture = 0;
+    words = 13 + (extended != 0);
+    firstIndex = index * words;
+    indices = (u16 *)displayList->VertexData(sortIndex * 4);
+    corner = 0;
+    for (; corner < 4; ++corner) {
+        *indices++ = firstIndex + corner * 3;
+        *indices++ = firstIndex;
+        if (extended) *indices++ = firstIndex;
+        *indices++ = corner * 2;
     }
+    displayList->Invalidate();
 }
 
 peParticleContainer::peParticleContainer(peEmitterNode* emitter,_peParticle* definition,u16 maximum):peRenderContainer(emitter,0x50,maximum,(definition->flags&0x2000000)?&g_ext_vertex_format:&g_vertex_format,(GSgfxPrimType)0x80,4,(definition->flags&0x2000000)?0x38:0x34,(definition->flags>>26)&1) {
@@ -281,63 +369,75 @@ static inline ParticleColor particleRenderColor(char* data,u16 index) {
     data+=index*0x38;
     return *(ParticleColor*)(data+0x34);
 }
-void peParticleNode::Render(_peParticle* definition,GSgfxDL* list,char* data) {
-    u32 flags=definition->flags;
-    u32* animation=(u32*)definition->texture;
-    u32 extended=(flags>>25)&1;
-    u16 current=texture;
-    if(data && (list->flags&1)==1) {
-        if(flags&0x400000) {
-            u16 count=*animation;
-            f32 limit=__OSu16tof32(&count);
-            u32 blend=(flags>>23)&1;
-            if(blend)limit-=1.0f;
-            f32 frame;
-            if(flags&0x1000000)frame=limit*(life-time)/definition->frameDuration;
-            else frame=definition->frameDuration*(limit*(1.0f-time/life));
-            u16 initial=current;
-            f32 value=fmod(frame+__OSu16tof32(&initial),limit);
-            current=__OSf32tou16(value)%(u16)*animation;
-            if(blend) {
-                u16 whole=current;
-                f32 remainder=value;
-                remainder-=__OSu16tof32(&whole);
-                u8 fraction=__OSf32tou8(255.0f*remainder);
-                ParticleColor color;
-                color.channels.r=color.channels.g=color.channels.b=color.channels.a=fraction;
-                particleSetKColor(0,color);
-                if(extended) {
-                    ParticleColor next=particleRenderColor(data,index);
-                    color.channels.r=next.channels.r;
-                    color.channels.g=next.channels.g;
-                    color.channels.b=next.channels.b;
-                    color.channels.a=next.channels.a;
-                    particleSetKColor(1,color);
-                }
-                void* image=(void*)animation[current+2];
-                s32 wrapT=particleWrap(flags,0x100);
-                particleSetupFrameTexture(1,image,(flags>>12)&3,(flags>>14)&3,flags,wrapT);
+struct ParticleDualRenderData { u8 reserved[0x34]; u32 secondColor; };
+static inline void SetBlendColor(ParticleColor color, u8 slot) { particleSetKColor(slot,color); }
+static inline void SetupTexture(u32 slot, void* texture, u32 flags) {
+    u32 magFilter=0;
+    if(flags&0x100)magFilter=2;
+    u32 wrapS=(flags>>12)&3;
+    u32 wrapT=(flags>>14)&3;
+    particleEngineSetupTexture(slot,texture,wrapS,wrapT,particleMinimumFilter(flags),magFilter);
+}
+static inline u16 FloatToUnsigned16(f32 value) { u16 result; OSf32tou16(&value, &result); return result; }
+void peParticleNode::Render(_peParticle *particle, GSgfxDL *displayList,
+                            char *renderData)
+{
+    u32 flags;
+    ParticleAnimation *textures;
+    bool extended;
+    u16 textureIndex;
+    f32 fraction, frame;
+    flags = particle->flags;
+    textures = (ParticleAnimation*)particle->texture;
+    textureIndex = texture;
+    extended = (flags & 0x02000000) != 0;
+    if (!renderData) return;
+    if ((displayList->flags & 1) != 1) return;
+    if (flags & 0x400000) {
+        f32 count = Unsigned16ToFloat(textures->count);
+        bool interpolate = (flags & 0x800000) != 0;
+        f32 frames = count;
+        if (interpolate) frames = count - 1.0f;
+        f32 phase;
+        if (flags & 0x1000000)
+            phase = frames * (life - time) / particle->frameDuration;
+        else
+            phase = particle->frameDuration * (frames * (1.0f - time / life));
+        frame = fmod(phase + Unsigned16ToFloat(textureIndex), frames);
+        textureIndex = FloatToUnsigned16(frame) % (u16)textures->count;
+        if (interpolate) {
+            f32 textureFraction = frame;
+            textureFraction -= Unsigned16ToFloat(textureIndex);
+            fraction = 255.0f * textureFraction;
+            ParticleColor blend;
+            blend.channels.r = blend.channels.g = blend.channels.b = blend.channels.a = FloatToUnsigned8(fraction);
+            SetBlendColor(blend, 0);
+            if (extended) {
+                ParticleDualRenderData *data = (ParticleDualRenderData *)renderData;
+                data += index;
+                u32 packed = data->secondColor;
+                const u8 *components = (const u8 *)&packed;
+                blend.channels.r = components[0];
+                blend.channels.g = components[1];
+                blend.channels.b = components[2];
+                blend.channels.a = components[3];
+                SetBlendColor(blend, 1);
             }
+            SetupTexture(1, textures->textures[textureIndex + 1], flags);
         }
-        void* image=(void*)animation[current+1];
-        s32 wrapT=particleWrap(flags,0x100);
-        particleSetupFrameTexture(0,image,(flags>>12)&3,(flags>>14)&3,flags,wrapT);
-        beginSurface__10GSgfxLayerFUs(g_current_layer,4);
-        u16 vertex=(sortIndex*4)&0xfffc;
-        u16* indices=(list->flags&1)?(u16*)(list->data+vertex*list->stride+3):0;
-        u16 remaining=4;
-        volatile PPCWGPipe* fifo=&GXWGFifo;
-        if(extended) {
-            for(;remaining--;) {
-                fifo->u16=indices[0];fifo->u16=indices[1];fifo->u16=indices[2];fifo->u16=indices[3];indices+=4;
-            }
-        } else {
-            for(;remaining--;) {
-                fifo->u16=indices[0];fifo->u16=indices[1];fifo->u16=indices[2];indices+=3;
-            }
-        }
-        endSurface__10GSgfxLayerFv(g_current_layer);
     }
+    SetupTexture(0, textures->textures[textureIndex], flags);
+    beginSurface__10GSgfxLayerFUs(g_current_layer,4);
+    u16 *indices = (u16 *)displayList->VertexData(sortIndex * 4);
+    u16 corners = 4;
+    register volatile PPCWGPipe *fifo = &GXWGFifo;
+    while (corners--) {
+        fifo->u16 = *indices++;
+        fifo->u16 = *indices++;
+        if (extended) fifo->u16 = *indices++;
+        fifo->u16 = *indices++;
+    }
+    endSurface__10GSgfxLayerFv(g_current_layer);
 }
 
 extern "C" {

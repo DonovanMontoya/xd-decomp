@@ -228,47 +228,52 @@ extern "C" ParticleBankState* peBankCreate(_gpdHeader* file) {
     return bank;
 }
 
-extern "C" void peBankFreeFile(_gpdHeader* file) {
-    if (file->magic == 0x01f056da) {
-        switch((u32)(file->version - 0x30000)) {
-        case 2:
-            if (file->references == 0) {
-                _peFreeInternalBankData(_peBankData(file));
-                _gpdResourceItem* resource = (_gpdResourceItem*)(file + 1);
-                u32 remaining = file->count;
-                while (remaining) {
-                    if ((resource->flags & 0x40) == 0x40) {
-                        switch(resource->kind) {
-                        case 0: GStextureFree(resource->data); break;
-                        case 3: {
-                            u16 shape = (u32)resource->data - 1;
-                            u32 size = shapeGetUsedMemorySize(shape);
-                            g_particle_debug_stats[4] -= size;
-                            g_particle_debug_stats[5] -= size;
-                            shapeRelease(shape);
-                            break;
-                        }
-                        case 2: {
-                            u32* table = (u32*)resource->data;
-                            u32 i = 0;
-                            u32 count = table[0];
-                            u32* textures = table + 1;
-                            for(; i < count; ++i, ++textures) {
-                                if (*textures) GStextureFree((void*)*textures);
-                            }
-                            break;
-                        }
-                        }
-                    }
-                    ++resource; --remaining;
+extern "C" void peBankFreeFile(_gpdHeader *fileData) {
+    void **textures;
+    u32 index;
+    u32 textureCount;
+    u16 shape;
+    u32 size;
+    char *bankData;
+    _gpdResourceItem *resource;
+    _gpdHeader *file;
+    u32 resourceCount;
+    file = (_gpdHeader *)fileData;
+    if (file->magic != 0x01f056da || file->version != 0x30002) return;
+    if (file->references) return;
+    bankData = (char *)(file + 1);
+    bankData += file->count * sizeof(_gpdResourceItem);
+    _peFreeInternalBankData((_particleData *)bankData);
+    resource = (_gpdResourceItem *)(file + 1);
+    resourceCount = file->count;
+    while (resourceCount) {
+        if ((resource->flags & 0x40) == 0x40) {
+            switch (resource->kind) {
+            case 0:
+                GStextureFree(resource->data);
+                break;
+            case 3:
+                shape = (u32)resource->data - 1;
+                size = shapeGetUsedMemorySize(shape);
+                g_particle_debug_stats[4] -= size;
+                g_particle_debug_stats[5] -= size;
+                shapeRelease(shape);
+                break;
+            case 2:
+                textureCount = *(u32 *)resource->data;
+                textures = (void **)((u32 *)resource->data + 1);
+                for (index = 0; index < textureCount; index++, textures++) {
+                    if (*textures) GStextureFree(*textures);
                 }
+                break;
             }
-            break;
         }
+        resource++;
+        resourceCount--;
     }
 }
 extern bool _peConvertFileData(_gpdHeader*,_gpdResourceItem*,_particleData*,const char*);
-extern "C" _gpdHeader* peBankLoadFile(void* data, void*) {
+extern "C" _gpdHeader* peBankLoadFile(void* data) {
     u8* cursor = (u8*)data;
     const char* base = (const char*)cursor;
     _gpdHeader* header = (_gpdHeader*)cursor;
