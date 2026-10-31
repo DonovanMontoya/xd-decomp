@@ -787,7 +787,7 @@ config.libs = [
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/seq_api.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/snd_synthapi.c"),
             Object(MatchingFor("GXXE01"), "musyx/runtime/stream.c", src_dir="src" if config.version == "GXXE01" else None),
-            Object(NonMatching, "musyx/runtime/synthdata.c"),
+            Object(MatchingFor("GXXE01"), "musyx/runtime/synthdata.c", src_dir="src" if config.version == "GXXE01" else None),
             Object(MatchingFor("GXXE01"), "musyx/runtime/synthmacros.c", src_dir="src" if config.version == "GXXE01" else None, extra_cflags=["-DMUSY_FILTER_LEGACY_OPCODE_ORDER=1"] if config.version == "GXXE01" else []),
             Object(MatchingFor("GXXE01"), "musyx/runtime/synthvoice.c", src_dir="src" if config.version == "GXXE01" else None),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/synth_ac.c"),
