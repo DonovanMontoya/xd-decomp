@@ -823,8 +823,8 @@ s32 _menuDrawReliveMeter(Pokemon *p, long a, long b, long c, long d, u8 e, GSgfx
     return menuDrawReliveMeter3(p, a, b, c, d, e, layer, f);
 }
 
-long rate01ToAlphaFrom50(f32 rate) {
-    return (s32)(205.0f * rate + 50.0f);
+u8 rate01ToAlphaFrom50(f32 rate) {
+    return 205.0f * rate + 50.0f;
 }
 
 u8 isDirRegionInReverseClockwise(f32 a, f32 b, f32 c) {
@@ -2476,6 +2476,30 @@ u32 GSmsgGetRect(u32);
 void GSmsgPrint2(s32,s32,s32,u32,u32);
 }
 namespace {
+static inline void statusTempoBars(CMenuReliveHall* self, tagWINDOW_WORK* window, u8 start) {
+    u8 dancer;
+    u8 preview;
+    CMenuPokemonCursor* c;
+    Pokemon* caught;
+    preview=start;
+    dancer=preview;
+    if(self->cursor->isCatchPokemon()) {
+        c=self->cursor;
+        if(c->pokemon.checkValid())caught=&c->pokemon;else caught=0;
+        if(!caught->isDarkPokemon())dancer=true;
+    }
+    if(dancer) {
+        bool valid=false;
+        if(self->cursor->index>=0 && self->cursor->index<=5)valid=true;
+        if(valid)preview=true;
+    }
+    u8 alpha=0;
+    if(preview)alpha=255;
+    _relivehallTempoBarSpriteSetting(window,0x316,self->getTempo(true),alpha,true);
+    alpha=255;
+    if(preview)alpha=rate01ToAlphaFrom50(self->calcAnimationTimeRate0to1to0(0.6f));
+    _relivehallTempoBarSpriteSetting(window,0x28b,self->getTempo(false),alpha,true);
+}
 void CMenuReliveHall::drawStatusPanel() {
     tagWINDOW_WORK* window=windowSearchID(0x67);
     Pokemon* pokemon=getStatusDisplayVisitorGetPointer();
@@ -2484,8 +2508,8 @@ void CMenuReliveHall::drawStatusPanel() {
         _menuDrawReliveMeter(pokemon,item->x,item->y,item->width,item->height,255,(GSgfxLayerID)window->layer,stageIndex);
         u16 types[2];
         u16* type=types;
-        s32 i=0;
-        do {*type++=zokuseiGetPokemonSpriteID(pokemon->getPokemonDataPtr(),(u16)i);++i;}while(i<2);
+        s32 i;
+        for(i=0;i<2;i++) *type++=zokuseiGetPokemonSpriteID(pokemon->getPokemonDataPtr(),(u16)i);
         tagSPRITE_WORK* first=menuPtSpriteWorkGetByItemID(window,0x297,0);
         tagSPRITE_WORK* second=menuPtSpriteWorkGetByItemID(window,0x298,0);
         if(types[0]==types[1])menuPtSpriteDraw(types[0],(first->x+second->x)/2,(first->y+second->y)/2);
@@ -2533,30 +2557,12 @@ void CMenuReliveHall::drawStatusPanel() {
     if(hitEffect.active) {
         menuPtSpriteWorkSetSw(window,0x316,0,false);
         s32 from=hallTempo;
-        s32 difference=getTempo(false)-from;
+        s32 to=getTempo(false);
         f32 rate=hitEffect.rate;
-        _relivehallTempoBarSpriteSetting(window,0x28b,rate*difference+from,255,true);
+        _relivehallTempoBarSpriteSetting(window,0x28b,rate*(to-from)+from,255,true);
         return;
     }
-    u8 preview=0;
-    u8 dancer=0;
-    if(cursor->isCatchPokemon()) {
-        CMenuPokemonCursor* c=cursor;
-        Pokemon* caught;
-        if(c->pokemon.checkValid())caught=&c->pokemon;else caught=0;
-        if(!caught->isDarkPokemon())dancer=true;
-    }
-    if(dancer) {
-        bool valid=false;
-        if(cursor->index>=0 && cursor->index<=5)valid=true;
-        if(valid)preview=true;
-    }
-    u8 alpha=0;
-    if(preview)alpha=255;
-    _relivehallTempoBarSpriteSetting(window,0x316,getTempo(true),alpha,true);
-    alpha=255;
-    if(preview)alpha=rate01ToAlphaFrom50(calcAnimationTimeRate0to1to0(0.6f));
-    _relivehallTempoBarSpriteSetting(window,0x28b,getTempo(false),alpha,true);
+    statusTempoBars(this,window,0);
 }
 }
 
