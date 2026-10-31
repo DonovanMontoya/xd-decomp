@@ -1,7 +1,8 @@
 #include <game/pxdvs/app/floor/floorBiosPrivate.hpp>
 #include <libc/string.h>
+#pragma force_active on
 extern "C" {
-inline void GSvecSet(GSvec *vector, f32 x, f32 y, f32 z) { vector->x=x; vector->y=y; vector->z=z; }
+inline void GSvecSet(GSvec*,f32,f32,f32);
 void *peopleInfoBiosGetPtrFromIndex(u16);
 floorCharacter_dd_ *floorCharacterBiosGetPtr(u32, u32);
 static floorCharacter_dd_ _globalCharacter[3];
@@ -80,4 +81,8 @@ void floorCharacterBiosInitGlobalCharacter() {
     c.peopleIndex = 45;
     _globalCharacter[2] = c;
 }
+}
+
+extern "C" {
+inline void GSvecSet(GSvec *vector, f32 x, f32 y, f32 z) { vector->x=x; vector->y=y; vector->z=z; }
 }

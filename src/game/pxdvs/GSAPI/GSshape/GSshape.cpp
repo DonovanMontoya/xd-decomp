@@ -1,3 +1,6 @@
+#pragma defer_codegen on
+// Deferred code generation emits these definitions in reverse order.
+#pragma force_active on
 #include <game/pxdvs/GSAPI/GSshape/GSshape.hpp>
 static u8 g_primitiveEditorMode;
 static u8 g_moduleInited;
@@ -8,57 +11,8 @@ static u16 g_shapeRenderNum;
 static GsShapeRender** g_shapeRender;
 
 extern "C" {
-u32 shapeGetInstancedMemorySizeAll() { return g_instancedMemorySizeAll; }
-u32 shapeGetUsedMemorySize(u16 index) {
-    if(index>=g_shapeRenderNum) return 0;
-    if(g_shapeRender[index] == 0) {
-        return 0;
-    } else {
-        return g_shapeRender[index]->GetUsedMemorySizeAll();
-    }
-}
-void shapeFreePrimitiveInstance(u16 index,s16 instance) {
-    if(index<g_shapeRenderNum && g_shapeRender[index]) g_shapeRender[index]->FreeShapeRenderDrawBuffer(instance);
-}
-s16 shapeCreatePrimitiveInstance(u16 index) {
-    if(index>=g_shapeRenderNum) return -1;
-    if(g_shapeRender[index] == 0) {
-        return -1;
-    } else {
-        return g_shapeRender[index]->CreateShapeRenderDrawBuffer();
-    }
-}
-s32 shapeGenerateIndex() {
-    GsShapeRender *render;
-    u16 i;
-    for(i=0;i<g_shapeRenderNum;i++) {
-        render=g_shapeRender[i];
-        if(!render) return i;
-        if(!render->animation) return i;
-    }
-    return -1;
-}
-void shapeRelease(u16 index) {
-    if(index<g_shapeRenderNum && g_shapeRender[index]) {
-        g_shapeRender[index]->FreeShapeRender(); GSmemFree(g_shapeRender[index]); g_shapeRender[index]=0;
-    }
-}
-void shapeRender(u16 index,s16 instance,GSgfxLayerID layer) {
-    if(index<g_shapeRenderNum && g_shapeRender[index]) g_shapeRender[index]->Render(instance,layer);
-}
-void shapeUpdate(u16 index,f32 seconds,s16 instance) {
-    if(index<g_shapeRenderNum && g_shapeRender[index]) g_shapeRender[index]->Update(seconds,instance);
-}
-bool shapeLoad(u16 index,void* file) {
-    if(index>=g_shapeRenderNum) return false;
-    if(g_shapeRender[index]) GSmemFree(g_shapeRender[index]);
-    g_shapeRender[index]=(GsShapeRender*)GSmemAlloc(sizeof(GsShapeRender));
-    if(!g_shapeRender[index]) return false;
-    g_shapeRender[index]->InitShapeRender(); g_shapeRender[index]->LoadShapeRender(file);
-    return true;
-}
-}
 
+}
 
 struct GSgfxVF;
 class GSgfxMatrixStack {
@@ -107,13 +61,74 @@ f32 GSgfxVideoGetLastRenderTime();
 void GSprint(GSgfxLayerID,s32,s32,u32,const char *,...);
 }
 
+extern "C" u32 GSgfxPerfbarCPUEntry(u32);
+
+struct GsShapeRenderModuleData {
+    void (*preRender)(); void (*preUpdate)(f32); void (*render)();
+    void (*fastRender)(); void (*postUpdate)(f32); void (*postRender)(); u32 parameter;
+};
+struct GSgfxRenderModule;
+extern void GSgfxRenderModuleRegister(u8,GSgfxRenderModule*,void*);
+
+extern "C" {
+u32 shapeGetInstancedMemorySizeAll();
+}
+extern "C" {
+u32 shapeGetUsedMemorySize(u16 index);
+}
+extern "C" {
+void shapeFreePrimitiveInstance(u16 index,s16 instance);
+}
+extern "C" {
+s16 shapeCreatePrimitiveInstance(u16 index);
+}
+extern "C" {
+s32 shapeGenerateIndex();
+}
+extern "C" {
+void shapeRelease(u16 index);
+}
+extern "C" {
+void shapeRender(u16 index,s16 instance,GSgfxLayerID layer);
+}
+extern "C" {
+void shapeUpdate(u16 index,f32 seconds,s16 instance);
+}
+extern "C" {
+bool shapeLoad(u16 index,void* file);
+}
+extern "C" {
+inline GSgfxLayerID primitiveEditorLayer();
+}
+extern "C" {
+static inline void _shapeUpdateAll();
+}
+extern "C" {
+void shapePrimitiveEditorRender(GSgfxLayerID layerId);
+}
+extern "C++" {
+static void _shapePreUpdate(f32);
+}
+extern "C++" {
+static void _shapeFastRender();
+}
+extern "C" {
+static inline void shapeFreeAll();
+}
+extern "C" {
+bool shapeInit(u16 count);
+}
+
+extern "C" {
 inline GSgfxLayerID primitiveEditorLayer()
 {
     if (!g_primitiveEditorMode) return GS_SHAPE_LAYER_DEFAULT;
     if (g_shapeRenderNum && g_shapeRender[0] && g_shapeRender[0]->animation) return g_shapeRender[0]->GetLayerId();
     return GS_SHAPE_LAYER_DEFAULT;
 }
+}
 
+extern "C" {
 static inline void _shapeUpdateAll() {
     for (u16 i = 0; i < g_shapeRenderNum; i++) {
         if (g_shapeRender[i] != 0) {
@@ -121,7 +136,138 @@ static inline void _shapeUpdateAll() {
         }
     }
 }
-extern "C" void shapePrimitiveEditorRender(GSgfxLayerID layerId) {
+}
+
+extern "C" {
+static inline void shapeFreeAll()
+{
+    u16 i;
+    for(i=0;i<g_shapeRenderNum;i++) {
+        if(g_shapeRender[i]) {
+            g_shapeRender[i]->FreeShapeRender();
+            GSmemFree(g_shapeRender[i]); g_shapeRender[i]=0;
+        }
+    }
+}
+}
+
+extern "C++" {
+static void _shapePreUpdate(f32) {
+    for(u16 i=0;i<g_shapeRenderNum;i++) {
+        if(g_shapeRender[i] && g_shapeRender[i]->animation) g_shapeRender[i]->SwapBuffers();
+    }
+}
+}
+
+extern "C++" {
+static void _shapeFastRender() {
+    if(g_primitiveEditorMode) {
+        GSgfxLayerID layer;
+        if(!g_primitiveEditorMode) layer=GS_SHAPE_LAYER_DEFAULT;
+        else if(g_shapeRenderNum && g_shapeRender[0] && g_shapeRender[0]->animation) layer=g_shapeRender[0]->GetLayerId();
+        else layer=GS_SHAPE_LAYER_DEFAULT;
+        u32 saved=GSgfxPerfbarCPUEntry(0xFF00);
+        shapePrimitiveEditorRender(layer);
+        GSgfxPerfbarCPUEntry(saved);
+    }
+}
+}
+
+extern "C" {
+bool shapeInit(u16 count) {
+    g_primitiveEditorMode=0;
+    shapeFreeAll();
+    if(g_shapeRender) { GSmemFree(g_shapeRender); g_shapeRender=0; }
+    g_shapeRenderNum=0;
+    if(!g_moduleInited) {
+        GsShapeRenderModuleData module={0,_shapePreUpdate,0,_shapeFastRender,0,0,0xB29A48E1};
+        GSgfxRenderModuleRegister(0x50,(GSgfxRenderModule*)&module,0); g_moduleInited=1;
+    }
+    g_shapeRender=(GsShapeRender**)GSmemAllocClr(count*4);
+    if(!g_shapeRender) { g_shapeRenderNum=0; return false; }
+    g_shapeRenderNum=count;
+    return true;
+}
+}
+
+extern "C" {
+bool shapeLoad(u16 index,void* file) {
+    if(index>=g_shapeRenderNum) return false;
+    if(g_shapeRender[index]) GSmemFree(g_shapeRender[index]);
+    g_shapeRender[index]=(GsShapeRender*)GSmemAlloc(sizeof(GsShapeRender));
+    if(!g_shapeRender[index]) return false;
+    g_shapeRender[index]->InitShapeRender(); g_shapeRender[index]->LoadShapeRender(file);
+    return true;
+}
+}
+
+extern "C" {
+void shapeUpdate(u16 index,f32 seconds,s16 instance) {
+    if(index<g_shapeRenderNum && g_shapeRender[index]) g_shapeRender[index]->Update(seconds,instance);
+}
+}
+
+extern "C" {
+void shapeRender(u16 index,s16 instance,GSgfxLayerID layer) {
+    if(index<g_shapeRenderNum && g_shapeRender[index]) g_shapeRender[index]->Render(instance,layer);
+}
+}
+
+extern "C" {
+void shapeRelease(u16 index) {
+    if(index<g_shapeRenderNum && g_shapeRender[index]) {
+        g_shapeRender[index]->FreeShapeRender(); GSmemFree(g_shapeRender[index]); g_shapeRender[index]=0;
+    }
+}
+}
+
+extern "C" {
+s32 shapeGenerateIndex() {
+    GsShapeRender *render;
+    u16 i;
+    for(i=0;i<g_shapeRenderNum;i++) {
+        render=g_shapeRender[i];
+        if(!render) return i;
+        if(!render->animation) return i;
+    }
+    return -1;
+}
+}
+
+extern "C" {
+s16 shapeCreatePrimitiveInstance(u16 index) {
+    if(index>=g_shapeRenderNum) return -1;
+    if(g_shapeRender[index] == 0) {
+        return -1;
+    } else {
+        return g_shapeRender[index]->CreateShapeRenderDrawBuffer();
+    }
+}
+}
+
+extern "C" {
+void shapeFreePrimitiveInstance(u16 index,s16 instance) {
+    if(index<g_shapeRenderNum && g_shapeRender[index]) g_shapeRender[index]->FreeShapeRenderDrawBuffer(instance);
+}
+}
+
+extern "C" {
+u32 shapeGetUsedMemorySize(u16 index) {
+    if(index>=g_shapeRenderNum) return 0;
+    if(g_shapeRender[index] == 0) {
+        return 0;
+    } else {
+        return g_shapeRender[index]->GetUsedMemorySizeAll();
+    }
+}
+}
+
+extern "C" {
+u32 shapeGetInstancedMemorySizeAll() { return g_instancedMemorySizeAll; }
+}
+
+extern "C" {
+void shapePrimitiveEditorRender(GSgfxLayerID layerId) {
     GSgfxLayer* layer;
     s32 usedMemory;
     s32 instancedMemory;
@@ -243,52 +389,4 @@ extern "C" void shapePrimitiveEditorRender(GSgfxLayerID layerId) {
         }
     }
 }
-
-
-extern "C" u32 GSgfxPerfbarCPUEntry(u32);
-static void _shapePreUpdate(f32) {
-    for(u16 i=0;i<g_shapeRenderNum;i++) {
-        if(g_shapeRender[i] && g_shapeRender[i]->animation) g_shapeRender[i]->SwapBuffers();
-    }
-}
-static void _shapeFastRender() {
-    if(g_primitiveEditorMode) {
-        GSgfxLayerID layer;
-        if(!g_primitiveEditorMode) layer=GS_SHAPE_LAYER_DEFAULT;
-        else if(g_shapeRenderNum && g_shapeRender[0] && g_shapeRender[0]->animation) layer=g_shapeRender[0]->GetLayerId();
-        else layer=GS_SHAPE_LAYER_DEFAULT;
-        u32 saved=GSgfxPerfbarCPUEntry(0xFF00);
-        shapePrimitiveEditorRender(layer);
-        GSgfxPerfbarCPUEntry(saved);
-    }
-}
-struct GsShapeRenderModuleData {
-    void (*preRender)(); void (*preUpdate)(f32); void (*render)();
-    void (*fastRender)(); void (*postUpdate)(f32); void (*postRender)(); u32 parameter;
-};
-struct GSgfxRenderModule;
-extern void GSgfxRenderModuleRegister(u8,GSgfxRenderModule*,void*);
-static inline void shapeFreeAll()
-{
-    u16 i;
-    for(i=0;i<g_shapeRenderNum;i++) {
-        if(g_shapeRender[i]) {
-            g_shapeRender[i]->FreeShapeRender();
-            GSmemFree(g_shapeRender[i]); g_shapeRender[i]=0;
-        }
-    }
-}
-extern "C" bool shapeInit(u16 count) {
-    g_primitiveEditorMode=0;
-    shapeFreeAll();
-    if(g_shapeRender) { GSmemFree(g_shapeRender); g_shapeRender=0; }
-    g_shapeRenderNum=0;
-    if(!g_moduleInited) {
-        GsShapeRenderModuleData module={0,_shapePreUpdate,0,_shapeFastRender,0,0,0xB29A48E1};
-        GSgfxRenderModuleRegister(0x50,(GSgfxRenderModule*)&module,0); g_moduleInited=1;
-    }
-    g_shapeRender=(GsShapeRender**)GSmemAllocClr(count*4);
-    if(!g_shapeRender) { g_shapeRenderNum=0; return false; }
-    g_shapeRenderNum=count;
-    return true;
 }

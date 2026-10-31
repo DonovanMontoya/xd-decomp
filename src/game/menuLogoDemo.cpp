@@ -218,11 +218,11 @@ static u8 _rw_thread[0x318];
 static u32 _rw_arg[4];
 static u8 _fs_stack[0x1000];
 static u8 _fs_thread[0x318];
-static u8 _menuMainExec;
 static s32 _sound_wave_complete;
 static s32 _gsfsysinit_complete;
-static s32 _warningSeq;
+static u8 _menuMainExec;
 static f32 _warningSeqTimer;
+static s32 _warningSeq;
 static f32 _warningTimer;
 static s32 _progressive_mode_change = -1;
 
@@ -429,6 +429,9 @@ void fn_80085E88(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
         break;
     case 0xA5:
         msg = 0x4A46;
+        break;
+    case 0xA0:
+    case 0xA1:
         break;
     default:
         msg = 0;

@@ -1,4 +1,6 @@
-
+#pragma defer_codegen on
+// Deferred code generation emits these definitions in reverse order.
+#pragma force_active on
 #include <dolphin/types.h>
 
 #pragma pool_strings off
@@ -204,21 +206,6 @@ static void _partFindAnimCB(HSD_AnimJoint* joint, void** args, int);
 static void _partFindJObjCB(HSD_JObj* jobj, void** args, int);
 static void _partFindIndexCB(HSD_JObj* jobj, void** args, int);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 extern "C" {
 void GSpartShapeAnimWalkTree(HSD_ShapeAnimJoint* joint, void (*cb)(HSD_ShapeAnimJoint*, void**, int), void** args);
 void GSpartMatAnimWalkTree(HSD_MatAnimJoint* joint, void (*cb)(HSD_MatAnimJoint*, void**, int), void** args);
@@ -243,25 +230,148 @@ u32 GSpartGetMaterialCount(GSpart* part);
 void GSpartFree(GSpart* part);
 }
 
+#define union_type_dobj(o) ((o)->flags & 0x4020 ? 0 : 1)
 
+extern "C" {
+static inline bool HSD_JObjMtxIsDirty(HSD_JObj* jobj);
+}
+extern "C" {
+static inline void HSD_JObjSetupMatrix(HSD_JObj* jobj);
+}
+extern "C" {
+static inline f32 HSD_JObjGetRotationX(HSD_JObj* jobj);
+}
+extern "C" {
+static inline f32 HSD_JObjGetRotationY(HSD_JObj* jobj);
+}
+extern "C" {
+static inline f32 HSD_JObjGetRotationZ(HSD_JObj* jobj);
+}
+extern "C" {
+static inline f32 HSD_JObjGetScaleX(HSD_JObj* jobj);
+}
+extern "C" {
+static inline f32 HSD_JObjGetScaleY(HSD_JObj* jobj);
+}
+extern "C" {
+static inline f32 HSD_JObjGetScaleZ(HSD_JObj* jobj);
+}
+extern "C" {
+static inline void HSD_JObjGetRotation(HSD_JObj* jobj, Quaternion* quat);
+}
+extern "C" {
+static inline void HSD_JObjGetScale(HSD_JObj* jobj, GSvec* scale);
+}
+extern "C" {
+static inline void HSD_JObjGetTranslate(HSD_JObj* jobj, GSvec* translate);
+}
+extern "C" {
+static inline HSD_JObj* HSD_JObjGetParent(HSD_JObj* jobj);
+}
+extern "C" {
+static inline HSD_DObj* partGetDObj(GSpart* part);
+}
+extern "C" {
+static inline HSD_MObj* partFindMaterial(HSD_DObj* dobj, u32 index, u32* count);
+}
+extern "C" {
+static inline GSmaterial* partFindModelMaterial(_GSmodel* model, HSD_MObj* mobj);
+}
+extern "C++" {
+static void _partFindIndexCB(HSD_JObj* jobj, void** args, int);
+}
+extern "C++" {
+static void _partFindJObjCB(HSD_JObj* jobj, void** args, int);
+}
+extern "C++" {
+static void _partFindAnimCB(HSD_AnimJoint* joint, void** args, int);
+}
+extern "C++" {
+static void _partFindMatAnimCB(HSD_MatAnimJoint* joint, void** args, int);
+}
+extern "C++" {
+static void _partFindShapeAnimCB(HSD_ShapeAnimJoint* joint, void** args, int);
+}
+extern "C++" {
+static void _partAnimWalkTree0(HSD_AnimJoint* joint, void (*cb)(HSD_AnimJoint*, void**, int), void** args);
+}
+extern "C++" {
+static void _partMatAnimWalkTree0(HSD_MatAnimJoint* joint, void (*cb)(HSD_MatAnimJoint*, void**, int), void** args);
+}
+extern "C++" {
+static void _partShapeAnimWalkTree0(HSD_ShapeAnimJoint* joint, void (*cb)(HSD_ShapeAnimJoint*, void**, int), void** args);
+}
+extern "C" {
+void GSpartInit(u32 count);
+}
+extern "C" {
+static inline GSpart* GSpartFindFree();
+}
+extern "C" {
+GSpart* GSpartCreate();
+}
+extern "C" {
+void GSpartFree(GSpart* part);
+}
+extern "C" {
+u32 GSpartGetMaterialCount(GSpart* part);
+}
+extern "C" {
+GSmaterial* GSpartGetMaterial(GSpart* part, u32 index);
+}
+extern "C" {
+void GSpartInitMaterial(GSmaterial* material, GSpart* part, u32 index);
+}
+extern "C" {
+void GSpartGetTransform(GSpart* part, GSvec* position, GSvec* rotation, GSvec* scale);
+}
+extern "C" {
+void GSpartGetMatrix(GSpart* part, Mtx out);
+}
+extern "C" {
+static inline GSmodelPartAnim* partAllocAnimMix(GSpart* part, int type);
+}
+extern "C" {
+void GSpartRegisterAnimMix(GSpart* part, int type, u32 mixFlags, void* callback, void* arg);
+}
+extern "C" {
+void GSpartUnregisterAnimMix(GSpart* part, int type);
+}
+extern "C" {
+s32 GSpartSetAnimIndex(GSpart* part, int anim, s32 type, f32 frame);
+}
+extern "C" {
+s32 GSpartSetTexAnimIndex(GSpart* part, int anim, int index, s32 type, f32 frame);
+}
+extern "C" {
+void GSpartStopAnimIndex(GSpart* part, s32 anim);
+}
+extern "C" {
+u32 GSpartGetJObjIndex(HSD_JObj* jobj, HSD_JObj* root);
+}
+extern "C" {
+HSD_JObj* GSpartGetJObjPtr(HSD_JObj* root, u32 index);
+}
+extern "C" {
+HSD_AnimJoint* GSpartGetAnimPtr(HSD_AnimJoint* root, u32 index);
+}
+extern "C" {
+HSD_MatAnimJoint* GSpartGetMatAnimPtr(HSD_MatAnimJoint* root, u32 index);
+}
+extern "C" {
+HSD_ShapeAnimJoint* GSpartGetShapeAnimPtr(HSD_ShapeAnimJoint* root, u32 index);
+}
+extern "C" {
+void GSpartAnimWalkTree(HSD_AnimJoint* joint, void (*cb)(HSD_AnimJoint*, void**, int), void** args);
+}
+extern "C" {
+void GSpartMatAnimWalkTree(HSD_MatAnimJoint* joint, void (*cb)(HSD_MatAnimJoint*, void**, int), void** args);
+}
+extern "C" {
+void GSpartShapeAnimWalkTree(HSD_ShapeAnimJoint* joint, void (*cb)(HSD_ShapeAnimJoint*, void**, int), void** args);
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+extern "C" {
 static inline bool HSD_JObjMtxIsDirty(HSD_JObj* jobj) {
     bool result;
     if (!jobj) {
@@ -273,56 +383,72 @@ static inline bool HSD_JObjMtxIsDirty(HSD_JObj* jobj) {
     }
     return result;
 }
+}
 
+extern "C" {
 static inline void HSD_JObjSetupMatrix(HSD_JObj* jobj) {
     if (!jobj || !HSD_JObjMtxIsDirty(jobj)) {
         return;
     }
     HSD_JObjSetupMatrixSub(jobj);
 }
+}
 
+extern "C" {
 static inline f32 HSD_JObjGetRotationX(HSD_JObj* jobj) {
     if (!jobj) {
         __assert("jobj.h", 748, "jobj");
     }
     return jobj->rotate.x;
 }
+}
 
+extern "C" {
 static inline f32 HSD_JObjGetRotationY(HSD_JObj* jobj) {
     if (!jobj) {
         __assert("jobj.h", 762, "jobj");
     }
     return jobj->rotate.y;
 }
+}
 
+extern "C" {
 static inline f32 HSD_JObjGetRotationZ(HSD_JObj* jobj) {
     if (!jobj) {
         __assert("jobj.h", 776, "jobj");
     }
     return jobj->rotate.z;
 }
+}
 
+extern "C" {
 static inline f32 HSD_JObjGetScaleX(HSD_JObj* jobj) {
     if (!jobj) {
         __assert("jobj.h", 899, "jobj");
     }
     return jobj->scale.x;
 }
+}
 
+extern "C" {
 static inline f32 HSD_JObjGetScaleY(HSD_JObj* jobj) {
     if (!jobj) {
         __assert("jobj.h", 911, "jobj");
     }
     return jobj->scale.y;
 }
+}
 
+extern "C" {
 static inline f32 HSD_JObjGetScaleZ(HSD_JObj* jobj) {
     if (!jobj) {
         __assert("jobj.h", 923, "jobj");
     }
     return jobj->scale.z;
 }
+}
 
+extern "C" {
 static inline void HSD_JObjGetRotation(HSD_JObj* jobj, Quaternion* quat) {
     if (!jobj) {
         __assert("jobj.h", 733, "jobj");
@@ -332,7 +458,9 @@ static inline void HSD_JObjGetRotation(HSD_JObj* jobj, Quaternion* quat) {
     }
     *quat = *(Quaternion*)&jobj->rotate;
 }
+}
 
+extern "C" {
 static inline void HSD_JObjGetScale(HSD_JObj* jobj, GSvec* scale) {
     if (!jobj) {
         __assert("jobj.h", 849, "jobj");
@@ -342,7 +470,9 @@ static inline void HSD_JObjGetScale(HSD_JObj* jobj, GSvec* scale) {
     }
     *scale = jobj->scale;
 }
+}
 
+extern "C" {
 static inline void HSD_JObjGetTranslate(HSD_JObj* jobj, GSvec* translate) {
     if (!jobj) {
         __assert("jobj.h", 996, "jobj");
@@ -352,16 +482,18 @@ static inline void HSD_JObjGetTranslate(HSD_JObj* jobj, GSvec* translate) {
     }
     *translate = jobj->translate;
 }
+}
 
+extern "C" {
 static inline HSD_JObj* HSD_JObjGetParent(HSD_JObj* jobj) {
     if (jobj == 0) {
         return 0;
     }
     return jobj->parent;
 }
+}
 
-#define union_type_dobj(o) ((o)->flags & 0x4020 ? 0 : 1)
-
+extern "C" {
 static inline HSD_DObj* partGetDObj(GSpart* part) {
     HSD_JObj* jobj = part->jobj;
     if (union_type_dobj(jobj)) {
@@ -369,8 +501,9 @@ static inline HSD_DObj* partGetDObj(GSpart* part) {
     }
     return 0;
 }
+}
 
-
+extern "C" {
 static inline HSD_MObj* partFindMaterial(HSD_DObj* dobj, u32 index, u32* count) {
     u32 i = 0;
 
@@ -388,7 +521,9 @@ static inline HSD_MObj* partFindMaterial(HSD_DObj* dobj, u32 index, u32* count) 
     }
     return 0;
 }
+}
 
+extern "C" {
 static inline GSmaterial* partFindModelMaterial(_GSmodel* model, HSD_MObj* mobj) {
     GSmaterial* mat = (GSmaterial*)(model ? (void*)model->materials : 0);
     u32 count = model ? model->materialCount : 0;
@@ -404,19 +539,45 @@ static inline GSmaterial* partFindModelMaterial(_GSmodel* model, HSD_MObj* mobj)
     }
     return 0;
 }
+}
 
+extern "C" {
+static inline GSpart* GSpartFindFree() {
+    GSpart* part = _partStructList;
+    u32 i;
 
+    for (i = 0; i < _partStructCount; i++, part++) {
+        if (part->inUse == 0) {
+            return part;
+        }
+    }
+    return 0;
+}
+}
 
+extern "C" {
+static inline GSmodelPartAnim* partAllocAnimMix(GSpart* part, int type) {
+    _GSmodel* model = part->model;
+    int i;
+    GSmodelPartAnim* anim;
 
+    for (i = 0; i < 16; i++) {
+        anim = &model->partAnim[i];
+        if (anim->type != 0 && anim->type == type && anim->partIndex == part->index) {
+            return 0;
+        }
+    }
+    for (i = 0; i < 16; i++) {
+        anim = &model->partAnim[i];
+        if (anim->type == 0) {
+            return anim;
+        }
+    }
+    return 0;
+}
+}
 
-
-
-
-
-
-
-
-
+extern "C++" {
 static void _partFindIndexCB(HSD_JObj* jobj, void** args, int) {
     if (_partFound == 1) {
         return;
@@ -427,7 +588,9 @@ static void _partFindIndexCB(HSD_JObj* jobj, void** args, int) {
     }
     _partFindCurIdx++;
 }
+}
 
+extern "C++" {
 static void _partFindJObjCB(HSD_JObj* jobj, void** args, int) {
     if (_partFound == 1) {
         return;
@@ -438,7 +601,9 @@ static void _partFindJObjCB(HSD_JObj* jobj, void** args, int) {
     }
     _partFindCurIdx++;
 }
+}
 
+extern "C++" {
 static void _partFindAnimCB(HSD_AnimJoint* joint, void** args, int) {
     if (_partFound == 1) {
         return;
@@ -449,7 +614,9 @@ static void _partFindAnimCB(HSD_AnimJoint* joint, void** args, int) {
     }
     _partFindCurIdx++;
 }
+}
 
+extern "C++" {
 static void _partFindMatAnimCB(HSD_MatAnimJoint* joint, void** args, int) {
     if (_partFound == 1) {
         return;
@@ -460,7 +627,9 @@ static void _partFindMatAnimCB(HSD_MatAnimJoint* joint, void** args, int) {
     }
     _partFindCurIdx++;
 }
+}
 
+extern "C++" {
 static void _partFindShapeAnimCB(HSD_ShapeAnimJoint* joint, void** args, int) {
     if (_partFound == 1) {
         return;
@@ -471,7 +640,9 @@ static void _partFindShapeAnimCB(HSD_ShapeAnimJoint* joint, void** args, int) {
     }
     _partFindCurIdx++;
 }
+}
 
+extern "C++" {
 static void _partAnimWalkTree0(HSD_AnimJoint* joint, void (*cb)(HSD_AnimJoint*, void**, int), void** args) {
     HSD_AnimJoint* child;
 
@@ -485,7 +656,9 @@ static void _partAnimWalkTree0(HSD_AnimJoint* joint, void (*cb)(HSD_AnimJoint*, 
         _partAnimWalkTree0(child, cb, args);
     }
 }
+}
 
+extern "C++" {
 static void _partMatAnimWalkTree0(HSD_MatAnimJoint* joint, void (*cb)(HSD_MatAnimJoint*, void**, int), void** args) {
     HSD_MatAnimJoint* child;
 
@@ -499,7 +672,9 @@ static void _partMatAnimWalkTree0(HSD_MatAnimJoint* joint, void (*cb)(HSD_MatAni
         _partMatAnimWalkTree0(child, cb, args);
     }
 }
+}
 
+extern "C++" {
 static void _partShapeAnimWalkTree0(HSD_ShapeAnimJoint* joint, void (*cb)(HSD_ShapeAnimJoint*, void**, int), void** args) {
     HSD_ShapeAnimJoint* child;
 
@@ -513,7 +688,9 @@ static void _partShapeAnimWalkTree0(HSD_ShapeAnimJoint* joint, void (*cb)(HSD_Sh
         _partShapeAnimWalkTree0(child, cb, args);
     }
 }
+}
 
+extern "C" {
 void GSpartInit(u32 count) {
     u32 i;
 
@@ -525,19 +702,9 @@ void GSpartInit(u32 count) {
         }
     }
 }
-
-static inline GSpart* GSpartFindFree() {
-    GSpart* part = _partStructList;
-    u32 i;
-
-    for (i = 0; i < _partStructCount; i++, part++) {
-        if (part->inUse == 0) {
-            return part;
-        }
-    }
-    return 0;
 }
 
+extern "C" {
 GSpart* GSpartCreate() {
     GSpart* part = GSpartFindFree();
 
@@ -547,11 +714,15 @@ GSpart* GSpartCreate() {
     part->inUse = 1;
     return part;
 }
+}
 
+extern "C" {
 void GSpartFree(GSpart* part) {
     part->inUse = 0;
 }
+}
 
+extern "C" {
 u32 GSpartGetMaterialCount(GSpart* part) {
     HSD_DObj* dobj = partGetDObj(part);
     u32 count;
@@ -562,7 +733,9 @@ u32 GSpartGetMaterialCount(GSpart* part) {
     partFindMaterial(dobj, -1, &count);
     return count;
 }
+}
 
+extern "C" {
 GSmaterial* GSpartGetMaterial(GSpart* part, u32 index) {
     HSD_DObj* dobj = partGetDObj(part);
     if (!dobj) return 0;
@@ -576,7 +749,9 @@ GSmaterial* GSpartGetMaterial(GSpart* part, u32 index) {
     }
     return 0;
 }
+}
 
+extern "C" {
 void GSpartInitMaterial(GSmaterial* material, GSpart* part, u32 index) {
     HSD_DObj* dobj;
 
@@ -587,7 +762,9 @@ void GSpartInitMaterial(GSmaterial* material, GSpart* part, u32 index) {
     }
     material->mobj = partFindMaterial(dobj, index, 0);
 }
+}
 
+extern "C" {
 void GSpartGetTransform(GSpart* part, GSvec* position, GSvec* rotation, GSvec* scale) {
     static HSD_JObj* parentList[24];
     u32 count = 0;
@@ -668,7 +845,9 @@ void GSpartGetTransform(GSpart* part, GSvec* position, GSvec* rotation, GSvec* s
         scale->z = sz;
     }
 }
+}
 
+extern "C" {
 void GSpartGetMatrix(GSpart* part, Mtx out) {
     HSD_JObj* jobj = part->jobj;
 
@@ -681,27 +860,9 @@ void GSpartGetMatrix(GSpart* part, Mtx out) {
         PSMTXCopy(jobj->mtx, out);
     }
 }
-
-static inline GSmodelPartAnim* partAllocAnimMix(GSpart* part, int type) {
-    _GSmodel* model = part->model;
-    int i;
-    GSmodelPartAnim* anim;
-
-    for (i = 0; i < 16; i++) {
-        anim = &model->partAnim[i];
-        if (anim->type != 0 && anim->type == type && anim->partIndex == part->index) {
-            return 0;
-        }
-    }
-    for (i = 0; i < 16; i++) {
-        anim = &model->partAnim[i];
-        if (anim->type == 0) {
-            return anim;
-        }
-    }
-    return 0;
 }
 
+extern "C" {
 void GSpartRegisterAnimMix(GSpart* part, int type, u32 mixFlags, void* callback, void* arg) {
     GSmodelPartAnim* slot;
     f32 rot[4];
@@ -723,7 +884,9 @@ void GSpartRegisterAnimMix(GSpart* part, int type, u32 mixFlags, void* callback,
         }
     }
 }
+}
 
+extern "C" {
 void GSpartUnregisterAnimMix(GSpart* part, int type) {
     _GSmodel* model = part->model;
     int i;
@@ -736,7 +899,9 @@ void GSpartUnregisterAnimMix(GSpart* part, int type) {
         }
     }
 }
+}
 
+extern "C" {
 s32 GSpartSetAnimIndex(GSpart* part, int anim, s32 type, f32 frame) {
     _GSmodel* model = part->model;
     HSD_JObj* jobj = part->jobj;
@@ -801,7 +966,9 @@ s32 GSpartSetAnimIndex(GSpart* part, int anim, s32 type, f32 frame) {
     model->animDirty = 1;
     return i;
 }
+}
 
+extern "C" {
 s32 GSpartSetTexAnimIndex(GSpart* part, int anim, int index, s32 type, f32 frame) {
     _GSmodel* model = part->model;
     GSmodelPartMix* slot;
@@ -873,7 +1040,9 @@ s32 GSpartSetTexAnimIndex(GSpart* part, int anim, int index, s32 type, f32 frame
     model->texAnimDirty = 1;
     return i;
 }
+}
 
+extern "C" {
 void GSpartStopAnimIndex(GSpart* part, s32 anim) {
     _GSmodel* model = part->model;
     int i;
@@ -887,7 +1056,9 @@ void GSpartStopAnimIndex(GSpart* part, s32 anim) {
         model->partMix[i].aobj = 0;
     }
 }
+}
 
+extern "C" {
 u32 GSpartGetJObjIndex(HSD_JObj* jobj, HSD_JObj* root) {
     if (jobj == root) {
         return 0;
@@ -899,7 +1070,9 @@ u32 GSpartGetJObjIndex(HSD_JObj* jobj, HSD_JObj* root) {
     HSD_JObjWalkTree(jobj, _partFindIndexCB, 0);
     return _partFoundIndex;
 }
+}
 
+extern "C" {
 HSD_JObj* GSpartGetJObjPtr(HSD_JObj* root, u32 index) {
     if (index == 0) {
         return root;
@@ -911,7 +1084,9 @@ HSD_JObj* GSpartGetJObjPtr(HSD_JObj* root, u32 index) {
     HSD_JObjWalkTree(root, _partFindJObjCB, 0);
     return _partFoundJObj;
 }
+}
 
+extern "C" {
 HSD_AnimJoint* GSpartGetAnimPtr(HSD_AnimJoint* root, u32 index) {
     if (index == 0) {
         return root;
@@ -923,7 +1098,9 @@ HSD_AnimJoint* GSpartGetAnimPtr(HSD_AnimJoint* root, u32 index) {
     GSpartAnimWalkTree(root, _partFindAnimCB, 0);
     return _partFoundAnim;
 }
+}
 
+extern "C" {
 HSD_MatAnimJoint* GSpartGetMatAnimPtr(HSD_MatAnimJoint* root, u32 index) {
     if (index == 0) {
         return root;
@@ -935,7 +1112,9 @@ HSD_MatAnimJoint* GSpartGetMatAnimPtr(HSD_MatAnimJoint* root, u32 index) {
     GSpartMatAnimWalkTree(root, _partFindMatAnimCB, 0);
     return _partFoundMatAnim;
 }
+}
 
+extern "C" {
 HSD_ShapeAnimJoint* GSpartGetShapeAnimPtr(HSD_ShapeAnimJoint* root, u32 index) {
     if (index == 0) {
         return root;
@@ -947,7 +1126,9 @@ HSD_ShapeAnimJoint* GSpartGetShapeAnimPtr(HSD_ShapeAnimJoint* root, u32 index) {
     GSpartShapeAnimWalkTree(root, _partFindShapeAnimCB, 0);
     return _partFoundShapeAnim;
 }
+}
 
+extern "C" {
 void GSpartAnimWalkTree(HSD_AnimJoint* joint, void (*cb)(HSD_AnimJoint*, void**, int), void** args) {
     HSD_AnimJoint* child;
 
@@ -961,7 +1142,9 @@ void GSpartAnimWalkTree(HSD_AnimJoint* joint, void (*cb)(HSD_AnimJoint*, void**,
         _partAnimWalkTree0(child, cb, args);
     }
 }
+}
 
+extern "C" {
 void GSpartMatAnimWalkTree(HSD_MatAnimJoint* joint, void (*cb)(HSD_MatAnimJoint*, void**, int), void** args) {
     HSD_MatAnimJoint* child;
 
@@ -975,7 +1158,9 @@ void GSpartMatAnimWalkTree(HSD_MatAnimJoint* joint, void (*cb)(HSD_MatAnimJoint*
         _partMatAnimWalkTree0(child, cb, args);
     }
 }
+}
 
+extern "C" {
 void GSpartShapeAnimWalkTree(HSD_ShapeAnimJoint* joint, void (*cb)(HSD_ShapeAnimJoint*, void**, int), void** args) {
     HSD_ShapeAnimJoint* child;
 
@@ -988,4 +1173,5 @@ void GSpartShapeAnimWalkTree(HSD_ShapeAnimJoint* joint, void (*cb)(HSD_ShapeAnim
     for (child = joint->child; child != 0; child = child->next) {
         _partShapeAnimWalkTree0(child, cb, args);
     }
+}
 }

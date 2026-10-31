@@ -1,7 +1,9 @@
 #pragma defer_codegen on
+extern "C" {
+#include <libc/stdio.h>
+}
 #include <dolphin/types.h>
 #include <dolphin/gx/GXVert.h>
-#include <libc/stdio.h>
 
 #pragma force_active on
 
@@ -282,12 +284,756 @@ static f32 _pdaScriptAddFrame;
 
 extern "C" {
 
+extern "C" void menuPdaOpen(void);
+
+}
+
+static void _menuPdaFree(void *p);
+
+static void _menuPdaInit(void);
+
+static void _menuPdaExit(void);
+
+static void _menuPdaSetMotion(u32 id, s16 index, f32 frame, bool loop);
+
+static void _menuPdaWaitMotion(u32 id);
+
+static void _menuPdaStopMotion(u32 id);
+
+static void _menuPdaModelVisibility(u32 id, bool visible);
+
+static s32 _menuPdaModelGetIndex(u32 id);
+
+static u8 _menuPdaWaitMotion2(u32 id);
+
+extern "C" {
+
+s32 menuPdaGetSubres(void);
+
+}
+
+extern "C" {
+
+s32 menuPdaGetRes(void);
+
+}
+
+extern "C" {
+
+void menuPdaSetSubres(s32 res, s32 sub);
+
+}
+
+static s32 _menuPdaGetPokecoupon(void);
+
+static s32 _menuPdaGetMoney(void);
+
+static void _menPdaFadeOutSet(void);
+
+static bool _menPdaFadeOutWait(void);
+
+static void _menPdaFadeInWait(void);
+
+static void _menuPdaAddFunc(void);
+
+static void _menuPdaZoomIn(void);
+
+static void _menuPdaZoomOut(void);
+
+extern "C" {
+
+extern "C" void menuPdaZoomIn(void);
+
+}
+
+extern "C" {
+
+extern "C" void menuPdaAddFunc(void);
+
+}
+
+extern "C" {
+
+extern "C" void menuPdaModelVisibility(u32 id, bool visible);
+
+}
+
+extern "C" {
+
+s32 menuPdaTopCtrl(tagWINDOW_WORK* window);
+
+}
+
+extern "C" {
+
+extern "C" s32 menuPdaDummyCtrl(void);
+
+}
+
+static void _menuPdaModelCursorAnime(void);
+
+static s8 _menuPdaGetCurrentID(tagWINDOW_WORK* window, tagSPRITE_WORK* sprite);
+
+static void _menuPdaSetMenuItem(void);
+
+static bool _SelectCursorPositionCheck(void);
+
+static void _SelectCursorCalcAngle(s8 idx);
+
+static s32 _SelectCursorCalcPositon(GSvec2* out);
+
+static s32 _SelectCursorSub(s8 dir, GSvec2 *pos);
+
+static void _menuPdaDrawFace(tagWINDOW_WORK* window, tagSPRITE_WORK* sprite);
+
+static void _SelectCursor(tagWINDOW_WORK* window, tagSPRITE_WORK* sprite, s8 idx);
+
+
+
+static bool _checkAddFunc(tagWINDOW_WORK* window);
+
+extern "C" {
+
+s32 menuPdaBackDrawTitleText(tagWINDOW_WORK* window, tagSPRITE_WORK* sprite);
+
+}
+
+static s32 _getMenuIndex(PDATOP_MENU_RES res);
+
+static PDATOP_MENU_RES topMenu(PDATOP_MENU_RES res);
+
+static void _menuPdaTopClose(void);
+
+static void _menuPdaStartEvent(void);
+
+extern "C" {
+
+extern "C" void menuPdaInit(void);
+
+}
+
+extern "C" {
+
+extern "C" void menuPdaMain(void);
+
+}
+
+static void _menuPdaSelectAnimeSet(long n);
+
+extern "C" {
+
+void menuPda(void);
+
+}
+
+extern "C" {
+
+extern "C" s32 menuPdaBackDrawBackXD(void);
+
+}
+
+extern "C" {
+
+extern "C" s32 menuPdaDrawTitle(tagWINDOW_WORK *window, tagSPRITE_WORK *arg1);
+
+}
+
+extern "C" {
+
+extern "C" void menuPdaButton(tagWINDOW_WORK *win);
+
+}
+
+extern "C" {
+
+s32 menuPdaCursorCtrl(tagWINDOW_WORK* window);
+
+}
+
+extern "C" {
+
+extern "C" void menuPdaSetModelPointer(void);
+
+}
+
+extern "C" {
+
+extern "C" void menuPdaReleaseModelPointer(void);
+
+}
+
+extern "C" {
+
+extern "C" void menuPdaDrawDirectModel(void);
+
+}
+
+static void _menuPdaSetMenuItemScript(u8 enable);
+
+static void _menuPdaScriptCalcAlphaInit(void);
+
+static void _menuPdaScriptCalcAlpha(f32 delta);
+
+static u8 _menuPdaScriptGetAlpha(void);
+
+extern "C" {
+
+void menuPdaScript(u8 flag);
+
+}
+
+
+
+
+static bool _checkAddFunc(tagWINDOW_WORK* window) {
+    return window->seq == 0x107;
+}
+
+s32 menuPdaBackDrawTitleText(tagWINDOW_WORK* window, tagSPRITE_WORK* sprite) {
+    bool add = _checkAddFunc(window);
+    switch (sprite->id) {
+    case 7: {
+        u32 time = pokecoloGetPlayTimeValue();
+        msgctrlSetValue(0x4C, time);
+        break;
+    }
+    case 9:
+        msgctrlSetValue(0x69, _menuPdaGetPokecoupon());
+        break;
+    case 0xB:
+        msgctrlSetValue(0x69, _menuPdaGetMoney());
+        break;
+    case 0xD: {
+        u32 value = heroGetStatus(0, 2, 0) & 0xFFFF;
+        s32 i = 0;
+        s32 x = sprite->x;
+        u32 digit;
+        x -= 0x12;
+        for (; i < 5; i++) {
+            digit = value % 10;
+            value /= 10;
+            msgctrlSetValue(0x34, digit);
+            GSmsgPrint2(window->layer, x, 0, (u8)window->alpha | 0xFFFFFF00, 0x426F);
+            x -= GSmsgGetRect(0x426F) >> 16;
+        }
+        break;
+    }
+    case 0xE:
+    case 0xF:
+        break;
+    case 2:
+        if (add && !_addfunc) {
+            sprite->alpha = _menuPdaScriptGetAlpha();
+        }
+        _SelectCursor(window, sprite, 0);
+        break;
+    case 3:
+        _SelectCursor(window, sprite, 1);
+        break;
+    case 4:
+        _SelectCursor(window, sprite, 2);
+        break;
+    case 5:
+        if (add && _addfunc == 1) {
+            sprite->alpha = _menuPdaScriptGetAlpha();
+        }
+        _SelectCursor(window, sprite, 3);
+        break;
+    case 6:
+        _SelectCursor(window, sprite, 4);
+        break;
+    case 1:
+        _menuPdaDrawFace(window, sprite);
+        _menuPdaGetCurrentID(window, sprite);
+        _menuPdaModelCursorAnime();
+        _SelectCursorPositionCheck();
+        if (_menuPdaStatus.cur >= 0) {
+            _menuPdaStatus.prev = _menuPdaStatus.cur;
+        }
+        break;
+    case 0x173: {
+        s32 table[5] = {0x3B53, 0x3B54, 0x3B55, 0x3C03, 0x3B56};
+        sprite->msgID = table[menuPdaGetRes()];
+        break;
+    }
+    case 0x1C6: {
+        u32 flag = GSflagGet(0x6C2);
+        s32 table[7] = {0x3B72, 0x3B73, 0x3B74, 0x3B75, 0x3B76, 0x3B77, 0x3C2E};
+        if (flag != 0 && flag <= 8) {
+            sprite->msgID = table[flag - 1];
+        } else {
+            sprite->msgID = 0;
+        }
+        break;
+    }
+    case 0x1C8:
+        winSpriteSetDisp(sprite, add);
+        break;
+    case 0x1C9:
+        winSpriteSetDisp(sprite, _pdaSelectAnimeFlag);
+        break;
+    }
+    return 0;
+}
+
+static s32 _getMenuIndex(PDATOP_MENU_RES res) {
+    s16 i;
+    for (i = 0; i < _cursor_index_max; i++) {
+        if (res == _cursor_index[i]) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+static PDATOP_MENU_RES topMenu(PDATOP_MENU_RES res) {
+    s32 index = _getMenuIndex(res);
+    if (menuOpenCustom(0x6B, windowGetActiveID(), &index, 0, 1, 0) == -1) {
+        return PDATOP_NONE;
+    }
+    return (PDATOP_MENU_RES)_menuPdaStatus.cur;
+}
+
+static void _menuPdaTopClose(void) {
+    menuClose(0x6B);
+    menuCloseSync(0x6B, 1);
+}
+
+static void _menuPdaStartEvent(void) {
+    s32 layers[1] = {0};
+    void* model;
+    model = GSresGetResourceAllGroup(PDA_MODEL);
+    GSmodelSetRenderLayer(model, 1, layers);
+    cameraPlayAnime(0x17, 0x17CF1800, 0.0f, 0);
+    GSmodelSetRenderCamera(model, GSresGetResource(0x17, 0x17CF1800));
+    GSmodelSetVisibility(model, true);
+    GSmodelSetBoundCheck(model, false);
+    _menuPdaSetMotion(PDA_MODEL, 0, 0.0f, false);
+    menuOffScreenSetPriority(0);
+    GSthreadSwitch();
+    _menuPdaWaitMotion(PDA_MODEL);
+    _menuPdaStopMotion(PDA_MODEL);
+    _menuPdaSetMotion(PDA_MODEL, 1, 0.0f, true);
+}
+
+extern "C" void menuPdaInit(void) {
+    void *model = GSresGetResourceAllGroup(0x17CF1000);
+    _pModel = model;
+    if (model != 0) {
+        GSmodelSetVisibility(model, false);
+        _menuPdaSetMotion(0x17CF1000, 0, 0.0f, false);
+    }
+    if (_seon != 0) {
+        GSsndPlayNow(0x44E);
+    }
+}
+
+extern "C" void menuPdaMain(void) {
+    for (;;) {
+        GSthreadSwitch();
+    }
+}
+
+static void _menuPdaSelectAnimeSet(long n) {
+    char start[0x40];
+    char end[0x40];
+    if (n >= 4) {
+        _pdaSelectAnimeFlag = 0;
+    } else {
+        _pdaSelectAnimeFlag = 1;
+        sprintf(start, "%d_start", n + 1);
+        sprintf(end, "%d_end", n + 1);
+        FlashSystemSetPlayFrameLabel(0x20543000, start, end);
+        FlashSystemSetNowFrameLabel(0x20543000, start);
+    }
+}
+
+void menuPda(void) {
+    s32 res = 0;
+    void* model;
+    TitleParam param;
+    scriptLightSetDisp(0x17CF1600, false);
+    scriptLightSetDisp(0x17CF1601, false);
+    if (pokecoloGetRomVersion() == 1) {
+        GSflagOn(0x3F2);
+    }
+    FlashSystemSetLoopFlag(0x1FBD3000, true);
+    FlashSystemSetLoopFlag(0x20543000, false);
+    menuOpen(0xA8, 0);
+    model = GSresGetResourceAllGroup(PDA_MODEL);
+    _pModel = model;
+    GSmodelSetVisibility(model, false);
+    GSthreadSwitch();
+    _menuPdaStatus.unk41 = 0;
+    _menuPdaInit();
+    _menuPdaStartEvent();
+    _menuPdaSetMenuItem();
+    _SelectCursorCalcAngle(_cursor_index[0]);
+    _menuPdaStatus.pos = _menuPdaStatus.target;
+    param.titleMsg = &TitleMsgID;
+    param.flag0 = 0;
+    param.alpha = 0xFF;
+    param.flag2 = 0;
+    param.lineAnim = &LineAnimTime;
+    menuOpenCustom(0x6C, windowGetActiveID(), 0, 0, 0, 1, &param);
+    while (!_menuPdaStatus.unk41) {
+        _menuPdaSetMenuItem();
+        res = topMenu((PDATOP_MENU_RES)res);
+        _menuPdaStatus.sub = 1;
+        _menuPdaStatus.cur = res;
+        switch (res) {
+        case 0:
+            _menuPdaTopClose();
+            _menuPdaZoomIn();
+            menuPdaDPMonList();
+            _menuPdaStatus.sub = 0;
+            _menuPdaZoomOut();
+            break;
+        case 1:
+            _menuPdaTopClose();
+            _menuPdaZoomIn();
+            menuPdaMemoList();
+            _menuPdaStatus.sub = 0;
+            _menuPdaZoomOut();
+            break;
+        case 2:
+            _menuPdaTopClose();
+            _menuPdaZoomIn();
+            menuPdaMailListXD();
+            _menuPdaStatus.sub = 0;
+            _menuPdaZoomOut();
+            break;
+        case 3:
+            _menuPdaTopClose();
+            _menuPdaZoomIn();
+            menuPdaSearcher();
+            _menuPdaStatus.sub = 0;
+            _menuPdaZoomOut();
+            break;
+        default:
+            _menPdaFadeOutSet();
+            _menuPdaExit();
+            _menuPdaStatus.unk41 = 1;
+            break;
+        }
+    }
+    _menPdaFadeOutWait();
+    if (_menuPdaStatus.unk40 != 1) {
+        menuOffScreenSetDisp(1);
+        _menuPdaStatus.unk40 = 1;
+    }
+    _menuPdaTopClose();
+    menuClose(0x6C);
+    menuCloseSync(0x6C, true);
+    menuClose(0xA8);
+    menuCloseSync(0xA8, true);
+    _menuPdaModelVisibility(PDA_MODEL, false);
+    _menPdaFadeInWait();
+    menuOffScreenSetPriority(1);
+    GSfloorPop();
+    floorSetFadeScript(0, 0);
+}
+
+extern "C" s32 menuPdaBackDrawBackXD(void) {
+    return 0;
+}
+
+extern "C" s32 menuPdaDrawTitle(tagWINDOW_WORK *window, tagSPRITE_WORK *arg1) {
+    s16 temp_r0;
+    s32 temp_r31;
+    s32 temp_r3;
+
+    temp_r31 = menuPdaGetRes();
+    temp_r3 = menuPdaGetSubres();
+    temp_r0 = arg1->id;
+    switch (temp_r0) {                              /* irregular */
+    case 0x1CA: case 0x1CB: case 0x1CC:
+        if ((temp_r31 == 0) && (temp_r3 == 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 22:
+        if (temp_r31 == 0) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 23:
+        if (temp_r31 == 2) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 24:
+        if ((temp_r31 == 1) && (temp_r3 == 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 26:
+        if ((temp_r31 == 1) && (temp_r3 > 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 27:
+        if ((temp_r31 == 1) && (temp_r3 > 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 28:
+        if ((temp_r31 == 1) && (temp_r3 > 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 29:
+        if ((temp_r31 == 1) && (temp_r3 > 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 30:
+        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 0)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 31:
+        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 1)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 32:
+        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 2)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 33:
+        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 3)) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    case 25:
+        if (temp_r31 == 3) {
+            winSpriteSetDisp(arg1, 1);
+        } else {
+            winSpriteSetDisp(arg1, 0);
+        }
+        break;
+    }
+    return 0;
+}
+
+extern "C" void menuPdaButton(tagWINDOW_WORK *win) {
+    if (floorGetCurrent() != 0x38C) {
+        menuButtonNormal(win);
+    }
+}
+
+s32 menuPdaCursorCtrl(tagWINDOW_WORK* window) {
+    MenuData* data;
+    s32 up;
+    s32 down;
+    s16 count;
+    s32 w;
+    s32 h;
+    MenuItem* item;
+    u16 repeat;
+    if (window == 0) {
+        return 0;
+    }
+    if (_checkAddFunc(window)) {
+        return 0;
+    }
+    data = menuDataBiosGetPtr(window->seq);
+    if (windowGetCursorToItem(window) == 0) {
+        window->cursor = 0;
+        return 0;
+    }
+    w = 0x10;
+    h = 0xC;
+    repeat = windowGetKeyRepeat();
+    up = repeat & 1;
+    PdaStatus* status = &_menuPdaStatus;
+    down = repeat & 2;
+    do {
+        count = 0;
+        item = menuItemBiosGetPtr(window->seq, data->firstItem);
+        if (up) {
+            for (;;) {
+                if (item->flagA) {
+                    count++;
+                }
+                if (item->flagB) {
+                    break;
+                }
+                item = menuItemBiosGetPtr(window->seq, item->next);
+            }
+            if (window->cursor > 0) {
+                window->cursor--;
+                status->arrived = 0;
+            } else {
+                window->cursor = count - 1;
+                status->arrived = 1;
+            }
+        } else if (down) {
+            for (;;) {
+                if (item->flagA) {
+                    count++;
+                }
+                if (item->flagB) {
+                    break;
+                }
+                item = menuItemBiosGetPtr(window->seq, item->next);
+            }
+            if (window->cursor < (s16)count - 1) {
+                window->cursor++;
+                status->arrived = 0;
+            } else {
+                window->cursor = 0;
+                status->arrived = 1;
+            }
+        }
+        if (window->prevCursor != window->cursor) {
+            break;
+        }
+        w += 0x10;
+        h += 0xC;
+        if (w >= 0x280) {
+            w = 0x280;
+        }
+        if (h >= 0x1E0) {
+            h = 0x1E0;
+        }
+    } while (w != 0x280 || h != 0x1E0);
+    return 0;
+}
+
+extern "C" void menuPdaSetModelPointer(void) {
+    _pModel = GSresGetResourceAllGroup(0x17CF1000);
+}
+
+extern "C" void menuPdaReleaseModelPointer(void) {
+    _pModel = GSresGetResourceAllGroup(0x17CF1000);
+}
+
+extern "C" void menuPdaDrawDirectModel(void) {
+}
+
+static void _menuPdaSetMenuItemScript(u8 enable) {
+    if (enable == 0) {
+        menuItemBiosSetSelectFlag(0x107, 2, 0);
+        menuItemBiosSetSelectFlag(0x107, 5, 0);
+    } else {
+        menuItemBiosSetSelectFlag(0x107, 2, 1);
+        menuItemBiosSetSelectFlag(0x107, 5, 0);
+    }
+    menuItemBiosSetSelectFlag(0x107, 3, 1);
+    menuItemBiosSetSelectFlag(0x107, 4, 1);
+    menuItemBiosSetSelectFlag(0x107, 6, 1);
+}
+
+static void _menuPdaScriptCalcAlphaInit(void) {
+    _pdaScriptAddFrame = 0.0f;
+}
+
+static void _menuPdaScriptCalcAlpha(f32 delta) {
+    _pdaScriptAddFrame += delta;
+}
+
+static u8 _menuPdaScriptGetAlpha(void) {
+    f32 a;
+    if (_pdaScriptAddFrame >= _pdaScriptTime) {
+        return 255;
+    }
+    a = 255.0f * _pdaScriptAddFrame / _pdaScriptTime;
+    if (a > 255.0f) {
+        a = 255.0f;
+    }
+    return a;
+}
+
+void menuPdaScript(u8 flag) {
+    u32 endFrame;
+    TitleParam param2;
+    s32 param1 = 0;
+    _addfunc = flag;
+    if (flag == 0) {
+        _menuPdaStatus.cur = 1;
+        _menuPdaStatus.prev = 1;
+        FlashSystemSetPlayFrameLabel(0x1FBD3000, "1_start", "1_end");
+        FlashSystemSetNowFrameLabel(0x1FBD3000, "1_start");
+        endFrame = FlashSystemGetFrameFromLabel(0x1FBD3000, "1_end");
+    } else {
+        _menuPdaStatus.cur = 0;
+        _menuPdaStatus.prev = 0;
+        FlashSystemSetPlayFrameLabel(0x1FBD3000, "2_start", "2_end");
+        FlashSystemSetNowFrameLabel(0x1FBD3000, "2_start");
+        endFrame = FlashSystemGetFrameFromLabel(0x1FBD3000, "2_end");
+    }
+    _SelectCursorCalcAngle(_menuPdaStatus.cur);
+    _menuPdaStatus.pos = _menuPdaStatus.target;
+    FlashSystemSetLoopFlag(0x1FBD3000, false);
+    _menuPdaStatus.sub = 0;
+    _menuPdaSetMenuItemScript(flag);
+    menuOpen(0xA8, 0);
+    menuOpenCustom(0x6C, windowGetActiveID(), 0, 0, 0, 1, &param2);
+    menuOpenCustom(0x107, windowGetActiveID(), &param1, 0, 0, 0);
+    while (FlashSystemGetNowFrame(0x1FBD3000) < endFrame) {
+        GSthreadSwitch();
+    }
+    _menuPdaScriptCalcAlphaInit();
+    GSthreadSwitch();
+    if (flag == 0) {
+        menuItemBiosSetSelectFlag(0x107, 2, true);
+    } else {
+        menuItemBiosSetSelectFlag(0x107, 5, true);
+    }
+    {
+        f32 t = 2.0f;
+        do {
+            f32 dt = timeGetLastFrameSec();
+            _menuPdaScriptCalcAlpha(dt);
+            t -= dt;
+            GSthreadSwitch();
+        } while (t >= 0.0f);
+    }
+    menuClose(0x107);
+    menuCloseSync(0x107, true);
+    menuClose(0xA8);
+    menuClose(0x6C);
+    menuCloseSync(0x6C, true);
+    menuOffScreenSetPriority(1);
+    GSfloorPop();
+}
+
+#pragma defer_codegen off
+// The model initialization shares this retained full-scale value.
+static const struct { f32 value; } pdaModelScale = {1.0f};
+#pragma defer_codegen on
+
 extern "C" void menuPdaOpen(void) {
     GSfloorPush(0x392);
     floorSetFadeScript(0, 0);
     floorWaitForChange();
-}
-
 }
 
 static void _menuPdaFree(void *p) {
@@ -297,7 +1043,7 @@ static void _menuPdaFree(void *p) {
 static void _menuPdaInit(void) {
     _menuPdaStatus.sub = _menuPdaStatus.prev = _menuPdaStatus.cur = 0;
     _menuPdaStatus.unk14 = _menuPdaStatus.unk18 = _menuPdaStatus.unk1C = 0.0f;
-    _menuPdaStatus.unk20 = _menuPdaStatus.unk24 = 1.0f;
+    _menuPdaStatus.unk20 = _menuPdaStatus.unk24 = pdaModelScale.value;
     _menuPdaStatus.unk28 = 300.0f;
     _menuPdaStatus.unk2C = -100.0f;
     _menuPdaStatus.unk38 = _menuPdaStatus.unk34 = _menuPdaStatus.unk30 = 0.0f;
@@ -382,23 +1128,13 @@ static u8 _menuPdaWaitMotion2(u32 id) {
     return GSmodelIsAnimating(model);
 }
 
-extern "C" {
-
 s32 menuPdaGetSubres(void) {
     return _menuPdaStatus.sub;
 }
 
-}
-
-extern "C" {
-
 s32 menuPdaGetRes(void) {
     return _menuPdaStatus.cur;
 }
-
-}
-
-extern "C" {
 
 void menuPdaSetSubres(s32 res, s32 sub) {
     if (res >= 0) {
@@ -407,8 +1143,6 @@ void menuPdaSetSubres(s32 res, s32 sub) {
     if (sub >= 0) {
         _menuPdaStatus.sub = sub;
     }
-}
-
 }
 
 static s32 _menuPdaGetPokecoupon(void) {
@@ -489,31 +1223,17 @@ static void _menuPdaZoomOut(void) {
     _menuPdaSetMotion(0x17CF1000, 1, 0.0f, true);
 }
 
-extern "C" {
-
 extern "C" void menuPdaZoomIn(void) {
     _menuPdaZoomIn();
 }
-
-}
-
-extern "C" {
 
 extern "C" void menuPdaAddFunc(void) {
     _menuPdaAddFunc();
 }
 
-}
-
-extern "C" {
-
 extern "C" void menuPdaModelVisibility(u32 id, bool visible) {
     _menuPdaModelVisibility(id, visible);
 }
-
-}
-
-extern "C" {
 
 s32 menuPdaTopCtrl(tagWINDOW_WORK* window) {
     switch (window->state) {
@@ -533,15 +1253,9 @@ s32 menuPdaTopCtrl(tagWINDOW_WORK* window) {
     return 0;
 }
 
-}
-
-extern "C" {
-
 extern "C" s32 menuPdaDummyCtrl(void) {
     menuPdaDrawDirectModel();
     return 0;
-}
-
 }
 
 static void _menuPdaModelCursorAnime(void) {
@@ -783,597 +1497,3 @@ static void _SelectCursor(tagWINDOW_WORK* window, tagSPRITE_WORK* sprite, s8 idx
         }
     }
 }
-
-f32 _menuPdaUnusedOne(f32 v) {
-    return v + 1.0f;
-}
-
-static bool _checkAddFunc(tagWINDOW_WORK* window) {
-    return window->seq == 0x107;
-}
-
-extern "C" {
-
-s32 menuPdaBackDrawTitleText(tagWINDOW_WORK* window, tagSPRITE_WORK* sprite) {
-    bool add = _checkAddFunc(window);
-    switch (sprite->id) {
-    case 7: {
-        u32 time = pokecoloGetPlayTimeValue();
-        msgctrlSetValue(0x4C, time);
-        break;
-    }
-    case 9:
-        msgctrlSetValue(0x69, _menuPdaGetPokecoupon());
-        break;
-    case 0xB:
-        msgctrlSetValue(0x69, _menuPdaGetMoney());
-        break;
-    case 0xD: {
-        u32 value = heroGetStatus(0, 2, 0) & 0xFFFF;
-        s32 i = 0;
-        s32 x = sprite->x;
-        u32 digit;
-        x -= 0x12;
-        for (; i < 5; i++) {
-            digit = value % 10;
-            value /= 10;
-            msgctrlSetValue(0x34, digit);
-            GSmsgPrint2(window->layer, x, 0, (u8)window->alpha | 0xFFFFFF00, 0x426F);
-            x -= GSmsgGetRect(0x426F) >> 16;
-        }
-        break;
-    }
-    case 0xE:
-    case 0xF:
-        break;
-    case 2:
-        if (add && !_addfunc) {
-            sprite->alpha = _menuPdaScriptGetAlpha();
-        }
-        _SelectCursor(window, sprite, 0);
-        break;
-    case 3:
-        _SelectCursor(window, sprite, 1);
-        break;
-    case 4:
-        _SelectCursor(window, sprite, 2);
-        break;
-    case 5:
-        if (add && _addfunc == 1) {
-            sprite->alpha = _menuPdaScriptGetAlpha();
-        }
-        _SelectCursor(window, sprite, 3);
-        break;
-    case 6:
-        _SelectCursor(window, sprite, 4);
-        break;
-    case 1:
-        _menuPdaDrawFace(window, sprite);
-        _menuPdaGetCurrentID(window, sprite);
-        _menuPdaModelCursorAnime();
-        _SelectCursorPositionCheck();
-        if (_menuPdaStatus.cur >= 0) {
-            _menuPdaStatus.prev = _menuPdaStatus.cur;
-        }
-        break;
-    case 0x173: {
-        s32 table[5] = {0x3B53, 0x3B54, 0x3B55, 0x3C03, 0x3B56};
-        sprite->msgID = table[menuPdaGetRes()];
-        break;
-    }
-    case 0x1C6: {
-        u32 flag = GSflagGet(0x6C2);
-        s32 table[7] = {0x3B72, 0x3B73, 0x3B74, 0x3B75, 0x3B76, 0x3B77, 0x3C2E};
-        if (flag != 0 && flag <= 8) {
-            sprite->msgID = table[flag - 1];
-        } else {
-            sprite->msgID = 0;
-        }
-        break;
-    }
-    case 0x1C8:
-        winSpriteSetDisp(sprite, add);
-        break;
-    case 0x1C9:
-        winSpriteSetDisp(sprite, _pdaSelectAnimeFlag);
-        break;
-    }
-    return 0;
-}
-
-}
-
-static s32 _getMenuIndex(PDATOP_MENU_RES res) {
-    s16 i;
-    for (i = 0; i < _cursor_index_max; i++) {
-        if (res == _cursor_index[i]) {
-            return i;
-        }
-    }
-    return 0;
-}
-
-static PDATOP_MENU_RES topMenu(PDATOP_MENU_RES res) {
-    s32 index = _getMenuIndex(res);
-    if (menuOpenCustom(0x6B, windowGetActiveID(), &index, 0, 1, 0) == -1) {
-        return PDATOP_NONE;
-    }
-    return (PDATOP_MENU_RES)_menuPdaStatus.cur;
-}
-
-static void _menuPdaTopClose(void) {
-    menuClose(0x6B);
-    menuCloseSync(0x6B, 1);
-}
-
-static void _menuPdaStartEvent(void) {
-    s32 layers[1] = {0};
-    void* model;
-    model = GSresGetResourceAllGroup(PDA_MODEL);
-    GSmodelSetRenderLayer(model, 1, layers);
-    cameraPlayAnime(0x17, 0x17CF1800, 0.0f, 0);
-    GSmodelSetRenderCamera(model, GSresGetResource(0x17, 0x17CF1800));
-    GSmodelSetVisibility(model, true);
-    GSmodelSetBoundCheck(model, false);
-    _menuPdaSetMotion(PDA_MODEL, 0, 0.0f, false);
-    menuOffScreenSetPriority(0);
-    GSthreadSwitch();
-    _menuPdaWaitMotion(PDA_MODEL);
-    _menuPdaStopMotion(PDA_MODEL);
-    _menuPdaSetMotion(PDA_MODEL, 1, 0.0f, true);
-}
-
-extern "C" {
-
-extern "C" void menuPdaInit(void) {
-    void *model = GSresGetResourceAllGroup(0x17CF1000);
-    _pModel = model;
-    if (model != 0) {
-        GSmodelSetVisibility(model, false);
-        _menuPdaSetMotion(0x17CF1000, 0, 0.0f, false);
-    }
-    if (_seon != 0) {
-        GSsndPlayNow(0x44E);
-    }
-}
-
-}
-
-extern "C" {
-
-extern "C" void menuPdaMain(void) {
-    for (;;) {
-        GSthreadSwitch();
-    }
-}
-
-}
-
-static void _menuPdaSelectAnimeSet(long n) {
-    char start[0x40];
-    char end[0x40];
-    if (n >= 4) {
-        _pdaSelectAnimeFlag = 0;
-    } else {
-        _pdaSelectAnimeFlag = 1;
-        sprintf(start, "%d_start", n + 1);
-        sprintf(end, "%d_end", n + 1);
-        FlashSystemSetPlayFrameLabel(0x20543000, start, end);
-        FlashSystemSetNowFrameLabel(0x20543000, start);
-    }
-}
-
-extern "C" {
-
-void menuPda(void) {
-    s32 res = 0;
-    void* model;
-    TitleParam param;
-    scriptLightSetDisp(0x17CF1600, false);
-    scriptLightSetDisp(0x17CF1601, false);
-    if (pokecoloGetRomVersion() == 1) {
-        GSflagOn(0x3F2);
-    }
-    FlashSystemSetLoopFlag(0x1FBD3000, true);
-    FlashSystemSetLoopFlag(0x20543000, false);
-    menuOpen(0xA8, 0);
-    model = GSresGetResourceAllGroup(PDA_MODEL);
-    _pModel = model;
-    GSmodelSetVisibility(model, false);
-    GSthreadSwitch();
-    _menuPdaStatus.unk41 = 0;
-    _menuPdaInit();
-    _menuPdaStartEvent();
-    _menuPdaSetMenuItem();
-    _SelectCursorCalcAngle(_cursor_index[0]);
-    _menuPdaStatus.pos = _menuPdaStatus.target;
-    param.titleMsg = &TitleMsgID;
-    param.flag0 = 0;
-    param.alpha = 0xFF;
-    param.flag2 = 0;
-    param.lineAnim = &LineAnimTime;
-    menuOpenCustom(0x6C, windowGetActiveID(), 0, 0, 0, 1, &param);
-    while (!_menuPdaStatus.unk41) {
-        _menuPdaSetMenuItem();
-        res = topMenu((PDATOP_MENU_RES)res);
-        _menuPdaStatus.sub = 1;
-        _menuPdaStatus.cur = res;
-        switch (res) {
-        case 0:
-            _menuPdaTopClose();
-            _menuPdaZoomIn();
-            menuPdaDPMonList();
-            _menuPdaStatus.sub = 0;
-            _menuPdaZoomOut();
-            break;
-        case 1:
-            _menuPdaTopClose();
-            _menuPdaZoomIn();
-            menuPdaMemoList();
-            _menuPdaStatus.sub = 0;
-            _menuPdaZoomOut();
-            break;
-        case 2:
-            _menuPdaTopClose();
-            _menuPdaZoomIn();
-            menuPdaMailListXD();
-            _menuPdaStatus.sub = 0;
-            _menuPdaZoomOut();
-            break;
-        case 3:
-            _menuPdaTopClose();
-            _menuPdaZoomIn();
-            menuPdaSearcher();
-            _menuPdaStatus.sub = 0;
-            _menuPdaZoomOut();
-            break;
-        default:
-            _menPdaFadeOutSet();
-            _menuPdaExit();
-            _menuPdaStatus.unk41 = 1;
-            break;
-        }
-    }
-    _menPdaFadeOutWait();
-    if (_menuPdaStatus.unk40 != 1) {
-        menuOffScreenSetDisp(1);
-        _menuPdaStatus.unk40 = 1;
-    }
-    _menuPdaTopClose();
-    menuClose(0x6C);
-    menuCloseSync(0x6C, true);
-    menuClose(0xA8);
-    menuCloseSync(0xA8, true);
-    _menuPdaModelVisibility(PDA_MODEL, false);
-    _menPdaFadeInWait();
-    menuOffScreenSetPriority(1);
-    GSfloorPop();
-    floorSetFadeScript(0, 0);
-}
-
-}
-
-extern "C" {
-
-extern "C" s32 menuPdaBackDrawBackXD(void) {
-    return 0;
-}
-
-}
-
-extern "C" {
-
-extern "C" s32 menuPdaDrawTitle(tagWINDOW_WORK *window, tagSPRITE_WORK *arg1) {
-    s16 temp_r0;
-    s32 temp_r31;
-    s32 temp_r3;
-
-    temp_r31 = menuPdaGetRes();
-    temp_r3 = menuPdaGetSubres();
-    temp_r0 = arg1->id;
-    switch (temp_r0) {                              /* irregular */
-    case 0x1CA: case 0x1CB: case 0x1CC:
-        if ((temp_r31 == 0) && (temp_r3 == 1)) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 22:
-        if (temp_r31 == 0) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 23:
-        if (temp_r31 == 2) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 24:
-        if ((temp_r31 == 1) && (temp_r3 == 1)) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 26:
-        if ((temp_r31 == 1) && (temp_r3 > 1)) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 27:
-        if ((temp_r31 == 1) && (temp_r3 > 1)) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 28:
-        if ((temp_r31 == 1) && (temp_r3 > 1)) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 29:
-        if ((temp_r31 == 1) && (temp_r3 > 1)) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 30:
-        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 0)) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 31:
-        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 1)) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 32:
-        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 2)) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 33:
-        if ((temp_r31 == 1) && (temp_r3 > 1) && (menuPdaMemoXDGetItem() == 3)) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    case 25:
-        if (temp_r31 == 3) {
-            winSpriteSetDisp(arg1, 1);
-        } else {
-            winSpriteSetDisp(arg1, 0);
-        }
-        break;
-    }
-    return 0;
-}
-
-}
-
-extern "C" {
-
-extern "C" void menuPdaButton(tagWINDOW_WORK *win) {
-    if (floorGetCurrent() != 0x38C) {
-        menuButtonNormal(win);
-    }
-}
-
-}
-
-extern "C" {
-
-s32 menuPdaCursorCtrl(tagWINDOW_WORK* window) {
-    MenuData* data;
-    s32 up;
-    s32 down;
-    s16 count;
-    s32 w;
-    s32 h;
-    MenuItem* item;
-    u16 repeat;
-    if (window == 0) {
-        return 0;
-    }
-    if (_checkAddFunc(window)) {
-        return 0;
-    }
-    data = menuDataBiosGetPtr(window->seq);
-    if (windowGetCursorToItem(window) == 0) {
-        window->cursor = 0;
-        return 0;
-    }
-    w = 0x10;
-    h = 0xC;
-    repeat = windowGetKeyRepeat();
-    up = repeat & 1;
-    PdaStatus* status = &_menuPdaStatus;
-    down = repeat & 2;
-    do {
-        count = 0;
-        item = menuItemBiosGetPtr(window->seq, data->firstItem);
-        if (up) {
-            for (;;) {
-                if (item->flagA) {
-                    count++;
-                }
-                if (item->flagB) {
-                    break;
-                }
-                item = menuItemBiosGetPtr(window->seq, item->next);
-            }
-            if (window->cursor > 0) {
-                window->cursor--;
-                status->arrived = 0;
-            } else {
-                window->cursor = count - 1;
-                status->arrived = 1;
-            }
-        } else if (down) {
-            for (;;) {
-                if (item->flagA) {
-                    count++;
-                }
-                if (item->flagB) {
-                    break;
-                }
-                item = menuItemBiosGetPtr(window->seq, item->next);
-            }
-            if (window->cursor < (s16)count - 1) {
-                window->cursor++;
-                status->arrived = 0;
-            } else {
-                window->cursor = 0;
-                status->arrived = 1;
-            }
-        }
-        if (window->prevCursor != window->cursor) {
-            break;
-        }
-        w += 0x10;
-        h += 0xC;
-        if (w >= 0x280) {
-            w = 0x280;
-        }
-        if (h >= 0x1E0) {
-            h = 0x1E0;
-        }
-    } while (w != 0x280 || h != 0x1E0);
-    return 0;
-}
-
-}
-
-extern "C" {
-
-extern "C" void menuPdaSetModelPointer(void) {
-    _pModel = GSresGetResourceAllGroup(0x17CF1000);
-}
-
-}
-
-extern "C" {
-
-extern "C" void menuPdaReleaseModelPointer(void) {
-    _pModel = GSresGetResourceAllGroup(0x17CF1000);
-}
-
-}
-
-extern "C" {
-
-extern "C" void menuPdaDrawDirectModel(void) {
-}
-
-}
-
-static void _menuPdaSetMenuItemScript(u8 enable) {
-    if (enable == 0) {
-        menuItemBiosSetSelectFlag(0x107, 2, 0);
-        menuItemBiosSetSelectFlag(0x107, 5, 0);
-    } else {
-        menuItemBiosSetSelectFlag(0x107, 2, 1);
-        menuItemBiosSetSelectFlag(0x107, 5, 0);
-    }
-    menuItemBiosSetSelectFlag(0x107, 3, 1);
-    menuItemBiosSetSelectFlag(0x107, 4, 1);
-    menuItemBiosSetSelectFlag(0x107, 6, 1);
-}
-
-static void _menuPdaScriptCalcAlphaInit(void) {
-    _pdaScriptAddFrame = 0.0f;
-}
-
-static void _menuPdaScriptCalcAlpha(f32 delta) {
-    _pdaScriptAddFrame += delta;
-}
-
-static u8 _menuPdaScriptGetAlpha(void) {
-    f32 a;
-    if (_pdaScriptAddFrame >= _pdaScriptTime) {
-        return 255;
-    }
-    a = 255.0f * _pdaScriptAddFrame / _pdaScriptTime;
-    if (a > 255.0f) {
-        a = 255.0f;
-    }
-    return a;
-}
-
-extern "C" {
-
-void menuPdaScript(u8 flag) {
-    u32 endFrame;
-    TitleParam param2;
-    s32 param1 = 0;
-    _addfunc = flag;
-    if (flag == 0) {
-        _menuPdaStatus.cur = 1;
-        _menuPdaStatus.prev = 1;
-        FlashSystemSetPlayFrameLabel(0x1FBD3000, "1_start", "1_end");
-        FlashSystemSetNowFrameLabel(0x1FBD3000, "1_start");
-        endFrame = FlashSystemGetFrameFromLabel(0x1FBD3000, "1_end");
-    } else {
-        _menuPdaStatus.cur = 0;
-        _menuPdaStatus.prev = 0;
-        FlashSystemSetPlayFrameLabel(0x1FBD3000, "2_start", "2_end");
-        FlashSystemSetNowFrameLabel(0x1FBD3000, "2_start");
-        endFrame = FlashSystemGetFrameFromLabel(0x1FBD3000, "2_end");
-    }
-    _SelectCursorCalcAngle(_menuPdaStatus.cur);
-    _menuPdaStatus.pos = _menuPdaStatus.target;
-    FlashSystemSetLoopFlag(0x1FBD3000, false);
-    _menuPdaStatus.sub = 0;
-    _menuPdaSetMenuItemScript(flag);
-    menuOpen(0xA8, 0);
-    menuOpenCustom(0x6C, windowGetActiveID(), 0, 0, 0, 1, &param2);
-    menuOpenCustom(0x107, windowGetActiveID(), &param1, 0, 0, 0);
-    while (FlashSystemGetNowFrame(0x1FBD3000) < endFrame) {
-        GSthreadSwitch();
-    }
-    _menuPdaScriptCalcAlphaInit();
-    GSthreadSwitch();
-    if (flag == 0) {
-        menuItemBiosSetSelectFlag(0x107, 2, true);
-    } else {
-        menuItemBiosSetSelectFlag(0x107, 5, true);
-    }
-    {
-        f32 t = 2.0f;
-        do {
-            f32 dt = timeGetLastFrameSec();
-            _menuPdaScriptCalcAlpha(dt);
-            t -= dt;
-            GSthreadSwitch();
-        } while (t >= 0.0f);
-    }
-    menuClose(0x107);
-    menuCloseSync(0x107, true);
-    menuClose(0xA8);
-    menuClose(0x6C);
-    menuCloseSync(0x6C, true);
-    menuOffScreenSetPriority(1);
-    GSfloorPop();
-}
-
-}
-
-#pragma force_active reset

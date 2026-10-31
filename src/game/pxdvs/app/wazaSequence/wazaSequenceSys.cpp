@@ -1,3 +1,4 @@
+#pragma force_active on
 #include <game/pxdvs/app/wazaSequence/wazaSequenceSysPrivate.hpp>
 #include <dolphin/os/OSFastCast.h>
 
@@ -12,19 +13,66 @@ static u32 _modelShadowList[16];
 static u32 g_SoundListener;
 s32 gCameraShakeModel;
 s8 g_EnableModelLayerChange;
-u32 gCameraShakeModels[9];
+#pragma push
+#pragma explicit_zero_data on
+u32 gCameraShakeModels[9] = {0};
+#pragma pop
 extern u32 waza_resource_data[];
 
-inline u32 loadResourceInline(unsigned long group, unsigned long id) {
-    u32 r = (u32)GSresGetResource(group, id);
-    if (r != 0) {
-        return r;
-    }
-    GSfsysReadWait(group);
-    return (u32)GSresGetResource(group, id);
+extern "C" {
+
 }
 
-static u32 _wazaSequenceSysLoadModel(u32 res) {
+extern "C" {
+
+}
+
+extern "C" {
+
+}
+
+extern "C" {
+
+}
+
+extern "C" {
+
+}
+
+struct WazaTimeRec {
+    s32 count;
+    f32 pad;
+    f32 times[3];
+};
+
+struct PartAnimData {
+    u8 type;
+    u8 count;
+    u8 parts[8];
+    u8 texParts[8];
+    u8 index;
+};
+
+extern "C" {
+void GSmodelLinkTexAnimToAnim(_GSmodel*, u8);
+void GSmodelSetTexAnimType(_GSmodel*, s32);
+void GSmodelSetTexAnimFrame(_GSmodel*, f32);
+void GSmodelSetPartAnimIndex(_GSmodel*, u32, u32, f32, u32);
+void GSmodelSetPartTexAnimIndex(_GSmodel*, u32, u32, u32, f32, u32);
+}
+
+extern "C" {
+
+}
+static inline void wazaSequenceSysFreeShakeModels(u32 *models) {
+    for (s32 i = 0; i < 9; i++) {
+        if (models[i] != 0) {
+            GSmodelFree(models[i]);
+            models[i] = 0;
+        }
+    }
+}
+static inline u32 _wazaSequenceSysLoadModel(u32 res) {
     u32 model;
     if (res == 0) {
         return 0;
@@ -47,9 +95,100 @@ static u32 _wazaSequenceSysLoadModel(u32 res) {
     }
     return model;
 }
-
+inline u32 loadResourceInline(unsigned long group, unsigned long id) {
+    u32 r = (u32)GSresGetResource(group, id);
+    if (r != 0) {
+        return r;
+    }
+    GSfsysReadWait(group);
+    return (u32)GSresGetResource(group, id);
+}
+static inline void waitResourceLoad(u32 group) {
+    while (((s32(*)(u32))GSfsysGetStatus)(group) == 1) {
+        GSthreadSwitch();
+    }
+}
+static inline void freeWazaRes(u16 id) {
+    if (id != 0) {
+        int count;
+        WazaSequence* w;
+        Sequence* s;
+        count = 0;
+        for (s = g_Sequences; s != 0; s = s->next) {
+            for (w = s->wazaList; w != 0; w = w->next) {
+                if (id == w->resId) {
+                    count++;
+                }
+            }
+        }
+        if (count == 1) {
+            waitResourceLoad(id);
+            ((void(*)(u32))GSresFreeGroup)(id);
+            ((void(*)(u32))GSfsysFree)(id);
+        }
+    }
+}
+extern "C++" { static void _wazaSequenceSysCameraShakeInit(); }
+extern "C" { void Sequence_SetCamera(Sequence* seq, s32 camera); }
+extern "C" { void Sequence_SetLookTarget(Sequence* seq, Sequence* target); }
+extern "C" { void Sequence_GetScale(Sequence* seq, GSvec* out); }
+extern "C" { void Sequence_GetRotation(Sequence* seq, GSvec* out); }
+extern "C" { void Sequence_GetPosition(Sequence* seq, GSvec* out); }
+extern "C" { void Sequence_SetScale(Sequence* seq, const GSvec* v); }
+extern "C" { void Sequence_SetRotation(Sequence* seq, const GSvec* v); }
+extern "C" { void Sequence_SetPosition(Sequence* seq, const GSvec* v); }
+extern "C" { u32 Sequence_GetPokemonRndVal(Sequence* seq); }
+extern "C" { u8 Sequence_IsFlipped(Sequence* seq); }
+extern "C" { void Sequence_SetFlipped(Sequence* seq, s8 flipped); }
+extern "C" { u8 Sequence_IsRare(Sequence* seq); }
+extern "C" { u8 Sequence_GetFlags(Sequence* seq); }
+extern "C" { u16 Sequence_GetID(Sequence* seq); }
+extern "C" { u32 Sequence_GetGSmodel(Sequence* seq); }
+extern "C" { s32 Sequence_GetModelSize(Sequence* seq); }
+extern "C" { void Sequence_SetDownFlag(Sequence* seq, u8 down); }
+extern "C" { WazaSequence* Sequence_GetWaza(Sequence* seq, u16 a, u16 b); }
+extern "C" { void Sequence_FreeAllWaza(Sequence* seq); }
+extern "C" { void Sequence_Free(Sequence* seq); }
+extern "C" { void Sequence_DoAnimation(Sequence* seq, int anim); }
+extern "C" { void Sequence_Talk(Sequence* seq); }
+extern "C" { void Sequence_CopyState(Sequence* dst, Sequence* src); }
+extern "C" { void Sequence_SetFlags(Sequence* seq, u8 flags); }
+extern "C" { void Sequence_SetDefaultFlags(Sequence* seq); }
+extern "C" { void Sequence_ResetStatus(Sequence* seq, u8 status); }
+extern "C" { void Sequence_SetStatus(Sequence* seq, u8 status); }
+extern "C" { void Sequence_SetVisibility(Sequence* seq, bool visible); }
+extern "C" { ModelSequence* Sequence_LoadPokemon(u16 id, u32 rnd, bool rare); }
+extern "C" { ModelSequence* Sequence_LoadTrainer(u16 id); }
+extern "C" { NullSequence* Sequence_CreateNull(); }
+extern "C" { u32 wazaSequenceSysGetWazaGroupID(u16 a, u16 b); }
+extern "C++" { u16 wazaSequenceSysGetResourceID(ModelSequence* seq, u16 waza, u16 kind, u8 variant); }
+extern "C++" { f32 wazaSequenceSysNullGetWazaTime(WazaSequence* sequence, u8 event); }
+extern "C++" { f32 wazaSequenceSysGetWazaTime(ModelSequence* seq, WazaSequence* waza, u8 phase); }
+extern "C++" { void wazaSequenceSysPartAnimationStart(_GSmodel* model, PartAnimData* data); }
+extern "C++" { u32 wazaSequenceSysGetSleepParticle(); }
+extern "C++" { u32 wazaSequenceSysGetIceParticle(); }
+extern "C" { void wazaSequenceSysSetVisibilityAll(bool visible); }
+extern "C" { u16 wazaSequenceSysGetActiveWazaNum(); }
+extern "C" { s32 wazaSequenceSysLastWazaIsImpactPoint(u8 point); }
+extern "C" { void wazaSequenceSysFreeAllWazaExcept(Sequence* seq, WazaSequence* except); }
+extern "C" { void wazaSequenceSysFreeAllWaza(); }
+extern "C" { void wazaSequenceSysRelease(); }
+extern "C" { s32 wazaSequenceSysIsValidSequence(Sequence* seq); }
+extern "C" { s32 wazaSequenceSysIsValidWaza(WazaSequence* waza); }
+extern "C" { void wazaSequenceSysEnableLayerChange(); }
+extern "C" { void wazaSequenceSysInit(); }
+extern "C" { void wazaSequenceSysInitExtras(); }
+extern "C" { s32 wazaSequenceSysGetResID(); }
+extern "C" { void wazaSequenceSysUpdate(); }
+extern "C++" { void wazaSequenceSysApplyStop(); }
+extern "C++" { void wazaSequenceSysFreeSequenceResource(ModelSequence* seq); }
+extern "C++" { void wazaSequenceSysFreeWazaResource(WazaSequence* waza); }
+extern "C++" { u32 wazaSequenceSysGetModelShadowLight(); }
+extern "C++" { s32 wazaSequenceSysGetModelShadowCount(); }
+extern "C++" { u32* wazaSequenceSysGetModelShadowList(); }
+extern "C++" { void wazaSequenceSysResetAnimationExcept(ModelSequence* except); }
+extern "C++" { u32 wazaSequenceSysLoadResource(unsigned long group, unsigned long id); }
 extern "C" {
-
 void Sequence_SetCamera(Sequence* seq, s32 camera) {
     if (seq != 0) {
         if (Sequence_IsValid(seq)) {
@@ -57,189 +196,8 @@ void Sequence_SetCamera(Sequence* seq, s32 camera) {
         }
     }
 }
-
-void Sequence_GetScale(Sequence* seq, GSvec* out) {
-    if (seq != 0) {
-        if (!Sequence_IsValid(seq)) {
-            out->z = 1.0f;
-            out->y = 1.0f;
-            out->x = 1.0f;
-            return;
-        }
-        seq->GetScale(out);
-    }
 }
-
-void Sequence_GetRotation(Sequence* seq, GSvec* out) {
-    if (seq != 0) {
-        if (!Sequence_IsValid(seq)) {
-            out->x = 0.0f;
-            out->y = 0.0f;
-            out->z = 0.0f;
-            return;
-        }
-        seq->GetRotation(out);
-    }
-}
-
-void Sequence_GetPosition(Sequence* seq, GSvec* out) {
-    if (seq != 0) {
-        if (!Sequence_IsValid(seq)) {
-            out->x = 0.0f;
-            out->y = 0.0f;
-            out->z = 0.0f;
-            return;
-        }
-        seq->GetPosition(out);
-    }
-}
-
-void Sequence_SetScale(Sequence* seq, const GSvec* v) {
-    if (seq != 0) {
-        if (Sequence_IsValid(seq)) {
-            seq->SetScale(v);
-        }
-    }
-}
-
-void Sequence_SetRotation(Sequence* seq, const GSvec* v) {
-    if (seq != 0) {
-        if (Sequence_IsValid(seq)) {
-            seq->SetRotation(v);
-        }
-    }
-}
-
-void Sequence_SetPosition(Sequence* seq, const GSvec* v) {
-    if (seq != 0) {
-        if (Sequence_IsValid(seq)) {
-            seq->SetPosition(v);
-        }
-    }
-}
-
-u32 Sequence_GetPokemonRndVal(Sequence* seq) {
-    if (seq == 0) {
-        return 0;
-    }
-    if (!Sequence_IsValid(seq)) {
-        return 0;
-    }
-    ModelSequence* model = Sequence_AsModel(seq);
-    if (model == 0) {
-        return 0;
-    }
-    return model->rnd;
-}
-
-u8 Sequence_IsFlipped(Sequence* seq) {
-    if (seq == 0) {
-        return 0;
-    }
-    if (!Sequence_IsValid(seq)) {
-        return 0;
-    }
-    ModelSequence* model = Sequence_AsModel(seq);
-    if (model == 0) {
-        return 0;
-    }
-    return model->flipped;
-}
-
-
-void Sequence_SetFlipped(Sequence* seq, s8 flipped) {
-    if (seq != 0) {
-        if (Sequence_IsValid(seq)) {
-            ModelSequence* model = Sequence_AsModel(seq);
-            if (model != 0) {
-                model->flipped = flipped;
-            }
-        }
-    }
-}
-
-u8 Sequence_IsRare(Sequence* seq) {
-    if (seq == 0) {
-        return 0;
-    }
-    if (!Sequence_IsValid(seq)) {
-        return 0;
-    }
-    ModelSequence* model = Sequence_AsModel(seq);
-    if (model == 0) {
-        return 0;
-    }
-    return model->rare;
-}
-
-u8 Sequence_GetFlags(Sequence* seq) {
-    if (seq == 0) {
-        return 0;
-    }
-    if (!Sequence_IsValid(seq)) {
-        return 0;
-    }
-    ModelSequence* model = Sequence_AsModel(seq);
-    if (model == 0) {
-        return 0;
-    }
-    return model->flags;
-}
-
-u16 Sequence_GetID(Sequence* seq) {
-    if (seq == 0) {
-        return 0;
-    }
-    if (Sequence_IsValid(seq)) {
-        return seq->id;
-    }
-    return 0;
-}
-
-u32 Sequence_GetGSmodel(Sequence* seq) {
-    if (seq == 0) {
-        return 0;
-    }
-    if (!Sequence_IsValid(seq)) {
-        return 0;
-    }
-    ModelSequence* model = Sequence_AsModel(seq);
-    if (model == 0) {
-        return 0;
-    }
-    return model->model;
-}
-
-s32 Sequence_GetModelSize(Sequence* seq) {
-    if (seq == 0) {
-        return 0;
-    }
-    if (!Sequence_IsValid(seq)) {
-        return 0;
-    }
-    ModelSequence* model = Sequence_AsModel(seq);
-    if (model == 0) {
-        return 0;
-    }
-    return *(s8*)&model->modelSize;
-}
-
-void Sequence_SetDownFlag(Sequence* seq, u8 down) {
-    if (seq != 0) {
-        if (Sequence_IsValid(seq)) {
-            ModelSequence* model = Sequence_AsModel(seq);
-            if (model != 0) {
-                model->flags = model->flags & ~8;
-                if (down != 0) {
-                    model->flags = model->flags | 0x10;
-                } else {
-                    model->flags = model->flags & 0x10;
-                }
-            }
-        }
-    }
-}
-
+extern "C" {
 void Sequence_SetLookTarget(Sequence* seq, Sequence* target) {
     if (seq != 0) {
         if (Sequence_IsValid(seq)) {
@@ -262,7 +220,257 @@ void Sequence_SetLookTarget(Sequence* seq, Sequence* target) {
         }
     }
 }
-
+}
+extern "C" {
+void Sequence_GetScale(Sequence* seq, GSvec* out) {
+    if (seq != 0) {
+        if (!Sequence_IsValid(seq)) {
+            out->z = 1.0f;
+            out->y = 1.0f;
+            out->x = 1.0f;
+            return;
+        }
+        seq->GetScale(out);
+    }
+}
+}
+extern "C" {
+void Sequence_GetRotation(Sequence* seq, GSvec* out) {
+    if (seq != 0) {
+        if (!Sequence_IsValid(seq)) {
+            out->x = 0.0f;
+            out->y = 0.0f;
+            out->z = 0.0f;
+            return;
+        }
+        seq->GetRotation(out);
+    }
+}
+}
+extern "C" {
+void Sequence_GetPosition(Sequence* seq, GSvec* out) {
+    if (seq != 0) {
+        if (!Sequence_IsValid(seq)) {
+            out->x = 0.0f;
+            out->y = 0.0f;
+            out->z = 0.0f;
+            return;
+        }
+        seq->GetPosition(out);
+    }
+}
+}
+extern "C" {
+void Sequence_SetScale(Sequence* seq, const GSvec* v) {
+    if (seq != 0) {
+        if (Sequence_IsValid(seq)) {
+            seq->SetScale(v);
+        }
+    }
+}
+}
+extern "C" {
+void Sequence_SetRotation(Sequence* seq, const GSvec* v) {
+    if (seq != 0) {
+        if (Sequence_IsValid(seq)) {
+            seq->SetRotation(v);
+        }
+    }
+}
+}
+extern "C" {
+void Sequence_SetPosition(Sequence* seq, const GSvec* v) {
+    if (seq != 0) {
+        if (Sequence_IsValid(seq)) {
+            seq->SetPosition(v);
+        }
+    }
+}
+}
+extern "C" {
+u32 Sequence_GetPokemonRndVal(Sequence* seq) {
+    if (seq == 0) {
+        return 0;
+    }
+    if (!Sequence_IsValid(seq)) {
+        return 0;
+    }
+    ModelSequence* model = Sequence_AsModel(seq);
+    if (model == 0) {
+        return 0;
+    }
+    return model->rnd;
+}
+}
+extern "C" {
+u8 Sequence_IsFlipped(Sequence* seq) {
+    if (seq == 0) {
+        return 0;
+    }
+    if (!Sequence_IsValid(seq)) {
+        return 0;
+    }
+    ModelSequence* model = Sequence_AsModel(seq);
+    if (model == 0) {
+        return 0;
+    }
+    return model->flipped;
+}
+}
+extern "C" {
+void Sequence_SetFlipped(Sequence* seq, s8 flipped) {
+    if (seq != 0) {
+        if (Sequence_IsValid(seq)) {
+            ModelSequence* model = Sequence_AsModel(seq);
+            if (model != 0) {
+                model->flipped = flipped;
+            }
+        }
+    }
+}
+}
+extern "C" {
+u8 Sequence_IsRare(Sequence* seq) {
+    if (seq == 0) {
+        return 0;
+    }
+    if (!Sequence_IsValid(seq)) {
+        return 0;
+    }
+    ModelSequence* model = Sequence_AsModel(seq);
+    if (model == 0) {
+        return 0;
+    }
+    return model->rare;
+}
+}
+extern "C" {
+u8 Sequence_GetFlags(Sequence* seq) {
+    if (seq == 0) {
+        return 0;
+    }
+    if (!Sequence_IsValid(seq)) {
+        return 0;
+    }
+    ModelSequence* model = Sequence_AsModel(seq);
+    if (model == 0) {
+        return 0;
+    }
+    return model->flags;
+}
+}
+extern "C" {
+u16 Sequence_GetID(Sequence* seq) {
+    if (seq == 0) {
+        return 0;
+    }
+    if (Sequence_IsValid(seq)) {
+        return seq->id;
+    }
+    return 0;
+}
+}
+extern "C" {
+u32 Sequence_GetGSmodel(Sequence* seq) {
+    if (seq == 0) {
+        return 0;
+    }
+    if (!Sequence_IsValid(seq)) {
+        return 0;
+    }
+    ModelSequence* model = Sequence_AsModel(seq);
+    if (model == 0) {
+        return 0;
+    }
+    return model->model;
+}
+}
+extern "C" {
+s32 Sequence_GetModelSize(Sequence* seq) {
+    if (seq == 0) {
+        return 0;
+    }
+    if (!Sequence_IsValid(seq)) {
+        return 0;
+    }
+    ModelSequence* model = Sequence_AsModel(seq);
+    if (model == 0) {
+        return 0;
+    }
+    return *(s8*)&model->modelSize;
+}
+}
+extern "C" {
+void Sequence_SetDownFlag(Sequence* seq, u8 down) {
+    if (seq != 0) {
+        if (Sequence_IsValid(seq)) {
+            ModelSequence* model = Sequence_AsModel(seq);
+            if (model != 0) {
+                model->flags = model->flags & ~8;
+                if (down != 0) {
+                    model->flags = model->flags | 0x10;
+                } else {
+                    model->flags = model->flags & 0x10;
+                }
+            }
+        }
+    }
+}
+}
+extern "C" {
+WazaSequence* Sequence_GetWaza(Sequence* seq, u16 a, u16 b) {
+    if (seq == 0) {
+        return 0;
+    }
+    if (Sequence_IsValid(seq)) {
+        return ((NullSequence*)seq)->GetWaza(a, b);
+    }
+    return 0;
+}
+}
+extern "C" {
+void Sequence_FreeAllWaza(Sequence* seq) {
+    if (seq != 0) {
+        if (Sequence_IsValid(seq)) {
+            ((NullSequence*)seq)->FreeAllWaza();
+        }
+    }
+}
+}
+extern "C" {
+void Sequence_Free(Sequence* seq) {
+    if (seq != 0) {
+        if (Sequence_IsValid(seq)) {
+            delete seq;
+        }
+    }
+}
+}
+extern "C" {
+void Sequence_DoAnimation(Sequence* seq, int anim) {
+    if (seq != 0) {
+        if (Sequence_IsValid(seq)) {
+            ModelSequence* model = Sequence_AsModel(seq);
+            if (model != 0) {
+                model->DoModelAnimation(anim);
+            }
+        }
+    }
+}
+}
+extern "C" {
+void Sequence_Talk(Sequence* seq) {
+    if (seq != 0) {
+        if (Sequence_IsValid(seq)) {
+            ModelSequence* model = Sequence_AsModel(seq);
+            if (model != 0) {
+                model->Talk();
+            }
+        }
+    }
+}
+}
+extern "C" {
 void Sequence_CopyState(Sequence* dst, Sequence* src) {
     if (dst != 0) {
         if (Sequence_IsValid(dst)) {
@@ -279,55 +487,8 @@ void Sequence_CopyState(Sequence* dst, Sequence* src) {
         }
     }
 }
-
-WazaSequence* Sequence_GetWaza(Sequence* seq, u16 a, u16 b) {
-    if (seq == 0) {
-        return 0;
-    }
-    if (Sequence_IsValid(seq)) {
-        return ((NullSequence*)seq)->GetWaza(a, b);
-    }
-    return 0;
 }
-
-void Sequence_FreeAllWaza(Sequence* seq) {
-    if (seq != 0) {
-        if (Sequence_IsValid(seq)) {
-            ((NullSequence*)seq)->FreeAllWaza();
-        }
-    }
-}
-
-void Sequence_Free(Sequence* seq) {
-    if (seq != 0) {
-        if (Sequence_IsValid(seq)) {
-            delete seq;
-        }
-    }
-}
-
-void Sequence_DoAnimation(Sequence* seq, int anim) {
-    if (seq != 0) {
-        if (Sequence_IsValid(seq)) {
-            ModelSequence* model = Sequence_AsModel(seq);
-            if (model != 0) {
-                model->DoModelAnimation(anim);
-            }
-        }
-    }
-}
-
-void Sequence_Talk(Sequence* seq) {
-    if (seq != 0) {
-        if (Sequence_IsValid(seq)) {
-            ModelSequence* model = Sequence_AsModel(seq);
-            if (model != 0) {
-                model->Talk();
-            }
-        }
-    }
-}
-
+extern "C" {
 void Sequence_SetFlags(Sequence* seq, u8 flags) {
     if (seq != 0) {
         if (Sequence_IsValid(seq)) {
@@ -338,7 +499,8 @@ void Sequence_SetFlags(Sequence* seq, u8 flags) {
         }
     }
 }
-
+}
+extern "C" {
 void Sequence_SetDefaultFlags(Sequence* seq) {
     if (seq != 0) {
         if (Sequence_IsValid(seq)) {
@@ -349,7 +511,8 @@ void Sequence_SetDefaultFlags(Sequence* seq) {
         }
     }
 }
-
+}
+extern "C" {
 void Sequence_ResetStatus(Sequence* seq, u8 status) {
     if (seq != 0) {
         if (Sequence_IsValid(seq)) {
@@ -360,7 +523,8 @@ void Sequence_ResetStatus(Sequence* seq, u8 status) {
         }
     }
 }
-
+}
+extern "C" {
 void Sequence_SetStatus(Sequence* seq, u8 status) {
     if (seq != 0) {
         if (Sequence_IsValid(seq)) {
@@ -371,7 +535,8 @@ void Sequence_SetStatus(Sequence* seq, u8 status) {
         }
     }
 }
-
+}
+extern "C" {
 void Sequence_SetVisibility(Sequence* seq, bool visible) {
     if (seq != 0) {
         if (Sequence_IsValid(seq)) {
@@ -379,269 +544,23 @@ void Sequence_SetVisibility(Sequence* seq, bool visible) {
         }
     }
 }
-
+}
+extern "C" {
 ModelSequence* Sequence_LoadPokemon(u16 id, u32 rnd, bool rare) {
     return New_ModelSequence(id, rnd, rare);
 }
-
+}
+extern "C" {
 ModelSequence* Sequence_LoadTrainer(u16 id) {
     return New_ModelSequence(id);
 }
-
+}
+extern "C" {
 NullSequence* Sequence_CreateNull() {
     return New_NullSequence();
 }
-
 }
-
-u32 wazaSequenceSysGetSleepParticle() {
-    return g_SleepParticle;
-}
-
-u32 wazaSequenceSysGetIceParticle() {
-    return g_IceParticle;
-}
-
-u32 wazaSequenceSysGetModelShadowLight() {
-    return _modelShadowLight;
-}
-
-s32 wazaSequenceSysGetModelShadowCount() {
-    return _modelShadowCount;
-}
-
-u32* wazaSequenceSysGetModelShadowList() {
-    return _modelShadowList;
-}
-
 extern "C" {
-
-void wazaSequenceSysEnableLayerChange() {
-    g_EnableModelLayerChange = 1;
-}
-
-s32 wazaSequenceSysGetResID() {
-    if ((u32)(_resource_id_count + 0x10000) == 0xFFFF) {
-        _resource_id_count = 0;
-    }
-    return ++_resource_id_count;
-}
-
-s32 wazaSequenceSysIsValidSequence(Sequence* seq) {
-    Sequence* p = g_Sequences;
-    if (seq == 0) {
-        return 0;
-    }
-    for (; p != 0; p = p->next) {
-        if (p == seq) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-s32 wazaSequenceSysIsValidWaza(WazaSequence* waza) {
-    Sequence* p = g_Sequences;
-    if (waza == 0) {
-        return 0;
-    }
-    for (; p != 0; p = p->next) {
-        WazaSequence* w = p->wazaList;
-        for (; w != 0; w = w->next) {
-            if (w == waza) {
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-
-s32 wazaSequenceSysLastWazaIsImpactPoint(u8 point) {
-    if (g_LastStartedWaza != 0) {
-        return g_LastStartedWaza->IsImpactPoint(point);
-    }
-    return 1;
-}
-
-
-void wazaSequenceSysFreeAllWazaExcept(Sequence* seq, WazaSequence* except) {
-    if (Sequence_IsValid(seq)) {
-        WazaSequence* w = seq->wazaList;
-        for (; w != 0; ) {
-            WazaSequence* next = w->next;
-            if (w != except) {
-                delete w;
-            }
-            w = next;
-        }
-    }
-}
-
-}
-
-static void wazaSequenceSysApplyStop() {
-    Sequence* seq = g_Sequences;
-    for (; seq != 0; seq = seq->next) {
-        WazaSequence* w = seq->wazaList;
-        for (; w != 0; w = w->next) {
-            bool stop = false;
-            if (w->active != 0 && w->stopped != 0) {
-                stop = true;
-            }
-            if (stop) {
-                w->ApplyStop();
-            }
-        }
-    }
-}
-
-extern "C" {
-
-void wazaSequenceSysFreeAllWaza() {
-    Sequence* seq = g_Sequences;
-    for (; seq != 0; seq = seq->next) {
-        ((NullSequence*)seq)->FreeAllWaza();
-    }
-}
-
-void wazaSequenceSysSetVisibilityAll(bool visible) {
-    Sequence* seq = g_Sequences;
-    for (; seq != 0; seq = seq->next) {
-        seq->SetVisibility(visible);
-    }
-}
-
-u16 wazaSequenceSysGetActiveWazaNum() {
-    u16 count = 0;
-    Sequence* seq = g_Sequences;
-    for (; seq != 0; seq = seq->next) {
-        WazaSequence* w = seq->wazaList;
-        for (; w != 0; w = w->next) {
-            u8 running = 0;
-            if (w->active != 0 && w->stopped == 0) {
-                running = 1;
-            }
-            if (running) {
-                count++;
-            }
-        }
-    }
-    return count;
-}
-
-}
-
-static u32 wazaSequenceSysLoadResource(unsigned long group, unsigned long id) {
-    return loadResourceInline(group, id);
-}
-
-static inline void waitResourceLoad(u32 group) {
-    while (((s32(*)(u32))GSfsysGetStatus)(group) == 1) {
-        GSthreadSwitch();
-    }
-}
-static void wazaSequenceSysFreeSequenceResource(ModelSequence* seq) {
-    if (seq->resourceGroup != 0) {
-        u16 id = seq->resourceGroup;
-        Sequence* s;
-        int count;
-        ModelSequence* m;
-        count = 0;
-        for (s = g_Sequences; s != 0; s = s->next) {
-            m = Sequence_AsModel(s);
-            if (m != 0 && id == m->resourceGroup) {
-                count++;
-            }
-        }
-        if (count == 1) {
-            waitResourceLoad(id);
-            ((void(*)(u32))GSresFreeGroup)(id);
-            ((void(*)(u32))GSfsysFree)(id);
-        }
-    }
-}
-
-
-static inline void freeWazaRes(u16 id) {
-    if (id != 0) {
-        int count;
-        WazaSequence* w;
-        Sequence* s;
-        count = 0;
-        for (s = g_Sequences; s != 0; s = s->next) {
-            for (w = s->wazaList; w != 0; w = w->next) {
-                if (id == w->resId) {
-                    count++;
-                }
-            }
-        }
-        if (count == 1) {
-            waitResourceLoad(id);
-            ((void(*)(u32))GSresFreeGroup)(id);
-            ((void(*)(u32))GSfsysFree)(id);
-        }
-    }
-}
-static void wazaSequenceSysFreeWazaResource(WazaSequence* waza) {
-    freeWazaRes(waza->resId);
-}
-
-static void wazaSequenceSysResetAnimationExcept(ModelSequence* except) {
-    Sequence* p = g_Sequences;
-    if (except == 0) {
-        return;
-    }
-    for (; p != 0; p = p->next) {
-        ModelSequence* m = Sequence_AsModel(p);
-        if (except != m && m->isPokemon != 0) {
-            m->DoDefaultAnimation(GSMODEL_ANIM_TYPE_1, false);
-        }
-    }
-}
-
-extern "C" {
-
-static inline void wazaSequenceSysFreeShakeModels(u32 *models) {
-    for (s32 i = 0; i < 9; i++) {
-        if (models[i] != 0) {
-            GSmodelFree(models[i]);
-            models[i] = 0;
-        }
-    }
-}
-void wazaSequenceSysRelease() {
-    Sequence* p = g_Sequences;
-    while (p != 0) {
-        Sequence* next = p->next;
-        delete p;
-        p = next;
-    }
-    g_Sequences = 0;
-    if (g_IceParticle != 0 || g_SleepParticle != 0) {
-        GSresFreeGroup(0x6F7);
-        GSfsysFree(0x6F7);
-        g_IceParticle = 0;
-        g_SleepParticle = 0;
-    }
-    wazaSequenceSysFreeShakeModels(gCameraShakeModels);
-    gCameraShakeModel = 0;
-    GSresFreeGroup(0x634);
-    GSfsysFree(0x634);
-    _modelShadowCount = 0;
-    _modelShadowLight = 0;
-    memset(_modelShadowList, 0, 0);
-    if (g_SoundListener != 0) {
-        GSsndFreeListener(g_SoundListener);
-        g_SoundListener = 0;
-    }
-}
-
-void wazaSequenceSysInitExtras() {
-    g_IceParticle = loadResourceInline(0x6F7, 0x205D2400);
-    g_SleepParticle = loadResourceInline(0x6F7, 0x11052400);
-    _wazaSequenceSysCameraShakeInit();
-}
-
 u32 wazaSequenceSysGetWazaGroupID(u16 a, u16 b) {
     u16 id = wazaSequenceSysGetResourceID(0, a, b, 0);
     if (id != 0) {
@@ -649,296 +568,8 @@ u32 wazaSequenceSysGetWazaGroupID(u16 a, u16 b) {
     }
     return 0;
 }
-
 }
-
-extern "C" {
-
-#pragma global_optimizer off
-void wazaSequenceSysUpdate() {
-    u8 rate = GSgfxVideoGetVsyncRate();
-    f32 fr = rate;
-    f32 dt = GSgfxVideoGetLastRenderTime(rate) / fr;
-    WazaSequence* w;
-    Sequence* seq = g_Sequences;
-    u32 camera;
-    for (; seq != 0; seq = seq->next) {
-        w = seq->wazaList;
-        for (; w != 0; w = w->next) {
-            u8 stop = 0;
-            if (w->active != 0 && w->stopped != 0) {
-                stop = 1;
-            }
-            if (stop) {
-                w->ApplyStop();
-            }
-        }
-    }
-    seq = g_Sequences;
-    for (; seq != 0; seq = seq->next) {
-        seq->Update(dt);
-    }
-    camera = GScameraGetActiveCamera();
-    if (camera != 0) {
-        GSvec pos;
-        GSvec look;
-        GSvec up;
-        GScameraLoadActiveCameraMatrix(-1);
-        GScameraGetPosition(camera, &pos);
-        GScameraGetLookAt(camera, &up, &look);
-        PSVECSubtract(&look, &pos, &look);
-        PSVECNormalize(&look, &look);
-        if (g_SoundListener != 0) {
-            GSsndUpdateListenerParam(g_SoundListener, &pos, &look, &up);
-        } else {
-            g_SoundListener = GSsndCreateListenerParam(&pos, &zeroVector, &look, &up, 0x7F, 250.0f, 250.0f, 360.0f);
-        }
-    }
-}
-#pragma global_optimizer on
-
-}
-
-struct WazaTimeRec {
-    s32 count;
-    f32 pad;
-    f32 times[3];
-};
-f32 wazaSequenceSysGetWazaTime(ModelSequence* seq, WazaSequence* waza, u8 phase) {
-    f32 t = *(f32*)((u8*)waza + 4);
-    WazaTimeRec* rec = (WazaTimeRec*)(*(u8**)((u8*)seq + 0x9C) + waza->index * 0xD0);
-    if ((s32)phase == -1) {
-        return 0.0f;
-    }
-    if (phase == 0) {
-        return t;
-    }
-    if (phase == 3 || phase == 4) {
-        return t + (&rec->pad)[rec->count + 1];
-    }
-    if (phase == 1) {
-        return t + *(f32*)((u8*)rec + 0x10);
-    }
-    if (phase == 2) {
-        s32 count = rec->count;
-        if (count > 2) {
-            return t + (&rec->pad)[count];
-        }
-        return t + (&rec->pad)[count + 1];
-    }
-    return 0.0f;
-}
-
-struct PartAnimData {
-    u8 type;
-    u8 count;
-    u8 parts[8];
-    u8 texParts[8];
-    u8 index;
-};
-
-extern "C" {
-void GSmodelLinkTexAnimToAnim(_GSmodel*, u8);
-void GSmodelSetTexAnimType(_GSmodel*, s32);
-void GSmodelSetTexAnimFrame(_GSmodel*, f32);
-void GSmodelSetPartAnimIndex(_GSmodel*, u32, u32, f32, u32);
-void GSmodelSetPartTexAnimIndex(_GSmodel*, u32, u32, u32, f32, u32);
-}
-
-void wazaSequenceSysPartAnimationStart(_GSmodel* model, PartAnimData* data) {
-    u8 i;
-    u8 n;
-    u8* part;
-    u8* tex;
-    switch (data->type) {
-    case 1:
-        GSmodelLinkTexAnimToAnim(model, 0);
-        GSmodelSetTexAnimIndex(model, data->index);
-        GSmodelSetTexAnimRate(model, 0.5f);
-        GSmodelSetTexAnimType(model, 0);
-        GSmodelSetTexAnimFrame(model, 0.0f);
-        GSmodelStartTexAnimation(model);
-        break;
-    case 2:
-        n = data->count;
-        part = data->parts;
-        tex = data->texParts;
-        for (i = 0; i < n; i++, part++, tex++) {
-            if (*part != 0xFF) {
-                if (*tex == 0xFF) {
-                    GSmodelSetPartAnimIndex(model, *part, data->index, 0.0f, 0);
-                } else {
-                    GSmodelSetPartTexAnimIndex(model, *part, *tex, data->index, 0.0f, 0);
-                }
-            }
-        }
-        break;
-    }
-}
-
-extern "C" {
-
-void wazaSequenceSysInit() {
-    GSvec pos;
-    GSvec look;
-    GSvec up;
-    Sequence* p;
-    Sequence* next;
-    u32 group;
-    s32 floor;
-    s32 light;
-    u32 i;
-    u32 shadowNum;
-    u32 camera;
-    camera = GScameraGetActiveCamera();
-    p = g_Sequences;
-    while (p != 0) {
-        next = p->next;
-        delete p;
-        p = next;
-    }
-    g_Sequences = 0;
-    if (g_IceParticle != 0 || g_SleepParticle != 0) {
-        GSresFreeGroup(0x6F7);
-        GSfsysFree(0x6F7);
-        g_IceParticle = 0;
-        g_SleepParticle = 0;
-    }
-    wazaSequenceSysFreeShakeModels(gCameraShakeModels);
-    gCameraShakeModel = 0;
-    GSresFreeGroup(0x634);
-    GSfsysFree(0x634);
-    _modelShadowCount = 0;
-    _modelShadowLight = 0;
-    memset(_modelShadowList, 0, 0);
-    if (g_SoundListener != 0) {
-        GSsndFreeListener(g_SoundListener);
-        g_SoundListener = 0;
-    }
-    if (camera != 0) {
-        GScameraGetPosition(camera, &pos);
-        GScameraGetLookAt(camera, &up, &look);
-        PSVECSubtract(&look, &pos, &look);
-        PSVECNormalize(&look, &look);
-        g_SoundListener = GSsndCreateListenerParam(&pos, &zeroVector, &look, &up, 0x7F, 250.0f, 250.0f, 360.0f);
-    }
-    floor = floorDataBiosGetCurrentPtr();
-    group = floorDataBiosGetGroupID(floor);
-    switch (floorDataBiosGetFloorKind(floor)) {
-    case 2:
-    case 4:
-        g_EnableModelLayerChange = 1;
-        break;
-    case 3:
-    default:
-        g_EnableModelLayerChange = 0;
-        break;
-    }
-    shadowNum = floorDataBiosGetShadowReciveNum(floor);
-    if (shadowNum > 0x10) {
-        shadowNum = 0x10;
-    }
-    _modelShadowCount = 0;
-    for (i = 0; i < shadowNum; i++) {
-        u32 res = (u32)GSresGetResource(group, floorDataBiosGetShadowReciveID(floor, i));
-        if (res != 0) {
-            _modelShadowList[_modelShadowCount++] = res;
-        }
-    }
-    light = floorDataBiosGetShadowLightID(floor);
-    if (light != 0) {
-        _modelShadowLight = (u32)GSresGetResource(group, light);
-    }
-}
-
-}
-
-static void _wazaSequenceSysCameraShakeInit() {
-    u32* out = gCameraShakeModels;
-    u32 res;
-    u32 model;
-    res = loadResourceInline(0x634, 0x102E1000);
-    if (res != 0) {
-        model = _wazaSequenceSysLoadModel(res);
-        *out = model;
-        if (model != 0) {
-            GSmodelSetVisibility(model, 0);
-        }
-        out++;
-    }
-    res = loadResourceInline(0x634, 0x102B1000);
-    if (res != 0) {
-        model = _wazaSequenceSysLoadModel(res);
-        *out = model;
-        if (*out != 0) {
-            GSmodelSetVisibility(*out, 0);
-        }
-        out++;
-    }
-    res = loadResourceInline(0x634, 0x10271000);
-    if (res != 0) {
-        model = _wazaSequenceSysLoadModel(res);
-        *out = model;
-        if (*out != 0) {
-            GSmodelSetVisibility(*out, 0);
-        }
-        out++;
-    }
-    res = loadResourceInline(0x634, 0x102C1000);
-    if (res != 0) {
-        model = _wazaSequenceSysLoadModel(res);
-        *out = model;
-        if (*out != 0) {
-            GSmodelSetVisibility(*out, 0);
-        }
-        out++;
-    }
-    res = loadResourceInline(0x634, 0x10281000);
-    if (res != 0) {
-        model = _wazaSequenceSysLoadModel(res);
-        *out = model;
-        if (*out != 0) {
-            GSmodelSetVisibility(*out, 0);
-        }
-        out++;
-    }
-    res = loadResourceInline(0x634, 0x10251000);
-    if (res != 0) {
-        model = _wazaSequenceSysLoadModel(res);
-        *out = model;
-        if (*out != 0) {
-            GSmodelSetVisibility(*out, 0);
-        }
-        out++;
-    }
-    res = loadResourceInline(0x634, 0x102D1000);
-    if (res != 0) {
-        model = _wazaSequenceSysLoadModel(res);
-        *out = model;
-        if (*out != 0) {
-            GSmodelSetVisibility(*out, 0);
-        }
-        out++;
-    }
-    res = loadResourceInline(0x634, 0x10291000);
-    if (res != 0) {
-        model = _wazaSequenceSysLoadModel(res);
-        *out = model;
-        if (*out != 0) {
-            GSmodelSetVisibility(*out, 0);
-        }
-        out++;
-    }
-    res = loadResourceInline(0x634, 0x10261000);
-    if (res != 0) {
-        model = _wazaSequenceSysLoadModel(res);
-        *out = model;
-        if (*out != 0) {
-            GSmodelSetVisibility(*out, 0);
-        }
-    }
-}
-
+extern "C++" {
 u16 wazaSequenceSysGetResourceID(ModelSequence* seq, u16 waza, u16 kind, u8 variant) {
     u16 begin;
     int pokemon;
@@ -1025,8 +656,8 @@ u16 wazaSequenceSysGetResourceID(ModelSequence* seq, u16 waza, u16 kind, u8 vari
     }
     return resource;
 }
-
-
+}
+extern "C++" {
 f32 wazaSequenceSysNullGetWazaTime(WazaSequence* sequence, u8 event) {
     u16 duration;
     switch (sequence->index) {
@@ -1070,4 +701,492 @@ f32 wazaSequenceSysNullGetWazaTime(WazaSequence* sequence, u8 event) {
         }
     }
     return 0.0f;
+}
+}
+extern "C++" {
+f32 wazaSequenceSysGetWazaTime(ModelSequence* seq, WazaSequence* waza, u8 phase) {
+    f32 t = *(f32*)((u8*)waza + 4);
+    WazaTimeRec* rec = (WazaTimeRec*)(*(u8**)((u8*)seq + 0x9C) + waza->index * 0xD0);
+    if ((s32)phase == -1) {
+        return 0.0f;
+    }
+    if (phase == 0) {
+        return t;
+    }
+    if (phase == 3 || phase == 4) {
+        return t + (&rec->pad)[rec->count + 1];
+    }
+    if (phase == 1) {
+        return t + *(f32*)((u8*)rec + 0x10);
+    }
+    if (phase == 2) {
+        s32 count = rec->count;
+        if (count > 2) {
+            return t + (&rec->pad)[count];
+        }
+        return t + (&rec->pad)[count + 1];
+    }
+    return 0.0f;
+}
+}
+extern "C++" {
+void wazaSequenceSysPartAnimationStart(_GSmodel* model, PartAnimData* data) {
+    u8 i;
+    u8 n;
+    u8* part;
+    u8* tex;
+    switch (data->type) {
+    case 1:
+        GSmodelLinkTexAnimToAnim(model, 0);
+        GSmodelSetTexAnimIndex(model, data->index);
+        GSmodelSetTexAnimRate(model, 0.5f);
+        GSmodelSetTexAnimType(model, 0);
+        GSmodelSetTexAnimFrame(model, 0.0f);
+        GSmodelStartTexAnimation(model);
+        break;
+    case 2:
+        n = data->count;
+        part = data->parts;
+        tex = data->texParts;
+        for (i = 0; i < n; i++, part++, tex++) {
+            if (*part != 0xFF) {
+                if (*tex == 0xFF) {
+                    GSmodelSetPartAnimIndex(model, *part, data->index, 0.0f, 0);
+                } else {
+                    GSmodelSetPartTexAnimIndex(model, *part, *tex, data->index, 0.0f, 0);
+                }
+            }
+        }
+        break;
+    }
+}
+}
+extern "C++" {
+u32 wazaSequenceSysGetSleepParticle() {
+    return g_SleepParticle;
+}
+}
+extern "C++" {
+u32 wazaSequenceSysGetIceParticle() {
+    return g_IceParticle;
+}
+}
+extern "C" {
+void wazaSequenceSysSetVisibilityAll(bool visible) {
+    Sequence* seq = g_Sequences;
+    for (; seq != 0; seq = seq->next) {
+        seq->SetVisibility(visible);
+    }
+}
+}
+extern "C" {
+u16 wazaSequenceSysGetActiveWazaNum() {
+    u16 count = 0;
+    Sequence* seq = g_Sequences;
+    for (; seq != 0; seq = seq->next) {
+        WazaSequence* w = seq->wazaList;
+        for (; w != 0; w = w->next) {
+            u8 running = 0;
+            if (w->active != 0 && w->stopped == 0) {
+                running = 1;
+            }
+            if (running) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+}
+extern "C" {
+s32 wazaSequenceSysLastWazaIsImpactPoint(u8 point) {
+    if (g_LastStartedWaza != 0) {
+        return g_LastStartedWaza->IsImpactPoint(point);
+    }
+    return 1;
+}
+}
+extern "C" {
+void wazaSequenceSysFreeAllWazaExcept(Sequence* seq, WazaSequence* except) {
+    if (Sequence_IsValid(seq)) {
+        WazaSequence* w = seq->wazaList;
+        for (; w != 0; ) {
+            WazaSequence* next = w->next;
+            if (w != except) {
+                delete w;
+            }
+            w = next;
+        }
+    }
+}
+}
+extern "C" {
+void wazaSequenceSysFreeAllWaza() {
+    Sequence* seq = g_Sequences;
+    for (; seq != 0; seq = seq->next) {
+        ((NullSequence*)seq)->FreeAllWaza();
+    }
+}
+}
+extern "C" {
+void wazaSequenceSysRelease() {
+    Sequence* p = g_Sequences;
+    while (p != 0) {
+        Sequence* next = p->next;
+        delete p;
+        p = next;
+    }
+    g_Sequences = 0;
+    if (g_IceParticle != 0 || g_SleepParticle != 0) {
+        GSresFreeGroup(0x6F7);
+        GSfsysFree(0x6F7);
+        g_IceParticle = 0;
+        g_SleepParticle = 0;
+    }
+    wazaSequenceSysFreeShakeModels(gCameraShakeModels);
+    gCameraShakeModel = 0;
+    GSresFreeGroup(0x634);
+    GSfsysFree(0x634);
+    _modelShadowCount = 0;
+    _modelShadowLight = 0;
+    memset(_modelShadowList, 0, 0);
+    if (g_SoundListener != 0) {
+        GSsndFreeListener(g_SoundListener);
+        g_SoundListener = 0;
+    }
+}
+}
+extern "C" {
+s32 wazaSequenceSysIsValidSequence(Sequence* seq) {
+    Sequence* p = g_Sequences;
+    if (seq == 0) {
+        return 0;
+    }
+    for (; p != 0; p = p->next) {
+        if (p == seq) {
+            return 1;
+        }
+    }
+    return 0;
+}
+}
+extern "C" {
+s32 wazaSequenceSysIsValidWaza(WazaSequence* waza) {
+    Sequence* p = g_Sequences;
+    if (waza == 0) {
+        return 0;
+    }
+    for (; p != 0; p = p->next) {
+        WazaSequence* w = p->wazaList;
+        for (; w != 0; w = w->next) {
+            if (w == waza) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+}
+extern "C" {
+void wazaSequenceSysEnableLayerChange() {
+    g_EnableModelLayerChange = 1;
+}
+}
+extern "C" {
+void wazaSequenceSysInit() {
+    GSvec pos;
+    GSvec look;
+    GSvec up;
+    Sequence* p;
+    Sequence* next;
+    u32 group;
+    s32 floor;
+    s32 light;
+    u32 i;
+    u32 shadowNum;
+    u32 camera;
+    camera = GScameraGetActiveCamera();
+    p = g_Sequences;
+    while (p != 0) {
+        next = p->next;
+        delete p;
+        p = next;
+    }
+    g_Sequences = 0;
+    if (g_IceParticle != 0 || g_SleepParticle != 0) {
+        GSresFreeGroup(0x6F7);
+        GSfsysFree(0x6F7);
+        g_IceParticle = 0;
+        g_SleepParticle = 0;
+    }
+    wazaSequenceSysFreeShakeModels(gCameraShakeModels);
+    gCameraShakeModel = 0;
+    GSresFreeGroup(0x634);
+    GSfsysFree(0x634);
+    _modelShadowCount = 0;
+    _modelShadowLight = 0;
+    memset(_modelShadowList, 0, 0);
+    if (g_SoundListener != 0) {
+        GSsndFreeListener(g_SoundListener);
+        g_SoundListener = 0;
+    }
+    if (camera != 0) {
+        GScameraGetPosition(camera, &pos);
+        GScameraGetLookAt(camera, &up, &look);
+        PSVECSubtract(&look, &pos, &look);
+        PSVECNormalize(&look, &look);
+        g_SoundListener = GSsndCreateListenerParam(&pos, &zeroVector, &look, &up, 0x7F, 250.0f, 250.0f, 360.0f);
+    }
+    floor = floorDataBiosGetCurrentPtr();
+    group = floorDataBiosGetGroupID(floor);
+    switch (floorDataBiosGetFloorKind(floor)) {
+    case 2:
+    case 4:
+        g_EnableModelLayerChange = 1;
+        break;
+    case 3:
+    default:
+        g_EnableModelLayerChange = 0;
+        break;
+    }
+    shadowNum = floorDataBiosGetShadowReciveNum(floor);
+    if (shadowNum > 0x10) {
+        shadowNum = 0x10;
+    }
+    _modelShadowCount = 0;
+    for (i = 0; i < shadowNum; i++) {
+        u32 res = (u32)GSresGetResource(group, floorDataBiosGetShadowReciveID(floor, i));
+        if (res != 0) {
+            _modelShadowList[_modelShadowCount++] = res;
+        }
+    }
+    light = floorDataBiosGetShadowLightID(floor);
+    if (light != 0) {
+        _modelShadowLight = (u32)GSresGetResource(group, light);
+    }
+}
+}
+extern "C" {
+void wazaSequenceSysInitExtras() {
+    g_IceParticle = loadResourceInline(0x6F7, 0x205D2400);
+    g_SleepParticle = loadResourceInline(0x6F7, 0x11052400);
+    _wazaSequenceSysCameraShakeInit();
+}
+}
+extern "C++" {
+static void _wazaSequenceSysCameraShakeInit() {
+    u32* out = gCameraShakeModels;
+    u32 res;
+    u32 model;
+    res = loadResourceInline(0x634, 0x102E1000);
+    if (res != 0) {
+        model = _wazaSequenceSysLoadModel(res);
+        *out = model;
+        if (model != 0) {
+            GSmodelSetVisibility(model, 0);
+        }
+        out++;
+    }
+    res = loadResourceInline(0x634, 0x102B1000);
+    if (res != 0) {
+        model = _wazaSequenceSysLoadModel(res);
+        *out = model;
+        if (*out != 0) {
+            GSmodelSetVisibility(*out, 0);
+        }
+        out++;
+    }
+    res = loadResourceInline(0x634, 0x10271000);
+    if (res != 0) {
+        model = _wazaSequenceSysLoadModel(res);
+        *out = model;
+        if (*out != 0) {
+            GSmodelSetVisibility(*out, 0);
+        }
+        out++;
+    }
+    res = loadResourceInline(0x634, 0x102C1000);
+    if (res != 0) {
+        model = _wazaSequenceSysLoadModel(res);
+        *out = model;
+        if (*out != 0) {
+            GSmodelSetVisibility(*out, 0);
+        }
+        out++;
+    }
+    res = loadResourceInline(0x634, 0x10281000);
+    if (res != 0) {
+        model = _wazaSequenceSysLoadModel(res);
+        *out = model;
+        if (*out != 0) {
+            GSmodelSetVisibility(*out, 0);
+        }
+        out++;
+    }
+    res = loadResourceInline(0x634, 0x10251000);
+    if (res != 0) {
+        model = _wazaSequenceSysLoadModel(res);
+        *out = model;
+        if (*out != 0) {
+            GSmodelSetVisibility(*out, 0);
+        }
+        out++;
+    }
+    res = loadResourceInline(0x634, 0x102D1000);
+    if (res != 0) {
+        model = _wazaSequenceSysLoadModel(res);
+        *out = model;
+        if (*out != 0) {
+            GSmodelSetVisibility(*out, 0);
+        }
+        out++;
+    }
+    res = loadResourceInline(0x634, 0x10291000);
+    if (res != 0) {
+        model = _wazaSequenceSysLoadModel(res);
+        *out = model;
+        if (*out != 0) {
+            GSmodelSetVisibility(*out, 0);
+        }
+        out++;
+    }
+    res = loadResourceInline(0x634, 0x10261000);
+    if (res != 0) {
+        model = _wazaSequenceSysLoadModel(res);
+        *out = model;
+        if (*out != 0) {
+            GSmodelSetVisibility(*out, 0);
+        }
+    }
+}
+}
+extern "C" {
+s32 wazaSequenceSysGetResID() {
+    if ((u32)(_resource_id_count + 0x10000) == 0xFFFF) {
+        _resource_id_count = 0;
+    }
+    return ++_resource_id_count;
+}
+}
+#pragma global_optimizer off
+extern "C" {
+void wazaSequenceSysUpdate() {
+    u8 rate = GSgfxVideoGetVsyncRate();
+    f32 fr = rate;
+    f32 dt = GSgfxVideoGetLastRenderTime(rate) / fr;
+    WazaSequence* w;
+    Sequence* seq = g_Sequences;
+    u32 camera;
+    for (; seq != 0; seq = seq->next) {
+        w = seq->wazaList;
+        for (; w != 0; w = w->next) {
+            u8 stop = 0;
+            if (w->active != 0 && w->stopped != 0) {
+                stop = 1;
+            }
+            if (stop) {
+                w->ApplyStop();
+            }
+        }
+    }
+    seq = g_Sequences;
+    for (; seq != 0; seq = seq->next) {
+        seq->Update(dt);
+    }
+    camera = GScameraGetActiveCamera();
+    if (camera != 0) {
+        GSvec pos;
+        GSvec look;
+        GSvec up;
+        GScameraLoadActiveCameraMatrix(-1);
+        GScameraGetPosition(camera, &pos);
+        GScameraGetLookAt(camera, &up, &look);
+        PSVECSubtract(&look, &pos, &look);
+        PSVECNormalize(&look, &look);
+        if (g_SoundListener != 0) {
+            GSsndUpdateListenerParam(g_SoundListener, &pos, &look, &up);
+        } else {
+            g_SoundListener = GSsndCreateListenerParam(&pos, &zeroVector, &look, &up, 0x7F, 250.0f, 250.0f, 360.0f);
+        }
+    }
+}
+}
+#pragma global_optimizer on
+extern "C++" {
+void wazaSequenceSysApplyStop() {
+    Sequence* seq = g_Sequences;
+    for (; seq != 0; seq = seq->next) {
+        WazaSequence* w = seq->wazaList;
+        for (; w != 0; w = w->next) {
+            bool stop = false;
+            if (w->active != 0 && w->stopped != 0) {
+                stop = true;
+            }
+            if (stop) {
+                w->ApplyStop();
+            }
+        }
+    }
+}
+}
+extern "C++" {
+void wazaSequenceSysFreeSequenceResource(ModelSequence* seq) {
+    if (seq->resourceGroup != 0) {
+        u16 id = seq->resourceGroup;
+        Sequence* s;
+        int count;
+        ModelSequence* m;
+        count = 0;
+        for (s = g_Sequences; s != 0; s = s->next) {
+            m = Sequence_AsModel(s);
+            if (m != 0 && id == m->resourceGroup) {
+                count++;
+            }
+        }
+        if (count == 1) {
+            waitResourceLoad(id);
+            ((void(*)(u32))GSresFreeGroup)(id);
+            ((void(*)(u32))GSfsysFree)(id);
+        }
+    }
+}
+}
+extern "C++" {
+void wazaSequenceSysFreeWazaResource(WazaSequence* waza) {
+    freeWazaRes(waza->resId);
+}
+}
+extern "C++" {
+u32 wazaSequenceSysGetModelShadowLight() {
+    return _modelShadowLight;
+}
+}
+extern "C++" {
+s32 wazaSequenceSysGetModelShadowCount() {
+    return _modelShadowCount;
+}
+}
+extern "C++" {
+u32* wazaSequenceSysGetModelShadowList() {
+    return _modelShadowList;
+}
+}
+extern "C++" {
+void wazaSequenceSysResetAnimationExcept(ModelSequence* except) {
+    Sequence* p = g_Sequences;
+    if (except == 0) {
+        return;
+    }
+    for (; p != 0; p = p->next) {
+        ModelSequence* m = Sequence_AsModel(p);
+        if (except != m && m->isPokemon != 0) {
+            m->DoDefaultAnimation(GSMODEL_ANIM_TYPE_1, false);
+        }
+    }
+}
+}
+extern "C++" {
+u32 wazaSequenceSysLoadResource(unsigned long group, unsigned long id) {
+    return loadResourceInline(group, id);
+}
 }

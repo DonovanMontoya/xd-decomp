@@ -1,3 +1,6 @@
+#pragma defer_codegen on
+// Deferred code generation emits these definitions in reverse order.
+#pragma force_active on
 #include "game/maximum/GSAPI/particle/pslist.h"
 #define NULL ((void*)0)
 PSParticle* activeParticle[16];
@@ -5,36 +8,48 @@ static PSParticle* freeParticle;
 static s32 sortDirty[16];
 static PSParticle* activeParticleXLU[16];
 
+void _psListDelete(PSParticle *arg0, PSParticle *arg1);
+void _psListClear(void);
+s32 _psLinkInit(s32 count);
+PSParticle* particleSort(s32 linkNo, PSParticle** texEdge, PSParticle** xlu);
+PSParticle *_psListGetFirst(s32 arg0);
+PSParticle *_psListNew(PSParticle *arg0, s32 arg1);
 
-void _psListDelete(PSParticle *arg0, PSParticle *arg1) {
-    sortDirty[arg0->link] = 1;
-    if (arg1 == NULL) {
-        if ((PSParticle *) activeParticle[arg0->link] != arg0) {
-            __assert("pslist.c", 0x88, "activeParticle[pp->linkNo] == pp");
-        }
-        activeParticle[arg0->link] = arg0->next;
-    } else {
-        if ((PSParticle *) arg1->next != arg0) {
-            __assert("pslist.c", 0x8B, "parent->next == pp");
-        }
-        arg1->next = arg0->next;
+s32 _psLinkInit(s32 count) {
+    s32 i; u32 j; PSParticle* pp;
+    for (j = 0; j < 16; j++) {
+        activeParticle[j] = NULL; sortDirty[j] = 0; activeParticleXLU[j] = NULL;
     }
-    arg0->next = freeParticle;
-    freeParticle = arg0;
-    numActiveParticles -= 1;
+    freeParticle = NULL;
+    for (i = count - 1; i >= 0; i--) {
+        pp = HSD_Alloc(0x94); memset(pp, 0, 0x94);
+        if (pp == NULL) return -1;
+        pp->next = freeParticle; freeParticle = pp;
+    }
+    return i;
 }
 
-PSParticle *_psListGetFirst(s32 arg0) {
-    s32 var_r0;
-
-    var_r0 = 0;
-    if ((arg0 >= 0) && (arg0 < 0x10)) {
-        var_r0 = 1;
+void _psListClear(void) {
+    PSParticle* node = freeParticle;
+    PSParticle* next;
+    s32 i;
+    while (node != NULL) {
+        next = node->next;
+        HSD_Free(node);
+        node = next;
     }
-    if (var_r0 == 0) {
-        __assert("pslist.c", 0x98, "linkNo >= 0 && linkNo < PS_NUM_LINK");
+    freeParticle = NULL;
+    for (i = 0; i < 16; i++) {
+        node = activeParticle[i];
+        while (node != NULL) {
+            next = node->next;
+            HSD_Free(node);
+            node = next;
+        }
+        activeParticle[i] = NULL;
+        sortDirty[i] = 0;
+        activeParticleXLU[i] = NULL;
     }
-    return activeParticle[arg0];
 }
 
 PSParticle *_psListNew(PSParticle *arg0, s32 arg1) {
@@ -68,43 +83,36 @@ PSParticle *_psListNew(PSParticle *arg0, s32 arg1) {
     return temp_r3;
 }
 
-void _psListClear(void) {
-    PSParticle* node = freeParticle;
-    PSParticle* next;
-    s32 i;
-    while (node != NULL) {
-        next = node->next;
-        HSD_Free(node);
-        node = next;
-    }
-    freeParticle = NULL;
-    for (i = 0; i < 16; i++) {
-        node = activeParticle[i];
-        while (node != NULL) {
-            next = node->next;
-            HSD_Free(node);
-            node = next;
+void _psListDelete(PSParticle *arg0, PSParticle *arg1) {
+    sortDirty[arg0->link] = 1;
+    if (arg1 == NULL) {
+        if ((PSParticle *) activeParticle[arg0->link] != arg0) {
+            __assert("pslist.c", 0x88, "activeParticle[pp->linkNo] == pp");
         }
-        activeParticle[i] = NULL;
-        sortDirty[i] = 0;
-        activeParticleXLU[i] = NULL;
+        activeParticle[arg0->link] = arg0->next;
+    } else {
+        if ((PSParticle *) arg1->next != arg0) {
+            __assert("pslist.c", 0x8B, "parent->next == pp");
+        }
+        arg1->next = arg0->next;
     }
+    arg0->next = freeParticle;
+    freeParticle = arg0;
+    numActiveParticles -= 1;
 }
 
-s32 _psLinkInit(s32 count) {
-    s32 i; u32 j; PSParticle* pp;
-    for (j = 0; j < 16; j++) {
-        activeParticle[j] = NULL; sortDirty[j] = 0; activeParticleXLU[j] = NULL;
-    }
-    freeParticle = NULL;
-    for (i = count - 1; i >= 0; i--) {
-        pp = HSD_Alloc(0x94); memset(pp, 0, 0x94);
-        if (pp == NULL) return -1;
-        pp->next = freeParticle; freeParticle = pp;
-    }
-    return i;
-}
+PSParticle *_psListGetFirst(s32 arg0) {
+    s32 var_r0;
 
+    var_r0 = 0;
+    if ((arg0 >= 0) && (arg0 < 0x10)) {
+        var_r0 = 1;
+    }
+    if (var_r0 == 0) {
+        __assert("pslist.c", 0x98, "linkNo >= 0 && linkNo < PS_NUM_LINK");
+    }
+    return activeParticle[arg0];
+}
 
 PSParticle* particleSort(s32 linkNo, PSParticle** texEdge, PSParticle** xlu)
 {

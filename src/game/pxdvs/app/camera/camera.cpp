@@ -1,11 +1,13 @@
-#pragma defer_codegen on
+void cameraResetOffsets(bool resetFov);
+#pragma defer_codegen off
 #include <game/pxdvs/app/camera/camera.hpp>
 #include <game/pxdvs/GSAPI/GSres/GSres.hpp>
 #include <game/pxdvs/GSAPI/GSmodel/GSmodel.hpp>
 #include <game/pxdvs/GSAPI/GSpart/GSpart.hpp>
 #include <libc/string.h>
 extern "C" {
-#include <libc/math.h>
+f64 sin(f64);
+f64 cos(f64);
 }
 extern "C" {
 f64 atan2(f64,f64);
@@ -27,6 +29,17 @@ static CameraUpVector gUpVec;
 extern "C" { CameraWork* pCamWork = &_cameraWork; }
 static FloorCamera* _pFloorCamera;
 
+void cameraResetOffsets(bool resetFov) {
+    { GSvec* v=&pCamWork->offsetPosition; v->param1=0.0f; v->param2=0.0f; v->param3=0.0f; }
+    { GSvec* v=&pCamWork->offsetRotation; v->param1=0.0f; v->param2=0.0f; v->param3=0.0f; }
+    f32 fov;
+    if (resetFov) fov = 30.0f;
+    { GSvec* v=&pCamWork->offsetScale; v->param1=1.0f; v->param2=1.0f; v->param3=1.0f; }
+    if (resetFov) pCamWork->fov = fov;
+}
+#pragma force_active on
+#pragma defer_codegen on
+
 static inline FloorCamera* currentFloorCamera() {
     u32 id = GSfloorGetCurrent();
     FloorCamera* camera = _pFloorCamera;
@@ -43,18 +56,7 @@ static inline void copyVector(GSvec* to,const GSvec* from) { f32* d=(f32*)to; co
 static inline Vec* vec(GSvec* v) { return (Vec*)v; }
 static inline Vec* vec(const GSvec* v) { return (Vec*)v; }
 extern "C" {
-void fn_80196A14(u8 flag) { if (flag) pCamWork->flags |= 0x20; else pCamWork->flags &= ~0x20; }
-void cameraLockYTarget(u8 flag) { if (flag) pCamWork->flags |= 0x18; else pCamWork->flags &= ~8; }
-void cameraSetMirrorFlag(s32 flags) { pCamWork->flags &= 0x18; pCamWork->flags |= flags; }
-#pragma scheduling off
-void cameraSetOffsetScale(const GSvec* v) { CameraWork* work=pCamWork; work->offsetScale.param1=v->param1; work->offsetScale.param2=v->param2; work->offsetScale.param3=v->param3; }
-void cameraSetOffsetRotation(const GSvec* v) { CameraWork* work=pCamWork; work->offsetRotation.param1=v->param1; work->offsetRotation.param2=v->param2; work->offsetRotation.param3=v->param3; }
-void cameraSetOffsetPosition(const GSvec* v) { CameraWork* work=pCamWork; work->offsetPosition.param1=v->param1; work->offsetPosition.param2=v->param2; work->offsetPosition.param3=v->param3; }
-#pragma scheduling reset
-f32 cameraGetFov() { return pCamWork->fov; }
-f32 cameraGetRotY() { return pCamWork->rotation.param2; }
-f32 cameraGetDistance() { return pCamWork->distance; }
-f32 cameraGetHeight() { return pCamWork->height; }
+
 static inline void cameraSetFovValue(f32& value) {
     if (value < 3.0f) value = 3.0f;
     if (value > 120.0f) value = 120.0f;
@@ -62,259 +64,7 @@ static inline void cameraSetFovValue(f32& value) {
     if (floor) floor->fov = value;
     pCamWork->fov = value;
 }
-void cameraSetFov(f32 value) { cameraSetFovValue(value); }
-void cameraSetRotY(f32 value) { FloorCamera* floor=currentFloorCamera(); if (floor) floor->rotation=value; pCamWork->rotation.param2=value; }
-void cameraSetDistance(f32 value) { FloorCamera* floor=currentFloorCamera(); if (floor) floor->distance=value; pCamWork->distance=value; }
-void cameraSetHeight(f32 value) { FloorCamera* floor=currentFloorCamera(); if (floor) floor->height=value; pCamWork->height=value; }
-void cameraSetRotationXYZ(f32 x,f32 y,f32 z) {
-    GSvec rotation; rotation.param1=x; rotation.param2=y; rotation.param3=z;
-    GScamera* camera=(GScamera*)GSresGetResource(0,0);
-    copyVector(&pCamWork->rotation,&rotation);
-    GScameraSetRotation(camera,vec(&rotation));
-}
-void cameraSetTargetPosXYZ(f32 x,f32 y,f32 z) { CameraWork* work=pCamWork; work->targetPosition.param1=x; work->targetPosition.param2=y; work->targetPosition.param3=z; }
-void cameraSetTargetOfsXYZ(f32 x,f32 y,f32 z) { CameraWork* work=pCamWork; work->targetOffset.param1=x; work->targetOffset.param2=y; work->targetOffset.param3=z; }
-void cameraSetAnimeRate(f32 rate) { GScamera* camera=animationCamera(pCamWork); if(camera) GScameraSetAnimRate(camera,rate); }
-void cameraResumeAnime() { GScamera* camera=animationCamera(pCamWork); if(camera) GScameraStartAnimation(camera); }
-void cameraPauseAnime() { GScamera* camera=animationCamera(pCamWork); if(camera) GScameraStopAnimation(camera); }
-void cameraStopAnime() {
-    GScamera* camera=animationCamera(pCamWork);
-    pCamWork->animationGroup=0; pCamWork->animationID=0;
-    if(camera) GScameraStopAnimation(camera);
-}
-s32 cameraWaitSyncAnime(u8 wait) {
-    GScamera* camera=animationCamera(pCamWork);
-    if(!camera) return 0;
-    if(wait) {
-        for(;;) {
-            if(GScameraHasAnimationEnded(camera)) break;
-            if(!GSthreadGetCurrentThread()) { GSlogWrite("cameraWaitSyncAnime()  スレッドから呼ぶようにしてください\n"); break; }
-            GSthreadSwitch();
-        }
-    } else if(!GScameraHasAnimationEnded(camera)) return 1;
-    return 0;
-}
-void cameraPlayOffsetAnime(u32 group,u32 id,s32 frame,u8 loop) {
-    if(pCamWork->animationGroup || pCamWork->animationID) cameraStopAnime();
-    u8 previous=cameraSetType(8);
-    pCamWork->animationGroup=group; pCamWork->animationID=id; pCamWork->previousType=previous;
-    GScamera* camera=animationCamera(pCamWork);
-    if(camera) {
-        GScameraSetAnimIndex(camera,0); if(loop) GScameraSetAnimType(camera,1); else GScameraSetAnimType(camera,0);
-        GScameraSetAnimRate(camera,0.5f); GScameraSetAnimFrame(camera,(f32)frame); GScameraStartAnimation(camera);
-        { GSvec* v=&pCamWork->offsetPosition; v->param1=0.0f; v->param2=0.0f; v->param3=0.0f; }
-        { GSvec* v=&pCamWork->offsetRotation; v->param1=0.0f; v->param2=0.0f; v->param3=0.0f; }
-        { GSvec* v=&pCamWork->offsetScale; v->param1=1.0f; v->param2=1.0f; v->param3=1.0f; }
-        GScameraSetActiveCamera((GScamera*)GSresGetResource(0,0));
-    }
-}
-void cameraPlayAnime(u32 group,u32 id,u8 loop,f32 frame) {
-    if(pCamWork->animationGroup || pCamWork->animationID) cameraStopAnime();
-    u8 previous=cameraSetType(4);
-    pCamWork->animationGroup=group; pCamWork->animationID=id; pCamWork->previousType=previous;
-    GScamera* camera=animationCamera(pCamWork);
-    if(camera) {
-        GScameraSetAnimIndex(camera,0); if(loop) GScameraSetAnimType(camera,1); else GScameraSetAnimType(camera,0);
-        GScameraSetAnimRate(camera,0.5f); GScameraSetAnimFrame(camera,frame); GScameraStartAnimation(camera); GScameraSetActiveCamera(camera);
-    }
-}
-void cameraMoveStop() {
-    pCamWork->targetAnimation.stop(); pCamWork->offsetAnimation.stop(); pCamWork->positionAnimation.stop(); pCamWork->rotationAnimation.stop(); pCamWork->fovAnimation.stop(); pCamWork->moving=0;
-}
-s32 cameraMoveEndCheckSpecial(u8 wait) {
-    for(;;) {
-        if(!pCamWork->targetAnimation.isMove() && !pCamWork->positionAnimation.isMove() && !pCamWork->rotationAnimation.isMove()) return 0;
-        if(wait) GSthreadSwitch(); else return 1;
-    }
-}
-s32 cameraMoveEndCheck(u8 wait) {
-    for(;;) {
-        if(!pCamWork->targetAnimation.isMove() && !pCamWork->offsetAnimation.isMove() && !pCamWork->positionAnimation.isMove() && !pCamWork->rotationAnimation.isMove() && !pCamWork->fovAnimation.isMove()) return 0;
-        if(wait) GSthreadSwitch(); else return 1;
-    }
-}
-void cameraMoveFovAcc(f32 acceleration) { pCamWork->fovAnimation.setAcceleration(acceleration); }
-void cameraMoveRotationAcc(f32 acceleration) { pCamWork->rotationAnimation.setAcceleration(acceleration); }
-void cameraMovePositionAcc(f32 acceleration) { pCamWork->positionAnimation.setAcceleration(acceleration); }
-void cameraMoveTargetOfsAcc(f32 acceleration) { pCamWork->offsetAnimation.setAcceleration(acceleration); }
-void cameraMoveTargetPosAcc(f32 acceleration) { pCamWork->targetAnimation.setAcceleration(acceleration); }
-void cameraMoveRotationXYZ(u32 mode,f32 x,f32 y,f32 z,f32 duration) {
-    GSvec rotation; rotation.param1=x; rotation.param2=y; rotation.param3=z;
-    if(duration < 1e-7f && duration > -1e-7f) { cameraSetRotation(&rotation); return; }
-    pCamWork->moving=1; pCamWork->rotationAnimation.start(&pCamWork->rotation,&rotation,duration);
-}
-void cameraMoveRotation(u32 mode,const GSvec* rotation,f32 duration) {
-    if(duration < 1e-7f && duration > -1e-7f) { cameraSetRotation(rotation); return; }
-    pCamWork->moving=1; pCamWork->rotationAnimation.start(&pCamWork->rotation,rotation,duration);
-}
-void cameraMoveFov(u32 mode,f32 fov,f32 duration) { pCamWork->moving=1; pCamWork->fovAnimation.start(&pCamWork->fov,&fov,duration); }
-void cameraMovePositionXYZ(u32 mode,f32 x,f32 y,f32 z,f32 duration) {
-    GSvec position; position.param1=x; position.param2=y; position.param3=z;
-    if(duration < 1e-7f && duration > -1e-7f) { cameraSetPosition(&position); return; }
-    pCamWork->moving=1; pCamWork->positionAnimation.start(&pCamWork->position,&position,duration);
-}
-void cameraMovePosition(u32 mode,const GSvec* position,f32 duration) {
-    if(duration < 1e-7f && duration > -1e-7f) {
-        volatile f32* target=(volatile f32*)&pCamWork->position;
-        const volatile f32* source=(const volatile f32*)position;
-        target[0]=source[0]; target[1]=source[1]; target[2]=source[2];
-        return;
-    }
-    pCamWork->moving=1; pCamWork->positionAnimation.start(&pCamWork->position,position,duration);
-}
-void cameraMoveTargetXYZ(u32 mode,f32 x,f32 y,f32 z,f32 duration) {
-    GSvec position; position.param1=x; position.param2=y; position.param3=z;
-    if(duration < 1e-7f && duration > -1e-7f) { cameraSetTargetPos(&position); return; }
-    pCamWork->moving=1; pCamWork->targetAnimation.start(&pCamWork->targetPosition,&position,duration);
-}
-void cameraMoveTargetOfs(u32 mode,const GSvec* position,f32 duration) { pCamWork->moving=1; pCamWork->offsetAnimation.start(&pCamWork->targetOffset,position,duration); }
-void cameraMoveTargetPos(u32 mode,const GSvec* position,f32 duration) {
-    if(duration < 1e-7f && duration > -1e-7f) {
-        volatile f32* target=(volatile f32*)&pCamWork->targetPosition;
-        const volatile f32* source=(const volatile f32*)position;
-        target[0]=source[0]; target[1]=source[1]; target[2]=source[2];
-        return;
-    }
-    pCamWork->moving=1; pCamWork->targetAnimation.start(&pCamWork->targetPosition,position,duration);
-}
-void cameraMoveTarget(u32 mode,u32 group,u32 id,f32 duration) {
-    GSvec position;position.param1=0.0f;position.param2=0.0f;position.param3=0.0f;
-    cameraSetTarget(group,id);
-    GSmodel* model=(GSmodel*)GSresGetResource(group,id);
-    if(model) GSmodelGetPosition(model,&position);
-    if(duration < 1e-7f && duration > -1e-7f) { cameraSetTargetPos(&position); return; }
-    pCamWork->moving=1; pCamWork->targetAnimation.start(&pCamWork->targetPosition,&position,duration);
-}
-void cameraGetRotation(GSvec* out) { copyVector(out,&pCamWork->rotation); }
-void cameraSetRotation(const GSvec* value) {
-    GScamera* camera=(GScamera*)GSresGetResource(0,0);
-    volatile f32* target=(volatile f32*)&pCamWork->rotation;
-    const volatile f32* source=(const volatile f32*)value;
-    target[0]=source[0]; target[1]=source[1]; target[2]=source[2];
-    GScameraSetRotation(camera,vec(value));
-}
-void cameraGetPosition(GSvec* out) { copyVector(out,&pCamWork->position); }
-#pragma scheduling off
-void cameraSetPosition(const GSvec* value) { CameraWork* work=pCamWork; work->position.param1=value->param1; work->position.param2=value->param2; work->position.param3=value->param3; }
-#pragma scheduling reset
-void cameraGetTargetPos(GSvec* out) { copyVector(out,&pCamWork->targetPosition); }
-#pragma scheduling off
-void cameraSetTargetPos(const GSvec* value) { CameraWork* work=pCamWork; work->targetPosition.param1=value->param1; work->targetPosition.param2=value->param2; work->targetPosition.param3=value->param3; }
-#pragma scheduling reset
-void cameraGetTargetOfs(GSvec* out) { copyVector(out,&pCamWork->targetOffset); }
-#pragma scheduling off
-void cameraSetTargetOfs(const GSvec* value) { CameraWork* work=pCamWork; work->targetOffset.param1=value->param1; work->targetOffset.param2=value->param2; work->targetOffset.param3=value->param3; }
-#pragma scheduling reset
-#pragma scheduling off
-void cameraSetPartTargetOffset(const GSvec* value) {
-    CameraWork* work=pCamWork; work->partTargetOffset.param1=value->param1; work->partTargetOffset.param2=value->param2; work->partTargetOffset.param3=value->param3;
-}
-#pragma scheduling reset
-void cameraSetTargetExt(u32 group,u32 id,s32 part) {
-    pCamWork->targetGroup=group; pCamWork->targetID=id; pCamWork->targetPart=part;
-    GSvec* offset=&pCamWork->partTargetOffset; offset->param1=0.0f; offset->param2=0.0f; offset->param3=0.0f;
-}
-void cameraSetTarget(u32 group,u32 id) { pCamWork->targetGroup=group; pCamWork->targetID=id; pCamWork->targetPart=-1; }
-GScamera* cameraGetActive() {
-    GScamera* camera=GScameraGetActiveCamera();
-    if(camera) return camera;
-    camera=(GScamera*)GSresGetResource(0,0); GScameraSetActiveCamera(camera); return camera;
-}
-u8 cameraGetType() { return pCamWork->type; }
-u8 cameraSetType(u8 type) {
-    pCamWork->flags=0;
-    if(pCamWork->type==type) return type;
-    u8 previous=pCamWork->type; pCamWork->type=type; pCamWork->flags &= ~0x20; return previous;
-}
-void cameraRefreshTargetPos() {
-    if(pCamWork->targetGroup || pCamWork->targetID) {
-        GSmodel* model=(GSmodel*)GSresGetResource(pCamWork->targetGroup,pCamWork->targetID);
-        if(model) {
-            GSmodelGetPosition(model,&pCamWork->targetPosition);
-            if(pCamWork->targetPart>=0) {
-                GSpart* part=GSmodelGetPart(model,pCamWork->targetPart);
-                if(part) {
-                    GSpartGetTransform(part,vec(&pCamWork->targetOffset),0,0);
-                    PSVECSubtract(vec(&pCamWork->targetOffset),vec(&pCamWork->targetPosition),vec(&pCamWork->targetOffset));
-                    PSVECAdd(vec(&pCamWork->targetOffset),vec(&pCamWork->partTargetOffset),vec(&pCamWork->targetOffset));
-                    GSpartFree(part);
-                }
-            }
-        }
-    }
-}
-void cameraResetFloor() {
-    if(pCamWork->type==6) cameraSetType(0);
-    FloorCamera* floor=currentFloorCamera();
-    if(floor) {
-        cameraSetHeight(floor->defaultHeight); cameraSetDistance(floor->defaultDistance);
-        cameraSetRotY(floor->defaultRotation); cameraSetFov(floor->defaultFov);
-    }
-}
-void cameraSetFloorDefault(f32 height,f32 distance,f32 rotation) {
-    FloorCamera* floor=currentFloorCamera();
-    if(floor) {
-        floor->defaultHeight=height; floor->defaultDistance=distance; floor->defaultRotation=rotation;
-        if(floor->state==1) { floor->state=2; cameraSetHeight(height); cameraSetDistance(distance); cameraSetRotY(rotation); }
-    }
-}
-void cameraSetGScamera(GScamera* camera) {
-    if(camera) {
-        f32 fov,aspect,nearPlane,farPlane;
-        Vec distance;
-        f32 height,depth,fieldOfView,rotation;
-        GScamera* target=(GScamera*)GSresGetResource(0,0);
-        GScameraGetPerspective(camera,&fov,&aspect,&nearPlane,&farPlane);
-        GScameraSetPerspective(target,fov,aspect,nearPlane,farPlane);
-        GScameraGetDistanceVector(camera,&distance);
-        cameraSetType(3);
-        target->interest=camera->interest;
-        target->position=camera->position;
-        fieldOfView=fov;
-        rotation=(f32)atan2(distance.x,distance.z);
-        depth=distance.z; height=distance.y;
-        FloorCamera* floor=currentFloorCamera();
-        if(floor) {
-            if(floor->state) { height=floor->height; depth=floor->distance; rotation=floor->rotation; }
-            else {
-                if(height<0.0f) height=0.0f;
-                if(depth<10.0f) { depth=30.0f; height=0.0f; }
-                else if(depth>500.0f) depth=500.0f;
-                floor->state=1; floor->defaultHeight=height; floor->defaultDistance=depth; floor->defaultRotation=rotation; floor->defaultFov=fieldOfView;
-            }
-        }
-        cameraSetHeight(height); cameraSetDistance(depth); cameraSetRotY(rotation); cameraSetFovValue(fieldOfView);
-    }
-}
-void cameraReturn(f32 duration,u8 wait) {
-    GScamera* camera=GScameraGetActiveCamera();
-    if(floorFieldCameraDataExist()) {
-        if(pCamWork->type==3) {
-            Vec position,front;
-            GSvec offset;
-            offset.param1=pCamWork->targetOffset.param1; offset.param2=pCamWork->targetOffset.param2; offset.param3=pCamWork->targetOffset.param3;
-            GScameraGetFrontVector(camera,&front);
-            PSVECScale(&front,&front,pCamWork->distance);
-            GScameraGetPosition(camera,&position);
-            PSVECAdd(&position,&front,&position);
-            PSVECSubtract(&position,vec(&offset),&position);
-            GSvec* target=&pCamWork->targetPosition;
-            target->param1=position.x; target->param2=position.y; target->param3=position.z;
-        }
-        cameraSetType(0); floorFieldCameraEnable(); floorFieldCameraBlend(duration);
-    } else {
-        cameraSetType(0);
-        FloorCamera* floor=currentFloorCamera();
-        if(floor) { cameraSetHeight(floor->defaultHeight); cameraSetDistance(floor->defaultDistance); cameraSetFov(floor->defaultFov); }
-        cameraMoveTarget(0,0,100,duration);
-        cameraMoveRotationXYZ(0,0.0f,floor->defaultRotation,0.0f,duration);
-    }
-    for(;;) {
-        if(!(pCamWork->targetAnimation.isMove() || pCamWork->offsetAnimation.isMove() || pCamWork->positionAnimation.isMove() || pCamWork->rotationAnimation.isMove() || pCamWork->fovAnimation.isMove())) break;
-        if(!wait) break;
-        GSthreadSwitch();
-    }
-}
+
 }
 
 static inline void interpolate(f32* out,const f32* a,const f32* b,f32 t) { f32 from=*a; *out=from+(*b-from)*t; }
@@ -324,9 +74,7 @@ static inline void interpolate(GSvec* out,const GSvec* a,const GSvec* b,f32 t) {
     PSVECScale(&delta,&delta,t);
     PSVECAdd(vec(a),&delta,vec(out));
 }
-#pragma dont_inline on
-template<class T> CameraAnimation<T>::CameraAnimation() { moving=0; accelerating=0; accelerateOut=0; accelerateIn=0; acceleration=0.05f; }
-#pragma dont_inline off
+
 template<class T> void CameraAnimation<T>::start(const T* from,const T* to,f32 seconds) {
     if(seconds < 1e-7f && seconds > -1e-7f) return;
     moving=1; duration=seconds; elapsed=0.0f; startPosition=*from; endPosition=*to; acceleration=0.05f; speed=0.0f; phase=0;
@@ -372,6 +120,8 @@ template<class T> void CameraAnimation<T>::setAcceleration(f32 amount) { acceler
 template<class T> const T* CameraAnimation<T>::getCurrentPos() const { return &currentPosition; }
 // Scalar interpolation rounds its multiply separately from the final addition.
 #pragma dont_inline on
+template<> const f32* CameraAnimation<f32>::getCurrentPos() const { return &currentPosition; }
+template<> void CameraAnimation<f32>::setAcceleration(f32 amount) { acceleration=amount; accelerating=1; accelerateOut=1; accelerateIn=1; }
 template<> u8 CameraAnimation<f32>::updateAcceleration(f32 delta) {
     if(!moving) return 0;
     if(firstUpdate) {
@@ -421,8 +171,16 @@ template<> u8 CameraAnimation<f32>::update(f32 delta) {
 #pragma dont_inline off
 #pragma fp_contract on
 #pragma dont_inline on
-template class CameraAnimation<GSvec>;
+// Instantiate the defined methods now; constructors follow static initialization.
+// MWCC warns about the constructors deliberately deferred past this point.
+#pragma push
+#pragma supress_warnings on
 template class CameraAnimation<f32>;
+template class CameraAnimation<GSvec>;
+#pragma pop
+#pragma dont_inline off
+#pragma dont_inline on
+template<class T> CameraAnimation<T>::CameraAnimation() { moving=0; accelerating=0; accelerateOut=0; accelerateIn=0; acceleration=0.05f; }
 #pragma dont_inline off
 
 struct FloorModuleInterface {
@@ -440,63 +198,7 @@ s32 floorRegisterModule(u8,u8,FloorModuleInterface*);
 extern s32 _hModuleField;
 extern u8* floordata;
 void* GSmemAllocClr(u32);
-static const char* _cameraGetModuleName__Fv() { return "camera"; }
-static s32 _cameraGetUID__Fv() { return 17; }
-static s32 _cameraGetStateSize__F14FloorStateMode(s32 mode) { if(mode==1 || mode==2) return 0x274; return 0; }
-#pragma opt_propagation off
-static void _cameraRestoreStateData__F14FloorStateModePvUl(s32 mode,void* data,u32 size) {
-    if(mode==1 || mode==2) {
-        memcpy(pCamWork,data,sizeof(CameraWork));
-        GScamera* camera;
-        CameraWork* work;
-        camera=(GScamera*)GSresGetResource(0,0);
-        work=pCamWork;
-        if(work->type==4 || work->type==8) camera=animationCamera(work);
-        if(pCamWork->flags & 8) pCamWork->flags |= 0x10;
-        GScameraPopState(camera,(GScameraState*)((u8*)data+sizeof(CameraWork)));
-        GScameraSetActiveCamera(camera);
-    }
-}
-#pragma opt_propagation reset
-#pragma opt_propagation off
-static void _cameraMakeStateData__F14FloorStateModePvUl(s32 mode,void* data,u32 size) {
-    if(mode==1 || mode==2) {
-        GScamera* camera;
-        void* destination=data;
-        CameraWork* work;
-        camera=(GScamera*)GSresGetResource(0,0);
-        work=pCamWork;
-        if(work->type==4 || work->type==8) camera=animationCamera(work);
-        memcpy(destination,pCamWork,sizeof(CameraWork));
-        GScameraPushState(camera,(GScameraState*)((u8*)destination+sizeof(CameraWork)));
-    }
-}
-#pragma opt_propagation reset
-void cameraInit() {
-    GSvec offset,up,position;
-    offset.param1=0.0f; offset.param2=0.0f; offset.param3=14.0f;
-    up.param1=0.0f; up.param2=1.0f; up.param3=0.0f;
-    position.param1=0.0f; position.param2=0.0f; position.param3=100.0f;
-    memset(&_cameraWork,0,sizeof(CameraWork)); pCamWork=&_cameraWork;
-    GScamera* camera=GScameraCreate();
-    GSresRegisterResource(camera,0,0,0);
-    cameraSetType(0); cameraSetTarget(0,100); cameraSetTargetOfs(&offset);
-    _pFloorCamera=(FloorCamera*)GSmemAllocClr(*floordata_number*sizeof(FloorCamera));
-    for(u32 i=0; i<*floordata_number; ++i) { _pFloorCamera[i].state=0; _pFloorCamera[i].floorID=*(u16*)(floordata+i*0x40+2); }
-    { GSvec* v=&pCamWork->offsetPosition; v->param1=0.0f; v->param2=0.0f; v->param3=0.0f; }
-    { GSvec* v=&pCamWork->offsetRotation; v->param1=0.0f; v->param2=0.0f; v->param3=0.0f; }
-    { GSvec* v=&pCamWork->offsetScale; v->param1=1.0f; v->param2=1.0f; v->param3=1.0f; }
-    pCamWork->fov=30.0f;
-    FloorModuleInterface_clear(&_floorModuleCamera);
-    _floorModuleCamera.save=_cameraMakeStateData__F14FloorStateModePvUl;
-    _floorModuleCamera.restore=_cameraRestoreStateData__F14FloorStateModePvUl;
-    _floorModuleCamera.size=_cameraGetStateSize__F14FloorStateMode;
-    _floorModuleCamera.uid=_cameraGetUID__Fv;
-    _floorModuleCamera.name=_cameraGetModuleName__Fv;
-    _hModuleField=floorRegisterModule(0x80,0,&_floorModuleCamera);
-    GScameraLookAt(camera,vec(&up),vec(&offset));
-    GScameraSetPosition(camera,vec(&position)); GScameraSetActiveCamera(camera); GScameraLoadActiveCameraMatrix(0);
-}
+
 }
 
 #include <game/maximum/GSAPI/baselib/quatlib.h>
@@ -578,6 +280,208 @@ static inline void cameraApplyFov(GScamera* camera) {
     GScameraSetPerspective(camera,pCamWork->fov,aspect,nearPlane,farPlane);
 }
 extern "C" {
+
+static inline f32 cameraAngle(f32 height,f32 distance) { return (f32)atan2(height,distance); }
+static inline void cameraDisplacement(Vec* out,f32 height,f32 distance) {
+    out->x=0.0f;out->y=height;out->z=distance;
+}
+
+static inline u8 cameraAnyMoving() {
+    return pCamWork->targetAnimation.isMove() || pCamWork->offsetAnimation.isMove() || pCamWork->positionAnimation.isMove() || pCamWork->rotationAnimation.isMove() || pCamWork->fovAnimation.isMove();
+}
+
+}
+
+#pragma push
+#pragma opt_propagation off
+extern "C" {
+static void _cameraMakeStateData__F14FloorStateModePvUl(s32 mode,void* data,u32 size) {
+    if(mode==1 || mode==2) {
+        GScamera* camera;
+        void* destination=data;
+        CameraWork* work;
+        camera=(GScamera*)GSresGetResource(0,0);
+        work=pCamWork;
+        if(work->type==4 || work->type==8) camera=animationCamera(work);
+        memcpy(destination,pCamWork,sizeof(CameraWork));
+        GScameraPushState(camera,(GScameraState*)((u8*)destination+sizeof(CameraWork)));
+    }
+}
+}
+#pragma pop
+#pragma push
+#pragma opt_propagation off
+extern "C" {
+static void _cameraRestoreStateData__F14FloorStateModePvUl(s32 mode,void* data,u32 size) {
+    if(mode==1 || mode==2) {
+        memcpy(pCamWork,data,sizeof(CameraWork));
+        GScamera* camera;
+        CameraWork* work;
+        camera=(GScamera*)GSresGetResource(0,0);
+        work=pCamWork;
+        if(work->type==4 || work->type==8) camera=animationCamera(work);
+        if(pCamWork->flags & 8) pCamWork->flags |= 0x10;
+        GScameraPopState(camera,(GScameraState*)((u8*)data+sizeof(CameraWork)));
+        GScameraSetActiveCamera(camera);
+    }
+}
+}
+#pragma pop
+extern "C" {
+static s32 _cameraGetStateSize__F14FloorStateMode(s32 mode) { if(mode==1 || mode==2) return 0x274; return 0; }
+}
+extern "C" {
+static s32 _cameraGetUID__Fv() { return 17; }
+}
+extern "C" {
+static const char* _cameraGetModuleName__Fv() { return "camera"; }
+}
+extern "C" {
+void cameraInit() {
+    GSvec offset,up,position;
+    offset.param1=0.0f; offset.param2=0.0f; offset.param3=14.0f;
+    up.param1=0.0f; up.param2=1.0f; up.param3=0.0f;
+    position.param1=0.0f; position.param2=0.0f; position.param3=100.0f;
+    memset(&_cameraWork,0,sizeof(CameraWork)); pCamWork=&_cameraWork;
+    GScamera* camera=GScameraCreate();
+    GSresRegisterResource(camera,0,0,0);
+    cameraSetType(0); cameraSetTarget(0,100); cameraSetTargetOfs(&offset);
+    _pFloorCamera=(FloorCamera*)GSmemAllocClr(*floordata_number*sizeof(FloorCamera));
+    for(u32 i=0; i<*floordata_number; ++i) { _pFloorCamera[i].state=0; _pFloorCamera[i].floorID=*(u16*)(floordata+i*0x40+2); }
+    cameraResetOffsets(true);
+    FloorModuleInterface_clear(&_floorModuleCamera);
+    _floorModuleCamera.save=_cameraMakeStateData__F14FloorStateModePvUl;
+    _floorModuleCamera.restore=_cameraRestoreStateData__F14FloorStateModePvUl;
+    _floorModuleCamera.size=_cameraGetStateSize__F14FloorStateMode;
+    _floorModuleCamera.uid=_cameraGetUID__Fv;
+    _floorModuleCamera.name=_cameraGetModuleName__Fv;
+    _hModuleField=floorRegisterModule(0x80,0,&_floorModuleCamera);
+    GScameraLookAt(camera,vec(&up),vec(&offset));
+    GScameraSetPosition(camera,vec(&position)); GScameraSetActiveCamera(camera); GScameraLoadActiveCameraMatrix(0);
+}
+}
+extern "C" {
+void cameraSetFloorDefault(f32 height,f32 distance,f32 rotation) {
+    FloorCamera* floor=currentFloorCamera();
+    if(floor) {
+        floor->defaultHeight=height; floor->defaultDistance=distance; floor->defaultRotation=rotation;
+        if(floor->state==1) { floor->state=2; cameraSetHeight(height); cameraSetDistance(distance); cameraSetRotY(rotation); }
+    }
+}
+}
+extern "C" {
+void cameraResetFloor() {
+    if(pCamWork->type==6) cameraSetType(0);
+    FloorCamera* floor=currentFloorCamera();
+    if(floor) {
+        cameraSetHeight(floor->defaultHeight); cameraSetDistance(floor->defaultDistance);
+        cameraSetRotY(floor->defaultRotation); cameraSetFov(floor->defaultFov);
+    }
+}
+}
+extern "C" {
+void cameraSetGScamera(GScamera* camera) {
+    if(camera) {
+        f32 fov,aspect,nearPlane,farPlane;
+        Vec distance;
+        f32 height,depth,fieldOfView,rotation;
+        GScamera* target=(GScamera*)GSresGetResource(0,0);
+        GScameraGetPerspective(camera,&fov,&aspect,&nearPlane,&farPlane);
+        GScameraSetPerspective(target,fov,aspect,nearPlane,farPlane);
+        GScameraGetDistanceVector(camera,&distance);
+        cameraSetType(3);
+        target->interest=camera->interest;
+        target->position=camera->position;
+        fieldOfView=fov;
+        rotation=(f32)atan2(distance.x,distance.z);
+        depth=distance.z; height=distance.y;
+        FloorCamera* floor=currentFloorCamera();
+        if(floor) {
+            if(floor->state) { height=floor->height; depth=floor->distance; rotation=floor->rotation; }
+            else {
+                if(height<0.0f) height=0.0f;
+                if(depth<10.0f) { depth=30.0f; height=0.0f; }
+                else if(depth>500.0f) depth=500.0f;
+                floor->state=1; floor->defaultHeight=height; floor->defaultDistance=depth; floor->defaultRotation=rotation; floor->defaultFov=fieldOfView;
+            }
+        }
+        cameraSetHeight(height); cameraSetDistance(depth); cameraSetRotY(rotation); cameraSetFovValue(fieldOfView);
+    }
+}
+}
+extern "C" {
+static void _cameraPadMoveUpdate__FP9_GScamera(GScamera* camera) {
+    f32 ry;
+    f32 x;
+    f32 rx;
+    f32 y;
+    f32 divisor;
+    f32 render;
+    render=GSgfxVideoGetLastRenderTime();
+    divisor=64.0f;
+    if(!dbgMenuIsOpen()) {
+        u32 changed=GSinputButtonsChanged(1);
+        u32 pressed=GSinputButtonsPressed(1);
+        if(pressed&changed&0x400) {
+            if(menuIsCheck(6)) menuClose(6);
+            else { menuOpenCustom(6,0,0,0,1,0); menuSetPosition(6,20,260); }
+        }
+        Mtx matrix,yMatrix,zMatrix;
+        PSMTXRotRad(matrix,'X',pCamWork->rotation.param1); PSMTXRotRad(yMatrix,'Y',pCamWork->rotation.param2); PSMTXConcat(yMatrix,matrix,matrix);
+        PSMTXRotRad(zMatrix,'Z',pCamWork->rotation.param3); PSMTXConcat(zMatrix,matrix,matrix);
+        x=render*(f32)(s8)GSinputGetLeftStickXData(1,0); y=render*(f32)(s8)GSinputGetLeftStickYData(1,0);
+        rx=render*(f32)(s8)GSinputGetRightStickXData(1,0); ry=render*(f32)(s8)GSinputGetRightStickYData(1,0);
+        if(GSinputButtonsPressed(1)&0x40) divisor*=4.0f;
+        Vec world,local;
+        if(GSinputButtonsPressed(1)&0x800) { local.x=x/divisor; local.y=-y/divisor; local.z=0.0f; }
+        else { local.y=0.0f; local.x=x/divisor; local.z=y/divisor; }
+        PSMTXMultVec(matrix,&local,&world); PSVECAdd(vec(&pCamWork->position),&world,vec(&pCamWork->position));
+        if(GSinputButtonsPressed(1)&0x20) { f32 add=ry/divisor; f32 fov=add+pCamWork->fov; cameraSetFov(fov); }
+        else pCamWork->rotation.param1-=ry/(32.0f*divisor);
+        pCamWork->rotation.param2-=rx/(32.0f*divisor);
+        GScameraSetPosition(camera,vec(&pCamWork->position)); GScameraSetRotation(camera,vec(&pCamWork->rotation)); cameraApplyFov(camera);
+    }
+}
+}
+extern "C" {
+static void _cameraPadRotateUpdate__FP9_GScamera(GScamera* camera) {
+    if(!dbgMenuIsOpen()) {
+        s32 render=(s32)GSgfxVideoGetLastRenderTime();
+        s32 input=(s8)GSinputGetRightStickXData(1,1);
+        s32 horizontal=input*render;
+        render=(s32)GSgfxVideoGetLastRenderTime();
+        input=(s8)GSinputGetRightStickYData(1,1);
+        s32 vertical=input*render;
+        f32 angle=cameraAngle(pCamWork->height,pCamWork->distance);
+        f32 height=pCamWork->height, distance=pCamWork->distance;
+        f32 radius=cameraSqrt((f32)(height*height)+(f32)(distance*distance));
+        if(GSinputButtonsPressed(1)&0x20) { f32 fov=(f32)vertical/64.0f+pCamWork->fov;cameraSetFov(fov); }
+        else if(GSinputButtonsPressed(1)&0x40) radius+=(f32)vertical/64.0f;
+        else angle-=(f32)vertical/4096.0f;
+        pCamWork->height=radius*(f32)sin(angle);
+        pCamWork->distance=radius*(f32)cos(angle);
+        if(pCamWork->distance<10.0f) pCamWork->distance=10.0f;
+        else if(pCamWork->distance>500.0f) pCamWork->distance=500.0f;
+        cameraSetHeight(pCamWork->height); cameraSetDistance(pCamWork->distance);
+        Vec target,displacement;
+        cameraDisplacement(&displacement,pCamWork->height,pCamWork->distance);
+        pCamWork->rotation.param2+=(f32)horizontal/2048.0f;
+        cameraSetRotY(pCamWork->rotation.param2);
+        Mtx matrix;
+        PSMTXRotRad(matrix,'Y',pCamWork->rotation.param2); PSMTXMultVec(matrix,&displacement,&displacement);
+        CameraWork* work=pCamWork;
+        Vec* base=vec(&work->targetPosition);
+        Vec* offset=vec(&work->targetOffset);
+        PSVECAdd(base,offset,&target);
+        PSVECAdd(&target,&displacement,vec(&pCamWork->position));
+        cameraApplyLockedY(&target);
+        GScameraSetPosition(camera,vec(&pCamWork->position)); GScameraLookAt(camera,vec(&gUpVec),&target);
+        pCamWork->rotation.param1=-cameraAngle(pCamWork->height,pCamWork->distance);
+        cameraApplyFov(camera);
+    }
+}
+}
+extern "C" {
 static void _cameraOffsetAnimeUpdate__FP9_GScamera(GScamera* camera) {
     GScamera* animation=animationCamera(pCamWork);
     if(!animation || animation==camera || !GScameraIsAnimating(animation) || GScameraHasAnimationEnded(animation)) return;
@@ -626,81 +530,27 @@ static void _cameraOffsetAnimeUpdate__FP9_GScamera(GScamera* camera) {
     pCamWork->rotation.param2=(f32)atan2(position.x,position.z);
     pCamWork->rotation.param1=-(f32)atan2(pCamWork->height,pCamWork->distance);
 }
-static inline f32 cameraAngle(f32 height,f32 distance) { return (f32)atan2(height,distance); }
-static inline void cameraDisplacement(Vec* out,f32 height,f32 distance) {
-    out->x=0.0f;out->y=height;out->z=distance;
 }
-static void _cameraPadRotateUpdate__FP9_GScamera(GScamera* camera) {
-    if(!dbgMenuIsOpen()) {
-        s32 render=(s32)GSgfxVideoGetLastRenderTime();
-        s32 input=(s8)GSinputGetRightStickXData(1,1);
-        s32 horizontal=input*render;
-        render=(s32)GSgfxVideoGetLastRenderTime();
-        input=(s8)GSinputGetRightStickYData(1,1);
-        s32 vertical=input*render;
-        f32 angle=cameraAngle(pCamWork->height,pCamWork->distance);
-        f32 height=pCamWork->height, distance=pCamWork->distance;
-        f32 radius=cameraSqrt((f32)(height*height)+(f32)(distance*distance));
-        if(GSinputButtonsPressed(1)&0x20) { f32 fov=(f32)vertical/64.0f+pCamWork->fov;cameraSetFov(fov); }
-        else if(GSinputButtonsPressed(1)&0x40) radius+=(f32)vertical/64.0f;
-        else angle-=(f32)vertical/4096.0f;
-        pCamWork->height=radius*(f32)sin(angle);
-        pCamWork->distance=radius*(f32)cos(angle);
-        if(pCamWork->distance<10.0f) pCamWork->distance=10.0f;
-        else if(pCamWork->distance>500.0f) pCamWork->distance=500.0f;
-        cameraSetHeight(pCamWork->height); cameraSetDistance(pCamWork->distance);
-        Vec target,displacement;
-        cameraDisplacement(&displacement,pCamWork->height,pCamWork->distance);
-        pCamWork->rotation.param2+=(f32)horizontal/2048.0f;
-        cameraSetRotY(pCamWork->rotation.param2);
-        Mtx matrix;
-        PSMTXRotRad(matrix,'Y',pCamWork->rotation.param2); PSMTXMultVec(matrix,&displacement,&displacement);
-        CameraWork* work=pCamWork;
-        Vec* base=vec(&work->targetPosition);
-        Vec* offset=vec(&work->targetOffset);
-        PSVECAdd(base,offset,&target);
-        PSVECAdd(&target,&displacement,vec(&pCamWork->position));
-        cameraApplyLockedY(&target);
-        GScameraSetPosition(camera,vec(&pCamWork->position)); GScameraLookAt(camera,vec(&gUpVec),&target);
-        pCamWork->rotation.param1=-cameraAngle(pCamWork->height,pCamWork->distance);
-        cameraApplyFov(camera);
-    }
-}
-static void _cameraPadMoveUpdate__FP9_GScamera(GScamera* camera) {
-    f32 ry;
-    f32 x;
-    f32 rx;
-    f32 y;
-    f32 divisor;
-    f32 render;
-    render=GSgfxVideoGetLastRenderTime();
-    divisor=64.0f;
-    if(!dbgMenuIsOpen()) {
-        u32 changed=GSinputButtonsChanged(1);
-        u32 pressed=GSinputButtonsPressed(1);
-        if(pressed&changed&0x400) {
-            if(menuIsCheck(6)) menuClose(6);
-            else { menuOpenCustom(6,0,0,0,1,0); menuSetPosition(6,20,260); }
+extern "C" {
+void cameraRefreshTargetPos() {
+    if(pCamWork->targetGroup || pCamWork->targetID) {
+        GSmodel* model=(GSmodel*)GSresGetResource(pCamWork->targetGroup,pCamWork->targetID);
+        if(model) {
+            GSmodelGetPosition(model,&pCamWork->targetPosition);
+            if(pCamWork->targetPart>=0) {
+                GSpart* part=GSmodelGetPart(model,pCamWork->targetPart);
+                if(part) {
+                    GSpartGetTransform(part,vec(&pCamWork->targetOffset),0,0);
+                    PSVECSubtract(vec(&pCamWork->targetOffset),vec(&pCamWork->targetPosition),vec(&pCamWork->targetOffset));
+                    PSVECAdd(vec(&pCamWork->targetOffset),vec(&pCamWork->partTargetOffset),vec(&pCamWork->targetOffset));
+                    GSpartFree(part);
+                }
+            }
         }
-        Mtx matrix,yMatrix,zMatrix;
-        PSMTXRotRad(matrix,'X',pCamWork->rotation.param1); PSMTXRotRad(yMatrix,'Y',pCamWork->rotation.param2); PSMTXConcat(yMatrix,matrix,matrix);
-        PSMTXRotRad(zMatrix,'Z',pCamWork->rotation.param3); PSMTXConcat(zMatrix,matrix,matrix);
-        x=render*(f32)(s8)GSinputGetLeftStickXData(1,0); y=render*(f32)(s8)GSinputGetLeftStickYData(1,0);
-        rx=render*(f32)(s8)GSinputGetRightStickXData(1,0); ry=render*(f32)(s8)GSinputGetRightStickYData(1,0);
-        if(GSinputButtonsPressed(1)&0x40) divisor*=4.0f;
-        Vec world,local;
-        if(GSinputButtonsPressed(1)&0x800) { local.x=x/divisor; local.y=-y/divisor; local.z=0.0f; }
-        else { local.y=0.0f; local.x=x/divisor; local.z=y/divisor; }
-        PSMTXMultVec(matrix,&local,&world); PSVECAdd(vec(&pCamWork->position),&world,vec(&pCamWork->position));
-        if(GSinputButtonsPressed(1)&0x20) { f32 add=ry/divisor; f32 fov=add+pCamWork->fov; cameraSetFov(fov); }
-        else pCamWork->rotation.param1-=ry/(32.0f*divisor);
-        pCamWork->rotation.param2-=rx/(32.0f*divisor);
-        GScameraSetPosition(camera,vec(&pCamWork->position)); GScameraSetRotation(camera,vec(&pCamWork->rotation)); cameraApplyFov(camera);
     }
 }
-static inline u8 cameraAnyMoving() {
-    return pCamWork->targetAnimation.isMove() || pCamWork->offsetAnimation.isMove() || pCamWork->positionAnimation.isMove() || pCamWork->rotationAnimation.isMove() || pCamWork->fovAnimation.isMove();
 }
+extern "C" {
 void cameraUpdate() {
     GScamera* camera=(GScamera*)GSresGetResource(0,0);
     CameraWork* work=pCamWork;
@@ -796,4 +646,330 @@ void cameraUpdate() {
     }
     GScameraSetActiveCamera(camera); GScameraLoadActiveCameraMatrix(-1);
 }
+}
+extern "C" {
+u8 cameraSetType(u8 type) {
+    pCamWork->flags=0;
+    if(pCamWork->type==type) return type;
+    u8 previous=pCamWork->type; pCamWork->type=type; pCamWork->flags &= ~0x20; return previous;
+}
+}
+extern "C" {
+u8 cameraGetType() { return pCamWork->type; }
+}
+extern "C" {
+GScamera* cameraGetActive() {
+    GScamera* camera=GScameraGetActiveCamera();
+    if(camera) return camera;
+    camera=(GScamera*)GSresGetResource(0,0); GScameraSetActiveCamera(camera); return camera;
+}
+}
+extern "C" {
+void cameraSetTarget(u32 group,u32 id) { pCamWork->targetGroup=group; pCamWork->targetID=id; pCamWork->targetPart=-1; }
+}
+extern "C" {
+void cameraSetTargetExt(u32 group,u32 id,s32 part) {
+    pCamWork->targetGroup=group; pCamWork->targetID=id; pCamWork->targetPart=part;
+    GSvec* offset=&pCamWork->partTargetOffset; offset->param1=0.0f; offset->param2=0.0f; offset->param3=0.0f;
+}
+}
+#pragma push
+#pragma scheduling off
+extern "C" {
+void cameraSetPartTargetOffset(const GSvec* value) {
+    CameraWork* work=pCamWork; work->partTargetOffset.param1=value->param1; work->partTargetOffset.param2=value->param2; work->partTargetOffset.param3=value->param3;
+}
+}
+#pragma pop
+#pragma push
+#pragma scheduling off
+extern "C" {
+void cameraSetTargetOfs(const GSvec* value) { CameraWork* work=pCamWork; work->targetOffset.param1=value->param1; work->targetOffset.param2=value->param2; work->targetOffset.param3=value->param3; }
+}
+#pragma pop
+extern "C" {
+void cameraGetTargetOfs(GSvec* out) { copyVector(out,&pCamWork->targetOffset); }
+}
+#pragma push
+#pragma scheduling off
+extern "C" {
+void cameraSetTargetPos(const GSvec* value) { CameraWork* work=pCamWork; work->targetPosition.param1=value->param1; work->targetPosition.param2=value->param2; work->targetPosition.param3=value->param3; }
+}
+#pragma pop
+extern "C" {
+void cameraGetTargetPos(GSvec* out) { copyVector(out,&pCamWork->targetPosition); }
+}
+#pragma push
+#pragma scheduling off
+extern "C" {
+void cameraSetPosition(const GSvec* value) { CameraWork* work=pCamWork; work->position.param1=value->param1; work->position.param2=value->param2; work->position.param3=value->param3; }
+}
+#pragma pop
+extern "C" {
+void cameraGetPosition(GSvec* out) { copyVector(out,&pCamWork->position); }
+}
+extern "C" {
+void cameraSetRotation(const GSvec* value) {
+    GScamera* camera=(GScamera*)GSresGetResource(0,0);
+    volatile f32* target=(volatile f32*)&pCamWork->rotation;
+    const volatile f32* source=(const volatile f32*)value;
+    target[0]=source[0]; target[1]=source[1]; target[2]=source[2];
+    GScameraSetRotation(camera,vec(value));
+}
+}
+extern "C" {
+void cameraGetRotation(GSvec* out) { copyVector(out,&pCamWork->rotation); }
+}
+extern "C" {
+void cameraMoveTarget(u32 mode,u32 group,u32 id,f32 duration) {
+    GSvec position;position.param1=0.0f;position.param2=0.0f;position.param3=0.0f;
+    cameraSetTarget(group,id);
+    GSmodel* model=(GSmodel*)GSresGetResource(group,id);
+    if(model) GSmodelGetPosition(model,&position);
+    if(duration < 1e-7f && duration > -1e-7f) { cameraSetTargetPos(&position); return; }
+    pCamWork->moving=1; pCamWork->targetAnimation.start(&pCamWork->targetPosition,&position,duration);
+}
+}
+extern "C" {
+void cameraMoveTargetPos(u32 mode,const GSvec* position,f32 duration) {
+    if(duration < 1e-7f && duration > -1e-7f) {
+        volatile f32* target=(volatile f32*)&pCamWork->targetPosition;
+        const volatile f32* source=(const volatile f32*)position;
+        target[0]=source[0]; target[1]=source[1]; target[2]=source[2];
+        return;
+    }
+    pCamWork->moving=1; pCamWork->targetAnimation.start(&pCamWork->targetPosition,position,duration);
+}
+}
+extern "C" {
+void cameraMoveTargetOfs(u32 mode,const GSvec* position,f32 duration) { pCamWork->moving=1; pCamWork->offsetAnimation.start(&pCamWork->targetOffset,position,duration); }
+}
+extern "C" {
+void cameraMoveTargetXYZ(u32 mode,f32 x,f32 y,f32 z,f32 duration) {
+    GSvec position; position.param1=x; position.param2=y; position.param3=z;
+    if(duration < 1e-7f && duration > -1e-7f) { cameraSetTargetPos(&position); return; }
+    pCamWork->moving=1; pCamWork->targetAnimation.start(&pCamWork->targetPosition,&position,duration);
+}
+}
+extern "C" {
+void cameraMovePosition(u32 mode,const GSvec* position,f32 duration) {
+    if(duration < 1e-7f && duration > -1e-7f) {
+        volatile f32* target=(volatile f32*)&pCamWork->position;
+        const volatile f32* source=(const volatile f32*)position;
+        target[0]=source[0]; target[1]=source[1]; target[2]=source[2];
+        return;
+    }
+    pCamWork->moving=1; pCamWork->positionAnimation.start(&pCamWork->position,position,duration);
+}
+}
+extern "C" {
+void cameraMovePositionXYZ(u32 mode,f32 x,f32 y,f32 z,f32 duration) {
+    GSvec position; position.param1=x; position.param2=y; position.param3=z;
+    if(duration < 1e-7f && duration > -1e-7f) { cameraSetPosition(&position); return; }
+    pCamWork->moving=1; pCamWork->positionAnimation.start(&pCamWork->position,&position,duration);
+}
+}
+extern "C" {
+void cameraMoveFov(u32 mode,f32 fov,f32 duration) { pCamWork->moving=1; pCamWork->fovAnimation.start(&pCamWork->fov,&fov,duration); }
+}
+extern "C" {
+void cameraMoveRotation(u32 mode,const GSvec* rotation,f32 duration) {
+    if(duration < 1e-7f && duration > -1e-7f) { cameraSetRotation(rotation); return; }
+    pCamWork->moving=1; pCamWork->rotationAnimation.start(&pCamWork->rotation,rotation,duration);
+}
+}
+extern "C" {
+void cameraMoveRotationXYZ(u32 mode,f32 x,f32 y,f32 z,f32 duration) {
+    GSvec rotation; rotation.param1=x; rotation.param2=y; rotation.param3=z;
+    if(duration < 1e-7f && duration > -1e-7f) { cameraSetRotation(&rotation); return; }
+    pCamWork->moving=1; pCamWork->rotationAnimation.start(&pCamWork->rotation,&rotation,duration);
+}
+}
+extern "C" {
+void cameraMoveTargetPosAcc(f32 acceleration) { pCamWork->targetAnimation.setAcceleration(acceleration); }
+}
+extern "C" {
+void cameraMoveTargetOfsAcc(f32 acceleration) { pCamWork->offsetAnimation.setAcceleration(acceleration); }
+}
+extern "C" {
+void cameraMovePositionAcc(f32 acceleration) { pCamWork->positionAnimation.setAcceleration(acceleration); }
+}
+extern "C" {
+void cameraMoveRotationAcc(f32 acceleration) { pCamWork->rotationAnimation.setAcceleration(acceleration); }
+}
+extern "C" {
+void cameraMoveFovAcc(f32 acceleration) { pCamWork->fovAnimation.setAcceleration(acceleration); }
+}
+extern "C" {
+void cameraReturn(f32 duration,u8 wait) {
+    GScamera* camera=GScameraGetActiveCamera();
+    if(floorFieldCameraDataExist()) {
+        if(pCamWork->type==3) {
+            Vec position,front;
+            GSvec offset;
+            offset.param1=pCamWork->targetOffset.param1; offset.param2=pCamWork->targetOffset.param2; offset.param3=pCamWork->targetOffset.param3;
+            GScameraGetFrontVector(camera,&front);
+            PSVECScale(&front,&front,pCamWork->distance);
+            GScameraGetPosition(camera,&position);
+            PSVECAdd(&position,&front,&position);
+            PSVECSubtract(&position,vec(&offset),&position);
+            GSvec* target=&pCamWork->targetPosition;
+            target->param1=position.x; target->param2=position.y; target->param3=position.z;
+        }
+        cameraSetType(0); floorFieldCameraEnable(); floorFieldCameraBlend(duration);
+    } else {
+        cameraSetType(0);
+        FloorCamera* floor=currentFloorCamera();
+        if(floor) { cameraSetHeight(floor->defaultHeight); cameraSetDistance(floor->defaultDistance); cameraSetFov(floor->defaultFov); }
+        cameraMoveTarget(0,0,100,duration);
+        cameraMoveRotationXYZ(0,0.0f,floor->defaultRotation,0.0f,duration);
+    }
+    for(;;) {
+        if(!(pCamWork->targetAnimation.isMove() || pCamWork->offsetAnimation.isMove() || pCamWork->positionAnimation.isMove() || pCamWork->rotationAnimation.isMove() || pCamWork->fovAnimation.isMove())) break;
+        if(!wait) break;
+        GSthreadSwitch();
+    }
+}
+}
+extern "C" {
+s32 cameraMoveEndCheck(u8 wait) {
+    for(;;) {
+        if(!pCamWork->targetAnimation.isMove() && !pCamWork->offsetAnimation.isMove() && !pCamWork->positionAnimation.isMove() && !pCamWork->rotationAnimation.isMove() && !pCamWork->fovAnimation.isMove()) return 0;
+        if(wait) GSthreadSwitch(); else return 1;
+    }
+}
+}
+extern "C" {
+s32 cameraMoveEndCheckSpecial(u8 wait) {
+    for(;;) {
+        if(!pCamWork->targetAnimation.isMove() && !pCamWork->positionAnimation.isMove() && !pCamWork->rotationAnimation.isMove()) return 0;
+        if(wait) GSthreadSwitch(); else return 1;
+    }
+}
+}
+extern "C" {
+void cameraMoveStop() {
+    pCamWork->targetAnimation.stop(); pCamWork->offsetAnimation.stop(); pCamWork->positionAnimation.stop(); pCamWork->rotationAnimation.stop(); pCamWork->fovAnimation.stop(); pCamWork->moving=0;
+}
+}
+extern "C" {
+void cameraPlayAnime(u32 group,u32 id,u8 loop,f32 frame) {
+    if(pCamWork->animationGroup || pCamWork->animationID) cameraStopAnime();
+    u8 previous=cameraSetType(4);
+    pCamWork->animationGroup=group; pCamWork->animationID=id; pCamWork->previousType=previous;
+    GScamera* camera=animationCamera(pCamWork);
+    if(camera) {
+        GScameraSetAnimIndex(camera,0); if(loop) GScameraSetAnimType(camera,1); else GScameraSetAnimType(camera,0);
+        GScameraSetAnimRate(camera,0.5f); GScameraSetAnimFrame(camera,frame); GScameraStartAnimation(camera); GScameraSetActiveCamera(camera);
+    }
+}
+}
+extern "C" {
+void cameraPlayOffsetAnime(u32 group,u32 id,s32 frame,u8 loop) {
+    if(pCamWork->animationGroup || pCamWork->animationID) cameraStopAnime();
+    u8 previous=cameraSetType(8);
+    pCamWork->animationGroup=group; pCamWork->animationID=id; pCamWork->previousType=previous;
+    GScamera* camera=animationCamera(pCamWork);
+    if(camera) {
+        GScameraSetAnimIndex(camera,0); if(loop) GScameraSetAnimType(camera,1); else GScameraSetAnimType(camera,0);
+        GScameraSetAnimRate(camera,0.5f); GScameraSetAnimFrame(camera,(f32)frame); GScameraStartAnimation(camera);
+        cameraResetOffsets(false);
+        GScameraSetActiveCamera((GScamera*)GSresGetResource(0,0));
+    }
+}
+}
+extern "C" {
+s32 cameraWaitSyncAnime(u8 wait) {
+    GScamera* camera=animationCamera(pCamWork);
+    if(!camera) return 0;
+    if(wait) {
+        for(;;) {
+            if(GScameraHasAnimationEnded(camera)) break;
+            if(!GSthreadGetCurrentThread()) { GSlogWrite("cameraWaitSyncAnime()  スレッドから呼ぶようにしてください\n"); break; }
+            GSthreadSwitch();
+        }
+    } else if(!GScameraHasAnimationEnded(camera)) return 1;
+    return 0;
+}
+}
+extern "C" {
+void cameraStopAnime() {
+    GScamera* camera=animationCamera(pCamWork);
+    pCamWork->animationGroup=0; pCamWork->animationID=0;
+    if(camera) GScameraStopAnimation(camera);
+}
+}
+extern "C" {
+void cameraPauseAnime() { GScamera* camera=animationCamera(pCamWork); if(camera) GScameraStopAnimation(camera); }
+}
+extern "C" {
+void cameraResumeAnime() { GScamera* camera=animationCamera(pCamWork); if(camera) GScameraStartAnimation(camera); }
+}
+extern "C" {
+void cameraSetAnimeRate(f32 rate) { GScamera* camera=animationCamera(pCamWork); if(camera) GScameraSetAnimRate(camera,rate); }
+}
+extern "C" {
+void cameraSetTargetOfsXYZ(f32 x,f32 y,f32 z) { CameraWork* work=pCamWork; work->targetOffset.param1=x; work->targetOffset.param2=y; work->targetOffset.param3=z; }
+}
+extern "C" {
+void cameraSetTargetPosXYZ(f32 x,f32 y,f32 z) { CameraWork* work=pCamWork; work->targetPosition.param1=x; work->targetPosition.param2=y; work->targetPosition.param3=z; }
+}
+extern "C" {
+void cameraSetRotationXYZ(f32 x,f32 y,f32 z) {
+    GSvec rotation; rotation.param1=x; rotation.param2=y; rotation.param3=z;
+    GScamera* camera=(GScamera*)GSresGetResource(0,0);
+    copyVector(&pCamWork->rotation,&rotation);
+    GScameraSetRotation(camera,vec(&rotation));
+}
+}
+extern "C" {
+void cameraSetHeight(f32 value) { FloorCamera* floor=currentFloorCamera(); if (floor) floor->height=value; pCamWork->height=value; }
+}
+extern "C" {
+void cameraSetDistance(f32 value) { FloorCamera* floor=currentFloorCamera(); if (floor) floor->distance=value; pCamWork->distance=value; }
+}
+extern "C" {
+void cameraSetRotY(f32 value) { FloorCamera* floor=currentFloorCamera(); if (floor) floor->rotation=value; pCamWork->rotation.param2=value; }
+}
+extern "C" {
+void cameraSetFov(f32 value) { cameraSetFovValue(value); }
+}
+extern "C" {
+f32 cameraGetHeight() { return pCamWork->height; }
+}
+extern "C" {
+f32 cameraGetDistance() { return pCamWork->distance; }
+}
+extern "C" {
+f32 cameraGetRotY() { return pCamWork->rotation.param2; }
+}
+extern "C" {
+f32 cameraGetFov() { return pCamWork->fov; }
+}
+#pragma push
+#pragma scheduling off
+extern "C" {
+void cameraSetOffsetPosition(const GSvec* v) { CameraWork* work=pCamWork; work->offsetPosition.param1=v->param1; work->offsetPosition.param2=v->param2; work->offsetPosition.param3=v->param3; }
+}
+#pragma pop
+#pragma push
+#pragma scheduling off
+extern "C" {
+void cameraSetOffsetRotation(const GSvec* v) { CameraWork* work=pCamWork; work->offsetRotation.param1=v->param1; work->offsetRotation.param2=v->param2; work->offsetRotation.param3=v->param3; }
+}
+#pragma pop
+#pragma push
+#pragma scheduling off
+extern "C" {
+void cameraSetOffsetScale(const GSvec* v) { CameraWork* work=pCamWork; work->offsetScale.param1=v->param1; work->offsetScale.param2=v->param2; work->offsetScale.param3=v->param3; }
+}
+#pragma pop
+extern "C" {
+void cameraSetMirrorFlag(s32 flags) { pCamWork->flags &= 0x18; pCamWork->flags |= flags; }
+}
+extern "C" {
+void cameraLockYTarget(u8 flag) { if (flag) pCamWork->flags |= 0x18; else pCamWork->flags &= ~8; }
+}
+extern "C" {
+void fn_80196A14(u8 flag) { if (flag) pCamWork->flags |= 0x20; else pCamWork->flags &= ~0x20; }
 }

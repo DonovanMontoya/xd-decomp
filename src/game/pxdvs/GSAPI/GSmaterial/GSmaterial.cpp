@@ -1,3 +1,6 @@
+#pragma defer_codegen on
+// Deferred code generation emits these definitions in reverse order.
+#pragma force_active on
 #include <dolphin/types.h>
 #include <dolphin/gx/GXStruct.h>
 
@@ -133,100 +136,85 @@ static int _matGSmatObjLoad(HSD_MObj* mobj, void* desc);
 
 HSD_MObjInfo _matGSmatObj = { _GSmaterialObjInit };
 
-void GSmaterialResetTexture(GSmaterial* material)
-{
-    HSD_ImageDesc* old;
-
-    if (material->savedImage != GSMATERIAL_UNSET) {
-        old = material->mobj->tobj->imagedesc;
-        material->mobj->tobj->imagedesc = material->savedImage;
-        HSD_ImageDescRemove(old);
-        material->savedImage = (HSD_ImageDesc*)GSMATERIAL_UNSET;
-    }
 }
 
-void GSmaterialGetTexture(GSmaterial* material, GStexture* texture)
-{
-    HSD_ImageDesc* image;
-
-    if (material->savedImage != GSMATERIAL_UNSET) {
-        image = material->savedImage;
-    } else {
-        image = material->mobj->tobj->imagedesc;
-    }
-    ((u8*)texture)[6] = 0;
-    if (image != 0) {
-        GStextureCreateFromMemory(texture, image->width, image->height, image->image_ptr, GXFmtToGStextureFmt(image->format), 0, image->mipmap);
-    }
+extern "C" {
+void GSmaterialResetTexture(GSmaterial* material);
+}
+extern "C" {
+void GSmaterialGetTexture(GSmaterial* material, GStexture* texture);
+}
+extern "C" {
+void GSmaterialSetTexture(GSmaterial* material, GStexture* texture);
+}
+extern "C" {
+void GSmaterialGetModulate(GSmaterial* m, GXColor* color);
+}
+extern "C" {
+void GSmaterialResetAlpha(GSmaterial* material);
+}
+extern "C" {
+void GSmaterialStoreAlpha(GSmaterial* material);
+}
+extern "C" {
+void GSmaterialSetEnvMapBlendValue(GSmaterial* material, f32 blend);
+}
+extern "C" {
+void GSmaterialSetEnvMapParams(GSmaterial* material, s32 type, s32 mode, f32 blend, GStexture* texture);
+}
+extern "C" {
+void GSmaterialSetModulate(GSmaterial* m, GXColor* c);
+}
+extern "C" {
+void GSmaterialSetColorChannels(GSmaterial* m, u8* c);
+}
+extern "C" {
+void GSmaterialSetAlpha(GSmaterial* material, f32 alpha);
+}
+extern "C" {
+u32 GSmaterialGetEnabledExtensions(GSmaterial* m);
+}
+extern "C" {
+static inline void _matRemoveEnvMap(GSmaterial* material);
+}
+extern "C" {
+void GSmaterialDisableExtension(GSmaterial* material, u32 extensions);
+}
+extern "C" {
+void GSmaterialEnableExtension(GSmaterial* material, u32 extensions);
+}
+extern "C" {
+u32 GSmaterialGetFlags(GSmaterial* material);
+}
+extern "C" {
+void GSmaterialResetPEdescr(GSmaterial* material);
+}
+extern "C" {
+void GSmaterialSetPEdescr(GSmaterial* material, HSD_PEDesc* pe);
+}
+extern "C" {
+void GSmaterialResetFlags(GSmaterial* material);
+}
+extern "C" {
+void GSmaterialSetFlags(GSmaterial* material, u32 flags);
+}
+extern "C" {
+void GSmaterialInit();
+}
+extern "C" {
+static void _GSmaterialObjInit(void);
+}
+extern "C" {
+static HSD_TExp* _matGSmatObjMakeTExp(HSD_MObj* mobj, HSD_TObj* tobj, HSD_TExp** list);
+}
+extern "C" {
+static void _matGSmatEnableEnvMapExt(GSmaterial* material);
+}
+extern "C" {
+static int _matGSmatObjLoad(HSD_MObj* mobj, void* desc);
 }
 
-void GSmaterialSetTexture(GSmaterial* material, GStexture* texture)
-{
-    HSD_ImageDesc* image;
-
-    if (material->savedImage == GSMATERIAL_UNSET) {
-        material->savedImage = material->mobj->tobj->imagedesc;
-        image = HSD_ImageDescAlloc();
-    } else {
-        image = material->mobj->tobj->imagedesc;
-    }
-    if (image != 0) {
-        image->image_ptr = GStextureLockImage(texture, 0);
-        image->width = GStextureGetXsize(texture);
-        image->height = GStextureGetYsize(texture);
-        image->format = GStextureGetGXformat(texture, 1);
-        image->mipmap = GStextureGetMiplevels(texture) != 0;
-        image->minLOD = 0.0f;
-        image->maxLOD = 0.0f;
-        GStextureUnlockImage(texture);
-        material->mobj->tobj->imagedesc = image;
-    }
-}
-
-extern "C" void GSmaterialGetModulate(GSmaterial* m, GXColor* color) {
-    color->r = m->modulate.r; color->g = m->modulate.g;
-    color->b = m->modulate.b; color->a = m->modulate.a;
-}
-
-void GSmaterialResetAlpha(GSmaterial* material)
-{
-    HSD_MObjSetAlpha(material->mobj, material->savedAlpha / 255.0f);
-}
-
-void GSmaterialStoreAlpha(GSmaterial* material)
-{
-    material->savedAlpha = (u8)(255.0f * material->mobj->mat->alpha);
-}
-
-void GSmaterialSetEnvMapBlendValue(GSmaterial* material, f32 blend)
-{
-    HSD_TObj* tobj = material->envTObj;
-
-    material->envBlend = blend;
-    if (tobj != 0) {
-        tobj->blending = blend;
-    }
-}
-
-void GSmaterialSetEnvMapParams(GSmaterial* material, s32 type, s32 mode, f32 blend, GStexture* texture)
-{
-    material->envType = type;
-    material->envMode = mode;
-    material->envBlend = blend;
-    material->envTexture = texture;
-}
-
-extern "C" void GSmaterialSetModulate(GSmaterial* m, GXColor* c) { m->modulate.r = c->r; m->modulate.g = c->g; m->modulate.b = c->b; m->modulate.a = c->a; }
-
-extern "C" void GSmaterialSetColorChannels(GSmaterial* m, u8* c) { m->channels[0] = c[0]; m->channels[1] = c[1]; m->channels[2] = c[2]; m->channels[3] = c[3]; }
-
-void GSmaterialSetAlpha(GSmaterial* material, f32 alpha)
-{
-    HSD_MObjSetAlpha(material->mobj, alpha);
-}
-
-extern "C" u32 GSmaterialGetEnabledExtensions(GSmaterial* m) { return m->extensions; }
-
+extern "C" {
 static inline void _matRemoveEnvMap(GSmaterial* material)
 {
     HSD_MObj* mobj;
@@ -259,181 +247,22 @@ static inline void _matRemoveEnvMap(GSmaterial* material)
     }
     material->envTexture = 0;
 }
-
-void GSmaterialDisableExtension(GSmaterial* material, u32 extensions)
-{
-    u32 disable;
-    HSD_MObj* mobj;
-
-    mobj = material->mobj;
-    disable = extensions & material->extensions;
-    if (disable & 1) {
-        material->modulate.r = material->modulate.g = material->modulate.b = material->modulate.a = 0x7F;
-    }
-    if (disable & 2) {
-        material->channels[0] = 0;
-        material->channels[1] = 1;
-        material->channels[2] = 2;
-        material->channels[3] = 3;
-    }
-    if (disable & 4) {
-        _matRemoveEnvMap(material);
-    }
-    material->extensions &= ~disable;
-    if (material->extensions == 0) {
-        mobj->user = 0;
-    }
-    HSD_MObjCompileTev(mobj);
 }
 
-void GSmaterialEnableExtension(GSmaterial* material, u32 extensions)
+extern "C" {
+static int _matGSmatObjLoad(HSD_MObj* mobj, void* desc)
 {
-    u32 enable;
-    HSD_MObj* mobj;
+    int ret = hsdMObj.load(mobj, desc);
 
-    mobj = material->mobj;
-    enable = extensions & ~material->extensions;
-    if (enable != 0) {
-        mobj->user = material;
-        if (enable & 4) {
-            _matGSmatEnableEnvMapExt(material);
-        }
-        material->extensions |= enable;
-        HSD_MObjCompileTev(mobj);
+    if (ret != 0) {
+        return ret;
     }
+    mobj->user = 0;
+    return 0;
+}
 }
 
-u32 GSmaterialGetFlags(GSmaterial* material)
-{
-    u32 flags = HSD_MObjGetFlags(material->mobj);
-    u32 result = 0;
-
-    if (flags & 1) {
-        result |= 1;
-    }
-    if (flags & 2) {
-        result |= 2;
-    }
-    if (flags & 4) {
-        result |= 4;
-    }
-    if (flags & 8) {
-        result |= 8;
-    }
-    if (flags & 0x40000000) {
-        result |= 0x10;
-    }
-    if (flags & 0x2000) {
-        result |= 0x20;
-    }
-    if (flags & 0x4000) {
-        result |= 0x40;
-    }
-    return result;
-}
-
-void GSmaterialResetPEdescr(GSmaterial* material)
-{
-    HSD_PEDesc* saved = material->savedPE;
-
-    if (saved != GSMATERIAL_UNSET) {
-        material->mobj->pe = saved;
-        material->savedPE = (HSD_PEDesc*)GSMATERIAL_UNSET;
-    }
-}
-
-void GSmaterialSetPEdescr(GSmaterial* material, HSD_PEDesc* pe)
-{
-    if (material->savedPE == GSMATERIAL_UNSET) {
-        material->savedPE = material->mobj->pe;
-    } else {
-        GSlogWrite("GSmaterialSetPEdescr: Warning: already using a custom description!\n");
-    }
-    material->mobj->pe = pe;
-}
-
-void GSmaterialResetFlags(GSmaterial* material)
-{
-    HSD_MObjClearFlags(material->mobj, 0x4000600F);
-    HSD_MObjSetFlags(material->mobj, material->savedFlags);
-    HSD_MObjCompileTev(material->mobj);
-}
-
-void GSmaterialSetFlags(GSmaterial* material, u32 flags)
-{
-    u32 result;
-
-    material->savedFlags = HSD_MObjGetFlags(material->mobj);
-    HSD_MObjClearFlags(material->mobj, 0x4000600F);
-    result = 0;
-    if (flags & 1) {
-        result |= 1;
-    }
-    if (flags & 2) {
-        result |= 2;
-    }
-    if (flags & 4) {
-        result |= 4;
-    }
-    if (flags & 8) {
-        result |= 8;
-    }
-    if (flags & 0x10) {
-        result |= 0x40000000;
-    }
-    if (flags & 0x20) {
-        result |= 0x2000;
-    }
-    if (flags & 0x40) {
-        result |= 0x4000;
-    }
-    HSD_MObjSetFlags(material->mobj, result);
-    HSD_MObjCompileTev(material->mobj);
-}
-
-extern "C" void GSmaterialInit() { HSD_MObjSetDefaultClass(&_matGSmatObj); }
-
-static void _GSmaterialObjInit(void)
-{
-    hsdInitClassInfo(&_matGSmatObj, &hsdMObj, "GSmaterial MObj", "GSmaterial MObj", sizeof(HSD_MObjInfo), 0x24);
-    _matGSmatObj.load = _matGSmatObjLoad;
-    _matGSmatObj.make_texp = _matGSmatObjMakeTExp;
-}
-
-static HSD_TExp* _matGSmatObjMakeTExp(HSD_MObj* mobj, HSD_TObj* tobj, HSD_TExp** list)
-{
-    HSD_TExp* t;
-    HSD_TExp* texp;
-    GSmaterial* material;
-    HSD_TExp* color;
-    HSD_TExp* tev;
-    HSD_TExp* alpha;
-
-    texp = hsdMObj.make_texp(mobj, tobj, list);
-    material = mobj->user;
-    if (material == 0) {
-        return texp;
-    }
-    if (material->extensions & 2) {
-        for (t = texp; t != 0; t = t->next) {
-            if (HSD_TExpGetType(t) == 1) {
-                HSD_TExpColorSwap(t, material->channels[0], material->channels[1], material->channels[2], material->channels[3]);
-            }
-        }
-    }
-    if (material->extensions & 1) {
-        color = HSD_TExpCnst(&material->modulate, 1, 0, list);
-        alpha = HSD_TExpCnst(&material->modulate.a, 6, 0, list);
-        tev = HSD_TExpTev(list);
-        HSD_TExpColorOp(tev, 0, 0, 1, 1);
-        HSD_TExpColorIn(tev, 0, 0, 1, color, 1, texp, 0, 0);
-        HSD_TExpAlphaOp(tev, 0, 0, 0, 1);
-        HSD_TExpAlphaIn(tev, 0, 0, 5, alpha, 5, texp, 0, 0);
-        texp = tev;
-    }
-    return texp;
-}
-
+extern "C" {
 static void _matGSmatEnableEnvMapExt(GSmaterial* material)
 {
     static HSD_TObjDesc tobjdesc = {
@@ -518,16 +347,316 @@ static void _matGSmatEnableEnvMapExt(GSmaterial* material)
         GSmaterialDisableExtension(material, 4);
     }
 }
-
-static int _matGSmatObjLoad(HSD_MObj* mobj, void* desc)
-{
-    int ret = hsdMObj.load(mobj, desc);
-
-    if (ret != 0) {
-        return ret;
-    }
-    mobj->user = 0;
-    return 0;
 }
 
+extern "C" {
+static HSD_TExp* _matGSmatObjMakeTExp(HSD_MObj* mobj, HSD_TObj* tobj, HSD_TExp** list)
+{
+    HSD_TExp* t;
+    HSD_TExp* texp;
+    GSmaterial* material;
+    HSD_TExp* color;
+    HSD_TExp* tev;
+    HSD_TExp* alpha;
+
+    texp = hsdMObj.make_texp(mobj, tobj, list);
+    material = mobj->user;
+    if (material == 0) {
+        return texp;
+    }
+    if (material->extensions & 2) {
+        for (t = texp; t != 0; t = t->next) {
+            if (HSD_TExpGetType(t) == 1) {
+                HSD_TExpColorSwap(t, material->channels[0], material->channels[1], material->channels[2], material->channels[3]);
+            }
+        }
+    }
+    if (material->extensions & 1) {
+        color = HSD_TExpCnst(&material->modulate, 1, 0, list);
+        alpha = HSD_TExpCnst(&material->modulate.a, 6, 0, list);
+        tev = HSD_TExpTev(list);
+        HSD_TExpColorOp(tev, 0, 0, 1, 1);
+        HSD_TExpColorIn(tev, 0, 0, 1, color, 1, texp, 0, 0);
+        HSD_TExpAlphaOp(tev, 0, 0, 0, 1);
+        HSD_TExpAlphaIn(tev, 0, 0, 5, alpha, 5, texp, 0, 0);
+        texp = tev;
+    }
+    return texp;
+}
+}
+
+extern "C" {
+static void _GSmaterialObjInit(void)
+{
+    hsdInitClassInfo(&_matGSmatObj, &hsdMObj, "GSmaterial MObj", "GSmaterial MObj", sizeof(HSD_MObjInfo), 0x24);
+    _matGSmatObj.load = _matGSmatObjLoad;
+    _matGSmatObj.make_texp = _matGSmatObjMakeTExp;
+}
+}
+
+extern "C" {
+void GSmaterialInit() { HSD_MObjSetDefaultClass(&_matGSmatObj); }
+}
+
+extern "C" {
+void GSmaterialSetFlags(GSmaterial* material, u32 flags)
+{
+    u32 result;
+
+    material->savedFlags = HSD_MObjGetFlags(material->mobj);
+    HSD_MObjClearFlags(material->mobj, 0x4000600F);
+    result = 0;
+    if (flags & 1) {
+        result |= 1;
+    }
+    if (flags & 2) {
+        result |= 2;
+    }
+    if (flags & 4) {
+        result |= 4;
+    }
+    if (flags & 8) {
+        result |= 8;
+    }
+    if (flags & 0x10) {
+        result |= 0x40000000;
+    }
+    if (flags & 0x20) {
+        result |= 0x2000;
+    }
+    if (flags & 0x40) {
+        result |= 0x4000;
+    }
+    HSD_MObjSetFlags(material->mobj, result);
+    HSD_MObjCompileTev(material->mobj);
+}
+}
+
+extern "C" {
+void GSmaterialResetFlags(GSmaterial* material)
+{
+    HSD_MObjClearFlags(material->mobj, 0x4000600F);
+    HSD_MObjSetFlags(material->mobj, material->savedFlags);
+    HSD_MObjCompileTev(material->mobj);
+}
+}
+
+extern "C" {
+void GSmaterialSetPEdescr(GSmaterial* material, HSD_PEDesc* pe)
+{
+    if (material->savedPE == GSMATERIAL_UNSET) {
+        material->savedPE = material->mobj->pe;
+    } else {
+        GSlogWrite("GSmaterialSetPEdescr: Warning: already using a custom description!\n");
+    }
+    material->mobj->pe = pe;
+}
+}
+
+extern "C" {
+void GSmaterialResetPEdescr(GSmaterial* material)
+{
+    HSD_PEDesc* saved = material->savedPE;
+
+    if (saved != GSMATERIAL_UNSET) {
+        material->mobj->pe = saved;
+        material->savedPE = (HSD_PEDesc*)GSMATERIAL_UNSET;
+    }
+}
+}
+
+extern "C" {
+u32 GSmaterialGetFlags(GSmaterial* material)
+{
+    u32 flags = HSD_MObjGetFlags(material->mobj);
+    u32 result = 0;
+
+    if (flags & 1) {
+        result |= 1;
+    }
+    if (flags & 2) {
+        result |= 2;
+    }
+    if (flags & 4) {
+        result |= 4;
+    }
+    if (flags & 8) {
+        result |= 8;
+    }
+    if (flags & 0x40000000) {
+        result |= 0x10;
+    }
+    if (flags & 0x2000) {
+        result |= 0x20;
+    }
+    if (flags & 0x4000) {
+        result |= 0x40;
+    }
+    return result;
+}
+}
+
+extern "C" {
+void GSmaterialEnableExtension(GSmaterial* material, u32 extensions)
+{
+    u32 enable;
+    HSD_MObj* mobj;
+
+    mobj = material->mobj;
+    enable = extensions & ~material->extensions;
+    if (enable != 0) {
+        mobj->user = material;
+        if (enable & 4) {
+            _matGSmatEnableEnvMapExt(material);
+        }
+        material->extensions |= enable;
+        HSD_MObjCompileTev(mobj);
+    }
+}
+}
+
+extern "C" {
+void GSmaterialDisableExtension(GSmaterial* material, u32 extensions)
+{
+    u32 disable;
+    HSD_MObj* mobj;
+
+    mobj = material->mobj;
+    disable = extensions & material->extensions;
+    if (disable & 1) {
+        material->modulate.r = material->modulate.g = material->modulate.b = material->modulate.a = 0x7F;
+    }
+    if (disable & 2) {
+        material->channels[0] = 0;
+        material->channels[1] = 1;
+        material->channels[2] = 2;
+        material->channels[3] = 3;
+    }
+    if (disable & 4) {
+        _matRemoveEnvMap(material);
+    }
+    material->extensions &= ~disable;
+    if (material->extensions == 0) {
+        mobj->user = 0;
+    }
+    HSD_MObjCompileTev(mobj);
+}
+}
+
+extern "C" {
+u32 GSmaterialGetEnabledExtensions(GSmaterial* m) { return m->extensions; }
+}
+
+extern "C" {
+void GSmaterialSetAlpha(GSmaterial* material, f32 alpha)
+{
+    HSD_MObjSetAlpha(material->mobj, alpha);
+}
+}
+
+extern "C" {
+void GSmaterialSetColorChannels(GSmaterial* m, u8* c) { m->channels[0] = c[0]; m->channels[1] = c[1]; m->channels[2] = c[2]; m->channels[3] = c[3]; }
+}
+
+extern "C" {
+void GSmaterialSetModulate(GSmaterial* m, GXColor* c) { m->modulate.r = c->r; m->modulate.g = c->g; m->modulate.b = c->b; m->modulate.a = c->a; }
+}
+
+extern "C" {
+void GSmaterialSetEnvMapParams(GSmaterial* material, s32 type, s32 mode, f32 blend, GStexture* texture)
+{
+    material->envType = type;
+    material->envMode = mode;
+    material->envBlend = blend;
+    material->envTexture = texture;
+}
+}
+
+extern "C" {
+void GSmaterialSetEnvMapBlendValue(GSmaterial* material, f32 blend)
+{
+    HSD_TObj* tobj = material->envTObj;
+
+    material->envBlend = blend;
+    if (tobj != 0) {
+        tobj->blending = blend;
+    }
+}
+}
+
+extern "C" {
+void GSmaterialStoreAlpha(GSmaterial* material)
+{
+    material->savedAlpha = (u8)(255.0f * material->mobj->mat->alpha);
+}
+}
+
+extern "C" {
+void GSmaterialResetAlpha(GSmaterial* material)
+{
+    HSD_MObjSetAlpha(material->mobj, material->savedAlpha / 255.0f);
+}
+}
+
+extern "C" {
+void GSmaterialGetModulate(GSmaterial* m, GXColor* color) {
+    color->r = m->modulate.r; color->g = m->modulate.g;
+    color->b = m->modulate.b; color->a = m->modulate.a;
+}
+}
+
+extern "C" {
+void GSmaterialSetTexture(GSmaterial* material, GStexture* texture)
+{
+    HSD_ImageDesc* image;
+
+    if (material->savedImage == GSMATERIAL_UNSET) {
+        material->savedImage = material->mobj->tobj->imagedesc;
+        image = HSD_ImageDescAlloc();
+    } else {
+        image = material->mobj->tobj->imagedesc;
+    }
+    if (image != 0) {
+        image->image_ptr = GStextureLockImage(texture, 0);
+        image->width = GStextureGetXsize(texture);
+        image->height = GStextureGetYsize(texture);
+        image->format = GStextureGetGXformat(texture, 1);
+        image->mipmap = GStextureGetMiplevels(texture) != 0;
+        image->minLOD = 0.0f;
+        image->maxLOD = 0.0f;
+        GStextureUnlockImage(texture);
+        material->mobj->tobj->imagedesc = image;
+    }
+}
+}
+
+extern "C" {
+void GSmaterialGetTexture(GSmaterial* material, GStexture* texture)
+{
+    HSD_ImageDesc* image;
+
+    if (material->savedImage != GSMATERIAL_UNSET) {
+        image = material->savedImage;
+    } else {
+        image = material->mobj->tobj->imagedesc;
+    }
+    ((u8*)texture)[6] = 0;
+    if (image != 0) {
+        GStextureCreateFromMemory(texture, image->width, image->height, image->image_ptr, GXFmtToGStextureFmt(image->format), 0, image->mipmap);
+    }
+}
+}
+
+extern "C" {
+void GSmaterialResetTexture(GSmaterial* material)
+{
+    HSD_ImageDesc* old;
+
+    if (material->savedImage != GSMATERIAL_UNSET) {
+        old = material->mobj->tobj->imagedesc;
+        material->mobj->tobj->imagedesc = material->savedImage;
+        HSD_ImageDescRemove(old);
+        material->savedImage = (HSD_ImageDesc*)GSMATERIAL_UNSET;
+    }
+}
 }

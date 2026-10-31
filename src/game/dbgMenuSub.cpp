@@ -1,3 +1,4 @@
+#pragma defer_codegen on
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/hero/hero.hpp>
 #include <global.h>
@@ -186,41 +187,507 @@ s32 debugMenuChangePerfBar(void);
 
 
 
-s32 dbgMenuGetRootMenu(void) {
-    switch (pokecoloGetRomVersion()) {
-    case 2:
-        return 0x1F1;
+s32 dbgMenuGetRootMenu(void);
+
+s32 dbgMenuPeopleViewerRintoOnOff(void);
+
+s32 dbgMenuPeopleViewerMouthOnOff(void);
+
+s32 dbgMenuPeopleViewerEyeOnOff(void);
+
+s32 dbgMenuPeopleViewerAnim(void);
+
+s32 dbgMenuPeopleViewerPlaySpeed(void);
+
+s32 dbgMenuPeopleViewerMotion(void);
+
+s32 dbgMenuPeopleViewerChara(void);
+
+s32 dbgMenuSoundVolumeDisp(void);
+
+s32 dbgMenuGSresDumpGroup(void);
+
+s32 dbgMenuDbgPokemonGet(void);
+
+s32 dbgMenuSetHeroStyleSnatch(void);
+
+s32 dbgMenuSetHeroStyleVisor(void);
+
+s32 dbgMenuSetHeroStyleNormal(void);
+
+s32 dbgMenuScriptFlagAllClear(void);
+
+s32 dbgMenuKleinPTin(void);
+
+s32 dbgMenuGirlPTin(void);
+
+s32 dbgMenuManaPTin(void);
+
+s32 dbgMenuPTout(void);
+
+s32 dbgMenuScriptLightEdt(void);
+
+s32 dbgMenuScriptHumanColision(void);
+
+s32 dbgMenuScriptSoundTest(void);
+
+s32 dbgMenuScriptYesNoMsgTest(void);
+
+s32 dbgMenuScriptMsgTest(void);
+
+s32 dbgMenuScriptDispLine(void);
+
+s32 debugMenuChangeAMemInfo(void);
+
+s32 dbgMenuMovieTest(void);
+
+static const char* _dbgMenuMovieTestGetStr(unsigned long index);
+
+s32 dbgMenuSetPAL60(void);
+
+s32 dbgMenuSetPAL50(void);
+
+s32 dbgMenuGSmemOptimize(void);
+
+s32 dbgMenuGSmemDispMap(void);
+
+s32 dbgMenuGSmemCheck(void);
+
+s32 dbgMenuScreenFilterHi(void);
+
+s32 dbgMenuScreenFilterMed(void);
+
+s32 dbgMenuScreenFilterLow(void);
+
+s32 dbgMenuScreenFilterDefault(void);
+
+s32 dbgMenuScreenFilterOff(void);
+
+s32 dbgMenuFrameLockToggle(void);
+
+s32 dbgMenuFrameRate15(void);
+
+s32 dbgMenuFrameRate20(void);
+
+s32 dbgMenuFrameRate30(void);
+
+s32 dbgMenuFrameRate60(void);
+
+s32 dbgMenuSendAllMail(void);
+
+s32 dbgMenuSendMail(void);
+
+s32 dbgMenuColisionDisp(s32 id);
+
+s32 debugMenuColorBarDisp(void);
+
+s32 debugMenuShadowBorderDisp(void);
+
+s32 debugMenuNodrawArea(void);
+
+s32 debugMenuChangeMemInfo(void);
+
+s32 debugMenuChangePerfBar(void);
+
+
+
+
+s32 debugMenuChangePerfBar(void) {
+    s32 mode = GSgfxPerfbarGetRenderMode();
+    switch (mode) {
     case 0:
-    default:
-        return 2;
+        mode = 2;
+        break;
+    case 2:
+        mode = 1;
+        break;
+    case 1:
+        mode = 0;
+        break;
     }
+    GSgfxPerfbarSetRenderMode(mode);
+    return 0;
 }
 
-s32 dbgMenuPeopleViewerRintoOnOff(void) { return 0; }
-
-s32 dbgMenuPeopleViewerMouthOnOff(void) { return 0; }
-
-s32 dbgMenuPeopleViewerEyeOnOff(void) { return 0; }
-
-s32 dbgMenuPeopleViewerAnim(void) { return 0; }
-
-s32 dbgMenuPeopleViewerPlaySpeed(void) { return 0; }
-
-s32 dbgMenuPeopleViewerMotion(void) { return 0; }
-
-s32 dbgMenuPeopleViewerChara(void) { return 0; }
-
-s32 dbgMenuSoundVolumeDisp(void) {
-    if (floorSound_getDispSoundVolume() == 1) {
-        floorSound_setDispSoundVolume(0);
+s32 debugMenuChangeMemInfo(void) {
+    if (menuIsCheck(4)) {
+        menuClose(4);
     } else {
-        floorSound_setDispSoundVolume(1);
+        menuOpenCustom(4, 0, 0, 0, 0, 0);
     }
     return 0;
 }
 
-s32 dbgMenuGSresDumpGroup(void) {
-    GSresDumpAll();
+s32 debugMenuNodrawArea(void) {
+    if (menuIsCheck(7)) {
+        menuClose(7);
+    } else {
+        menuOpenCustom(7, 0, 0, 0, 0, 0);
+    }
+    return 0;
+}
+
+s32 debugMenuShadowBorderDisp(void) {
+    static bool borderDisp;
+    static s8 init;
+    if (init == 0) {
+        borderDisp = 0;
+        init = 1;
+    }
+    borderDisp = !borderDisp;
+    GSmodelSetShadowDebug(borderDisp);
+    return 0;
+}
+
+s32 debugMenuColorBarDisp(void) {
+    __pokecolo_renderXluc = 0;
+    menuOpenCustom(5, 0, 0, 0, 1, 0);
+    menuClose(5);
+    __pokecolo_renderXluc = 1;
+    return 0;
+}
+
+s32 dbgMenuColisionDisp(s32 id) {
+    u8* res = GSresGetResource(0, 2);
+    if (res == 0) {
+        return 0;
+    }
+    switch (id) {
+    case 0x131:
+        if (res[0] != 0) {
+            res[0] = 0;
+        } else {
+            res[0] = 1;
+        }
+        break;
+    case 0x132:
+        if (res[1] != 0) {
+            res[1] = 0;
+        } else {
+            res[1] = 1;
+        }
+        break;
+    }
+    return 0;
+}
+
+s32 dbgMenuSendMail(void) {
+    s32 mail;
+    while ((mail = menuOpen(2, 1)) != -1) {
+        if (mailChkReceiveMail(mail) == 0 && mailAddMailbox(mail) != 0) {
+            mailMainReceiveStart();
+        }
+    }
+    return 0;
+}
+
+s32 dbgMenuSendAllMail(void) {
+    mailMainSendAllMail();
+    return 0;
+}
+
+s32 dbgMenuFrameRate60(void) {
+    GSgfxVideoSetLockFrameRate(0);
+    return 0;
+}
+
+s32 dbgMenuFrameRate30(void) {
+    GSgfxVideoSetLockFrameRate(1);
+    return 0;
+}
+
+s32 dbgMenuFrameRate20(void) {
+    GSgfxVideoSetLockFrameRate(2);
+    return 0;
+}
+
+s32 dbgMenuFrameRate15(void) {
+    GSgfxVideoSetLockFrameRate(3);
+    return 0;
+}
+
+s32 dbgMenuFrameLockToggle(void) {
+    GSgfxVideoSetLockFrameActive(GSgfxVideoGetLockFrameActive() == 0);
+    return 0;
+}
+
+s32 dbgMenuScreenFilterOff(void) {
+    const DbgScreenFilter filter = {{0, 0, 0x15, 0x16, 0x15, 0, 0}};
+    DbgScreenFilter copy = filter;
+    GSgfxVideoSetFilter(&copy);
+    return 0;
+}
+
+s32 dbgMenuScreenFilterDefault(void) {
+    const DbgScreenFilter filter = {{0x08, 0x08, 0x0A, 0x0C, 0x0A, 0x08, 0x08}};
+    DbgScreenFilter copy = filter;
+    GSgfxVideoSetFilter(&copy);
+    return 0;
+}
+
+s32 dbgMenuScreenFilterLow(void) {
+    const DbgScreenFilter filter = {{0x04, 0x06, 0x0E, 0x10, 0x0E, 0x06, 0x04}};
+    DbgScreenFilter copy = filter;
+    GSgfxVideoSetFilter(&copy);
+    return 0;
+}
+
+s32 dbgMenuScreenFilterMed(void) {
+    const DbgScreenFilter filter = {{9, 9, 9, 10, 9, 9, 9}};
+    DbgScreenFilter copy = filter;
+    GSgfxVideoSetFilter(&copy);
+    return 0;
+}
+
+s32 dbgMenuScreenFilterHi(void) {
+    const DbgScreenFilter filter = {{0x0D, 0x09, 0x07, 0x06, 0x07, 0x09, 0x0D}};
+    DbgScreenFilter copy = filter;
+    GSgfxVideoSetFilter(&copy);
+    return 0;
+}
+
+s32 dbgMenuGSmemCheck(void) {
+    GSlogWrite("check fsys heap\n");
+    u8 ok = GSmemCheckHeap(0);
+    GSlogWrite("%s\n", ok ? "ok" : "error");
+    GSlogWrite("check floor heap\n");
+    ok = GSmemCheckHeap(floorGetLocalHeapHandle());
+    GSlogWrite("%s\n", ok ? "ok" : "error");
+    GSlogWrite("check system heap\n");
+    ok = GSmemCheckHeap(g_hFloorHeap);
+    GSlogWrite("%s\n", ok ? "ok" : "error");
+    return 0;
+}
+
+s32 dbgMenuGSmemDispMap(void) {
+    GSmemDumpHeapInfo();
+    GSmemDumpHeap(g_hFloorHeap);
+    GSmemDumpHeap(0);
+    GSmemDumpPool(0);
+    return 0;
+}
+
+s32 dbgMenuGSmemOptimize(void) {
+    return 0;
+}
+
+s32 dbgMenuSetPAL50(void) {
+    GSgfxVideoSetMode(1, 1, 0, 1, 0);
+    return 0;
+}
+
+s32 dbgMenuSetPAL60(void) {
+    GSgfxVideoSetMode(2, 1, 0, 1, 0);
+    return 0;
+}
+
+static const char* _dbgMenuMovieTestGetStr(unsigned long index) {
+    static const char* test_movie_str[16] = {
+        "tv_news_common",
+        "tv_news_ren",
+        "tv_music_chiril",
+        "tv_deathgold_appear",
+        "tv_agent_report",
+        "tv_cyobin_comments",
+        "tv_battle_demo",
+        "tv_colosseum_demo",
+        "tv_colosseum_demo_lugia",
+        "tpc_logo",
+        "gs_logo",
+        "auto_demo",
+        "ending",
+        "staffroll",
+        "relive_complete",
+        "event_battle_192x144",
+    };
+    static char strbuf[64];
+    if (index >= 16) {
+        index = 15;
+    }
+    GScharMakeFromSJIS(strbuf, test_movie_str[index]);
+    return strbuf;
+}
+
+s32 dbgMenuMovieTest(void) {
+    static s32 test_movie[16] = {
+        0x8ED, 0x8EE, 0x8EF, 0x8F0, 0x8F1, 0x8F2, 0x8F3, 0x9F4,
+        0xA17, 0x7D9, 0x7DA, 0x7DC, 0x8EB, 0x7DD, 0x8EC, 0x814,
+    };
+    static u16 test_movie_wh[32] = {
+        0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90,
+        0xC0, 0x90, 0x280, 0x1E0, 0x280, 0x1E0, 0x280, 0x1E0, 0x280, 0x1E0, 0x280, 0x1E0, 0x280, 0x1E0, 0xC0, 0x90,
+    };
+    static u32 test_movie_index;
+    static s8 init;
+    u32 index;
+    s32 texture;
+    u32 i;
+
+    if (init == 0) {
+        test_movie_index = 0;
+        init = 1;
+    }
+    for (i = 0; i < 16; i++) {
+        while (GSmoviePlayCheck(test_movie[i]) == 1) {
+            GSmovieStop(test_movie[i]);
+            GSthreadSwitch();
+        }
+    }
+    if (!menuSubOpenNumberInputID(test_movie_index, &index, _dbgMenuMovieTestGetStr)) {
+        return 0;
+    }
+    if (index >= 16) {
+        index = 15;
+    }
+    menuSubCloseNumberInput();
+    if (GSfloorGetCurrent() == 0x196 && test_movie_wh[index * 2] == 0xC0 && test_movie_wh[index * 2 + 1] == 0x90) {
+        texture = floorGetActiveOffscreenTexture();
+    } else {
+        texture = 0;
+    }
+    GSdvdFstRefresh();
+    GSmoviePlay(test_movie[index], 0, 1, texture);
+    test_movie_index = index;
+    return 0;
+}
+
+s32 debugMenuChangeAMemInfo(void) {
+    static s32 disp;
+    static s8 init;
+    if (init == 0) {
+        disp = 0;
+        init = 1;
+    }
+    switch (disp) {
+    case 0:
+    case 1:
+        _dbgMenuDispAMemInfoFlag = disp;
+        menuOpenCustom(0x21, 0, 0, 0, 0, 0);
+        disp++;
+        break;
+    default:
+        if (menuIsCheck(0x21)) {
+            menuClose(0x21);
+        }
+        disp = 0;
+        break;
+    }
+    return 0;
+}
+
+s32 dbgMenuScriptDispLine(void) {
+    if (floorIsDispScriptInfo() == 1) {
+        floorSetDispScriptInfo(0);
+    } else {
+        floorSetDispScriptInfo(1);
+    }
+    return 0;
+}
+
+s32 dbgMenuScriptMsgTest(void) {
+    static u32 msg_id;
+    static s8 init;
+    if (init == 0) {
+        msg_id = 0;
+        init = 1;
+    }
+    while (menuSubOpenNumberInputDigit(msg_id, &msg_id) == 1) {
+        winMsgOpenField(msg_id, 1, 0);
+        winMsgClose(1);
+    }
+    return 0;
+}
+
+s32 dbgMenuScriptYesNoMsgTest(void) {
+    static u32 msg_id;
+    static s8 init;
+    if (init == 0) {
+        msg_id = 0;
+        init = 1;
+    }
+    while (menuSubOpenNumberInputDigit(msg_id, &msg_id) == 1) {
+        winMsgOpenField(msg_id, 1, 0);
+        menuSubOpenYesNoField();
+        winMsgClose(1);
+    }
+    return 0;
+}
+
+s32 dbgMenuScriptSoundTest(void) {
+    static u32 snd_id;
+    static s8 init;
+    if (init == 0) {
+        snd_id = 0;
+        init = 1;
+    }
+    while (menuSubOpenNumberInputDigit(snd_id, &snd_id) == 1) {
+        if (snd_id == soundGetBGMID() || snd_id == soundGetEnvID()) {
+            soundStop(snd_id, 1000);
+        } else {
+            soundOpenPlay(snd_id, 0, 0x7F);
+        }
+    }
+    return 0;
+}
+
+s32 dbgMenuScriptHumanColision(void) {
+    if (floorGetHumanColision() == 1) {
+        floorSetHumanColision(0);
+    } else {
+        floorSetHumanColision(1);
+    }
+    return 0;
+}
+
+s32 dbgMenuScriptLightEdt(void) {
+    if (lightIsDebugMode() == 1) {
+        lightSetDebugMode(0);
+    } else {
+        lightSetDebugMode(1);
+    }
+    return 0;
+}
+
+s32 dbgMenuPTout(void) {
+    heroSetFollowerWithID(0, 0);
+    return 0;
+}
+
+s32 dbgMenuManaPTin(void) {
+    heroSetFollowerWithID(1, 0);
+    return 0;
+}
+
+s32 dbgMenuGirlPTin(void) {
+    heroSetFollowerWithID(2, 0);
+    return 0;
+}
+
+s32 dbgMenuKleinPTin(void) {
+    heroSetFollowerWithID(3, 0);
+    return 0;
+}
+
+s32 dbgMenuScriptFlagAllClear(void) {
+    u32 i;
+    for (i = 1; i < *flag_data_number; i++) {
+        GSflagOff(i);
+    }
+    return 0;
+}
+
+s32 dbgMenuSetHeroStyleNormal(void) {
+    Hero::getHeroPtr()->setHeroStyle(0, true);
+    return 0;
+}
+
+s32 dbgMenuSetHeroStyleVisor(void) {
+    Hero::getHeroPtr()->setHeroStyle(1, true);
+    return 0;
+}
+
+s32 dbgMenuSetHeroStyleSnatch(void) {
+    Hero::getHeroPtr()->setHeroStyle(2, true);
     return 0;
 }
 
@@ -333,403 +800,57 @@ s32 dbgMenuDbgPokemonGet(void) {
     return 0;
 }
 
-s32 dbgMenuSetHeroStyleSnatch(void) {
-    Hero::getHeroPtr()->setHeroStyle(2, true);
+s32 dbgMenuGSresDumpGroup(void) {
+    GSresDumpAll();
     return 0;
 }
 
-s32 dbgMenuSetHeroStyleVisor(void) {
-    Hero::getHeroPtr()->setHeroStyle(1, true);
-    return 0;
-}
-
-s32 dbgMenuSetHeroStyleNormal(void) {
-    Hero::getHeroPtr()->setHeroStyle(0, true);
-    return 0;
-}
-
-s32 dbgMenuScriptFlagAllClear(void) {
-    u32 i;
-    for (i = 1; i < *flag_data_number; i++) {
-        GSflagOff(i);
-    }
-    return 0;
-}
-
-s32 dbgMenuKleinPTin(void) {
-    heroSetFollowerWithID(3, 0);
-    return 0;
-}
-
-s32 dbgMenuGirlPTin(void) {
-    heroSetFollowerWithID(2, 0);
-    return 0;
-}
-
-s32 dbgMenuManaPTin(void) {
-    heroSetFollowerWithID(1, 0);
-    return 0;
-}
-
-s32 dbgMenuPTout(void) {
-    heroSetFollowerWithID(0, 0);
-    return 0;
-}
-
-s32 dbgMenuScriptLightEdt(void) {
-    if (lightIsDebugMode() == 1) {
-        lightSetDebugMode(0);
+s32 dbgMenuSoundVolumeDisp(void) {
+    if (floorSound_getDispSoundVolume() == 1) {
+        floorSound_setDispSoundVolume(0);
     } else {
-        lightSetDebugMode(1);
+        floorSound_setDispSoundVolume(1);
     }
     return 0;
 }
 
-s32 dbgMenuScriptHumanColision(void) {
-    if (floorGetHumanColision() == 1) {
-        floorSetHumanColision(0);
-    } else {
-        floorSetHumanColision(1);
-    }
-    return 0;
-}
+s32 dbgMenuPeopleViewerChara(void) { return 0; }
 
-s32 dbgMenuScriptSoundTest(void) {
-    static u32 snd_id;
-    static s8 init;
-    if (init == 0) {
-        snd_id = 0;
-        init = 1;
-    }
-    while (menuSubOpenNumberInputDigit(snd_id, &snd_id) == 1) {
-        if (snd_id == soundGetBGMID() || snd_id == soundGetEnvID()) {
-            soundStop(snd_id, 1000);
-        } else {
-            soundOpenPlay(snd_id, 0, 0x7F);
-        }
-    }
-    return 0;
-}
+s32 dbgMenuPeopleViewerMotion(void) { return 0; }
 
-s32 dbgMenuScriptYesNoMsgTest(void) {
-    static u32 msg_id;
-    static s8 init;
-    if (init == 0) {
-        msg_id = 0;
-        init = 1;
-    }
-    while (menuSubOpenNumberInputDigit(msg_id, &msg_id) == 1) {
-        winMsgOpenField(msg_id, 1, 0);
-        menuSubOpenYesNoField();
-        winMsgClose(1);
-    }
-    return 0;
-}
+s32 dbgMenuPeopleViewerPlaySpeed(void) { return 0; }
 
-s32 dbgMenuScriptMsgTest(void) {
-    static u32 msg_id;
-    static s8 init;
-    if (init == 0) {
-        msg_id = 0;
-        init = 1;
-    }
-    while (menuSubOpenNumberInputDigit(msg_id, &msg_id) == 1) {
-        winMsgOpenField(msg_id, 1, 0);
-        winMsgClose(1);
-    }
-    return 0;
-}
+s32 dbgMenuPeopleViewerAnim(void) { return 0; }
 
-s32 dbgMenuScriptDispLine(void) {
-    if (floorIsDispScriptInfo() == 1) {
-        floorSetDispScriptInfo(0);
-    } else {
-        floorSetDispScriptInfo(1);
-    }
-    return 0;
-}
+s32 dbgMenuPeopleViewerEyeOnOff(void) { return 0; }
 
-s32 debugMenuChangeAMemInfo(void) {
-    static s32 disp;
-    static s8 init;
-    if (init == 0) {
-        disp = 0;
-        init = 1;
-    }
-    switch (disp) {
-    case 0:
-    case 1:
-        _dbgMenuDispAMemInfoFlag = disp;
-        menuOpenCustom(0x21, 0, 0, 0, 0, 0);
-        disp++;
-        break;
-    default:
-        if (menuIsCheck(0x21)) {
-            menuClose(0x21);
-        }
-        disp = 0;
-        break;
-    }
-    return 0;
-}
+s32 dbgMenuPeopleViewerMouthOnOff(void) { return 0; }
 
-s32 dbgMenuMovieTest(void) {
-    static s32 test_movie[16] = {
-        0x8ED, 0x8EE, 0x8EF, 0x8F0, 0x8F1, 0x8F2, 0x8F3, 0x9F4,
-        0xA17, 0x7D9, 0x7DA, 0x7DC, 0x8EB, 0x7DD, 0x8EC, 0x814,
-    };
-    static u16 test_movie_wh[32] = {
-        0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90, 0xC0, 0x90,
-        0xC0, 0x90, 0x280, 0x1E0, 0x280, 0x1E0, 0x280, 0x1E0, 0x280, 0x1E0, 0x280, 0x1E0, 0x280, 0x1E0, 0xC0, 0x90,
-    };
-    static u32 test_movie_index;
-    static s8 init;
-    u32 index;
-    s32 texture;
-    u32 i;
+s32 dbgMenuPeopleViewerRintoOnOff(void) { return 0; }
 
-    if (init == 0) {
-        test_movie_index = 0;
-        init = 1;
-    }
-    for (i = 0; i < 16; i++) {
-        while (GSmoviePlayCheck(test_movie[i]) == 1) {
-            GSmovieStop(test_movie[i]);
-            GSthreadSwitch();
-        }
-    }
-    if (!menuSubOpenNumberInputID(test_movie_index, &index, _dbgMenuMovieTestGetStr)) {
-        return 0;
-    }
-    if (index >= 16) {
-        index = 15;
-    }
-    menuSubCloseNumberInput();
-    if (GSfloorGetCurrent() == 0x196 && test_movie_wh[index * 2] == 0xC0 && test_movie_wh[index * 2 + 1] == 0x90) {
-        texture = floorGetActiveOffscreenTexture();
-    } else {
-        texture = 0;
-    }
-    GSdvdFstRefresh();
-    GSmoviePlay(test_movie[index], 0, 1, texture);
-    test_movie_index = index;
-    return 0;
-}
-
-static const char* _dbgMenuMovieTestGetStr(unsigned long index) {
-    static const char* test_movie_str[16] = {
-        "tv_news_common",
-        "tv_news_ren",
-        "tv_music_chiril",
-        "tv_deathgold_appear",
-        "tv_agent_report",
-        "tv_cyobin_comments",
-        "tv_battle_demo",
-        "tv_colosseum_demo",
-        "tv_colosseum_demo_lugia",
-        "tpc_logo",
-        "gs_logo",
-        "auto_demo",
-        "ending",
-        "staffroll",
-        "relive_complete",
-        "event_battle_192x144",
-    };
-    static char strbuf[64];
-    if (index >= 16) {
-        index = 15;
-    }
-    GScharMakeFromSJIS(strbuf, test_movie_str[index]);
-    return strbuf;
-}
-
-s32 dbgMenuSetPAL60(void) {
-    GSgfxVideoSetMode(2, 1, 0, 1, 0);
-    return 0;
-}
-
-s32 dbgMenuSetPAL50(void) {
-    GSgfxVideoSetMode(1, 1, 0, 1, 0);
-    return 0;
-}
-
-s32 dbgMenuGSmemOptimize(void) {
-    return 0;
-}
-
-s32 dbgMenuGSmemDispMap(void) {
-    GSmemDumpHeapInfo();
-    GSmemDumpHeap(g_hFloorHeap);
-    GSmemDumpHeap(0);
-    GSmemDumpPool(0);
-    return 0;
-}
-
-s32 dbgMenuGSmemCheck(void) {
-    GSlogWrite("check fsys heap\n");
-    u8 ok = GSmemCheckHeap(0);
-    GSlogWrite("%s\n", ok ? "ok" : "error");
-    GSlogWrite("check floor heap\n");
-    ok = GSmemCheckHeap(floorGetLocalHeapHandle());
-    GSlogWrite("%s\n", ok ? "ok" : "error");
-    GSlogWrite("check system heap\n");
-    ok = GSmemCheckHeap(g_hFloorHeap);
-    GSlogWrite("%s\n", ok ? "ok" : "error");
-    return 0;
-}
-
-s32 dbgMenuScreenFilterHi(void) {
-    const DbgScreenFilter filter = {{0x0D, 0x09, 0x07, 0x06, 0x07, 0x09, 0x0D}};
-    DbgScreenFilter copy = filter;
-    GSgfxVideoSetFilter(&copy);
-    return 0;
-}
-
-s32 dbgMenuScreenFilterMed(void) {
-    const DbgScreenFilter filter = {{9, 9, 9, 10, 9, 9, 9}};
-    DbgScreenFilter copy = filter;
-    GSgfxVideoSetFilter(&copy);
-    return 0;
-}
-
-s32 dbgMenuScreenFilterLow(void) {
-    const DbgScreenFilter filter = {{0x04, 0x06, 0x0E, 0x10, 0x0E, 0x06, 0x04}};
-    DbgScreenFilter copy = filter;
-    GSgfxVideoSetFilter(&copy);
-    return 0;
-}
-
-s32 dbgMenuScreenFilterDefault(void) {
-    const DbgScreenFilter filter = {{0x08, 0x08, 0x0A, 0x0C, 0x0A, 0x08, 0x08}};
-    DbgScreenFilter copy = filter;
-    GSgfxVideoSetFilter(&copy);
-    return 0;
-}
-
-s32 dbgMenuScreenFilterOff(void) {
-    const DbgScreenFilter filter = {{0, 0, 0x15, 0x16, 0x15, 0, 0}};
-    DbgScreenFilter copy = filter;
-    GSgfxVideoSetFilter(&copy);
-    return 0;
-}
-
-s32 dbgMenuFrameLockToggle(void) {
-    GSgfxVideoSetLockFrameActive(GSgfxVideoGetLockFrameActive() == 0);
-    return 0;
-}
-
-s32 dbgMenuFrameRate15(void) {
-    GSgfxVideoSetLockFrameRate(3);
-    return 0;
-}
-
-s32 dbgMenuFrameRate20(void) {
-    GSgfxVideoSetLockFrameRate(2);
-    return 0;
-}
-
-s32 dbgMenuFrameRate30(void) {
-    GSgfxVideoSetLockFrameRate(1);
-    return 0;
-}
-
-s32 dbgMenuFrameRate60(void) {
-    GSgfxVideoSetLockFrameRate(0);
-    return 0;
-}
-
-s32 dbgMenuSendAllMail(void) {
-    mailMainSendAllMail();
-    return 0;
-}
-
-s32 dbgMenuSendMail(void) {
-    s32 mail;
-    while ((mail = menuOpen(2, 1)) != -1) {
-        if (mailChkReceiveMail(mail) == 0 && mailAddMailbox(mail) != 0) {
-            mailMainReceiveStart();
-        }
-    }
-    return 0;
-}
-
-s32 dbgMenuColisionDisp(s32 id) {
-    u8* res = GSresGetResource(0, 2);
-    if (res == 0) {
-        return 0;
-    }
-    switch (id) {
-    case 0x131:
-        if (res[0] != 0) {
-            res[0] = 0;
-        } else {
-            res[0] = 1;
-        }
-        break;
-    case 0x132:
-        if (res[1] != 0) {
-            res[1] = 0;
-        } else {
-            res[1] = 1;
-        }
-        break;
-    }
-    return 0;
-}
-
-s32 debugMenuColorBarDisp(void) {
-    __pokecolo_renderXluc = 0;
-    menuOpenCustom(5, 0, 0, 0, 1, 0);
-    menuClose(5);
-    __pokecolo_renderXluc = 1;
-    return 0;
-}
-
-s32 debugMenuShadowBorderDisp(void) {
-    static bool borderDisp;
-    static s8 init;
-    if (init == 0) {
-        borderDisp = 0;
-        init = 1;
-    }
-    borderDisp = !borderDisp;
-    GSmodelSetShadowDebug(borderDisp);
-    return 0;
-}
-
-s32 debugMenuNodrawArea(void) {
-    if (menuIsCheck(7)) {
-        menuClose(7);
-    } else {
-        menuOpenCustom(7, 0, 0, 0, 0, 0);
-    }
-    return 0;
-}
-
-s32 debugMenuChangeMemInfo(void) {
-    if (menuIsCheck(4)) {
-        menuClose(4);
-    } else {
-        menuOpenCustom(4, 0, 0, 0, 0, 0);
-    }
-    return 0;
-}
-
-s32 debugMenuChangePerfBar(void) {
-    s32 mode = GSgfxPerfbarGetRenderMode();
-    switch (mode) {
-    case 0:
-        mode = 2;
-        break;
+s32 dbgMenuGetRootMenu(void) {
+    switch (pokecoloGetRomVersion()) {
     case 2:
-        mode = 1;
-        break;
-    case 1:
-        mode = 0;
-        break;
+        return 0x1F1;
+    case 0:
+    default:
+        return 2;
     }
-    GSgfxPerfbarSetRenderMode(mode);
-    return 0;
 }
 
-#pragma force_active reset
+#pragma defer_codegen off
+// Format strings retained by the original memory diagnostics.
+static const char cacheMemoryFormat[] ATTRIBUTE_ALIGN(4) = "CacheMemory : %.2fkb / %.2fkb";
+static const char largestCacheBlockFormat[] ATTRIBUTE_ALIGN(4) = "  - Largest : %.2fkb";
+static const char keptCacheFormat[] ATTRIBUTE_ALIGN(4) = "  - KeepCache : %.2fkb";
+static const char cacheManageFormat[] ATTRIBUTE_ALIGN(4) = "CacheManage : %d / %d";
+static const char arqManageFormat[] ATTRIBUTE_ALIGN(4) = "ARQManage   : %d / %d";
+static const char localMemoryFormat[] ATTRIBUTE_ALIGN(4) = "LocalMemory : %.2fkb / %.2fkb";
+static const char streamingBgmFormat[] ATTRIBUTE_ALIGN(4) = "Streaming BGM Playing...";
+static const char fightFieldFormat[] ATTRIBUTE_ALIGN(4) = "fight/field:%s/%s";
+static const char resourceCountFormat[] ATTRIBUTE_ALIGN(4) = "resCount:%d/%d";
+static const char fsysFreeFormat[] ATTRIBUTE_ALIGN(4) = "fsysfree: %.2fKb";
+static const char fsysLargestFormat[] ATTRIBUTE_ALIGN(4) = "fsyslarge: %.2fKb";
+static const char minimumMemoryFormat[] ATTRIBUTE_ALIGN(4) = "totalmin: %.2fKb";
+static const char largestMemoryFormat[] ATTRIBUTE_ALIGN(4) = "memlarge: %.2fKb";
+static const char totalMemoryFormat[] ATTRIBUTE_ALIGN(4) = "memtotal: %.2fKb";

@@ -1,3 +1,4 @@
+#pragma defer_codegen on
 /* Debug menu entries for testing menus, PDA, memo, esaba and Shadow Pokemon state. */
 #include <global.h>
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
@@ -338,50 +339,797 @@ s32 dbgMenuMenuTestNameEntryMenu(s32 menu);
 
 
 
-s32 dbgMenuMenuReliveHallDisp(void) {
-    if (menuIsCheck(0x108)) {
-        menuClose(0x108);
-    } else {
-        menuOpenCustom(0x108, 0, 0, 0, 1, 0);
+s32 dbgMenuMenuReliveHallDisp(void);
+
+static s32 _getWorldMapFlagData(long index);
+
+static void _setWorldMapFlagData(long index, long value);
+
+s32 dbgMenuMenuTestUsohachi2(void);
+
+s32 dbgMenuMenuTestUsohachi(void);
+
+s32 dbgMenuMenuTestWorlMapShow(void);
+
+s32 dbgMenuMenuWorldMapCursor(DbgMenuWindow* window);
+
+s32 dbgMenuMenuTestWorlMapFlagSet(void);
+
+s32 dbgMenuEsabaDebugCursor(DbgMenuWindow* window);
+
+s32 dbgMenuUnderTakerebugCursor(DbgMenuWindow* window);
+
+s32 dbgMenuMenuTestNintendoWarning(void);
+
+u32 dbgMenuMenuUnderTakerIconAppear(void);
+
+s32 dbgMenuMenuUnderTakerIconFlagOnOff(void);
+
+s32 dbgMenuMenuUnderTakerIconOnOff(void);
+
+s32 dbgMenuMenuUnderTakerDisp(void);
+
+s32 dbgMenuMenuUnderTakerOnOff(void);
+
+s32 dbgMenuMenuTestInfoRelive(void);
+
+s32 dbgMenuMenuTestInfoEsa(void);
+
+s32 dbgMenuMenuEsabaDisp(void);
+
+u32 dbgMenuMenuTestEsabaPokemon(void);
+
+static void _pokemonCreate(Pokemon* pokemon, u16 id, u32 trainerRnd);
+
+static void _esabaSetPokemon(long place, long id);
+
+s32 dbgMenuMenuTestEsabaGet(void);
+
+s32 dbgMenuMenuTestEsabaPut(void);
+
+s32 dbgMenuMenuTestEsabaSet(void);
+
+s32 dbgMenuMenuSetPlace(DbgMenuWindow* window, s32 place);
+
+s32 dbgMenuMenuMoveDemo(DbgMenuWindow* window, s32 demo);
+
+s32 dbgMenuMenuTestMewWazaMenu(void);
+
+s32 dbgMenuMenuTestOrreColosseumMenu(void);
+
+s32 dbgMenuMenuTestWazaOshieBasanMenu(void);
+
+s32 dbgMenuMenuTestWazaOshieMeijinMenu(DbgMenuWindow* window, s32 type);
+
+s32 dbgMenuMenuTestTutorialMenu(void);
+
+s32 dbgMenuMenuTestEeveeMenu(void);
+
+s32 dbgMenuMenuTestPdaAddFunc(void);
+
+s32 dbgMenuMenuTestMailRead(void);
+
+s32 dbgMenuMenuTestMailReceive(void);
+
+s32 dbgMenuMenuTestPdaSyougou(void);
+
+s32 dbgMenuMenuTestPdaMR(void);
+
+s32 dbgMenuMenuTestPdaEsa(void);
+
+s32 dbgMenuMenuTestPdaDPM(void);
+
+s32 dbgMenuMenuTestPdaEnable(void);
+
+static void _dbgMenuMenuTestPdaFlagSet(u32 flag);
+
+static void testD2Present(D2PRESENT_MODE mode);
+
+#pragma opt_dead_assignments off
+s32 dbgMenuMenuTestD2Present(s32 menu);
+#pragma opt_dead_assignments reset
+
+s32 dbgMenuMenuTestWorlMapSetAllFlag(void);
+
+s32 dbgMenuEntrySnatchListRelive(void);
+
+static void _debugPokemonCreate(Pokemon* pokemon, u16 id);
+
+s32 dbgMenuEntrySnatchListSuccess(void);
+
+s32 dbgMenuEntrySnatchListAll(void);
+
+s32 dbgMenuEntrySnatchList(void);
+
+static u16 _getDPPokemonID(long index);
+
+static void _setDPStatus(long index, darkPokemonStatus status);
+
+static s32 _getDPStatus(long index);
+
+s32 dbgMenuMenuTestTeacherMemo(void);
+
+s32 dbgMenuMenuTestCompleteMemo(void);
+
+s32 dbgMenuMenuTestAddPokemonMemo(void);
+
+s32 dbgMenuMenuTestEnableMemo(void);
+
+#pragma opt_common_subs off
+static void testEvolution(void);
+#pragma opt_common_subs reset
+
+s32 dbgMenuMenuTestEvolution(void);
+
+s32 dbgMenuMenuTestWazaMenu(void);
+
+s32 dbgMenuMenuTestPokemonChangeMenu(void);
+
+s32 dbgMenuMenuTestPCBox(void);
+
+s32 dbgMenuMenuTestRelivehallTutorialMenu(void);
+
+s32 dbgMenuMenuTestPcBoxPokemonSetFull(void);
+
+s32 dbgMenuMenuTestReliveHallPokemonSetBest(void);
+
+s32 dbgMenuMenuTestReliveHallPokemonSet1(void);
+
+s32 dbgMenuMenuTestReliveHallPokemonSet0(void);
+
+s32 dbgMenuMenuTestHologramMenu(void);
+
+s32 dbgMenuMenuTestReliveHallMenu(void);
+
+s32 dbgMenuMenuTestBingoClear(void);
+
+s32 dbgMenuMenuTestBingoSelect(void);
+
+s32 dbgMenuMenuTestBingo(void);
+
+s32 dbgMenuMenuTestBattleDiskExec(void);
+
+s32 dbgMenuMenuTestBattleDisk(void);
+
+s32 dbgMenuMenuTestPokemonMenu(s32 menu);
+
+s32 dbgMenuMenuTestShopMenu(s32 menu);
+
+s32 dbgMenuMenuTestNameEntryMenu(s32 menu);
+
+
+
+
+s32 dbgMenuMenuTestNameEntryMenu(s32 menu) {
+    DbgMenuPair table[4] = { { 0x1C4, 0 }, { 0x1C5, 1 }, { 0x1C6, 2 }, { 0x1C7, 3 } };
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (menu == table[i].menu) {
+            break;
+        }
+    }
+    if (i >= 4) {
+        return 0;
+    }
+    menuNameEntryOpen(table[i].value, 0);
+    return 0;
+}
+
+s32 dbgMenuMenuTestShopMenu(s32 menu) {
+    DbgMenuPair table[13] = {
+        { 0x1C8, 0 }, { 0x1C9, 16 }, { 0x1CA, 1 }, { 0x1CB, 2 }, { 0x1CC, 3 },
+        { 0x1CD, 4 }, { 0x1CE, 5 }, { 0x1CF, 6 }, { 0x1D0, 7 }, { 0x1D1, 8 },
+        { 0x1D2, 9 }, { 0x1D3, 10 }, { 0x1D4, 11 },
+    };
+    s32 i;
+
+    for (i = 0; i < 13; i++) {
+        if (menu == table[i].menu) {
+            break;
+        }
+    }
+    if (i >= 13) {
+        return 0;
+    }
+    menuShopOpen(table[i].value);
+    return 0;
+}
+
+s32 dbgMenuMenuTestPokemonMenu(s32 menu) {
+    switch (menu) {
+    case 0x1D5:
+        menuPokemonOpen(1, 0, 0);
+        break;
+    case 0x1D6:
+        menuPokemonOpen(2, 0, 0);
+        break;
+    default:
+        menuPokemonOpen(2, 0, 0);
+        break;
     }
     return 0;
 }
 
-static s32 _getWorldMapFlagData(long index) {
-    if (worldmapXD_data[index].flag == 0) {
-        return -1;
-    }
-    return GSflagGet(worldmapXD_data[index].flag);
-}
-
-static void _setWorldMapFlagData(long index, long value) {
-    if (worldmapXD_data[index].flag != 0) {
-        GSflagSet(worldmapXD_data[index].flag, value);
-    }
-}
-
-s32 dbgMenuMenuTestUsohachi2(void) {
-    menuScriptUsohachi2();
+s32 dbgMenuMenuTestBattleDisk(void) {
+    menuBattleDiskOpen();
     return 0;
 }
 
-s32 dbgMenuMenuTestUsohachi(void) {
-    menuScriptUsohachi();
+s32 dbgMenuMenuTestBattleDiskExec(void) {
+    menuBattleDiskOpenFight();
     return 0;
 }
 
-s32 dbgMenuMenuTestWorlMapShow(void) {
+s32 dbgMenuMenuTestBingo(void) {
+    GSfloorPush(0x388);
+    return 0;
+}
+
+s32 dbgMenuMenuTestBingoSelect(void) {
+    u32* status = savedataGetStatus(0, 0x1B);
+
+    *status |= 0x2A0000 | 0xAAAA;
+    return 0;
+}
+
+s32 dbgMenuMenuTestBingoClear(void) {
+    u32* status = savedataGetStatus(0, 0x1B);
+
+    *status |= 0x3F0000 | 0xFFFF;
+    return 0;
+}
+
+s32 dbgMenuMenuTestReliveHallMenu(void) {
+    GSfloorPush(0x3A3);
+    return 0;
+}
+
+s32 dbgMenuMenuTestHologramMenu(void) {
+    GSfloorPush(0x3A6);
+    return 0;
+}
+
+s32 dbgMenuMenuTestReliveHallPokemonSet0(void) {
+    makePocketDeubugMakeDarkPokemonReset();
+    pcboxDebugPokemonSetup();
+    reliveHallDebugPokemonSetup(1);
+    return 0;
+}
+
+s32 dbgMenuMenuTestReliveHallPokemonSet1(void) {
+    makePocketDeubugMakeDarkPokemonReset();
+    pcboxDebugPokemonSetup();
+    reliveHallDebugPokemonSetup(0);
+    return 0;
+}
+
+s32 dbgMenuMenuTestReliveHallPokemonSetBest(void) {
+    makePocketDeubugMakeDarkPokemonReset();
+    pcboxDebugPokemonSetup();
+    reliveHallDebugPokemonSetup(2);
+    return 0;
+}
+
+s32 dbgMenuMenuTestPcBoxPokemonSetFull(void) {
+    makePocketDeubugMakeDarkPokemonReset();
+    pcboxDebugPokemonSetupFull();
+    reliveHallDebugPokemonSetup(2);
+    return 0;
+}
+
+s32 dbgMenuMenuTestRelivehallTutorialMenu(void) {
+    msgctrlSetValue(0x59, 0x1772);
+    GSfloorPush(0x3A7);
+    return 0;
+}
+
+s32 dbgMenuMenuTestPCBox(void) {
+    GSfloorPush(0x391);
+    return 0;
+}
+
+s32 dbgMenuMenuTestPokemonChangeMenu(void) {
+    msgctrlSetValue(0x59, 0x1772);
+    menuPokemonChange();
+    return 0;
+}
+
+s32 dbgMenuMenuTestWazaMenu(void) {
+    u32* hero = savedataGetStatus(0, 2);
+    Pokemon* pokemon;
+
+    if (hero == NULL) {
+        return 0;
+    }
+    pokemon = heroBiosGetPokemonPtr(hero, 0);
+    if (!pokemonCheckValid(pokemon)) {
+        return 0;
+    }
+    menuPokemonStatusOpenWazaLearn(pokemon, 0x25);
+    return 0;
+}
+
+s32 dbgMenuMenuTestEvolution(void) {
+    GSthreadCreate(1, GSfloorGetCurrentFloorGroupID(), 0x4000, 1, 1, testEvolution);
+    return 0;
+}
+
+#pragma opt_common_subs off
+static void testEvolution(void) {
+    Pokemon* before = (Pokemon*)heroGetStatus(0, 3, 0);
+    Pokemon* after;
+    struct {
+        u8 result[0x14];
+        s16 order[2];
+        u8 unk18[0x28];
+    } work;
+
+    if (pokemonCheckValid(before)) {
+        after = (Pokemon*)heroGetStatus(0, 3, 1);
+        if (pokemonCheckValid(after)) {
+            fadeSet(3, 0.5f);
+            fadeCheck(1);
+            work.order[0] = 1;
+            work.order[1] = 2;
+            evolutionOpen(before, after, 1, work.order, 2, work.result);
+            fadeSet(2, 0.5f);
+            fadeCheck(1);
+        }
+    }
+}
+#pragma opt_common_subs reset
+
+s32 dbgMenuMenuTestEnableMemo(void) {
+    return 1;
+}
+
+s32 dbgMenuMenuTestAddPokemonMemo(void) {
+    u32 value = 0;
+
+    for (;;) {
+        if (!menuSubOpenNumberInput(value, &value, 1, 0x32, 0x32, 0)) {
+            break;
+        }
+        memoDataSetPokemonID(0, value);
+    }
+    menuSubCloseNumberInput();
+    return 1;
+}
+
+s32 dbgMenuMenuTestCompleteMemo(void) {
+    memoInitDebug(0);
+    return 1;
+}
+
+s32 dbgMenuMenuTestTeacherMemo(void) {
+    memoDataSetMemoFlag(0);
+    return 1;
+}
+
+static s32 _getDPStatus(long index) {
+    DarkPokemon* dark = darkPokemonGetDarkPokemon((u16)index);
+
+    if (dark->getPokemonID() != 0) {
+        return dark->getStatus();
+    }
+    return 0;
+}
+
+static void _setDPStatus(long index, darkPokemonStatus status) {
+    DarkPokemon* dark = darkPokemonGetDarkPokemon((u16)index);
+
+    if (dark->getPokemonID() != 0) {
+        dark->setStatus(status);
+        dark->setUpdate(true);
+    }
+}
+
+static u16 _getDPPokemonID(long index) {
+    return darkPokemonGetDarkPokemon((u16)index)->getPokemonID();
+}
+
+s32 dbgMenuEntrySnatchList(void) {
+    u32 value = 0;
+
+    for (;;) {
+        if (!menuSubOpenNumberInput(value, &value, 1, 0x32, 0x32, 0)) {
+            break;
+        }
+        DarkPokemon* dark = darkPokemonGetDarkPokemon((u16)value);
+        if (dark != NULL) {
+            darkPokemonBiosSetFightFlag(value, 1);
+            dark->setUpdate(true);
+        }
+    }
+    menuSubCloseNumberInput();
+    return 1;
+}
+
+s32 dbgMenuEntrySnatchListAll(void) {
+    s32 i;
+
+    for (i = 0; i <= darkpokemonBiosGetScenarioNum(); i++) {
+        if (_getDPStatus(i) == 0) {
+            _setDPStatus(i, darkStatus1);
+        }
+    }
+    return 1;
+}
+
+s32 dbgMenuEntrySnatchListSuccess(void) {
+    Pokemon pokemon;
+    s32 i;
+
+    for (i = 0; i <= darkpokemonBiosGetScenarioNum(); i++) {
+        if (_getDPStatus(i) >= 1) {
+            u16 id = _getDPPokemonID(i);
+            _debugPokemonCreate(&pokemon, id);
+            pokemonSetDarkPokemonStatus(&pokemon, i);
+            heroCatchPokemon(0, &pokemon, 0, 4, 1);
+            _setDPStatus(i, darkStatus3);
+        }
+    }
+    return 1;
+}
+
+static void _debugPokemonCreate(Pokemon* pokemon, u16 id) {
+    s32 rnd;
+    s32 trainerRnd;
+
+    pokemonCreate(pokemon, id, 10, gamedataGetStatus(0, 1));
+    rnd = memoDataGetPokemonRndFromID(0, id);
+    trainerRnd = memoDataGetPokemonTrainerRndFromID(0, id);
+    pokemonBiosSetRnd(pokemon, rnd);
+    pokemonBiosSetCatchTrainerRnd(pokemon, trainerRnd);
+}
+
+s32 dbgMenuEntrySnatchListRelive(void) {
+    s32 i;
+
+    for (i = 0; i <= darkpokemonBiosGetScenarioNum(); i++) {
+        if (_getDPStatus(i) >= 1) {
+            _setDPStatus(i, darkStatus4);
+        }
+    }
+    return 1;
+}
+
+s32 dbgMenuMenuTestWorlMapSetAllFlag(void) {
+    menuWorldMapMXDebug();
+    return 0;
+}
+
+#pragma opt_dead_assignments off
+s32 dbgMenuMenuTestD2Present(s32 menu) {
+    DbgMenuPair table[3] = { { 0x1DF, 0 }, { 0x1E0, 1 }, { 0x1E1, 2 } };
+    s32 i;
+    s32 value;
+
+    for (i = 0; i < 3; i++) {
+        if (menu == table[i].menu) {
+            break;
+        }
+    }
+    value = table[i].value;
+    GSthreadSetArgs(GSthreadCreate(1, GSfloorGetCurrentFloorGroupID(), 0x4000, 1, 1, (void (*)(void))testD2Present), 1,
+                    value);
+    return 0;
+}
+#pragma opt_dead_assignments reset
+
+static void testD2Present(D2PRESENT_MODE mode) {
+    d2presentOpen(mode);
+}
+
+static void _dbgMenuMenuTestPdaFlagSet(u32 flag) {
+    u32 value = GSflagTest(flag);
+
+    for (;;) {
+        if (!menuSubOpenNumberInput(value, &value, 1, 0x32, 0x32, 0)) {
+            break;
+        }
+        if (value != 0) {
+            GSflagOn(flag);
+        } else {
+            GSflagOff(flag);
+        }
+    }
+    menuSubCloseNumberInput();
+}
+
+s32 dbgMenuMenuTestPdaEnable(void) {
+    _dbgMenuMenuTestPdaFlagSet(0x3F1);
+    return 1;
+}
+
+s32 dbgMenuMenuTestPdaDPM(void) {
+    _dbgMenuMenuTestPdaFlagSet(0x3F2);
+    return 1;
+}
+
+s32 dbgMenuMenuTestPdaEsa(void) {
+    _dbgMenuMenuTestPdaFlagSet(0x3F3);
+    return 1;
+}
+
+s32 dbgMenuMenuTestPdaMR(void) {
+    _dbgMenuMenuTestPdaFlagSet(0x3F4);
+    return 1;
+}
+
+s32 dbgMenuMenuTestPdaSyougou(void) {
+    u32 value = GSflagGet(0x6C2);
+
+    for (;;) {
+        if (!menuSubOpenNumberInput(value, &value, 1, 0x32, 0x32, 0)) {
+            break;
+        }
+        if (value <= 7) {
+            GSflagSet(0x6C2, value);
+        }
+    }
+    menuSubCloseNumberInput();
+    return 0;
+}
+
+s32 dbgMenuMenuTestMailReceive(void) {
+    menuScriptReciveMail();
+    return 0;
+}
+
+s32 dbgMenuMenuTestMailRead(void) {
+    u32 value = 0;
+
+    if (menuSubOpenNumberInput(0, &value, 1, 0x32, 0x32, 0)) {
+        menuSubCloseNumberInput();
+        menuSubCloseNumberInputWait();
+        menuScriptReadMail(value);
+    }
+    menuSubCloseNumberInput();
+    return 0;
+}
+
+s32 dbgMenuMenuTestPdaAddFunc(void) {
+    u32 value = 0;
+
+    if (menuSubOpenNumberInput(0, &value, 1, 0x32, 0x32, 0)) {
+        menuSubCloseNumberInput();
+        menuSubCloseNumberInputWait();
+        if (value > 1) {
+            value = 0;
+        }
+        menuScriptPdaAddFunc(value);
+    }
+    menuSubCloseNumberInput();
+    return 0;
+}
+
+s32 dbgMenuMenuTestEeveeMenu(void) {
+    menuScriptEevee();
+    return 0;
+}
+
+s32 dbgMenuMenuTestTutorialMenu(void) {
+    menuScriptTutorial();
+    return 0;
+}
+
+s32 dbgMenuMenuTestWazaOshieMeijinMenu(DbgMenuWindow* window, s32 type) {
+    menuScriptWazaMeijin(type);
+    return 0;
+}
+
+s32 dbgMenuMenuTestWazaOshieBasanMenu(void) {
+    u8 work[4];
+
+    menuScriptWazaBasan(work);
+    return 0;
+}
+
+s32 dbgMenuMenuTestOrreColosseumMenu(void) {
+    u32 index = 0;
+
+    menuSubOpenNumberInput(0, &index, 1, 0x32, 0x32, 1);
+    if (index >= 28) {
+        index = 0;
+    }
+    menuOrreColosseum(_testEncount[index]);
+    menuOrreColosseumGetResult();
+    return 0;
+}
+
+s32 dbgMenuMenuTestMewWazaMenu(void) {
+    mewWazaSequence();
+    return 0;
+}
+
+s32 dbgMenuMenuMoveDemo(DbgMenuWindow* window, s32 demo) {
+    menuMoveDemo(demo);
+    return 0;
+}
+
+s32 dbgMenuMenuSetPlace(DbgMenuWindow* window, s32 place) {
+    _esabaPlace = place;
+    return 1;
+}
+
+s32 dbgMenuMenuTestEsabaSet(void) {
+    esabaSet(_esabaPlace);
+    return 0;
+}
+
+s32 dbgMenuMenuTestEsabaPut(void) {
+    esabaPut(_esabaPlace);
+    return 0;
+}
+
+s32 dbgMenuMenuTestEsabaGet(void) {
+    esabaGet(_esabaPlace);
+    return 0;
+}
+
+static void _esabaSetPokemon(long place, long id) {
+    esabaSetPokemon(_esabaPlace, _esabaSelectPokemon);
+}
+
+static void _pokemonCreate(Pokemon* pokemon, u16 id, u32 trainerRnd) {
+    s32 rnd;
+
+    pokemonCreate(pokemon, id, 10, gamedataGetStatus(0, 1));
+    rnd = memoDataGetPokemonRndFromID(0, id);
+    pokemonBiosSetRnd(pokemon, rnd);
+    pokemonBiosSetCatchTrainerRnd(pokemon, trainerRnd);
+}
+
+u32 dbgMenuMenuTestEsabaPokemon(void) {
+    s32 select[2] = { 0xF86F, 0xF146 };
+    Pokemon pokemon;
+    s32 trainerRnd;
     s32 result;
+    s32 rnd;
 
+    _esabaSelectPokemon = 0;
+    trainerRnd = heroGetStatus(0, 2, 0);
+    result = menuOpenCustom(0x10A, windowGetActiveID(), 0, 0, 1, 0);
+    if (result > 0) {
+        if (_esabaSelectPokemon == 0x19D || _esabaSelectPokemon == 0x19E) {
+            _esabaSetPokemon(_esabaPlace, _esabaSelectPokemon);
+        } else {
+            switch (menuSubOpenSelect2(0, select, 2, 0x96, 0x96, 0, 2, 1)) {
+            case 0:
+                _esabaSetPokemon(_esabaPlace, _esabaSelectPokemon);
+                _pokemonCreate(&pokemon, _esabaSelectPokemon, trainerRnd);
+                rnd = pokemonCreateRndFit(&pokemon, -1, -1, 0, trainerRnd);
+                esabaSetPokemonRnd(_esabaPlace, rnd);
+                break;
+            case 1:
+                _esabaSetPokemon(_esabaPlace, _esabaSelectPokemon);
+                esabaSetPokemonRnd(_esabaPlace, trainerRnd);
+                break;
+            }
+        }
+    } else if (result == 0) {
+        _esabaSetPokemon(_esabaPlace, _esabaSelectPokemon);
+    }
+    menuClose(0x10A);
+    menuCloseSync(0x10A, 1);
+    return (u32)result >> 31;
+}
+
+s32 dbgMenuMenuEsabaDisp(void) {
+    if (menuIsCheck(0xB7)) {
+        menuClose(0xB7);
+    } else {
+        menuOpenCustom(0xB7, 0, 0, 0, 1, 0);
+    }
+    return 0;
+}
+
+s32 dbgMenuMenuTestInfoEsa(void) {
+    menuScriptInfoEsa();
+    return 0;
+}
+
+s32 dbgMenuMenuTestInfoRelive(void) {
+    menuScriptInfoRelive(0, 1);
+    return 0;
+}
+
+s32 dbgMenuMenuUnderTakerOnOff(void) {
+    s32 flag = undertakerGetStartFlagID();
+
+    if (GSflagTest(flag)) {
+        GSflagOff(flag);
+    } else {
+        GSflagOn(flag);
+    }
+    return 0;
+}
+
+s32 dbgMenuMenuUnderTakerDisp(void) {
+    if (menuIsCheck(0xC0)) {
+        menuClose(0xC0);
+    } else {
+        menuOpenCustom(0xC0, 0, 0, 0, 1, 0);
+    }
+    return 0;
+}
+
+s32 dbgMenuMenuUnderTakerIconOnOff(void) {
+    menuIntUnderTakerOpenIcon();
+    return 0;
+}
+
+s32 dbgMenuMenuUnderTakerIconFlagOnOff(void) {
+    if (GSflagTest(0x5AD)) {
+        GSflagOff(0x5AD);
+    } else {
+        GSflagOn(0x5AD);
+    }
+    return 0;
+}
+
+u32 dbgMenuMenuUnderTakerIconAppear(void) {
+    s32 result = menuOpenCustom(0x111, windowGetActiveID(), 0, 0, 1, 0);
+
+    if (result >= 0 && _undertakerFloorID[result] != 0) {
+        undertakerSetPlace(_undertakerFloorID[result]);
+    }
+    menuClose(0x111);
+    menuCloseSync(0x111, 1);
+    return (u32)result >> 31;
+}
+
+s32 dbgMenuMenuTestNintendoWarning(void) {
+    menuNintendoWarning();
+    return 0;
+}
+
+s32 dbgMenuUnderTakerebugCursor(DbgMenuWindow* window) {
+    DbgMenuKeyInfo* key = windowGetKeyInfo();
+    u32 count;
+
+    _undertakerFloorCount = count = undertakerGetPlace(_undertakerFloorID);
+    if (count != 0) {
+        if (key->trigger & 5) {
+            if (--window->cursor < 0) {
+                window->cursor = 0;
+            }
+        } else if (key->trigger & 0xA) {
+            if (++window->cursor >= count) {
+                window->cursor = _undertakerFloorCount - 1;
+            }
+        }
+    }
+    return 0;
+}
+
+s32 dbgMenuEsabaDebugCursor(DbgMenuWindow* window) {
+    DbgMenuKeyInfo* key = windowGetKeyInfo();
+    s32 max = esabaGetPokemonMax(_esabaPlace);
+
+    if (key->trigger & 5) {
+        if (--window->cursor < 0) {
+            window->cursor = 0;
+        }
+    } else if (key->trigger & 0xA) {
+        u16 count = max + 3;
+        if (++window->cursor >= count) {
+            window->cursor = count - 1;
+        }
+    }
+    return 0;
+}
+
+s32 dbgMenuMenuTestWorlMapFlagSet(void) {
     _debugWorldMapData.select = 0;
     _debugWorldMapData.mode = 0;
     _debugWorldMapData.count = *worldmapXD_data_number;
-    result = menuOpenCustom(0xD7, windowGetActiveID(), 0, 0, 1, 1, &_debugWorldMapData);
-    menuClose(0xD7);
-    menuCloseSync(0xD7, 1);
-    if (result >= 0) {
-        menuScriptOpenWorldMap(_debugWorldMapData.select);
+    while (menuOpenCustom(0xC4, windowGetActiveID(), 0, 0, 1, 1, &_debugWorldMapData) != -1) {
     }
+    menuClose(0xC4);
+    menuCloseSync(0xC4, 1);
     return 0;
 }
 
@@ -430,637 +1178,49 @@ s32 dbgMenuMenuWorldMapCursor(DbgMenuWindow* window) {
     return 0;
 }
 
-s32 dbgMenuMenuTestWorlMapFlagSet(void) {
+s32 dbgMenuMenuTestWorlMapShow(void) {
+    s32 result;
+
     _debugWorldMapData.select = 0;
     _debugWorldMapData.mode = 0;
     _debugWorldMapData.count = *worldmapXD_data_number;
-    while (menuOpenCustom(0xC4, windowGetActiveID(), 0, 0, 1, 1, &_debugWorldMapData) != -1) {
-    }
-    menuClose(0xC4);
-    menuCloseSync(0xC4, 1);
-    return 0;
-}
-
-s32 dbgMenuEsabaDebugCursor(DbgMenuWindow* window) {
-    DbgMenuKeyInfo* key = windowGetKeyInfo();
-    s32 max = esabaGetPokemonMax(_esabaPlace);
-
-    if (key->trigger & 5) {
-        if (--window->cursor < 0) {
-            window->cursor = 0;
-        }
-    } else if (key->trigger & 0xA) {
-        u16 count = max + 3;
-        if (++window->cursor >= count) {
-            window->cursor = count - 1;
-        }
+    result = menuOpenCustom(0xD7, windowGetActiveID(), 0, 0, 1, 1, &_debugWorldMapData);
+    menuClose(0xD7);
+    menuCloseSync(0xD7, 1);
+    if (result >= 0) {
+        menuScriptOpenWorldMap(_debugWorldMapData.select);
     }
     return 0;
 }
 
-s32 dbgMenuUnderTakerebugCursor(DbgMenuWindow* window) {
-    DbgMenuKeyInfo* key = windowGetKeyInfo();
-    u32 count;
-
-    _undertakerFloorCount = count = undertakerGetPlace(_undertakerFloorID);
-    if (count != 0) {
-        if (key->trigger & 5) {
-            if (--window->cursor < 0) {
-                window->cursor = 0;
-            }
-        } else if (key->trigger & 0xA) {
-            if (++window->cursor >= count) {
-                window->cursor = _undertakerFloorCount - 1;
-            }
-        }
-    }
+s32 dbgMenuMenuTestUsohachi(void) {
+    menuScriptUsohachi();
     return 0;
 }
 
-s32 dbgMenuMenuTestNintendoWarning(void) {
-    menuNintendoWarning();
+s32 dbgMenuMenuTestUsohachi2(void) {
+    menuScriptUsohachi2();
     return 0;
 }
 
-u32 dbgMenuMenuUnderTakerIconAppear(void) {
-    s32 result = menuOpenCustom(0x111, windowGetActiveID(), 0, 0, 1, 0);
-
-    if (result >= 0 && _undertakerFloorID[result] != 0) {
-        undertakerSetPlace(_undertakerFloorID[result]);
+static void _setWorldMapFlagData(long index, long value) {
+    if (worldmapXD_data[index].flag != 0) {
+        GSflagSet(worldmapXD_data[index].flag, value);
     }
-    menuClose(0x111);
-    menuCloseSync(0x111, 1);
-    return (u32)result >> 31;
 }
 
-s32 dbgMenuMenuUnderTakerIconFlagOnOff(void) {
-    if (GSflagTest(0x5AD)) {
-        GSflagOff(0x5AD);
+static s32 _getWorldMapFlagData(long index) {
+    if (worldmapXD_data[index].flag == 0) {
+        return -1;
+    }
+    return GSflagGet(worldmapXD_data[index].flag);
+}
+
+s32 dbgMenuMenuReliveHallDisp(void) {
+    if (menuIsCheck(0x108)) {
+        menuClose(0x108);
     } else {
-        GSflagOn(0x5AD);
+        menuOpenCustom(0x108, 0, 0, 0, 1, 0);
     }
     return 0;
 }
-
-s32 dbgMenuMenuUnderTakerIconOnOff(void) {
-    menuIntUnderTakerOpenIcon();
-    return 0;
-}
-
-s32 dbgMenuMenuUnderTakerDisp(void) {
-    if (menuIsCheck(0xC0)) {
-        menuClose(0xC0);
-    } else {
-        menuOpenCustom(0xC0, 0, 0, 0, 1, 0);
-    }
-    return 0;
-}
-
-s32 dbgMenuMenuUnderTakerOnOff(void) {
-    s32 flag = undertakerGetStartFlagID();
-
-    if (GSflagTest(flag)) {
-        GSflagOff(flag);
-    } else {
-        GSflagOn(flag);
-    }
-    return 0;
-}
-
-s32 dbgMenuMenuTestInfoRelive(void) {
-    menuScriptInfoRelive(0, 1);
-    return 0;
-}
-
-s32 dbgMenuMenuTestInfoEsa(void) {
-    menuScriptInfoEsa();
-    return 0;
-}
-
-s32 dbgMenuMenuEsabaDisp(void) {
-    if (menuIsCheck(0xB7)) {
-        menuClose(0xB7);
-    } else {
-        menuOpenCustom(0xB7, 0, 0, 0, 1, 0);
-    }
-    return 0;
-}
-
-u32 dbgMenuMenuTestEsabaPokemon(void) {
-    s32 select[2] = { 0xF86F, 0xF146 };
-    Pokemon pokemon;
-    s32 trainerRnd;
-    s32 result;
-    s32 rnd;
-
-    _esabaSelectPokemon = 0;
-    trainerRnd = heroGetStatus(0, 2, 0);
-    result = menuOpenCustom(0x10A, windowGetActiveID(), 0, 0, 1, 0);
-    if (result > 0) {
-        if (_esabaSelectPokemon == 0x19D || _esabaSelectPokemon == 0x19E) {
-            _esabaSetPokemon(_esabaPlace, _esabaSelectPokemon);
-        } else {
-            switch (menuSubOpenSelect2(0, select, 2, 0x96, 0x96, 0, 2, 1)) {
-            case 0:
-                _esabaSetPokemon(_esabaPlace, _esabaSelectPokemon);
-                _pokemonCreate(&pokemon, _esabaSelectPokemon, trainerRnd);
-                rnd = pokemonCreateRndFit(&pokemon, -1, -1, 0, trainerRnd);
-                esabaSetPokemonRnd(_esabaPlace, rnd);
-                break;
-            case 1:
-                _esabaSetPokemon(_esabaPlace, _esabaSelectPokemon);
-                esabaSetPokemonRnd(_esabaPlace, trainerRnd);
-                break;
-            }
-        }
-    } else if (result == 0) {
-        _esabaSetPokemon(_esabaPlace, _esabaSelectPokemon);
-    }
-    menuClose(0x10A);
-    menuCloseSync(0x10A, 1);
-    return (u32)result >> 31;
-}
-
-static void _pokemonCreate(Pokemon* pokemon, u16 id, u32 trainerRnd) {
-    s32 rnd;
-
-    pokemonCreate(pokemon, id, 10, gamedataGetStatus(0, 1));
-    rnd = memoDataGetPokemonRndFromID(0, id);
-    pokemonBiosSetRnd(pokemon, rnd);
-    pokemonBiosSetCatchTrainerRnd(pokemon, trainerRnd);
-}
-
-static void _esabaSetPokemon(long place, long id) {
-    esabaSetPokemon(_esabaPlace, _esabaSelectPokemon);
-}
-
-s32 dbgMenuMenuTestEsabaGet(void) {
-    esabaGet(_esabaPlace);
-    return 0;
-}
-
-s32 dbgMenuMenuTestEsabaPut(void) {
-    esabaPut(_esabaPlace);
-    return 0;
-}
-
-s32 dbgMenuMenuTestEsabaSet(void) {
-    esabaSet(_esabaPlace);
-    return 0;
-}
-
-s32 dbgMenuMenuSetPlace(DbgMenuWindow* window, s32 place) {
-    _esabaPlace = place;
-    return 1;
-}
-
-s32 dbgMenuMenuMoveDemo(DbgMenuWindow* window, s32 demo) {
-    menuMoveDemo(demo);
-    return 0;
-}
-
-s32 dbgMenuMenuTestMewWazaMenu(void) {
-    mewWazaSequence();
-    return 0;
-}
-
-s32 dbgMenuMenuTestOrreColosseumMenu(void) {
-    u32 index = 0;
-
-    menuSubOpenNumberInput(0, &index, 1, 0x32, 0x32, 1);
-    if (index >= 28) {
-        index = 0;
-    }
-    menuOrreColosseum(_testEncount[index]);
-    menuOrreColosseumGetResult();
-    return 0;
-}
-
-s32 dbgMenuMenuTestWazaOshieBasanMenu(void) {
-    u8 work[4];
-
-    menuScriptWazaBasan(work);
-    return 0;
-}
-
-s32 dbgMenuMenuTestWazaOshieMeijinMenu(DbgMenuWindow* window, s32 type) {
-    menuScriptWazaMeijin(type);
-    return 0;
-}
-
-s32 dbgMenuMenuTestTutorialMenu(void) {
-    menuScriptTutorial();
-    return 0;
-}
-
-s32 dbgMenuMenuTestEeveeMenu(void) {
-    menuScriptEevee();
-    return 0;
-}
-
-s32 dbgMenuMenuTestPdaAddFunc(void) {
-    u32 value = 0;
-
-    if (menuSubOpenNumberInput(0, &value, 1, 0x32, 0x32, 0)) {
-        menuSubCloseNumberInput();
-        menuSubCloseNumberInputWait();
-        if (value > 1) {
-            value = 0;
-        }
-        menuScriptPdaAddFunc(value);
-    }
-    menuSubCloseNumberInput();
-    return 0;
-}
-
-s32 dbgMenuMenuTestMailRead(void) {
-    u32 value = 0;
-
-    if (menuSubOpenNumberInput(0, &value, 1, 0x32, 0x32, 0)) {
-        menuSubCloseNumberInput();
-        menuSubCloseNumberInputWait();
-        menuScriptReadMail(value);
-    }
-    menuSubCloseNumberInput();
-    return 0;
-}
-
-s32 dbgMenuMenuTestMailReceive(void) {
-    menuScriptReciveMail();
-    return 0;
-}
-
-s32 dbgMenuMenuTestPdaSyougou(void) {
-    u32 value = GSflagGet(0x6C2);
-
-    for (;;) {
-        if (!menuSubOpenNumberInput(value, &value, 1, 0x32, 0x32, 0)) {
-            break;
-        }
-        if (value <= 7) {
-            GSflagSet(0x6C2, value);
-        }
-    }
-    menuSubCloseNumberInput();
-    return 0;
-}
-
-s32 dbgMenuMenuTestPdaMR(void) {
-    _dbgMenuMenuTestPdaFlagSet(0x3F4);
-    return 1;
-}
-
-s32 dbgMenuMenuTestPdaEsa(void) {
-    _dbgMenuMenuTestPdaFlagSet(0x3F3);
-    return 1;
-}
-
-s32 dbgMenuMenuTestPdaDPM(void) {
-    _dbgMenuMenuTestPdaFlagSet(0x3F2);
-    return 1;
-}
-
-s32 dbgMenuMenuTestPdaEnable(void) {
-    _dbgMenuMenuTestPdaFlagSet(0x3F1);
-    return 1;
-}
-
-static void _dbgMenuMenuTestPdaFlagSet(u32 flag) {
-    u32 value = GSflagTest(flag);
-
-    for (;;) {
-        if (!menuSubOpenNumberInput(value, &value, 1, 0x32, 0x32, 0)) {
-            break;
-        }
-        if (value != 0) {
-            GSflagOn(flag);
-        } else {
-            GSflagOff(flag);
-        }
-    }
-    menuSubCloseNumberInput();
-}
-
-static void testD2Present(D2PRESENT_MODE mode) {
-    d2presentOpen(mode);
-}
-
-#pragma opt_dead_assignments off
-s32 dbgMenuMenuTestD2Present(s32 menu) {
-    DbgMenuPair table[3] = { { 0x1DF, 0 }, { 0x1E0, 1 }, { 0x1E1, 2 } };
-    s32 i;
-    s32 value;
-
-    for (i = 0; i < 3; i++) {
-        if (menu == table[i].menu) {
-            break;
-        }
-    }
-    value = table[i].value;
-    GSthreadSetArgs(GSthreadCreate(1, GSfloorGetCurrentFloorGroupID(), 0x4000, 1, 1, (void (*)(void))testD2Present), 1,
-                    value);
-    return 0;
-}
-#pragma opt_dead_assignments reset
-
-s32 dbgMenuMenuTestWorlMapSetAllFlag(void) {
-    menuWorldMapMXDebug();
-    return 0;
-}
-
-s32 dbgMenuEntrySnatchListRelive(void) {
-    s32 i;
-
-    for (i = 0; i <= darkpokemonBiosGetScenarioNum(); i++) {
-        if (_getDPStatus(i) >= 1) {
-            _setDPStatus(i, darkStatus4);
-        }
-    }
-    return 1;
-}
-
-static void _debugPokemonCreate(Pokemon* pokemon, u16 id) {
-    s32 rnd;
-    s32 trainerRnd;
-
-    pokemonCreate(pokemon, id, 10, gamedataGetStatus(0, 1));
-    rnd = memoDataGetPokemonRndFromID(0, id);
-    trainerRnd = memoDataGetPokemonTrainerRndFromID(0, id);
-    pokemonBiosSetRnd(pokemon, rnd);
-    pokemonBiosSetCatchTrainerRnd(pokemon, trainerRnd);
-}
-
-s32 dbgMenuEntrySnatchListSuccess(void) {
-    Pokemon pokemon;
-    s32 i;
-
-    for (i = 0; i <= darkpokemonBiosGetScenarioNum(); i++) {
-        if (_getDPStatus(i) >= 1) {
-            u16 id = _getDPPokemonID(i);
-            _debugPokemonCreate(&pokemon, id);
-            pokemonSetDarkPokemonStatus(&pokemon, i);
-            heroCatchPokemon(0, &pokemon, 0, 4, 1);
-            _setDPStatus(i, darkStatus3);
-        }
-    }
-    return 1;
-}
-
-s32 dbgMenuEntrySnatchListAll(void) {
-    s32 i;
-
-    for (i = 0; i <= darkpokemonBiosGetScenarioNum(); i++) {
-        if (_getDPStatus(i) == 0) {
-            _setDPStatus(i, darkStatus1);
-        }
-    }
-    return 1;
-}
-
-s32 dbgMenuEntrySnatchList(void) {
-    u32 value = 0;
-
-    for (;;) {
-        if (!menuSubOpenNumberInput(value, &value, 1, 0x32, 0x32, 0)) {
-            break;
-        }
-        DarkPokemon* dark = darkPokemonGetDarkPokemon((u16)value);
-        if (dark != NULL) {
-            darkPokemonBiosSetFightFlag(value, 1);
-            dark->setUpdate(true);
-        }
-    }
-    menuSubCloseNumberInput();
-    return 1;
-}
-
-static u16 _getDPPokemonID(long index) {
-    return darkPokemonGetDarkPokemon((u16)index)->getPokemonID();
-}
-
-static void _setDPStatus(long index, darkPokemonStatus status) {
-    DarkPokemon* dark = darkPokemonGetDarkPokemon((u16)index);
-
-    if (dark->getPokemonID() != 0) {
-        dark->setStatus(status);
-        dark->setUpdate(true);
-    }
-}
-
-static s32 _getDPStatus(long index) {
-    DarkPokemon* dark = darkPokemonGetDarkPokemon((u16)index);
-
-    if (dark->getPokemonID() != 0) {
-        return dark->getStatus();
-    }
-    return 0;
-}
-
-s32 dbgMenuMenuTestTeacherMemo(void) {
-    memoDataSetMemoFlag(0);
-    return 1;
-}
-
-s32 dbgMenuMenuTestCompleteMemo(void) {
-    memoInitDebug(0);
-    return 1;
-}
-
-s32 dbgMenuMenuTestAddPokemonMemo(void) {
-    u32 value = 0;
-
-    for (;;) {
-        if (!menuSubOpenNumberInput(value, &value, 1, 0x32, 0x32, 0)) {
-            break;
-        }
-        memoDataSetPokemonID(0, value);
-    }
-    menuSubCloseNumberInput();
-    return 1;
-}
-
-s32 dbgMenuMenuTestEnableMemo(void) {
-    return 1;
-}
-
-#pragma opt_common_subs off
-static void testEvolution(void) {
-    Pokemon* before = (Pokemon*)heroGetStatus(0, 3, 0);
-    Pokemon* after;
-    struct {
-        u8 result[0x14];
-        s16 order[2];
-        u8 unk18[0x28];
-    } work;
-
-    if (pokemonCheckValid(before)) {
-        after = (Pokemon*)heroGetStatus(0, 3, 1);
-        if (pokemonCheckValid(after)) {
-            fadeSet(3, 0.5f);
-            fadeCheck(1);
-            work.order[0] = 1;
-            work.order[1] = 2;
-            evolutionOpen(before, after, 1, work.order, 2, work.result);
-            fadeSet(2, 0.5f);
-            fadeCheck(1);
-        }
-    }
-}
-#pragma opt_common_subs reset
-
-s32 dbgMenuMenuTestEvolution(void) {
-    GSthreadCreate(1, GSfloorGetCurrentFloorGroupID(), 0x4000, 1, 1, testEvolution);
-    return 0;
-}
-
-s32 dbgMenuMenuTestWazaMenu(void) {
-    u32* hero = savedataGetStatus(0, 2);
-    Pokemon* pokemon;
-
-    if (hero == NULL) {
-        return 0;
-    }
-    pokemon = heroBiosGetPokemonPtr(hero, 0);
-    if (!pokemonCheckValid(pokemon)) {
-        return 0;
-    }
-    menuPokemonStatusOpenWazaLearn(pokemon, 0x25);
-    return 0;
-}
-
-s32 dbgMenuMenuTestPokemonChangeMenu(void) {
-    msgctrlSetValue(0x59, 0x1772);
-    menuPokemonChange();
-    return 0;
-}
-
-s32 dbgMenuMenuTestPCBox(void) {
-    GSfloorPush(0x391);
-    return 0;
-}
-
-s32 dbgMenuMenuTestRelivehallTutorialMenu(void) {
-    msgctrlSetValue(0x59, 0x1772);
-    GSfloorPush(0x3A7);
-    return 0;
-}
-
-s32 dbgMenuMenuTestPcBoxPokemonSetFull(void) {
-    makePocketDeubugMakeDarkPokemonReset();
-    pcboxDebugPokemonSetupFull();
-    reliveHallDebugPokemonSetup(2);
-    return 0;
-}
-
-s32 dbgMenuMenuTestReliveHallPokemonSetBest(void) {
-    makePocketDeubugMakeDarkPokemonReset();
-    pcboxDebugPokemonSetup();
-    reliveHallDebugPokemonSetup(2);
-    return 0;
-}
-
-s32 dbgMenuMenuTestReliveHallPokemonSet1(void) {
-    makePocketDeubugMakeDarkPokemonReset();
-    pcboxDebugPokemonSetup();
-    reliveHallDebugPokemonSetup(0);
-    return 0;
-}
-
-s32 dbgMenuMenuTestReliveHallPokemonSet0(void) {
-    makePocketDeubugMakeDarkPokemonReset();
-    pcboxDebugPokemonSetup();
-    reliveHallDebugPokemonSetup(1);
-    return 0;
-}
-
-s32 dbgMenuMenuTestHologramMenu(void) {
-    GSfloorPush(0x3A6);
-    return 0;
-}
-
-s32 dbgMenuMenuTestReliveHallMenu(void) {
-    GSfloorPush(0x3A3);
-    return 0;
-}
-
-s32 dbgMenuMenuTestBingoClear(void) {
-    u32* status = savedataGetStatus(0, 0x1B);
-
-    *status |= 0x3F0000 | 0xFFFF;
-    return 0;
-}
-
-s32 dbgMenuMenuTestBingoSelect(void) {
-    u32* status = savedataGetStatus(0, 0x1B);
-
-    *status |= 0x2A0000 | 0xAAAA;
-    return 0;
-}
-
-s32 dbgMenuMenuTestBingo(void) {
-    GSfloorPush(0x388);
-    return 0;
-}
-
-s32 dbgMenuMenuTestBattleDiskExec(void) {
-    menuBattleDiskOpenFight();
-    return 0;
-}
-
-s32 dbgMenuMenuTestBattleDisk(void) {
-    menuBattleDiskOpen();
-    return 0;
-}
-
-s32 dbgMenuMenuTestPokemonMenu(s32 menu) {
-    switch (menu) {
-    case 0x1D5:
-        menuPokemonOpen(1, 0, 0);
-        break;
-    case 0x1D6:
-        menuPokemonOpen(2, 0, 0);
-        break;
-    default:
-        menuPokemonOpen(2, 0, 0);
-        break;
-    }
-    return 0;
-}
-
-s32 dbgMenuMenuTestShopMenu(s32 menu) {
-    DbgMenuPair table[13] = {
-        { 0x1C8, 0 }, { 0x1C9, 16 }, { 0x1CA, 1 }, { 0x1CB, 2 }, { 0x1CC, 3 },
-        { 0x1CD, 4 }, { 0x1CE, 5 }, { 0x1CF, 6 }, { 0x1D0, 7 }, { 0x1D1, 8 },
-        { 0x1D2, 9 }, { 0x1D3, 10 }, { 0x1D4, 11 },
-    };
-    s32 i;
-
-    for (i = 0; i < 13; i++) {
-        if (menu == table[i].menu) {
-            break;
-        }
-    }
-    if (i >= 13) {
-        return 0;
-    }
-    menuShopOpen(table[i].value);
-    return 0;
-}
-
-s32 dbgMenuMenuTestNameEntryMenu(s32 menu) {
-    DbgMenuPair table[4] = { { 0x1C4, 0 }, { 0x1C5, 1 }, { 0x1C6, 2 }, { 0x1C7, 3 } };
-    s32 i;
-
-    for (i = 0; i < 4; i++) {
-        if (menu == table[i].menu) {
-            break;
-        }
-    }
-    if (i >= 4) {
-        return 0;
-    }
-    menuNameEntryOpen(table[i].value, 0);
-    return 0;
-}
-
-#pragma force_active reset

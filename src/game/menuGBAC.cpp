@@ -1,3 +1,4 @@
+#pragma dollar_identifiers on
 #pragma peephole off
 #pragma pool_strings off
 #include <dolphin/types.h>
@@ -160,6 +161,7 @@ static u8 _mainFlow(_MENU_GBAC_TYPE type, u32 flags, Hero** heroes);
 extern "C" {
 s32 openMenuGBA(_MENU_GBAC_TYPE type, u32 flags, Hero** heroes);
 
+static const char* gba_bin_name$2220[2] = {"maxbtl.bin", "maxcng.bin"};
 static u16 GBA_ROM_VERSION_FLAG[4] = {0, 0, 0, 0};
 
 void menuGBACSetRomVer(u16 ver, u16 idx);
@@ -222,7 +224,7 @@ s32 openMenuGBA(_MENU_GBAC_TYPE type, u32 flags, Hero** heroes)
 static u8 _mainFlow(_MENU_GBAC_TYPE type, u32 flags, Hero** heroes)
 {
     Hero localHero;
-    static const char* gba_bin_name[2] = {"maxbtl.bin", "maxcng.bin"};
+
     s32 nameIdx = 0;
     s32 i;
     bool first = false;
@@ -245,7 +247,7 @@ static u8 _mainFlow(_MENU_GBAC_TYPE type, u32 flags, Hero** heroes)
     }
     switch (pokecoloGetCountryCode()) {
     case 0:
-        while (!AGB_Prepare(gba_bin_name[nameIdx])) {
+        while (!AGB_Prepare(gba_bin_name$2220[nameIdx])) {
             GSthreadSwitch();
         }
         break;

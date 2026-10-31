@@ -123,6 +123,31 @@ Two unused math helpers were also restored from the Colosseum checkpoint above:
 retail data layout; the linker strips the unused helper code. Both linked units
 were verified against the retail DOL hash.
 
+## Camera reset helper
+
+`cameraResetOffsets` in `game/pxdvs/app/camera/camera.cpp` was adapted from
+[Decomp-Robot/pokemon-xd](https://github.com/Decomp-Robot/pokemon-xd/blob/f5cb7af499cba4ab5af02b03abc7f537b89a9ef4/src/game/app/camera/camera.cpp),
+commit `f5cb7af499cba4ab5af02b03abc7f537b89a9ef4` (CC0). The existing calls from
+`cameraPlayOffsetAnime` and `cameraInit` share its offset, scale, and optional
+field-of-view reset. Both calls inline; the linker removes the unused out-of-line
+copy while retaining the shared literal pool. The linked retail DOL hash was
+verified after restoring the unit's function and template emission order.
+
+## Battle sequence processing
+
+The following bodies were adapted from
+[Decomp-Robot/pokemon-xd](https://github.com/Decomp-Robot/pokemon-xd/tree/f5cb7af499cba4ab5af02b03abc7f537b89a9ef4),
+commit `f5cb7af499cba4ab5af02b03abc7f537b89a9ef4` (CC0):
+
+- `WS_WKC_ACT`: `src/game/app/fight/fightSeq/fightSeqBasis.cpp`.
+- `fightSeqSoubiItemCheckTurn` and `fightSeqFightOutPokemonTokuseiCheckWazaHitAfter`:
+  `src/game/app/fight/fightSeq/fightSeq.cpp`.
+
+Local adaptations retain the existing types and symbols, with narrow call views
+where the retail parameter or return widths differ. Referenced sequence symbols,
+relocation offsets, and initializer bytes were checked against the retail object;
+all previously exact functions remain exact.
+
 ## Colosseum license notice
 
 ```text
