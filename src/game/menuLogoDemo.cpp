@@ -554,55 +554,50 @@ void fn_80085E88(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
     }
 }
 
-void menuNintendoWarningCtrl(tagWINDOW_WORK* win) {
+void menuNintendoWarningCtrl(tagWINDOW_WORK* w)
+{
     f32 dt = timeGetLastFrameSec();
-    f32 seqTimer;
-    switch (win->phase) {
+    switch (w->phase) {
     case 0:
         _warningSeq = 0;
         _warningSeqTimer = 0.0f;
-        if (win->step == 0) {
-            winSeqSetMenu(win->menu, 0x1CC);
-            win->step = 1;
+        if (w->step == 0) {
+            winSeqSetMenu(w->menu, 0x1cc);
+            w->step = 1;
             menuGSfsysInit__Fv();
         }
         break;
     case 2:
         switch (_warningSeq) {
         case 0:
-            if (winSeqCheckMove(win->menu) == 0) {
+            if (!winSeqCheckMove(w->menu)) {
                 _warningSeq = 1;
-                return;
             }
             break;
         case 1:
-            _warningSeqTimer = _warningSeqTimer + dt;
+            _warningSeqTimer += dt;
             if (_warningSeqTimer >= 1.5f) {
                 _warningSeq = 2;
                 _warningTimer = 0.0f;
-                return;
             }
             break;
-        case 2: {
-            f32 st = _warningSeqTimer + dt;
-            _warningSeqTimer = st;
+        case 2:
             _warningTimer += dt;
-            if (st >= 60.0f) {
+            _warningSeqTimer += dt;
+            if (_warningSeqTimer >= 60.0f) {
                 _warningSeq = 3;
-                return;
             }
             break;
-        }
         case 3:
             _warningTimer += dt;
-            return;
+            break;
         }
         break;
     case 3:
         _warningTimer += dt;
-        if (win->step == 0) {
-            winSeqSetMenu(win->menu, 0x1D0);
-            win->step = 1;
+        if (w->step == 0) {
+            winSeqSetMenu(w->menu, 0x1d0);
+            w->step = 1;
         }
         break;
     }
@@ -702,20 +697,20 @@ static void _setTexture(GStexture* texture, GSvec2* pos, GSvec2* uv, GSgfxColAu8
     GSprimDraw2DTexQuad4V(pos, uv, texture, &copy);
 }
 
-static void _setTextureWindow(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite, GStexture* texture) {
-    u16 alpha;
+static void _setTextureWindow(tagWINDOW_WORK* w, tagSPRITE_WORK* sp, GStexture* tex)
+{
     GSvec2 pos[4];
     GSvec2 uv[4];
-    GSgfxColAu8 color;
-
-    pos[0].x = sprite->x;
-    pos[0].y = sprite->y;
-    pos[1].x = sprite->x + sprite->width;
-    pos[1].y = sprite->y;
-    pos[2].x = sprite->x + sprite->width;
-    pos[2].y = sprite->y + sprite->height;
-    pos[3].x = sprite->x;
-    pos[3].y = sprite->y + sprite->height;
+    GSgfxColAu8 col;
+    u16 a;
+    pos[0].x = (f32)sp->x;
+    pos[0].y = (f32)sp->y;
+    pos[1].x = (f32)(sp->x + sp->width);
+    pos[1].y = (f32)sp->y;
+    pos[2].x = (f32)(sp->x + sp->width);
+    pos[2].y = (f32)(sp->y + sp->height);
+    pos[3].x = (f32)sp->x;
+    pos[3].y = (f32)(sp->y + sp->height);
     uv[0].x = 0.0f;
     uv[0].y = 0.0f;
     uv[1].x = 1.0f;
@@ -724,15 +719,16 @@ static void _setTextureWindow(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite, GStex
     uv[2].y = 1.0f;
     uv[3].x = 0.0f;
     uv[3].y = 1.0f;
-    color.r = 0xFF;
-    color.g = 0xFF;
-    color.b = 0xFF;
-    alpha = (u16)(*((u8*)win + 0x93) * sprite->color.channels.alpha) / 255;
-    if (alpha > 0xFF) {
-        alpha = 0xFF;
+    col.r = 0xff;
+    col.g = 0xff;
+    col.b = 0xff;
+    a = (u16)(*((u8*)w + 0x93) * sp->color.channels.alpha);
+    a /= 255;
+    if (a > 255) {
+        a = 255;
     }
-    color.a = alpha;
-    _setTexture(texture, &pos[0], &uv[0], color);
+    col.a = a;
+    _setTexture(tex, pos, uv, col);
 }
 
 extern "C" {

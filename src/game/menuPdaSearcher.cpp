@@ -12,7 +12,17 @@ static void _menuClose(s32 id){menuClose(id);menuCloseSync(id,1);}
 static void _esaMonInit(){for(u32 i=0;i<*esabadata_number;i++)_esaTimer[i]=0.0f;}
 static u8 _getWorldMapFlag(u16 index){u16 table[3]={15,16,17};if(index>2)return 0;return GSflagGet(*(u32*)(worldmapXD_data+table[index]*0x24+4))!=0;}
 static void _updateTimer(u16 index){f32 rate=esabaGetDigestRate(index);f32 delta=_gettLastTime();f32 divisor=rate/100.0f;_esaTimer[index]+=(3.1415927f*(2.0f*delta))/divisor;f32 time=_esaTimer[index];if(time>6.2831855f)_esaTimer[index]=time-6.2831855f;}
-static void _animMojiCursor(tagWINDOW_WORK *w,tagSPRITE_WORK *s,u16 index){f32 alpha=255.0f*((1.0f+(f32)cos(_esaTimer[index]))/2.0f);if(alpha>=255.0f)alpha=255.0f;((u8*)s)[0x67]=(w->alpha*(u8)(s32)alpha)/255;}
+static void _animMojiCursor(tagWINDOW_WORK* w, tagSPRITE_WORK* sp, u16 id)
+{
+    f32 c = (f32)cos(_esaTimer[id]);
+    f32 s = 1.0f + c;
+    f32 v = 0.5f * s;
+    v = 255.0f * v;
+    if (v >= 255.0f) {
+        v = 255.0f;
+    }
+    ((u8*)sp)[0x67] = (u8)(w->alpha * (u8)(s32)v / 255);
+}
 static void _esaPrintMsg(tagWINDOW_WORK *w,tagSPRITE_WORK *s,unsigned long msg){u32 color=w->alpha|0xFFFFFF00;u32 rect=GSmsgGetRect(msg);s16 width=s->width;GSmsgPrintRect(w->layer,(s16)((u32)(width-(rect>>16))>>1),0,width,s->height,color,msg);}
 static void _esaNumSet(tagSPRITE_WORK *s,u16 index){s32 *ids=_esaMeterIndex[index];s32 number=esabaGetEsaNum(index);if(number==0)winSpriteSetDisp(s,0);s32 match=0;for(;match<10;match++)if(s->id==ids[match])break;if(number>=match+1){winSpriteSetDisp(s,1);return;}winSpriteSetDisp(s,0);}
 extern "C" {

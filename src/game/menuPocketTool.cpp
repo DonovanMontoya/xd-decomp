@@ -24,7 +24,7 @@ tagWINDOW_WORK *windowSearchID(s32);
 void winMsgDraw(void);
 void GSgfxLayerSetActive(s32);
 s32 floorGetMenuLayerID(void);
-void spriteSetOffset(s32, s32, s32);
+void spriteSetOffset(s32, s16, s16);
 void spriteClearScissor(s32);
 void spriteSetEnv(s32);
 void spriteClearEnv(s32);
@@ -998,23 +998,29 @@ s32 winSpriteGetLayerID(tagWINDOW_WORK*,tagSPRITE_WORK*);
 void GSmsgMain(s32,u32,u16,bool);
 void GSmsgPrint2(s32,s32,s32,u32,u32);
 }
-void CInfoWindow::draw() {
-    if(open_) {
+void CInfoWindow::draw()
+{
+    if (open_) {
         menuPtWindowWorkDraw(unk0);
-        for(CInfoWindow* entry=this;entry->keys[0][0];entry=(CInfoWindow*)((u8*)entry+8))msgctrlSetValue(entry->keys[0][0],entry->keys[0][1]);
-        s32 layer;
-        tagWINDOW_WORK* window=windowSearchID(unk0);
-        tagSPRITE_WORK* sprite=menuPtSpriteWorkGetByItemID(window,unk4,0);
-        layer=winSpriteGetLayerID(window,sprite);
-        if(wait) {
-            spriteSetOffset(layer,(s16)(window->x+sprite->x),(s16)(window->y+sprite->y));
+        CInfoWindow* p = this;
+        while (p->keys[0][0] != 0) {
+            msgctrlSetValue(p->keys[0][0], p->keys[0][1]);
+            p = (CInfoWindow*)((u8*)p + 8);
+        }
+        tagWINDOW_WORK* win = (tagWINDOW_WORK*)windowSearchID(unk0);
+        tagSPRITE_WORK* spr = menuPtSpriteWorkGetByItemID(win, unk4, 0);
+        int layer = winSpriteGetLayerID(win, spr);
+        if (wait) {
+            spriteSetOffset(layer, win->x + spr->x, win->y + spr->y);
             spriteClearScissor(layer);
             spriteSetEnv(layer);
-            GSmsgMain(layer,msg,key,((s8)window->flags & 4)==0);
-            spriteSetOffset(layer,0,0);
+            GSmsgMain((s32)layer, msg, key, ((s8)win->flags & 4) == 0);
+            spriteSetOffset(layer, 0, 0);
             spriteClearScissor(layer);
             spriteSetEnv(layer);
-        } else GSmsgPrint2(layer,window->x+sprite->x,window->y+sprite->y,-1,msg);
+        } else {
+            GSmsgPrint2(layer, win->x + spr->x, win->y + spr->y, -1, msg);
+        }
     }
 }
 

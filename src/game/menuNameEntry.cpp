@@ -711,23 +711,19 @@ static s32 pushNameEntryFloor(int mode, int index, int fade)
 }
 
 extern "C" {
-s32 menuNameEntryOpen(int mode, int index)
-{
-    s32 ids[4] = { 0x37, 0x40, 0x38, 0x41 };
-    s32 *p;
-    s32 *base;
-    int i;
+s32 menuNameEntryOpen(s32 mode, s32 param) {
+    int ids[4] = {0x37, 0x40, 0x38, 0x41};
     s32 result;
-    base = ids;
-    for (p = base, i = 0; i < 4; p++, i++) {
-        if (menuIsCheck(*p) != 0) {
-            menuSetDisp(*p, 0);
+    int i;
+    for (i = 0; i < 4; i++) {
+        if (menuIsCheck(ids[i])) {
+            menuSetDisp(ids[i], 0);
         }
     }
-    result = pushNameEntryFloor(mode, index, 1);
-    for (i = 0; i < 4; base++, i++) {
-        if (menuIsCheck(*base) != 0) {
-            menuSetDisp(*base, 1);
+    result = pushNameEntryFloor(mode, param, 1);
+    for (i = 0; i < 4; i++) {
+        if (menuIsCheck(ids[i])) {
+            menuSetDisp(ids[i], 1);
         }
     }
     return result;
@@ -792,28 +788,19 @@ s32 menuNameEntryDrawXButtonText(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite)
     return 0;
 }
 
-s32 menuNameEntryDraw50Text(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite)
-{
+s32 menuNameEntryDraw50Text(tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
     int x;
     int y;
     int col;
     int row;
     SHEET sheet;
     u16 ch;
-    row = 0;
-    y = 0;
-    sheet = (SHEET)*((NAME_ENTRY_ARG *)window->unk68)->unk24;
-    do {
-        col = 0;
-        x = -2;
-        while ((ch = getCharSheet((SHEET)sheet, col, row)) != 0) {
-            putGScharL((GSgfxLayerID)winSpriteGetLayerID(window, sprite), x, y, window->unk93 | 0xFFFFFF00, ch);
-            x += 26;
-            col++;
+    sheet = (SHEET)*((NAME_ENTRY_ARG*)w->unk68)->unk24;
+    for (row = 0, y = 0; row < 8; y += 0x1E, row++) {
+        for (col = 0, x = -2; (ch = getCharSheet(sheet, col, row)) != 0; x += 0x1A, col++) {
+            putGScharL((GSgfxLayerID)winSpriteGetLayerID(w, sp), x, y, w->unk93 | ~0xFF, ch);
         }
-        y += 30;
-        row++;
-    } while (row < 8);
+    }
     return 0;
 }
 }

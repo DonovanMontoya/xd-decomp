@@ -26,7 +26,7 @@ u8 fightOutPokemonGetFightOutPokemonEnemyOumuWazaDataIdAry(FightOutPokemon*,u16*
 u8 fightTrainerAiCheckGuard(FIGHT_TRAINER*,FightOutPokemon*,u32);
 
 struct AiCheckContext {FIGHT_TRAINER* trainer;u32 value;};
-static s32 _fightTrainerAiCheckHorobinoutaSub(FightOutPokemon*,u32,void*);
+static s32 _fightTrainerAiCheckHorobinoutaSub(void*,u32,void*);
 static s32 _fightTrainerAiSimerikeCheckSub(FightOutPokemon*,u32,void*);
 static s32 _fightTrainerAiSawaguCheckSub(FightOutPokemon*,u32,void*);
 
@@ -41,15 +41,20 @@ s32 fightTrainerAiCheckJoutaiKieWazaHitWazaDataId(FIGHT_TRAINER*,u16 state,u16 m
 u16 fightTrainerAiCheckHorobinouta(FIGHT_TRAINER* trainer) {
     AiCheckContext context;
     context.trainer=trainer;context.value=0;
-    fightFloorLoopValidFightOutPokemon(0,_fightTrainerAiCheckHorobinoutaSub,&context,0);
+    fightFloorLoopValidFightOutPokemon(0,(s32(*)(FightOutPokemon*,u32,void*))_fightTrainerAiCheckHorobinoutaSub,&context,0);
     return context.value;
 }
-static s32 _fightTrainerAiCheckHorobinoutaSub(FightOutPokemon* pokemon,u32 type,void* data) {
-    unsigned int targetType=type;
-    FIGHT_TRAINER* trainer=((AiCheckContext*)data)->trainer;
-    if(fightOutPokemonCheckFightOut(pokemon)==0)return 1;
-    if(fightTrainerIsAllyFightTargetPtr(trainer,pokemon,targetType)==1)return 1;
-    if(fightTrainerAiIsFightOutPokemonJoutaiDataId(trainer,pokemon,30)!=1 && fightTrainerAiIsFightOutPokemonTokuseiDataId(trainer,pokemon,43)!=1)++((AiCheckContext*)data)->value;
+static s32 _fightTrainerAiCheckHorobinoutaSub(void* currentPtr, u32 targetType, void* dataPtr)
+{
+    AiCheckContext* data = (AiCheckContext*)dataPtr;
+    FightOutPokemon* current = (FightOutPokemon*)currentPtr;
+    FIGHT_TRAINER* first = (FIGHT_TRAINER*)data->trainer;
+    if (!fightOutPokemonCheckFightOut((FightOutPokemon*)currentPtr)) return 1;
+    if (fightTrainerIsAllyFightTargetPtr(first, current, targetType) == 1) return 1;
+    if (fightTrainerAiIsFightOutPokemonJoutaiDataId(first, current, 0x1e) != 1 &&
+        fightTrainerAiIsFightOutPokemonTokuseiDataId(first, current, 0x2b) != 1) {
+        data->value++;
+    }
     return 1;
 }
 u8 fightTrainerAiCheckTextureZokusei(FIGHT_TRAINER* trainer,FightOutPokemon* pokemon) {

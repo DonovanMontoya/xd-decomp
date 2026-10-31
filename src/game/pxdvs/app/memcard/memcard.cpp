@@ -6,7 +6,7 @@
 static u8 _memcardInitializeFlag;
 static MemcardStatus* _memcardStatusPtr;
 static u8 _memcard_anySaveOFF_Flag;
-static u8 _memcardStatusBuf[0x210];
+static u8 _memcardStatusBuf[0x210] __attribute__((aligned(8)));
 
 static u8 _memcardMsgOpen(MEMCARD_MSGTYPE msg);
 
@@ -993,129 +993,386 @@ void gamedatasaveBiosSetMemcardID(void*,u64);s32 gbaCommandChangePokemonEnd(s32)
 static u8 _memcard_gba2mode;
 #pragma push
 #pragma dont_inline on
-void _memcardJobMain(u32, u32) {
-    u64 sp20;
-    u64 sp18;
-    u64 sp10;
-    u64 serialFirst,serialSecond,serialFinal;
-    MemcardStatus* finalStatus;
-    u8 sp8;
-    s32 *var_r7;
-    s32 temp_cr0_eq;
-    s32 temp_r0;
-    s32 temp_r0_10;
-    s32 temp_r0_11;
-    s32 temp_r0_12;
-    s32 temp_r0_13;
-    s32 temp_r0_14;
-    s32 temp_r0_15;
-    s32 temp_r0_16;
-    s32 temp_r0_2;
-    s32 temp_r0_3;
-    s32 temp_r0_4;
-    s32 temp_r0_7;
-    s32 temp_r0_8;
-    s32 temp_r27;
-    s32 temp_r27_3;
-    s32 temp_r29;
-    s32 temp_r29_3;
-    s32 temp_r29_4;
-    s32 temp_r3;
-    s32 temp_r3_10;
-    s32 temp_r3_2;
-    s32 temp_r3_3;
-    s32 temp_r3_4;
-    s32 temp_r3_9;
-    s32 temp_r4_2;
-    s32 temp_r5_2;
-    s32 temp_r5_3;
-    s32 temp_r5_4;
-    s32 var_ctr;
-    s32 var_ctr_2;
-    s32 var_r0;
-    s32 var_r0_2;
-    s32 var_r0_3;
-    s32 var_r0_4;
-    s32 var_r0_5;
-    s32 var_r0_6;
-    s32 var_r0_7;
-    s32 var_r0_8;
-    s32 var_r0_9;
-    s32 var_r27_2;
-    u8 *var_r27;
-    s32 var_r28;
-    s32 var_r29_2;
-    s32 var_r30;
-    s32 var_r31;
-    s32 var_r3;
-    s32 var_r3_10;
-    s32 var_r3_11;
-    s32 var_r3_12;
-    s32 var_r3_13;
-    s32 var_r3_14;
-    s32 var_r3_15;
-    s32 var_r3_16;
-    s32 var_r3_17;
-    s32 var_r3_18;
-    s32 var_r3_19;
-    s32 var_r3_20;
-    s32 var_r3_21;
-    s32 var_r3_22;
-    s32 var_r3_23;
-    s32 var_r3_24;
-    s32 var_r3_25;
-    s32 var_r3_26;
-    s32 var_r3_27;
-    s32 var_r3_28;
-    s32 var_r3_2;
-    s32 var_r3_3;
-    s32 var_r3_4;
-    s32 var_r3_5;
-    s32 var_r3_6;
-    s32 var_r3_7;
-    s32 var_r3_8;
-    s32 var_r3_9;
-    s32 var_r4;
-    s32 var_r4_2;
-    s32 var_r4_3;
-    s32 var_r4_4;
-    s32 var_r4_5;
-    s32 var_r5;
-    s32 var_r5_10;
-    s32 var_r5_11;
-    s32 var_r5_12;
-    s32 var_r5_2;
-    s32 var_r5_3;
-    s32 var_r5_4;
-    s32 var_r5_5;
-    s32 var_r5_6;
-    s32 var_r5_7;
-    u32 var_r5_9;
-    u32 var_r6;
-    s32 var_r6_2;
-    u32 temp_r0_6;
-    u32 temp_r0_9;
-    u32 temp_r3_5;
-    u32 temp_r5;
-    u32 var_r29;
-    u8 *temp_r27_2;
-    u8 *temp_r28;
-    u8 *temp_r29_2;
-    u8 *temp_r3_6;
-    u8 *temp_r4;
-    u32 *var_r5_8;
-    u8 temp_r0_5;
-    void *temp_r3_7;
-    void *temp_r3_8;
-    u8 *temp_ret;
-    u8 *temp_ret_2;
-    u8 *temp_ret_3;
+// SDK accessors for the recovered card-stat layout.
+#define CARD_STAT_BANNER_MASK 3
+#define CARD_STAT_ANIM_MASK 4
+#define CARD_STAT_ICON_MASK 3
+#define CARD_STAT_SPEED_MASK 3
+#define CARDSetBannerFormat(stat, f) \
+    ((stat)->bannerFormat = (u8)(((stat)->bannerFormat & ~CARD_STAT_BANNER_MASK) | (f)))
+#define CARDSetIconAnim(stat, f) \
+    ((stat)->bannerFormat = (u8)(((stat)->bannerFormat & ~CARD_STAT_ANIM_MASK) | (f)))
+#define CARDSetIconFormat(stat, n, f) \
+    ((stat)->iconFormat = (u16)(((stat)->iconFormat & ~(CARD_STAT_ICON_MASK << (2 * (n)))) | ((f) << (2 * (n)))))
+#define CARDSetIconSpeed(stat, n, f) \
+    ((stat)->iconSpeed = (u16)(((stat)->iconSpeed & ~(CARD_STAT_SPEED_MASK << (2 * (n)))) | ((f) << (2 * (n)))))
+#define CARDSetIconAddress(stat, addr) ((stat)->iconAddr = (u32)(addr))
+#define CARDSetCommentAddress(stat, addr) ((stat)->commentAddr = (u32)(addr))
+
+
+#pragma push
+#pragma dont_inline off
+static inline s32 _memcardPollResult(void)
+{
+    s32 result = _memcardStatusPtr->cardResult;
+
+    if (result != -1) {
+        return result;
+    }
+    result = CARDGetResultCode(_memcardStatusPtr->param);
+    _memcardStatusPtr->cardResult = result;
+    return result;
+}
+
+static inline void _memcardSetRequestResult(s32 result)
+{
+    if (result == 0) {
+        result = CARDGetResultCode(_memcardStatusPtr->param);
+    }
+    _memcardStatusPtr->cardResult = result;
+}
+
+static inline s32 _memcardAsk(s32 msg, s32 resume)
+{
+    _memcardStatusPtr->msg = msg;
+    _memcardStatusPtr->nextTask = resume;
+    return 0x30;
+}
+
+static inline s32 _memcardSaveOffset(s32 slot)
+{
+    return slot * 0x28000 + 0x6000;
+}
+
+static inline s32 _memcardCheckCard(void)
+{
+    u64 serial;
+    s32 result = _memcardPollResult();
+
+    if (_memcardStatusPtr->sectorSize != 0x2000) {
+        result = -6;
+    }
+    switch (result) {
+    case -1:
+        return 5;
+    case 0:
+        switch (_memcardStatusPtr->state) {
+        case 3:
+        case 9:
+        case 11:
+            break;
+        default:
+            if (_memcardStatusPtr->valid) {
+                CARDGetSerialNo(_memcardStatusPtr->param, &serial);
+                if (serial != _memcardStatusPtr->serial) {
+                    _memcardStatusPtr->msg = 0x10;
+                    return 0x2B;
+                }
+            }
+            break;
+        }
+        return 9;
+    case -6:
+    case -13:
+        switch (_memcardStatusPtr->state) {
+        case 1:
+        case 9:
+            return _memcardAsk(7, 6);
+        }
+        break;
+    }
+    _memcardStatusPtr->msg = result;
+    return 0x2B;
+}
+
+static inline s32 _memcardCheckIconFile(void)
+{
+    u32 checksum = 0;
+    u8* file;
+    u32 i;
+    s32 result = _memcardPollResult();
+
+    switch (result) {
+    case -1:
+        return 0x1B;
+    case 0:
+        file = (u8*)_memcardStatusPtr->buf50;
+        for (i = 0; i < 0xE90; i++) {
+            checksum += ((u32*)file)[i];
+        }
+        if (checksum != *(u32*)(file + 0x3A40)) {
+            _memcardStatusPtr->unk40 = 1;
+        }
+        return 0x1C;
+    }
+    _memcardStatusPtr->msg = result;
+    return 0x2B;
+}
+
+static inline s32 _memcardBeginHeaderRead(void)
+{
+    _memcardStatusPtr->limit = 0;
+    _memcardStatusPtr->index = 0;
+    switch (_memcardStatusPtr->state) {
+    case 1:
+    case 2:
+        if (_memcardStatusPtr->unk40 != 0) {
+            _memcardStatusPtr->msg = 5;
+            break;
+        }
+    case 3:
+    case 8:
+        return 0x1D;
+    default:
+        _memcardStatusPtr->msg = 2;
+        break;
+    }
+    _memcardStatusPtr->nextTask = 0x1D;
+    return 0x30;
+}
+
+static inline void _memcardSetSaveId(void* data, u64 serial)
+{
+    if (data == 0) {
+        gamedatasaveBiosSetMemcardID(gamedatasaveBiosGetPtr(savedataGetStatus(data, 1)), serial);
+    } else {
+        gamedatasaveBiosSetMemcardID((void*)((u8*)_memcardGetMultiSaveDataToSTRUCT(data, 1) + 8), serial);
+    }
+}
+
+static inline void _memcardCountSave(void* data)
+{
+    if (data == 0) {
+        gamedatasaveSetStatus(savedataGetStatus(data, 1), 4, gamedatasaveGetStatus(savedataGetStatus(data, 1), 4) + 1);
+    } else {
+        void* gamedata = _memcardGetMultiSaveDataToSTRUCT(data, 1);
+        gamedatasaveSetStatus(gamedata, 4, gamedatasaveGetStatus(gamedata, 4) + 1);
+    }
+}
+
+static inline void _memcardFillRandom(u8* random, s32 count)
+{
+    while (count-- != 0) {
+        *random++ = HSD_Rand();
+    }
+}
+
+static inline s32 _memcardSaveSetup(void)
+{
+    u64 serial;
+    u8* pack;
+
+    CARDGetSerialNo(_memcardStatusPtr->param, &serial);
+    _memcardSetSaveId(0, serial);
+    _memcardStatusPtr->unk2C++;
+    _memcardStatusPtr->index = (_memcardStatusPtr->index + 1) % 2;
+    pack = (u8*)_memcardStatusPtr->buf50;
+    pack[0] = 1;
+    pack[1] = 1;
+    pack[2] = 1;
+    pack[3] = 0;
+    *(s32*)(pack + 4) = _memcardStatusPtr->unk2C;
+    _memcardSetSaveId(pack + 8, serial);
+    switch (_memcardStatusPtr->state) {
+    case 4:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+        _memcardCountSave(pack + 8);
+        break;
+    }
+    {
+        void* gamedata = _memcardGetMultiSaveDataToSTRUCT(pack + 8, 1);
+        u32 sum = 0;
+        u32 i;
+
+        for (i = 0; i < 0x600; i++) {
+            sum += ((u32*)0x80001800)[i];
+        }
+        gamedatasaveSetStatus(gamedata, 0xC, sum);
+    }
+    {
+        void* gamedata = _memcardGetMultiSaveDataToSTRUCT(pack + 8, 1);
+        u32 sum = 0;
+        s32 i;
+
+        for (i = 0; i < 8; i++) {
+            sum += pack[i];
+        }
+        gamedatasaveSetStatus(gamedata, 0xD, sum);
+    }
+    _memcard_Encryption(pack + 8);
+    _memcardFillRandom(pack + 0x27FD8, 0x28);
+    return 0x26;
+}
+
+static inline s32 _memcardCheckWrite(void)
+{
+    s32 result = _memcardPollResult();
+
+    _memcardStatusPtr->busyCount++;
+    switch (result) {
+    case -1:
+        return 0x27;
+    case 0:
+        _memcard_gba2mode = 0;
+        switch (_memcardStatusPtr->state) {
+        case 8:
+            _memcardStatusPtr->nextTask = 0x28;
+            _memcard_gba2mode = 1;
+            return 0x31;
+        case 1:
+        case 2:
+        case 3:
+            _memcardStatusPtr->msg = 0x12;
+            _memcardStatusPtr->result = 3;
+            break;
+        case 4:
+        case 9:
+        case 10:
+        case 11:
+            _memcardCountSave(0);
+        default:
+            _memcardStatusPtr->msg = 10;
+            _memcardStatusPtr->result = 4;
+            break;
+        }
+        _memcardStatusPtr->unk40 = 1;
+        if (_memcardStatusPtr->unk40 != 0) {
+            return 0x11;
+        }
+        return 0x2C;
+    }
+    _memcardStatusPtr->msg = result;
+    return 0x2B;
+}
+
+static inline s32 _memcardPollResultInto(s32* result)
+{
+    *result = _memcardStatusPtr->cardResult;
+    if (*result != -1) {
+        return *result;
+    }
+    *result = CARDGetResultCode(_memcardStatusPtr->param);
+    _memcardStatusPtr->cardResult = *result;
+    return *result;
+}
+
+static inline s32 _memcardCheckLastWrite(void)
+{
+    s32 result;
+
+    switch (_memcardPollResultInto(&result)) {
+    case -1:
+        _memcardStatusPtr->busyCount--;
+        if (_memcardStatusPtr->mounted == 0) {
+            if (gbaCommandIsConnected(2) == 0) {
+                CARDCancel(&_memcardStatusPtr->file);
+                return 0x2B;
+            }
+            if ((s32)_memcardStatusPtr->busyCount < 3) {
+                if (gbaCommandChangePokemonEnd(2) != 0) {
+                    CARDCancel(&_memcardStatusPtr->file);
+                    return 0x2B;
+                }
+                _memcardStatusPtr->mounted = 1;
+            }
+        }
+        return 0x2A;
+    case 0:
+        if (_memcardStatusPtr->mounted == 0) {
+            gbaCommandChangePokemonEnd(2);
+        }
+        _memcardCountSave(0);
+        _memcardStatusPtr->msg = 0;
+        _memcardStatusPtr->result = 4;
+        return 0x2C;
+    }
+    PKJB_ReturnTitle(1);
+    _memcardStatusPtr->msg = result;
+    return 0x2B;
+}
+
+static inline s32 _memcardEndAccess(void)
+{
+    u64 serial;
+
+    if (_memcardStatusPtr->unk3E != 0) {
+        CARDGetSerialNo(_memcardStatusPtr->param, &serial);
+        CARDClose(&_memcardStatusPtr->file);
+        _memcardStatusPtr->unk3E = 0;
+    }
+    CARDUnmount(_memcardStatusPtr->param);
+    GSgfxResetRestore(_memcardStatusPtr->resetEnabled);
+    if (_memcardStatusPtr->callbackDone != 0 && _memcard_gba2mode == 0) {
+        return 0;
+    }
+    switch (_memcardStatusPtr->state) {
+    case 3:
+    case 8:
+        return 0x32;
+    }
+    switch (_memcardStatusPtr->result) {
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+        _memcardStatusPtr->serial = serial;
+        _memcardStatusPtr->valid = 1;
+        break;
+    }
+    _memcardStatusPtr->msg = _memcardStatusPtr->msg;
+    _memcardStatusPtr->nextTask = 0x2D;
+    return 0x30;
+}
+
+static inline s32 _memcardFinishTask(void)
+{
+    switch (_memcardStatusPtr->state) {
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 9:
+    case 10:
+    case 11:
+    case 13:
+        if (_memcardStatusPtr->result != 4) {
+            return _memcardAsk(0xF, 0x32);
+        }
+        break;
+    case 1:
+        if (_memcardStatusPtr->result == -1) {
+            switch (_memcardStatusPtr->unk60) {
+            case 7:
+                _memcardStatusPtr->msg = 13;
+                break;
+            case 13:
+                _memcardStatusPtr->msg = 14;
+                break;
+            default:
+                return 0x2E;
+            }
+            _memcardStatusPtr->nextTask = 0x2E;
+            return 0x30;
+        }
+        break;
+    }
+    return 0x32;
+}
+
+#pragma pop
+#pragma dont_inline off
+void _memcardJobMain(u32, u32)
+{
+    s32 next;
+    s32 result;
+    s32 status;
 
     _memcard_new_saveDataCrateFlag = 1;
-loop_1:
-    temp_r0 = _memcardStatusPtr->task;
-    {
-        switch (temp_r0) {
+    do {
+        switch (_memcardStatusPtr->task) {
         case 0:
             _memcardStatusPtr->cardResult = 0;
             _memcardStatusPtr->unk60 = 0x32;
@@ -1124,895 +1381,544 @@ loop_1:
             _memcardStatusPtr->callbackDone = 0;
             _memcard_gba2mode = 0;
             GSgfxResetRestore(_memcardStatusPtr->resetEnabled);
-            temp_r0_2 = _memcardStatusPtr->state;
-            switch (temp_r0_2) {
-            case 3:case 8:default:
-                break;
-            case 1:case 2:
+            switch (_memcardStatusPtr->state) {
+            case 1:
+            case 2:
                 _memcardStatusPtr->valid = 0;
                 break;
             case 4:
-                if (gamedatasaveGetStatus(0, 4U) == 0U) {
+                if ((u32)gamedatasaveGetStatus(0, 4) == 0) {
                     _memcardStatusPtr->state = 9;
                 }
                 floorMemoryCardSaveCallback();
                 break;
+            case 8:
+                break;
             }
             _memcardStatusPtr->retryCount = 0;
             _memcardStatusPtr->task = 1;
-            goto block_396;
+            break;
+
         case 1:
-            var_r3 = CARDProbeEx(_memcardStatusPtr->param, &_memcardStatusPtr->cardSize, &_memcardStatusPtr->sectorSize);
-            temp_r27 = var_r3;
-            if (var_r3 == 0) {
-                var_r3 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3;
-            switch (temp_r27) {
+            status = CARDProbeEx(_memcardStatusPtr->param, &_memcardStatusPtr->cardSize,
+                                 &_memcardStatusPtr->sectorSize);
+            _memcardSetRequestResult(status);
+            switch (status) {
             case -1:
-                var_r4 = 1;
+                next = 1;
                 break;
             case 0:
-                var_r4 = 2;
+                next = 2;
                 break;
             default:
                 if (_memcardStatusPtr->retryCount++ < 6) {
-                    var_r4 = 1;
                     _memcardStatusPtr->cardResult = -1;
+                    next = 1;
                 } else {
-                    var_r4 = 0x2B;
-                    _memcardStatusPtr->msg = temp_r27;
+                    _memcardStatusPtr->msg = status;
+                    next = 0x2B;
                 }
                 break;
             }
-            _memcardStatusPtr->task = var_r4;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
         case 2:
-            var_r3_2 = CARDMountAsync(_memcardStatusPtr->param, _memcardStatusPtr->buf54, _memcardCallback, 0);
-            if (var_r3_2 == 0) {
-                var_r3_2 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3_2;
+            _memcardSetRequestResult(CARDMountAsync(_memcardStatusPtr->param, _memcardStatusPtr->buf54,
+                                                    _memcardCallback, 0));
             _memcardStatusPtr->task = 3;
-            goto block_396;
+            break;
+
         case 3:
-            var_r3_3 = _memcardStatusPtr->cardResult;
-            switch(var_r3_3) {
+            result = _memcardPollResult();
+            switch (result) {
             case -1:
-                var_r3_3 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_3;
+                next = 3;
                 break;
-            default:break;
-            }
-            switch (var_r3_3) {
-            case -1:
-                var_r0 = 3;
-                break;
+            case 0:
             case -6:
-            case 0:
             case -13:
-                var_r0 = 4;
+                next = 4;
                 break;
             default:
-                var_r0 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_3;
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
                 break;
             }
-            _memcardStatusPtr->task = var_r0;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
         case 4:
-            var_r3_4 = CARDCheckAsync(_memcardStatusPtr->param, 0);
-            if (var_r3_4 == 0) {
-                var_r3_4 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3_4;
+            _memcardSetRequestResult(CARDCheckAsync(_memcardStatusPtr->param, 0));
             _memcardStatusPtr->task = 5;
-            goto block_396;
+            break;
+
         case 5:
-            var_r3_5 = _memcardStatusPtr->cardResult;
-            switch(var_r3_5) {
-            case -1:
-                var_r3_5 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_5;
-                break;
-            default:break;
-            }
-            if ((s32) _memcardStatusPtr->sectorSize != 0x2000) {
-                var_r3_5 = -6;
-            }
-            switch (var_r3_5) {
-            case -1:
-                var_r4_2 = 5;
-                break;
-            case 0:
-                switch(_memcardStatusPtr->state) {
-                default:
-                    if(_memcardStatusPtr->valid && (CARDGetSerialNo(_memcardStatusPtr->param,&sp20),sp20!=(((u64)_memcardStatusPtr->serialHigh<<32)|_memcardStatusPtr->serialLow))) {
-                        var_r4_2=43;
-                        _memcardStatusPtr->msg=16;
-                        break;
-                    }
-                case 3:case 9:case 11:var_r4_2=9;break;
-                }
-                break;
-            case -6:case -13:
-                switch(_memcardStatusPtr->state) {
-                case 1:case 9:
-                    _memcardStatusPtr->msg=7;
-                    var_r4_2=48;
-                    _memcardStatusPtr->nextTask=6;
-                    break;
-                default:goto cardFailure;
-                }
-                break;
-            default:
-            cardFailure:
-                _memcardStatusPtr->msg=var_r3_5;
-                var_r4_2=43;
-                break;
-            }
-            _memcardStatusPtr->task = var_r4_2;
-            goto block_396;
+            _memcardStatusPtr->task = _memcardCheckCard();
+            break;
+
         case 6:
-            if ((s32) _memcardStatusPtr->msg != 0) {
+            if (_memcardStatusPtr->msg != 0) {
                 CARDFormatAsync(_memcardStatusPtr->param, 0);
-                if ((u8) _memcardStatusPtr->callbackDone != 0) {
-                    var_r5 = 0x2B;
+                if (_memcardStatusPtr->callbackDone != 0) {
                     _memcardStatusPtr->msg = 0;
+                    next = 0x2B;
                 } else {
                     _memcardStatusPtr->unk60 = 7;
-                    var_r5 = 0x30;
-                    _memcardStatusPtr->msg = 4;
-                    _memcardStatusPtr->nextTask = 7;
+                    next = _memcardAsk(4, 7);
                 }
             } else {
-                var_r5 = 0x2B;
                 _memcardStatusPtr->msg = 0;
+                next = 0x2B;
             }
-            _memcardStatusPtr->task = var_r5;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
         case 7:
             GSgfxResetDisable();
-            var_r3_6 = CARDFormatAsync(_memcardStatusPtr->param, 0);
-            if ((u8) _memcardStatusPtr->callbackDone != 0) {
-                _memcardStatusPtr->msg = var_r3_6;
-                var_r0_2 = 0x2B;
+            result = CARDFormatAsync(_memcardStatusPtr->param, 0);
+            if (_memcardStatusPtr->callbackDone != 0) {
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
             } else {
-                if (var_r3_6 == 0) {
-                    var_r3_6 = CARDGetResultCode(_memcardStatusPtr->param);
-                }
-                var_r0_2 = 8;
-                _memcardStatusPtr->cardResult = var_r3_6;
+                _memcardSetRequestResult(result);
+                next = 8;
             }
-            _memcardStatusPtr->task = var_r0_2;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
         case 8:
-            var_r3_7 = _memcardStatusPtr->cardResult;
-            switch(var_r3_7) {
+            result = _memcardPollResult();
+            switch (result) {
             case -1:
-                var_r3_7 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_7;
-                break;
-            default:break;
-            }
-            switch (var_r3_7) {
-            case -1:
-                var_r5_2 = 8;
+                next = 8;
                 break;
             case 0:
                 GSgfxResetRestore(_memcardStatusPtr->resetEnabled);
-                var_r5_2 = 0x30;
                 _memcardStatusPtr->unk60 = 0x32;
-                _memcardStatusPtr->msg = 9;
-                _memcardStatusPtr->nextTask = 9;
+                next = _memcardAsk(9, 9);
                 break;
             default:
-                var_r5_2 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_7;
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
                 break;
             }
-            _memcardStatusPtr->task = var_r5_2;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
         case 9:
             _memcardStatusPtr->task = _memcardCardOpen();
-            goto block_396;
+            break;
+
         case 10:
-            if ((s32) _memcardStatusPtr->msg == 0) {
-                var_r5_3 = 0x2B;
+            if (_memcardStatusPtr->msg == 0) {
                 _memcardStatusPtr->msg = 0;
+                next = 0x2B;
             } else {
                 _memcardStatusPtr->msg = 3;
-                var_r5_3 = 0x30;
-                _memcardStatusPtr->unk60 = 0xD;
-                _memcardStatusPtr->nextTask = 0xB;
+                _memcardStatusPtr->unk60 = 13;
+                _memcardStatusPtr->nextTask = 11;
+                next = 0x30;
             }
-            _memcardStatusPtr->task = var_r5_3;
-            goto block_396;
-        case 11:
+            _memcardStatusPtr->task = next;
+            break;
+
+        case 11: {
+            s32 deleted;
+
             GSgfxResetDisable();
-            switch(pokecoloGetCountryCode()) {
-            case 0:var_r30 = CARDDeleteAsync(_memcardStatusPtr->param, "PokemonXD", 0);break;
-            case 1:case 2:var_r30 = CARDDeleteAsync(_memcardStatusPtr->param, "PokemonXD", 0);break;
-            }
-            var_r3_8 = var_r30;
-            if (var_r30 == 0) {
-                var_r3_8 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3_8;
-            _memcardStatusPtr->task = 0xC;
-            goto block_396;
-        case 12:
-            var_r3_9 = _memcardStatusPtr->cardResult;
-            switch(var_r3_9) {
-            case -1:
-                var_r3_9 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_9;
+            switch (pokecoloGetCountryCode()) {
+            case 0:
+                deleted = CARDDeleteAsync(_memcardStatusPtr->param, "PokemonXD", 0);
                 break;
-            default:break;
+            case 1:
+            case 2:
+                deleted = CARDDeleteAsync(_memcardStatusPtr->param, "PokemonXD", 0);
+                break;
             }
-            switch (var_r3_9) {
+            _memcardSetRequestResult(deleted);
+            _memcardStatusPtr->task = 12;
+            break;
+        }
+
+        case 12:
+            result = _memcardPollResult();
+            switch (result) {
             case -1:
-                var_r5_4 = 0xC;
+                next = 12;
                 break;
             case 0:
             case -4:
-                if ((s32) _memcardStatusPtr->state == 0xC) {
-                    var_r5_4 = 0x2B;
-                    _memcardStatusPtr->msg = 0xA;
+                if (_memcardStatusPtr->state == 12) {
+                    _memcardStatusPtr->msg = 10;
+                    next = 0x2B;
                 } else {
-                    var_r5_4 = 0xD;
+                    next = 13;
                 }
                 break;
             default:
-                var_r5_4 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_9;
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
                 break;
             }
-            _memcardStatusPtr->task = var_r5_4;
-            goto block_396;
-        case 13:
-            switch(pokecoloGetCountryCode()) {
-            case 0:var_r31 = CARDCreateAsync(_memcardStatusPtr->param, "PokemonXD", 0x56000U, &_memcardStatusPtr->file, 0);break;
-            case 1:case 2:var_r31 = CARDCreateAsync(_memcardStatusPtr->param, "PokemonXD", 0x56000U, &_memcardStatusPtr->file, 0);break;
+            _memcardStatusPtr->task = next;
+            break;
+
+        case 13: {
+            s32 created;
+
+            switch (pokecoloGetCountryCode()) {
+            case 0:
+                created = CARDCreateAsync(_memcardStatusPtr->param, "PokemonXD", 0x56000,
+                                          &_memcardStatusPtr->file, 0);
+                break;
+            case 1:
+            case 2:
+                created = CARDCreateAsync(_memcardStatusPtr->param, "PokemonXD", 0x56000,
+                                          &_memcardStatusPtr->file, 0);
+                break;
             }
-            var_r3_10 = var_r31;
-            if (var_r31 == 0) {
-                var_r3_10 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3_10;
-            _memcardStatusPtr->task = 0xE;
-            goto block_396;
+            _memcardSetRequestResult(created);
+            _memcardStatusPtr->task = 14;
+            break;
+        }
+
         case 14:
-            var_r3_11 = _memcardStatusPtr->cardResult;
-            switch(var_r3_11) {
+            result = _memcardPollResult();
+            switch (result) {
             case -1:
-                var_r3_11 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_11;
-                break;
-            default:break;
-            }
-            switch (var_r3_11) {
-            case -1:
-                var_r5_5 = 0xE;
+                next = 14;
                 break;
             case 0:
-                var_r5_5 = 0xF;
                 _memcardStatusPtr->unk3E = 1;
+                next = 15;
                 break;
             default:
-                var_r5_5 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_11;
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
                 break;
             }
-            _memcardStatusPtr->task = var_r5_5;
-            goto block_396;
-        case 15:
-            CARDGetAttributes(_memcardStatusPtr->param, _memcardStatusPtr->file.fileNo, &sp8);
-            temp_r0_5 = sp8 | 0x18;
-            sp8 = temp_r0_5;
-            var_r3_12 = CARDSetAttributesAsync(_memcardStatusPtr->param, _memcardStatusPtr->file.fileNo, temp_r0_5, 0);
-            if (var_r3_12 == 0) {
-                var_r3_12 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3_12;
-            _memcardStatusPtr->task = 0x10;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
+        case 15: {
+            u8 attributes;
+
+            CARDGetAttributes(_memcardStatusPtr->param, _memcardStatusPtr->file.fileNo, &attributes);
+            attributes |= 0x18;
+            _memcardSetRequestResult(CARDSetAttributesAsync(_memcardStatusPtr->param,
+                                                            _memcardStatusPtr->file.fileNo, attributes,
+                                                            0));
+            _memcardStatusPtr->task = 16;
+            break;
+        }
+
         case 16:
-            var_r3_13 = _memcardStatusPtr->cardResult;
-            switch(var_r3_13) {
+            result = _memcardPollResult();
+            switch (result) {
             case -1:
-                var_r3_13 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_13;
-                break;
-            default:break;
-            }
-            switch (var_r3_13) {
-            case -1:
-                var_r0_3 = 0x10;
+                next = 16;
                 break;
             case 0:
-                var_r0_3 = 0x11;
+                next = 17;
                 break;
             default:
-                var_r0_3 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_13;
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
                 break;
             }
-            _memcardStatusPtr->task = var_r0_3;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
         case 17:
             _memcardStatusPtr->task = fn_801CC508();
-            goto block_396;
+            break;
+
         case 18:
-            var_r3_14 = CARDWriteAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50, (u8) _memcardStatusPtr->unk40 != 0 ? 0x4000 : 0x6000, 0, 0);
-            if (var_r3_14 == 0) {
-                var_r3_14 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3_14;
-            _memcardStatusPtr->task = 0x13;
-            goto block_396;
+            _memcardSetRequestResult(CARDWriteAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50,
+                                                    _memcardStatusPtr->unk40 != 0 ? 0x4000 : 0x6000, 0, 0));
+            _memcardStatusPtr->task = 19;
+            break;
+
         case 19:
-            var_r3_15 = _memcardStatusPtr->cardResult;
-            switch(var_r3_15) {
+            result = _memcardPollResult();
+            switch (result) {
             case -1:
-                var_r3_15 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_15;
-                break;
-            default:break;
-            }
-            switch (var_r3_15) {
-            case -1:
-                var_r0_4 = 0x13;
+                next = 19;
                 break;
             case 0:
-                if ((u8) _memcardStatusPtr->unk40 != 0) {
-                    var_r0_4 = 0x2C;
+                if (_memcardStatusPtr->unk40 != 0) {
+                    next = 0x2C;
                 } else {
-                    var_r0_4 = 0x14;
+                    next = 20;
                 }
                 break;
             default:
-                var_r0_4 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_15;
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
                 break;
             }
-            _memcardStatusPtr->task = var_r0_4;
-            goto block_396;
-        case 20:
-            temp_r27_2 = _memcardStatusPtr->buf50;
-            memset(temp_r27_2, 0, 0x2000U);
-            temp_r27_2[0] = 1;
-            temp_r27_2[1] = 1;
-            temp_r27_2[2] = 1;
-            temp_r27_2[3] = 0;
+            _memcardStatusPtr->task = next;
+            break;
+
+        case 20: {
+            u8* header = (u8*)_memcardStatusPtr->buf50;
+
+            memset(header, 0, 0x2000);
+            header[0] = 1;
+            header[1] = 1;
+            header[2] = 1;
+            header[3] = 0;
             _memcardStatusPtr->index = 0;
-            _memcardStatusPtr->task = 0x15;
-            goto block_396;
+            _memcardStatusPtr->task = 21;
+            break;
+        }
+
         case 21:
-            var_r3_16 = CARDWriteAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50, 0x2000, (_memcardStatusPtr->index * 0x28000) + 0x6000, 0);
-            if (var_r3_16 == 0) {
-                var_r3_16 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3_16;
-            _memcardStatusPtr->task = 0x16;
-            goto block_396;
+            _memcardSetRequestResult(CARDWriteAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50, 0x2000,
+                                                    _memcardSaveOffset(_memcardStatusPtr->index), 0));
+            _memcardStatusPtr->task = 22;
+            break;
+
         case 22:
-            var_r3_17 = _memcardStatusPtr->cardResult;
-            switch(var_r3_17) {
+            result = _memcardPollResult();
+            switch (result) {
             case -1:
-                var_r3_17 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_17;
-                break;
-            default:break;
-            }
-            switch (var_r3_17) {
-            case -1:
-                var_r0_5 = 0x16;
+                next = 22;
                 break;
             case 0:
-                temp_r0_6 = _memcardStatusPtr->index + 1;
-                _memcardStatusPtr->index = (s32) temp_r0_6;
-                if (temp_r0_6 < 2U) {
-                    var_r0_5 = 0x15;
+                if ((u32)++_memcardStatusPtr->index < 2) {
+                    next = 21;
                 } else {
-                    var_r0_5 = 0x17;
+                    next = 23;
                 }
                 break;
             default:
-                var_r0_5 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_17;
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
                 break;
             }
-            _memcardStatusPtr->task = var_r0_5;
-            goto block_396;
-        case 23:
-            temp_r3_4 = CARDGetStatus(_memcardStatusPtr->param, _memcardStatusPtr->file.fileNo, &_memcardStatusPtr->stat);
-            if (temp_r3_4 == 0) {
-                _memcardStatusPtr->stat.commentAddr = 0;
-                _memcardStatusPtr->stat.iconAddr = 0x40;
-                _memcardStatusPtr->stat.bannerFormat = (_memcardStatusPtr->stat.bannerFormat & 0xFFFFFFFC) | 2;
-                _memcardStatusPtr->stat.bannerFormat &= 0xFFFFFFFB;
-                _memcardStatusPtr->stat.iconFormat = (_memcardStatusPtr->stat.iconFormat & 0xFFFFFFFC) | 1;
-                _memcardStatusPtr->stat.iconSpeed = (_memcardStatusPtr->stat.iconSpeed & 0xFFFFFFFC) | 1;
-                _memcardStatusPtr->stat.iconFormat = (_memcardStatusPtr->stat.iconFormat & 0xFFFFFFF3) | 4;
-                _memcardStatusPtr->stat.iconSpeed = (_memcardStatusPtr->stat.iconSpeed & 0xFFFFFFF3) | 4;
-                _memcardStatusPtr->stat.iconFormat = (_memcardStatusPtr->stat.iconFormat & 0xFFFFFFCF) | 0x10;
-                _memcardStatusPtr->stat.iconSpeed = (_memcardStatusPtr->stat.iconSpeed & 0xFFFFFFCF) | 0x10;
-                _memcardStatusPtr->stat.iconFormat = (_memcardStatusPtr->stat.iconFormat & 0xFFFFFF3F) | 0x40;
-                _memcardStatusPtr->stat.iconSpeed = (_memcardStatusPtr->stat.iconSpeed & 0xFFFFFF3F) | 0x40;
-                _memcardStatusPtr->stat.iconFormat = (_memcardStatusPtr->stat.iconFormat & 0xFFFFFCFF) | 0x100;
-                _memcardStatusPtr->stat.iconSpeed = (_memcardStatusPtr->stat.iconSpeed & 0xFFFFFCFF) | 0x100;
-                _memcardStatusPtr->stat.iconFormat = (_memcardStatusPtr->stat.iconFormat & 0xFFFFF3FF) | 0x400;
-                _memcardStatusPtr->stat.iconSpeed = (_memcardStatusPtr->stat.iconSpeed & 0xFFFFF3FF) | 0x400;
-                _memcardStatusPtr->stat.iconFormat = (_memcardStatusPtr->stat.iconFormat & 0xFFFFCFFF) | 0x1000;
-                _memcardStatusPtr->stat.iconSpeed = (_memcardStatusPtr->stat.iconSpeed & 0xFFFFCFFF) | 0x1000;
-                _memcardStatusPtr->stat.iconFormat = (_memcardStatusPtr->stat.iconFormat & 0xFFFF3FFF) | 0x4000;
-                _memcardStatusPtr->stat.iconSpeed = (_memcardStatusPtr->stat.iconSpeed & 0xFFFF3FFF) | 0x4000;
-                var_r3_18 = CARDSetStatusAsync(_memcardStatusPtr->param, _memcardStatusPtr->file.fileNo, &_memcardStatusPtr->stat, 0);
-                if (var_r3_18 == 0) {
-                    var_r3_18 = CARDGetResultCode(_memcardStatusPtr->param);
+            _memcardStatusPtr->task = next;
+            break;
+
+        case 23: {
+            s32 i;
+
+            result = CARDGetStatus(_memcardStatusPtr->param, _memcardStatusPtr->file.fileNo,
+                                   &_memcardStatusPtr->stat);
+            if (result == 0) {
+                CARDSetCommentAddress(&_memcardStatusPtr->stat, 0);
+                CARDSetIconAddress(&_memcardStatusPtr->stat, 0x40);
+                CARDSetBannerFormat(&_memcardStatusPtr->stat, 2);
+                CARDSetIconAnim(&_memcardStatusPtr->stat, 0);
+                for (i = 0; i < 8; i++) {
+                    CARDSetIconFormat(&_memcardStatusPtr->stat, i, 1);
+                    CARDSetIconSpeed(&_memcardStatusPtr->stat, i, 1);
                 }
-                var_r0_6 = 0x18;
-                _memcardStatusPtr->cardResult = var_r3_18;
+                _memcardSetRequestResult(CARDSetStatusAsync(_memcardStatusPtr->param,
+                                                            _memcardStatusPtr->file.fileNo,
+                                                            &_memcardStatusPtr->stat, 0));
+                next = 24;
             } else {
-                var_r0_6 = 0x2B;
-                _memcardStatusPtr->msg = temp_r3_4;
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
             }
-            _memcardStatusPtr->task = var_r0_6;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+        }
+
         case 24:
-            var_r3_19 = _memcardStatusPtr->cardResult;
-            switch(var_r3_19) {
+            result = _memcardPollResult();
+            switch (result) {
             case -1:
-                var_r3_19 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_19;
-                break;
-            default:break;
-            }
-            switch (var_r3_19) {
-            case -1:
-                var_r5_7 = 0x18;
+                next = 24;
                 break;
             case 0:
-                if ((s32) _memcardStatusPtr->state == 9) {
-                    _memcardDuplicateSaveData_multi(_memcardStatusPtr->buf50 + 8);
-                    var_r5_7 = 0x25;
+                if (_memcardStatusPtr->state == 9) {
+                    _memcardDuplicateSaveData_multi((u8*)_memcardStatusPtr->buf50 + 8);
                     _memcardStatusPtr->unk2C = 0;
                     _memcardStatusPtr->index = -1;
+                    next = 0x25;
                 } else {
-                    _memcardStatusPtr->msg = 0xB;
-                    var_r5_7 = 0x2C;
+                    _memcardStatusPtr->msg = 11;
                     _memcardStatusPtr->result = 2;
+                    next = 0x2C;
                 }
                 break;
             default:
-                var_r5_7 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_19;
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
                 break;
             }
-            _memcardStatusPtr->task = var_r5_7;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
         case 25:
-            _memcardStatusPtr->task = 0x1A;
-            goto block_396;
+            _memcardStatusPtr->task = 26;
+            break;
+
         case 26:
-            var_r3_20 = CARDReadAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50, 0x4000, 0, 0);
-            if (var_r3_20 == 0) {
-                var_r3_20 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3_20;
-            _memcardStatusPtr->task = 0x1B;
-            goto block_396;
+            _memcardSetRequestResult(CARDReadAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50, 0x4000, 0,
+                                                   0));
+            _memcardStatusPtr->task = 27;
+            break;
+
         case 27:
-            var_r3_21 = _memcardStatusPtr->cardResult;
-            var_r29 = 0U;
-            switch(var_r3_21) {
-            case -1:
-                var_r3_21 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_21;
-                break;
-            default:break;
-            }
-            switch (var_r3_21) {
-            case -1:
-                var_r0_7 = 0x1B;
-                break;
-            case 0:
-                temp_r4 = _memcardStatusPtr->buf50;
-                for(u32 word=0;word<0xE90;++word) var_r29+=((u32*)temp_r4)[word];
-                if (var_r29 != (u32) *(u32*)(temp_r4+0x3A40)) {
-                    _memcardStatusPtr->unk40 = 1;
-                }
-                var_r0_7 = 0x1C;
-                break;
-            default:
-                var_r0_7 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_21;
-                break;
-            }
-            _memcardStatusPtr->task = var_r0_7;
-            goto block_396;
+            _memcardStatusPtr->task = _memcardCheckIconFile();
+            break;
+
         case 28:
-            _memcardStatusPtr->limit = 0;
-            _memcardStatusPtr->index = 0;
-            switch(_memcardStatusPtr->state) {
-            case 1:case 2:
-                if(_memcardStatusPtr->unk40) {
-                    _memcardStatusPtr->msg=5;
-                    goto headerMessage;
-                }
-            case 3:case 8:
-                var_r4_3=29;
-                break;
-            default:
-                _memcardStatusPtr->msg=2;
-            headerMessage:
-                var_r4_3=48;
-                _memcardStatusPtr->nextTask=29;
-                break;
-            }
-            _memcardStatusPtr->task = var_r4_3;
-            goto block_396;
+            _memcardStatusPtr->task = _memcardBeginHeaderRead();
+            break;
+
         case 29:
-            temp_r4_2 = _memcardStatusPtr->index;
-            var_r3_22 = CARDReadAsync(&_memcardStatusPtr->file, ((temp_r4_2 << 9) + 0x30000 + _memcardStatusPtr->buf50) - 0x8000, 0x200, (temp_r4_2 * 0x28000) + 0x6000, 0);
-            if (var_r3_22 == 0) {
-                var_r3_22 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3_22;
-            _memcardStatusPtr->task = 0x1E;
-            goto block_396;
+            _memcardSetRequestResult(CARDReadAsync(&_memcardStatusPtr->file,
+                                                   (u8*)_memcardStatusPtr->buf50 +
+                                                       (_memcardStatusPtr->index * 0x200 + 0x28000),
+                                                   0x200, _memcardSaveOffset(_memcardStatusPtr->index), 0));
+            _memcardStatusPtr->task = 30;
+            break;
+
         case 30:
-            var_r3_23 = _memcardStatusPtr->cardResult;
-            switch(var_r3_23) {
+            result = _memcardPollResult();
+            switch (result) {
             case -1:
-                var_r3_23 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_23;
-                break;
-            default:break;
-            }
-            switch (var_r3_23) {
-            case -1:
-                var_r0_8 = 0x1E;
+                next = 30;
                 break;
             case 0:
-                temp_r0_9 = _memcardStatusPtr->index + 1;
-                _memcardStatusPtr->index = (s32) temp_r0_9;
-                if (temp_r0_9 < 2U) {
-                    var_r0_8 = 0x1D;
+                if ((u32)++_memcardStatusPtr->index < 2) {
+                    next = 29;
                 } else {
-                    var_r0_8 = 0x1F;
+                    next = 31;
                 }
                 break;
             default:
-                var_r0_8 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_23;
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
                 break;
             }
-            _memcardStatusPtr->task = var_r0_8;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
         case 31:
             _memcardStatusPtr->task = _memcardExamineHeader();
-            goto block_396;
+            break;
+
         case 32:
-            _memcardStatusPtr->task = 0x21;
-            goto block_396;
+            _memcardStatusPtr->task = 33;
+            break;
+
         case 33:
-            var_r3_24 = CARDReadAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50, 0x28000, (_memcardStatusPtr->index * 0x28000) + 0x6000, 0);
-            if (var_r3_24 == 0) {
-                var_r3_24 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3_24;
-            _memcardStatusPtr->task = 0x22;
-            goto block_396;
+            _memcardSetRequestResult(CARDReadAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50, 0x28000,
+                                                   _memcardSaveOffset(_memcardStatusPtr->index), 0));
+            _memcardStatusPtr->task = 34;
+            break;
+
         case 34:
-            var_r3_25 = _memcardStatusPtr->cardResult;
-            switch(var_r3_25) {
+            result = _memcardPollResult();
+            switch (result) {
             case -1:
-                var_r3_25 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_25;
-                break;
-            default:break;
-            }
-            switch (var_r3_25) {
-            case -1:
-                var_r0_9 = 0x22;
+                next = 34;
                 break;
             case 0:
-                var_r0_9 = 0x23;
+                next = 35;
                 break;
             default:
-                var_r0_9 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_25;
+                _memcardStatusPtr->msg = result;
+                next = 0x2B;
                 break;
             }
-            _memcardStatusPtr->task = var_r0_9;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
         case 35:
             _memcardStatusPtr->task = _memcardExamineDataPack();
-            goto block_396;
+            break;
+
         case 36:
             _memcardStatusPtr->task = _memcardMergeDataPack();
-            goto block_396;
+            break;
+
         case 37:
-            CARDGetSerialNo(_memcardStatusPtr->param, &sp18);
-            serialFirst=sp18;
-            temp_ret = (u8*)gamedatasaveBiosGetPtr(savedataGetStatus(0, 1U));
-            gamedatasaveBiosSetMemcardID(temp_ret, serialFirst);
-            _memcardStatusPtr->unk2C += 1;
-            temp_r3_5 = _memcardStatusPtr->index + 1;
-            temp_r5 = temp_r3_5 >> 0x1FU;
-            _memcardStatusPtr->index = ((temp_r3_5 & 1) ^ temp_r5) - temp_r5;
-            temp_r29_2 = _memcardStatusPtr->buf50;
-            temp_r29_2[0] = 1;
-            temp_r3_6 = temp_r29_2 + 8;
-            temp_r29_2[1] = 1U;
-            temp_r29_2[2] = 1U;
-            temp_r29_2[3] = 0U;
-            *(s32*)(temp_r29_2+4) = _memcardStatusPtr->unk2C;
-            serialSecond=sp18;
-            if (temp_r3_6 == 0) {
-                temp_ret_2 = (u8*)gamedatasaveBiosGetPtr(savedataGetStatus(temp_r3_6, 1U));
-                gamedatasaveBiosSetMemcardID(temp_ret_2, serialSecond);
-            } else {
-                temp_ret_3 = (u8*)_memcardGetMultiSaveDataToSTRUCT(temp_r3_6, 1);
-                gamedatasaveBiosSetMemcardID(temp_ret_3 + 8, serialSecond);
-            }
-            switch(_memcardStatusPtr->state) {
-            case 4:case 8:case 9:case 10:case 11:
-                temp_r28 = temp_r29_2 + 8;
-                if (temp_r28 == 0) {
-                    temp_r27_3 = gamedatasaveGetStatus(savedataGetStatus(temp_r28, 1U), 4U);
-                    gamedatasaveSetStatus(savedataGetStatus(temp_r28, 1U), 4U, temp_r27_3 + 1);
-                } else {
-                    temp_r3_7 = _memcardGetMultiSaveDataToSTRUCT(temp_r28, 1);
-                    gamedatasaveSetStatus(temp_r3_7, 4U, gamedatasaveGetStatus(temp_r3_7, 4U) + 1);
-                }
-                break;
-            }
-            temp_r3_8 = _memcardGetMultiSaveDataToSTRUCT(temp_r29_2 + 8, 1);
-            var_r5_9 = 0;
-            for(var_r6=0;var_r6<0x600;++var_r6)var_r5_9+=((u32*)0x80001800)[var_r6];
-            gamedatasaveSetStatus(temp_r3_8, 0xCU, var_r5_9);
-            temp_r3_8=_memcardGetMultiSaveDataToSTRUCT(temp_r29_2+8,1);
-            var_r5_10=0;
-            for(s32 byte=0;byte<8;++byte)var_r5_10+=temp_r29_2[byte];
-            gamedatasaveSetStatus(temp_r3_8,0xD,var_r5_10);
-            _memcard_Encryption(temp_r29_2 + 8);
-            var_r28 = 0x27;
-            var_r27 = temp_r29_2 + 0x27FD8;
-            do {
-                temp_cr0_eq=var_r28;
-                *var_r27=HSD_Rand();
-                ++var_r27;
-                --var_r28;
-            }while(temp_cr0_eq!=0);
-            _memcardStatusPtr->task = 0x26;
-            goto block_396;
-        case 38:
-            var_r29_2 = 0x28000;
-            if ((s32) _memcardStatusPtr->state == 8) {
-                var_r29_2 = 0x26000;
-            }
+            _memcardStatusPtr->task = _memcardSaveSetup();
+            break;
+
+        case 38: {
+            s32 length = _memcardStatusPtr->state == 8 ? 0x26000 : 0x28000;
+
             GSgfxResetDisable();
-            var_r3_26 = CARDWriteAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50, var_r29_2, (_memcardStatusPtr->index * 0x28000) + 0x6000, 0);
-            if (var_r3_26 == 0) {
-                var_r3_26 = CARDGetResultCode(_memcardStatusPtr->param);
-            }
-            _memcardStatusPtr->cardResult = var_r3_26;
+            _memcardSetRequestResult(CARDWriteAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50, length,
+                                                    _memcardSaveOffset(_memcardStatusPtr->index), 0));
             _memcardStatusPtr->busyCount = 0;
             _memcardStatusPtr->task = 0x27;
-            goto block_396;
+            break;
+        }
+
         case 39:
-            var_r3_27 = _memcardStatusPtr->cardResult;
-            switch(var_r3_27) {
-            case -1:
-                var_r3_27 = CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult = var_r3_27;
-                break;
-            default:break;
-            }
-            _memcardStatusPtr->busyCount += 1;
-            switch (var_r3_27) {
-            case -1:
-                var_r5_10 = 0x27;
-                break;
-            case 0:
-                _memcard_gba2mode = 0;
-                switch(_memcardStatusPtr->state) {
-                case 8:
-                    _memcardStatusPtr->nextTask=40;
-                    var_r5_10=49;
-                    _memcard_gba2mode=1;
-                    break;
-                case 1:case 2:case 3:
-                    _memcardStatusPtr->msg=18;
-                    _memcardStatusPtr->result=3;
-                    goto writeFinished;
-                case 4:case 9:case 10:case 11:
-                    temp_r29_3=gamedatasaveGetStatus(savedataGetStatus(0,1),4);
-                    gamedatasaveSetStatus(savedataGetStatus(0,1),4,temp_r29_3+1);
-                default:
-                    _memcardStatusPtr->msg=10;
-                    _memcardStatusPtr->result=4;
-                writeFinished:
-                    _memcardStatusPtr->unk40=1;
-                    if(_memcardStatusPtr->unk40)var_r5_10=17;else var_r5_10=44;
-                    break;
-                }
-                break;
-            default:
-                var_r5_10 = 0x2B;
-                _memcardStatusPtr->msg = var_r3_27;
-                break;
-            }
-            _memcardStatusPtr->task = var_r5_10;
-            goto block_396;
+            _memcardStatusPtr->task = _memcardCheckWrite();
+            break;
+
         case 40:
-            temp_r3_9 = _memcardStatusPtr->timer;
-            _memcardStatusPtr->timer = temp_r3_9 - 1;
-            if (temp_r3_9 != 0) {
-                var_r4_4 = 0x28;
+            if (_memcardStatusPtr->timer-- != 0) {
                 _memcardStatusPtr->cardResult = -1;
+                next = 0x28;
             } else {
-                var_r4_4 = 0x29;
                 _memcardStatusPtr->cardResult = 0;
+                next = 0x29;
             }
-            _memcardStatusPtr->task = var_r4_4;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
         case 41:
             if (gbaCommandIsConnected(2) == 0) {
-                var_r6_2 = 0x2B;
+                next = 0x2B;
             } else {
-                s32 offset = (_memcardStatusPtr->index * 0x28000) + 0x6000;
-                offset += 0x26000;
-                var_r3_28 = CARDWriteAsync(&_memcardStatusPtr->file, _memcardStatusPtr->buf50 + 0x26000, 0x2000, offset, 0);
-                if (var_r3_28 == 0) {
-                    var_r3_28 = CARDGetResultCode(_memcardStatusPtr->param);
-                }
-                _memcardStatusPtr->cardResult = var_r3_28;
-                var_r6_2 = 0x2A;
-                _memcardStatusPtr->busyCount /= 19U;
-                _memcardStatusPtr->busyCount += 1;
+                _memcardSetRequestResult(CARDWriteAsync(&_memcardStatusPtr->file,
+                                                        (u8*)_memcardStatusPtr->buf50 + 0x26000, 0x2000,
+                                                        _memcardSaveOffset(_memcardStatusPtr->index) + 0x26000,
+                                                        0));
+                _memcardStatusPtr->busyCount /= 19;
+                _memcardStatusPtr->busyCount++;
                 _memcardStatusPtr->mounted = 0;
+                next = 0x2A;
             }
-            _memcardStatusPtr->task = var_r6_2;
-            goto block_396;
+            _memcardStatusPtr->task = next;
+            break;
+
         case 42:
-            var_r27_2 = _memcardStatusPtr->cardResult;
-            switch(var_r27_2) {
-            case -1:
-                var_r27_2=CARDGetResultCode(_memcardStatusPtr->param);
-                _memcardStatusPtr->cardResult=var_r27_2;
-                break;
-            default:break;
-            }
-            switch (var_r27_2) {
-            case -1:
-                _memcardStatusPtr->busyCount -= 1;
-                if ((u8) _memcardStatusPtr->mounted == 0) {
-                    if (gbaCommandIsConnected(2) == 0) {
-                        CARDCancel(&_memcardStatusPtr->file);
-                        var_r5_11 = 0x2B;
-                    } else if ((s32) _memcardStatusPtr->busyCount < 3) {
-                        if (gbaCommandChangePokemonEnd(2) != 0) {
-                            CARDCancel(&_memcardStatusPtr->file);
-                            var_r5_11 = 0x2B;
-                        } else {
-                            _memcardStatusPtr->mounted = 1;
-                            goto block_353;
-                        }
-                    } else {
-                        goto block_353;
-                    }
-                } else {
-block_353:
-                    var_r5_11 = 0x2A;
-                }
-                break;
-            case 0:
-                if ((u8) _memcardStatusPtr->mounted == 0) {
-                    gbaCommandChangePokemonEnd(2);
-                }
-                temp_r29_4 = gamedatasaveGetStatus(savedataGetStatus(0, 1U), 4U);
-                gamedatasaveSetStatus(savedataGetStatus(0, 1U), 4U, temp_r29_4 + 1);
-                var_r5_11 = 0x2C;
-                _memcardStatusPtr->msg = 0;
-                _memcardStatusPtr->result = 4;
-                break;
-            default:
-                PKJB_ReturnTitle(1U);
-                var_r5_11 = 0x2B;
-                _memcardStatusPtr->msg = var_r27_2;
-                break;
-            }
-            _memcardStatusPtr->task = var_r5_11;
-            goto block_396;
+            _memcardStatusPtr->task = _memcardCheckLastWrite();
+            break;
+
         case 43:
             _memcardStatusPtr->result = -1;
             _memcardStatusPtr->task = 0x2C;
-            goto block_396;
+            break;
+
         case 44:
-            if ((u8) _memcardStatusPtr->unk3E != 0) {
-                CARDGetSerialNo(_memcardStatusPtr->param, &sp10);
-                CARDClose(&_memcardStatusPtr->file);
-                _memcardStatusPtr->unk3E = 0;
-            }
-            CARDUnmount(_memcardStatusPtr->param);
-            GSgfxResetRestore(_memcardStatusPtr->resetEnabled);
-            if (((u8) _memcardStatusPtr->callbackDone != 0) && ((u8) _memcard_gba2mode == 0)) {
-                var_r5_12 = 0;
-            } else {
-                switch(_memcardStatusPtr->state) {
-                case 3:case 8:
-                    var_r5_12=50;
-                    break;
-                default:
-                    switch(_memcardStatusPtr->result) {
-                    case 1:case 2:case 3:case 4:
-                        serialFinal=sp10;
-                        finalStatus=_memcardStatusPtr;
-                        finalStatus->serialLow=(u32)serialFinal;
-                        finalStatus->serialHigh=(u32)(serialFinal>>32);
-                        _memcardStatusPtr->valid=1;
-                        break;
-                    }
-                    *(volatile s32*)&_memcardStatusPtr->msg=_memcardStatusPtr->msg;
-                    _memcardStatusPtr->nextTask=45;
-                    var_r5_12=48;
-                    break;
-                }
-            }
-            _memcardStatusPtr->task = var_r5_12;
-            goto block_396;
+            _memcardStatusPtr->task = _memcardEndAccess();
+            break;
+
         case 45:
-            switch(_memcardStatusPtr->state) {
-            case 4:case 5:case 6:case 7:case 9:case 10:case 11:case 13:
-                if(_memcardStatusPtr->result==4)goto jobDone;
-                _memcardStatusPtr->msg=0xf;
-                var_r4_5=0x30;
-                _memcardStatusPtr->nextTask=0x32;
-                break;
-            case 1:
-                if(_memcardStatusPtr->result!=-1)goto jobDone;
-                switch(_memcardStatusPtr->unk60) {
-                case 7:_memcardStatusPtr->msg=0xd;break;
-                case 13:_memcardStatusPtr->msg=0xe;break;
-                default:var_r4_5=0x2e;goto jobNext;
-                }
-                _memcardStatusPtr->nextTask=0x2e;
-                var_r4_5=0x30;
-                break;
-            default:
-            jobDone:var_r4_5=0x32;break;
-            }
-        jobNext:
-            _memcardStatusPtr->task=var_r4_5;
-            goto block_396;
+            _memcardStatusPtr->task = _memcardFinishTask();
+            break;
+
         case 46:
-            _memcardStatusPtr->msg = 8;
-            _memcardStatusPtr->nextTask = 0x2F;
-            _memcardStatusPtr->task = 0x30;
-            goto block_396;
+            _memcardStatusPtr->task = _memcardAsk(8, 0x2F);
+            break;
+
         case 47:
-            if ((s32) _memcardStatusPtr->msg != 0) {
+            if (_memcardStatusPtr->msg != 0) {
                 _memcardStatusPtr->result = 5;
             }
             _memcardStatusPtr->task = 0x32;
-            goto block_396;
-        case 48:case 49:case 50:
-            return;
-        default:
-            goto block_396;
-        }
-    }
-    {
-block_396:
-        if ((s32) _memcardStatusPtr->cardResult == -1) {
+            break;
+
+        case 48:
+        case 49:
+        case 50:
             return;
         }
-        goto loop_1;
-    }
+    } while (_memcardStatusPtr->cardResult != -1);
 }
 
 #pragma pop

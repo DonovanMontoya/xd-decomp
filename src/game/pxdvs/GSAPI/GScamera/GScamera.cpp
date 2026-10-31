@@ -475,52 +475,50 @@ static inline void cameraMarkViewport(GSgfxLayer* layer, u32 flags) {
     layer->renderState[1].dirty |= 2;
 }
 extern "C" {
-static void _cameraLoadClipping__FP9_GScameraP10GSgfxLayer(GScamera* camera, GSgfxLayer* layer) {
+static inline void cameraSetClippedViewport(GSgfxLayer* layer, f32 x, f32 y, f32 w, f32 h) {
+    layer->viewport[0]=x; layer->viewport[1]=y; layer->viewport[2]=w; layer->viewport[3]=h;
+    cameraMarkViewport(layer, 0x10);
+}
+
+static inline void cameraSetClippedScissor(GSgfxLayer* layer, s16 x, s16 y, s16 w, s16 h) {
+    layer->scissor[0]=x; layer->scissor[1]=y; layer->scissor[2]=w; layer->scissor[3]=h;
+    cameraMarkViewport(layer, 1);
+}
+
+static void _cameraLoadClipping__FP9_GScameraP10GSgfxLayer(GScamera* camera, GSgfxLayer* layer)
+{
     if (camera->clippingFlags & 1) {
         if (camera->clippingFlags & 2) {
-            HSD_CObj* object = camera->object;
-            f32 right, top, bottom, left;
-            left = object->viewport[0];
-            right = object->viewport[1];
-            top = object->viewport[2];
-            bottom = object->viewport[3];
-            layer->viewport[0] = left;
-            layer->viewport[1] = top;
-            layer->viewport[2] = 0.5f * (right - left) + left;
-            layer->viewport[3] = 0.5f * (bottom - top) + top;
-            cameraMarkViewport(layer, 0x10);
+            HSD_CObj* cobj = camera->object;
+            f32 y = cobj->viewport[2];
+            f32 x = cobj->viewport[0];
+            cameraSetClippedViewport(layer, x, y, 0.5f * (cobj->viewport[1] - x) + x, 0.5f * (cobj->viewport[3] - y) + y);
         } else {
-            u16 height, width;
-            u16 halfWidth, halfHeight;
-            f32 right, bottom;
-            GSgfxVideoGetEFBSize(&width, &height);
-            halfWidth = width >> 1;
-            right = __OSu16tof32(&halfWidth);
-            halfHeight = height >> 1;
-            bottom = __OSu16tof32(&halfHeight);
-            layer->viewport[0] = 0.0f;
-            layer->viewport[1] = 0.0f;
-            layer->viewport[2] = right;
-            layer->viewport[3] = bottom;
-            cameraMarkViewport(layer, 0x10);
+            u16 h, w;
+            u16 hw, hh;
+            f32 vh, vw;
+            GSgfxVideoGetEFBSize(&w, &h);
+            hw = w >> 1;
+            vw = __OSu16tof32(&hw);
+            hh = h >> 1;
+            vh = __OSu16tof32(&hh);
+            cameraSetClippedViewport(layer, 0.0f, 0.0f, vw, vh);
         }
         if (camera->clippingFlags & 4) {
-            HSD_CObj* object = camera->object;
-            u16 top = object->scissor[2];
-            u16 height = object->scissor[3] - top;
-            u16 left = object->scissor[0];
-            u16 width = object->scissor[1] - left;
-            layer->scissor[0] = left;
-            layer->scissor[1] = top;
-            layer->scissor[2] = width;
-            layer->scissor[3] = height;
+            HSD_CObj* cobj = camera->object;
+            u16 top = cobj->scissor[2];
+            u16 bottom = cobj->scissor[3];
+            u16 left = cobj->scissor[0];
+            u16 right = cobj->scissor[1];
+s16 h = bottom - top;
+            s16 w = right - left;
+            cameraSetClippedScissor(layer, left, top, w, h);
+        } else {
+            layer->scissor[0] = 0;
+            layer->scissor[1] = 0;
+            GSgfxVideoGetEFBSize((u16*)&layer->scissor[2], (u16*)&layer->scissor[3]);
             cameraMarkViewport(layer, 1);
-            return;
         }
-        layer->scissor[0] = 0;
-        layer->scissor[1] = 0;
-        GSgfxVideoGetEFBSize(&layer->scissor[2], &layer->scissor[3]);
-        cameraMarkViewport(layer, 1);
     }
 }
 static void _cameraLoadCameraMatrix__FP9_GScamera12GSgfxLayerID(GScamera* camera, s32 layerID) {

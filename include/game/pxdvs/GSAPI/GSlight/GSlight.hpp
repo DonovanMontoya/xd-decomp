@@ -70,7 +70,7 @@ void GSlightGetColor(GSlight*, GXColor*);
 void GSlightSetActive(GSlight*, u8);
 void GSlightSetTarget(GSlight*, HSD_Vec3*);
 void GSlightSetPosition(GSlight*, HSD_Vec3*);
-void GSlightSetColor(GSlight*, GXColor*);
+void GSlightSetColor(GSlight*, const GXColor*);
 void GSlightSetType(GSlight*, s32);
 void GSlightFree(GSlight*);
 GSlight* GSlightLoad(GSlightResource*);

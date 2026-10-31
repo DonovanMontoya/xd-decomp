@@ -1,3 +1,4 @@
+#pragma dollar_identifiers on
 #include <game/menuPocketLayout.hpp>
 
 extern "C" {
@@ -457,7 +458,7 @@ int _execDeposit(int tab, u16 item, int index);
 u8 _depositPC(u16 item, int num);
 u8 _IsSortAble(tagWINDOW_WORK *win);
 u8 _IsIrekaeAble(tagWINDOW_WORK *win);
-int _swapItemSlot(int, int, int);
+void _swapItemSlot(int, int, int);
 
 u8 _depositPC(u16 item, int num) {
     if (pcboxGetItemCapacity(0, item) < num) {
@@ -556,31 +557,24 @@ u8 _execGive(int tab, u16 item, int index) {
     return 1;
 }
 
-int _swapItemSlot(int kind, int from, int to) {
+struct ItemSlot { u16 id, n; };
+void _swapItemSlot(int kind, int from, int to)
+{
     u16 count;
-    u16 saved[2];
-    u32 *ary;
-    u32 *src;
-    u32 *dst;
-    if (from != to) {
-        if (from == to - 1) {
-            return 0;
-        }
-        ary = heroItemGetItemKindToItemAryPtr(Data.hero, kind, &count, 0, 0, 0);
-        src = ary + from;
-        *(u32 *)saved = *src;
-        if (from != count - 1) {
-            memmove(src, src + 1, (count - from - 1) * 4);
-        }
-        if (from < to) {
-            to--;
-        }
-        dst = ary + to;
-        memmove(dst + 1, dst, (count - to - 1) * 4);
-        ((u16 *)dst)[0] = saved[0];
-        ((u16 *)dst)[1] = saved[1];
+    if (from == to || from == to - 1) {
+        return;
     }
-    return 0;
+    ItemSlot* items = (ItemSlot*)heroItemGetItemKindToItemAryPtr(Data.hero, kind, &count, 0, 0, 0);
+    ItemSlot saved = items[from];
+    if (from != count - 1) {
+        memmove(items + from, items + from + 1, (count - from - 1) * 4);
+    }
+    if (from < to) {
+        to--;
+    }
+    memmove(items + to + 1, items + to, (count - to - 1) * 4);
+    items[to].id = saved.id;
+    items[to].n = saved.n;
 }
 
 bool _openPokemonMenuForGiveItem(u16 item, u8 kind, u8 index) {
@@ -802,18 +796,17 @@ u8 _IsIrekaeAble(tagWINDOW_WORK *win) {
     return TabTbl[win->selected].irekae;
 }
 
-u16 _selectItem(int &index, long *param) {
-    CURSOR cursor;
-    int tab;
+u16 _selectItem(int& pos, long* param)
+{
     Data.swapIndex = -1;
-    tab = menuOpenCustom(0x2C, windowGetActiveID(), param, 0, 1, 0);
+    int tab = menuOpenCustom(0x2C, windowGetActiveID(), param, 0, 1, 0);
     if (tab == -1) {
         return 0;
     }
     Data.tab = tab;
-    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[tab].cursorId);
-    index = cursor.first + cursor.selected;
-    return _getItemIDFromMenuPos(tab, index);
+    CURSOR cp = ((CURSOR (*)(u32))cursorBiosGetPos)(TabTbl[tab].cursorId);
+    pos = cp.first + cp.selected;
+    return _getItemIDFromMenuPos(tab, pos);
 }
 
 }
@@ -1229,79 +1222,82 @@ s32 menuPocket2DrawMoney(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
     return 0;
 }
 
-s32 menuPocket2PrintNumMenu(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    s32 *arg = (s32 *)win->parameters[0];
+int menuPocket2PrintNumMenu(tagWINDOW_WORK* w, tagSPRITE_WORK* sp)
+{
+    PocketNumArg* param;
     u32 i;
-    const s32 *p;
-    s32 idx;
-    s32 j;
-    s32 div;
+    const s32* row;
+    int j;
+    s32 k;
+    int power;
+    int digit;
+
+    param = (PocketNumArg*)w->parameters[0];
     for (i = 0; i < 4; i++) {
-        if (arg[0] == MenuPocket2Num[i].menu) {
+        if (param->menu == MenuPocket2Num[i].menu) {
             break;
         }
     }
     if (i >= 4) {
         return 0;
     }
-    p = MenuPocket2Num[i].items;
-    for (idx = 0; idx < MenuPocket2Num[i].count; idx++, p += 3) {
-        if ((s16)spr->id == *p) {
+    row = MenuPocket2Num[i].items;
+    j = 0;
+    while (j < MenuPocket2Num[i].count) {
+        if (sp->id == row[0]) {
             break;
         }
+        j++;
+        row += 3;
     }
-    if (idx >= MenuPocket2Num[i].count) {
+    if (j >= MenuPocket2Num[i].count) {
         return 0;
     }
-    div = 1;
-    for (j = 0; j < MenuPocket2Num[i].count - idx - 1; j++) {
-        div *= 10;
+    power = 1;
+    for (k = 0; k < MenuPocket2Num[i].count - j - 1; k++) {
+        power *= 10;
     }
-    msgctrlSetValue(0x34, Data.num / div % 10);
-    GSmsgPrintRight(winSpriteGetLayerID(win, spr), 0, 0, spr->width, spr->height, -1, 0x4270);
+    digit = Data.num / power;
+    digit %= 10;
+    msgctrlSetValue(0x34, digit);
+    GSmsgPrintRight(winSpriteGetLayerID(w, sp), 0, 0, sp->width, sp->height, -1, 0x4270);
     return 0;
 }
 
-s32 menuPocket2PrintItemKind(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    MENU_ITEM_dd_ *area;
-    MENU_ITEM_dd_ *self;
-    s16 w;
-    s32 msg;
-    s32 half;
+int menuPocket2PrintItemKind(tagWINDOW_WORK* w, tagSPRITE_WORK* sp)
+{
+    int tab;
+    MENU_ITEM_dd_ * area = menuItemBiosGetPtr(w->menu, 0xB7);
+    MENU_ITEM_dd_ * base = menuItemBiosGetPtr(w->menu, sp->id);
+    f32 off;
+    s16 tw2;
+    u32 title2;
+    spriteSetScissor(winSpriteGetLayerID(w, sp), area->x - base->x, area->y - base->y, area->width, area->height);
+    int center = sp->width / 2;
+    u32 title = TabTbl[w->selected].unk14;
     s16 tw;
-    area = menuItemBiosGetPtr(win->menu, 0xB7);
-    self = menuItemBiosGetPtr(win->menu, spr->id);
-    spriteSetScissor(winSpriteGetLayerID(win, spr), area->x - self->x, area->y - self->y, area->width, area->height);
-    w = spr->width;
-    msg = TabTbl[win->selected].unk14;
-    half = w / 2;
-    tw = GSmsgGetRect(msg) >> 16;
-    GSmsgPrint2(winSpriteGetLayerID(win, spr), (s32)Data.tabScroll + (half - tw / 2), 0, -1, msg);
+    tw = GSmsgGetRect(title) >> 16;
+    GSmsgPrint2(winSpriteGetLayerID(w, sp), (int)Data.tabScroll + (center - tw / 2), 0, -1, title);
     if (Data.tabScroll != 0.0f) {
-        s32 idx;
-        f32 off;
-        s32 msg2;
-        s16 tw2;
         if (Data.tabScroll > 0.0f) {
-            idx = win->selected - 1;
-            if (idx < 0) {
-                idx = 4;
+            tab = w->selected - 1;
+            if (tab < 0) {
+                tab = 4;
             }
             off = Data.tabScroll - (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
         } else {
-            idx = win->selected + 1;
-            if ((u32)idx >= 5) {
-                idx = 0;
+            tab = w->selected + 1;
+            if ((u32)tab >= 5) {
+                tab = 0;
             }
             off = Data.tabScroll + (f32)menuItemBiosGetPtr(0x2C, 0xB6)->width;
         }
-        const PocketTab *tab2 = (const PocketTab *)((u8 *)TabTbl + idx * 32);
-        msg2 = tab2->unk14;
-        tw2 = GSmsgGetRect(msg2) >> 16;
-        GSmsgPrint2(winSpriteGetLayerID(win, spr), (s32)off + (half - tw2 / 2), 0, -1, msg2);
+        title2 = TabTbl[tab].unk14;
+        tw2 = GSmsgGetRect(title2) >> 16;
+        GSmsgPrint2(winSpriteGetLayerID(w, sp), (int)off + (center - tw2 / 2), 0, -1, title2);
     }
-    spriteClearScissor(winSpriteGetLayerID(win, spr));
-    spriteSetEnv(winSpriteGetLayerID(win, spr));
+    spriteClearScissor(winSpriteGetLayerID(w, sp));
+    spriteSetEnv(winSpriteGetLayerID(w, sp));
     return 0;
 }
 
@@ -1464,30 +1460,35 @@ s32 menuPocket2DrawBallCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
     return 0;
 }
 
-s32 menuPocket2DrawExchangeCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *spr) {
-    CURSOR cursor;
-    *(u32 *)&cursor = cursorBiosGetPos(TabTbl[win->selected].cursorId);
-    s32 y = cursor.selected * 0x1E;
-    f32 t;
+static f32 duration$2229;
+static s8 init$2230;
+int menuPocket2DrawExchangeCursor(tagWINDOW_WORK* w, tagSPRITE_WORK* sp)
+{
+    CURSOR pos = ((CURSOR (*)(u32))cursorBiosGetPos)(TabTbl[w->selected].cursorId);
+    int y = pos.selected * 30;
     if (Data.isScroll == 0) {
         y += (s16)Data.curPos;
     }
     if (Data.swapIndex >= 0) {
-        s32 iy = menuItemBiosGetPtr(win->menu, spr->id)->y;
-        spr->y = iy + y;
-        winSpriteSetDisp(spr, 1);
-        static f32 duration = 0.5f;
+        MENU_ITEM_dd_ * item = menuItemBiosGetPtr(w->menu, sp->id);
+        sp->y = item->y + y;
+        winSpriteSetDisp(sp, 1);
+        if (init$2230 == 0) {
+            duration$2229 = 0.5f;
+            init$2230 = 1;
+        }
         Data.anim += timeGetLastFrameSec();
-        if (Data.anim > duration) {
+        if (Data.anim > duration$2229) {
             Data.anim = 0.0f;
         }
-        t = Data.anim / duration;
+        f32 t = Data.anim / duration$2229;
         if (t > 0.5f) {
             t = 1.0f - t;
         }
-        spr->color.channels.alpha = (u8)(155.0f * (t * 2.0f) + 100.0f);
+        t *= 2.0f;
+        sp->color.channels.alpha = 155.0f * t + 100.0f;
     } else {
-        winSpriteSetDisp(spr, 0);
+        winSpriteSetDisp(sp, 0);
     }
     return 0;
 }

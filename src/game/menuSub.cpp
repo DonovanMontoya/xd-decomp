@@ -486,31 +486,33 @@ void menuSubOpenColosseumEnter(void) {
     menuSubOpenSelect2(0, items, 3, 0x32, 0x32, 0, 3, 1);
 }
 
-s8 menuSubOpenYesNo(u8 type, s16 x, s16 y, s32 arg3) {
-    s16 menu;
+s8 menuSubOpenYesNo(u8 type, s16 x, s16 y, s32 initial) {
+    s16 menuID;
     s8 result;
-    if (arg3 != 0) {
-        arg3 = 1;
+    s32 id;
+
+    if (initial != 0) {
+        initial = 1;
     }
     switch (type) {
     case 0:
-        menu = 0x35;
+        id = 0x35;
         break;
     case 1:
-        menu = 0x35;
+        id = 0x35;
         break;
     default:
     case 0x7F:
-        menu = 0x55;
+        id = 0x55;
         break;
     }
-    menuOpenCustom(menu, windowGetActiveID(), &arg3, 0, 0, 0);
+    menuOpenCustom(menuID = id, windowGetActiveID(), &initial, 0, 0, 0);
     if (x >= 0 && y >= 0) {
-        menuSetPosition(menu, x, y);
+        menuSetPosition(menuID, x, y);
     }
-    windowCheckCursor(menu, 1);
-    result = windowGetValue(menu);
-    menuCloseCustom(menu, 0, 1);
+    windowCheckCursor(menuID, 1);
+    result = windowGetValue(menuID);
+    menuCloseCustom(menuID, 0, 1);
     return result;
 }
 

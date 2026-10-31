@@ -596,108 +596,96 @@ int AppScript::cmpLight(int cmd, tigaVariant* args, tigaVariant* result) {
     return 0;
 }
 
-int AppScript::cmpFight(int cmd, tigaVariant* args, tigaVariant* result) {
-    switch (cmd) {
-    case 0x10: {
-        s32 a = appScriptGetInt(&args[1]);
-        s32 b = appScriptGetInt(&args[2]);
-        appScriptSetInt(result, scriptEncount(a, b != 0, appScriptGetInt(&args[3])));
-        break;
-    }
-    case 0x11:
-        appScriptSetInt(result, fightEncount(appScriptGetInt(&args[1])));
-        break;
-    case 0x12:
-        appScriptSetInt(result, fightGetFightResultId());
-        break;
-    case 0x13:
-        fightSoundOpenPlay(appScriptGetInt(&args[1]) != 0);
-        break;
-    case 0x14:
-        fightSoundOpenPlayEnv(appScriptGetInt(&args[1]) != 0);
-        break;
+int AppScript::cmpFight(int command, GSscript::tigaVariant* args, GSscript::tigaVariant* result)
+{
+    FIGHT_ENCOUNT* encount;
+    switch (command) {
+    case 0x10: appScriptSetInt(result, scriptEncount(appScriptGetInt(&args[1]), appScriptGetInt(&args[2]) != 0, appScriptGetInt(&args[3]))); break;
+    case 0x11: appScriptSetInt(result, fightEncount(appScriptGetInt(&args[1]))); break;
+    case 0x12: appScriptSetInt(result, fightGetFightResultId()); break;
+    case 0x13: fightSoundOpenPlay(appScriptGetInt(&args[1]) != 0); break;
+    case 0x14: fightSoundOpenPlayEnv(appScriptGetInt(&args[1]) != 0); break;
     case 0x15:
-        if (darkPokemonGetDarkPokemon((u16)appScriptGetInt(&args[1]))->getStatus() > darkStatus2) {
+        if (darkPokemonGetDarkPokemon((u16)appScriptGetInt(&args[1]))->getStatus() > 2) {
             fightEncount(appScriptGetInt(&args[2]));
         } else {
             fightEncount(appScriptGetInt(&args[3]));
         }
         break;
-    case 0x16:
-        result->value.pointer = fightEncountGetStrObj();
-        break;
+    case 0x16: result->value.pointer = fightEncountGetStrObj(); break;
     case 0x17:
-        appScriptEncountForWrite()->setField(appScriptGetInt(&args[1]));
+        encount = fightEncountGetStrObj();
+        if (encount->getDirtyFlag() == 1) {
+            encount->clear();
+        }
+        encount->setField(appScriptGetInt(&args[1]));
         break;
-    case 0x18:
-        appScriptSetInt(result, fightEncountGetStrObj()->getField());
+    case 0x18: appScriptSetInt(result, fightEncountGetStrObj()->getField()); break;
+    case 0x19:
+        encount = fightEncountGetStrObj();
+        appScriptSetInt(result, encount->getMsg(appScriptGetInt(&args[1])));
         break;
-    case 0x19: {
-        FIGHT_ENCOUNT* obj = fightEncountGetStrObj();
-        appScriptSetInt(result, obj->getMsg(appScriptGetInt(&args[1])));
+    case 0x1A:
+        encount = fightEncountGetStrObj();
+        if (encount->getDirtyFlag() == 1) {
+            encount->clear();
+        }
+        encount->setMsg(appScriptGetInt(&args[1]), appScriptGetInt(&args[2]));
         break;
-    }
-    case 0x1A: {
-        s32 a;
-        FIGHT_ENCOUNT* obj = appScriptEncountForWrite();
-        a = appScriptGetInt(&args[1]);
-        obj->setMsg(a, appScriptGetInt(&args[2]));
+    case 0x1B: appScriptSetInt(result, fightEncountGetStrObj()->getAddMode()); break;
+    case 0x1C: appScriptSetInt(result, fightEncountGetStrObj()->getAddPlace()); break;
+    case 0x1D: appScriptSetInt(result, fightEncountGetStrObj()->getAddID()); break;
+    case 0x1E:
+        encount = fightEncountGetStrObj();
+        if (encount->getDirtyFlag() == 1) {
+            encount->clear();
+        }
+        encount->setAddMode(appScriptGetInt(&args[1]));
+        encount->setAddPlace(appScriptGetInt(&args[2]));
+        encount->setAddID(appScriptGetInt(&args[3]));
         break;
-    }
-    case 0x1B:
-        appScriptSetInt(result, fightEncountGetStrObj()->getAddMode());
+    case 0x1F: appScriptSetInt(result, fightEncountGetStrObj()->getSwapMode()); break;
+    case 0x20: appScriptSetInt(result, fightEncountGetStrObj()->getSwapDeckNO()); break;
+    case 0x21:
+        encount = fightEncountGetStrObj();
+        if (encount->getDirtyFlag() == 1) {
+            encount->clear();
+        }
+        encount->setSwapMode(appScriptGetInt(&args[1]));
+        encount->setSwapDeckNO((u8)appScriptGetInt(&args[2]));
         break;
-    case 0x1C:
-        appScriptSetInt(result, fightEncountGetStrObj()->getAddPlace());
-        break;
-    case 0x1D:
-        appScriptSetInt(result, fightEncountGetStrObj()->getAddID());
-        break;
-    case 0x1E: {
-        FIGHT_ENCOUNT* obj = appScriptEncountForWrite();
-        obj->setAddMode(appScriptGetInt(&args[1]));
-        obj->setAddPlace(appScriptGetInt(&args[2]));
-        obj->setAddID(appScriptGetInt(&args[3]));
-        break;
-    }
-    case 0x1F:
-        appScriptSetInt(result, fightEncountGetStrObj()->getSwapMode());
-        break;
-    case 0x20:
-        appScriptSetInt(result, fightEncountGetStrObj()->getSwapDeckNO());
-        break;
-    case 0x21: {
-        FIGHT_ENCOUNT* obj = appScriptEncountForWrite();
-        obj->setSwapMode(appScriptGetInt(&args[1]));
-        obj->setSwapDeckNO((u8)appScriptGetInt(&args[2]));
-        break;
-    }
-    case 0x22:
-        appScriptSetInt(result, fightEncountGetStrObj()->getSwapDeckNO());
-        break;
+    case 0x22: appScriptSetInt(result, fightEncountGetStrObj()->getSwapDeckNO()); break;
     case 0x23:
-        appScriptEncountForWrite()->setFightMode(appScriptGetInt(&args[1]));
+        encount = fightEncountGetStrObj();
+        if (encount->getDirtyFlag() == 1) {
+            encount->clear();
+        }
+        encount->setFightMode(appScriptGetInt(&args[1]));
         break;
-    case 0x24:
-        appScriptSetInt(result, fightEncountGetStrObj()->getDestroyFlag());
-        break;
+    case 0x24: appScriptSetInt(result, fightEncountGetStrObj()->getDestroyFlag()); break;
     case 0x25:
-        appScriptEncountForWrite()->setDestroyFlag(appScriptGetInt(&args[1]));
+        encount = fightEncountGetStrObj();
+        if (encount->getDirtyFlag() == 1) {
+            encount->clear();
+        }
+        encount->setDestroyFlag(appScriptGetInt(&args[1]));
         break;
-    case 0x26:
-        appScriptSetInt(result, fightEncountGetStrObj()->getTrainerKind());
-        break;
+    case 0x26: appScriptSetInt(result, fightEncountGetStrObj()->getTrainerKind()); break;
     case 0x27:
-        appScriptEncountForWrite()->setTrainerKind(appScriptGetInt(&args[1]));
+        encount = fightEncountGetStrObj();
+        if (encount->getDirtyFlag() == 1) {
+            encount->clear();
+        }
+        encount->setTrainerKind(appScriptGetInt(&args[1]));
         break;
-    case 0x28:
-        fightEncountAnnihilationRecovery();
-        break;
-    case 0x29:
-        appScriptSetInt(result, fightEncountGetStrObj()->getRoundNo());
-        break;
+    case 0x28: fightEncountAnnihilationRecovery(); break;
+    case 0x29: appScriptSetInt(result, fightEncountGetStrObj()->getRoundNo()); break;
     case 0x2A:
-        appScriptEncountForWrite()->setRoundNo(appScriptGetInt(&args[1]));
+        encount = fightEncountGetStrObj();
+        if (encount->getDirtyFlag() == 1) {
+            encount->clear();
+        }
+        encount->setRoundNo(appScriptGetInt(&args[1]));
         break;
     }
     return 0;

@@ -1338,37 +1338,47 @@ void fightFloorSetTuusinErrorFightResult(FIGHT_FLOOR* floor) {
     fightFloorSetFightResultId(floor, 1);
 }
 void fightFloorSetTimeOutAllFightResult(FIGHT_FLOOR* floor) {
-    u32 enemyHp;
-    u32 allyHp;
-    u32 allyCount;
-    u32 enemyRate;
-    u32 allyRate;
-    u32 trainers;
-    u32 pokemonCount;
-    FightSide* enemy;
-    FightSide* ally;
-    u32 allyMax;
-    u32 enemyCount;
-    u32 enemyMax;
-    if (static_cast<u16>(fightGetFightResultId()) == 1) return;
-    trainers = static_cast<u8>(fightFloor_GetFightTypeTrainerNum(floor));
-    pokemonCount = static_cast<u8>(fightFloor_GetFightTypeEntryPokemonNum(floor));
-    ally = static_cast<FightSide*>(fightTargetGetPtrAsNowFightType(4, nullptr));
-    allyCount = fightSideGetNokoriFightPokemonNum(ally, trainers, pokemonCount);
-    allyHp = fightSideGetFightPokemonNokoriHp(ally, trainers, pokemonCount);
-    allyMax = fightSideGetFightPokemonMaxHp(ally, trainers, pokemonCount);
-    allyRate = allyHp * 100 / allyMax;
-    enemy = static_cast<FightSide*>(fightTargetGetPtrAsNowFightType(5, nullptr));
-    enemyCount = fightSideGetNokoriFightPokemonNum(enemy, trainers, pokemonCount);
-    enemyHp = fightSideGetFightPokemonNokoriHp(enemy, trainers, pokemonCount);
-    enemyMax = fightSideGetFightPokemonMaxHp(enemy, trainers, pokemonCount);
-    enemyRate = enemyHp * 100 / enemyMax;
+    u16 nokori2;
+    u32 hp2;
+    FightSide* side2;
+    u32 rate2;
+    u32 rate1;
+    u32 hp1;
+    u16 nokori1;
+    u32 trainerNum;
+    FightSide* side1;
+    u32 entryNum;
+
+    if ((u16)fightGetFightResultId() == 1) {
+        return;
+    }
+    trainerNum = fightFloor_GetFightTypeTrainerNum(floor);
+    entryNum = ((u8(*)(FIGHT_FLOOR*))fightFloor_GetFightTypeEntryPokemonNum)(floor);
+
+    side1 = (FightSide*)fightTargetGetPtrAsNowFightType(4, 0);
+    nokori1 = ((u16(*)(FightSide*,u8,u8))fightSideGetNokoriFightPokemonNum)(side1, trainerNum, entryNum);
+    hp1 = ((u32(*)(FightSide*,u8,u8))fightSideGetFightPokemonNokoriHp)(side1, trainerNum, entryNum);
+    rate1 = hp1 * 100 / ((u32(*)(FightSide*,u8,u8))fightSideGetFightPokemonMaxHp)(side1, trainerNum, entryNum);
+
+    side2 = (FightSide*)fightTargetGetPtrAsNowFightType(5, 0);
+    nokori2 = ((u16(*)(FightSide*,u8,u8))fightSideGetNokoriFightPokemonNum)(side2, trainerNum, entryNum);
+    hp2 = ((u32(*)(FightSide*,u8,u8))fightSideGetFightPokemonNokoriHp)(side2, trainerNum, entryNum);
+    rate2 = hp2 * 100 / ((u32(*)(FightSide*,u8,u8))fightSideGetFightPokemonMaxHp)(side2, trainerNum, entryNum);
+
     fightFloorSetFightResultId(floor, 0);
-    if (static_cast<u16>(allyCount) > static_cast<u16>(enemyCount)) fightFloorSetFightResultId(floor, 2);
-    if (static_cast<u16>(allyCount) < static_cast<u16>(enemyCount)) fightFloorSetFightResultId(floor, 3);
-    if (static_cast<u16>(fightGetFightResultId()) == 0) {
-        if (allyRate >= enemyRate) fightFloorSetFightResultId(floor, 2);
-        if (allyRate <= enemyRate) fightFloorSetFightResultId(floor, 3);
+    if (nokori1 > nokori2) {
+        fightFloorSetFightResultId(floor, 2);
+    }
+    if (nokori1 < nokori2) {
+        fightFloorSetFightResultId(floor, 3);
+    }
+    if ((u16)fightGetFightResultId() == 0) {
+        if (rate1 >= rate2) {
+            fightFloorSetFightResultId(floor, 2);
+        }
+        if (rate1 <= rate2) {
+            fightFloorSetFightResultId(floor, 3);
+        }
     }
 }
 void fightFloorSetMenuFightAction(FIGHT_FLOOR* floor, FightOutPokemon* pokemon, FightFloorActionMenu* menu) {

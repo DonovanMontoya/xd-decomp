@@ -39,26 +39,54 @@ void _HSD_DispForgetMemory(void* lo,void* hi) { }
 void HSD_JObjSetSPtclCallback(void (*func)(int,int,int,HSD_JObj*)) { sptcl_callback=func; }
 typedef struct XD_JObjInfo { HSD_ClassInfo parent; void* load; void* make_mtx; void (*make_pmtx)(HSD_JObj*,Mtx,Mtx); void (*disp)(HSD_JObj*,Mtx,Mtx,unsigned int,unsigned int); } XD_JObjInfo;
 #define JMETHOD(o) ((XD_JObjInfo*)(o)->object.class_info)
-void HSD_JObjDisp(HSD_JObj* jobj,MtxPtr vmtx,unsigned int trsp_mask,unsigned int rendermode) {
-    if (jobj==0) return;
-    if (union_type_dobj(jobj)) {
-        Mtx mtx;
-        unsigned int xlu_bits;
-        if (jobj->flags & 0x10) return;
-        xlu_bits=jobj->flags & (trsp_mask<<18);
-        if (xlu_bits==0) return;
-        HSD_JObjSetupMatrix(jobj);
-        if (vmtx==0) vmtx=HSD_CObjGetCurrent()->view_mtx;
-        JMETHOD(jobj)->make_pmtx(jobj,vmtx,mtx);
-        if (xlu_bits&0x40000) JMETHOD(jobj)->disp(jobj,vmtx,mtx,1,rendermode);
-        if (xlu_bits&0x100000) JMETHOD(jobj)->disp(jobj,vmtx,mtx,4,rendermode);
-        if (xlu_bits&0x80000) JMETHOD(jobj)->disp(jobj,vmtx,mtx,2,rendermode);
-    } else if ((jobj->flags&JOBJ_PTCL) && sptcl_callback) {
-        HSD_SList* list;
-        for(list=jobj->u.ptcl;list;list=list->next) {
-            unsigned int value=(unsigned int)list->data;
-            if(value&0x80000000) sptcl_callback(0,value&63,(value>>6)&0xffffff,jobj);
-            list->data=(void*)((unsigned int)list->data&0x7fffffff);
+inline void HSD_JObjDispDObj(HSD_JObj* jobj, MtxPtr vmtx, HSD_TrspMask trsp_mask,
+                      unsigned int rendermode)
+{
+    HSD_CObj* cobj;
+    Mtx mtx;
+
+    if ((jobj->flags & 0x10) == 0) {
+        unsigned int xlu_bits = jobj->flags & (trsp_mask << 18);
+        if (xlu_bits != 0) {
+            HSD_JObjSetupMatrix(jobj);
+
+            if (vmtx == 0) {
+                cobj = HSD_CObjGetCurrent();
+                vmtx = cobj->view_mtx;
+            }
+
+            JMETHOD(jobj)->make_pmtx(jobj, vmtx, mtx);
+            if ((xlu_bits & 0x40000) != 0) {
+                JMETHOD(jobj)->disp(jobj, vmtx, mtx, 1,
+                                            rendermode);
+            }
+            if ((xlu_bits & 0x100000) != 0) {
+                JMETHOD(jobj)->disp(jobj, vmtx, mtx, 4, rendermode);
+            }
+            if ((xlu_bits & 0x80000) != 0) {
+                JMETHOD(jobj)->disp(jobj, vmtx, mtx, 2, rendermode);
+            }
+        }
+    }
+}
+
+void HSD_JObjDisp(HSD_JObj* jobj, MtxPtr vmtx, HSD_TrspMask trsp_mask,
+                  unsigned int rendermode)
+{
+    if (jobj != 0) {
+        if (union_type_dobj(jobj)) {
+            HSD_JObjDispDObj(jobj, vmtx, trsp_mask, rendermode);
+        } else if ((jobj->flags & JOBJ_PTCL) && sptcl_callback != 0) {
+            HSD_SList* sp;
+            for (sp = jobj->u.ptcl; sp != 0; sp = sp->next) {
+                if ((((unsigned int) sp->data) & 0x80000000) != 0) {
+                    unsigned int bank = 63 & ((unsigned int) sp->data);
+                    unsigned int offset = (((unsigned int) sp->data) >> 6) &
+                                 0xffffff;
+                    (*sptcl_callback)(0, bank, offset, jobj);
+                }
+                sp->data = (void*) ((unsigned int) sp->data & 0x7fffffff);
+            }
         }
     }
 }

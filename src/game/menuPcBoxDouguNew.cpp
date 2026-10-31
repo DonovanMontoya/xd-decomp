@@ -77,26 +77,25 @@ static u16 getItemIDFromMenuPos(int);
 static s32 getNbItemSlot(void);
 static s32 printItemListDougu(tagWINDOW_WORK *, tagSPRITE_WORK *, u32);
 
-extern "C" s32 menuPcBoxDouguNumDrawNum(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
-    const s32 ids[3] = {0x4B0, 0x4AF, 0x4AE};
-    s32 i;
-    s32 j;
-    s32 div;
-    for (i = 0; i < 3; i++) {
-        if (sprite->id == ids[i]) {
+extern "C" s32 menuPcBoxDouguNumDrawNum(tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
+    s32 index, i, div;
+    s32 ids[3] = {0x4B0, 0x4AF, 0x4AE};
+    for (index = 0; index < 3; index++) {
+        if (sp->id == ids[index]) {
             break;
         }
     }
-    if (i >= 3) {
+    if (index >= 3) {
         return 0;
     }
     div = 1;
-    for (j = 0; j < i; j++) {
+    for (i = 0; i < index; i++) {
         div *= 10;
     }
-    s32 v = NumValue / div % 10;
-    msgctrlSetValue(0x34, v);
-    GSmsgPrintRight(winSpriteGetLayerID(win, sprite), 0, 0, sprite->width, sprite->height, win->color90, 0x4270);
+    s32 digit = NumValue / div;
+    digit %= 10;
+    msgctrlSetValue(0x34, digit);
+    GSmsgPrintRight(winSpriteGetLayerID(w, sp), 0, 0, sp->width, sp->height, w->color90, 0x4270);
     return 0;
 }
 

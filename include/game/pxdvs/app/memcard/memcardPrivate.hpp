@@ -28,7 +28,7 @@ struct MemcardCardStat {
 
 struct MemcardStatus {
     volatile s32 state;     // 0x00
-    s32 msg;                // 0x04
+    volatile s32 msg;                // 0x04
     s32 result;             // 0x08
     s32 task;               // 0x0C
     s32 nextTask;           // 0x10
@@ -47,7 +47,7 @@ struct MemcardStatus {
     u8 unk40;               // 0x40
     u8 valid;               // 0x41
     u8 reserved42[6];
-    u32 serialHigh,serialLow;
+    union { u64 serial; struct { u32 serialHigh,serialLow; }; };
     u8* buf50;            // 0x50
     u8* buf54;            // 0x54
     void* saveData;         // 0x58

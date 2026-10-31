@@ -204,7 +204,7 @@ static inline GXColor lightCopyColor(GXColor* color) {
     copy.a = color->a;
     return copy;
 }
-extern "C" void GSlightSetColor(GSlight* light, GXColor* color) {
+extern "C" void GSlightSetColor(GSlight* light, const GXColor* color) {
     GXColor copy;
     copy.r = color->r;
     copy.g = color->g;

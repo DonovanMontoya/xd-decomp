@@ -558,30 +558,33 @@ static void wazaSequenceSysFreeSequenceResource(ModelSequence* seq) {
     }
 }
 
-static void wazaSequenceSysFreeWazaResource(WazaSequence* waza) {
-    u16 g;
-    u16 group = waza->resId;
-    if (group != 0) {
-        Sequence* p = g_Sequences;
+static inline void waitResourceLoad(u32 group) {
+    while (((s32(*)(u32))GSfsysGetStatus)(group) == 1) {
+        GSthreadSwitch();
+    }
+}
+static inline void freeWazaRes(u16 id) {
+    if (id != 0) {
+        int count;
         WazaSequence* w;
-        s32 count = 0;
-        for (; p != 0; p = p->next) {
-            w = p->wazaList;
-            for (; w != 0; w = w->next) {
-                if (group == w->resId) {
+        Sequence* s;
+        count = 0;
+        for (s = g_Sequences; s != 0; s = s->next) {
+            for (w = s->wazaList; w != 0; w = w->next) {
+                if (id == w->resId) {
                     count++;
                 }
             }
         }
         if (count == 1) {
-            g = group;
-            while (GSfsysGetStatus(g) == 1) {
-                GSthreadSwitch();
-            }
-            GSresFreeGroup(group);
-            GSfsysFree(group);
+            waitResourceLoad(id);
+            ((void(*)(u32))GSresFreeGroup)(id);
+            ((void(*)(u32))GSfsysFree)(id);
         }
     }
+}
+static void wazaSequenceSysFreeWazaResource(WazaSequence* waza) {
+    freeWazaRes(waza->resId);
 }
 
 static void wazaSequenceSysResetAnimationExcept(ModelSequence* except) {

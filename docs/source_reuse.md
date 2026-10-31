@@ -60,6 +60,34 @@ functions. It does not change the license of the rest of this repository.
 | `game/pxdvs/app/fight/fightPokemon.cpp` | `fightOutPokemonCopyHensinStatus`, `fightOutPokemonCreateFightPokemonEnemyAryEnemySideAll`, `fightOutPokemonIsFightActionAttackWazaOut`, `fightOutPokemonSetMeetEnemyFightPokemonEnemySideAll` |
 | `game/pxdvs/GSAPI/GSgfxM/gamecube.cpp` | `GSgfx_GCWriteTevIndTile` |
 | `game/pxdvs/GSAPI/GSScript/tiga.cpp` | `runParamsPC__Q28GSscript4TigaFP7TPCCodePQ28GSscript11tigaVariantib`, `tigaErrMessage__8GSscriptFPCc` |
+| `game/dbgMenuFlag.cpp` | `dbgMenuFlagInfoDraw` |
+| `game/menuFight.cpp` | `menuFightDrawIwaitStatus`, `menuFightOpenTarget` |
+| `game/menuPocketTool.cpp` | `draw__11CInfoWindowFv` |
+| `game/menuPocket.cpp` | `_swapItemSlot__24@unnamed@menuPocket_cpp@Fiii`, `_selectItem__24@unnamed@menuPocket_cpp@FRiPl`, `menuPocket2PrintNumMenu`, `menuPocket2PrintItemKind`, `menuPocket2DrawExchangeCursor` |
+| `game/menuNameEntry.cpp` | `menuNameEntryDraw50Text`, `menuNameEntryOpen` |
+| `game/menuPdaSearcher.cpp` | `_animMojiCursor__FP14tagWINDOW_WORKP14tagSPRITE_WORKUs` |
+| `game/menuPdaDPMonitor.cpp` | `DispPokemonModel__10menuPdaDPMFP14tagWINDOW_WORKP14tagSPRITE_WORKP12DPM_CONTENTS` |
+| `game/menuScript.cpp` | `menuScriptTutorialCursor` |
+| `game/menuSub.cpp` | `menuSubOpenYesNo` |
+| `game/dbgMenuSub.cpp` | `dbgMenuGetRootMenu` |
+| `game/menuPcBoxDouguNew.cpp` | `menuPcBoxDouguNumDrawNum` |
+| `game/menuLogoDemo.cpp` | `menuNintendoWarningCtrl`, `_setTextureWindow__FP14tagWINDOW_WORKP14tagSPRITE_WORKP9GStexture` |
+| `game/menuBattleDisk.cpp` | `BattleDiskContentsDraw` |
+| `game/pxdvs/GSAPI/GScamera/GScamera.cpp` | `_cameraLoadClipping__FP9_GScameraP10GSgfxLayer` |
+| `game/pxdvs/GSAPI/GSlight/GSlight.cpp` | `GSlightSetColor` |
+| `game/pxdvs/GSAPI/GSmodel/bound.cpp` | `_modelBoundPObj__FP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv` |
+| `game/pxdvs/app/menu/winSprite.cpp` | `winSpriteDrawTexture` |
+| `game/pxdvs/app/floor/floorCharacterBios.cpp` | `floorCharacterBiosInitGlobalCharacter` |
+| `game/pxdvs/GSAPI/GSflag/GSflag.cpp` | `_flagSet` |
+| `game/pxdvs/app/script/appScript.cpp` | `cmpFight__9AppScriptFiPQ28GSscript11tigaVariantPQ28GSscript11tigaVariant` |
+| `game/pxdvs/app/script/script.cpp` | `scriptSoundOpenPlayME` |
+| `game/pxdvs/app/memcard/memcard.cpp` | `_memcardJobMain__FUlUl` |
+| `game/pxdvs/app/wazaSequence/wazaSequenceSys.cpp` | `wazaSequenceSysFreeWazaResource__FP12WazaSequence` |
+| `game/pxdvs/app/fight/fightFloor.cpp` | `fightFloorSetTimeOutAllFightResult` |
+| `game/pxdvs/app/fight/fightSeq/fightWazaWzx.cpp` | `fightWazaWzxTypeFuncHuuin` |
+| `game/pxdvs/app/fight/fightTrainerAi2.cpp` | `_fightTrainerAiCheckHorobinoutaSub` |
+| `game/maximum/GSAPI/baselib/displayfunc.cpp` | `HSD_JObjDisp` |
+| `game/maximum/GSAPI/baselib/texpdag.cpp` | `assign_reg` |
 
 ## Colosseum license notice
 

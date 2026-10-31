@@ -283,88 +283,153 @@ s32 fn_8009EA68(tagWINDOW_WORK* win) {
     return 0;
 }
 
-s32 BattleDiskContentsDraw(tagWINDOW_WORK* win, tagSPRITE_WORK* sprite) {
-    u32 idx = 0;
-    switch (sprite->id) {
+s32 BattleDiskContentsDraw(tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
+    u32 slot = 0;
+    switch (sp->id) {
     case 0x751:
+    case 0x752:
         break;
     case 0x753:
         if (gBDisk.unk16 == 1) {
-            winSpriteSetDisp(sprite, 1);
+            winSpriteSetDisp(sp, 1);
         } else {
-            winSpriteSetDisp(sprite, 0);
+            winSpriteSetDisp(sp, 0);
         }
         break;
     case 0x754:
     case 0x755:
         if (gBDisk.unk16 == 2) {
-            winSpriteSetDisp(sprite, 1);
+            winSpriteSetDisp(sp, 1);
         } else {
-            winSpriteSetDisp(sprite, 0);
+            winSpriteSetDisp(sp, 0);
         }
         break;
     case 0x756:
         if (gBDisk.unk16 == 2) {
-            winSpriteSetDisp(sprite, 1);
+            winSpriteSetDisp(sp, 1);
         } else {
-            winSpriteSetDisp(sprite, 0);
+            winSpriteSetDisp(sp, 0);
         }
         break;
     case 0x76E:
-        idx = 1;
+        slot = 1;
     case 0x76D:
-        idx += 1;
+        slot++;
     case 0x76C:
-        idx += 1;
+        slot++;
     case 0x76B:
-        idx += 1;
+        slot++;
     case 0x76A:
-        idx += 1;
+        slot++;
     case 0x769:
-        idx += 1;
+        slot++;
     case 0x768:
-        idx += 1;
+        slot++;
     case 0x767:
-        idx += 1;
+        slot++;
     case 0x766:
-        idx += 1;
+        slot++;
     case 0x765:
-        idx += 1;
+        slot++;
     case 0x764:
-        idx += 1;
+        slot++;
     case 0x763:
-        idx += 1;
+        slot++;
     case 0x762:
-        idx += 1;
+        slot++;
     case 0x761:
-        idx += 1;
-    case 0x760:
-        if (getPanelIdx(idx, gBDisk.unk16) >= 0) {
-            drawPkmPanel(getPanelIdx(idx, gBDisk.unk16), win, sprite);
+        slot++;
+    case 0x760: {
+        BDisk* d = &gBDisk;
+        if (getPanelIdx(slot, d->unk16) >= 0) {
+            drawPkmPanel(getPanelIdx(slot, d->unk16), w, sp);
         }
         break;
+    }
+    case 0x779:
+    case 0x77A:
+    case 0x77B:
+    case 0x77C:
+    case 0x77D:
+    case 0x77E:
+    case 0x77F:
+    case 0x780:
+    case 0x781:
+    case 0x782:
+    case 0x783:
+    case 0x784:
+    case 0x785:
+    case 0x786:
+    case 0x787:
+    case 0x788:
+    case 0x789:
+    case 0x78A:
+    case 0x78B:
+    case 0x78C:
+    case 0x78D:
+    case 0x78E:
+    case 0x78F:
+    case 0x790:
+    case 0x791:
+    case 0x792:
+    case 0x793:
+    case 0x794:
+    case 0x795:
+    case 0x796:
+    case 0x797:
+    case 0x798:
+    case 0x799:
+    case 0x79A:
+    case 0x79B:
+    case 0x79C:
+    case 0x79D:
+    case 0x79E:
+    case 0x79F:
+    case 0x7A0:
+    case 0x7A1:
+    case 0x7A2:
+    case 0x7A3:
+    case 0x7A4:
+    case 0x7A5:
+    case 0x7A6:
+    case 0x7A7:
+    case 0x7A8:
+    case 0x7A9:
+    case 0x7AA:
+    case 0x7AB:
+    case 0x7AC:
+    case 0x7AD:
+    case 0x7AE:
+    case 0x7AF:
+    case 0x7B0:
+    case 0x7B1:
+    case 0x7B2:
+    case 0x7B3:
+    case 0x7B4:
+    case 0x7B5:
+        break;
     case 0x7BB:
-        sprite->value4C = deckDataVirtualDB_GetExplanetion2(gBDisk.selectedID);
+        sp->value4C = deckDataVirtualDB_GetExplanetion2(gBDisk.selectedID);
         break;
     case 0x7BC:
-        if (win->menu != windowGetActiveID()) {
-            sprite->value4C = 0xE2E2;
+        if (w->menu != windowGetActiveID()) {
+            sp->value4C = 0xE2E2;
         } else {
-            sprite->value4C = 0xE300;
+            sp->value4C = 0xE300;
         }
         break;
     case 0x7BD:
-        if (win->menu == windowGetActiveID()) {
-            winSpriteSetDisp(sprite, 1);
+        if (w->menu == windowGetActiveID()) {
+            winSpriteSetDisp(sp, 1);
         } else {
-            winSpriteSetDisp(sprite, 0);
+            winSpriteSetDisp(sp, 0);
         }
         break;
     case 0x7BE:
-        if (win->menu != windowGetActiveID()) {
-            winSpriteSetDisp(sprite, 1);
+        if (w->menu != windowGetActiveID()) {
+            winSpriteSetDisp(sp, 1);
         } else {
-            winSpriteSetDisp(sprite, 0);
+            winSpriteSetDisp(sp, 0);
         }
         break;
     }

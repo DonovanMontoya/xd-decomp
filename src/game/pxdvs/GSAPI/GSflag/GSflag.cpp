@@ -47,32 +47,44 @@ static u32 _flagGet(u32* words, const GSflagData* data, s32 id) {
     return (words[word] >> shift) & 1;
 }
 
-static void _flagSet(u32* words, const GSflagData* data, s32 id, u32 value) {
-    if (words == 0) {
+static void _flagSet(u32* bits, const GSflagData* data, s32 id, u32 value) {
+    u32 length;
+    u32 pos;
+    u32 bitLength;
+    u32 word;
+    u32 shift;
+
+    if (bits == NULL) {
         GSlogWrite("ERROR[GSflagSet]:Initialization has not finished.\n");
         return;
     }
-    u32 position = data[id].bitPosition;
-    u32 width = data[id].bitLength;
-    s32 valueWidth = _flagGetBitLength(value);
-    if (valueWidth > width) {
-        GSlogWrite("ERROR[GSflagSet]:Overflow BitValue FlagID=%d Value=%d (%d BitLength=%d)>(Limit=%dBit).\n", id, value, value, valueWidth, width);
-        value &= _flagAND[width];
+    pos = data[id].bitPosition;
+    length = data[id].bitLength;
+    bitLength = _flagGetBitLength(value);
+    if (bitLength > length) {
+        GSlogWrite("ERROR[GSflagSet]:Overflow BitValue FlagID=%d Value=%d (%d BitLength=%d)>(Limit=%dBit).\n", id,
+                   value, value, bitLength, length);
+        value &= _flagAND[length];
     }
-    u32 word = (u32)position >> 5;
-    s32 shift = position & 31;
-    if (width > 1) {
-        u32 end = width + shift;
-        s32* ptr = (s32*)&words[word];
-        ptr[0] = (value << shift) | (ptr[0] & ~(_flagAND[width] << shift));
-        if (end >= 32) {
-            s32 extra = end - 32;
-            ptr[1] = (value >> (width - extra)) | (ptr[1] & ~_flagAND[extra]);
+    word = pos >> 5;
+    shift = pos & 0x1F;
+    if (length > 1) {
+        u32 low = bits[word];
+        u32 v = value << shift;
+        low &= ~(_flagAND[length] << shift);
+        bits[word] = v | low;
+        if (length + shift >= 32) {
+            u32 high;
+            u32 over = length + shift - 32;
+            high = bits[word + 1];
+            v = value >> (length - over);
+            high &= ~_flagAND[over];
+            bits[word + 1] = v | high;
         }
     } else if (value == 0) {
-        words[word] &= ~(1 << shift);
+        bits[word] &= ~(1 << shift);
     } else {
-        words[word] |= 1 << shift;
+        bits[word] |= 1 << shift;
     }
 }
 

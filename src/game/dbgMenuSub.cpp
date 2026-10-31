@@ -84,7 +84,6 @@ s32 dbgMenuGetRootMenu(void) {
     case 2:
         return 0x1F1;
     case 0:
-    case 1:
     default:
         return 2;
     }

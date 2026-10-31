@@ -14,28 +14,39 @@ static s32 _scriptEventColID = -1;
 static GSvec _vHizukiWalkkPos[3];
 static s32 _vHizukiWalkPosCount;
 
-u32 scriptSoundOpenPlayME(u32 me, u32 time, u32 flag) {
-    FloorBgmMask* mask = floorSound_getBgmMaskObj();
-    f32 wait = (f32)time / 1000.0f;
-    u32 bgm = soundGetBGMID();
-    u32 env = soundGetEnvID();
-    u32 volume = soundGetVolume();
+u8 scriptSoundOpenPlayME(u32 id, u32 time, u8 flag)
+{
+    u32 bgm;
+    s32 env;
+    s32 volume;
+    u8 ret;
+    FloorBgmMask* mask;
+    f32 wait;
+    mask = floorSound_getBgmMaskObj();
+    wait = (f32)time / 1000.0f;
+    bgm = soundGetBGMID();
+    env = soundGetEnvID();
+    volume = soundGetVolume();
     GSflagSet(0x8FA, 1);
-    if (mask) mask->startMECallback();
-    if (bgm != 0xFFFFFFFF) {
+    if (mask) {
+        mask->startMECallback();
+    }
+    if (bgm != -1) {
         GSsndPause(bgm, time, 0);
         soundSetVolumeID(env, time, 0);
         scriptWaitTime(wait);
     }
-    flag = soundPlayME(me, time, flag);
-    if (me != 0xFFFFFFFF) {
+    ret = ((u8(*)(u32, u32, u8))soundPlayME)(id, time, flag);
+    if (id != -1) {
         GSsndContinue(bgm, time, 0);
         soundSetVolumeID(env, time, volume);
         scriptWaitTime(wait);
     }
-    if (mask) mask->endMECallback();
+    if (mask) {
+        mask->endMECallback();
+    }
     GSflagSet(0x8FA, 0);
-    return flag;
+    return ret;
 }
 
 u8 pcBoxAllSearchPokemon(s32 id) {

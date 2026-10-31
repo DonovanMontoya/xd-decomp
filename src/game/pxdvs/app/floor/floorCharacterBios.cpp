@@ -47,36 +47,37 @@ floorCharacter_dd_ *floorCharacterBiosFindByResID(u32 groupID, u32 resourceID) {
 floorCharacter_dd_ *floorCharacterBiosGetCurrentPtr(u32 index) { return floorCharacterBiosGetPtr(GSfloorGetCurrent(), index); }
 floorCharacter_dd_ *floorCharacterBiosGetPtr(u32 floorID, u32 index) { return floorDataBiosGetCharInfo(floorDataBiosGetPtr(floorID), index); }
 void floorCharacterBiosInitGlobalCharacter() {
+    floorCharacter_dd_ c;
+
     memset(_globalCharacter, 0, sizeof(_globalCharacter));
-    floorCharacter_dd_ character;
-    memset(&character, 0, sizeof(character));
-    character.visibility = 1;
-    character.isHit = 1;
-    character.flag4 = 1;
-    character.talkWallThrough = 1;
-    character.peopleIndex = 0;
-    character.moveType = 0;
-    character.talkStartType = 2;
-    character.flag2 = 1;
-    character.nameID = 0;
-    character.talkEndType = 0;
-    character.parameter2 = 0;
-    character.parameter3 = 0;
-    character.rotation = 0;
-    character.resourceID = 0;
-    character.moveScriptID = 0;
-    character.talkScriptID = 0;
-    character.x = 0.0f;
-    character.y = 0.0f;
-    character.z = 0.0f;
-    character.nameID = 1;
-    character.peopleIndex = 2;
-    _globalCharacter[0] = character;
-    character.nameID = 3;
-    character.peopleIndex = 90;
-    _globalCharacter[1] = character;
-    character.nameID = 24;
-    character.peopleIndex = 45;
-    _globalCharacter[2] = character;
+    memset(&c, 0, sizeof(c));
+    c.visibility = 1;
+    c.isHit = 1;
+    c.flag4 = 1;
+    c.talkWallThrough = 1;
+    c.flag2 = 1;
+    c.moveType = 0;
+    c.talkStartType = 2;
+    c.talkEndType = 0;
+    c.parameter2 = 0;
+    c.parameter3 = 0;
+    c.rotation = 0;
+    c.peopleIndex = 0;
+    c.nameID = 0;
+    c.resourceID = 0;
+    c.moveScriptID = 0;
+    c.talkScriptID = 0;
+    c.x = 0.0f;
+    c.y = 0.0f;
+    c.z = 0.0f;
+    c.nameID = 1;
+    c.peopleIndex = 2;
+    _globalCharacter[0] = c;
+    c.nameID = 3;
+    c.peopleIndex = 90;
+    _globalCharacter[1] = c;
+    c.nameID = 0x18;
+    c.peopleIndex = 45;
+    _globalCharacter[2] = c;
 }
 }
