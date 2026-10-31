@@ -434,17 +434,18 @@ struct _PLACEOBJECT2 {
     u8 flags;u8 reserved1[3];s32 character,depth;
     FLASHMATRIX matrix;FLASHCXFORM cxform;u32 ratio,name;
 };
+static inline u16 flashLast(FlashMenu*m, s32 layer){return ((u16*)m->items[m->field10].extra)[(u16)layer];}
 inline void flashPlaceReference(FlashMenu* menu,s32 depth, _PLACEOBJECT2* object) {
     if((s32)menu->field14 != 0) {
-        if(menu->activeFrame <= ((u16*)menu->items[menu->field10].extra)[(u16)menu->activeLayer]) {
+        if(menu->activeFrame <= flashLast(menu, menu->activeLayer)) {
             FlashItem* item=&((FlashLayer*)menu->layers)[menu->activeLayer].items[depth];
             item->field30=0;item->field34=(s32)object;
         }
     } else {menu->items[depth].field30=0;menu->items[depth].field34=(s32)object;}
 }
-inline void flashPlaceCharacter(FlashMenu* menu,u16 character, s32 depth) {
+inline void flashPlaceCharacter(FlashMenu* menu,s32 depth,u16 character) {
     if((s32)menu->field14 != 0) {
-        if(menu->activeFrame <= ((u16*)menu->items[menu->field10].extra)[(u16)menu->activeLayer]) {
+        if(menu->activeFrame <= flashLast(menu, menu->activeLayer)) {
             FlashItem* item=&((FlashLayer*)menu->layers)[menu->activeLayer].items[depth];
             item->frame=character;
         }
@@ -452,7 +453,7 @@ inline void flashPlaceCharacter(FlashMenu* menu,u16 character, s32 depth) {
 }
 inline void flashPlaceMatrix(FlashMenu* menu,FLASHMATRIX* matrix,s32 depth) {
     if((s32)menu->field14 != 0) {
-        if(menu->activeFrame <= ((u16*)menu->items[menu->field10].extra)[(u16)menu->activeLayer]) {
+        if(menu->activeFrame <= flashLast(menu, menu->activeLayer)) {
             FlashItem* item=&((FlashLayer*)menu->layers)[menu->activeLayer].items[depth];
             memcpy(&item->matrix,matrix,0x18);
         }
@@ -460,15 +461,15 @@ inline void flashPlaceMatrix(FlashMenu* menu,FLASHMATRIX* matrix,s32 depth) {
 }
 inline void flashPlaceColor(FlashMenu* menu,FLASHCXFORM* color,s32 depth) {
     if((s32)menu->field14 != 0) {
-        if(menu->activeFrame <= ((u16*)menu->items[menu->field10].extra)[(u16)menu->activeLayer]) {
+        if(menu->activeFrame <= flashLast(menu, menu->activeLayer)) {
             FlashItem* item=&((FlashLayer*)menu->layers)[menu->activeLayer].items[depth];
             memcpy(&item->cxform,color,0x10);
         }
     } else {memcpy(&menu->items[depth].cxform,color,0x10);}
 }
-inline void flashPlaceRatio(FlashMenu* menu,u32 ratio,s32 depth) {
+inline void flashPlaceRatio(FlashMenu* menu,s32 depth,u32 ratio) {
     if((s32)menu->field14 != 0) {
-        if(menu->activeFrame <= ((u16*)menu->items[menu->field10].extra)[(u16)menu->activeLayer]) {
+        if(menu->activeFrame <= flashLast(menu, menu->activeLayer)) {
             FlashItem* item=&((FlashLayer*)menu->layers)[menu->activeLayer].items[depth];
             item->depth=(f32)ratio/65536.0f;
         }
@@ -477,10 +478,10 @@ inline void flashPlaceRatio(FlashMenu* menu,u32 ratio,s32 depth) {
 void FlashMenu::ParsePlaceObject2Sub(_PLACEOBJECT2* object) {
     u8 flags=object->flags;
     flashPlaceReference(this,object->depth,object);
-    if(flags&2) flashPlaceCharacter(this,object->character,object->depth);
+    if(flags&2) flashPlaceCharacter(this,object->depth,object->character);
     if(flags&4) flashPlaceMatrix(this,&object->matrix,object->depth);
     if(flags&8) flashPlaceColor(this,&object->cxform,object->depth);
-    if(flags&16) flashPlaceRatio(this,object->ratio,object->depth);
+    if(flags&16) flashPlaceRatio(this,object->depth,object->ratio);
     if((flags&32) && header->relocated==0 && field1E!=0) object->name=(u32)object+object->name;
 }
 
