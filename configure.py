@@ -483,7 +483,7 @@ config.libs = [
             Object(MatchingFor("GXXE01", "NXXJ01"), "dolphin/os/OSFatal.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "dolphin/os/OSFont.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "dolphin/os/OSInterrupt.c"),
-            Object(Equivalent, "dolphin/os/OSLink.c"),
+            Object(MatchingFor("GXXE01"), "dolphin/os/OSLink.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "dolphin/os/OSMemory.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "dolphin/os/OSMutex.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "dolphin/os/OSReboot.c"),
@@ -782,7 +782,7 @@ config.libs = [
         minor=0,
         patch=3,
         objects=[
-            Object(NonMatching, "musyx/runtime/seq.c", src_dir="src" if config.version == "GXXE01" else None),
+            Object(MatchingFor("GXXE01"), "musyx/runtime/seq.c", src_dir="src" if config.version == "GXXE01" else None),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/synth.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/seq_api.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/snd_synthapi.c"),
@@ -793,7 +793,7 @@ config.libs = [
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/synth_ac.c"),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/synth_dbtab.c"),
             Object(MatchingFor("GXXE01"), "musyx/runtime/synth_adsr.c", src_dir="src" if config.version == "GXXE01" else None),
-            Object(NonMatching, "musyx/runtime/synth_vsamples.c"),
+            Object(MatchingFor("GXXE01"), "musyx/runtime/synth_vsamples.c"),
             Object(MatchingFor("GXXE01"), "musyx/runtime/s_data.c", src_dir="src" if config.version == "GXXE01" else None),
             Object(MatchingFor("GXXE01", "NXXJ01"), "musyx/runtime/hw_dspctrl.c"),
             Object(MatchingFor("GXXE01"), "musyx/runtime/hw_volconv.c", src_dir="src" if config.version == "GXXE01" else None),
@@ -863,13 +863,13 @@ config.libs = [
         "objects": [
             Object(NonMatching, "game/menuData.c"),
             Object(MatchingFor("GXXE01"), "game/menuTool.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
-            Object(NonMatching, "game/menuColosseumBattleConnection.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
+            Object(MatchingFor("GXXE01"), "game/menuColosseumBattleConnection.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(NonMatching, "game/menuSeq.c"),
             Object(NonMatching, "game/menuSprite.c"),
             Object(MatchingFor("GXXE01"), "game/menuPokeCoupon.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/menuKeyDisc.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuPocketBattleDisk.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
-            Object(NonMatching, "game/menuWorldMapMX.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
+            Object(MatchingFor("GXXE01"), "game/menuWorldMapMX.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(NonMatching, "game/menuItemMX.cpp"),
             Object(MatchingFor("GXXE01"), "game/menuPokemon.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(NonMatching, "game/menuFightStatus.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
@@ -887,7 +887,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/menuPdaMailXD.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuPdaMailList.XD.cpp", extra_cflags=["-inline noauto", "-lang c++", "-opt nopeephole", "-use_lmw_stmw on"]),
             Object(MatchingFor("GXXE01"), "game/menuColosseumBattle.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/menuCB_BattleResult.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
+            Object(MatchingFor("GXXE01"), "game/menuCB_BattleResult.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuCB_BattleStart.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuCB_Bios.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuCB_Common.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
@@ -935,7 +935,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/menuUseItem.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
             Object(NonMatching, "game/menuItemDebugRelease.c"),
             Object(MatchingFor("GXXE01"), "game/menuMewWaza.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
-            Object(NonMatching, "game/menuMoveDemo.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
+            Object(MatchingFor("GXXE01"), "game/menuMoveDemo.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuTitleOption.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
         ],
     },
@@ -1006,7 +1006,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSscratch/GSscratch.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GStexture/GStexture.cpp", extra_cflags=["-O4", "-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSthread/GSthread.cpp", extra_cflags=["-inline off", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSinput/GSinput.cpp", cflags=cflags_xd_input),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSinput/GSinput.cpp", cflags=cflags_xd_input),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSres/GSres.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
 
             # GSmsg
@@ -1017,7 +1017,7 @@ config.libs = [
 
             # GScolsys
             Object(NonMatching, "game/pxdvs/GSAPI/GScolsys/GScolsys2.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GScolsys/GScolsys2Draw.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GScolsys/GScolsys2Draw.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GScolsys/GScolsys2Walk.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GScolsys/GScolsys2Hit.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GScolsys/GScolsys2Util.cpp"),
@@ -1027,7 +1027,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GScolsys/GScolsys2Sun.cpp"),
 
             # GSparticle
-            Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/GSparticle.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSparticle/GSparticle.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peParticle.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSparticle/peNode.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peBank.cpp"),
@@ -1385,7 +1385,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/app/fight/fightMenu.cpp", cflags=cflags_xd_app_fight),
 
             # fightTimer
-            Object(NonMatching, "game/pxdvs/app/fight/fightTimer/fightTimer.cpp", extra_cflags=["-inline off"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightTimer/fightTimer.cpp", extra_cflags=["-inline off"]),
 
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/d2present/d2present.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/effectEditor/effectEditor.cpp"),

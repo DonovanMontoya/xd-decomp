@@ -42,57 +42,103 @@ static s32 getMdlEventListPass(GSvec *start,GSvec *end,CCD_THRUMDL_HEAD *model,G
     }
     return count;
 }
-extern "C" s32 GScolsys2ThruPassEventID(GSvec *start,GSvec *end,ThruEvent *events) {
-    s32 count=0;
-    ThruEvent temporary[4];
-    GSmtx matrix,rotation;
-    Vec direction,crossing;
-    f32 rate;
-    u8 enabled;
-    ThruFile *head=GScolsys2GetCCDFileHead();
-    if(!head) return 0;
-    ThruObject *object=head->objects;
-    for(u32 i=0;i<head->count && count<4;i++,object++) {
-        GScolsys2GetObjEnable(i,&enabled);
-        if(enabled && object->model) {
-            CCD_THRUMDL_HEAD *model=object->model;
-            s32 found;
-            if(object->flags&1) {
-                GScolsys2GetObjMatrix(matrix.m,i);
-                GScolsys2GetObjRotMatrix(rotation.m,i);
-                found=getMdlEventListPass(start,end,model,&matrix,&rotation,temporary);
-            } else {
-                s32 used=0;
-                PSVECSubtract((Vec *)end,(Vec *)start,&direction);
-                ThruPolygon *polygon=model->polygons;
-                ThruEvent *output=temporary;
-                for(u32 j=0;j<model->count && used<4;j++,polygon++) {
-                    ThruEvent *existing=temporary;
-        s32 duplicate;
-        for(duplicate=0;duplicate<used;existing++,duplicate++) if(polygon->eventID==existing->eventID) break;
-        if(duplicate<used) continue;
-                    if(PSVECDotProduct(&polygon->normal,&direction)>=0.0f) continue;
-                    if(segmentContact(&crossing,&rate,&polygon->normal,polygon->vertices,start,end)) {
-                        used++;
-                        copyEvent(output,polygon->vertices,&polygon->normal,polygon->eventID);
-                        output++;
-                    }
+static inline u8 checkStaticThruPass(GSvec* start, GSvec* end, Vec* normal, Vec* triangle) {
+    Vec crossing;
+    f32 parameter;
+    if (!GScolsys2UtilGetCpPlaneLine((Vec*)&crossing, &parameter, normal, triangle, (Vec*)start, (Vec*)end)) return 0;
+    if (parameter < 0.0f || parameter > 1.0f) return 0;
+    if (!GScolsy2UtilChkInTri((Vec*)&crossing, triangle, normal)) return 0;
+    return 1;
+}
+inline void appendStaticThruPassTrigger(GSvec* start, GSvec* end, Vec* direction,
+                                         ThruPolygon* model, ThruEvent* events,
+                                         s32& eventCount)
+{
+    s32 duplicate;
+    for (duplicate = 0; duplicate < eventCount; duplicate++) {
+        if (events[duplicate].eventID == model->eventID) break;
+    }
+    if (duplicate < eventCount) return;
+    if (PSVECDotProduct((const Vec *)&model->normal, (const Vec *)direction) >= 0.0f) return;
+    Vec* normal = &model->normal;
+    if (!checkStaticThruPass(start, end, normal, model->vertices)) return;
+    u16 eventId = model->eventID;
+    for (s32 point = 0; point < 3; point++) {
+        *(Vec*)&events[eventCount].vertices[point] = model->vertices[point];
+    }
+    events[eventCount].normal = model->normal;
+    events[eventCount].eventID = eventId;
+    eventCount++;
+}
+inline s32 collectFixedThruPassEvents(GSvec* start, GSvec* end,
+                                      CCD_THRUMDL_HEAD* head, ThruEvent* out)
+{
+    ThruPolygon* modelCursor;
+    u32 modelIndex;
+    s32 passEventCount;
+    Vec travelDirection;
+
+    passEventCount = 0;
+    PSVECSubtract((const Vec *)end, (const Vec *)start, (Vec *)&travelDirection);
+    modelCursor = (ThruPolygon*)head->polygons;
+    for (modelIndex = 0; modelIndex < (u32)head->count && passEventCount < 4; modelIndex++, modelCursor++) {
+        appendStaticThruPassTrigger(start, end, &travelDirection, modelCursor, out, passEventCount);
+    }
+    return passEventCount;
+}
+extern "C" s32 GScolsys2ThruPassEventID(GSvec* start, GSvec* end, ThruEvent* out)
+{
+    ThruFile* collisionFile;
+    ThruObject* objectCursor;
+    CCD_THRUMDL_HEAD* head;
+    u32 objectIndex;
+    s32 eventCount = 0;
+    ThruEvent objectEvents[4];
+    GSmtx objectMatrix;
+    GSmtx rotationMatrix;
+
+    collisionFile = GScolsys2GetCCDFileHead();
+    if (collisionFile == 0) {
+        return 0;
+    }
+    objectCursor = collisionFile->objects;
+    for (objectIndex = 0; objectIndex < (u32)collisionFile->count && eventCount < 4; objectIndex++, objectCursor++) {
+        u8 enabled;
+        s32 objectEventCount;
+        s32 eventIndex;
+
+        GScolsys2GetObjEnable(objectIndex, &enabled);
+        if (enabled == 0) continue;
+        head = objectCursor->model;
+        if (head == 0) continue;
+        if (objectCursor->flags & 1) {
+            GScolsys2GetObjMatrix(objectMatrix.m, objectIndex);
+            GScolsys2GetObjRotMatrix(rotationMatrix.m, objectIndex);
+            objectEventCount = getMdlEventListPass(start, end, head, &objectMatrix, &rotationMatrix, objectEvents);
+        } else {
+            objectEventCount = collectFixedThruPassEvents(start, end, head, objectEvents);
+        }
+        for (eventIndex = 0; eventIndex < objectEventCount && eventCount < 4; eventIndex++) {
+            s32 duplicateIndex;
+
+            for (duplicateIndex = 0; duplicateIndex < eventCount; duplicateIndex++) {
+                if (out[duplicateIndex].eventID == objectEvents[eventIndex].eventID) {
+                    break;
                 }
-                found=used;
             }
-            ThruEvent *entry=temporary;
-            for(s32 j=0;j<found && count<4;j++,entry++) {
-                ThruEvent *existing=events;
-                s32 duplicate;
-                for(duplicate=0;duplicate<count;existing++,duplicate++) if(existing->eventID==entry->eventID) break;
-                if(duplicate>=count) {
-                    copyEvent(&events[count],entry);
-                    count++;
-                }
+            if (duplicateIndex < eventCount) {
+                continue;
             }
+            s32 outputIndex = eventCount++;
+            for (s32 point = 0; point < 3; point++) {
+                out[outputIndex].vertices[point] = objectEvents[eventIndex].vertices[point];
+            }
+            out[outputIndex].normal = objectEvents[eventIndex].normal;
+            out[outputIndex].eventID = objectEvents[eventIndex].eventID;
+
         }
     }
-    return count;
+    return eventCount;
 }
 static inline u8 faceContact(Vec *point,Vec *vertices,Vec *normal,f32 radiusSquared) {
     Vec crossing;

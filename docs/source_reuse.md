@@ -159,6 +159,10 @@ commit `b74b73e67debf8b4c7a7277f424650918bb94834` (CC0):
   `menuPocket`, `menuPokemon`, `menuPokemonStatus`, `menuBattleDisk`, and
   `menuPocketTool`: matching draw, cursor, action, and list routines in the
   corresponding menu sources.
+- `menuWorldMapMX`: `WorldMap::CalcModel2D`.
+- `menuColosseumBattleConnection`: connection main control.
+- `GScolsys2Thru`: `GScolsys2ThruPassEventID`.
+- `GScolsys2Draw`: hit-model drawing, fixed-object display lists, and the draw entry.
 - `menuCB_BattleResult`: `_menuCB_BattleResultTaisen`, named `menuCBResultMain`
   in the donor.
 - `GSparticle`: `GSparticlePreUpdate` and `GSparticleLoad`.
@@ -166,6 +170,8 @@ commit `b74b73e67debf8b4c7a7277f424650918bb94834` (CC0):
 - `peParticle`: particle depth sorting, container and node rendering, and start.
 - `peBank`: `peBankFreeFile`.
 - `GSinput`: `_inputUpdateMotors`, including the volatile motor state types.
+- `fightTimer`: the used zero and frame-rate constant arrays and exported timer
+  API signatures from `src/game/app/fight/fightTimer/fightTimer.cpp`.
 
 Adaptations preserve the existing unit layouts and symbols. Narrow prototype,
 member padding, and constant-table corrections follow the retail object. Every
@@ -178,6 +184,18 @@ using `src/hsd/mobj.c` from
 commit `e354ba3f0475ac50af3b7d9dccc1f2855be8369c` (MIT). The linker removes the
 unused helpers while retaining their shared literal pool. The linked unit passes
 the retail DOL hash check; the license notice below applies.
+
+The natural recursive bodies for `HSD_JObjReqAnimAllByFlags` and
+`HSD_JObjDispAll` were restored from XD commit
+`50a8d7284ec86bb82c2a387e335a2099cb1a905c`. A scoped inline-size recipe also
+matches `HSD_JObjSetMtxDirtySub`, retaining all earlier exact functions. The unit
+remains nonmatching pending its complete linked layout.
+
+`GSparticle` retains the genuine unused `GSparticleSetGeneratorZDraw` diagnostic
+API. Immediate emission of this unforced function before the deferred functions
+preserves the retail diagnostic string order; the linker removes its unused
+code. The module initializer remains an ordinary local aggregate. The complete
+linked unit passes the retail DOL hash check.
 
 ## Colosseum license notice
 

@@ -114,15 +114,18 @@ const void* __OSStringTable AT_ADDRESS(OS_BASE_CACHED | 0x30D0);
   } while (0)
 
 #pragma dont_inline on
+#pragma force_active on
 void OSNotifyLink(OSModuleInfo* module) {}
+#pragma force_active reset
 
+#pragma force_active on
 void OSNotifyUnlink(OSModuleInfo* module) {}
+#pragma force_active reset
 #pragma dont_inline reset
 
-void OSSetStringTable(void* stringTable) {
-    __OSStringTable = stringTable;
-}
+void OSSetStringTable(void* stringTable);
 
+#pragma force_active on
 static BOOL Relocate(OSModuleHeader* newModule, OSModuleHeader* module) {
     OSModuleID idNew;
     OSImportInfo* imp;
@@ -223,7 +226,9 @@ Found:
 
     return TRUE;
 }
+#pragma force_active reset
 
+#pragma force_active on
 static BOOL Link(OSModuleInfo* newModule, void* bss, BOOL fixed) {
     u32 i;
     OSSectionInfo* si;
@@ -316,11 +321,15 @@ static BOOL Link(OSModuleInfo* newModule, void* bss, BOOL fixed) {
     OSNotifyLink(newModule);
     return TRUE;
 }
+#pragma force_active reset
 
+#pragma force_active on
 BOOL OSLink(OSModuleInfo* newModule, void* bss) {
     return Link(newModule, bss, FALSE);
 }
+#pragma force_active reset
 
+#pragma force_active on
 BOOL OSLinkFixed(OSModuleInfo* newModule, void* bss) {
     ASSERTLINE(400, newModule->version <= OS_MODULE_VERSION && 3 <= newModule->version);
 
@@ -329,7 +338,9 @@ BOOL OSLinkFixed(OSModuleInfo* newModule, void* bss) {
     }
     return Link(newModule, bss, TRUE);
 }
+#pragma force_active reset
 
+#pragma force_active on
 static BOOL Undo(OSModuleHeader* newModule, OSModuleHeader* module) {
     OSModuleID idNew;
     OSImportInfo* imp;
@@ -424,7 +435,9 @@ Found:
 
     return TRUE;
 }
+#pragma force_active reset
 
+#pragma force_active on
 BOOL OSUnlink(OSModuleInfo* oldModule) {
     OSModuleHeader* moduleHeader;
     OSModuleInfo* moduleInfo;
@@ -485,10 +498,19 @@ BOOL OSUnlink(OSModuleInfo* oldModule) {
 
     return TRUE;
 }
+#pragma force_active reset
 
+#pragma force_active on
 void __OSModuleInit(void) {
     __OSModuleInfoList.head = __OSModuleInfoList.tail = 0;
     __OSStringTable = 0;
+}
+#pragma force_active reset
+
+OSModuleInfo* OSSearchModule(void* ptr, u32* section, u32* offset);
+
+void OSSetStringTable(void* stringTable) {
+    __OSStringTable = stringTable;
 }
 
 OSModuleInfo* OSSearchModule(void* ptr, u32* section, u32* offset) {
