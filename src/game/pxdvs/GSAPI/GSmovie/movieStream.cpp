@@ -307,8 +307,7 @@ extern "C" void _movieStreamDecode(__GSmovieStreaming* movie) {
                 component = 0;
                 frameAddress = (u32)audioRead->data;
                 sizes = (u32*)(frameAddress + 8);
-                payloadAddress = audioDecoder->componentCount * 4 + 8;
-                payloadAddress += frameAddress;
+                payloadAddress = frameAddress + audioDecoder->componentCount * 4 + 8;
                 for (; component < audioDecoder->componentCount; ++sizes, ++component) {
                     switch (audioDecoder->componentTypes[component]) {
                     case 1:
