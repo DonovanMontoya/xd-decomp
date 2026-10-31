@@ -135,47 +135,39 @@ static u32 _VideoDecode(__GSmovieStreaming* s, THPReadBuffer* rb, THPTextureSet*
 
 extern "C" void DCFlushRange(void*,u32);
 extern "C" void sndStreamARAMUpdate(u32,u32,u32,u32,u32);
+static inline void _fillStreamChannel(__GSmovieStreaming* movie,u64 playedIn,u32 remainingIn,s16* rightIn,s16* leftIn) {
+    u64 played;
+    u32 remaining;
+    s16* left;
+    s16* right;
+    left=leftIn;
+    right=rightIn;
+    remaining=remainingIn;
+    played=playedIn;
+    s32 status;
+    for(;;) {
+        u32 count=GetAudioSample(movie,left,right,remaining,&status);
+        played+=count;
+        if(status==0) break;
+        if(status==1) {
+            remaining-=count;left+=count;if(right)right+=count;
+            MovieDecoder* current=movie->decoder;
+            current->marks[current->markWrite]=played;
+            current->markWrite++;
+            if(current->markWrite>=5) current->markWrite=0;
+            continue;
+        }
+        memset(left,0,remaining*2);if(right)memset(right,0,remaining*2);break;
+    }
+}
 extern "C" u8 _StreamInitFillStreamBuffer(__GSmovieStreaming* movie) {
-    s32 stereoStatus,monoStatus;
     MovieDecoder* decoder=movie->decoder;
     u32 samples=((u32)(0.5f+(f32)(decoder->sampleRate*60)/1000.0f)+31)&~31;
     if(decoder->channels==2) {
-        u32 remaining=samples;
-        s16* left=decoder->leftBuffer;
-        s16* right=decoder->rightBuffer;
-        u64 played=decoder->samplesPlayed;
-        for(;;) {
-            u32 count=GetAudioSample(movie,left,right,remaining,&stereoStatus);
-            played+=count;
-            if(stereoStatus==0) break;
-            if(stereoStatus==1) {
-                remaining-=count;left+=count;if(right)right+=count;
-                MovieDecoder* current=movie->decoder;
-                current->marks[current->markWrite]=played;
-                if(++current->markWrite>=5) current->markWrite=0;
-                continue;
-            }
-            memset(left,0,remaining*2);if(right)memset(right,0,remaining*2);break;
-        }
+        _fillStreamChannel(movie,decoder->samplesPlayed,samples,decoder->rightBuffer,decoder->leftBuffer);
         decoder->samplesPlayed+=samples;
     } else {
-        u32 remaining=samples;
-        s16* left=decoder->leftBuffer;
-        s16* right=0;
-        u64 played=decoder->samplesPlayed;
-        for(;;) {
-            u32 count=GetAudioSample(movie,left,right,remaining,&monoStatus);
-            played+=count;
-            if(monoStatus==0) break;
-            if(monoStatus==1) {
-                remaining-=count;left+=count;if(right)right+=count;
-                MovieDecoder* current=movie->decoder;
-                current->marks[current->markWrite]=played;
-                if(++current->markWrite>=5) current->markWrite=0;
-                continue;
-            }
-            memset(left,0,remaining*2);if(right)memset(right,0,remaining*2);break;
-        }
+        _fillStreamChannel(movie,decoder->samplesPlayed,samples,0,decoder->leftBuffer);
         decoder->samplesPlayed+=samples;
     }
     u32 bytes=samples*2;
@@ -185,7 +177,7 @@ extern "C" u8 _StreamInitFillStreamBuffer(__GSmovieStreaming* movie) {
         DCFlushRange(decoder->rightBuffer,bytes);
         sndStreamARAMUpdate(decoder->rightStream,0,samples,0,0);
     }
-    movie->reserved1a=1;
+    *(u8*)&movie->reserved1a=1;
     return 1;
 }
 
