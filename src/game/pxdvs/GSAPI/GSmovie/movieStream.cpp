@@ -182,28 +182,19 @@ extern "C" u8 _StreamInitFillStreamBuffer(__GSmovieStreaming* movie) {
 }
 
 extern "C" u8 GSfsysStreamGetData(u32,u32,void*,u32,u32,void(*)(s32,void*,s32),void*,s32);
-static inline void _advanceStream(__GSmovieStreaming* movie,u32 size) {
-    MovieDecoder* decoder=movie->decoder;
-    decoder->streamOffset+=0x8000;
-    if(decoder->preload) {
-        if(decoder->streamOffset>=decoder->movieBytes) decoder->streamOffset=0;
-    } else if(decoder->streamOffset>=decoder->movieBytes) decoder->streamOffset=0;
-    else if(decoder->streamOffset>=GSfsysStreamGetCacheSize()) decoder->streamOffset=0;
-    _movieStreamPrepareGetDataCallback_Exec(movie,0,size);
-}
 static inline void prepareMovieStreamGetData(__GSmovieStreaming* movie) {
     MovieDecoder* decoder;
+    s32 interrupts;
     s32 state;
     u32 size;
-    s32 interrupts;
-    MovieDecoder* first=movie->decoder;
+    decoder=movie->decoder;
     interrupts=OSDisableInterrupts();
     switch(movie->state) {
     case 0:case 1:case 2:case 3:case 4:case 5:case 6:case 10:case 11:
         break;
     default:
-        if(!first->reads[first->readWrite].valid) {
-            size=first->fetchSize;
+        if(!decoder->reads[decoder->readWrite].valid) {
+            size=decoder->fetchSize;
             if(size) {
                 decoder=movie->decoder;
                 state=decoder->fetchState;
@@ -214,10 +205,10 @@ static inline void prepareMovieStreamGetData(__GSmovieStreaming* movie) {
                     u32 offset=decoder->streamOffset;
                     if(!(decoder->loop&1) && decoder->fetchPos+decoder->currentFrame>=decoder->frames) {
                         memset(buffer,0,0x8000);
-                        _advanceStream(movie,size);
+                        _movieStreamPrepareGetDataCallback(0,(void*)size,(s32)movie);
                     } else if(decoder->preload) {
                         memcpy(buffer,decoder->preloadBuffer+offset,0x8000);
-                        _advanceStream(movie,size);
+                        _movieStreamPrepareGetDataCallback(0,(void*)size,(s32)movie);
                     } else if(!GSfsysStreamGetData(movie->handle,0,buffer,0x8000,offset,_movieStreamPrepareGetDataCallback,(void*)size,(s32)movie)) {
                         decoder->fetchState=state;
                     }
@@ -242,8 +233,8 @@ extern "C" void _movieStreamPrepareGetData(__GSmovieStreaming* movie) {
 void _movieStreamPrepareGetDataCallback_Exec(__GSmovieStreaming* movie, u32 offset, u32 size) {
     s32 count = 0x8000 - offset;
     MovieDecoder* decoder = movie->decoder;
-    u8* source = decoder->streamBuffer + offset;
     u32 filled = decoder->reads[decoder->readWrite].size;
+    u8* source = offset + (u8*)decoder->streamBuffer;
     u8* destination = decoder->reads[decoder->readWrite].data + filled;
     if (filled + count > size) {
         count = size - filled;
