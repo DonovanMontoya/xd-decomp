@@ -35,21 +35,40 @@ static inline __GSmovieStreaming* findMovie(u32 handle) {
     }
     return 0;
 }
-static void _movieStreamTHPPlayerPrepareGetDataCallback(s32,void* context,s32) {
-    __GSmovieStreaming* movie=(__GSmovieStreaming*)context;
-    s32 interrupts;
-    MovieDecoder* decoder=movie->decoder;
-    _readOffset+=0x8000;
-    if(_readOffset>=decoder->movieBytes) _readOffset=0;
-    if(_readOffset>=GSfsysStreamGetCacheSize()) _readOffset=0;
-    _readAddr+=0x8000; _readBytes+=0x8000;
-    if(_readBytes>=decoder->movieBytes) { _readWaitFlag=1; return; }
-    interrupts=OSDisableInterrupts();
-    u8 success;
-    if(GSfsysStreamGetData(movie->handle,0,_readAddr,0x8000,_readOffset,_movieStreamTHPPlayerPrepareGetDataCallback,movie,0)==1) { success=1; _readWaitFlag=0; }
-    else success=0;
-    OSRestoreInterrupts(interrupts);
-    if(!success) _readWaitFlag=1;
+static void _movieStreamTHPPlayerPrepareGetDataCallback(s32, void*, s32);
+static inline bool _movieReadStart(__GSmovieStreaming* s) {
+    s32 level = OSDisableInterrupts();
+    bool started;
+    if ((u8)GSfsysStreamGetData(s->handle, 0, _readAddr, 0x8000, _readOffset,
+                                _movieStreamTHPPlayerPrepareGetDataCallback, s, 0) == 1) {
+        _readWaitFlag = 0;
+        started = true;
+    } else {
+        started = false;
+    }
+    OSRestoreInterrupts(level);
+    return started;
+}
+static void _movieStreamTHPPlayerPrepareGetDataCallback(s32, void* arg, s32) {
+    __GSmovieStreaming* s = (__GSmovieStreaming*)arg;
+    MovieDecoder* p = s->decoder;
+    _readOffset += 0x8000;
+    if (_readOffset >= p->movieBytes) {
+        _readOffset = 0;
+    }
+    if (_readOffset >= GSfsysStreamGetCacheSize()) {
+        _readOffset = 0;
+    }
+    _readAddr += 0x8000;
+    _readBytes += 0x8000;
+    if (_readBytes >= p->movieBytes) {
+        _readWaitFlag = 1;
+    } else {
+        bool started = _movieReadStart(s);
+        if (!started) {
+            _readWaitFlag = 1;
+        }
+    }
 }
 static inline void movieContinueOne(u32 handle) {
     if(_initFlag) {__GSmovieStreaming* movie=findMovie(handle);if(movie)movie->decoder->paused=0;}

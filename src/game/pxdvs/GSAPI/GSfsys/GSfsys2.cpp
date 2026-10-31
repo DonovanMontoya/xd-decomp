@@ -554,19 +554,28 @@ s32 _fsysReadStreamingExec(u32 group, u32 resource, u32 secondary) {
     GSfsysCancelWait(group);
     return _fsysExec(group, resource, 4, 0, 0, 0, secondary);
 }
-void GSfsysFree(u32 group) {
+void GSfsysFree(u32 id) {
+    GSfsysHeader* header;
+    FsysWork* work;
+    s32 i;
+    BOOL intr;
+
     if (_initFlag) {
-        BOOL interrupts = OSDisableInterrupts();
-        _fsysFreeStatus(group);
-        FsysWork* work = _fsysGetWork(group, 0);
-        if (work) {
-            GSfsysHeader* header = _fsysGetHeader((GSfsysRequest*)work);
-            if (header) for (u32 i = 0; i < header->fileCount; ++i) {
-                GSfsysResource* resource = _fsysGetResHeader((GSfsysRequest*)work, i);
-                if (resource) resource->flags &= ~8;
+        intr = OSDisableInterrupts();
+        _fsysFreeStatus(id);
+        work = _fsysGetWork(id, 0);
+        if (work != 0) {
+            header = _fsysGetHeader((GSfsysRequest*)work);
+            if (header != 0) {
+                for (i = 0; i < header->fileCount; i++) {
+                    GSfsysResource* res = _fsysGetResHeader((GSfsysRequest*)work, i);
+                    if (res != 0) {
+                        res->flags &= ~0x8;
+                    }
+                }
             }
         }
-        OSRestoreInterrupts(interrupts);
+        OSRestoreInterrupts(intr);
     }
 }
 void _fsysDelTAG(FsysBackgroundWork* entry, FsysBackgroundWork** root) {
@@ -737,22 +746,32 @@ void GSfsysDaemonBackground() {
         entry = entry->next;
     }
 }
-void _fsysBackgroundTaskNormalType(FsysBackgroundWork* entry, u8 copy) {
-    if (entry->loaded != 1) {
-        do {
-            if (_fsysBGTaskCancel(entry) == 1) return;
-            GSfsysResource* resource = entry->resource;
-            GSfsysBlock* block = resource->expandBlocks;
-            if (!block) return;
-            if (copy == 1) {
-                void* destination = (u8*)resource->expandedData + entry->consumedBytes;
-                memcpy(destination, block->data, _fsysGetTransLength(resource->length, entry->consumedBytes));
+void _fsysBackgroundTaskNormalType(FsysBackgroundWork* bg, u8 copy) {
+    GSfsysBlock* block;
+    u8* dst;
+
+    if (bg->loaded != 1) {
+        while (1) {
+            if (_fsysBGTaskCancel(bg) == 1) {
+                return;
             }
-            _fsysFreeBlock(&entry->resource->expandBlocks, 1);
-            entry->consumedBytes += _fsysBlockByteSize;
-        } while (entry->consumedBytes < entry->resource->length);
-        DCFlushRange(entry->resource->expandedData, entry->resource->length);
-        entry->loaded = 1;
+            block = bg->resource->expandBlocks;
+            if (block == 0) {
+                return;
+            }
+            if (copy == 1) {
+                dst = (u8*)bg->resource->expandedData + bg->consumedBytes;
+                s32 tmp2 = _fsysGetTransLength(bg->resource->length, bg->consumedBytes);
+                memcpy(dst, block->data, tmp2);
+            }
+            _fsysFreeBlock(&bg->resource->expandBlocks, 1);
+            bg->consumedBytes += _fsysBlockByteSize;
+            if (bg->consumedBytes >= bg->resource->length) {
+                break;
+            }
+        }
+        DCFlushRange(bg->resource->expandedData, bg->resource->length);
+        bg->loaded = 1;
     }
 }
 u8 _fsysCheckExpandCompleteAll(FsysWork* work) {
@@ -773,52 +792,66 @@ u8 _fsysCheckExpandCompleteAll(FsysWork* work) {
     }
     return complete;
 }
-u8 _fsysCheckExpandComplete(FsysWork* work, u32 index) {
-    GSfsysResource* resource = _fsysGetResHeader((GSfsysRequest*)work, index);
-    if (!resource) return 0;
-    BOOL interrupts = OSDisableInterrupts();
-    if (resource->token != 0xffff) { resource->reserved3C = resource->token; resource->token = 0xffff; }
-    OSRestoreInterrupts(interrupts);
-    u8 complete;
-    if (!(resource->flags & 8)) {
-        switch ((s32)resource->reserved3C) {
-        case 1:break;
+u8 _fsysCheckExpandComplete(FsysWork* work, u32 idx) {
+    GSfsysResource* res;
+    BOOL intr;
+    u8 done;
+
+    res = _fsysGetResHeader((GSfsysRequest*)work, idx);
+    if (res == 0) {
+        return 0;
+    }
+    intr = OSDisableInterrupts();
+    if ((s32)res->token != 0xFFFF) {
+        res->reserved3C = res->token;
+        res->token = 0xFFFF;
+    }
+    OSRestoreInterrupts(intr);
+    if (!(res->flags & 8)) {
+        switch (res->reserved3C) {
         case 3:
-            _fsysReadDataExec((GSfsysRequest*)work, resource);
+            _fsysReadDataExec((GSfsysRequest*)work, res);
             break;
         case 4:
-            if (_fsysExpandFileExec((GSfsysRequest*)work, resource) == 1)
-                _fsysReadDataExec((GSfsysRequest*)work, resource);
+            if (_fsysExpandFileExec((GSfsysRequest*)work, res) == 1) {
+                _fsysReadDataExec((GSfsysRequest*)work, res);
+            }
             break;
         case 5:
             if (work->cancelled == 1) {
                 _fsysWorkSetTaskStatus(work, 10);
-                _fsysResHeaderSetTaskStatus(resource, 1);
+                _fsysResHeaderSetTaskStatus(res, 1);
             } else {
-                s32 active = _fsysGetActiveTask(2);
-                if (_fsysGetActiveTask(1) + active == 0) {
-                    if (resource->streamBytes <= _fsysStreamGetNormalCacheSize())
-                        _fsysReadDataExec((GSfsysRequest*)work, resource);
-                } else if (resource->streamBytes <= _fsysStreamGetMinimumCacheSize()) {
-                    _fsysReadDataExec((GSfsysRequest*)work, resource);
+                if (_fsysGetActiveTask(1) + (s32)(_fsysGetActiveTask(2)) == 0) {
+                    if (res->streamBytes <= _fsysStreamGetNormalCacheSize()) {
+                        _fsysReadDataExec((GSfsysRequest*)work, res);
+                    }
+                } else if (res->streamBytes <= _fsysStreamGetMinimumCacheSize()) {
+                    _fsysReadDataExec((GSfsysRequest*)work, res);
                 }
             }
             break;
         case 2:
             if (work->cancelled == 1) {
                 _fsysWorkSetTaskStatus(work, 10);
-                _fsysResHeaderSetTaskStatus(resource, 1);
+                _fsysResHeaderSetTaskStatus(res, 1);
             }
             break;
+        case 0:
+        case 1:
+            break;
         }
-        complete = 0;
+        done = 0;
     } else {
-        complete = 1;
+        done = 1;
     }
-    interrupts = OSDisableInterrupts();
-    if (resource->token != 0xffff) { resource->reserved3C = resource->token; resource->token = 0xffff; }
-    OSRestoreInterrupts(interrupts);
-    return complete;
+    intr = OSDisableInterrupts();
+    if ((s32)res->token != 0xFFFF) {
+        res->reserved3C = res->token;
+        res->token = 0xFFFF;
+    }
+    OSRestoreInterrupts(intr);
+    return done;
 }
 void _fsysHeaderSizeReadDvdCallback(s32 result, GSdvdWork* dvd) {
     FsysWork* work = _fsysInfo2Work(dvd);

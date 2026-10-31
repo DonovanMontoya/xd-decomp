@@ -415,44 +415,41 @@ int Tiga::runParamsWait(int id, tigaVariant* params, int count, tigaVariant* res
     return 1;
 }
 
-long Tiga::runParamsPC(TPCCode* code, tigaVariant* params, int count, bool threaded) {
-    TigaThread* previous = currentThread;
+static inline void assignThreadArgument(tigaVariant* dst, const tigaVariant* src) { dst->type=src->type; dst->flags=src->flags; dst->value=src->value; }
+s32 Tiga::runParamsPC(TPCCode* code, tigaVariant* args, int count, bool useThread)
+{
     int index;
     long handle;
-    if (makeThread(code, index, handle) != 0) {
-        int i;
+    TigaThread* prev = currentThread;
+    if (makeThread(code, index, handle)) {
         currentThread = threads[index];
-        TigaThread* thread = threads[index];
-        tigaVariant* stack = thread->stackPtr10;
-        for (i = 0; i < count; i++) {
-            stack--;
-            tigaVariant* source = &params[count - i];
-            source--;
-            stack->type = source->type;
-            stack->flags = source->flags;
-            stack->value.integer = source->value.integer;
-            stack->flags = 0;
+        TigaThread* t = threads[index];
+        tigaVariant* sp = t->stackPtr10;
+        for (int i = 0; i < count; i++) {
+            sp--;
+            assignThreadArgument(sp, &args[count - i - 1]);
+            sp->flags = 0;
         }
-        stack--;
-        stack->type = 0x35;
-        stack->flags = 0;
-        stack->value.integer = 0;
-        thread->stackPtr10 = stack;
-        thread->stackPtr14--;
-        *thread->stackPtr14 = (s32)thread->stackPtr0C;
-        thread->stackPtr0C = stack;
-        if (threaded) {
-            void* created = floorCreateThreadLocal(1, 0x2000, 1, _executeScriptThread);
-            GSthreadSetName(created, "GSscript thread");
-            GSthreadSetArgs(created, 2, this, handle);
-            thread->thread = created;
+        sp--;
+        sp->type = 0x35;
+        sp->flags = 0;
+        sp->value.integer = 0;
+        t->stackPtr10 = sp;
+        t->stackPtr14--;
+        *t->stackPtr14 = (s32)t->stackPtr0C;
+        t->stackPtr0C = sp;
+        if (useThread) {
+            void* g = floorCreateThreadLocal(1, 0x2000, 1, _executeScriptThread);
+            GSthreadSetName(g, "GSscript thread");
+            GSthreadSetArgs(g, 2, this, handle);
+            t->thread = g;
         } else {
-            execute(thread);
+            execute(t);
         }
-        currentThread = previous;
-        return thread->handle;
+        currentThread = prev;
+        return t->handle;
     }
-    currentThread = previous;
+    currentThread = prev;
     return 0;
 }
 
@@ -882,11 +879,15 @@ void _executeScriptThread(Tiga* tiga, long id) {
 
 Tiga* Tiga::m_cpCurrentObject;
 
-s32 tigaErrMessage(const char* message) {
+#pragma push
+#pragma optimization_level 1
+void tigaErrMessage(const char* msg)
+{
     if (Tiga::m_cpCurrentObject != 0) {
+        const char* m = msg;
     }
-    return (s32)message;
 }
+#pragma pop
 
 static inline s32 expressionInteger(tigaVariant* value) {
     if(value->type==1)return value->value.integer;

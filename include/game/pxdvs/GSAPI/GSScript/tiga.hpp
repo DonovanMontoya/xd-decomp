@@ -332,7 +332,7 @@ public:
     static Tiga* m_cpCurrentObject;
 };
 
-s32 tigaErrMessage(const char*);
+void tigaErrMessage(const char*);
 void _executeScriptThread(Tiga*, long);
 
 }  // namespace GSscript

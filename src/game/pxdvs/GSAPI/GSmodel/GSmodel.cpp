@@ -620,50 +620,69 @@ static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer, s32 
     }
     GSgfxPerfbarCPUEntry(perf);
 }
+static inline bool modelRenderFlag(GSmodel* model, u32 flag) { return (model->flags & flag) == flag; }
 static void _modelRenderModelSub__FP10GSgfxLayer14GSgfxLayerPassP8_GSmodel(GSgfxLayer* layerPtr, s32 pass, GSmodel* model) {
     ModelRenderLayer* layer = (ModelRenderLayer*)layerPtr;
+    GScamera* camera;
+    u8 zCompare;
+
     modelUpdateTransform__FP8_GSmodel(model);
-    u32 fog = layer->fogEnabled != 0;
-    if (layer->kind == 0) {
+    zCompare = layer->fogEnabled != 0;
+    if (layer->kind != 0) {
+        return;
+    }
+    switch (pass) {
+    case 0:
+        if (zCompare != modelRenderFlag(model, 0x1000000)) {
+            modelSetLayerFog(layer, modelRenderFlag(model, 0x1000000));
+        }
+        break;
+    case 1:
+        if (zCompare != modelRenderFlag(model, 0x2000000)) {
+            modelSetLayerFog(layer, modelRenderFlag(model, 0x2000000));
+        }
+        break;
+    }
+    camera = model->camera;
+    if (camera == 0) {
+        camera = GScameraGetActiveCamera();
+    }
+    if (camera != 0 && camera->object != 0) {
+        HSD_JObj* jobj;
+
+        GScameraLoadProjection(camera, layerPtr);
+        layer->projectionFlag = 0;
+        layer->renderState[0].clipping |= 0x4;
+        layer->renderState[0].dirty |= 0x2;
+        layer->renderState[1].clipping |= 0x4;
+        layer->renderState[1].dirty |= 0x2;
+        FlushState__10GSgfxLayerFv(layerPtr);
+        HSD_StateInvalidate(-1);
+        GSlightSetupLights(camera->object);
+        modelShadowPrepare__FP8_GSmodelb(model, true);
+        jobj = modelGetRenderJObj__FP8_GSmodel(model);
         switch (pass) {
         case 0:
-            { u32 bit = model->flags & 0x1000000;
-            if (fog != ((model->flags >> 24) & 1)) modelSetLayerFog(layer, bit == 0x1000000); }
+            HSD_JObjDispAll(jobj, 0, 1, 0);
             break;
         case 1:
-            { u32 bit = model->flags & 0x2000000;
-            if (fog != ((model->flags >> 25) & 1)) modelSetLayerFog(layer, bit == 0x2000000); }
+            HSD_JObjDispAll(jobj, 0, 6, 0);
             break;
         }
-        GScamera* camera = model->camera;
-        if (!camera) camera = GScameraGetActiveCamera();
-        if (camera && camera->object) {
-            GScameraLoadProjection(camera, layerPtr);
-            layer->projectionFlag = 0;
-            layer->renderState[0].clipping |= 4;
-            layer->renderState[0].dirty |= 2;
-            layer->renderState[1].clipping |= 4;
-            layer->renderState[1].dirty |= 2;
-            FlushState__10GSgfxLayerFv(layerPtr);
-            HSD_StateInvalidate(-1);
-            GSlightSetupLights(camera->object);
-            modelShadowPrepare__FP8_GSmodelb(model, true);
-            HSD_JObj* joint = modelGetRenderJObj__FP8_GSmodel(model);
-            switch (pass) {
-            case 0: HSD_JObjDispAll(joint, 0, 1, 0); break;
-            case 1: HSD_JObjDispAll(joint, 0, 6, 0); break;
-            }
-            *(volatile u8*)0xCC008000 = 0x10;
-            *(volatile u16*)0xCC008000 = 0;
-            *(volatile u16*)0xCC008000 = 0x1005;
-            *(volatile u32*)0xCC008000 = 0;
-            modelShadowPrepare__FP8_GSmodelb(model, false);
-            InvalidateState__10GSgfxLayerFv(layerPtr);
-            model->renderToken = tokenMark__10GSgfxLayerFv(layerPtr);
+        *(volatile u8*)0xCC008000 = 0x10;
+        *(volatile u16*)0xCC008000 = 0;
+        *(volatile u16*)0xCC008000 = 0x1005;
+        *(volatile u32*)0xCC008000 = 0;
+        modelShadowPrepare__FP8_GSmodelb(model, false);
+        InvalidateState__10GSgfxLayerFv(layerPtr);
+        model->renderToken = tokenMark__10GSgfxLayerFv(layerPtr);
+    }
+    if (pass == 1) {
+        if (model->flags & 0x8000000) {
+            modelShadowRenderMarukage__FP8_GSmodelP10GSgfxLayer(model, layerPtr);
         }
-        if (pass == 1) {
-            if (model->flags & 0x8000000) modelShadowRenderMarukage__FP8_GSmodelP10GSgfxLayer(model, layerPtr);
-            if (model->flags & 0x200000) GSboundDraw__FP7GSboundP10GSgfxLayer((GSbound*)model->boundStorage, layerPtr);
+        if (model->flags & 0x200000) {
+            GSboundDraw__FP7GSboundP10GSgfxLayer((GSbound*)model->boundStorage, layerPtr);
         }
     }
 }

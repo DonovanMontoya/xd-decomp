@@ -305,41 +305,81 @@ void GSboundGetSize(GSbound* bound, Vec* size, u8 scale, u8 rotate) {
     }
 }
 s32 GSgfxProjectFastList(Vec*, Vec*, s32);
-s32 GSboundIsInViewFast(GSbound* bound) {
-    u8 outsideAll, outsideAny;
+static inline void _boundGenPointList(Vec* points, Vec* mm)
+{
+    points[0].x = mm[0].x;
+    points[0].y = mm[0].y;
+    points[0].z = mm[0].z;
+    points[1].x = mm[0].x;
+    points[1].y = mm[0].y;
+    points[1].z = mm[1].z;
+    points[2].x = mm[0].x;
+    points[2].y = mm[1].y;
+    points[2].z = mm[0].z;
+    points[3].x = mm[0].x;
+    points[3].y = mm[1].y;
+    points[3].z = mm[1].z;
+    points[4].x = mm[1].x;
+    points[4].y = mm[0].y;
+    points[4].z = mm[0].z;
+    points[5].x = mm[1].x;
+    points[5].y = mm[0].y;
+    points[5].z = mm[1].z;
+    points[6].x = mm[1].x;
+    points[6].y = mm[1].y;
+    points[6].z = mm[0].z;
+    points[7].x = mm[1].x;
+    points[7].y = mm[1].y;
+    points[7].z = mm[1].z;
+}
+static inline s32 _boundIsInScreenView(Vec* screen)
+{
     s32 i;
-    Vec* point;
-    Vec corners[8], projected[8], maximum, minimum;
-    if (bound->flags & 4) return 2;
-    GSboundGetMinMax(bound, &minimum, &maximum, 1, 1, 1, 0);
-    corners[0].x = minimum.x; corners[0].y = minimum.y; corners[0].z = minimum.z;
-    corners[1].x = minimum.x; corners[1].y = minimum.y; corners[1].z = maximum.z;
-    corners[2].x = minimum.x; corners[2].y = maximum.y; corners[2].z = minimum.z;
-    corners[3].x = minimum.x; corners[3].y = maximum.y; corners[3].z = maximum.z;
-    corners[4].x = maximum.x; corners[4].y = minimum.y; corners[4].z = minimum.z;
-    corners[5].x = maximum.x; corners[5].y = minimum.y; corners[5].z = maximum.z;
-    corners[6].x = maximum.x; corners[6].y = maximum.y; corners[6].z = minimum.z;
-    corners[7].x = maximum.x; corners[7].y = maximum.y; corners[7].z = maximum.z;
-    if (GSgfxProjectFastList(corners, projected, 8) != 2) return 2;
-    outsideAny=0;
-    outsideAll=0x1f;
-    i=0;
-    point=projected;
-    for (; i < 8; ++point, ++i) {
-        u8 outside;
-        if (point->x < 0.0f) outside = 1;
-        else if (point->x > 640.0f) outside = 2;
-        else outside = 0;
-        if (point->y < 0.0f) outside |= 4;
-        else if (point->y > 480.0f) outside |= 8;
-        if (point->z == -1.0f) outside |= 16;
-        outsideAny |= outside;
-        outsideAll &= outside;
+    u8 orCode = 0;
+    u8 andCode = 0x1f;
+    for (i = 0; i < 8; i++) {
+        u8 code;
+        if (screen[i].x < 0.0f) {
+            code = 1;
+        } else if (screen[i].x > 640.0f) {
+            code = 2;
+        } else {
+            code = 0;
+        }
+        if (screen[i].y < 0.0f) {
+            code |= 4;
+        } else if (screen[i].y > 480.0f) {
+            code |= 8;
+        }
+        if (screen[i].z == -1.0f) {
+            code |= 0x10;
+        }
+        orCode |= code;
+        andCode &= code;
     }
-    s32 result;
-    if (!outsideAny) result=2;
-    else { if (outsideAll) result=0; else result=1; }
-    return result;
+    if (orCode == 0) {
+        return 2;
+    } else if (andCode != 0) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+s32 GSboundIsInViewFast(GSbound* b)
+{
+    Vec mm[2];
+    Vec points[8];
+    Vec screen[8];
+
+    if (b->flags & 4) {
+        return 2;
+    }
+    GSboundGetMinMax(b, &mm[0], &mm[1], true, true, true, false);
+    _boundGenPointList(points, mm);
+    if (GSgfxProjectFastList(points, screen, 8) != 2) {
+        return 2;
+    }
+    return _boundIsInScreenView(screen);
 }
 }
 

@@ -44,6 +44,22 @@ functions. It does not change the license of the rest of this repository.
 | `game/pxdvs/app/fight/fightTrainerAiWazaValue.cpp` | `fightTrainerAiWazaValueMamoru`, `fightTrainerAiWazaValueIryokuHonoo` |
 | `game/maximum/GSAPI/particle/psdisp.cpp` | `psDispSubAppSRT`, `psDispSub` |
 | `game/pxdvs/GSAPI/GSsnd/sndStream.cpp` | `_sndStreamPrepareGetDataCallback` |
+| `game/pxdvs/GSAPI/GSinput/GSinput.cpp` | `GSinputMotorStart` |
+| `game/pxdvs/app/floor/floorFieldCameraEditor.cpp` | `floorInitFieldCameraEditor` |
+| `game/pxdvs/GSAPI/GSbound/GSbound.cpp` | `GSboundIsInViewFast` |
+| `game/pxdvs/GSAPI/GSmodel/shadow.cpp` | `modelShadowPrepare__FP8_GSmodelb` |
+| `game/pxdvs/GSAPI/GSmovie/GSmovie.cpp` | `_movieStreamTHPPlayerPrepareGetDataCallback__FlPvl` |
+| `game/pxdvs/GSAPI/GSmovie/movieStream.cpp` | `_VideoDecode__FP18__GSmovieStreamingP13THPReadBufferP13THPTextureSet` |
+| `game/pxdvs/GSAPI/GSshape/shapeObject.cpp` | `DrawShapeGfx__13GsShapeObjectFP10GSgfxLayersUc` |
+| `game/pxdvs/GSAPI/GSmodel/GSmodel.cpp` | `_modelRenderModelSub__FP10GSgfxLayer14GSgfxLayerPassP8_GSmodel` |
+| `game/pxdvs/GSAPI/GSfsys/GSfsys2.cpp` | `GSfsysFree`, `_fsysBackgroundTaskNormalType`, `_fsysCheckExpandComplete` |
+| `game/gbaCommand.cpp` | `gbaCommandRequestAction`, `gbaCommandEntryResult` |
+| `game/menuWorldMapMX.cpp` | `ControlPad__8WorldMapFP14tagWINDOW_WORK`, `CheckIconAnime__8WorldMapFl` |
+| `game/pxdvs/GSAPI/GSpart/GSpart.cpp` | `GSpartRegisterAnimMix` |
+| `game/menuPdaMemoWaveXD.cpp` | `DispFuncSub__14pdaMemoNakigoeFP15NakigoeDispWork12GSgfxLayerID`, `_drawLine__F12GSgfxLayerIDP5GSvecP5GSvecf` |
+| `game/pxdvs/app/fight/fightPokemon.cpp` | `fightOutPokemonCopyHensinStatus`, `fightOutPokemonCreateFightPokemonEnemyAryEnemySideAll`, `fightOutPokemonIsFightActionAttackWazaOut`, `fightOutPokemonSetMeetEnemyFightPokemonEnemySideAll` |
+| `game/pxdvs/GSAPI/GSgfxM/gamecube.cpp` | `GSgfx_GCWriteTevIndTile` |
+| `game/pxdvs/GSAPI/GSScript/tiga.cpp` | `runParamsPC__Q28GSscript4TigaFP7TPCCodePQ28GSscript11tigaVariantib`, `tigaErrMessage__8GSscriptFPCc` |
 
 ## Colosseum license notice
 

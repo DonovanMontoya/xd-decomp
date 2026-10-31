@@ -4,7 +4,47 @@ extern "C" {void*memset(void*,int,unsigned long);void*memcpy(void*,const void*,u
 void floorInitFieldCamera(GSfloor_dd_*);
 extern "C" u8 floorFieldCameraEditorGetMode(){return gFieldCameraEditorData.mode;}
 extern "C" void floorReleaseFieldCameraEditor(){floorFieldCameraEditorStopTest();if(gFieldCameraEditorData.application)GSgappTerminate(gFieldCameraEditorData.application);GSmemFree(gFieldCameraEditorData.cameraAllocation);GSmemFree(gFieldCameraEditorData.headerAllocation);memset(&gFieldCameraEditorData,0,sizeof(gFieldCameraEditorData));}
-extern "C" void floorInitFieldCameraEditor(u32 floor){GSfloor_dd_*data=floorDataBiosGetPtr(floor);floorReleaseFieldCameraEditor();if(data){gFieldCameraEditorData.application=GSgappCreate(1,0x7F,0,floorUpdateFieldCameraEditor);if(gFieldCameraEditorData.application){FieldCameraList*header=(FieldCameraList*)GSmemAlloc(8);if(header){gFieldCameraEditorData.list=header;gFieldCameraEditorData.headerAllocation=header;FieldCameraList*original=floorDataBiosGetFieldCameraListPtr(data);gFieldCameraEditorData.floor=floor;gFieldCameraEditorData.originalList=data->cameras;gFieldCameraEditorData.mode=floorFieldCameraGetMode();gFieldCameraEditorData.list->count=&gFieldCameraEditorData.count;if(original){u32 count=*original->count;if(count){u32 size=count*0x34;void*allocation=GSmemAlloc(size);if(allocation){gFieldCameraEditorData.count=count;gFieldCameraEditorData.cameraAllocation=allocation;gFieldCameraEditorData.list->cameras=(FieldCamera*)allocation;memcpy(gFieldCameraEditorData.list->cameras,original->cameras,size);return;}goto fail;}}return;}}}fail:floorReleaseFieldCameraEditor();}
+extern "C" void floorInitFieldCameraEditor(u32 floorID) {
+    void* mem;
+    u32* cams;
+    u32 size;
+    GSfloor_dd_* floor = floorDataBiosGetPtr(floorID);
+    u32 count;
+    void* arr;
+    floorReleaseFieldCameraEditor();
+    if (floor != 0) {
+        gFieldCameraEditorData.application = GSgappCreate(1, 0x7f, 0, floorUpdateFieldCameraEditor);
+        if (gFieldCameraEditorData.application != 0) {
+            mem = GSmemAlloc(8);
+            if (mem != 0) {
+                gFieldCameraEditorData.list = (FieldCameraList*)mem;
+                gFieldCameraEditorData.headerAllocation = mem;
+                cams = (u32*)floorDataBiosGetFieldCameraListPtr(floor);
+                gFieldCameraEditorData.floor = floorID;
+                gFieldCameraEditorData.originalList = floor->cameras;
+                gFieldCameraEditorData.mode = floorFieldCameraGetMode();
+                gFieldCameraEditorData.list->count = &gFieldCameraEditorData.count;
+                if (cams != 0) {
+                    count = *(u32*)cams[0];
+                    if (count != 0) {
+                        size = count * 0x34;
+                        arr = GSmemAlloc(size);
+                        if (arr == 0) {
+                            goto fail;
+                        }
+                        gFieldCameraEditorData.count = count;
+                        gFieldCameraEditorData.cameraAllocation = arr;
+                        gFieldCameraEditorData.list->cameras = (FieldCamera*)arr;
+                        memcpy(gFieldCameraEditorData.list->cameras, (void*)cams[1], size);
+                    }
+                }
+                return;
+            }
+        }
+    }
+fail:
+    floorReleaseFieldCameraEditor();
+}
 extern "C" void floorUpdateFieldCameraEditor(){
  FieldCamera*c=gFieldCameraEditorData.selected;GSfloor_dd_*current=floorDataBiosGetPtr(GSfloorGetCurrent());GSfloor_dd_*expected=floorDataBiosGetPtr(gFieldCameraEditorData.floor);if(!current||current!=expected){floorReleaseFieldCameraEditor();return;}if(gFieldCameraEditorData.testing)return;if(!c)return;GSvec position,offset;position.clear();if(cameraGetType()!=5)return;GScameraLoadActiveCameraMatrix(-1);ActiveCamera*camera=GScameraGetActiveCamera();if(!camera)return;GSvecCopy(&position,&camera->position);cameraGetTargetOfs(&offset);
  if(floorFieldCameraEditorGetMode()==1&&!dbgMenuIsOpen()&&!menuIsCheck(0x23)){

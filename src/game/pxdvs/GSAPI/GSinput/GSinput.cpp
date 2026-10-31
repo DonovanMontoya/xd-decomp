@@ -52,7 +52,7 @@ void GSinputClearButtonData(s32 id, s32 buttons) {
 }
 void GSinputMotorStart(s32 id, u8 mode, u8 intensity, s32 duration, u8 fade) {
     if (_padMotorFlag) {
-        InputDevice* device = _inputFindDevice(id);
+        volatile InputDevice* device = _inputFindDevice(id);
         if (device && mode == 0) {
             device->motorState = 1;
             device->motorIntensity = intensity * 15;

@@ -88,39 +88,48 @@ static void _movieStreamPrepareGetDataCallback(s32,void* result,s32 context) {
     else if(decoder->streamOffset>=GSfsysStreamGetCacheSize()) decoder->streamOffset=0;
     _movieStreamPrepareGetDataCallback_Exec(movie,0,bytes);
 }
-static s32 _VideoDecode(__GSmovieStreaming* movie,THPReadBuffer* read,THPTextureSet* texture) {
-    u32 component=0;
-    u32* sizes;
+static u32 _VideoDecode(__GSmovieStreaming* s, THPReadBuffer* rb, THPTextureSet* ts) {
+    u32 i;
+    s32* sizes;
     u8* data;
-    MovieDecoder* decoder=movie->decoder;
-    s32 remaining=0;
-    u32 raw = (u32)read->data;
-    sizes=(u32*)(raw+8);
-    data=(u8*)(raw+(decoder->componentCount*4+8));
-    for(;component<decoder->componentCount;++component) {
-        switch(decoder->componentTypes[component]) {
+    MovieDecoder* p = s->decoder;
+    u32 result = 0;
+    sizes = (s32*)(rb->data + 8);
+    data = rb->data + 8 + p->componentCount * 4;
+    for (i = 0; i < p->componentCount; i++) {
+        switch (p->componentTypes[i]) {
         case 0:
-            s32 error=THPVideoDecode(data,texture->y,texture->u,texture->v,decoder->videoWork);
-            decoder->audioError=error;
-            if(error) {
-                if(movie->reading==1) {movie->ready=0;movie->reading=0;}
-                decoder->state=5;
-            }
-            texture->frame=read->frame; texture->valid=1;
-            ++decoder->texWrite;
-            if(decoder->texWrite>=3) decoder->texWrite=0;
-            u32 frames=decoder->framesDecoded;
-            s32 audio=decoder->lastAudioFrame+1;
-            decoder->framesDecoded=frames+1;
-            remaining=(s32)frames<audio ? audio-frames : 0;
+                s32 err = THPVideoDecode(data, ts->y, ts->u, ts->v, p->videoWork);
+                p->audioError = err;
+                if (err != 0) {
+                    if (s->reading == 1) {
+                        s->ready = 0;
+                        s->reading = 0;
+                    }
+                    p->state = 5;
+                }
+                ts->frame = rb->frame;
+                ts->valid = 1;
+                p->texWrite++;
+                if (p->texWrite >= 3) {
+                    p->texWrite = 0;
+                }
+                {
+                    s32 old = p->framesDecoded;
+                    s32 cur = p->lastAudioFrame + 1;
+                    result = cur > old ? cur - old : 0;
+                    p->framesDecoded = old + 1;
+                }
             break;
-        default: break;
         }
-        data+=*sizes;
+        data += *sizes;
         sizes++;
     }
-    if(movie->reading==1) { movie->ready=1; movie->reading=0; }
-    return remaining;
+    if (s->reading == 1) {
+        s->ready = 1;
+        s->reading = 0;
+    }
+    return result;
 }
 #pragma force_active reset
 

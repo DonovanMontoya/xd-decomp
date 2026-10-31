@@ -663,17 +663,17 @@ void WorldMap::RenderMoveDemoModel() {
     }
 }
 
-void WorldMap::ControlPad(tagWINDOW_WORK *win) {
-    u16 key = (windowGetKeyInfo(), windowGetKeyRepeat());
-    s16 cursor;
-    s32 dir;
-    cursor = _cursor_index[unk8->cursor];
-    dir = -1;
-    if (fadeCheck(0) == 0 && flag1C != 1 && unk8->flag48 != 1) {
-        GetModelID(cursor);
+void WorldMap::ControlPad(tagWINDOW_WORK* window) {
+    windowGetKeyInfo();
+    u16 key = windowGetKeyRepeat();
+    s32 dir = -1;
+    unsigned int index = _cursor_index[unk8->cursor];
+
+    if (((fadeCheck(0) == 0) && (flag1C != 1)) && (unk8->flag48 != 1)) {
+        GetModelID(index);
         if (key == 8) {
             dir = 0;
-        } else if (key == 0xA) {
+        } else if (key == 10) {
             dir = 1;
         } else if (key == 2) {
             dir = 2;
@@ -688,20 +688,17 @@ void WorldMap::ControlPad(tagWINDOW_WORK *win) {
         } else if (key == 9) {
             dir = 7;
         }
-        {
-            WorldMapIconData *icon = &icons[cursor];
-            if (dir >= 0) {
-                s8 n = icon->nbr[dir];
-                if (n >= 0) {
-                    s16 i = 0;
-                    s16 *p;
-                    for (p = _cursor_index; i < _cursor_index_num; p++, i++) {
-                        if (n == *p) {
-                            unk8->cursor = i;
-                            win->pos.selected = i;
-                            SetCursorPosition(i, 1);
-                            break;
-                        }
+        WorldMapIconData* ic = &icons[index];
+        if (dir >= 0) {
+            s8 next = ic->nbr[dir];
+            if (next >= 0) {
+                s16 i;
+                for (i = 0; i < _cursor_index_num; i++) {
+                    if (next == _cursor_index[i]) {
+                        unk8->cursor = i;
+                        window->pos.selected = i;
+                        SetCursorPosition(i, true);
+                        return;
                     }
                 }
             }
@@ -709,53 +706,43 @@ void WorldMap::ControlPad(tagWINDOW_WORK *win) {
     }
 }
 
-void WorldMap::CheckIconAnime(long index) {
-    u32 model;
-    s16 cursor;
-    s32 i;
-    s32 off = 0;
-    cursor = _cursor_index[index];
-    i = 0;
-    unk8->flag48 = off;
-    for (; i < GetDataNum(); i++, off += 0x2C) {
-        WorldMapIconData *ic = (WorldMapIconData *)((u8 *)icons + off);
-        s16 motion = ic->motion;
-        model = *(u32 *)ic;
-        switch (motion) {
-        case 0:
-        case 3:
-        default:
-            break;
+void WorldMap::CheckIconAnime(s32 sel) {
+    s16 selIdx = _cursor_index[sel];
+    s32 i = 0;
+    unk8->flag48 = 0;
+    while (i < GetDataNum()) {
+        u32 model = icons[i].model;
+        switch (icons[i].motion) {
         case 1:
             if (!CheckMotion(model)) {
-                SetIconMotion(i, model, 2, 0.0f, 1);
+                SetIconMotion(i, model, 2, 0.0f, true);
             } else {
                 unk8->flag48 = 1;
             }
             break;
         case 6:
             if (!CheckMotion(model)) {
-                SetIconMotion(i, model, 7, 0.0f, 1);
+                SetIconMotion(i, model, 7, 0.0f, true);
             }
             break;
         case 2:
-            if (cursor == i) {
-                SetIconMotion(i, model, 4, 0.0f, 1);
+            if (selIdx == i) {
+                SetIconMotion(i, model, 4, 0.0f, true);
             }
             break;
         case 7:
-            if (cursor == i) {
-                SetIconMotion(i, model, 8, 0.0f, 1);
+            if (selIdx == i) {
+                SetIconMotion(i, model, 8, 0.0f, true);
             }
             break;
         case 4:
-            if (cursor != i) {
-                SetIconMotion(i, model, 2, 0.0f, 1);
+            if (selIdx != i) {
+                SetIconMotion(i, model, 2, 0.0f, true);
             }
             break;
         case 8:
-            if (cursor != i) {
-                SetIconMotion(i, model, 7, 0.0f, 1);
+            if (selIdx != i) {
+                SetIconMotion(i, model, 7, 0.0f, true);
             }
             break;
         case 5:
@@ -769,6 +756,7 @@ void WorldMap::CheckIconAnime(long index) {
             }
             break;
         }
+        i++;
     }
 }
 

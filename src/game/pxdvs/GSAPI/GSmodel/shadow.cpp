@@ -123,14 +123,35 @@ static inline u8 shadowHasReceiver(GSmodelShadowReceiver* receiver, GSmodel* mod
     for (u32 i = 0; i < 5; ++i) if (receiver[i].model == model) return 1;
     return 0;
 }
-void modelShadowPrepare__FP8_GSmodelb(GSmodel* model, bool enable) {
-    GSmodelShadowReceiver* receiver = _modelShadowReceiveList;
-    if (shadowHasReceiver(receiver, model)) {
-        HSD_JObj* joint = modelGetRenderJObj__FP8_GSmodel(model);
-        if (!enable) HSD_JObjWalkTree(joint, _modelShadowSetShadowFlag__FP9_HSD_JObjPPvi, (void**)0);
-        else HSD_JObjWalkTree(joint, _modelShadowSetShadowFlag__FP9_HSD_JObjPPvi, (void**)1);
-        u8 flag = enable;
-        for (u32 i = 0; i < 5; ++i, ++receiver) if (receiver->active && receiver->model == model) HSD_ShadowSetActive(receiver->shadow, flag);
+static inline bool _shadowIsReceiveModel(GSmodel* model)
+{
+    u32 i;
+
+    for (i = 0; i < 5; i++) {
+        if (_modelShadowReceiveList[i].model == model) {
+            return true;
+        }
+    }
+    return false;
+}
+void modelShadowPrepare__FP8_GSmodelb(GSmodel* model, bool enable)
+{
+    HSD_JObj* jobj;
+    u32 i;
+
+    if (!_shadowIsReceiveModel(model)) {
+        return;
+    }
+    jobj = modelGetRenderJObj__FP8_GSmodel(model);
+    if (!enable) {
+        HSD_JObjWalkTree(jobj, _modelShadowSetShadowFlag__FP9_HSD_JObjPPvi, (void**)0);
+    } else {
+        HSD_JObjWalkTree(jobj, _modelShadowSetShadowFlag__FP9_HSD_JObjPPvi, (void**)1);
+    }
+    for (i = 0; i < 5; i++) {
+        if (_modelShadowReceiveList[i].active && _modelShadowReceiveList[i].model == model) {
+            HSD_ShadowSetActive(_modelShadowReceiveList[i].shadow, enable);
+        }
     }
 }
 void modelShadowFreeModelList__FP8_GSmodel(GSmodel* model) {
