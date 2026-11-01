@@ -971,38 +971,53 @@ void winMsgOpenField(u32, u32, u32);
 void winMsgCloseField(u32);
 }
 
+extern "C" u32 getHp__7PokemonCFv(const Pokemon*);
 static void cbPoison(long, FootStepCounter counter, long) {
-    s32 fainted[6];
     s32* readFainted;
-    s32 faintedCount = 0;
-    u8 poisoned = 0;
+    s32 faintedCount;
+    u8 poisoned;
+    s32* nextFainted;
+    s32 healthyCount;
+    u32 hp;
+    s32 j;
+    u8 condition;
+    Pokemon* fainter;
+    DarkPokemon* dark;
+    s32 k;
+    s32 fainted[6];
+    Pokemon* member;
+    s32 i;
+    Pokemon* pokemon;
+    void* nickname;
+    faintedCount = 0;
+    poisoned = 0;
     if (counter == 0) {
         if (++*(s32*)&HeroMove.raw[0x3A0] >= 4) {
             *(s32*)&HeroMove.raw[0x3A0] = 0;
-            s32 healthyCount = 0;
-            for (s32 i = 0; i < 6; ++i) {
-                Pokemon* pokemon = (Pokemon*)heroGetStatus(0, 3, i);
+            healthyCount = 0;
+            for (i = 0; i < 6; ++i) {
+                pokemon = (Pokemon*)heroGetStatus(0, 3, i);
                 if (pokemon && pokemonCheckValid(pokemon) && pokemon->getHp()) ++healthyCount;
             }
             readFainted = fainted;
-            s32* nextFainted = readFainted;
-            for (s32 i = 0; i < 6; ++i) {
-                Pokemon* pokemon = (Pokemon*)heroGetStatus(0, 3, i);
-                if (pokemon && pokemonCheckValid(pokemon)) {
-                    u32 hp = pokemon->getHp();
+            nextFainted = readFainted;
+            for (j = 0; j < 6; ++j) {
+                member = (Pokemon*)heroGetStatus(0, 3, j);
+                if (member && pokemonCheckValid(member)) {
+                    hp = getHp__7PokemonCFv(member);
                     if ((u16)hp) {
-                        u8 condition = pokemon->getCondition();
+                        condition = member->getCondition();
                         if (condition == 3 || condition == 4) {
                             poisoned = 1;
                             if (healthyCount > 1 || (u16)hp > 1) {
-                                pokemon->setHp(hp - 1);
+                                member->setHp(hp - 1);
                                 if ((u16)(hp - 1) == 0) {
-                                    *nextFainted = i;
+                                    *nextFainted = j;
                                     --healthyCount;
                                     ++nextFainted;
                                     ++faintedCount;
-                                    pokemon->initCondition();
-                                    DarkPokemon* dark = pokemon->getDarkPokemon();
+                                    member->initCondition();
+                                    dark = member->getDarkPokemon();
                                     if (dark) dark->setReversMode(false);
                                 }
                             }
@@ -1013,13 +1028,13 @@ static void cbPoison(long, FootStepCounter counter, long) {
             if (poisoned) fadeEffectDokuStart();
             if (faintedCount > 0) {
                 heroMoveInitEvent();
-                for (s32 i = 0; i < faintedCount; ++readFainted, ++i) {
-                    Pokemon* pokemon = (Pokemon*)heroGetStatus(0, 3, *readFainted);
-                    void* nickname = pokemonBiosGetNicknamePtr(pokemon);
+                for (k = 0; k < faintedCount; ++readFainted, ++k) {
+                    fainter = (Pokemon*)heroGetStatus(0, 3, *readFainted);
+                    nickname = pokemonBiosGetNicknamePtr(fainter);
                     msgctrlSetValue(0x32, nickname);
                     winMsgOpenField(0xC37E, 1, 0);
                     winMsgCloseField(1);
-                    actionFriendSet(pokemon, 7);
+                    actionFriendSet(fainter, 7);
                 }
                 heroMoveTermEvent();
             }
