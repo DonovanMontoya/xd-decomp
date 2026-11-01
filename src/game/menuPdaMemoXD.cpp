@@ -904,25 +904,76 @@ u32 GSmsgGetRect(u32);
 void *__nwa__FUl(u32);
 void __dla__FPv(void *);
 }
-static inline s32 memoCopyWordPrefix(const u16* text, u16* line, s32 endWord) {
-    s32 spaces=0;
-    s32 copied=0;
-    const u16* src=text;
-    u16* dst=line;
+static inline s32 memoCopyWordPrefix(const u16 *text,u16 *line,const s32 &endWord) {
+    u32 ch;
+    u16 *dst;
+    const u16 *src;
+    s32 spaces;
+    s32 copied;
+    spaces = 0;
+    copied = 0;
+    src = text;
+    dst = line;
     for (;;) {
-        u32 ch=*src;
-        if(ch==0x20 || ch==0x3000) {
-            if(spaces==endWord)break;
-            *dst=ch;spaces++;
+        ch = *src;
+        if (ch == 0x20 || ch == 0x3000) {
+            if (spaces == endWord) break;
+            *dst = ch;
+            spaces++;
         } else {
-            if(ch==0)break;
-            *dst=ch;
+            if (ch == 0) break;
+            *dst = ch;
         }
-        src++;dst++;copied++;
+        src++;
+        dst++;
+        copied++;
     }
-    line[copied]=0;
-    return copied+1;
+    line[copied++] = 0;
+    return copied;
 }
+
+static inline void memoTokuseiSplit(const u16 *text, u16 *buf1, u16 *buf2, s32 fitLine) {
+    s32 spaceIdx = 0;
+    s32 count1 = 0;
+    s32 count2 = 0;
+    u8 second = 0;
+    u32 total = GSmsgGetCharLength(text);
+    u32 ch;
+    const u16 *src;
+    u32 idx = 0;
+    src = text;
+    for (;; src++, idx++) {
+        ch = *src;
+        if (ch == 0xFFFF) {
+            continue;
+        }
+        if (ch == 0x20 || ch == 0x3000) {
+            if (spaceIdx == fitLine - 1) {
+                second = 1;
+            } else if (second != 0) {
+                buf2[count2++] = ch;
+            } else {
+                buf1[count1++] = ch;
+            }
+            spaceIdx++;
+            continue;
+        }
+        if (ch == 0) {
+            if (total <= idx) {
+                break;
+            }
+            continue;
+        }
+        if (second != 0) {
+            buf2[count2++] = ch;
+        } else {
+            buf1[count1++] = ch;
+        }
+    }
+    buf1[count1] = 0;
+    buf2[count2] = 0;
+}
+
 void menuPdaMemoXD::PokemonTokuseiSetumei(tagWINDOW_WORK *window,tagSPRITE_WORK *sprite,MEMO_CONTENTS *contents,u16 index)
 {
     CURSOR *cursor=contents->cursor;
@@ -933,48 +984,33 @@ void menuPdaMemoXD::PokemonTokuseiSetumei(tagWINDOW_WORK *window,tagSPRITE_WORK 
     u32 ability=(u8)pokemonDataBiosGetTokuseiDataId(data,index);
     if(index!=0 && ability==first)ability=0;
     if((u16)ability!=0) {
-        const u16 *text=GSmsgGetGSchar(pokemonTokuseiDataBiosGetDoc(pokemonTokuseiDataBiosGetPtr(ability)));
-        u32 length=GSmsgGetCharLength(text);
-        s32 size=(length+2)*2;
-        u16 *line1=(u16 *)__nwa__FUl(size);
-        u16 *line2=(u16 *)__nwa__FUl(size);
-        s32 word=0;
-        s32 splitWord=0;
-        u8 overflow=0;
-        s32 copied;
-        do {
-            copied=memoCopyWordPrefix(text,line1,word++);
-            msgctrlSetValue(0x37,line1);
+        u16 *line1;
+        const u16 *text;
+        s32 size;
+        u16 *line2;
+        s32 word;
+        u32 length;
+        s32 splitWord;
+        u8 overflow;
+        text=GSmsgGetGSchar(pokemonTokuseiDataBiosGetDoc(pokemonTokuseiDataBiosGetPtr(ability)));
+        length=GSmsgGetCharLength(text);
+        size=(length+2)*2;
+        line1=(u16 *)__nwa__FUl(size);
+        line2=(u16 *)__nwa__FUl(size);
+        word=0;
+        splitWord=0;
+        overflow=0;
+        for (;;) {
+            s32 out=memoCopyWordPrefix(text,line1,word++);
+            msgctrlSetValue(0x37,(const void *)(u32)line1);
             u32 rect=GSmsgGetRect(0x4276);
             if((rect>>16)<=(u32)item->x)splitWord=word;
-            if((u8)((rect>>16)<=(u32)item->x)==0)overflow=1;
-        } while((u32)copied<length);
-        if(overflow) {
-            s32 spaces=0;
-            s32 n1=0;
-            s32 n2=0;
-            u8 secondLine=0;
-            u32 chars=GSmsgGetCharLength(text);
-            u32 i=0;
-            const u16 *src=text;
-            for(;;) {
-                u32 ch=*src;
-                if(ch==0xFFFF) {
-                } else if(ch==0x20 || ch==0x3000) {
-                    if(spaces==splitWord-1)secondLine=1;
-                    else if(secondLine)line2[n2++]=ch;
-                    else line1[n1++]=ch;
-                    spaces++;
-                } else if(ch==0) {
-                    if(chars<=i)break;
-                } else {
-                    if(secondLine)line2[n2++]=ch;
-                    else line1[n1++]=ch;
-                }
-                src++;i++;
-            }
-            line1[n1]=0;line2[n2]=0;
-            msgctrlSetValue(0x37,line1);
+            if(!((rect/65536)<=(u32)*(volatile s16 *)&item->x))overflow=1;
+            if(!((u32)out<length))break;
+        }
+        if(overflow!=0) {
+            memoTokuseiSplit(text,line1,line2,splitWord);
+            msgctrlSetValue(0x37,(const void *)(u32)line1);
             GSmsgPrint2(window->layer,0,0,window->alpha|0xFFFFFF00,0x4276);
             msgctrlSetValue(0x37,line2);
             GSmsgPrint2(window->layer,0,18,window->alpha|0xFFFFFF00,0x4276);
