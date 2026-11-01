@@ -471,7 +471,7 @@ extern "C" void modelShadowRender__FP10GSgfxLayer(GSgfxLayer* layer) {
                                 if((u8)GSboundHasAnimData((GSbound*)caster->boundStorage)==0) {
                                     GSboundGetSize((GSbound*)caster->boundStorage,&size,1,1);
                                     f32 edge=_modelShadowBoundExpansion+(f32)(u32)(f32)ceil(shadowLargestExtent(size));
-                                    if(edge>0.1f)HSD_ViewingRectAddRect(&viewing,(HSD_Vec3*)&center,-edge,-edge,edge,edge);
+                                    if(edge>0.1f)HSD_ViewingRectAddRect(&viewing,(HSD_Vec3*)&center,edge,-edge,-edge,edge);
                                 }else {
                                     f32 ground;
                                     if(caster->animationFlags&4) {GSmodelGetPosition(caster,(GSvec*)&position);ground=position.y;}
@@ -485,7 +485,7 @@ extern "C" void modelShadowRender__FP10GSgfxLayer(GSgfxLayer* layer) {
                         if(HSD_ViewingRectCheck(&viewing))HSD_ShadowSetViewingRect(receiver->shadow,viewing.top,viewing.bottom,viewing.left,viewing.rightEdge);
                         else {
                             f32 edge=(f32)receiver->sizeMax+_modelShadowBoundExpansion;
-                            if(edge>0.1f)HSD_ShadowSetViewingRect(receiver->shadow,-edge,-edge,edge,edge);
+                            if(edge>0.1f)HSD_ShadowSetViewingRect(receiver->shadow,edge,-edge,-edge,edge);
                         }
                         HSD_Shadow* shadow=receiver->shadow;u8 intensity=255-_modelShadowIntensity;
                         if(!shadow)__assert("shadow.h",0x6c,"shadow");
