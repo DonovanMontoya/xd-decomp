@@ -521,7 +521,7 @@ static inline u16 faceKey(cBingo* self, BingoPanel* p, u32 n) {
     return cBingo::ClosePanelIdx[pokemonDataBiosGetZokuseiDataId(pdata, (u16)(type % 18))];
 }
 
-static inline u16 faceKeyShuf(cBingo* self, BingoPanel* q) {
+static inline u32 faceKeyShuf(cBingo* self, BingoPanel* q) {
     void* pdata = mPokemon[q->idx].pkm.getPokemonDataPtr();
     u8 type = ((bingo_bios*)self)->getPanelType(self->sheet, q->idx);
     return cBingo::ClosePanelIdx[pokemonDataBiosGetZokuseiDataId(pdata, (u16)(type % 18))];
@@ -2681,15 +2681,15 @@ void cBingo::dispOpenPanel(u32 n, tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
 
 void cBingo::dispShufflePanel(u32 n, tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
     u32 off = n * 8;
-    BingoPanel* q = &shuf[n];
-    BingoPanel* p = &panel[n];
     f32 ang = 3.14f * shuf[n].scale;
     s32 layer = winSpriteGetLayerID(w, sp);
     if (shuf[n].scale <= 0.0f) {
         if (panel[n].state != 0) {
             windowDrawSprite2(0, 0, 0x46, 0x43, -1, w, 0x29E, 0, layer);
         } else {
-            int key = faceKey(this, p, n);
+            void* pdata = mPokemon[panel[n].idx].pkm.getPokemonDataPtr();
+            u8 type = ((bingo_bios*)this)->getPanelType(sheet, panel[(u16)n].idx);
+            u32 key = ClosePanelIdx[pokemonDataBiosGetZokuseiDataId(pdata, (u16)(type % 18))];
             windowDrawSprite2(0, 0, 0x46, 0x43, -1, w, key, 0, layer);
         }
         panel[n].scale -= 8.0f * timeGetLastFrameSec();
@@ -2703,7 +2703,9 @@ void cBingo::dispShufflePanel(u32 n, tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
             f32 kc658 = 35.0f;
             windowDrawSprite2(a + 0x23, 0, (s16)(c * kc658 - (f32)a), 0x43, -1, w, 0x29E, 0, layer);
         } else {
-            int key = faceKey(this, p, n);
+            void* pdata = mPokemon[panel[n].idx].pkm.getPokemonDataPtr();
+            u8 type = ((bingo_bios*)this)->getPanelType(sheet, panel[(u16)n].idx);
+            u32 key = ClosePanelIdx[pokemonDataBiosGetZokuseiDataId(pdata, (u16)(type % 18))];
             f32 c = (f32)fabsInline(cosfInline(ang));
             f32 ka = -35.0f;
             s16 a = (s16)(c * ka);
@@ -2720,7 +2722,7 @@ void cBingo::dispShufflePanel(u32 n, tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
         f32 kc1320 = 35.0f;
         windowDrawSprite2(a + 0x23, 0, (s16)(c * kc1320 - (f32)a), 0x43, -1, w, 0x29E, 0, layer);
     } else {
-        int key = faceKeyShuf(this, q);
+        u32 key = faceKeyShuf(this, &shuf[n]);
         f32 c = (f32)fabsInline(cosfInline(ang));
         f32 ka = -35.0f;
         s16 a = (s16)(c * ka);
