@@ -417,9 +417,17 @@ void CMenuReliveHall::setStatusDisplayVisitor(Pokemon *p) {
     }
 }
 
+static inline void hallInitCircles(CMenuReliveHall *self) {
+    for (u32 i = 0; i < 3; i++) {
+        GSgfxColAu8 color = relivehallAisyou2ColorTbl[i];
+        self->circles[i].init(_aisyou2LineWidthHalfTable[i].rate, _aisyou2LineWidthHalfTable[i].half2,
+                        _aisyou2LineWidthHalfTable[i].rate2, color);
+    }
+}
+
 void CMenuReliveHall::init(CMenuGlobalState &gs) {
     time = 0;
-    ((CState *)((u8 *)this + 0x278))->init();
+    ((CState *)&current)->init();
     fadeTime = 0;
     fadeState = 0;
     memset(windows, 0, 0x100);
@@ -440,13 +448,9 @@ void CMenuReliveHall::init(CMenuGlobalState &gs) {
     cursorIndex = 0;
     memset(&menuTable, 0, 0xC);
     memset(&stick, 0, 0xC);
-    for (u32 i = 0; i < 3; i++) {
-        GSgfxColAu8 color = relivehallAisyou2ColorTbl[i];
-        circles[i].init(_aisyou2LineWidthHalfTable[i].rate, _aisyou2LineWidthHalfTable[i].half2,
-                        _aisyou2LineWidthHalfTable[i].rate2, color);
-    }
+    hallInitCircles(this);
     memset(&model0, 0, 0x10);
-    ((CState *)((u8 *)this + 0x278))->init();
+    ((CState *)&current)->init();
     globalState = 0;
     cursor = 0;
     memset(cursorPositions, 0, 0x24);
@@ -459,7 +463,7 @@ void CMenuReliveHall::init(CMenuGlobalState &gs) {
     globalState = &gs;
     cursor = &globalState->cursor;
     cursor->setPositionTable(cursorPositions, 0);
-    ((CState *)((u8 *)this + 0x278))->init();
+    ((CState *)&current)->init();
     ((CState *)&animationState)->init();
     s16 *markers = (s16 *)markerOverride;
     for (unsigned int i = 0; i < 18; i++) markers[i] = -1;
@@ -468,7 +472,7 @@ void CMenuReliveHall::init(CMenuGlobalState &gs) {
     starAlpha = 255;
     effectAlpha = 255;
     markerAlpha = 255;
-    memset(&hitEffect, 0, sizeof(hitEffect));
+    memset((u8 *)markerOverride + 0x4A, 0, sizeof(hitEffect));
     localWindowSetTable(localWindowTable);
     loadDatas();
     infoWindow.init(0xCF, 0x5D0);
@@ -1885,11 +1889,12 @@ void CMenuReliveHall::drawVsitorLine(long aisyou, SPokemonView *view) {
     }
 }
 
+static inline f32 hallPhaseRemainder(f32 current, f32 step, f32 rate) { return -(current * step - rate); }
 void CMenuReliveHall::drawMainBG() {
     tagWINDOW_WORK *window = windowSearchID(0x67);
-    GSgfxColAu8 *colors;
     int level, cur, i;
-    bool hasVisitor = getVisitorWithCatch() != 0;
+    bool hasVisitor;
+    hasVisitor = (u8)(getVisitorWithCatch() != 0);
     int bonus;
     int passion = getPassion(&bonus);
     if (passion <= 0) {
@@ -1906,17 +1911,18 @@ void CMenuReliveHall::drawMainBG() {
         level = bonus + 4;
     }
     f32 rate = calcAnimationTimeRate0to1(0.8f);
-    colors = _passion2ColorTbl;
-    i = 0;
     cur = (s32)(rate / 0.03846154f);
-    f32 frac = -((f32)cur * 0.03846154f - rate) * 26.0f;
-    f32 inv = 1.0f - frac;
-    do {
+    f32 inv, frac;
+    f32 scale = 26.0f;
+    rate = hallPhaseRemainder((f32)cur,0.03846154f,rate);
+    frac = rate * scale;
+    inv = 1.0f - frac;
+    for (i = 0; i < 13; i++) {
         tagSPRITE_WORK *sprite = menuPtSpriteWorkGetByItemID(window, 0x28D, i);
-        GSgfxColAu8 color = *colors;
+        GSgfxColAu8 color = _passion2ColorTbl[i];
         sprite->color.value = GSgfxColAu8To32(color);
-        if (i < level && hasVisitor) {
-            s32 alpha;
+        if (i < level && (u8)hasVisitor) {
+            u8 alpha;
             if (cur < 13) {
                 if (i < cur) {
                     alpha = 0xFF;
@@ -1940,13 +1946,12 @@ void CMenuReliveHall::drawMainBG() {
         } else {
             menuPtSpriteWorkSetSw(window, sprite, false);
         }
-        colors++;
-        i++;
-    } while (i < 13);
+    }
     menuPtSpriteWorkSetSw(window, 0x28C, 0, hasVisitor);
     menuPtSpriteWorkSetSw(window, 0x316, 0, false);
     menuPtSpriteWorkSetSw(window, 0x28B, 0, false);
-    menuPtSpriteWorkSetSw(window, 0x28A, 0, dancerPositionQuantityWithCatch() != 0);
+    int dancers = dancerPositionQuantityWithCatch();
+    menuPtSpriteWorkSetSw(window, 0x28A, 0, dancers != 0);
     menuPtSpriteWorkSetSw(window, 0x4D1, 0, dancerPositionQuantityWithCatch() != 0);
     menuPtSpriteWorkSetSw(window, 0x8EE, 0, hasVisitor);
     menuPtSpriteWorkSetSw(window, 0x4D2, 0, hasVisitor);
@@ -2265,7 +2270,7 @@ void CMenuReliveHall::animationDataReset() {
     starAlpha = 255;
     effectAlpha = 255;
     markerAlpha = 255;
-    memset(&hitEffect, 0, sizeof(hitEffect));
+    memset((u8 *)markerOverride + 0x4A, 0, sizeof(hitEffect));
 }
 
 inline f32 cosf(f32 x) { return cos(x); }
