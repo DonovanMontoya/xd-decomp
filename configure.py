@@ -1265,7 +1265,7 @@ config.libs = [
 
             # recovery
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/recovery/recovery.cpp", cflags=cflags_xd_app_fight),
-            Object(NonMatching, "game/pxdvs/app/recovery/recoveryEvent.cpp", extra_cflags=["-inline noauto"]),
+            Object(NonMatching, "game/pxdvs/app/recovery/recoveryEvent.cpp", cflags=cflags_xd_app_fight),
 
             # mail
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/mail/mailMain.cpp", extra_cflags=["-opt nopeephole"]),
