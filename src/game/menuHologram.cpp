@@ -814,13 +814,17 @@ inline void loadStageModel(ModelSlot &slot, u32 id)
     }
 }
 
+static inline s8 getFirstDancer(CReliveStage *s) { return s->firstDancer; }
 void CMenuHologram::stageAllModelLoad()
 {
+    u8 *materials;
     s32 st;
-    u32 archive;
-    u32 camera;
-    s32 count;
     u16 effect;
+    int index;
+    s32 count;
+    u32 camera;
+    u32 archive;
+    Pokemon *visitor;
     stageAllModelUnLoad();
     initializeOffscreenData();
     st = stage->getState();
@@ -867,43 +871,48 @@ void CMenuHologram::stageAllModelLoad()
         archive = 0x18E40400;
         break;
     }
-    Pokemon *visitor = stage->getVisitorPointer();
+    visitor = stage->getVisitorPointer();
     if (visitor != 0) {
         ModelSlot *slot = modelPokemonLoad(2);
-        GSpart *part = GSmodelGetPart(slots[1].model, ((u8 *)relivehall_data)[6 + plateIndexTbl[st][count][0]]);
+        u8 *hallData = (u8 *)relivehall_data;
+        GSpart *part = GSmodelGetPart(slots[1].model, hallData[6 + plateIndexTbl[st][count][0]]);
         GSmodelAttachToGSpart(slot->model, part, 7, 0, 1);
         GSpartFree(part);
         modelVisitorSetYPosition(2);
         modelPokemonSetScale(2);
     }
     for (s32 i = 0; i < count; i++) {
-        s32 index = i + 3;
+        index = i + 3;
         ModelSlot *slot = modelPokemonLoad(index);
-        GSpart *part = GSmodelGetPart(slots[1].model, ((u8 *)relivehall_data)[6 + plateIndexTbl[st][count][(count + (i - stage->firstDancer)) % count + 1]]);
+        s32 k = (count + (i - stage->firstDancer)) % count + 1;
+        u8 *hallData = (u8 *)relivehall_data;
+        GSpart *part = GSmodelGetPart(slots[1].model, hallData[6 + plateIndexTbl[st][count][k]]);
         GSmodelAttachToGSpart(slot->model, part, 7, 0, 1);
         GSpartFree(part);
         modelPokemonSetScale(index);
     }
-    u8 *materials = slots[1].model != 0 ? *(u8 **)((u8 *)slots[1].model + 0x5E0) : 0;
+    materials = slots[1].model != 0 ? *(u8 **)((u8 *)slots[1].model + 0x5E0) : 0;
     GSmodelDisableModulation(slots[1].model);
     if (count != 0) {
         GSgfxColAu8 color;
         memset(&color, 0, 4);
         if (visitor != 0) {
-            GSgfxColAu8 c = pokemonToAisyouColor(visitor, stage->getDancerPointer(stage->firstDancer));
-            ((u8 *)&color)[0] = ((u8 *)&c)[0];
-            ((u8 *)&color)[1] = ((u8 *)&c)[1];
-            ((u8 *)&color)[2] = ((u8 *)&c)[2];
-            ((u8 *)&color)[3] = ((u8 *)&c)[3];
+            const GSgfxColAu8 &c = pokemonToAisyouColor(visitor, stage->getDancerPointer(getFirstDancer(stage)));
+            color.channels[0] = c.channels[0];
+            color.channels[1] = c.channels[1];
+            color.channels[2] = c.channels[2];
+            color.channels[3] = c.channels[3];
         }
-        void *material = materials + (((u8 *)relivehall_data)[6 + colorLineIndexTbl[st][count][0]] - 1) * 0x34;
+        u8 *hallData = (u8 *)relivehall_data;
+        void *material = materials + (hallData[6 + colorLineIndexTbl[st][count][0]] - 1) * 0x34;
         GSmaterialSetModulate(material, &color);
         GSmaterialEnableExtension(material, 1);
     }
     for (s32 i = 0; i < count; i++) {
-        Pokemon *next = stage->getDancerPointer((i + 1) % count);
-        GSgfxColAu8 color = pokemonToAisyouColor(stage->getDancerPointer(i), next);
-        void *material = materials + (((u8 *)relivehall_data)[6 + colorLineIndexTbl[st][count][(count + (i - stage->firstDancer)) % count + 1]] - 1) * 0x34;
+        GSgfxColAu8 color = pokemonToAisyouColor(stage->getDancerPointer(i), stage->getDancerPointer((i + 1) % count));
+        s32 k = (count + (i - stage->firstDancer)) % count + 1;
+        u8 *hallData = (u8 *)relivehall_data;
+        void *material = materials + (hallData[6 + colorLineIndexTbl[st][count][k]] - 1) * 0x34;
         GSmaterialSetModulate(material, &color);
         GSmaterialEnableExtension(material, 1);
     }
