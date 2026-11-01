@@ -582,7 +582,7 @@ void menuSubDrawTriangle(GSgfxLayerID layer, long x0, long y0, long x1, long y1,
     }
 }
 
-void menuSubDrawTile(GSgfxLayerID layer, long x, long y, long w, long h, const u8* color) {
+void menuSubDrawTile(GSgfxLayerID layer, long x, long y, long w, long h, GXColor color) {
     GSgfxLayer* l = GSgfxLayerFindByID(layer);
     if (l != 0) {
         l->primitive = 0x98;
@@ -591,25 +591,13 @@ void menuSubDrawTile(GSgfxLayerID layer, long x, long y, long w, long h, const u
         h += y;
         l->beginSurface(4);
         GXPosition2s16(x, y);
-        GXWGFifo.u8 = color[0];
-        GXWGFifo.u8 = color[1];
-        GXWGFifo.u8 = color[2];
-        GXWGFifo.u8 = color[3];
+        GXColor4u8(color.r, color.g, color.b, color.a);
         GXPosition2s16(w, y);
-        GXWGFifo.u8 = color[0];
-        GXWGFifo.u8 = color[1];
-        GXWGFifo.u8 = color[2];
-        GXWGFifo.u8 = color[3];
+        GXColor4u8(color.r, color.g, color.b, color.a);
         GXPosition2s16(x, h);
-        GXWGFifo.u8 = color[0];
-        GXWGFifo.u8 = color[1];
-        GXWGFifo.u8 = color[2];
-        GXWGFifo.u8 = color[3];
+        GXColor4u8(color.r, color.g, color.b, color.a);
         GXPosition2s16(w, h);
-        GXWGFifo.u8 = color[0];
-        GXWGFifo.u8 = color[1];
-        GXWGFifo.u8 = color[2];
-        GXWGFifo.u8 = color[3];
+        GXColor4u8(color.r, color.g, color.b, color.a);
         l->endSurface();
     }
 }
