@@ -180,25 +180,54 @@ static void _fadeFluidSetShockSub(u32 x, u32 y, f32 strength);
 static void _fadeFluidDoFree(void* ptr);
 static void* _fadeFluidDoMalloc(u32 size);
 
+static inline void FluidPosition3f32(f32 x, f32 y, f32 z) {
+    GXWGFifo.f32 = x;
+    GXWGFifo.f32 = y;
+    GXWGFifo.f32 = z;
+}
+static inline void FluidColor4u8(u8 r, u8 g, u8 b, u8 a) {
+    GXWGFifo.u8 = r;
+    GXWGFifo.u8 = g;
+    GXWGFifo.u8 = b;
+    GXWGFifo.u8 = a;
+}
+static inline void FluidTexCoord2f32(f32 s, f32 t) {
+    GXWGFifo.f32 = s;
+    GXWGFifo.f32 = t;
+}
+static inline u32 FluidRow(u32 y, u32 stride) {
+    return y * stride;
+}
+static inline void FluidVertex2(GSvec* vertex, f32 sx, f32 sy, u8 alpha) {
+    FluidPosition3f32(vertex->x * sx, vertex->y * sy, vertex->z * sx);
+    FluidColor4u8(255, 255, 255, alpha);
+}
+static inline void FluidVertex(GSvec* vertex, GSvec2* uv, f32 sx, f32 sy, u8 alpha) {
+    FluidPosition3f32(vertex->x * sx, vertex->y * sy, vertex->z * sx);
+    FluidColor4u8(255, 255, 255, alpha);
+    FluidTexCoord2f32(uv->x, uv->y);
+}
+
 extern "C" {
 
 void fadeFluidDispSecond(int layerID, GStexture* tex, f32 progress, f32 blend) {
-    enum TsE { TsE0 };
-    u32 row1;
-    u32 row0;
-    GSgfxLayer* layer = GSgfxLayerFindByID(layerID);
-    GSvec interpolated;
-    GSvec to;
+    u32 count;
+    GSvec color;
     GSvec from;
-    enum TsE alpha;
-    u32 x;
-    u32 y;
-
-    to.z = to.y = to.x = 1.0f;
-    from.z = from.y = from.x = 0.0f;
-    GSlerpGetLinearInterpolationVector(&interpolated, &to, &from, blend);
-    alpha = (enum TsE)((s32)(255.0f * interpolated.x));
-    alpha = (enum TsE)((s32)((f32)alpha * (1.0f - progress)));
+    f32 sx;
+    s32 alpha;
+    f32 value;
+    GSvec to;
+    f32 sy;
+    s32 y;
+    GSgfxLayer* layer;
+    u32 stride;
+    layer = GSgfxLayerFindByID(layerID);
+    from.x = 1.0f; from.y = 1.0f; from.z = 1.0f;
+    to.x = 0.0f; to.y = 0.0f; to.z = 0.0f;
+    GSlerpGetLinearInterpolationVector(&color, &from, &to, blend);
+    value = (f32)(s32)(255.0f * color.x);
+    alpha = (s32)(value * (1.0f - progress));
     spriteSetEnv(layerID);
     if (layer->curBlendIdx != 1) {
         layer->curBlendIdx = 1;
@@ -247,54 +276,51 @@ void fadeFluidDispSecond(int layerID, GStexture* tex, f32 progress, f32 blend) {
         layer->tex17f8 = tex;
         layer->dirty17f4 |= 1;
     }
-    FadeFluidWork* work = &_fadeFluidWork;
-    f32 xScale = work->xScale;
-    f32 yScale = work->yScale;
-    unsigned int stride = work->columns;
-    stride += 1;
-    for (y = 0; y < work->rows; y++) {
+    sx = _fadeFluidWork.xScale; sy = _fadeFluidWork.yScale;
+    stride = _fadeFluidWork.columns + 1;
+    count = stride * 2;
+    for (y = 0; y < _fadeFluidWork.rows; ++y) {
         layer->primType = 0x98;
-        row0 = stride;
-        layer->beginSurface(stride * 2);
-        row0 *= y;
-        row1 = (y + 1) * stride;
-        for (x = 0; x < stride; x++) {
-            GSvec2* t0 = &work->texCoord[x + row0];
-            GSvec* p1;
-            GSvec2* t1;
-            t1 = &work->texCoord[x + row1];
-            p1 = &work->heightPage[_fadeFluidSw][x + row1];
-            GSvec* p0 = &work->heightPage[_fadeFluidSw][x + row0];
-            GXPosition3f32(p0->x * xScale, p0->y * yScale, p0->z * xScale);
-            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
-            GXTexCoord2f32(t0->x, t0->y);
-            GXPosition3f32(p1->x * xScale, p1->y * yScale, p1->z * xScale);
-            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
-            GXTexCoord2f32(t1->x, t1->y);
+        GSvec** slot;
+        GSvec2* uv;
+        u32 rowB;
+        u32 j;
+        u32 x;
+        u32 rowA;
+        u32 i;
+        layer->beginSurface(count);
+        slot = &_fadeFluidWork.heightPage[_fadeFluidSw];
+        uv = _fadeFluidWork.texCoord;
+        rowA = FluidRow(y, stride); rowB = (y + 1) * stride;
+        for (x = 0; x < stride; ++x) {
+            i = x + rowA; j = x + rowB;
+            FluidVertex2(&(*slot)[i], sx, sy, alpha);
+            GSvec2* t0 = &uv[i];
+            FluidTexCoord2f32(t0->x, t0->y);
+            FluidVertex(&(*slot)[j], &uv[j], sx, sy, alpha);
         }
         layer->endSurface();
     }
 }
 
 void fadeFluidDisp(GStexture* tex, f32 progress, f32 blend) {
-    enum TsE { TsE0 };
-    GSvec2* t0;
-    u32 row1;
-    GSvec* p0;
-    u32 row0;
-    GSgfxLayer* layer = GSgfxLayerFindByID(7);
-    GSvec interpolated;
-    GSvec to;
+    u32 count;
+    GSvec color;
     GSvec from;
-    enum TsE alpha;
-    u32 x;
-    u32 y;
-
-    to.z = to.y = to.x = 1.0f;
-    from.z = from.y = from.x = 0.0f;
-    GSlerpGetLinearInterpolationVector(&interpolated, &to, &from, blend);
-    alpha = (enum TsE)((s32)(255.0f * interpolated.x));
-    alpha = (enum TsE)((s32)((f32)alpha * (1.0f - progress)));
+    f32 sx;
+    s32 alpha;
+    f32 value;
+    GSvec to;
+    f32 sy;
+    s32 y;
+    GSgfxLayer* layer;
+    u32 stride;
+    layer = GSgfxLayerFindByID(7);
+    from.x = 1.0f; from.y = 1.0f; from.z = 1.0f;
+    to.x = 0.0f; to.y = 0.0f; to.z = 0.0f;
+    GSlerpGetLinearInterpolationVector(&color, &from, &to, blend);
+    value = (f32)(s32)(255.0f * color.x);
+    alpha = (s32)(value * (1.0f - progress));
     spriteSetEnv(7);
     if (layer->curBlendIdx != 1) {
         layer->curBlendIdx = 1;
@@ -343,27 +369,28 @@ void fadeFluidDisp(GStexture* tex, f32 progress, f32 blend) {
         layer->tex17f8 = tex;
         layer->dirty17f4 |= 1;
     }
-    FadeFluidWork* work = &_fadeFluidWork;
-    f32 xScale = work->xScale;
-    f32 yScale = work->yScale;
-    u32 stride = work->columns + 1;
     layer->primType = 0x98;
-    for (y = 0; y < work->rows; y++) {
-        row0 = stride;
-        row0 *= y;
-        layer->beginSurface(stride * 2);
-        row1 = (y + 1) * stride;
-        for (x = 0; x < stride; x++) {
-            p0 = &work->heightPage[_fadeFluidSw][x + row0];
-            GSvec* p1 = &work->heightPage[_fadeFluidSw][x + row1];
-            GSvec2* t1 = &work->texCoord[x + row1];
-            t0 = &work->texCoord[x + row0];
-            GXPosition3f32(p0->x * xScale, p0->y * yScale, p0->z * xScale);
-            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
-            GXTexCoord2f32(t0->x, t0->y);
-            GXPosition3f32(p1->x * xScale, p1->y * yScale, p1->z * xScale);
-            GXColor4u8(0xFF, 0xFF, 0xFF, (u8)alpha);
-            GXTexCoord2f32(t1->x, t1->y);
+    sx = _fadeFluidWork.xScale; sy = _fadeFluidWork.yScale;
+    stride = _fadeFluidWork.columns + 1;
+    count = stride * 2;
+    for (y = 0; y < _fadeFluidWork.rows; ++y) {
+        GSvec** slot;
+        GSvec2* uv;
+        u32 rowB;
+        u32 j;
+        u32 x;
+        u32 rowA;
+        u32 i;
+        layer->beginSurface(count);
+        slot = &_fadeFluidWork.heightPage[_fadeFluidSw];
+        uv = _fadeFluidWork.texCoord;
+        rowA = FluidRow(y, stride); rowB = (y + 1) * stride;
+        for (x = 0; x < stride; ++x) {
+            i = x + rowA; j = x + rowB;
+            FluidVertex2(&(*slot)[i], sx, sy, alpha);
+            GSvec2* t0 = &uv[i];
+            FluidTexCoord2f32(t0->x, t0->y);
+            FluidVertex(&(*slot)[j], &uv[j], sx, sy, alpha);
         }
         layer->endSurface();
     }
