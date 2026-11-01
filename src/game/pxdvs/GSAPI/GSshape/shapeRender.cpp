@@ -496,31 +496,44 @@ inline bool shapeObjectBillboard(tagGsFilePrimObjectEntry *primitive)
     return result!=0;
 }
 
+static inline GSmtx *shapeRenderCamera(GSgfxLayer *layer)
+{
+    return &layer->matrixStack->frame->matrix;
+}
+
 void GsShapeRender::Render(s16 instanceId,GSgfxLayerID layerId)
 {
     if(active && frame<animation->frameCount) {
-        s32 i;
-        u32 activeCamera;
-        f32 fov,aspect,depth,farPlane;
+        f32 fov;
+        GSmtx *view;
+        f32 aspect;
         GSmtx *camera;
         GSgfxLayer *renderLayer;
+        f32 depth;
+        s32 i;
+        GsKeyObject *key;
+        f32 farPlane;
+        GsShapeKeyEntry *channel;
+        bool billboard;
+        GsShapeObject *object;
+        u32 activeCamera;
+        tagGsFilePrimObjectEntry *primitive;
+        u8 texture;
         renderLayer=GSgfxLayerFindByID(layerId);
         depth=0.1f;
         activeCamera=GScameraGetActiveCamera();
         if(activeCamera) GScameraGetPerspective(activeCamera,&fov,&aspect,&depth,&farPlane);
-        camera=&renderLayer->matrixStack->frame->matrix;
+        camera=shapeRenderCamera(renderLayer);
         if(camera) {
             for(i=0;i<keyCount;i++) {
-                GsKeyObject *key=&keys[i];
-                GsShapeKeyEntry *channel=key->entry;
-                GsShapeObject *object=&objects[channel->objectIndex];
-                tagGsFilePrimObjectEntry *primitive=object->entry;
+                key=&keys[i];
+                channel=key->entry;
+                object=&objects[channel->objectIndex];
+                primitive=object->entry;
                 if(primitive->dynamic && key->visible) {
-                    bool billboard=shapeObjectBillboard(primitive);
+                    billboard=shapeObjectBillboard(primitive);
                     if(billboard==1) MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(object,camera,depth);
-                    GSmtx *view;
-                    if(billboard==1) view=(GSmtx *)((u8 *)object+0x470);
-                    else view=camera;
+                    view=billboard==1?(GSmtx *)((u8 *)object+0x470):camera;
                     if(primitive->colorMode && object->entry->reserved1C) {
                         tagGsFilePrimKeyFrame *first,*second;
                         f32 t;
@@ -572,7 +585,7 @@ void GsShapeRender::Render(s16 instanceId,GSgfxLayerID layerId)
                     SetStateMode__13GsShapeObjectFP10GSgfxLayer(object,renderLayer);
                     if(primitive->shapeType==8 && refractTexture) renderLayer->textureCopy(renderLayer->pass,refractTexture,false,0,false,false,false);
                     SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(object,renderLayer,(GsShapeTexture *)textures,primitive->shapeType==8?refractTexture:0);
-                    for(u8 texture=0;texture<count;texture++) renderLayer->tgenFunc(texture,(GSgfxTgenFunc)1,sources[texture],&key->textureMatrices[texture],false,0);
+                    for(texture=0;texture<count;texture++) renderLayer->tgenFunc(texture,(GSgfxTgenFunc)1,sources[texture],&key->textureMatrices[texture],false,0);
                     bool billboard=shapeObjectBillboard(primitive);
                     if(billboard==1) renderLayer->matrixStack->push((GSmtx *)((u8 *)object+0x470));
                     renderLayer->matrixStack->pushMult(&key->transformMatrix);
