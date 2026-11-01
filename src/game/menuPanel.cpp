@@ -10,7 +10,55 @@ extern "C" s32 menuPanelInputNumber(s32 initial,s32 *result,s32 min,s32 max,bool
 extern "C" void menuPanelInputNumberHook(tagWINDOW_WORK *w,tagSPRITE_WORK *s){InputNumberArg *p=(InputNumberArg*)w->parameters[0];switch(s->id){case 0x504:msgctrlSetValue(0x34,p->current/10);return;case 0x503:msgctrlSetValue(0x34,p->current%10);return;case 0x511:{msgctrlSetValue(0x34,p->original-p->current+esabaGetEsaItemNum());return;}}}
 extern "C" void menuPanelInputNumberCursor(tagWINDOW_WORK *w){windowGetKeyInfo();InputNumberArg *p=(InputNumberArg*)w->parameters[0];u16 keys=windowGetKeyRepeat();if(keys&1){if(p->current<p->max)p->current++;}else if(keys&2){if(p->current>p->min)p->current--;}}
 extern "C" void menuPanelInputNumberCtrl(tagWINDOW_WORK *w){switch(w->phase){case 0:if(!w->step){winSeqSetMenu(w->menu,0x24);w->step=1;}return;case 3:if(!w->step){winSeqSetMenu(w->menu,0x17B);w->step=1;}break;}}
-extern "C" s32 menuPanelCursorSelect(tagWINDOW_WORK *w){u32 keys=windowGetKeyInfo()[3];keys|=windowGetKeyRepeat();s8 count=windowGetParam(w,2);s8 visible=menuDataBiosGetDispMax(w->menu);u32 less=visible<count;if(less)count=visible;if(!less)visible=count;struct S {s16 first,selected;}; S next,old;u16 pad=keys;next.first=w->first;next.selected=w->selected;old.first=w->first;old.selected=w->selected;if(pad&1)next.selected--;else if(pad&2)next.selected++;if(next.selected<0){next.first+=next.selected;next.selected=0;if(next.first<0){next.selected=(s8)(visible-1);next.first=(s8)(count-visible);}}else if(next.selected>=visible){s8 end=visible-1;next.first+=next.selected-end;next.selected=end;if(next.first+end>=count){next.first=0;next.selected=0;}}s32 previous=*(s32*)&old;s32 cursor=*(s32*)&next;if(menuCursorCmp(&previous,&cursor,cursor))menuSubCursorAnimeStart();w->first=next.first;w->selected=next.selected;w->value=next.first+next.selected;return 0;}
+extern "C" s32 menuPanelCursorSelect(tagWINDOW_WORK *window) {
+    struct Pair {s16 first,selected;};
+    s8 count;
+    s8 visible;
+    Pair next, old;
+    s32 previous;
+    s32 cursor;
+    s32 pad;
+    s32 end;
+    u32 keys;
+    u32 less;
+    keys = windowGetKeyInfo()[3];
+    keys = keys | windowGetKeyRepeat();
+    count = windowGetParam(window,2);
+    visible = menuDataBiosGetDispMax(window->menu);
+    less = visible < count;
+    if (less) count = visible;
+    if (!less) visible = count;
+    pad = keys & 0xFFFF;
+    next.first = window->first;
+    next.selected = window->selected;
+    old.first = window->first;
+    old.selected = window->selected;
+    if (pad & 1) next.selected--;
+    else if (pad & 2) next.selected++;
+    if (next.selected < 0) {
+        next.first += next.selected;
+        next.selected = 0;
+        if (next.first < 0) {
+            next.selected = (s8)(visible-1);
+            next.first = (s8)(count-visible);
+        }
+    } else if (next.selected >= visible) {
+        end = visible - 1;
+        next.first += next.selected - end;
+        next.selected = (s8)end;
+        if (next.first + (s8)end >= count) {
+            next.first = 0;
+            next.selected = 0;
+        }
+    }
+    previous = *(s32*)&old;
+    cursor = *(s32*)&next;
+    if (menuCursorCmp(&previous,&cursor,cursor)) menuSubCursorAnimeStart();
+    window->first = next.first;
+    window->selected = next.selected;
+    window->value = *(volatile s16*)&next.first + next.selected;
+    return 0;
+}
 
 extern "C" s32 menuPanelCtrlSelect2(tagWINDOW_WORK *w){menuSubCursorAnimeMain();switch(w->phase){case 5:break;case 0:if(!w->step){s32 size;void *source=(void*)windowGetParam(w,1);s32 count=windowGetParam(w,2);void *dest=windowAllocMemory(w,size=count*4);if(dest)memcpy(dest,source,size);u8 enabled=(u32)(windowGetParam(w,5)!=0);if(enabled==0)menuSetStatus(w->menu,8);winSeqSetMenu(w->menu,0x24);w->step=1;}break;case 3:if(!w->step){winSeqSetMenu(w->menu,0x17B);w->step=1;}break;}return 0;}
 extern "C" s32 menuPanelCtrlSelect(tagWINDOW_WORK *w){menuSubCursorAnimeMain();switch(w->phase){case 5:break;case 0:if(!w->step){s32 size;void *source=(void*)windowGetParam(w,1);s32 count=windowGetParam(w,2);void *dest=windowAllocMemory(w,size=count*4);if(dest)memcpy(dest,source,size);winSeqSetMenu(w->menu,0x24);w->step=1;}break;case 3:if(!w->step){winSeqSetMenu(w->menu,0x17B);w->step=1;}break;}return 0;}
