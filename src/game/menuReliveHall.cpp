@@ -1849,31 +1849,37 @@ void CMenuReliveHall::drawDancerStarLight() {
     }
 }
 
+static inline f32 hallSin(f32 a) { return (f32)sin(a); }
+static inline f32 hallCos(f32 a) { return (f32)cos(a); }
+static inline f32 hallSub(f32 a, f32 b) { return a - b; }
+static inline PocketVec<f32> hallPoint(f32 x, f32 y) { PocketVec<f32> p; p.x = x; p.y = y; return p; }
+static inline void hallDrawLineV(PocketVec<f32> b, PocketVec<f32> a, const GSgfxColAu8 &c1, const GSgfxColAu8 &c2) {
+    GSgfxColAu8 k2 = c2, k1 = c1;
+    GSprimDraw2DLine(a.x, a.y, b.x, b.y, &k1, &k2);
+}
+static inline void hallDrawLine(const PocketVec<f32> &q, const PocketVec<f32> &p, GSgfxColAu8 c1, GSgfxColAu8 c2) {
+    hallDrawLineV(q, p, c1, c2);
+}
 void CMenuReliveHall::drawVsitorLine(long aisyou, SPokemonView *view) {
     if (views[6].hidden == 0) {
         GSgfxColAu8 color = relivehallAisyou2ColorTbl[aisyou];
         u8 alpha = markerAlpha;
-        int width = _aisyou2LineWidthHalfTable[aisyou].half;
         color.a = color.a * alpha / 255;
-        PocketVec<short> p0 = view->getPosition();
+        int width = _aisyou2LineWidthHalfTable[aisyou].half;
+        f32 x;
+        const PocketVec<short> &p0 = view->getPosition();
         f32 y = p0.y;
         PocketVec<short> p1 = view->getPosition();
-        f32 x = p1.x;
-        f32 angle = 1.5707964f + xy2dir(x - fcirclePosition.x, y - fcirclePosition.y);
+        x = p1.x;
+        f32 angle = 1.5707964f + xy2dir(x - fcirclePosition.x, hallSub(y, fcirclePosition.y));
         f32 w = 0.0f;
         while (w < (f32)width) {
+            f32 s;
             f32 offset = w - (f32)(width / 2);
-            f32 s = offset * (f32)sin(angle);
-            f32 c = (f32)cos(angle);
-            GSgfxColAu8 c1 = color, c2 = color;
-            PocketVec<f32> b, a;
-            a.x = fcirclePosition.x + s;
-            b.x = x + s;
+            s = offset * hallSin(angle);
+            f32 c = hallCos(angle);
             f32 d = offset * -c;
-            a.y = fcirclePosition.y + d;
-            b.y = y + d;
-            PocketVec<f32> first = a, second = b;
-            GSprimDraw2DLine(first.x, first.y, second.x, second.y, &c1, &c2);
+            hallDrawLine(hallPoint(x + s, y + d), hallPoint(fcirclePosition.x + s, fcirclePosition.y + d), color, color);
             w += 0.5f;
         }
     }
