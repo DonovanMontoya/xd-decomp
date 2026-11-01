@@ -29,12 +29,28 @@ void menuSubDrawSimpleWindow(s32,s32,s32,s32,s32);
 void windowDrawSpriteCursor(s16,s16,u32,tagWINDOW_WORK*,s32,s32,s32,f32*,s32);
 
 s32 menuPanelDrawSelect(tagWINDOW_WORK* window) {
+    u32* backMessage;
+    s32 width;
+    s32 textStep;
+    u32* textMessage;
+    u8 visible;
     f32 animation[2];
-    s32 animationColor;
-    s32 height, width;
-    u8 style;
+    u32* message;
+    s32 i;
+    s32 j;
     u32* messages;
-    s32 count, maxHeight, offset;
+    s32 count;
+    s32 textY;
+    s32 maxHeight;
+    s32 k;
+    s32 y;
+    u8 style;
+    s32 animationColor;
+    s32 height;
+    s32 step;
+    s32 rowHeight;
+    s32 offset;
+    u32 rect;
     offset = _DrawSelectOffset;
     height = 0;
     width = 0;
@@ -42,53 +58,52 @@ s32 menuPanelDrawSelect(tagWINDOW_WORK* window) {
     style = windowGetParam(window, 0);
     messages = (u32*)windowGetAllocPtr(window);
     count = (s8)windowGetParam(window, 2);
-    u8 visible = menuDataBiosGetDispMax(window->menu);
+    visible = menuDataBiosGetDispMax(window->menu);
     if (count > visible) count = visible;
-    u32* message = messages;
-    for (s32 i = 0; i < count; i++, message++) {
-        u32 rect = GSmsgGetRect(*message);
+    message = messages;
+    for (i = 0; i < count; message++, i++) {
+        rect = GSmsgGetRect(*message);
         if (width < (s32)(rect >> 16)) width = rect >> 16;
-        s32 rowHeight = (u16)rect;
+        rowHeight = (u16)rect;
         if (maxHeight < rowHeight) maxHeight = rowHeight;
-        height = rowHeight + (offset + height);
+        height = rowHeight + offset + height;
     }
     height -= offset;
-    width = width + 26 + _addwidth;
+    width += 26;
+    width += _addwidth;
     switch (style) {
     case 0: menuSubDrawNormalWindow2(window->layer,0,0,width,height,window->alpha); break;
     case 1: menuSubDrawMsgWindow2(window->layer,0,0,width,height,window->alpha,1); break;
     case 0x7F: menuSubDrawSimpleWindow(window->layer,0,0,width,height-2); break;
     }
-    u32* backMessage = messages;
-    s32 y = 1;
-    for (s32 i = 0; i < count; i++, backMessage++) {
-        s32 step;
+    backMessage = messages;
+    y = 1;
+    for (j = 0; j < count; backMessage++, j++) {
         if (*backMessage) step = offset + (u16)GSmsgGetRect(*backMessage);
         else step = 20;
-        if (window->selected == i) {
+        if (window->selected == j) {
             if (maxHeight >= 20)
-                menuSubDrawCursorBack(window->layer,_cursorOffset-5,(y+_lsizecursorYoffset)-7,width+_backWidth,step,window->alpha,0);
+                menuSubDrawCursorBack(window->layer,_cursorOffset-5,y-7+_lsizecursorYoffset,width+_backWidth,step,window->alpha,0);
             else
                 menuSubDrawCursorBack(window->layer,_cursorOffset-6,y-6,width+_backWidth,step,window->alpha,1);
         }
         y += step;
     }
-    u32* textMessage = messages;
-    s16 textY = 1;
-    for (s32 i = 0; i < count; i++, textMessage++) {
-        s32 step;
+    textMessage = messages;
+    textY = 1;
+    for (k = 0; k < count; textMessage++, k++) {
         if (*textMessage) {
-            step = offset + (u16)GSmsgGetRect(*textMessage);
+            textStep = offset + (u16)GSmsgGetRect(*textMessage);
             GSmsgPrint2(window->layer,26,textY,window->alpha | 0xFFFFFF00,*textMessage);
-        } else step = 20;
+        } else textStep = 20;
         menuSubCursorAnimeValGet(animation,&animationColor);
-        if (window->selected == i) {
+        if (window->selected == k) {
             if (maxHeight >= 20)
                 windowDrawSpriteCursor((s16)_cursorOffset,(s16)(textY+_lsizecursorYoffset),window->alpha|0xFFFFFF00,window,0x7D,0,window->layer,animation,animationColor);
             else
                 windowDrawSpriteCursor((s16)_cursorOffset,textY,window->alpha|0xFFFFFF00,window,0xC2,0,window->layer,animation,animationColor);
         }
-        textY += step;
+        textY += textStep;
     }
     return 0;
 }
