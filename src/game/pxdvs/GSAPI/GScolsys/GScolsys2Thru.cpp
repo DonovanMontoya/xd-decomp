@@ -346,32 +346,40 @@ static s32 getMdlEventList(GSvec *point,GSvec *direction,f32 radius,CCD_THRUMDL_
     return count;
 }
 static s32 getEventList(GSvec *point,GSvec *direction,f32 radius,ThruEvent *events) {
-    s32 count=0;
-    ThruEvent temporary[4];
-    GSmtx matrix,rotation;
+    ThruObject *object;
+    GSmtx matrix;
+    ThruEvent *existing;
+    u32 i;
+    s32 found;
+    s32 count;
+    count=0;
+    GSmtx rotation;
+    ThruEvent *entry;
+    s32 j;
+    s32 duplicate;
     u8 enabled;
-    ThruFile *head=GScolsys2GetCCDFileHead();
-    u32 i=0;
-    ThruObject *object=head->objects;
+    ThruEvent temporary[4];
+    CCD_THRUMDL_HEAD *model;
+    ThruFile *head;
+    head=GScolsys2GetCCDFileHead();
+    i=0;
+    object=head->objects;
     for(;i<head->count && count<4;i++,object++) {
         GScolsys2GetObjEnable(i,&enabled);
         if(enabled) {
-            CCD_THRUMDL_HEAD *model=object->model;
+            model=object->model;
             if(model) {
-                s32 found;
                 if(object->flags&1) {
                     GScolsys2GetObjMatrix(matrix.m,i);
                     GScolsys2GetObjRotMatrix(rotation.m,i);
                     found=getMdlEventList(point,direction,radius,model,&matrix,&rotation,temporary);
                 } else found=getFixedMdlEventList(point,direction,radius,model,temporary);
-                ThruEvent *entry=temporary;
-                for(s32 j=0;j<found && count<4;j++,entry++) {
-                    ThruEvent *existing=events;
-                s32 duplicate;
-                for(duplicate=0;duplicate<count;existing++,duplicate++) if(existing->eventID==entry->eventID) break;
-                if(duplicate>=count) {
-                        copyEvent(&events[count],entry);
-                        count++;
+                entry=temporary;
+                for(j=0;j<found && count<4;entry++,j++) {
+                    existing=events;
+                    for(duplicate=0;duplicate<count;existing++,duplicate++) if(existing->eventID==entry->eventID) break;
+                    if(duplicate>=count) {
+                        copyEvent(&events[count++],entry);
                     }
                 }
             }
