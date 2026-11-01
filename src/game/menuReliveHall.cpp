@@ -297,15 +297,15 @@ typedef char HallWorkSize[sizeof(CMenuReliveHall) == 0x81190 ? 1 : -1];
 static u8 blurAlphaTbl[9] = {255, 215, 175, 135, 95, 55, 0, 0, 0};
 static f32 blurScaleTbl[9] = {1.0f, 0.85f, 0.7f, 0.55f, 0.4f, 0.25f, 0.0f, 0.0f, 0.0f};
 static f32 starMasterScaleTbl[10] = {1.1f, 0.85f, 1.0f, 0.9f, 1.1f, 0.9f, 0.85f, 1.1f, 1.0f, 0.85f};
-static f32 _markerDancerOnDirTbl[20] = {
+static f32 _markerDancerOnDirTbl[5][4] = {
     0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 3.1415927f,
     0.0f, 0.0f, 0.0f, 2.0943952f, 4.1887903f, 0.0f, 5.497787f, 0.7853982f, 2.3561945f, 3.9269907f
 };
-static f32 _zokuseiMarkDancerOnDirTbl[20] = {
+static f32 _zokuseiMarkDancerOnDirTbl[5][4] = {
     0.0f, 0.0f, 0.0f, 0.0f, 1.4486233f, 0.0f, 0.0f, 0.0f, 1.4486233f, 1.6929694f,
     0.0f, 0.0f, 1.4486233f, 1.9373156f, 4.328417f, 0.0f, 4.82409f, 1.4590952f, 1.6824975f, 4.600688f
 };
-static f32 _markerDancerEmptyDirTbl[16] = {
+static f32 _markerDancerEmptyDirTbl[4][4] = {
     0.0f, 0.0f, 0.0f, 0.0f, 3.1415927f, 0.0f, 0.0f, 0.0f,
     1.5707964f, 4.712389f, 0.0f, 0.0f, 1.0471976f, 3.1415927f, 5.235988f, 0.0f
 };
@@ -1013,8 +1013,7 @@ void CMenuReliveHall::dancerMoveAnimationKick(f32 *pos, f32 *face, bool pickup, 
 }
 
 void CMenuReliveHall::resetViewAll() {
-    int off, i, quantity;
-    f32 *angles, *facings;
+    int i, quantity;
     memset(views, 0, 0x2D0);
     Pokemon *visitorPokemon = stage->getVisitorPointer();
     memset(&views[6].ant, 0, 0x34);
@@ -1023,31 +1022,28 @@ void CMenuReliveHall::resetViewAll() {
         views[6].ant.setAnimation(0);
     }
     quantity = stage->getDancerQuantity();
-    off = quantity * 16;
-    angles = (f32 *)((u8 *)_markerDancerOnDirTbl + off);
-    facings = (f32 *)((u8 *)_zokuseiMarkDancerOnDirTbl + off);
     i = 0;
     for (; i < quantity; i++) {
+        SPokemonView &v = views[i];
         Pokemon *pokemon = stage->getDancerPointer(i);
-        f32 a = *angles;
-        views[i].unk4 = views[i].targetAngle = views[i].startAngle = a;
-        f32 f = *facings;
-        views[i].facing = views[i].targetFacing = views[i].startFacing = f;
-        views[i].unk0 = 0;
-        views[i].ant.initByPokemon(pokemon);
-        views[i].ant.setAnimation(1);
-        angles++;
-        facings++;
+        f32 a = _markerDancerOnDirTbl[quantity][i];
+        v.unk4 = v.targetAngle = v.startAngle = a;
+        f32 f = _zokuseiMarkDancerOnDirTbl[quantity][i];
+        v.facing = v.targetFacing = v.startFacing = f;
+        v.unk0 = 0;
+        v.ant.initByPokemon(pokemon);
+        v.ant.setAnimation(1);
     }
     int empty = getQuantityMarkerDancerEmpty();
     if (empty != 0) {
-        f32 *marks = (f32 *)((u8 *)_markerDancerEmptyDirTbl + off);
         for (int k = 0; k < empty; k++) {
-            SPokemonView *v = &views[i + k];
+            SPokemonView *v = &views[i];
+            f32 m = _markerDancerEmptyDirTbl[quantity][k];
             v->unk0 = 1;
-            v->unk4 = *marks++;
+            v->unk4 = m;
             v->targetAngle = v->unk4;
             v->startAngle = v->unk4;
+            i++;
         }
     }
     setCircleSw();
@@ -2712,23 +2708,32 @@ static PocketVec<f32> st$3117[4];
 namespace {
 inline void arrowSetColor(GSgfxColAu8* c,u8 r,u8 g,u8 b,u8 a) {c->r=r;c->g=g;c->b=b;c->a=a;}
 void menuPtSpriteDrawArrow(u16 id,u32 packedColor,f32 rotation,int offset) {
+    f32 top;
+    f32 width;
+    f32 angle;
+    f32 height;
+    f32 oldY;
+    f32 cosine;
+    f32 left;
+    f32 oldX;
+    f32 sine;
     MenuSpriteValue* data=menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(id));
     void* texture=GSresGetResourceAllGroup(data->resource);
-    f32 left=data->x,top=data->y,width=data->width,height=data->height;
-    GSgfxColAu8 color={255,255,255,255};
+    GSgfxColAu8 color={0,0,0,0};
     arrowSetColor(&color,packedColor>>24,packedColor>>16,packedColor>>8,packedColor);
+    left=data->x;top=data->y;width=data->width;height=data->height;
     st$3117[0].x=st$3117[1].x=left/GStextureGetXsize(texture);
     st$3117[2].x=st$3117[3].x=(left+width)/GStextureGetXsize(texture);
     st$3117[1].y=st$3117[2].y=top/GStextureGetYsize(texture);
     st$3117[0].y=st$3117[3].y=(top+height)/GStextureGetYsize(texture);
     xy$3116[0].x=xy$3116[1].x=0;xy$3116[2].x=xy$3116[3].x=width;
     xy$3116[1].y=xy$3116[2].y=0;xy$3116[0].y=xy$3116[3].y=height;
-    for(s32 i=0;i<4;i++) {xy$3116[i].x-=width/2.0f;xy$3116[i].y-=height;xy$3116[i].y+=offset;}
-    f32 angle=-rotation;
+    for(s32 i=0;i<4;i++) {xy$3116[i].y-=height;xy$3116[i].y+=offset;xy$3116[i].x-=width/2.0f;}
+    angle=-rotation;
     for(s32 i=0;i<4;i++) {
-        f32 oldX=xy$3116[i].x,oldY=xy$3116[i].y;
-        f32 cosine=cos(angle);f32 sine=sin(angle);
-        xy$3116[i].x=oldX*cosine+oldY*sine;
+        oldX=xy$3116[i].x;oldY=xy$3116[i].y;
+        cosine=cos(angle);sine=sin(angle);
+        xy$3116[i].x=oldY*sine+oldX*cosine;
         sine=sin(angle);cosine=cos(angle);
         xy$3116[i].y=oldY*cosine-oldX*sine;
     }
