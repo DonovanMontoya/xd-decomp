@@ -10,6 +10,10 @@ void makePocketCologneArg(POCKET_COLOGNE_ARG *p,unsigned long kind){p->kind=kind
 extern "C" {
 s32 menuPocketColognDrawLineCursor(tagWINDOW_WORK *w,tagSPRITE_WORK *s){MENU_ITEM_dd_ *p=menuItemBiosGetPtr(w->menu,s->id);s->y=*(s16*)((u8*)p+8)+w->selected*getLineHeight(w);return 0;}
 s32 menuPocketColognDrawCursor(tagWINDOW_WORK *w,tagSPRITE_WORK *s){s32 table[4]={0x12C,0x12B,0x12A,0x129};if(s->id==table[w->selected]){s32 point[2]={0,0};s32 alpha=-1;if(w->menu==windowGetActiveID())menuSubCursorAnimeValGet(point,&alpha);s32 layer=winSpriteGetLayerID(w,s);windowDrawSpriteCursor(0,0,-1,w,0xC2,0,layer,point,alpha);}winSpriteSetDisp(s,0);return 0;}
+static inline void drawRight(tagWINDOW_WORK *w, tagSPRITE_WORK *s, s16 width, u32 msg) {
+    s16 h = GSmsgGetRect(msg) >> 16;
+    GSmsgPrint2(winSpriteGetLayerID(w, s), width - h, 0, 0xFFFFFFFF, msg);
+}
 s32 menuPocketColognDrawItemText(tagWINDOW_WORK *w, tagSPRITE_WORK *s) {
     s32 ids[4] = {0x130, 0x12F, 0x12E, 0x12D};
     POCKET_COLOGNE_ARG *p = (POCKET_COLOGNE_ARG *)w->parameters[0];
@@ -38,8 +42,7 @@ s32 menuPocketColognDrawItemText(tagWINDOW_WORK *w, tagSPRITE_WORK *s) {
         GSmsgPrint2(winSpriteGetLayerID(w, s), width - (s16)name, 0, 0xFFFFFFFF, 0x428F);
         s32 count = getItemNum(((u16 *)p)[index * 2 + 2]);
         msgctrlSetValue(0x34, count);
-        name = (s16)(GSmsgGetRect(0x426F) >> 16);
-        GSmsgPrint2(winSpriteGetLayerID(w, s), width - (s16)name, 0, 0xFFFFFFFF, 0x426F);
+        drawRight(w, s, width, 0x426F);
     }
     return 0;
 }

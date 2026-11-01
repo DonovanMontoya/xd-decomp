@@ -1866,23 +1866,26 @@ void GSgfx_GCWriteCopyDisp(GCCopyDisplayInfo* info, u32 destination, u8 colorUpd
     GCFlushRegister(&control);
 }
 
+static inline u8 gcCopyCompare() { return GC_BYTE(0xbf0); }
+static inline s32 gcCopyBlend() { return GC_WORD(0xbb4); }
+static inline u32 gcCopyTexFormat(const GCCopyTextureInfo* i) { return i->format; }
 void GSgfx_GCWriteCopyTex(GCCopyTextureInfo* info, u32 destination) {
+    u32 savedFormat;
     u8 savedCompare = 0xfe;
     s32 savedBlend = 0xfefefefe;
-    u32 savedFormat;
     if (info->format & 0x10) {
         savedFormat = gsgfxState->bp30[4].pixel.pixelFormat;
         gsgfxState->bp30[4].pixel.pixelFormat = 3;
         gsgfxState->dirty |= 0x10;
     }
     if (info->clear == 1) {
-        u8 compare = GC_BYTE(0xbf0);
+        u8 compare = gcCopyCompare();
         if (compare != 0) {
             savedCompare = compare;
             gsgfxState->bp30[4].copyPixel.compare = 0;
             gsgfxState->dirty |= 0x10;
         }
-        s32 blend = GC_WORD(0xbb4);
+        s32 blend = gcCopyBlend();
         if (blend != 0) {
             savedBlend = blend;
             gsgfxState->bp30[2].copyBlend.blend = 0;
@@ -1893,20 +1896,20 @@ void GSgfx_GCWriteCopyTex(GCCopyTextureInfo* info, u32 destination) {
         gsgfxState->dirty &= ~0x14;
     }
     GCBPRegister source, size, stride, address, control;
+    stride.value = 0;
     source.value = 0;
     size.value = 0;
     source.fields.address = 0x49;
-    s32 format = info->format;
-    source.copyRectangle.x = info->x;
-    stride.value = 0;
     address.value = 0;
     control.value = 0;
     size.fields.address = 0x4a;
-    size.copyRectangle.x = info->width - 1;
+    u32 format = gcCopyTexFormat(info);
+    source.copyRectangle.x = info->x;
     stride.fields.address = 0x4d;
     address.fields.address = 0x4b;
     control.fields.address = 0x52;
     source.copyRectangle.y = info->y;
+    size.copyRectangle.x = info->width - 1;
     size.copyRectangle.y = info->height - 1;
     s32 blockWidth;
     switch (format) {
@@ -1919,19 +1922,20 @@ void GSgfx_GCWriteCopyTex(GCCopyTextureInfo* info, u32 destination) {
         blockWidth = 2; break;
     default: blockWidth = 0; break;
     }
+    GCBPRegister* sp = &stride;
     switch (blockWidth) {
-    case 2: stride.copyStride.stride = info->stride >> 1; break;
-    case 4: stride.copyStride.stride = info->stride >> 2; break;
-    case 8: stride.copyStride.stride = info->stride >> 3; break;
+    case 2: sp->copyStride.stride = info->stride >> 1; break;
+    case 4: sp->copyStride.stride = info->stride >> 2; break;
+    case 8: sp->copyStride.stride = info->stride >> 3; break;
     }
+    address.tlutSource.source = (destination & 0x3FFFFFFF) >> 5;
     control.copyControl.clamp = info->clamp;
-    format = info->format;
+    control.copyControl.conversion = 1;
+    format = gcCopyTexFormat(info);
     control.copyControl.depth = (format >> 3) & 1;
+    control.copyControl.format = format;
     control.copyControl.mipmap = info->mipmap;
     control.copyControl.clear = info->clear;
-    address.tlutSource.source = destination >> 5;
-    control.copyControl.conversion = 1;
-    control.copyControl.format = format;
     switch (format) {
     case 0: case 1: case 2: case 3:
         control.copyControl.intensity = 1; break;

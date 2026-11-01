@@ -297,15 +297,15 @@ typedef char HallWorkSize[sizeof(CMenuReliveHall) == 0x81190 ? 1 : -1];
 static u8 blurAlphaTbl[9] = {255, 215, 175, 135, 95, 55, 0, 0, 0};
 static f32 blurScaleTbl[9] = {1.0f, 0.85f, 0.7f, 0.55f, 0.4f, 0.25f, 0.0f, 0.0f, 0.0f};
 static f32 starMasterScaleTbl[10] = {1.1f, 0.85f, 1.0f, 0.9f, 1.1f, 0.9f, 0.85f, 1.1f, 1.0f, 0.85f};
-static f32 _markerDancerOnDirTbl[20] = {
+static f32 _markerDancerOnDirTbl[5][4] = {
     0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 3.1415927f,
     0.0f, 0.0f, 0.0f, 2.0943952f, 4.1887903f, 0.0f, 5.497787f, 0.7853982f, 2.3561945f, 3.9269907f
 };
-static f32 _zokuseiMarkDancerOnDirTbl[20] = {
+static f32 _zokuseiMarkDancerOnDirTbl[5][4] = {
     0.0f, 0.0f, 0.0f, 0.0f, 1.4486233f, 0.0f, 0.0f, 0.0f, 1.4486233f, 1.6929694f,
     0.0f, 0.0f, 1.4486233f, 1.9373156f, 4.328417f, 0.0f, 4.82409f, 1.4590952f, 1.6824975f, 4.600688f
 };
-static f32 _markerDancerEmptyDirTbl[16] = {
+static f32 _markerDancerEmptyDirTbl[4][4] = {
     0.0f, 0.0f, 0.0f, 0.0f, 3.1415927f, 0.0f, 0.0f, 0.0f,
     1.5707964f, 4.712389f, 0.0f, 0.0f, 1.0471976f, 3.1415927f, 5.235988f, 0.0f
 };
@@ -417,9 +417,17 @@ void CMenuReliveHall::setStatusDisplayVisitor(Pokemon *p) {
     }
 }
 
+static inline void hallInitCircles(CMenuReliveHall *self) {
+    for (u32 i = 0; i < 3; i++) {
+        GSgfxColAu8 color = relivehallAisyou2ColorTbl[i];
+        self->circles[i].init(_aisyou2LineWidthHalfTable[i].rate, _aisyou2LineWidthHalfTable[i].half2,
+                        _aisyou2LineWidthHalfTable[i].rate2, color);
+    }
+}
+
 void CMenuReliveHall::init(CMenuGlobalState &gs) {
     time = 0;
-    ((CState *)((u8 *)this + 0x278))->init();
+    ((CState *)&current)->init();
     fadeTime = 0;
     fadeState = 0;
     memset(windows, 0, 0x100);
@@ -440,13 +448,9 @@ void CMenuReliveHall::init(CMenuGlobalState &gs) {
     cursorIndex = 0;
     memset(&menuTable, 0, 0xC);
     memset(&stick, 0, 0xC);
-    for (u32 i = 0; i < 3; i++) {
-        GSgfxColAu8 color = relivehallAisyou2ColorTbl[i];
-        circles[i].init(_aisyou2LineWidthHalfTable[i].rate, _aisyou2LineWidthHalfTable[i].half2,
-                        _aisyou2LineWidthHalfTable[i].rate2, color);
-    }
+    hallInitCircles(this);
     memset(&model0, 0, 0x10);
-    ((CState *)((u8 *)this + 0x278))->init();
+    ((CState *)&current)->init();
     globalState = 0;
     cursor = 0;
     memset(cursorPositions, 0, 0x24);
@@ -459,7 +463,7 @@ void CMenuReliveHall::init(CMenuGlobalState &gs) {
     globalState = &gs;
     cursor = &globalState->cursor;
     cursor->setPositionTable(cursorPositions, 0);
-    ((CState *)((u8 *)this + 0x278))->init();
+    ((CState *)&current)->init();
     ((CState *)&animationState)->init();
     s16 *markers = (s16 *)markerOverride;
     for (unsigned int i = 0; i < 18; i++) markers[i] = -1;
@@ -468,7 +472,7 @@ void CMenuReliveHall::init(CMenuGlobalState &gs) {
     starAlpha = 255;
     effectAlpha = 255;
     markerAlpha = 255;
-    memset(&hitEffect, 0, sizeof(hitEffect));
+    memset((u8 *)markerOverride + 0x4A, 0, sizeof(hitEffect));
     localWindowSetTable(localWindowTable);
     loadDatas();
     infoWindow.init(0xCF, 0x5D0);
@@ -823,8 +827,8 @@ s32 _menuDrawReliveMeter(Pokemon *p, long a, long b, long c, long d, u8 e, GSgfx
     return menuDrawReliveMeter3(p, a, b, c, d, e, layer, f);
 }
 
-long rate01ToAlphaFrom50(f32 rate) {
-    return (s32)(205.0f * rate + 50.0f);
+u8 rate01ToAlphaFrom50(f32 rate) {
+    return 205.0f * rate + 50.0f;
 }
 
 u8 isDirRegionInReverseClockwise(f32 a, f32 b, f32 c) {
@@ -1009,8 +1013,7 @@ void CMenuReliveHall::dancerMoveAnimationKick(f32 *pos, f32 *face, bool pickup, 
 }
 
 void CMenuReliveHall::resetViewAll() {
-    int off, i, quantity;
-    f32 *angles, *facings;
+    int i, quantity;
     memset(views, 0, 0x2D0);
     Pokemon *visitorPokemon = stage->getVisitorPointer();
     memset(&views[6].ant, 0, 0x34);
@@ -1019,31 +1022,28 @@ void CMenuReliveHall::resetViewAll() {
         views[6].ant.setAnimation(0);
     }
     quantity = stage->getDancerQuantity();
-    off = quantity * 16;
-    angles = (f32 *)((u8 *)_markerDancerOnDirTbl + off);
-    facings = (f32 *)((u8 *)_zokuseiMarkDancerOnDirTbl + off);
     i = 0;
     for (; i < quantity; i++) {
+        SPokemonView &v = views[i];
         Pokemon *pokemon = stage->getDancerPointer(i);
-        f32 a = *angles;
-        views[i].unk4 = views[i].targetAngle = views[i].startAngle = a;
-        f32 f = *facings;
-        views[i].facing = views[i].targetFacing = views[i].startFacing = f;
-        views[i].unk0 = 0;
-        views[i].ant.initByPokemon(pokemon);
-        views[i].ant.setAnimation(1);
-        angles++;
-        facings++;
+        f32 a = _markerDancerOnDirTbl[quantity][i];
+        v.unk4 = v.targetAngle = v.startAngle = a;
+        f32 f = _zokuseiMarkDancerOnDirTbl[quantity][i];
+        v.facing = v.targetFacing = v.startFacing = f;
+        v.unk0 = 0;
+        v.ant.initByPokemon(pokemon);
+        v.ant.setAnimation(1);
     }
     int empty = getQuantityMarkerDancerEmpty();
     if (empty != 0) {
-        f32 *marks = (f32 *)((u8 *)_markerDancerEmptyDirTbl + off);
         for (int k = 0; k < empty; k++) {
-            SPokemonView *v = &views[i + k];
+            SPokemonView *v = &views[i];
+            f32 m = _markerDancerEmptyDirTbl[quantity][k];
             v->unk0 = 1;
-            v->unk4 = *marks++;
+            v->unk4 = m;
             v->targetAngle = v->unk4;
             v->startAngle = v->unk4;
+            i++;
         }
     }
     setCircleSw();
@@ -1849,41 +1849,48 @@ void CMenuReliveHall::drawDancerStarLight() {
     }
 }
 
+static inline f32 hallSin(f32 a) { return (f32)sin(a); }
+static inline f32 hallCos(f32 a) { return (f32)cos(a); }
+static inline f32 hallSub(f32 a, f32 b) { return a - b; }
+static inline PocketVec<f32> hallPoint(f32 x, f32 y) { PocketVec<f32> p; p.x = x; p.y = y; return p; }
+static inline void hallDrawLineV(PocketVec<f32> b, PocketVec<f32> a, const GSgfxColAu8 &c1, const GSgfxColAu8 &c2) {
+    GSgfxColAu8 k2 = c2, k1 = c1;
+    GSprimDraw2DLine(a.x, a.y, b.x, b.y, &k1, &k2);
+}
+static inline void hallDrawLine(const PocketVec<f32> &q, const PocketVec<f32> &p, GSgfxColAu8 c1, GSgfxColAu8 c2) {
+    hallDrawLineV(q, p, c1, c2);
+}
 void CMenuReliveHall::drawVsitorLine(long aisyou, SPokemonView *view) {
     if (views[6].hidden == 0) {
         GSgfxColAu8 color = relivehallAisyou2ColorTbl[aisyou];
         u8 alpha = markerAlpha;
-        int width = _aisyou2LineWidthHalfTable[aisyou].half;
         color.a = color.a * alpha / 255;
-        PocketVec<short> p0 = view->getPosition();
+        int width = _aisyou2LineWidthHalfTable[aisyou].half;
+        f32 x;
+        const PocketVec<short> &p0 = view->getPosition();
         f32 y = p0.y;
         PocketVec<short> p1 = view->getPosition();
-        f32 x = p1.x;
-        f32 angle = 1.5707964f + xy2dir(x - fcirclePosition.x, y - fcirclePosition.y);
+        x = p1.x;
+        f32 angle = 1.5707964f + xy2dir(x - fcirclePosition.x, hallSub(y, fcirclePosition.y));
         f32 w = 0.0f;
         while (w < (f32)width) {
+            f32 s;
             f32 offset = w - (f32)(width / 2);
-            f32 s = offset * (f32)sin(angle);
-            f32 c = (f32)cos(angle);
-            GSgfxColAu8 c1 = color, c2 = color;
-            PocketVec<f32> b, a;
-            a.x = fcirclePosition.x + s;
-            b.x = x + s;
+            s = offset * hallSin(angle);
+            f32 c = hallCos(angle);
             f32 d = offset * -c;
-            a.y = fcirclePosition.y + d;
-            b.y = y + d;
-            PocketVec<f32> first = a, second = b;
-            GSprimDraw2DLine(first.x, first.y, second.x, second.y, &c1, &c2);
+            hallDrawLine(hallPoint(x + s, y + d), hallPoint(fcirclePosition.x + s, fcirclePosition.y + d), color, color);
             w += 0.5f;
         }
     }
 }
 
+static inline f32 hallPhaseRemainder(f32 current, f32 step, f32 rate) { return -(current * step - rate); }
 void CMenuReliveHall::drawMainBG() {
     tagWINDOW_WORK *window = windowSearchID(0x67);
-    GSgfxColAu8 *colors;
     int level, cur, i;
-    bool hasVisitor = getVisitorWithCatch() != 0;
+    bool hasVisitor;
+    hasVisitor = (u8)(getVisitorWithCatch() != 0);
     int bonus;
     int passion = getPassion(&bonus);
     if (passion <= 0) {
@@ -1900,17 +1907,18 @@ void CMenuReliveHall::drawMainBG() {
         level = bonus + 4;
     }
     f32 rate = calcAnimationTimeRate0to1(0.8f);
-    colors = _passion2ColorTbl;
-    i = 0;
     cur = (s32)(rate / 0.03846154f);
-    f32 frac = -((f32)cur * 0.03846154f - rate) * 26.0f;
-    f32 inv = 1.0f - frac;
-    do {
+    f32 inv, frac;
+    f32 scale = 26.0f;
+    rate = hallPhaseRemainder((f32)cur,0.03846154f,rate);
+    frac = rate * scale;
+    inv = 1.0f - frac;
+    for (i = 0; i < 13; i++) {
         tagSPRITE_WORK *sprite = menuPtSpriteWorkGetByItemID(window, 0x28D, i);
-        GSgfxColAu8 color = *colors;
+        GSgfxColAu8 color = _passion2ColorTbl[i];
         sprite->color.value = GSgfxColAu8To32(color);
-        if (i < level && hasVisitor) {
-            s32 alpha;
+        if (i < level && (u8)hasVisitor) {
+            u8 alpha;
             if (cur < 13) {
                 if (i < cur) {
                     alpha = 0xFF;
@@ -1934,13 +1942,12 @@ void CMenuReliveHall::drawMainBG() {
         } else {
             menuPtSpriteWorkSetSw(window, sprite, false);
         }
-        colors++;
-        i++;
-    } while (i < 13);
+    }
     menuPtSpriteWorkSetSw(window, 0x28C, 0, hasVisitor);
     menuPtSpriteWorkSetSw(window, 0x316, 0, false);
     menuPtSpriteWorkSetSw(window, 0x28B, 0, false);
-    menuPtSpriteWorkSetSw(window, 0x28A, 0, dancerPositionQuantityWithCatch() != 0);
+    int dancers = dancerPositionQuantityWithCatch();
+    menuPtSpriteWorkSetSw(window, 0x28A, 0, dancers != 0);
     menuPtSpriteWorkSetSw(window, 0x4D1, 0, dancerPositionQuantityWithCatch() != 0);
     menuPtSpriteWorkSetSw(window, 0x8EE, 0, hasVisitor);
     menuPtSpriteWorkSetSw(window, 0x4D2, 0, hasVisitor);
@@ -2259,7 +2266,7 @@ void CMenuReliveHall::animationDataReset() {
     starAlpha = 255;
     effectAlpha = 255;
     markerAlpha = 255;
-    memset(&hitEffect, 0, sizeof(hitEffect));
+    memset((u8 *)markerOverride + 0x4A, 0, sizeof(hitEffect));
 }
 
 inline f32 cosf(f32 x) { return cos(x); }
@@ -2476,6 +2483,30 @@ u32 GSmsgGetRect(u32);
 void GSmsgPrint2(s32,s32,s32,u32,u32);
 }
 namespace {
+static inline void statusTempoBars(CMenuReliveHall* self, tagWINDOW_WORK* window, u8 start) {
+    u8 dancer;
+    u8 preview;
+    CMenuPokemonCursor* c;
+    Pokemon* caught;
+    preview=start;
+    dancer=preview;
+    if(self->cursor->isCatchPokemon()) {
+        c=self->cursor;
+        if(c->pokemon.checkValid())caught=&c->pokemon;else caught=0;
+        if(!caught->isDarkPokemon())dancer=true;
+    }
+    if(dancer) {
+        bool valid=false;
+        if(self->cursor->index>=0 && self->cursor->index<=5)valid=true;
+        if(valid)preview=true;
+    }
+    u8 alpha=0;
+    if(preview)alpha=255;
+    _relivehallTempoBarSpriteSetting(window,0x316,self->getTempo(true),alpha,true);
+    alpha=255;
+    if(preview)alpha=rate01ToAlphaFrom50(self->calcAnimationTimeRate0to1to0(0.6f));
+    _relivehallTempoBarSpriteSetting(window,0x28b,self->getTempo(false),alpha,true);
+}
 void CMenuReliveHall::drawStatusPanel() {
     tagWINDOW_WORK* window=windowSearchID(0x67);
     Pokemon* pokemon=getStatusDisplayVisitorGetPointer();
@@ -2484,8 +2515,8 @@ void CMenuReliveHall::drawStatusPanel() {
         _menuDrawReliveMeter(pokemon,item->x,item->y,item->width,item->height,255,(GSgfxLayerID)window->layer,stageIndex);
         u16 types[2];
         u16* type=types;
-        s32 i=0;
-        do {*type++=zokuseiGetPokemonSpriteID(pokemon->getPokemonDataPtr(),(u16)i);++i;}while(i<2);
+        s32 i;
+        for(i=0;i<2;i++) *type++=zokuseiGetPokemonSpriteID(pokemon->getPokemonDataPtr(),(u16)i);
         tagSPRITE_WORK* first=menuPtSpriteWorkGetByItemID(window,0x297,0);
         tagSPRITE_WORK* second=menuPtSpriteWorkGetByItemID(window,0x298,0);
         if(types[0]==types[1])menuPtSpriteDraw(types[0],(first->x+second->x)/2,(first->y+second->y)/2);
@@ -2533,30 +2564,12 @@ void CMenuReliveHall::drawStatusPanel() {
     if(hitEffect.active) {
         menuPtSpriteWorkSetSw(window,0x316,0,false);
         s32 from=hallTempo;
-        s32 difference=getTempo(false)-from;
+        s32 to=getTempo(false);
         f32 rate=hitEffect.rate;
-        _relivehallTempoBarSpriteSetting(window,0x28b,rate*difference+from,255,true);
+        _relivehallTempoBarSpriteSetting(window,0x28b,rate*(to-from)+from,255,true);
         return;
     }
-    u8 preview=0;
-    u8 dancer=0;
-    if(cursor->isCatchPokemon()) {
-        CMenuPokemonCursor* c=cursor;
-        Pokemon* caught;
-        if(c->pokemon.checkValid())caught=&c->pokemon;else caught=0;
-        if(!caught->isDarkPokemon())dancer=true;
-    }
-    if(dancer) {
-        bool valid=false;
-        if(cursor->index>=0 && cursor->index<=5)valid=true;
-        if(valid)preview=true;
-    }
-    u8 alpha=0;
-    if(preview)alpha=255;
-    _relivehallTempoBarSpriteSetting(window,0x316,getTempo(true),alpha,true);
-    alpha=255;
-    if(preview)alpha=rate01ToAlphaFrom50(calcAnimationTimeRate0to1to0(0.6f));
-    _relivehallTempoBarSpriteSetting(window,0x28b,getTempo(false),alpha,true);
+    statusTempoBars(this,window,0);
 }
 }
 
@@ -2695,23 +2708,32 @@ static PocketVec<f32> st$3117[4];
 namespace {
 inline void arrowSetColor(GSgfxColAu8* c,u8 r,u8 g,u8 b,u8 a) {c->r=r;c->g=g;c->b=b;c->a=a;}
 void menuPtSpriteDrawArrow(u16 id,u32 packedColor,f32 rotation,int offset) {
+    f32 top;
+    f32 width;
+    f32 angle;
+    f32 height;
+    f32 oldY;
+    f32 cosine;
+    f32 left;
+    f32 oldX;
+    f32 sine;
     MenuSpriteValue* data=menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(id));
     void* texture=GSresGetResourceAllGroup(data->resource);
-    f32 left=data->x,top=data->y,width=data->width,height=data->height;
-    GSgfxColAu8 color={255,255,255,255};
+    GSgfxColAu8 color={0,0,0,0};
     arrowSetColor(&color,packedColor>>24,packedColor>>16,packedColor>>8,packedColor);
+    left=data->x;top=data->y;width=data->width;height=data->height;
     st$3117[0].x=st$3117[1].x=left/GStextureGetXsize(texture);
     st$3117[2].x=st$3117[3].x=(left+width)/GStextureGetXsize(texture);
     st$3117[1].y=st$3117[2].y=top/GStextureGetYsize(texture);
     st$3117[0].y=st$3117[3].y=(top+height)/GStextureGetYsize(texture);
     xy$3116[0].x=xy$3116[1].x=0;xy$3116[2].x=xy$3116[3].x=width;
     xy$3116[1].y=xy$3116[2].y=0;xy$3116[0].y=xy$3116[3].y=height;
-    for(s32 i=0;i<4;i++) {xy$3116[i].x-=width/2.0f;xy$3116[i].y-=height;xy$3116[i].y+=offset;}
-    f32 angle=-rotation;
+    for(s32 i=0;i<4;i++) {xy$3116[i].y-=height;xy$3116[i].y+=offset;xy$3116[i].x-=width/2.0f;}
+    angle=-rotation;
     for(s32 i=0;i<4;i++) {
-        f32 oldX=xy$3116[i].x,oldY=xy$3116[i].y;
-        f32 cosine=cos(angle);f32 sine=sin(angle);
-        xy$3116[i].x=oldX*cosine+oldY*sine;
+        oldX=xy$3116[i].x;oldY=xy$3116[i].y;
+        cosine=cos(angle);sine=sin(angle);
+        xy$3116[i].x=oldY*sine+oldX*cosine;
         sine=sin(angle);cosine=cos(angle);
         xy$3116[i].y=oldY*cosine-oldX*sine;
     }

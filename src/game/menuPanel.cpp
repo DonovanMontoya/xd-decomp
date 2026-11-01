@@ -10,7 +10,55 @@ extern "C" s32 menuPanelInputNumber(s32 initial,s32 *result,s32 min,s32 max,bool
 extern "C" void menuPanelInputNumberHook(tagWINDOW_WORK *w,tagSPRITE_WORK *s){InputNumberArg *p=(InputNumberArg*)w->parameters[0];switch(s->id){case 0x504:msgctrlSetValue(0x34,p->current/10);return;case 0x503:msgctrlSetValue(0x34,p->current%10);return;case 0x511:{msgctrlSetValue(0x34,p->original-p->current+esabaGetEsaItemNum());return;}}}
 extern "C" void menuPanelInputNumberCursor(tagWINDOW_WORK *w){windowGetKeyInfo();InputNumberArg *p=(InputNumberArg*)w->parameters[0];u16 keys=windowGetKeyRepeat();if(keys&1){if(p->current<p->max)p->current++;}else if(keys&2){if(p->current>p->min)p->current--;}}
 extern "C" void menuPanelInputNumberCtrl(tagWINDOW_WORK *w){switch(w->phase){case 0:if(!w->step){winSeqSetMenu(w->menu,0x24);w->step=1;}return;case 3:if(!w->step){winSeqSetMenu(w->menu,0x17B);w->step=1;}break;}}
-extern "C" s32 menuPanelCursorSelect(tagWINDOW_WORK *w){u32 keys=windowGetKeyInfo()[3];keys|=windowGetKeyRepeat();s8 count=windowGetParam(w,2);s8 visible=menuDataBiosGetDispMax(w->menu);u32 less=visible<count;if(less)count=visible;if(!less)visible=count;struct S {s16 first,selected;}; S next,old;u16 pad=keys;next.first=w->first;next.selected=w->selected;old.first=w->first;old.selected=w->selected;if(pad&1)next.selected--;else if(pad&2)next.selected++;if(next.selected<0){next.first+=next.selected;next.selected=0;if(next.first<0){next.selected=(s8)(visible-1);next.first=(s8)(count-visible);}}else if(next.selected>=visible){s8 end=visible-1;next.first+=next.selected-end;next.selected=end;if(next.first+end>=count){next.first=0;next.selected=0;}}s32 previous=*(s32*)&old;s32 cursor=*(s32*)&next;if(menuCursorCmp(&previous,&cursor,cursor))menuSubCursorAnimeStart();w->first=next.first;w->selected=next.selected;w->value=next.first+next.selected;return 0;}
+extern "C" s32 menuPanelCursorSelect(tagWINDOW_WORK *window) {
+    struct Pair {s16 first,selected;};
+    s8 count;
+    s8 visible;
+    Pair next, old;
+    s32 previous;
+    s32 cursor;
+    s32 pad;
+    s32 end;
+    u32 keys;
+    u32 less;
+    keys = windowGetKeyInfo()[3];
+    keys = keys | windowGetKeyRepeat();
+    count = windowGetParam(window,2);
+    visible = menuDataBiosGetDispMax(window->menu);
+    less = visible < count;
+    if (less) count = visible;
+    if (!less) visible = count;
+    pad = keys & 0xFFFF;
+    next.first = window->first;
+    next.selected = window->selected;
+    old.first = window->first;
+    old.selected = window->selected;
+    if (pad & 1) next.selected--;
+    else if (pad & 2) next.selected++;
+    if (next.selected < 0) {
+        next.first += next.selected;
+        next.selected = 0;
+        if (next.first < 0) {
+            next.selected = (s8)(visible-1);
+            next.first = (s8)(count-visible);
+        }
+    } else if (next.selected >= visible) {
+        end = visible - 1;
+        next.first += next.selected - end;
+        next.selected = (s8)end;
+        if (next.first + (s8)end >= count) {
+            next.first = 0;
+            next.selected = 0;
+        }
+    }
+    previous = *(s32*)&old;
+    cursor = *(s32*)&next;
+    if (menuCursorCmp(&previous,&cursor,cursor)) menuSubCursorAnimeStart();
+    window->first = next.first;
+    window->selected = next.selected;
+    window->value = *(volatile s16*)&next.first + next.selected;
+    return 0;
+}
 
 extern "C" s32 menuPanelCtrlSelect2(tagWINDOW_WORK *w){menuSubCursorAnimeMain();switch(w->phase){case 5:break;case 0:if(!w->step){s32 size;void *source=(void*)windowGetParam(w,1);s32 count=windowGetParam(w,2);void *dest=windowAllocMemory(w,size=count*4);if(dest)memcpy(dest,source,size);u8 enabled=(u32)(windowGetParam(w,5)!=0);if(enabled==0)menuSetStatus(w->menu,8);winSeqSetMenu(w->menu,0x24);w->step=1;}break;case 3:if(!w->step){winSeqSetMenu(w->menu,0x17B);w->step=1;}break;}return 0;}
 extern "C" s32 menuPanelCtrlSelect(tagWINDOW_WORK *w){menuSubCursorAnimeMain();switch(w->phase){case 5:break;case 0:if(!w->step){s32 size;void *source=(void*)windowGetParam(w,1);s32 count=windowGetParam(w,2);void *dest=windowAllocMemory(w,size=count*4);if(dest)memcpy(dest,source,size);winSeqSetMenu(w->menu,0x24);w->step=1;}break;case 3:if(!w->step){winSeqSetMenu(w->menu,0x17B);w->step=1;}break;}return 0;}
@@ -29,12 +77,28 @@ void menuSubDrawSimpleWindow(s32,s32,s32,s32,s32);
 void windowDrawSpriteCursor(s16,s16,u32,tagWINDOW_WORK*,s32,s32,s32,f32*,s32);
 
 s32 menuPanelDrawSelect(tagWINDOW_WORK* window) {
+    u32* backMessage;
+    s32 width;
+    s32 textStep;
+    u32* textMessage;
+    u8 visible;
     f32 animation[2];
-    s32 animationColor;
-    s32 height, width;
-    u8 style;
+    u32* message;
+    s32 i;
+    s32 j;
     u32* messages;
-    s32 count, maxHeight, offset;
+    s32 count;
+    s32 textY;
+    s32 maxHeight;
+    s32 k;
+    s32 y;
+    u8 style;
+    s32 animationColor;
+    s32 height;
+    s32 step;
+    s32 rowHeight;
+    s32 offset;
+    u32 rect;
     offset = _DrawSelectOffset;
     height = 0;
     width = 0;
@@ -42,53 +106,52 @@ s32 menuPanelDrawSelect(tagWINDOW_WORK* window) {
     style = windowGetParam(window, 0);
     messages = (u32*)windowGetAllocPtr(window);
     count = (s8)windowGetParam(window, 2);
-    u8 visible = menuDataBiosGetDispMax(window->menu);
+    visible = menuDataBiosGetDispMax(window->menu);
     if (count > visible) count = visible;
-    u32* message = messages;
-    for (s32 i = 0; i < count; i++, message++) {
-        u32 rect = GSmsgGetRect(*message);
+    message = messages;
+    for (i = 0; i < count; message++, i++) {
+        rect = GSmsgGetRect(*message);
         if (width < (s32)(rect >> 16)) width = rect >> 16;
-        s32 rowHeight = (u16)rect;
+        rowHeight = (u16)rect;
         if (maxHeight < rowHeight) maxHeight = rowHeight;
-        height = rowHeight + (offset + height);
+        height = rowHeight + offset + height;
     }
     height -= offset;
-    width = width + 26 + _addwidth;
+    width += 26;
+    width += _addwidth;
     switch (style) {
     case 0: menuSubDrawNormalWindow2(window->layer,0,0,width,height,window->alpha); break;
     case 1: menuSubDrawMsgWindow2(window->layer,0,0,width,height,window->alpha,1); break;
     case 0x7F: menuSubDrawSimpleWindow(window->layer,0,0,width,height-2); break;
     }
-    u32* backMessage = messages;
-    s32 y = 1;
-    for (s32 i = 0; i < count; i++, backMessage++) {
-        s32 step;
+    backMessage = messages;
+    y = 1;
+    for (j = 0; j < count; backMessage++, j++) {
         if (*backMessage) step = offset + (u16)GSmsgGetRect(*backMessage);
         else step = 20;
-        if (window->selected == i) {
+        if (window->selected == j) {
             if (maxHeight >= 20)
-                menuSubDrawCursorBack(window->layer,_cursorOffset-5,(y+_lsizecursorYoffset)-7,width+_backWidth,step,window->alpha,0);
+                menuSubDrawCursorBack(window->layer,_cursorOffset-5,y-7+_lsizecursorYoffset,width+_backWidth,step,window->alpha,0);
             else
                 menuSubDrawCursorBack(window->layer,_cursorOffset-6,y-6,width+_backWidth,step,window->alpha,1);
         }
         y += step;
     }
-    u32* textMessage = messages;
-    s16 textY = 1;
-    for (s32 i = 0; i < count; i++, textMessage++) {
-        s32 step;
+    textMessage = messages;
+    textY = 1;
+    for (k = 0; k < count; textMessage++, k++) {
         if (*textMessage) {
-            step = offset + (u16)GSmsgGetRect(*textMessage);
+            textStep = offset + (u16)GSmsgGetRect(*textMessage);
             GSmsgPrint2(window->layer,26,textY,window->alpha | 0xFFFFFF00,*textMessage);
-        } else step = 20;
+        } else textStep = 20;
         menuSubCursorAnimeValGet(animation,&animationColor);
-        if (window->selected == i) {
+        if (window->selected == k) {
             if (maxHeight >= 20)
                 windowDrawSpriteCursor((s16)_cursorOffset,(s16)(textY+_lsizecursorYoffset),window->alpha|0xFFFFFF00,window,0x7D,0,window->layer,animation,animationColor);
             else
                 windowDrawSpriteCursor((s16)_cursorOffset,textY,window->alpha|0xFFFFFF00,window,0xC2,0,window->layer,animation,animationColor);
         }
-        textY += step;
+        textY += textStep;
     }
     return 0;
 }
@@ -96,27 +159,29 @@ s32 menuPanelDrawSelect(tagWINDOW_WORK* window) {
 
 extern "C" s32 menuPanelCursorSelect2(tagWINDOW_WORK* window) {
     struct Pair {s16 first,selected;};
+    u8 wrap;
     s8 count;
     s8 visible;
-    u32 keys;
-    u8 wrap;
     Pair next, old;
     s32 previous;
     s32 cursor;
-    s8 end;
+    s32 pad;
+    s32 end;
+    u32 keys;
     keys = windowGetKeyInfo()[3];
     keys = keys | windowGetKeyRepeat();
     count = windowGetParam(window,2);
     visible = windowGetParam(window,3);
     wrap = (u32)(windowGetParam(window,4) != 0);
     if (count < visible) visible = count;
+    pad = keys & 0xFFFF;
     next.first = window->first;
     next.selected = window->selected;
     old.first = window->first;
     old.selected = window->selected;
 
-    if ((u16)keys & 1) next.selected--;
-    else if ((u16)keys & 2) next.selected++;
+    if (pad & 1) next.selected--;
+    else if (pad & 2) next.selected++;
     if (next.selected < 0) {
         next.first += next.selected;
         next.selected = 0;
@@ -132,14 +197,14 @@ extern "C" s32 menuPanelCursorSelect2(tagWINDOW_WORK* window) {
     } else if (next.selected >= visible) {
         end = visible - 1;
         next.first += next.selected - end;
-        next.selected = end;
+        next.selected = (s8)end;
         if (wrap) {
-            if (next.first + end >= count) {
+            if (next.first + (s8)end >= count) {
                 next.first = 0;
                 next.selected = 0;
             }
-        } else if (next.first + end >= count) {
-            next.selected = end;
+        } else if (next.first + (s8)end >= count) {
+            next.selected = (s8)end;
             next.first = (s8)(count-visible);
         }
     }
@@ -188,13 +253,30 @@ void* menuSpriteBiosGetPtr(s32);
 PanelSprite* menuSpriteBiosGetValPtr(void*);
 void windowDrawSprite(s16,s16,tagWINDOW_WORK*,s32,s32,s32);
 s32 menuPanelDrawSelect2(tagWINDOW_WORK* window) {
-    f32 animation[2];
-    s32 animationColor;
-    struct Pair {s16 first, selected;} scroll = *(Pair*)&window->first;
-    s32 height, width;
-    u8 style;
+    struct Pair {s16 first, selected;};
+    u32* message;
+    s32 height;
+    s32 step;
+    s32 requestedVisible;
+    Pair scroll = *(Pair*)&window->first;
     u32* messages;
-    s32 count, maxHeight, offset;
+    s32 rowHeight;
+    s32 animationColor;
+    int visible;
+    s32 count;
+    s32 i;
+    s32 textY;
+    s32 textStep;
+    s32 k;
+    s32 j;
+    PanelSprite* sprite;
+    f32 animation[2];
+    s32 width;
+    s32 maxHeight;
+    u8 style;
+    s32 y;
+    s32 offset;
+    u32 rect;
     offset = _DrawSelectOffset;
     height = 0;
     width = 0;
@@ -202,16 +284,16 @@ s32 menuPanelDrawSelect2(tagWINDOW_WORK* window) {
     style = windowGetParam(window, 0);
     messages = (u32*)windowGetAllocPtr(window);
     count = (s8)windowGetParam(window, 2);
-    s32 visible = count;
-    s32 requestedVisible = windowGetParam(window, 3);
+    visible = count;
+    requestedVisible = windowGetParam(window, 3);
     if (visible > requestedVisible) visible = requestedVisible;
-    u32* message = messages;
-    for (s32 i = 0; i < count; i++, message++) {
-        u32 rect = GSmsgGetRect(*message);
+    message = messages;
+    for (i = 0; i < count; message++, i++) {
+        rect = GSmsgGetRect(*message);
         if (width < (s32)(rect >> 16)) width = rect >> 16;
-        s32 rowHeight = (u16)rect;
+        rowHeight = (u16)rect;
         if (maxHeight < rowHeight) maxHeight = rowHeight;
-        if (i < visible) {height += offset; height += rowHeight;}
+        if (i < visible) {height = rowHeight + offset + height;}
     }
     height -= offset;
     width += 26;
@@ -221,41 +303,38 @@ s32 menuPanelDrawSelect2(tagWINDOW_WORK* window) {
     case 1: menuSubDrawMsgWindow2(window->layer,0,0,width+2,height,window->alpha,1); break;
     case 0x7F: menuSubDrawSimpleWindow(window->layer,0,0,width+2,height-2); break;
     }
-    PanelSprite* sprite = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x237));
+    sprite = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x237));
     if (count > requestedVisible && scroll.first != 0)
         windowDrawSprite((s16)(width/2-sprite->width/2),-18,window,0x237,2,window->layer);
     if (count > requestedVisible && requestedVisible != count-scroll.first)
         windowDrawSprite((s16)(width/2-sprite->width/2),(s16)(height+10),window,0x237,0,window->layer);
-    u32* backMessage = messages;
-    s32 y = 1;
-    for (s32 i = 0; i < visible; i++, backMessage++) {
-        s32 step;
-        if (*backMessage) step = offset + (u16)GSmsgGetRect(messages[scroll.first+i]);
+    y = 1;
+    for (j = 0; j < visible; j++) {
+        if (messages[j]) step = offset + (u16)GSmsgGetRect(messages[scroll.first+j]);
         else step = 20;
-        if (window->selected == i) {
+        if (window->selected == j) {
             if (maxHeight >= 20)
-                menuSubDrawCursorBack(window->layer,_cursorOffset-5,(y+_lsizecursorYoffset)-7,width+_backWidth,step,window->alpha,0);
+                menuSubDrawCursorBack(window->layer,_cursorOffset-5,y-7+_lsizecursorYoffset,width+_backWidth,step,window->alpha,0);
             else
                 menuSubDrawCursorBack(window->layer,_cursorOffset-6,y-6,width+_backWidth,step,window->alpha,1);
         }
         y += step;
     }
-    u32* textMessage = messages;
-    s32 textY = 1;
-    for (s32 i = 0; i < visible; i++, textMessage++) {
-        s32 step;
-        if (*textMessage) {
-            step = offset + (u16)GSmsgGetRect(messages[scroll.first+i]);
-            GSmsgPrint2(window->layer,26,textY,window->alpha | 0xFFFFFF00,messages[scroll.first+i]);
-        } else step = 20;
+    textY = 1;
+    for (k = 0; k < visible; k++) {
+        s32 idx = scroll.first + k;
+        if (messages[k]) {
+            textStep = offset + (u16)GSmsgGetRect(messages[idx]);
+            GSmsgPrint2(window->layer,26,textY,window->alpha | 0xFFFFFF00,messages[idx]);
+        } else textStep = 20;
         menuSubCursorAnimeValGet(animation,&animationColor);
-        if (window->selected == i) {
+        if (window->selected == k) {
             if (maxHeight >= 20)
                 windowDrawSpriteCursor((s16)_cursorOffset,(s16)(textY+_lsizecursorYoffset),window->alpha|0xFFFFFF00,window,0x7D,0,window->layer,animation,animationColor);
             else
                 windowDrawSpriteCursor((s16)_cursorOffset,textY,window->alpha|0xFFFFFF00,window,0xC2,0,window->layer,animation,animationColor);
         }
-        textY += step;
+        textY += textStep;
     }
     return 0;
 }

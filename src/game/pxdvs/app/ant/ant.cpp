@@ -437,6 +437,10 @@ void dispTexture(GStexture *texture,f32 x,f32 y,int tx,int ty,int width,int heig
     GSgfxEndSurface();
 }
 }
+static inline s32 antOffX(CAnt*a){return a->unk20;}
+static inline s32 antOffY(CAnt*a){return a->unk24;}
+static inline f32 antAbs(f32 x){ if(x<0.0f) return -x; return x; }
+static inline f32 antBlendA(f32 t){ return 1.0f-2.0f*antAbs(t-0.5f); }
 void CAnt::draw(PocketVec<short> offset){
     u32 id;
     if(unk0==0||unk14==1)return;
@@ -447,15 +451,16 @@ void CAnt::draw(PocketVec<short> offset){
     GSgfxColAu8 color;
     switch(unk30){
     case 1:{
-        f32 phase=colorAnimationTimeDark-0.5f;color=colorPurple;
-        if(phase<0.0f)phase=-phase;
-        color.a=(u8)(255.0f*(0.76f*(1.0f-2.0f*phase)+0.16f));break;
+        color=colorPurple;
+        f32 phase=colorAnimationTimeDark-0.5f;
+        f32 blend=1.0f-2.0f*antAbs(phase);
+        blend=0.76f*blend+0.16f;
+        blend=255.0f*blend;
+        color.a=(u8)blend;break;
     }
     case 0:color=colorNone;break;
     case 2:{
-        f32 phase=colorAnimationTimeReliveReady-0.5f;
-        if(phase<0.0f)phase=-phase;
-        f32 blend=1.0f-2.0f*phase;
+        f32 blend=antBlendA(colorAnimationTimeReliveReady);
         f32 inverse=1.0f-blend;
         if(blend>0.5)color.a=(u8)(255.0f*blend);else color.a=128;
         color.r=(u8)(colorWhite.r*blend+colorPurple.r*inverse);
@@ -472,7 +477,7 @@ void CAnt::draw(PocketVec<short> offset){
     u8 *frames=resource+*(s32*)(resource+4);
     Frame *frame=(Frame*)(frames+unk28*4);
     Quad *quad=(Quad*)(frames+frame->offset);
-    for(s32 i=0;i<frame->count;i++,quad++){
-        dispTexture(texture,(f32)(position.x+(unk20+quad->x)),(f32)(position.y+(unk24+quad->y+32)),quad->tx,quad->ty,quad->width,quad->height,color,unkC,unk10);
+    for(s32 i=0;i<frame->count;i++){
+        dispTexture(texture,(f32)(position.x+antOffX(this)+quad[i].x),(f32)(position.y+antOffY(this)+quad[i].y+32),quad[i].tx,quad[i].ty,quad[i].width,quad[i].height,color,unkC,unk10);
     }
 }

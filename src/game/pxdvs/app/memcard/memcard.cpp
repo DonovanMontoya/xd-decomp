@@ -26,8 +26,6 @@ static inline void advanceMemcardKey() {
     s32 i;
     for (i = 0; i < 4; i++) {
         key[i] = _memcard_encrypt_key[i];
-    }
-    for (i = 0; i < 4; i++) {
         key[i] += increments[i];
     }
     _memcard_encrypt_key[0] = (key[0]&0xF) | ((key[1]&0xF)<<4) | ((key[2]&0xF)<<8) | ((key[3]&0xF)<<12);
@@ -36,39 +34,40 @@ static inline void advanceMemcardKey() {
     _memcard_encrypt_key[3] = ((key[0]&0xF000)>>12) | ((key[1]&0xF000)>>8) | ((key[2]&0xF000)>>4) | (key[3]&0xF000);
 }
 
-static inline void memcardChecksums(u16* data, u32* sums) {
-    s32 i;
-    for (i = 0; i < 4; i++) {
-        for (s32 word = i*0x4FFA; word < (i+1)*0x4FFA; word++) sums[i] += data[word];
-    }
-}
-
 u8 _memcard_Decryption(void* buffer) {
+    s32 word;
+    s32 i;
+    u32 check[4];
     u32 sums[4];
-    sums[0]=0; sums[1]=0; sums[2]=0; sums[3]=0;
-    u16* data = (u16*)buffer;
+    u16* data;
+    data = (u16*)buffer;
     _memcard_encrypt_key[0] = data[0];
     _memcard_encrypt_key[1] = data[1];
     _memcard_encrypt_key[2] = data[2];
     _memcard_encrypt_key[3] = data[3];
-    for (s32 word=4; word<0x13FE8; word+=4) {
-        for (s32 i = 0; i < 4; i++) {
+    sums[0]=0; sums[1]=0; sums[2]=0; sums[3]=0;
+    for (word=4; word<0x13FE8; word+=4) {
+        for (i = 0; i < 4; i++) {
             data[word+i] -= _memcard_encrypt_key[i];
         }
         advanceMemcardKey();
     }
-    u32 check0 = data[10] | (data[11]<<16);
-    u32 check1 = data[8] | (data[9]<<16);
-    u32 check2 = data[6] | (data[7]<<16);
-    u32 check3 = data[4] | (data[5]<<16);
+    check[0] = (data[11]<<16) | data[10];
+    check[1] = data[8] | (data[9]<<16);
+    check[2] = data[6] | (data[7]<<16);
+    check[3] = data[4] | (data[5]<<16);
     data[10]=0; data[11]=0; data[8]=0; data[9]=0;
     data[6]=0; data[7]=0; data[4]=0; data[5]=0;
-    memcardChecksums(data, sums);
-    if (sums[0]==check0 && sums[1]==check1 && sums[2]==check2 && sums[3]==check3) return 1;
+    for (i = 0; i < 4; i++) {
+        for (word = i*0x4FFA; word < (i+1)*0x4FFA; word++) sums[i] += data[word];
+    }
+    if (sums[0]==check[0] && sums[1]==check[1] && sums[2]==check[2] && sums[3]==check[3]) return 1;
     return 0;
 }
 
 void _memcard_Encryption(void* buffer) {
+    s32 word;
+    s32 i;
     u32 sums[4];
     sums[0]=0; sums[1]=0; sums[2]=0; sums[3]=0;
     u16* data = (u16*)buffer;
@@ -78,13 +77,15 @@ void _memcard_Encryption(void* buffer) {
     _memcard_encrypt_key[3] = data[3];
     data[10]=0; data[11]=0; data[8]=0; data[9]=0;
     data[6]=0; data[7]=0; data[4]=0; data[5]=0;
-    memcardChecksums(data, sums);
+    for (i = 0; i < 4; i++) {
+        for (word = i*0x4FFA; word < (i+1)*0x4FFA; word++) sums[i] += data[word];
+    }
     data[10]=sums[0]; data[11]=sums[0]>>16;
     data[8]=sums[1]; data[9]=sums[1]>>16;
     data[6]=sums[2]; data[7]=sums[2]>>16;
     data[4]=sums[3]; data[5]=sums[3]>>16;
-    for (s32 word=4; word<0x13FE8; word+=4) {
-        for (s32 i = 0; i < 4; i++) {
+    for (word=4; word<0x13FE8; word+=4) {
+        for (i = 0; i < 4; i++) {
             data[word+i] += _memcard_encrypt_key[i];
         }
         advanceMemcardKey();
@@ -860,18 +861,6 @@ inline u64 memcardCurrentID(void *pack)
     return gamedatasaveBiosGetMemcardID((u8 *)_memcardGetMultiSaveDataToSTRUCT(pack,1)+8);
 }
 
-static inline void advanceMemcardHeaderKey() {
-    const s32 increments[4] = {0x43, 0x29, 0x17, 0x13};
-    s32 key0 = _memcard_encrypt_key[0] + increments[0];
-    s32 key1 = _memcard_encrypt_key[1] + increments[1];
-    s32 key2 = _memcard_encrypt_key[2] + increments[2];
-    s32 key3 = _memcard_encrypt_key[3] + increments[3];
-    _memcard_encrypt_key[1] = ((key3<<8)&0xF000) | ((key2<<4)&0xF00) | (key1&0xF0) | ((key0>>4)&0xF);
-    _memcard_encrypt_key[0] = ((key3<<12)&0xF000) | ((key2<<8)&0xF00) | ((key1<<4)&0xF0) | (key0&0xF);
-    _memcard_encrypt_key[2] = ((key3<<4)&0xF000) | (key2&0xF00) | ((key1>>4)&0xF0) | ((key0>>8)&0xF);
-    _memcard_encrypt_key[3] = (key3&0xF000) | ((key2>>4)&0xF00) | (((u16)key1>>8)&0xF0) | ((key0>>12)&0xF);
-}
-
 inline void decryptMemcardHeader(void *buffer)
 {
     u16 *data=(u16 *)buffer;
@@ -879,17 +868,11 @@ inline void decryptMemcardHeader(void *buffer)
     _memcard_encrypt_key[1]=data[1];
     _memcard_encrypt_key[2]=data[2];
     _memcard_encrypt_key[3]=data[3];
-    s32 byteOffset=8;
     for(s32 word=4;word<0xFC;word+=4) {
-        s32 second=(word+1)*2;
-        *(u16*)((u8*)data+byteOffset)-=_memcard_encrypt_key[0];
-        s32 third=(word+2)*2;
-        s32 fourth=(word+3)*2;
-        byteOffset+=8;
-        *(u16*)((u8*)data+second)-=_memcard_encrypt_key[1];
-        *(u16*)((u8*)data+third)-=_memcard_encrypt_key[2];
-        *(u16*)((u8*)data+fourth)-=_memcard_encrypt_key[3];
-        advanceMemcardHeaderKey();
+        for(s32 i=0;i<4;i++) {
+            data[word+i]-=_memcard_encrypt_key[i];
+        }
+        advanceMemcardKey();
     }
 }
 
@@ -900,19 +883,30 @@ struct MemcardSaveHeader {
     u8 payload[0x1F8];
 };
 
+static inline u8 _memcardHeaderValid(MemcardSaveHeader *header)
+{
+    u8 valid=0;
+    if(header->valid[0]==1 && header->valid[1]==1 && header->valid[2]==1) valid=1;
+    return valid;
+}
+
+static inline MemcardSaveHeader *_memcardGetHeader(s32 offset)
+{
+    return (MemcardSaveHeader *)((u8 *)_memcardStatusPtr->buf50+offset);
+}
+
 #pragma push
-#pragma opt_loop_invariants off
 static s32 _memcardExamineHeader()
 {
-    s32 sequence=0;
-    s32 selected=-1;
+    s32 i;
+    s32 selected;
     MemcardSaveHeader *header;
-    s32 offset=0x28000;
-    for(s32 i=0;i<2;i++,offset+=0x200) {
-        header=(MemcardSaveHeader *)((u8 *)_memcardStatusPtr->buf50+offset);
-        u8 valid=0;
-        if(header->valid[0]==1 && header->valid[1]==1 && header->valid[2]==1) valid=1;
-        if(valid==0) {
+    s32 sequence;
+    sequence=0;
+    selected=-1;
+    for(i=0;i<2;i++) {
+        header=_memcardGetHeader(0x28000+i*0x200);
+        if(_memcardHeaderValid(header)==0) {
             _memcardStatusPtr->msg=0x13;
             return 0x2B;
         }
@@ -941,15 +935,18 @@ static s32 _memcardExamineHeader()
                 }
             }
             switch(_memcardStatusPtr->state) {
-            case 1:case 2:
+            case 1:case 2:case 3:
                 _memcardStatusPtr->msg=0xC;
                 _memcardStatusPtr->result=1;
                 if(_memcardStatusPtr->unk40) return 0x11;
                 return 0x2C;
             }
             memset(_memcardStatusPtr->buf50,0,0x28000);
-            _memcard_new_saveDataCrateFlag=0;
-            _memcardDuplicateSaveData_multi((u8 *)_memcardStatusPtr->buf50+8);
+            {
+                u8 *dst=(u8 *)_memcardStatusPtr->buf50+8;
+                _memcard_new_saveDataCrateFlag=0;
+                _memcardDuplicateSaveData_multi(dst);
+            }
             _memcard_new_saveDataCrateFlag=1;
             _memcardStatusPtr->unk2C=0;
             _memcardStatusPtr->index=-1;
@@ -958,7 +955,7 @@ static s32 _memcardExamineHeader()
         return 0x20;
     case 4:case 6:case 8:
         if(selected!=-1 && sequence<=_memcardStatusPtr->unk2C) {
-            header=(MemcardSaveHeader *)((u8 *)_memcardStatusPtr->buf50+0x28000+selected*0x200);
+            header=(MemcardSaveHeader *)((u8 *)_memcardStatusPtr->buf50+(selected*0x200+0x28000));
             u64 id=memcardCurrentID(0);
             decryptMemcardHeader(header->payload);
             if(id==memcardCurrentID(header->payload)) {

@@ -326,8 +326,9 @@ void SoundEntry::Stop(bool force) {
     }
 }
 
+static inline SequenceEntry* entryFirst(SequenceEntry* e){ return e->waza->entries; }
 void SequenceEntry::Link() {
-    SequenceEntry* before=waza->entries;
+    SequenceEntry* before=entryFirst(this);
     if(linkId) {
         SequenceEntry* linked=waza->GetEntryFromID(linkId);
         if(linked) {

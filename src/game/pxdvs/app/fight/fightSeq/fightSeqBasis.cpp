@@ -769,15 +769,15 @@ s32 _WsWkcActSubSetStockItem__FPvUsPv(FightOutPokemon *arg0, u16 arg1, void *arg
 }
 
 void WS_COND_CHG_BIT_CHECK(void) {
-    u32 var_r3;
     u32 bits;
-    u8 *temp_r3;
-    u16 temp_r31;
-    FightOutPokemon *temp_r3_2;
-    u16 temp_r3_3;
-    u8 temp_r27;
-    s32 temp_r26;
     s32 temp_r25;
+    s32 temp_r26;
+    u16 var_r0_2;
+    u8 var_r3;
+    u16 temp_r31;
+    u8 temp_r27;
+    FightOutPokemon *temp_r3_2;
+    u8 *temp_r3;
     FightOutPokemon *temp_r23;
     u8 var_r22;
     s32 temp_r22;
@@ -785,7 +785,7 @@ void WS_COND_CHG_BIT_CHECK(void) {
     s32 var_r20;
     u8 temp_r19;
     u16 var_r0;
-    u16 var_r0_2;
+    u16 temp_r3_3;
 
     var_r22 = 0;
     var_r21 = 0;
@@ -802,8 +802,8 @@ void WS_COND_CHG_BIT_CHECK(void) {
         if (temp_r25 != 0) {
             var_r0 = 0x2D;
         }
-        while((u8)var_r3 != 0) {
-            bits=(u8)var_r3;
+        while(var_r3 != 0) {
+            bits=var_r3;
             if (bits & 1) {
                 temp_r3_3 = fightSeqCondChgActTypeToPokemonStatusId(var_r22);
                 temp_r19 = pokemonGetStatus((Pokemon *) temp_r3_2, 0U, temp_r3_3, 0U);
@@ -833,8 +833,8 @@ void WS_COND_CHG_BIT_CHECK(void) {
         if (temp_r26 != 0) {
             var_r0_2 = 0x26;
         }
-        while((u8)var_r3 != 0) {
-            bits=(u8)var_r3;
+        while(var_r3 != 0) {
+            bits=var_r3;
             if ((bits & 1) && ((u8)pokemonGetStatus((Pokemon *) temp_r3_2, 0U, fightSeqCondChgActTypeToPokemonStatusId(var_r22), 0U) < 0xCU)) {
                 var_r20 += 1;
                 var_r21 = var_r0_2 + var_r22;

@@ -961,14 +961,31 @@ static s32 _menuModelAdjustCamera(MENU_MODEL* m,bool) {
 }
 
 static s32 _menuModelAdjustCamera2(MENU_MODEL* a,MENU_MODEL* b) {
-    Mtx rot,rotY;
-    Vec camera,lightTarget,positionA,positionB,light;
-    f32 fov,aspect,nearPlane,farPlane;
+    f32 fov;
+    f32 aspect;
+    f32 nearPlane;
+    f32 farPlane;
     f32 scale;
+    f32 size[2];
+    f32 sizeRatio;
+    f32 displayScale;
+    f32 negatedB;
+    f32 shift;
+    f32 tangent;
+    f32 distance;
+    f32 baseDistance;
+    Mtx rot;
+    Mtx rotY;
+    Vec camera;
+    Vec lightTarget;
+    Vec positionA;
+    Vec positionB;
+    Vec light;
     s32 angle;
     MENU_COLOR color;
-    f32 width,height,sizeRatio,displayScale;
-    u32 modelA; u32 bound; u32 modelB;
+    u32 modelA;
+    u32 bound;
+    u32 modelB;
     static MenuModelVector upVec(0.0f,1.0f,0.0f);
     static MenuModelVector target(0.0f,0.0f,0.0f);
     if(!a) return 0;
@@ -990,7 +1007,7 @@ static s32 _menuModelAdjustCamera2(MENU_MODEL* a,MENU_MODEL* b) {
     if(!modelA) {a->state=0;return 0;}
     if(!modelB) return 0;
     if(!a->boundValid) {
-        bound=GSmodelGetBound(modelA);
+        u32 bound=GSmodelGetBound(modelA);
         if(!bound)return 0;
         GSboundGetSize(bound,(Vec*)a->boundSize,0,0);
         GSboundGetMinMax(bound,(Vec*)a->boundMin,(Vec*)a->boundMax,0,0,0,0);
@@ -1003,20 +1020,20 @@ static s32 _menuModelAdjustCamera2(MENU_MODEL* a,MENU_MODEL* b) {
         GSboundGetMinMax(bound,(Vec*)b->boundMin,(Vec*)b->boundMax,0,0,0,0);
         b->boundValid=1;
     }
-    width=a->boundSize[0]+b->boundSize[0];
-    height=a->boundSize[1];
-    height=a->boundSize[1]>=b->boundSize[1]?a->boundSize[1]:b->boundSize[1];
-    f32 negatedB=-b->boundSize[0];
-    f32 shift=width*0.5f+negatedB;
+    size[0]=a->boundSize[0]+b->boundSize[0];
+    size[1]=a->boundSize[1];
+    size[1]=a->boundSize[1]>=b->boundSize[1]?a->boundSize[1]:b->boundSize[1];
+    negatedB=-b->boundSize[0];
+    shift=size[0]/2.0f+negatedB;
     GSmodelGetPosition(modelA,&positionA);
     positionA.y=0.0f;
-    positionA.x=-(a->boundSize[0]*0.5f)+shift;
+    positionA.x=-(a->boundSize[0]/2.0f)+shift;
     positionA.z=0.0f;
     PSVECAdd(&positionA,(Vec*)a->offset,&positionA);
     GSmodelSetPosition(modelA,&positionA);
     GSmodelGetPosition(modelB,&positionB);
     positionB.y=0.0f;
-    positionB.x=b->boundSize[0]*0.5f+shift;
+    positionB.x=b->boundSize[0]/2.0f+shift;
     positionB.z=0.0f;
     PSVECAdd(&positionB,(Vec*)b->offset,&positionB);
     GSmodelSetPosition(modelB,&positionB);
@@ -1027,14 +1044,13 @@ static s32 _menuModelAdjustCamera2(MENU_MODEL* a,MENU_MODEL* b) {
     case 0x4e:case 0x82:case 0x90:case 0x96:case 0xd0:case 0xf3:case 0xfa:displayScale=_disp_scale;break;
     default:displayScale=1.0f;break;
     }
-    width=width>height?width:height;
-    f32 tangent=(f32)tan((0.017453292f*fov)/2.0f);
-    f32 distance=width/sizeRatio;
-    f32 baseDistance=0.8f*distance/tangent;
+    size[0]=size[0]>size[1]?size[0]:size[1];
+    tangent=(f32)tan((0.017453292f*fov)/2.0f);
+    distance=size[0]/sizeRatio;
+    baseDistance=0.8f*distance/tangent;
     camera.z=((baseDistance*scale)/displayScale)/a->zoom;
-    camera.x=0.0f;
-    target.y=0.75f*height;
-    camera.y=0.0f;
+    target.y=0.75f*size[1];
+    camera.y=camera.x=0.0f;
     PSMTXRotRad(rot,'X',a->camRot[0]);
     PSMTXRotRad(rotY,'Y',-a->camRot[1]);
     PSMTXConcat(rotY,rot,rot);

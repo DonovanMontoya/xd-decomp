@@ -518,19 +518,22 @@ s32 _fsysOpenFile(FsysWork* work) {
     return 1;
 }
 s32 _fsysExec(u32 group, u32 resource, s32 mode, u8 keep, u32 pre, u32 post, u32 secondary) {
+    FsysWork* work;
     BOOL interrupts = OSDisableInterrupts();
     _fsysFreeStatus(group);
-    FsysWork* work = _fsysGetWork(group, 0);
+    s32 id = group;
+    work = _fsysGetWork(id, 0);
     if (!work) {
         work = _fsysGetNewWork();
         if (!work) {
             s32 previous = OSRestoreInterrupts(interrupts);
-            if (work == 0) { return previous; } else { return 0; }
+            if (work != 0) previous = 0;
+            return previous;
         }
         work->header = 0;
         work->cacheGroup = _fsysIncCacheUniqueGroupID();
     }
-    work->group = group;
+    work->group = id;
     work->resourceID = resource;
     work->dvd = 0;
     work->mode = mode;
@@ -543,7 +546,7 @@ s32 _fsysExec(u32 group, u32 resource, s32 mode, u8 keep, u32 pre, u32 post, u32
     work->preCallback = pre;
     work->postCallback = post;
     work->secondaryResourceID = secondary;
-    work->directory = (GSfsysDirectory*)_fsysGetGROUP(group);
+    work->directory = (GSfsysDirectory*)_fsysGetGROUP(id);
     _fsysOpenFile(work);
     OSRestoreInterrupts(interrupts);
     return 1;

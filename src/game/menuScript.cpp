@@ -926,13 +926,18 @@ extern "C" void menuScriptTutorialCursor(tagWINDOW_WORK* w)
 }
 
 
-static inline s32 scriptCopyWordPrefix(const u16 *text,u16 *line,s32 endWord) {
-    s32 spaces = 0;
-    s32 copied = 0;
-    const u16 *src = text;
-    u16 *dst = line;
+static inline s32 scriptCopyWordPrefix(const u16 *text,u16 *line,const s32 &endWord) {
+    u32 ch;
+    u16 *dst;
+    const u16 *src;
+    s32 spaces;
+    s32 copied;
+    spaces = 0;
+    copied = 0;
+    src = text;
+    dst = line;
     for (;;) {
-        u32 ch = *src;
+        ch = *src;
         if (ch == 0x20 || ch == 0x3000) {
             if (spaces == endWord) break;
             *dst = ch;
@@ -945,30 +950,79 @@ static inline s32 scriptCopyWordPrefix(const u16 *text,u16 *line,s32 endWord) {
         dst++;
         copied++;
     }
-    line[copied] = 0;
-    return copied + 1;
+    line[copied++] = 0;
+    return copied;
+}
+
+static inline void _tokuseiSplit(u16 *text, u16 *buf1, u16 *buf2, s32 fitLine) {
+    s32 spaceIdx = 0;
+    s32 count1 = 0;
+    s32 count2 = 0;
+    u8 second = 0;
+    u32 total = GSmsgGetCharLength(text);
+    u16 ch;
+    u16 *src;
+    u32 idx = 0;
+    src = text;
+    for (;; src++, idx++) {
+        ch = *src;
+        if (ch == 0xFFFF) {
+            continue;
+        }
+        if (ch == 0x20 || ch == 0x3000) {
+            if (spaceIdx == fitLine - 1) {
+                second = 1;
+            } else if (second != 0) {
+                buf2[count2++] = ch;
+            } else {
+                buf1[count1++] = ch;
+            }
+            spaceIdx++;
+            continue;
+        }
+        if (ch == 0) {
+            if (total <= idx) {
+                break;
+            }
+            continue;
+        }
+        if (second != 0) {
+            buf2[count2++] = ch;
+        } else {
+            buf1[count1++] = ch;
+        }
+    }
+    buf1[count1] = 0;
+    buf2[count2] = 0;
 }
 
 static void _menuScriptTokuseiSetumei(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite, CURSOR *cursor, POKEMON_DATA_dd_ *pdata) {
     MENU_ITEM_dd_ *item = menuItemBiosGetPtr(0xAF, sprite->id);
     if (u8 tokusei = pokemonDataBiosGetTokuseiDataId(pdata, 0)) {
-        u16 *text = GSmsgGetGSchar((s32)pokemonTokuseiDataBiosGetDoc(pokemonTokuseiDataBiosGetPtr(tokusei)));
-        u32 len = GSmsgGetCharLength(text);
-        u32 size = (len + 2) * 2;
-        u16 *buf1 = (u16 *)__nwa__FUl(size);
-        u16 *buf2 = (u16 *)__nwa__FUl(size);
-        u16 *printBuf = buf1;
-        s32 line = 0;
-        s32 fitLine = 0;
-        u8 overflow = 0;
+        u16 *buf1;
+        u16 *text;
+        u32 size;
+        u16 *buf2;
+        s32 line;
+        u32 len;
+        s32 fitLine;
+        u8 overflow;
+        text = GSmsgGetGSchar((s32)pokemonTokuseiDataBiosGetDoc(pokemonTokuseiDataBiosGetPtr(tokusei)));
+        len = GSmsgGetCharLength(text);
+        size = (len + 2) * 2;
+        buf1 = (u16 *)__nwa__FUl(size);
+        buf2 = (u16 *)__nwa__FUl(size);
+        line = 0;
+        fitLine = 0;
+        overflow = 0;
         for (;;) {
             s32 out = scriptCopyWordPrefix(text,buf1,line++);
-            msgctrlSetValue(0x37, (u32)printBuf);
+            msgctrlSetValue(0x37, (u32)buf1);
             u32 rect = GSmsgGetRect(0x4276);
             if ((rect >> 16) <= (u32)item->width) {
                 fitLine = line;
             }
-            if (!((rect >> 16) <= (u32)item->width)) {
+            if (!((rect / 65536) <= (u32)*(volatile s16 *)&item->width)) {
                 overflow = 1;
             }
             if (!((u32)out < len)) {
@@ -976,43 +1030,7 @@ static void _menuScriptTokuseiSetumei(tagWINDOW_WORK *win, tagSPRITE_WORK *sprit
             }
         }
         if (overflow != 0) {
-            s32 spaceIdx = 0;
-            s32 count1 = 0;
-            s32 count2 = 0;
-            u8 second = 0;
-            u32 total = GSmsgGetCharLength(text);
-            u32 idx = 0;
-            u16 *src = text;
-            for (;; src++, idx++) {
-                u16 ch = *src;
-                if (ch == 0xFFFF) {
-                    continue;
-                }
-                if (ch == 0x20 || ch == 0x3000) {
-                    if (spaceIdx == fitLine - 1) {
-                        second = 1;
-                    } else if (second != 0) {
-                        buf2[count2++] = ch;
-                    } else {
-                        buf1[count1++] = ch;
-                    }
-                    spaceIdx++;
-                    continue;
-                }
-                if (ch == 0) {
-                    if (total <= idx) {
-                        break;
-                    }
-                    continue;
-                }
-                if (second != 0) {
-                    buf2[count2++] = ch;
-                } else {
-                    buf1[count1++] = ch;
-                }
-            }
-            buf1[count1] = 0;
-            buf2[count2] = 0;
+            _tokuseiSplit(text, buf1, buf2, fitLine);
             msgctrlSetValue(0x37, (u32)buf1);
             GSmsgPrint2(win->layer, 0, 0, WIN_ALPHA(win) | ~0xFF, 0x4276);
             msgctrlSetValue(0x37, (u32)buf2);

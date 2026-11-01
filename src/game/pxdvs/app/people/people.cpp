@@ -1147,11 +1147,10 @@ void _peopleMoveTypeList__FP13tagPeopleWorkb(tagPeopleWork* work, bool loop) {
         if ((work->walkPointIndex >= work->walkPointCount - 1 && work->walkActive == 2) || work->unknown7C[0] != 0) {
             f32 step;
             f32 distance;
-            f32 rate;
             distance = PSVECDistance(peopleBiosGetPosPtr(work), &work->walkTarget);
-            rate = (f32)GSgfxVideoGetVsyncRate();
-            step = speed * (30.0f * (f32)timeGetLastFrameTime() / rate);
-            if (distance < peopleViewerGetPlaySpeedRate(work) * step) arrived = 1;
+            step = speed * (30.0f * (f32)timeGetLastFrameTime() / (f32)GSgfxVideoGetVsyncRate());
+            f32 play = peopleViewerGetPlaySpeedRate(work);
+            if (distance < play * step) arrived = 1;
         } else if (PSVECDistance(peopleBiosGetPosPtr(work), &work->walkTarget) < 5.0f) {
             arrived = 1;
         }
@@ -2690,6 +2689,21 @@ void PSVECNormalize(GSvec*,GSvec*);
 s32 _peopleSideStepCheck__Fv() {
     GSvec heroPosition,heroRotation,manaPosition,manaRotation,testPosition,collisionPosition,delta,position;
     GSvec heroMovement,manaOffset,deltaTemp,positionTemp;
+    f32 limit;
+    f32 heroAngle;
+    f32 distance;
+    f32 sideAngle;
+    f32 mx;
+    f32 mz;
+    f32 radius;
+    f32 manaRadius;
+    f32 hz;
+    f32 manaAngle;
+    u8 free;
+    f32 step;
+    u8 hit;
+    f32 hx;
+    f32 heroRadius;
     if(!g_pHero || !g_pMana)return 0;
     if(!PEOPLE_MANA->used || !PEOPLE_MANA->visible)return 0;
     if(PEOPLE_HERO->unknown28<0.5f*(PEOPLE_HERO->unknown20+PEOPLE_HERO->unknown24))return 0;
@@ -2698,21 +2712,24 @@ s32 _peopleSideStepCheck__Fv() {
     peopleBiosGetPos(PEOPLE_MANA,&manaPosition);
     peopleBiosGetRot(PEOPLE_HERO,&heroRotation);
     peopleBiosGetRot(PEOPLE_MANA,&manaRotation);
-    f32 heroRadius=GScolsys2HumanGetHumanRadius(PEOPLE_HERO->collisionHandle);
-    f32 manaRadius=GScolsys2HumanGetHumanRadius(PEOPLE_MANA->collisionHandle);
+    heroRadius=GScolsys2HumanGetHumanRadius(PEOPLE_HERO->collisionHandle);
+    manaRadius=GScolsys2HumanGetHumanRadius(PEOPLE_MANA->collisionHandle);
     if(PEOPLE_MANA->followerMotion==6) {
-        f32 distance=PSVECDistance(&heroPosition,&manaPosition);
+        distance=PSVECDistance(&heroPosition,&manaPosition);
         if(distance>=5.0f+(heroRadius+manaRadius) || distance<=0.1f+(heroRadius+manaRadius))PEOPLE_MANA->followerMotion=0;
     }
     if(PEOPLE_MANA->followerMotion!=0 && PEOPLE_MANA->followerMotion!=3 && PEOPLE_MANA->followerMotion!=5)return 0;
     if(heroPosition.param1==PEOPLE_HERO->previousPosition.param1 && heroPosition.param2==PEOPLE_HERO->previousPosition.param2 && heroPosition.param3==PEOPLE_HERO->previousPosition.param3)return 0;
-    u8 hit=0;
+    hit=0;
     PSVECSubtract(&heroPosition,&PEOPLE_HERO->previousPosition,&heroMovement);
+    hx=heroMovement.param1; hz=heroMovement.param3;
     PSVECSubtract(&manaPosition,&heroPosition,&manaOffset);
-    f32 heroAngle=(f32)atan2(heroMovement.param1,heroMovement.param3);
-    f32 radius=heroRadius+manaRadius;
-    f32 manaAngle=(f32)atan2(manaOffset.param1,manaOffset.param3);
-    for(f32 step=0.0f;step<=2.0f*radius;step+=1.0f) {
+    mx=manaOffset.param1; mz=manaOffset.param3;
+    heroAngle=(f32)atan2(hx,hz);
+    manaAngle=(f32)atan2(mx,mz);
+    radius=heroRadius+manaRadius;
+    limit=2.0f*radius;
+    for(step=0.0f;step<=limit;step+=1.0f) {
         testPosition.param1=heroPosition.param1;testPosition.param2=heroPosition.param2;testPosition.param3=heroPosition.param3;
         testPosition.param1=step*(f32)sin(heroAngle)+heroPosition.param1;
         testPosition.param3=step*(f32)cos(heroAngle)+heroPosition.param3;
@@ -2724,28 +2741,27 @@ s32 _peopleSideStepCheck__Fv() {
         }
     }
     if(hit) {
-        f32 sideAngle;
         if(_peopleGetDiffAngleFix__Fff(heroAngle,manaAngle)<0.0f) {sideAngle=1.5707964f+heroAngle;PEOPLE_MANA->followerMotion=2;}
         else {sideAngle=heroAngle-1.5707964f;PEOPLE_MANA->followerMotion=1;}
-        u8 free=1;
-        PEOPLE_MANA->walkStartPosition.param1=manaPosition.param1;PEOPLE_MANA->walkStartPosition.param2=manaPosition.param2;PEOPLE_MANA->walkStartPosition.param3=manaPosition.param3;
+        free=1;
+        {tagPeopleWork* mana=PEOPLE_MANA;mana->walkStartPosition.param1=manaPosition.param1;mana->walkStartPosition.param2=manaPosition.param2;mana->walkStartPosition.param3=manaPosition.param3;}
         sideAngle=adjustPIPI__Ff(sideAngle);
-        for(f32 step=0.0f;step<=8.0f;step+=1.0f) {
-            manaPosition.param1=step*(f32)sin(sideAngle)+PEOPLE_MANA->walkStartPosition.param1;
-            manaPosition.param3=step*(f32)cos(sideAngle)+PEOPLE_MANA->walkStartPosition.param3;
+        for(distance=0.0f;distance<=8.0f;distance+=1.0f) {
+            manaPosition.param1=distance*(f32)sin(sideAngle)+PEOPLE_MANA->walkStartPosition.param1;
+            manaPosition.param3=distance*(f32)cos(sideAngle)+PEOPLE_MANA->walkStartPosition.param3;
             manaPosition.param2=GScolsys2HumanGetWalkHeight(&manaPosition);
             if(GScolsys2HitNpcCollision(&PEOPLE_MANA->walkStartPosition,&manaPosition,manaRadius,0))free=0;
             if(GScolsys2HumanCollision(PEOPLE_MANA->collisionHandle,&PEOPLE_MANA->walkStartPosition,&manaPosition,&collisionPosition)==6)free=0;
         }
         if(!free) {
             PEOPLE_MANA->followerMotion=0;
-            f32 distance=PSVECDistance(&heroPosition,&manaPosition);
-            if(!(distance<0.00001f && distance>-0.00001f)) {
-                if(distance<=radius) {
+            step=PSVECDistance(&heroPosition,&manaPosition);
+            if(!(step<0.00001f && step>-0.00001f)) {
+                if(step<=radius) {
                     PSVECSubtract(&manaPosition,&heroPosition,&deltaTemp);
                     delta.param1=deltaTemp.param1;delta.param2=deltaTemp.param2;delta.param3=deltaTemp.param3;
                     PSVECNormalize(&delta,&delta);
-                    PSVECScale(&delta,&delta,distance);
+                    PSVECScale(&delta,&delta,step);
                     PSVECAdd(&heroPosition,&delta,&positionTemp);
                     position.param1=positionTemp.param1;position.param2=positionTemp.param2;position.param3=positionTemp.param3;
                     peopleBiosSetPos(PEOPLE_MANA,&position);
@@ -2753,7 +2769,7 @@ s32 _peopleSideStepCheck__Fv() {
             }
             return 0;
         }
-        PEOPLE_MANA->walkTarget.param1=manaPosition.param1;PEOPLE_MANA->walkTarget.param2=manaPosition.param2;PEOPLE_MANA->walkTarget.param3=manaPosition.param3;
+        {tagPeopleWork* mana=PEOPLE_MANA;mana->walkTarget.param1=manaPosition.param1;mana->walkTarget.param2=manaPosition.param2;mana->walkTarget.param3=manaPosition.param3;}
         peopleSetFlagOn(PEOPLE_MANA->group,PEOPLE_MANA->resource,8);
         PEOPLE_MANA->unknown0E=0;
         PEOPLE_MANA->walkActive=1;

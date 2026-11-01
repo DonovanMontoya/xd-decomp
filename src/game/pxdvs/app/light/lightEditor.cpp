@@ -76,11 +76,12 @@ void lightEditorStripped(f32* a, f32* b) {
 }
 
 void LightEditor::editDirection(GSlight* light) {
-    f32 dt;
     f32 lx;
+    f32 a1;
     f32 ly;
+    f32 dt;
+    f32 a0;
     f32 scale;
-    f32 angles[2];
     dt = GSgfxVideoGetLastRenderTime();
     scale = 1000.0f;
     u32 changed = GSinputButtonsChanged(1);
@@ -119,8 +120,8 @@ void LightEditor::editDirection(GSlight* light) {
     if (!(GSinputButtonsPressed(1) & 0x40)) {
         scale *= 4.0f;
     }
-    angles[0] = lx / scale;
-    angles[1] = ly / scale;
+    a0 = lx / scale;
+    a1 = ly / scale;
     dir.x = pos.x; dir.y = pos.y; dir.z = pos.z;
     PSVECNormalize(&dir, &dir);
     up.x = 0.0f;
@@ -138,10 +139,10 @@ void LightEditor::editDirection(GSlight* light) {
         }
     }
     PSVECCrossProduct(&dir, &up, &right);
-    PSMTXRotAxisRad(&rot, &right, -angles[1]);
+    PSMTXRotAxisRad(&rot, &right, -a1);
     *(LightMtxBits*)&rotCopy = *(LightMtxBits*)&rot;
     PSMTXCopy(&rotCopy, &result);
-    PSMTXRotRad(&yaw, 'Y', angles[0]);
+    PSMTXRotRad(&yaw, 'Y', a0);
     PSMTXConcat(&yaw, &result, &result);
     PSMTXMultVec(&result, &pos, &pos);
     GSlightSetPosition(light, &pos);

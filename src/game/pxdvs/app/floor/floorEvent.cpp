@@ -334,17 +334,18 @@ s32 floorEventCtrlDoor(u32 floorID, u32 index, u8 control) {
     switch (control) {
     case 1: break;
     case 0: case 2: {
-        s32 heroFlags = peopleGetFlags(0, 0x64);
-        s32 partnerFlags = peopleGetFlags(0, 0x65);
-        s32 secondFlags = peopleGetFlags(0, 0x69);
-        s32 thirdFlags = peopleGetFlags(0, 0x68);
+        s32 flags[4];
+        flags[0] = peopleGetFlags(0, 0x64);
+        flags[1] = peopleGetFlags(0, 0x65);
+        flags[2] = peopleGetFlags(0, 0x69);
+        flags[3] = peopleGetFlags(0, 0x68);
         heroMoveInitEvent();
         _floorEventWaitMotion(model);
         heroMoveTermEvent();
-        peopleSetFlags(0, 0x64, heroFlags);
-        peopleSetFlags(0, 0x65, partnerFlags);
-        peopleSetFlags(0, 0x69, secondFlags);
-        peopleSetFlags(0, 0x68, thirdFlags);
+        peopleSetFlags(0, 0x64, flags[0]);
+        peopleSetFlags(0, 0x65, flags[1]);
+        peopleSetFlags(0, 0x69, flags[2]);
+        peopleSetFlags(0, 0x68, flags[3]);
         break;
     }
     }

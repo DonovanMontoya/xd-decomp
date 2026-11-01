@@ -173,28 +173,18 @@ static s32 _menuFaceAddList(u16 face,FacePokemonGetter getter,void* context){
     s32 index=_menuFaceSearchList(face);
     if(index<0){
         if(count==_menuFaceListNum){
-            u16 oldFace;
-            s8 oldSlot;
-            FacePokemonGetter oldGetter;
-            void* oldContext;
-            u8 oldState;
-            u32 oldResource;
-            oldState=pMenuFaceList[0].state;
-            oldResource=pMenuFaceList[0].resource;
-            oldFace=pMenuFaceList[0].face;
-            oldSlot=pMenuFaceList[0].slot;
-            oldGetter=pMenuFaceList[0].getter;
-            oldContext=pMenuFaceList[0].context;
-            if(oldState==2)GSresFreeResource(0x5c0,oldResource);
+            FaceListEntry old;
+            old=pMenuFaceList[0];
+            if(pMenuFaceList[0].state==2)GSresFreeResource(0x5c0,pMenuFaceList[0].resource);
             for(s32 i=0;i<count-1;++i)pMenuFaceList[i]=pMenuFaceList[i+1];
             count=_menuFaceListNum-1;
             FaceListEntry* restored = &pMenuFaceList[count];
-            restored->resource=oldResource;
-            restored->face=oldFace;
-            restored->state=oldState;
-            restored->slot=oldSlot;
-            restored->getter=oldGetter;
-            restored->context=oldContext;
+            restored->resource=old.resource;
+            restored->face=old.face;
+            restored->state=old.state;
+            restored->slot=old.slot;
+            restored->getter=old.getter;
+            restored->context=old.context;
         }
         pMenuFaceList[count].resource=resource;
         pMenuFaceList[count].face=face;

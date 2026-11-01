@@ -611,7 +611,7 @@ void menuOrre::Main() {
     menuFaceLoad(0,_loadPokemonCallBack,&_loadFaceCount);menuOpen(0xFF,0);
     do {GSthreadSwitch();}while(FlashSystemIsLastFrame(0x1F5C3000)==0);
     _setPlayFrameLabel(0x1F5B3000,0);
-    for(;;) {
+    while(true) {
         unk18=1.0f;
         u8 selecting=1;
         _setPlayFrameLabel(0x1F5A3000,0);
@@ -677,7 +677,8 @@ void menuOrre::Main() {
         }while(finished==0);
         Hero *hero = _clearBattlePokemon();
         for(u16 i=0;i<4;++i) {
-            pokemonBiosCopy(heroBiosGetPokemonPtr(hero,i),GetTemochiPokemonPtr(slots[i]));
+            Pokemon *const &src = GetTemochiPokemonPtr(slots[i]);
+            pokemonBiosCopy(heroBiosGetPokemonPtr(hero,i),src);
         }
         fightSetMenuCtrlHero(fightGetMenuCtrlHero());
         _fightresult=fightEncount(deckNumber);

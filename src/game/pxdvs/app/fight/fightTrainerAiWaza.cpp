@@ -1,30 +1,39 @@
 #include <game/pxdvs/app/fight/fightTrainerAiWazaPrivate.hpp>
 extern "C" {
 s32 fightTrainerAiSelectFightActionWaza(void *arg0, void *arg1, u16 arg2) {
-    void *sp14;
-    void *enemies[8];
-    u16 moves[8];
-    s16 slots[8];
-    s16 sp10;
-    s32 var_r23;
-    s32 var_r3;
-    s32 var_r3_2;
-    u16 var_r29;
-    void *temp_r3_4;
     void *temp_r3_5;
-    void *var_r24;
+    u16 moves[8];
+    s16 sp10;
+    s16 slots[8];
+    s32 temp_r29;
+    u16 var_r29;
     void *var_r28;
+    s32 var_r23;
+    void *sp14;
+    u8 temp_r24;
+    s32 var_r3_2;
+    u16 temp_r3_2;
+    u16 temp_r3;
+    s32 temp_r3_6;
+    u8 var_r26;
+    u16 temp_r25;
+    void *var_r24;
+    void *enemies[8];
+    s32 temp_r24_2;
+    void *temp_r3_4;
+    s32 var_r3;
+    u16 temp_r3_3;
 
-    s32 temp_r29 = fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(arg0));
-    u8 var_r26 = fightOutPokemon_GetFixAiWaza(arg1);
-    u8 temp_r24 = fightOutPokemon_GetFixAiDef(arg1);
-    u16 temp_r25 = fightAi_GetWazaDataIDFromFixActWaza(arg0, arg1, var_r26);
+    temp_r29 = fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(arg0));
+    var_r26 = fightOutPokemon_GetFixAiWaza(arg1);
+    temp_r24 = fightOutPokemon_GetFixAiDef(arg1);
+    temp_r25 = fightAi_GetWazaDataIDFromFixActWaza(arg0, arg1, var_r26);
     var_r24 = fightAi_GetWazaDataIDFromFixActDef(arg0, arg1, temp_r24);
-    u16 temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, arg1, moves, slots, 1);
+    temp_r3 = fightTrainerAiGetFightOutPokemonWazaDataIdAry(arg0, arg1, moves, slots, 1);
     if (temp_r3 == 0) {
         return 0;
     }
-    u16 temp_r3_2 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, enemies, 0, 1);
+    temp_r3_2 = fightFloorGetFightTrainerFightOutPokemonPtrAry(0, arg0, enemies, 0, 1);
     if (temp_r3_2 == 0) {
         return 0;
     }
@@ -49,8 +58,8 @@ block_11:
     }
     if (var_r3 < 0) {
         if ((sp14 != 0U) && (sp10 >= 0)) {
-            s32 temp_r24_2 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(sp14,arg2);
-            u16 temp_r3_3 = fightTrainerAiGetFightOutPokemonWazaDataId(arg0, arg1, (u8) sp10);
+            temp_r24_2 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(sp14,arg2);
+            temp_r3_3 = fightTrainerAiGetFightOutPokemonWazaDataId(arg0, arg1, (u8) sp10);
             if (temp_r3_3 != 0) {
                 fightOutPokemonCreateFightActionAttackWaza(arg1, 0, 0x13, 0, &fight_action_data_waza, temp_r3_3, temp_r24_2, (s8) sp10,0);
                 return 1;
@@ -120,8 +129,8 @@ block_50:
     if (var_r28 == 0U) {
         return 0;
     }
-    s32 temp_r3_6 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(var_r28, arg2);
-    fightOutPokemonCreateFightActionAttackWaza(arg1, 0, 0x13, 0, &fight_action_data_waza, var_r29, temp_r3_6, (s8) var_r23,0);
+    temp_r3_6 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(var_r28, arg2);
+    ((void(*)(void*,u32,u32,u32,void*,u32,s32,s8,u8))fightOutPokemonCreateFightActionAttackWaza)(arg1, 0, 0x13, 0, &fight_action_data_waza, var_r29, temp_r3_6, var_r23,0);
     return 1;
 }
 

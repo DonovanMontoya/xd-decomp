@@ -98,7 +98,7 @@ void peDistortionContainer::Start() {
 }
 peDistortionContainer::~peDistortionContainer() {g_particle_debug_stats.node-=0x78;g_particle_debug_stats.total-=0x78;}
 peDistortionContainer::peDistortionContainer(peEmitterNode *emitter,_peDistortion *d,u16 maximum):peRenderContainer(emitter,0x48,maximum,&g_vertex_format,(GSgfxPrimType)0x80,4,0x34,(d->flags>>14)&1) {
- definition=d;_peDistortion *textureDefinition=definition;uv[0]=textureDefinition->u1;uv[1]=textureDefinition->v1;uv[2]=textureDefinition->u0;uv[3]=textureDefinition->v1;uv[4]=textureDefinition->u0;uv[5]=textureDefinition->v0;uv[6]=textureDefinition->u1;uv[7]=textureDefinition->v0;DCFlushRange(uv,0x20);
+ definition=d;_peDistortion *textureDefinition=definition;f32 *c=uv;c[0]=textureDefinition->u1;c[1]=textureDefinition->v1;c[2]=textureDefinition->u0;c[3]=textureDefinition->v1;c[4]=textureDefinition->u0;c[5]=textureDefinition->v0;c[6]=textureDefinition->u1;c[7]=textureDefinition->v0;DCFlushRange(c,0x20);
  peDistortionNode *node=(peDistortionNode*)freeNodes;s16 index=0;while(node){node->index=index++;node=(peDistortionNode*)node->next;}g_particle_debug_stats.node+=0x78;g_particle_debug_stats.total+=0x78;
 }
 extern "C" f32 __float_nan[];

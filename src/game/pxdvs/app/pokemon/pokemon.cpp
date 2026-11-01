@@ -25,35 +25,34 @@ extern "C" {
 void pokemonGetEffortFromPokemon(Pokemon* poke, u16 itemEffect, u8 doubleFlag, u32 species)
 {
     PokemonEffortEntry table[6] = {{0x8D, 0x0A, 0}, {0x8E, 0x0B, 0}, {0x8F, 0x0C, 0}, {0x90, 0x0D, 0}, {0x91, 0x0E, 0}, {0x92, 0x0F, 0}};
+    u16 gain;
+    PokemonEffortEntry* entry;
+    PokemonEffortEntry* entry2;
+    u8 i;
+    s32 multiplier;
+    u8 j;
+    u32 m;
+    u16 total;
     if (poke && pokemonCheckFightOut(poke)) {
-        s32 multiplier = 1;
-        u32 total = 0;
-        {
-            u8 i;
-            for (i = 0; i < 6; i++) {
-                PokemonEffortEntry* entry = &table[i];
-                entry->value = pokemonGetStatus(poke, 0, entry->effortStat, 0);
-                total += entry->value;
-            }
+        multiplier = 1;
+        total = 0;
+        for (i = 0; i < 6; i++) {
+            entry = &table[i];
+            entry->value = pokemonGetStatus(poke, 0, entry->effortStat, 0);
+            total += entry->value;
         }
         if (doubleFlag == 1) multiplier = 2;
-        {
-            u32 m = (u8)multiplier;
-            u32 item = itemEffect;
-            u8 j;
-            for (j = 0; j < 6; j++) {
-                PokemonEffortEntry* entry;
-                u16 gain;
-                if ((u16)total >= 0x1FE) break;
-                entry = &table[j];
-                gain = m * (u16)pokemonGetStatus(0, species, entry->giveProperty, 0);
-                if (item == 0x18) gain = gain << 1;
-                if ((u16)total + gain > 0x1FE) gain = gain - ((u16)total + gain - 0x1FE);
-                if (gain + entry->value > 0xFF) gain = gain - (gain + entry->value - 0xFF);
-                total += gain;
-                entry->value = entry->value + gain;
-                pokemonSetStatus(poke, 0, entry->effortStat, 0, entry->value);
-            }
+        m = (u8)multiplier;
+        for (j = 0; j < 6; j++) {
+            if (total >= 0x1FE) break;
+            entry2 = &table[j];
+            gain = m * (u16)pokemonGetStatus(0, species, entry2->giveProperty, 0);
+            if (itemEffect == 0x18) gain = gain << 1;
+            if (total + gain > 0x1FE) gain -= total + gain - 0x1FE;
+            if (gain + entry2->value > 0xFF) gain -= gain + entry2->value - 0xFF;
+            total += gain;
+            entry2->value += gain;
+            pokemonSetStatus(poke, 0, entry2->effortStat, 0, entry2->value);
         }
     }
 }
@@ -1406,13 +1405,17 @@ void _pokemonSetLevelBasisStatus(Pokemon* a , u8 b)
 
 u16 _pokemonGetLevelOneStatus(Pokemon* poke, u8 level, u16 stat, u16 basisStat, u16 randomStat, u16 effortStat, long bonus)
 {
-    u32 speciesId = pokemon_GetPokemonDataId(poke);
-    u32 nature = pokemon_GetSeikaku(poke);
-    u16 basis = pokemonGetStatus(nullptr, speciesId, basisStat, 0);
-    u16 random = pokemonGetStatus(poke, 0, randomStat, 0);
-    u16 effort = pokemonGetStatus(poke, 0, effortStat, 0);
-    u16 value = pokemonCreateBasisStatus(basis, random, effort, level, bonus);
-    u32 adjusted = pokemonAdjustValueBySeikaku(nature, stat, value);
+    u32 speciesId;
+    u16 basis;
+    u16 random;
+    u32 nature;
+    u16 effort;
+    speciesId = pokemon_GetPokemonDataId(poke);
+    nature = pokemon_GetSeikaku(poke);
+    basis = pokemonGetStatus(nullptr, speciesId, basisStat, 0);
+    random = pokemonGetStatus(poke, 0, randomStat, 0);
+    effort = pokemonGetStatus(poke, 0, effortStat, 0);
+    const u32 &adjusted = pokemonAdjustValueBySeikaku(nature, stat, pokemonCreateBasisStatus(basis, random, effort, level, bonus));
     pokemonSetStatus(poke, 0, stat, 0, adjusted);
     return adjusted;
 }

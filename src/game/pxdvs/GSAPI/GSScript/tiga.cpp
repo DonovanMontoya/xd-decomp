@@ -566,18 +566,15 @@ void Tiga::unmappingScript() {
     objManager.clear();
 }
 
+static inline void releaseExpression(tigaVariant* value) {
+    if(value->type==1 || value->type==2)value->type=0;
+    else{Tiga::m_cpCurrentObject->cellMemory->freeVariant(value);value->type=0;}
+}
 void Tiga::free() {
-    tigaVariant* v;
     int i;
     m_cpCurrentObject = this;
     for (i = 0; i < globalCount; i++) {
-        v = &globals[i];
-        if (v->type == 1 || v->type == 2) {
-            v->type = 0;
-        } else {
-            m_cpCurrentObject->cellMemory->freeVariant(v);
-            v->type = 0;
-        }
+        releaseExpression(&globals[i]);
     }
     for (i = 0; i < 8; i++) {
         delete threads[i];
@@ -1096,10 +1093,6 @@ struct TigaInstruction {
     u8 opcode, subcode;
     s16 argument;
 };
-static inline void releaseExpression(tigaVariant* value) {
-    if(value->type==1 || value->type==2)value->type=0;
-    else{Tiga::m_cpCurrentObject->cellMemory->freeVariant(value);value->type=0;}
-}
 static inline void retainExpression(tigaVariant* value) {
     if(value->type!=1 && value->type!=2)Tiga::m_cpCurrentObject->cellMemory->dupVariant(value);
 }

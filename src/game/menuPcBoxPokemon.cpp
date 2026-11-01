@@ -866,12 +866,17 @@ void CMenuPokemonLeave::boxNameDraw(int box, long win, u32 item) {
 
 void CMenuPokemonLeave::resetViewAntAll() {
     int prev;
-    int next;
+    bool inRange;
     int i;
+    CAnt *ant;
+    int s;
+    s8 box;
+    int next;
     int b;
+    bool show;
     CAnt::systemUsecountReset();
     for (i = 0; i < 6; i++) {
-        CAnt *ant = &temochiAnt[i];
+        ant = &temochiAnt[i];
         ant->init();
         Pokemon *p = temochiPokemonGetPointer(i);
         if (p != 0) {
@@ -885,9 +890,7 @@ void CMenuPokemonLeave::resetViewAntAll() {
     prev = (currentBox + 7) % 8;
     next = (currentBox + 1) % 8;
     for (b = 0; b < 8; b++) {
-        bool inRange;
-        bool show = true;
-        int s;
+        show = true;
         inRange = false;
         if (prev == b || currentBox == b) {
             inRange = true;
@@ -895,7 +898,7 @@ void CMenuPokemonLeave::resetViewAntAll() {
         if (!inRange && next != b) {
             show = false;
         }
-        s8 box = b;
+        box = b;
         for (s = 0; s < 30; s++) {
             CAnt *ant = &pcAnt[b][s];
             ant->init();

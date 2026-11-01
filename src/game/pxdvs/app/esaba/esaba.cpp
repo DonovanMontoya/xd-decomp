@@ -217,6 +217,13 @@ static void _esabaCallBackEsaFunc__FUs15FootStepCounterl(u16 area, s32, s32 step
 }
 
 static void _esabaAppearPokemon__FUs(u16 area){s32 progressIndex=esabaappdata->progressIndex;u32 progress=GSflagGet(0x3C4);if(progress>=flag_etc[progressIndex].c){u16 mode=esabaappdata->mode;u32 cur=GSflagGet(esabaappdata->progressFlag);if(cur==mode){_esabaAppearPokemonSub__FUs(area);return;}}_esabaAppearPokemonSub2__FUs(area);}
+static inline u32 getFlag32(u16 i){return GSflagGet(esabadata[i].pokemonFlag);}
+static inline u8 esabaExExists(u16 i, u8 exists){
+for(;i<(u16)*esabadata_number;i++){
+if(esabapokemondata_EX[1].id==(u16)getFlag32(i)){exists=1;break;}
+}
+return exists;
+}
 static void _esabaAppearPokemonSub2__FUs(u16 area){
 u16 cumulative;
 u16 i;
@@ -225,12 +232,16 @@ u16 count=esabaGetPokemonMax(area);
 exists=0;
 cumulative=0;
 i=exists;
-for(;i<(u16)*esabadata_number;i++){
-if(esabapokemondata_EX[1].id==(u16)GSflagGet(esabadata[i].pokemonFlag)){exists=1;break;}
-}
+exists=esabaExExists(i,exists);
 if(!exists&&(u16)((u16)HSD_Rand()%100)<(u16)esabapokemondata_EX[1].rate){appearPokemon(area,esabapokemondata_EX[1].id);return;}
 u16 random=(u16)HSD_Rand()%100;
-for(s32 i=0;i<count;i++){cumulative+=listRate(area,i);if(cumulative>=random){appearPokemon(area,listPokemon(area,i));return;}}
+for(s32 i=0;i<count;i++){cumulative+=listRate(area,i);if(cumulative>=random){u16 id=listPokemon(area,i);appearPokemon(area,id);return;}}
+}
+static inline u8 esabaExExistsN(u16 i, u8 exists, s32 n){
+for(;i<(u16)*esabadata_number;i++){
+if(esabapokemondata_EX[n].id==(u16)getFlag32(i)){exists=1;break;}
+}
+return exists;
 }
 static void _esabaAppearPokemonSub__FUs(u16 area){
 u16 firstIndex,secondIndex;
@@ -241,15 +252,11 @@ u16 cumulative=0;
 u16 first=esabapokemondata_EX[0].rate;
 u16 second=esabapokemondata_EX[1].rate;
 firstIndex=firstExists;
-for(;firstIndex<(u16)*esabadata_number;firstIndex++){
-if(esabapokemondata_EX[0].id==(u16)GSflagGet(esabadata[firstIndex].pokemonFlag)){firstExists=1;break;}
-}
+firstExists=esabaExExistsN(firstIndex,firstExists,0);
 if(firstExists)first=0;
 u8 secondExists=0;
 secondIndex=secondExists;
-for(;secondIndex<(u16)*esabadata_number;secondIndex++){
-if(esabapokemondata_EX[1].id==(u16)GSflagGet(esabadata[secondIndex].pokemonFlag)){secondExists=1;break;}
-}
+secondExists=esabaExExistsN(secondIndex,secondExists,1);
 if(secondExists)second=0;
 u16 random=(u16)HSD_Rand()%100;
 if(random<first){appearPokemon(area,esabapokemondata_EX[0].id);return;}
@@ -257,6 +264,6 @@ u16 both=first+second;
 if(first==0)both=second;
 if(random<both){appearPokemon(area,esabapokemondata_EX[1].id);return;}
 u16 ordinary=(u16)HSD_Rand()%100;
-for(s32 i=0;i<count;i++){cumulative+=listRate(area,i);if(cumulative>=ordinary){appearPokemon(area,listPokemon(area,i));return;}}
+for(s32 i=0;i<count;i++){cumulative+=listRate(area,i);if(cumulative>=ordinary){u16 id=listPokemon(area,i);appearPokemon(area,id);return;}}
 }
 }

@@ -135,47 +135,39 @@ static u32 _VideoDecode(__GSmovieStreaming* s, THPReadBuffer* rb, THPTextureSet*
 
 extern "C" void DCFlushRange(void*,u32);
 extern "C" void sndStreamARAMUpdate(u32,u32,u32,u32,u32);
+static inline void _fillStreamChannel(__GSmovieStreaming* movie,u64 playedIn,u32 remainingIn,s16* rightIn,s16* leftIn) {
+    u64 played;
+    u32 remaining;
+    s16* left;
+    s16* right;
+    left=leftIn;
+    right=rightIn;
+    remaining=remainingIn;
+    played=playedIn;
+    s32 status;
+    for(;;) {
+        u32 count=GetAudioSample(movie,left,right,remaining,&status);
+        played+=count;
+        if(status==0) break;
+        if(status==1) {
+            remaining-=count;left+=count;if(right)right+=count;
+            MovieDecoder* current=movie->decoder;
+            current->marks[current->markWrite]=played;
+            current->markWrite++;
+            if(current->markWrite>=5) current->markWrite=0;
+            continue;
+        }
+        memset(left,0,remaining*2);if(right)memset(right,0,remaining*2);break;
+    }
+}
 extern "C" u8 _StreamInitFillStreamBuffer(__GSmovieStreaming* movie) {
-    s32 stereoStatus,monoStatus;
     MovieDecoder* decoder=movie->decoder;
     u32 samples=((u32)(0.5f+(f32)(decoder->sampleRate*60)/1000.0f)+31)&~31;
     if(decoder->channels==2) {
-        u32 remaining=samples;
-        s16* left=decoder->leftBuffer;
-        s16* right=decoder->rightBuffer;
-        u64 played=decoder->samplesPlayed;
-        for(;;) {
-            u32 count=GetAudioSample(movie,left,right,remaining,&stereoStatus);
-            played+=count;
-            if(stereoStatus==0) break;
-            if(stereoStatus==1) {
-                remaining-=count;left+=count;if(right)right+=count;
-                MovieDecoder* current=movie->decoder;
-                current->marks[current->markWrite]=played;
-                if(++current->markWrite>=5) current->markWrite=0;
-                continue;
-            }
-            memset(left,0,remaining*2);if(right)memset(right,0,remaining*2);break;
-        }
+        _fillStreamChannel(movie,decoder->samplesPlayed,samples,decoder->rightBuffer,decoder->leftBuffer);
         decoder->samplesPlayed+=samples;
     } else {
-        u32 remaining=samples;
-        s16* left=decoder->leftBuffer;
-        s16* right=0;
-        u64 played=decoder->samplesPlayed;
-        for(;;) {
-            u32 count=GetAudioSample(movie,left,right,remaining,&monoStatus);
-            played+=count;
-            if(monoStatus==0) break;
-            if(monoStatus==1) {
-                remaining-=count;left+=count;if(right)right+=count;
-                MovieDecoder* current=movie->decoder;
-                current->marks[current->markWrite]=played;
-                if(++current->markWrite>=5) current->markWrite=0;
-                continue;
-            }
-            memset(left,0,remaining*2);if(right)memset(right,0,remaining*2);break;
-        }
+        _fillStreamChannel(movie,decoder->samplesPlayed,samples,0,decoder->leftBuffer);
         decoder->samplesPlayed+=samples;
     }
     u32 bytes=samples*2;
@@ -185,33 +177,24 @@ extern "C" u8 _StreamInitFillStreamBuffer(__GSmovieStreaming* movie) {
         DCFlushRange(decoder->rightBuffer,bytes);
         sndStreamARAMUpdate(decoder->rightStream,0,samples,0,0);
     }
-    movie->reserved1a=1;
+    *(u8*)&movie->reserved1a=1;
     return 1;
 }
 
 extern "C" u8 GSfsysStreamGetData(u32,u32,void*,u32,u32,void(*)(s32,void*,s32),void*,s32);
-static inline void _advanceStream(__GSmovieStreaming* movie,u32 size) {
-    MovieDecoder* decoder=movie->decoder;
-    decoder->streamOffset+=0x8000;
-    if(decoder->preload) {
-        if(decoder->streamOffset>=decoder->movieBytes) decoder->streamOffset=0;
-    } else if(decoder->streamOffset>=decoder->movieBytes) decoder->streamOffset=0;
-    else if(decoder->streamOffset>=GSfsysStreamGetCacheSize()) decoder->streamOffset=0;
-    _movieStreamPrepareGetDataCallback_Exec(movie,0,size);
-}
 static inline void prepareMovieStreamGetData(__GSmovieStreaming* movie) {
     MovieDecoder* decoder;
+    s32 interrupts;
     s32 state;
     u32 size;
-    s32 interrupts;
-    MovieDecoder* first=movie->decoder;
+    decoder=movie->decoder;
     interrupts=OSDisableInterrupts();
     switch(movie->state) {
     case 0:case 1:case 2:case 3:case 4:case 5:case 6:case 10:case 11:
         break;
     default:
-        if(!first->reads[first->readWrite].valid) {
-            size=first->fetchSize;
+        if(!decoder->reads[decoder->readWrite].valid) {
+            size=decoder->fetchSize;
             if(size) {
                 decoder=movie->decoder;
                 state=decoder->fetchState;
@@ -222,10 +205,10 @@ static inline void prepareMovieStreamGetData(__GSmovieStreaming* movie) {
                     u32 offset=decoder->streamOffset;
                     if(!(decoder->loop&1) && decoder->fetchPos+decoder->currentFrame>=decoder->frames) {
                         memset(buffer,0,0x8000);
-                        _advanceStream(movie,size);
+                        _movieStreamPrepareGetDataCallback(0,(void*)size,(s32)movie);
                     } else if(decoder->preload) {
                         memcpy(buffer,decoder->preloadBuffer+offset,0x8000);
-                        _advanceStream(movie,size);
+                        _movieStreamPrepareGetDataCallback(0,(void*)size,(s32)movie);
                     } else if(!GSfsysStreamGetData(movie->handle,0,buffer,0x8000,offset,_movieStreamPrepareGetDataCallback,(void*)size,(s32)movie)) {
                         decoder->fetchState=state;
                     }
@@ -250,8 +233,8 @@ extern "C" void _movieStreamPrepareGetData(__GSmovieStreaming* movie) {
 void _movieStreamPrepareGetDataCallback_Exec(__GSmovieStreaming* movie, u32 offset, u32 size) {
     s32 count = 0x8000 - offset;
     MovieDecoder* decoder = movie->decoder;
-    u8* source = decoder->streamBuffer + offset;
     u32 filled = decoder->reads[decoder->readWrite].size;
+    u8* source = offset + (u8*)decoder->streamBuffer;
     u8* destination = decoder->reads[decoder->readWrite].data + filled;
     if (filled + count > size) {
         count = size - filled;
@@ -315,8 +298,7 @@ extern "C" void _movieStreamDecode(__GSmovieStreaming* movie) {
                 component = 0;
                 frameAddress = (u32)audioRead->data;
                 sizes = (u32*)(frameAddress + 8);
-                payloadAddress = audioDecoder->componentCount * 4 + 8;
-                payloadAddress += frameAddress;
+                payloadAddress = frameAddress + audioDecoder->componentCount * 4 + 8;
                 for (; component < audioDecoder->componentCount; ++sizes, ++component) {
                     switch (audioDecoder->componentTypes[component]) {
                     case 1:

@@ -865,18 +865,18 @@ static FightOutPokemon* _fightMenuFightTrainerGcHeroOpenMenuSubWazaSelectDefense
 }
 
 static u8 _fightMenuFightTrainerGcHeroOpenMenuSubWaza(FIGHT_TRAINER* trainer,FightOutPokemon* attacker,u16 type) {
-    u8 status[0x48];
-    u16 invalidMove;
-    s32 selected;
-    Pokemon *pokemon;
-    u32 message;
-    u32 outCount;
-    u8 invalid;
-    u16 failMove;
     u16 move;
+    s32 selected;
+    u8 invalid;
+    u16 invalidMove;
+    u16 failMove;
+    Pokemon *pokemon;
     FightOutPokemon *target;
-    s32 relative;
+    u32 message;
+    u8 outCount;
     s32 wazaStatus;
+    u8 status[0x48];
+    s32 relative;
     outCount=(u8)fightTypeDataBiosGetFightoutPokemonNum(fightTypeDataBiosGetPtr(type));
     for(;;){
         fightOutPokemonToMenuWazaStatus(attacker,status);
@@ -892,7 +892,7 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubWaza(FIGHT_TRAINER* trainer,Fig
             return 0;
         }
         invalid=fightOutPokemonCheckCanOutOkWazaBanme(attacker,selected,1,&invalidMove);
-        failMove=pokemonGetStatus(pokemon,0,0x7F,selected);
+        failMove=((s32(*)(void*,u32,s32,u16))pokemonGetStatus)(pokemon,0,0x7F,selected);
         if(invalid!=0){
             fightMsgctrlSetValue(0x11,(u32)attacker);
             fightMsgctrlSetValue(0x28,(u32)GSmsgGetGSchar(wazaGetStatus(0,failMove,1,0)));
@@ -905,7 +905,7 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubWaza(FIGHT_TRAINER* trainer,Fig
         else if(invalid==2)message=0x4EE7;
         else if(invalid==1)message=0x4EE6;
         if(invalid!=0){fightMenuOpenMsg(message);fightMainWaitFrame(0x40);fightMenuCloseMsg();continue;}
-        move=pokemonGetStatus(pokemon,0,0x7F,(u16)selected);
+        move=((s32(*)(void*,u32,s32,u16))pokemonGetStatus)(pokemon,0,0x7F,selected);
         if(move!=0&&move<*waza_data_number&&move!=0x176){
             _fightMenuGcHeroDefenseFlag=0;
             target=fightSeqSelectDefensePokemonPtr(attacker,move,type,_fightMenuFightTrainerGcHeroOpenMenuSubWazaSelectDefensePokemon,1,0,-1);
@@ -913,7 +913,7 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubWaza(FIGHT_TRAINER* trainer,Fig
                 if(target){
                     relative=((u32(*)(FightOutPokemon*,u16))fightTargetGetTragetPtrToRelativeHostSideFightTargetId)(target,type);
                     menuFightCloseWaza(1);
-                    fightOutPokemonCreateFightActionAttackWaza(attacker,0,0x13,0,fight_action_data_waza,move,relative,(s8)selected,0);
+                    ((void(*)(FightOutPokemon*,u32,u32,u32,void*,u16,u32,s8,u8))fightOutPokemonCreateFightActionAttackWaza)(attacker,0,0x13,0,fight_action_data_waza,move,relative,selected,0);
                     return 1;
                 }
             }

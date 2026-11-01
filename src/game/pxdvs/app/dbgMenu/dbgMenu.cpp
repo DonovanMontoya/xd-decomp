@@ -13,47 +13,46 @@ extern "C" void dbgMenuSetLayerID(s32 arg0) {
     _dbgLayerID = arg0;
 }
 
-extern "C" void dbgMenuCursor(tagWINDOW_WORK *arg0) {
-    s16 temp_r0;
-    s16 var_r3;
-    s16 var_r4;
-    s32 temp_r29;
-    s8 temp_r4;
-    s8 var_r5;
-    u16 temp_r30;
+static inline void dbgScroll(s16 *pFirst, s16 *pSel, u16 key, s8 disp, s32 count) {
+    s16 sel;
+    s16 first;
+    first = *pFirst;
+    sel = *pSel;
+    if (key & 1) {
+        sel -= 1;
+    } else if (key & 2) {
+        sel += 1;
+    }
+    if (sel < 0) {
+        first += sel;
+        sel = 0;
+        if (first < 0) {
+            sel = (s8) (disp - 1);
+            first = (s8) (count - disp);
+        }
+    } else if (sel >= disp) {
+        first += sel - (disp - 1);
+        sel = (s8) (disp - 1);
+        if ((s32) (first + sel) >= count) {
+            first = 0;
+            sel = 0;
+        }
+    }
+    *pFirst = first;
+    *pSel = sel;
+}
 
-    temp_r30 = windowGetKeyInfo()[3];
-    temp_r29 = (s8)_dbgMenuGetMenuNum(arg0, 0);
-    var_r5 = (s8)menuDataBiosGetDispMax(arg0->menu);
-    if (temp_r29 < var_r5) {
-        var_r5 = temp_r29;
+extern "C" void dbgMenuCursor(tagWINDOW_WORK *arg0) {
+    u16 key;
+    s8 count;
+    s8 disp;
+    key = windowGetKeyInfo()[3];
+    count = (s8)_dbgMenuGetMenuNum(arg0, 0);
+    disp = (s8)menuDataBiosGetDispMax(arg0->menu);
+    if (count < disp) {
+        disp = count;
     }
-    var_r3 = arg0->first;
-    var_r4 = arg0->selected;
-    if (temp_r30 & 1) {
-        var_r4 -= 1;
-    } else if (temp_r30 & 2) {
-        var_r4 += 1;
-    }
-    if (var_r4 < 0) {
-        var_r3 += var_r4;
-        var_r4 = 0;
-        if (var_r3 < 0) {
-            var_r4 = (s16) (s8) (var_r5 - 1);
-            var_r3 = (s16) (s8) (temp_r29 - var_r5);
-        }
-    } else if (var_r4 >= var_r5) {
-        temp_r4 = var_r5 - 1;
-        temp_r0 = var_r3 + (var_r4 - temp_r4);
-        var_r4 = (s16) temp_r4;
-        var_r3 = temp_r0;
-        if ((s32) (var_r3 + var_r4) >= temp_r29) {
-            var_r3 = 0;
-            var_r4 = 0;
-        }
-    }
-    arg0->first = var_r3;
-    arg0->selected = var_r4;
+    dbgScroll(&arg0->first, &arg0->selected, key, disp, count);
 }
 
 extern "C" u8 dbgMenuGetEnable(void) {
@@ -338,12 +337,40 @@ static u32 _dbgMenuGetMsgID(tagWINDOW_WORK*arg0,long arg1) {
     return var_r3->message;
 }
 
+static inline s32 dbgIdxInl(tagWINDOW_WORK *w) {
+    if (w->menu >= _menu_data_number + 1) {
+        return w->menu - (_menu_data_number + 1);
+    }
+    return -1;
+}
+
+static inline s16 dbgLinkInl(long arg0) {
+    s16 link;
+    u32 n;
+    DebugEntry *e;
+    if (arg0 <= 0 || ((debugMenuDataGetNum == 0) ? (n = 0U) : (n = debugMenuDataGetNum()), (s32) n <= arg0)) {
+        return 0;
+    }
+    if (debugMenuDataGetPtr == 0) {
+        e = 0;
+    } else {
+        e = debugMenuDataGetPtr(arg0);
+    }
+    if (e == 0) {
+        link = 0;
+    } else {
+        link = e->link;
+    }
+    if (link <= 0 || ((debugMenuDataGetNum == 0) ? (n = 0U) : (n = debugMenuDataGetNum()), (s32) n <= link)) {
+        link = 0;
+    }
+    return link;
+}
+
 static s32 _dbgMenuGetItemNo(tagWINDOW_WORK *arg0,long arg1) {
     s16 temp_r4_3;
     s16 var_r28_3;
     s16 var_r28_4;
-    s16 var_r29_2;
-    s32 temp_r0;
     s32 temp_r0_2;
     s32 temp_r0_3;
     s32 temp_r28;
@@ -351,15 +378,11 @@ static s32 _dbgMenuGetItemNo(tagWINDOW_WORK *arg0,long arg1) {
     s32 temp_r31;
     s32 temp_r3_4;
     s32 temp_r4;
-    s32 temp_r4_2;
     s32 temp_r6;
     s32 temp_r6_2;
-    s32 temp_r7;
-    s32 temp_r7_2;
     s32 var_r0;
     s32 var_r28;
     s32 var_r28_2;
-    s32 var_r29;
     s32 var_r3;
     s32 var_r3_2;
     s32 var_r3_3;
@@ -367,41 +390,29 @@ static s32 _dbgMenuGetItemNo(tagWINDOW_WORK *arg0,long arg1) {
     s32 var_r3_5;
     s32 var_r5;
     s32 var_r5_2;
-    u32 var_r3_10;
     u32 var_r3_6;
     u32 var_r3_7;
-    u32 var_r3_8;
     DebugEntry *temp_r3_6;
-    DebugEntry *var_r3_9;
     tagWINDOW_WORK *temp_r3;
     tagWINDOW_WORK *temp_r3_2;
     tagWINDOW_WORK *temp_r3_3;
     tagWINDOW_WORK *temp_r3_5;
 
-    temp_r0 = arg0->menu;
-    var_r3_2 = -1;
+    var_r3_2 = dbgIdxInl(arg0);
     temp_r4 = _menu_data_number + 1;
-    if (temp_r0 >= temp_r4) {
-        var_r3_2 = temp_r0 - temp_r4;
-    }
     if (var_r3_2 < 0) {
         return 0;
     }
     if (var_r3_2 == 0) {
         var_r3 = dbgMenuGetRootMenu();
     } else {
-        temp_r4_2 = (s32) (var_r3_2 - 1) >> 0x1F;
-        temp_r3 = windowSearchID(((var_r3_2+temp_r4)-1)&~temp_r4_2);
+        temp_r3 = windowSearchID((var_r3_2 - 1) < 0 ? 0 : temp_r4 + (var_r3_2-1));
         if (temp_r3 == 0) {
             var_r28 = dbgMenuGetRootMenu();
         } else {
-            var_r5 = -1;
-            temp_r7 = temp_r3->menu;
-            temp_r6 = _menu_data_number + 1;
             temp_r31 = temp_r3->first + temp_r3->selected;
-            if (temp_r7 >= temp_r6) {
-                var_r5 = temp_r7 - temp_r6;
-            }
+            var_r5 = dbgIdxInl(temp_r3);
+            temp_r6 = _menu_data_number + 1;
             if (var_r5 < 0) {
                 var_r0 = 0;
             } else {
@@ -409,25 +420,21 @@ static s32 _dbgMenuGetItemNo(tagWINDOW_WORK *arg0,long arg1) {
                     var_r3_3 = dbgMenuGetRootMenu();
                 } else {
                     temp_r0_2 = var_r5 - 1;
-                    temp_r3_2 = windowSearchID((temp_r6 + temp_r0_2) & ~(temp_r0_2 >> 0x1F));
+                    temp_r3_2 = windowSearchID(temp_r0_2 < 0 ? 0 : temp_r6 + temp_r0_2);
                     if (temp_r3_2 == 0) {
-                        var_r29 = dbgMenuGetRootMenu();
+                        temp_r29 = dbgMenuGetRootMenu();
                     } else {
-                        var_r5_2 = -1;
-                        temp_r7_2 = temp_r3_2->menu;
-                        temp_r6_2 = _menu_data_number + 1;
                         temp_r29 = temp_r3_2->first + temp_r3_2->selected;
-                        if (temp_r7_2 >= temp_r6_2) {
-                            var_r5_2 = temp_r7_2 - temp_r6_2;
-                        }
+                        var_r5_2 = dbgIdxInl(temp_r3_2);
+                        temp_r6_2 = _menu_data_number + 1;
                         if (var_r5_2 < 0) {
-                            var_r29 = 0;
+                            temp_r29 = 0;
                         } else {
                             if (var_r5_2 == 0) {
                                 var_r3_4 = dbgMenuGetRootMenu();
                             } else {
                                 temp_r0_3 = var_r5_2 - 1;
-                                temp_r3_3 = windowSearchID((temp_r6_2 + temp_r0_3) & ~(temp_r0_3 >> 0x1F));
+                                temp_r3_3 = windowSearchID(temp_r0_3 < 0 ? 0 : temp_r6_2 + temp_r0_3);
                                 if (temp_r3_3 == 0) {
                                     var_r28_2 = dbgMenuGetRootMenu();
                                 } else {
@@ -461,13 +468,13 @@ static s32 _dbgMenuGetItemNo(tagWINDOW_WORK *arg0,long arg1) {
                                 }
                                 var_r3_4 = (s32) var_r28_3;
                             }
-                            var_r29 = var_r3_4 + temp_r29;
+                            temp_r29 = var_r3_4 + temp_r29;
                         }
                     }
-                    if (var_r29 <= 0 || (((debugMenuDataGetNum == 0) ? (var_r3_6 = 0U) : (var_r3_6 = debugMenuDataGetNum()), (s32) var_r3_6 <= var_r29))) {
+                    if (temp_r29 <= 0 || (((debugMenuDataGetNum == 0) ? (var_r3_6 = 0U) : (var_r3_6 = debugMenuDataGetNum()), (s32) var_r3_6 <= temp_r29))) {
                         var_r28_4 = 0;
                     } else {
-                        temp_r3_6 = dbgMenuGetPtr(var_r29);
+                        temp_r3_6 = dbgMenuGetPtr(temp_r29);
                         if (temp_r3_6 == 0) {
                             var_r28_4 = 0;
                         } else {
@@ -483,24 +490,7 @@ static s32 _dbgMenuGetItemNo(tagWINDOW_WORK *arg0,long arg1) {
             }
             var_r28 = var_r0;
         }
-        if (var_r28 <= 0 || (((debugMenuDataGetNum == 0) ? (var_r3_8 = 0U) : (var_r3_8 = debugMenuDataGetNum()), (s32) var_r3_8 <= var_r28))) {
-            var_r29_2 = 0;
-        } else {
-            if (debugMenuDataGetPtr == 0) {
-                var_r3_9 = 0;
-            } else {
-                var_r3_9 = debugMenuDataGetPtr(var_r28);
-            }
-            if (var_r3_9 == 0) {
-                var_r29_2 = 0;
-            } else {
-                var_r29_2 = var_r3_9->link;
-            }
-            if (var_r29_2 <= 0 || (((debugMenuDataGetNum == 0) ? (var_r3_10 = 0U) : (var_r3_10 = debugMenuDataGetNum()), (s32) var_r3_10 <= var_r29_2))) {
-                var_r29_2 = 0;
-            }
-        }
-        var_r3 = (s32) var_r29_2;
+        var_r3 = (s32) dbgLinkInl(var_r28);
     }
     return var_r3 + arg1;
 }

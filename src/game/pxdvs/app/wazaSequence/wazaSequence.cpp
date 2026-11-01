@@ -270,13 +270,12 @@ s32 WazaSequence::GetNumVariations(u16 id,u16 kind) {
 }
 
 WazaSequence::WazaSequence(NullSequence *owner,u16 id,u8 moveKind,u8 variant) {
-    ModelSequence *model=0;
     time=0.0f;startOffset=0.0f;flags=0;wazaId=0;kind=0;failed=0;resId=0;
     entryCount=0;index=0;active=0;ended=0;field16=0;stopped=0;
     cameraResource=0;entries=0;sequence=0;next=0;previous=0;
     if (owner == 0) {failed=1;return;}
     if (moveKind == 0) {failed=1;return;}
-    if (owner->type == 1) model=(ModelSequence *)owner;
+    ModelSequence *model = owner->type == 1 ? (ModelSequence *)owner : 0;
     u16 resource=wazaSequenceSysGetResourceID(model,id,moveKind,variant);
     if (resource == 0) {failed=1;return;}
     u32 group=waza_resource_data[resource].group;

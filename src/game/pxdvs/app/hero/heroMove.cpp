@@ -971,38 +971,53 @@ void winMsgOpenField(u32, u32, u32);
 void winMsgCloseField(u32);
 }
 
+extern "C" u32 getHp__7PokemonCFv(const Pokemon*);
 static void cbPoison(long, FootStepCounter counter, long) {
-    s32 fainted[6];
     s32* readFainted;
-    s32 faintedCount = 0;
-    u8 poisoned = 0;
+    s32 faintedCount;
+    u8 poisoned;
+    s32* nextFainted;
+    s32 healthyCount;
+    u32 hp;
+    s32 j;
+    u8 condition;
+    Pokemon* fainter;
+    DarkPokemon* dark;
+    s32 k;
+    s32 fainted[6];
+    Pokemon* member;
+    s32 i;
+    Pokemon* pokemon;
+    void* nickname;
+    faintedCount = 0;
+    poisoned = 0;
     if (counter == 0) {
         if (++*(s32*)&HeroMove.raw[0x3A0] >= 4) {
             *(s32*)&HeroMove.raw[0x3A0] = 0;
-            s32 healthyCount = 0;
-            for (s32 i = 0; i < 6; ++i) {
-                Pokemon* pokemon = (Pokemon*)heroGetStatus(0, 3, i);
+            healthyCount = 0;
+            for (i = 0; i < 6; ++i) {
+                pokemon = (Pokemon*)heroGetStatus(0, 3, i);
                 if (pokemon && pokemonCheckValid(pokemon) && pokemon->getHp()) ++healthyCount;
             }
             readFainted = fainted;
-            s32* nextFainted = readFainted;
-            for (s32 i = 0; i < 6; ++i) {
-                Pokemon* pokemon = (Pokemon*)heroGetStatus(0, 3, i);
-                if (pokemon && pokemonCheckValid(pokemon)) {
-                    u32 hp = pokemon->getHp();
+            nextFainted = readFainted;
+            for (j = 0; j < 6; ++j) {
+                member = (Pokemon*)heroGetStatus(0, 3, j);
+                if (member && pokemonCheckValid(member)) {
+                    hp = getHp__7PokemonCFv(member);
                     if ((u16)hp) {
-                        u8 condition = pokemon->getCondition();
+                        condition = member->getCondition();
                         if (condition == 3 || condition == 4) {
                             poisoned = 1;
                             if (healthyCount > 1 || (u16)hp > 1) {
-                                pokemon->setHp(hp - 1);
+                                member->setHp(hp - 1);
                                 if ((u16)(hp - 1) == 0) {
-                                    *nextFainted = i;
+                                    *nextFainted = j;
                                     --healthyCount;
                                     ++nextFainted;
                                     ++faintedCount;
-                                    pokemon->initCondition();
-                                    DarkPokemon* dark = pokemon->getDarkPokemon();
+                                    member->initCondition();
+                                    dark = member->getDarkPokemon();
                                     if (dark) dark->setReversMode(false);
                                 }
                             }
@@ -1013,13 +1028,13 @@ static void cbPoison(long, FootStepCounter counter, long) {
             if (poisoned) fadeEffectDokuStart();
             if (faintedCount > 0) {
                 heroMoveInitEvent();
-                for (s32 i = 0; i < faintedCount; ++readFainted, ++i) {
-                    Pokemon* pokemon = (Pokemon*)heroGetStatus(0, 3, *readFainted);
-                    void* nickname = pokemonBiosGetNicknamePtr(pokemon);
+                for (k = 0; k < faintedCount; ++readFainted, ++k) {
+                    fainter = (Pokemon*)heroGetStatus(0, 3, *readFainted);
+                    nickname = pokemonBiosGetNicknamePtr(fainter);
                     msgctrlSetValue(0x32, nickname);
                     winMsgOpenField(0xC37E, 1, 0);
                     winMsgCloseField(1);
-                    actionFriendSet(pokemon, 7);
+                    actionFriendSet(fainter, 7);
                 }
                 heroMoveTermEvent();
             }
@@ -1128,18 +1143,18 @@ s32 GScolsys2WalkGetHeight(GSvec*, WalkHeight*);
 static void initFloor() {
     GSvec rotation, position, followerPosition;
     WalkHeight heights[8];
-    s32 k;
+    s32 i;
     if (!GSfloorIsPop()) {
         getPos(&position, (HEROMOVE_MEMBER)heroMoveGetLeader());
         getRot(&rotation, (HEROMOVE_MEMBER)heroMoveGetLeader());
-        f32 dz, dx;
-        dx = sin(rotation.param2);
-        dz = cos(rotation.param2);
-        dx = -dx;
+        f32 sx, cx, dx, dz;
+        sx = sin(rotation.param2);
+        cx = cos(rotation.param2);
+        dx = -sx;
         followerPosition.param2 = position.param2;
-        dz = -dz;
+        dz = -cx;
         f32 distance = 10.0f;
-        for (s32 i = 0; i < 4; ++i) {
+        for (i = 0; i < 4; ++i) {
             if (heroMoveIsMember(i) && i != heroMoveGetLeader()) {
                 followerPosition.param1 = dx * distance + position.param1;
                 followerPosition.param2 = position.param2;
@@ -1147,11 +1162,16 @@ static void initFloor() {
                 s32 count = GScolsys2WalkGetHeight(&followerPosition, heights);
                 if (count > 0) {
                     if (count >= 2) {
-                        f32 closest = -1000000.0f;
-                        f32 highest = closest;
-                        s32 found = 0;
-                        for (s32 j = 0; j < count; ++j) {
-                            f32 height = heights[j].height;
+                        f32 height;
+                        f32 highest;
+                        f32 closest;
+                        s32 j;
+                        s32 found;
+                        closest = -1000000.0f;
+                        highest = closest;
+                        found = 0;
+                        for (j = 0; j < count; ++j) {
+                            height = heights[j].height;
                             if (highest < height) highest = height;
                             if (!(height - followerPosition.param2 >= 100.0f) && closest < height) {
                                 closest = height;
@@ -1172,11 +1192,11 @@ static void initFloor() {
     }
     setDisp(HEROMOVE_MEMBER_0, heroMoveIsMember(0));
     if (!GSfloorIsPop()) {
-        for (s32 i = 1; i < 4; ++i) setDisp((HEROMOVE_MEMBER)i, heroMoveIsMember(i));
+        for (i = 1; i < 4; ++i) setDisp((HEROMOVE_MEMBER)i, heroMoveIsMember(i));
     }
-    for (s32 i = 0; i < 4; ++i) initFootWork((FOOTWORK*)(HeroMove.raw + i * 0x20 + 0x14));
-    for (k = 0; k < 4; ++k) {
-        if (heroMoveIsMember(k)) heroMoveSetNeckMode(k, heroMoveGetNeckMode(k));
+    for (i = 0; i < 4; ++i) initFootWork((FOOTWORK*)(HeroMove.raw + i * 0x20 + 0x14));
+    for (i = 0; i < 4; ++i) {
+        if (heroMoveIsMember(i)) heroMoveSetNeckMode(i, heroMoveGetNeckMode(i));
     }
     *(s32*)&HeroMove.raw[0x10] = 300;
     *(s32*)&HeroMove.raw[0x30] = 300;

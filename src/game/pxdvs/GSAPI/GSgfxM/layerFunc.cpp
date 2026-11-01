@@ -86,11 +86,12 @@ void tokenMark__10GSgfxLayerFv(void* layer) {
     SetupFifo__10GSgfxLayerFv(layer); GSgfxTokenMark_Sub__Fv();
 }
 void tunitIndTexMtx__10GSgfxLayerF16GSgfxIndTexMtxIDPA3_fSc(GraphicsLayerState* layer, s32 id, float (*matrix)[3], s8 exponent) {
-    SetupFifo__10GSgfxLayerFv(layer); GSgfx_GCWriteIndTexMtx(id,matrix,exponent);
+    u32 index = id;
+    SetupFifo__10GSgfxLayerFv(layer); GSgfx_GCWriteIndTexMtx(index,matrix,exponent);
     s32 saved = layer->blendIndex; u8 other = saved == 0;
     if (layer->blendRecords[other].fifo != 0) {
         selectLayerPass(layer,other); SetupFifo__10GSgfxLayerFv(layer);
-        GSgfx_GCWriteIndTexMtx(id,matrix,exponent);
+        GSgfx_GCWriteIndTexMtx(index,matrix,exponent);
         selectLayerPass(layer,saved); SetupFifo__10GSgfxLayerFv(layer);
     }
 }

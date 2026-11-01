@@ -104,17 +104,17 @@ s32 _searchwaza__FP5MWAZAlPUsll(MWAZA *arg0, s32 arg1, u16 *arg2, s32 arg3, s32 
     }
 }
 
+static inline u32 mewRand(u32 n) { u32 r = HSD_Rand(); return r % n; }
 s32 _fillTmplate__FPUsP9MEWPOINTS(u16 *arg0, MEWPOINTS *arg1) {
-    s16 temp_r4;
-    s32 var_r0;
     s32 var_r23;
-    s32 var_r25;
-    s32 var_r27;
-    s32 var_r30;
+    s16 temp_r4;
     s32 var_r31;
-    s32 temp_r3;
-    MWAZA *var_r28;
+    s32 var_r30;
     MWAZA *var_r29;
+    MWAZA *var_r28;
+    s32 var_r27;
+    s32 var_r0;
+    s32 temp_r3;
 
     temp_r4 = arg1->unk0;
     if (temp_r4 > 0xC) {
@@ -129,13 +129,12 @@ s32 _fillTmplate__FPUsP9MEWPOINTS(u16 *arg0, MEWPOINTS *arg1) {
     var_r29 = mWazaTbl + (0x30 - var_r0);
     var_r30 = 0;
     var_r28 = var_r29;
-    var_r25 = 0;
     do {
-        if (*(u16*)((u8*)arg0 + var_r25) & 0x8000) {
+        if (arg0[var_r30] & 0x8000) {
 loop_6:
-            temp_r3 = _searchwaza__FP5MWAZAlPUsll(var_r28, (s32) *(u16*)((u8*)arg0 + var_r25), arg0, var_r30, 0);
+            temp_r3 = _searchwaza__FP5MWAZAlPUsll(var_r28, (s32) arg0[var_r30], arg0, var_r30, 0);
             if (temp_r3 != 0) {
-                var_r23 = (u32)HSD_Rand() % (((s32) temp_r3 / 2) + (((s32) temp_r3 / 8) + 1));
+                var_r23 = mewRand(temp_r3 / 2 + temp_r3 / 8 + 1);
                 if (var_r23 >= (s32) temp_r3) {
                     var_r23 = 0;
                 }
@@ -148,14 +147,14 @@ loop_6:
                         var_r23 = 0;
                     }
                 }
-                *(u16*)((u8*)arg0 + var_r25) = _searchwaza__FP5MWAZAlPUsll(var_r28, (s32) *(u16*)((u8*)arg0 + var_r25), arg0, var_r30, var_r23 + 1);
+                arg0[var_r30] = _searchwaza__FP5MWAZAlPUsll(var_r28, (s32) arg0[var_r30], arg0, var_r30, var_r23 + 1);
                 var_r28 += var_r23 + 1;
             } else {
                 if (var_r27 < 2) {
                     var_r28 = var_r29;
                     var_r27 += 1;
                 } else {
-                    *(u16*)((u8*)arg0 + var_r25) = 0x800F;
+                    arg0[var_r30] = 0x800F;
                     if (var_r29 != mWazaTbl) {
                         var_r29 -= 1;
                     }
@@ -165,7 +164,6 @@ loop_6:
             }
         }
         var_r30 += 1;
-        var_r25 += 2;
     } while (var_r30 < 4);
     return 0;
 }
@@ -265,9 +263,7 @@ s32 _tmplSelect__FP9MEWPOINTS(MEWPOINTS *arg0) {
             return 5;
 }
 
-static inline s32 pointMagnitude(s16 point) {
-    return point < 0 ? -point : point;
-}
+#define pointMagnitude(p) ((p) < 0 ? -(p) : (p))
 static inline void scaleLargestPoint(MEWPOINTS* points, s32 factor) {
     if (pointMagnitude(points->unk2) > pointMagnitude(points->unk4) &&
         pointMagnitude(points->unk2) > pointMagnitude(points->unk6)) {
@@ -327,20 +323,12 @@ void _question_5__FP9MEWPOINTS(MEWPOINTS *arg0) {
 }
 
 void _question_4__FP9MEWPOINTS(MEWPOINTS *arg0) {
-    s16 factor;
-    s16 base;
     s32 answers[2];
     s16 temp_r3_2;
-    s32 temp_r3_3;
-    s32 temp_r3_4;
-    s16 temp_r4_2;
-    s16 temp_r4_3;
     s32 temp_r28;
     s32 temp_r3;
     u32 temp_ret;
     u32 temp_ret_2;
-    u32 temp_ret_3;
-    void *temp_r4;
 
     s32 interlude[5]={0xC727,0xC728,0xC729,0xC72A,0xC72C};
     temp_ret = (u32)HSD_Rand();
@@ -363,9 +351,7 @@ void _question_4__FP9MEWPOINTS(MEWPOINTS *arg0) {
         }
         temp_r3_2 = arg0->unk6;
         arg0->unk6 = (s16) (temp_r3_2 + 3);
-        factor=(u32)HSD_Rand()%3;
-        base=arg0->unk0;
-        arg0->unk0 = base*(factor+1);
+        arg0->unk0 *= (s16)mewRand(3) + 1;
         return;
     case 1:
         if ((u8) temp_r3 == 0) {
@@ -373,13 +359,8 @@ void _question_4__FP9MEWPOINTS(MEWPOINTS *arg0) {
             arg0->unk0 *= 2;
             return;
         }
-        temp_ret_3 = (u32)HSD_Rand();
-        temp_r4_2 = arg0->unk6;
-        temp_r3_3 = (s16) (temp_ret_3 % 3) + (s32)temp_r4_2;
-        arg0->unk6 = (s16) (temp_r3_3 + 2);
-        factor=(u32)HSD_Rand()%3;
-        base=arg0->unk0;
-        arg0->unk0 = base*(factor+1);
+        arg0->unk6 += (s16)mewRand(3) + 2;
+        arg0->unk0 *= (s16)mewRand(3) + 1;
         return;
     case 2:
         if ((u8) temp_r3 == 0) {
@@ -387,11 +368,8 @@ void _question_4__FP9MEWPOINTS(MEWPOINTS *arg0) {
             arg0->unk0 *= 2;
             return;
         }
-        temp_r3_4 = ((u32)HSD_Rand() & 3) + arg0->unk6;
-        arg0->unk6 = (s16) (temp_r3_4 + 1);
-        factor=(u32)HSD_Rand()%3;
-        base=arg0->unk0;
-        arg0->unk0 = base*(factor+1);
+        { u32 r = HSD_Rand(); arg0->unk6 += (r & 3) + 1; }
+        arg0->unk0 *= (s16)mewRand(3) + 1;
         return;
     }
 }
@@ -420,16 +398,16 @@ void _question_3__FP9MEWPOINTS(MEWPOINTS *arg0) {
         arg0->unk2 += 2;
         break;
     case 1:
-        arg0->unk2 = (s16)((u32)HSD_Rand() % 3) + arg0->unk2 + 1;
+        arg0->unk2 += (s16)mewRand(3) + 1;
         break;
     case 2:
-        arg0->unk4 = (s16)((u32)HSD_Rand() % 3) + arg0->unk4 + 1;
+        arg0->unk4 += (s16)mewRand(3) + 1;
         break;
     case 3:
         if ((u32)HSD_Rand() % 10 < 5) {
             arg0->unk2 -= 2;
         } else {
-            arg0->unk4 = (s16)((u32)HSD_Rand() % 5) + arg0->unk4 - 1;
+            arg0->unk4 += (s16)mewRand(5) - 1;
         }
         break;
     }

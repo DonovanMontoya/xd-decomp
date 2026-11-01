@@ -61,7 +61,7 @@ u8 windowCheckCursor(s32, s32);
 s32 windowGetActiveID(void);
 s32 windowGetValue(s32);
 tagWINDOW_WORK* windowSearchID(s32);
-void windowDrawSprite2(s16, s16, s16, s16, u32, void*, u16, s32, s32);
+void windowDrawSprite2(s16, s16, s16, s16, u32, void*, u32, s32, s32);
 void menuSubCursorAnimeInit(void);
 GSgfxVF* GSgfxVFBuildTemp(s32, s32, u8, u8, s32, s32, s32, s32, s32);
 }
@@ -190,29 +190,57 @@ void menuSubDrawCursorBack(GSgfxLayerID layer, long x, long y, long w, long h, u
 
 }
 
+static inline s32 getSpritePtr(u32 id) { return menuSpriteBiosGetPtr(id); }
+static inline void _drawBack(GSgfxLayerID layer, long x, long y, long w, unsigned long color, menuSubCursorBackColor col, u8 scaled, long &midW) {
+    u32 midId;
+    s32 midPtr;
+    u32 leftId;
+    short px;
+    s32 leftPtr;
+    MenuSubSpriteVal* left;
+    short py;
+    MenuSubSpriteVal* mid;
+    px = x;
+    py = y;
+    if (col == 0) {
+        leftId = 0xBF;
+        midId = 0xC0;
+    } else {
+        leftId = 0x1F6;
+        midId = 0x1F7;
+    }
+    leftPtr = getSpritePtr(leftId);
+    midPtr = getSpritePtr(midId);
+    left = menuSpriteBiosGetValPtr(leftPtr);
+    mid = menuSpriteBiosGetValPtr(midPtr);
+    color |= scaled;
+    midW = w - left->width - left->width;
+    windowDrawSprite2(px, py, left->width, left->height, color, 0, leftId, 0, layer);
+    px += left->width;
+    windowDrawSprite2(px, py, midW, mid->height, color, 0, midId, 0, layer);
+    px += midW;
+    windowDrawSprite2(px, py, left->width, left->height, color, 0, leftId, 1, layer);
+}
 static void _menuSubDrawCursorBackSub(GSgfxLayerID layer, long x, long y, long w, long h, unsigned long color, unsigned char alpha, unsigned char kind, menuSubCursorBackColor col, bool anim) {
-    u8 a;
-    u8 scaled;
+    long midW;
+    s32 midPtr;
+    u32 c;
+    s32 leftPtr;
     MenuSubSpriteVal* left;
     MenuSubSpriteVal* mid;
-    u16 leftId;
-    u16 midId;
-    u32 c;
-    short px;
+    u8 scaled;
     short py;
-    long midW;
+    short px;
+    u8 a;
+    u32 prod;
 
     _animAlpha();
-    if (anim) {
-        a = _animAlpha();
-    } else {
-        a = 0xFF;
-    }
-    scaled = (a * alpha) / 255;
+    a = anim ? _animAlpha() : 0xFF;
+    prod = a;
+    prod *= alpha;
+    scaled = (u16)prod / 255;
     if (GSgfxLayerFindByID(layer) != 0) {
         if (kind == 0) {
-            s32 leftPtr;
-            s32 midPtr;
             px = x;
             py = y;
             leftPtr = menuSpriteBiosGetPtr(0xBB);
@@ -228,30 +256,7 @@ static void _menuSubDrawCursorBackSub(GSgfxLayerID layer, long x, long y, long w
             windowDrawSprite2(px, py, left->width, left->height, c, 0, 0xBB, 1, layer);
             return;
         }
-        {
-            s32 leftPtr;
-            s32 midPtr;
-            px = x;
-            py = y;
-            if (col == 0) {
-                leftId = 0xBF;
-                midId = 0xC0;
-            } else {
-                leftId = 0x1F6;
-                midId = 0x1F7;
-            }
-            leftPtr = menuSpriteBiosGetPtr(leftId);
-            midPtr = menuSpriteBiosGetPtr(midId);
-            left = menuSpriteBiosGetValPtr(leftPtr);
-            mid = menuSpriteBiosGetValPtr(midPtr);
-            c = color | scaled;
-            midW = w - left->width - left->width;
-            windowDrawSprite2(px, py, left->width, left->height, c, 0, leftId, 0, layer);
-            px += left->width;
-            windowDrawSprite2(px, py, midW, mid->height, c, 0, midId, 0, layer);
-            px += midW;
-            windowDrawSprite2(px, py, left->width, left->height, c, 0, leftId, 1, layer);
-        }
+        _drawBack(layer, x, y, w, color, col, scaled, midW);
     }
 }
 
@@ -582,7 +587,7 @@ void menuSubDrawTriangle(GSgfxLayerID layer, long x0, long y0, long x1, long y1,
     }
 }
 
-void menuSubDrawTile(GSgfxLayerID layer, long x, long y, long w, long h, const u8* color) {
+void menuSubDrawTile(GSgfxLayerID layer, long x, long y, long w, long h, GXColor color) {
     GSgfxLayer* l = GSgfxLayerFindByID(layer);
     if (l != 0) {
         l->primitive = 0x98;
@@ -591,25 +596,13 @@ void menuSubDrawTile(GSgfxLayerID layer, long x, long y, long w, long h, const u
         h += y;
         l->beginSurface(4);
         GXPosition2s16(x, y);
-        GXWGFifo.u8 = color[0];
-        GXWGFifo.u8 = color[1];
-        GXWGFifo.u8 = color[2];
-        GXWGFifo.u8 = color[3];
+        GXColor4u8(color.r, color.g, color.b, color.a);
         GXPosition2s16(w, y);
-        GXWGFifo.u8 = color[0];
-        GXWGFifo.u8 = color[1];
-        GXWGFifo.u8 = color[2];
-        GXWGFifo.u8 = color[3];
+        GXColor4u8(color.r, color.g, color.b, color.a);
         GXPosition2s16(x, h);
-        GXWGFifo.u8 = color[0];
-        GXWGFifo.u8 = color[1];
-        GXWGFifo.u8 = color[2];
-        GXWGFifo.u8 = color[3];
+        GXColor4u8(color.r, color.g, color.b, color.a);
         GXPosition2s16(w, h);
-        GXWGFifo.u8 = color[0];
-        GXWGFifo.u8 = color[1];
-        GXWGFifo.u8 = color[2];
-        GXWGFifo.u8 = color[3];
+        GXColor4u8(color.r, color.g, color.b, color.a);
         l->endSurface();
     }
 }

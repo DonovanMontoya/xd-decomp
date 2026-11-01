@@ -14,10 +14,35 @@ void* memcpy(void*,const void*,unsigned long);
 void* memset(void*,int,unsigned long);
 void* hsdAllocMemPiece(int); void hsdFreeMemPiece(void*,int);
 #define HSD_ASSERT(line, cond) do { if (!(cond)) __assert(FILE_NAME, line, #cond); } while (0)
-double __fabs(double); float atan2f(float,float); double atan2(double,double); double fabs(double); int __fpclassifyf(float); void OSReport(const char*,...);
+double __fabs(double); float atan2f(float,float); double atan2(double,double); void OSReport(const char*,...);
+inline double fabs(double x) { return __fabs(x); }
+
 #define fabsf(v) ((float)__fabs(v))
 #define fabsf_bitwise(v) ((float)__fabs(v))
-#define sqrtf(v) hsdSqrt(v)
+inline int __fpclassifyf(float value) {
+    const int exponent = 0x7f800000;
+    const int mantissa = 0x007fffff;
+    switch (*(int*)&value & exponent) {
+    case exponent: if (*(int*)&value & mantissa) return 1; else return 2;
+    case 0: if (*(int*)&value & mantissa) return 5; else return 3;
+    default: return 4;
+    }
+}
+static inline float cobjSqrt(float value) {
+    if (value > 0.0f) {
+        double guess = __frsqrte((double)value);
+        guess = 0.5 * guess * (3.0 - guess * guess * value);
+        guess = 0.5 * guess * (3.0 - guess * guess * value);
+        guess = 0.5 * guess * (3.0 - guess * guess * value);
+        return (float)(value * guess);
+    } else if (value < 0.0) {
+        return __float_nan[0];
+    } else if (__fpclassifyf(value) == 1) {
+        return __float_nan[0];
+    }
+    return value;
+}
+#define sqrtf(v) cobjSqrt(v)
 void PSVECNormalize(Vec3*,Vec3*); void PSVECSubtract(Vec3*,Vec3*,Vec3*); float PSVECMag(Vec3*); float PSVECDotProduct(Vec3*,Vec3*);
 #define VECSubtract PSVECSubtract
 #define VECNormalize PSVECNormalize
@@ -38,7 +63,7 @@ HSD_CObjInfo hsdCObj = { CObjInfoInit };
 typedef char CObjSizeCheck[sizeof(HSD_CObj)==0x8C?1:-1];
 typedef char CObjRuntimeSizeCheck[sizeof(HSD_CObjRuntime)==0x8C?1:-1];
 typedef char CObjInfoSizeCheck[sizeof(HSD_CObjInfo)==0x44?1:-1];
-static inline int vec_normalize_check(Vec3* src,Vec3* dst) { if (!src || !dst) return -1; if (__fabs(src->x)<=FLT_MIN && __fabs(src->y)<=FLT_MIN && __fabs(src->z)<=FLT_MIN) return -1; PSVECNormalize(src,dst); return 0; }
+static inline int vec_normalize_check(Vec3* src,Vec3* dst) { if (!src || !dst) return -1; if (fabs(src->x)<=FLT_MIN && fabs(src->y)<=FLT_MIN && fabs(src->z)<=FLT_MIN) return -1; PSVECNormalize(src,dst); return 0; }
 static inline int HSD_CObjGetEyeVector(HSD_CObj* cobj, Vec3* eye);
 static inline HSD_WObj* HSD_CObjGetEyePositionWObj(HSD_CObj* cobj);
 static inline HSD_WObj* HSD_CObjGetInterestWObj(HSD_CObj* cobj);
@@ -184,14 +209,9 @@ static inline f32 vec_get_x(Vec3* v)
     return v->x;
 }
 
-static inline f64 cobj_fabs(f64 x)
-{
-    return __fabs(x);
-}
-
 static inline f64 vec_get_abs_y(Vec3* v)
 {
-    return (f32)cobj_fabs(v->y);
+    return (f32)fabs(v->y);
 }
 
 static inline f32 cobj_get_up_x(Vec3* up)
@@ -497,7 +517,7 @@ void HSD_CObjSetRoll(HSD_CObj* cobj, float roll)
         HSD_CObjSetUpVector(cobj, &up);
     } else {
         if (cobj->u.roll != roll) {
-            cobj->flags |= 0xC0000000;
+            HSD_CObjSetMtxDirty(cobj);
         }
         cobj->u.roll = roll;
     }
@@ -537,13 +557,11 @@ void HSD_CObjSetUpVector(HSD_CObj* cobj, Vec3* up)
         if (vec_normalize_check(up, &v)) {
             OSReport("illegal up vector."); HSD_ASSERT(882, 0);
         }
-        up = &v;
-
-        if (cobj->u.up.x != cobj_get_up_x(up) || cobj->u.up.y != up->y ||
-            cobj->u.up.z != up->z)
+        if (cobj->u.up.x != cobj_get_up_x(&v) || cobj->u.up.y != v.y ||
+            cobj->u.up.z != v.z)
         {
             HSD_CObjSetMtxDirty(cobj);
-            cobj->u.up = *up;
+            cobj->u.up = v;
         }
     } else {
         HSD_CObjSetRoll(cobj, upvec2roll(cobj, up));
