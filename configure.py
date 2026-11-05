@@ -141,6 +141,7 @@ version_num = VERSIONS.index(config.version)
 
 # Apply arguments
 config.build_dir = args.build_dir
+
 config.dtk_path = args.dtk
 config.objdiff_path = args.objdiff
 config.binutils_path = args.binutils
@@ -186,6 +187,36 @@ if args.map:
 
 # Use for any additional files that should cause a re-configure when modified
 config.reconfig_deps = []
+
+if config.version == "GXXE01":
+    from tools.extract_pokecolo_assets import ASSETS
+
+    pokecolo_extractor = Path("tools/extract_pokecolo_assets.py")
+    pokecolo_dol = Path("orig/GXXE01/sys/main.dol")
+    pokecolo_include_dir = config.out_path() / "include/game/pokecolo"
+    config.reconfig_deps = (config.reconfig_deps or []) + [pokecolo_extractor]
+    config.custom_build_rules = (config.custom_build_rules or []) + [
+        {
+            "name": "pokecolo_assets",
+            "command": '$python "$extractor" --dol "$dol" --output-dir "$asset_dir"',
+            "description": "Extract private pokecolo initializers",
+            "restat": True,
+        }
+    ]
+    config.custom_build_steps = config.custom_build_steps or {}
+    config.custom_build_steps.setdefault("pre-compile", []).append(
+        {
+            "rule": "pokecolo_assets",
+            "outputs": [pokecolo_include_dir / (name + ".inc") for name, _, _ in ASSETS],
+            "inputs": [pokecolo_dol],
+            "implicit": [pokecolo_extractor],
+            "variables": {
+                "extractor": pokecolo_extractor,
+                "dol": pokecolo_dol,
+                "asset_dir": pokecolo_include_dir,
+            },
+        }
+    )
 
 # Optional numeric ID for decomp.me preset
 # Can be overridden in libraries or objects
@@ -956,7 +987,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/gbaCommand.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/agbCommunication.cpp", extra_cflags=["-inline noauto,deferred", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/floorRead.cpp", extra_cflags=["-inline off", "-opt nopeephole"]),
-            Object(NonMatching, "game/pokecolo.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pokecolo.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pokeconv.cpp", extra_cflags=["-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/wazaconv.cpp", extra_cflags=["-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/floorLayerConfig.cpp", extra_cflags=["-opt nopeephole", "-str reuse,nopool,readonly"]),
@@ -1005,7 +1036,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSpart/GSpart.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSscratch/GSscratch.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GStexture/GStexture.cpp", extra_cflags=["-O4", "-inline deferred,auto", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSthread/GSthread.cpp", extra_cflags=["-inline off", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSthread/GSthread.cpp", extra_cflags=["-inline off", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSinput/GSinput.cpp", cflags=cflags_xd_input),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSres/GSres.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
 
@@ -1105,7 +1136,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/perfbar.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/token.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/project.cpp", extra_cflags=["-inline deferred,auto"]),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/halt.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/halt.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/video.cpp", extra_cflags=["-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/gpu.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/vf.cpp"),
@@ -1494,7 +1525,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/bytecode.cpp", extra_cflags=['-lang c', '-str reuse,nopool,readonly']),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/class.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/cobj.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
-            Object(NonMatching, "game/maximum/GSAPI/baselib/debug.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
+            Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/debug.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/displayfunc.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/dobj.cpp", extra_cflags=["-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/fobj.cpp", extra_cflags=['-DMUST_MATCH', '-lang c', '-inline auto,deferred', '-str reuse,nopool,readonly']),

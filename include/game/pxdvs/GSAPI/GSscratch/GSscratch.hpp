@@ -3,6 +3,7 @@
 #include <dolphin/types.h>
 typedef void (*GSscratchCallback)(u8 valid, void* block, u8 blockCount);
 extern "C" {
+void GSscratchInit(u8 stackBlocks);
 void GSscratchSetValid();
 void GSscratchSetInvalid();
 u8 GSscratchIsPtr(void*);

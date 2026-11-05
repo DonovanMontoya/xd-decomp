@@ -1,4 +1,5 @@
 #include <game/sysvarsPrivate.hpp>
+#include <game/pxdvs/GSAPI/GSscratch/GSscratch.hpp>
 #include <libc/string.h>
 
 struct _GSgfxInitParms {
@@ -33,7 +34,6 @@ void ARQInit();
 void AIInit(u8 *);
 void ARQSetChunkSize(u32);
 void GSlogInit(u32, u32);
-void GSscratchInit(u32);
 void GSdvdSetDVDServer(const char *, u16);
 void GSdvdSetReportServer(const char *, u16, u8);
 void GSdvdSetGCClient(const char *, const char *, const char *, u8);
