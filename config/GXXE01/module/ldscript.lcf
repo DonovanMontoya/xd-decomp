@@ -316,6 +316,9 @@ SECTIONS
 FORCEACTIVE
 {
     $FORCEACTIVE
+    menuWorldMapMoveDemoExit
+    menuWorldMapMoveDemoMain
+    menuWorldMapMoveDemoInit
 /* Retain every original packed-stream API name, including unused entries. */
     ItemBallTbl
     ItemNormalTbl

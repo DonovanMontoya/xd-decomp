@@ -1653,3 +1653,20 @@ static f32 moveParty(HEROMOVE_MEMBER member) {
     peopleMoveAlongAngle(hero->getFollowerGrpID(),hero->getFollowerResID(),speed,movementAngle);
     return GSvecDistanceXZ((GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(follower),peopleBiosGetPrevPosPtr(follower));
 }
+
+extern "C" __declspec(weak) HeroMoveQueuedEvent* constructHeroMoveQueuedEvent(HeroMoveQueuedEvent*);
+
+extern "C" {
+static void __sinit_heroMove_cpp() {
+    __construct_array(HeroMove.leaderLog.log, __ct__5GSvecFv, 0, sizeof(GSvec), 60);
+    __construct_array(HeroMove.state.events3, (void (*)(void*))constructHeroMoveQueuedEvent, 0, sizeof(HeroMoveQueuedEvent), 4);
+    __construct_array(HeroMove.state.events1, (void (*)(void*))constructHeroMoveQueuedEvent, 0, sizeof(HeroMoveQueuedEvent), 4);
+    __construct_array(HeroMove.state.events2, (void (*)(void*))constructHeroMoveQueuedEvent, 0, sizeof(HeroMoveQueuedEvent), 4);
+}
+}
+extern "C" __declspec(weak) HeroMoveQueuedEvent* constructHeroMoveQueuedEvent(HeroMoveQueuedEvent* event) {
+    __construct_array(event->position, __ct__5GSvecFv, 0, sizeof(GSvec), 3);
+    return event;
+}
+
+__declspec(section ".ctors") static void (*const heroMoveInitializer)() = __sinit_heroMove_cpp;
