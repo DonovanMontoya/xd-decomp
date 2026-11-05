@@ -982,7 +982,9 @@ void _fsysBackgroundTaskCompressType(FsysBackgroundWork* entry) {
     if (entry->loaded != 1 && _fsysBGTaskCancel(entry) != 1) {
     GSfsysBlock* block = entry->resource->expandBlocks;
     if (!block) return;
+    s32 count;
     u32 position;
+    s32 i;
     if (entry->dictionary == 0) {
         entry->dictionary = (u8*)_fsysAlloc(0x1011);
         if (!entry->dictionary) return;
@@ -994,20 +996,30 @@ void _fsysBackgroundTaskCompressType(FsysBackgroundWork* entry) {
         entry->payloadBytes = entry->compressedBytes - 16;
         entry->decodeState = 0;
     } else position = 0;
-    s32 tokens = entry->tokenCount;
-    s32 ringPosition = entry->dictionaryPosition;
-    u32 flags = entry->tokenFlags;
-    s32 matchPosition = entry->matchPosition;
-    u32 consumed = entry->consumedBytes;
-    s32 written = entry->writtenBytes;
-    u8* output = (u8*)entry->resource->expandedData;
-    u32 inputLength = entry->payloadBytes;
-    u32 blockBytes = _fsysBlockByteSize;
-    u8* ring = (u8*)entry->dictionary;
-    s32 state = entry->decodeState;
+    s32 matchPosition;
+    s32 ringPosition;
+    u32 flags;
+    s32 tokens;
+    u32 consumed;
+    s32 written;
+    u8* output;
+    u8* ring;
+    u32 inputLength;
+    u32 blockBytes;
+    s32 state;
+    tokens = entry->tokenCount;
+    flags = entry->tokenFlags;
+    ringPosition = entry->dictionaryPosition;
+    matchPosition = entry->matchPosition;
+    consumed = entry->consumedBytes;
+    written = entry->writtenBytes;
+    output = (u8*)entry->resource->expandedData;
+    inputLength = entry->payloadBytes;
+    blockBytes = _fsysBlockByteSize;
+    ring = (u8*)entry->dictionary;
+    state = entry->decodeState;
     u8 value;
     u8* input;
-    s32 count;
 nextBlock:
     input = (u8*)block->data;
     switch (state) {
@@ -1049,7 +1061,7 @@ matchHigh:
     if (position > blockBytes) { state = 4; --consumed; goto finishBlock; }
     count = (value & 15) + 2;
     matchPosition |= (value << 4) & 0xf00;
-    for (s32 i = 0; i <= count; ++i) {
+    for (i = 0; i <= count; ++i) {
         value = ring[(matchPosition + i) & 0xfff];
         output[written++] = value;
         ring[ringPosition++] = value;
