@@ -554,6 +554,7 @@ __declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *arg0) {
     temp_r0 = arg0->kind;
     temp_r4 = temp_r0 & 0x80000080;
     switch (temp_r4) {                              /* irregular */
+    case 0x80000000:
     case 0x0:
         temp_r5 = arg0->primCount;
         if (temp_r5 != 0) {
