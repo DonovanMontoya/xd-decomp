@@ -455,7 +455,7 @@ extern "C" void menuScriptReciveMail(void) {
 extern "C" void menuScriptUsohachiCtrl(tagWINDOW_WORK *);
 extern "C" void menuScriptEeveeCtrl(tagWINDOW_WORK *);
 
-extern "C" void menuScriptPdaAddFunc(void);
+extern "C" void menuScriptPdaAddFunc(s32);
 static void _menuScriptPdaAddFunc(pdaAddFuncDef);
 static void _menuScriptReadMail(long);
 static void _getWazaData(u16, WAZAOSHIEDEF *);
@@ -476,8 +476,8 @@ static void _menuScriptPdaAddFunc(pdaAddFuncDef def) {
     GSmodelAllUnpauseAnimation();
 }
 
-extern "C" void menuScriptPdaAddFunc(void) {
-    ((void (*)(void))_menuScriptPdaAddFunc)();
+extern "C" void menuScriptPdaAddFunc(s32 def) {
+    _menuScriptPdaAddFunc((pdaAddFuncDef)def);
 }
 
 static void _menuScriptReadMail(long id) {
@@ -497,8 +497,8 @@ static void _menuScriptReadMail(long id) {
     GSmodelAllUnpauseAnimation();
 }
 
-extern "C" void menuScriptReadMail(void) {
-    ((void (*)(void))_menuScriptReadMail)();
+extern "C" void menuScriptReadMail(s32 id) {
+    _menuScriptReadMail(id);
 }
 
 extern "C" void menuScriptInfoRelive(void *arg, u8 first) {
@@ -601,9 +601,9 @@ extern "C" s32 menuScriptWazaBasan(s8 *flag) {
     return ret;
 }
 
-extern "C" s32 menuScriptWazaMeijin(void) {
+extern "C" s32 menuScriptWazaMeijin(s32 pokemonIndex) {
     s32 ret;
-    _WazaNum = ((u16 (*)(void))_checkWaza)();
+    _WazaNum = _checkWaza(pokemonIndex);
     if (_WazaNum == 0) {
         ret = -1;
     } else {
