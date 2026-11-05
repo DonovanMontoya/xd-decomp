@@ -22,6 +22,6 @@ void _HSD_MemSetCallbacks(MemCallbacks *callbacks, unsigned int size) {
     if (size != sizeof(MemCallbacks)) {
         __assert("memory.c", 19, "size == sizeof(__mem_cb)");
     }
-    __mem_cb = *callbacks;
+    __memcpy(&__mem_cb, callbacks, sizeof(__mem_cb));
 }
 }
