@@ -2798,12 +2798,12 @@ s32 GScolsys2WalkGetHeight(GSvec*,PeopleWalkSurface*);
 GSvec* peopleBiosGetPrevPosPtr(tagPeopleWork*);
 u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* work,GSvec* output,GSvec* previous) {
     PeopleWalkSurface surfaces[8];
-    PeopleCollisionSurface fourth,third,second,first;
+    PeopleCollisionSurface events[4];
     GSvec oldPosition,position,start,end,hit;
-    __construct_array(first.vertices,(void*)__ct__5GSvecFv,0,12,3);
-    __construct_array(second.vertices,(void*)__ct__5GSvecFv,0,12,3);
-    __construct_array(third.vertices,(void*)__ct__5GSvecFv,0,12,3);
-    __construct_array(fourth.vertices,(void*)__ct__5GSvecFv,0,12,3);
+    __construct_array(events[0].vertices,(void*)__ct__5GSvecFv,0,12,3);
+    __construct_array(events[1].vertices,(void*)__ct__5GSvecFv,0,12,3);
+    __construct_array(events[2].vertices,(void*)__ct__5GSvecFv,0,12,3);
+    __construct_array(events[3].vertices,(void*)__ct__5GSvecFv,0,12,3);
     if(peopleBiosCheckFlag(work,0x700)) {
         position.param1=output->param1;position.param2=output->param2;position.param3=output->param3;
         oldPosition.param1=previous->param1;oldPosition.param2=previous->param2;oldPosition.param3=previous->param3;
@@ -2813,7 +2813,7 @@ u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* wor
         PeopleInfo* info=peopleInfoBiosGetPtr(work->object);
         f32 radius;
         if(!info)radius=3.0f;else radius=peopleInfoBiosGetColBallSize(info);
-        if(peopleBiosCheckFlag(work,0x800) && work->resource==100)heroMoveSetEventList(2,&first,GScolsys2ThruGetEventID(&start,&end,&first,radius));
+        if(peopleBiosCheckFlag(work,0x800) && work->resource==100)heroMoveSetEventList(2,events,GScolsys2ThruGetEventID(&start,&end,events,radius));
         position.param1=end.param1;position.param2=end.param2;position.param3=end.param3;
         if(gimmickBoxIsPushBoxFloor())position.param2=start.param2;
         if(peopleBiosCheckFlag(work,0x400) && GScolsys2HumanCollision(work->collisionHandle,&oldPosition,&position,&hit)==6) {
@@ -2827,7 +2827,7 @@ u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* wor
             if(gimmickBoxIsPushBoxFloor())position.param2=start.param2;
         }
         if(peopleBiosCheckFlag(work,0x800) && work->resource==100) {
-            heroMoveSetEventList(1,&first,GScolsys2ThruPassEventID(&start,&position,&first));
+            heroMoveSetEventList(1,events,GScolsys2ThruPassEventID(&start,&position,events));
             if(gimmickBoxIsPushBoxFloor())position.param2=start.param2;
         }
         if(peopleBiosCheckFlag(work,0x200)) {
@@ -2845,10 +2845,9 @@ u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* wor
                     f32 height=surfaces[0].height;
                     f32 difference=(f32)fabs(peopleBiosGetPrevPosPtr(work)->param2-surfaces[0].height);
                     PeopleWalkSurface* surface=surfaces+1;
-                    for(s32 i=1;i<count;++i,++surface) {
-                        f32 other=surface->height;
-                        f32 otherDifference=(f32)fabs(peopleBiosGetPrevPosPtr(work)->param2-other);
-                        if(difference>otherDifference) {difference=otherDifference;height=other;}
+                    for(s32 i=1;i<count;++surface,++i) {
+                        f32 otherDifference=(f32)fabs(peopleBiosGetPrevPosPtr(work)->param2-surface->height);
+                        if(difference>otherDifference) {difference=otherDifference;height=surface->height;}
                     }
                     position.param2=height;
                 }
@@ -2858,7 +2857,7 @@ u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* wor
         gimmickBoxOnBox(work,&oldPosition,&position);
         output->param1=position.param1;output->param2=position.param2;output->param3=position.param3;
     }
-    return work->unknown17E==0;
+    return work->unknown17E ? 0U : 1U;
 }
 }
 
