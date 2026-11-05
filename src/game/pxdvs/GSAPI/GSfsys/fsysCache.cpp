@@ -249,9 +249,15 @@ void _fsysWriteCache(GSfsysCacheRequest* request, u32 identifier, void* source, 
 }
 static u8 _fsysReadCacheExec(GSfsysCacheRequest* request, u32 identifier, void* destination, u32 length, u32 offset, ARQCallback callback, u32 first, u32 second, u32 third) {
     GSfsysCache* entry = _fsysGetCacheManage(request->group, request->identifier);
-    if (!entry) return 0;
+    if (!entry) {
+        if (!entry) return;
+        return 0;
+    }
     GSfsysARQTransfer* transfer = _fsysGetNewArq();
-    if (!transfer) return 0;
+    if (!transfer) {
+        if (!transfer) return;
+        return 0;
+    }
     transfer->context = request;
     transfer->identifier = identifier;
     transfer->callback = callback;
@@ -267,7 +273,7 @@ static u8 _fsysReadCacheExec(GSfsysCacheRequest* request, u32 identifier, void* 
         ARQPostRequest(&transfer->request, request->group, 1, priority, (u32)entry->data + offset, (u32)destination, length, _fsysARQCallbackRead);
         return 1;
     }
-    return (u8)(u32)transfer;
+    return;
 }
 u8 _fsysReadCacheEX(GSfsysCacheRequest* request, u32 identifier, void* destination, u32 length, u32 offset, ARQCallback callback, u32 first, u32 second, u32 third) {
     return _fsysReadCacheExec(request, identifier, destination, length, offset, callback, first, second, third);
