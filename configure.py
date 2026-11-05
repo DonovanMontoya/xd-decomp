@@ -1348,15 +1348,15 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightActionData_item.c"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightActionData_syuuryou.c"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightWazaHitKakurituData.c"),
-            Object(NonMatching, "game/pxdvs/app/fight/fightTrainerAi_ComboId.c"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightTrainerAi_ComboId.c"),
 
             # fightAi2
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightTrainerAi2.cpp", cflags=cflags_xd_app_fight),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightTrainerAiWazaHit.cpp", cflags=cflags_xd_app_fight),
 
             # fightSeq
-            Object(NonMatching, "game/pxdvs/app/fight/fightSeq/fightSeqItem.c"),
-            Object(NonMatching, "game/pxdvs/app/fight/fightSeq/fightSeqWaza.c"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightSeq/fightSeqItem.c"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightSeq/fightSeqWaza.c"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightSeq/fightSeqWSWaza.cpp", cflags=cflags_xd_app_fight),
             Object(NonMatching, "game/pxdvs/app/fight/fightSeq/fightSeqBasis.cpp", cflags=cflags_xd_app_fight),
             Object(NonMatching, "game/pxdvs/app/fight/fightSeq/fightSeqItemseq.cpp", cflags=cflags_xd_app_fight),
