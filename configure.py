@@ -1087,7 +1087,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSfsys/fsysCache.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSfsys/fsysRead.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSfsys/fsysAlloc.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSfsys/GSfsys2.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSfsys/GSfsys2.cpp"),
 
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSflag/GSflag.cpp", extra_cflags=["-inline noauto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSbound/GSbound.cpp"),
