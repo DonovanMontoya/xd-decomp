@@ -8,8 +8,12 @@ extern void GSmemFreePool(void*, void*);
 extern void __assert(const char*, int, const char*);
 extern void* memset(void*, int, unsigned int);
 
-static HSD_ObjAllocData d_alloc_data;
+static const char list_file_name[] = "list.c";
+static const char list_previous[] = "prev";
+static const char list_assertion[] = "list";
+
 static HSD_ObjAllocData s_alloc_data;
+static HSD_ObjAllocData d_alloc_data;
 
 void HSD_ListInitAllocData(void)
 {
@@ -34,13 +38,13 @@ HSD_SList* HSD_SListAlloc(void)
     if (allocator != 0 && GSmemGetFreePool() != 0) {
         list = (HSD_SList*) GSmemAllocPool(allocator);
         if (list == 0) {
-            __assert("list.c", 0x58, "list");
+            __assert(list_file_name, 0x58, list_assertion);
         }
         return list;
     }
     list = (HSD_SList*) HSD_ObjAlloc(&s_alloc_data);
     if (list == 0) {
-        __assert("list.c", 0x60, "list");
+        __assert(list_file_name, 0x60, list_assertion);
     }
     memset(list, 0, sizeof(HSD_SList));
     return list;
@@ -53,18 +57,18 @@ HSD_SList* HSD_SListPrepend(HSD_SList* list, void* data)
     if (allocator != 0 && GSmemGetFreePool() != 0) {
         node = (HSD_SList*) GSmemAllocPool(allocator);
         if (node == 0) {
-            __assert("list.c", 0x58, "list");
+            __assert(list_file_name, 0x58, list_assertion);
         }
     } else {
         node = (HSD_SList*) HSD_ObjAlloc(&s_alloc_data);
         if (node == 0) {
-            __assert("list.c", 0x60, "list");
+            __assert(list_file_name, 0x60, list_assertion);
         }
         memset(node, 0, sizeof(HSD_SList));
     }
     node->data = data;
     if (node == 0) {
-        __assert("list.c", 0xE7, "prev");
+        __assert(list_file_name, 0xE7, list_previous);
     }
     node->next = list;
     return node;

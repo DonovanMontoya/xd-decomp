@@ -570,9 +570,11 @@ void preReliveMain(u8 arg0) {
     }
 }
 
+#pragma force_active on
 void preReliveInit(void) {
     pParameter.unk4 = -1;
 }
+#pragma force_active reset
 
 void preReliveSetParameter(s32 arg0, s32 arg1, u8 arg2) {
     pParameter.unk4 = arg1;

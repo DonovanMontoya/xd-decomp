@@ -1,3 +1,4 @@
+#pragma defer_codegen on
 #include <global.h>
 struct Sodateya {u8 active,level;u16 steps;u32 dp;u8 pokemon[0xC4];};
 extern "C" {
@@ -33,15 +34,15 @@ static inline u32 addExperience(u32 original, u32 steps) {
     return sum;
 }
 extern "C" {
-s32 sodateyaeChekcRais(){Sodateya *work=getWork(0);if(!work)return -1;switch(work->active){case 1:return 1;case 0:return 0;default:return -1;}}
-u8 *sodateyaGetPokemonPtr(Sodateya *work){work=getWork(work);return work->pokemon;}
-s32 sodateyaGetPokemonDPValue(){sodateyaGetPokemonPtr(0);u32 initial=getInitialDP(0);return (s32)(initial-pokemonBiosGetDp(sodateyaGetPokemonPtr(0)))/100;}
-s32 sodateyaGetPokemonLevelUpValue(){u8 initial=getInitialLevel(0);u8 current=pokemonBiosGetLevel(sodateyaGetPokemonPtr(0));s32 result=initial;return current-result;}
-s32 sodateyaCalcPrice(s32 levels){s32 dpPrice;if(getInitialDP(0)){s32 gain=sodateyaGetPokemonDPValue();if(gain)dpPrice=gain*100+100;else dpPrice=0;}else dpPrice=0;s32 base=100*levels;dpPrice=base+dpPrice;dpPrice+=100;return dpPrice;}
-void sodateyaReclaim(s32 slot){void *hero=savedataGetStatus(0,2);void *pokemon=heroBiosGetPokemonPtr(hero,slot);Sodateya *work=getWork(0);if(pokemon){u8 *stored=sodateyaGetPokemonPtr(work);if(stored){memcpy(pokemon,stored,0xC4);if(pokemonBiosGetDarkFlag(stored))pokemonBiosGetDp(stored);void *dark=getDarkPokemon__7PokemonFv(pokemon);if(dark)setPlace__11DarkPokemonF16darkPokemonWhereUc(dark,1,0);setActive(work,0);pokemonInit(stored);}}pokemonAllKaihuku(pokemon);}
-void sodateyaRaise(s32 slot){void *pokemon;void *hero=savedataGetStatus(0,2);pokemon=heroBiosGetPokemonPtr(hero,slot);s32 count=heroGetPokeomCount(hero);Sodateya *work=getWork(0);u8 success;if(!pokemon)success=0;else {setLevel(work,pokemonBiosGetLevel(pokemon));u8 *stored=sodateyaGetPokemonPtr(work);if(!stored)success=0;else {if(pokemonIsJoutaiDataId(pokemon,62))pokemonInitJoutaiDataId(pokemon,62);memcpy(stored,pokemon,0xC4);if(pokemonBiosGetDarkFlag(pokemon))work->dp=pokemonBiosGetDp(pokemon);else work->dp=0;void *dark=getDarkPokemon__7PokemonFv(pokemon);if(dark)setPlace__11DarkPokemonF16darkPokemonWhereUc(dark,4,0);setActive(work,1);pokemonInit(pokemon);success=1;}}if(success&&(s32)slot<6){s32 i=slot;while(i<count-1){void *destination=heroBiosGetPokemonPtr(hero,i);pokemon=heroBiosGetPokemonPtr(hero,i+1);if(!pokemonCheckValid(pokemon))break;memcpy(destination,pokemon,0xC4);i++;}pokemonInit(pokemon);}}
-void sodateyaInit(Sodateya *work){work=getWork(work);if(work){setSteps(work,0);work->level=0;work->active=0;}}
-void sodateyaHeroCallBackInit(){_sodateyaHandle=heroMoveAddStepCallback(_sodateyaCallBackFunc__Fl15FootStepCounterl,0);}
+s32 sodateyaeChekcRais();
+u8 *sodateyaGetPokemonPtr(Sodateya *work);
+s32 sodateyaGetPokemonDPValue();
+s32 sodateyaGetPokemonLevelUpValue();
+s32 sodateyaCalcPrice(s32 levels);
+void sodateyaReclaim(s32 slot);
+void sodateyaRaise(s32 slot);
+void sodateyaInit(Sodateya *work);
+void sodateyaHeroCallBackInit();
 static inline void sodateyaPartyStep(s32 arg1, s32 arg2){
     u16 var_r25;
     u8 *temp_r26;
@@ -93,6 +94,11 @@ static inline void sodateyaPartyStep(s32 arg1, s32 arg2){
         }
     }
 }
+static void _sodateyaCallBackFunc__Fl15FootStepCounterl(s32, s32 arg1, s32 arg2);
+
+}
+
+extern "C" {
 static void _sodateyaCallBackFunc__Fl15FootStepCounterl(s32, s32 arg1, s32 arg2) {
     u16 temp_r3_2;
     s32 temp_r0_2;
@@ -145,4 +151,21 @@ static void _sodateyaCallBackFunc__Fl15FootStepCounterl(s32, s32 arg1, s32 arg2)
     }
 }
 
+void sodateyaHeroCallBackInit(){_sodateyaHandle=heroMoveAddStepCallback(_sodateyaCallBackFunc__Fl15FootStepCounterl,0);}
+
+void sodateyaInit(Sodateya *work){work=getWork(work);if(work){setSteps(work,0);work->level=0;work->active=0;}}
+
+u8 *sodateyaGetPokemonPtr(Sodateya *work){work=getWork(work);return work->pokemon;}
+
+s32 sodateyaGetPokemonLevelUpValue(){u8 initial=getInitialLevel(0);u8 current=pokemonBiosGetLevel(sodateyaGetPokemonPtr(0));s32 result=initial;return current-result;}
+
+s32 sodateyaGetPokemonDPValue(){sodateyaGetPokemonPtr(0);u32 initial=getInitialDP(0);return (s32)(initial-pokemonBiosGetDp(sodateyaGetPokemonPtr(0)))/100;}
+
+void sodateyaRaise(s32 slot){void *pokemon;void *hero=savedataGetStatus(0,2);pokemon=heroBiosGetPokemonPtr(hero,slot);s32 count=heroGetPokeomCount(hero);Sodateya *work=getWork(0);u8 success;if(!pokemon)success=0;else {setLevel(work,pokemonBiosGetLevel(pokemon));u8 *stored=sodateyaGetPokemonPtr(work);if(!stored)success=0;else {if(pokemonIsJoutaiDataId(pokemon,62))pokemonInitJoutaiDataId(pokemon,62);memcpy(stored,pokemon,0xC4);if(pokemonBiosGetDarkFlag(pokemon))work->dp=pokemonBiosGetDp(pokemon);else work->dp=0;void *dark=getDarkPokemon__7PokemonFv(pokemon);if(dark)setPlace__11DarkPokemonF16darkPokemonWhereUc(dark,4,0);setActive(work,1);pokemonInit(pokemon);success=1;}}if(success&&(s32)slot<6){s32 i=slot;while(i<count-1){void *destination=heroBiosGetPokemonPtr(hero,i);pokemon=heroBiosGetPokemonPtr(hero,i+1);if(!pokemonCheckValid(pokemon))break;memcpy(destination,pokemon,0xC4);i++;}pokemonInit(pokemon);}}
+
+void sodateyaReclaim(s32 slot){void *hero=savedataGetStatus(0,2);void *pokemon=heroBiosGetPokemonPtr(hero,slot);Sodateya *work=getWork(0);if(pokemon){u8 *stored=sodateyaGetPokemonPtr(work);if(stored){memcpy(pokemon,stored,0xC4);if(pokemonBiosGetDarkFlag(stored))pokemonBiosGetDp(stored);void *dark=getDarkPokemon__7PokemonFv(pokemon);if(dark)setPlace__11DarkPokemonF16darkPokemonWhereUc(dark,1,0);setActive(work,0);pokemonInit(stored);}}pokemonAllKaihuku(pokemon);}
+
+s32 sodateyaCalcPrice(s32 levels){s32 dpPrice;if(getInitialDP(0)){s32 gain=sodateyaGetPokemonDPValue();if(gain)dpPrice=gain*100+100;else dpPrice=0;}else dpPrice=0;s32 base=100*levels;dpPrice=base+dpPrice;dpPrice+=100;return dpPrice;}
+
+s32 sodateyaeChekcRais(){Sodateya *work=getWork(0);if(!work)return -1;switch(work->active){case 1:return 1;case 0:return 0;default:return -1;}}
 }
