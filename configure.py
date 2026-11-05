@@ -1095,7 +1095,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSshape/GSshape.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
 
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSstream/GSstream.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSlogM/GSlog.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSlogM/GSlog.cpp"),
 
             # GSgfxM
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/backfb.cpp"),
