@@ -81,13 +81,14 @@ s32 WazaSequence_IsActive(WazaSequence *waza) {
     return 0;
 }
 WazaSequence *Sequence_LoadWaza(NullSequence *sequence,u16 id,u8 kind,u8 variant) {
-    WazaSequence *waza = new WazaSequence(sequence,id,kind,variant);
-    if (waza == 0) waza = 0;
-    else if (waza->failed != 0) {
-        delete waza;
-        waza = 0;
+    struct { WazaSequence* value; } result;
+    result.value = new WazaSequence(sequence,id,kind,variant);
+    if (result.value == 0) result.value = 0;
+    else if (result.value->failed != 0) {
+        delete result.value;
+        result.value = 0;
     }
-    return waza;
+    return result.value;
 }
 void WazaSequence_Free(WazaSequence *waza) {
     if (waza != 0 && wazaSequenceSysIsValidWaza(waza)) delete waza;
