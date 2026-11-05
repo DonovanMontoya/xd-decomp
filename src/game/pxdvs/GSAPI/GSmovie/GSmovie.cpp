@@ -99,7 +99,7 @@ void GSmovieAllPause() {
 }
 inline void movieStop(u32 handle) {
     if(_initFlag) {
-        __GSmovieStreaming* movie=findMovie(handle);
+        __GSmovieStreaming* movie=findMovieStream(handle);
         if(movie) {
             GSgfxRenderWaitForDrawComplete__Fv();
             if(movie->layer && --_movieLayerUseCount==0) { Remove__16GSgfxLayerConfigF12GSgfxLayerID(_movieLayerID); _movieLayerID=-1; }
@@ -463,9 +463,10 @@ void THPInit();
 
 inline void movieOpenDecoder(__GSmovieStreaming *movie)
 {
+    u32 i;
     MovieDecoder *decoder=movie->decoder;
     decoder->hasAudio=0;
-    for(u32 i=0;i<decoder->componentCount;i++) {
+    for(i=0;i<decoder->componentCount;i++) {
         switch(decoder->componentTypes[i]) {
         case 1: decoder->hasAudio=1;
         case 0: break;
@@ -479,15 +480,14 @@ inline void movieOpenDecoder(__GSmovieStreaming *movie)
 
 inline u32 movieBufferSize(__GSmovieStreaming *movie)
 {
-    MovieDecoder *decoder=movie->decoder;
     u32 size;
+    MovieDecoder *decoder=movie->decoder;
     if(decoder->preload) size=(decoder->movieBytes+31)&~31;
     else size=0;
-    u32 pixels=decoder->width*decoder->height;
     u32 uvBytes;
     size+=((decoder->maxBufferSize+31)&~31)*10;
-    size+=((pixels+31)&~31)*3;
-    uvBytes=(((pixels>>2)+31)&~31)*3;
+    size+=((decoder->width*decoder->height+31)&~31)*3;
+    uvBytes=((((decoder->width*decoder->height)>>2)+31)&~31)*3;
     size+=uvBytes;
     size+=uvBytes;
     if(decoder->hasAudio) {
