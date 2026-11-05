@@ -788,12 +788,13 @@ static u16 _checkWaza2(void) {
     u16 *ids = (u16 *)__nwa__FUl(*wazaoshie_data_number * 2);
     u8 *rel = (u8 *)__nwa__FUl(*wazaoshie_data_number);
     for (i = 0; i < *wazaoshie_data_number; i++) {
-        s32 idx = wazaoshie_data[i].floorIndex;
-        if (GSflagGet(0x3C4) >= flag_etc[idx].value) {
+        struct { s32 value; } idx;
+        idx.value = wazaoshie_data[i].floorIndex;
+        if (GSflagGet(0x3C4) >= flag_etc[idx.value].value) {
             u16 id = wazaoshie_data[i].id;
-            ids[count] = id;
-            rel[count] = GSflagTest(wazaoshie_data[i].flag, id);
-            if (rel[count] != 0) {
+            ids[(u16)count] = id;
+            rel[(u16)count] = GSflagTest(wazaoshie_data[i].flag, id);
+            if (rel[(u16)count] != 0) {
                 released++;
             }
             count++;
