@@ -316,6 +316,9 @@ SECTIONS
 FORCEACTIVE
 {
     $FORCEACTIVE
+    menuOrreExit
+    menuOrreMain
+    menuOrreInit
     menuWorldMapMoveDemoExit
     menuWorldMapMoveDemoMain
     menuWorldMapMoveDemoInit

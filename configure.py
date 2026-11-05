@@ -961,7 +961,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/menuItem.c"),
             Object(MatchingFor("GXXE01"), "game/menuBattleDisk.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuItemXD.c"),
-            Object(NonMatching, "game/menuOrreColosseum.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/menuOrreColosseum.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/menuTitle.cpp", extra_cflags=["-opt nopeephole", "-inline noauto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/menuUseItem.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/menuItemDebugRelease.c"),
@@ -1006,7 +1006,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmemman/sysdolmem.cpp", extra_cflags=["-O0", "-opt peephole,schedule", "-inline deferred,noauto"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmemman/poolAlloc.cpp", extra_cflags=["-O0", "-opt peephole,schedule", "-inline deferred,noauto"]),
 
-            Object(NonMatching, "game/pxdvs/GSAPI/GScamera/GScamera.cpp", extra_cflags=["-inline auto,deferred", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GScamera/GScamera.cpp", extra_cflags=["-inline auto,deferred", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSlight/GSlight.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmaterial/GSmaterial.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
 
