@@ -147,8 +147,8 @@ s32 GSfsysInit(u32 dvdEntries) {
 u32 GSfsysGetInvalidID() { return 0xffff; }
 u32 GSfsysStreamGetCacheSize() { return _fsysStreamGetCacheSize(); }
 s32 GSfsysGetDriveStatus() { if (_initFlag == 0) { return -1; } else { return GSdvdGetDriveStatus(); } }
-s32 GSfsysStreamHeaderPostFunc(u32, u32) { if (_initFlag == 0) { return 0; } else { return 0; } }
-s32 GSfsysStreamMovieHeaderPostFunc(u32, u32) { if (_initFlag == 0) { return 0; } else { return 0; } }
+void* GSfsysStreamHeaderPostFunc(u32, u32) { if (_initFlag == 0) { return 0; } else { return 0; } }
+void* GSfsysStreamMovieHeaderPostFunc(u32, u32) { if (_initFlag == 0) { return 0; } else { return 0; } }
 s32 GSfsysStreamHeaderPreFunc(u32 group, u32 resource, u32 bytes) {
     if (_initFlag == 0) { return 0; } else { return GSsndStreamPreFunc(group, resource, bytes); }
 }
