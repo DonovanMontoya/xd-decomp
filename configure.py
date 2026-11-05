@@ -1015,9 +1015,9 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmath/GSmtx44.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmath/GSquat.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmath/init.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSmath/GSbezier.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmath/GSbezier.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmath/GSlerp.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSmath/GSutil.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmath/GSutil.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmath/GSvec.cpp"),
 
             # GSmodel
