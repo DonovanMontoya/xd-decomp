@@ -1065,7 +1065,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peEmitter.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peModel.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peContainer.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peDistortion.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSparticle/peDistortion.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peParticleStrip.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peSpline.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/particleEngine.cpp"),
@@ -1084,7 +1084,7 @@ config.libs = [
             # GSfsys
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSfsys/fsysStream.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSfsys/fsysBlock.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSfsys/fsysCache.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSfsys/fsysCache.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSfsys/fsysRead.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSfsys/fsysAlloc.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSfsys/GSfsys2.cpp"),

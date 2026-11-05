@@ -27,6 +27,9 @@ void* _fsysDoMalloc(u32);
 void _fsysDelTAG(void*, void*);
 void _fsysAddTAG(void*, void*);
 }
+typedef GSfsysRequest GSfsysCacheRequest;
+// Release build of a null-check assert: the report is compiled out, leaving the test twice.
+#define FSYS_NULL_RETURN(ptr) if ((ptr) == NULL) { if ((ptr) == NULL) return; return; }
 #pragma dont_inline on
 extern "C" {
 static void _fsysAddCacheManage(GSfsysCache*);
@@ -36,8 +39,67 @@ static void _fsysDelARQTrans(GSfsysARQTransfer*);
 GSfsysARQTransfer* _fsysArq2ArqTrans(u32);
 static void _fsysARQCallbackWrite(u32);
 static void _fsysARQCallbackRead(u32);
+static u8 _fsysReadCacheExec(GSfsysCacheRequest* request, u32 identifier, void* destination, u32 length, u32 offset, ARQCallback callback, u32 first, u32 second, u32 third);
+static u8 _fsysInitCacheHeap(u32);
 }
 extern "C" {
+void _fsysWriteCache(GSfsysCacheRequest* request, u32 identifier, void* source, u32 destination, u32 length, u32 offset, ARQCallback callback) {
+    GSfsysARQTransfer* transfer = _fsysGetNewArq();
+    FSYS_NULL_RETURN(transfer);
+    transfer->context = request;
+    transfer->identifier = identifier;
+    transfer->callback = callback;
+    s32 priority = request->state == 4 ? 1 : 0;
+    DCFlushRange(source, length);
+    ARQPostRequest(&transfer->request, request->group, 0, priority, (u32)source, destination + offset, length, _fsysARQCallbackWrite);
+}
+u8 _fsysReadCacheEX(GSfsysCacheRequest* request, u32 identifier, void* destination, u32 length, u32 offset, ARQCallback callback, u32 first, u32 second, u32 third) {
+    return _fsysReadCacheExec(request, identifier, destination, length, offset, callback, first, second, third);
+}
+u8 _fsysReadCache(GSfsysCacheRequest* request, u32 identifier, void* destination, u32 length, u32 offset, ARQCallback callback) {
+    return _fsysReadCacheExec(request, identifier, destination, length, offset, callback, 0, 0, 0);
+}
+static u8 _fsysReadCacheExec(GSfsysCacheRequest* request, u32 identifier, void* destination, u32 length, u32 offset, ARQCallback callback, u32 first, u32 second, u32 third) {
+    GSfsysCache* entry = _fsysGetCacheManage(request->group, request->identifier);
+    if (!entry) {
+        if (!entry) return;
+        return 0;
+    }
+    GSfsysARQTransfer* transfer = _fsysGetNewArq();
+    if (!transfer) {
+        if (!transfer) return;
+        return 0;
+    }
+    transfer->context = request;
+    transfer->identifier = identifier;
+    transfer->callback = callback;
+    transfer->extra[0] = first;
+    transfer->extra[1] = second;
+    transfer->extra[2] = third;
+    s32 priority = request->state == 4 ? 1 : 0;
+    if (offset + length > entry->length) length = entry->length - offset;
+    if (!((u32)destination & 31) && !(length & 31)) {
+        DCInvalidateRange(destination, length);
+        transfer->destination = destination;
+        transfer->length = length;
+        ARQPostRequest(&transfer->request, request->group, 1, priority, (u32)entry->data + offset, (u32)destination, length, _fsysARQCallbackRead);
+        return 1;
+    }
+    return;
+}
+static void _fsysARQCallbackWrite(u32 request) {
+    GSfsysARQTransfer* transfer = _fsysArq2ArqTrans(request);
+    FSYS_NULL_RETURN(transfer);
+    if (transfer->callback) transfer->callback(request);
+    _fsysDelARQTrans(transfer);
+}
+static void _fsysARQCallbackRead(u32 request) {
+    GSfsysARQTransfer* transfer = _fsysArq2ArqTrans(request);
+    FSYS_NULL_RETURN(transfer);
+    DCInvalidateRange(transfer->destination, transfer->length);
+    if (transfer->callback) transfer->callback(request);
+    _fsysDelARQTrans(transfer);
+}
 u8 _fsysCheckCache(u32 group, u32 identifier) { return _fsysGetCacheManage(group, identifier) != 0; }
 u32 _fsysIncCacheUniqueGroupID() { return _fsysCACHEuniqueGroupID++; }
 s32 _fsysInitCache(u32 cacheSize, u32 entryCount) {
@@ -75,7 +137,7 @@ void* _fsysAllocCacheFromHeap(u32 size) {
     if (result) _fsysCACHEFreeBytes += size;
     return result;
 }
-u8 _fsysInitCacheHeap(u32 size) { return size <= 0xa00000; }
+static u8 _fsysInitCacheHeap(u32 size) { return size <= 0xa00000; }
 u32 GSfsysCreateCacheHeap() {
     _fsysAmemTopAddr = 0x600000;
     _fsysAmemHeap = GSmemCreateExternalHeap((void*)0x600000, (void*)0x1000000, _fsysAmemCell, 512);
@@ -133,12 +195,6 @@ GSfsysCache* _fsysGetCacheManage(u32 group, u32 identifier) {
     return entry;
 }
 void _fsysDelCacheManage(GSfsysCache* entry) { _fsysDelTAG(entry, &_fsysCACHEManageRoot); }
-}
-extern "C" static void _fsysAddCacheManage(GSfsysCache* entry) { _fsysAddTAG(entry, &_fsysCACHEManageRoot); }
-#pragma dont_inline reset
-
-#pragma dont_inline on
-extern "C" {
 GSfsysCache* _fsysGetNewCacheManage(u32 group, u32 identifier, u8 persistent, u8 locked, u32 freshness) {
     BOOL interrupts;
     GSfsysCache* entry;
@@ -176,6 +232,9 @@ GSfsysCache* _fsysGetNewCacheManage(u32 group, u32 identifier, u8 persistent, u8
     OSRestoreInterrupts(interrupts);
     return result;
 }
+}
+extern "C" static void _fsysAddCacheManage(GSfsysCache* entry) { _fsysAddTAG(entry, &_fsysCACHEManageRoot); }
+extern "C" {
 GSfsysARQTransfer* _fsysArq2ArqTrans(u32 request) {
     GSfsysARQTransfer* transfer = _fsysARQTransRoot;
     while (transfer) {
@@ -219,67 +278,5 @@ static GSfsysARQTransfer* _fsysGetNewArq() {
     return result;
 }
 static void _fsysAddArq(GSfsysARQTransfer* transfer) { _fsysAddTAG(transfer, &_fsysARQTransRoot); }
-// Release build of a null-check assert: the report is compiled out, leaving the test twice.
-#define FSYS_NULL_RETURN(ptr) if ((ptr) == NULL) { if ((ptr) == NULL) return; return; }
-static void _fsysARQCallbackWrite(u32 request) {
-    GSfsysARQTransfer* transfer = _fsysArq2ArqTrans(request);
-    FSYS_NULL_RETURN(transfer);
-    if (transfer->callback) transfer->callback(request);
-    _fsysDelARQTrans(transfer);
-}
-static void _fsysARQCallbackRead(u32 request) {
-    GSfsysARQTransfer* transfer = _fsysArq2ArqTrans(request);
-    FSYS_NULL_RETURN(transfer);
-    DCInvalidateRange(transfer->destination, transfer->length);
-    if (transfer->callback) transfer->callback(request);
-    _fsysDelARQTrans(transfer);
-}
-}
-typedef GSfsysRequest GSfsysCacheRequest;
-extern "C" {
-void _fsysWriteCache(GSfsysCacheRequest* request, u32 identifier, void* source, u32 destination, u32 length, u32 offset, ARQCallback callback) {
-    GSfsysARQTransfer* transfer = _fsysGetNewArq();
-    FSYS_NULL_RETURN(transfer);
-    transfer->context = request;
-    transfer->identifier = identifier;
-    transfer->callback = callback;
-    s32 priority = request->state == 4 ? 1 : 0;
-    DCFlushRange(source, length);
-    ARQPostRequest(&transfer->request, request->group, 0, priority, (u32)source, destination + offset, length, _fsysARQCallbackWrite);
-}
-static u8 _fsysReadCacheExec(GSfsysCacheRequest* request, u32 identifier, void* destination, u32 length, u32 offset, ARQCallback callback, u32 first, u32 second, u32 third) {
-    GSfsysCache* entry = _fsysGetCacheManage(request->group, request->identifier);
-    if (!entry) {
-        if (!entry) return;
-        return 0;
-    }
-    GSfsysARQTransfer* transfer = _fsysGetNewArq();
-    if (!transfer) {
-        if (!transfer) return;
-        return 0;
-    }
-    transfer->context = request;
-    transfer->identifier = identifier;
-    transfer->callback = callback;
-    transfer->extra[0] = first;
-    transfer->extra[1] = second;
-    transfer->extra[2] = third;
-    s32 priority = request->state == 4 ? 1 : 0;
-    if (offset + length > entry->length) length = entry->length - offset;
-    if (!((u32)destination & 31) && !(length & 31)) {
-        DCInvalidateRange(destination, length);
-        transfer->destination = destination;
-        transfer->length = length;
-        ARQPostRequest(&transfer->request, request->group, 1, priority, (u32)entry->data + offset, (u32)destination, length, _fsysARQCallbackRead);
-        return 1;
-    }
-    return;
-}
-u8 _fsysReadCacheEX(GSfsysCacheRequest* request, u32 identifier, void* destination, u32 length, u32 offset, ARQCallback callback, u32 first, u32 second, u32 third) {
-    return _fsysReadCacheExec(request, identifier, destination, length, offset, callback, first, second, third);
-}
-u8 _fsysReadCache(GSfsysCacheRequest* request, u32 identifier, void* destination, u32 length, u32 offset, ARQCallback callback) {
-    return _fsysReadCacheExec(request, identifier, destination, length, offset, callback, 0, 0, 0);
-}
 }
 #pragma dont_inline reset
