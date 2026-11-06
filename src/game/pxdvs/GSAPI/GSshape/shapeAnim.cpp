@@ -1,5 +1,4 @@
 #include <game/pxdvs/GSAPI/GSshape/GSshape.hpp>
-#include <libc/math.h>
 
 bool GsKeyObject::GetGradationParameter(u8* type, tagGScol4ub* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
     *type=a->gradationType;
@@ -227,7 +226,7 @@ bool GsKeyObject::GetShapeMatrix(GSmtx* shape,GSmtx* transform,const tagGsFilePr
     for(int i=0;i<count;i++) {
         switch(order[i]) {
         case 4:
-            if(i!=0 && ((f32)fabs(sx-1.0f)>0.00001f || (f32)fabs(sy-1.0f)>0.00001f || (f32)fabs(sz-1.0f)>0.00001f)) {
+            if(i!=0 && ((f32)__fabs(sx-1.0f)>0.00001f || (f32)__fabs(sy-1.0f)>0.00001f || (f32)__fabs(sz-1.0f)>0.00001f)) {
                 PSMTXTransApply(transform->matrix,transform->matrix,nx,ny,nz);
                 PSMTXScaleApply(transform->matrix,transform->matrix,sx,sy,sz);
                 PSMTXTransApply(transform->matrix,transform->matrix,cx,cy,cz);
@@ -237,7 +236,7 @@ bool GsKeyObject::GetShapeMatrix(GSmtx* shape,GSmtx* transform,const tagGsFilePr
         case 0:
             PSMTXTransApply(transform->matrix,transform->matrix,px,py,pz); break;
         case 1:
-            if((f32)fabs(rx)>0.00001f) {
+            if((f32)__fabs(rx)>0.00001f) {
                 Mtx matrix;
                 PSMTXTransApply(transform->matrix,transform->matrix,nx,ny,nz);
                 PSMTXRotRad(matrix,'X',0.017453292f*rx);
@@ -246,7 +245,7 @@ bool GsKeyObject::GetShapeMatrix(GSmtx* shape,GSmtx* transform,const tagGsFilePr
             }
             break;
         case 2:
-            if((f32)fabs(ry)>0.00001f) {
+            if((f32)__fabs(ry)>0.00001f) {
                 Mtx matrix;
                 PSMTXTransApply(transform->matrix,transform->matrix,nx,ny,nz);
                 PSMTXRotRad(matrix,'Y',0.017453292f*ry);
@@ -255,7 +254,7 @@ bool GsKeyObject::GetShapeMatrix(GSmtx* shape,GSmtx* transform,const tagGsFilePr
             }
             break;
         case 3:
-            if((f32)fabs(rz)>0.00001f) {
+            if((f32)__fabs(rz)>0.00001f) {
                 Mtx matrix;
                 PSMTXTransApply(transform->matrix,transform->matrix,nx,ny,nz);
                 PSMTXRotRad(matrix,'Z',0.017453292f*rz);

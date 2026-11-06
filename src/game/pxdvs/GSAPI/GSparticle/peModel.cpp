@@ -1,6 +1,5 @@
 #include <game/pxdvs/GSAPI/GSparticle/peModelPrivate.hpp>
 #include <dolphin/gx.h>
-#include <libc/math.h>
 static u32 _primitive_instance_memory;
 static inline void updatePrimitiveMemory() {
  g_particle_debug_stats.reserved10-=_primitive_instance_memory;
