@@ -21,10 +21,9 @@ static GXColor prevChanAmb;
 static GXColor prevColorPrim;
 static GXColor prevColorEnv;
 static GXColor prevColorMat;
-static s32 currentMtx;
+static GXPosNrmMtx currentMtx;
 static void* particleFog;
 static u8 billboard_tex0_u8[32] __attribute__((aligned(32))) = {0,1,0,0,1,0,1,1,1,1,1,0,0,0,0,1,0,0,0,1,1,1,1,0,1,0,1,1,0,1,0,0};
-static const f32 identityMtx[12] = {1,0,0,0,0,1,0,0,0,0,1,0};
 s32 psDispHasRenderData(s32 arg0);
 
 void psDispBeginFrame(void);
@@ -1591,505 +1590,532 @@ __declspec(weak) void psDispSub(PSParticle* pp, u32* texform)
                          up_z);
 }
 
-static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3) {
-    f32 *epsilon;
-    s32 link;
-    u32 prevZMode;
-    s32 prevAlphaMode;
-    u8 prevAlpha1, prevAlpha2;
-    s32 firstParticle;
-    s32 localIdentity[12];
-    f32 textureMtx[3][4];
-    GXTexObj textureObj;
-    u16 paletteEntries;
-    u32 paletteName, paletteFormat;
-    GXTlutObj paletteObj;
-    PSParticle *opaque, *translucent;
-    s32 chanMat, chanAmb, colorPrim, colorEnv, colorMat;
-    s16 pointX, pointY, pointZ;
-    PSParticle *var_r25;
-    PSTex *temp_r3_8;
-    enum _GXAttnFn var_r17;
-    enum _GXAttnFn var_r17_2;
-    enum _GXTexFilter temp_r4_5;
-    enum _GXTexWrapMode var_r16_2;
-    enum _GXTexWrapMode var_r17_3;
-    f32 (*temp_r27)[4];
-    f32 (*temp_r28)[4];
-    f32 temp_f0;
-    f32 temp_f0_2;
-    f32 temp_f0_3;
-    f32 temp_f10;
-    f32 temp_f12;
-    f32 temp_f1;
-    f32 temp_f1_2;
-    f32 temp_f27;
-    f32 temp_f2;
-    f32 temp_f2_2;
-    f32 temp_f3;
-    f32 temp_f3_2;
-    f32 temp_f3_3;
-    f32 temp_f4;
-    f32 temp_f4_2;
-    f32 temp_f5;
-    f32 temp_f7;
-    f32 temp_f8;
-    f32 var_f0;
-    f32 var_f1;
-    f32 var_f2;
-    s32 temp_r3;
-    s32 temp_r3_11;
-    s32 temp_r3_2;
-    s32 temp_r7;
-    u16 temp_r4;
-    u16 var_r0;
-    u32 *var_r22;
-    u32 temp_r0;
-    u32 temp_r0_3;
-    u32 temp_r3_10;
-    u32 temp_r3_3;
-    u32 temp_r3_4;
-    u32 temp_r3_5;
-    u32 temp_r3_7;
-    u32 temp_r3_9;
-    u32 temp_r4_2;
-    u32* temp_r4_3;
-    u32 var_r14;
-    u32 var_r16 = 0;
-    u32 var_r19;
-    u32 var_r20;
-    u32 var_r21;
-    u32 var_r23;
-    u8 temp_r0_2;
-    u8 temp_r5;
-    u8 temp_r6;
-    u8 temp_r6_2;
-    u8 var_r4;
-    u8 var_r7;
-    void **temp_r4_4;
-    void **var_r4_2;
-    void *temp_r26;
-    void *temp_r29;
-    u32** temp_r3_6;
-    void *var_r18;
-    void *var_r24;
-    void *var_r4_3;
+enum HSD_ParticleKind {
+    Tornado = 1 << 2,
+    TexEdge = 1 << 3,
+    ComTLUT = 1 << 4,
+    MirrorS = 1 << 5,
+    MirrorT = 1 << 6,
+    PrimEnv = 1 << 7,
+    TexInterpNear = 1 << 9,
+    DispTexture = 1 << 10,
+    TexFlipS = 1 << 18,
+    TexFlipT = 1 << 19,
+    Trail = 1 << 20,
+    DirVec = 1 << 21,
+    DispFog = 1 << 24,
+    NoZComp = 1 << 28,
+    DispPoint = 1 << 30,
+    DispLighting = 1 << 31
+};
 
-    prevAlphaMode = 0;
-    prevAlpha1 = 0;
-    prevAlpha2 = 0xFF;
-    temp_r29 = vmtx;
-    temp_r28 = (f32 (*)[4])prj;
-    firstParticle = 1;
-    temp_r27 = pvmtx;
-    temp_r26 = rvmtx;
-    var_r23 = 0;
-    link = 0;
-    do {
-        if (arg0 & (1 << link)) {
-            particleSort(link, &opaque, &translucent);
-            switch (arg1) {                         /* switch 1; irregular */
+#define PS_FLAG_HIDDEN 0x20000000
+
+static inline void setVtxDesc(s32 fmt)
+{
+    GXClearVtxDesc();
+    GXInvalidateVtxCache();
+    switch (fmt) {
+    case 0:
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX8);
+        return;
+    case 1:
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        return;
+    case 2:
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX8);
+        return;
+    case 3:
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+        return;
+    case 4:
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+        return;
+    case 5:
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+        return;
+    }
+}
+
+static inline void psSetColor(GXColor* color, u8 value)
+{
+    color->r = value;
+    color->g = value;
+    color->b = value;
+    color->a = value;
+}
+
+static inline void setupChanCtrl(PSParticle* pp)
+{
+    u32 chan_state = pp->kind & (DispLighting | Trail);
+
+    if (chan_state != (u32) prevChanCtrl) {
+        prevChanCtrl = chan_state;
+        GXSetNumChans(1);
+        switch (prevChanCtrl) {
+        case Trail:
+            GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_VTX, GX_SRC_VTX, 0,
+                          GX_DF_NONE, GX_AF_NONE);
+            break;
+        case DispLighting:
+            GXSetChanCtrl(GX_COLOR0, GX_TRUE, GX_SRC_REG, GX_SRC_REG,
+                          HSD_LObjGetLightMaskDiffuse(), GX_DF_NONE,
+                          (s32) HSD_LObjGetLightMaskAttnFunc() ? GX_AF_SPOT
+                                                         : GX_AF_NONE);
+            GXSetChanCtrl(GX_ALPHA0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, 0,
+                          GX_DF_NONE, GX_AF_NONE);
+            break;
+        case DispLighting | Trail:
+            GXSetChanCtrl(GX_COLOR0, GX_TRUE, GX_SRC_REG, GX_SRC_REG,
+                          HSD_LObjGetLightMaskDiffuse(), GX_DF_NONE,
+                          (s32) HSD_LObjGetLightMaskAttnFunc() ? GX_AF_SPOT
+                                                         : GX_AF_NONE);
+            GXSetChanCtrl(GX_ALPHA0, GX_FALSE, GX_SRC_VTX, GX_SRC_VTX, 0,
+                          GX_DF_NONE, GX_AF_NONE);
+            break;
+        default:
+            GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, 0,
+                          GX_DF_NONE, GX_AF_NONE);
+            break;
+        }
+    }
+}
+
+static inline void setBlendMode(int blend_mode)
+{
+    if (prevBlendMode != blend_mode) {
+        prevBlendMode = blend_mode;
+        switch (blend_mode) {
+        case 0:
+            GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA,
+                           GX_LO_CLEAR);
+            break;
+        case 1:
+            GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE,
+                           GX_LO_CLEAR);
+            break;
+        case 2:
+            GXSetBlendMode(GX_BM_SUBTRACT, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA,
+                           GX_LO_CLEAR);
+            break;
+        case 3:
+            GXSetBlendMode(GX_BM_BLEND, GX_BL_DSTCLR, GX_BL_ZERO,
+                           GX_LO_CLEAR);
+            break;
+        default:
+            OSReport("Particle:setBlendMode:Unknown mode\n");
+            break;
+        }
+    }
+}
+
+static inline void psSetCurrentMtx(GXPosNrmMtx idx)
+{
+    if (currentMtx != idx) {
+        currentMtx = idx;
+        GXSetCurrentMtx(idx);
+    }
+}
+
+static inline void psSetupVtxFormat(GXVtxFmt format, BOOL has_color,
+                                    BOOL has_texture, GXCompType texture_type)
+{
+    GXSetVtxAttrFmt(format, GX_VA_POS, GX_POS_XYZ, GX_S16, 6U);
+    if (has_color) {
+        GXSetVtxAttrFmt(format, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA4, 0U);
+    }
+    if (has_texture) {
+        GXSetVtxAttrFmt(format, GX_VA_TEX0, GX_TEX_ST, texture_type, 0U);
+    }
+}
+
+static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3) {
+    typedef struct _HSD_TlutDesc {
+        u16* lut;
+        GXTlutFmt fmt;
+        u32 tlut_name;
+        u16 n_entries;
+    } HSD_TlutDesc;
+    typedef struct _HSD_PSFormGroup {
+        u32 num;
+        u8* formTable[1];
+    } HSD_PSFormGroup;
+    s32 linkNo;
+    u32 prevTexEdge;
+    s32 alpha_compare_mode;
+    u8 prevACmpParam1;
+    u8 prevACmpParam2;
+    s32 needs_setup;
+    PSParticle* pp;
+    void* prevTex;
+    u32 prevMirror;
+    u16* prevLut;
+    HSD_TlutDesc tlutdesc;
+    GXTexObj texObj;
+    PSParticle* sorted_particles;
+    PSParticle* non_edge_particles;
+    GXTlutObj gx_tlut_obj;
+    s32 prev_tex_interp_near;
+    u32 prev_kind;
+
+    alpha_compare_mode = 0;
+    prev_tex_interp_near = 0;
+    prevACmpParam1 = 0;
+    prevACmpParam2 = 0xFF;
+    needs_setup = 1;
+    for (linkNo = 0; linkNo < 16; linkNo++) {
+        if (arg0 & (1 << linkNo)) {
+            particleSort(linkNo, &sorted_particles, &non_edge_particles);
+            switch (arg1) {
             case 1:
-                var_r25 = opaque;
+                pp = sorted_particles;
                 break;
             case 2:
-                var_r25 = translucent;
+                pp = non_edge_particles;
                 break;
             default:
-                goto nextLink;
+                continue;
             }
-            epsilon = __float_epsilon;
-            while (var_r25 != NULL) {
-                if ((u32) arg1 == 1U && !(var_r25->kind & 8)) break;
-                if (!(var_r25->size < *epsilon) && ((arg2 == NULL) || ((u16) var_r25->id == (u16) arg2->id)) && ((u32) var_r25->generator->camera == arg3) && !(var_r25->kind & 0x20000000)) {
-                    if (firstParticle != 0) {
-                        var_r24 = NULL;
+            while (pp != NULL) {
+                PSTex* tex_group = NULL;
+                HSD_PSFormGroup* form_group = NULL;
+                HSD_PSFormGroup** form_groups;
+                u8* form = NULL;
+                GXTexFmt fmt;
+                int blend_mode;
+                u8 alpha0;
+                u8 alpha1;
+                u32 width;
+                u32 height;
+                void* image;
+                GXTexWrapMode wrap_s;
+                f32 scale_s;
+                f32 scale_t;
+                GXTexWrapMode wrap_t;
+                void** tex_table;
+
+                if (((u32) arg1 == 1) && !(pp->kind & TexEdge)) {
+                    break;
+                }
+                if (!(pp->size < __float_epsilon[0]) &&
+                    (arg2 == NULL || pp->id == arg2->id) &&
+                    (u32) pp->generator->camera == arg3 &&
+                    !(pp->kind & PS_FLAG_HIDDEN))
+                {
+                    if (needs_setup != 0) {
+                        prevLut = NULL;
                         prevPointSize = -1;
+                        prevTex = NULL;
                         prevLineWidth = -1;
                         prevChanCtrl = -1;
                         psSetupTevInvalidState();
-                        var_r16 &= 0xFEFFFFFF;
-                        prevZMode = -1U;
-                        var_r14 = -1U;
+                        prevMirror = (u32) -1;
+                        prev_kind &= 0xFEFFFFFF;
+                        prevTexEdge = (u32) -1;
                         HSD_FogSet(NULL);
-                        prevChanMat.g = 0xFF;
-                        prevChanMat.b = 0xFF;
-                        prevChanMat.a = 0xFF;
-                        prevChanMat.r = 0xFF;
-                        prevChanAmb.b = 0xFF;
-                        prevChanAmb.g = 0xFF;
-                        prevChanAmb.r = 0xFF;
-                        prevChanAmb.a = 0xFF;
-                        *(u32*)&chanMat = (s32) *(u32*)&prevChanMat;
-                        GXSetChanMatColor(GX_COLOR0A0, *(GXColor*)&chanMat);
-                        *(u32*)&chanAmb = (s32) *(u32*)&prevChanAmb;
-                        GXSetChanAmbColor(GX_COLOR0A0, *(GXColor*)&chanAmb);
+                        prevChanMat.r = prevChanMat.g = prevChanMat.b = 0xFF;
+                        prevChanAmb.r = prevChanAmb.g = prevChanAmb.b = 0xFF;
+                        prevChanMat.a = prevChanAmb.a = 0xFF;
+                        GXSetChanMatColor(GX_COLOR0A0, prevChanMat);
+                        GXSetChanAmbColor(GX_COLOR0A0, prevChanAmb);
                         psSetupTevInvalidState();
                         psSetupTevCommon();
-                        prevColorPrim.g = 0xFF;
-                        prevColorPrim.b = 0xFF;
-                        prevColorPrim.a = 0xFF;
-                        prevColorEnv.g = 0;
-                        prevColorPrim.r = 0xFF;
-                        prevColorEnv.b = 0;
-                        prevColorEnv.a = 0;
-                        prevColorMat.g = 0xFF;
-                        prevColorMat.b = 0xFF;
-                        prevColorEnv.r = 0;
-                        prevColorMat.r = 0xFF;
-                        prevColorMat.a = 0xFF;
-                        *(u32*)&colorPrim = (s32) *(u32*)&prevColorPrim;
-                        GXSetTevColor(GX_TEVREG0, *(GXColor*)&colorPrim);
-                        *(u32*)&colorEnv = (s32) *(u32*)&prevColorEnv;
-                        GXSetTevColor(GX_TEVREG1, *(GXColor*)&colorEnv);
-                        *(u32*)&colorMat = (s32) *(u32*)&prevColorMat;
-                        GXSetTevColor(GX_TEVREG2, *(GXColor*)&colorMat);
+                        psSetColor(&prevColorPrim, 0xFF);
+                        psSetColor(&prevColorEnv, 0);
+                        psSetColor(&prevColorMat, 0xFF);
+                        GXSetTevColor(GX_TEVREG0, prevColorPrim);
+                        GXSetTevColor(GX_TEVREG1, prevColorEnv);
+                        GXSetTevColor(GX_TEVREG2, prevColorMat);
                         prevBlendMode = -1;
-                        GXSetZCompLoc(0U);
+                        GXSetZCompLoc(GX_FALSE);
                         HSD_CObjGetViewingMtx(HSD_CObjGetCurrent(), vmtx);
                         PSMTXInverse(vmtx, rvmtx);
-                        if (prj[0] == 0.0f) {
-                            temp_f2 = temp_r28[0][2];
-                            temp_f0 = (*(f32*)((u8*)temp_r29+0x20));
-                            temp_f3 = (*(f32*)((u8*)temp_r29+0x24));
-                            temp_f7 = temp_r28[1][0];
-                            temp_f12 = (*(f32*)((u8*)temp_r29+0x28));
-                            temp_f10 = (*(f32*)((u8*)temp_r29+0x2C));
-                            temp_f27 = temp_r28[0][1];
-                            temp_f8 = temp_r28[0][3];
-                            pvmtx[0][0] = (f32) ((temp_f27 * vmtx[0][0]) + (temp_f2 * temp_f0));
-                            temp_r27[0][1] = (temp_f27 * (*(f32*)((u8*)temp_r29+0x4))) + (temp_f2 * temp_f3);
-                            temp_r27[0][2] = (temp_f27 * (*(f32*)((u8*)temp_r29+0x8))) + (temp_f2 * temp_f12);
-                            temp_r27[0][3] = (temp_f27 * (*(f32*)((u8*)temp_r29+0xC))) + (temp_f2 * temp_f10);
-                            temp_r27[1][0] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x10))) + (temp_f7 * temp_f0);
-                            temp_r27[1][1] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x14))) + (temp_f7 * temp_f3);
-                            temp_r27[1][2] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x18))) + (temp_f7 * temp_f12);
-                            temp_r27[1][3] = (temp_f8 * (*(f32*)((u8*)temp_r29+0x1C))) + (temp_f7 * temp_f10);
-                        } else {
-                            temp_f4 = temp_r28[0][1];
-                            temp_f3_2 = temp_r28[0][2];
-                            temp_f5 = temp_r28[0][3];
-                            temp_f4_2 = temp_r28[1][0];
-                            pvmtx[0][0] = (f32) ((temp_f4 * vmtx[0][0]) + temp_f3_2);
-                            temp_r27[0][1] = (temp_f4 * (*(f32*)((u8*)temp_r29+0x4))) + temp_f3_2;
-                            temp_r27[0][2] = (temp_f4 * (*(f32*)((u8*)temp_r29+0x8))) + temp_f3_2;
-                            temp_r27[0][3] = (temp_f4 * (*(f32*)((u8*)temp_r29+0xC))) + temp_f3_2;
-                            temp_r27[1][0] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x10))) + temp_f4_2;
-                            temp_r27[1][1] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x14))) + temp_f4_2;
-                            temp_r27[1][2] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x18))) + temp_f4_2;
-                            temp_r27[1][3] = (temp_f5 * (*(f32*)((u8*)temp_r29+0x1C))) + temp_f4_2;
-                        }
-                        temp_f0_2 = (*(f32*)((u8*)temp_r26+0x4));
-                        temp_f3_3 = (*(f32*)((u8*)temp_r26+0x10));
-                        temp_f1 = (*(f32*)((u8*)temp_r26+0x14));
-                        temp_f2_2 = (*(f32*)((u8*)temp_r26+0x20));
-                        temp_f0_3 = (*(f32*)((u8*)temp_r26+0x24));
-                        rx0 = rvmtx[0][0] + temp_f0_2;
-                        rx1 = rvmtx[0][0] - temp_f0_2;
-                        ry0 = temp_f3_3 + temp_f1;
-                        ry1 = temp_f3_3 - temp_f1;
-                        rz0 = temp_f2_2 + temp_f0_3;
-                        rz1 = temp_f2_2 - temp_f0_3;
-                        GXLoadPosMtxImm(vmtx, 0U);
-                        localIdentity[0] = ((const s32*)identityMtx)[0];
-                        localIdentity[1] = ((const s32*)identityMtx)[1];
-                        localIdentity[2] = ((const s32*)identityMtx)[2];
-                        localIdentity[3] = ((const s32*)identityMtx)[3];
-                        localIdentity[4] = ((const s32*)identityMtx)[4];
-                        localIdentity[5] = ((const s32*)identityMtx)[5];
-                        localIdentity[6] = ((const s32*)identityMtx)[6];
-                        localIdentity[7] = ((const s32*)identityMtx)[7];
-                        localIdentity[8] = ((const s32*)identityMtx)[8];
-                        localIdentity[9] = ((const s32*)identityMtx)[9];
-                        localIdentity[10] = ((const s32*)identityMtx)[10];
-                        localIdentity[11] = ((const s32*)identityMtx)[11];
-                        GXLoadPosMtxImm((f32 (*)[4]) &localIdentity[0], 3U);
-                        currentMtx = 3;
-                        if (3 != 0) {
-                            currentMtx = 0;
-                            GXSetCurrentMtx(0U);
-                        }
-                        GXEnableTexOffsets(GX_TEXCOORD0, 1U, 1U);
-                        HSD_MtxGetRotationMtx(rvmtx, rvmtxRot, 0x7A, 0x78);
-                        GXSetCullMode(GX_CULL_BACK);
-                        GXSetArray(GX_VA_TEX0, billboard_tex0_u8, 2U);
-                        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGB565, 0U);
-                        GXSetVtxAttrFmt(GX_VTXFMT1, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                        GXSetVtxAttrFmt(GX_VTXFMT2, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                        GXSetVtxAttrFmt(GX_VTXFMT2, GX_VA_CLR0, GX_TEX_ST, GX_RGBA4, 0U);
-                        GXSetVtxAttrFmt(GX_VTXFMT2, GX_VA_TEX0, GX_TEX_ST, GX_RGB565, 0U);
-                        GXSetVtxAttrFmt(GX_VTXFMT3, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                        GXSetVtxAttrFmt(GX_VTXFMT3, GX_VA_CLR0, GX_TEX_ST, GX_RGBA4, 0U);
-                        GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                        GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
-                        GXSetVtxAttrFmt(GX_VTXFMT5, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 6U);
-                        GXSetVtxAttrFmt(GX_VTXFMT5, GX_VA_CLR0, GX_TEX_ST, GX_RGBA4, 0U);
-                        GXSetVtxAttrFmt(GX_VTXFMT5, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
-                        firstParticle = 0;
-                    }
-                    temp_r3_2 = ((u32) var_r25->kind >> 0x16U) & 3;
-                    if ((s32) prevBlendMode != temp_r3_2) {
-                        prevBlendMode = temp_r3_2;
-                        switch (temp_r3_2) { /* switch 2; irregular */
-                        case 0:             /* switch 2 */
-                            GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
-                            break;
-                        case 1:             /* switch 2 */
-                            GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_CLEAR);
-                            break;
-                        case 2:             /* switch 2 */
-                            GXSetBlendMode(GX_BM_SUBTRACT, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
-                            break;
-                        case 3:             /* switch 2 */
-                            GXSetBlendMode(GX_BM_BLEND, GX_BL_DSTCLR, GX_BL_ZERO, GX_LO_CLEAR);
-                            break;
-                        default:            /* switch 2 */
-                            OSReport("Particle:setBlendMode:Unknown mode\n");
-                            break;
-                        }
-                    }
-                    temp_r4 = var_r25->alphaCount;
-                    if (temp_r4 != 0) {
-                        temp_r5 = var_r25->alpha1Target;
-                        temp_r7 = (s32) (var_r25->alphaRemain << 0x10) / (s32) temp_r4;
-                        temp_r6 = var_r25->alpha2Target;
-                        var_r4 = (u8) ((s32) ((temp_r5 << 0x10) + (temp_r7 * (var_r25->alpha1 - temp_r5))) >> 0x10);
-                        var_r7 = (u8) ((s32) ((temp_r6 << 0x10) + (temp_r7 * (var_r25->alpha2 - temp_r6))) >> 0x10);
-                    } else {
-                        var_r4 = var_r25->alpha1;
-                        var_r7 = var_r25->alpha2;
-                    }
-                    temp_r6_2 = var_r25->alphaMode;
-                    if ((prevAlphaMode != (s32) temp_r6_2) || (prevAlpha1 != var_r4) || (prevAlpha2 != var_r7)) {
-                        prevAlphaMode = (s32) temp_r6_2;
-                        prevAlpha1 = var_r4;
-                        prevAlpha2 = var_r7;
-                        GXSetAlphaCompare((temp_r6_2 >> 3U) & 7, var_r4, (temp_r6_2 >> 6U) & 3, temp_r6_2 & 7, var_r7);
-                    }
-                    psSetupTev(var_r25);
-                    temp_r3_3 = var_r25->kind & 0x80100000;
-                    if (temp_r3_3 != (u32) prevChanCtrl) {
-                        prevChanCtrl = (s32) temp_r3_3;
-                        GXSetNumChans(1U);
-                        if ((s32) prevChanCtrl != 0x80100000) {
-                            if ((s32) prevChanCtrl < 0x80100000) {
-                                if ((s32) prevChanCtrl < 0x80000001) {
-                                    var_r17 = GX_AF_NONE;
-                                    if (HSD_LObjGetLightMaskAttnFunc() != 0) {
-                                        var_r17 = GX_AF_SPOT;
-                                    }
-                                    GXSetChanCtrl(GX_COLOR0, 1U, GX_SRC_REG, GX_SRC_REG, HSD_LObjGetLightMaskDiffuse(), GX_DF_NONE, var_r17);
-                                    GXSetChanCtrl(GX_ALPHA0, 0U, GX_SRC_REG, GX_SRC_REG, 0U, GX_DF_NONE, GX_AF_NONE);
-                                } else {
-                                    goto block_57;
-                                }
-                            } else if ((s32) prevChanCtrl != 0x100000) {
-block_57:
-                                GXSetChanCtrl(GX_COLOR0A0, 0U, GX_SRC_REG, GX_SRC_REG, 0U, GX_DF_NONE, GX_AF_NONE);
+                        {
+                            if (0.0f == prj[0]) {
+                                pvmtx[0][0] = prj[1] * vmtx[0][0] + prj[2] * vmtx[2][0];
+                                pvmtx[0][1] = prj[1] * vmtx[0][1] + prj[2] * vmtx[2][1];
+                                pvmtx[0][2] = prj[1] * vmtx[0][2] + prj[2] * vmtx[2][2];
+                                pvmtx[0][3] = prj[1] * vmtx[0][3] + prj[2] * vmtx[2][3];
+                                pvmtx[1][0] = prj[3] * vmtx[1][0] + prj[4] * vmtx[2][0];
+                                pvmtx[1][1] = prj[3] * vmtx[1][1] + prj[4] * vmtx[2][1];
+                                pvmtx[1][2] = prj[3] * vmtx[1][2] + prj[4] * vmtx[2][2];
+                                pvmtx[1][3] = prj[3] * vmtx[1][3] + prj[4] * vmtx[2][3];
                             } else {
-                                GXSetChanCtrl(GX_COLOR0A0, 0U, GX_SRC_VTX, GX_SRC_VTX, 0U, GX_DF_NONE, GX_AF_NONE);
+                                pvmtx[0][0] = prj[1] * vmtx[0][0] + prj[2];
+                                pvmtx[0][1] = prj[1] * vmtx[0][1] + prj[2];
+                                pvmtx[0][2] = prj[1] * vmtx[0][2] + prj[2];
+                                pvmtx[0][3] = prj[1] * vmtx[0][3] + prj[2];
+                                pvmtx[1][0] = prj[3] * vmtx[1][0] + prj[4];
+                                pvmtx[1][1] = prj[3] * vmtx[1][1] + prj[4];
+                                pvmtx[1][2] = prj[3] * vmtx[1][2] + prj[4];
+                                pvmtx[1][3] = prj[3] * vmtx[1][3] + prj[4];
                             }
+                            rx0 = rvmtx[0][0] + rvmtx[0][1];
+                            rx1 = rvmtx[0][0] - rvmtx[0][1];
+                            ry0 = rvmtx[1][0] + rvmtx[1][1];
+                            ry1 = rvmtx[1][0] - rvmtx[1][1];
+                            rz0 = rvmtx[2][0] + rvmtx[2][1];
+                            rz1 = rvmtx[2][0] - rvmtx[2][1];
+                        }
+                        GXLoadPosMtxImm(vmtx, GX_PNMTX0);
+                        {
+                            PSMtx billboard_mtx = { { 1.0F, 0.0F, 0.0F, 0.0F },
+                                                    { 0.0F, 1.0F, 0.0F, 0.0F },
+                                                    { 0.0F, 0.0F, 1.0F, 0.0F } };
+                            GXLoadPosMtxImm(billboard_mtx, GX_PNMTX1);
+                        }
+                        currentMtx = GX_PNMTX1;
+                        psSetCurrentMtx(GX_PNMTX0);
+                        GXEnableTexOffsets(GX_TEXCOORD0, GX_TRUE, GX_TRUE);
+                        HSD_MtxGetRotationMtx(rvmtx, rvmtxRot, 'z', 'x');
+                        GXSetCullMode(GX_CULL_BACK);
+                        GXSetArray(GX_VA_TEX0, billboard_tex0_u8, 2);
+                        psSetupVtxFormat(GX_VTXFMT0, FALSE, TRUE, GX_U8);
+                        psSetupVtxFormat(GX_VTXFMT1, FALSE, FALSE, GX_U8);
+                        psSetupVtxFormat(GX_VTXFMT2, TRUE, TRUE, GX_U8);
+                        psSetupVtxFormat(GX_VTXFMT3, TRUE, FALSE, GX_U8);
+                        psSetupVtxFormat(GX_VTXFMT4, FALSE, TRUE, GX_F32);
+                        psSetupVtxFormat(GX_VTXFMT5, TRUE, TRUE, GX_F32);
+                        needs_setup = 0;
+                    }
+
+                    blend_mode = (pp->kind >> 0x16U) & 3;
+                    setBlendMode(blend_mode);
+
+                    if (pp->alphaCount != 0) {
+                        s32 scale = (65536 * pp->alphaRemain) / pp->alphaCount;
+                        alpha0 = ((pp->alpha1Target << 16) +
+                                  scale * (pp->alpha1 -
+                                           pp->alpha1Target)) >>
+                                 16;
+                        alpha1 = ((pp->alpha2Target << 16) +
+                                  scale * (pp->alpha2 -
+                                           pp->alpha2Target)) >>
+                                 16;
+                    } else {
+                        alpha0 = pp->alpha1;
+                        alpha1 = pp->alpha2;
+                    }
+                    if ((alpha_compare_mode != pp->alphaMode) ||
+                        (prevACmpParam1 != alpha0) ||
+                        (prevACmpParam2 != alpha1))
+                    {
+                        alpha_compare_mode = pp->alphaMode;
+                        prevACmpParam1 = alpha0;
+                        prevACmpParam2 = alpha1;
+                        GXSetAlphaCompare(
+                            (alpha_compare_mode >> 3) & 7, prevACmpParam1,
+                            (alpha_compare_mode >> 6) & 3,
+                            alpha_compare_mode & 7, prevACmpParam2);
+                    }
+
+                    psSetupTev(pp);
+                    setupChanCtrl(pp);
+                    setupChanReg(pp);
+                    setupTevReg(pp);
+                    if ((pp->kind & (TexEdge | NoZComp)) != prevTexEdge) {
+                        prevTexEdge = pp->kind & (TexEdge | NoZComp);
+                        if (prevTexEdge & TexEdge) {
+                            GXSetZMode((pp->kind & NoZComp) ? GX_FALSE : GX_TRUE,
+                                       GX_LEQUAL, GX_TRUE);
                         } else {
-                            var_r17_2 = GX_AF_NONE;
-                            if (HSD_LObjGetLightMaskAttnFunc() != 0) {
-                                var_r17_2 = GX_AF_SPOT;
-                            }
-                            GXSetChanCtrl(GX_COLOR0, 1U, GX_SRC_REG, GX_SRC_REG, HSD_LObjGetLightMaskDiffuse(), GX_DF_NONE, var_r17_2);
-                            GXSetChanCtrl(GX_ALPHA0, 0U, GX_SRC_VTX, GX_SRC_VTX, 0U, GX_DF_NONE, GX_AF_NONE);
+                            GXSetZMode((pp->kind & NoZComp) ? GX_FALSE : GX_TRUE,
+                                       GX_LEQUAL, GX_FALSE);
                         }
                     }
-                    setupChanReg(var_r25);
-                    setupTevReg(var_r25);
-                    temp_r4_2 = var_r25->kind;
-                    temp_r3_4 = temp_r4_2 & 0x10000008;
-                    if (temp_r3_4 != prevZMode) {
-                        prevZMode = temp_r3_4;
-                        if (temp_r3_4 & 8) {
-                            GXSetZMode(((temp_r4_2 >> 0x1CU) & 1) ^ 1, GX_LEQUAL, 1U);
-                        } else {
-                            GXSetZMode(((temp_r4_2 >> 0x1CU) & 1) ^ 1, GX_LEQUAL, 0U);
-                        }
-                    }
-                    temp_r3_5 = var_r25->kind;
-                    if ((temp_r3_5 ^ var_r16) & 0x01000000) {
-                        if (temp_r3_5 & 0x01000000) {
+                    if (((pp->kind ^ prev_kind) & DispFog) != 0) {
+                        if (pp->kind & DispFog) {
                             HSD_FogSet(particleFog);
                         } else {
                             HSD_FogSet(NULL);
                         }
                     }
-                    temp_r3_6 = (u32**)psFormGroupArray[var_r25->bank];
-                    if ((temp_r3_6 != NULL) && (temp_r4_3 = temp_r3_6[var_r25->texGroup], temp_r4_3 != NULL) && ((u8*)temp_r4_3 + 4 != NULL)) {
-                        var_r22 = (u32*)temp_r4_3[var_r25->pose + 1];
-                    } else {
-                        var_r22 = NULL;
-                    }
-                    temp_r3_7 = var_r25->kind;
-                    if (temp_r3_7 & 0x400) {
-                        if (temp_r3_7 & 0x20) {
-                            var_f1 = 2.0f;
-                            var_r17_3 = GX_MIRROR;
-                        } else {
-                            var_f1 = 1.0f;
-                            var_r17_3 = GX_CLAMP;
-                        }
-                        if (temp_r3_7 & 0x40) {
-                            var_f2 = 2.0f;
-                            var_r16_2 = GX_MIRROR;
-                        } else {
-                            var_f2 = 1.0f;
-                            var_r16_2 = GX_CLAMP;
-                        }
-                        temp_r0 = temp_r3_7 & 0x60;
-                        if (temp_r0 != var_r14) {
-                            var_r14 = temp_r0;
-                            var_r24 = NULL;
-                            PSMTXScale(textureMtx, var_f1, var_f2, 1.0f);
-                            if (var_r25->kind & 0x40) {
-                                textureMtx[1][3] = 1.0f;
-                            }
-                            GXLoadTexMtxImm(textureMtx, 0x1EU, GX_MTX2x4);
-                            GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1EU, 0U, 0x7DU);
-                        }
-                        temp_r3_8 = psTexGroupArray[var_r25->bank][var_r25->texGroup];
-                        if (temp_r3_8 != NULL) {
-                            var_r21 = temp_r3_8->format;
-                            var_r4_2 = temp_r3_8->textures;
-                            var_r20 = temp_r3_8->width;
-                            var_r19 = temp_r3_8->height;
-                        } else {
-                            var_r21 = 0;
-                            var_r19 = 0;
-                            var_r20 = 0;
-                            var_r4_2 = NULL;
-                        }
-                        if (var_r4_2 != NULL) {
-                            var_r18 = var_r4_2[var_r25->pose];
-                        } else {
-                            var_r18 = NULL;
-                        }
-                        if ((((s32) var_r21 == 8) || ((s32) var_r21 == 9)) && (var_r4_2 != NULL)) {
-                            temp_r4_4 = &var_r4_2[temp_r3_8->count];
-                            if (temp_r4_4 != NULL) {
-                                temp_r0_2 = var_r25->palette;
-                                if (temp_r0_2 != 0xFF) {
-                                    var_r4_3 = temp_r4_4[temp_r0_2 & 0xFF];
-                                } else if (!(var_r25->kind & 0x10)) {
-                                    var_r4_3 = temp_r4_4[var_r25->pose];
-                                } else {
-                                    var_r4_3 = *temp_r4_4;
-                                }
-                                if (var_r4_3 != NULL) {
-                                    paletteName = 0;
-                                    var_r0 = 0x100;
-                                    paletteFormat = temp_r3_8->paletteFormat;
-                                    if ((s32) var_r21 == 8) {
-                                        var_r0 = 0x10;
-                                    }
-                                    paletteEntries = var_r0;
-                                    GXInitTlutObj(&paletteObj, var_r4_3, (enum _GXTlutFmt) paletteFormat, var_r0);
-                                    GXLoadTlut(&paletteObj, paletteName);
-                                }
-                                var_r24 = NULL;
-                            }
-                        }
-                        if ((var_r24 != var_r18) && (var_r18 != NULL)) {
-                            var_r24 = var_r18;
-                            if ((s32) var_r21 < 0xA) {
-                                if ((s32) var_r21 != 7) {
-                                    if ((s32) var_r21 < 7) {
-                                        if ((s32) var_r21 < 0) {
-                                            goto block_113;
-                                        }
-                                        goto block_112;
-                                    }
 
-                                    GXInitTexObjCI(&textureObj, var_r18, (u16) var_r20, (u16) var_r19, (enum _GXCITexFmt) var_r21, var_r17_3, var_r16_2, 0U, 0);
-                                } else {
-                                    goto block_113;
+
+
+                    form_groups = (HSD_PSFormGroup**) psFormGroupArray[pp->bank];
+                    if (form_groups != NULL &&
+                        (form_group = form_groups[pp->texGroup]) != NULL
+                        && form_group->formTable != NULL
+                    )
+                    {
+                        form = form_group->formTable[pp->pose];
+                    } else {
+                        form = NULL;
+                    }
+
+                    if (pp->kind & DispTexture) {
+                        if (pp->kind & MirrorS) {
+                            scale_s = 2.0f;
+                            wrap_s = GX_MIRROR;
+                        } else {
+                            scale_s = 1.0f;
+                            wrap_s = GX_CLAMP;
+                        }
+                        if (pp->kind & MirrorT) {
+                            scale_t = 2.0f;
+                            wrap_t = GX_MIRROR;
+                        } else {
+                            scale_t = 1.0f;
+                            wrap_t = GX_CLAMP;
+                        }
+                        if ((pp->kind & (MirrorS | MirrorT)) != prevMirror) {
+                            PSMtx temp_mtx;
+
+                            prevMirror = pp->kind & (MirrorS | MirrorT);
+                            prevTex = NULL;
+                            PSMTXScale(temp_mtx, scale_s, scale_t, 1.0f);
+                            if (pp->kind & MirrorT) {
+                                temp_mtx[1][3] = 1.0f;
+                            }
+                            GXLoadTexMtxImm(temp_mtx, GX_TEXMTX0, GX_MTX2x4);
+                            GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4,
+                                              GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
+                                              GX_PTIDENTITY);
+                        }
+                        tex_group = psTexGroupArray[pp->bank][pp->texGroup];
+                        if (tex_group != NULL) {
+                            fmt = tex_group->format;
+                            tex_table = tex_group->textures;
+                            width = tex_group->width;
+                            height = tex_group->height;
+                        } else {
+                            fmt = 0;
+                            height = 0;
+                            width = 0;
+                            tex_table = NULL;
+                        }
+                        if (tex_table != NULL) {
+                            image = tex_table[pp->pose];
+                        } else {
+                            image = NULL;
+                        }
+                        if ((fmt == GX_TF_C4) || (fmt == GX_TF_C8)) {
+                            if (tex_table != NULL) {
+                                void** palettes =
+                                    (void**) &tex_table[tex_group->count];
+                                if (palettes != NULL) {
+                                    if (pp->palette != 0xFF) {
+                                        tlutdesc.lut = palettes[pp->palette];
+                                    } else if (!(pp->kind & ComTLUT)) {
+                                        tlutdesc.lut = palettes[pp->pose];
+                                    } else {
+                                        tlutdesc.lut = palettes[0];
+                                    }
+                                    if (tlutdesc.lut != prevLut) {
+                                        tlutdesc.fmt = (GXTlutFmt)
+                                                           tex_group->paletteFormat;
+                                        tlutdesc.tlut_name = GX_TLUT0;
+                                        tlutdesc.n_entries =
+                                            (fmt == GX_TF_C4) ? 16 : 256;
+                                        GXInitTlutObj(
+                                            &gx_tlut_obj, tlutdesc.lut,
+                                            tlutdesc.fmt, tlutdesc.n_entries);
+                                        GXLoadTlut(&gx_tlut_obj,
+                                                   tlutdesc.tlut_name);
+                                    }
+                                    prevTex = NULL;
                                 }
-                            } else if ((s32) var_r21 != 0xE) {
-block_113:
+                            }
+                        }
+                        if ((prevTex != image) && (image != NULL)) {
+                            prevTex = image;
+                            switch (fmt) {
+                            case GX_TF_C4:
+                            case GX_TF_C8:
+                                GXInitTexObjCI(&texObj, image, width, height,
+                                               fmt, wrap_s, wrap_t, GX_FALSE,
+                                               GX_TLUT0);
+                                break;
+                            case GX_TF_I4:
+                            case GX_TF_I8:
+                            case GX_TF_IA4:
+                            case GX_TF_IA8:
+                            case GX_TF_RGB565:
+                            case GX_TF_RGB5A3:
+                            case GX_TF_RGBA8:
+                            case GX_TF_CMPR:
+                                GXInitTexObj(&texObj, image, width, height,
+                                             fmt, wrap_s, wrap_t, GX_FALSE);
+                                break;
+                            default:
                                 __assert("psdisp.c", 0x7AD, "0");
-                            } else {
-block_112:
-                                GXInitTexObj(&textureObj, var_r18, (u16) var_r20, (u16) var_r19, (enum _GXTexFmt) var_r21, var_r17_3, var_r16_2, 0U);
+                                break;
                             }
-                            temp_r0_3 = var_r25->kind;
-                            var_r23 = temp_r0_3 & 0x200;
-                            GXInitTexObjLOD(&textureObj, var_r23 == 0, ((temp_r0_3 >> 9U) & 1) ^ 1, 0.0f, 0.0f, 0.0f, 0U, 0U, GX_ANISO_1);
-                            GXLoadTexObj(&textureObj, GX_TEXMAP0);
+                            prev_tex_interp_near = pp->kind & TexInterpNear;
+                            GXInitTexObjLOD(
+                                &texObj,
+                                (prev_tex_interp_near != 0) ? GX_NEAR
+                                                            : GX_LINEAR,
+                                ((pp->kind >> 9) & 1) ? GX_NEAR : GX_LINEAR,
+                                0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE,
+                                GX_ANISO_1);
+                            GXLoadTexObj(&texObj, GX_TEXMAP0);
                         }
-                        temp_r3_9 = var_r25->kind & 0x200;
-                        if (var_r23 != temp_r3_9) {
-                            temp_r4_5 = temp_r3_9 == 0;
-                            var_r23 = temp_r3_9;
-                            GXInitTexObjLOD(&textureObj, temp_r4_5, temp_r4_5, 0.0f, 0.0f, 0.0f, 0U, 0U, GX_ANISO_1);
-                            GXLoadTexObj(&textureObj, GX_TEXMAP0);
+                        if ((u32) prev_tex_interp_near !=
+                            (pp->kind & TexInterpNear))
+                        {
+                            prev_tex_interp_near = pp->kind & TexInterpNear;
+                            GXInitTexObjLOD(
+                                &texObj,
+                                (prev_tex_interp_near != 0) ? GX_NEAR
+                                                            : GX_LINEAR,
+                                (s32) (pp->kind & TexInterpNear) != 0
+                                    ? GX_NEAR
+                                    : GX_LINEAR,
+                                0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE,
+                                GX_ANISO_1);
+                            GXLoadTexObj(&texObj, GX_TEXMAP0);
                         }
                     }
-                    temp_r3_10 = var_r25->kind;
-                    if (temp_r3_10 & 0x40000000) {
-                        if ((PSAppSRT *) var_r25->appsrt != NULL) {
-                            psDispSubAPPSRTPoint(var_r25);
-                        } else if (temp_r3_10 & 0x100000) {
-                            var_r25 = psDispSubPointTrail(var_r25);
-                        } else {
-                            if ((s32) currentMtx != 0) {
-                                currentMtx = 0;
-                                GXSetCurrentMtx(0U);
-                            }
-                            temp_f1_2 = var_r25->size;
-                            if (temp_f1_2 > 42.5) {
-                                var_f0 = 255.0f;
-                            } else {
-                                var_f0 = 6.0f * temp_f1_2;
-                            }
-                            temp_r3_11 = (s32) var_f0;
-                            if ((s32) prevPointSize != (s32) (u8) temp_r3_11) {
-                                prevPointSize = (s32) (u8) temp_r3_11;
-                                GXSetPointSize((u8) temp_r3_11, GX_TO_ONE);
-                            }
-                            if (var_r25->kind & 0x400) {
-                                GXClearVtxDesc();
-                                GXInvalidateVtxCache();
-                                GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-                                GXSetVtxDesc(GX_VA_TEX0, GX_INDEX8);
-                                GXBegin(GX_POINTS, GX_VTXFMT0, 1U);
-                            } else {
-                                GXClearVtxDesc();
-                                GXInvalidateVtxCache();
-                                GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-                                GXBegin(GX_POINTS, GX_VTXFMT1, 1U);
-                            }
-                            pointZ = PS_FIXED6(var_r25->position.z);
 
-                            pointY = PS_FIXED6(var_r25->position.y);
-                            pointX = PS_FIXED6(var_r25->position.x);
-                            *(volatile s16 *)0xCC008000 = pointX;
-                            *(volatile s16 *)0xCC008000 = pointY;
-                            *(volatile s16 *)0xCC008000 = pointZ;
-                            if (var_r25->kind & 0x400) {
-                                *(volatile u8 *)0xCC008000 = 1;
+                    if (pp->kind & DispPoint) {
+                        if (pp->appsrt != NULL) {
+                            psDispSubAPPSRTPoint(pp);
+                        } else if (pp->kind & Trail) {
+                            pp = psDispSubPointTrail(pp);
+                        } else {
+                            u8 point_size;
+
+                            psSetCurrentMtx(GX_PNMTX0);
+                            point_size = (pp->size > 42.5) ? 255.0f : 6.0f * pp->size;
+                            if (prevPointSize != (s32) point_size) {
+                                prevPointSize = point_size;
+                                GXSetPointSize(point_size, GX_TO_ONE);
+                            }
+                            if (pp->kind & DispTexture) {
+                                setVtxDesc(0);
+                                GXBegin(GX_POINTS, GX_VTXFMT0, 1);
+                            } else {
+                                setVtxDesc(1);
+                                GXBegin(GX_POINTS, GX_VTXFMT1, 1);
+                            }
+                            GXPosition3s16(PS_FIXED6(pp->position.x), PS_FIXED6(pp->position.y), PS_FIXED6(pp->position.z));
+                            if (pp->kind & DispTexture) {
+                                GXTexCoord1x8(1);
                             }
                         }
-                    } else if ((PSAppSRT *) var_r25->appsrt != NULL) {
-                        psDispSubAppSRT(var_r25, var_r22);
+                    } else if (pp->appsrt != NULL) {
+                        psDispSubAppSRT(pp, (u32*) form);
                     } else {
-                        psDispSub(var_r25, var_r22);
+                        psDispSub(pp, (u32*) form);
                     }
                 }
-                var_r16 = var_r25->kind;
-                var_r25 = var_r25->next;
+
+                prev_kind = pp->kind;
+                pp = pp->next;
             }
         }
-nextLink:
-        temp_r3 = link + 1;
-        link = temp_r3;
-    } while (temp_r3 < 0x10);
-    if (firstParticle == 0) {
-        HSD_StateInvalidate(-1U);
+    }
+    if (needs_setup == 0) {
+        HSD_StateInvalidate(-1);
     }
 }
 

@@ -226,6 +226,15 @@ The existing `peRenderContainer` constructor was also adapted from
 vertex-data initialization, and cached-buffer structure while retaining all
 previously exact functions. The constructor remains partially matching.
 
+The particle dispatcher `_psDispParticlesSub` and its inline state helpers were
+adapted from `src/game/maximum/GSAPI/particle/psdisp.cpp` at XD commit
+`f39426745384c10876383ed909c3fbc84f6e3a8b` (CC0, with the inherited MIT
+notice below). Retail instructions verify its matrix-cache interface, palette
+descriptor, control flow, and call sequence. A local identity initializer
+replaces the reconstruction-only global without changing allocated data bytes.
+The dispatcher remains partially matching; missing readonly initializer pools
+and point-emission register allocation still prevent exact matching.
+
 The local `musyx/runtime/synthdata.c` override comes from AxioDL/musyx
 commit `89850639d731ec080c12cb0bc8d7ab2ea3880c3a` (CC0-1.0). It restores
 the retail capacity of 4,096 macro records and retains the original function
