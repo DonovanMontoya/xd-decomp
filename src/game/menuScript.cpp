@@ -93,7 +93,7 @@ void *pokemonTokuseiDataBiosGetPtr(u16);
 u32 pokemonTokuseiDataBiosGetName(void *);
 u32 pokemonDataBiosGetName(void *);
 void winSpriteSetDisp(tagSPRITE_WORK *, bool);
-u16 windowGetKeyRepeat(void);
+u32 windowGetKeyRepeat(void);
 u16 *GSmsgGetGSchar(s32);
 void GSmsgPrint2(s32, s32, s32, s32, u32);
 void *menuDataBiosGetPtr(s32);
@@ -819,7 +819,7 @@ static u16 _checkWaza2(void) {
 extern "C" s32 menuScriptWazaOshieCursor(tagWINDOW_WORK *win) {
     CURSOR c;
     s16 sel;
-    u16 key;
+    u32 key;
     u16 available;
     s32 num;
     s32 vis;
@@ -833,9 +833,9 @@ extern "C" s32 menuScriptWazaOshieCursor(tagWINDOW_WORK *win) {
         vis = num;
     }
     if (vis != 0) {
-        if ((key & 1) != 0) {
+        if (((u16)key & 1) != 0) {
             c.selected -= 1;
-        } else if ((key & 2) != 0) {
+        } else if (((u16)key & 2) != 0) {
             c.selected += 1;
         }
         sel = c.selected;
@@ -892,7 +892,7 @@ extern "C" void menuScriptTutorialCursor(tagWINDOW_WORK* w)
     if (total < 8) {
         vis = total;
     }
-    u32 rep = ((u32(*)())windowGetKeyRepeat)();
+    u32 rep = windowGetKeyRepeat();
     CURSOR c = cursorBiosGetPos(0xE);
     if (vis != 0) {
         if ((u16)rep & 1) {

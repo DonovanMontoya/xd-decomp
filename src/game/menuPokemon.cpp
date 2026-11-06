@@ -94,7 +94,7 @@ void winSpriteSetDisp(tagSPRITE_WORK *, s32);
 s32 menuGetCursor(s32);
 void pokemonReplace(Pokemon *, Pokemon *);
 void menuSubSleep(f32);
-u16 windowGetKeyRepeat(u8 *);
+u32 windowGetKeyRepeat(u8 *);
 u8 menuDataBiosGetDispMax(s32);
 extern s32 lbl_804E7EB8;
 extern s32 lbl_804E7EBC;
