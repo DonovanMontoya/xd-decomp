@@ -235,6 +235,11 @@ replaces the reconstruction-only global without changing allocated data bytes.
 The dispatcher remains partially matching; missing readonly initializer pools
 and point-emission register allocation still prevent exact matching.
 
+`memcardInitialize` was adapted from `src/game/pxdvs/app/memcard/memcard.cpp`
+at the same XD checkpoint. Separate `u32` low and `u16` high random values
+recover the retail initializer's instruction order. Its complete instruction
+bytes and relocations match, with other functions and data unchanged.
+
 The local `musyx/runtime/synthdata.c` override comes from AxioDL/musyx
 commit `89850639d731ec080c12cb0bc8d7ab2ea3880c3a` (CC0-1.0). It restores
 the retail capacity of 4,096 macro records and retains the original function
