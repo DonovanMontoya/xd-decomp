@@ -520,7 +520,7 @@ void GSmodelDrawModel(GSmodel* model, GSgfxLayer* layerPtr, s32 pass) {
     }
 }
 extern "C" {
-void GSgfxTokenIfClearedReset(void*);
+void GSgfxTokenIfClearedReset(u16*);
 void modelShadowRender__FP10GSgfxLayer(GSgfxLayer*);
 void GScameraLoadActiveCameraMatrix(s32);
 void GSgfxVideoGetEFBSize(u16*, u16*);
@@ -588,7 +588,7 @@ static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer, s32 
         model = _modelTopPtr;
         fogWasOn = modelLayerField<u8>(layer, 0x16A7) != 0;
         while (model) {
-            GSgfxTokenIfClearedReset((u8*)model + 0x62);
+            GSgfxTokenIfClearedReset((u16*)((u8*)model + 0x62));
             if (model->flags & 0x04000000) {
                 for (s32 i = 0; i < 8; i++) {
                     if (model->renderLayers[i] == layerId) {

@@ -235,6 +235,13 @@ replaces the reconstruction-only global without changing allocated data bytes.
 The dispatcher remains partially matching; missing readonly initializer pools
 and point-emission register allocation still prevent exact matching.
 
+The graphics token implementation was adapted from
+`src/game/pxdvs/GSAPI/GSgfxM/token.cpp` at the same XD checkpoint. It restores
+the native C++ interfaces and boolean helper graph, preserving all nine exact
+functions and storage. `GSgfxTokenIfClearedReset` remains partially matching:
+two instructions use a different temporary to perform an equivalent unsigned
+halfword zero test. The token unit remains NonMatching.
+
 `memcardInitialize` was adapted from `src/game/pxdvs/app/memcard/memcard.cpp`
 at the same XD checkpoint. Separate `u32` low and `u16` high random values
 recover the retail initializer's instruction order. Its complete instruction

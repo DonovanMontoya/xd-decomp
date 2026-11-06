@@ -17,7 +17,7 @@ void peBankStopLoop(ParticleBankState*);
 void peBankStop(ParticleBankState*);
 u8 particleEnginePrepareUpdate(void*);
 u8 particleEnginePrepareRender(void*);
-u8 GSgfxTokenCleared(u16);
+bool GSgfxTokenCleared(u16);
 void GSboundReset(void*); void GSboundAlwaysInView(void*,s32); s32 GSboundIsInViewFast(void*);
 }
 typedef char ParticleBankFlagsOffsetCheck[offsetof(ParticleBankState, flags) == 0x134 ? 1 : -1];
