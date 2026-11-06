@@ -1,5 +1,4 @@
 #include <game/pxdvs/GSAPI/GSmsg/spritePrivate.hpp>
-#include <libc/math.h>
 #include <libc/string.h>
 struct _struct__spriteWork_0x10 {f32 unk0,unk4,unk8,unkC;};
 static _struct__spriteWork_0x10 _spriteWork[3]={{0,0,1,1},{0,0,1,1},{0,0,1,1}};
