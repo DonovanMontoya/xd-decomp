@@ -267,6 +267,14 @@ change the stored clipping coordinates. Finite differential execution of the
 complete retail and candidate instruction streams agrees on all ordered writes
 in 206 cases. The function remains partially matching, with no exact-byte gain.
 
+`StreamUpdateCallback` in `src/game/pxdvs/GSAPI/GSmovie/movieStream.cpp` reuses
+the existing `_fillStreamChannel` helper, also used by the exact initial-fill
+routine. The same XD checkpoint independently supports this fill boundary.
+The callback recovers retail's instruction count, relocation sites, and ordered
+ring updates. Bounded execution of the retail and candidate instruction words
+agrees in 260 cases. Register assignments still differ, so the callback remains
+partially matching and contributes no new exact bytes.
+
 ## Colosseum license notice
 
 ```text

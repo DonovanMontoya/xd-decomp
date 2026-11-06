@@ -356,7 +356,6 @@ decodeDone:
 
 extern "C" void OSReport(const char*, ...);
 u32 StreamUpdateCallback(void* first, u32 firstSamples, void* second, u32 secondSamples, u32 context) {
-    s32 statusA, statusB, statusC, statusD;
     __GSmovieStreaming* movie = (__GSmovieStreaming*)context;
     if (!movie) return 0;
     MovieDecoder* decoder = movie->decoder;
@@ -379,51 +378,11 @@ u32 StreamUpdateCallback(void* first, u32 firstSamples, void* second, u32 second
         if (first == decoder->leftBuffer) {
             if (decoder->channels == 2) {
                 MovieDecoder* current = movie->decoder;
-                u32 remaining = samples;
-                s16* left = decoder->leftBuffer;
-                s16* right = decoder->rightBuffer;
-                u64 played = current->samplesPlayed;
-                for (;;) {
-                    u32 count = GetAudioSample(movie, left, right, remaining, &statusA);
-                    played += count;
-                    if (statusA == 0) break;
-                    if (statusA == 1) {
-                        remaining -= count;
-                        left += count;
-                        if (right) right += count;
-                        MovieDecoder* marks = movie->decoder;
-                        marks->marks[marks->markWrite] = played;
-                        if (++marks->markWrite >= 5) marks->markWrite = 0;
-                        continue;
-                    }
-                    memset(left, 0, remaining * 2);
-                    if (right) memset(right, 0, remaining * 2);
-                    break;
-                }
+                _fillStreamChannel(movie, current->samplesPlayed, samples, decoder->rightBuffer, decoder->leftBuffer);
                 current->samplesPlayed += samples;
             } else {
                 MovieDecoder* current = movie->decoder;
-                u32 remaining = samples;
-                s16* left = decoder->leftBuffer;
-                s16* right = 0;
-                u64 played = current->samplesPlayed;
-                for (;;) {
-                    u32 count = GetAudioSample(movie, left, right, remaining, &statusB);
-                    played += count;
-                    if (statusB == 0) break;
-                    if (statusB == 1) {
-                        remaining -= count;
-                        left += count;
-                        if (right) right += count;
-                        MovieDecoder* marks = movie->decoder;
-                        marks->marks[marks->markWrite] = played;
-                        if (++marks->markWrite >= 5) marks->markWrite = 0;
-                        continue;
-                    }
-                    memset(left, 0, remaining * 2);
-                    if (right) memset(right, 0, remaining * 2);
-                    break;
-                }
+                _fillStreamChannel(movie, current->samplesPlayed, samples, 0, decoder->leftBuffer);
                 current->samplesPlayed += samples;
             }
             u32 bytes = samples * 2;
@@ -436,51 +395,11 @@ u32 StreamUpdateCallback(void* first, u32 firstSamples, void* second, u32 second
         } else {
             if (decoder->channels == 2) {
                 MovieDecoder* current = movie->decoder;
-                u32 remaining = samples;
-                s16* left = decoder->leftBuffer + samples;
-                s16* right = decoder->rightBuffer + samples;
-                u64 played = current->samplesPlayed;
-                for (;;) {
-                    u32 count = GetAudioSample(movie, left, right, remaining, &statusC);
-                    played += count;
-                    if (statusC == 0) break;
-                    if (statusC == 1) {
-                        remaining -= count;
-                        left += count;
-                        if (right) right += count;
-                        MovieDecoder* marks = movie->decoder;
-                        marks->marks[marks->markWrite] = played;
-                        if (++marks->markWrite >= 5) marks->markWrite = 0;
-                        continue;
-                    }
-                    memset(left, 0, remaining * 2);
-                    if (right) memset(right, 0, remaining * 2);
-                    break;
-                }
+                _fillStreamChannel(movie, current->samplesPlayed, samples, decoder->rightBuffer + samples, decoder->leftBuffer + samples);
                 current->samplesPlayed += samples;
             } else {
                 MovieDecoder* current = movie->decoder;
-                u32 remaining = samples;
-                s16* left = decoder->leftBuffer + samples;
-                s16* right = 0;
-                u64 played = current->samplesPlayed;
-                for (;;) {
-                    u32 count = GetAudioSample(movie, left, right, remaining, &statusD);
-                    played += count;
-                    if (statusD == 0) break;
-                    if (statusD == 1) {
-                        remaining -= count;
-                        left += count;
-                        if (right) right += count;
-                        MovieDecoder* marks = movie->decoder;
-                        marks->marks[marks->markWrite] = played;
-                        if (++marks->markWrite >= 5) marks->markWrite = 0;
-                        continue;
-                    }
-                    memset(left, 0, remaining * 2);
-                    if (right) memset(right, 0, remaining * 2);
-                    break;
-                }
+                _fillStreamChannel(movie, current->samplesPlayed, samples, 0, decoder->leftBuffer + samples);
                 current->samplesPlayed += samples;
             }
             u32 bytes = samples * 2;
