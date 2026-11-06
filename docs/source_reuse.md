@@ -258,6 +258,15 @@ commit `89850639d731ec080c12cb0bc8d7ab2ea3880c3a` (CC0-1.0). It restores
 the retail capacity of 4,096 macro records and retains the original function
 emission metadata. GXXE01 uses this override; the vendor submodule is unchanged.
 
+`getCrossPoint` in `src/game/pxdvs/app/flashmenu/vecGraph.cpp` uses the
+rotation structure from XD commit
+`f39426745384c10876383ed909c3fbc84f6e3a8b`, checked against retail's fused
+operations and signed halfword interpolation. Explicit compiler intrinsics
+preserve which product rounds before each fused operation; reassociation can
+change the stored clipping coordinates. Finite differential execution of the
+complete retail and candidate instruction streams agrees on all ordered writes
+in 206 cases. The function remains partially matching, with no exact-byte gain.
+
 ## Colosseum license notice
 
 ```text

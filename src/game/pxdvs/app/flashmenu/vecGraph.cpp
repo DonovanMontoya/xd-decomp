@@ -233,18 +233,22 @@ extern "C" void vectroGraphSetBlendMode(s32 src, s32 dst) {
 }
 
 void getCrossPoint(long column,short y,short x1,short x2,short originX,short originY,VEC_GRAPH_DATA* data) {
-    s32 dy = y - originX;
-    s32 dx1 = x1 - originY;
-    s32 dx2 = x2 - originY;
-    f32 sine = data->sinAngle;
+    s32 dy0 = x1 - originY;
+    s32 dy1 = x2 - originY;
+    s32 dx = y - originX;
     f32 cosine = data->cosAngle;
-    vecRect[0] = cosine * dy - sine * dx1;
-    vecRect[1] = sine * dy + cosine * dx1;
-    vecRect[2] = cosine * dy - sine * dx2;
-    vecRect[3] = sine * dy + cosine * dx2;
-    vecRect[6] = vecRect[2] > vecRect[0] ? vecRect[2] - vecRect[0] : vecRect[0] - vecRect[2];
-    vecRect[7] = vecRect[3] > vecRect[1] ? vecRect[3] - vecRect[1] : vecRect[1] - vecRect[3];
-    if (vecRect[6] == 0 || vecRect[7] == 0) {
+    s16 leftX = __fmsubs(cosine, (f32)dx, data->sinAngle * (f32)dy0);
+    s16 leftY = __fmadds(data->sinAngle, (f32)dx, cosine * (f32)dy0);
+    s16 rightX = __fmsubs(cosine, (f32)dx, data->sinAngle * (f32)dy1);
+    s16 rightY = __fmadds(data->sinAngle, (f32)dx, cosine * (f32)dy1);
+    vecRect[0] = leftX;
+    vecRect[1] = leftY;
+    vecRect[2] = rightX;
+    vecRect[3] = rightY;
+    vecRect[6] = rightX > leftX ? rightX - leftX : leftX - rightX;
+    s16 height = vecRect[3] > vecRect[1] ? vecRect[3] - vecRect[1] : vecRect[1] - vecRect[3];
+    vecRect[7] = height;
+    if (vecRect[6] == 0 || height == 0) {
         s16 value = vecRect[0] + originX;
         for (s32 i=0;i<256;i++) data->crossPoints[i][column] = value;
     } else {
@@ -252,7 +256,7 @@ void getCrossPoint(long column,short y,short x1,short x2,short originX,short ori
             s16 position = i + data->originY - originY;
             s16 distance = position > vecRect[1] ? position - vecRect[1] : vecRect[1] - position;
             f32 fraction = (f32)distance / (f32)vecRect[7];
-            s16 value;
+            s32 value;
             if (vecRect[0] < vecRect[2]) {
                 f32 interpolated = (f32)vecRect[6] * fraction + (f32)vecRect[0];
                 value = interpolated;
