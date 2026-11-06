@@ -9,7 +9,10 @@
 #include "game/maximum/GSAPI/baselib/mobj.h"
 #include "game/maximum/GSAPI/baselib/pobj.h"
 static inline f64 shadow_fabs(f64 x) { return __fabs(x); }
-#define HSD_ASSERT(line,expr) ((expr)?(void)0:__assert("shadow.c",line,#expr))
+static const char shadowDiagnosticSource[] = "shadow.c";
+static const char shadowPositionCondition[] = "position";
+static const char viewingRectPositiveArgumentCondition[] = "a > 0.0F";
+#define HSD_ASSERT(line,expr) ((expr)?(void)0:__assert(shadowDiagnosticSource,line,#expr))
 double atan2(double,double);
 static inline int normalize_check(Vec3* src,Vec3* dst) {
     if(!src || !dst) return -1;
@@ -404,13 +407,6 @@ int HSD_ViewingRectCheck(HSD_ViewingRect* rect)
     return !rect->invalid && rect->top > rect->bottom && rect->right > rect->left;
 }
 
-/* Stripped from the DOL; its assertion string still occupies .rodata. */
-void HSD_ViewingRectScale(HSD_ViewingRect* rect, float a)
-{
-    HSD_ASSERT(860, a > 0.0F);
-    rect->top *= a;
-}
-
 void HSD_ViewingRectAddRect(HSD_ViewingRect* rect, Vec3* position, float top,
                             float bottom, float left, float right)
 {
@@ -418,7 +414,7 @@ void HSD_ViewingRectAddRect(HSD_ViewingRect* rect, Vec3* position, float top,
     Vec3 o2p, e2p;
 
     HSD_ASSERT(878, rect);
-    HSD_ASSERT(879, position);
+    ((position)?(void)0:__assert(shadowDiagnosticSource,879,shadowPositionCondition));
     if(rect->invalid) return;
 
     VECSubtract((Vec*)position, (Vec*)&rect->origin, (Vec*)&o2p);

@@ -1,3 +1,5 @@
+#pragma defer_codegen on
+// MWCC emits deferred definitions in reverse order; retain the order below.
 #include <global.h>
 #pragma dont_inline on
 #pragma force_active on
@@ -6,7 +8,13 @@ static u8 pokecolo_DVDETHMode;
 static s32 _RomVer;
 static u64 _frameTime;
 static f32 _resettimer;
-static s32 _pokecoloCurrentLanguage;
+extern "C" {
+u8 pokecoloWaitVSync;
+u32 pokecoloFrameCounter;
+void *pokecoloGappThreadHandle,*pokecoloGappPadReadHandle,*pokecoloGappGBAReadHandle,*pokecoloGappMainDeamonHandle,*pokecoloGappRenderHandle,*pokecoloGappAntiActionReplayHandle;
+u8 __pokecolo_renderXluc = 1;
+}
+
 static void* _getSaveSystemDataPtr();
 extern "C" {
 void* savedataBiosGetNowSavedataPtr();
@@ -52,106 +60,36 @@ u8 menuFieldIsOpen();
 u8 peopleIsBlock();
 void peopleDaemon(unsigned long,unsigned long);
 void peopleUpdateShadow();
-u8 pokecoloIsDVDETHMode(){return pokecolo_DVDETHMode;}
-void fn_8005C068(s32 language){_pokecoloCurrentLanguage=language;}
-s32 pokecoloGetLanguage(){if(_pokecoloCurrentLanguage==0)return 2;return _pokecoloCurrentLanguage;}
-void pokecoloStartCountPlayTime(u8 active){__pokecolo_CountPlayTime=active;}
-void pokecoloSetPlayTime(f64 value){void* save=_getSaveSystemDataPtr();if(save)gamedatasaveBiosSetPlaytime(save,value);}
-f64 pokecoloGetPlayTime(){void* save=_getSaveSystemDataPtr();if(save)return gamedatasaveBiosGetPlaytime(save);return 0.0;}
-u32 pokecoloGetPlayTimeValue(){return (u32)pokecoloGetPlayTime();}
-s32 pokecoloGetCountryCode(){return 1;}
-s32 pokecoloGetRomVersion(){return _RomVer;}
-void pokecoloInitRomVersion(){_RomVer=0;}
-f64 pokecoloGetFrameTime(){return ((f32)_frameTime/1000.0f)/1000.0f;}
-void pokecoloCheckDiskTray(){
-    if(menuIsCheck(0x2a)){
-        if(!pauseIsPause())pauseOn();
-    }else{
-        switch(GSfsysGetDriveStatus()){
-        case 3:case 4:case 5:case 6:case 11:
-            if(!pauseIsPause())pauseOn();
-            break;
-        default:
-            if(pauseIsPause())pauseOff();
-            break;
-        }
-    }
+u8 pokecoloIsDVDETHMode();
+void fn_8005C068(s32 language);
+s32 pokecoloGetLanguage();
+void pokecoloStartCountPlayTime(u8 active);
+void pokecoloSetPlayTime(f64 value);
+f64 pokecoloGetPlayTime();
+u32 pokecoloGetPlayTimeValue();
+s32 pokecoloGetCountryCode();
+s32 pokecoloGetRomVersion();
+void pokecoloInitRomVersion();
+f64 pokecoloGetFrameTime();
+void pokecoloCheckDiskTray();
 }
-}
-static void _countPlayTime(){
-    void* save=_getSaveSystemDataPtr();
-    if(save && __pokecolo_CountPlayTime==1 && GSflagGet(0x30d)==0){
-        f64 time=gamedatasaveBiosGetPlaytime(save);
-        f64 elapsed=pokecoloGetFrameTime();
-        time+=elapsed;
-        if(time>=3599940.0)time=3599940.0;
-        gamedatasaveBiosSetPlaytime(save,time);
-    }
-}
-static void* _getSaveSystemDataPtr(){
-    void* save=savedataBiosGetNowSavedataPtr();
-    if(save){
-        void* data=savedataBiosGetGamedataPtr(save);
-        if(data)return gamedatasaveBiosGetPtr(data);
-    }
-    return 0;
-}
-s32 _pokecoloCheckExDisc(){if(pokecoloGetRomVersion()==4)return 1;return 0;}
-static void _pokecoloShutdown(){GSsndQuit();}
-extern "C" s32 fn_8005C8C4(){return 2;}
-extern "C" void fn_8005C8CC(){fn_8005C8EC();}
-extern "C" void fn_8005C8EC(){GSfsysReadWait(10);}
-static void _setSystemVars(){}
-static void _mainRender(unsigned long,unsigned long){
-    static s32 frame=0;
-    GSgfxRender();
-}
-static void _mainDaemon(unsigned long,unsigned long){
-    dbgMenuGSvtrCaptureUpdate();
-    if(GSvtrIsActive() && !dbgMenuIsOpen()){
-        u32 changed=GSinputButtonsChanged(1);
-        u32 pressed=GSinputButtonsPressed(1);
-        if((pressed&changed&0x40)!=0){
-            if(GSvtrGetState()==2)GSvtrSlowPlay();
-            else if(GSvtrGetState()==4)GSvtrPause();
-            else GSvtrPlay();
-        }
-        changed=GSinputButtonsChanged(1);
-        pressed=GSinputButtonsPressed(1);
-        if((pressed&changed&0x10)!=0)GSvtrSingleStep();
-        changed=GSinputButtonsChanged(1);
-        pressed=GSinputButtonsPressed(1);
-        if((pressed&changed&8)!=0)GSvtrSetInfoDisp(!GSvtrGetInfoDisp(),0);
-    }
-    menuDaemon();GSmsgDaemon();_countPlayTime();
-}
-static void _mainThreadExec(unsigned long first,unsigned long second){
-    u8 reset=GSgfxResetGetStatus();
-    if((GSinputButtonsPressed(1)&0x1600)==0x1600 && reset!=0){
-        _resettimer+=timeGetLastFrameSec();
-        if(_resettimer>=0.5f)GSgfxReset(0);
-    }else _resettimer=0.0f;
-    GSthreadExecuteAll();
-    if(!menuFieldIsOpen() && !peopleIsBlock())peopleDaemon(first,second);
-    else peopleUpdateShadow();
-}
-static void _mainGBARead(unsigned long,unsigned long){
-    s32 channel=1;
-    do{if(!GSinputIsConnected(channel))gbaCommandKeyRead(channel);++channel;}while(channel<=4);
-}
-static void _mainPadRead(unsigned long,unsigned long){
-    GSinputReadStart();
-    s32 channel=1;
-    do{if(!gbaCommandIsConnected(channel))GSinputRead(channel);++channel;}while(channel<=4);
-    GSinputReadEnd();
-}
+static void _countPlayTime();
+s32 _pokecoloCheckExDisc();
+static void _pokecoloShutdown();
+extern "C" s32 fn_8005C8C4();
+extern "C" void fn_8005C8CC();
+extern "C" void fn_8005C8EC();
+static void _setSystemVars();
+static void _mainRender(unsigned long,unsigned long);
+static void _mainDaemon(unsigned long,unsigned long);
+static void _mainThreadExec(unsigned long first,unsigned long second);
+static void _mainGBARead(unsigned long,unsigned long);
+static void _mainPadRead(unsigned long,unsigned long);
 #pragma force_active reset
 
 #include <libc/string.h>
 extern "C" {
-u8 pokecoloWaitVSync;
-u32 pokecoloFrameCounter;
-void *pokecoloGappThreadHandle,*pokecoloGappPadReadHandle,*pokecoloGappGBAReadHandle,*pokecoloGappMainDeamonHandle,*pokecoloGappRenderHandle,*pokecoloGappAntiActionReplayHandle;
+
 void floorLayerConfig(u32,u32);
 void menuNintendo();
 void floorLayerConfigLoad();
@@ -193,38 +131,9 @@ static const u32 _clearAddress[32]={
     0x883,0x8EA,0x983,0xBEA,0xC83,0xCEA,0xD83,0xEEA,
     0xF83,0x12EA,0x1383,0x13EA,0x1483,0x16EA,0x1783,0x17EA
 };
-static s32 _AntiActionReplayTimer;
-extern "C" void mainAntiActionReplay(unsigned long,unsigned long) {
-    if(_AntiActionReplayTimer==0) {
-        for(u32 i=0;i<32;i+=2) {
-            memset((void *)(0x80000000+_clearAddress[i]+0x15),0,(_clearAddress[i+1]+0x16)-(_clearAddress[i]+0x15));
-        }
-        memset((void *)0x80001801,0,0x17FF);
-        _AntiActionReplayTimer=100;
-    }
-    --_AntiActionReplayTimer;
-}
-static void _pokecoloInit() {
-    floorLayerConfig(0,5);menuNintendo();floorLayerConfigLoad();
-    GSfloorSetData(floordata,*floordata_number);
-    u8 *resource=GSresAllocResource(2,0,2,0);
-    resource[0]=0;resource[1]=0;pokecoloWaitVSync=0;
-    pokecoloSetPlayTime(0.0);pokecoloStartCountPlayTime(0);
-    GSmsgFontOpen(tableResBiosGetResPtr(0));
-    GSmsgOpen(tableResBiosGetResPtr(1));
-    GSdvdSetErrorMsg(0x65,0x66,0x67,0x68,0x69);
-    floorMappingCommonScript();
-    u32 offset=(u32)OSGetTime()&0x7E0;
-    savedataBiosSetNowSavedataPtr(savedataBiosGetSavedataBufferPtr()+offset);
-    savedataCreate(0,0);fightInit();
-    GSflagInit(savedataGetStatus(0,4),savedataGetStatus(0,7),savedataGetStatus(0,5),savedataGetStatus(0,8),savedataGetStatus(0,6),savedataGetStatus(0,9));
-    GSvtrLoadTexture();menuFaceAllocMemory();
-    GSmodelSetMarukageTexture(GSresGetResourceAllGroup(0x1F3A1200));
-    characterInit();cameraInit();lightInit();heroMoveAllInit();peopleInit(0x30);
-    floorFieldCameraInit();sodateyaHeroCallBackInit();reliveHallCallBackInit();esabaHeroCallBackInit();
-    memcardInitialize();floorInit();_setSystemVars();
-    memset((void *)0x80001803,0,0x17FD);
-}
+
+extern "C" void mainAntiActionReplay(unsigned long,unsigned long);
+static void _pokecoloInit();
 
 #include <game/sysvarsPrivate.hpp>
 extern "C" {
@@ -257,6 +166,30 @@ void GSmsgInit(u32,u32);
 extern u8 msgctrlcode[];
 void GSmsgSetCtrlFunc(void *);
 void GSnetworkInit();
+
+#if defined(VERSION_GXXE01)
+static u8 resident_fnt[297488] = {
+#include <game/pokecolo/resident_fnt.inc>
+};
+static u8 common_fnt[1840] = {
+#include <game/pokecolo/common_fnt.inc>
+};
+static u8 common_tbl[96444] = {
+#include <game/pokecolo/common_tbl.inc>
+};
+static u8 system_error_tbl[868] = {
+#include <game/pokecolo/system_error_tbl.inc>
+};
+u8 lbl_8038FBE0[138932] = {
+#include <game/pokecolo/lbl_8038FBE0.inc>
+};
+static u8 debug_menu_fnt[67972] = {
+#include <game/pokecolo/debug_menu_fnt.inc>
+};
+static u8 system_error_fnt[8] = {
+#include <game/pokecolo/system_error_fnt.inc>
+};
+#else
 extern u8 resident_fnt[];
 extern u8 common_fnt[];
 extern u8 common_tbl[];
@@ -264,6 +197,7 @@ extern u8 system_error_fnt[8];
 extern u8 system_error_tbl[];
 extern u8 debug_menu_fnt[];
 extern u8 lbl_8038FBE0[];
+#endif
 void GSvtrInit();
 void GSlensFlareInit();
 void GSmovieInit();
@@ -282,6 +216,113 @@ void GSeffectInitSystem();
 void deckInit();
 void *GSthreadCreate(u32,u32,u32,u32,u32,void (*)());
 void GSgappUpdate();
+void pokecoloMain();
+}
+
+#pragma force_active on
+// Original rodata strings at offsets 0x80, 0x8c, 0xa0, and 0xac.
+static const char pokecoloMainThreadName[] = "mainThread";
+static const char pokecoloAntiActionReplayName[] = "AntiActionReplay";
+static const char pokecoloMainDaemonName[] = "mainDeamon";
+static const char pokecoloDeckRequestPath[] = "debug/_deckrequest.bin";
+#pragma force_active reset
+
+#pragma force_active on
+static void _mainPadRead(unsigned long,unsigned long) {
+    GSinputReadStart();
+    s32 channel=1;
+    do{if(!gbaCommandIsConnected(channel))GSinputRead(channel);++channel;}while(channel<=4);
+    GSinputReadEnd();
+}
+
+static void _mainGBARead(unsigned long,unsigned long) {
+    s32 channel=1;
+    do{if(!GSinputIsConnected(channel))gbaCommandKeyRead(channel);++channel;}while(channel<=4);
+}
+
+static void _mainThreadExec(unsigned long first,unsigned long second) {
+    u8 reset=GSgfxResetGetStatus();
+    if((GSinputButtonsPressed(1)&0x1600)==0x1600 && reset!=0){
+        _resettimer+=timeGetLastFrameSec();
+        if(_resettimer>=0.5f)GSgfxReset(0);
+    }else _resettimer=0.0f;
+    GSthreadExecuteAll();
+    if(!menuFieldIsOpen() && !peopleIsBlock())peopleDaemon(first,second);
+    else peopleUpdateShadow();
+}
+
+static void _mainDaemon(unsigned long,unsigned long) {
+    dbgMenuGSvtrCaptureUpdate();
+    if(GSvtrIsActive() && !dbgMenuIsOpen()){
+        u32 changed=GSinputButtonsChanged(1);
+        u32 pressed=GSinputButtonsPressed(1);
+        if((pressed&changed&0x40)!=0){
+            if(GSvtrGetState()==2)GSvtrSlowPlay();
+            else if(GSvtrGetState()==4)GSvtrPause();
+            else GSvtrPlay();
+        }
+        changed=GSinputButtonsChanged(1);
+        pressed=GSinputButtonsPressed(1);
+        if((pressed&changed&0x10)!=0)GSvtrSingleStep();
+        changed=GSinputButtonsChanged(1);
+        pressed=GSinputButtonsPressed(1);
+        if((pressed&changed&8)!=0)GSvtrSetInfoDisp(!GSvtrGetInfoDisp(),0);
+    }
+    menuDaemon();GSmsgDaemon();_countPlayTime();
+}
+
+static void _mainRender(unsigned long,unsigned long) {
+    static s32 frame=0;
+    GSgfxRender();
+}
+
+// Keep these after the render function static storage in the original SBSS order.
+static s32 _AntiActionReplayTimer;
+static s32 _pokecoloCurrentLanguage;
+
+void mainAntiActionReplay(unsigned long,unsigned long) {
+    if(_AntiActionReplayTimer==0) {
+        for(u32 i=0;i<32;i+=2) {
+            memset((void *)(0x80000000+_clearAddress[i]+0x15),0,(_clearAddress[i+1]+0x16)-(_clearAddress[i]+0x15));
+        }
+        memset((void *)0x80001801,0,0x17FF);
+        _AntiActionReplayTimer=100;
+    }
+    --_AntiActionReplayTimer;
+}
+
+static void _setSystemVars() {}
+
+void fn_8005C8EC() {GSfsysReadWait(10);}
+
+void fn_8005C8CC() {fn_8005C8EC();}
+
+s32 fn_8005C8C4() {return 2;}
+
+static void _pokecoloInit() {
+    floorLayerConfig(0,5);menuNintendo();floorLayerConfigLoad();
+    GSfloorSetData(floordata,*floordata_number);
+    u8 *resource=GSresAllocResource(2,0,2,0);
+    resource[0]=0;resource[1]=0;pokecoloWaitVSync=0;
+    pokecoloSetPlayTime(0.0);pokecoloStartCountPlayTime(0);
+    GSmsgFontOpen(tableResBiosGetResPtr(0));
+    GSmsgOpen(tableResBiosGetResPtr(1));
+    GSdvdSetErrorMsg(0x65,0x66,0x67,0x68,0x69);
+    floorMappingCommonScript();
+    u32 offset=(u32)OSGetTime()&0x7E0;
+    savedataBiosSetNowSavedataPtr(savedataBiosGetSavedataBufferPtr()+offset);
+    savedataCreate(0,0);fightInit();
+    GSflagInit(savedataGetStatus(0,4),savedataGetStatus(0,7),savedataGetStatus(0,5),savedataGetStatus(0,8),savedataGetStatus(0,6),savedataGetStatus(0,9));
+    GSvtrLoadTexture();menuFaceAllocMemory();
+    GSmodelSetMarukageTexture(GSresGetResourceAllGroup(0x1F3A1200));
+    characterInit();cameraInit();lightInit();heroMoveAllInit();peopleInit(0x30);
+    floorFieldCameraInit();sodateyaHeroCallBackInit();reliveHallCallBackInit();esabaHeroCallBackInit();
+    memcardInitialize();floorInit();_setSystemVars();
+    memset((void *)0x80001803,0,0x17FD);
+}
+
+static void _pokecoloShutdown() {GSsndQuit();}
+
 void pokecoloMain() {
     u64 lastTime;
     GSgfxRelocToScratch();
@@ -316,10 +357,10 @@ void pokecoloMain() {
     pokecoloGappRenderHandle=GSgappCreate(1,255,0,_mainRender);GSgappSetName(pokecoloGappRenderHandle,"Render");
     pokecoloGappPadReadHandle=GSgappCreate(1,0,0,_mainPadRead);GSgappSetName(pokecoloGappPadReadHandle,"PADRead");
     pokecoloGappGBAReadHandle=GSgappCreate(1,1,0,_mainGBARead);GSgappSetName(pokecoloGappGBAReadHandle,"GBARead");
-    pokecoloGappThreadHandle=GSgappCreate(1,10,0,_mainThreadExec);GSgappSetName(pokecoloGappThreadHandle,"mainThread");
+    pokecoloGappThreadHandle=GSgappCreate(1,10,0,_mainThreadExec);GSgappSetName(pokecoloGappThreadHandle,pokecoloMainThreadName);
     GSgappSetPauseLevel(pokecoloGappThreadHandle,1);GSvtrRegisterGSgapp(pokecoloGappThreadHandle);
-    pokecoloGappAntiActionReplayHandle=GSgappCreate(1,253,0,mainAntiActionReplay);GSgappSetName(pokecoloGappAntiActionReplayHandle,"AntiActionReplay");
-    pokecoloGappMainDeamonHandle=GSgappCreate(1,254,0,_mainDaemon);GSgappSetName(pokecoloGappMainDeamonHandle,"mainDeamon");
+    pokecoloGappAntiActionReplayHandle=GSgappCreate(1,253,0,mainAntiActionReplay);GSgappSetName(pokecoloGappAntiActionReplayHandle,pokecoloAntiActionReplayName);
+    pokecoloGappMainDeamonHandle=GSgappCreate(1,254,0,_mainDaemon);GSgappSetName(pokecoloGappMainDeamonHandle,pokecoloMainDaemonName);
     GSgfxResetEnable();GSgfxResetSetShutdownCallback(_pokecoloShutdown);fadeInit();GSfilterInitialise(8);GSeffectInitSystem();deckInit();
     GSthreadCreate(0,1000,0x4000,1,1,_pokecoloInit);
     lastTime=OSGetTime();
@@ -329,4 +370,63 @@ void pokecoloMain() {
         lastTime=OSGetTime();++pokecoloFrameCounter;
     }
 }
+
+void pokecoloCheckDiskTray() {
+    if(menuIsCheck(0x2a)){
+        if(!pauseIsPause())pauseOn();
+    }else{
+        switch(GSfsysGetDriveStatus()){
+        case 3:case 4:case 5:case 6:case 11:
+            if(!pauseIsPause())pauseOn();
+            break;
+        default:
+            if(pauseIsPause())pauseOff();
+            break;
+        }
+    }
 }
+
+f64 pokecoloGetFrameTime() {return ((f32)_frameTime/1000.0f)/1000.0f;}
+
+s32 pokecoloGetRomVersion() {return _RomVer;}
+
+void pokecoloInitRomVersion() {_RomVer=0;}
+
+s32 _pokecoloCheckExDisc() {if(pokecoloGetRomVersion()==4)return 1;return 0;}
+
+s32 pokecoloGetCountryCode() {return 1;}
+
+static void* _getSaveSystemDataPtr() {
+    void* save=savedataBiosGetNowSavedataPtr();
+    if(save){
+        void* data=savedataBiosGetGamedataPtr(save);
+        if(data)return gamedatasaveBiosGetPtr(data);
+    }
+    return 0;
+}
+
+static void _countPlayTime() {
+    void* save=_getSaveSystemDataPtr();
+    if(save && __pokecolo_CountPlayTime==1 && GSflagGet(0x30d)==0){
+        f64 time=gamedatasaveBiosGetPlaytime(save);
+        f64 elapsed=pokecoloGetFrameTime();
+        time+=elapsed;
+        if(time>=3599940.0)time=3599940.0;
+        gamedatasaveBiosSetPlaytime(save,time);
+    }
+}
+
+f64 pokecoloGetPlayTime() {void* save=_getSaveSystemDataPtr();if(save)return gamedatasaveBiosGetPlaytime(save);return 0.0;}
+
+u32 pokecoloGetPlayTimeValue() {return (u32)pokecoloGetPlayTime();}
+
+void pokecoloSetPlayTime(f64 value) {void* save=_getSaveSystemDataPtr();if(save)gamedatasaveBiosSetPlaytime(save,value);}
+
+void pokecoloStartCountPlayTime(u8 active) {__pokecolo_CountPlayTime=active;}
+
+s32 pokecoloGetLanguage() {if(_pokecoloCurrentLanguage==0)return 2;return _pokecoloCurrentLanguage;}
+
+void fn_8005C068(s32 language) {_pokecoloCurrentLanguage=language;}
+
+u8 pokecoloIsDVDETHMode() {return pokecolo_DVDETHMode;}
+#pragma force_active reset

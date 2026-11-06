@@ -35,7 +35,8 @@ Flag groups like `cflags_xd_app_balanced`, `cflags_xd_app_fight` (-O4 instead of
 - Battle (`fight*`) and script units: `cflags_xd_app_fight`; script `obj*` units also add `-opt nopeephole -str reuse,nopool,readonly`.
 - gimmick: `-O0,p -inline off -fp_contract off`.
 - Type-effectiveness: append `-opt level=0` after `zokusei.cpp`'s normal `-O4,p` or `zokuseiBios.cpp`'s `-O1,p`. This lowers optimization passes while preserving backend defaults; `-O0,p` produces different scheduling.
-- MetroTRK pieces that were originally assembly may be `asm` functions or `.s` files; elsewhere use real C/C++ only.
+- MetroTRK pieces that were originally assembly may be `asm` functions or `.s` files.
+- The 14 original register-save, stack-switch, and exception-entry routines in `GSthread.cpp`, `GSscratch.cpp`, `baselib/debug.cpp`, and `GSgfxM/halt.cpp` may retain inline assembly. Use real C/C++ for all other game code.
 
 Find a new unit's recipe early using its trivial functions.
 

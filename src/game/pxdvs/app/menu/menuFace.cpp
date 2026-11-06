@@ -13,8 +13,25 @@ static s32 _menuFaceAddList(u16,FacePokemonGetter,void*);
 static void _menuFaceLoadCallBack(s32,void*,s32);
 static s32 _unloadTexture(void*,u32,u32);
 static u16 _menuFaceGetIDSub(Pokemon*,u8,s8);
+static s32 _menuFaceGetListNum();
+static s32 _menuFaceSearchList(u16 face);
+static s32 _unloadTexture(void* texture,u32,u32);
+
+static u16 _menuFaceGetIDSub(Pokemon* pokemon,u8 form,s8 rareOverride);
+
+static s32 _menuFaceAddList(u16 face,FacePokemonGetter getter,void* context);
+
+static void _menuFaceLoadCallBack(s32,void*,s32 input);
+
+static s32 _menuFaceDispFromID3(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face,GSivec2* size,GSivec2* position);
+static s32 _menuFaceDispFromID(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face,GSvec2* position);
 extern "C" {
-s32 menuFaceLoadFightPokemon(u32 slot,FacePokemonGetter getter,void* context){
+
+s32 menuFaceDispFromID(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face);
+
+}
+
+extern "C" s32 menuFaceLoadFightPokemon(u32 slot,FacePokemonGetter getter,void* context){
     Pokemon* pokemon=(Pokemon*)pokemonGetStatus((Pokemon*)slot,0,0xcc,0);
     u8 form=pokemonGetFightPokemonDeoxysSel(slot);
     u16 face=menuFaceGetID2(pokemon,form);
@@ -30,9 +47,12 @@ s32 menuFaceLoadFightPokemon(u32 slot,FacePokemonGetter getter,void* context){
     }
     return 1;
 }
-void menuFaceLoad_Tool(Pokemon* pokemon,FacePokemonGetter getter,void* context){menuFaceLoadFromID_Tool(menuFaceGetID2(pokemon,0),getter,context);}
-void menuFaceLoad(Pokemon* pokemon,FacePokemonGetter getter,void* context){menuFaceLoadFromID(menuFaceGetID(pokemon),getter,context);}
-s32 menuFaceLoadFromID_Tool(u16 face,FacePokemonGetter getter,void* context){
+
+extern "C" void menuFaceLoad_Tool(Pokemon* pokemon,FacePokemonGetter getter,void* context){menuFaceLoadFromID_Tool(menuFaceGetID2(pokemon,0),getter,context);}
+
+extern "C" void menuFaceLoad(Pokemon* pokemon,FacePokemonGetter getter,void* context){menuFaceLoadFromID(menuFaceGetID(pokemon),getter,context);}
+
+extern "C" s32 menuFaceLoadFromID_Tool(u16 face,FacePokemonGetter getter,void* context){
     u32 resource;
     for(;;){
         if(!face){
@@ -61,7 +81,8 @@ s32 menuFaceLoadFromID_Tool(u16 face,FacePokemonGetter getter,void* context){
         return 1;
     }
 }
-s32 menuFaceLoadFromID(u16 face,FacePokemonGetter getter,void* context){
+
+extern "C" s32 menuFaceLoadFromID(u16 face,FacePokemonGetter getter,void* context){
     u32 resource;
     for(;;){
         if(!face){
@@ -90,44 +111,100 @@ s32 menuFaceLoadFromID(u16 face,FacePokemonGetter getter,void* context){
         return 1;
     }
 }
-bool menuFaceCheckLoading(){
+
+extern "C" bool menuFaceCheckLoading(){
     s32 count=_menuFaceGetListNum();
     FaceListEntry* entry=pMenuFaceList;
     for(s32 i=0;i<count;++entry,++i)if(entry->state==1)return true;
     return false;
 }
-u32 menuFaceGetTexID(u16 face){return menuFaceBiosGetTexID(face);}
-u16 menuFaceGetID3(Pokemon* pokemon,u8 form,s8 rare){return _menuFaceGetIDSub(pokemon,form,rare);}
-u16 menuFaceGetID2(Pokemon* pokemon,u8 form){return _menuFaceGetIDSub(pokemon,form,-1);}
-u16 menuFaceGetID(Pokemon* pokemon){return _menuFaceGetIDSub(pokemon,_testType,-1);}
-s8 menuFaceSearchEnable(u16 face){s32 index=_menuFaceSearchList(face);if(index<0)return -1;return pMenuFaceList[index].state==2;}
-void menuFaceAllocMemory(){}
-void menuFaceInit(s32 count){
-    _menuFaceListNum=count;
-    if(!pMenuFaceList)pMenuFaceList=(FaceListEntry*)GSmemAlloc(count*sizeof(FaceListEntry));
-    memset(pMenuFaceList,0,_menuFaceListNum*sizeof(FaceListEntry));
-    if(!pMenuFaceTexList)pMenuFaceTexList=(FaceTextureEntry*)GSmemAlloc(_menuFaceListNum*sizeof(FaceTextureEntry));
-    memset(pMenuFaceTexList,0,_menuFaceListNum*sizeof(FaceTextureEntry));
-    for(s32 i=0;i<_menuFaceListNum;++i){
-        if(!pMenuFaceTexList[i].data)pMenuFaceTexList[i].data=GSmemAllocAlign(0x1f60,0x20);
-        memset(pMenuFaceTexList[i].data,0,0x1f60);
-        pMenuFaceList[i].slot=(s8)i;
+
+static void _menuFaceLoadCallBack(s32,void*,s32 input){
+    FaceListEntry* entry;
+    u16 face=input;
+    u32 resource=menuFaceGetTexID(face);
+    s32 index=_menuFaceSearchList(face);
+    if(index<0){if(resource)GSresFreeResource(0x5c0,resource);}
+    else{
+        entry=&pMenuFaceList[index];
+        FaceTextureFile* texture=(FaceTextureFile*)GSresGetResource(0x5c0,resource);
+        texture->absolutePointers=0;
+        texture->pixels-=(u32)texture;
+        if(texture->format<=1)texture->palette-=(u32)texture;
+        memcpy(pMenuFaceTexList[entry->slot].data,texture,0x1f60);
+        GSresFreeResource(0x5c0,resource);
+        void* loaded=GStextureLoad(pMenuFaceTexList[entry->slot].data);
+        GSresRegisterResource(loaded,0x5c0,resource,_unloadTexture);
+        DCFlushRange(loaded,0x1f60);
+        GXInvalidateTexAll();
+        entry->state=2;
+        if(_menuFaceLoadCallBackFlag)menuFaceLoadFromID(0,entry->getter,entry->context);
+        else menuFaceLoadFromID_Tool(0,entry->getter,entry->context);
     }
 }
-}
-static s32 _menuFaceGetListNum(){
-    FaceListEntry* entry=pMenuFaceList;
-    s32 i=0;
-    for(;i<_menuFaceListNum;++entry,++i)if(!entry->resource)break;
-    return i;
-}
-static s32 _menuFaceSearchList(u16 face){
+
+extern "C" s32 menuFaceDisp(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,Pokemon* pokemon){return menuFaceDispFromID(window,sprite,menuFaceGetID(pokemon));}
+
+extern "C" s32 menuFaceDispFromID3(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face,GSivec2* size,GSivec2* position){return _menuFaceDispFromID3(window,sprite,face,size,position);}
+
+extern "C" s32 menuFaceDispFromID2(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face,GSvec2* position){return _menuFaceDispFromID(window,sprite,face,position);}
+
+extern "C" s32 menuFaceDispFromID(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face){return _menuFaceDispFromID(window,sprite,face,0);}
+
+static s32 _menuFaceDispFromID3(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face,GSivec2* size,GSivec2* position){
+    if(menuFaceSearchEnable(face)!=1)return 0;
     u32 resource=menuFaceGetTexID(face);
-    FaceListEntry* entry=pMenuFaceList;
-    for(s32 i=0;i<_menuFaceListNum;++entry,++i)if(resource==entry->resource)return i;
-    return -1;
+    if(!resource)return 0;
+    void* texture=GSresGetResourceAllGroup(resource);
+    if(!texture)return 0;
+    sizedPortraitSprite=*sprite;
+    sizedPortraitSprite.resource=resource;
+    if(position){sizedPortraitSprite.x=position->x;sizedPortraitSprite.y=position->y;}
+    else{sizedPortraitSprite.x=0;sizedPortraitSprite.y=0;}
+    sizedPortraitSprite.sourceX=0;sizedPortraitSprite.sourceY=0;
+    sizedPortraitSprite.sourceWidth=42;sizedPortraitSprite.sourceHeight=42;
+    if(menuFaceBiosGetRareFlag(face) && GStextureGetYsize(texture)>42)sizedPortraitSprite.sourceY=42;
+    sizedPortraitSprite.width=size->x;sizedPortraitSprite.height=size->y;
+    if(size->x<0 && GStextureGetXsize(texture)>42){
+        sizedPortraitSprite.sourceX=42;
+        s32 width=size->x;
+        if(width<0)width=-width;
+        sizedPortraitSprite.width=width;
+    }
+    winSpriteDrawTexture(window,&sizedPortraitSprite);
+    return 1;
 }
-static s32 _unloadTexture(void* texture,u32,u32){GStextureFree(texture);return 1;}
+
+static s32 _menuFaceDispFromID(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face,GSvec2* position){
+    if(menuFaceSearchEnable(face)!=1)return 0;
+    u32 resource=menuFaceGetTexID(face);
+    if(!resource)return 0;
+    void* texture=GSresGetResourceAllGroup(resource);
+    if(!texture)return 0;
+    portraitSprite=*sprite;
+    portraitSprite.resource=resource;
+    if(position){portraitSprite.x=position->x;portraitSprite.y=position->y;}
+    else{portraitSprite.x=0;portraitSprite.y=0;}
+    portraitSprite.sourceX=0;portraitSprite.sourceY=0;
+    portraitSprite.sourceWidth=42;portraitSprite.sourceHeight=42;
+    if(menuFaceBiosGetRareFlag(face) && GStextureGetYsize(texture)>42)portraitSprite.sourceY=42;
+    if(portraitSprite.width<0 && GStextureGetXsize(texture)>42){
+        s32 width=portraitSprite.width;
+        portraitSprite.sourceX=42;
+        if(width<0)width=-width;
+        portraitSprite.width=width;
+    }
+    winSpriteDrawTexture(window,&portraitSprite);
+    return 1;
+}
+
+extern "C" u32 menuFaceGetTexID(u16 face){return menuFaceBiosGetTexID(face);}
+
+extern "C" u16 menuFaceGetID3(Pokemon* pokemon,u8 form,s8 rare){return _menuFaceGetIDSub(pokemon,form,rare);}
+
+extern "C" u16 menuFaceGetID2(Pokemon* pokemon,u8 form){return _menuFaceGetIDSub(pokemon,form,-1);}
+
+extern "C" u16 menuFaceGetID(Pokemon* pokemon){return _menuFaceGetIDSub(pokemon,_testType,-1);}
 
 static u16 _menuFaceGetIDSub(Pokemon* pokemon,u8 form,s8 rareOverride){
     static u16 unknown_face_id_tbl[28][2]={
@@ -165,6 +242,8 @@ static u16 _menuFaceGetIDSub(Pokemon* pokemon,u8 form,s8 rareOverride){
     if(rare==0){return pokemonGetStatus(0,species,0x5b,0);}
     else{return pokemonGetStatus(0,species,0x5b,1);}
 }
+
+extern "C" s8 menuFaceSearchEnable(u16 face){s32 index=_menuFaceSearchList(face);if(index<0)return -1;return pMenuFaceList[index].state==2;}
 
 static s32 _menuFaceAddList(u16 face,FacePokemonGetter getter,void* context){
     u32 resource=menuFaceGetTexID(face);
@@ -211,78 +290,33 @@ static s32 _menuFaceAddList(u16 face,FacePokemonGetter getter,void* context){
     return index;
 }
 
-static void _menuFaceLoadCallBack(s32,void*,s32 input){
-    FaceListEntry* entry;
-    u16 face=input;
+static s32 _menuFaceGetListNum(){
+    FaceListEntry* entry=pMenuFaceList;
+    s32 i=0;
+    for(;i<_menuFaceListNum;++entry,++i)if(!entry->resource)break;
+    return i;
+}
+
+static s32 _menuFaceSearchList(u16 face){
     u32 resource=menuFaceGetTexID(face);
-    s32 index=_menuFaceSearchList(face);
-    if(index<0){if(resource)GSresFreeResource(0x5c0,resource);}
-    else{
-        entry=&pMenuFaceList[index];
-        FaceTextureFile* texture=(FaceTextureFile*)GSresGetResource(0x5c0,resource);
-        texture->absolutePointers=0;
-        texture->pixels-=(u32)texture;
-        if(texture->format<=1)texture->palette-=(u32)texture;
-        memcpy(pMenuFaceTexList[entry->slot].data,texture,0x1f60);
-        GSresFreeResource(0x5c0,resource);
-        void* loaded=GStextureLoad(pMenuFaceTexList[entry->slot].data);
-        GSresRegisterResource(loaded,0x5c0,resource,_unloadTexture);
-        DCFlushRange(loaded,0x1f60);
-        GXInvalidateTexAll();
-        entry->state=2;
-        if(_menuFaceLoadCallBackFlag)menuFaceLoadFromID(0,entry->getter,entry->context);
-        else menuFaceLoadFromID_Tool(0,entry->getter,entry->context);
+    FaceListEntry* entry=pMenuFaceList;
+    for(s32 i=0;i<_menuFaceListNum;++entry,++i)if(resource==entry->resource)return i;
+    return -1;
+}
+
+extern "C" void menuFaceAllocMemory(){}
+
+extern "C" void menuFaceInit(s32 count){
+    _menuFaceListNum=count;
+    if(!pMenuFaceList)pMenuFaceList=(FaceListEntry*)GSmemAlloc(count*sizeof(FaceListEntry));
+    memset(pMenuFaceList,0,_menuFaceListNum*sizeof(FaceListEntry));
+    if(!pMenuFaceTexList)pMenuFaceTexList=(FaceTextureEntry*)GSmemAlloc(_menuFaceListNum*sizeof(FaceTextureEntry));
+    memset(pMenuFaceTexList,0,_menuFaceListNum*sizeof(FaceTextureEntry));
+    for(s32 i=0;i<_menuFaceListNum;++i){
+        if(!pMenuFaceTexList[i].data)pMenuFaceTexList[i].data=GSmemAllocAlign(0x1f60,0x20);
+        memset(pMenuFaceTexList[i].data,0,0x1f60);
+        pMenuFaceList[i].slot=(s8)i;
     }
 }
 
-static s32 _menuFaceDispFromID3(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face,GSivec2* size,GSivec2* position){
-    if(menuFaceSearchEnable(face)!=1)return 0;
-    u32 resource=menuFaceGetTexID(face);
-    if(!resource)return 0;
-    void* texture=GSresGetResourceAllGroup(resource);
-    if(!texture)return 0;
-    sizedPortraitSprite=*sprite;
-    sizedPortraitSprite.resource=resource;
-    if(position){sizedPortraitSprite.x=position->x;sizedPortraitSprite.y=position->y;}
-    else{sizedPortraitSprite.x=0;sizedPortraitSprite.y=0;}
-    sizedPortraitSprite.sourceX=0;sizedPortraitSprite.sourceY=0;
-    sizedPortraitSprite.sourceWidth=42;sizedPortraitSprite.sourceHeight=42;
-    if(menuFaceBiosGetRareFlag(face) && GStextureGetYsize(texture)>42)sizedPortraitSprite.sourceY=42;
-    sizedPortraitSprite.width=size->x;sizedPortraitSprite.height=size->y;
-    if(size->x<0 && GStextureGetXsize(texture)>42){
-        sizedPortraitSprite.sourceX=42;
-        s32 width=size->x;
-        if(width<0)width=-width;
-        sizedPortraitSprite.width=width;
-    }
-    winSpriteDrawTexture(window,&sizedPortraitSprite);
-    return 1;
-}
-static s32 _menuFaceDispFromID(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face,GSvec2* position){
-    if(menuFaceSearchEnable(face)!=1)return 0;
-    u32 resource=menuFaceGetTexID(face);
-    if(!resource)return 0;
-    void* texture=GSresGetResourceAllGroup(resource);
-    if(!texture)return 0;
-    portraitSprite=*sprite;
-    portraitSprite.resource=resource;
-    if(position){portraitSprite.x=position->x;portraitSprite.y=position->y;}
-    else{portraitSprite.x=0;portraitSprite.y=0;}
-    portraitSprite.sourceX=0;portraitSprite.sourceY=0;
-    portraitSprite.sourceWidth=42;portraitSprite.sourceHeight=42;
-    if(menuFaceBiosGetRareFlag(face) && GStextureGetYsize(texture)>42)portraitSprite.sourceY=42;
-    if(portraitSprite.width<0 && GStextureGetXsize(texture)>42){
-        s32 width=portraitSprite.width;
-        portraitSprite.sourceX=42;
-        if(width<0)width=-width;
-        portraitSprite.width=width;
-    }
-    winSpriteDrawTexture(window,&portraitSprite);
-    return 1;
-}
-extern "C" {
-s32 menuFaceDispFromID3(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face,GSivec2* size,GSivec2* position){return _menuFaceDispFromID3(window,sprite,face,size,position);}
-s32 menuFaceDispFromID2(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face,GSvec2* position){return _menuFaceDispFromID(window,sprite,face,position);}
-s32 menuFaceDispFromID(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,u16 face){return _menuFaceDispFromID(window,sprite,face,0);}
-s32 menuFaceDisp(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite,Pokemon* pokemon){return menuFaceDispFromID(window,sprite,menuFaceGetID(pokemon));}
-}
+static s32 _unloadTexture(void* texture,u32,u32){GStextureFree(texture);return 1;}

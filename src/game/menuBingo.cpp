@@ -355,7 +355,7 @@ s8 fadeCheck(s32);
 u16 fadeGetType(void);
 void fadeSet(s32 type, f32 time);
 void* menuSpriteBiosGetPtr(u32 id);
-u16 windowGetKeyRepeat(void);
+u32 windowGetKeyRepeat(void);
 u16 windowGetKeyTrg(void);
 void menuPlaySe(s32 menu, s32 se);
 u8 winSeqCheckMove(s32 menuID);
@@ -1447,7 +1447,7 @@ static inline int openPanel(BingoPanel* panels, int c) {
 }
 
 s32 menuBingoSheetBtn(tagWINDOW_WORK* w) {
-    u16 rep = windowGetKeyRepeat();
+    u32 rep = windowGetKeyRepeat();
     u16 trg = windowGetKeyTrg();
     if (gBingo.f108 != 0) return 0;
     switch (gBingo.f144) {
@@ -1572,12 +1572,12 @@ s32 menuBingoSheetBtn(tagWINDOW_WORK* w) {
         int cnt = countPokemon();
         if (trg & 0x10) {
             gBingo.f124 = -2;
-        } else if (rep & 1) {
+        } else if ((u16)rep & 1) {
             if (gBingo.f12c != 0) {
                 gBingo.f12c = gBingo.f12c - 1;
                 menuPlaySe(w->menuID, 1);
             }
-        } else if (rep & 2) {
+        } else if ((u16)rep & 2) {
             if (gBingo.f12c < cnt - 1) {
                 gBingo.f12c = gBingo.f12c + 1;
                 menuPlaySe(w->menuID, 1);
@@ -1652,12 +1652,12 @@ s32 menuBingoSheetBtn(tagWINDOW_WORK* w) {
         } else if (trg & 0x20) {
             gBingo.f144 = 7;
             gBingo.f124 = -1;
-        } else if (rep & 1) {
+        } else if ((u16)rep & 1) {
             if (gBingo.f12c != 0) {
                 menuPlaySe(w->menuID, 1);
                 gBingo.f12c = gBingo.f12c - 1;
             }
-        } else if (rep & 2) {
+        } else if ((u16)rep & 2) {
             if (gBingo.f12c < cnt - 1) {
                 menuPlaySe(w->menuID, 1);
                 gBingo.f12c = gBingo.f12c + 1;
@@ -1723,14 +1723,14 @@ s32 menuBingoSheetCur(tagWINDOW_WORK* w) {
         return 0;
     }
     int pos = w->cursor;
-    u16 rep = windowGetKeyRepeat();
-    if (rep & 1) {
+    u32 rep = windowGetKeyRepeat();
+    if ((u16)rep & 1) {
         pos -= 4;
-    } else if (rep & 2) {
+    } else if ((u16)rep & 2) {
         pos += 4;
-    } else if (rep & 4) {
+    } else if ((u16)rep & 4) {
         pos -= 1;
-    } else if (rep & 8) {
+    } else if ((u16)rep & 8) {
         pos += 1;
     }
     if (gBingo.canMove(pos) || gBingo.flagAt(pos) != 0 || gBingo.noPanelFlagged()) {

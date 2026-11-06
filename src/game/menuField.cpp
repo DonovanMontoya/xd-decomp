@@ -1,6 +1,6 @@
 #include <game/menuPcBoxPokemonLayout.hpp>
 extern "C" {u32 GSflagGet(u32);u32 GSmsgGetRect(u32);void GSmsgPrint2(s32,s16,s16,u32,u32);f32 timeGetLastFrameSec();f32 menuGetLastTime();double sin(double);void winAnimeCursor(tagWINDOW_WORK*,tagSPRITE_WORK*);void winSetSequence(void*,s32);void winSpriteSetDisp(tagSPRITE_WORK*,s32);void winSeqSetMenu(s32,s32);s32 pokecoloGetRomVersion();}
-static f32 _fieldMenuTimer;static f32 _menuFieldCursorAngle;static u8 _openFieldMenu;static u32 _soundEnvID;static s32 _soundEnvVol;
+static u8 _openFieldMenu;static f32 _fieldMenuTimer;static u32 _soundEnvID;static s32 _soundEnvVol;static f32 _menuFieldCursorAngle;
 static f32 _menuFiledAlpha[5];static s32 barcolor=0xC0C0D000;static f32 _cursorSec=0.8f;static f32 _max_alpha=255.0f;static f32 _min_alpha=200.0f;
 static void _menuFieldMenuCursor(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _menuFieldFlashCursor(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _menuFieldCursorCheck(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _menuFieldDrawItemSub(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _animAlpha(long);static s32 _menuFieldCheckCursor(long);static u8 _menuFieldCheckPDA();
 extern "C" void menuFieldDrawItem2(tagWINDOW_WORK *arg0,tagSPRITE_WORK *arg1) {
@@ -222,6 +222,32 @@ extern "C" s32 menuFieldMainCtrl(tagWINDOW_WORK *arg0) {
 class GSvec {public:f32 x,y,z;GSvec(){}};
 struct FieldEvent {GSvec points[3];u8 pad24[12];u16 script;u8 pad32[2];};
 extern "C" {u8 GSgfxVideoGetVsyncRate();void GSgfxVideoSetLockFrameRate(s32);void GSmodelAllPauseAnimation();void GSmodelAllUnpauseAnimation();void GSsndPopVolumeALL(s32,s32,s32);void GSsndPushVolumeALL(s32,s32,s32,s32);void GSthreadSwitch();s8 fadeCheck(s32);void floorEventExecScript(s32,u16);void floorFieldCameraPause();void floorFieldCameraUnpause();void fn_80233AB4();void heroMoveAddAutoEvent(u32,u32,s32,s32,s32);s32 heroMoveCheckEvent(FieldEvent*);void heroMoveInitEvent();void heroMoveTermEvent();void mailMainReceiveTerminate();void menuClose(s32);void menuCloseCustom(s32,s32,s32);void menuCloseSync(s32,s32);void menuCreateOffScreen(f32,f32);u8 menuGetOffScreenFlag();void menuIntUnderTakerDispIconOff2();void menuIntUnderTakerDispIconRestore2();void menuOffScreenRelease();s32 menuOpen(s32,s32);void menuPdaOpen();u32 menuPocket2GetItemScript(u16);u16 menuPocket2Open(s32,s32*,s32);void menuPokemonOpen(s32,s32,s32);void menuReleaseOffScreen(f32);void menuReport();s32 scriptContinueSave();u32 soundGetEnvID();s32 soundGetVolume();void soundSetVolumeID(u32,s32,s32);}
+
+#pragma defer_codegen on
+static u8 _menuFieldCheckPDA(void) {
+    if (pokecoloGetRomVersion() == 1) {
+        return 1U;
+    }
+    return GSflagGet(0x3F1) != 0U;
+}
+
+static s32 _menuFieldCheckCursor(long arg0) {
+    s32 var_r3;
+
+    if (_menuFieldCheckPDA() != 0) {
+        return arg0;
+    }
+    var_r3 = arg0;
+    if (arg0 >= 1) {
+        var_r3 = arg0 + 1;
+    }
+    return var_r3;
+}
+
+extern "C" u8 menuFieldIsOpen(void) {
+    return _openFieldMenu;
+}
+
 extern "C" s32 menuFieldMain(u8 arg0) {
     FieldEvent events[4];
     FieldEvent *event;
@@ -354,27 +380,4 @@ extern "C" s32 menuFieldMain(u8 arg0) {
     menuIntUnderTakerDispIconRestore2();
     return 0;
 }
-
-extern "C" u8 menuFieldIsOpen(void) {
-    return _openFieldMenu;
-}
-
-static s32 _menuFieldCheckCursor(long arg0) {
-    s32 var_r3;
-
-    if (_menuFieldCheckPDA() != 0) {
-        return arg0;
-    }
-    var_r3 = arg0;
-    if (arg0 >= 1) {
-        var_r3 = arg0 + 1;
-    }
-    return var_r3;
-}
-
-static u8 _menuFieldCheckPDA(void) {
-    if (pokecoloGetRomVersion() == 1) {
-        return 1U;
-    }
-    return GSflagGet(0x3F1) != 0U;
-}
+#pragma defer_codegen off

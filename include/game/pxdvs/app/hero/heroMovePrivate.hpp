@@ -72,6 +72,16 @@ struct HeroMoveWork {
     };
 };
 
+
+typedef char HeroMoveQueuedEvent_size_check[(sizeof(HeroMoveQueuedEvent) == 0x34) ? 1 : -1];
+typedef char HeroMoveQueuedEvent_position_check[(offsetof(HeroMoveQueuedEvent, position) == 0) ? 1 : -1];
+typedef char HeroMoveQueuedEvent_eventID_check[(offsetof(HeroMoveQueuedEvent, eventID) == 0x30) ? 1 : -1];
+typedef char HeroMoveWork_size_check[(sizeof(HeroMoveWork) == 0x660) ? 1 : -1];
+typedef char HeroMoveWork_log_check[(offsetof(HeroMoveWork, leaderLog.log) == 0x8C) ? 1 : -1];
+typedef char HeroMoveWork_events3_check[(offsetof(HeroMoveWork, state.events3) == 0x3C8) ? 1 : -1];
+typedef char HeroMoveWork_events1_check[(offsetof(HeroMoveWork, state.events1) == 0x498) ? 1 : -1];
+typedef char HeroMoveWork_events2_check[(offsetof(HeroMoveWork, state.events2) == 0x568) ? 1 : -1];
+
 struct FOOTWORK {
     f32 v[4];
 };

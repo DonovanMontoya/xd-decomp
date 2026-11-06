@@ -681,7 +681,7 @@ void menuPdaDPMList::SortSub(SnatchSortBuff *buf, long n, bool asc) {
 
 extern "C" {
 void winSpriteSetDisp(tagSPRITE_WORK*,u8);
-u16 windowGetKeyRepeat();
+u32 windowGetKeyRepeat();
 void GSsndPlayNow(u32);
 }
 void menuPdaDPMList::SortCursor(tagWINDOW_WORK*,tagSPRITE_WORK* sprite) {

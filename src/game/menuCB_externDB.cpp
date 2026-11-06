@@ -2973,7 +2973,7 @@ void menuTool_tunaideGCEntry00_Ctrl(MenuDBWindow *arg0) {
                     temp_r29 = _CB.unkB0EC;
                     var_r29 = getDancerQuantity__12CReliveStageFv(getStage__11CReliveHallFl(getPointer__11CReliveHallFv(), temp_r29));
                 }
-                if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+                if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                     switch ((s32) _CB.unkB0F0) {    /* switch 3; irregular */
                     case 0:                         /* switch 3 */
                             switch (_CB.unkB0F8) {  /* switch 4 */
@@ -3136,7 +3136,7 @@ block_95:
                     if (temp_r28 != (s32) _CB.unkB0F8) {
                         menuCB_SE_Play(0x441);
                     }
-                } else if ((s32) (windowGetKeyRepeat() & 2) != 0) {
+                } else if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
                     switch ((s32) _CB.unkB0F0) {    /* switch 8; irregular */
                     case 0:                         /* switch 8 */
                         switch ((s32) _CB.unkB0F8) { /* switch 9; irregular */
@@ -3267,7 +3267,7 @@ block_173:
                         menuCB_SE_Play(0x441);
                     }
                 }
-                if ((s32) (windowGetKeyRepeat() & 4) != 0) {
+                if ((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) {
                     switch ((s32) _CB.unkB0F0) {    /* switch 14; irregular */
                     case 0:                         /* switch 14 */
                         switch (_CB.unkB0F8) {  /* switch 15 */
@@ -3408,7 +3408,7 @@ block_173:
                     if (temp_r28 != (s32) _CB.unkB0F8) {
                         menuCB_SE_Play(0x441);
                     }
-                } else if ((s32) (windowGetKeyRepeat() & 8) != 0) {
+                } else if ((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) {
                     switch ((s32) _CB.unkB0F0) {    /* switch 20; irregular */
                     case 0:                         /* switch 20 */
                         switch (_CB.unkB0F8) {  /* switch 21 */
@@ -4923,7 +4923,7 @@ void menuTool_error00_Button(MenuDBWindow *arg0) {
             return;
         }
         if ((s32) _CB.unkB0DC != -1) {
-            if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+            if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                 if ((s32) _CB.unkB008 == 6) {
                     _CB.unkB008 = _CB.unkB0DC;
                     menuCB_SE_Play(0x10);
@@ -4937,7 +4937,7 @@ void menuTool_error00_Button(MenuDBWindow *arg0) {
                 goto block_11;
             }
 block_11:
-            if (((s32) (windowGetKeyRepeat() & 2) != 0) && ((s32) _CB.unkB008 < (s32) _CB.unkB0DC)) {
+            if (((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) && ((s32) _CB.unkB008 < (s32) _CB.unkB0DC)) {
                 _CB.unkB008 += 1;
                 menuCB_SE_Play(0x10);
                 return;
@@ -5884,14 +5884,14 @@ block_8:
             if ((s32) _CB.unkB10C == 1) {
                 switch ((s32) _CB.unkAFE4) {        /* switch 1; irregular */
                 case 0:                             /* switch 1 */
-                    if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+                    if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                         if ((s32) _CB.unkAFF4 != 0) {
                             _CB.unkAFF4 -= 1;
                         } else {
                             _CB.unkAFF4 = 3;
                         }
                         menuCB_SE_Play(0x10);
-                    } else if ((s32) (windowGetKeyRepeat() & 2) != 0) {
+                    } else if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
                         if ((s32) _CB.unkAFF4 != 3) {
                             _CB.unkAFF4 += 1;
                         } else {
@@ -5901,13 +5901,13 @@ block_8:
                     }
                     break;
                 case 1:                             /* switch 1 */
-                    if ((s32) (windowGetKeyRepeat() & 3) != 0) {
+                    if ((s32) (((u16)windowGetKeyRepeat()) & 3) != 0) {
                         _CB.unkAFF8 ^= 1;
                         menuCB_SE_Play(0x10);
                     }
                     break;
                 case 2:                             /* switch 1 */
-                    if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+                    if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                         *(volatile s32 *)&_CB.unkB000 = *(volatile s32 *)&_CB.unkAFFC;
                         battleField = *(volatile s32 *)&_CB.unkAFFC;
                         if (battleField != 0) {
@@ -5918,7 +5918,7 @@ block_8:
                             menuCB_SE_Play(0x10);
                         }
                     }
-                    if (((s32) (windowGetKeyRepeat() & 2) != 0) && ((s32) _CB.unkB114 == 0)) {
+                    if (((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) && ((s32) _CB.unkB114 == 0)) {
                         *(volatile s32 *)&_CB.unkB000 = *(volatile s32 *)&_CB.unkAFFC;
                         battleField = *(volatile s32 *)&_CB.unkAFFC;
                         if (battleField != 6) {
@@ -5931,14 +5931,14 @@ block_8:
                     }
                     break;
                 case 3:                             /* switch 1 */
-                    if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+                    if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                         if ((s32) _CB.unkB004 != 0) {
                             _CB.unkB004 -= 1;
                         } else {
                             _CB.unkB004 = 5;
                         }
                         menuCB_SE_Play(0x10);
-                    } else if ((s32) (windowGetKeyRepeat() & 2) != 0) {
+                    } else if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
                         if ((s32) _CB.unkB004 != 5) {
                             _CB.unkB004 += 1;
                         } else {
@@ -6009,7 +6009,7 @@ block_8:
                     }
                     _CB.unkB10C = 1;
                     return;
-                } else if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+                } else if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                     _menuCB_TunaideSub_Page_Chenge_Init__Fv();
                     if ((s32) _CB.unkAFE4 == 0) {
                         _CB.unkAFE4 = 5;
@@ -6019,7 +6019,7 @@ block_8:
                     if (((s32) _CB.unkAFE4 == 1) && ((s32) _CB.unkAFF4 >= 2)) {
                         _CB.unkAFE4 = 0;
                     }
-                } else if ((s32) (windowGetKeyRepeat() & 2) != 0) {
+                } else if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
                     _menuCB_TunaideSub_Page_Chenge_Init__Fv();
                     if ((s32) _CB.unkAFE4 == 5) {
                         _CB.unkAFE4 = 0;
@@ -6029,7 +6029,7 @@ block_8:
                     if (((s32) _CB.unkAFE4 == 1) && ((s32) _CB.unkAFF4 >= 2)) {
                         _CB.unkAFE4 = 2;
                     }
-                } else if ((s32) (windowGetKeyRepeat() & 8) != 0) {
+                } else if ((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) {
                     _menuCB_TunaideSub_Page_Chenge_Init__Fv();
                     switch ((s32) _CB.unkAFE4) {    /* switch 4; irregular */
                     case 0:
@@ -6045,7 +6045,7 @@ block_8:
                         _CB.unkAFE4 = 0;
                         return;
                     }
-                } else if ((s32) (windowGetKeyRepeat() & 4) != 0) {
+                } else if ((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) {
                     _menuCB_TunaideSub_Page_Chenge_Init__Fv();
                     switch ((s32) _CB.unkAFE4) {    /* switch 5; irregular */
                     case 0:
@@ -6407,7 +6407,7 @@ void menuTool_imasugu00_Button(MenuDBWindow *arg0) {
             menuCB_SE_Play(0x12);
             return;
         }
-        if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+        if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
             if ((s32) _CB.unkAFD4 == 0) {
                 _CB.unkAFD4 = 2;
             } else {
@@ -6416,7 +6416,7 @@ void menuTool_imasugu00_Button(MenuDBWindow *arg0) {
             menuCB_SE_Play(0x10);
             return;
         }
-        if ((s32) (windowGetKeyRepeat() & 2) != 0) {
+        if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
             if ((s32) _CB.unkAFD4 == 2) {
                 _CB.unkAFD4 = 0;
             } else {
@@ -7875,7 +7875,7 @@ block_17:
                         goto block_27;
                     }
 block_27:
-                    if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+                    if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                         if ((s32) _CB.unkB02C != 0) {
                             _CB.unkB02C -= 1;
                             menuCB_SE_Play(0x10);
@@ -7885,7 +7885,7 @@ block_27:
                             _CB.unkB028 -= 1;
                             menuCB_SE_Play(0x10);
                         }
-                    } else if ((s32) (windowGetKeyRepeat() & 2) != 0) {
+                    } else if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
                         if ((s32) _CB.unkB02C != 0xA) {
                             _CB.unkB02C += 1;
                             menuCB_SE_Play(0x10);
@@ -7895,7 +7895,7 @@ block_27:
                             _CB.unkB028 += 1;
                             menuCB_SE_Play(0x10);
                         }
-                    } else if ((s32) (windowGetKeyRepeat() & 4) != 0) {
+                    } else if ((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) {
                         temp_r0_3 = _CB.unkB028 - 0xA;
                         _ruleCursol2 = temp_r0_3;
                         if (temp_r0_3 <= 0) {
@@ -7904,7 +7904,7 @@ block_27:
                         if ((s32) _ruleCursol2 != (s32) _CB.unkB028) {
                             menuCB_SE_Play(0x10);
                         }
-                    } else if ((s32) (windowGetKeyRepeat() & 8) != 0) {
+                    } else if ((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) {
                         temp_r0_4 = _CB.unkB028 + 0xA;
                         _ruleCursol2 = temp_r0_4;
                         if (temp_r0_4 >= 0x34) {
@@ -7933,17 +7933,17 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        if (((s32) (windowGetKeyRepeat() & 4) != 0) && ((s32) _ruleCursol.unk0 != 0)) {
+                        if (((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) && ((s32) _ruleCursol.unk0 != 0)) {
                             _ruleCursol.unk0 -= 1;
                             menuCB_SE_Play(0x10);
                             return;
                         }
-                        if (((s32) (windowGetKeyRepeat() & 8) != 0) && ((s32) _ruleCursol.unk0 != 5)) {
+                        if (((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) && ((s32) _ruleCursol.unk0 != 5)) {
                             _ruleCursol.unk0 += 1;
                             menuCB_SE_Play(0x10);
                             return;
                         }
-                        if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+                        if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                             switch ((s32) _ruleCursol.unk0) { /* switch 2; irregular */
                             case 0:                 /* switch 2 */
                                 _CB.unk9C78->unk0 += 0x64;
@@ -7976,7 +7976,7 @@ block_27:
                             }
                             _CB.unk9C78->unk4 = (s16) ((s16) _CB.unk9C78->unk2 * 6);
                         }
-                        if ((s32) (windowGetKeyRepeat() & 2) != 0) {
+                        if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
                             switch ((s32) _ruleCursol.unk0) { /* switch 3; irregular */
                             case 0:                 /* switch 3 */
                                 _CB.unk9C78->unk0 -= 0x64;
@@ -8027,17 +8027,17 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        if (((s32) (windowGetKeyRepeat() & 4) != 0) && ((s32) _ruleCursol.unk4 != 0)) {
+                        if (((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) && ((s32) _ruleCursol.unk4 != 0)) {
                             _ruleCursol.unk4 -= 1;
                             menuCB_SE_Play(0x10);
                             return;
                         }
-                        if (((s32) (windowGetKeyRepeat() & 8) != 0) && ((s32) _ruleCursol.unk4 != 2)) {
+                        if (((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) && ((s32) _ruleCursol.unk4 != 2)) {
                             _ruleCursol.unk4 += 1;
                             menuCB_SE_Play(0x10);
                             return;
                         }
-                        if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+                        if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                             switch ((s32) _ruleCursol.unk4) { /* switch 4; irregular */
                             case 0:                 /* switch 4 */
                                 _CB.unk9C78->unk4 += 0x64;
@@ -8058,7 +8058,7 @@ block_27:
                                 _CB.unk9C78->unk4 = temp_r0_6;
                             }
                         }
-                        if ((s32) (windowGetKeyRepeat() & 2) != 0) {
+                        if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
                             switch ((s32) _ruleCursol.unk4) { /* switch 5; irregular */
                             case 0:                 /* switch 5 */
                                 _CB.unk9C78->unk4 -= 0x64;
@@ -8096,7 +8096,7 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        if ((s32) (windowGetKeyRepeat() & 4) != 0) {
+                        if ((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) {
                             if ((s32) _ruleCursol.unk8 != 0) {
                                 _ruleCursol.unk8 -= 1;
                                 menuCB_SE_Play(0x10);
@@ -8106,7 +8106,7 @@ block_27:
                                 _CB.unk9C78->unk14 = (s16) (abs((s16) _CB.unk9C78->unk14) * -1);
                                 return;
                             }
-                        } else if ((s32) (windowGetKeyRepeat() & 8) != 0) {
+                        } else if ((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) {
                             if ((s32) _ruleCursol.unk8 != 2) {
                                 _ruleCursol.unk8 += 1;
                                 menuCB_SE_Play(0x10);
@@ -8118,7 +8118,7 @@ block_27:
                             }
                         } else {
                             temp_r29_3 = (s16) _CB.unk9C78->unk14;
-                            if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+                            if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                                 switch ((s32) _ruleCursol.unk8) { /* switch 6; irregular */
                                 case 0:             /* switch 6 */
                                     _CB.unk9C78->unk14 += 0xA;
@@ -8134,7 +8134,7 @@ block_27:
                                     break;
                                 }
                             }
-                            if ((s32) (windowGetKeyRepeat() & 2) != 0) {
+                            if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
                                 switch ((s32) _ruleCursol.unk8) { /* switch 7; irregular */
                                 case 0:             /* switch 7 */
                                     _CB.unk9C78->unk14 -= 0xA;
@@ -8168,7 +8168,7 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        if ((s32) (windowGetKeyRepeat() & 4) != 0) {
+                        if ((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) {
                             if ((s32) _ruleCursol.unkC != 0) {
                                 _ruleCursol.unkC -= 1;
                                 menuCB_SE_Play(0x10);
@@ -8178,7 +8178,7 @@ block_27:
                                 _CB.unk9C78->unk16 = (s16) (abs((s16) _CB.unk9C78->unk16) * -1);
                                 return;
                             }
-                        } else if ((s32) (windowGetKeyRepeat() & 8) != 0) {
+                        } else if ((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) {
                             if ((s32) _ruleCursol.unkC != 2) {
                                 _ruleCursol.unkC += 1;
                                 menuCB_SE_Play(0x10);
@@ -8190,7 +8190,7 @@ block_27:
                             }
                         } else {
                             temp_r29_4 = (s16) _CB.unk9C78->unk16;
-                            if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+                            if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                                 switch ((s32) _ruleCursol.unkC) { /* switch 8; irregular */
                                 case 0:             /* switch 8 */
                                     _CB.unk9C78->unk16 += 0xA;
@@ -8206,7 +8206,7 @@ block_27:
                                     break;
                                 }
                             }
-                            if ((s32) (windowGetKeyRepeat() & 2) != 0) {
+                            if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
                                 switch ((s32) _ruleCursol.unkC) { /* switch 9; irregular */
                                 case 0:             /* switch 9 */
                                     _CB.unk9C78->unk16 -= 0xA;
@@ -8259,7 +8259,7 @@ block_27:
                                 return;
                             }
                         }
-                        if (((s32) (windowGetKeyRepeat() & 1) != 0) && ((s32) _ruleCursol.unk10 == 0)) {
+                        if (((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) && ((s32) _ruleCursol.unk10 == 0)) {
                             temp_r3_2 = (s16) _CB.unk9C78->unk1A;
                             if (temp_r3_2 != 6) {
                                 _CB.unk9C78->unk1A += 1;
@@ -8267,7 +8267,7 @@ block_27:
                                 return;
                             }
                         }
-                        if (((s32) (windowGetKeyRepeat() & 2) != 0) && ((s32) _ruleCursol.unk10 == 0)) {
+                        if (((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) && ((s32) _ruleCursol.unk10 == 0)) {
                             temp_r3_3 = (s16) _CB.unk9C78->unk1A;
                             if (temp_r3_3 != 1) {
                                 _CB.unk9C78->unk1A -= 1;
@@ -8619,7 +8619,7 @@ block_27:
                                 }
                                 menuCB_SE_Play(0x11);
                             }
-                            if ((s32) (windowGetKeyRepeat() & 1) != 0) {
+                            if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
                                 switch ((s32) _CB.unkB118) { /* switch 12; irregular */
                                 case 0:             /* switch 12 */
                                     if ((s32) _CB.unkB014 != 0) {
@@ -8673,7 +8673,7 @@ block_27:
                                     menuCB_SE_Play(0x10);
                                     return;
                                 }
-                            } else if ((s32) (windowGetKeyRepeat() & 2) != 0) {
+                            } else if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
                                 switch ((s32) _CB.unkB118) { /* switch 13; irregular */
                                 case 0:             /* switch 13 */
                                     _CB.unkB014 += 1;

@@ -1,3 +1,4 @@
+#pragma defer_codegen on
 #include <game/pxdvs/app/menu/windowPrivate.hpp>
 #include <libc/string.h>
 #include <libc/stdarg.h>
@@ -36,229 +37,150 @@ static void _winCalcWindowSize(long,const MENU_ITEM_dd_ *,s16 *,s16 *);
 extern "C" {
 WindowKeyInfo *windowGetKeyInfo2();
 void windowDrawSprite2(s16,s16,s16,s16,s32,tagWINDOW_WORK *,u16,u32,int);
-void *windowGetAllocPtr(tagWINDOW_WORK *window) { if(window!=0)return window->allocation;return 0; }
-void *windowAllocMemory(tagWINDOW_WORK *window,s32 size) {
-    if(window==0)return 0;
-    if(window->allocation!=0) { GSmemFree(window->allocation);window->allocation=0; }
-    if(size<=0)return 0;
-    window->allocation=GSmemAlloc(size);
-    if(window->allocation==0)return 0;
-    if(window->allocation==0){return 0;}else{return window->allocation;}
+void *windowGetAllocPtr(tagWINDOW_WORK *window);
+void *windowAllocMemory(tagWINDOW_WORK *window,s32 size);
+void *windowGetFreeWork(tagWINDOW_WORK *window);
+void windowSetParam(tagWINDOW_WORK *window,s32 index,u32 value);
+u32 windowGetParam(tagWINDOW_WORK *window,s32 index);
+void windowDrawSprite(s16 x,s16 y,tagWINDOW_WORK *work,u16 spriteID,u32 flags,s32 layer);
+void windowDrawSpriteCursor(s16 x,s16 y,s32 color,tagWINDOW_WORK *work,u16 spriteID,u32 flags,int layer,f32 *offset,s32 followingColor);
+void windowDrawSprite2(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK *work,u16 spriteID,u32 flags,int layer);
+void windowDrawSprite3(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK *work,u16 spriteID,s16 sourceX,s16 sourceY,s16 sourceWidth,s16 sourceHeight,u32 flags,int layer);
+MENU_ITEM_dd_ *windowGetCursorToItem(tagWINDOW_WORK *window);
+s32 windowGetValue(s32 menuID);
+WindowCursor windowGetCursor(s32 menuID);
+s32 windowCheckCursor(s32 menuID,u8 wait);
+s32 windowGetActiveID();
+WindowSprite *windowSearchItemID(tagWINDOW_WORK *window,u16 itemID);
+tagWINDOW_WORK *windowSearchID(s32 menuID);
+void windowCloseMain(tagWINDOW_WORK *window);
+s32 windowClose(tagWINDOW_WORK *window,u32 mode);
+void windowCreateCursorSprite(tagWINDOW_WORK *window);
+tagWINDOW_WORK *windowOpen(s32 *selection,s32 menuID,s32 parentID,u32 flags,s32 parameterCount,va_list parameters);
+void windowInit(u16 capacity);
+WindowKeyInfo *windowGetPortKeyInfo2(u8 ports);
+WindowKeyInfo *windowGetPortKeyInfo(u8 ports);
+u32 windowGetKeyTrg();
+u32 windowGetKeyOn();
+u32 windowGetKeyRepeat();
+WindowKeyInfo *windowGetKeyInfo2();
+WindowKeyInfo *windowGetKeyInfo();
 }
-void *windowGetFreeWork(tagWINDOW_WORK *window) { if(window!=0)return window->freeWork;return 0; }
-void windowSetParam(tagWINDOW_WORK *window,s32 index,u32 value) { if(window!=0)window->parameters[index]=value; }
-u32 windowGetParam(tagWINDOW_WORK *window,s32 index) { if(window!=0)return window->parameters[index];return 0; }
-void windowDrawSprite(s16 x,s16 y,tagWINDOW_WORK *work,u16 spriteID,u32 flags,s32 layer) {
-    if(spriteID!=0) { MenuSpriteValue *value=menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(spriteID));windowDrawSprite2(x,y,value->width,value->height,-1,work,spriteID,flags,layer); }
-}
-void windowDrawSpriteCursor(s16 x,s16 y,s32 color,tagWINDOW_WORK *work,u16 spriteID,u32 flags,int layer,f32 *offset,s32 followingColor) {
-    WindowDrawParameter* draw;
-    tagWINDOW_WORK temporary;
-    u32 kind;
-    MenuSpriteValue *value;
-    s32 index;
-    MenuSpriteData *sprite;
-    WindowDrawParameter drawData;
-    draw=&drawData;
-    index=0;
-    sprite=menuSpriteBiosGetPtr(spriteID);
-    for(;;) {
-        value=menuSpriteBiosGetValPtr(sprite);
-        memset(draw,0,sizeof(*draw));
-        draw->type=7;
-        if(index==0)draw->color.value=color;else draw->color.value=followingColor;
-        draw->scaleX=1.0f;draw->scaleY=1.0f;
-        if(layer==floorGetMenuLayerID())draw->screenRelative=1;
-        kind=sprite->flags.fields.kind;
-        if(kind==1){draw->flags|=1;draw->resource=value->resource;}
-        else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
-        else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
-        if(index==0) { draw->x=x+sprite->x;draw->y=y+sprite->y; }
-        else { draw->x=x+sprite->x+(s32)offset[0];draw->y=y+sprite->y+(s32)offset[1]; }
-        draw->width=value->width;draw->height=value->height;
-        draw->sourceX=value->x;draw->sourceY=value->y;draw->sourceWidth=value->width;draw->sourceHeight=value->height;
-        draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
-        if((flags&1)!=0)draw->width=-draw->width;
-        if((flags&2)!=0)draw->height=-draw->height;
-        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;*(s32 *)&temporary.frame=-1; }
-        winSpriteDraw(work,draw);
-        if(sprite->flags.fields.last!=0)break;
-        ++index;
-        sprite=menuSpriteBiosGetPtr(sprite->nextSprite);
-    }
-}
-void windowDrawSprite2(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK *work,u16 spriteID,u32 flags,int layer) {
-    MenuSpriteData *sprite;
-    WindowDrawParameter drawData;
-    WindowDrawParameter* draw=&drawData;
-    tagWINDOW_WORK temporary;
-    sprite=menuSpriteBiosGetPtr(spriteID);
-    for(;;) {
-        MenuSpriteValue *value=menuSpriteBiosGetValPtr(sprite);
-        memset(draw,0,sizeof(*draw));draw->color.value=color;draw->type=7;draw->scaleX=1.0f;draw->scaleY=1.0f;
-        if(layer==floorGetMenuLayerID())draw->screenRelative=1;
-        u32 kind=sprite->flags.fields.kind;
-        if(kind==1){draw->flags|=1;draw->resource=value->resource;}
-        else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
-        else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
-        draw->x=x+sprite->x;draw->y=y+sprite->y;draw->width=width;draw->height=height;
-        draw->sourceX=value->x;draw->sourceY=value->y;draw->sourceWidth=value->width;draw->sourceHeight=value->height;
-        draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
-        if((flags&1)!=0)draw->width=-draw->width;
-        if((flags&2)!=0)draw->height=-draw->height;
-        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;*(s32 *)&temporary.frame=-1; }
-        winSpriteDraw(work,draw);
-        if(sprite->flags.fields.last!=0)break;
-        sprite=menuSpriteBiosGetPtr(sprite->nextSprite);
-    }
-}
-void windowDrawSprite3(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK *work,u16 spriteID,s16 sourceX,s16 sourceY,s16 sourceWidth,s16 sourceHeight,u32 flags,int layer) {
-    MenuSpriteData *sprite;
-    WindowDrawParameter drawData;
-    WindowDrawParameter* draw=&drawData;
-    tagWINDOW_WORK temporary;
-    sprite=menuSpriteBiosGetPtr(spriteID);
-    for(;;) {
-        MenuSpriteValue *value=menuSpriteBiosGetValPtr(sprite);
-        memset(draw,0,sizeof(*draw));draw->color.value=color;draw->type=7;draw->scaleX=1.0f;draw->scaleY=1.0f;
-        if(layer==floorGetMenuLayerID())draw->screenRelative=1;
-        u32 kind=sprite->flags.fields.kind;
-        if(kind==1){draw->flags|=1;draw->resource=value->resource;}
-        else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
-        else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
-        draw->x=x+sprite->x;draw->y=y+sprite->y;draw->width=width;draw->height=height;
-        draw->sourceX=value->x+sourceX;draw->sourceY=value->y+sourceY;draw->sourceWidth=sourceWidth;draw->sourceHeight=sourceHeight;
-        draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
-        if((flags&1)!=0)draw->width=-draw->width;
-        if((flags&2)!=0)draw->height=-draw->height;
-        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;*(s32 *)&temporary.frame=-1; }
-        winSpriteDraw(work,draw);
-        if(sprite->flags.fields.last!=0)break;
-        sprite=menuSpriteBiosGetPtr(sprite->nextSprite);
-    }
-}
-MENU_ITEM_dd_ *windowGetCursorToItem(tagWINDOW_WORK *window) {
-    struct ItemFlagBits { u8 selectable:1; u8 last:1; u8 rest:6; };
-    MenuData *data=menuDataBiosGetPtr(window->menuID);
-    MENU_ITEM_dd_ *item=menuItemBiosGetPtr(window->menuID,data->firstItem);
-    s32 index=0;
-    for(;;) {
-        if(((ItemFlagBits*)&item->flags)->selectable) { if(window->cursorIndex==index)return item;++index; }
-        if(((ItemFlagBits*)&item->flags)->last)break;
+static void _windowSetCloseFlag(tagWINDOW_WORK *window,bool force);
+static s32 _windowCreateItemSprite(tagWINDOW_WORK *window);
+static bool _windowCheckParent(tagWINDOW_WORK *window,tagWINDOW_WORK *parent);
+static s32 _windowDeleteWork(tagWINDOW_WORK *window);
+static s32 _winInsertWork(tagWINDOW_WORK *window,s8 priority);
+static tagWINDOW_WORK *_winGetNewWork();
+static void _winCalcWindowSize(long menuID,const MENU_ITEM_dd_ *item,s16 *width,s16 *height);
 
-        item=menuItemBiosGetPtr(window->menuID,item->nextItem);
-    }
-    return 0;
-}
-s32 windowGetValue(s32 menuID) {
-    s32 value;
-    tagWINDOW_WORK *window=windowSearchID(menuID);
-    if(window!=0) {
-        if(window->cancelled!=0)value=-1;
-        else {
-            MenuData *data=menuDataBiosGetPtr(window->menuID);
-            if(data!=0) {
-                switch((data->flags>>3)&3) {
-                case 0:value=0;break;case 1:value=window->cursorBase+window->cursorIndex;break;
-                case 2:value=window->value;break;case 3:value=menuGetCursorItemID(menuID);break;
-                }
-            } else value=window->cursorBase+window->cursorIndex;
+extern "C" WindowKeyInfo *windowGetKeyInfo() { return &winSysWork.key; }
+
+extern "C" WindowKeyInfo *windowGetKeyInfo2() { return &winSysWork2.key; }
+
+extern "C" u32 windowGetKeyRepeat() { u32 key=windowGetKeyInfo()->repeat;u32 other;if((windowGetKeyInfo()->on&0xF)!=0)other=0;else other=windowGetKeyInfo2()->repeat;key|=other;return key; }
+
+extern "C" u32 windowGetKeyOn() { s32 key=windowGetKeyInfo()->on;u32 other;if((key&0xF)!=0)other=0;else other=windowGetKeyInfo2()->on;key|=other;return key; }
+
+extern "C" u32 windowGetKeyTrg() { u32 key=windowGetKeyInfo()->trigger;u32 other;if((windowGetKeyInfo()->on&0xF)!=0)other=0;else other=windowGetKeyInfo2()->trigger;key|=other;return key; }
+
+extern "C" WindowKeyInfo *windowGetPortKeyInfo(u8 ports) {
+    const u8 masks[4]={1,2,4,8};
+    static WindowKeyInfo key;
+    memset(&key,0,sizeof(key));
+    for(s32 i=0;i<4;++i) {
+        WindowKeyInfo *port=&winSysWork.portKeys[i];
+        if((ports&masks[i])!=0) {
+            key.on|=port->on;key.off|=port->off;key.trigger|=port->trigger;key.repeat|=port->repeat;key.released|=port->released;
         }
-    } else value=-1;
-    return value;
+    }
+    return &key;
 }
-WindowCursor windowGetCursor(s32 menuID) {
-    WindowCursor zero={0,0};
-    tagWINDOW_WORK *window=windowSearchID(menuID);
-    if(window!=0)return *(WindowCursor *)&window->cursorBase;
-    return zero;
+
+extern "C" WindowKeyInfo *windowGetPortKeyInfo2(u8 ports) {
+    const u8 masks[4]={1,2,4,8};
+    static WindowKeyInfo key;
+    memset(&key,0,sizeof(key));
+    for(s32 i=0;i<4;++i) {
+        WindowKeyInfo *port=&winSysWork2.portKeys[i];
+        if((ports&masks[i])!=0) {
+            key.on|=port->on;key.off|=port->off;key.trigger|=port->trigger;key.repeat|=port->repeat;key.released|=port->released;
+        }
+    }
+    return &key;
 }
-s32 windowCheckCursor(s32 menuID,u8 wait) {
+
+extern "C" void windowInit(u16 capacity) {
+    memset(&winSysWork,0,sizeof(winSysWork));memset(&winSysWork2,0,sizeof(winSysWork2));
+    s32 size=capacity*sizeof(tagWINDOW_WORK);
+    winSysWork.pool=static_cast<tagWINDOW_WORK *>(GSmemAlloc(size));
+    if(winSysWork.pool==0) { GSlogWrite("windowInitの初期化に失敗しました\n");return; }
+    winSysWork.capacity=capacity;memset(winSysWork.pool,0,size);winSpriteInit();
+}
+
+static void _winCalcWindowSize(long menuID,const MENU_ITEM_dd_ *item,s16 *width,s16 *height) {
+    s32 minX=640;*width=0;s32 minY=480;s32 maxX=0,maxY=0;*height=0;
     for(;;) {
-        tagWINDOW_WORK *window=windowSearchID(menuID);
-        if(window==0) { GSlogWrite("%s(0x%08x)  ウィンドウが存在しない\n",__FUNCTION__,menuID);return 0; }
-        if(window->finished!=0)return 0;
-        if(window->cancelled!=0)return 0;
-        if(wait!=0) {
-            if(GSthreadGetCurrentThread()==0) { GSlogWrite("%s(0x%08x)  スレッドから呼ぶようにしてください\n",__FUNCTION__,menuID);break; }
-            GSthreadSwitch();
-        } else break;
+        menuSpriteBiosGetPtr(item->spriteID);
+        u32 rect;
+        if(item->message!=0)rect=GSmsgGetRect(item->message);else rect=0;
+        s16 rectW=rect>>16;
+        s16 rectH=rect&0xffff;
+        if(minX>item->x)minX=item->x;
+        if(maxX<item->x+item->width)maxX=item->x+item->width;
+        if(maxX<item->x+rectW)maxX=item->x+rectW;
+        if(minY>item->y)minY=item->y;
+        if(maxY<item->y+item->height)maxY=item->y+item->height;
+        if(maxY<item->y+rectH)maxY=item->y+rectH;
+        if((((u32)item->flags>>6)&1)!=0)break;
+        item=menuItemBiosGetPtr(menuID,item->nextItem);
     }
-    return 1;
+    *width=maxX-minX;*height=maxY-minY;
 }
-s32 windowGetActiveID() { return winSysWork.activeID; }
-WindowSprite *windowSearchItemID(tagWINDOW_WORK *window,u16 itemID) {
-    if(window==0)return 0;
-    WindowSprite *sprite=window->items;
-    while(sprite!=0) { if(sprite->itemID==itemID)return sprite;sprite=sprite->next; }
-    return 0;
-}
-tagWINDOW_WORK *windowSearchID(s32 menuID) {
-    if(menuID<=0)return 0;
-    tagWINDOW_WORK *window=winSysWork.head;
-    while(window!=0) { if(window->menuID==menuID)return window;window=window->next; }
-    return 0;
-}
-void windowCloseMain(tagWINDOW_WORK *window) {
-    MenuData *data=menuDataBiosGetPtr(window->menuID);
-    if(data->control!=0) { window->state=5;data->control(window); }
-    _windowDeleteWork(window);
-}
-s32 windowClose(tagWINDOW_WORK *window,u32 mode) {
-    tagWINDOW_WORK *child;
-    u32 detach;
-    u8 selected;
-    bool force;
-    detach=mode&2;
-    selected=0;
-    force=!!(mode&4);
-    if(detach==0)for(child=winSysWork.head;child!=0;child=child->next) if(_windowCheckParent(child,window)!=0)_windowSetCloseFlag(child,force);
-    if((mode&1)==0 && window!=0) {
-        _windowSetCloseFlag(window,force);
-        if(detach!=0)for(child=winSysWork.head;child!=0;child=child->next) if(child->parent==window)child->parent=window->parent;
+
+static tagWINDOW_WORK *_winGetNewWork() {
+    tagWINDOW_WORK *window=winSysWork.pool;
+    for(s32 i=0;i<winSysWork.capacity;++i,++window) {
+        if(static_cast<s8>(window->flags)==0) { memset(window,0,sizeof(*window));window->flags=7;window->scaleX=1.0f;window->scaleY=1.0f;*(s32 *)&window->frame=-1;return window; }
     }
-    window=windowSearchID(windowGetActiveID());
-    while(window!=0) {
-        if(window->closing!=0 || window->inactive!=0) {
-            for(child=winSysWork.head;child!=0;child=child->next) {
-                if(child->closing==0 && child->inactive==0 && _windowCheckParent(child,window->parent)!=0) { selected=1;winSysWork.activeID=child->menuID; }
+    GSlogWrite("Error!! _winGetNewWork() [ワークの確保に失敗]\n");return 0;
+}
+
+static s32 _winInsertWork(tagWINDOW_WORK *window,s8 priority) {
+    if(winSysWork.head==0)winSysWork.head=window;
+    else {
+        tagWINDOW_WORK *current=winSysWork.head;
+        for(;;) {
+            if(current->priority>priority) {
+                window->previous=current->previous;window->next=current;
+                if(current->previous==0)winSysWork.head=window;else current->previous->next=window;
+                current->previous=window;break;
             }
-            if(selected!=0) break;
-        } else { winSysWork.activeID=window->menuID; break; }
-        window=window->parent;
-    }
-    if(window==0)winSysWork.activeID=0;
-    return 0;
-}
-void windowCreateCursorSprite(tagWINDOW_WORK *window) {
-    MenuData *data=menuDataBiosGetPtr(window->menuID);
-    MENU_ITEM_dd_ *item=windowGetCursorToItem(window);
-    if(item!=0) {
-        winSpriteRelease(&window->cursor);
-        if(item->cursorSpriteID!=0) {
-            MenuSpriteData *record=menuSpriteBiosGetPtr(item->cursorSpriteID);
-            s32 index=0;
-            for(;;) {
-                MenuSpriteValue *value=menuSpriteBiosGetValPtr(record);
-                WindowSprite *sprite=winSpriteAdd(&window->cursor);
-                if(sprite==0) { winSpriteRelease(&window->cursor);return; }
-                if(record->flags.fields.kind==1) { sprite->flags|=1;sprite->resource=value->resource; }
-                else if(record->flags.fields.kind==2) { sprite->flags|=2;sprite->texture=value->resource; }
-                else if(record->flags.fields.kind==3) { sprite->flags|=0x10;sprite->texture=value->resource; }
-                sprite->itemID=data->firstItem;
-                sprite->x=item->x+record->x;sprite->y=item->y+record->y;
-                sprite->width=value->width;sprite->height=value->height;
-                sprite->sourceX=value->x;sprite->sourceY=value->y;sprite->sourceWidth=value->width;sprite->sourceHeight=value->height;
-                sprite->color.channels.alpha=record->alpha;
-                if(record->flags.fields.sequence!=0)winSetSequence(sprite->sequence,record->flags.fields.sequence);
-                if(index!=0)winSetSequence(sprite->sequence,0x141);
-                if(record->flags.fields.last!=0)break;
-                record=menuSpriteBiosGetPtr(record->nextSprite);++index;
-            }
+            if(current->next==0) { current->next=window;window->previous=current;window->next=0;break; }
+            current=current->next;
         }
     }
+    return 0;
 }
-tagWINDOW_WORK *windowOpen(s32 *selection,s32 menuID,s32 parentID,u32 flags,s32 parameterCount,va_list parameters) {
+
+static s32 _windowDeleteWork(tagWINDOW_WORK *window) {
+    if(window==0)return 0;
+    if(window->previous==0)winSysWork.head=window->next;else window->previous->next=window->next;
+    if(window->next!=0)window->next->previous=window->previous;
+    winSpriteRelease(&window->items);winSpriteRelease(&window->cursor);
+    if(window->allocation!=0) { if(window->allocation!=0) { GSmemFree(window->allocation);window->allocation=0; } }
+    window->flags=0;window->menuID=0;return 0;
+}
+
+static bool _windowCheckParent(tagWINDOW_WORK *window,tagWINDOW_WORK *parent) {
+    tagWINDOW_WORK *p;
+    if(window==parent)return 0;
+    p=window;
+    while(p!=0) { p=p->parent;if(p==parent)return 1; }
+    return 0;
+}
+
+extern "C" tagWINDOW_WORK *windowOpen(s32 *selection,s32 menuID,s32 parentID,u32 flags,s32 parameterCount,va_list parameters) {
     tagWINDOW_WORK *window;
     tagWINDOW_WORK *parent=windowSearchID(parentID);
     s32 layer;
@@ -305,44 +227,36 @@ tagWINDOW_WORK *windowOpen(s32 *selection,s32 menuID,s32 parentID,u32 flags,s32 
     if(window->entered!=0) { window->closing=0;window->state=2;window->entered=0; }
     return window;
 }
-void windowInit(u16 capacity) {
-    memset(&winSysWork,0,sizeof(winSysWork));memset(&winSysWork2,0,sizeof(winSysWork2));
-    s32 size=capacity*sizeof(tagWINDOW_WORK);
-    winSysWork.pool=static_cast<tagWINDOW_WORK *>(GSmemAlloc(size));
-    if(winSysWork.pool==0) { GSlogWrite("windowInitの初期化に失敗しました\n");return; }
-    winSysWork.capacity=capacity;memset(winSysWork.pool,0,size);winSpriteInit();
-}
-WindowKeyInfo *windowGetPortKeyInfo2(u8 ports) {
-    const u8 masks[4]={1,2,4,8};
-    static WindowKeyInfo key;
-    memset(&key,0,sizeof(key));
-    for(s32 i=0;i<4;++i) {
-        WindowKeyInfo *port=&winSysWork2.portKeys[i];
-        if((ports&masks[i])!=0) {
-            key.on|=port->on;key.off|=port->off;key.trigger|=port->trigger;key.repeat|=port->repeat;key.released|=port->released;
+
+extern "C" void windowCreateCursorSprite(tagWINDOW_WORK *window) {
+    MenuData *data=menuDataBiosGetPtr(window->menuID);
+    MENU_ITEM_dd_ *item=windowGetCursorToItem(window);
+    if(item!=0) {
+        winSpriteRelease(&window->cursor);
+        if(item->cursorSpriteID!=0) {
+            MenuSpriteData *record=menuSpriteBiosGetPtr(item->cursorSpriteID);
+            s32 index=0;
+            for(;;) {
+                MenuSpriteValue *value=menuSpriteBiosGetValPtr(record);
+                WindowSprite *sprite=winSpriteAdd(&window->cursor);
+                if(sprite==0) { winSpriteRelease(&window->cursor);return; }
+                if(record->flags.fields.kind==1) { sprite->flags|=1;sprite->resource=value->resource; }
+                else if(record->flags.fields.kind==2) { sprite->flags|=2;sprite->texture=value->resource; }
+                else if(record->flags.fields.kind==3) { sprite->flags|=0x10;sprite->texture=value->resource; }
+                sprite->itemID=data->firstItem;
+                sprite->x=item->x+record->x;sprite->y=item->y+record->y;
+                sprite->width=value->width;sprite->height=value->height;
+                sprite->sourceX=value->x;sprite->sourceY=value->y;sprite->sourceWidth=value->width;sprite->sourceHeight=value->height;
+                sprite->color.channels.alpha=record->alpha;
+                if(record->flags.fields.sequence!=0)winSetSequence(sprite->sequence,record->flags.fields.sequence);
+                if(index!=0)winSetSequence(sprite->sequence,0x141);
+                if(record->flags.fields.last!=0)break;
+                record=menuSpriteBiosGetPtr(record->nextSprite);++index;
+            }
         }
     }
-    return &key;
 }
-WindowKeyInfo *windowGetPortKeyInfo(u8 ports) {
-    const u8 masks[4]={1,2,4,8};
-    static WindowKeyInfo key;
-    memset(&key,0,sizeof(key));
-    for(s32 i=0;i<4;++i) {
-        WindowKeyInfo *port=&winSysWork.portKeys[i];
-        if((ports&masks[i])!=0) {
-            key.on|=port->on;key.off|=port->off;key.trigger|=port->trigger;key.repeat|=port->repeat;key.released|=port->released;
-        }
-    }
-    return &key;
-}
-u32 windowGetKeyTrg() { u32 key=windowGetKeyInfo()->trigger;u32 other;if((windowGetKeyInfo()->on&0xF)!=0)other=0;else other=windowGetKeyInfo2()->trigger;key|=other;return key; }
-u32 windowGetKeyOn() { s32 key=windowGetKeyInfo()->on;u32 other;if((key&0xF)!=0)other=0;else other=windowGetKeyInfo2()->on;key|=other;return key; }
-u32 windowGetKeyRepeat() { u32 key=windowGetKeyInfo()->repeat;u32 other;if((windowGetKeyInfo()->on&0xF)!=0)other=0;else other=windowGetKeyInfo2()->repeat;key|=other;return key; }
-WindowKeyInfo *windowGetKeyInfo2() { return &winSysWork2.key; }
-WindowKeyInfo *windowGetKeyInfo() { return &winSysWork.key; }
-}
-static void _windowSetCloseFlag(tagWINDOW_WORK *window,bool force) { if(force==0 || ((u32)menuDataBiosGetPtr(window->menuID)->flags&1)==0)window->closing=1; }
+
 static s32 _windowCreateItemSprite(tagWINDOW_WORK *window) {
     s16 width,height;
     s16 itemID=menuDataBiosGetPtr(window->menuID)->firstItem;
@@ -373,60 +287,217 @@ static s32 _windowCreateItemSprite(tagWINDOW_WORK *window) {
     }
     return 0;
 }
-static bool _windowCheckParent(tagWINDOW_WORK *window,tagWINDOW_WORK *parent) {
-    tagWINDOW_WORK *p;
-    if(window==parent)return 0;
-    p=window;
-    while(p!=0) { p=p->parent;if(p==parent)return 1; }
-    return 0;
-}
-static s32 _windowDeleteWork(tagWINDOW_WORK *window) {
-    if(window==0)return 0;
-    if(window->previous==0)winSysWork.head=window->next;else window->previous->next=window->next;
-    if(window->next!=0)window->next->previous=window->previous;
-    winSpriteRelease(&window->items);winSpriteRelease(&window->cursor);
-    if(window->allocation!=0) { if(window->allocation!=0) { GSmemFree(window->allocation);window->allocation=0; } }
-    window->flags=0;window->menuID=0;return 0;
-}
-static s32 _winInsertWork(tagWINDOW_WORK *window,s8 priority) {
-    if(winSysWork.head==0)winSysWork.head=window;
-    else {
-        tagWINDOW_WORK *current=winSysWork.head;
-        for(;;) {
-            if(current->priority>priority) {
-                window->previous=current->previous;window->next=current;
-                if(current->previous==0)winSysWork.head=window;else current->previous->next=window;
-                current->previous=window;break;
+
+static void _windowSetCloseFlag(tagWINDOW_WORK *window,bool force) { if(force==0 || ((u32)menuDataBiosGetPtr(window->menuID)->flags&1)==0)window->closing=1; }
+
+extern "C" s32 windowClose(tagWINDOW_WORK *window,u32 mode) {
+    tagWINDOW_WORK *child;
+    u32 detach;
+    u8 selected;
+    bool force;
+    detach=mode&2;
+    selected=0;
+    force=!!(mode&4);
+    if(detach==0)for(child=winSysWork.head;child!=0;child=child->next) if(_windowCheckParent(child,window)!=0)_windowSetCloseFlag(child,force);
+    if((mode&1)==0 && window!=0) {
+        _windowSetCloseFlag(window,force);
+        if(detach!=0)for(child=winSysWork.head;child!=0;child=child->next) if(child->parent==window)child->parent=window->parent;
+    }
+    window=windowSearchID(windowGetActiveID());
+    while(window!=0) {
+        if(window->closing!=0 || window->inactive!=0) {
+            for(child=winSysWork.head;child!=0;child=child->next) {
+                if(child->closing==0 && child->inactive==0 && _windowCheckParent(child,window->parent)!=0) { selected=1;winSysWork.activeID=child->menuID; }
             }
-            if(current->next==0) { current->next=window;window->previous=current;window->next=0;break; }
-            current=current->next;
+            if(selected!=0) break;
+        } else { winSysWork.activeID=window->menuID; break; }
+        window=window->parent;
+    }
+    if(window==0)winSysWork.activeID=0;
+    return 0;
+}
+
+extern "C" void windowCloseMain(tagWINDOW_WORK *window) {
+    MenuData *data=menuDataBiosGetPtr(window->menuID);
+    if(data->control!=0) { window->state=5;data->control(window); }
+    _windowDeleteWork(window);
+}
+
+extern "C" tagWINDOW_WORK *windowSearchID(s32 menuID) {
+    if(menuID<=0)return 0;
+    tagWINDOW_WORK *window=winSysWork.head;
+    while(window!=0) { if(window->menuID==menuID)return window;window=window->next; }
+    return 0;
+}
+
+extern "C" WindowSprite *windowSearchItemID(tagWINDOW_WORK *window,u16 itemID) {
+    if(window==0)return 0;
+    WindowSprite *sprite=window->items;
+    while(sprite!=0) { if(sprite->itemID==itemID)return sprite;sprite=sprite->next; }
+    return 0;
+}
+
+extern "C" s32 windowGetActiveID() { return winSysWork.activeID; }
+
+extern "C" s32 windowCheckCursor(s32 menuID,u8 wait) {
+    for(;;) {
+        tagWINDOW_WORK *window=windowSearchID(menuID);
+        if(window==0) { GSlogWrite("%s(0x%08x)  ウィンドウが存在しない\n",__FUNCTION__,menuID);return 0; }
+        if(window->finished!=0)return 0;
+        if(window->cancelled!=0)return 0;
+        if(wait!=0) {
+            if(GSthreadGetCurrentThread()==0) { GSlogWrite("%s(0x%08x)  スレッドから呼ぶようにしてください\n",__FUNCTION__,menuID);break; }
+            GSthreadSwitch();
+        } else break;
+    }
+    return 1;
+}
+
+extern "C" WindowCursor windowGetCursor(s32 menuID) {
+    WindowCursor zero={0,0};
+    tagWINDOW_WORK *window=windowSearchID(menuID);
+    if(window!=0)return *(WindowCursor *)&window->cursorBase;
+    return zero;
+}
+
+extern "C" s32 windowGetValue(s32 menuID) {
+    s32 value;
+    tagWINDOW_WORK *window=windowSearchID(menuID);
+    if(window!=0) {
+        if(window->cancelled!=0)value=-1;
+        else {
+            MenuData *data=menuDataBiosGetPtr(window->menuID);
+            if(data!=0) {
+                switch((data->flags>>3)&3) {
+                case 0:value=0;break;case 1:value=window->cursorBase+window->cursorIndex;break;
+                case 2:value=window->value;break;case 3:value=menuGetCursorItemID(menuID);break;
+                }
+            } else value=window->cursorBase+window->cursorIndex;
         }
+    } else value=-1;
+    return value;
+}
+
+extern "C" MENU_ITEM_dd_ *windowGetCursorToItem(tagWINDOW_WORK *window) {
+    struct ItemFlagBits { u8 selectable:1; u8 last:1; u8 rest:6; };
+    MenuData *data=menuDataBiosGetPtr(window->menuID);
+    MENU_ITEM_dd_ *item=menuItemBiosGetPtr(window->menuID,data->firstItem);
+    s32 index=0;
+    for(;;) {
+        if(((ItemFlagBits*)&item->flags)->selectable) { if(window->cursorIndex==index)return item;++index; }
+        if(((ItemFlagBits*)&item->flags)->last)break;
+
+        item=menuItemBiosGetPtr(window->menuID,item->nextItem);
     }
     return 0;
 }
-static tagWINDOW_WORK *_winGetNewWork() {
-    tagWINDOW_WORK *window=winSysWork.pool;
-    for(s32 i=0;i<winSysWork.capacity;++i,++window) {
-        if(static_cast<s8>(window->flags)==0) { memset(window,0,sizeof(*window));window->flags=7;window->scaleX=1.0f;window->scaleY=1.0f;*(s32 *)&window->frame=-1;return window; }
-    }
-    GSlogWrite("Error!! _winGetNewWork() [ワークの確保に失敗]\n");return 0;
-}
-static void _winCalcWindowSize(long menuID,const MENU_ITEM_dd_ *item,s16 *width,s16 *height) {
-    s32 minX=640;*width=0;s32 minY=480;s32 maxX=0,maxY=0;*height=0;
+
+extern "C" void windowDrawSprite3(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK *work,u16 spriteID,s16 sourceX,s16 sourceY,s16 sourceWidth,s16 sourceHeight,u32 flags,int layer) {
+    MenuSpriteData *sprite;
+    WindowDrawParameter drawData;
+    WindowDrawParameter* draw=&drawData;
+    tagWINDOW_WORK temporary;
+    sprite=menuSpriteBiosGetPtr(spriteID);
     for(;;) {
-        menuSpriteBiosGetPtr(item->spriteID);
-        u32 rect;
-        if(item->message!=0)rect=GSmsgGetRect(item->message);else rect=0;
-        s16 rectW=rect>>16;
-        s16 rectH=rect&0xffff;
-        if(minX>item->x)minX=item->x;
-        if(maxX<item->x+item->width)maxX=item->x+item->width;
-        if(maxX<item->x+rectW)maxX=item->x+rectW;
-        if(minY>item->y)minY=item->y;
-        if(maxY<item->y+item->height)maxY=item->y+item->height;
-        if(maxY<item->y+rectH)maxY=item->y+rectH;
-        if((((u32)item->flags>>6)&1)!=0)break;
-        item=menuItemBiosGetPtr(menuID,item->nextItem);
+        MenuSpriteValue *value=menuSpriteBiosGetValPtr(sprite);
+        memset(draw,0,sizeof(*draw));draw->color.value=color;draw->type=7;draw->scaleX=1.0f;draw->scaleY=1.0f;
+        if(layer==floorGetMenuLayerID())draw->screenRelative=1;
+        u32 kind=sprite->flags.fields.kind;
+        if(kind==1){draw->flags|=1;draw->resource=value->resource;}
+        else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
+        else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
+        draw->x=x+sprite->x;draw->y=y+sprite->y;draw->width=width;draw->height=height;
+        draw->sourceX=value->x+sourceX;draw->sourceY=value->y+sourceY;draw->sourceWidth=sourceWidth;draw->sourceHeight=sourceHeight;
+        draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
+        if((flags&1)!=0)draw->width=-draw->width;
+        if((flags&2)!=0)draw->height=-draw->height;
+        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;*(s32 *)&temporary.frame=-1; }
+        winSpriteDraw(work,draw);
+        if(sprite->flags.fields.last!=0)break;
+        sprite=menuSpriteBiosGetPtr(sprite->nextSprite);
     }
-    *width=maxX-minX;*height=maxY-minY;
 }
+
+extern "C" void windowDrawSprite2(s16 x,s16 y,s16 width,s16 height,s32 color,tagWINDOW_WORK *work,u16 spriteID,u32 flags,int layer) {
+    MenuSpriteData *sprite;
+    WindowDrawParameter drawData;
+    WindowDrawParameter* draw=&drawData;
+    tagWINDOW_WORK temporary;
+    sprite=menuSpriteBiosGetPtr(spriteID);
+    for(;;) {
+        MenuSpriteValue *value=menuSpriteBiosGetValPtr(sprite);
+        memset(draw,0,sizeof(*draw));draw->color.value=color;draw->type=7;draw->scaleX=1.0f;draw->scaleY=1.0f;
+        if(layer==floorGetMenuLayerID())draw->screenRelative=1;
+        u32 kind=sprite->flags.fields.kind;
+        if(kind==1){draw->flags|=1;draw->resource=value->resource;}
+        else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
+        else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
+        draw->x=x+sprite->x;draw->y=y+sprite->y;draw->width=width;draw->height=height;
+        draw->sourceX=value->x;draw->sourceY=value->y;draw->sourceWidth=value->width;draw->sourceHeight=value->height;
+        draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
+        if((flags&1)!=0)draw->width=-draw->width;
+        if((flags&2)!=0)draw->height=-draw->height;
+        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;*(s32 *)&temporary.frame=-1; }
+        winSpriteDraw(work,draw);
+        if(sprite->flags.fields.last!=0)break;
+        sprite=menuSpriteBiosGetPtr(sprite->nextSprite);
+    }
+}
+
+extern "C" void windowDrawSpriteCursor(s16 x,s16 y,s32 color,tagWINDOW_WORK *work,u16 spriteID,u32 flags,int layer,f32 *offset,s32 followingColor) {
+    WindowDrawParameter* draw;
+    tagWINDOW_WORK temporary;
+    u32 kind;
+    MenuSpriteValue *value;
+    s32 index;
+    MenuSpriteData *sprite;
+    WindowDrawParameter drawData;
+    draw=&drawData;
+    index=0;
+    sprite=menuSpriteBiosGetPtr(spriteID);
+    for(;;) {
+        value=menuSpriteBiosGetValPtr(sprite);
+        memset(draw,0,sizeof(*draw));
+        draw->type=7;
+        if(index==0)draw->color.value=color;else draw->color.value=followingColor;
+        draw->scaleX=1.0f;draw->scaleY=1.0f;
+        if(layer==floorGetMenuLayerID())draw->screenRelative=1;
+        kind=sprite->flags.fields.kind;
+        if(kind==1){draw->flags|=1;draw->resource=value->resource;}
+        else if(kind==2){draw->flags|=2;draw->texture=value->resource;}
+        else if(kind==3){draw->flags|=0x10;draw->texture=value->resource;}
+        if(index==0) { draw->x=x+sprite->x;draw->y=y+sprite->y; }
+        else { draw->x=x+sprite->x+(s32)offset[0];draw->y=y+sprite->y+(s32)offset[1]; }
+        draw->width=value->width;draw->height=value->height;
+        draw->sourceX=value->x;draw->sourceY=value->y;draw->sourceWidth=value->width;draw->sourceHeight=value->height;
+        draw->color.channels.alpha=(sprite->alpha*draw->color.channels.alpha)/255;
+        if((flags&1)!=0)draw->width=-draw->width;
+        if((flags&2)!=0)draw->height=-draw->height;
+        if(work==0) { work=&temporary;memset(work,0,sizeof(*work));spriteGetOffset(layer,&temporary.x,&temporary.y);temporary.layerID=layer;*(s32 *)&temporary.frame=-1; }
+        winSpriteDraw(work,draw);
+        if(sprite->flags.fields.last!=0)break;
+        ++index;
+        sprite=menuSpriteBiosGetPtr(sprite->nextSprite);
+    }
+}
+
+extern "C" void windowDrawSprite(s16 x,s16 y,tagWINDOW_WORK *work,u16 spriteID,u32 flags,s32 layer) {
+    if(spriteID!=0) { MenuSpriteValue *value=menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(spriteID));windowDrawSprite2(x,y,value->width,value->height,-1,work,spriteID,flags,layer); }
+}
+
+extern "C" u32 windowGetParam(tagWINDOW_WORK *window,s32 index) { if(window!=0)return window->parameters[index];return 0; }
+
+extern "C" void windowSetParam(tagWINDOW_WORK *window,s32 index,u32 value) { if(window!=0)window->parameters[index]=value; }
+
+extern "C" void *windowGetFreeWork(tagWINDOW_WORK *window) { if(window!=0)return window->freeWork;return 0; }
+
+extern "C" void *windowAllocMemory(tagWINDOW_WORK *window,s32 size) {
+    if(window==0)return 0;
+    if(window->allocation!=0) { GSmemFree(window->allocation);window->allocation=0; }
+    if(size<=0)return 0;
+    window->allocation=GSmemAlloc(size);
+    if(window->allocation==0)return 0;
+    if(window->allocation==0){return 0;}else{return window->allocation;}
+}
+
+extern "C" void *windowGetAllocPtr(tagWINDOW_WORK *window) { if(window!=0)return window->allocation;return 0; }

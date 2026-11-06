@@ -3394,7 +3394,7 @@ static inline u32 isPokemonComboPartner(Pokemon *pokemon,u8 slot,u8 side) {
 }
 u8 fightTrainerAi_SelComboPartner(Pokemon **candidates, Pokemon **out, u8 count, FIGHT_TRAINER *trainer) {
     u8 order[4]={0,1,2,3};
-    u8 single[6],first[6],second[6];
+    u8 single[16],first[6],second[6];
     void *deck=getDeckTrainerObj__11DeckTrainerFUl(fightTrainer_GetFightTrainerDataId(trainer));
     u8 outCount=fightFloor_GetFightTypeFightoutPokemonNum(0);
     u8 i;

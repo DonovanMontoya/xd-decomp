@@ -204,7 +204,6 @@ bool GsShapeObject::DeformTextureCoord(u32 texture,bool deform,const f32* u,cons
 }
 extern "C" double sin(double);
 extern "C" double cos(double);
-#include <libc/math.h>
 extern "C" double tan(double);
 bool GsShapeObject::DeformVertexCoord(bool deform,const f32* u,const f32* v,bool radius,f32 radiusU,f32 radiusV,bool angle,f32 angleU,f32 angleV,bool twistEnabled,const f32* twist) {
     switch(entry->geometryType) {
@@ -218,7 +217,7 @@ bool GsShapeObject::DeformVertexCoord(bool deform,const f32* u,const f32* v,bool
         shear=0.0f;
         columns=entry->segmentsU+1; rows=entry->segmentsV+1;
         f32 shearAngle=angle?angleU:entry->shearAngle;
-        if((f32)fabs(shearAngle)>0.00001f) shear=entry->height*(f32)tan(0.017453292f*shearAngle);
+        if((f32)__fabs(shearAngle)>0.00001f) shear=entry->height*(f32)tan(0.017453292f*shearAngle);
         const f32* tw=twist;const f32* vp=v;
         for(row=0;row<rows;tw++,vp++,row++) {
             f32 z;if(twistEnabled)z=*tw;else z=0.0f;
@@ -374,7 +373,7 @@ bool GsShapeObject::DeformVertexCoordSpiral(bool deform,const f32* u,const f32* 
                 if(rounded==1){
                     sample=(across-0.5f)*taper+0.5f;
                     current=radiusU*(1.0f-sample)+radiusV*sample;
-                    f32 distance=length*(f32)fabs(sample-0.5f);
+                    f32 distance=length*(f32)__fabs(sample-0.5f);
                     f32 bulge=quarter-distance*distance;
                     if(bulge>0.0f)current+=shapeSqrt(bulge);
                 }else current=radiusU*complement+radiusV*across;
@@ -390,7 +389,7 @@ bool GsShapeObject::DeformVertexCoordSpiral(bool deform,const f32* u,const f32* 
                     sample=(across-0.5f)*(1.0f-fraction)+0.5f;
                     f32 position=((fraction*vertical+(sample-0.5f*fraction))-0.5f)*taper+0.5f;
                     current=radiusU*(1.0f-position)+radiusV*position;
-                    f32 distance=length*(f32)fabs(position-0.5f);
+                    f32 distance=length*(f32)__fabs(position-0.5f);
                     f32 bulge=quarter-distance*distance;
                     if(bulge>0.0f)current+=shapeSqrt(bulge);
                 }else{
@@ -1155,7 +1154,7 @@ extern "C" bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(Gs
     PSMTXMultVecSR(transform,&value,&value);
     if(texture==0) {
      f32 x,y,z;GXProject(positions[index].x,positions[index].y,positions[index].z,projectionMatrix,projection,viewport,&x,&y,&z);
-     if((f32)fabs(value.x)>0.00001f||(f32)fabs(value.y)>0.00001f||(f32)fabs(value.z)>0.00001f) {
+     if((f32)__fabs(value.x)>0.00001f||(f32)__fabs(value.y)>0.00001f||(f32)__fabs(value.z)>0.00001f) {
       PSVECNormalize(&value,&value);
       if(value.x<=0.0f)x=x*(1.0f+value.x);else x=value.x*(screenWidth-x)+x;
       if(value.y<=0.0f)y+=-value.y*(screenHeight-y);else y*=1.0f-value.y;
@@ -1181,7 +1180,7 @@ static f32 shapeAngleWeight(f32 dot,f32 width) {
  return result;
 }
 static f32 shapeAngularWeight(Vec *normal,Vec *view,GsShapeObject *self) {
- f64 absolute=fabs(PSVECDotProduct(normal,view));f32 dot=(f32)absolute;
+ f64 absolute=__fabs(PSVECDotProduct(normal,view));f32 dot=(f32)absolute;
  return shapeAngleWeight(dot,*(f32*)((u8*)self->entry+0xd0));
 }
 #pragma dont_inline on
@@ -1218,7 +1217,7 @@ static inline bool shapeBillboardYaw(GsShapeObject* self,f32 x,f32 depth) {
     Mtx rotationNegative;
     Mtx rotationPositive;
     direction.x=x; direction.y=0.0f; direction.z=depth;
-    if((f32)fabs(direction.x)>0.00001f || (f32)fabs(direction.z)>0.00001f) {
+    if((f32)__fabs(direction.x)>0.00001f || (f32)__fabs(direction.z)>0.00001f) {
         PSVECNormalize(&direction,&direction);
         f32 dot=shapeDot2(0.0f,1.0f,direction.x,direction.z);
         if(dot>=-1.0f && dot<=1.0f) {
@@ -1242,10 +1241,10 @@ static inline bool shapeBillboardFull(GsShapeObject* self,f32 x,f32 y,f32 depth)
     Mtx rotation;
     reference.x=0.0f; reference.y=0.0f; reference.z=1.0f;
     direction.x=x; direction.y=y; direction.z=depth;
-    if((f32)fabs(direction.x)>0.00001f || (f32)fabs(direction.y)>0.00001f || (f32)fabs(direction.z)>0.00001f) {
+    if((f32)__fabs(direction.x)>0.00001f || (f32)__fabs(direction.y)>0.00001f || (f32)__fabs(direction.z)>0.00001f) {
         PSVECNormalize(&direction,&direction);
         PSVECCrossProduct(&reference,&direction,&axis);
-        if((f32)fabs(axis.x)>0.00001f || (f32)fabs(axis.y)>0.00001f || (f32)fabs(axis.z)>0.00001f) {
+        if((f32)__fabs(axis.x)>0.00001f || (f32)__fabs(axis.y)>0.00001f || (f32)__fabs(axis.z)>0.00001f) {
             PSVECNormalize(&axis,&axis);
             f32 dot=PSVECDotProduct(&reference,&direction);
             if(dot>=-1.0f && dot<=1.0f) {

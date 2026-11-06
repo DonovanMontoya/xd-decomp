@@ -15,7 +15,6 @@ s32 _fsysInitCache(u32, u32);
 s32 _fsysGetFreeCacheHeapSize();
 void _fsysFreeCacheFromHeap(void*, u32);
 void* _fsysAllocCacheFromHeap(u32);
-u8 _fsysInitCacheHeap(u32);
 u32 GSfsysCreateCacheHeap();
 void _fsysSetLockCacheFlagGroup(u32, u8);
 void _fsysSetLockCacheFlag(u32, u32, u8);

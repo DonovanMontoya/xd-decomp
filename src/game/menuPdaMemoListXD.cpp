@@ -63,7 +63,7 @@ void menuPdaSubScrollBar(MemoWindow *, MemoSprite *, s32, s32, u32, s32, s32, Me
 u32 cursorBiosGetPos(s32);
 void cursorBiosSetPos(s32, MemoCursor *);
 MemoKey *windowGetKeyInfo(void);
-u16 windowGetKeyRepeat(void);
+u32 windowGetKeyRepeat(void);
 u8 winSeqCheckMove(s32);
 void winSeqSetMenu(s32, s32);
 void winSpriteSetDisp(MemoSprite *, s32);

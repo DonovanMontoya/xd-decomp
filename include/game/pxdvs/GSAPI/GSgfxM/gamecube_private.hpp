@@ -19,7 +19,7 @@ union GCBPRegister {
     struct { u32 address:8, reserved:4, y:10, x:10; } copyRectangle;
     struct { u32 address:8, reserved:14, stride:10; } copyStride;
     struct { u32 address:8, reserved:15, scale:9; } copyScale;
-    struct { u32 address:8, reserved:7, conversion:1, intensity:1, display:1, gamma:2, clear:1, scale:1, mipmap:1, fieldMode:2, format:3, depth:1, reserved2:1, clamp:2; } copyControl;
+    struct { u32 address:8, reserved:7, conversion:1, intensity:1, display:1, frameToField:2, clear:1, scale:1, mipmap:1, gamma:2, format:3, depth:1, reserved2:1, clamp:2; } copyControl;
     struct { u32 address:8, reserved:19, alpha:1, color:1, dither:1, logic:1, blend:1; } copyBlend;
     struct { u32 address:8, reserved:19, update:1, function:3, test:1; } copyDepth;
     struct { u32 address:8, reserved:17, compare:1, reserved5:1, depthFormat:2, pixelFormat:3; } copyPixel;
@@ -148,8 +148,8 @@ struct GCCopyDisplayInfo {
     u16 stride;
     u8 paddingA[2];
     GXFBClamp clamp;
+    GXCopyMode frameToField;
     GXGamma gamma;
-    GXCopyMode fieldMode;
     f32 scale;
     u8 clear, red, green, blue, alpha;
     u8 padding21[3];
@@ -157,6 +157,8 @@ struct GCCopyDisplayInfo {
 };
 typedef char GCCopyDisplayInfoSizeCheck[sizeof(GCCopyDisplayInfo) == 0x28 ? 1 : -1];
 typedef char GCCopyDisplayInfoStrideOffsetCheck[offsetof(GCCopyDisplayInfo, stride) == 0x8 ? 1 : -1];
+typedef char GCCopyDisplayInfoFrameToFieldOffsetCheck[offsetof(GCCopyDisplayInfo, frameToField) == 0x10 ? 1 : -1];
+typedef char GCCopyDisplayInfoGammaOffsetCheck[offsetof(GCCopyDisplayInfo, gamma) == 0x14 ? 1 : -1];
 typedef char GCCopyDisplayInfoScaleOffsetCheck[offsetof(GCCopyDisplayInfo, scale) == 0x18 ? 1 : -1];
 struct GCVertexAttributeFormat { s32 attribute, count, type; u8 fraction; u8 padding[3]; };
 struct GCVertexDescriptor { s32 attribute, type; };

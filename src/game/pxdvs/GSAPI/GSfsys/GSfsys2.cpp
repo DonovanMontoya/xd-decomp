@@ -61,10 +61,168 @@ static FsysBackgroundWork* _fsysBGWorkRoot;
 static FsysQueue* _fsysQueManage;
 static FsysQueue* _fsysQueManageExec;
 static u32 _fsysDaemonForegroundHDL, _fsysDaemonBackgroundHDL;
-static u32 _fsysQueManageMax, _fsysBGWorkIndex, _fsysBGWorkMax, _fsysWorkIndex, _fsysWorkMax;
-static FsysQueue* _fsysQueManageRoot[3];
-static u32 headerTop[8];
 static u32* _headerTop;
+static u32 _fsysQueManageMax, _fsysBGWorkIndex, _fsysBGWorkMax, _fsysWorkIndex, _fsysWorkMax;
+static u32 headerTop[8];
+static FsysQueue* _fsysQueManageRoot[3];
+void* floorReadNormalPreFunc(u32 group, u32 id, u32 size);
+void* floorReadMapPreFunc(u32 group, u32 id, u32 size);
+void* floorReadMapPostFunc(u32 group, u32 id, u32 extra);
+void* floorReadObjPreFunc(u32 group, u32 id, u32 size);
+void* floorReadObjPostFunc(u32 group, u32 id, u32 extra);
+void* floorReadColPreFunc(u32 group, u32 id, u32 size);
+void* floorReadColPostFunc(u32 group, u32 id);
+void* floorReadBGMPreFunc(u32 group, u32 id, u32 size);
+void* floorReadBGMPostFunc();
+void* floorReadMsgPreFunc(u32 group, u32 id, u32 size);
+void* floorReadMsgPostFunc(u32 group, u32 id);
+void* floorReadFontPreFunc(u32 group, u32 id, u32 size);
+void* floorReadFontPostFunc(u32 group, u32 id);
+void* floorReadScriptPreFunc(u32 group, u32 id, u32 size);
+void* floorReadScriptPostFunc(u32 group, u32 id);
+void* floorReadTexPreFunc(u32 group, u32 id, u32 size);
+void* floorReadTexPostFunc(u32 group, u32 id);
+void* floorReadParticlePreFunc(u32 group, u32 id, u32 size);
+void* floorReadParticlePostFunc(u32 group, u32 id, u32 extra);
+void* floorReadCameraPreFunc(u32 group, u32 id, u32 size);
+void* floorReadCameraPostFunc(u32 group, u32 id, u32 extra);
+void* GSfsysOSLinkPreFunc(u32 group, u32 identifier, u32 bytes);
+void* GSfsysOSLinkPostFunc(u32 group, u32 identifier);
+void* floorReadPKXPreFunc(u32 group, u32 id, u32 size);
+void* floorReadPKXPostFunc(u32 group, u32 id);
+void* floorReadWZXPreFunc(u32 group, u32 id, u32 size);
+void* floorReadWZXPostFunc(u32 group, u32 id);
+void* floorReadGFLPreFunc(u32 group, u32 id, u32 size);
+void* floorReadGFLPostFunc(u32 group, u32 id);
+void* floorReadNotLinkedParticlePreFunc(u32 group, u32 id, u32 size);
+void* floorReadNotLinkedParticlePostFunc(u32 group, u32 id);
+void* floorReadEncodeRelPreFunc(u32 group, u32 id, u32 size);
+void* floorReadEncodeRelPostFunc(u32 group, u32 id, u32 extra);
+s32 GSfsysStreamHeaderPreFunc(u32 group, u32 resource, u32 bytes);
+void* GSfsysStreamHeaderPostFunc(u32, u32);
+s32 GSfsysStreamPreFunc(u32 group, u32 resource);
+s32 GSfsysStreamMovieHeaderPreFunc(u32 group, u32 resource, u32 bytes);
+void* GSfsysStreamMovieHeaderPostFunc(u32, u32);
+s32 GSfsysStreamMoviePreFunc(u32 group, u32 resource);
+void* floorReadGSWPreFunc(u32 group, u32 id, u32 size);
+void* floorReadGSWPostFunc(u32 group, u32 id);
+void* floorReadAntPreFunc(u32 group, u32 id, u32 size);
+void* floorReadAntPostFunc(u32 group, u32 id, u32 extra);
+void* floorReadDeckPreFunc(u32 group, u32 id, u32 size);
+void* floorReadDeckPostFunc(u32 group, u32 id);
+
+GSfsysDataType fsys_datatype[27] = {
+    { 800, 0, floorReadNormalPreFunc, 0 },
+    { 600, 1, floorReadMapPreFunc, (void (*)(u32, u32, u32))floorReadMapPostFunc },
+    { 700, 2, floorReadObjPreFunc, (void (*)(u32, u32, u32))floorReadObjPostFunc },
+    { 800, 3, floorReadColPreFunc, (void (*)(u32, u32, u32))floorReadColPostFunc },
+    { 300, 4, floorReadBGMPreFunc, (void (*)(u32, u32, u32))floorReadBGMPostFunc },
+    { 400, 5, floorReadMsgPreFunc, (void (*)(u32, u32, u32))floorReadMsgPostFunc },
+    { 500, 6, floorReadFontPreFunc, (void (*)(u32, u32, u32))floorReadFontPostFunc },
+    { 200, 7, floorReadScriptPreFunc, (void (*)(u32, u32, u32))floorReadScriptPostFunc },
+    { 800, 8, 0, 0 },
+    { 900, 9, floorReadTexPreFunc, (void (*)(u32, u32, u32))floorReadTexPostFunc },
+    { 800, 10, floorReadParticlePreFunc, (void (*)(u32, u32, u32))floorReadParticlePostFunc },
+    { 800, 11, 0, 0 },
+    { 800, 12, floorReadCameraPreFunc, (void (*)(u32, u32, u32))floorReadCameraPostFunc },
+    { 800, 13, 0, 0 },
+    { 100, 14, GSfsysOSLinkPreFunc, (void (*)(u32, u32, u32))GSfsysOSLinkPostFunc },
+    { 700, 15, floorReadPKXPreFunc, (void (*)(u32, u32, u32))floorReadPKXPostFunc },
+    { 800, 16, floorReadWZXPreFunc, (void (*)(u32, u32, u32))floorReadWZXPostFunc },
+    { 950, 17, floorReadGFLPreFunc, (void (*)(u32, u32, u32))floorReadGFLPostFunc },
+    { 800, 18, floorReadNotLinkedParticlePreFunc, (void (*)(u32, u32, u32))floorReadNotLinkedParticlePostFunc },
+    { 100, 19, floorReadEncodeRelPreFunc, (void (*)(u32, u32, u32))floorReadEncodeRelPostFunc },
+    { 100, 20, (void* (*)(u32, u32, u32))GSfsysStreamHeaderPreFunc, (void (*)(u32, u32, u32))GSfsysStreamHeaderPostFunc },
+    { 200, 21, (void* (*)(u32, u32, u32))GSfsysStreamPreFunc, 0 },
+    { 100, 22, (void* (*)(u32, u32, u32))GSfsysStreamMovieHeaderPreFunc, (void (*)(u32, u32, u32))GSfsysStreamMovieHeaderPostFunc },
+    { 200, 23, (void* (*)(u32, u32, u32))GSfsysStreamMoviePreFunc, 0 },
+    { 900, 24, floorReadGSWPreFunc, (void (*)(u32, u32, u32))floorReadGSWPostFunc },
+    { 700, 25, floorReadAntPreFunc, (void (*)(u32, u32, u32))floorReadAntPostFunc },
+    { 800, 26, floorReadDeckPreFunc, (void (*)(u32, u32, u32))floorReadDeckPostFunc },
+};
+u32 fsys_datatype_number = 27;
+
+
+
+void _fsysPrintStatus(FsysWork* work, s32 phase);
+void* _fsysDoMalloc(u32 bytes);
+u8 GSfsysInit2(u32 blocks, u32 cacheBytes, u32 cacheEntries);
+s32 GSfsysInit(u32 dvdEntries);
+u32 GSfsysGetInvalidID();
+u32 GSfsysStreamGetCacheSize();
+s32 GSfsysGetDriveStatus();
+void* GSfsysStreamHeaderPostFunc(u32, u32);
+void* GSfsysStreamMovieHeaderPostFunc(u32, u32);
+s32 GSfsysStreamHeaderPreFunc(u32 group, u32 resource, u32 bytes);
+s32 GSfsysStreamMovieHeaderPreFunc(u32 group, u32 resource, u32 bytes);
+s32 GSfsysStreamPreFunc(u32 group, u32 resource);
+s32 GSfsysStreamMoviePreFunc(u32 group, u32 resource);
+void GSfsysFreeCache(s32 group);
+u32 GSfsysRead(u32 group);
+u32 GSfsysReadID(u32 group, u32 resource);
+u32 GSfsysReadIDEX(u32 group, u32 resource, u32 pre, u32 post, u32 secondary);
+u32 GSfsysPreRead(u32 group);
+u32 GSfsysPreReadKeepCache(u32 group);
+u32 _fsysPreReadExec(u32 group, u8 keep, u32 pre, u32 post, u32 secondary, s32 priority);
+u32 GSfsysReadStreaming(u32 group);
+u32 GSfsysReadStreamingEX(u32 group, u32 resource, u32 secondary);
+s32 GSfsysWait(u32 group);
+s32 GSfsysReadIDWait(u32 group, u32 resource);
+s32 GSfsysReadIDEXWait(u32 group, u32 resource, u32 pre, u32 post, u32 secondary);
+s32 GSfsysPreReadWait(u32 group);
+void GSfsysStreamSetLoopPoint(u32 group, u32 id, u32 start, u32 end);
+void GSfsysStreamSetLoopFlag(u32 group, u32 id, u8 loop);
+TocGroup* _fsysGetGROUP(u32 id);
+void _fsysOffTOCFlag(u32 groupId, u32 bits);
+void _fsysOnTOCFlag(u32 groupId, u32 bits);
+s32 _fsysGetFilename(FsysWork* work, char* output);
+FsysWork* _fsysGetWork(u32 group, u8 activeOnly);
+u32 _fsysID2Index(FsysWork* work, u32 id);
+void _fsysWorkSetTaskStatus(FsysWork* work, s32 status);
+void _fsysResHeaderSetTaskStatus(GSfsysResource* resource, s32 status);
+void _fsysFreeStatus(u32 group);
+s32 _fsysWait(s32 group, u8 allowPreread);
+s32 _fsysGetActiveTask(s32 mode);
+s32 GSfsysGetStatus(s32 groupId);
+u8 GSfsysCancel(u32 group);
+s32 GSfsysCancelWait(u32 group);
+s32 GSfsysReadWait(u32 group);
+FsysQueue* _fsysGetNewQueManage(s32 mode, u32 group, u32 resource, u8 keep, u32 pre, u32 post, u32 secondary);
+u8 _fsysAddQueManage(FsysQueue* queue, s32 priority);
+void _fsysDelQueManage(FsysQueue* queue);
+FsysQueue* _fsysGetQueManage(u32 group, u32 resource);
+s32 _fsysRequest(s32 mode, u32 group, u32 resource, u8 keep, u32 pre, u32 post, u32 secondary, s32 priority);
+u8 _fsysQueExecSub(FsysQueue* queue);
+void _fsysQueExec();
+FsysWork* _fsysGetNewWork_Sub(s32 preserveFinished);
+FsysWork* _fsysGetNewWork();
+s32 _fsysOpenFile(FsysWork* work);
+s32 _fsysExec(u32 group, u32 resource, s32 mode, u8 keep, u32 pre, u32 post, u32 secondary);
+s32 _fsysReadStreamingExec(u32 group, u32 resource, u32 secondary);
+void GSfsysFree(u32 id);
+void _fsysDelTAG(FsysBackgroundWork* entry, FsysBackgroundWork** root);
+void _fsysAddTAG(FsysBackgroundWork* entry, FsysBackgroundWork** root);
+void _fsysDelBGWork(FsysBackgroundWork* entry);
+void _fsysAddBGWork(FsysBackgroundWork* entry);
+FsysBackgroundWork* _fsysGetNewBGWork();
+void _fsysMemSet(void* data, s32 value, u32 bytes);
+u8 _fsysBGTaskCancel(FsysBackgroundWork* entry);
+s32 GSfsysStreamGetData(u32 group, u32 resource, void* data, u32 bytes, u32 a, u32 b, u32 c, u32 d);
+u8 _fsysCloseFile(FsysWork* work, u8 cancelled);
+FsysWork* _fsysInfo2Work(void* dvd);
+void GSfsysOSUnLink(u32 group, u32 identifier, u32);
+u8 _fsysOSUnLink(void*, unsigned long group, unsigned long identifier);
+void* GSfsysOSLinkPreFunc(u32 group, u32 identifier, u32 bytes);
+void* GSfsysOSLinkPostFunc(u32 group, u32 identifier);
+void GSfsysDaemonBackground();
+void _fsysBackgroundTaskNormalType(FsysBackgroundWork* bg, u8 copy);
+u8 _fsysCheckExpandCompleteAll(FsysWork* work);
+u8 _fsysCheckExpandComplete(FsysWork* work, u32 idx);
+void _fsysHeaderSizeReadDvdCallback(s32 result, GSdvdWork* dvd);
+void GSfsysDaemonForeground();
+void _fsysForegroundTask(FsysWork* work);
+u8 _fsysInitTOC();
+void _fsysBackgroundTaskCompressType(FsysBackgroundWork* entry);
 
 // Stripped from the DOL; its strings still occupy .rodata.
 void _fsysPrintStatus(FsysWork* work, s32 phase) {
@@ -101,7 +259,406 @@ void _fsysPrintStatus(FsysWork* work, s32 phase) {
     default: OSReport("[%d]default", work->group); break;
     }
 }
-void* _fsysDoMalloc(u32 bytes) { return GSmemAllocAlign(bytes, 32); }
+
+u32 GSfsysStreamGetCacheSize() { return _fsysStreamGetCacheSize(); }
+
+u32 GSfsysGetInvalidID() { return 0xffff; }
+
+void GSfsysStreamSetLoopPoint(u32 group, u32 id, u32 start, u32 end) {
+    if (!_initFlag) return;
+    FsysWork* work = _fsysGetWork(group, 0);
+    if (!work) return;
+    GSfsysResource* resource;
+    if (id == 0) {
+        resource = _fsysGetResHeader((GSfsysRequest*)work, 1);
+    } else {
+        resource = _fsysGetResHeader((GSfsysRequest*)work, _fsysID2Index(work, id));
+    }
+    if (resource) { resource->loopStart = start; resource->loopEnd = end; }
+}
+
+void GSfsysStreamSetLoopFlag(u32 group, u32 id, u8 loop) {
+    if (!_initFlag) return;
+    FsysWork* work = _fsysGetWork(group, 0);
+    if (!work) return;
+    GSfsysResource* resource;
+    if (id == 0) {
+        resource = _fsysGetResHeader((GSfsysRequest*)work, 1);
+    } else {
+        resource = _fsysGetResHeader((GSfsysRequest*)work, _fsysID2Index(work, id));
+    }
+    if (resource) {
+        if (loop == 0) { resource->flags |= 0x800; return; }
+        resource->flags &= ~0x800;
+    }
+}
+
+s32 GSfsysStreamGetData(u32 group, u32 resource, void* data, u32 bytes, u32 a, u32 b, u32 c, u32 d) {
+    if (!_initFlag) return 0;
+    FsysWork* work = _fsysGetWork(group, 0);
+    if (!work) { _fsysMemSet(data, 0, bytes); return 0; }
+    return _fsysStreamGetData(work, resource, data, bytes, a, b, c, d);
+}
+
+s32 GSfsysStreamMoviePreFunc(u32 group, u32 resource) {
+    if (!_initFlag) return 0;
+    FsysWork* work = _fsysGetWork(group, 0);
+    if (!work) return 0;
+    GSmovieStreamPostFunc(group, work->secondaryResourceID);
+    return 0;
+}
+
+void* GSfsysStreamMovieHeaderPostFunc(u32, u32) { if (_initFlag == 0) { return 0; } else { return 0; } }
+
+s32 GSfsysStreamMovieHeaderPreFunc(u32 group, u32 resource, u32 bytes) {
+    if (_initFlag == 0) { return 0; } else { return GSmovieStreamPreFunc(group, resource, bytes); }
+}
+
+s32 GSfsysStreamPreFunc(u32 group, u32 resource) {
+    if (!_initFlag) return 0;
+    FsysWork* work = _fsysGetWork(group, 0);
+    if (!work) return 0;
+    GSsndStreamPostFunc(group, work->secondaryResourceID);
+    return 0;
+}
+
+void* GSfsysStreamHeaderPostFunc(u32, u32) { if (_initFlag == 0) { return 0; } else { return 0; } }
+
+s32 GSfsysStreamHeaderPreFunc(u32 group, u32 resource, u32 bytes) {
+    if (_initFlag == 0) { return 0; } else { return GSsndStreamPreFunc(group, resource, bytes); }
+}
+
+s32 GSfsysInit(u32 dvdEntries) {
+    u8 result;
+    GSdvdInit(dvdEntries);
+    if ((result = GSfsysInit2(0, 0, 0)) == 0) return result;
+    return result;
+}
+
+s32 GSfsysGetDriveStatus() { if (_initFlag == 0) { return -1; } else { return GSdvdGetDriveStatus(); } }
+
+void GSfsysFreeCache(s32 group) {
+    if (_initFlag) {
+        do {} while (_fsysMemFreeCacheGroup(group) != 0);
+    }
+}
+
+void GSfsysFree(u32 id) {
+    GSfsysHeader* header;
+    FsysWork* work;
+    s32 i;
+    BOOL intr;
+
+    if (_initFlag) {
+        intr = OSDisableInterrupts();
+        _fsysFreeStatus(id);
+        work = _fsysGetWork(id, 0);
+        if (work != 0) {
+            header = _fsysGetHeader((GSfsysRequest*)work);
+            if (header != 0) {
+                for (i = 0; i < header->fileCount; i++) {
+                    GSfsysResource* res = _fsysGetResHeader((GSfsysRequest*)work, i);
+                    if (res != 0) {
+                        res->flags &= ~0x8;
+                    }
+                }
+            }
+        }
+        OSRestoreInterrupts(intr);
+    }
+}
+
+void* GSfsysOSLinkPreFunc(u32 group, u32 identifier, u32 bytes) {
+    void* resource = GSresAllocResourceAlign(bytes, 32, group, identifier, _fsysOSUnLink);
+    if (resource == 0) resource = 0;
+    return resource;
+}
+
+#pragma opt_propagation off
+void* GSfsysOSLinkPostFunc(u32 group, u32 identifier) {
+    OSModuleHeader* module = (OSModuleHeader*)GSresGetResource(group, identifier);
+    if (!module) return 0;
+    if (module->info.version < 3) return 0;
+    OSModuleHeader* end = module + module->fixSize;
+    void* bss = (void*)(((u32)end + 31) & ~31);
+    OSLinkFixed(&module->info, bss);
+    if (module->prolog) ((void (*)())module->prolog)();
+    return module;
+}
+#pragma opt_propagation reset
+
+u8 _fsysOSUnLink(void*, unsigned long group, unsigned long identifier) {
+    if (!_initFlag) return 0;
+    GSfsysOSUnLink(group, identifier, 0);
+    return 1;
+}
+
+void GSfsysOSUnLink(u32 group, u32 identifier, u32) {
+    if (_initFlag) {
+        OSModuleHeader* module = (OSModuleHeader*)GSresGetResource(group, identifier);
+        if (module) {
+            if (module->epilog) ((void (*)())module->epilog)();
+            OSUnlink(&module->info);
+        }
+    }
+}
+
+s32 GSfsysReadIDEXWait(u32 group, u32 resource, u32 pre, u32 post, u32 secondary) {
+    if (!_initFlag) return 0;
+    for (;;) {
+        if ((u8)GSfsysReadIDEX(group, resource, pre, post, secondary) == 1) break;
+        GSthreadSwitch();
+    }
+    return _fsysWait(group, 0);
+}
+
+s32 GSfsysReadIDWait(u32 group, u32 resource) {
+    if (!_initFlag) return 0;
+    for (;;) {
+        if ((u8)GSfsysReadID(group, resource) == 1) break;
+        GSthreadSwitch();
+    }
+    return _fsysWait(group, 0);
+}
+
+u32 GSfsysReadIDEX(u32 group, u32 resource, u32 pre, u32 post, u32 secondary) { return _fsysRequest(1, group, resource, 0, pre, post, secondary, 1); }
+
+u32 GSfsysReadID(u32 group, u32 resource) { return _fsysRequest(1, group, resource, 0, 0, 0, 0, 1); }
+
+s32 GSfsysCancelWait(u32 group) {
+    if (GSfsysCancel(group) == 0) return 0;
+    return _fsysWait(group, 0);
+}
+
+u8 GSfsysCancel(u32 group) {
+    if (!_initFlag) return 0;
+    if (GSfsysGetStatus(group) <= 0) return 0;
+    FsysWork* work = _fsysGetWork(group, 1);
+    if (!work) return 0;
+    work->cancelled = 1;
+    return 1;
+}
+
+s32 GSfsysPreReadWait(u32 group) {
+    if (!_initFlag) return 0;
+    for (;;) {
+        if ((u8)GSfsysPreRead(group) == 1) break;
+        GSthreadSwitch();
+    }
+    return _fsysWait(group, 0);
+}
+
+u32 GSfsysPreReadKeepCache(u32 group) { return _fsysPreReadExec(group, 1, 0, 0, 0, 1); }
+
+u32 GSfsysPreRead(u32 group) { return _fsysPreReadExec(group, 0, 0, 0, 0, 1); }
+
+u32 _fsysPreReadExec(u32 group, u8 keep, u32 pre, u32 post, u32 secondary, s32 priority) { return _fsysRequest(2, group, 0xffff, keep, pre, post, secondary, priority); }
+
+s32 GSfsysReadWait(u32 group) {
+    if (!_initFlag) return 0;
+    FsysWork* work = _fsysGetWork(group, 1);
+    if (work && work->mode == 2) GSfsysCancelWait(group);
+    for (;;) {
+        if ((u8)GSfsysRead(group) == 1) break;
+        GSthreadSwitch();
+    }
+    return _fsysWait(group, 0);
+}
+
+s32 GSfsysWait(u32 group) { return _fsysWait(group, 1); }
+
+s32 _fsysWait(s32 group, u8 allowPreread) {
+    if (!_initFlag) return 0;
+    for (;;) {
+        s32 status = GSfsysGetStatus(group);
+        if (status == 0) return 1;
+        if (status == -1) { if (allowPreread == 1) return 1; }
+        else if (status <= -2) return 0;
+        GSthreadSwitch();
+    }
+}
+
+u32 GSfsysReadStreamingEX(u32 group, u32 resource, u32 secondary) { return _fsysReadStreamingExec(group, resource, secondary); }
+
+u32 GSfsysReadStreaming(u32 group) { return _fsysReadStreamingExec(group, 0xffff, 0); }
+
+s32 _fsysReadStreamingExec(u32 group, u32 resource, u32 secondary) {
+    if (!_initFlag) return 0;
+    if (GSfsysGetStatus(group) <= 0) return _fsysExec(group, resource, 4, 0, 0, 0, secondary);
+    GSfsysCancelWait(group);
+    return _fsysExec(group, resource, 4, 0, 0, 0, secondary);
+}
+
+u32 GSfsysRead(u32 group) { return _fsysRequest(1, group, 0xffff, 0, 0, 0, 0, 1); }
+
+s32 _fsysRequest(s32 mode, u32 group, u32 resource, u8 keep, u32 pre, u32 post, u32 secondary, s32 priority) {
+    if (!_initFlag) return 0;
+    if (mode < 0 || priority >= 6) return 0;
+    if (priority < 0 || priority >= 3) return 0;
+    FsysQueue* queue = _fsysGetQueManage(group, resource);
+    if (queue && queue->processed == 0 && (mode == 2 || mode == 3)) _fsysDelQueManage(queue);
+    queue = _fsysGetNewQueManage(mode, group, resource, keep, pre, post, secondary);
+    if (!queue) return 0;
+    if (_fsysAddQueManage(queue, priority) == 1) _fsysQueExec();
+    return 1;
+}
+
+void _fsysQueExec() {
+    FsysQueue* queue;
+    FsysQueue* next;
+    s32 i;
+    if (_fsysQueManageExec) {
+        if (_fsysQueExecSub(_fsysQueManageExec) == 0) return;
+        _fsysQueManageExec = 0;
+    }
+    for (i = 0; i < 3; ++i) {
+        queue = _fsysQueManageRoot[i];
+        while (queue) {
+            next = queue->next;
+            if (_fsysQueExecSub(queue) == 0) { _fsysQueManageExec = queue; return; }
+            queue = next;
+        }
+    }
+}
+
+u8 _fsysQueExecSub(FsysQueue* queue) {
+    if (queue->processed == 0) {
+        queue->processed = 1;
+        switch (queue->mode) {
+        case 5:
+            GSfsysCancel(queue->group);
+            return 0;
+        default:
+            _fsysDelQueManage(queue);
+            return 1;
+        case 1: case 2: case 3: case 4:
+            _fsysExec(queue->group, queue->resourceID, queue->mode, queue->keepCache, queue->preCallback, queue->postCallback, queue->secondaryResourceID);
+            return 0;
+        }
+    }
+    if (GSfsysGetStatus(queue->group) <= 0) { _fsysDelQueManage(queue); return 1; }
+    return 0;
+}
+
+void _fsysDelQueManage(FsysQueue* queue) {
+    if (queue->previous) queue->previous->next = queue->next;
+    if (queue->next) queue->next->previous = queue->previous;
+    for (s32 i = 0; i < 3; ++i) {
+        if (queue == _fsysQueManageRoot[i]) { _fsysQueManageRoot[i] = queue->next; break; }
+    }
+    queue->group = 0;
+}
+
+u8 _fsysAddQueManage(FsysQueue* queue, s32 priority) {
+    u8 result;
+    FsysQueue* current = _fsysQueManageRoot[priority];
+    if (!current) {
+        _fsysQueManageRoot[priority] = queue;
+        result = 1;
+    } else {
+        FsysQueue* tail = current;
+        while (tail->next) tail = tail->next;
+        tail->next = queue;
+        result = 0;
+        queue->previous = tail;
+    }
+    return result;
+}
+
+FsysQueue* _fsysGetQueManage(u32 group, u32 resource) {
+    for (s32 i = 0; i < 3; ++i) {
+        FsysQueue* queue = _fsysQueManageRoot[i];
+        while (queue) {
+            if (queue->group == group) {
+                if (resource != 0xffff && queue->resourceID == resource) return queue;
+                return queue;
+            }
+            queue = queue->next;
+        }
+    }
+    return 0;
+}
+
+FsysQueue* _fsysGetNewQueManage(s32 mode, u32 group, u32 resource, u8 keep, u32 pre, u32 post, u32 secondary) {
+    FsysQueue* queue;
+    FsysQueue* result;
+    result = 0;
+    queue = _fsysQueManage;
+    for (u32 i = 0; i < _fsysQueManageMax; ++queue, ++i) {
+        if (queue->group == 0) {
+            result = _fsysQueManage + i;
+            result->previous = 0;
+            result->next = 0;
+            result->mode = mode;
+            result->group = group;
+            result->resourceID = resource;
+            result->preCallback = pre;
+            result->postCallback = post;
+            result->secondaryResourceID = secondary;
+            result->keepCache = keep;
+            result->processed = 0;
+            break;
+        }
+    }
+    return result;
+}
+
+s32 _fsysExec(u32 group, u32 resource, s32 mode, u8 keep, u32 pre, u32 post, u32 secondary) {
+    FsysWork* work;
+    BOOL interrupts = OSDisableInterrupts();
+    _fsysFreeStatus(group);
+    s32 id = group;
+    work = _fsysGetWork(id, 0);
+    if (!work) {
+        work = _fsysGetNewWork();
+        if (!work) {
+            s32 previous = OSRestoreInterrupts(interrupts);
+            if (work != 0) previous = 0;
+            return previous;
+        }
+        work->header = 0;
+        work->cacheGroup = _fsysIncCacheUniqueGroupID();
+    }
+    work->group = id;
+    work->resourceID = resource;
+    work->dvd = 0;
+    work->mode = mode;
+    work->status = 2;
+    work->pendingStatus = 0xffff;
+    work->readIndex = 0;
+    work->expandIndex = 0;
+    work->cancelled = 0;
+    work->keepCache = keep;
+    work->preCallback = pre;
+    work->postCallback = post;
+    work->secondaryResourceID = secondary;
+    work->directory = (GSfsysDirectory*)_fsysGetGROUP(id);
+    _fsysOpenFile(work);
+    OSRestoreInterrupts(interrupts);
+    return 1;
+}
+
+void _fsysFreeStatus(u32 group) {
+    _fsysOffTOCFlag(group, 1);
+    FsysWork* work = _fsysGetWork(group, 0);
+    if (work) work->status = 1;
+}
+
+s32 GSfsysGetStatus(s32 groupId) {
+    if (!_initFlag) return -2;
+    TocGroup* group = _fsysGetGROUP(groupId);
+    if (!group) return -1;
+    if (group->flags & 1) return 0;
+    FsysWork* work = _fsysGetWork(groupId, 0);
+    if (!work) return -1;
+    switch (work->status) {
+    case 12: return 0;
+    case 1: return -1;
+    case -999: return -2;
+    default: return 1;
+    }
+}
+
 u8 GSfsysInit2(u32 blocks, u32 cacheBytes, u32 cacheEntries) {
     u32 i;
     if (_initFlag == 1) return 0;
@@ -138,593 +695,7 @@ u8 GSfsysInit2(u32 blocks, u32 cacheBytes, u32 cacheEntries) {
     _initFlag = 1;
     return 1;
 }
-s32 GSfsysInit(u32 dvdEntries) {
-    u8 result;
-    GSdvdInit(dvdEntries);
-    if ((result = GSfsysInit2(0, 0, 0)) == 0) return result;
-    return result;
-}
-u32 GSfsysGetInvalidID() { return 0xffff; }
-u32 GSfsysStreamGetCacheSize() { return _fsysStreamGetCacheSize(); }
-s32 GSfsysGetDriveStatus() { if (_initFlag == 0) { return -1; } else { return GSdvdGetDriveStatus(); } }
-s32 GSfsysStreamHeaderPostFunc(u32, u32) { if (_initFlag == 0) { return 0; } else { return 0; } }
-s32 GSfsysStreamMovieHeaderPostFunc(u32, u32) { if (_initFlag == 0) { return 0; } else { return 0; } }
-s32 GSfsysStreamHeaderPreFunc(u32 group, u32 resource, u32 bytes) {
-    if (_initFlag == 0) { return 0; } else { return GSsndStreamPreFunc(group, resource, bytes); }
-}
-s32 GSfsysStreamMovieHeaderPreFunc(u32 group, u32 resource, u32 bytes) {
-    if (_initFlag == 0) { return 0; } else { return GSmovieStreamPreFunc(group, resource, bytes); }
-}
-s32 GSfsysStreamPreFunc(u32 group, u32 resource) {
-    if (!_initFlag) return 0;
-    FsysWork* work = _fsysGetWork(group, 0);
-    if (!work) return 0;
-    GSsndStreamPostFunc(group, work->secondaryResourceID);
-    return 0;
-}
-s32 GSfsysStreamMoviePreFunc(u32 group, u32 resource) {
-    if (!_initFlag) return 0;
-    FsysWork* work = _fsysGetWork(group, 0);
-    if (!work) return 0;
-    GSmovieStreamPostFunc(group, work->secondaryResourceID);
-    return 0;
-}
-void GSfsysFreeCache(s32 group) {
-    if (_initFlag) {
-        do {} while (_fsysMemFreeCacheGroup(group) != 0);
-    }
-}
-u32 GSfsysRead(u32 group) { return _fsysRequest(1, group, 0xffff, 0, 0, 0, 0, 1); }
-u32 GSfsysReadID(u32 group, u32 resource) { return _fsysRequest(1, group, resource, 0, 0, 0, 0, 1); }
-u32 GSfsysReadIDEX(u32 group, u32 resource, u32 pre, u32 post, u32 secondary) { return _fsysRequest(1, group, resource, 0, pre, post, secondary, 1); }
-u32 _fsysPreReadExec(u32, u8, u32, u32, u32, s32);
-u32 GSfsysPreRead(u32 group) { return _fsysPreReadExec(group, 0, 0, 0, 0, 1); }
-u32 GSfsysPreReadKeepCache(u32 group) { return _fsysPreReadExec(group, 1, 0, 0, 0, 1); }
-u32 _fsysPreReadExec(u32 group, u8 keep, u32 pre, u32 post, u32 secondary, s32 priority) { return _fsysRequest(2, group, 0xffff, keep, pre, post, secondary, priority); }
-u32 GSfsysReadStreaming(u32 group) { return _fsysReadStreamingExec(group, 0xffff, 0); }
-u32 GSfsysReadStreamingEX(u32 group, u32 resource, u32 secondary) { return _fsysReadStreamingExec(group, resource, secondary); }
-s32 GSfsysWait(u32 group) { return _fsysWait(group, 1); }
-s32 GSfsysReadIDWait(u32 group, u32 resource) {
-    if (!_initFlag) return 0;
-    for (;;) {
-        if ((u8)GSfsysReadID(group, resource) == 1) break;
-        GSthreadSwitch();
-    }
-    return _fsysWait(group, 0);
-}
-s32 GSfsysReadIDEXWait(u32 group, u32 resource, u32 pre, u32 post, u32 secondary) {
-    if (!_initFlag) return 0;
-    for (;;) {
-        if ((u8)GSfsysReadIDEX(group, resource, pre, post, secondary) == 1) break;
-        GSthreadSwitch();
-    }
-    return _fsysWait(group, 0);
-}
-s32 GSfsysPreReadWait(u32 group) {
-    if (!_initFlag) return 0;
-    for (;;) {
-        if ((u8)GSfsysPreRead(group) == 1) break;
-        GSthreadSwitch();
-    }
-    return _fsysWait(group, 0);
-}
-void GSfsysStreamSetLoopPoint(u32 group, u32 id, u32 start, u32 end) {
-    if (!_initFlag) return;
-    FsysWork* work = _fsysGetWork(group, 0);
-    if (!work) return;
-    GSfsysResource* resource;
-    if (id == 0) {
-        resource = _fsysGetResHeader((GSfsysRequest*)work, 1);
-    } else {
-        resource = _fsysGetResHeader((GSfsysRequest*)work, _fsysID2Index(work, id));
-    }
-    if (resource) { resource->loopStart = start; resource->loopEnd = end; }
-}
-void GSfsysStreamSetLoopFlag(u32 group, u32 id, u8 loop) {
-    if (!_initFlag) return;
-    FsysWork* work = _fsysGetWork(group, 0);
-    if (!work) return;
-    GSfsysResource* resource;
-    if (id == 0) {
-        resource = _fsysGetResHeader((GSfsysRequest*)work, 1);
-    } else {
-        resource = _fsysGetResHeader((GSfsysRequest*)work, _fsysID2Index(work, id));
-    }
-    if (resource) {
-        if (loop == 0) { resource->flags |= 0x800; return; }
-        resource->flags &= ~0x800;
-    }
-}
 
-TocGroup* _fsysGetGROUP(u32 id) {
-    u32 count = _fsysTOC->groupCount;
-    TocGroup* group = (TocGroup*)((u8*)_fsysTOC + _fsysTOC->tableOffset);
-    for (u32 i = 0; i < count; ++i, ++group) {
-        if (group->group == id) return group;
-    }
-    return 0;
-}
-void _fsysOffTOCFlag(u32 groupId, u32 bits) {
-    TocGroup* group = _fsysGetGROUP(groupId);
-    if (group) group->flags &= ~bits;
-}
-void _fsysOnTOCFlag(u32 groupId, u32 bits) {
-    TocGroup* group = _fsysGetGROUP(groupId);
-    if (group) group->flags |= bits;
-}
-s32 _fsysGetFilename(FsysWork* work, char* output) {
-    TocGroup* group = _fsysGetGROUP(work->group);
-    if (!group) return 0;
-    sprintf(output, "%s.fsys", group->name);
-    return 1;
-}
-#pragma opt_propagation off
-FsysWork* _fsysGetWork(u32 group, u8 activeOnly) {
-    FsysWork* work;
-    FsysWork* base = _fsysWork;
-    work = base;
-    for (u32 i = 0; i < _fsysWorkMax; ++work, ++i) {
-        if (activeOnly == 1) {
-            switch (work->status) {
-            case 0:
-            case -999:
-            case 12:
-                continue;
-            }
-        } else if (work->status == 0) {
-            continue;
-        }
-        if (group == work->group) return base + i;
-    }
-    return 0;
-}
-#pragma opt_propagation reset
-u32 _fsysID2Index(FsysWork* work, u32 id) {
-    if (id == 0xffff) return 0xffff;
-    GSfsysHeader* header = _fsysGetHeader((GSfsysRequest*)work);
-    if (header) for (u32 i = 0; i < header->fileCount; ++i) {
-        GSfsysResource* resource = _fsysGetResHeader((GSfsysRequest*)work, i);
-        if (resource && resource->identifier == id) return i;
-    }
-    return 0xffff;
-}
-void _fsysWorkSetTaskStatus(FsysWork* work, s32 status) {
-    BOOL interrupts = OSDisableInterrupts();
-    work->pendingStatus = status;
-    OSRestoreInterrupts(interrupts);
-}
-void _fsysResHeaderSetTaskStatus(GSfsysResource* resource, s32 status) {
-    BOOL interrupts = OSDisableInterrupts();
-    resource->token = status;
-    OSRestoreInterrupts(interrupts);
-}
-void _fsysFreeStatus(u32 group) {
-    _fsysOffTOCFlag(group, 1);
-    FsysWork* work = _fsysGetWork(group, 0);
-    if (work) work->status = 1;
-}
-s32 _fsysWait(s32 group, u8 allowPreread) {
-    if (!_initFlag) return 0;
-    for (;;) {
-        s32 status = GSfsysGetStatus(group);
-        if (status == 0) return 1;
-        if (status == -1) { if (allowPreread == 1) return 1; }
-        else if (status <= -2) return 0;
-        GSthreadSwitch();
-    }
-}
-s32 _fsysGetActiveTask(s32 mode) {
-    FsysWork* work;
-    s32 count = 0;
-    work = _fsysWork;
-    for (u32 i = 0; i < _fsysWorkMax; ++i, ++work) {
-        switch (work->status) {
-        case -999:
-        case 0:
-        case 1:
-        case 12:
-            break;
-        default:
-            if (mode == work->mode) ++count;
-            break;
-        }
-    }
-    return count;
-}
-
-s32 GSfsysGetStatus(s32 groupId) {
-    if (!_initFlag) return -2;
-    TocGroup* group = _fsysGetGROUP(groupId);
-    if (!group) return -1;
-    if (group->flags & 1) return 0;
-    FsysWork* work = _fsysGetWork(groupId, 0);
-    if (!work) return -1;
-    switch (work->status) {
-    case 12: return 0;
-    case 1: return -1;
-    case -999: return -2;
-    default: return 1;
-    }
-}
-u8 GSfsysCancel(u32 group) {
-    if (!_initFlag) return 0;
-    if (GSfsysGetStatus(group) <= 0) return 0;
-    FsysWork* work = _fsysGetWork(group, 1);
-    if (!work) return 0;
-    work->cancelled = 1;
-    return 1;
-}
-s32 GSfsysCancelWait(u32 group) {
-    if (GSfsysCancel(group) == 0) return 0;
-    return _fsysWait(group, 0);
-}
-s32 GSfsysReadWait(u32 group) {
-    if (!_initFlag) return 0;
-    FsysWork* work = _fsysGetWork(group, 1);
-    if (work && work->mode == 2) GSfsysCancelWait(group);
-    for (;;) {
-        if ((u8)GSfsysRead(group) == 1) break;
-        GSthreadSwitch();
-    }
-    return _fsysWait(group, 0);
-}
-
-FsysQueue* _fsysGetNewQueManage(s32 mode, u32 group, u32 resource, u8 keep, u32 pre, u32 post, u32 secondary) {
-    FsysQueue* queue;
-    FsysQueue* result;
-    result = 0;
-    queue = _fsysQueManage;
-    for (u32 i = 0; i < _fsysQueManageMax; ++queue, ++i) {
-        if (queue->group == 0) {
-            result = _fsysQueManage + i;
-            result->previous = 0;
-            result->next = 0;
-            result->mode = mode;
-            result->group = group;
-            result->resourceID = resource;
-            result->preCallback = pre;
-            result->postCallback = post;
-            result->secondaryResourceID = secondary;
-            result->keepCache = keep;
-            result->processed = 0;
-            break;
-        }
-    }
-    return result;
-}
-u8 _fsysAddQueManage(FsysQueue* queue, s32 priority) {
-    u8 result;
-    FsysQueue* current = _fsysQueManageRoot[priority];
-    if (!current) {
-        _fsysQueManageRoot[priority] = queue;
-        result = 1;
-    } else {
-        FsysQueue* tail = current;
-        while (tail->next) tail = tail->next;
-        tail->next = queue;
-        result = 0;
-        queue->previous = tail;
-    }
-    return result;
-}
-
-void _fsysDelQueManage(FsysQueue* queue) {
-    if (queue->previous) queue->previous->next = queue->next;
-    if (queue->next) queue->next->previous = queue->previous;
-    for (s32 i = 0; i < 3; ++i) {
-        if (queue == _fsysQueManageRoot[i]) { _fsysQueManageRoot[i] = queue->next; break; }
-    }
-    queue->group = 0;
-}
-FsysQueue* _fsysGetQueManage(u32 group, u32 resource) {
-    for (s32 i = 0; i < 3; ++i) {
-        FsysQueue* queue = _fsysQueManageRoot[i];
-        while (queue) {
-            if (queue->group == group) {
-                if (resource != 0xffff && queue->resourceID == resource) return queue;
-                return queue;
-            }
-            queue = queue->next;
-        }
-    }
-    return 0;
-}
-s32 _fsysRequest(s32 mode, u32 group, u32 resource, u8 keep, u32 pre, u32 post, u32 secondary, s32 priority) {
-    if (!_initFlag) return 0;
-    if (mode < 0 || priority >= 6) return 0;
-    if (priority < 0 || priority >= 3) return 0;
-    FsysQueue* queue = _fsysGetQueManage(group, resource);
-    if (queue && queue->processed == 0 && (mode == 2 || mode == 3)) _fsysDelQueManage(queue);
-    queue = _fsysGetNewQueManage(mode, group, resource, keep, pre, post, secondary);
-    if (!queue) return 0;
-    if (_fsysAddQueManage(queue, priority) == 1) _fsysQueExec();
-    return 1;
-}
-u8 _fsysQueExecSub(FsysQueue* queue) {
-    if (queue->processed == 0) {
-        queue->processed = 1;
-        switch (queue->mode) {
-        case 5:
-            GSfsysCancel(queue->group);
-            return 0;
-        default:
-            _fsysDelQueManage(queue);
-            return 1;
-        case 1: case 2: case 3: case 4:
-            _fsysExec(queue->group, queue->resourceID, queue->mode, queue->keepCache, queue->preCallback, queue->postCallback, queue->secondaryResourceID);
-            return 0;
-        }
-    }
-    if (GSfsysGetStatus(queue->group) <= 0) { _fsysDelQueManage(queue); return 1; }
-    return 0;
-}
-void _fsysQueExec() {
-    FsysQueue* queue;
-    FsysQueue* next;
-    s32 i;
-    if (_fsysQueManageExec) {
-        if (_fsysQueExecSub(_fsysQueManageExec) == 0) return;
-        _fsysQueManageExec = 0;
-    }
-    for (i = 0; i < 3; ++i) {
-        queue = _fsysQueManageRoot[i];
-        while (queue) {
-            next = queue->next;
-            if (_fsysQueExecSub(queue) == 0) { _fsysQueManageExec = queue; return; }
-            queue = next;
-        }
-    }
-}
-
-FsysWork* _fsysGetNewWork_Sub(s32 preserveFinished) {
-    FsysWork* result = 0;
-    u32 index = _fsysWorkIndex;
-    while (!result) {
-        FsysWork* work = _fsysWork + index;
-        switch (work->status) {
-        case 12:
-            if (preserveFinished == 1) break;
-        case -999:
-        case 0:
-        case 1:
-            result = work;
-            if (work->header) _fsysMemFreeHeader((GSfsysRequest*)work);
-            break;
-        }
-        ++index;
-        if (index >= _fsysWorkMax) index = 0;
-        if (index == _fsysWorkIndex) break;
-    }
-    _fsysWorkIndex = index;
-    return result;
-}
-FsysWork* _fsysGetNewWork() {
-    FsysWork* work = _fsysGetNewWork_Sub(1);
-    if (work) return work;
-    work = _fsysGetNewWork_Sub(0);
-    if (work) return work;
-    return 0;
-}
-s32 _fsysOpenFile(FsysWork* work) {
-    char filename[128];
-    _fsysGetFilename(work, filename);
-    work->dvd = GSdvdOpen(filename);
-    if (!work->dvd) { _fsysWorkSetTaskStatus(work, -998); return 0; }
-    if (work->directory->headerLength == 0) {
-        _fsysWorkSetTaskStatus(work, 3);
-    } else {
-        _fsysWorkSetTaskStatus(work, 5);
-    }
-    return 1;
-}
-s32 _fsysExec(u32 group, u32 resource, s32 mode, u8 keep, u32 pre, u32 post, u32 secondary) {
-    FsysWork* work;
-    BOOL interrupts = OSDisableInterrupts();
-    _fsysFreeStatus(group);
-    s32 id = group;
-    work = _fsysGetWork(id, 0);
-    if (!work) {
-        work = _fsysGetNewWork();
-        if (!work) {
-            s32 previous = OSRestoreInterrupts(interrupts);
-            if (work != 0) previous = 0;
-            return previous;
-        }
-        work->header = 0;
-        work->cacheGroup = _fsysIncCacheUniqueGroupID();
-    }
-    work->group = id;
-    work->resourceID = resource;
-    work->dvd = 0;
-    work->mode = mode;
-    work->status = 2;
-    work->pendingStatus = 0xffff;
-    work->readIndex = 0;
-    work->expandIndex = 0;
-    work->cancelled = 0;
-    work->keepCache = keep;
-    work->preCallback = pre;
-    work->postCallback = post;
-    work->secondaryResourceID = secondary;
-    work->directory = (GSfsysDirectory*)_fsysGetGROUP(id);
-    _fsysOpenFile(work);
-    OSRestoreInterrupts(interrupts);
-    return 1;
-}
-s32 _fsysReadStreamingExec(u32 group, u32 resource, u32 secondary) {
-    if (!_initFlag) return 0;
-    if (GSfsysGetStatus(group) <= 0) return _fsysExec(group, resource, 4, 0, 0, 0, secondary);
-    GSfsysCancelWait(group);
-    return _fsysExec(group, resource, 4, 0, 0, 0, secondary);
-}
-void GSfsysFree(u32 id) {
-    GSfsysHeader* header;
-    FsysWork* work;
-    s32 i;
-    BOOL intr;
-
-    if (_initFlag) {
-        intr = OSDisableInterrupts();
-        _fsysFreeStatus(id);
-        work = _fsysGetWork(id, 0);
-        if (work != 0) {
-            header = _fsysGetHeader((GSfsysRequest*)work);
-            if (header != 0) {
-                for (i = 0; i < header->fileCount; i++) {
-                    GSfsysResource* res = _fsysGetResHeader((GSfsysRequest*)work, i);
-                    if (res != 0) {
-                        res->flags &= ~0x8;
-                    }
-                }
-            }
-        }
-        OSRestoreInterrupts(intr);
-    }
-}
-void _fsysDelTAG(FsysBackgroundWork* entry, FsysBackgroundWork** root) {
-    BOOL interrupts = OSDisableInterrupts();
-    if (entry->previous) entry->previous->next = entry->next;
-    if (entry->next) entry->next->previous = entry->previous;
-    if (entry == *root) *root = entry->next;
-    entry->inUse = 0;
-    entry->previous = 0;
-    entry->next = 0;
-    OSRestoreInterrupts(interrupts);
-}
-void _fsysAddTAG(FsysBackgroundWork* entry, FsysBackgroundWork** root) {
-    BOOL interrupts = OSDisableInterrupts();
-    if (*root == 0) {
-        *root = entry;
-    } else {
-        FsysBackgroundWork* tail = *root;
-        while (tail->next) tail = tail->next;
-        tail->next = entry;
-        entry->previous = tail;
-    }
-    OSRestoreInterrupts(interrupts);
-}
-void _fsysDelBGWork(FsysBackgroundWork* entry) { _fsysDelTAG(entry, &_fsysBGWorkRoot); }
-void _fsysAddBGWork(FsysBackgroundWork* entry) { _fsysAddTAG(entry, &_fsysBGWorkRoot); }
-FsysBackgroundWork* _fsysGetNewBGWork() {
-    FsysBackgroundWork* result = 0;
-    BOOL interrupts = OSDisableInterrupts();
-    FsysBackgroundWork* entry;
-    u32 index = _fsysBGWorkIndex;
-    while (!result) {
-        entry = _fsysBGWork + index;
-        if (entry->inUse == 0) {
-            entry->previous = 0;
-            entry->next = 0;
-            entry->inUse = 1;
-            entry->loaded = 0;
-            entry->compressed = 0;
-            entry->resourceAllocated = 0;
-            entry->work = 0;
-            entry->resource = 0;
-            entry->flags[0] = 0;
-            entry->flags[1] = 0;
-            entry->flags[2] = 0;
-            entry->flags[3] = 0;
-            entry->expandedBytes = 0;
-            entry->compressedBytes = 0;
-            entry->payloadBytes = 0;
-            entry->dictionary = 0;
-            entry->matchPosition = 0;
-            entry->dictionaryPosition = 0;
-            entry->tokenFlags = 0;
-            entry->tokenCount = 0;
-            entry->consumedBytes = 0;
-            entry->writtenBytes = 0;
-            entry->decodeState = 0;
-            result = entry;
-        }
-        ++index;
-        if (index >= _fsysBGWorkMax) index = 0;
-        if (index == _fsysBGWorkIndex) break;
-    }
-    _fsysBGWorkIndex = index;
-    OSRestoreInterrupts(interrupts);
-    return result;
-}
-void _fsysMemSet(void* data, s32 value, u32 bytes) {
-    if (data) { memset(data, value, bytes); DCFlushRange(data, bytes); }
-}
-u8 _fsysBGTaskCancel(FsysBackgroundWork* entry) {
-    if (entry->work->cancelled == 1) {
-        _fsysFreeBlockAll(&entry->resource->readBlocks);
-        _fsysFreeBlockAll(&entry->resource->expandBlocks);
-        entry->loaded = 1;
-        return 1;
-    } else {
-        return 0;
-    }
-}
-s32 GSfsysStreamGetData(u32 group, u32 resource, void* data, u32 bytes, u32 a, u32 b, u32 c, u32 d) {
-    if (!_initFlag) return 0;
-    FsysWork* work = _fsysGetWork(group, 0);
-    if (!work) { _fsysMemSet(data, 0, bytes); return 0; }
-    return _fsysStreamGetData(work, resource, data, bytes, a, b, c, d);
-}
-u8 _fsysCloseFile(FsysWork* work, u8 cancelled) {
-    if (cancelled == 0 && work->preCallback && work->mode != 4)
-        ((void (*)(s32, u32, u32))work->preCallback)(work->mode, work->postCallback, work->secondaryResourceID);
-    BOOL interrupts = OSDisableInterrupts();
-    _fsysSetLockCacheFlagGroup(work->group, 0);
-    _fsysStreamFreeCacheAll((GSfsysRequest*)work);
-    OSRestoreInterrupts(interrupts);
-    void* dvd = work->dvd;
-    work->dvd = 0;
-    return GSdvdClose((GSdvdWork*)dvd);
-}
-FsysWork* _fsysInfo2Work(void* dvd) {
-    FsysWork* work;
-    u32 i;
-    s32 j;
-    for (i = 0; i < _fsysWorkMax; ++i) {
-        work = _fsysWork + i;
-        switch (work->status) { case -999: case 0: case 1: case 12: continue; }
-        if (work->dvd == dvd) return work;
-        GSfsysHeader* header = _fsysGetHeader((GSfsysRequest*)work);
-        if (header && (header->flags & 1)) {
-            for (j = 0; j < header->fileCount; ++j) {
-                GSfsysResource* resource = _fsysGetResHeader((GSfsysRequest*)work, j);
-                if (resource && resource->dvd == dvd) return work;
-            }
-        }
-    }
-    return 0;
-}
-void GSfsysOSUnLink(u32 group, u32 identifier, u32) {
-    if (_initFlag) {
-        OSModuleHeader* module = (OSModuleHeader*)GSresGetResource(group, identifier);
-        if (module) {
-            if (module->epilog) ((void (*)())module->epilog)();
-            OSUnlink(&module->info);
-        }
-    }
-}
-u8 _fsysOSUnLink(void*, unsigned long group, unsigned long identifier) {
-    if (!_initFlag) return 0;
-    GSfsysOSUnLink(group, identifier, 0);
-    return 1;
-}
-void* GSfsysOSLinkPreFunc(u32 group, u32 identifier, u32 bytes) {
-    void* resource = GSresAllocResourceAlign(bytes, 32, group, identifier, _fsysOSUnLink);
-    if (resource == 0) resource = 0;
-    return resource;
-}
-#pragma opt_propagation off
-void* GSfsysOSLinkPostFunc(u32 group, u32 identifier) {
-    OSModuleHeader* module = (OSModuleHeader*)GSresGetResource(group, identifier);
-    if (!module) return 0;
-    if (module->info.version < 3) return 0;
-    OSModuleHeader* end = module + module->fixSize;
-    void* bss = (void*)(((u32)end + 31) & ~31);
-    OSLinkFixed(&module->info, bss);
-    if (module->prolog) ((void (*)())module->prolog)();
-    return module;
-}
-#pragma opt_propagation reset
 void GSfsysDaemonBackground() {
     FsysBackgroundWork* entry = _fsysBGWorkRoot;
     while (entry) {
@@ -749,6 +720,7 @@ void GSfsysDaemonBackground() {
         entry = entry->next;
     }
 }
+
 void _fsysBackgroundTaskNormalType(FsysBackgroundWork* bg, u8 copy) {
     GSfsysBlock* block;
     u8* dst;
@@ -777,6 +749,254 @@ void _fsysBackgroundTaskNormalType(FsysBackgroundWork* bg, u8 copy) {
         bg->loaded = 1;
     }
 }
+
+void _fsysBackgroundTaskCompressType(FsysBackgroundWork* entry) {
+    if (entry->loaded != 1 && _fsysBGTaskCancel(entry) != 1) {
+    GSfsysBlock* block = entry->resource->expandBlocks;
+    if (!block) return;
+    s32 count;
+    u32 position;
+    s32 i;
+    if (entry->dictionary == 0) {
+        entry->dictionary = (u8*)_fsysAlloc(0x1011);
+        if (!entry->dictionary) return;
+        memset((void*)entry->dictionary, 0, 0xfee);
+        memcpy(entry->flags, block->data, 16);
+        entry->dictionaryPosition = 0xfee;
+        position = 16;
+        entry->tokenFlags = 0;
+        entry->payloadBytes = entry->compressedBytes - 16;
+        entry->decodeState = 0;
+    } else position = 0;
+    s32 matchPosition;
+    s32 ringPosition;
+    u32 flags;
+    s32 tokens;
+    u32 consumed;
+    s32 written;
+    u8* output;
+    u8* ring;
+    u32 inputLength;
+    u32 blockBytes;
+    s32 state;
+    tokens = entry->tokenCount;
+    flags = entry->tokenFlags;
+    ringPosition = entry->dictionaryPosition;
+    matchPosition = entry->matchPosition;
+    consumed = entry->consumedBytes;
+    written = entry->writtenBytes;
+    output = (u8*)entry->resource->expandedData;
+    inputLength = entry->payloadBytes;
+    blockBytes = _fsysBlockByteSize;
+    ring = (u8*)entry->dictionary;
+    state = entry->decodeState;
+    u8 value;
+    u8* input;
+nextBlock:
+    input = (u8*)block->data;
+    switch (state) {
+    case 0: break;
+    case 1: goto readFlags;
+    case 2: goto literal;
+    case 3: goto matchLow;
+    case 4: goto matchHigh;
+    }
+nextToken:
+    flags >>= 1;
+    if (flags & 0x100) goto chooseToken;
+readFlags:
+    ++consumed;
+    value = input[position++];
+    if (consumed > inputLength) goto finishBlock;
+    if (position > blockBytes) { state = 1; --consumed; goto finishBlock; }
+    flags = value | 0xff00;
+chooseToken:
+    if (!(flags & 1)) goto matchLow;
+literal:
+    ++consumed;
+    value = input[position++];
+    if (consumed > inputLength) goto finishBlock;
+    if (position > blockBytes) { state = 2; --consumed; goto finishBlock; }
+    output[written++] = value;
+    ring[ringPosition++] = value;
+    ringPosition &= 0xfff;
+    goto tokenDone;
+matchLow:
+    ++consumed;
+    matchPosition = input[position++];
+    if (consumed > inputLength) goto finishBlock;
+    if (position > blockBytes) { state = 3; --consumed; goto finishBlock; }
+matchHigh:
+    ++consumed;
+    value = input[position++];
+    if (consumed > inputLength) goto finishBlock;
+    if (position > blockBytes) { state = 4; --consumed; goto finishBlock; }
+    count = (value & 15) + 2;
+    matchPosition |= (value << 4) & 0xf00;
+    for (i = 0; i <= count; ++i) {
+        value = ring[(matchPosition + i) & 0xfff];
+        output[written++] = value;
+        ring[ringPosition++] = value;
+        ringPosition &= 0xfff;
+    }
+tokenDone:
+    ++tokens;
+    goto nextToken;
+finishBlock:
+    _fsysFreeBlock(&entry->resource->expandBlocks, 1);
+    if (consumed > inputLength) {
+        DCFlushRange(entry->resource->expandedData, entry->expandedBytes);
+        entry->loaded = 1;
+        return;
+    }
+    if (_fsysBGTaskCancel(entry) == 1) return;
+    block = entry->resource->expandBlocks;
+    if (block) { position = 0; goto nextBlock; }
+    entry->tokenCount = tokens;
+    entry->tokenFlags = flags;
+    entry->matchPosition = matchPosition;
+    entry->dictionaryPosition = ringPosition;
+    entry->consumedBytes = consumed;
+    entry->writtenBytes = written;
+    entry->decodeState = state;
+}
+
+    }
+
+void _fsysMemSet(void* data, s32 value, u32 bytes) {
+    if (data) { memset(data, value, bytes); DCFlushRange(data, bytes); }
+}
+
+u8 _fsysBGTaskCancel(FsysBackgroundWork* entry) {
+    if (entry->work->cancelled == 1) {
+        _fsysFreeBlockAll(&entry->resource->readBlocks);
+        _fsysFreeBlockAll(&entry->resource->expandBlocks);
+        entry->loaded = 1;
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+void GSfsysDaemonForeground() {
+    FsysBackgroundWork* entry = _fsysBGWorkRoot;
+    while (entry) {
+        FsysBackgroundWork* next = entry->next;
+        if (entry->loaded == 1) {
+            GSfsysResource* resource = entry->resource;
+            FsysWork* work = entry->work;
+            u32 index = _fsysID2Index(work, resource->identifier);
+            GSfsysResource* previous = index != 0 ? _fsysGetResHeader((GSfsysRequest*)work, index - 1) : 0;
+            if (_fsysID2Index(work, work->resourceID) != 0xffff || !previous || (previous->flags & 8)) {
+                GSfsysDataType* type = _fsysGetDataType(resource->dataType);
+                if (work->cancelled == 0 && type->finish) {
+                    if (resource->flags & 0x80000000) type->finish(work->group, resource->identifier, resource->expandedLength);
+                    else type->finish(work->group, resource->identifier, resource->length);
+                }
+                if (entry->dictionary) { _fsysFree((void*)entry->dictionary); entry->dictionary = 0; }
+                _fsysDelBGWork(entry);
+                resource->flags |= 8;
+                _fsysSetLockCacheFlag(work->group, _fsysID2Index(work, resource->identifier), 0);
+            } else if (previous && !(previous->flags & 8)) {
+                OSReport("<1>-----fsysBGwork:Wait Prev ResFinish Index=%d:%d\n", work->group, _fsysID2Index(work, resource->identifier));
+            } else {
+                OSReport("<2>-----fsysBGwork:Wait Prev ResFinish Index=%d:%d\n", work->group, _fsysID2Index(work, resource->identifier));
+            }
+        }
+        entry = next;
+    }
+    for (u32 i = 0; i < _fsysWorkMax; ++i) _fsysForegroundTask(_fsysWork + i);
+    _fsysQueExec();
+}
+
+void _fsysForegroundTask(FsysWork* work) {
+    BOOL interrupts = OSDisableInterrupts();
+    if (work->pendingStatus != 0xffff) { work->status = work->pendingStatus; work->pendingStatus = 0xffff; }
+    OSRestoreInterrupts(interrupts);
+    switch (work->status) {
+    case 3:
+        if (!_headerTop) {
+            _headerTop = headerTop;
+            _fsysWorkSetTaskStatus(work, 4);
+            if (GSdvdReadAsync((GSdvdWork*)work->dvd, _headerTop, 32, 0, _fsysHeaderSizeReadDvdCallback) == 0) {
+                _headerTop = 0;
+                _fsysWorkSetTaskStatus(work, 3);
+            }
+        }
+        break;
+    case 5:
+        switch (work->mode) {
+        case 1: _fsysWorkSetTaskStatus(work, 6); _fsysReadRequest((GSfsysRequest*)work); break;
+        case 4: _fsysWorkSetTaskStatus(work, 9); _fsysReadRequest((GSfsysRequest*)work); break;
+        case 2: _fsysWorkSetTaskStatus(work, 7); _fsysReadRequest((GSfsysRequest*)work); break;
+        case 3: _fsysWorkSetTaskStatus(work, 8); _fsysSeekRequest((GSfsysRequest*)work); break;
+        default: _fsysWorkSetTaskStatus(work, -1000); break;
+        }
+        break;
+    case 6: case 7: case 9: _fsysCheckExpandCompleteAll(work); break;
+    case 10:
+        switch (work->mode) {
+        case 1: if (!_fsysCheckExpandCompleteAll(work)) break;
+        case 2: case 4: _fsysWorkSetTaskStatus(work, 11); break;
+        default: _fsysWorkSetTaskStatus(work, -1000); break;
+        }
+        break;
+    case -1000: case -996: case -995: case -994:
+        OSReport("_fsysForegroundTask:ERROR...:%d\n", work->group);
+        if (_fsysCloseFile(work, 1) == 0) { _fsysWorkSetTaskStatus(work, -997); break; }
+    case -998:
+        OSReport("_fsysForegroundTask:ERROR_FILEOPEN:%d\n", work->group);
+        _fsysOpenFile(work);
+        break;
+    case -997:
+        OSReport("_fsysForegroundTask:ERROR_FILECLOSE:%d\n", work->group);
+        _fsysWorkSetTaskStatus(work, -999);
+        break;
+    case 11:
+        if (_fsysCloseFile(work, 0) == 0) _fsysWorkSetTaskStatus(work, -997);
+        else {
+            if (work->mode >= 5 || work->mode < 3) _fsysOnTOCFlag(work->group, 1);
+            _fsysWorkSetTaskStatus(work, 12);
+        }
+        break;
+    case 0:
+    case 1:
+    case 12:
+    case -999:
+        break;
+    }
+    interrupts = OSDisableInterrupts();
+    if (work->pendingStatus != 0xffff) { work->status = work->pendingStatus; work->pendingStatus = 0xffff; }
+    OSRestoreInterrupts(interrupts);
+}
+
+void _fsysHeaderSizeReadDvdCallback(s32 result, GSdvdWork* dvd) {
+    FsysWork* work = _fsysInfo2Work(dvd);
+    if (!work) {
+        _headerTop = 0;
+        _fsysWorkSetTaskStatus(work, 3);
+        if (work != 0) return;
+    } else if (result < 0) {
+        _headerTop = 0;
+        _fsysWorkSetTaskStatus(work, 3);
+        if (work != 0) return;
+    } else {
+        work->directory->headerLength = _headerTop[7];
+        _headerTop = 0;
+        _fsysWorkSetTaskStatus(work, 5);
+    }
+}
+
+void _fsysOffTOCFlag(u32 groupId, u32 bits) {
+    TocGroup* group = _fsysGetGROUP(groupId);
+    if (group) group->flags &= ~bits;
+}
+
+void _fsysOnTOCFlag(u32 groupId, u32 bits) {
+    TocGroup* group = _fsysGetGROUP(groupId);
+    if (group) group->flags |= bits;
+}
+
 u8 _fsysCheckExpandCompleteAll(FsysWork* work) {
     u32 i;
     GSfsysHeader* header = _fsysGetHeader((GSfsysRequest*)work);
@@ -795,6 +1015,17 @@ u8 _fsysCheckExpandCompleteAll(FsysWork* work) {
     }
     return complete;
 }
+
+u32 _fsysID2Index(FsysWork* work, u32 id) {
+    if (id == 0xffff) return 0xffff;
+    GSfsysHeader* header = _fsysGetHeader((GSfsysRequest*)work);
+    if (header) for (u32 i = 0; i < header->fileCount; ++i) {
+        GSfsysResource* resource = _fsysGetResHeader((GSfsysRequest*)work, i);
+        if (resource && resource->identifier == id) return i;
+    }
+    return 0xffff;
+}
+
 u8 _fsysCheckExpandComplete(FsysWork* work, u32 idx) {
     GSfsysResource* res;
     BOOL intr;
@@ -856,112 +1087,221 @@ u8 _fsysCheckExpandComplete(FsysWork* work, u32 idx) {
     OSRestoreInterrupts(intr);
     return done;
 }
-void _fsysHeaderSizeReadDvdCallback(s32 result, GSdvdWork* dvd) {
-    FsysWork* work = _fsysInfo2Work(dvd);
-    if (!work) {
-        _headerTop = 0;
+
+s32 _fsysGetActiveTask(s32 mode) {
+    FsysWork* work;
+    s32 count = 0;
+    work = _fsysWork;
+    for (u32 i = 0; i < _fsysWorkMax; ++i, ++work) {
+        switch (work->status) {
+        case -999:
+        case 0:
+        case 1:
+        case 12:
+            break;
+        default:
+            if (mode == work->mode) ++count;
+            break;
+        }
+    }
+    return count;
+}
+
+u8 _fsysCloseFile(FsysWork* work, u8 cancelled) {
+    if (cancelled == 0 && work->preCallback && work->mode != 4)
+        ((void (*)(s32, u32, u32))work->preCallback)(work->mode, work->postCallback, work->secondaryResourceID);
+    BOOL interrupts = OSDisableInterrupts();
+    _fsysSetLockCacheFlagGroup(work->group, 0);
+    _fsysStreamFreeCacheAll((GSfsysRequest*)work);
+    OSRestoreInterrupts(interrupts);
+    void* dvd = work->dvd;
+    work->dvd = 0;
+    return GSdvdClose((GSdvdWork*)dvd);
+}
+
+s32 _fsysOpenFile(FsysWork* work) {
+    char filename[128];
+    _fsysGetFilename(work, filename);
+    work->dvd = GSdvdOpen(filename);
+    if (!work->dvd) { _fsysWorkSetTaskStatus(work, -998); return 0; }
+    if (work->directory->headerLength == 0) {
         _fsysWorkSetTaskStatus(work, 3);
-        if (work != 0) return;
-    } else if (result < 0) {
-        _headerTop = 0;
-        _fsysWorkSetTaskStatus(work, 3);
-        if (work != 0) return;
     } else {
-        work->directory->headerLength = _headerTop[7];
-        _headerTop = 0;
         _fsysWorkSetTaskStatus(work, 5);
     }
+    return 1;
 }
-void GSfsysDaemonForeground() {
-    FsysBackgroundWork* entry = _fsysBGWorkRoot;
-    while (entry) {
-        FsysBackgroundWork* next = entry->next;
-        if (entry->loaded == 1) {
-            GSfsysResource* resource = entry->resource;
-            FsysWork* work = entry->work;
-            u32 index = _fsysID2Index(work, resource->identifier);
-            GSfsysResource* previous = index != 0 ? _fsysGetResHeader((GSfsysRequest*)work, index - 1) : 0;
-            if (_fsysID2Index(work, work->resourceID) != 0xffff || !previous || (previous->flags & 8)) {
-                GSfsysDataType* type = _fsysGetDataType(resource->dataType);
-                if (work->cancelled == 0 && type->finish) {
-                    if (resource->flags & 0x80000000) type->finish(work->group, resource->identifier, resource->expandedLength);
-                    else type->finish(work->group, resource->identifier, resource->length);
-                }
-                if (entry->dictionary) { _fsysFree((void*)entry->dictionary); entry->dictionary = 0; }
-                _fsysDelBGWork(entry);
-                resource->flags |= 8;
-                _fsysSetLockCacheFlag(work->group, _fsysID2Index(work, resource->identifier), 0);
-            } else if (previous && !(previous->flags & 8)) {
-                OSReport("<1>-----fsysBGwork:Wait Prev ResFinish Index=%d:%d\n", work->group, _fsysID2Index(work, resource->identifier));
-            } else {
-                OSReport("<2>-----fsysBGwork:Wait Prev ResFinish Index=%d:%d\n", work->group, _fsysID2Index(work, resource->identifier));
-            }
-        }
-        entry = next;
-    }
-    for (u32 i = 0; i < _fsysWorkMax; ++i) _fsysForegroundTask(_fsysWork + i);
-    _fsysQueExec();
+
+s32 _fsysGetFilename(FsysWork* work, char* output) {
+    TocGroup* group = _fsysGetGROUP(work->group);
+    if (!group) return 0;
+    sprintf(output, "%s.fsys", group->name);
+    return 1;
 }
-void _fsysForegroundTask(FsysWork* work) {
+
+void _fsysResHeaderSetTaskStatus(GSfsysResource* resource, s32 status) {
     BOOL interrupts = OSDisableInterrupts();
-    if (work->pendingStatus != 0xffff) { work->status = work->pendingStatus; work->pendingStatus = 0xffff; }
-    OSRestoreInterrupts(interrupts);
-    switch (work->status) {
-    case 3:
-        if (!_headerTop) {
-            _headerTop = headerTop;
-            _fsysWorkSetTaskStatus(work, 4);
-            if (GSdvdReadAsync((GSdvdWork*)work->dvd, _headerTop, 32, 0, _fsysHeaderSizeReadDvdCallback) == 0) {
-                _headerTop = 0;
-                _fsysWorkSetTaskStatus(work, 3);
-            }
-        }
-        break;
-    case 5:
-        switch (work->mode) {
-        case 1: _fsysWorkSetTaskStatus(work, 6); _fsysReadRequest((GSfsysRequest*)work); break;
-        case 4: _fsysWorkSetTaskStatus(work, 9); _fsysReadRequest((GSfsysRequest*)work); break;
-        case 2: _fsysWorkSetTaskStatus(work, 7); _fsysReadRequest((GSfsysRequest*)work); break;
-        case 3: _fsysWorkSetTaskStatus(work, 8); _fsysSeekRequest((GSfsysRequest*)work); break;
-        default: _fsysWorkSetTaskStatus(work, -1000); break;
-        }
-        break;
-    case 6: case 7: case 9: _fsysCheckExpandCompleteAll(work); break;
-    case 10:
-        switch (work->mode) {
-        case 1: if (!_fsysCheckExpandCompleteAll(work)) break;
-        case 2: case 4: _fsysWorkSetTaskStatus(work, 11); break;
-        default: _fsysWorkSetTaskStatus(work, -1000); break;
-        }
-        break;
-    case -1000: case -996: case -995: case -994:
-        OSReport("_fsysForegroundTask:ERROR...:%d\n", work->group);
-        if (_fsysCloseFile(work, 1) == 0) { _fsysWorkSetTaskStatus(work, -997); break; }
-    case -998:
-        OSReport("_fsysForegroundTask:ERROR_FILEOPEN:%d\n", work->group);
-        _fsysOpenFile(work);
-        break;
-    case -997:
-        OSReport("_fsysForegroundTask:ERROR_FILECLOSE:%d\n", work->group);
-        _fsysWorkSetTaskStatus(work, -999);
-        break;
-    case 11:
-        if (_fsysCloseFile(work, 0) == 0) _fsysWorkSetTaskStatus(work, -997);
-        else {
-            if (work->mode >= 5 || work->mode < 3) _fsysOnTOCFlag(work->group, 1);
-            _fsysWorkSetTaskStatus(work, 12);
-        }
-        break;
-    case 0:
-    case 1:
-    case 12:
-    case -999:
-        break;
-    }
-    interrupts = OSDisableInterrupts();
-    if (work->pendingStatus != 0xffff) { work->status = work->pendingStatus; work->pendingStatus = 0xffff; }
+    resource->token = status;
     OSRestoreInterrupts(interrupts);
 }
+
+void _fsysWorkSetTaskStatus(FsysWork* work, s32 status) {
+    BOOL interrupts = OSDisableInterrupts();
+    work->pendingStatus = status;
+    OSRestoreInterrupts(interrupts);
+}
+
+TocGroup* _fsysGetGROUP(u32 id) {
+    u32 count = _fsysTOC->groupCount;
+    TocGroup* group = (TocGroup*)((u8*)_fsysTOC + _fsysTOC->tableOffset);
+    for (u32 i = 0; i < count; ++i, ++group) {
+        if (group->group == id) return group;
+    }
+    return 0;
+}
+
+void _fsysDelBGWork(FsysBackgroundWork* entry) { _fsysDelTAG(entry, &_fsysBGWorkRoot); }
+
+void _fsysAddBGWork(FsysBackgroundWork* entry) { _fsysAddTAG(entry, &_fsysBGWorkRoot); }
+
+FsysBackgroundWork* _fsysGetNewBGWork() {
+    FsysBackgroundWork* result = 0;
+    BOOL interrupts = OSDisableInterrupts();
+    FsysBackgroundWork* entry;
+    u32 index = _fsysBGWorkIndex;
+    while (!result) {
+        entry = _fsysBGWork + index;
+        if (entry->inUse == 0) {
+            entry->previous = 0;
+            entry->next = 0;
+            entry->inUse = 1;
+            entry->loaded = 0;
+            entry->compressed = 0;
+            entry->resourceAllocated = 0;
+            entry->work = 0;
+            entry->resource = 0;
+            entry->flags[0] = 0;
+            entry->flags[1] = 0;
+            entry->flags[2] = 0;
+            entry->flags[3] = 0;
+            entry->expandedBytes = 0;
+            entry->compressedBytes = 0;
+            entry->payloadBytes = 0;
+            entry->dictionary = 0;
+            entry->matchPosition = 0;
+            entry->dictionaryPosition = 0;
+            entry->tokenFlags = 0;
+            entry->tokenCount = 0;
+            entry->consumedBytes = 0;
+            entry->writtenBytes = 0;
+            entry->decodeState = 0;
+            result = entry;
+        }
+        ++index;
+        if (index >= _fsysBGWorkMax) index = 0;
+        if (index == _fsysBGWorkIndex) break;
+    }
+    _fsysBGWorkIndex = index;
+    OSRestoreInterrupts(interrupts);
+    return result;
+}
+
+void _fsysDelTAG(FsysBackgroundWork* entry, FsysBackgroundWork** root) {
+    BOOL interrupts = OSDisableInterrupts();
+    if (entry->previous) entry->previous->next = entry->next;
+    if (entry->next) entry->next->previous = entry->previous;
+    if (entry == *root) *root = entry->next;
+    entry->inUse = 0;
+    entry->previous = 0;
+    entry->next = 0;
+    OSRestoreInterrupts(interrupts);
+}
+
+void _fsysAddTAG(FsysBackgroundWork* entry, FsysBackgroundWork** root) {
+    BOOL interrupts = OSDisableInterrupts();
+    if (*root == 0) {
+        *root = entry;
+    } else {
+        FsysBackgroundWork* tail = *root;
+        while (tail->next) tail = tail->next;
+        tail->next = entry;
+        entry->previous = tail;
+    }
+    OSRestoreInterrupts(interrupts);
+}
+
+FsysWork* _fsysGetNewWork() {
+    FsysWork* work = _fsysGetNewWork_Sub(1);
+    if (work) return work;
+    work = _fsysGetNewWork_Sub(0);
+    if (work) return work;
+    return 0;
+}
+
+FsysWork* _fsysGetNewWork_Sub(s32 preserveFinished) {
+    FsysWork* result = 0;
+    u32 index = _fsysWorkIndex;
+    while (!result) {
+        FsysWork* work = _fsysWork + index;
+        switch (work->status) {
+        case 12:
+            if (preserveFinished == 1) break;
+        case -999:
+        case 0:
+        case 1:
+            result = work;
+            if (work->header) _fsysMemFreeHeader((GSfsysRequest*)work);
+            break;
+        }
+        ++index;
+        if (index >= _fsysWorkMax) index = 0;
+        if (index == _fsysWorkIndex) break;
+    }
+    _fsysWorkIndex = index;
+    return result;
+}
+
+#pragma opt_propagation off
+FsysWork* _fsysGetWork(u32 group, u8 activeOnly) {
+    FsysWork* work;
+    FsysWork* base = _fsysWork;
+    work = base;
+    for (u32 i = 0; i < _fsysWorkMax; ++work, ++i) {
+        if (activeOnly == 1) {
+            switch (work->status) {
+            case 0:
+            case -999:
+            case 12:
+                continue;
+            }
+        } else if (work->status == 0) {
+            continue;
+        }
+        if (group == work->group) return base + i;
+    }
+    return 0;
+}
+#pragma opt_propagation reset
+
+FsysWork* _fsysInfo2Work(void* dvd) {
+    FsysWork* work;
+    u32 i;
+    s32 j;
+    for (i = 0; i < _fsysWorkMax; ++i) {
+        work = _fsysWork + i;
+        switch (work->status) { case -999: case 0: case 1: case 12: continue; }
+        if (work->dvd == dvd) return work;
+        GSfsysHeader* header = _fsysGetHeader((GSfsysRequest*)work);
+        if (header && (header->flags & 1)) {
+            for (j = 0; j < header->fileCount; ++j) {
+                GSfsysResource* resource = _fsysGetResHeader((GSfsysRequest*)work, j);
+                if (resource && resource->dvd == dvd) return work;
+            }
+        }
+    }
+    return 0;
+}
+
 u8 _fsysInitTOC() {
     u32 length;
     GSdvdWork* dvd = GSdvdOpen("gsfsys.toc");
@@ -978,104 +1318,7 @@ u8 _fsysInitTOC() {
     }
     return 1;
 }
-void _fsysBackgroundTaskCompressType(FsysBackgroundWork* entry) {
-    if (entry->loaded != 1 && _fsysBGTaskCancel(entry) != 1) {
-    GSfsysBlock* block = entry->resource->expandBlocks;
-    if (!block) return;
-    u32 position;
-    if (entry->dictionary == 0) {
-        entry->dictionary = (u8*)_fsysAlloc(0x1011);
-        if (!entry->dictionary) return;
-        memset((void*)entry->dictionary, 0, 0xfee);
-        memcpy(entry->flags, block->data, 16);
-        entry->dictionaryPosition = 0xfee;
-        position = 16;
-        entry->tokenFlags = 0;
-        entry->payloadBytes = entry->compressedBytes - 16;
-        entry->decodeState = 0;
-    } else position = 0;
-    s32 tokens = entry->tokenCount;
-    s32 ringPosition = entry->dictionaryPosition;
-    u32 flags = entry->tokenFlags;
-    s32 matchPosition = entry->matchPosition;
-    u32 consumed = entry->consumedBytes;
-    s32 written = entry->writtenBytes;
-    u8* output = (u8*)entry->resource->expandedData;
-    u32 inputLength = entry->payloadBytes;
-    u32 blockBytes = _fsysBlockByteSize;
-    u8* ring = (u8*)entry->dictionary;
-    s32 state = entry->decodeState;
-    u8 value;
-    u8* input;
-    s32 count;
-nextBlock:
-    input = (u8*)block->data;
-    switch (state) {
-    case 0: break;
-    case 1: goto readFlags;
-    case 2: goto literal;
-    case 3: goto matchLow;
-    case 4: goto matchHigh;
-    }
-nextToken:
-    flags >>= 1;
-    if (flags & 0x100) goto chooseToken;
-readFlags:
-    ++consumed;
-    value = input[position++];
-    if (consumed > inputLength) goto finishBlock;
-    if (position > blockBytes) { state = 1; --consumed; goto finishBlock; }
-    flags = value | 0xff00;
-chooseToken:
-    if (!(flags & 1)) goto matchLow;
-literal:
-    ++consumed;
-    value = input[position++];
-    if (consumed > inputLength) goto finishBlock;
-    if (position > blockBytes) { state = 2; --consumed; goto finishBlock; }
-    output[written++] = value;
-    ring[ringPosition++] = value;
-    ringPosition &= 0xfff;
-    goto tokenDone;
-matchLow:
-    ++consumed;
-    matchPosition = input[position++];
-    if (consumed > inputLength) goto finishBlock;
-    if (position > blockBytes) { state = 3; --consumed; goto finishBlock; }
-matchHigh:
-    ++consumed;
-    value = input[position++];
-    if (consumed > inputLength) goto finishBlock;
-    if (position > blockBytes) { state = 4; --consumed; goto finishBlock; }
-    count = (value & 15) + 2;
-    matchPosition |= (value << 4) & 0xf00;
-    for (s32 i = 0; i <= count; ++i) {
-        value = ring[(matchPosition + i) & 0xfff];
-        output[written++] = value;
-        ring[ringPosition++] = value;
-        ringPosition &= 0xfff;
-    }
-tokenDone:
-    ++tokens;
-    goto nextToken;
-finishBlock:
-    _fsysFreeBlock(&entry->resource->expandBlocks, 1);
-    if (consumed > inputLength) {
-        DCFlushRange(entry->resource->expandedData, entry->expandedBytes);
-        entry->loaded = 1;
-        return;
-    }
-    if (_fsysBGTaskCancel(entry) == 1) return;
-    block = entry->resource->expandBlocks;
-    if (block) { position = 0; goto nextBlock; }
-    entry->tokenCount = tokens;
-    entry->tokenFlags = flags;
-    entry->matchPosition = matchPosition;
-    entry->dictionaryPosition = ringPosition;
-    entry->consumedBytes = consumed;
-    entry->writtenBytes = written;
-    entry->decodeState = state;
-}
 
-    }
+void* _fsysDoMalloc(u32 bytes) { return GSmemAllocAlign(bytes, 32); }
+
 }

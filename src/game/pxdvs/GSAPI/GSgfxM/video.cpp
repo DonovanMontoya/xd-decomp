@@ -4,13 +4,13 @@
 struct VideoMode { u32 tv; u16 width,height,xfbHeight,xOrigin,yOrigin,viWidth,viHeight; u8 pad12[2]; u32 xfbMode; u8 field,aa; u8 samples[12][2]; u8 filter[7]; u8 pad39[3]; };
 struct VideoBuffer { s32 state; void *ptr; };
 struct Viewport { float x,y,width,height,nearZ,farZ; };
-struct VideoState { VideoMode mode; VideoBuffer buffers[3]; VideoBuffer * volatile displayed; volatile u8 count; u8 rate,field,pad5b; volatile u16 requestedHeight;u16 maxHeight; volatile s32 vsync; s32 system; void(* volatile callback)(u32); s32 missed,presented; float elapsed,lastElapsed; u8 pad7c[4]; s64 lastTime; volatile s32 lockRate; volatile u8 lockCount; u8 lockActive; u8 pad8e[2]; s32 copyMode,pixelFormat; float yScale; volatile GXColor color; u32 depth; u8 padA4[4]; };
+struct VideoState { VideoMode mode; VideoBuffer buffers[3]; VideoBuffer * volatile displayed; volatile u8 count; u8 rate,field,pad5b; volatile u16 requestedHeight;u16 maxHeight; volatile s32 vsync; s32 system; void(* volatile callback)(u32); s32 missed,presented; float elapsed,lastElapsed; u8 pad7c[4]; s64 lastTime; volatile s32 lockRate; volatile u8 lockCount; u8 lockActive; u8 pad8e[2]; s32 gamma,pixelFormat; float yScale; volatile GXColor color; u32 depth; u8 padA4[4]; };
 #pragma pack(push,1)
-struct CopyParams { u16 x,y,width,height,stride; u8 padA[2]; s32 format,unused,mode; float scale; u8 clear; u32 color; u8 pad21[3]; u32 depth; };
+struct CopyParams { u16 x,y,width,height,stride; u8 padA[2]; s32 clamp,frameToField,gamma; float scale; u8 clear; u32 color; u8 pad21[3]; u32 depth; };
 #pragma pack(pop)
 ABI_SIZE(VideoMode,0x3c); ABI_OFF(VideoMode,samples,0x1a); ABI_OFF(VideoMode,filter,0x32);
 ABI_SIZE(VideoBuffer,8); ABI_SIZE(Viewport,0x18); ABI_SIZE(VideoState,0xa8); ABI_OFF(VideoState,count,0x58); ABI_OFF(VideoState,lastTime,0x80); ABI_OFF(VideoState,color,0x9c);
-ABI_SIZE(CopyParams,0x28); ABI_OFF(CopyParams,color,0x1d); ABI_OFF(CopyParams,depth,0x24);
+ABI_SIZE(CopyParams,0x28); ABI_OFF(CopyParams,clamp,0xc); ABI_OFF(CopyParams,frameToField,0x10); ABI_OFF(CopyParams,gamma,0x14); ABI_OFF(CopyParams,color,0x1d); ABI_OFF(CopyParams,depth,0x24);
 struct ModeEntry { s32 id; GXRenderModeObj *ntsc,*pal,*eurgb,*mpal; };
 ABI_SIZE(ModeEntry,0x14);
 extern "C" {
@@ -55,7 +55,7 @@ inline VideoBuffer *freeBuffer(bool wait) {
     if(_videoState.count==3) { findState(4); }
     return waitFree(wait);
 }
-inline void copyParams(CopyParams &p) { p.x=0;p.y=0;p.width=640;p.height=480;p.stride=640;p.format=3;p.unused=0;p.mode=_videoState.copyMode;p.scale=_videoState.yScale;p.clear=1;p.color=*(u32*)&_videoState.color;p.depth=_videoState.depth; }
+inline void copyParams(CopyParams &p) { p.x=0;p.y=0;p.width=640;p.height=480;p.stride=640;p.clamp=3;p.frameToField=0;p.gamma=_videoState.gamma;p.scale=_videoState.yScale;p.clear=1;p.color=*(u32*)&_videoState.color;p.depth=_videoState.depth; }
 extern "C" {
 u32 GSgfxVideoBuildEFB2XFBCopy__FPvPv(void *cmd,void *xfb) {
     VideoBuffer *b=findPointer(xfb); b->state=4; CopyParams p;copyParams(p);
@@ -140,7 +140,7 @@ void GSgfxVideoInit__FUcUs14GSgfxVideoMode(u8 count,u16 height,s32 mode) {
     u32 area=((_videoState.mode.width+15)&0xfff0)*_videoState.maxHeight; u32 bytes=area*2; u32 words=bytes/sizeof(u32);
     for(s32 i=0;i<3;i++) { if(i<_videoState.count) { u32 *data=(u32*)GSmemAlloc(bytes);_videoState.buffers[i].ptr=data;_videoState.buffers[i].state=3;u32 *p=data;u32 j=words;while(j--) *p++=0x10801080;DCFlushRange(data,bytes); }else {_videoState.buffers[i].ptr=0;_videoState.buffers[i].state=0;} }
     VISetPreRetraceCallback(_videoPreRetraceFunc__FUl);VISetPostRetraceCallback(_videoPostRetraceFunc__FUl);_videoState.buffers[0].state=1;VISetNextFrameBuffer(_videoState.buffers[0].ptr);_videoState.displayed=&_videoState.buffers[0];
-    _videoState.copyMode=0;_videoState.color.r=0;_videoState.color.g=0;_videoState.color.b=0;_videoState.color.a=0;_videoState.depth=0xffffff;_videoState.pixelFormat=0;_videoState.missed=0;_videoState.presented=0;_videoState.elapsed=0;_videoState.lastElapsed=0;_videoState.lastTime=OSGetTime();_videoState.lockRate=0;_videoState.lockCount=0;_videoState.lockActive=0;
+    _videoState.gamma=0;_videoState.color.r=0;_videoState.color.g=0;_videoState.color.b=0;_videoState.color.a=0;_videoState.depth=0xffffff;_videoState.pixelFormat=0;_videoState.missed=0;_videoState.presented=0;_videoState.elapsed=0;_videoState.lastElapsed=0;_videoState.lastTime=OSGetTime();_videoState.lockRate=0;_videoState.lockCount=0;_videoState.lockActive=0;
     VISetBlack(1);VIConfigure((GXRenderModeObj*)&_videoState.mode);VIFlush();VIWaitForRetrace();VIWaitForRetrace();
 }
 

@@ -55,15 +55,16 @@ u8 GSlogInit(u32 bytes,u32 mode) {
     return 1;
 }
 }
-extern "C" void logVsnprintf_float(char* dest,u32 capacity,const char* format,va_list args) {
+extern "C" void logVsnprintf_float(char* dest,u32 capacity,const char* formatArg,va_list args) {
     static char fmtbuf[16];
     static char cvtbuf[16];
     static char cvtbuf2[16];
+    const char* format=formatArg;
     char* out=dest;
-    const char* text;
     char* spec;
+    char* text;
     u8 done=0;
-    int formatting=0;
+    u8 formatting=0;
     u8 left=0;
     u8 zero=0;
     u8 converted=0;
@@ -75,9 +76,9 @@ extern "C" void logVsnprintf_float(char* dest,u32 capacity,const char* format,va
             } else { *out++=*format; }
         } else {
             switch(*format) {
-            case 'c': cvtbuf[0]=va_arg(args,int); cvtbuf[1]=0; text=cvtbuf; converted=1; break;
+            case 'c': text=cvtbuf; cvtbuf[0]=va_arg(args,int); cvtbuf[1]=0; converted=1; break;
             case 'd': logInt2Str(va_arg(args,int),cvtbuf); text=cvtbuf; converted=1; break;
-            case 'f': logFloat2Str((f32)va_arg(args,double),cvtbuf,cvtbuf2); text=cvtbuf; converted=1; break;
+            case 'f': { f32 value=va_arg(args,double); logFloat2Str(value,cvtbuf,cvtbuf2); text=cvtbuf; converted=1; break; }
             case 's': text=va_arg(args,char*); converted=1; break;
             case 'X': case 'x': {
                 u32 value=va_arg(args,u32);
@@ -92,12 +93,12 @@ extern "C" void logVsnprintf_float(char* dest,u32 capacity,const char* format,va
                 spec=fmtbuf;
                 if(*spec=='-') { left=1; ++spec; }
                 if(*spec=='0') { zero=1; ++spec; }
-                formatting=logStr2Int(spec);
+                int width=logStr2Int(spec);
                 int length=strlen(text);
-                if(formatting>length) {
-                    formatting-=length;
+                if(width>length) {
+                    width-=length;
                     if(!left) {
-                        while(formatting-- && (u32)(out-dest)<capacity) {
+                        while(width-- && (u32)(out-dest)<capacity) {
                             if(zero) *out++='0'; else *out++=' ';
                         }
                     }
@@ -108,14 +109,14 @@ extern "C" void logVsnprintf_float(char* dest,u32 capacity,const char* format,va
                     int length=strlen(text);
                     char* dot=strchr(spec,'.');
                     if(dot) {
-                        formatting=logStr2Int(dot+1);
-                        if(formatting>0 && length>formatting) ((char*)text)[formatting]=0;
+                        width=logStr2Int(dot+1);
+                        if(width>0 && length>width) text[width]=0;
                     }
                     *out++='.';
                     while(*text && (u32)(out-dest)<capacity) *out++=*text++;
                 }
                 if(left==1) {
-                    while(formatting-- && (u32)(out-dest)<capacity) *out++=' ';
+                    while(width-- && (u32)(out-dest)<capacity) *out++=' ';
                 }
                 left=0; zero=0; formatting=0; converted=0;
             }
@@ -125,6 +126,14 @@ extern "C" void logVsnprintf_float(char* dest,u32 capacity,const char* format,va
     }
     *out=0;
 }
+// Retail retains these additional formatter buffers as fmtbuf$1271,
+// cvtbuf$1272, and cvtbuf2$1273 in both version symbol maps.
+#pragma force_active on
+static char retainedFmtbuf[16];
+static char retainedCvtbuf[16];
+static char retainedCvtbuf2[16];
+#pragma force_active reset
+
 void logFloat2Str(f32 value, char* integerText, char* fractionText) {
     if(value<0.0f) { value=-value; *integerText++='-'; }
     int integer=(int)value;

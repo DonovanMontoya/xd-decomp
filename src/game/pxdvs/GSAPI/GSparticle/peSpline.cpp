@@ -92,14 +92,13 @@ extern "C" f32 peSplineGetValue(PeSpline *spline, f32 time) {
             t3 = t2 * time;
             f32 h11 = t3 - t2;
             f32 q = (t2 + t2) - t3;
-            f32 h10 = time + (h11 - t2);
             f32 h01 = q - h11;
             f32 h00 = 1.0f - h01;
-            f32 minimum;
-            if (spline->flags & 4) minimum = -1.0f;
-            else minimum = 0.0f;
-            f32 value = length * (h10 * *tangent + h11 * tangent[last])
-                + (h01 * point[1] + h00 * point[0]);
+            f32 h10 = time + (h11 - t2);
+            f32 minimum = (spline->flags & 4) ? -1.0f : 0.0f;
+            f32 value = h00 * point[0];
+            value = h01 * point[1] + value;
+            value = length * (h10 * *tangent + h11 * tangent[last]) + value;
             if (value < minimum) value = minimum;
             else if (value > 1.0f) value = 1.0f;
             spline->value = value;

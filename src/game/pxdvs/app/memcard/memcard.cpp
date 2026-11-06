@@ -796,10 +796,15 @@ s32 memcardTaskCall(s32 state, s32 priority, s32 param) {
     return result;
 }
 
-void memcardInitialize(void) {
-    if (_memcardInitializeFlag == 0) {
+void memcardInitialize(void)
+{
+    if (!_memcardInitializeFlag) {
+        u32 lo;
+        u16 hi;
         CARDInit();
-        _memcardStatusPtr = (MemcardStatus*)(_memcardStatusBuf + (((HSD_Rand() << 16) | HSD_Rand()) & 0xF8));
+        lo = HSD_Rand();
+        hi = HSD_Rand();
+        _memcardStatusPtr = (MemcardStatus*)(_memcardStatusBuf + (((hi << 16) | lo) & 0xf8));
         _memcardStatusPtr->state = 0;
         _memcardStatusPtr->buf50 = 0;
         _memcardStatusPtr->buf54 = 0;

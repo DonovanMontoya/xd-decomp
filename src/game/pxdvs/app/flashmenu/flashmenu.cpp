@@ -587,7 +587,7 @@ void FlashMenu::ParseDefineMorphShapeSub(_DEFINEMORPHSHAPE* morph) {
 }
 
 struct FlashTagName {s32 id;const char* name;};
-static const FlashTagName _fltagnametable[] = {
+static FlashTagName _fltagnametable[] = {
     {0, "stagEnd"},
     {1, "stagShowFrame"},
     {2, "stagDefineShape"},

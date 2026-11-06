@@ -345,23 +345,31 @@ extern "C" void modelShadowUpdate__Fv() {
 extern "C" {
 static u8 _modelShadowAddAsNewReceiver__FP8_GSmodelP8_GSmodelP7GSlightP7GSbound(GSmodel* surface,GSmodel* model,GSlight* light,GSbound* bound) {
     Vec newSize,existingSize;
-    GSmodelShadowReceiver* list=_modelShadowReceiveList;
-    GSmodelShadowReceiver* receiver=shadowFindFreeReceiver(list);
+    u32 index;
+    struct { GSmodelShadowReceiver* value; } list;
+    list.value = _modelShadowReceiveList;
+    GSmodelShadowReceiver* receiver=shadowFindFreeReceiver(list.value);
     if(!receiver) {
         receiver=_modelShadowFindValidReceiveModel__FP8_GSmodelP8_GSmodelP7GSlightP7GSbound(surface,model,light,0);
-        if(receiver)for(s32 j=0;j<16;j++)if(receiver->surfaces[j] && (receiver->surfaces[j]->flags&0x40000000)) {receiver=0;break;}
+        if(receiver) {
+            GSmodel* candidate;
+            for(index=0;index<16;index++) {
+                candidate=receiver->surfaces[index];
+                if(candidate && (candidate->flags&0x40000000)) {receiver=0;break;}
+            }
+        }
         if(!receiver) {
-            u32 index;
             GSmodel* candidate;
             u8 found;
             s32 j;
+            index=0;
             found=0;
-            for(index=0;index<5;index++,list++) {
-                receiver=list;
-                if(list->model==surface) {
+            for(;index<5;list.value++,index++) {
+                receiver=list.value;
+                if(list.value->model==surface) {
                     found=1;
                     for(j=0;j<16;j++) {
-                        candidate=list->surfaces[index];
+                        candidate=list.value->surfaces[index];
                         if(candidate && (candidate->flags&0x40000000)) {found=0;break;}
                     }
                     if(found)break;

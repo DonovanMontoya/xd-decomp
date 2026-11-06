@@ -14,7 +14,7 @@ struct GSfsysResource {
     u32 reserved3C, token, streamBytes, streamPosition, streamFlags, loopStart, loopEnd;
 };
 typedef char GSfsysResourceSizeCheck[sizeof(GSfsysResource) == 0x58 ? 1 : -1];
-struct GSfsysDataType { const char* name; u32 identifier; void* (*begin)(u32, u32, u32); void (*finish)(u32, u32, u32); };
+struct GSfsysDataType { u32 field00; u32 identifier; void* (*begin)(u32, u32, u32); void (*finish)(u32, u32, u32); };
 struct GSfsysBGWork {
     GSfsysBGWork *previous, *next;
     u8 inUse, reserved09, compressed, reserved0B;

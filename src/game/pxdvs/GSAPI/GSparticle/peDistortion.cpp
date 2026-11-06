@@ -1,7 +1,6 @@
 #include <game/pxdvs/GSAPI/GSparticle/peDistortionPrivate.hpp>
 #include <dolphin/os/OSFastCast.h>
 #include <dolphin/os.h>
-#include <libc/math.h>
 static inline f32 spline(ShapeSpline *s,f32 t) {
  if(!s || !(s->flags&3))return 1.0f;
  f32 d=s->time-t;if(d<0)d=-d;
@@ -30,6 +29,7 @@ static inline u8 visible(peDistortionContainer *c) {
  if(g_render_pass!=1)return 0;
  switch(layerWord(0x28)) {case 1:if(!(flags&0x2000))return 0;break;case 3:if(flags&0x10)return 0;break;case 5:if(!(flags&0x10))return 0;break;default:return 0;}return 1;
 }
+enum DistortionTextureFilter { DISTORTION_NEAREST=0, DISTORTION_LINEAR=2 };
 void peDistortionContainer::Render() {
  if(active&&visible(this)) {
   ResolveMultipleSwap();u32 flags=definition->flags;u8 *layer;
@@ -40,8 +40,8 @@ void peDistortionContainer::Render() {
   layer=(u8*)g_current_layer;(*(u32*)(layer+0x1664))=7;(*(u8*)(layer+0x1670))=0;(*(u32*)(layer+0x1668))=0;(*(u32*)(layer+0x166c))=7;(*(u8*)(layer+0x1671))=0;(*(u8*)(layer+0x1672))=1;
   (*(u32*)(layer+0x170c))|=0x10;(*(u32*)(layer+0x16a8))|=0x40;(*(u32*)(layer+0x17c4))|=0x10;(*(u32*)(layer+0x1760))|=0x40;
   particleEngineSetupBlendMode(0);particleEngineSetupTevStages(0,0,0);
-  u32 wrapT=0;if(flags&0x40)wrapT=2;u32 wrapS=0;if(flags&0x20)wrapS=2;
-  particleEngineSetupTexture(0,definition->texture,flags&3,(flags>>2)&3,wrapS,wrapT);
+  u32 magFilter=0;if(flags&0x40)magFilter=2;
+  particleEngineSetupTexture(0,definition->texture,flags&3,(flags>>2)&3,(flags&0x20)?DISTORTION_LINEAR:DISTORTION_NEAREST,magFilter);
   u8 *data=renderData[swapIndex];GSgfxDL *list=&displayLists[swapIndex];GSgfxVF *format=(list->flags&1)?(GSgfxVF*)list->reserved:0;
   GSgfxVFSetArray(format,9,3,data,4,renderBytes);GSgfxVFSetArray(format,11,3,data+0x30,4,renderBytes);GSgfxVFSetArray(format,13,3,uv,4,0x20);
   dlDraw__10GSgfxLayerFP7GSgfxDL(g_current_layer,&displayLists[swapIndex]);MarkForSwap();

@@ -1,7 +1,4 @@
-// Each function is generated where it is defined, so a body only inlines the
-// functions defined above it; the tree traversal is defined last and expands
-// the whole display chain up to the inline depth limit.
-#pragma defer_codegen off
+#pragma defer_codegen on
 #pragma auto_inline on
 #include <game/pxdvs/GSAPI/GSmodel/GSmodel.hpp>
 #include <game/maximum/GSAPI/baselib/mtx_base.h>
@@ -43,33 +40,13 @@ static void _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP
 static void _modelParseLoadEnvelopeMatrix__FP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtx(HSD_PObj*, GSmtx*, GSmtx*, GSmtx*);
 static void _modelParseDObjDisp__FP9_HSD_DObjP5GSmtxP5GSmtxbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_DObj*, GSmtx*, GSmtx*, bool, GSmodelParseCallback, void*);
 
-static void _modelParseJObjDisp__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_JObj* joint, GSmtx* view, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
-    if (joint && ((joint->flags & 0x4020) ? 0 : 1)) _modelParseJObjDispDObj__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, mask, loadMatrices, callback, context);
-}
-static void _modelParseJObjDispDObj__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_JObj* joint, GSmtx* view, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
-    if (!(joint->flags & 0x10)) {
-        u32 transparency = joint->flags & (mask << 18);
-        if (transparency) {
-            HSD_JObjSetupMatrix(joint);
-            if (!view) {
-                static GSmtx foo;
-                memcpy(foo.matrix, mtxIdent, sizeof(Mtx));
-                view = &foo;
-            }
-            GSmtx position;
-            HSD_JObjMakePositionMtx(joint, view->matrix, position.matrix);
-            if (transparency & 0x40000) _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, &position, 1, loadMatrices, callback, context);
-            if (transparency & 0x100000) _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, &position, 4, loadMatrices, callback, context);
-            if (transparency & 0x80000) _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, &position, 2, loadMatrices, callback, context);
-        }
-    }
-}
 static inline void parseLoadRigidMatrix(GSmtx* position, GSmtx* matrices) {
     HSD_JObj* joint = HSD_JObjGetCurrent();
     HSD_JObj* mark; u32 kind;
     HSD_PObjGetMtxMark(0, &mark, &kind);
     if (mark != joint || kind != 1) { HSD_PObjSetMtxMark(0, joint, 1); PSMTXCopy(position->matrix, matrices[0].matrix); }
 }
+
 static inline void parseLoadSharedMatrix(HSD_PObj* polygon, GSmtx* view, GSmtx* position, GSmtx* matrices) {
     HSD_JObj* blendJoint;
     u8 updateCurrent;
@@ -93,43 +70,7 @@ static inline void parseLoadSharedMatrix(HSD_PObj* polygon, GSmtx* view, GSmtx* 
                             }
                         }
 }
-static inline void _modelParseDObjDisp__FP9_HSD_DObjP5GSmtxP5GSmtxbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_DObj* object, GSmtx* view, GSmtx* position, bool loadMatrices, GSmodelParseCallback callback, void* context) {
-    for (HSD_PObj* polygon = object->pobj; polygon; polygon = polygon->next) {
-        static GSmtx mtxStack[10];
-        if (!(polygon->flags & 0x800)) {
-            if (loadMatrices) {
-                switch (polygon->flags & 0x3000) {
-                case 0:
-                    if (!polygon->u.jobj) {
-                        parseLoadRigidMatrix(position, mtxStack);
-                    } else {
-                        parseLoadSharedMatrix(polygon, view, position, mtxStack);
-                    }
-                    break;
-                case 0x1000: {
-                    parseLoadRigidMatrix(position, mtxStack);
-                    break;
-                }
-                case 0x2000: _modelParseLoadEnvelopeMatrix__FP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtx(polygon, view, position, mtxStack); break;
-                }
-            }
-            if ((polygon->flags & 0x3000) == 0x1000) callback(polygon, view, position, 0, context);
-            else if (callback) {if(loadMatrices)callback(polygon,view,position,mtxStack,context);else callback(polygon,view,position,0,context);}
-        }
-    }
-}
-static void _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_JObj* joint, GSmtx* view, GSmtx* position, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
-    HSD_JObjSetCurrent(joint);
-    u32 objectMask=mask<<1;
-    HSD_PObjClearMtxMark(0, 0);
-    for (HSD_DObj* object = joint->u.dobj; object; object = object->next) {
-        if (!(object->flags & 1) && (object->flags & objectMask)) {
-            HSD_DObjSetCurrent(object);
-            _modelParseDObjDisp__FP9_HSD_DObjP5GSmtxP5GSmtxbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(object, view, position, loadMatrices, callback, context);
-        }
-    }
-    HSD_DObjSetCurrent(0); HSD_JObjSetCurrent(0);
-}
+
 static void _modelParseLoadEnvelopeMatrix__FP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtx(HSD_PObj* polygon, GSmtx* view, GSmtx*, GSmtx* matrices) {
     Mtx modelNode,weighted,temporary;
     GSmtx* output;HSD_SList* list;s32 i;f32(*modelMatrix)[4];
@@ -161,12 +102,76 @@ static void _modelParseLoadEnvelopeMatrix__FP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtx(HSD
         PSMTXConcat(view->matrix, matrix, temporary); PSMTXCopy(temporary, output->matrix);
     }
 }
+
+static void _modelParseDObjDisp__FP9_HSD_DObjP5GSmtxP5GSmtxbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_DObj* object, GSmtx* view, GSmtx* position, bool loadMatrices, GSmodelParseCallback callback, void* context) {
+    for (HSD_PObj* polygon = object->pobj; polygon; polygon = polygon->next) {
+        static GSmtx mtxStack[10];
+        if (!(polygon->flags & 0x800)) {
+            if (loadMatrices) {
+                switch (polygon->flags & 0x3000) {
+                case 0:
+                    if (!polygon->u.jobj) {
+                        parseLoadRigidMatrix(position, mtxStack);
+                    } else {
+                        parseLoadSharedMatrix(polygon, view, position, mtxStack);
+                    }
+                    break;
+                case 0x1000: {
+                    parseLoadRigidMatrix(position, mtxStack);
+                    break;
+                }
+                case 0x2000: _modelParseLoadEnvelopeMatrix__FP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtx(polygon, view, position, mtxStack); break;
+                }
+            }
+            if ((polygon->flags & 0x3000) == 0x1000) callback(polygon, view, position, 0, context);
+            else if (callback) {if(loadMatrices)callback(polygon,view,position,mtxStack,context);else callback(polygon,view,position,0,context);}
+        }
+    }
+}
+
+static void _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_JObj* joint, GSmtx* view, GSmtx* position, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
+    HSD_JObjSetCurrent(joint);
+    u32 objectMask=mask<<1;
+    HSD_PObjClearMtxMark(0, 0);
+    for (HSD_DObj* object = joint->u.dobj; object; object = object->next) {
+        if (!(object->flags & 1) && (object->flags & objectMask)) {
+            HSD_DObjSetCurrent(object);
+            _modelParseDObjDisp__FP9_HSD_DObjP5GSmtxP5GSmtxbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(object, view, position, loadMatrices, callback, context);
+        }
+    }
+    HSD_DObjSetCurrent(0); HSD_JObjSetCurrent(0);
+}
+
+static void _modelParseJObjDispDObj__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_JObj* joint, GSmtx* view, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
+    if (!(joint->flags & 0x10)) {
+        u32 transparency = joint->flags & (mask << 18);
+        if (transparency) {
+            HSD_JObjSetupMatrix(joint);
+            if (!view) {
+                static GSmtx foo;
+                memcpy(foo.matrix, mtxIdent, sizeof(Mtx));
+                view = &foo;
+            }
+            GSmtx position;
+            HSD_JObjMakePositionMtx(joint, view->matrix, position.matrix);
+            if (transparency & 0x40000) _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, &position, 1, loadMatrices, callback, context);
+            if (transparency & 0x100000) _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, &position, 4, loadMatrices, callback, context);
+            if (transparency & 0x80000) _modelParseJObjDispSub__FP9_HSD_JObjP5GSmtxP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, &position, 2, loadMatrices, callback, context);
+        }
+    }
+}
+
+static void _modelParseJObjDisp__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_JObj* joint, GSmtx* view, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
+    if (joint && ((joint->flags & 0x4020) ? 0 : 1)) _modelParseJObjDispDObj__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(joint, view, mask, loadMatrices, callback, context);
+}
+
 static void _modelParseSetupInstanceMtx__FP5GSmtxP9_HSD_JObjP5GSmtx(GSmtx* view, HSD_JObj* joint, GSmtx* out) {
     HSD_JObjSetupMatrix(joint); HSD_JObjSetupMatrix(joint->child);
     PSMTXInverse(joint->child->mtx, out->matrix);
     PSMTXConcat(joint->mtx, out->matrix, out->matrix);
     if (view) PSMTXConcat(view->matrix, out->matrix, out->matrix);
 }
+
 static void _modelParseJObjDispAll__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(HSD_JObj* joint, GSmtx* view, s32 mask, bool loadMatrices, GSmodelParseCallback callback, void* context) {
     if (joint) {
         if (joint->flags & 0x1000) {
@@ -183,6 +188,7 @@ static void _modelParseJObjDispAll__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_P
         }
     }
 }
+
 void GSmodelParse(GSmodel* model, bool loadMatrices, GSmodelParseCallback callback, void* context) {
     _modelParseJObjDispAll__FP9_HSD_JObjP5GSmtx12HSD_TrspMaskbPFP9_HSD_PObjP5GSmtxP5GSmtxP5GSmtxPv_vPv(modelGetRenderJObj__FP8_GSmodel(model), 0, 7, loadMatrices, callback, context);
 }

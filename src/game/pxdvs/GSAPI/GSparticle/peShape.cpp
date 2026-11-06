@@ -614,7 +614,6 @@ void peShapeNode::Render(_peShape* shape) {
     pop__16GSgfxMatrixStackFv(((ParticleLayerState*)g_current_layer)->unk19A0);
 }
 
-#include <libc/math.h>
 #include <dolphin/os/OSFastCast.h>
 static inline f32 shapeSpline(ShapeSpline* spline,f32 progress) {
     if(!spline || !(spline->flags&3))return 1.0f;

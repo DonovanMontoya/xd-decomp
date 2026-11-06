@@ -226,10 +226,54 @@ The existing `peRenderContainer` constructor was also adapted from
 vertex-data initialization, and cached-buffer structure while retaining all
 previously exact functions. The constructor remains partially matching.
 
+The particle dispatcher `_psDispParticlesSub` and its inline state helpers were
+adapted from `src/game/maximum/GSAPI/particle/psdisp.cpp` at XD commit
+`f39426745384c10876383ed909c3fbc84f6e3a8b` (CC0, with the inherited MIT
+notice below). Retail instructions verify its matrix-cache interface, palette
+descriptor, control flow, and call sequence. A local identity initializer
+replaces the reconstruction-only global without changing allocated data bytes.
+The dispatcher remains partially matching; missing readonly initializer pools
+and point-emission register allocation still prevent exact matching.
+
+The graphics token implementation was adapted from
+`src/game/pxdvs/GSAPI/GSgfxM/token.cpp` at the same XD checkpoint. It restores
+the native C++ interfaces and boolean helper graph, preserving all nine exact
+functions and storage. `GSgfxTokenIfClearedReset` remains partially matching:
+two instructions use a different temporary to perform an equivalent unsigned
+halfword zero test. The token unit remains NonMatching.
+
+The light editor retains its real methods while leaving unresolved literal-pool
+placement visible. Its former `lightEditorStripped` and `lightEditorSave`
+placeholders had no supporting original-source or independent API evidence and
+were removed. Their constants and text remain supplied by the real methods;
+the unit remains NonMatching until its code and storage layout are exact.
+
+`memcardInitialize` was adapted from `src/game/pxdvs/app/memcard/memcard.cpp`
+at the same XD checkpoint. Separate `u32` low and `u16` high random values
+recover the retail initializer's instruction order. Its complete instruction
+bytes and relocations match, with other functions and data unchanged.
+
 The local `musyx/runtime/synthdata.c` override comes from AxioDL/musyx
 commit `89850639d731ec080c12cb0bc8d7ab2ea3880c3a` (CC0-1.0). It restores
 the retail capacity of 4,096 macro records and retains the original function
 emission metadata. GXXE01 uses this override; the vendor submodule is unchanged.
+
+`getCrossPoint` in `src/game/pxdvs/app/flashmenu/vecGraph.cpp` uses the
+rotation structure from XD commit
+`f39426745384c10876383ed909c3fbc84f6e3a8b`, checked against retail's fused
+operations and signed halfword interpolation. Explicit compiler intrinsics
+preserve which product rounds before each fused operation; reassociation can
+change the stored clipping coordinates. Finite differential execution of the
+complete retail and candidate instruction streams agrees on all ordered writes
+in 206 cases. The function remains partially matching, with no exact-byte gain.
+
+`StreamUpdateCallback` in `src/game/pxdvs/GSAPI/GSmovie/movieStream.cpp` reuses
+the existing `_fillStreamChannel` helper, also used by the exact initial-fill
+routine. The same XD checkpoint independently supports this fill boundary.
+The callback recovers retail's instruction count, relocation sites, and ordered
+ring updates. Bounded execution of the retail and candidate instruction words
+agrees in 260 cases. Register assignments still differ, so the callback remains
+partially matching and contributes no new exact bytes.
 
 ## Colosseum license notice
 

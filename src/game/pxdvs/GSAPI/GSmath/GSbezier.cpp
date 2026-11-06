@@ -1,12 +1,21 @@
 #include <game/pxdvs/GSAPI/GSmath/GSbezier.hpp>
 
+struct BezierParameterLimit {
+    f32 value;
+};
+
+static const BezierParameterLimit parameterMax = {1.0f};
+static const BezierParameterLimit parameterMin = {0.0f};
+
+#pragma opt_common_subs off
+
 void GSbezierCalculateVector(Vec* result, const GSbezier* curve, f32 t) {
     Vec term;
-    if (t < 0.0f) t = 0.0f;
-    if (t > 1.0f) t = 1.0f;
+    if (t < parameterMin.value) t = parameterMin.value;
+    if (t > parameterMax.value) t = parameterMax.value;
 
     f32 tSquared = t * t;
-    f32 inverseT = 1.0f - t;
+    f32 inverseT = parameterMax.value - t;
     f32 inverseTSquared = inverseT * inverseT;
 
     PSVECScale(&curve->start, result, inverseTSquared * inverseT);
@@ -17,3 +26,5 @@ void GSbezierCalculateVector(Vec* result, const GSbezier* curve, f32 t) {
     PSVECScale(&curve->end, &term, tSquared * t);
     PSVECAdd(result, &term, result);
 }
+
+#pragma opt_common_subs reset

@@ -1457,6 +1457,7 @@ static void _fightTrainer_GetUnderTakerDarkPoke(u8* list, u8 count, u8 start, He
     } while (start < first + num && count >= num && loops <= 100);
 }
 
+#pragma opt_loop_invariants off
 static void _fightTrainerCreateDeckUnderTaker(u16 id, Hero* hero, u16 encountId) {
     u8 list[0x80];
     Pokemon pokemon;
@@ -1516,9 +1517,11 @@ static void _fightTrainerCreateDeckUnderTaker(u16 id, Hero* hero, u16 encountId)
     count = _fightTrainer_GetListUnderTakerDarkPoke(list);
     if (count != 0) {
         _fightTrainer_SortUnderTakerDarkPoke(list, count);
-        _fightTrainer_GetUnderTakerDarkPoke(list, count, i, hero, (u32)count > 6 ? 2 : 1, encountId);
+        _fightTrainer_GetUnderTakerDarkPoke(list, count, i, hero, (u32)count >= 7 ? (u8)2 : (u8)1, encountId);
     }
 }
+
+#pragma opt_loop_invariants reset
 
 static void _fightTrainerCreateDeckUnderTakerInColosseum(u16 id, Hero* hero, u16 encountId) {
     u8 list[0x80];

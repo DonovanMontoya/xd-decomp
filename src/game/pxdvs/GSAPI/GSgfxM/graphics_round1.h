@@ -42,7 +42,7 @@ float GSgfxVideoGetLastRenderTime(); s32 GSgfxVideoGetVsyncCount(); u8 GSgfxVide
 u8 GSgfxVideoSetXFBReady__FPv(void*); void *GSgfxVideoCopyEFBToXFB__Fv(); void *GSgfxVideoFindFreeXFB__Fb(bool);
 u32 GSgfxVideoBuildEFB2XFBCopy__FPvPv(void*,void*);
 void GSgfxVideoSetOneShotPostCallback__FPFPv_v(void(*)(void*));
-void GSgfxTokenInit__Fv(); void GSgfxTokenAbortFrame__Fv(); void GSgfxTokenMarkFrame__Fv(); u16 GSgfxTokenMark_Sub__Fv(); u8 GSgfxTokenCleared(u16);
+void GSgfxTokenInit__Fv(); void GSgfxTokenAbortFrame__Fv(); void GSgfxTokenMarkFrame__Fv(); u16 GSgfxTokenMark_Sub__Fv(); bool GSgfxTokenCleared(u16);
 void GSgfxPerfbarCPUStart__Fv(); void GSgfxPerfbarCPUEnd__Fv(); void GSgfxPerfbarGPUStart__Fv(); void GSgfxPerfbarGPUEnd__Fv(); u32 GSgfxPerfbarCPUEntry(u32); void GSgfxPerfbarGPUEntry__FUl(u32);
 void GSgfxLayerInvalidateAll__Fv();
 }

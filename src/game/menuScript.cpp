@@ -93,7 +93,7 @@ void *pokemonTokuseiDataBiosGetPtr(u16);
 u32 pokemonTokuseiDataBiosGetName(void *);
 u32 pokemonDataBiosGetName(void *);
 void winSpriteSetDisp(tagSPRITE_WORK *, bool);
-u16 windowGetKeyRepeat(void);
+u32 windowGetKeyRepeat(void);
 u16 *GSmsgGetGSchar(s32);
 void GSmsgPrint2(s32, s32, s32, s32, u32);
 void *menuDataBiosGetPtr(s32);
@@ -455,7 +455,7 @@ extern "C" void menuScriptReciveMail(void) {
 extern "C" void menuScriptUsohachiCtrl(tagWINDOW_WORK *);
 extern "C" void menuScriptEeveeCtrl(tagWINDOW_WORK *);
 
-extern "C" void menuScriptPdaAddFunc(void);
+extern "C" void menuScriptPdaAddFunc(s32);
 static void _menuScriptPdaAddFunc(pdaAddFuncDef);
 static void _menuScriptReadMail(long);
 static void _getWazaData(u16, WAZAOSHIEDEF *);
@@ -476,8 +476,8 @@ static void _menuScriptPdaAddFunc(pdaAddFuncDef def) {
     GSmodelAllUnpauseAnimation();
 }
 
-extern "C" void menuScriptPdaAddFunc(void) {
-    ((void (*)(void))_menuScriptPdaAddFunc)();
+extern "C" void menuScriptPdaAddFunc(s32 def) {
+    _menuScriptPdaAddFunc((pdaAddFuncDef)def);
 }
 
 static void _menuScriptReadMail(long id) {
@@ -497,8 +497,8 @@ static void _menuScriptReadMail(long id) {
     GSmodelAllUnpauseAnimation();
 }
 
-extern "C" void menuScriptReadMail(void) {
-    ((void (*)(void))_menuScriptReadMail)();
+extern "C" void menuScriptReadMail(s32 id) {
+    _menuScriptReadMail(id);
 }
 
 extern "C" void menuScriptInfoRelive(void *arg, u8 first) {
@@ -601,9 +601,9 @@ extern "C" s32 menuScriptWazaBasan(s8 *flag) {
     return ret;
 }
 
-extern "C" s32 menuScriptWazaMeijin(void) {
+extern "C" s32 menuScriptWazaMeijin(s32 pokemonIndex) {
     s32 ret;
-    _WazaNum = ((u16 (*)(void))_checkWaza)();
+    _WazaNum = _checkWaza(pokemonIndex);
     if (_WazaNum == 0) {
         ret = -1;
     } else {
@@ -788,12 +788,13 @@ static u16 _checkWaza2(void) {
     u16 *ids = (u16 *)__nwa__FUl(*wazaoshie_data_number * 2);
     u8 *rel = (u8 *)__nwa__FUl(*wazaoshie_data_number);
     for (i = 0; i < *wazaoshie_data_number; i++) {
-        s32 idx = wazaoshie_data[i].floorIndex;
-        if (GSflagGet(0x3C4) >= flag_etc[idx].value) {
+        struct { s32 value; } idx;
+        idx.value = wazaoshie_data[i].floorIndex;
+        if (GSflagGet(0x3C4) >= flag_etc[idx.value].value) {
             u16 id = wazaoshie_data[i].id;
-            ids[count] = id;
-            rel[count] = GSflagTest(wazaoshie_data[i].flag, id);
-            if (rel[count] != 0) {
+            ids[(u16)count] = id;
+            rel[(u16)count] = GSflagTest(wazaoshie_data[i].flag, id);
+            if (rel[(u16)count] != 0) {
                 released++;
             }
             count++;
@@ -818,7 +819,7 @@ static u16 _checkWaza2(void) {
 extern "C" s32 menuScriptWazaOshieCursor(tagWINDOW_WORK *win) {
     CURSOR c;
     s16 sel;
-    u16 key;
+    u32 key;
     u16 available;
     s32 num;
     s32 vis;
@@ -832,9 +833,9 @@ extern "C" s32 menuScriptWazaOshieCursor(tagWINDOW_WORK *win) {
         vis = num;
     }
     if (vis != 0) {
-        if ((key & 1) != 0) {
+        if (((u16)key & 1) != 0) {
             c.selected -= 1;
-        } else if ((key & 2) != 0) {
+        } else if (((u16)key & 2) != 0) {
             c.selected += 1;
         }
         sel = c.selected;
@@ -891,7 +892,7 @@ extern "C" void menuScriptTutorialCursor(tagWINDOW_WORK* w)
     if (total < 8) {
         vis = total;
     }
-    u32 rep = ((u32(*)())windowGetKeyRepeat)();
+    u32 rep = windowGetKeyRepeat();
     CURSOR c = cursorBiosGetPos(0xE);
     if (vis != 0) {
         if ((u16)rep & 1) {

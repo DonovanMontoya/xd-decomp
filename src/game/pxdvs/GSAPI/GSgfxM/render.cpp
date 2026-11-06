@@ -1,6 +1,6 @@
 #include "graphics_round1.h"
-static u8 _renderXFBCommandBuf[0x10000]; static GSgfx_GCFifoObj _renderXFBCommandFifo; static RenderEntry _renderFifoList[64];
-static void *_renderLastXFBPtr; static u32 _renderPauseCount; static void *_renderPrepareFrameStart,*_renderPrepareFrameEnd; static u16 _renderXFBCopyToken;
+static u8 _renderXFBCommandBuf[0x60] ATTRIBUTE_ALIGN(32); static GSgfx_GCFifoObj _renderXFBCommandFifo; static RenderEntry _renderFifoList[64];
+static void *_renderPrepareFrameStart,*_renderPrepareFrameEnd; static void *_renderLastXFBPtr; static u32 _renderPauseCount; static u16 _renderXFBCopyToken;
 extern "C" {
 extern Mtx mtxIdent; extern void *gsgfx_layer_activeFifo; extern u8 gsgfx_layer_inPrimitive;
 void GSgfxRenderModuleDoPreUpdate__Ff(float); void GSgfxRenderModuleDoPostUpdate__Ff(float); void GSgfxRenderModuleInit__Fv();

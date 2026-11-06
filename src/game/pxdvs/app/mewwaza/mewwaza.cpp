@@ -13,6 +13,8 @@ static AnswerPair mewans5[5] = {
     { 0xC71C, 0xC71D },
     { 0xC71F, 0xC720 },
 };
+struct MewInterludeMessages { s32 values[5]; };
+static const MewInterludeMessages interludeMessages = {{0xC727,0xC728,0xC729,0xC72A,0xC72C}};
 static WazaTemplate _wrktmplt;
 MEWPOINTS mewPoints;
 
@@ -330,9 +332,9 @@ void _question_4__FP9MEWPOINTS(MEWPOINTS *arg0) {
     u32 temp_ret;
     u32 temp_ret_2;
 
-    s32 interlude[5]={0xC727,0xC728,0xC729,0xC72A,0xC72C};
+    MewInterludeMessages interlude = interludeMessages;
     temp_ret = (u32)HSD_Rand();
-    winMsgOpenFieldWithSE(interlude[temp_ret % 5], 1, 0, 1);
+    winMsgOpenFieldWithSE(interlude.values[temp_ret % 5], 1, 0, 1);
     temp_ret_2 = (u32)HSD_Rand();
     temp_r28 = temp_ret_2 % 3;
     winMsgOpenFieldWithSE(mewques4[temp_r28], 1, 0, 1);
@@ -376,12 +378,12 @@ void _question_4__FP9MEWPOINTS(MEWPOINTS *arg0) {
 
 void _question_3__FP9MEWPOINTS(MEWPOINTS *arg0) {
     s32 answers[2];
-    s32 interlude[5]={0xC727,0xC728,0xC729,0xC72A,0xC72C};
+    MewInterludeMessages interlude = interludeMessages;
     s32 choice;
     u32 first;
     u32 second;
     u32 picked;
-    winMsgOpenFieldWithSE(interlude[(u32)HSD_Rand() % 5], 1, 0, 1);
+    winMsgOpenFieldWithSE(interlude.values[(u32)HSD_Rand() % 5], 1, 0, 1);
     winMsgOpenFieldWithSE(0xC704, 1, 0, 1);
     first = (u32)HSD_Rand() & 3;
     second = first;
@@ -468,9 +470,9 @@ s8 _mewSequence__FP9MEWPOINTS(MEWPOINTS *arg0) {
         arg0->unk4 = (s16) -(((u32)HSD_Rand() % 3) - 1);
         break;
     }
-    s32 interlude[5]={0xC727,0xC728,0xC729,0xC72A,0xC72C};
+    MewInterludeMessages interlude = interludeMessages;
     temp_ret = (u32)HSD_Rand();
-    winMsgOpenFieldWithSE(interlude[temp_ret % 5], 1, 0, 1);
+    winMsgOpenFieldWithSE(interlude.values[temp_ret % 5], 1, 0, 1);
     winMsgOpenFieldWithSE(0xC6FF, 1, 0, 1);
     temp_r28_2 = (u32)HSD_Rand() & 3;
     var_r29_2 = temp_r28_2;
