@@ -20,11 +20,14 @@ static inline int WObjRefDec(HSD_WObj* o) { int ret; if ((ret = (o->parent.ref_c
 static inline void HSD_WObjUnref(HSD_WObj* o) { if (o && WObjRefDec(o)) hsdDelete(o); }
 #define HSD_OBJECT_METHOD(o) ((HSD_ClassInfo*)(o)->parent.class_info)
 static inline u8 HSD_LObjGetPriority(HSD_LObj* lobj) { if (!lobj) __assert("lobj.h",355,"lobj"); return lobj->priority; }
-static HSD_LObjInfo* default_class;
-static HSD_SList* current_lights;
-static HSD_LObj* active_lights[MAX_GXLIGHT];
+static s32 lightmask_alpha;
+static s32 lightmask_attnfunc;
+static s32 lightmask_specular;
+static s32 lightmask_diffuse;
 static s32 nb_active_lights;
-static s32 lightmask_diffuse,lightmask_specular,lightmask_attnfunc,lightmask_alpha;
+static HSD_LObj* active_lights[MAX_GXLIGHT];
+static HSD_SList* current_lights;
+static HSD_LObjInfo* default_class;
 static void LObjInfoInit(void);
 HSD_LObjInfo hsdLObj = { LObjInfoInit };
 HSD_SList* HSD_SListPrepend(HSD_SList*,void*); HSD_SList* HSD_SListRemove(HSD_SList*);

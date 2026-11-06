@@ -6,12 +6,23 @@
 #define fabs __fabs
 static f32 vmtx[3][4], rvmtx[3][4], prj[7], pvmtx[3][4], rvmtxRot[3][4];
 u8 psFrameNum = 123;
-static void* particleFog;
+static s32 prevPointSize;
+static s32 prevLineWidth;
+static f32 rx0;
+static f32 rx1;
+static f32 ry0;
+static f32 ry1;
+static f32 rz0;
+static f32 rz1;
+static s32 prevBlendMode;
+static s32 prevChanCtrl;
+static GXColor prevChanMat;
+static GXColor prevChanAmb;
+static GXColor prevColorPrim;
+static GXColor prevColorEnv;
+static GXColor prevColorMat;
 static s32 currentMtx;
-static GXColor prevColorMat,prevColorEnv,prevColorPrim,prevChanAmb,prevChanMat;
-static s32 prevChanCtrl,prevBlendMode;
-static f32 rz1,rz0,ry1,ry0,rx1,rx0;
-static s32 prevLineWidth,prevPointSize;
+static void* particleFog;
 static u8 billboard_tex0_u8[32] __attribute__((aligned(32))) = {0,1,0,0,1,0,1,1,1,1,1,0,0,0,0,1,0,0,0,1,1,1,1,0,1,0,1,1,0,1,0,0};
 static const f32 identityMtx[12] = {1,0,0,0,0,1,0,0,0,0,1,0};
 s32 psDispHasRenderData(s32 arg0);

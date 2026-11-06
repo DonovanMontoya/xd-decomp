@@ -2,7 +2,7 @@
 #include <libc/string.h>
 struct MENU_POKEMON_STATUS {u8 pad0[0x16];u8 special,pad17;s16 maxHP,hp;u32 maxEXP,exp;union {u8 pad24[12];struct {u16 condition,face;u8 sex,side,pad2A[3],dark,pad2E[2];} details;};};
 struct StatusTween {s16 hp,frames,timer;u16 levelUp;u32 exp;s16 expFrames,expTimer;};
-static f32 menuStatusOldTime,menuStatusTime;
+static f32 menuStatusTime,menuStatusOldTime;
 extern "C" {tagWINDOW_WORK *windowSearchID(s32);StatusTween *windowGetFreeWork(tagWINDOW_WORK*);MENU_POKEMON_STATUS *windowGetAllocPtr(tagWINDOW_WORK*);MENU_POKEMON_STATUS *windowAllocMemory(tagWINDOW_WORK*,s32);void GSthreadSwitch();void GSsndPlayNow(u32);void GSsndStopNow(u32);f32 timeGetLastFrameSec();u8 fightKind_CheckFightKind(s32);s32 menuFightGetStatus();void menuFightSetStatus(s32);void menuFightSetSeq();void *menuSeqBiosGetPtr(s32);}
 static void menuUpdateStatusTime();
 extern "C" {

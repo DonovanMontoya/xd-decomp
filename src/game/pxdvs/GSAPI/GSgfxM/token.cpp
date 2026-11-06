@@ -2,7 +2,7 @@
 struct TokenRegistration { u16 start,end; void(*callback)(u16); };
 ABI_SIZE(TokenRegistration,8); ABI_OFF(TokenRegistration,callback,4);
 static TokenRegistration _tokenRegisterList[4];
-static u16 _tokenCurrent,_tokenFrameEnd,_tokenFrameStart,_tokenLastGPU,_tokenMaximum;
+static u16 _tokenCurrent,_tokenFrameStart,_tokenFrameEnd,_tokenLastGPU,_tokenMaximum;
 static u8 _tokenRegisterCount;
 extern "C" {
 static void _tokenDrawSyncCallback__FUs(u16);

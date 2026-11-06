@@ -1,6 +1,6 @@
 #include <game/menuPcBoxPokemonLayout.hpp>
 extern "C" {u32 GSflagGet(u32);u32 GSmsgGetRect(u32);void GSmsgPrint2(s32,s16,s16,u32,u32);f32 timeGetLastFrameSec();f32 menuGetLastTime();double sin(double);void winAnimeCursor(tagWINDOW_WORK*,tagSPRITE_WORK*);void winSetSequence(void*,s32);void winSpriteSetDisp(tagSPRITE_WORK*,s32);void winSeqSetMenu(s32,s32);s32 pokecoloGetRomVersion();}
-static f32 _fieldMenuTimer;static f32 _menuFieldCursorAngle;static u8 _openFieldMenu;static u32 _soundEnvID;static s32 _soundEnvVol;
+static u8 _openFieldMenu;static f32 _fieldMenuTimer;static u32 _soundEnvID;static s32 _soundEnvVol;static f32 _menuFieldCursorAngle;
 static f32 _menuFiledAlpha[5];static s32 barcolor=0xC0C0D000;static f32 _cursorSec=0.8f;static f32 _max_alpha=255.0f;static f32 _min_alpha=200.0f;
 static void _menuFieldMenuCursor(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _menuFieldFlashCursor(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _menuFieldCursorCheck(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _menuFieldDrawItemSub(tagWINDOW_WORK*,tagSPRITE_WORK*,long);static void _animAlpha(long);static s32 _menuFieldCheckCursor(long);static u8 _menuFieldCheckPDA();
 extern "C" void menuFieldDrawItem2(tagWINDOW_WORK *arg0,tagSPRITE_WORK *arg1) {
