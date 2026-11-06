@@ -242,6 +242,12 @@ functions and storage. `GSgfxTokenIfClearedReset` remains partially matching:
 two instructions use a different temporary to perform an equivalent unsigned
 halfword zero test. The token unit remains NonMatching.
 
+The light editor retains its real methods while leaving unresolved literal-pool
+placement visible. Its former `lightEditorStripped` and `lightEditorSave`
+placeholders had no supporting original-source or independent API evidence and
+were removed. Their constants and text remain supplied by the real methods;
+the unit remains NonMatching until its code and storage layout are exact.
+
 `memcardInitialize` was adapted from `src/game/pxdvs/app/memcard/memcard.cpp`
 at the same XD checkpoint. Separate `u32` low and `u16` high random values
 recover the retail initializer's instruction order. Its complete instruction

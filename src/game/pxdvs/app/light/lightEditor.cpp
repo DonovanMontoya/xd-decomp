@@ -69,12 +69,6 @@ public:
     void writePrintf(const char*, ...);
 };
 
-// Stripped from the DOL; its constants still occupy .sdata2.
-void lightEditorStripped(f32* a, f32* b) {
-    *a = 0.1f;
-    *b = 1.0f;
-}
-
 void LightEditor::editDirection(GSlight* light) {
     f32 lx;
     f32 a1;
@@ -307,11 +301,6 @@ void LightEditor::editCommand() {
 
 #pragma opt_common_subs reset
 #pragma opt_loop_invariants reset
-// Stripped from the DOL; its strings still occupy .sdata2.
-void lightEditorSave() {
-    GSprint(0, 0, 0, 0, "save");
-}
-
 void LightEditor::dispLightModel(GSlight* light, bool selected) {
     LightVec pos;
     LightVec dir;
@@ -630,7 +619,7 @@ void LightEditor::editUpdate() {
     }
 }
 
-LightEditor::LightEditor() {
+void LightEditor::init() {
     mUnk4 = 0;
     mUnk0 = 0;
     mUnk1 = 0;
@@ -638,7 +627,7 @@ LightEditor::LightEditor() {
     mUnk3 = 0;
 }
 
-void LightEditor::init() {
+LightEditor::LightEditor() {
     mUnk4 = 0;
     mUnk0 = 0;
     mUnk1 = 0;
