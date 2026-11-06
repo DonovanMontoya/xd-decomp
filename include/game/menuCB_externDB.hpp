@@ -316,7 +316,7 @@ u8 pauseIsPause(void);
 MenuDBKey *windowGetKeyInfo(void);
 MenuDBKey *windowGetKeyInfo2(void);
 MenuDBKey *windowGetPortKeyInfo(u8);
-u16 windowGetKeyRepeat(void);
+u32 windowGetKeyRepeat(void);
 u32 windowSearchID(s32);
 u8 GSinputIsConnected(s32);
 s32 GSinputButtonsPressed(s32);

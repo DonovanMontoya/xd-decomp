@@ -27,7 +27,7 @@ s32 windowGetActiveID(void);
 void menuClose(s32);
 void menuCloseSync(s32, s32);
 DpmKey *windowGetKeyInfo(void);
-u16 windowGetKeyRepeat(void);
+u32 windowGetKeyRepeat(void);
 u8 winSeqCheckMove(s32);
 void winSeqSetMenu(s32, s32);
 void GSsndPlayNow(u32);
@@ -310,7 +310,7 @@ void Cursor__10menuPdaDPMFP14tagWINDOW_WORK(DpmWork *arg0, DpmWindow *arg1) {
     s16 temp_r5;
     s16 temp_r5_2;
     s32 temp_r3_3;
-    u16 temp_r3_2;
+    u32 temp_r3_2;
     DpmContents *temp_r3;
 
     windowGetKeyInfo();
@@ -325,12 +325,12 @@ void Cursor__10menuPdaDPMFP14tagWINDOW_WORK(DpmWork *arg0, DpmWindow *arg1) {
     if (temp_r29 < 0xA) {
         var_r28 = temp_r29;
     }
-    if ((s32)(temp_r3_2 & 1) != 0) {
+    if ((s32)(((u16)temp_r3_2) & 1) != 0) {
         if (temp_r31 != 0) {
             GSsndPlayNow(0x450);
         }
         temp_r30->selected--;
-    } else if ((s32)(temp_r3_2 & 2) != 0) {
+    } else if ((s32)(((u16)temp_r3_2) & 2) != 0) {
         if ((s32)(temp_r29 - 1) != (s32)((u32)temp_r5 + (u32)temp_r4)) {
             GSsndPlayNow(0x450);
         }

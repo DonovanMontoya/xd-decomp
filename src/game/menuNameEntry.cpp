@@ -18,7 +18,7 @@ void winMsgOpen(s32, s32, s32, s32);
 void winMsgClose(s32);
 s8 menuSubOpenYesNo(s32, s32, s32, s32);
 u16 windowGetKeyTrg(void);
-u16 windowGetKeyRepeat(void);
+u32 windowGetKeyRepeat(void);
 void winSeqSetMenu(s32, s32);
 void GSfloorPush(s32);
 void floorSetFadeScript(s32, s32);
@@ -989,7 +989,7 @@ s32 menuNameEntryCtrl(tagWINDOW_WORK *window)
 
 s32 menuNameEntryCursor(tagWINDOW_WORK *window)
 {
-    u16 rep = windowGetKeyRepeat();
+    u32 rep = windowGetKeyRepeat();
     u16 trg = windowGetKeyTrg();
     NAME_ENTRY_ARG *arg = (NAME_ENTRY_ARG *)window->unk68;
     if ((trg & 0x40) != 0) {
@@ -1023,7 +1023,7 @@ s32 menuNameEntryCursor(tagWINDOW_WORK *window)
         window->unkA4 = 1;
         return 0;
     }
-    if ((rep & 8) != 0) {
+    if ((((u16)rep) & 8) != 0) {
         s32 v = *arg->unk28 + 1;
         if (*arg->unk2C < 6) {
             if (v < 11) {
@@ -1038,7 +1038,7 @@ s32 menuNameEntryCursor(tagWINDOW_WORK *window)
         }
         *arg->unk28 = v;
     }
-    if ((rep & 4) != 0) {
+    if ((((u16)rep) & 4) != 0) {
         s32 v = *arg->unk28 - 1;
         if (*arg->unk2C > 5 && v > 6) {
             v = 6;
@@ -1050,7 +1050,7 @@ s32 menuNameEntryCursor(tagWINDOW_WORK *window)
         }
         *arg->unk28 = v;
     }
-    if ((rep & 2) != 0) {
+    if ((((u16)rep) & 2) != 0) {
         s32 v = *arg->unk2C;
         if (*arg->unk28 >= 11) {
             if (v == 1) {
@@ -1068,7 +1068,7 @@ s32 menuNameEntryCursor(tagWINDOW_WORK *window)
         }
         *arg->unk2C = v;
     }
-    if ((rep & 1) != 0) {
+    if ((((u16)rep) & 1) != 0) {
         s32 v = *arg->unk2C;
         if (*arg->unk28 >= 11) {
             if (v == 2) {
