@@ -61,6 +61,10 @@ static inline ScratchBlock* scratchFindBlock(u8 start) {
     }
     return 0;
 }
+static inline ScratchBlock* scratchFindFreeBlock()
+{
+    return scratchFindBlock(0xFF);
+}
 static inline u32 scratchRangeMask(u8 start, u8 count) {
     u32 occupied = 0;
     u32 bit = 0x80000000;
@@ -94,28 +98,69 @@ extern "C" void GSscratchFree(void* pointer) {
         block->start = 255;
     }
 }
-static inline void scratchSetRange(u8 index, u8 count) {
-    u32 bit = 0x80000000;
-    while (index--) bit >>= 1;
-    u32 map = _blockMap;
-    while (count--) {
-        map |= bit;
-        bit >>= 1;
+static inline void scratchSetRange(u8 index, u8 count)
+{
+    u32 mask;
+    u32 map;
+
+    mask = 0x80000000;
+    while (index-- != 0) {
+        mask >>= 1;
+    }
+    map = _blockMap;
+    while (count-- != 0) {
+        map |= mask;
+        mask >>= 1;
     }
     _blockMap = map;
 }
-extern "C" void* GSscratchAlloc(u8 blocks, GSscratchCallback callback) {
-    if (_scratchInvalid == 1) return 0;
-    if (blocks == 0 || blocks > 32) return 0;
-    for (u8 start = 0; start < 32; ++start) {
-        if (scratchRangeMask(start, blocks) == 0) {
-            ScratchBlock* block = scratchFindBlock(255);
-            if (!block) return 0;
-            block->start = start;
-            block->count = blocks;
-            block->callback = callback;
-            scratchSetRange(start, blocks);
-            return _scratchPadBase + (block->start << 9);
+extern "C" void* GSscratchAlloc(u8 blocks, GSscratchCallback callback)
+{
+    u32 scanMask;
+    u32 occupied;
+    u8 shift;
+    u8 remaining;
+    u32 map;
+    u8 candidate;
+    ScratchBlock* entry;
+
+    if (_scratchInvalid == 1) {
+        return 0;
+    }
+    if (blocks == 0 || blocks > 32) {
+        return 0;
+    }
+
+    map = _blockMap;
+    for (candidate = 0; candidate < 32; candidate++) {
+        remaining = blocks;
+        shift = candidate;
+        occupied = 0;
+        scanMask = 0x80000000;
+        while (shift-- != 0) {
+            scanMask >>= 1;
+        }
+        while (remaining-- != 0) {
+            occupied <<= 1;
+            if (scanMask != 0) {
+                if ((map & scanMask) != 0) {
+                    occupied |= 1;
+                }
+                scanMask >>= 1;
+            } else {
+                occupied |= 1;
+            }
+        }
+        if (occupied == 0) {
+            if ((entry = scratchFindFreeBlock()) == 0) {
+                return 0;
+            }
+
+            entry->start = candidate;
+            entry->count = blocks;
+            entry->callback = callback;
+            scratchSetRange(candidate, blocks);
+            return (u8*)_scratchPadBase + entry->start * 0x200;
         }
     }
     return 0;
