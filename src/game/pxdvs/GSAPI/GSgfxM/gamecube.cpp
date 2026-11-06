@@ -1774,11 +1774,11 @@ u8* GSgfx_GCWriteCopyDispDirect(u8* buffer, GCCopyDisplayInfo* info, u32 destina
     u16 scaleValue = (u32)(256.0f / info->scale);
     control.copyControl.display = 1;
     control.copyControl.clamp = info->clamp;
-    control.copyControl.fieldMode = (u16)info->fieldMode;
+    control.copyControl.gamma = (u16)info->gamma;
     source.copyRectangle.x = info->x;
     scale.copyScale.scale = scaleValue;
     size.copyRectangle.x = info->width - 1;
-    control.copyControl.gamma = (u8)info->gamma;
+    control.copyControl.frameToField = (u8)info->frameToField;
     control.copyControl.clear = info->clear;
     source.copyRectangle.y = info->y;
     size.copyRectangle.y = info->height - 1;
@@ -1853,9 +1853,9 @@ void GSgfx_GCWriteCopyDisp(GCCopyDisplayInfo* info, u32 destination, u8 colorUpd
     control.copyControl.display = 1;
     control.copyControl.clamp = info->clamp;
     source.copyRectangle.x = info->x;
-    control.copyControl.fieldMode = (u16)info->fieldMode;
+    control.copyControl.gamma = (u16)info->gamma;
     source.copyRectangle.y = info->y;
-    control.copyControl.gamma = (u8)info->gamma;
+    control.copyControl.frameToField = (u8)info->frameToField;
     control.copyControl.clear = info->clear;
     address.tlutSource.source = destination >> 5;
     GCFlushRegister(&scale);
