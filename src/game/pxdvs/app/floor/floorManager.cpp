@@ -468,10 +468,7 @@ void *getStateData__12FloorManagerFP12StateDataPtr(FloorManagerLayout *a,FloorSt
     return current;
 }
 
-/* Stripped from the DOL; its string still occupies .rodata. */
-void floorScriptLoadErrorStripped(void) {
-    GSlogWrite("Script load error.");
-}
+static const char floorScriptLoadErrorMessage[] = "Script load error.";
 s32 makeSaveData__12FloorManagerFPPUcPUl(FloorManagerLayout *a,void **data,u32 *size) {
     u8 *payload;
     FloorWriteStreamLayout stream;
