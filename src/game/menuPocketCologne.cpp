@@ -2,7 +2,7 @@
 #include <game/menuPcBoxPokemonLayout.hpp>
 struct POCKET_COLOGNE_ARG {u32 kind;struct {u16 id,pad;} entries[4];s32 count;};
 static f32 ActMenuCursorBlinkTime;
-extern "C" {void *itemDataBiosGetPtr(u16);s32 itemDataBiosGetKind(void*);u32 itemDataBiosGetName(void*);void *heroItemGetItemKindToItemAryPtr(void*,s32,u16*,u16*,s32,s32);u8 itemCheckValid(void*);u16 itemBiosGetNum(void*);u32 itemGetStatus(void*,s32,s32,s32);u32 GSmsgGetRect(u32);void GSmsgPrint2(s32,s32,s32,u32,u32);void menuClose(s32);void menuCloseSync(s32,s32);MENU_ITEM_dd_ *menuItemBiosGetPtr(s32,s16);s32 menuOpenCustom(s32,s32,void*,s32,s32,s32,...);void menuSubCursorAnimeInit();void menuSubCursorAnimeMain();void menuSubCursorAnimeStart();void menuSubCursorAnimeValGet(s32*,s32*);void msgctrlSetValue(s32,u32);void winSeqSetMenu(s32,s32);s32 winSpriteGetLayerID(tagWINDOW_WORK*,tagSPRITE_WORK*);void winSpriteSetDisp(tagSPRITE_WORK*,s32);void windowDrawSpriteCursor(s32,s32,s32,tagWINDOW_WORK*,s32,s32,s32,s32*,s32);s32 windowGetActiveID();u16 windowGetKeyRepeat();}
+extern "C" {void *itemDataBiosGetPtr(u16);s32 itemDataBiosGetKind(void*);u32 itemDataBiosGetName(void*);void *heroItemGetItemKindToItemAryPtr(void*,s32,u16*,u16*,s32,s32);u8 itemCheckValid(void*);u16 itemBiosGetNum(void*);u32 itemGetStatus(void*,s32,s32,s32);u32 GSmsgGetRect(u32);void GSmsgPrint2(s32,s32,s32,u32,u32);void menuClose(s32);void menuCloseSync(s32,s32);MENU_ITEM_dd_ *menuItemBiosGetPtr(s32,s16);s32 menuOpenCustom(s32,s32,void*,s32,s32,s32,...);void menuSubCursorAnimeInit();void menuSubCursorAnimeMain();void menuSubCursorAnimeStart();void menuSubCursorAnimeValGet(s32*,s32*);void msgctrlSetValue(s32,u32);void winSeqSetMenu(s32,s32);s32 winSpriteGetLayerID(tagWINDOW_WORK*,tagSPRITE_WORK*);void winSpriteSetDisp(tagSPRITE_WORK*,s32);void windowDrawSpriteCursor(s32,s32,s32,tagWINDOW_WORK*,s32,s32,s32,s32*,s32);s32 windowGetActiveID();u32 windowGetKeyRepeat();}
 static s32 getItemNum(u16 id);
 static u32 getStockMax(u16 id);
 static u32 getItemName(unsigned long id);
@@ -27,7 +27,7 @@ void makePocketCologneArg(POCKET_COLOGNE_ARG *p,unsigned long kind){p->kind=kind
 
 extern "C" s32 menuPocketColognCtrl(tagWINDOW_WORK *w){switch(w->phase){case 0:if(!w->step){winSeqSetMenu(0x32,0x60);ActMenuCursorBlinkTime=0;w->step=1;menuSubCursorAnimeInit();}break;case 2:ActMenuCursorBlinkTime+=0.033333335f;if(ActMenuCursorBlinkTime>1.0f)ActMenuCursorBlinkTime=0;menuSubCursorAnimeMain();break;case 3:if(!w->step){winSeqSetMenu(0x32,0x64);w->step=1;}break;}return 0;}
 
-extern "C" s32 menuPocketColognCursor(tagWINDOW_WORK *w){POCKET_COLOGNE_ARG *p=(POCKET_COLOGNE_ARG*)w->parameters[0];s16 old;s32 count;u16 keys=windowGetKeyRepeat();count=p->count;old=w->selected;if(keys&2){s32 next=old+1;if(next>=count)next=count-1;w->selected=(s8)next;}if(keys&1){s32 next=w->selected-1;if(next<0)next=0;w->selected=(s8)next;}if(old!=w->selected)menuSubCursorAnimeStart();return 0;}
+extern "C" s32 menuPocketColognCursor(tagWINDOW_WORK *w){POCKET_COLOGNE_ARG *p=(POCKET_COLOGNE_ARG*)w->parameters[0];s16 old;s32 count;u32 keys=windowGetKeyRepeat();count=p->count;old=w->selected;if(((u16)keys)&2){s32 next=old+1;if(next>=count)next=count-1;w->selected=(s8)next;}if(((u16)keys)&1){s32 next=w->selected-1;if(next<0)next=0;w->selected=(s8)next;}if(old!=w->selected)menuSubCursorAnimeStart();return 0;}
 
 extern "C" s32 menuPocketColognDrawItemText(tagWINDOW_WORK *w, tagSPRITE_WORK *s) {
     s32 ids[4] = {0x130, 0x12F, 0x12E, 0x12D};

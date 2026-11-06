@@ -15,7 +15,7 @@ u32 mailGetSortMode(void);
 u32 cursorBiosGetPos(s32);
 void cursorBiosSetPos(s32, PdaMailCursor *);
 PdaMailKey *windowGetKeyInfo(void);
-u16 windowGetKeyRepeat(void);
+u32 windowGetKeyRepeat(void);
 u8 winSeqCheckMove(s32);
 void winSeqSetMenu(s32, s32);
 void winSpriteSetDisp(PdaMailSprite *, s32);
@@ -212,7 +212,7 @@ void menuPdaMailListButtonXD(PdaMailWindow *arg0) {
 s32 menuPdaMailListCursorXD(PdaMailWindow *arg0) {
     PdaMailCursor cursor, copy;
     s32 count, visible;
-    u16 repeat;
+    u32 repeat;
     s16 selected;
     windowGetKeyInfo();
     cursor.packed = _getCursor__Fv();
@@ -224,19 +224,19 @@ s32 menuPdaMailListCursorXD(PdaMailWindow *arg0) {
         visible = count;
     repeat = windowGetKeyRepeat();
     if (visible != 0) {
-        if (repeat & 1) {
+        if (((u16)repeat) & 1) {
             if (cursor.pos.selected + cursor.pos.first != 0)
                 GSsndPlayNow(0x450);
             cursor.pos.selected--;
-        } else if (repeat & 2) {
+        } else if (((u16)repeat) & 2) {
             if (count - 1 != cursor.pos.selected + cursor.pos.first)
                 GSsndPlayNow(0x450);
             cursor.pos.selected++;
-        } else if (repeat & 8) {
+        } else if (((u16)repeat) & 8) {
             if (count - 1 != cursor.pos.selected + cursor.pos.first)
                 GSsndPlayNow(0x453);
             cursor.pos.selected += visible;
-        } else if (repeat & 4) {
+        } else if (((u16)repeat) & 4) {
             if (cursor.pos.selected + cursor.pos.first != 0)
                 GSsndPlayNow(0x453);
             cursor.pos.selected -= visible;

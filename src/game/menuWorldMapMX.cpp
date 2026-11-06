@@ -27,7 +27,7 @@ void cameraSetType(s32);
 void cameraUpdate(void);
 void* memcpy(void *, const void *, u32);
 void windowGetKeyInfo(void);
-u16 windowGetKeyRepeat(void);
+u32 windowGetKeyRepeat(void);
 s8 fadeCheck(s32);
 void GSgfxLayerFindByID(u32);
 void GScameraIsAnimating(u32);
@@ -884,27 +884,27 @@ void WorldMap::Cursor(tagWINDOW_WORK *win) {
 
 void WorldMap::ControlPad(tagWINDOW_WORK* window) {
     windowGetKeyInfo();
-    u16 key = windowGetKeyRepeat();
+    u32 key = windowGetKeyRepeat();
     s32 dir = -1;
     unsigned int index = _cursor_index[unk8->cursor];
 
     if (((fadeCheck(0) == 0) && (flag1C != 1)) && (unk8->flag48 != 1)) {
         GetModelID(index);
-        if (key == 8) {
+        if (((u16)key) == 8) {
             dir = 0;
-        } else if (key == 10) {
+        } else if (((u16)key) == 10) {
             dir = 1;
-        } else if (key == 2) {
+        } else if (((u16)key) == 2) {
             dir = 2;
-        } else if (key == 6) {
+        } else if (((u16)key) == 6) {
             dir = 3;
-        } else if (key == 4) {
+        } else if (((u16)key) == 4) {
             dir = 4;
-        } else if (key == 5) {
+        } else if (((u16)key) == 5) {
             dir = 5;
-        } else if (key == 1) {
+        } else if (((u16)key) == 1) {
             dir = 6;
-        } else if (key == 9) {
+        } else if (((u16)key) == 9) {
             dir = 7;
         }
         WorldMapIconData* ic = &icons[index];
