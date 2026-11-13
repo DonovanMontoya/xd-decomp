@@ -295,15 +295,16 @@ void GSgfxVFFree(VFFormat *format) {
 u32 GSgfxVFIsUsed(VFFormat *format) { return format->flags & 1; }
 VFFormat *GSgfxVFGetPredef(s32 index) { return &_vfPredefFmt[index]; }
 void GSgfxVFCreate(VFFormat *format) {
+    u32 i;
     u32 index = _vfAllocIndex;
     u32 next;
     if ((next = index + 1) >= 8) next = 0;
     _vfAllocIndex = next;
     format->index = index;
     format->flags |= 1;
-    for (u32 i = 0; (s32)i < 27; ++i) format->formats[i].attribute = 255;
-    for (u32 i = 0; (s32)i < 27; ++i) format->descriptors[i].attribute = 255;
-    for (u32 i = 0; (s32)i < 27; ++i) format->arrays[i].attribute = 255;
+    for (i = 0; (s32)i < 27; ++i) format->formats[i].attribute = 255;
+    for (i = 0; (s32)i < 27; ++i) format->descriptors[i].attribute = 255;
+    for (i = 0; (s32)i < 27; ++i) format->arrays[i].attribute = 255;
     format->flags |= 6;
 }
 void GSgfxVFInit(VFFormat *format) { memset(format, 0, sizeof(*format)); }
@@ -365,8 +366,10 @@ VFFormat *GSgfxVFBuildTemp(s32 positionCount, s32 positionComponent, u8 normal, 
     _vfLocal.flags |= 6;
     return &_vfLocal;
 }
+#pragma opt_dead_assignments off
 void GSgfxVFInit__Fv(void) {
     _vfAllocIndex = 0;
     GSgfxVFCreate(&_vfLocal);
 }
+#pragma opt_dead_assignments reset
 }
