@@ -213,7 +213,9 @@ drawLevel:
             cursor=menuGetCursorItemID(0x5C);
             switch(w->menu){case 0x37:if(cursor==0x138)active=1;break;case 0x40:if(cursor==0x139)active=1;break;case 0x38:if(cursor==0x13A)active=1;break;case 0x41:if(cursor==0x13B)active=1;break;}
             phase=(u32)(100.0f*menuStatusTime)%100;s->color.value=0xFFFFFFFF;
-            fade=200.0f*(f32)sin(3.14f*(0.01f*(f32)phase));
+            f32 angle = 3.14f * (0.01f * (f32)phase);
+            f32 intensity = (f32)sin(angle);
+            fade = 200.0f * intensity;
             s->color.channels.green-=fade;s->color.channels.blue-=fade;
             if(active){if(alternate){if(fightFloorGetStatus(0,0,0x32,0)!=0)winSpriteSetDisp(s,1);}else winSpriteSetDisp(s,1);}
         }break;
