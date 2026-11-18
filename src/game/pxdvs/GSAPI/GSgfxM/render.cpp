@@ -5,7 +5,8 @@ extern "C" {
 extern Mtx mtxIdent; extern void *gsgfx_layer_activeFifo; extern u8 gsgfx_layer_inPrimitive;
 void GSgfxRenderModuleDoPreUpdate__Ff(float); void GSgfxRenderModuleDoPostUpdate__Ff(float); void GSgfxRenderModuleInit__Fv();
 void GSgfxPerfbarRender__FP10GSgfxLayer(void*); void GSgfxResetUpdate__Fv(); void GSgfxSSUpdate__Fv(); void GSgfxCaptureUpdate__FPv(void*);
-s32 GSgfxLayerPrerender__Fv(); void GSgfxCaptureRenderFrameNumber__FP10GSgfxLayer(void*); void GSgfxBackFBDoFrame__FP10GSgfxLayer(void*); void GSgfxLayerRenderStats__FP10GSgfxLayer(void*);
+struct LayerNode;
+LayerNode* GSgfxLayerPrerender__Fv(); void GSgfxCaptureRenderFrameNumber__FP10GSgfxLayer(void*); void GSgfxBackFBDoFrame__FP10GSgfxLayer(void*); void GSgfxLayerRenderStats__FP10GSgfxLayer(void*);
 void GSgfxLayerBuildRenderList__Fv(); void GSgfxLayerPrepareNextFrame__Fv(); void GSgfxLayerUpdateActiveFifoStats__Fv();
 static void _renderResetGX__Fv(); static void _renderBreakpointCallback__Fv(); static void _renderCopyEFB__FPv(void*); static void _renderDrawDoneCallback__Fv();
 inline void waitComplete() {
@@ -27,7 +28,7 @@ void GSgfxRender(void) {
     RenderEntry *temp_r28_4;
     f32 var_f31;
     s32 temp_r28;
-    s32 temp_r28_2;
+    LayerNode* layer;
     s32 temp_r28_3;
     s32 temp_r29_2;
     s32 temp_r30;
@@ -65,12 +66,12 @@ void GSgfxRender(void) {
         GSgfxLayerInvalidateAll__Fv();
         break;
     case 2:
-        temp_r28_2 = GSgfxLayerPrerender__Fv();
-        GSgfxCaptureRenderFrameNumber__FP10GSgfxLayer((void*)temp_r28_2);
-        GSgfxBackFBDoFrame__FP10GSgfxLayer((void*)temp_r28_2);
+        layer = GSgfxLayerPrerender__Fv();
+        GSgfxCaptureRenderFrameNumber__FP10GSgfxLayer(layer);
+        GSgfxBackFBDoFrame__FP10GSgfxLayer(layer);
         GSgfxPerfbarCPUEnd__Fv();
-        GSgfxPerfbarRender__FP10GSgfxLayer((void*)temp_r28_2);
-        GSgfxLayerRenderStats__FP10GSgfxLayer((void*)temp_r28_2);
+        GSgfxPerfbarRender__FP10GSgfxLayer(layer);
+        GSgfxLayerRenderStats__FP10GSgfxLayer(layer);
         if(GSgfxVideoGetXFBCount()>1) waitComplete();
         _renderXFBCopyToken = GSgfxTokenMark_Sub__Fv();
         GSgfxResetUpdate__Fv();
