@@ -20,68 +20,72 @@ void spriteClearScissor(s32 layer) {
     }
 }
 
-void spriteSetScissor(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4) {
-    f32 temp_f5;
-    f32 temp_f6;
-    s16 var_r0;
-    s32 var_r27;
-    s32 var_r28;
-    s32 var_r29;
-    s32 var_r30;
-    struct _struct__spriteWork_0x10 *temp_r31;
-    GSgfxLayer *temp_r3;
+#pragma opt_lifetimes off
+#pragma opt_propagation off
+void spriteSetScissor(s32 layerId, s32 x, s32 y, s32 width, s32 height) {
+    f32 scaleX;
+    f32 scaleY;
+    s16 transformIndex;
+    struct _struct__spriteWork_0x10 *transform;
+    GSgfxLayer *layer;
 
-    if (arg0 == floorGetMenuLayerID()) {
-        var_r0 = 0;
-    } else if (arg0 == 7) {
-        var_r0 = 1;
+    s32 menuLayer = floorGetMenuLayerID();
+    s32 targetLayerId = layerId;
+    if (layerId == menuLayer) {
+        transformIndex = 0;
+    } else if (layerId == 7) {
+        transformIndex = 1;
     } else {
-        var_r0 = 2;
+        transformIndex = 2;
     }
-    temp_r31 = &_spriteWork[var_r0];
-    temp_r3 = GSgfxLayerFindByID(arg0);
-    _TargetLayer = temp_r3;
-    if (temp_r3 != NULL) {
-        temp_f5 = temp_r31->unk8;
-        temp_f6 = temp_r31->unkC;
-        var_r27 = (s32) ((f32) (s32) (temp_r31->unk0 + (f32) arg1) * temp_f5);
-        var_r28 = (s32) ((f32) (s32) (temp_r31->unk4 + (f32) arg2) * temp_f6);
-        var_r29 = (s32) ((f32) arg3 * temp_f5);
-        var_r30 = (s32) ((f32) arg4 * temp_f6);
-        if (var_r27 >= 0x280) {
-            var_r27 = 0x280;
+    transform = &_spriteWork[transformIndex];
+    layer = GSgfxLayerFindByID(targetLayerId);
+    _TargetLayer = layer;
+    if (layer != NULL) {
+        scaleX = transform->unk8;
+        scaleY = transform->unkC;
+        x = (s32)(transform->unk0 + (f32)x);
+        y = (s32)(transform->unk4 + (f32)y);
+        x = (s32)((f32)x * scaleX);
+        y = (s32)((f32)y * scaleY);
+        width = (s32)((f32)width * scaleX);
+        height = (s32)((f32)height * scaleY);
+        if (x >= 0x280) {
+            x = 0x280;
         }
-        if (var_r28 >= 0x1E0) {
-            var_r28 = 0x1E0;
+        if (y >= 0x1E0) {
+            y = 0x1E0;
         }
-        if (var_r29 >= 0x280) {
-            var_r29 = 0x280;
+        if (width >= 0x280) {
+            width = 0x280;
         }
-        if (var_r30 >= 0x1E0) {
-            var_r30 = 0x1E0;
+        if (height >= 0x1E0) {
+            height = 0x1E0;
         }
-        if (var_r27 < 0) {
-            var_r27 = 0;
+        if (x < 0) {
+            x = 0;
         }
-        if (var_r28 < 0) {
-            var_r28 = 0;
+        if (y < 0) {
+            y = 0;
         }
-        if (var_r29 < 0) {
-            var_r29 = 0;
+        if (width < 0) {
+            width = 0;
         }
-        if (var_r30 < 0) {
-            var_r30 = 0;
+        if (height < 0) {
+            height = 0;
         }
-        temp_r3->unkD70 = (u16) var_r27;
-        temp_r3->unkD72 = (u16) var_r28;
-        temp_r3->unkD74 = (u16) var_r29;
-        temp_r3->unkD76 = (u16) var_r30;
-        temp_r3->unk16B8 = (s32) (temp_r3->unk16B8 | 1);
-        temp_r3->unk16A8 = (s32) (temp_r3->unk16A8 | 2);
-        temp_r3->unk1770 = (s32) (temp_r3->unk1770 | 1);
-        temp_r3->unk1760 = (s32) (temp_r3->unk1760 | 2);
+        layer->unkD70 = (u16) x;
+        layer->unkD72 = (u16) y;
+        layer->unkD74 = (u16) width;
+        layer->unkD76 = (u16) height;
+        layer->unk16B8 = (s32) (layer->unk16B8 | 1);
+        layer->unk16A8 = (s32) (layer->unk16A8 | 2);
+        layer->unk1770 = (s32) (layer->unk1770 | 1);
+        layer->unk1760 = (s32) (layer->unk1760 | 2);
     }
 }
+#pragma opt_propagation reset
+#pragma opt_lifetimes reset
 
 void spriteClearEnv(s32 layer) {
     GSgfxLayer *temp_r3;
