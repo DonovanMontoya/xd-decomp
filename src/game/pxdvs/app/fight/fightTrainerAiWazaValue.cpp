@@ -256,10 +256,10 @@ u8 _fightTrainerAiWazaValueIsAllyHaveWazaDataId__FP13FIGHT_TRAINERP15FightOutPok
 typedef u8 (*StatCheck)(FIGHT_TRAINER *, FightOutPokemon *);
 typedef s32 (*WazaValueFunc)(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *);
 WazaValueFunc wazaDB_GetFightTrainerAiWazaValueFuncPtr(u16);
-extern u16 joutaiIzyouWazaTbl[];
-extern u16 KonranWazaTbl[];
-extern u16 moukakeiTbl[];
-extern u16 statusUpKinomiTbl[];
+extern const u16 joutaiIzyouWazaTbl[];
+extern const u16 KonranWazaTbl[];
+extern const u16 moukakeiTbl[];
+extern const u16 statusUpKinomiTbl[];
 extern u32 *waza_data_number;
 s32 _fightTrainerAiWazaValueSubNouryokuKyouka__FP13FIGHT_TRAINERP15FightOutPokemonUsP15FightOutPokemonlUcUsUsUsUsPFP13FIGHT_TRAINERP15FightOutPokemon_b(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *, s32, u8, u16, u16, u16, u16, StatCheck);
 u8 fightTrainerAiIsFightOutPokemonPhyAtkCntTakai(FIGHT_TRAINER *, FightOutPokemon *);
