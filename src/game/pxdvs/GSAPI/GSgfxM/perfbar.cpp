@@ -94,162 +94,9 @@ void PERFEndFrame(void);
 void PERFStopAutoSampling(void);
 
 
-s32 GSgfxPerfbarGetRenderMode(void)
-{
-    return _perfRenderMode;
-}
+static void _perfRestoreGPU__Fv(void);
+void GSgfxPerfbarGPUStart__Fv(void);
 
-void GSgfxPerfbarSetRenderMode(s32 mode)
-{
-    _perfRenderMode = mode;
-}
-
-static void _perfRestoreGPU__Fv(void)
-{
-}
-
-void GSgfxPerfbarGPUStart__Fv(void)
-{
-    s64 time = OSGetTime();
-    *(s64 *)(_perfCurFrame + 0x2010) = time;
-    *(u32 *)(_perfCurFrame + 0x201C) = 0;
-}
-
-void GSgfxPerfbarCPUStart__Fv(void)
-{
-    s64 time = OSGetTime();
-    *(s64 *)_perfCurFrame = time;
-    *(u32 *)(_perfCurFrame + 0xC) = 0;
-    if (_perfRenderMode == 2) {
-        PERFStartFrame();
-        PERFStartAutoSampling(1.0f);
-        _perfFullStarted = 1;
-    }
-}
-
-s32 GSgfxPerfbarGPUEntry__FUl(u32 color)
-{
-    u32 index = *(u32 *)(_perfCurFrame + 0x201C);
-    if (index >= 0x40) return 0;
-    u32 previous;
-    if (*(u32 *)(_perfCurFrame + 0xC) == 0) previous = 0xFFFF;
-    else previous = *(u32 *)(_perfCurFrame + 0x211C + index * 4);
-    s64 now = OSGetTime();
-    f32 elapsed = __cvt_sll_flt(now - *(s64 *)(_perfCurFrame + 0x2010));
-    ((f32 *)(_perfCurFrame + 0x2020))[*(u32 *)(_perfCurFrame + 0x201C)] =
-        elapsed /
-        (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
-    *(u32 *)(_perfCurFrame + 0x2120 + *(u32 *)(_perfCurFrame + 0x201C) * 4) = color;
-    *(u32 *)(_perfCurFrame + 0x201C) += 1;
-    return previous;
-}
-
-s32 GSgfxPerfbarCPUEntry(s32 color)
-{
-    u32 index = *(u32 *)(_perfCurFrame + 0xC);
-    if (index >= 0x400) return 0;
-    u32 previous;
-    if (*(u32 *)(_perfCurFrame + 0xC) == 0) previous = 0xFFFFFF;
-    else previous = *(u32 *)(_perfCurFrame + 0x100C + index * 4);
-    s64 now = OSGetTime();
-    f32 elapsed = __cvt_sll_flt(now - *(s64 *)_perfCurFrame);
-    ((f32 *)(_perfCurFrame + 0x10))[*(u32 *)(_perfCurFrame + 0xC)] =
-        elapsed /
-        (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
-    *(u32 *)(_perfCurFrame + 0x1010 + *(u32 *)(_perfCurFrame + 0xC) * 4) = color;
-    *(u32 *)(_perfCurFrame + 0xC) += 1;
-    return previous;
-}
-
-void GSgfxPerfbarGPUEnd__Fv(void)
-{
-    if (*(u32 *)(_perfCurFrame + 0x201C) < 0x40) {
-        s64 now = OSGetTime();
-        f32 elapsed = __cvt_sll_flt(now - *(s64 *)(_perfCurFrame + 0x2010));
-        ((f32 *)(_perfCurFrame + 0x2020))[*(u32 *)(_perfCurFrame + 0x201C)] =
-            elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
-        *(u32 *)(_perfCurFrame + 0x2120 + *(u32 *)(_perfCurFrame + 0x201C) * 4) = 0;
-        *(u32 *)(_perfCurFrame + 0x201C) += 1;
-    }
-    s64 now = OSGetTime();
-    f32 elapsed = __cvt_sll_flt(now - *(s64 *)(_perfCurFrame + 0x2010));
-    *(f32 *)(_perfCurFrame + 0x2018) = elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
-    memcpy(_perfLastFrame + 0x2010, _perfCurFrame + 0x2010, 0x210);
-    memset(_perfCurFrame + 0x2010, 0, 0x210);
-}
-
-void GSgfxPerfbarCPUEnd__Fv(void)
-{
-    if (*(u32 *)(_perfCurFrame + 0xC) < 0x400) {
-        s64 now = OSGetTime();
-        f32 elapsed = __cvt_sll_flt(now - *(s64 *)_perfCurFrame);
-        ((f32 *)(_perfCurFrame + 0x10))[*(u32 *)(_perfCurFrame + 0xC)] =
-            elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
-        *(u32 *)(_perfCurFrame + 0x1010 + *(u32 *)(_perfCurFrame + 0xC) * 4) = 0;
-        *(u32 *)(_perfCurFrame + 0xC) += 1;
-    }
-    s64 now = OSGetTime();
-    f32 elapsed = __cvt_sll_flt(now - *(s64 *)_perfCurFrame);
-    *(f32 *)(_perfCurFrame + 8) = elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
-    memcpy(_perfLastFrame, _perfCurFrame, 0x2010);
-    memset(_perfCurFrame, 0, 0x2010);
-    _perfDListSize = 0;
-    if (_perfFullStarted == 1) {
-        PERFEndFrame();
-        PERFStopAutoSampling();
-        _perfFullStarted = 0;
-        if (_perfRenderMode == 2) {
-            GSgfxTokenWaitForClearAndReset((u16 *)&_perfDListToken);
-            if (_perfDisplayList == 0) {
-                _perfDisplayList = (u32)GSmemAllocAlign(0x8000, 0x20);
-                DCFlushRange((void *)_perfDisplayList, 0x8000);
-            }
-            GXBeginDisplayList((void *)_perfDisplayList, 0x8000);
-            GXResetWriteGatherPipe();
-            PERFDumpScreen();
-            GXFlush();
-            _perfDListSize = GXEndDisplayList();
-        }
-    }
-}
-
-void GSgfxPerfbarInit__FUc(u8 frameCount)
-{
-    _perfFrameCount = frameCount;
-    if (_perfFrameCount == 0) _perfFrameCount = 1;
-    _perfPixelSkip = 600.0f / _perfFrameCount;
-    memset(_perfLastFrame, 0, sizeof(_perfLastFrame));
-    memset(_perfCurFrame, 0, sizeof(_perfCurFrame));
-    _perfPeakCPU = 0.0f;
-    _perfPeakCPUTimer = 0;
-    _perfPeakGPUTimer = 0;
-    _perfUpdateTime = 0.0f;
-    _perfUpdateFPS = 0.0f;
-    _perfUpdateCount = 0;
-    PERFInit(60, 1, 1, GSmemAlloc, GSmemFree, _perfRestoreGPU__Fv);
-    PERFSetDrawBWBarKey(1);
-    GSgfxTokenSetDrawSyncCBFunc__FPFPFUs_v_v(PERFSetDrawSyncCallback);
-    for (s32 i = 0; i < 4; i++) for (s32 j = 0; j < 4; j++) _perfPERFMtx[i][j] = 0.0f;
-    _perfPERFMtx[0][0] = 0.003125f;
-    _perfPERFMtx[1][1] = 0.00416667f;
-    _perfPERFMtx[2][2] = 1.0f;
-    _perfPERFMtx[3][3] = 1.0f;
-    _perfPERFMtx[0][3] = -0.95f;
-    _perfPERFMtx[1][3] = -0.6250007f;
-    _perfDisplayList = 0;
-    _perfDListSize = 0;
-    _perfFullStarted = 0;
-    _perfDListToken = 0;
-    s64 time = OSGetTime();
-    *(s64 *)_perfCurFrame = time;
-    *(u32 *)(_perfCurFrame + 0xC) = 0;
-    if (_perfRenderMode == 2) {
-        PERFStartFrame();
-        PERFStartAutoSampling(1.0f);
-        _perfFullStarted = 1;
-    }
-    GSgfxPerfbarGPUStart__Fv();
-}
 void GSgfxPerfbarRender__FP10GSgfxLayer(GSgfxLayer *layer)
 {
     if (_perfRenderMode == 0) return;
@@ -427,6 +274,163 @@ void GSgfxPerfbarRender__FP10GSgfxLayer(GSgfxLayer *layer)
     f32 drawTime = __cvt_sll_flt(endTime - startTime) / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
     *(f32 *)(_perfCurFrame + 0x2220) = drawTime;
     *(f32 *)(_perfLastFrame + 0x2220) = drawTime;
+}
+
+s32 GSgfxPerfbarGPUEntry__FUl(u32 color)
+{
+    u32 index = *(u32 *)(_perfCurFrame + 0x201C);
+    if (index >= 0x40) return 0;
+    u32 previous;
+    if (*(u32 *)(_perfCurFrame + 0xC) == 0) previous = 0xFFFF;
+    else previous = *(u32 *)(_perfCurFrame + 0x211C + index * 4);
+    s64 now = OSGetTime();
+    f32 elapsed = __cvt_sll_flt(now - *(s64 *)(_perfCurFrame + 0x2010));
+    ((f32 *)(_perfCurFrame + 0x2020))[*(u32 *)(_perfCurFrame + 0x201C)] =
+        elapsed /
+        (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
+    *(u32 *)(_perfCurFrame + 0x2120 + *(u32 *)(_perfCurFrame + 0x201C) * 4) = color;
+    *(u32 *)(_perfCurFrame + 0x201C) += 1;
+    return previous;
+}
+
+s32 GSgfxPerfbarCPUEntry(s32 color)
+{
+    u32 index = *(u32 *)(_perfCurFrame + 0xC);
+    if (index >= 0x400) return 0;
+    u32 previous;
+    if (*(u32 *)(_perfCurFrame + 0xC) == 0) previous = 0xFFFFFF;
+    else previous = *(u32 *)(_perfCurFrame + 0x100C + index * 4);
+    s64 now = OSGetTime();
+    f32 elapsed = __cvt_sll_flt(now - *(s64 *)_perfCurFrame);
+    ((f32 *)(_perfCurFrame + 0x10))[*(u32 *)(_perfCurFrame + 0xC)] =
+        elapsed /
+        (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
+    *(u32 *)(_perfCurFrame + 0x1010 + *(u32 *)(_perfCurFrame + 0xC) * 4) = color;
+    *(u32 *)(_perfCurFrame + 0xC) += 1;
+    return previous;
+}
+
+void GSgfxPerfbarGPUEnd__Fv(void)
+{
+    if (*(u32 *)(_perfCurFrame + 0x201C) < 0x40) {
+        s64 now = OSGetTime();
+        f32 elapsed = __cvt_sll_flt(now - *(s64 *)(_perfCurFrame + 0x2010));
+        ((f32 *)(_perfCurFrame + 0x2020))[*(u32 *)(_perfCurFrame + 0x201C)] =
+            elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
+        *(u32 *)(_perfCurFrame + 0x2120 + *(u32 *)(_perfCurFrame + 0x201C) * 4) = 0;
+        *(u32 *)(_perfCurFrame + 0x201C) += 1;
+    }
+    s64 now = OSGetTime();
+    f32 elapsed = __cvt_sll_flt(now - *(s64 *)(_perfCurFrame + 0x2010));
+    *(f32 *)(_perfCurFrame + 0x2018) = elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
+    memcpy(_perfLastFrame + 0x2010, _perfCurFrame + 0x2010, 0x210);
+    memset(_perfCurFrame + 0x2010, 0, 0x210);
+}
+
+void GSgfxPerfbarGPUStart__Fv(void)
+{
+    s64 time = OSGetTime();
+    *(s64 *)(_perfCurFrame + 0x2010) = time;
+    *(u32 *)(_perfCurFrame + 0x201C) = 0;
+}
+
+void GSgfxPerfbarCPUEnd__Fv(void)
+{
+    if (*(u32 *)(_perfCurFrame + 0xC) < 0x400) {
+        s64 now = OSGetTime();
+        f32 elapsed = __cvt_sll_flt(now - *(s64 *)_perfCurFrame);
+        ((f32 *)(_perfCurFrame + 0x10))[*(u32 *)(_perfCurFrame + 0xC)] =
+            elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
+        *(u32 *)(_perfCurFrame + 0x1010 + *(u32 *)(_perfCurFrame + 0xC) * 4) = 0;
+        *(u32 *)(_perfCurFrame + 0xC) += 1;
+    }
+    s64 now = OSGetTime();
+    f32 elapsed = __cvt_sll_flt(now - *(s64 *)_perfCurFrame);
+    *(f32 *)(_perfCurFrame + 8) = elapsed / (f32)(*(volatile u32 *)0x800000F8 / 4 / 60);
+    memcpy(_perfLastFrame, _perfCurFrame, 0x2010);
+    memset(_perfCurFrame, 0, 0x2010);
+    _perfDListSize = 0;
+    if (_perfFullStarted == 1) {
+        PERFEndFrame();
+        PERFStopAutoSampling();
+        _perfFullStarted = 0;
+        if (_perfRenderMode == 2) {
+            GSgfxTokenWaitForClearAndReset((u16 *)&_perfDListToken);
+            if (_perfDisplayList == 0) {
+                _perfDisplayList = (u32)GSmemAllocAlign(0x8000, 0x20);
+                DCFlushRange((void *)_perfDisplayList, 0x8000);
+            }
+            GXBeginDisplayList((void *)_perfDisplayList, 0x8000);
+            GXResetWriteGatherPipe();
+            PERFDumpScreen();
+            GXFlush();
+            _perfDListSize = GXEndDisplayList();
+        }
+    }
+}
+
+void GSgfxPerfbarCPUStart__Fv(void)
+{
+    s64 time = OSGetTime();
+    *(s64 *)_perfCurFrame = time;
+    *(u32 *)(_perfCurFrame + 0xC) = 0;
+    if (_perfRenderMode == 2) {
+        PERFStartFrame();
+        PERFStartAutoSampling(1.0f);
+        _perfFullStarted = 1;
+    }
+}
+
+s32 GSgfxPerfbarGetRenderMode(void)
+{
+    return _perfRenderMode;
+}
+
+void GSgfxPerfbarSetRenderMode(s32 mode)
+{
+    _perfRenderMode = mode;
+}
+
+void GSgfxPerfbarInit__FUc(u8 frameCount)
+{
+    _perfFrameCount = frameCount;
+    if (_perfFrameCount == 0) _perfFrameCount = 1;
+    _perfPixelSkip = 600.0f / _perfFrameCount;
+    memset(_perfLastFrame, 0, sizeof(_perfLastFrame));
+    memset(_perfCurFrame, 0, sizeof(_perfCurFrame));
+    _perfPeakCPU = 0.0f;
+    _perfPeakCPUTimer = 0;
+    _perfPeakGPUTimer = 0;
+    _perfUpdateTime = 0.0f;
+    _perfUpdateFPS = 0.0f;
+    _perfUpdateCount = 0;
+    PERFInit(60, 1, 1, GSmemAlloc, GSmemFree, _perfRestoreGPU__Fv);
+    PERFSetDrawBWBarKey(1);
+    GSgfxTokenSetDrawSyncCBFunc__FPFPFUs_v_v(PERFSetDrawSyncCallback);
+    for (s32 i = 0; i < 4; i++) for (s32 j = 0; j < 4; j++) _perfPERFMtx[i][j] = 0.0f;
+    _perfPERFMtx[0][0] = 0.003125f;
+    _perfPERFMtx[1][1] = 0.00416667f;
+    _perfPERFMtx[2][2] = 1.0f;
+    _perfPERFMtx[3][3] = 1.0f;
+    _perfPERFMtx[0][3] = -0.95f;
+    _perfPERFMtx[1][3] = -0.6250007f;
+    _perfDisplayList = 0;
+    _perfDListSize = 0;
+    _perfFullStarted = 0;
+    _perfDListToken = 0;
+    s64 time = OSGetTime();
+    *(s64 *)_perfCurFrame = time;
+    *(u32 *)(_perfCurFrame + 0xC) = 0;
+    if (_perfRenderMode == 2) {
+        PERFStartFrame();
+        PERFStartAutoSampling(1.0f);
+        _perfFullStarted = 1;
+    }
+    GSgfxPerfbarGPUStart__Fv();
+}
+
+static void _perfRestoreGPU__Fv(void)
+{
 }
 
 }
