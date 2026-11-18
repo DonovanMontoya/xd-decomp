@@ -18,9 +18,17 @@ static void _sndStreamPrepareGetData_GetNewData(GSsndStream*, GSsndStream*, u32)
 static void _sndStreamPrepareGetDataCallback(u8, u32, void*);
 static void _sndStreamPrepareGetDataCallback_Exec(GSsndStream*, GSsndStream*, GSsndStreamBufferState*, u32, u32);
 static void _sndStreamARAMUpdate(GSsndStream*, GSsndStreamBufferState*);
-u32 _sndStreamNibble_HeaderOFF2ON(u32 samples) { f64 value = samples; value *= 8.0 / 7.0; return (u32)value; }
-u32 _sndStreamNibble_HeaderON2OFF(u32 nibbles) { f64 value = nibbles; value *= 0.875; return (u32)value; }
-static u32 _sndStreamNibble_GetHeaderPos(u32 nibbles) { f64 value = nibbles; value *= 0.5; return (u32)value & ~7U; }
+
+extern GSsndDescriptor* snd_data;
+void sndStreamDeactivate(u32);
+void sndStreamMixParameterVolume(u32, s32, u8, u8);
+
+static u32 _sndStreamNibble_GetHeaderPos(u32);
+u32 _sndStreamNibble_HeaderOFF2ON(u32);
+u32 _sndStreamNibble_HeaderON2OFF(u32);
+void _sndStreamCtrl(GSsndStream*, u8);
+static void _sndStreamFadePostProcess(GSsndStream*);
+
 void _sndStreamPrepareGetData(GSsndStream* stream) {
     BOOL interrupts = OSDisableInterrupts();
     GSsndStream* first;
@@ -29,6 +37,7 @@ void _sndStreamPrepareGetData(GSsndStream* stream) {
         _sndStreamPrepareGetData_Exec(stream, first, stream->initialized);
     OSRestoreInterrupts(interrupts);
 }
+
 static void _sndStreamPrepareGetData_Exec(GSsndStream* stream, GSsndStream* first, u32 half) {
     switch (first->buffers[stream->channel].state) {
     case 1: _sndStreamPrepareGetData_GetNewData(stream, first, half); return;
@@ -36,11 +45,13 @@ static void _sndStreamPrepareGetData_Exec(GSsndStream* stream, GSsndStream* firs
     case 2: return;
     }
 }
+
 static void _sndStreamPrepareGetData_GetOldData(GSsndStream* stream, GSsndStream* first, u32 half) {
     GSsndStreamBufferState* state = &first->buffers[stream->channel];
     state->state = 4;
     _sndStreamPrepareGetDataCallback_Exec(stream, first, state, state->length, half);
 }
+
 static void _sndStreamPrepareGetData_GetNewData(GSsndStream* stream, GSsndStream* first, u32 half) {
     GSsndStreamBufferState* state = &first->buffers[stream->channel];
     u32 oldState = state->state;
@@ -57,99 +68,7 @@ static void _sndStreamPrepareGetData_GetNewData(GSsndStream* stream, GSsndStream
     if (!GSfsysStreamGetData(first->identifier, first->resource, destination, 0x8000, offset,
         (void (*)(u8, u8, GSsndStream*))_sndStreamPrepareGetDataCallback, half, stream)) state->state = oldState;
 }
-static void _sndStreamPrepareGetDataCallback_Exec(GSsndStream* stream, GSsndStream* first, GSsndStreamBufferState* state, u32 offset, u32 half) {
-    GSsndStreamBufferState* selected;
-    u8 bufferHalf = half;
-    selected = (GSsndStreamBufferState*)((u8*)state + bufferHalf * 4);
-    u32 length = 0x8000 - offset;
-    u32 position = selected->readOffset;
-    void* source = (u8*)stream->buffer + 0x10000;
-    source = (u8*)source + offset;
-    void* destination;
-    if (bufferHalf) destination = (u8*)stream->buffer + (stream->bufferSize >> 1) + position;
-    else destination = (u8*)stream->buffer + position;
-    if (position + length > 0x8000) {
-        length = 0x8000 - position;
-        state->length = offset + length; state->state = 3;
-    } else { state->length = 0; state->state = 1; }
-    memcpy(destination, source, length);
-    selected->readOffset += length;
-    if (selected->readOffset >= 0x8000) {
-        selected->readOffset = 0; (&state->ready)[bufferHalf] = 1;
-    } else (&state->ready)[bufferHalf] = 0;
-}
-static void _sndStreamARAMUpdate(GSsndStream* stream, GSsndStreamBufferState* state) {
-    u32 offset;
-    if (stream->initialized) offset = stream->sampleCount >> 1; else offset = 0;
-    sndStreamARAMUpdate(stream->voice, offset, stream->sampleCount >> 1, 0, 0);
-    (&state->ready)[stream->initialized] = 0;
-    stream->initialized ^= 1;
-}
-void _sndStreamCtrl(GSsndStream* stream, u8 action) {
-    switch (action) {
-    case 1: stream->inUse = 10; return;
-    case 2: stream->paused = 1; return;
-    case 3: stream->paused = 1; return;
-    case 0: default: stream->paused = 0; return;
-    }
-}
-static void _sndStreamFadePostProcess(GSsndStream* stream) { _sndStreamCtrl(stream, stream->fadeAction); }
-s32 _sndStreamGetData(GSsndStream* stream, void (*callback)(u8, u8, GSsndStream*)) {
-    BOOL interrupts = OSDisableInterrupts();
-    GSsndStream* first;
-    if (stream->first) first = stream->first; else first = stream;
-    if (!(&first->buffers[stream->channel].ready)[stream->initialized]) {
-        OSRestoreInterrupts(interrupts); return 0;
-    }
-    void* buffer;
-    if (stream->initialized) buffer = (u8*)stream->buffer + (stream->bufferSize >> 1);
-    else buffer = stream->buffer;
-    DCFlushRange(buffer, stream->bufferSize >> 1);
-    if (callback) callback(0, 0, stream);
-    OSRestoreInterrupts(interrupts); return 1;
-}
-void _sndStreamGetDataCallback_EXEC_UPDATE(u8, u8, GSsndStream* stream) {
-    GSsndStream* first;
-    if (stream->first) first = stream->first; else first = stream;
-    _sndStreamARAMUpdate(stream, &first->buffers[stream->channel]);
-}
-void _sndStreamGetDataCallback_START(u8, u8, GSsndStream* stream) {
-    GSsndStream *first, *second;
-    switch ((s32)stream->inUse) {
-    case 3: case 4:
-        if (stream->first) { first = stream->first; second = stream; }
-        else { first = stream; second = stream->second; }
-        stream->inUse = 5;
-        if (first->inUse == 5 && second->inUse == 5) {
-            _sndStreamARAMUpdate(first, &first->buffers[first->channel]); first->inUse = 6;
-            _sndStreamARAMUpdate(second, &first->buffers[second->channel]); second->inUse = 6;
-        }
-        break;
-    }
-}
-#pragma opt_propagation off
-void _sndStreamGetDataCallback_ACTIVATE(u8, u8, GSsndStream* stream) {
-    GSsndStream *second;
-    GSsndStream* activeStream = stream;
-    GSsndStream* first;
-    switch ((s32)activeStream->inUse) {
-    case 6: case 7:
-        if (activeStream->first) { first = activeStream->first; second = activeStream; }
-        else { first = activeStream; second = activeStream->second; }
-        sndStreamMixParameterEx(activeStream->voice, activeStream->currentVolume, activeStream->channel ? 127 : 0, 0, 0, 0);
-        sndStreamFrq(activeStream->voice, first->header.reserved[2]);
-        sndStreamADPCMParameter(activeStream->voice, &first->buffers[activeStream->channel]);
-        activeStream->inUse = 8;
-        if (first->inUse == 8 && second->inUse == 8) {
-            _sndStreamARAMUpdate(first, &first->buffers[first->channel]);
-            sndStreamActivate(first->voice); first->inUse = 9;
-            _sndStreamARAMUpdate(second, &first->buffers[second->channel]);
-            sndStreamActivate(second->voice); second->inUse = 9;
-        }
-        break;
-    }
-}
-#pragma opt_propagation reset
+
 static void _sndStreamPrepareGetDataCallback(u8 result, u32 halfArg, void* arg) {
     GSsndStream* s = (GSsndStream*)arg;
     GSsndStream* master;
@@ -196,9 +115,35 @@ static void _sndStreamPrepareGetDataCallback(u8 result, u32 halfArg, void* arg) 
     }
     _sndStreamPrepareGetDataCallback_Exec(s, master, ch, headerPos, half);
 }
-extern GSsndDescriptor* snd_data;
-void sndStreamDeactivate(u32);
-void sndStreamMixParameterVolume(u32, s32, u8, u8);
+
+static void _sndStreamPrepareGetDataCallback_Exec(GSsndStream* stream, GSsndStream* first, GSsndStreamBufferState* state, u32 offset, u32 half) {
+    GSsndStreamBufferState* selected;
+    u8 bufferHalf = half;
+    selected = (GSsndStreamBufferState*)((u8*)state + bufferHalf * 4);
+    u32 length = 0x8000 - offset;
+    u32 position = selected->readOffset;
+    void* source = (u8*)stream->buffer + 0x10000;
+    source = (u8*)source + offset;
+    void* destination;
+    if (bufferHalf) destination = (u8*)stream->buffer + (stream->bufferSize >> 1) + position;
+    else destination = (u8*)stream->buffer + position;
+    if (position + length > 0x8000) {
+        length = 0x8000 - position;
+        state->length = offset + length; state->state = 3;
+    } else { state->length = 0; state->state = 1; }
+    memcpy(destination, source, length);
+    selected->readOffset += length;
+    if (selected->readOffset >= 0x8000) {
+        selected->readOffset = 0; (&state->ready)[bufferHalf] = 1;
+    } else (&state->ready)[bufferHalf] = 0;
+}
+
+static u32 _sndStreamNibble_GetHeaderPos(u32 nibbles) { f64 value = nibbles; value *= 0.5; return (u32)value & ~7U; }
+
+u32 _sndStreamNibble_HeaderOFF2ON(u32 samples) { f64 value = samples; value *= 8.0 / 7.0; return (u32)value; }
+
+u32 _sndStreamNibble_HeaderON2OFF(u32 nibbles) { f64 value = nibbles; value *= 0.875; return (u32)value; }
+
 u32 _sndStreamCallback(u32 firstOffset, u32 firstLength, u32 secondOffset, u32 secondLength, GSsndStream* stream) {
     GSsndStream *first, *second;
     if (stream->first) { first = stream->first; second = stream; }
@@ -257,5 +202,85 @@ u32 _sndStreamCallback(u32 firstOffset, u32 firstLength, u32 secondOffset, u32 s
     }
     return 0;
 }
+
+static void _sndStreamFadePostProcess(GSsndStream* stream) { _sndStreamCtrl(stream, stream->fadeAction); }
+
+void _sndStreamCtrl(GSsndStream* stream, u8 action) {
+    switch (action) {
+    case 1: stream->inUse = 10; return;
+    case 2: stream->paused = 1; return;
+    case 3: stream->paused = 1; return;
+    case 0: default: stream->paused = 0; return;
+    }
+}
+
+s32 _sndStreamGetData(GSsndStream* stream, void (*callback)(u8, u8, GSsndStream*)) {
+    BOOL interrupts = OSDisableInterrupts();
+    GSsndStream* first;
+    if (stream->first) first = stream->first; else first = stream;
+    if (!(&first->buffers[stream->channel].ready)[stream->initialized]) {
+        OSRestoreInterrupts(interrupts); return 0;
+    }
+    void* buffer;
+    if (stream->initialized) buffer = (u8*)stream->buffer + (stream->bufferSize >> 1);
+    else buffer = stream->buffer;
+    DCFlushRange(buffer, stream->bufferSize >> 1);
+    if (callback) callback(0, 0, stream);
+    OSRestoreInterrupts(interrupts); return 1;
+}
+
+#pragma opt_propagation off
+void _sndStreamGetDataCallback_ACTIVATE(u8, u8, GSsndStream* stream) {
+    GSsndStream *second;
+    GSsndStream* activeStream = stream;
+    GSsndStream* first;
+    switch ((s32)activeStream->inUse) {
+    case 6: case 7:
+        if (activeStream->first) { first = activeStream->first; second = activeStream; }
+        else { first = activeStream; second = activeStream->second; }
+        sndStreamMixParameterEx(activeStream->voice, activeStream->currentVolume, activeStream->channel ? 127 : 0, 0, 0, 0);
+        sndStreamFrq(activeStream->voice, first->header.reserved[2]);
+        sndStreamADPCMParameter(activeStream->voice, &first->buffers[activeStream->channel]);
+        activeStream->inUse = 8;
+        if (first->inUse == 8 && second->inUse == 8) {
+            _sndStreamARAMUpdate(first, &first->buffers[first->channel]);
+            sndStreamActivate(first->voice); first->inUse = 9;
+            _sndStreamARAMUpdate(second, &first->buffers[second->channel]);
+            sndStreamActivate(second->voice); second->inUse = 9;
+        }
+        break;
+    }
+}
+#pragma opt_propagation reset
+
+void _sndStreamGetDataCallback_START(u8, u8, GSsndStream* stream) {
+    GSsndStream *first, *second;
+    switch ((s32)stream->inUse) {
+    case 3: case 4:
+        if (stream->first) { first = stream->first; second = stream; }
+        else { first = stream; second = stream->second; }
+        stream->inUse = 5;
+        if (first->inUse == 5 && second->inUse == 5) {
+            _sndStreamARAMUpdate(first, &first->buffers[first->channel]); first->inUse = 6;
+            _sndStreamARAMUpdate(second, &first->buffers[second->channel]); second->inUse = 6;
+        }
+        break;
+    }
+}
+
+void _sndStreamGetDataCallback_EXEC_UPDATE(u8, u8, GSsndStream* stream) {
+    GSsndStream* first;
+    if (stream->first) first = stream->first; else first = stream;
+    _sndStreamARAMUpdate(stream, &first->buffers[stream->channel]);
+}
+
+static void _sndStreamARAMUpdate(GSsndStream* stream, GSsndStreamBufferState* state) {
+    u32 offset;
+    if (stream->initialized) offset = stream->sampleCount >> 1; else offset = 0;
+    sndStreamARAMUpdate(stream->voice, offset, stream->sampleCount >> 1, 0, 0);
+    (&state->ready)[stream->initialized] = 0;
+    stream->initialized ^= 1;
+}
+
 #pragma dont_inline reset
 }
