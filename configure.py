@@ -1432,7 +1432,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/deck/deckGroupData.c"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/deck/deckDataVirtualBios.cpp"),
 
-            Object(NonMatching, "game/pxdvs/app/reliveHall/reliveHall.cpp"),
+            Object(NonMatching, "game/pxdvs/app/reliveHall/reliveHall.cpp", extra_cflags=["-inline auto,deferred"]),
             Object(NonMatching, "game/pxdvs/app/ant/ant.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/mball/mballBios.cpp"),
 
