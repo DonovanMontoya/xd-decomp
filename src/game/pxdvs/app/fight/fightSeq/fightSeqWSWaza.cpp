@@ -39,8 +39,8 @@ extern ServerWorkData ServerWork;
 extern u8* UserWork;
 extern u8 ActionSeqNo;
 extern FightAction* fight_seq_now_fight_action_ptr;
-extern u8 fight_seq_server_work3_temp;
-extern u8 lbl_804EB918;
+extern s8 fight_seq_server_work3_temp;
+extern u8 lbl_804EB918[8];
 extern u8 fightseq_attack_pokemon_joutai_check_buff;
 extern u32 fight_waza_critical_data_number;
 extern u8 fight_action_data_turn[];
@@ -1300,7 +1300,7 @@ void fightSeqWazaExec(void* floor, u16 wazaId) {
     fightFloor_SetCriticakMsgId(0, 0);
     fightFloor_SetWazakoukaMsgId(0, 0);
     ServerWork.work[6] = 0;
-    lbl_804EB918 = 0;
+    lbl_804EB918[0] = 0;
     fightseq_attack_pokemon_joutai_check_buff = 0;
     if (fightOutPokemonIsJoutaiDataId(attack, 0x2A) == 1 && wazaId != 0xA5) {
         id = fightOutPokemonGetIdBuffJoutaiDataId(attack, 0x2A);

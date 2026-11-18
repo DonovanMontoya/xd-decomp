@@ -1,4 +1,7 @@
 #include <game/pxdvs/app/fight/fightSeq/fightSeq.hpp>
+#define FIGHT_POKEMON_MENUS_NO_PROTOTYPES
+#include <game/pxdvs/app/fight/fightPokemonMenus.hpp>
+#undef FIGHT_POKEMON_MENUS_NO_PROTOTYPES
 #undef NULL
 #define NULL 0
 
@@ -406,21 +409,73 @@ extern u8 WAZA_AddYakedo[];
 
 
 // Shared sequence state: pointers, flags, and accumulated damage.
-u8 *UserWork;
-static u8 *_wazaSeqAdrs;
-void *fight_seq_now_fight_action_ptr;
-void *kureinSequencePtr;
+FightMenuLvupStatus old_menu_lvup_status;
+u8 lbl_804EB918[8];
 void *miyaburiSequencePtr;
+u8 *UserWork;
+s32 WazaDamage;
+u16 PushWazaNo;
+static u8 *_wazaSeqAdrs;
+u8 ActionSeqNo;
 s32 ServerStatusFlag;
+u16 OboeWazaNo;
 s32 fight_seq_gaman_damage;
+u8 fight_seq_triple_kick_pow;
+s8 fight_seq_server_work3_temp;
+s8 fight_seq_renzoku_count;
+u8 fight_seq_wkc_work;
 u8 fight_seq_tuika_param;
+u8 fight_seq_tame_msg;
+void *fight_seq_now_fight_action_ptr;
+FightOutPokemon *fight_seq_fightout_pokemon_ptr;
+FightOutPokemon *fight_seq_fightout_pokemon_ptr2;
+u32 fight_seq_ulong_buff;
+u16 fight_seq_ushort_buff;
+u8 fight_seq_uchar_buff;
+u8 fight_seq_uchar_buff2;
+u16 joutai_data_null;
+FightPokemon *get_exp_fight_pokemon_ptr;
+u8 waza_oboe_banme;
 u8 fightseq_attack_pokemon_joutai_check_buff;
+u8 fight_seq_banme_buff;
+u8 fight_seq_banme_max;
+u8 fight_seq_cond_chg_multi;
+s16 msgFrame;
+void *kureinSequencePtr;
+
 SeqServerWork ServerWork = {{0,0,0,0,0,0,0,0}};
-const u16 fight_seq_status_id[7] = {0xe6,0xe7,0xe8,0xe9,0xea,0xeb,0xec};
+u16 joutai_data_waza_umakukimaran = 0x45;
+u16 joutai_data_waza_koukanai = 0x43;
+u16 joutai_data_waza_nohit = 0x40;
+u16 joutai_data_waza_batugun = 0x41;
+u16 joutai_data_waza_imahitotu = 0x42;
+u32 fight_seq_value_20 = 20;
+u32 fight_seq_value_40 = 40;
+
 const SeqItemTypePower SoubiItemWazaTypePowUpTbl[17] = {
  {31,6},{42,8},{46,4},{47,5},{48,12},{49,17},{50,1},{51,13},{52,11},
  {53,2},{54,3},{55,15},{56,7},{57,14},{58,10},{59,16},{60,0}
 };
+__declspec(section ".rodata") u16 TSUIKATbl[60] = {
+    0, 8, 3, 6, 7, 5, 4, 9, 17, 0,
+    11, 0, 34, 14, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 18,
+    0, 0, 22, 23, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 13, 0, 0, 0, 0, 0, 0,
+};
+__declspec(section ".rodata") u16 ShimeWazaNo[] = {20, 35, 83, 128, 250, 328, 0xffff};
+__declspec(section ".rodata") u8 JitabataTbl[] = {1, 200, 4, 150, 9, 100, 16, 80, 32, 40, 48, 20};
+__declspec(section ".rodata") u16 KetaguriTbl[] = {
+    100, 20, 250, 40, 500, 60, 1000, 80, 2000, 100, 0xffff, 0xffff,
+};
+__declspec(section ".rodata") u16 YubihuriNGTbl[] = {
+    355, 356, 357, 358, 359, 360, 361, 362, 363, 364,
+    365, 366, 367, 368, 369, 370, 371, 372, 373, 374,
+    118, 165, 166, 102, 0xfffe, 68, 243, 182, 197, 203,
+    194, 214, 168, 266, 289, 270, 343, 271, 264, 0xffff,
+};
+const u16 fight_seq_status_id[7] = {0xe6,0xe7,0xe8,0xe9,0xea,0xeb,0xec};
 
 u8 *TSUIKASeqTbl[0x27] = {
     WAZA_AddNemuri,

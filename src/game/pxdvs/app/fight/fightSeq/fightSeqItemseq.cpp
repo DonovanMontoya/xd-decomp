@@ -1,7 +1,7 @@
 #include <global.h>
 extern "C" f64 sqrt(f64);
 extern "C" {
-extern s8 ActionSeqNo,WildPokemonCatchFlag;extern u8 ServerWork[8];extern u32 GetFailMsgTbl[5],GetYaseiFailMsgTbl[5];extern u8 ITEM_MonsGetFail[],ITEM_MonsGetSuccess[];
+extern u8 ActionSeqNo,WildPokemonCatchFlag;extern u8 ServerWork[8];extern u32 GetFailMsgTbl[5],GetYaseiFailMsgTbl[5];extern u8 ITEM_MonsGetFail[],ITEM_MonsGetSuccess[];
 const u16 *GSmsgGetGSchar(u32);u32 GSthreadGetCurrentThread();u16 HSD_Rand();u8 darkPokemonBiosGetHokakuritu(u16);u8 darkPokemonBiosGetSnatchSuccessFlag(u16);u8 darkPokemonBiosGetLevel(u16);void *darkPokemonGetDarkPokemon(u32);
 void *fightFloorGetFightOutPokemonPtrToFightTrainerPtr(void*,void*);void *fightFloorGetFightOutPokemonPtrToHeroPtr(void*,void*);s32 fightFloorGetFightPokemonEntryCntInc(void*);u32 fightFloor_GetEncountDataId(void*);u32 fightFloor_GetEncountFloorId();u8 fightFloor_GetFightKind(void*);u8 fightFloor_GetFightKindBossFlag(void*);u8 fightFloor_GetFightKindDoZukanTukamaetaFlag(void*);u8 fightFloor_GetFightKindGetFriendFlag(void*);u8 fightFloor_GetFightType(void*);u8 fightFloor_GetFightTypeEntryPokemonNum(void*);s32 fightFloor_GetStockPokemonNum(void*);u8 fightFloor_GetTikeiDataId(void*);u8 fightFloor_GetTrainer(void*);u32 fightFloor_GetTurnCount(void*);
 void fightFloor_SetStockPokemonBallID(void*,s32,u8);void fightFloor_SetStockPokemonNum(void*,u8);void fightFloor_SetStockPokemonPtr(void*,s32,void*);u32 fightItem_GetCount(void*);u16 fightItem_GetItemDataId(void*);

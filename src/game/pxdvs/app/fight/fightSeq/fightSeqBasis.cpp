@@ -16,7 +16,7 @@ typedef struct HeroPokemonGetParam HeroPokemonGetParam;
 typedef struct Pokemon Pokemon;
 typedef struct WazaSequence WazaSequence;
 extern FightPokemon *get_exp_fight_pokemon_ptr;
-extern s8 ActionSeqNo; extern s32 ServerStatusFlag; extern u8 *UserWork;
+extern u8 ActionSeqNo; extern s32 ServerStatusFlag; extern u8 *UserWork;
 char * GSmsgGetGSchar(u32);
 s32 GSprint(s32, s32, s32, u32, const char *, ...);
 void GSsndPlayVolume(u32, u32, u32, u32);
@@ -406,7 +406,7 @@ extern s8 fight_seq_server_work3_temp;
 extern u8 fight_seq_tuika_param;
 extern u8 fight_seq_wkc_work;
 extern s32 fight_waza_critical_data_number;
-extern u8 lbl_804EB918;
+extern u8 lbl_804EB918[8];
 extern s16 msgFrame;
 extern FightMenuLvupStatus old_menu_lvup_status;
 extern u8 WAZA_AddDorobou[];
@@ -2595,7 +2595,7 @@ void WS_TSUIKA_CHECK(void) {
         fightSeqTuikaAct(0U, 0x80U);
     } else {
         temp_r3_2 = ServerWork.flags[3];
-        if ((temp_r3_2 & 0x80) && (temp_r28 == 0x175) && ((u8) lbl_804EB918 != 0)) {
+        if ((temp_r3_2 & 0x80) && (temp_r28 == 0x175) && ((u8) lbl_804EB918[0] != 0)) {
             ServerWork.flags[3] = (u8) (temp_r3_2 & 0x7F);
             fightSeqTuikaAct(0U, 0x80U);
         } else if (((s32) (HSD_Rand() % 100) < (s32) (u16) var_r29) && ((u8) ServerWork.flags[3] != 0) && (fightWazaIsHit(temp_r30) == 1)) {
@@ -4171,7 +4171,7 @@ void WS_HITCHECK(void) {
                     ServerWork.flags[6] = temp_r23_2;
                 }
             } else if (var_r20 == 0x175) {
-                lbl_804EB918 = 1;
+                lbl_804EB918[0] = 1;
             }
             fightSeqWazaSeqSet(7U, var_r20);
         }
