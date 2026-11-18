@@ -477,6 +477,12 @@ __declspec(section ".rodata") u16 YubihuriNGTbl[] = {
 };
 const u16 fight_seq_status_id[7] = {0xe6,0xe7,0xe8,0xe9,0xea,0xeb,0xec};
 
+struct ReplacementConditions { u16 values[11]; };
+struct ItemCandidates { s32 values[5]; };
+
+static const ReplacementConditions replacementConditions = {{15, 22, 9, 24, 20, 28, 29, 30, 37, 56, 57}};
+static const ItemCandidates emptyItemCandidates = {{-1, -1, -1, -1, -1}};
+
 u8 *TSUIKASeqTbl[0x27] = {
     WAZA_AddNemuri,
     WAZA_AddNemuri,
@@ -759,7 +765,7 @@ extern "C" u8 fightSeqSoubiItemCheckTurn(FightOutPokemon *pokemon, u8 mode)
     sequence = 0;
     u8 types[5] = {1, 2, 3,
         4, 5};
-    s32 candidates[5] = {-1, -1, -1, -1, -1};
+    ItemCandidates candidates = emptyItemCandidates;
 
     if (!fightOutPokemonCheckFightOut(pokemon)) return 0;
 
@@ -884,17 +890,17 @@ extern "C" u8 fightSeqSoubiItemCheckTurn(FightOutPokemon *pokemon, u8 mode)
             fightOutPokemonIsNokoriHpFollowing(pokemon, (u16)parameter)) {
             count = 0;
             u8 type;
-            for (u16 index = 0; index < 5; ++index) candidates[index] = -1;
+            for (u16 index = 0; index < 5; ++index) candidates.values[index] = -1;
             for (u16 index = 0; index < 5; ++index) {
                 type = types[index];
                 if ((u8)((s32(*)(void*,u16,s32,u16))pokemonGetStatus)((Pokemon*)pokemon, 0,
                     ((s32(*)(u8))fightSeqCondChgActTypeToPokemonStatusId)(type), 0) < 12) {
-                    candidates[count++] = type;
+                    candidates.values[count++] = type;
                 }
             }
             if (count < 1) break;
             u16 selected = (u16)HSD_Rand() % count;
-            const s32 *candidateList = candidates;
+            const s32 *candidateList = candidates.values;
             if (candidateList[selected] == -1) break;
             type = candidateList[selected];
             sequence = _fightSeqSoubiItemCheckTurnSubAbiCntUp__FP15FightOutPokemonUclUcUcUc(pokemon, mode, parameter,
@@ -1666,6 +1672,73 @@ void fightEvtSetSequence(void *arg0) {
 
 void *fightEvtGetSequence(void) {
     return kureinSequencePtr;
+}
+
+void fightSeqFightOutPokemonDarkCheckAppear(FightOutPokemon *pokemon,u8 mode) {
+    f32 position[3];
+    f32 rotation[3];
+    u8 fightType=fightFloor_GetFightType(0);
+    if(pokemon && fightOutPokemonCheckFightOut(pokemon)!=0 && pokemonIsDarkPokemon(fightOutPokemonGetPokemonPtr(pokemon))!=0){
+        FightPokemon *fightPokemon=fightOutPokemon_GetFightPokemonPtr(pokemon);
+        if(fightOutPokemonIsGcHeroFightOutPokemon(pokemon)==1){
+            if(fightPokemon_GetDarkOutFlag(fightPokemon)==0){
+                if(pokemon_GetPokemonDataId(fightOutPokemonGetPokemonPtr(pokemon))!=0xF9)
+                    pokemonAddDpFormPokemonDpFilterId(fightOutPokemonGetPokemonPtr(pokemon),0,0);
+                fightSeqCheckSetHensinBuffToMotoPokemon(pokemon,0xC5);
+                fightMenuFightOutPokemonRenewStatusMenu(pokemon,fightFloor_GetFightType(0),1);
+                fightPokemon_SetDarkOutFlag(fightPokemon,1);
+                fightSeqCheckSetHensinBuffToMotoFightPokemon(pokemon,0xD1);
+            }
+        }else if(mode==0){
+            WazaSequence *effect;
+            FIGHT_TRAINER *trainer=fightFloorGetGcHeroFightTrainerPtr(0);
+            u32 trainerSequence=(u32)fightTrainer_GetSequencePtr(trainer);
+            fightTrainer_GetFightTrainerDataId(trainer);
+            Hero *hero=savedataGetStatus(0,2);
+            // Retail only defines this register for styles 1 and 2. Use style 2's
+            // model on the otherwise indeterminate missing/unsupported-style path.
+            u32 model;
+            if(hero){
+                if(getHeroStyle__4HeroCFv(hero)==2)model=0x42;
+                if(getHeroStyle__4HeroCFv(hero)==1)model=0x43;
+            }
+            if(fightPokemon_GetDarkOutFlag(fightPokemon)==0 && fightFloor_GetFightKindDoHizukiMiyaburiFlag(0)==1 && trainerSequence){
+                miyaburiSequencePtr=Sequence_LoadTrainer(model);
+                Sequence_GetPosition((void*)trainerSequence,position);
+                Sequence_GetRotation((void*)trainerSequence,rotation);
+                Sequence_SetPosition(miyaburiSequencePtr,position);
+                Sequence_SetRotation(miyaburiSequencePtr,rotation);
+                u16 encounter=fightFloor_GetEncountDataId(0);
+                fightMenuFightOutPokemonCloseStatusMenuAnotherMine(0,pokemon,fightType,0,1);
+                Sequence_LoadWaza(miyaburiSequencePtr,0xA0,4,0);
+                fightOutPokemonDarkPokemonEffect(pokemon,0,0,0);
+                effect=Sequence_GetWaza(miyaburiSequencePtr,0xA0,4);
+                battleGridBackupModelVisibilityFlags();
+                Sequence_SetVisibility(trainerSequence,0);
+                battleGridStoreModelVisibilityFlags();
+                Sequence_SetVisibility((u32)miyaburiSequencePtr,1);
+                WazaSequence_Start(effect,1);
+                while(WazaSequence_IsActive(effect)!=0)GSthreadSwitch();
+                fightOutPokemonDarkPokemonEffect(pokemon,0,0,1);
+                u32 message;
+                if(encounter==0xE0)message=0x4FCF;
+                else if(encounter==0x191)message=0x5010;
+                else message=0x4FCE;
+                fightMenuOpenMsg((void*)message);
+                fightOutPokemonDarkPokemonEffect(pokemon,0,0,2);
+                fightMenuCloseMsg();
+                fightPokemon_SetDarkOutFlag(fightPokemon,1);
+                fightSeqCheckSetHensinBuffToMotoFightPokemon(pokemon,0xD1);
+                fightOutPokemonDarkPokemonEffect(pokemon,0,0,3);
+                WazaSequence_Free(effect);
+                Sequence_SetVisibility((u32)miyaburiSequencePtr,0);
+                battleGridResetModelVisibilityFlags();
+                Sequence_SetVisibility(trainerSequence,1);
+                Sequence_Free(miyaburiSequencePtr);
+                battleGridRestoreModelVisibilityFlags();
+            }
+        }
+    }
 }
 
 u8 fightSeqFightOutPokemonTokuseiCheckTenkiya(void) {
@@ -3494,7 +3567,7 @@ s32 fightSeqWazaDamageCalc(FightOutPokemon *arg0, FightOutPokemon *arg1, u32 arg
 }
 
 void fightSeqIrekaeInit(FightOutPokemon *arg0, FightOutPokemon *arg1, u8 arg2) {
-    u16 conditions[11] = {15,22,9,24,20,28,29,30,37,56,57};
+    ReplacementConditions conditions = replacementConditions;
     SeqReplacementWork work;
     void *temp_r7;
     void *temp_r4;
@@ -3510,7 +3583,7 @@ void fightSeqIrekaeInit(FightOutPokemon *arg0, FightOutPokemon *arg1, u8 arg2) {
     if (var_r26 == 0x7F) {
         fightOutPokemonCopyAllAbiCnt(arg0, arg1);
         for (var_r27 = 0; var_r27 < 0xBU; var_r27 += 1) {
-            temp_r28 = conditions[var_r27];
+            temp_r28 = conditions.values[var_r27];
             if (fightOutPokemonIsJoutaiDataId(arg1, temp_r28) == 1) {
                 fightOutPokemonCopyJoutaiDataId(arg0, arg1, temp_r28);
             }
@@ -3652,71 +3725,6 @@ void fightSeqCheckSetHensinBuffToMotoPokemon(FightOutPokemon *arg0, u16 arg1) {
         fightOutPokemonSetHensinPokemonStatusId(arg0, arg1, 0, 0);
     }
 }
-void fightSeqFightOutPokemonDarkCheckAppear(FightOutPokemon *pokemon,u8 mode) {
-    f32 position[3];
-    f32 rotation[3];
-    u8 fightType=fightFloor_GetFightType(0);
-    if(pokemon && fightOutPokemonCheckFightOut(pokemon)!=0 && pokemonIsDarkPokemon(fightOutPokemonGetPokemonPtr(pokemon))!=0){
-        FightPokemon *fightPokemon=fightOutPokemon_GetFightPokemonPtr(pokemon);
-        if(fightOutPokemonIsGcHeroFightOutPokemon(pokemon)==1){
-            if(fightPokemon_GetDarkOutFlag(fightPokemon)==0){
-                if(pokemon_GetPokemonDataId(fightOutPokemonGetPokemonPtr(pokemon))!=0xF9)
-                    pokemonAddDpFormPokemonDpFilterId(fightOutPokemonGetPokemonPtr(pokemon),0,0);
-                fightSeqCheckSetHensinBuffToMotoPokemon(pokemon,0xC5);
-                fightMenuFightOutPokemonRenewStatusMenu(pokemon,fightFloor_GetFightType(0),1);
-                fightPokemon_SetDarkOutFlag(fightPokemon,1);
-                fightSeqCheckSetHensinBuffToMotoFightPokemon(pokemon,0xD1);
-            }
-        }else if(mode==0){
-            WazaSequence *effect;
-            FIGHT_TRAINER *trainer=fightFloorGetGcHeroFightTrainerPtr(0);
-            u32 trainerSequence=(u32)fightTrainer_GetSequencePtr(trainer);
-            fightTrainer_GetFightTrainerDataId(trainer);
-            Hero *hero=savedataGetStatus(0,2);
-            // Retail only defines this register for styles 1 and 2. Use style 2's
-            // model on the otherwise indeterminate missing/unsupported-style path.
-            u32 model;
-            if(hero){
-                if(getHeroStyle__4HeroCFv(hero)==2)model=0x42;
-                if(getHeroStyle__4HeroCFv(hero)==1)model=0x43;
-            }
-            if(fightPokemon_GetDarkOutFlag(fightPokemon)==0 && fightFloor_GetFightKindDoHizukiMiyaburiFlag(0)==1 && trainerSequence){
-                miyaburiSequencePtr=Sequence_LoadTrainer(model);
-                Sequence_GetPosition((void*)trainerSequence,position);
-                Sequence_GetRotation((void*)trainerSequence,rotation);
-                Sequence_SetPosition(miyaburiSequencePtr,position);
-                Sequence_SetRotation(miyaburiSequencePtr,rotation);
-                u16 encounter=fightFloor_GetEncountDataId(0);
-                fightMenuFightOutPokemonCloseStatusMenuAnotherMine(0,pokemon,fightType,0,1);
-                Sequence_LoadWaza(miyaburiSequencePtr,0xA0,4,0);
-                fightOutPokemonDarkPokemonEffect(pokemon,0,0,0);
-                effect=Sequence_GetWaza(miyaburiSequencePtr,0xA0,4);
-                battleGridBackupModelVisibilityFlags();
-                Sequence_SetVisibility(trainerSequence,0);
-                battleGridStoreModelVisibilityFlags();
-                Sequence_SetVisibility((u32)miyaburiSequencePtr,1);
-                WazaSequence_Start(effect,1);
-                while(WazaSequence_IsActive(effect)!=0)GSthreadSwitch();
-                fightOutPokemonDarkPokemonEffect(pokemon,0,0,1);
-                u32 message;
-                if(encounter==0xE0)message=0x4FCF;
-                else if(encounter==0x191)message=0x5010;
-                else message=0x4FCE;
-                fightMenuOpenMsg((void*)message);
-                fightOutPokemonDarkPokemonEffect(pokemon,0,0,2);
-                fightMenuCloseMsg();
-                fightPokemon_SetDarkOutFlag(fightPokemon,1);
-                fightSeqCheckSetHensinBuffToMotoFightPokemon(pokemon,0xD1);
-                fightOutPokemonDarkPokemonEffect(pokemon,0,0,3);
-                WazaSequence_Free(effect);
-                Sequence_SetVisibility((u32)miyaburiSequencePtr,0);
-                battleGridResetModelVisibilityFlags();
-                Sequence_SetVisibility(trainerSequence,1);
-                Sequence_Free(miyaburiSequencePtr);
-                battleGridRestoreModelVisibilityFlags();
-            }
-        }
-    }
-}
+
 
 }
