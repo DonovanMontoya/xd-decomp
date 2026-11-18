@@ -184,12 +184,12 @@ s32 esabaSet(s32 arg0) {
     return var_r29;
 }
 
-void esabaSetEsaNum(s32 area,s32 number){GSflagSet(esabadata[area].amountFlag,number);if(number==0){GSflagSet(esabadata[area].appFlag,0);GSflagSet(esabadata[area].stepFlag,0);}}
 void esabaHeroCallBackInit(){_esabaHandle=heroMoveAddStepCallback(_esabaCallBackFunc__Fl15FootStepCounterl,0);}
 s32 esabaGetPokemonIsRare(s32 area){if(GSflagGet(esabadata[area].pokemonFlag)){u32 trainer=heroGetStatus(0,2,0);u32 random=GSflagGet(esabadata[area].randomFlag);u32 trainerHigh=trainer>>16;u32 trainerLow=(u16)trainer;u32 randomHigh=random>>16;u32 randomLow=(u16)random;return (randomLow^(randomHigh^(trainerHigh^trainerLow)))<8;}return 0;}
 void esabaSetPokemonRnd(s32 area,u32 random){GSflagSet(esabadata[area].randomFlag,random);}
 u32 esabaGetPokemonRnd(s32 area){return GSflagGet(esabadata[area].randomFlag);}
 u16 esabaGetPokemonID(s32 area){return GSflagGet(esabadata[area].pokemonFlag);}
+void esabaSetEsaNum(s32 area,s32 number){GSflagSet(esabadata[area].amountFlag,number);if(number==0){GSflagSet(esabadata[area].appFlag,0);GSflagSet(esabadata[area].stepFlag,0);}}
 u32 esabaGetEsaNum(s32 area){return GSflagGet(esabadata[area].amountFlag);}
 static void _esabaCallBackFunc__Fl15FootStepCounterl(s32 id,s32 kind,s32 steps){underTakerCallBackFunc(id,kind,steps);for(u16 area=0;area<(u16)*esabadata_number;area++){if(GSflagGet(esabadata[area].amountFlag)){if(GSflagGet(esabadata[area].pokemonFlag))_esabaCallBackEsaFunc__FUs15FootStepCounterl(area,kind,steps);else _esabaCallBackAppFunc__FUs15FootStepCounterl(area,kind,steps);}}}
 static void _esabaCallBackAppFunc__FUs15FootStepCounterl(u16 area,s32,s32 steps){u16 divisor;u16 interval;u32 count;u32 current=underTakerGetMiraboPlace();const s32 places[3]={90,91,92};if(current!=(u32)places[area]){if(!GSflagTest(esabadata[(u16)area].disableFlag)){u32 elapsed=GSflagGet(esabadata[(u16)area].appFlag);elapsed+=steps;if(elapsed>=esabaappdata->first){if(elapsed>=esabaappdata->last)_esabaAppearPokemon__FUs(area);else {interval=esabaappdata->interval;count=GSflagGet(esabadata[(u16)area].stepFlag);count+=steps;if(count>=interval){divisor=esabaappdata->randomDiv;if((u16)HSD_Rand()%divisor==0)_esabaAppearPokemon__FUs(area);else GSflagSet(esabadata[(u16)area].stepFlag,count-interval);}else GSflagSet(esabadata[(u16)area].stepFlag,count);}}GSflagSet(esabadata[(u16)area].appFlag,elapsed);}}}

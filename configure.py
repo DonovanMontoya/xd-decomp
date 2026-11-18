@@ -951,7 +951,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/menuPanel.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(NonMatching, "game/menuCB_Sub1.cpp", extra_cflags=["-lang c", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuLogoDemo.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
-            Object(NonMatching, "game/menuHologram.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
+            Object(NonMatching, "game/menuHologram.cpp", extra_cflags=["-inline noauto,deferred", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/menuBingo.cpp", extra_cflags=["-lang c++", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/menuItemBT.c"),
             Object(MatchingFor("GXXE01"), "game/menuReliveHallTutorial.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
