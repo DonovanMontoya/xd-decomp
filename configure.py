@@ -1312,7 +1312,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/wazaSequence/pokemonWazaWZXData.c"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/wazaSequence/unknownPokemonPKXData.c"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/wazaSequence/rarePokemonPKXData.c"),
-            Object(NonMatching, "game/pxdvs/app/wazaSequence/wazaSequence.cpp", extra_cflags=["-inline auto"]),
+            Object(NonMatching, "game/pxdvs/app/wazaSequence/wazaSequence.cpp", extra_cflags=["-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/wazaSequence/wazaSequenceSys.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/app/wazaSequence/modelSequence.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/wazaSequence/nullSequence.cpp"),
