@@ -108,61 +108,70 @@ void spriteClearEnv(s32 layer) {
     }
 }
 
-void spriteSetEnv(s32 arg0) {
+#pragma opt_propagation off
+void spriteSetEnv(s32 layerId) {
     Mtx view;
     Mtx44 projection;
     Vec eye, center, up;
-    f32 temp_f28;
-    f32 temp_f29;
-    f32 temp_f2;
-    f32 temp_f2_2;
-    f32 temp_f2_3;
-    f32 temp_f30;
-    f32 temp_f31;
-    f32 temp_f3;
-    f32 temp_f4;
-    s16 var_r0;
+    f32 halfWidth;
+    f32 halfHeight;
+    f32 viewWidth;
+    f32 viewHeight;
+    f32 viewAngle;
+    s16 transformIndex;
     SpriteMatrixFrame *temp_r3_2;
     SpriteMatrixFrame *temp_r3_4;
     f32 (*temp_r3_3)[4];
-    struct _struct__spriteWork_0x10 *temp_r31;
+    struct _struct__spriteWork_0x10 *transform;
     GSgfxLayer *temp_r31_2;
     SpriteMatrixStack *temp_r31_3;
     SpriteMatrixStack *temp_r31_4;
-    GSgfxLayer *temp_r3;
+    GSgfxLayer *layer;
 
-    if (arg0 == floorGetMenuLayerID()) {
-        var_r0 = 0;
-    } else if (arg0 == 7) {
-        var_r0 = 1;
+    s32 menuLayer = floorGetMenuLayerID();
+    s32 targetLayer = layerId;
+    if (layerId == menuLayer) {
+        transformIndex = 0;
+    } else if (layerId == 7) {
+        transformIndex = 1;
     } else {
-        var_r0 = 2;
+        transformIndex = 2;
     }
-    temp_r31 = &_spriteWork[var_r0];
-    temp_r3 = GSgfxLayerFindByID(arg0);
-    _TargetLayer = temp_r3;
-    if (temp_r3 != NULL) {
-        temp_f2 = temp_r31->unkC;
-        temp_f29 = 640.0f / temp_r31->unk8;
-        temp_f28 = 480.0f / temp_f2;
-        temp_f31 = temp_f29 * 0.5f;
-        temp_f30 = temp_f28 * 0.5f;
-        temp_f3 = temp_r31->unk0;
-        temp_f2_2 = temp_f30 / (f32) tan(0.2617994f);
-        center.z = 0.0f;
-        up.x = 0.0f;
-        temp_f4 = temp_f30 - temp_r31->unk4;
-        eye.z = temp_f2_2;
-        temp_f2_3 = temp_f31 - temp_f3;
+    transform = &_spriteWork[transformIndex];
+    layer = GSgfxLayerFindByID(targetLayer);
+    _TargetLayer = layer;
+    if (layer != NULL) {
+        f32 scaleX, baseWidth, scaleY, baseHeight;
+        baseWidth = 640.0f;
+        scaleX = transform->unk8;
+        baseHeight = 480.0f;
+        scaleY = transform->unkC;
+        viewWidth = baseWidth / scaleX;
+        viewHeight = baseHeight / scaleY;
+        f32 half = 0.5f;
+        halfWidth = viewWidth * half;
+        halfHeight = viewHeight * half;
+        viewAngle = 0.2617994f;
+        f32 tangent, coordinate, offsetX, viewY, zero;
+        tangent = (f32)tan(viewAngle);
+        zero = 0.0f;
+        viewY = transform->unk4;
+        offsetX = transform->unk0;
+        coordinate = halfHeight / tangent;
+        center.z = zero;
+        up.x = zero;
+        viewY = halfHeight - viewY;
+        eye.z = coordinate;
+        coordinate = halfWidth - offsetX;
         up.y = -1.0f;
-        eye.x = temp_f2_3;
-        eye.y = temp_f4;
-        center.x = temp_f2_3;
-        center.y = temp_f4;
-        up.z = 0.0f;
+        eye.x = coordinate;
+        eye.y = viewY;
+        center.x = coordinate;
+        center.y = viewY;
+        up.z = zero;
         C_MTXLookAt(view, &eye, &up, &center);
         temp_r31_2 = _TargetLayer;
-        GSmtx44Perspective(projection, 30.0f, -(temp_f29 / temp_f28), 0.1f, 30000.0f);
+        GSmtx44Perspective(projection, 30.0f, -(viewWidth / viewHeight), 0.1f, 30000.0f);
         temp_r31_2->unkD54 = 0;
         temp_r31_2->unkD58 = projection[0][0];
         temp_r31_2->unkD5C = projection[0][2];
@@ -198,7 +207,7 @@ void spriteSetEnv(s32 arg0) {
         temp_r31_2=_TargetLayer;
         if ((s32) temp_r31_2->unk1994 != 1) {
             temp_r31_2->unk1994 = 1;
-            temp_r31_2->unk1990 = (void *) ((u8*)temp_r31_2 + ((temp_r31_2->unk1994 * 0xBC) + 0x1818));
+            temp_r31_2->unk1990 = temp_r31_2->shaders[temp_r31_2->unk1994];
         }
         temp_r31_2->unk1644 = 1;
         temp_r31_2->unk1648 = 4;
@@ -242,6 +251,8 @@ void spriteSetEnv(s32 arg0) {
         temp_r31_2->unk1760 = (s32) (temp_r31_2->unk1760 | 2);
     }
 }
+
+#pragma opt_propagation reset
 
 void spriteGetOffset(s32 arg0, s16 *arg1, s16 *arg2) {
     s16 var_r0;
