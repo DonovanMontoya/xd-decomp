@@ -1,7 +1,6 @@
 #include "layer_private.h"
 #include <dolphin/os/OSFastCast.h>
 #include <game/pxdvs/GSAPI/GSgfxM/layerStatePrivate.hpp>
-static const LayerColor defaultColor={0x80808080};
 extern "C" {
 u8 GSgfxRenderModuleIsRendering__Fv();
 u8 GSgfxVFGetColorCount(void*); u8 GSgfxVFGetTextureCount(void*); u8 GSgfxVFHasElement(void*,s32);
@@ -206,18 +205,21 @@ void ResetVertexFormat__10GSgfxLayerFP7GSgfxVF(void *arg0, u32 arg1) {
 
 
 
+#pragma opt_dead_assignments off
+#pragma opt_propagation off
 void renderState_NL_NVC_NT__10GSgfxLayerFv(void *arg0) {
-    LayerColor sp18;
-    LayerColor sp14;
-    LayerColor sp10;
+    LayerColor neutralColor = {0x80808080};
+    LayerColor secondColor;
+    LayerColor firstColor;
     s32 sp8;
+    u32 lightCount = 0;
+    s32 attenuation = 2;
 
     layerField<u8>(arg0, 0xDB8) = 1;
-    sp18 = defaultColor;
     layerField<u32>(arg0, 0x16BC) = (s32) (layerField<u32>(arg0, 0x16BC) | 1);
-    sp10 = defaultColor;
+    firstColor = neutralColor;
     layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 4);
-    sp14 = defaultColor;
+    secondColor = neutralColor;
     layerField<u32>(arg0, 0x1774) = (s32) (layerField<u32>(arg0, 0x1774) | 1);
     layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 4);
     layerField<u8>(arg0, 0xC70) = 0;
@@ -235,8 +237,8 @@ void renderState_NL_NVC_NT__10GSgfxLayerFv(void *arg0) {
     layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 0x80);
     layerField<u32>(arg0, 0x17A4) = (s32) (layerField<u32>(arg0, 0x17A4) | 1);
     layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x80);
-    layerField<LayerColor>(arg0, 0xE9C) = sp10;
-    layerField<LayerColor>(arg0, 0xEA4) = sp14;
+    layerField<LayerColor>(arg0, 0xE9C) = firstColor;
+    layerField<LayerColor>(arg0, 0xEA4) = secondColor;
     layerField<u32>(arg0, 0x16C4) = (s32) (layerField<u32>(arg0, 0x16C4) | 1);
     layerField<u32>(arg0, 0x16C8) = (s32) (layerField<u32>(arg0, 0x16C8) | 1);
     layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 4);
@@ -244,7 +246,7 @@ void renderState_NL_NVC_NT__10GSgfxLayerFv(void *arg0) {
     layerField<u32>(arg0, 0x1780) = (s32) (layerField<u32>(arg0, 0x1780) | 1);
     layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 4);
     sp8 = 0;
-    cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(arg0,0,2,0,0,0,0,2,0);
+    cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(arg0, 0, 2, 0, 0, lightCount, 0, attenuation, 0);
     layerField<u32>(arg0, 0xEB0) = 0xFF;
     layerField<u32>(arg0, 0xEB4) = 0xFF;
     layerField<u32>(arg0, 0xEB8) = 4;
@@ -260,6 +262,8 @@ void renderState_NL_NVC_NT__10GSgfxLayerFv(void *arg0) {
     layerField<u32>(arg0, 0x17BC) = (s32) (layerField<u32>(arg0, 0x17BC) | 1);
     layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x20);
 }
+#pragma opt_propagation reset
+#pragma opt_dead_assignments reset
 
 }
 
