@@ -141,8 +141,11 @@ static u8 *_dlParseSurface__F13GSgfxPrimTypeP16_HSD_VtxDescListPUcUsP22GSgfxPars
     if (callbacks->endSurface) callbacks->endSurface(argument);
     return data;
 }
+#pragma opt_lifetimes off
 #pragma opt_propagation off
 static u8 *_dlParseVertex__FP16_HSD_VtxDescListPUcP22GSgfxParseCallbackListPv(DLInputDescriptor *descriptor, u8 *data, DLParseCallbacks *callbacks, void *argument) {
+    u32 bytes;
+    u16 index;
     u8 *next = data;
     u32 attributeFlag;
     u32 componentFlag;
@@ -176,7 +179,8 @@ static u8 *_dlParseVertex__FP16_HSD_VtxDescListPUcP22GSgfxParseCallbackListPv(DL
         if (attribute == 11) colorFlag = 0x10;
         attributeFlag = colorFlag;
         countFlag = 0x10000000;
-        switch (descriptor->component) {
+        attribute = descriptor->component;
+        switch (attribute) {
         case 0: componentFlag = 0x200000; break;
         case 1: componentFlag = 0x400000; break;
         case 2: componentFlag = 0x800000; break;
@@ -185,13 +189,17 @@ static u8 *_dlParseVertex__FP16_HSD_VtxDescListPUcP22GSgfxParseCallbackListPv(DL
         case 5: componentFlag = 0x4000000; break;
         }
     } else {
-        switch (descriptor->component) {
-        case 0: componentFlag = 0x10000; break;
-        case 1: componentFlag = 0x20000; break;
-        case 2: componentFlag = 0x40000; break;
-        case 3: componentFlag = 0x80000; break;
-        case 4: componentFlag = 0x100000; break;
+        // The retail switch retains the incoming data address for an unknown numeric format.
+        u32 numericFlag = reinterpret_cast<u32>(data);
+        componentFlag = descriptor->component;
+        switch (static_cast<s32>(componentFlag)) {
+        case 0: numericFlag = 0x10000; break;
+        case 1: numericFlag = 0x20000; break;
+        case 2: numericFlag = 0x40000; break;
+        case 3: numericFlag = 0x80000; break;
+        case 4: numericFlag = 0x100000; break;
         }
+        componentFlag = numericFlag;
         switch (attribute) {
         case 9:
             attributeFlag = 2;
@@ -225,7 +233,6 @@ static u8 *_dlParseVertex__FP16_HSD_VtxDescListPUcP22GSgfxParseCallbackListPv(DL
 
     if (descriptor->type == 1) {
         data=next;
-        u32 bytes;
         switch (componentFlag) {
         case 0x10000: case 0x20000: bytes = 1; break;
         case 0x200000: case 0x1000000: case 0x40000: case 0x80000: bytes = 2; break;
@@ -240,7 +247,6 @@ static u8 *_dlParseVertex__FP16_HSD_VtxDescListPUcP22GSgfxParseCallbackListPv(DL
         }
         next += bytes;
     } else {
-        u16 index;
         if (descriptor->type == 2) index = *next++;
         else { index = *reinterpret_cast<u16 *>(next); next += 2; }
         data = descriptor->data + index * descriptor->stride;
@@ -249,6 +255,7 @@ emit:
     if (callbacks->attribute) callbacks->attribute(countFlag | (attributeFlag | componentFlag), data, argument);
     return next;
 }
+#pragma opt_lifetimes reset
 #pragma opt_propagation reset
 static u16 _dlCalculateStride__FP7GSgfxVF(DLVertexFormat *format) {
     DLAttributeFormat *attribute = format->formats;

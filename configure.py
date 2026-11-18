@@ -1140,7 +1140,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/video.cpp", extra_cflags=["-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/gpu.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/vf.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/dl.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/dl.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSgfxM/layerState.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/matrixStack.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgfxM/layerFunc.cpp"),
