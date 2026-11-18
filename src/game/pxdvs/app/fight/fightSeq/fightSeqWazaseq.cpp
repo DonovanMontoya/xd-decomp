@@ -3277,6 +3277,20 @@ s8 fightSeqCondChgActParaIdToValue(u8 para) {
 }
 }
 
+extern "C" u16 fightSeqCondChgActTypeToPokemonStatusId(u8 type) {
+    switch(type){
+    case 0:break;
+    case 1:return 0xE6;
+    case 2:return 0xE7;
+    case 3:return 0xEA;
+    case 4:return 0xE8;
+    case 5:return 0xE9;
+    case 6:return 0xEB;
+    case 7:return 0xEC;
+    }
+    return 0;
+}
+
 extern "C" {
 void WS_SUITORI(void) {
     s32 var_r4;
@@ -3746,7 +3760,7 @@ void WS_JIBAKU_INIT(void) {
 }
 }
 
-extern "C" const u16 KakuritsuTable[4];
+extern "C" const u16 KakuritsuTable[4] = { 0xFFFF, 0x7FFF, 0x3FFF, 0x1FFF };
 extern "C" void WS_GUARD_SUCCESS_CHECK(void) {
     FightOutPokemon* attacker;
     u16 last;
@@ -3783,18 +3797,4 @@ extern "C" void WS_GUARD_SUCCESS_CHECK(void) {
         fightFloor_SetAttackPokemonFightWazaJoutaiDataId(0, 0x40);
     }
     fightSeq_NextWazaSeq(1);
-}
-
-extern "C" u16 fightSeqCondChgActTypeToPokemonStatusId(u8 type) {
-    switch(type){
-    case 0:break;
-    case 1:return 0xE6;
-    case 2:return 0xE7;
-    case 3:return 0xEA;
-    case 4:return 0xE8;
-    case 5:return 0xE9;
-    case 6:return 0xEB;
-    case 7:return 0xEC;
-    }
-    return 0;
 }
