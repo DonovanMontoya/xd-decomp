@@ -1,5 +1,6 @@
 #include <game/pxdvs/app/fight/fightWazaBiosLayout.hpp>
 #include <game/pxdvs/app/pokemon/pokemonFightRecords.hpp>
+#include <game/pxdvs/app/waza/wazaLayout.hpp>
 #pragma dont_inline on
 extern "C" {
 extern FightWazaHitKakurituBiosRecord fight_waza_hit_kakuritu_data[];

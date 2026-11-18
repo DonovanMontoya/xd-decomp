@@ -162,387 +162,6 @@ static inline s32 itemDecNum(ITEM *p, u16 id, u16 num) {
 }
 
 extern "C" {
-void itemSortAryByPriority(ITEM *ary, u16 count, s32 type) {
-    s32 j;
-    s32 i;
-    ITEM *q;
-    ITEM *p;
-    s32 n;
-    if (type == 2) {
-        currentPriorityTbl = item_dougu_sort;
-        currentPriorityTblQuantity = item_dougu_sort_number;
-    } else if (type == 1) {
-        currentPriorityTbl = item_ball_sort;
-        currentPriorityTblQuantity = item_ball_sort_number;
-    }
-    if (ary != NULL && count != 0) {
-        p = ary;
-        n = count - 1;
-        for (i = 0; i < n; p++, i++) {
-            if (itemValid(p)) {
-                j = i + 1;
-                q = ary + j;
-                for (; j < (s32)count; q++, j++) {
-                    if (itemValid(q)) {
-                        if (itemPriorityDiff(item_GetItemDataId(q), item_GetItemDataId(p)) > 0) {
-                            itemSwap(p, q);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-s32 itemCheckAddItemDataIdAry(ITEM *ary, u16 count, u16 id, u16 max, u8 flag) {
-    if (ary == NULL) {
-        return -1;
-    }
-    if (!itemDataValid(id)) {
-        return -1;
-    }
-    ITEM *p;
-    s32 result;
-    u16 i;
-    if (flag == 0) {
-        p = itemSearchItemDataIdAry(ary, count, id, 0, 0);
-        if (p != NULL) {
-            result = max - item_GetNum(p);
-        } else {
-            if (itemSearchItemDataIdAry(ary, count, id, 2, 0) != NULL) {
-                result = max;
-            } else {
-                result = 0;
-            }
-        }
-    } else {
-        result = 0;
-        for (i = 0; i < count; i++) {
-            p = ary + i;
-            if (!itemValid(p)) {
-                result += max;
-            } else if (itemIsSame(p, id) == 1) {
-                result += max - item_GetNum(p);
-            }
-        }
-    }
-    return result;
-}
-
-void itemReplace(ITEM *a, ITEM *b) {
-    if (a != NULL && b != NULL) {
-        u16 t0 = a->itemDataId;
-        u16 t1 = a->num;
-        a->itemDataId = b->itemDataId;
-        a->num = b->num;
-        b->itemDataId = t0;
-        b->num = t1;
-    }
-}
-
-s32 itemDecItemDataIdAry(ITEM *ary, u16 count, u16 id, u16 num, s16 idx, u16 unused, u8 sortType) {
-    if (ary == NULL) {
-        return -1;
-    }
-    if (!itemDataValid(id)) {
-        return -1;
-    }
-    s32 rem;
-    u8 needSort = 0;
-    if (idx < 0) {
-        rem = num;
-        for (;;) {
-            ITEM *p = itemSearchItemDataIdAry(ary, count, id, 0, 0);
-            if (p == NULL) {
-                break;
-            }
-            s32 over = itemDecNum(p, id, rem);
-            if (over < 0) {
-                return over;
-            }
-            if (!itemValid(p)) {
-                needSort = 1;
-            }
-            rem = over;
-            if (over > 0) {
-                continue;
-            }
-            break;
-        }
-    } else {
-        ITEM *p = ary + idx;
-        rem = itemDecNum(p, id, num);
-        if (!itemValid(p)) {
-            needSort = 1;
-        }
-    }
-    if (needSort == 1) {
-        _itemSortAry(ary, count, sortType);
-    }
-    return rem;
-}
-
-s32 itemAddItemDataIdAry(ITEM *ary, u16 count, u16 id, u16 num, s16 idx, u16 max, u8 sortType, u8 mode) {
-    if (ary == NULL) {
-        return -1;
-    }
-    if (!itemDataValid(id)) {
-        return -1;
-    }
-    s32 rem = num;
-    u8 needSort = 0;
-    if (mode == 0) {
-        ITEM *p = itemSearchItemDataIdAry(ary, count, id, 0, 0);
-        if (p != NULL) {
-            if (item_GetNum(p) < max) {
-                s32 over = itemAddNum(p, id, rem, max);
-                if (over < 0) {
-                    return over;
-                }
-                rem = over;
-            }
-        } else {
-            p = itemSearchItemDataIdAry(ary, count, id, 2, 0);
-            if (p != NULL) {
-                s32 over = itemAddNew(p, id, rem, max);
-                if (over < 0) {
-                    return over;
-                }
-                rem = over;
-                needSort = 1;
-            }
-        }
-    } else if (idx < 0) {
-        for (;;) {
-            ITEM *p = itemSearchItemDataIdAry(ary, count, id, 1, max);
-            if (p != NULL) {
-                s32 over = itemAddNum(p, id, rem, max);
-                if (over < 0) {
-                    return over;
-                }
-                rem = over;
-            } else {
-                p = itemSearchItemDataIdAry(ary, count, id, 2, 0);
-                if (p == NULL) {
-                    break;
-                }
-                s32 over = itemAddNew(p, id, rem, max);
-                if (over < 0) {
-                    return over;
-                }
-                needSort = 1;
-                rem = over;
-            }
-            if ((s32)rem <= 0) {
-                break;
-            }
-        }
-    } else {
-        rem = itemAddNum(ary + idx, id, num, max);
-    }
-    if (needSort == 1) {
-        _itemSortAry(ary, count, sortType);
-    }
-    return rem;
-}
-
-s32 itemGetQuantityInAry(ITEM *ary, u16 count, u16 id) {
-    if (ary == NULL) {
-        return 0;
-    }
-    if (!itemDataValid(id)) {
-        return 0;
-    }
-    ITEM *p = ary;
-    s32 n = count;
-    s32 total = 0;
-    for (s32 i = 0; i < n; p++, i++) {
-        if (itemIsSame(p, id)) {
-            total += item_GetNum(p);
-        }
-    }
-    return total;
-}
-
-ITEM *itemSearchItemDataIdAry(ITEM *ary, u16 count, u16 id, u8 mode, u16 num) {
-    u16 i;
-    if (ary == 0) {
-        return 0;
-    }
-    if (!itemDataValid(id)) {
-        return 0;
-    }
-    for (i = 0; i < count; i++) {
-        if (mode == 2) {
-            if (!itemValid(ary + i)) {
-                return ary + i;
-            }
-        } else if (itemIsSame(ary + i, id)) {
-            if (mode == 1) {
-                if (item_GetNum(ary + i) < num) {
-                    return ary + i;
-                }
-            } else {
-                return ary + i;
-            }
-        }
-    }
-    return 0;
-}
-}
-
-static void _itemSortAry(ITEM *ary, u16 count, u8 type) {
-    if (ary != NULL && count != 0) {
-        if (type == 0 || type == 1) {
-            ITEM *p;
-            s32 n;
-            s32 cnt;
-            s32 j;
-            s32 i;
-            cnt = count;
-            p = ary;
-            n = cnt - 1;
-            for (i = 0; i < n; p++, i++) {
-                if (!itemValid(p)) {
-                    for (j = i + 1; j < cnt; j++) {
-                        if (itemValid(ary + j) == 1) {
-                            itemReplace(p, ary + j);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        if (type == 1) {
-            ITEM *p;
-            s32 n;
-            s32 cnt;
-            s32 i;
-            s32 j;
-            cnt = count;
-            p = ary;
-            n = cnt - 1;
-            for (i = 0; i < n; p++, i++) {
-                if (itemValid(p)) {
-                    for (j = i + 1; j < cnt; j++) {
-                        if (itemValid(ary + j)) {
-                            u16 a = item_GetItemDataId(p);
-                            u16 b = item_GetItemDataId(ary + j);
-                            if (a > b) {
-                                itemReplace(p, ary + j);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-extern "C" {
-u8 itemDataCheckValid(u16 id) {
-    if (itemDB_GetName(id) == 0) {
-        return 0;
-    }
-    return id < *item_data_index_number;
-}
-
-u8 itemCheckValid(ITEM *item) {
-    if (item == NULL) {
-        return 0;
-    }
-    u16 id = item_GetItemDataId(item);
-    if (id == 0) {
-        return 0;
-    }
-    return itemDataValid(id) != 0;
-}
-
-void itemInitAry(ITEM *ary, u16 count) {
-    if (ary != NULL) {
-        ITEM *p;
-        for (u16 i = 0; i < count; i++) {
-            p = ary + i;
-            if (p != NULL) {
-                item_SetItemDataId(p, 0);
-                item_SetNum(p, 0);
-            }
-        }
-    }
-}
-}
-
-extern "C" {
-void itemSetStatus(void *ptr, u32 id, u16 type, u32 idx, s32 val) {
-    if (type == 0 || type >= 0x23) {
-        return;
-    }
-    if (type < 0xB) {
-        ptr = itemDataBiosGetPtr(id);
-        if (ptr == NULL) {
-            return;
-        }
-    } else if (type < 0x18) {
-        ptr = itemBallDataBiosGetPtr(id);
-        if (ptr == NULL) {
-            return;
-        }
-    } else if (ptr == NULL) {
-        return;
-    }
-    switch (type) {
-    case 1:
-        itemDataBiosSetName(ptr, val);
-        break;
-    case 2:
-        itemDataBiosSetKind(ptr, val);
-        break;
-    case 3:
-        itemDataBiosSetPrice(ptr, val);
-        break;
-    case 4:
-        itemDataBiosSetImportant(ptr, val != 0);
-        break;
-    case 5:
-        itemDataBiosSetUseful(ptr, val != 0);
-        break;
-    case 6:
-        itemDataBiosSetDoc(ptr, val);
-        break;
-    case 7:
-        itemDataBiosSetItemSoubiDataId(ptr, val);
-        break;
-    case 8:
-        itemDataBiosSetFightUseKoukaDataId(ptr, val);
-        break;
-    case 9:
-        itemDataBiosSetUseFriend(ptr, idx, val);
-        break;
-    case 10:
-        itemDataBiosSetBuff(ptr, val);
-    case 12:
-        itemBallDataBiosSetFightKoukaDataId(ptr, val);
-        break;
-    case 27:
-        itemBiosSetItemDataId(ptr, val);
-        break;
-    case 28:
-        itemBiosSetNum(ptr, val);
-        break;
-    case 30:
-        fightItemBiosSetItemDataId(ptr, val);
-        break;
-    case 31:
-        fightItemBiosSetTargetDataId(ptr, val);
-        break;
-    case 32:
-        fightItemBiosSetCount(ptr, val);
-        break;
-    case 33:
-        fightItemBiosSetBuff(ptr, val);
-        break;
-    }
-}
 
 s32 itemGetStatus(void *ptr, u32 id, u16 type, u32 idx) {
     if (type == 0 || type >= 0x23) {
@@ -628,4 +247,387 @@ s32 itemGetStatus(void *ptr, u32 id, u16 type, u32 idx) {
     }
     return 0;
 }
+
+void itemSetStatus(void *ptr, u32 id, u16 type, u32 idx, s32 val) {
+    if (type == 0 || type >= 0x23) {
+        return;
+    }
+    if (type < 0xB) {
+        ptr = itemDataBiosGetPtr(id);
+        if (ptr == NULL) {
+            return;
+        }
+    } else if (type < 0x18) {
+        ptr = itemBallDataBiosGetPtr(id);
+        if (ptr == NULL) {
+            return;
+        }
+    } else if (ptr == NULL) {
+        return;
+    }
+    switch (type) {
+    case 1:
+        itemDataBiosSetName(ptr, val);
+        break;
+    case 2:
+        itemDataBiosSetKind(ptr, val);
+        break;
+    case 3:
+        itemDataBiosSetPrice(ptr, val);
+        break;
+    case 4:
+        itemDataBiosSetImportant(ptr, val != 0);
+        break;
+    case 5:
+        itemDataBiosSetUseful(ptr, val != 0);
+        break;
+    case 6:
+        itemDataBiosSetDoc(ptr, val);
+        break;
+    case 7:
+        itemDataBiosSetItemSoubiDataId(ptr, val);
+        break;
+    case 8:
+        itemDataBiosSetFightUseKoukaDataId(ptr, val);
+        break;
+    case 9:
+        itemDataBiosSetUseFriend(ptr, idx, val);
+        break;
+    case 10:
+        itemDataBiosSetBuff(ptr, val);
+    case 12:
+        itemBallDataBiosSetFightKoukaDataId(ptr, val);
+        break;
+    case 27:
+        itemBiosSetItemDataId(ptr, val);
+        break;
+    case 28:
+        itemBiosSetNum(ptr, val);
+        break;
+    case 30:
+        fightItemBiosSetItemDataId(ptr, val);
+        break;
+    case 31:
+        fightItemBiosSetTargetDataId(ptr, val);
+        break;
+    case 32:
+        fightItemBiosSetCount(ptr, val);
+        break;
+    case 33:
+        fightItemBiosSetBuff(ptr, val);
+        break;
+    }
+}
+
+void itemInitAry(ITEM *ary, u16 count) {
+    if (ary != NULL) {
+        ITEM *p;
+        for (u16 i = 0; i < count; i++) {
+            p = ary + i;
+            if (p != NULL) {
+                item_SetItemDataId(p, 0);
+                item_SetNum(p, 0);
+            }
+        }
+    }
+}
+
+u8 itemCheckValid(ITEM *item) {
+    if (item == NULL) {
+        return 0;
+    }
+    u16 id = item_GetItemDataId(item);
+    if (id == 0) {
+        return 0;
+    }
+    return itemDataValid(id) != 0;
+}
+
+u8 itemDataCheckValid(u16 id) {
+    if (itemDB_GetName(id) == 0) {
+        return 0;
+    }
+    return id < *item_data_index_number;
+}
+
+}
+
+static void _itemSortAry(ITEM *ary, u16 count, u8 type) {
+    if (ary != NULL && count != 0) {
+        if (type == 0 || type == 1) {
+            ITEM *p;
+            s32 n;
+            s32 cnt;
+            s32 j;
+            s32 i;
+            cnt = count;
+            p = ary;
+            n = cnt - 1;
+            for (i = 0; i < n; p++, i++) {
+                if (!itemValid(p)) {
+                    for (j = i + 1; j < cnt; j++) {
+                        if (itemValid(ary + j) == 1) {
+                            itemReplace(p, ary + j);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (type == 1) {
+            ITEM *p;
+            s32 n;
+            s32 cnt;
+            s32 i;
+            s32 j;
+            cnt = count;
+            p = ary;
+            n = cnt - 1;
+            for (i = 0; i < n; p++, i++) {
+                if (itemValid(p)) {
+                    for (j = i + 1; j < cnt; j++) {
+                        if (itemValid(ary + j)) {
+                            u16 a = item_GetItemDataId(p);
+                            u16 b = item_GetItemDataId(ary + j);
+                            if (a > b) {
+                                itemReplace(p, ary + j);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+extern "C" {
+
+ITEM *itemSearchItemDataIdAry(ITEM *ary, u16 count, u16 id, u8 mode, u16 num) {
+    u16 i;
+    if (ary == 0) {
+        return 0;
+    }
+    if (!itemDataValid(id)) {
+        return 0;
+    }
+    for (i = 0; i < count; i++) {
+        if (mode == 2) {
+            if (!itemValid(ary + i)) {
+                return ary + i;
+            }
+        } else if (itemIsSame(ary + i, id)) {
+            if (mode == 1) {
+                if (item_GetNum(ary + i) < num) {
+                    return ary + i;
+                }
+            } else {
+                return ary + i;
+            }
+        }
+    }
+    return 0;
+}
+
+s32 itemGetQuantityInAry(ITEM *ary, u16 count, u16 id) {
+    if (ary == NULL) {
+        return 0;
+    }
+    if (!itemDataValid(id)) {
+        return 0;
+    }
+    ITEM *p = ary;
+    s32 n = count;
+    s32 total = 0;
+    for (s32 i = 0; i < n; p++, i++) {
+        if (itemIsSame(p, id)) {
+            total += item_GetNum(p);
+        }
+    }
+    return total;
+}
+
+s32 itemAddItemDataIdAry(ITEM *ary, u16 count, u16 id, u16 num, s16 idx, u16 max, u8 sortType, u8 mode) {
+    if (ary == NULL) {
+        return -1;
+    }
+    if (!itemDataValid(id)) {
+        return -1;
+    }
+    s32 rem = num;
+    u8 needSort = 0;
+    if (mode == 0) {
+        ITEM *p = itemSearchItemDataIdAry(ary, count, id, 0, 0);
+        if (p != NULL) {
+            if (item_GetNum(p) < max) {
+                s32 over = itemAddNum(p, id, rem, max);
+                if (over < 0) {
+                    return over;
+                }
+                rem = over;
+            }
+        } else {
+            p = itemSearchItemDataIdAry(ary, count, id, 2, 0);
+            if (p != NULL) {
+                s32 over = itemAddNew(p, id, rem, max);
+                if (over < 0) {
+                    return over;
+                }
+                rem = over;
+                needSort = 1;
+            }
+        }
+    } else if (idx < 0) {
+        for (;;) {
+            ITEM *p = itemSearchItemDataIdAry(ary, count, id, 1, max);
+            if (p != NULL) {
+                s32 over = itemAddNum(p, id, rem, max);
+                if (over < 0) {
+                    return over;
+                }
+                rem = over;
+            } else {
+                p = itemSearchItemDataIdAry(ary, count, id, 2, 0);
+                if (p == NULL) {
+                    break;
+                }
+                s32 over = itemAddNew(p, id, rem, max);
+                if (over < 0) {
+                    return over;
+                }
+                needSort = 1;
+                rem = over;
+            }
+            if ((s32)rem <= 0) {
+                break;
+            }
+        }
+    } else {
+        rem = itemAddNum(ary + idx, id, num, max);
+    }
+    if (needSort == 1) {
+        _itemSortAry(ary, count, sortType);
+    }
+    return rem;
+}
+
+s32 itemDecItemDataIdAry(ITEM *ary, u16 count, u16 id, u16 num, s16 idx, u16 unused, u8 sortType) {
+    if (ary == NULL) {
+        return -1;
+    }
+    if (!itemDataValid(id)) {
+        return -1;
+    }
+    s32 rem;
+    u8 needSort = 0;
+    if (idx < 0) {
+        rem = num;
+        for (;;) {
+            ITEM *p = itemSearchItemDataIdAry(ary, count, id, 0, 0);
+            if (p == NULL) {
+                break;
+            }
+            s32 over = itemDecNum(p, id, rem);
+            if (over < 0) {
+                return over;
+            }
+            if (!itemValid(p)) {
+                needSort = 1;
+            }
+            rem = over;
+            if (over > 0) {
+                continue;
+            }
+            break;
+        }
+    } else {
+        ITEM *p = ary + idx;
+        rem = itemDecNum(p, id, num);
+        if (!itemValid(p)) {
+            needSort = 1;
+        }
+    }
+    if (needSort == 1) {
+        _itemSortAry(ary, count, sortType);
+    }
+    return rem;
+}
+
+void itemReplace(ITEM *a, ITEM *b) {
+    if (a != NULL && b != NULL) {
+        u16 t0 = a->itemDataId;
+        u16 t1 = a->num;
+        a->itemDataId = b->itemDataId;
+        a->num = b->num;
+        b->itemDataId = t0;
+        b->num = t1;
+    }
+}
+
+s32 itemCheckAddItemDataIdAry(ITEM *ary, u16 count, u16 id, u16 max, u8 flag) {
+    if (ary == NULL) {
+        return -1;
+    }
+    if (!itemDataValid(id)) {
+        return -1;
+    }
+    ITEM *p;
+    s32 result;
+    u16 i;
+    if (flag == 0) {
+        p = itemSearchItemDataIdAry(ary, count, id, 0, 0);
+        if (p != NULL) {
+            result = max - item_GetNum(p);
+        } else {
+            if (itemSearchItemDataIdAry(ary, count, id, 2, 0) != NULL) {
+                result = max;
+            } else {
+                result = 0;
+            }
+        }
+    } else {
+        result = 0;
+        for (i = 0; i < count; i++) {
+            p = ary + i;
+            if (!itemValid(p)) {
+                result += max;
+            } else if (itemIsSame(p, id) == 1) {
+                result += max - item_GetNum(p);
+            }
+        }
+    }
+    return result;
+}
+
+void itemSortAryByPriority(ITEM *ary, u16 count, s32 type) {
+    s32 j;
+    s32 i;
+    ITEM *q;
+    ITEM *p;
+    s32 n;
+    if (type == 2) {
+        currentPriorityTbl = item_dougu_sort;
+        currentPriorityTblQuantity = item_dougu_sort_number;
+    } else if (type == 1) {
+        currentPriorityTbl = item_ball_sort;
+        currentPriorityTblQuantity = item_ball_sort_number;
+    }
+    if (ary != NULL && count != 0) {
+        p = ary;
+        n = count - 1;
+        for (i = 0; i < n; p++, i++) {
+            if (itemValid(p)) {
+                j = i + 1;
+                q = ary + j;
+                for (; j < (s32)count; q++, j++) {
+                    if (itemValid(q)) {
+                        if (itemPriorityDiff(item_GetItemDataId(q), item_GetItemDataId(p)) > 0) {
+                            itemSwap(p, q);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 }

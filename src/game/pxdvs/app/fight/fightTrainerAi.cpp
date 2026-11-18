@@ -1,4 +1,5 @@
 #include <dolphin/types.h>
+#include <game/pxdvs/app/fight/fightWazaBiosLayout.hpp>
 #include <game/pxdvs/app/fight/fightTrainerAiPrivate.hpp>
 #undef NULL
 #define NULL 0
@@ -6,6 +7,35 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern const u16 NemuraseWazaTbl[] = {47, 79, 95, 142, 147, 320};
+extern const u16 KonranWazaTbl[] = {48, 109, 186, 298, 207};
+extern const u16 joutaiIzyouWazaTbl[] = {
+    47, 79, 95, 142, 147, 320,
+    77, 139, 92,
+    48, 109, 186, 298, 207,
+    78, 86, 137,
+    261,
+};
+extern const ComboStatusMove statusUpWazaTbl[] = {
+    {96, 1, 1}, {159, 1, 1}, {336, 1, 1}, {106, 2, 1},
+    {110, 2, 1}, {74, 4, 1}, {104, 7, 1}, {14, 1, 2},
+    {112, 2, 2}, {151, 2, 2}, {334, 2, 2}, {97, 3, 2},
+    {294, 4, 2}, {133, 5, 2},
+};
+extern const ComboStatusMove statusDownWazaTbl[] = {
+    {45, 1, 1}, {39, 2, 1}, {43, 2, 1}, {81, 3, 1},
+    {28, 6, 1}, {108, 6, 1}, {134, 6, 1}, {148, 6, 1},
+    {230, 7, 1}, {204, 1, 2}, {297, 1, 2}, {103, 2, 2},
+    {371, 2, 2}, {178, 3, 2}, {184, 3, 2}, {313, 4, 2},
+    {319, 5, 2}, {369, 7, 2},
+};
+extern const u16 statusUpKinomiTbl[] = {15, 16, 17, 18, 19, 20, 21};
+extern const u16 DokuWazaTbl[] = {77, 139, 92};
+extern const u16 MahiWazaTbl[] = {78, 86, 137};
+extern const u16 YakedoWazaTbl[] = {261};
+extern const u16 moukakeiTbl[] = {66, 65, 68, 67};
+
 typedef struct FIGHT_TRAINER FIGHT_TRAINER; typedef struct Pokemon Pokemon; typedef struct FightPokemon FightPokemon; typedef struct FightOutPokemon FightOutPokemon; typedef struct FightSide FightSide; typedef struct FightWaza FightWaza;
 typedef struct AiAbilitySearch { s32 ability; FightOutPokemon *result; s32 side; FightOutPokemon *relative; FIGHT_TRAINER *trainer; } AiAbilitySearch;
 typedef FIGHT_TRAINER FightTrainer;

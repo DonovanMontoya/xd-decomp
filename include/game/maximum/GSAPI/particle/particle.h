@@ -142,9 +142,8 @@ PSParticle* psGenerateParticleID0(PSParticle*,s32,s32,s32,s32); PSParticle* psIn
 s32 psGeneratorGetCamera(PSGenerator*); void psGeneratorSetCamera(PSGenerator*,s32); PSGenerator* psCreateGeneratorID(s32,s32,s32); void psExecGenerator(s32); f32 generateParticle(PSGenerator*); void psKillAllGenerator(void); void psKillGeneratorID(u16); void psKillGenerator(PSGenerator*); void psRemoveGenerator(void); void psInitGenerator(s32); void genPosUpdate(PSGenerator*); u16 psGetNewIDNum(void);
 void HSD_JObjSetupMatrixSub(PSJObj*); void HSD_JObjUnref(PSJObj*); f32 HSD_Randf(void); void* HSD_SListRemove(void*);
 extern u16 numActiveParticles,numPeakParticles,numActiveGenerators,numPeakGenerators,numActivePSAppSRT,numPeakPSAppSRT;
-extern PSGenerator *activeGenerator,*freeGenerator,*lastGP; extern void* standbyGenerator;
+extern PSGenerator *activeGenerator,*freeGenerator,*lastGP;
 extern PSCmd** psCmdListArray[64]; extern PSTex** psTexGroupArray[64]; extern s32 psNumCmdList[64]; extern void* psFormGroupArray[64]; extern s32 psNumTexGroup[64]; extern void* ptclref[64];
-extern void (*psExtCreateGenFunc)(PSGenerator*); extern void (*psExtExecGenFunc)(PSGenerator*,f32 (*)[4]);
 
 typedef struct PSClass PSClass;
 typedef struct PSObject { PSClass* methods; u16 references; } PSObject;
@@ -154,5 +153,4 @@ typedef struct PSCamera { PSClass* methods; u16 references; u8 opaque[0x1E]; PSW
 void psSetBillboardCamera(PSCamera*); void psSetPointJObjNodup(PSObject*,s32); void psSetPointJObj(s32,PSObject*);
 void HSD_CObjGetUpVector(PSCamera*,PSVec*); void PSMTXConcat(f32 (*)[4],f32 (*)[4],f32 (*)[4]); void PSMTXIdentity(f32 (*)[4]); void PSMTXMultVec(f32 (*)[4],PSVec*,PSVec*); void PSMTXRotRad(f32 (*)[4],char,f32); void PSVECCrossProduct(PSVec*,PSVec*,PSVec*); void PSVECNormalize(PSVec*,PSVec*);
 f64 atan2(f64,f64); f64 cos(f64); f64 sin(f64);
-extern PSCamera* psCamera;
 #endif

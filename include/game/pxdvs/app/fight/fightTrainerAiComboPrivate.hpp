@@ -1,10 +1,9 @@
 #ifndef FIGHT_TRAINER_AI_COMBO_PRIVATE_HPP
 #define FIGHT_TRAINER_AI_COMBO_PRIVATE_HPP
-#include <dolphin/types.h>
+#include <game/pxdvs/app/fight/fightWazaBiosLayout.hpp>
 struct FIGHT_TRAINER;struct FightOutPokemon;struct Pokemon;
 struct ComboWaza {FightOutPokemon* attackers[2];FightOutPokemon* defenders[2];u16 moves[2];u8 slots[2],eligible[2],probability[2],combination,reserved;u16 damage[2][2];u8 result[2];u16 reserved26;u32 threat;};
 struct FixedActionShell {u8 reset,unused[3];u8* sequence[2];};
-struct ComboStatusMove {u16 move,stat,amount;};
 typedef u8 (*ComboHit)(FIGHT_TRAINER*,FightOutPokemon*,u16,FightOutPokemon*);
 typedef u8 (*ComboAction)(FIGHT_TRAINER*,FightOutPokemon**,u16,FightOutPokemon**,u16,ComboWaza*,u8);
 typedef u8 (*ComboContinue)(FIGHT_TRAINER*,FightOutPokemon*,FightOutPokemon**,u16);
@@ -17,8 +16,8 @@ typedef char ComboWazaSize[sizeof(ComboWaza)==0x2C?1:-1];
 #define ComboPower _GetAllWazaTableValue_IryokuWaza__FP13FIGHT_TRAINERPP15FightOutPokemonP20AI_ALLWAZA_VALID_TBLPs
 extern "C" {
 extern ComboDispatch comboid[];
-extern ComboStatusMove statusUpWazaTbl[],statusDownWazaTbl[];
-extern u16 NemuraseWazaTbl[],MahiWazaTbl[],KonranWazaTbl[],DokuWazaTbl[],YakedoWazaTbl[];
+extern const ComboStatusMove statusUpWazaTbl[],statusDownWazaTbl[];
+extern const u16 NemuraseWazaTbl[],MahiWazaTbl[],KonranWazaTbl[],DokuWazaTbl[],YakedoWazaTbl[];
 u16 HSD_Rand();u16 fightFloor_GetEncountDataId(void*);u32 fightFloor_GetFightType(void*);u32 fightFloor_GetTurnCount(void*);u8 fightFloorIsNowEncountVirtualBattle(void*);
 void *fightEncountDataBiosGetPtr(u16);u16 fightEncountDataBiosGetDiskId(void*);u16 fightEncountDataBiosGetFightTrainerDataId(void*,u8);u32 deckDataVirtualDB_GetEnemyDeck__FUs(u16);
 void *getDeckTrainerObj__11DeckTrainerFUl(u32);u8 getFixedActionID__11DeckTrainerCFv(void*);u16 getComboID__11DeckTrainerCFUc(void*,u8);u8 getComboActive__11DeckTrainerCFUc(void*,u8);

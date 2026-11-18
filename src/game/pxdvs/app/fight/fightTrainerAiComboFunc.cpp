@@ -1,4 +1,5 @@
 #include <dolphin/types.h>
+#include <game/pxdvs/app/fight/fightWazaBiosLayout.hpp>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1999,10 +2000,10 @@ u16 fightTrainerAiGetFightOutPokemonWazaDataIdAry(FIGHT_TRAINER *, FightOutPokem
 s32 fightTrainerAiWazaDoWazaDamageFunc(FIGHT_TRAINER *, FightOutPokemon *, u16, FightOutPokemon *, u8);
 u16 figthOutPokemonGetPokemonDataId(FightOutPokemon *);
 u16 zokuseiGetWazaJoutai(u16, u16);
-extern u16 statusUpWazaTbl[];
-extern u16 moukakeiTbl[];
-extern u16 statusUpKinomiTbl[];
-extern u16 NemuraseWazaTbl[];
+extern const ComboStatusMove statusUpWazaTbl[];
+extern const u16 moukakeiTbl[];
+extern const u16 statusUpKinomiTbl[];
+extern const u16 NemuraseWazaTbl[];
 
 
 
@@ -2509,7 +2510,6 @@ s32 fightAiCombo_Nihonbare_Asanohizasi_2(FIGHT_TRAINER *arg0, FightOutPokemon **
 }
 
 s32 fightAiCombo_StatusUp_Batontatti_1(FIGHT_TRAINER *arg0, FightOutPokemon **arg1, u16 arg2, FightOutPokemon **arg3, u16 arg4, FightAiAllWazaValid *arg5, u8 arg6) {
-    struct StatusMoveRecord { u16 move, stat, amount; };
     u8 fightType;
     FightAiAllWazaValid tbl[0x40];
     u8 buf[0x40];
@@ -2546,7 +2546,7 @@ s32 fightAiCombo_StatusUp_Batontatti_1(FIGHT_TRAINER *arg0, FightOutPokemon **ar
         }
         num = m = 0;
         for (; m < 0xE; m++) {
-            fightAi_AllWazaValid_AddComboList(arg0, tbl, &num, 1, ((const StatusMoveRecord*)statusUpWazaTbl)[m].move, 0, 0);
+            fightAi_AllWazaValid_AddComboList(arg0, tbl, &num, 1, statusUpWazaTbl[m].move, 0, 0);
         }
         if (num == 0) {
             return 0;
@@ -2555,14 +2555,14 @@ s32 fightAiCombo_StatusUp_Batontatti_1(FIGHT_TRAINER *arg0, FightOutPokemon **ar
         for (k = 0; k < num; k++) {
             none = 1;
             for (m = 0; m < 0xE; m++) {
-                if (tbl[k].wazaId[i] == ((const StatusMoveRecord*)statusUpWazaTbl)[m].move) {
+                if (tbl[k].wazaId[i] == statusUpWazaTbl[m].move) {
                     tbl[k].defender[i] = tbl[k].attacker[i];
                 }
             }
             cur = fightAiCombo_GetAllWazaValueTable(&tbl[k], value, arg0, arg1, arg3, -1);
             tbl[k].attacker[(s8)fightAi_getAnotherPokeNo(i)] = 0;
             for (m2 = 0; m2 < 0xE; m2++) {
-                if (tbl[k].wazaId[i] == ((const StatusMoveRecord*)statusUpWazaTbl)[m2].move) {
+                if (tbl[k].wazaId[i] == statusUpWazaTbl[m2].move) {
                     u8 (*hitFn)(FIGHT_TRAINER*, FightOutPokemon*, u16, FightOutPokemon*) = wazaDB_GetFightTrainerAiWazaHitFuncPtr(tbl[k].wazaId[i]);
                     if (hitFn(arg0, (FightOutPokemon*)tbl[k].attacker[i], tbl[k].wazaId[i], (FightOutPokemon*)tbl[k].defender[i]) == 0) {
                         cur = 0;

@@ -35,6 +35,13 @@ struct KeyInfoCopy {
 };
 
 extern "C" {
+u8 wildPokemonDownFlag;
+static void* _gSoundThread;
+u8 introBossFlag;
+u32 fightEnemyTrainerWazaSeqHdl;
+u8 WildPokemonCatchFlag;
+u16 _fight_kaisi_pre_trainer_intr_wzx_data_id;
+
 u32 fightFloor_GetFightType(void *);
 void *fightActionBiosGetActorFightTargetPtr(void *);
 void fightSeqSpecificationActionCounterInit(void *);
@@ -163,7 +170,6 @@ void *menuCBBios_GetHeroImmediately(u8);
 u8 fightTrainerIsGcHero(void *);
 void *fightGetMenuCtrlHero(void);
 void WazaSequence_Free(u32);
-extern u32 fightEnemyTrainerWazaSeqHdl;
 }
 
 extern "C" {
@@ -191,7 +197,6 @@ u32 Sequence_LoadWaza(void *, u16, s32, s32);
 u8 fightFloor_GetFightKindHostEnemyMsgFlag(void *);
 extern u16 _fight_kaisi_pre_trainer_intr_wzx_data_id_ary[5];
 extern u8 _fight_kaisi_pre_trainer_intr_wzx_data_id_num;
-extern u16 _fight_kaisi_pre_trainer_intr_wzx_data_id;
 }
 
 extern "C" s32 fightActionFlowHeijou(void) {
@@ -572,7 +577,6 @@ void _darkPokemonSetUnderTaker(DeckDarkPokemon *deck, Pokemon *pk, u16 id) {
 
 u16 _fight_kaisi_pre_trainer_intr_wzx_data_id_ary[5] = {0x90, 0x91, 0x92, 0x93, 0x94};
 u8 _fight_kaisi_pre_trainer_intr_wzx_data_id_num = 5;
-u16 _fight_kaisi_pre_trainer_intr_wzx_data_id;
 
 extern "C" void fightActionFlowKaisiPreSubLoad(void) {
     u16 eid;
@@ -759,7 +763,6 @@ extern "C" s32 fightActionFlowSyuuryouPost(void) {
     return 1;
 }
 
-u32 fightEnemyTrainerWazaSeqHdl;
 
 struct FIGHT_TRAINER;
 extern "C" {
@@ -850,7 +853,6 @@ void fightMenuFightOutPokemonOpenStatusMenuStart(void *, u8, u8);
 void fightMenuFightOutPokemonCloseStatusMenuAnotherMine(void *, void *, u8, u8, u8);
 void fightMenuFightOutPokemonCloseStatusMenu(void *, u8, u8);
 }
-u8 introBossFlag;
 
 extern "C" s32 fightActionFlowKaisiNyuujouPokemon(void *actor) {
     u32 outCount;
@@ -1168,7 +1170,6 @@ void fightMenuOpenTrainerMsg(u32);
 void *fightOutPokemonGetNamePtr(void *);
 u16 fightOutPokemonGetVoiceSndId(void *);
 u32 fightOutPokemon_GetKanseiSndId(void *);
-extern u8 WildPokemonCatchFlag;
 
 s32 fightActionFlowKaisiPre() {
     u32 encounterIntro;
@@ -1394,7 +1395,6 @@ u32 darkPokemonGetSnatchSuccessNum();
 u8 fightFloorGetFightTrainerFightPokemonPtrAry(void *,void *,void **,u32,u32);
 void fightCloseAllMenu();
 extern u8 WAZA_OkodukaiCheck[],WAZA_KobanCheck[];
-extern void *_gSoundThread;
 
 s32 fightActionFlowSyuuryou(void *actor) {
     void *party[24];

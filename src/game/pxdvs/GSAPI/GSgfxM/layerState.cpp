@@ -1,7 +1,6 @@
 #include "layer_private.h"
 #include <dolphin/os/OSFastCast.h>
 #include <game/pxdvs/GSAPI/GSgfxM/layerStatePrivate.hpp>
-static const LayerColor defaultColor={0x80808080};
 extern "C" {
 u8 GSgfxRenderModuleIsRendering__Fv();
 u8 GSgfxVFGetColorCount(void*); u8 GSgfxVFGetTextureCount(void*); u8 GSgfxVFHasElement(void*,s32);
@@ -206,18 +205,21 @@ void ResetVertexFormat__10GSgfxLayerFP7GSgfxVF(void *arg0, u32 arg1) {
 
 
 
+#pragma opt_dead_assignments off
+#pragma opt_propagation off
 void renderState_NL_NVC_NT__10GSgfxLayerFv(void *arg0) {
-    LayerColor sp18;
-    LayerColor sp14;
-    LayerColor sp10;
+    LayerColor neutralColor = {0x80808080};
+    LayerColor secondColor;
+    LayerColor firstColor;
     s32 sp8;
+    u32 lightCount = 0;
+    s32 attenuation = 2;
 
     layerField<u8>(arg0, 0xDB8) = 1;
-    sp18 = defaultColor;
     layerField<u32>(arg0, 0x16BC) = (s32) (layerField<u32>(arg0, 0x16BC) | 1);
-    sp10 = defaultColor;
+    firstColor = neutralColor;
     layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 4);
-    sp14 = defaultColor;
+    secondColor = neutralColor;
     layerField<u32>(arg0, 0x1774) = (s32) (layerField<u32>(arg0, 0x1774) | 1);
     layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 4);
     layerField<u8>(arg0, 0xC70) = 0;
@@ -235,8 +237,8 @@ void renderState_NL_NVC_NT__10GSgfxLayerFv(void *arg0) {
     layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 0x80);
     layerField<u32>(arg0, 0x17A4) = (s32) (layerField<u32>(arg0, 0x17A4) | 1);
     layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x80);
-    layerField<LayerColor>(arg0, 0xE9C) = sp10;
-    layerField<LayerColor>(arg0, 0xEA4) = sp14;
+    layerField<LayerColor>(arg0, 0xE9C) = firstColor;
+    layerField<LayerColor>(arg0, 0xEA4) = secondColor;
     layerField<u32>(arg0, 0x16C4) = (s32) (layerField<u32>(arg0, 0x16C4) | 1);
     layerField<u32>(arg0, 0x16C8) = (s32) (layerField<u32>(arg0, 0x16C8) | 1);
     layerField<u32>(arg0, 0x16A8) = (s32) (layerField<u32>(arg0, 0x16A8) | 4);
@@ -244,7 +246,7 @@ void renderState_NL_NVC_NT__10GSgfxLayerFv(void *arg0) {
     layerField<u32>(arg0, 0x1780) = (s32) (layerField<u32>(arg0, 0x1780) | 1);
     layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 4);
     sp8 = 0;
-    cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(arg0,0,2,0,0,0,0,2,0);
+    cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(arg0, 0, 2, 0, 0, lightCount, 0, attenuation, 0);
     layerField<u32>(arg0, 0xEB0) = 0xFF;
     layerField<u32>(arg0, 0xEB4) = 0xFF;
     layerField<u32>(arg0, 0xEB8) = 4;
@@ -260,6 +262,8 @@ void renderState_NL_NVC_NT__10GSgfxLayerFv(void *arg0) {
     layerField<u32>(arg0, 0x17BC) = (s32) (layerField<u32>(arg0, 0x17BC) | 1);
     layerField<u32>(arg0, 0x1760) = (s32) (layerField<u32>(arg0, 0x1760) | 0x20);
 }
+#pragma opt_propagation reset
+#pragma opt_dead_assignments reset
 
 }
 
@@ -406,8 +410,9 @@ static const u8 layerTevColorChannel[16]={0,1,0,1,0,1,7,5,6,0,0,0,0,0,0,7};
 static const u8 layerCullMode[4]={0,2,1,3};
 void GSgfx_GCWriteTexCoordGen(s32,s32,s32,u32,u8,u32);
 void GSgfx_GCWriteFog(s32,float,float,float,float);
-void GSgfx_GCWriteTevIndBumpST(s32,u8,s32);
-void GSgfx_GCWriteTevIndTile(s32,u8,u16,u16,u16,u16,s32,s32,u8,u8);
+void GSgfx_GCWriteTevIndBumpST(s32 stage, s32 indirectStage, s32 matrix);
+void GSgfx_GCWriteTevIndTile(u32 stage, u8 indirectStage, u16 sizeS, u16 sizeT, u16 spaceS, u16 spaceT,
+                             u32 format, s32 matrix, u32 bias, u32 alpha);
 void* GSgfxVideoGetViewport();
 void GSgfxVideoSetViewport__Fffffb(float,float,float,float,bool);
 __declspec(weak) void GSgfx_GCSetFogRangeAdj(u8 arg0, u16 arg1, u8 *arg2);
@@ -1529,9 +1534,10 @@ inline void GSgfx_GCWriteChanCtrl(s32 chan, u8 enable, s32 ambient, s32 material
     s32 diffuseFunction = diffuse;
     if (attenuation == 0) diffuseFunction = 0;
     GXWGFifo.u8 = 0x10; GXWGFifo.u16 = 0; GXWGFifo.u16 = 0x100e + (chan & 3);
+    u32 colorSourceBits = ((ambient << 6) | (((lights * 4) & 0x3c) | (material | ((enable * 2) & 0x1fe))));
     GXWGFifo.u32 = ((lights << 7) & 0x7800) | ((((u32)(-attenuation | attenuation) >> 21) & 0x400) |
         ((((u32)((2 - attenuation) | (attenuation - 2)) >> 22) & 0x200) |
-        ((ambient << 6) | (((lights * 4) & 0x3c) | (material | ((enable * 2) & 0x1fe))) | (diffuseFunction << 7))));
+        (colorSourceBits | (diffuseFunction << 7))));
     LAYER_CHAN_CTRL_ARGS[(u32)chan].enable = enable;
     LAYER_CHAN_CTRL_ARGS[(u32)chan].ambient = ambient;
     LAYER_CHAN_CTRL_ARGS[(u32)chan].material = material;
@@ -1540,7 +1546,8 @@ inline void GSgfx_GCWriteChanCtrl(s32 chan, u8 enable, s32 ambient, s32 material
     LAYER_CHAN_CTRL_ARGS[(u32)chan].attenuation = attenuation;
 }
 __declspec(weak) void GSgfx_GCSetChanCtrl(s32 arg0, u8 arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, s32 arg6) {
-    if (LAYER_CHAN_CTRL_ARGS[arg0].enable != arg1 || LAYER_CHAN_CTRL_CACHE->chan[arg0].ambient != arg2 || LAYER_CHAN_CTRL_CACHE->chan[arg0].material != arg3 ||
+    u8 cachedEnable = LAYER_CHAN_CTRL_ARGS[arg0].enable;
+    if (cachedEnable != arg1 || LAYER_CHAN_CTRL_CACHE->chan[arg0].ambient != arg2 || LAYER_CHAN_CTRL_CACHE->chan[arg0].material != arg3 ||
         LAYER_CHAN_CTRL_CACHE->chan[arg0].lights != arg4 || LAYER_CHAN_CTRL_CACHE->chan[arg0].diffuse != arg5 || LAYER_CHAN_CTRL_CACHE->chan[arg0].attenuation != arg6)
         GSgfx_GCWriteChanCtrl(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
 }

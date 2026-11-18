@@ -23,284 +23,375 @@ static inline f32 cameraSizeScale(s8 size) {
     }
 }
 
-void _wazaSequenceCameraDoPosition(ModelSequence *sequence, wazaSequenceCameraParams *params, f32 speed, bool flip) {
-    TemplateExpFileHeader *record = (TemplateExpFileHeader *)&sequence->records[sequence->wazaIndex];
-    cameraLockYTarget((record->flags >> 4) & 1);
-    switch (params->motion) {
-    case 0:
-        _wazaSequenceCameraDoDollyPosition(record, params, speed, flip);
+void _wazaSequenceCameraCalculateParams(ModelSequence *sequence, int flags, wazaSequenceCameraParams *params) {
+    _GSmodel *model = sequence->model;
+    GSbound *bound = GSmodelGetBound(model);
+    s32 size = sequence->modelSize;
+    GSvec size3;
+    GSvec boundMin;
+    GSvec boundMax;
+    GSvec rotation;
+    GSvec extent;
+    GSmodelGetRotation(model, &rotation);
+    params->baseRotation = rotation.param2;
+    f32 rangeScale;
+    f32 sizeScale;
+    switch (size) {
+    case -2:
+        rangeScale = 2.4f;
+        sizeScale = 0.875f;
         break;
-    case 1: {
-        f32 distance;
-        f32 height;
-        f32 side;
-        f32 duration;
-        duration = record->time[record->index];
-        duration *= speed;
-        side = 10.0f * HSD_Randf() + 25.0f;
-        height = 9.0f * HSD_Randf() + 1.0f;
-        distance = 30.0f * HSD_Randf() + 20.0f;
-        cameraSetDistance(distance);
-        cameraSetHeight(height);
-        cameraSetRotY(0.0f);
-        cameraUpdate();
-        GSvec position;
-        cameraGetPosition(&position);
-        if (flip) {
-            position.param1 += 10.0f;
-        } else {
-            position.param1 -= 10.0f;
-        }
-        cameraSetPosition(&position);
-        if (flip) {
-            position.param1 = position.param1 + side;
-        } else {
-            position.param1 = position.param1 - side;
-        }
-        cameraMovePosition(7, &position, duration);
-        cameraMovePositionAcc(duration * (0.1f / (f32)GSgfxVideoGetVsyncRate()));
-        f32 planar = side * side + height * height;
-        params->fovDistance[0] = hsdSqrt(planar);
-        params->fovDistance[2] = hsdSqrt(distance * distance + planar);
-        params->fovDistance[1] = 0.5f * (params->fovDistance[0] + params->fovDistance[2]);
+    case -1:
+        rangeScale = 1.5f;
+        sizeScale = 0.875f;
+        break;
+    case 1:
+        rangeScale = 1.25f;
+        sizeScale = 1.4f;
+        break;
+    case 2:
+        rangeScale = 1.3f;
+        sizeScale = 1.8f;
+        break;
+    case 3:
+        rangeScale = 1.5f;
+        sizeScale = 3.0f;
+        break;
+    default:
+        rangeScale = 1.2f;
+        sizeScale = 1.0f;
         break;
     }
-    case 2: {
-        f32 duration;
-        f32 distance;
-        f32 height;
-        f32 rotationEnd;
-        f32 rotationStart;
-        duration = record->time[record->index];
-        duration *= speed;
-        { f32 rnd = HSD_Randf(); f32 lo = params->distanceMin; f32 diff = params->distanceMax - lo; distance = diff * rnd + lo; }
-        { f32 rnd = HSD_Randf(); f32 lo = params->heightMin; f32 diff = params->heightMax - lo; height = diff * rnd + lo; }
-        if (flip) {
-            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationStart = (params->baseRotation - a) - diff * rnd; }
-            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationEnd = (params->baseRotation - a) - diff * rnd; }
+    switch (flags & 7) {
+    case 1:
+        params->rotationA = 0.0f;
+        params->rotationB = 0.34906584f;
+        break;
+    case 2:
+        params->rotationA = 0.17453292f;
+        params->rotationB = 0.34906584f;
+        break;
+    case 3:
+        params->rotationA = 0.20943952f;
+        params->rotationB = 0.7330383f;
+        break;
+    case 4:
+        if (size > 0) {
+            params->rotationA = 0.31415927f;
+            params->rotationB = 0.83775806f;
         } else {
-            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationStart = diff * rnd + (params->baseRotation + a); }
-            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationEnd = diff * rnd + (params->baseRotation + a); }
+            params->rotationA = 0.5235988f;
+            params->rotationB = 1.0471976f;
         }
-        if (rotationStart > rotationEnd) {
-            f32 swap = rotationStart;
-            rotationStart = rotationEnd;
-            rotationEnd = swap;
+        break;
+    case 5:
+        if (size > 0) {
+            params->rotationA = 0.62831855f;
+            params->rotationB = 1.1519173f;
+        } else {
+            params->rotationA = 1.0471976f;
+            params->rotationB = 1.3613569f;
         }
-        cameraSetDistance(1.25f * distance);
-        cameraSetHeight(height);
-        cameraSetRotY(rotationStart);
-        cameraUpdate();
-        cameraMoveRotationXYZ(7, 0.0f, rotationEnd, 0.0f, duration);
-        cameraMoveRotationAcc(duration * (0.1f / (f32)GSgfxVideoGetVsyncRate()));
-        f32 reach = hsdSqrt(distance * distance + height * height);
-        params->fovDistance[2] = reach;
-        params->fovDistance[1] = reach;
-        params->fovDistance[0] = reach;
+        break;
+    case 6:
+        params->rotationA = 1.2217305f;
+        params->rotationB = 1.3962634f;
+        break;
+    case 7:
+        params->rotationA = 1.2217305f;
+        params->rotationB = 1.5707964f;
+        break;
+    default:
+        if (size > 0) {
+            params->rotationA = 0.20943952f;
+            params->rotationB = 1.0471976f;
+        } else {
+            params->rotationA = 0.20943952f;
+            params->rotationB = 1.2566371f;
+        }
         break;
     }
-    case 3: {
-        f32 duration = record->time[record->index];
-        duration *= speed;
-        f32 distance;
-        { f32 rnd = HSD_Randf(); f32 lo = params->distanceMin; f32 diff = params->distanceMax - lo; distance = diff * rnd + lo; }
-        f32 height;
-        { f32 rnd = HSD_Randf(); f32 lo = params->heightMin; f32 diff = params->heightMax - lo; height = diff * rnd + lo; }
-        f32 rotation;
-        if (flip) {
-            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotation = (params->baseRotation - a) - diff * rnd; }
-        } else {
-            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotation = diff * rnd + (params->baseRotation + a); }
-        }
-        cameraSetDistance(1.25f * distance);
-        cameraSetHeight(height);
-        cameraSetRotY(rotation);
-        cameraUpdate();
-        GSvec position;
-        cameraGetPosition(&position);
-        cameraMovePosition(7, &position, duration);
-        f32 reach = hsdSqrt(distance * distance + height * height);
-        params->fovDistance[2] = reach;
-        params->fovDistance[1] = reach;
-        params->fovDistance[0] = reach;
-        break;
+    f32 heightLow;
+    f32 heightHigh;
+    if (flags & 0x80) {
+        params->distanceMin = 25.0f;
+        heightLow = 6.0f;
+        heightHigh = 8.0f;
+        params->distanceMax = 35.0f;
+    } else if (flags & 0x100) {
+        params->distanceMin = 35.0f;
+        params->distanceMax = 50.0f;
+        heightLow = 6.0f;
+        heightHigh = 11.0f;
+    } else if (flags & 0x200) {
+        params->distanceMin = 50.0f;
+        params->distanceMax = 60.0f;
+        heightLow = 6.0f;
+        heightHigh = 20.0f;
+    } else {
+        heightHigh = 20.0f;
+        params->distanceMin = heightHigh;
+        params->distanceMax = 60.0f;
+        heightLow = 6.0f;
     }
-    case 4: {
-        f32 duration = record->time[record->index];
-        f32 rotation;
-        if (flip) {
-            rotation = params->baseRotation - 0.47123894f;
-        } else {
-            rotation = 0.47123894f + params->baseRotation;
-        }
-        cameraSetDistance(110.0f);
-        cameraSetHeight(25.0f);
-        cameraSetRotY(rotation);
-        cameraUpdate();
-        GSvec position;
-        cameraGetPosition(&position);
-        cameraMovePosition(7, &position, duration);
-        f64 value = 12725.0;
-        f64 guess = __frsqrte(value);
-        guess = 0.5 * guess * (3.0 - guess * guess * value);
-        guess = 0.5 * guess * (3.0 - guess * guess * value);
-        guess = 0.5 * guess * (3.0 - guess * guess * value);
-        f32 reach = (f32)(value * guess);
-        params->fovDistance[2] = reach;
-        params->fovDistance[1] = reach;
-        params->fovDistance[0] = reach;
-        break;
+    params->distanceMin = params->distanceMin * sizeScale;
+    params->distanceMax = params->distanceMax * sizeScale;
+    GSboundGetMinMax(bound, &boundMin, &boundMax, 0, 0, 0, 0);
+    PSVECSubtract(&boundMax, &boundMin, &extent);
+    size3.param1 = extent.param1;
+    size3.param2 = extent.param2;
+    size3.param3 = extent.param3;
+    if (size3.param1 < 0.0f) size3.param1 = -size3.param1;
+    if (size3.param2 < 0.0f) size3.param2 = -size3.param2;
+    if (size3.param3 < 0.0f) size3.param3 = -size3.param3;
+    f32 mag = PSVECMag(&size3);
+    f32 dep = size3.param2;
+    params->width = 0.57735026f * mag;
+    params->depth = dep;
+    params->heightMin = boundMin.param2;
+    params->heightMax = boundMax.param2;
+    if (params->heightMin < heightLow) {
+        params->heightMin = heightLow;
+        if (params->heightMax < heightLow) params->heightMax = 1.5f * heightLow;
     }
-    case 5: {
-        f32 duration = record->time[record->index];
-        duration *= speed;
-        f32 distance = 50.0f * cameraSizeScale(sequence->modelSize);
-        f32 height;
-        { f32 rnd = HSD_Randf(); f32 lo = params->heightMin; f32 diff = params->heightMax - lo; height = diff * rnd + lo; }
-        f32 rotation;
-        if (flip) {
-            rotation = params->baseRotation - 0.7853982f;
-        } else {
-            rotation = 0.7853982f + params->baseRotation;
-        }
-        cameraSetDistance(1.25f * distance);
-        cameraSetHeight(height);
-        cameraSetRotY(rotation);
-        cameraUpdate();
-        GSvec position;
-        cameraGetPosition(&position);
-        cameraMovePosition(7, &position, duration);
-        f32 reach = hsdSqrt(distance * distance + height * height);
-        params->fovDistance[2] = reach;
-        params->fovDistance[1] = reach;
-        params->fovDistance[0] = reach;
-        break;
+    if (params->heightMax > heightHigh) {
+        params->heightMax = heightHigh;
+        if (params->heightMin > heightHigh) params->heightMin = 0.8f * heightHigh;
     }
-    }
+    params->width = params->width * rangeScale;
+    params->depth = params->depth * rangeScale;
+    if (params->distanceMin < 20.0f) params->distanceMin = 20.0f;
+    if (params->distanceMax < 40.0f) params->distanceMax = 40.0f;
+    if (params->distanceMin > 48.0f) params->distanceMin = 48.0f;
+    if (params->distanceMax > 60.0f) params->distanceMax = 60.0f;
 }
 
-void _wazaSequenceCameraDoDollyPosition(TemplateExpFileHeader *record, wazaSequenceCameraParams *params, f32 speed, bool flip) {
-    f32 duration;
-    f32 zoomInChance;
-    bool inward;
-    f32 moveStart;
-    f32 moveEnd;
-    f32 roll;
-    f32 half;
-    f32 sample12;
-    f32 lo12;
-    f32 diff12;
-    f32 distanceA;
-    f32 distanceFar;
-    f32 sample13;
-    f32 lo13;
-    f32 diff13;
-    f32 distanceB;
-    f32 distanceNear;
-    f32 height;
-    f32 sample14;
-    f32 lo14;
-    f32 diff14;
-    f32 sample15;
-    f32 lo15;
-    f32 diff15;
-    f32 rotation;
-    f32 sample16;
-    f32 a16;
-    f32 diff16;
-    f32 sample17;
-    f32 a17;
-    f32 diff17;
-    GSvec position;
-    GSvec target;
-    f32 heightSquared;
-    f32 middle;
-    f32 zoomOutChance;
-    zoomOutChance = 0.5f;
-    zoomInChance = 0.75f;
-    duration = record->time[record->index];
-    duration *= speed;
-    if (HSD_Randf() <= 0.7f) {
-        zoomOutChance = 0.3f;
-        inward = true;
-        zoomInChance = 0.65f;
-    } else {
-        inward = false;
+void _wazaSequenceCameraSelectMotion(ModelSequence *sequence, WazaSequence *waza, wazaSequenceCameraParams *params) {
+    u32 useFront, useBack, useLeft, useRight;
+    u32 flags;
+    u32 front, back, left, right;
+    s32 count = 0;
+    if (sequence->id == 0x13a) {
+        params->motion = 4;
+        return;
     }
-    roll = HSD_Randf();
-    if (roll < zoomOutChance) {
-        moveEnd = duration;
-        moveStart = 0.0f;
-    } else if (roll < zoomInChance) {
-        moveStart = 0.0f;
-        moveEnd = duration * HSD_Randf();
-        half = 0.5f * duration;
-        if (moveEnd < half) moveEnd = half;
-    } else {
-        moveStart = duration * HSD_Randf();
-        half = 0.5f * duration;
-        if (moveStart > half) moveStart = half;
-        moveEnd = duration;
-    }
-    sample12 = HSD_Randf();
-    lo12 = params->distanceMin;
-    diff12 = params->distanceMax - lo12;
-    distanceA = diff12 * sample12 + lo12;
-    distanceFar = distanceA;
-    sample13 = HSD_Randf();
-    lo13 = params->distanceMin;
-    diff13 = params->distanceMax - lo13;
-    distanceB = diff13 * sample13 + lo13;
-    distanceNear = distanceB;
-    if (inward) {
-        if (distanceA < distanceNear) {
-            distanceNear = distanceA;
-            distanceFar = distanceB;
+    if (waza != 0) {
+        flags = *(u32 *)((u8 *)waza + 8);
+        if (flags & 1) {
+            params->motion = 5;
+            return;
         }
-        sample14 = HSD_Randf();
-        lo14 = params->heightMin;
-        diff14 = params->heightMax - lo14;
-        height = diff14 * sample14 + lo14;
-    } else {
-        if (distanceA > distanceNear) {
-            distanceNear = distanceA;
-            distanceFar = distanceB;
+        front = (flags >> 3) & 1;
+        if (front) count = 1;
+        back = (flags >> 4) & 1;
+        if (back) count++;
+        left = (flags >> 5) & 1;
+        if (left) count++;
+        right = (flags >> 6) & 1;
+        if (right) count++;
+    }
+    if (count == 0) {
+        count = 4;
+        front = 1;
+        back = 1;
+        left = 1;
+        right = 1;
+    } else if (count == 1) {
+        if (front) params->motion = 3;
+        if (back) params->motion = 0;
+        if (left) params->motion = 1;
+        if (right) params->motion = 2;
+        gLastMotionType = params->motion;
+        return;
+    }
+    f32 share = 1.0f / (f32)count;
+    useFront = (u8)front;
+    useBack = (u8)back;
+    useLeft = (u8)left;
+    useRight = (u8)right;
+    for (;;) {
+        f32 roll = HSD_Randf();
+        f32 threshold = share;
+        if (useFront) {
+            if (threshold > roll) {
+                params->motion = 3;
+                if (gLastMotionType != params->motion) break;
+            }
+            threshold += share;
         }
-        sample15 = HSD_Randf();
-        lo15 = params->heightMin;
-        diff15 = params->heightMax - lo15;
-        height = diff15 * sample15 + lo15;
+        if (useBack) {
+            if (threshold > roll) {
+                params->motion = 0;
+                if (gLastMotionType != params->motion) break;
+            }
+            threshold += share;
+        }
+        if (useLeft) {
+            if (threshold > roll) {
+                params->motion = 1;
+                if (gLastMotionType != params->motion) break;
+            }
+            threshold += share;
+        }
+        if (useRight) {
+            if (threshold > roll) {
+                params->motion = 2;
+                if (gLastMotionType != params->motion) break;
+            }
+        }
     }
-    if (flip) {
-        sample16 = HSD_Randf();
-        a16 = params->rotationA;
-        diff16 = params->rotationB - a16;
-        rotation = (params->baseRotation - a16) - diff16 * sample16;
-    } else {
-        sample17 = HSD_Randf();
-        a17 = params->rotationA;
-        diff17 = params->rotationB - a17;
-        rotation = diff17 * sample17 + (params->baseRotation + a17);
+    gLastMotionType = params->motion;
+}
+
+f32 _wazaSequenceCameraSelectDuration(u8 mode, f32 *chance, f32 length) {
+    f32 result = length;
+    f32 original = result;
+    if (mode == 1) {
+        if (original < 0.2f) return result;
+        return 0.2f;
+    } else if (mode == 2) {
+        if (original < 0.333f) return result;
+        return 0.333f;
+    } else if (mode == 4) {
+        if (original < 0.75f) return result;
+        return 0.75f;
+    } else if (mode == 8) {
+        return result;
+    } else if (mode == 3) {
+        if (HSD_Randf() < chance[0]) {
+            result = 0.2f;
+            if (original < result) return original;
+            return result;
+        }
+        result = 0.333f;
+        if (original < result) return original;
+        return result;
+    } else if (mode == 5) {
+        if (HSD_Randf() < chance[0]) {
+            result = 0.2f;
+            if (original < result) return original;
+            return result;
+        }
+        result = 0.75f;
+        if (original < result) return original;
+        return result;
+    } else if (mode == 9) {
+        if (HSD_Randf() < chance[0]) {
+            result = 0.2f;
+            if (original < result) return original;
+            return result;
+        }
+        return original;
+    } else if (mode == 6) {
+        if (HSD_Randf() < chance[1]) {
+            result = 0.333f;
+            if (original < result) return original;
+            return result;
+        }
+        result = 0.75f;
+        if (original < result) return original;
+        return result;
+    } else if (mode == 10) {
+        if (HSD_Randf() < chance[1]) {
+            result = 0.333f;
+            if (original < result) return original;
+            return result;
+        }
+        return original;
+    } else if (mode == 12) {
+        if (HSD_Randf() < chance[2]) {
+            result = 0.75f;
+            if (original < result) return original;
+            return result;
+        }
+        return original;
+    } else if (mode == 7) {
+        f32 roll = HSD_Randf();
+        if (roll < chance[0]) {
+            result = 0.2f;
+            if (original < result) return original;
+            return result;
+        }
+        if (roll < chance[1]) {
+            result = 0.333f;
+            if (original < result) return original;
+            return result;
+        }
+        result = 0.75f;
+        if (original < result) return original;
+        return result;
+    } else if (mode == 11) {
+        f32 roll = HSD_Randf();
+        if (roll < chance[0]) {
+            result = 0.2f;
+            if (original < result) return original;
+            return result;
+        }
+        if (roll < chance[1]) {
+            result = 0.333f;
+            if (original < result) return original;
+            return result;
+        }
+        return original;
+    } else if (mode == 13) {
+        f32 roll = HSD_Randf();
+        if (roll < chance[0]) {
+            result = 0.2f;
+            if (original < result) return original;
+            return result;
+        }
+        if (roll < chance[2]) {
+            result = 0.75f;
+            if (original < result) return original;
+            return result;
+        }
+        return original;
+    } else if (mode == 14) {
+        f32 roll = HSD_Randf();
+        if (roll < chance[1]) {
+            result = 0.2f;
+            if (original < result) return original;
+            return result;
+        }
+        if (roll < chance[2]) {
+            result = 0.333f;
+            if (original < result) return original;
+            return result;
+        }
+        return original;
+    } else if (mode == 15) {
+        f32 roll = HSD_Randf();
+        if (roll < chance[0]) {
+            result = 0.2f;
+            if (original < result) return original;
+            return result;
+        }
+        if (roll < chance[1]) {
+            result = 0.2f;
+            if (original < result) return original;
+            return result;
+        }
+        if (roll < chance[2]) {
+            result = 0.333f;
+            if (original < result) return original;
+            return result;
+        }
+        return original;
     }
-    cameraSetDistance(1.25f * distanceFar);
-    cameraSetHeight(height);
-    cameraSetRotY(rotation);
-    cameraUpdate();
-    cameraGetPosition(&position);
-    cameraGetTargetPos(&target);
-    PSVECSubtract(&position, &target, &position);
-    position.param2 = 0.0f;
-    PSVECScale(&position, &position, distanceNear / distanceFar);
-    position.param2 = height;
-    PSVECAdd(&position, &target, &position);
-    moveEnd = moveEnd - moveStart;
-    cameraMovePosition(7, &position, moveEnd);
-    cameraMovePositionAcc(moveEnd * (0.1f / (f32)GSgfxVideoGetVsyncRate()));
-    heightSquared = height * height;
-    params->fovDistance[0] = hsdSqrt(distanceFar * distanceFar + heightSquared);
-    middle = 0.5f * (distanceFar + distanceNear);
-    params->fovDistance[1] = hsdSqrt(middle * middle + heightSquared);
-    params->fovDistance[2] = hsdSqrt(distanceNear * distanceNear + heightSquared);
+    return result;
+}
+
+void _wazaSequenceCameraGetFOVRange(wazaSequenceCameraParams *params, f32 *minFov, f32 *maxFov, f32 distance) {
+    f32 extent = 0.75f * params->width;
+    if (params->depth > extent) extent = params->depth;
+    f32 half = (f32)atan2(0.6f * extent, distance);
+    *minFov = 57.29578f * (2.0f * half);
+    f32 half2 = (f32)atan2(1.8f * extent, distance);
+    *maxFov = 57.29578f * (2.0f * half2);
+    if (*minFov < 15.0f) *minFov = 15.0f;
+    if (*maxFov < 15.0f) *maxFov = 15.0f;
+    if (*minFov > 85.0f) *minFov = 85.0f;
+    if (*maxFov > 85.0f) *maxFov = 85.0f;
 }
 
 void _wazaSequenceCameraDoFOV(ModelSequence *sequence, wazaSequenceCameraParams *params, int flags, f32 speed) {
@@ -461,373 +552,282 @@ void _wazaSequenceCameraDoFOV(ModelSequence *sequence, wazaSequenceCameraParams 
     }
 }
 
-void _wazaSequenceCameraGetFOVRange(wazaSequenceCameraParams *params, f32 *minFov, f32 *maxFov, f32 distance) {
-    f32 extent = 0.75f * params->width;
-    if (params->depth > extent) extent = params->depth;
-    f32 half = (f32)atan2(0.6f * extent, distance);
-    *minFov = 57.29578f * (2.0f * half);
-    f32 half2 = (f32)atan2(1.8f * extent, distance);
-    *maxFov = 57.29578f * (2.0f * half2);
-    if (*minFov < 15.0f) *minFov = 15.0f;
-    if (*maxFov < 15.0f) *maxFov = 15.0f;
-    if (*minFov > 85.0f) *minFov = 85.0f;
-    if (*maxFov > 85.0f) *maxFov = 85.0f;
-}
-
-f32 _wazaSequenceCameraSelectDuration(u8 mode, f32 *chance, f32 length) {
-    f32 result = length;
-    f32 original = result;
-    if (mode == 1) {
-        if (original < 0.2f) return result;
-        return 0.2f;
-    } else if (mode == 2) {
-        if (original < 0.333f) return result;
-        return 0.333f;
-    } else if (mode == 4) {
-        if (original < 0.75f) return result;
-        return 0.75f;
-    } else if (mode == 8) {
-        return result;
-    } else if (mode == 3) {
-        if (HSD_Randf() < chance[0]) {
-            result = 0.2f;
-            if (original < result) return original;
-            return result;
-        }
-        result = 0.333f;
-        if (original < result) return original;
-        return result;
-    } else if (mode == 5) {
-        if (HSD_Randf() < chance[0]) {
-            result = 0.2f;
-            if (original < result) return original;
-            return result;
-        }
-        result = 0.75f;
-        if (original < result) return original;
-        return result;
-    } else if (mode == 9) {
-        if (HSD_Randf() < chance[0]) {
-            result = 0.2f;
-            if (original < result) return original;
-            return result;
-        }
-        return original;
-    } else if (mode == 6) {
-        if (HSD_Randf() < chance[1]) {
-            result = 0.333f;
-            if (original < result) return original;
-            return result;
-        }
-        result = 0.75f;
-        if (original < result) return original;
-        return result;
-    } else if (mode == 10) {
-        if (HSD_Randf() < chance[1]) {
-            result = 0.333f;
-            if (original < result) return original;
-            return result;
-        }
-        return original;
-    } else if (mode == 12) {
-        if (HSD_Randf() < chance[2]) {
-            result = 0.75f;
-            if (original < result) return original;
-            return result;
-        }
-        return original;
-    } else if (mode == 7) {
-        f32 roll = HSD_Randf();
-        if (roll < chance[0]) {
-            result = 0.2f;
-            if (original < result) return original;
-            return result;
-        }
-        if (roll < chance[1]) {
-            result = 0.333f;
-            if (original < result) return original;
-            return result;
-        }
-        result = 0.75f;
-        if (original < result) return original;
-        return result;
-    } else if (mode == 11) {
-        f32 roll = HSD_Randf();
-        if (roll < chance[0]) {
-            result = 0.2f;
-            if (original < result) return original;
-            return result;
-        }
-        if (roll < chance[1]) {
-            result = 0.333f;
-            if (original < result) return original;
-            return result;
-        }
-        return original;
-    } else if (mode == 13) {
-        f32 roll = HSD_Randf();
-        if (roll < chance[0]) {
-            result = 0.2f;
-            if (original < result) return original;
-            return result;
-        }
-        if (roll < chance[2]) {
-            result = 0.75f;
-            if (original < result) return original;
-            return result;
-        }
-        return original;
-    } else if (mode == 14) {
-        f32 roll = HSD_Randf();
-        if (roll < chance[1]) {
-            result = 0.2f;
-            if (original < result) return original;
-            return result;
-        }
-        if (roll < chance[2]) {
-            result = 0.333f;
-            if (original < result) return original;
-            return result;
-        }
-        return original;
-    } else if (mode == 15) {
-        f32 roll = HSD_Randf();
-        if (roll < chance[0]) {
-            result = 0.2f;
-            if (original < result) return original;
-            return result;
-        }
-        if (roll < chance[1]) {
-            result = 0.2f;
-            if (original < result) return original;
-            return result;
-        }
-        if (roll < chance[2]) {
-            result = 0.333f;
-            if (original < result) return original;
-            return result;
-        }
-        return original;
-    }
-    return result;
-}
-
-void _wazaSequenceCameraSelectMotion(ModelSequence *sequence, WazaSequence *waza, wazaSequenceCameraParams *params) {
-    u32 useFront, useBack, useLeft, useRight;
-    u32 flags;
-    u32 front, back, left, right;
-    s32 count = 0;
-    if (sequence->id == 0x13a) {
-        params->motion = 4;
-        return;
-    }
-    if (waza != 0) {
-        flags = *(u32 *)((u8 *)waza + 8);
-        if (flags & 1) {
-            params->motion = 5;
-            return;
-        }
-        front = (flags >> 3) & 1;
-        if (front) count = 1;
-        back = (flags >> 4) & 1;
-        if (back) count++;
-        left = (flags >> 5) & 1;
-        if (left) count++;
-        right = (flags >> 6) & 1;
-        if (right) count++;
-    }
-    if (count == 0) {
-        count = 4;
-        front = 1;
-        back = 1;
-        left = 1;
-        right = 1;
-    } else if (count == 1) {
-        if (front) params->motion = 3;
-        if (back) params->motion = 0;
-        if (left) params->motion = 1;
-        if (right) params->motion = 2;
-        gLastMotionType = params->motion;
-        return;
-    }
-    f32 share = 1.0f / (f32)count;
-    useFront = (u8)front;
-    useBack = (u8)back;
-    useLeft = (u8)left;
-    useRight = (u8)right;
-    for (;;) {
-        f32 roll = HSD_Randf();
-        f32 threshold = share;
-        if (useFront) {
-            if (threshold > roll) {
-                params->motion = 3;
-                if (gLastMotionType != params->motion) break;
-            }
-            threshold += share;
-        }
-        if (useBack) {
-            if (threshold > roll) {
-                params->motion = 0;
-                if (gLastMotionType != params->motion) break;
-            }
-            threshold += share;
-        }
-        if (useLeft) {
-            if (threshold > roll) {
-                params->motion = 1;
-                if (gLastMotionType != params->motion) break;
-            }
-            threshold += share;
-        }
-        if (useRight) {
-            if (threshold > roll) {
-                params->motion = 2;
-                if (gLastMotionType != params->motion) break;
-            }
-        }
-    }
-    gLastMotionType = params->motion;
-}
-
-void _wazaSequenceCameraCalculateParams(ModelSequence *sequence, int flags, wazaSequenceCameraParams *params) {
-    _GSmodel *model = sequence->model;
-    GSbound *bound = GSmodelGetBound(model);
-    s32 size = sequence->modelSize;
-    GSvec size3;
-    GSvec boundMin;
-    GSvec boundMax;
-    GSvec rotation;
-    GSvec extent;
-    GSmodelGetRotation(model, &rotation);
-    params->baseRotation = rotation.param2;
-    f32 rangeScale;
-    f32 sizeScale;
-    switch (size) {
-    case -2:
-        rangeScale = 2.4f;
-        sizeScale = 0.875f;
-        break;
-    case -1:
-        rangeScale = 1.5f;
-        sizeScale = 0.875f;
-        break;
-    case 1:
-        rangeScale = 1.25f;
-        sizeScale = 1.4f;
-        break;
-    case 2:
-        rangeScale = 1.3f;
-        sizeScale = 1.8f;
-        break;
-    case 3:
-        rangeScale = 1.5f;
-        sizeScale = 3.0f;
-        break;
-    default:
-        rangeScale = 1.2f;
-        sizeScale = 1.0f;
-        break;
-    }
-    switch (flags & 7) {
-    case 1:
-        params->rotationA = 0.0f;
-        params->rotationB = 0.34906584f;
-        break;
-    case 2:
-        params->rotationA = 0.17453292f;
-        params->rotationB = 0.34906584f;
-        break;
-    case 3:
-        params->rotationA = 0.20943952f;
-        params->rotationB = 0.7330383f;
-        break;
-    case 4:
-        if (size > 0) {
-            params->rotationA = 0.31415927f;
-            params->rotationB = 0.83775806f;
-        } else {
-            params->rotationA = 0.5235988f;
-            params->rotationB = 1.0471976f;
-        }
-        break;
-    case 5:
-        if (size > 0) {
-            params->rotationA = 0.62831855f;
-            params->rotationB = 1.1519173f;
-        } else {
-            params->rotationA = 1.0471976f;
-            params->rotationB = 1.3613569f;
-        }
-        break;
-    case 6:
-        params->rotationA = 1.2217305f;
-        params->rotationB = 1.3962634f;
-        break;
-    case 7:
-        params->rotationA = 1.2217305f;
-        params->rotationB = 1.5707964f;
-        break;
-    default:
-        if (size > 0) {
-            params->rotationA = 0.20943952f;
-            params->rotationB = 1.0471976f;
-        } else {
-            params->rotationA = 0.20943952f;
-            params->rotationB = 1.2566371f;
-        }
-        break;
-    }
-    f32 heightLow;
-    f32 heightHigh;
-    if (flags & 0x80) {
-        params->distanceMin = 25.0f;
-        params->distanceMax = 35.0f;
-        heightLow = 6.0f;
-        heightHigh = 8.0f;
-    } else if (flags & 0x100) {
-        params->distanceMin = 35.0f;
-        params->distanceMax = 50.0f;
-        heightLow = 6.0f;
-        heightHigh = 11.0f;
-    } else if (flags & 0x200) {
-        params->distanceMin = 50.0f;
-        params->distanceMax = 60.0f;
-        heightLow = 6.0f;
-        heightHigh = 20.0f;
+void _wazaSequenceCameraDoDollyPosition(TemplateExpFileHeader *record, wazaSequenceCameraParams *params, f32 speed, bool flip) {
+    f32 duration;
+    f32 zoomInChance;
+    bool inward;
+    f32 moveStart;
+    f32 moveEnd;
+    f32 roll;
+    f32 half;
+    f32 sample12;
+    f32 lo12;
+    f32 diff12;
+    f32 distanceA;
+    f32 distanceFar;
+    f32 sample13;
+    f32 lo13;
+    f32 diff13;
+    f32 distanceB;
+    f32 distanceNear;
+    f32 height;
+    f32 sample14;
+    f32 lo14;
+    f32 diff14;
+    f32 sample15;
+    f32 lo15;
+    f32 diff15;
+    f32 rotation;
+    f32 sample16;
+    f32 a16;
+    f32 diff16;
+    f32 sample17;
+    f32 a17;
+    f32 diff17;
+    GSvec position;
+    GSvec target;
+    f32 heightSquared;
+    f32 middle;
+    f32 zoomOutChance;
+    zoomOutChance = 0.5f;
+    zoomInChance = 0.75f;
+    duration = record->time[record->index];
+    duration *= speed;
+    if (HSD_Randf() <= 0.7f) {
+        zoomOutChance = 0.3f;
+        inward = true;
+        zoomInChance = 0.65f;
     } else {
-        heightHigh = 20.0f;
-        params->distanceMin = heightHigh;
-        params->distanceMax = 60.0f;
-        heightLow = 6.0f;
+        inward = false;
     }
-    params->distanceMin = params->distanceMin * sizeScale;
-    params->distanceMax = params->distanceMax * sizeScale;
-    GSboundGetMinMax(bound, &boundMin, &boundMax, 0, 0, 0, 0);
-    PSVECSubtract(&boundMax, &boundMin, &extent);
-    size3.param1 = extent.param1;
-    size3.param2 = extent.param2;
-    size3.param3 = extent.param3;
-    if (size3.param1 < 0.0f) size3.param1 = -size3.param1;
-    if (size3.param2 < 0.0f) size3.param2 = -size3.param2;
-    if (size3.param3 < 0.0f) size3.param3 = -size3.param3;
-    f32 mag = PSVECMag(&size3);
-    f32 dep = size3.param2;
-    params->width = 0.57735026f * mag;
-    params->depth = dep;
-    params->heightMin = boundMin.param2;
-    params->heightMax = boundMax.param2;
-    if (params->heightMin < heightLow) {
-        params->heightMin = heightLow;
-        if (params->heightMax < heightLow) params->heightMax = 1.5f * heightLow;
+    roll = HSD_Randf();
+    if (roll < zoomOutChance) {
+        moveEnd = duration;
+        moveStart = 0.0f;
+    } else if (roll < zoomInChance) {
+        moveStart = 0.0f;
+        moveEnd = duration * HSD_Randf();
+        half = 0.5f * duration;
+        if (moveEnd < half) moveEnd = half;
+    } else {
+        moveStart = duration * HSD_Randf();
+        half = 0.5f * duration;
+        if (moveStart > half) moveStart = half;
+        moveEnd = duration;
     }
-    if (params->heightMax > heightHigh) {
-        params->heightMax = heightHigh;
-        if (params->heightMin > heightHigh) params->heightMin = 0.8f * heightHigh;
+    sample12 = HSD_Randf();
+    lo12 = params->distanceMin;
+    diff12 = params->distanceMax - lo12;
+    distanceA = diff12 * sample12 + lo12;
+    distanceFar = distanceA;
+    sample13 = HSD_Randf();
+    lo13 = params->distanceMin;
+    diff13 = params->distanceMax - lo13;
+    distanceB = diff13 * sample13 + lo13;
+    distanceNear = distanceB;
+    if (inward) {
+        if (distanceA < distanceNear) {
+            distanceNear = distanceA;
+            distanceFar = distanceB;
+        }
+        sample14 = HSD_Randf();
+        lo14 = params->heightMin;
+        diff14 = params->heightMax - lo14;
+        height = diff14 * sample14 + lo14;
+    } else {
+        if (distanceA > distanceNear) {
+            distanceNear = distanceA;
+            distanceFar = distanceB;
+        }
+        sample15 = HSD_Randf();
+        lo15 = params->heightMin;
+        diff15 = params->heightMax - lo15;
+        height = diff15 * sample15 + lo15;
     }
-    params->width = params->width * rangeScale;
-    params->depth = params->depth * rangeScale;
-    if (params->distanceMin < 20.0f) params->distanceMin = 20.0f;
-    if (params->distanceMax < 40.0f) params->distanceMax = 40.0f;
-    if (params->distanceMin > 48.0f) params->distanceMin = 48.0f;
-    if (params->distanceMax > 60.0f) params->distanceMax = 60.0f;
+    if (flip) {
+        sample16 = HSD_Randf();
+        a16 = params->rotationA;
+        diff16 = params->rotationB - a16;
+        rotation = (params->baseRotation - a16) - diff16 * sample16;
+    } else {
+        sample17 = HSD_Randf();
+        a17 = params->rotationA;
+        diff17 = params->rotationB - a17;
+        rotation = diff17 * sample17 + (params->baseRotation + a17);
+    }
+    cameraSetDistance(1.25f * distanceFar);
+    cameraSetHeight(height);
+    cameraSetRotY(rotation);
+    cameraUpdate();
+    cameraGetPosition(&position);
+    cameraGetTargetPos(&target);
+    PSVECSubtract(&position, &target, &position);
+    position.param2 = 0.0f;
+    PSVECScale(&position, &position, distanceNear / distanceFar);
+    position.param2 = height;
+    PSVECAdd(&position, &target, &position);
+    moveEnd = moveEnd - moveStart;
+    cameraMovePosition(7, &position, moveEnd);
+    cameraMovePositionAcc(moveEnd * (0.1f / (f32)GSgfxVideoGetVsyncRate()));
+    heightSquared = height * height;
+    params->fovDistance[0] = hsdSqrt(distanceFar * distanceFar + heightSquared);
+    middle = 0.5f * (distanceFar + distanceNear);
+    params->fovDistance[1] = hsdSqrt(middle * middle + heightSquared);
+    params->fovDistance[2] = hsdSqrt(distanceNear * distanceNear + heightSquared);
+}
+
+void _wazaSequenceCameraDoPosition(ModelSequence *sequence, wazaSequenceCameraParams *params, f32 speed, bool flip) {
+    TemplateExpFileHeader *record = (TemplateExpFileHeader *)&sequence->records[sequence->wazaIndex];
+    cameraLockYTarget((record->flags >> 4) & 1);
+    switch (params->motion) {
+    case 0:
+        _wazaSequenceCameraDoDollyPosition(record, params, speed, flip);
+        break;
+    case 1: {
+        f32 distance;
+        f32 height;
+        f32 side;
+        f32 duration;
+        duration = record->time[record->index];
+        duration *= speed;
+        side = 10.0f * HSD_Randf() + 25.0f;
+        height = 9.0f * HSD_Randf() + 1.0f;
+        distance = 30.0f * HSD_Randf() + 20.0f;
+        cameraSetDistance(distance);
+        cameraSetHeight(height);
+        cameraSetRotY(0.0f);
+        cameraUpdate();
+        GSvec position;
+        cameraGetPosition(&position);
+        if (flip) {
+            position.param1 += 10.0f;
+        } else {
+            position.param1 -= 10.0f;
+        }
+        cameraSetPosition(&position);
+        if (flip) {
+            position.param1 = position.param1 + side;
+        } else {
+            position.param1 = position.param1 - side;
+        }
+        cameraMovePosition(7, &position, duration);
+        cameraMovePositionAcc(duration * (0.1f / (f32)GSgfxVideoGetVsyncRate()));
+        f32 planar = side * side + height * height;
+        params->fovDistance[0] = hsdSqrt(planar);
+        params->fovDistance[2] = hsdSqrt(distance * distance + planar);
+        params->fovDistance[1] = 0.5f * (params->fovDistance[0] + params->fovDistance[2]);
+        break;
+    }
+    case 2: {
+        f32 duration;
+        f32 distance;
+        f32 height;
+        f32 rotationEnd;
+        f32 rotationStart;
+        duration = record->time[record->index];
+        duration *= speed;
+        { f32 rnd = HSD_Randf(); f32 lo = params->distanceMin; f32 diff = params->distanceMax - lo; distance = diff * rnd + lo; }
+        { f32 rnd = HSD_Randf(); f32 lo = params->heightMin; f32 diff = params->heightMax - lo; height = diff * rnd + lo; }
+        if (flip) {
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationStart = (params->baseRotation - a) - diff * rnd; }
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationEnd = (params->baseRotation - a) - diff * rnd; }
+        } else {
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationStart = diff * rnd + (params->baseRotation + a); }
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotationEnd = diff * rnd + (params->baseRotation + a); }
+        }
+        if (rotationStart > rotationEnd) {
+            f32 swap = rotationStart;
+            rotationStart = rotationEnd;
+            rotationEnd = swap;
+        }
+        cameraSetDistance(1.25f * distance);
+        cameraSetHeight(height);
+        cameraSetRotY(rotationStart);
+        cameraUpdate();
+        cameraMoveRotationXYZ(7, 0.0f, rotationEnd, 0.0f, duration);
+        cameraMoveRotationAcc(duration * (0.1f / (f32)GSgfxVideoGetVsyncRate()));
+        f32 reach = hsdSqrt(distance * distance + height * height);
+        params->fovDistance[2] = reach;
+        params->fovDistance[1] = reach;
+        params->fovDistance[0] = reach;
+        break;
+    }
+    case 3: {
+        f32 duration = record->time[record->index];
+        duration *= speed;
+        f32 distance;
+        { f32 rnd = HSD_Randf(); f32 lo = params->distanceMin; f32 diff = params->distanceMax - lo; distance = diff * rnd + lo; }
+        f32 height;
+        { f32 rnd = HSD_Randf(); f32 lo = params->heightMin; f32 diff = params->heightMax - lo; height = diff * rnd + lo; }
+        f32 rotation;
+        if (flip) {
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotation = (params->baseRotation - a) - diff * rnd; }
+        } else {
+            { f32 rnd = HSD_Randf(); f32 a = params->rotationA; f32 diff = params->rotationB - a; rotation = diff * rnd + (params->baseRotation + a); }
+        }
+        cameraSetDistance(1.25f * distance);
+        cameraSetHeight(height);
+        cameraSetRotY(rotation);
+        cameraUpdate();
+        GSvec position;
+        cameraGetPosition(&position);
+        cameraMovePosition(7, &position, duration);
+        f32 reach = hsdSqrt(distance * distance + height * height);
+        params->fovDistance[2] = reach;
+        params->fovDistance[1] = reach;
+        params->fovDistance[0] = reach;
+        break;
+    }
+    case 4: {
+        f32 duration = record->time[record->index];
+        f32 rotation;
+        if (flip) {
+            rotation = params->baseRotation - 0.47123894f;
+        } else {
+            rotation = 0.47123894f + params->baseRotation;
+        }
+        cameraSetDistance(110.0f);
+        cameraSetHeight(25.0f);
+        cameraSetRotY(rotation);
+        cameraUpdate();
+        GSvec position;
+        cameraGetPosition(&position);
+        cameraMovePosition(7, &position, duration);
+        f64 value = 12725.0;
+        f64 guess = __frsqrte(value);
+        guess = 0.5 * guess * (3.0 - guess * guess * value);
+        guess = 0.5 * guess * (3.0 - guess * guess * value);
+        guess = 0.5 * guess * (3.0 - guess * guess * value);
+        f32 reach = (f32)(value * guess);
+        params->fovDistance[2] = reach;
+        params->fovDistance[1] = reach;
+        params->fovDistance[0] = reach;
+        break;
+    }
+    case 5: {
+        f32 duration = record->time[record->index];
+        duration *= speed;
+        f32 distance = 50.0f * cameraSizeScale(sequence->modelSize);
+        f32 height;
+        { f32 rnd = HSD_Randf(); f32 lo = params->heightMin; f32 diff = params->heightMax - lo; height = diff * rnd + lo; }
+        f32 rotation;
+        if (flip) {
+            rotation = params->baseRotation - 0.7853982f;
+        } else {
+            rotation = 0.7853982f + params->baseRotation;
+        }
+        cameraSetDistance(1.25f * distance);
+        cameraSetHeight(height);
+        cameraSetRotY(rotation);
+        cameraUpdate();
+        GSvec position;
+        cameraGetPosition(&position);
+        cameraMovePosition(7, &position, duration);
+        f32 reach = hsdSqrt(distance * distance + height * height);
+        params->fovDistance[2] = reach;
+        params->fovDistance[1] = reach;
+        params->fovDistance[0] = reach;
+        break;
+    }
+    }
 }

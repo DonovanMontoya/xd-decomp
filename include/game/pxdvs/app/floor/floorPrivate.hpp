@@ -27,27 +27,15 @@ struct FloorModuleInterface {
 struct GSvec {
     f32 x, y, z;
     GSvec();
-    void set(f32 a, f32 b, f32 c) {
-        x = a;
-        y = b;
-        z = c;
-    }
-    void clear() {
-        x = 0.0f;
-        y = 0.0f;
-        z = 0.0f;
-    }
+    void set(f32 a, f32 b, f32 c);
+    void clear();
 };
 
 extern "C" void PSMTXIdentity(f32 (*)[4]);
 struct GSmtx {
     f32 m[3][4];
     GSmtx();
-    static GSmtx makeIdentity() {
-        GSmtx t;
-        PSMTXIdentity(t.m);
-        return t;
-    }
+    static GSmtx makeIdentity();
 };
 
 struct GSgfxColAu8 {
@@ -83,59 +71,10 @@ struct GSgfxLayer {
     void setFog(GSgfxFogType type, f32 start, f32 end, GSgfxColAu8 color);
 };
 
-inline void GSgfxLayer::fog(bool on) {
-    fogOn = on;
-    flags170c |= 0x40;
-    flags17c4 |= 0x40;
-    if (on) {
-        flags170c |= 0x200;
-        flags17c4 |= 0x200;
-        if (fogRangeOn) {
-            flags170c |= 0x100;
-            flags17c4 |= 0x100;
-        }
-    }
-    flags16a8 |= 0x40;
-    flags1760 |= 0x40;
-}
-
 extern "C" void GSgfxVideoGetEFBSize(GSsizeS16 *, s32);
 
-inline void GSgfxLayer::setFogRange(bool on, u16 range) {
-    fogRangeOn = on;
-    if (range != 0xFFFF) {
-        fogRange = range;
-    } else {
-        GSsizeS16 size;
-        GSgfxVideoGetEFBSize(&size, 0);
-        fogRange = size.w >> 1;
-    }
-    if (fogOn) {
-        flags170c |= 0x200;
-        flags17c4 |= 0x200;
-        if (on) {
-            flags170c |= 0x100;
-            flags17c4 |= 0x100;
-        }
-        flags16a8 |= 0x40;
-        flags1760 |= 0x40;
-    }
-}
-
-inline void GSgfxLayer::setFog(GSgfxFogType type, f32 start, f32 end, GSgfxColAu8 color) {
-    fogType = type;
-    fogStart = start;
-    fogEnd = end;
-    fogColor = *(u32 *)&color;
-    if (fogOn) {
-        flags170c |= 0x40;
-        flags16a8 |= 0x40;
-        flags17c4 |= 0x40;
-        flags1760 |= 0x40;
-    }
-}
-
 struct FLOOR_CHANGE_INFO {
+    FLOOR_CHANGE_INFO();
     u32 prevFloorID;
     u32 nextFloorID;
     u8 useInitPosition;

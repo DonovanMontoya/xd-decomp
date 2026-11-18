@@ -396,12 +396,15 @@ void menuSubCursorAnimeValGet(f32* out, s32* color) {
     *color = _cursorAnimeWork.color;
 }
 
+#pragma opt_propagation off
 void menuSubCursorAnimeMain(void) {
     MenuSubCursorAnimeWork *w = &_cursorAnimeWork;
     if (w->x != 0.0f) {
         s32 t = w->time + timeGetLastFrameTime();
         w->time=t;
-        w->x = (f32)(s16)((((f32)w->time * (f32)w->time) / (f32)w->duration / (f32)w->duration) * (w->toX - w->fromX) + w->fromX);
+        f32 fromX = w->fromX;
+        f32 positionRatio = (f32)w->time * (f32)w->time / (f32)w->duration / (f32)w->duration;
+        w->x = (f32)(s16)(positionRatio * (w->toX - fromX) + fromX);
         f32 ratio = (f32)(s16)t / (f32)w->duration;
         w->cur[0] = (u8)(ratio * (f32)(w->to[0] - w->from[0]) + (f32)w->from[0]);
         w->cur[1] = (u8)(ratio * (f32)(w->to[1] - w->from[1]) + (f32)w->from[1]);
@@ -420,6 +423,7 @@ void menuSubCursorAnimeMain(void) {
     _cursorAnimeWork.sec = _cursorAnimeWork.sec + delta;
 }
 
+#pragma opt_propagation reset
 void menuSubCursorAnimeStart(void) {
     _cursorAnimeWork.x = -8.0f;
     _cursorAnimeWork.y = 0.0f;

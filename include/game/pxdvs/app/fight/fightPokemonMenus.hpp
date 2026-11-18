@@ -1,6 +1,11 @@
 #ifndef FIGHT_POKEMON_MENUS_HPP
 #define FIGHT_POKEMON_MENUS_HPP
+#ifdef FIGHT_POKEMON_MENUS_NO_PROTOTYPES
+#include <dolphin/types.h>
+struct FightOutPokemon;
+#else
 #include <game/pxdvs/app/fight/fightPokemon.hpp>
+#endif
 
 // Only fields touched by the battle conversion are named here. The original
 // menu stores the subbar flag at 0x16 and displayed sex at 0x28.
@@ -26,6 +31,7 @@ struct FightMenuLvupStatus {
     u16 specialAttack;
     u16 specialDefense;
 };
+#ifndef FIGHT_POKEMON_MENUS_NO_PROTOTYPES
 extern "C" {
 void pokemon_SetRnd(Pokemon*, u32);
 void pokemon_SetCatchTrainerRnd(Pokemon*, u32);
@@ -46,4 +52,5 @@ void fightOutPokemonToMenuWazaStatus(FightOutPokemon*, FightMenuWazaStatus*);
 void fightPokemonToMenuWazaStatus(FightPokemon*, FightMenuWazaStatus*);
 void fightPokemonToMenuLvupStatus(FightPokemon*, FightMenuLvupStatus*);
 }
+#endif
 #endif

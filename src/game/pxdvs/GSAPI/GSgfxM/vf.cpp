@@ -139,6 +139,14 @@ static inline u32 elementIndex(s32 attribute) {
         if (attribute == value) return index;
     return 0;
 }
+static inline void recountDescriptorTypes(VFFormat *format) {
+    for (u8 i = 0; i < 27; ++i) {
+        if (format->descriptors[i].attribute == 255) break;
+        s32 type = format->descriptors[i].type;
+        if (type == 2 || type == 3) { format->flags |= 8; break; }
+    }
+    format->flags |= 6;
+}
 static inline void recountElements(VFFormat *format) {
     format->colors = 0;
     format->textures = 0;
@@ -151,12 +159,29 @@ static inline void recountElements(VFFormat *format) {
         if (!findFormat(format, i + 13)) break;
         ++format->textures;
     }
-    for (u8 i = 0; i < 27; ++i) {
-        if (format->descriptors[i].attribute == 255) break;
-        s32 type = format->descriptors[i].type;
-        if (type == 2 || type == 3) { format->flags |= 8; break; }
+    recountDescriptorTypes(format);
+}
+
+static inline VFAttribute *findRecountFormat(VFFormat *format, const s32& attribute) {
+    s32 value;
+    for (VFAttribute *p = format->formats; (value = p->attribute) != 255; ++p)
+        if (value == attribute) return p;
+    return 0;
+}
+static inline void recountRemovedElements(VFFormat *format) {
+    format->colors = 0;
+    format->textures = 0;
+    format->flags &= ~8;
+    u8 i;
+    for (i = 0; i < 2; ++i) {
+        if (!findRecountFormat(format, i + 11)) break;
+        ++format->colors;
     }
-    format->flags |= 6;
+    for (i = 0; i < 8; ++i) {
+        if (!findRecountFormat(format, i + 13)) break;
+        ++format->textures;
+    }
+    recountDescriptorTypes(format);
 }
 u8 GSgfxVFGetTextureCount(VFFormat *format) { return format->textures; }
 u8 GSgfxVFGetColorCount(VFFormat *format) { return format->colors; }
@@ -196,8 +221,7 @@ void GSgfxVFSetArray(VFFormat *format, s32 attribute, s32 type, void *data, u8 s
         format->flags |= 12;
     }
 }
-void GSgfxVFRemoveElement(VFFormat *format, s32 attribute) {
-    u8 changed = 0;
+static inline void removeDescriptor(VFFormat *format, s32 attribute, u8 &changed) {
     VFDescriptor *descriptor = findDescriptor(format, attribute);
     if (descriptor) {
         VFDescriptor *next = descriptor + 1;
@@ -208,32 +232,40 @@ void GSgfxVFRemoveElement(VFFormat *format, s32 attribute) {
         }
         changed = 1;
     }
-    if (attribute >= 9 || attribute < 0) {
-        VFAttribute *entry = findFormat(format, attribute);
-        if (entry) {
-            VFAttribute *next = entry + 1;
-            while (entry->attribute != 255) {
-                entry->attribute = next->attribute;
-                entry->count = next->count;
-                entry->component = next->component;
-                entry->fraction = next->fraction;
-                ++next; ++entry;
-            }
-            changed = 1;
+}
+static inline void removeFormat(VFFormat *format, s32 attribute, u8 &changed) {
+    VFAttribute *entry = findFormat(format, attribute);
+    if (entry) {
+        VFAttribute *next = entry + 1;
+        while (entry->attribute != 255) {
+            entry->attribute = next->attribute;
+            entry->count = next->count;
+            entry->component = next->component;
+            entry->fraction = next->fraction;
+            ++next; ++entry;
         }
+        changed = 1;
+    }
+}
+void GSgfxVFRemoveElement(VFFormat *format, s32 attribute) {
+    VFArray *nextArray;
+    u8 changed = 0;
+    removeDescriptor(format, attribute, changed);
+    if (attribute >= 9 || attribute < 0) {
+        removeFormat(format, attribute, changed);
         VFArray *array = findArray(format, attribute);
         if (array) {
-            VFArray *next = array + 1;
+            nextArray = array + 1;
             while (array->attribute != 255) {
-                array->attribute = next->attribute;
-                array->data = next->data;
-                array->stride = next->stride;
-                ++next; ++array;
+                array->attribute = nextArray->attribute;
+                array->data = nextArray->data;
+                array->stride = nextArray->stride;
+                ++nextArray; ++array;
             }
             changed = 1;
         }
     }
-    if (changed == 1) recountElements(format);
+    if (changed == 1) recountRemovedElements(format);
 }
 void GSgfxVFSetElement(VFFormat *format, s32 attribute, s32 count, s32 component, u8 fraction) {
     GSgfxVFRemoveElement(format, attribute);

@@ -1,13 +1,127 @@
 #include <game/pxdvs/GSAPI/GSshape/GSshape.hpp>
 u32 g_instancedMemorySizeAll;
 
-void GsShapeRender::SwapBuffers() {
-    currentBuffer=!currentBuffer;
-    ExecuteFreeInstance();
+static inline void shapeFreeQueuedInstances(GsShapeRender* render) {
+    for(s16 i=0;i<render->freeCount[render->currentBuffer];i++) {
+        s16 id=render->freeInstances[render->currentBuffer][i];
+        if(render->tokens[!render->currentBuffer][id]) GSgfxTokenWaitForClear(render->tokens[!render->currentBuffer][id]);
+        if(render->tokens[render->currentBuffer][id]) GSgfxTokenWaitForClear(render->tokens[render->currentBuffer][id]);
+        render->tokens[0][id]=0; render->tokens[1][id]=0;
+        for(u16 j=0;j<render->objectCount;j++) {
+            if(render->objects[j].FreeShapeDrawBuffer(id)==1) {
+                u32 size=render->objects[0].entry->vertexCount*(render->objects[0].entry->textureCount*8+16)*2;
+                render->instancedMemory-=size; g_instancedMemorySizeAll-=size;
+            }
+        }
+        render->instanceCount--; render->instances[id]=0;
+    }
+    render->freeCount[render->currentBuffer]=0;
 }
-GSgfxLayerID GsShapeRender::GetLayerId() const { return layer; }
-u32 GsShapeRender::GetInstancedMemorySizeAll() { return instancedMemory; }
-u32 GsShapeRender::GetUsedMemorySizeAll() { return usedMemory; }
+
+struct GsShapeFileHeader {
+    u8 reserved00[10], layer, reserved0B;
+    u32 animationOffset, objectsOffset, texturesOffset;
+};
+struct GsShapeFileTable { u32 reserved; u16 count, reserved06; u32 entriesOffset; };
+struct GsShapeFileTexture { u32 reserved00[3]; u8 reserved0C[2], usesExtraStage, reserved0F[5]; u32 imageOffset; };
+struct GsShapeTextureLink { GsShapeFileTexture* entry; GStexture* texture; };
+struct GSgfxVF;
+extern "C" {
+void GSgfxVFInit(GSgfxVF*);
+void GSgfxVFCreate(GSgfxVF*);
+void GSgfxVFSetElement(GSgfxVF*,s32,s32,s32,u8);
+GStexture* GStextureLoad(void*);
+void GStextureSetWrap(GStexture*,s32,s32);
+GStexture* GStextureCreate(u16,u16,s32,s32,u8);
+}
+static inline void* shapeFilePointer(u8* base,u32 offset) { return base+offset; }
+static inline void shapeRelocateCurve(u8* base,GsShapeCurvePoint*& curve) { curve=(GsShapeCurvePoint*)((u8*)curve+(u32)base); }
+
+// Per-object texture mapping data stored in the primitive file.
+struct GsShapeTextureMapping {
+    u8 reserved00[0xB], scaleBeforeOffset;
+    f32 minU,maxU,minV,maxV;
+};
+extern "C" GSmtx mtxIdent;
+
+struct GSgfxVF;
+struct GsShapeTexture;
+enum GSgfxTgenFunc { SHAPE_TGEN_DEFAULT };
+enum GSgfxTgenSrc { SHAPE_TGEN_SRC_DEFAULT };
+enum GSgfxLayerPass { SHAPE_PASS_DEFAULT };
+struct ShapeMatrixFrame {u32 flags;GSmtx matrix;};
+struct GSgfxMatrixStack {
+    u32 reserved0;
+    ShapeMatrixFrame *frame;
+    void push(GSmtx *);
+    void pushMult(GSmtx *);
+    void pop();
+};
+struct GSgfxLayer {
+    u8 reserved0[0xEAC];
+    u8 textureStages;
+    u8 reservedEAD[0x647];
+    u32 constantColor[4];
+    u8 reserved1504[0x1A4];
+    u32 dirty;
+    u8 reserved16AC[0x20];
+    u32 stageDirty;
+    u8 reserved16D0[0x28];
+    u32 constantColorDirty;
+    u8 reserved16FC[0x64];
+    u32 savedDirty;
+    u8 reserved1764[0x20];
+    u32 savedStageDirty;
+    u8 reserved1788[0x28];
+    u32 savedConstantColorDirty;
+    u8 reserved17B4[0x1E0];
+    GSgfxLayerPass pass;
+    u8 reserved1998[8];
+    GSgfxMatrixStack *matrixStack;
+    void setRenderStateAndSelect(GSgfxVF *);
+    void tgenFunc(u8,GSgfxTgenFunc,GSgfxTgenSrc,GSmtx *,bool,GSmtx *);
+    void textureCopy(GSgfxLayerPass,GStexture *,bool,u8 *,bool,bool,bool);
+    inline void setTextureStages(u8 count) {
+        textureStages=count;
+        stageDirty|=1;
+        dirty|=8;
+        savedStageDirty|=1;
+        savedDirty|=8;
+    }
+    inline void setConstantColor(u8 index,tagGScol4ub color) {
+        constantColor[index]=*(u32 *)&color;
+        constantColorDirty|=1<<index;
+        dirty|=0x10;
+        savedConstantColorDirty|=1<<index;
+        savedDirty|=0x10;
+    }
+};
+typedef char ShapeRenderLayerMatrixOffset[offsetof(GSgfxLayer,matrixStack)==0x19A0?1:-1];
+extern "C" {
+GSgfxLayer *GSgfxLayerFindByID(GSgfxLayerID);
+u32 GScameraGetActiveCamera();
+void GScameraGetPerspective(u32,f32 *,f32 *,f32 *,f32 *);
+u16 GSgfxTokenMark();
+void MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(GsShapeObject *,GSmtx *,f32);
+bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShapeObject *,GSmtx *,GSmtx *,GSmtx *,f32,bool);
+bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(GsShapeObject *,f32,f32,GSmtx *,GSmtx *,GSmtx *,f32);
+void SetStateMode__13GsShapeObjectFP10GSgfxLayer(GsShapeObject *,GSgfxLayer *);
+void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(GsShapeObject *,GSgfxLayer *,GsShapeTexture *,GStexture *);
+void CallDisplayListShape__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject *,GSgfxLayer *,s16,u8);
+}
+
+inline bool shapeObjectBillboard(tagGsFilePrimObjectEntry *primitive)
+{
+    u8 type=((u8 *)primitive)[0xCD];
+    u8 result=0;
+    if(type>=1 && type<=3) result=1;
+    return result!=0;
+}
+
+static inline GSmtx *shapeRenderCamera(GSgfxLayer *layer)
+{
+    return &layer->matrixStack->frame->matrix;
+}
 
 void GsShapeRender::InitShapeRender() {
     active=0; frame=0; instance=-1; animation=0;
@@ -21,6 +135,7 @@ void GsShapeRender::InitShapeRender() {
         for(int i=0;i<256;i++) tokens[buffer][i]=0;
     polygonCount=0; usedMemory=0; instancedMemory=0; freeCount[0]=0; freeCount[1]=0;
 }
+
 void GsShapeRender::FreeShapeRender() {
     int i,j;
     active=0; frame=0; instance=-1; animation=0;
@@ -59,89 +174,6 @@ void GsShapeRender::FreeShapeRender() {
     polygonCount=0; usedMemory=0; instancedMemory=0; freeCount[0]=0; freeCount[1]=0;
 }
 
-static inline void shapeFreeQueuedInstances(GsShapeRender* render) {
-    for(s16 i=0;i<render->freeCount[render->currentBuffer];i++) {
-        s16 id=render->freeInstances[render->currentBuffer][i];
-        if(render->tokens[!render->currentBuffer][id]) GSgfxTokenWaitForClear(render->tokens[!render->currentBuffer][id]);
-        if(render->tokens[render->currentBuffer][id]) GSgfxTokenWaitForClear(render->tokens[render->currentBuffer][id]);
-        render->tokens[0][id]=0; render->tokens[1][id]=0;
-        for(u16 j=0;j<render->objectCount;j++) {
-            if(render->objects[j].FreeShapeDrawBuffer(id)==1) {
-                u32 size=render->objects[0].entry->vertexCount*(render->objects[0].entry->textureCount*8+16)*2;
-                render->instancedMemory-=size; g_instancedMemorySizeAll-=size;
-            }
-        }
-        render->instanceCount--; render->instances[id]=0;
-    }
-    render->freeCount[render->currentBuffer]=0;
-}
-void GsShapeRender::ExecuteFreeInstance() {
-    if(lastBuffer==currentBuffer) {
-        currentBuffer=!currentBuffer;
-        shapeFreeQueuedInstances(this);
-        currentBuffer=!currentBuffer;
-    }
-    shapeFreeQueuedInstances(this);
-    lastBuffer=currentBuffer;
-}
-void GsShapeRender::FreeShapeRenderDrawBuffer(s16 id) {
-    if(id<0 || id>=256) return;
-    u8 next=!currentBuffer;
-    GsShapeRender* counters;
-    counters=(GsShapeRender*)((s16*)this+next);
-    if(counters->freeCount[0]>=256) {
-        currentBuffer=next;
-        shapeFreeQueuedInstances(this);
-        currentBuffer=!currentBuffer;
-    }
-    freeInstances[next][counters->freeCount[0]]=id;
-    counters->freeCount[0]++;
-}
-s16 GsShapeRender::CreateShapeRenderDrawBuffer() {
-    shapeFreeQueuedInstances(this);
-    u16 tries=0;
-    for(;tries<256;tries++) {
-        if(instances[nextInstance]==0) { instances[nextInstance]=1; break; }
-        nextInstance++;
-        if(nextInstance>=256) nextInstance=0;
-    }
-    if(tries==256) return -1;
-    if(instanceCount>=256) return -1;
-    instanceCount++;
-    for(u16 i=0;i<objectCount;i++) {
-        if(objects[i].CreateShapeDrawBuffer(nextInstance)==0) {
-            for(int j=0;j<i;j++) {
-                if(objects[j].FreeShapeDrawBuffer(nextInstance)==1) {
-                    u32 size=objects[0].entry->vertexCount*(objects[0].entry->textureCount*8+16)*2;
-                    instancedMemory-=size; g_instancedMemorySizeAll-=size;
-                }
-            }
-            return -1;
-        }
-        u32 size=objects[0].entry->vertexCount*(objects[0].entry->textureCount*8+16)*2;
-        instancedMemory+=size; g_instancedMemorySizeAll+=size;
-    }
-    return nextInstance;
-}
-
-struct GsShapeFileHeader {
-    u8 reserved00[10], layer, reserved0B;
-    u32 animationOffset, objectsOffset, texturesOffset;
-};
-struct GsShapeFileTable { u32 reserved; u16 count, reserved06; u32 entriesOffset; };
-struct GsShapeFileTexture { u32 reserved00[3]; u8 reserved0C[2], usesExtraStage, reserved0F[5]; u32 imageOffset; };
-struct GsShapeTextureLink { GsShapeFileTexture* entry; GStexture* texture; };
-struct GSgfxVF;
-extern "C" {
-void GSgfxVFInit(GSgfxVF*);
-void GSgfxVFCreate(GSgfxVF*);
-void GSgfxVFSetElement(GSgfxVF*,s32,s32,s32,u8);
-GStexture* GStextureLoad(void*);
-void GStextureSetWrap(GStexture*,s32,s32);
-GStexture* GStextureCreate(u16,u16,s32,s32,u8);
-}
-static inline void* shapeFilePointer(u8* base,u32 offset) { return base+offset; }
-static inline void shapeRelocateCurve(u8* base,GsShapeCurvePoint*& curve) { curve=(GsShapeCurvePoint*)((u8*)curve+(u32)base); }
 bool GsShapeRender::LoadShapeRender(void* file) {
     int i;
     int j;
@@ -267,12 +299,6 @@ bool GsShapeRender::LoadShapeRender(void* file) {
     return true;
 }
 
-// Per-object texture mapping data stored in the primitive file.
-struct GsShapeTextureMapping {
-    u8 reserved00[0xB], scaleBeforeOffset;
-    f32 minU,maxU,minV,maxV;
-};
-extern "C" GSmtx mtxIdent;
 void GsShapeRender::Update(f32 time,s16 id) {
     if(!active) return;
     GsShapeFileAnimation* sequence=animation;
@@ -422,84 +448,6 @@ void GsShapeRender::Update(f32 time,s16 id) {
         }
     }
 }
-struct GSgfxVF;
-struct GsShapeTexture;
-enum GSgfxTgenFunc { SHAPE_TGEN_DEFAULT };
-enum GSgfxTgenSrc { SHAPE_TGEN_SRC_DEFAULT };
-enum GSgfxLayerPass { SHAPE_PASS_DEFAULT };
-struct ShapeMatrixFrame {u32 flags;GSmtx matrix;};
-struct GSgfxMatrixStack {
-    u32 reserved0;
-    ShapeMatrixFrame *frame;
-    void push(GSmtx *);
-    void pushMult(GSmtx *);
-    void pop();
-};
-struct GSgfxLayer {
-    u8 reserved0[0xEAC];
-    u8 textureStages;
-    u8 reservedEAD[0x647];
-    u32 constantColor[4];
-    u8 reserved1504[0x1A4];
-    u32 dirty;
-    u8 reserved16AC[0x20];
-    u32 stageDirty;
-    u8 reserved16D0[0x28];
-    u32 constantColorDirty;
-    u8 reserved16FC[0x64];
-    u32 savedDirty;
-    u8 reserved1764[0x20];
-    u32 savedStageDirty;
-    u8 reserved1788[0x28];
-    u32 savedConstantColorDirty;
-    u8 reserved17B4[0x1E0];
-    GSgfxLayerPass pass;
-    u8 reserved1998[8];
-    GSgfxMatrixStack *matrixStack;
-    void setRenderStateAndSelect(GSgfxVF *);
-    void tgenFunc(u8,GSgfxTgenFunc,GSgfxTgenSrc,GSmtx *,bool,GSmtx *);
-    void textureCopy(GSgfxLayerPass,GStexture *,bool,u8 *,bool,bool,bool);
-    inline void setTextureStages(u8 count) {
-        textureStages=count;
-        stageDirty|=1;
-        dirty|=8;
-        savedStageDirty|=1;
-        savedDirty|=8;
-    }
-    inline void setConstantColor(u8 index,tagGScol4ub color) {
-        constantColor[index]=*(u32 *)&color;
-        constantColorDirty|=1<<index;
-        dirty|=0x10;
-        savedConstantColorDirty|=1<<index;
-        savedDirty|=0x10;
-    }
-};
-typedef char ShapeRenderLayerMatrixOffset[offsetof(GSgfxLayer,matrixStack)==0x19A0?1:-1];
-extern "C" {
-GSgfxLayer *GSgfxLayerFindByID(GSgfxLayerID);
-u32 GScameraGetActiveCamera();
-void GScameraGetPerspective(u32,f32 *,f32 *,f32 *,f32 *);
-u16 GSgfxTokenMark();
-void MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(GsShapeObject *,GSmtx *,f32);
-bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShapeObject *,GSmtx *,GSmtx *,GSmtx *,f32,bool);
-bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(GsShapeObject *,f32,f32,GSmtx *,GSmtx *,GSmtx *,f32);
-void SetStateMode__13GsShapeObjectFP10GSgfxLayer(GsShapeObject *,GSgfxLayer *);
-void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(GsShapeObject *,GSgfxLayer *,GsShapeTexture *,GStexture *);
-void CallDisplayListShape__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject *,GSgfxLayer *,s16,u8);
-}
-
-inline bool shapeObjectBillboard(tagGsFilePrimObjectEntry *primitive)
-{
-    u8 type=((u8 *)primitive)[0xCD];
-    u8 result=0;
-    if(type>=1 && type<=3) result=1;
-    return result!=0;
-}
-
-static inline GSmtx *shapeRenderCamera(GSgfxLayer *layer)
-{
-    return &layer->matrixStack->frame->matrix;
-}
 
 void GsShapeRender::Render(s16 instanceId,GSgfxLayerID layerId)
 {
@@ -600,4 +548,66 @@ void GsShapeRender::Render(s16 instanceId,GSgfxLayerID layerId)
             if(instanceId>=0 && instanceId<256) tokens[currentBuffer][instanceId]=GSgfxTokenMark();
         }
     }
+}
+
+s16 GsShapeRender::CreateShapeRenderDrawBuffer() {
+    shapeFreeQueuedInstances(this);
+    u16 tries=0;
+    for(;tries<256;tries++) {
+        if(instances[nextInstance]==0) { instances[nextInstance]=1; break; }
+        nextInstance++;
+        if(nextInstance>=256) nextInstance=0;
+    }
+    if(tries==256) return -1;
+    if(instanceCount>=256) return -1;
+    instanceCount++;
+    for(u16 i=0;i<objectCount;i++) {
+        if(objects[i].CreateShapeDrawBuffer(nextInstance)==0) {
+            for(int j=0;j<i;j++) {
+                if(objects[j].FreeShapeDrawBuffer(nextInstance)==1) {
+                    u32 size=objects[0].entry->vertexCount*(objects[0].entry->textureCount*8+16)*2;
+                    instancedMemory-=size; g_instancedMemorySizeAll-=size;
+                }
+            }
+            return -1;
+        }
+        u32 size=objects[0].entry->vertexCount*(objects[0].entry->textureCount*8+16)*2;
+        instancedMemory+=size; g_instancedMemorySizeAll+=size;
+    }
+    return nextInstance;
+}
+
+void GsShapeRender::FreeShapeRenderDrawBuffer(s16 id) {
+    if(id<0 || id>=256) return;
+    u8 next=!currentBuffer;
+    GsShapeRender* counters;
+    counters=(GsShapeRender*)((s16*)this+next);
+    if(counters->freeCount[0]>=256) {
+        currentBuffer=next;
+        shapeFreeQueuedInstances(this);
+        currentBuffer=!currentBuffer;
+    }
+    freeInstances[next][counters->freeCount[0]]=id;
+    counters->freeCount[0]++;
+}
+
+u32 GsShapeRender::GetUsedMemorySizeAll() { return usedMemory; }
+
+u32 GsShapeRender::GetInstancedMemorySizeAll() { return instancedMemory; }
+
+GSgfxLayerID GsShapeRender::GetLayerId() const { return layer; }
+
+void GsShapeRender::SwapBuffers() {
+    currentBuffer=!currentBuffer;
+    ExecuteFreeInstance();
+}
+
+void GsShapeRender::ExecuteFreeInstance() {
+    if(lastBuffer==currentBuffer) {
+        currentBuffer=!currentBuffer;
+        shapeFreeQueuedInstances(this);
+        currentBuffer=!currentBuffer;
+    }
+    shapeFreeQueuedInstances(this);
+    lastBuffer=currentBuffer;
 }

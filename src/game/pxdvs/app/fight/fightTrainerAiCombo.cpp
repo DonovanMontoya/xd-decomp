@@ -169,7 +169,7 @@ s16 fightAiCombo_GetValidValue(FightOutPokemon **allies,u16 allyCount,FightOutPo
 
 extern "C" {
 void ComboStatusUp(FIGHT_TRAINER *trainer,ComboWaza *table,s16 *score){
-    ComboStatusMove *entry;
+    const ComboStatusMove *entry;
     u8 i;
     u8 j;
     s16 value;
@@ -189,9 +189,9 @@ void ComboStatusUp(FIGHT_TRAINER *trainer,ComboWaza *table,s16 *score){
 void ComboStatusDown(FIGHT_TRAINER *trainer,FightOutPokemon **enemies,ComboWaza *table,s16 *score){
     u16 immune[3];
     u8 current,immuneCount,i,j,k,l;
-    ComboStatusMove *entry;
-    u16 *stat;
-    u16 *amount;
+    const ComboStatusMove *entry;
+    const u16 *stat;
+    const u16 *amount;
     immune[0]=0x1D;
     immune[1]=0x49;
     s16 value=*score;
