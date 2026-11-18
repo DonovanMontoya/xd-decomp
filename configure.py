@@ -913,7 +913,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/menuItemTool.cpp"),
             Object(MatchingFor("GXXE01"), "game/menuSaveLoad.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuPda.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/menuReliveHall.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
+            Object(NonMatching, "game/menuReliveHall.cpp", extra_cflags=["-inline noauto,deferred", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuPdaSearcher.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuPdaMailXD.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuPdaMailList.XD.cpp", extra_cflags=["-inline noauto", "-lang c++", "-opt nopeephole", "-use_lmw_stmw on"]),
