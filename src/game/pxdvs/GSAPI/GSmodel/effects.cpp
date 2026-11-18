@@ -20,7 +20,7 @@ void GSgfxVFInit(GSgfxVF*);
 void GSgfxVFCreate(GSgfxVF*);
 void GSgfxVFFree(GSgfxVF*);
 void GSgfxVFSetElement(GSgfxVF*, s32, s32, s32, u8);
-void GSgfxVFSetArray(GSgfxVF*, s32, s32, void*, u8, u8);
+void GSgfxVFSetArray(GSgfxVF*, s32, s32, void*, u8, u32);
 GSpart* GSmodelGetPart(GSmodel*, u32);
 GSparticleGenerator* GSparticleCreateGenerator(GSparticleBank*, s32, s32);
 void GSparticleSetGeneratorPosition(GSparticleGenerator*, Vec*);
