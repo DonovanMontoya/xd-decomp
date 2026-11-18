@@ -406,8 +406,9 @@ static const u8 layerTevColorChannel[16]={0,1,0,1,0,1,7,5,6,0,0,0,0,0,0,7};
 static const u8 layerCullMode[4]={0,2,1,3};
 void GSgfx_GCWriteTexCoordGen(s32,s32,s32,u32,u8,u32);
 void GSgfx_GCWriteFog(s32,float,float,float,float);
-void GSgfx_GCWriteTevIndBumpST(s32,u8,s32);
-void GSgfx_GCWriteTevIndTile(s32,u8,u16,u16,u16,u16,s32,s32,u8,u8);
+void GSgfx_GCWriteTevIndBumpST(s32 stage, s32 indirectStage, s32 matrix);
+void GSgfx_GCWriteTevIndTile(u32 stage, u8 indirectStage, u16 sizeS, u16 sizeT, u16 spaceS, u16 spaceT,
+                             u32 format, s32 matrix, u32 bias, u32 alpha);
 void* GSgfxVideoGetViewport();
 void GSgfxVideoSetViewport__Fffffb(float,float,float,float,bool);
 __declspec(weak) void GSgfx_GCSetFogRangeAdj(u8 arg0, u16 arg1, u8 *arg2);
