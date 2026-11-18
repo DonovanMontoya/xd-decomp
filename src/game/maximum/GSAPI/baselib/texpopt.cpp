@@ -1616,79 +1616,6 @@ block_622:
 
 #pragma opt_propagation reset
 
-int HSD_TExpSimplify(HSD_TExp* texp_)
-{
-    HSD_TExp* texp = (HSD_TExp*) texp_;
-    int res = false;
-    if (HSD_TExpGetType(texp) != HSD_TE_TEV) {
-        return false;
-    }
-    if (SimplifySrc(texp) != 0) {
-        res = true;
-    }
-    if (SimplifyThis(texp) != 0) {
-        res = true;
-    }
-    if (SimplifyByMerge(texp) != 0) {
-        res = true;
-    }
-    CalcTevRange(texp);
-    return res;
-}
-
-int HSD_TExpSimplify2(HSD_TExp* texp_)
-{
-    HSD_TExp* texp = texp_;
-    HSD_TExp* src_exp;
-    u8 src_sel;
-    HSD_TExp* cursor;
-    int i;
-
-    for (i = 0, cursor=texp; i < 4; i++, cursor=(HSD_TExp*)((u8*)cursor+sizeof(HSD_TEArg))) {
-        src_exp = cursor->tev.c_in[0].exp;
-        src_sel = cursor->tev.c_in[0].sel;
-        if (cursor->tev.c_in[0].type == HSD_TE_TEV && src_sel == 1 &&
-            IsThroughColor(src_exp))
-        {
-            switch (src_exp->tev.c_in[3].type) {
-            case HSD_TE_KONST:
-                if (texp->tev.kcsel == 0xFF) {
-                    texp->tev.kcsel = src_exp->tev.kcsel;
-                } else if (texp->tev.kcsel != src_exp->tev.kcsel) {
-                    break;
-                }
-                /* fallthrough */
-            case HSD_TE_IMM:
-                cursor->tev.c_in[0] = src_exp->tev.c_in[3];
-                HSD_TExpRef(cursor->tev.c_in[0].exp, cursor->tev.c_in[0].sel);
-                HSD_TExpUnref(src_exp, src_sel);
-                break;
-            }
-        }
-    }
-    for (i = 0, cursor=texp; i < 4; i++, cursor=(HSD_TExp*)((u8*)cursor+sizeof(HSD_TEArg))) {
-        src_exp = cursor->tev.a_in[0].exp;
-        src_sel = cursor->tev.a_in[0].sel;
-        if (cursor->tev.a_in[0].type == HSD_TE_TEV && IsThroughAlpha(src_exp)) {
-            switch (src_exp->tev.a_in[3].type) {
-            case HSD_TE_KONST:
-                if (texp->tev.kasel == 0xFF) {
-                    texp->tev.kasel = src_exp->tev.kasel;
-                } else if (texp->tev.kasel != src_exp->tev.kasel) {
-                    break;
-                }
-                /* fallthrough */
-            case HSD_TE_IMM:
-                cursor->tev.a_in[0] = src_exp->tev.a_in[3];
-                HSD_TExpRef(cursor->tev.a_in[0].exp, cursor->tev.a_in[0].sel);
-                HSD_TExpUnref(src_exp, src_sel);
-                break;
-            }
-        }
-    }
-    return 0;
-}
-
 static void CalcTevRange(HSD_TExp* texp)
 {
     int range = 0;
@@ -1776,4 +1703,77 @@ alpha:
     case GX_CS_DIVIDE_2: range /= 2; break;
     }
     texp->tev.a_range = range > 256;
+}
+
+int HSD_TExpSimplify(HSD_TExp* texp_)
+{
+    HSD_TExp* texp = (HSD_TExp*) texp_;
+    int res = false;
+    if (HSD_TExpGetType(texp) != HSD_TE_TEV) {
+        return false;
+    }
+    if (SimplifySrc(texp) != 0) {
+        res = true;
+    }
+    if (SimplifyThis(texp) != 0) {
+        res = true;
+    }
+    if (SimplifyByMerge(texp) != 0) {
+        res = true;
+    }
+    CalcTevRange(texp);
+    return res;
+}
+
+int HSD_TExpSimplify2(HSD_TExp* texp_)
+{
+    HSD_TExp* texp = texp_;
+    HSD_TExp* src_exp;
+    u8 src_sel;
+    HSD_TExp* cursor;
+    int i;
+
+    for (i = 0, cursor=texp; i < 4; i++, cursor=(HSD_TExp*)((u8*)cursor+sizeof(HSD_TEArg))) {
+        src_exp = cursor->tev.c_in[0].exp;
+        src_sel = cursor->tev.c_in[0].sel;
+        if (cursor->tev.c_in[0].type == HSD_TE_TEV && src_sel == 1 &&
+            IsThroughColor(src_exp))
+        {
+            switch (src_exp->tev.c_in[3].type) {
+            case HSD_TE_KONST:
+                if (texp->tev.kcsel == 0xFF) {
+                    texp->tev.kcsel = src_exp->tev.kcsel;
+                } else if (texp->tev.kcsel != src_exp->tev.kcsel) {
+                    break;
+                }
+                /* fallthrough */
+            case HSD_TE_IMM:
+                cursor->tev.c_in[0] = src_exp->tev.c_in[3];
+                HSD_TExpRef(cursor->tev.c_in[0].exp, cursor->tev.c_in[0].sel);
+                HSD_TExpUnref(src_exp, src_sel);
+                break;
+            }
+        }
+    }
+    for (i = 0, cursor=texp; i < 4; i++, cursor=(HSD_TExp*)((u8*)cursor+sizeof(HSD_TEArg))) {
+        src_exp = cursor->tev.a_in[0].exp;
+        src_sel = cursor->tev.a_in[0].sel;
+        if (cursor->tev.a_in[0].type == HSD_TE_TEV && IsThroughAlpha(src_exp)) {
+            switch (src_exp->tev.a_in[3].type) {
+            case HSD_TE_KONST:
+                if (texp->tev.kasel == 0xFF) {
+                    texp->tev.kasel = src_exp->tev.kasel;
+                } else if (texp->tev.kasel != src_exp->tev.kasel) {
+                    break;
+                }
+                /* fallthrough */
+            case HSD_TE_IMM:
+                cursor->tev.a_in[0] = src_exp->tev.a_in[3];
+                HSD_TExpRef(cursor->tev.a_in[0].exp, cursor->tev.a_in[0].sel);
+                HSD_TExpUnref(src_exp, src_sel);
+                break;
+            }
+        }
+    }
+    return 0;
 }
