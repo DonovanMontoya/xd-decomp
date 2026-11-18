@@ -1530,9 +1530,10 @@ inline void GSgfx_GCWriteChanCtrl(s32 chan, u8 enable, s32 ambient, s32 material
     s32 diffuseFunction = diffuse;
     if (attenuation == 0) diffuseFunction = 0;
     GXWGFifo.u8 = 0x10; GXWGFifo.u16 = 0; GXWGFifo.u16 = 0x100e + (chan & 3);
+    u32 colorSourceBits = ((ambient << 6) | (((lights * 4) & 0x3c) | (material | ((enable * 2) & 0x1fe))));
     GXWGFifo.u32 = ((lights << 7) & 0x7800) | ((((u32)(-attenuation | attenuation) >> 21) & 0x400) |
         ((((u32)((2 - attenuation) | (attenuation - 2)) >> 22) & 0x200) |
-        ((ambient << 6) | (((lights * 4) & 0x3c) | (material | ((enable * 2) & 0x1fe))) | (diffuseFunction << 7))));
+        (colorSourceBits | (diffuseFunction << 7))));
     LAYER_CHAN_CTRL_ARGS[(u32)chan].enable = enable;
     LAYER_CHAN_CTRL_ARGS[(u32)chan].ambient = ambient;
     LAYER_CHAN_CTRL_ARGS[(u32)chan].material = material;
@@ -1541,7 +1542,8 @@ inline void GSgfx_GCWriteChanCtrl(s32 chan, u8 enable, s32 ambient, s32 material
     LAYER_CHAN_CTRL_ARGS[(u32)chan].attenuation = attenuation;
 }
 __declspec(weak) void GSgfx_GCSetChanCtrl(s32 arg0, u8 arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, s32 arg6) {
-    if (LAYER_CHAN_CTRL_ARGS[arg0].enable != arg1 || LAYER_CHAN_CTRL_CACHE->chan[arg0].ambient != arg2 || LAYER_CHAN_CTRL_CACHE->chan[arg0].material != arg3 ||
+    u8 cachedEnable = LAYER_CHAN_CTRL_ARGS[arg0].enable;
+    if (cachedEnable != arg1 || LAYER_CHAN_CTRL_CACHE->chan[arg0].ambient != arg2 || LAYER_CHAN_CTRL_CACHE->chan[arg0].material != arg3 ||
         LAYER_CHAN_CTRL_CACHE->chan[arg0].lights != arg4 || LAYER_CHAN_CTRL_CACHE->chan[arg0].diffuse != arg5 || LAYER_CHAN_CTRL_CACHE->chan[arg0].attenuation != arg6)
         GSgfx_GCWriteChanCtrl(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
 }
