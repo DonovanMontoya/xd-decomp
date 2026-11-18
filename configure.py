@@ -1064,7 +1064,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peBank.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peEmitter.cpp", extra_cflags=["-inline auto,deferred"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peModel.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peContainer.cpp"),
+            Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peContainer.cpp", extra_cflags=["-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSparticle/peDistortion.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peParticleStrip.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSparticle/peSpline.cpp"),
