@@ -3,19 +3,14 @@
 #include "game/maximum/GSAPI/baselib/math_support.h"
 f64 __fabs(f64);
 static inline f32 generatorAtan2(f32 y, f32 x) { return (f32)atan2(y, x); }
-PSGenerator *activeGenerator,*freeGenerator,*lastGP;
-void* standbyGenerator;
-PSCamera* psCamera;
-void (*psExtExecGenFunc)(PSGenerator*,f32 (*)[4]);
-void (*psExtCreateGenFunc)(PSGenerator*);
+static void (*psExtExecGenFunc)(PSGenerator*, f32 (*)[4]);
+static void (*psExtCreateGenFunc)(PSGenerator*);
+static PSCamera* psCamera;
+PSGenerator* freeGenerator;
+PSGenerator* activeGenerator;
+PSGenerator* lastGP;
+static void* standbyGenerator;
 static u16 psIDNum = 0x100;
-s32 psGeneratorGetCamera(PSGenerator *arg0) {
-    return arg0->camera;
-}
-
-void psGeneratorSetCamera(PSGenerator *arg0, s32 arg1) {
-    arg0->camera = arg1;
-}
 
 static inline int psRefDec(PSCamera *o) {
     int ret;
@@ -94,10 +89,110 @@ static inline void psKillGeneratorSub(PSGenerator *arg0) {
     }
 }
 
-void psKillAllGenerator(void) {
-    PSGenerator *cur;
-    PSGenerator *next;
+static inline PSGenerator *psAllocGenerator(void) {
+    PSGenerator *gen;
+    PSGenerator *temp_r3;
+    PSGenerator *temp_r3_3;
 
+    if (freeGenerator == NULL) {
+        temp_r3 = (PSGenerator *) HSD_Alloc(0xB8U);
+        freeGenerator = temp_r3;
+        memset(temp_r3, 0, 0xB8U);
+    }
+    gen = freeGenerator;
+    if (gen == NULL) {
+        gen = NULL;
+    } else {
+        numActiveGenerators++;
+        if (numActiveGenerators > numPeakGenerators) {
+            numPeakGenerators = numActiveGenerators;
+        }
+        freeGenerator = gen->next;
+        if ((lastGP == NULL) || (temp_r3_3 = lastGP->next, temp_r3_3 == NULL)) {
+            if (activeGenerator == NULL) {
+                gen->next = NULL;
+                activeGenerator = gen;
+            } else {
+                gen->next = activeGenerator->next;
+                activeGenerator->next = gen;
+            }
+        } else {
+            gen->next = temp_r3_3->next;
+            lastGP->next->next = gen;
+        }
+        if (++psIDNum < 0x100U) {
+            psIDNum = 0x100;
+        }
+        gen->id = psIDNum;
+        gen->appsrt = NULL;
+        gen->state = 0;
+    }
+    return gen;
+}
+
+static inline f32 generatorSingle(f64 value) {return (f32)value;}
+static inline f32 generatorBoundaryCoordinate(f32 coordinate,f32 upper) {
+ if(coordinate>0.5f)return upper;
+ return 0.0f;
+}
+
+u16 psGetNewIDNum(void) {
+    if (++psIDNum < 0x100) psIDNum = 0x100;
+    return psIDNum;
+}
+
+void genPosUpdate(PSGenerator *arg0) {
+    PSJObj *temp_r31;
+    s32 temp_cr0_eq;
+    s32 var_r3;
+    u16 temp_r3;
+    u32 temp_r4;
+
+    if (arg0 != NULL) {
+        temp_r3 = arg0->transformFlags;
+        if (!(temp_r3 & 2) && (temp_r3 & 1)) {
+            temp_r31 = arg0->jobj;
+
+            if (temp_r31 != NULL) {
+                if (temp_r31 != NULL) {
+                    if (temp_r31 == NULL) {
+                        __assert("jobj.h", 0x25D, "jobj");
+                    }
+                    temp_r4 = temp_r31->flags;
+                    var_r3 = 0;
+                    if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
+                        var_r3 = 1;
+                    }
+                    if (var_r3 != 0) {
+                        HSD_JObjSetupMatrixSub(temp_r31);
+                    }
+                }
+                arg0->position.x = arg0->jobj->matrix[0][3];
+                arg0->position.y = arg0->jobj->matrix[1][3];
+                arg0->position.z = arg0->jobj->matrix[2][3];
+            }
+        }
+    }
+}
+
+void psInitGenerator(s32 count) {
+    PSGenerator* gp; s32 i;
+    activeGenerator = NULL; freeGenerator = NULL;
+    for (i = count - 1; i >= 0; i--) {
+        gp = HSD_Alloc(0xB8); memset(gp, 0, 0xB8);
+        if (gp == NULL) return;
+        gp->next = freeGenerator; freeGenerator = gp;
+    }
+    numActiveGenerators = 0; numPeakGenerators = 0;
+    standbyGenerator = NULL; psCamera = NULL; psExtExecGenFunc = NULL; psExtCreateGenFunc = NULL; lastGP = NULL;
+}
+
+void psRemoveGenerator(void) {
+    PSGenerator *next;
+    PSGenerator *cur;
+    PSGenerator *free_cur;
+
+    psKillAllParticle();
     cur = activeGenerator;
     while (cur != NULL) {
         next = cur->next;
@@ -107,7 +202,46 @@ void psKillAllGenerator(void) {
     while ((void *) standbyGenerator != NULL) {
         standbyGenerator = HSD_SListRemove(standbyGenerator);
     }
+    free_cur = freeGenerator;
+    while (free_cur != NULL) {
+        next = free_cur->next;
+        HSD_Free(free_cur);
+        free_cur = next;
+    }
+    freeGenerator = NULL;
+    if (psCamera != NULL) {
+        psCameraUnref(psCamera);
+        psCamera = NULL;
+    }
 }
+
+#pragma optimization_level 2
+void psKillGenerator(PSGenerator *arg0) {
+    PSGenerator *temp_r0;
+    PSGenerator *var_r4;
+
+    var_r4 = activeGenerator;
+    lastGP = NULL;
+    while (var_r4 != NULL) {
+        if (var_r4 == arg0) {
+            psKillGenNode(arg0);
+            if (lastGP != NULL) {
+                while ((temp_r0 = lastGP->next) != NULL) {
+                    lastGP = temp_r0;
+                }
+            } else if ((temp_r0 = activeGenerator) != NULL) {
+                lastGP = temp_r0;
+                while ((temp_r0 = lastGP->next) != NULL) {
+                    lastGP = temp_r0;
+                }
+            }
+            return;
+        }
+        lastGP = var_r4;
+        var_r4 = var_r4->next;
+    }
+}
+#pragma optimization_level reset
 
 void psKillGeneratorID(u16 arg0) {
     PSAppSRT *temp_r3;
@@ -153,185 +287,10 @@ while (var_r29 != NULL) {
 }
 }
 
-#pragma optimization_level 2
-void psKillGenerator(PSGenerator *arg0) {
-    PSGenerator *temp_r0;
-    PSGenerator *var_r4;
-
-    var_r4 = activeGenerator;
-    lastGP = NULL;
-    while (var_r4 != NULL) {
-        if (var_r4 == arg0) {
-            psKillGenNode(arg0);
-            if (lastGP != NULL) {
-                while ((temp_r0 = lastGP->next) != NULL) {
-                    lastGP = temp_r0;
-                }
-            } else if ((temp_r0 = activeGenerator) != NULL) {
-                lastGP = temp_r0;
-                while ((temp_r0 = lastGP->next) != NULL) {
-                    lastGP = temp_r0;
-                }
-            }
-            return;
-        }
-        lastGP = var_r4;
-        var_r4 = var_r4->next;
-    }
-}
-#pragma optimization_level reset
-
-void psInitGenerator(s32 count) {
-    PSGenerator* gp; s32 i;
-    activeGenerator = NULL; freeGenerator = NULL;
-    for (i = count - 1; i >= 0; i--) {
-        gp = HSD_Alloc(0xB8); memset(gp, 0, 0xB8);
-        if (gp == NULL) return;
-        gp->next = freeGenerator; freeGenerator = gp;
-    }
-    numActiveGenerators = 0; numPeakGenerators = 0;
-    standbyGenerator = NULL; psCamera = NULL; psExtExecGenFunc = NULL; psExtCreateGenFunc = NULL; lastGP = NULL;
-}
-
-void genPosUpdate(PSGenerator *arg0) {
-    PSJObj *temp_r31;
-    s32 temp_cr0_eq;
-    s32 var_r3;
-    u16 temp_r3;
-    u32 temp_r4;
-
-    if (arg0 != NULL) {
-        temp_r3 = arg0->transformFlags;
-        if (!(temp_r3 & 2) && (temp_r3 & 1)) {
-            temp_r31 = arg0->jobj;
-
-            if (temp_r31 != NULL) {
-                if (temp_r31 != NULL) {
-                    if (temp_r31 == NULL) {
-                        __assert("jobj.h", 0x25D, "jobj");
-                    }
-                    temp_r4 = temp_r31->flags;
-                    var_r3 = 0;
-                    if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
-                        var_r3 = 1;
-                    }
-                    if (var_r3 != 0) {
-                        HSD_JObjSetupMatrixSub(temp_r31);
-                    }
-                }
-                arg0->position.x = arg0->jobj->matrix[0][3];
-                arg0->position.y = arg0->jobj->matrix[1][3];
-                arg0->position.z = arg0->jobj->matrix[2][3];
-            }
-        }
-    }
-}
-
-u16 psGetNewIDNum(void) {
-    if (++psIDNum < 0x100) psIDNum = 0x100;
-    return psIDNum;
-}
-
-
-void psSetBillboardCamera(PSCamera *arg0) {
-    if (arg0 != psCamera) {
-        psCameraUnref(psCamera);
-        if (arg0 != NULL) {
-            if (arg0 != NULL) {
-                arg0->references++;
-                if (arg0->references == 0xFFFF) {
-                    __assert("object.h", 0x5D, "HSD_OBJ(o)->ref_count != HSD_OBJ_NOREF");
-                }
-            }
-        }
-        psCamera = arg0;
-    }
-}
-
-void psExecGenerator(s32 arg0) {
-    PSGenerator *var_r31;
-    PSJObj *temp_r29;
-    f32 temp_f1;
-    s32 temp_cr0_eq;
-    s32 var_r3;
-    u16 temp_r3;
-    u16 temp_r3_2;
-    u16 temp_r3_3;
-    u32 temp_r4;
-
-while ((void *) standbyGenerator != NULL) {
-        standbyGenerator = HSD_SListRemove(standbyGenerator);
-
-}
-    var_r31 = activeGenerator;
-    lastGP = NULL;
-while (var_r31 != NULL) {
-        if (arg0 & (1 << (var_r31->link + 0x10))) {
-            lastGP = var_r31;
-            var_r31 = var_r31->next;
-        } else if (var_r31->kind & 0x800) {
-            lastGP = var_r31;
-            var_r31 = var_r31->next;
-        } else {
-            if (var_r31 != NULL) {
-                temp_r3 = var_r31->transformFlags;
-                if (!(temp_r3 & 2) && (temp_r3 & 1)) {
-                    temp_r29 = var_r31->jobj;
-                    /* null checks below retain the original nested guards */
-                    if (temp_r29 != NULL) {
-                        if (temp_r29 != NULL) {
-                            if (temp_r29 == NULL) {
-                                __assert("jobj.h", 0x25D, "jobj");
-                            }
-                            temp_r4 = temp_r29->flags;
-                            var_r3 = 0;
-                            if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
-                                var_r3 = 1;
-                            }
-                            if (var_r3 != 0) {
-                                HSD_JObjSetupMatrixSub(temp_r29);
-                            }
-                        }
-                        var_r31->position.x = var_r31->jobj->matrix[0][3];
-                        var_r31->position.y = var_r31->jobj->matrix[1][3];
-                        var_r31->position.z = var_r31->jobj->matrix[2][3];
-                    }
-                }
-            }
-            temp_f1 = var_r31->random;
-            if (temp_f1 < 0.0f) {
-                var_r31->count -= temp_f1;
-            } else {
-                var_r31->count += var_r31->random * HSD_Randf();
-            }
-            if (var_r31->count >= 1.0f) {
-                var_r31->count = generateParticle(var_r31);
-            }
-            if (var_r31->life != 0 && --var_r31->life == 0) {
-                if ((u8) var_r31->state == 0) {
-                    psKillGenNode(var_r31);
-                } else {
-                    var_r31->kind |= 0x800;
-                }
-                if ((PSGenerator *) lastGP != NULL) {
-                    var_r31 = lastGP->next;
-                } else {
-                    var_r31 = activeGenerator;
-                }
-            } else {
-                lastGP = var_r31;
-                var_r31 = var_r31->next;
-            }
-        }
-}
-}
-
-void psRemoveGenerator(void) {
-    PSGenerator *next;
+void psKillAllGenerator(void) {
     PSGenerator *cur;
-    PSGenerator *free_cur;
+    PSGenerator *next;
 
-    psKillAllParticle();
     cur = activeGenerator;
     while (cur != NULL) {
         next = cur->next;
@@ -341,282 +300,8 @@ void psRemoveGenerator(void) {
     while ((void *) standbyGenerator != NULL) {
         standbyGenerator = HSD_SListRemove(standbyGenerator);
     }
-    free_cur = freeGenerator;
-    while (free_cur != NULL) {
-        next = free_cur->next;
-        HSD_Free(free_cur);
-        free_cur = next;
-    }
-    freeGenerator = NULL;
-    if (psCamera != NULL) {
-        psCameraUnref(psCamera);
-        psCamera = NULL;
-    }
 }
 
-static inline PSGenerator *psAllocGenerator(void) {
-    PSGenerator *gen;
-    PSGenerator *temp_r3;
-    PSGenerator *temp_r3_3;
-
-    if (freeGenerator == NULL) {
-        temp_r3 = (PSGenerator *) HSD_Alloc(0xB8U);
-        freeGenerator = temp_r3;
-        memset(temp_r3, 0, 0xB8U);
-    }
-    gen = freeGenerator;
-    if (gen == NULL) {
-        gen = NULL;
-    } else {
-        numActiveGenerators++;
-        if (numActiveGenerators > numPeakGenerators) {
-            numPeakGenerators = numActiveGenerators;
-        }
-        freeGenerator = gen->next;
-        if ((lastGP == NULL) || (temp_r3_3 = lastGP->next, temp_r3_3 == NULL)) {
-            if (activeGenerator == NULL) {
-                gen->next = NULL;
-                activeGenerator = gen;
-            } else {
-                gen->next = activeGenerator->next;
-                activeGenerator->next = gen;
-            }
-        } else {
-            gen->next = temp_r3_3->next;
-            lastGP->next->next = gen;
-        }
-        if (++psIDNum < 0x100U) {
-            psIDNum = 0x100;
-        }
-        gen->id = psIDNum;
-        gen->appsrt = NULL;
-        gen->state = 0;
-    }
-    return gen;
-}
-
-PSGenerator *psCreateGeneratorID(s32 arg0, s32 arg1, s32 arg2) {
-    f32 spC;
-    f32 sp8;
-    PSAppSRT *temp_r3_10;
-    PSCmd *temp_r3_6;
-    PSCmd *temp_r3_7;
-    PSGenerator *temp_r3;
-    PSGenerator *temp_r3_3;
-    PSGenerator *var_r29;
-    PSTex *temp_r3_5;
-    f32 temp_f0;
-    f32 temp_f0_2;
-    f32 temp_f0_3;
-    f32 temp_f0_4;
-    f32 temp_f0_5;
-    f32 temp_f1;
-    f32 temp_f1_5;
-    f32 temp_f1_9;
-    f32 temp_f2;
-    f32 temp_f2_2;
-    f32 temp_f2_3;
-    f32 temp_f2_4;
-    f32 temp_f3;
-    f32 var_f2;
-    f32 var_f2_2;
-    f32 var_f4;
-    f64 temp_f1_2;
-    f64 temp_f1_3;
-    f64 temp_f1_4;
-    f64 temp_f1_6;
-    f64 temp_f1_7;
-    f64 temp_f1_8;
-    s32 temp_r3_8;
-    s32 temp_r3_9;
-    s32 var_r0;
-    s32 var_r0_2;
-    u16 temp_r3_2;
-    u16 temp_r3_4;
-    u32 temp_r0;
-
-    if (arg1 >= 0x40) {
-        return NULL;
-    }
-    if (arg0 >= 8) {
-        return NULL;
-    }
-    if (arg2 >= (s32) psNumCmdList[arg1]) {
-        return NULL;
-    }
-    if ((PSCmd *) psCmdListArray[arg1][arg2] == NULL) {
-        return NULL;
-    }
-    var_r29 = psAllocGenerator();
-    if (var_r29 != NULL) {
-        var_r29->type = psCmdListArray[arg1][arg2]->type;
-        var_r29->bank = (u8) arg1;
-        var_r29->link = (u8) arg0;
-        var_r29->commandID = (u16) arg2;
-        var_r29->camera = 0;
-        var_r29->kind = psCmdListArray[arg1][arg2]->kind;
-        var_r29->texGroup = (u8) psCmdListArray[arg1][arg2]->texGroup;
-        var_r29->particleLife = psCmdListArray[arg1][arg2]->life;
-        var_r29->life = psCmdListArray[arg1][arg2]->genLife;
-        var_r29->position.z = 0.0f;
-        var_r29->position.y = 0.0f;
-        var_r29->position.x = 0.0f;
-        var_r29->velocity.x = psCmdListArray[arg1][arg2]->velocity.x;
-        var_r29->velocity.y = psCmdListArray[arg1][arg2]->velocity.y;
-        var_r29->velocity.z = psCmdListArray[arg1][arg2]->velocity.z;
-        var_r29->gravity = psCmdListArray[arg1][arg2]->gravity;
-        var_r29->friction = psCmdListArray[arg1][arg2]->friction;
-        var_r29->size = psCmdListArray[arg1][arg2]->size;
-        var_r29->commands = psCmdListArray[arg1][arg2]->commands;
-        var_r29->radius = psCmdListArray[arg1][arg2]->radius;
-        var_r29->angle = psCmdListArray[arg1][arg2]->angle;
-        var_r29->random = psCmdListArray[arg1][arg2]->random;
-        if (var_r29->kind & 0x100) {
-            temp_f0 = var_r29->random;
-            if (temp_f0 < 0.0f) {
-                var_f2 = (1.0f + temp_f0) > __float_epsilon[0] ? 1.0f : 0.0f;
-                var_r29->count = var_f2;
-            } else {
-                var_r29->count = 1.0f - __float_epsilon[0];
-            }
-        } else if (var_r29->random < 0.0f) {
-            var_r29->count = 0.0f;
-        } else {
-            var_r29->count = HSD_Randf();
-        }
-        temp_r3_5 = psTexGroupArray[arg1][var_r29->texGroup];
-        if ((temp_r3_5 != NULL) && ((u16) temp_r3_5->paletteFlags != 0)) {
-            var_r29->kind |= 0x10;
-        }
-        var_r29->children = 0;
-        temp_r0 = var_r29->type & 0xF;
-        switch (temp_r0) {                          /* switch 1 */
-        case 0:                                     /* switch 1 */
-        case 3:                                     /* switch 1 */
-        case 4:                                     /* switch 1 */
-            temp_r3_6 = psCmdListArray[arg1][arg2];
-            temp_f2 = temp_r3_6->param1;
-            if ((temp_f2 == 0.0f) && (temp_r3_6->param2 == 0.0f)) {
-                var_r29->param1 = 0.0f;
-                var_r29->param2 = 6.2831855f;
-            } else {
-                var_r29->param1 = temp_f2;
-                var_r29->param2 = psCmdListArray[arg1][arg2]->param2;
-            }
-            break;
-        case 1:                                     /* switch 1 */
-            var_r29->param1 = psCmdListArray[arg1][arg2]->param1;
-            var_r29->param2 = psCmdListArray[arg1][arg2]->param2;
-            var_r29->param3 = psCmdListArray[arg1][arg2]->param3;
-            break;
-        case 6:                                     /* switch 1 */
-        case 7:                                     /* switch 1 */
-            temp_r3_7 = psCmdListArray[arg1][arg2];
-            temp_f2_2 = temp_r3_7->param1;
-            if ((temp_f2_2 == 0.0f) && (temp_r3_7->param2 == 0.0f)) {
-                var_r29->param1 = 0.0f;
-                var_r29->param2 = 6.2831855f;
-            } else {
-                var_r29->param1 = temp_f2_2;
-                var_r29->param2 = psCmdListArray[arg1][arg2]->param2;
-            }
-            var_r29->param3 = psCmdListArray[arg1][arg2]->param3;
-            break;
-        case 5:                                     /* switch 1 */
-            temp_f0_2 = psCmdListArray[arg1][arg2]->param1;
-            var_r29->param1 = temp_f0_2;
-            var_r29->axisXX = temp_f0_2;
-            temp_f0_3 = psCmdListArray[arg1][arg2]->param2;
-            var_r29->param2 = temp_f0_3;
-            var_r29->axisYY = temp_f0_3;
-            temp_f0_4 = psCmdListArray[arg1][arg2]->param3;
-            var_r29->param3 = temp_f0_4;
-            var_r29->axisZZ = temp_f0_4;
-            var_r29->axisZY = 0.0f;
-            var_r29->axisZX = 0.0f;
-            var_r29->axisYZ = 0.0f;
-            var_r29->axisYX = 0.0f;
-            var_r29->axisXZ = 0.0f;
-            var_r29->axisXY = 0.0f;
-            var_r29->edgeFlags = 0;
-            if (psCmdListArray[arg1][arg2]->param1 < 0.0f) {
-                var_r29->edgeFlags |= 1;
-            }
-            if (psCmdListArray[arg1][arg2]->param2 < 0.0f) {
-                var_r29->edgeFlags |= 2;
-            }
-            if (psCmdListArray[arg1][arg2]->param3 < 0.0f) {
-                var_r29->edgeFlags |= 4;
-            }
-            break;
-        case 8:                                     /* switch 1 */
-            var_f4 = hsdSqrt(var_r29->velocity.x * var_r29->velocity.x + var_r29->velocity.y * var_r29->velocity.y + var_r29->velocity.z * var_r29->velocity.z);
-            var_r29->param1 = var_f4;
-            var_f2_2 = hsdSqrt(var_r29->velocity.x * var_r29->velocity.x + var_r29->velocity.z * var_r29->velocity.z);
-            if (var_f2_2 < __float_min[0]) {
-                if (var_r29->velocity.y >= 0.0f) {
-                    var_r29->param2 = 1.5707964f;
-                } else {
-                    var_r29->param2 = -1.5707964f;
-                }
-            } else {
-                var_r29->param2 = (f32) atan2((f64) var_r29->velocity.y, (f64) var_f2_2);
-            }
-            temp_f2_4 = var_r29->velocity.x;
-            if (__fabs(temp_f2_4) < __float_min[0]) {
-                if (var_r29->velocity.z >= 0.0f) {
-                    var_r29->axisXX = 1.5707964f;
-                } else {
-                    var_r29->axisXX = -1.5707964f;
-                }
-            } else {
-                var_r29->axisXX = (f32) atan2((f64) var_r29->velocity.z, (f64) temp_f2_4);
-            }
-            var_r29->param3 = psCmdListArray[arg1][arg2]->param1;
-            temp_f1_9 = var_r29->param3;
-            if (temp_f1_9 < 0.0f) {
-                var_r29->param3 = -temp_f1_9;
-                var_r29->param1 = -var_r29->param1;
-            }
-            var_r29->axisXY = psCmdListArray[arg1][arg2]->param2;
-            break;
-        case 2:
-            break;
-        default:                                    /* switch 1 */
-            if (((void (*)(PSGenerator *)) psExtCreateGenFunc) != NULL) {
-                psExtCreateGenFunc(var_r29);
-            }
-            break;
-        }
-        if (var_r29->kind & 0x20000) {
-            var_r29->type |= 0x800;
-            psAddGeneratorAppSRT(var_r29, 0);
-            temp_r3_10 = var_r29->appsrt;
-            if (temp_r3_10 != NULL) {
-                temp_r3_10->generatorOwned = 1;
-                var_r29->appsrt->generator = var_r29;
-            }
-        }
-        var_r29->transformFlags = 2;
-        var_r29->jobj = NULL;
-        var_r29->rotation.z = 0.0f;
-        var_r29->rotation.y = 0.0f;
-        var_r29->rotation.x = 0.0f;
-        var_r29->scale.z = 1.0f;
-        var_r29->scale.y = 1.0f;
-        var_r29->scale.x = 1.0f;
-        var_r29->nodeScale.z = 1.0f;
-        var_r29->nodeScale.y = 1.0f;
-        var_r29->nodeScale.x = 1.0f;
-    }
-    return var_r29;
-}
-
-static inline f32 generatorSingle(f64 value) {return (f32)value;}
-static inline f32 generatorBoundaryCoordinate(f32 coordinate,f32 upper) {
- if(coordinate>0.5f)return upper;
- return 0.0f;
-}
 f32 generateParticle(PSGenerator *arg0) {
     f32 sp8;
     f32 faceRandom3,faceRandom5,faceRandom6;
@@ -1334,4 +1019,322 @@ generation_test:
     temp_f1 = arg0->count;
     if (temp_f1 >= 1.0f) goto loop_215;
     return temp_f1;
+}
+
+void psExecGenerator(s32 arg0) {
+    PSGenerator *var_r31;
+    PSJObj *temp_r29;
+    f32 temp_f1;
+    s32 temp_cr0_eq;
+    s32 var_r3;
+    u16 temp_r3;
+    u16 temp_r3_2;
+    u16 temp_r3_3;
+    u32 temp_r4;
+
+while ((void *) standbyGenerator != NULL) {
+        standbyGenerator = HSD_SListRemove(standbyGenerator);
+
+}
+    var_r31 = activeGenerator;
+    lastGP = NULL;
+while (var_r31 != NULL) {
+        if (arg0 & (1 << (var_r31->link + 0x10))) {
+            lastGP = var_r31;
+            var_r31 = var_r31->next;
+        } else if (var_r31->kind & 0x800) {
+            lastGP = var_r31;
+            var_r31 = var_r31->next;
+        } else {
+            if (var_r31 != NULL) {
+                temp_r3 = var_r31->transformFlags;
+                if (!(temp_r3 & 2) && (temp_r3 & 1)) {
+                    temp_r29 = var_r31->jobj;
+                    /* null checks below retain the original nested guards */
+                    if (temp_r29 != NULL) {
+                        if (temp_r29 != NULL) {
+                            if (temp_r29 == NULL) {
+                                __assert("jobj.h", 0x25D, "jobj");
+                            }
+                            temp_r4 = temp_r29->flags;
+                            var_r3 = 0;
+                            if (!(temp_r4 & 0x800000) && (temp_r4 & 0x40)) {
+                                var_r3 = 1;
+                            }
+                            if (var_r3 != 0) {
+                                HSD_JObjSetupMatrixSub(temp_r29);
+                            }
+                        }
+                        var_r31->position.x = var_r31->jobj->matrix[0][3];
+                        var_r31->position.y = var_r31->jobj->matrix[1][3];
+                        var_r31->position.z = var_r31->jobj->matrix[2][3];
+                    }
+                }
+            }
+            temp_f1 = var_r31->random;
+            if (temp_f1 < 0.0f) {
+                var_r31->count -= temp_f1;
+            } else {
+                var_r31->count += var_r31->random * HSD_Randf();
+            }
+            if (var_r31->count >= 1.0f) {
+                var_r31->count = generateParticle(var_r31);
+            }
+            if (var_r31->life != 0 && --var_r31->life == 0) {
+                if ((u8) var_r31->state == 0) {
+                    psKillGenNode(var_r31);
+                } else {
+                    var_r31->kind |= 0x800;
+                }
+                if ((PSGenerator *) lastGP != NULL) {
+                    var_r31 = lastGP->next;
+                } else {
+                    var_r31 = activeGenerator;
+                }
+            } else {
+                lastGP = var_r31;
+                var_r31 = var_r31->next;
+            }
+        }
+}
+}
+
+PSGenerator *psCreateGeneratorID(s32 arg0, s32 arg1, s32 arg2) {
+    f32 spC;
+    f32 sp8;
+    PSAppSRT *temp_r3_10;
+    PSCmd *temp_r3_6;
+    PSCmd *temp_r3_7;
+    PSGenerator *temp_r3;
+    PSGenerator *temp_r3_3;
+    PSGenerator *var_r29;
+    PSTex *temp_r3_5;
+    f32 temp_f0;
+    f32 temp_f0_2;
+    f32 temp_f0_3;
+    f32 temp_f0_4;
+    f32 temp_f0_5;
+    f32 temp_f1;
+    f32 temp_f1_5;
+    f32 temp_f1_9;
+    f32 temp_f2;
+    f32 temp_f2_2;
+    f32 temp_f2_3;
+    f32 temp_f2_4;
+    f32 temp_f3;
+    f32 var_f2;
+    f32 var_f2_2;
+    f32 var_f4;
+    f64 temp_f1_2;
+    f64 temp_f1_3;
+    f64 temp_f1_4;
+    f64 temp_f1_6;
+    f64 temp_f1_7;
+    f64 temp_f1_8;
+    s32 temp_r3_8;
+    s32 temp_r3_9;
+    s32 var_r0;
+    s32 var_r0_2;
+    u16 temp_r3_2;
+    u16 temp_r3_4;
+    u32 temp_r0;
+
+    if (arg1 >= 0x40) {
+        return NULL;
+    }
+    if (arg0 >= 8) {
+        return NULL;
+    }
+    if (arg2 >= (s32) psNumCmdList[arg1]) {
+        return NULL;
+    }
+    if ((PSCmd *) psCmdListArray[arg1][arg2] == NULL) {
+        return NULL;
+    }
+    var_r29 = psAllocGenerator();
+    if (var_r29 != NULL) {
+        var_r29->type = psCmdListArray[arg1][arg2]->type;
+        var_r29->bank = (u8) arg1;
+        var_r29->link = (u8) arg0;
+        var_r29->commandID = (u16) arg2;
+        var_r29->camera = 0;
+        var_r29->kind = psCmdListArray[arg1][arg2]->kind;
+        var_r29->texGroup = (u8) psCmdListArray[arg1][arg2]->texGroup;
+        var_r29->particleLife = psCmdListArray[arg1][arg2]->life;
+        var_r29->life = psCmdListArray[arg1][arg2]->genLife;
+        var_r29->position.z = 0.0f;
+        var_r29->position.y = 0.0f;
+        var_r29->position.x = 0.0f;
+        var_r29->velocity.x = psCmdListArray[arg1][arg2]->velocity.x;
+        var_r29->velocity.y = psCmdListArray[arg1][arg2]->velocity.y;
+        var_r29->velocity.z = psCmdListArray[arg1][arg2]->velocity.z;
+        var_r29->gravity = psCmdListArray[arg1][arg2]->gravity;
+        var_r29->friction = psCmdListArray[arg1][arg2]->friction;
+        var_r29->size = psCmdListArray[arg1][arg2]->size;
+        var_r29->commands = psCmdListArray[arg1][arg2]->commands;
+        var_r29->radius = psCmdListArray[arg1][arg2]->radius;
+        var_r29->angle = psCmdListArray[arg1][arg2]->angle;
+        var_r29->random = psCmdListArray[arg1][arg2]->random;
+        if (var_r29->kind & 0x100) {
+            temp_f0 = var_r29->random;
+            if (temp_f0 < 0.0f) {
+                var_f2 = (1.0f + temp_f0) > __float_epsilon[0] ? 1.0f : 0.0f;
+                var_r29->count = var_f2;
+            } else {
+                var_r29->count = 1.0f - __float_epsilon[0];
+            }
+        } else if (var_r29->random < 0.0f) {
+            var_r29->count = 0.0f;
+        } else {
+            var_r29->count = HSD_Randf();
+        }
+        temp_r3_5 = psTexGroupArray[arg1][var_r29->texGroup];
+        if ((temp_r3_5 != NULL) && ((u16) temp_r3_5->paletteFlags != 0)) {
+            var_r29->kind |= 0x10;
+        }
+        var_r29->children = 0;
+        temp_r0 = var_r29->type & 0xF;
+        switch (temp_r0) {                          /* switch 1 */
+        case 0:                                     /* switch 1 */
+        case 3:                                     /* switch 1 */
+        case 4:                                     /* switch 1 */
+            temp_r3_6 = psCmdListArray[arg1][arg2];
+            temp_f2 = temp_r3_6->param1;
+            if ((temp_f2 == 0.0f) && (temp_r3_6->param2 == 0.0f)) {
+                var_r29->param1 = 0.0f;
+                var_r29->param2 = 6.2831855f;
+            } else {
+                var_r29->param1 = temp_f2;
+                var_r29->param2 = psCmdListArray[arg1][arg2]->param2;
+            }
+            break;
+        case 1:                                     /* switch 1 */
+            var_r29->param1 = psCmdListArray[arg1][arg2]->param1;
+            var_r29->param2 = psCmdListArray[arg1][arg2]->param2;
+            var_r29->param3 = psCmdListArray[arg1][arg2]->param3;
+            break;
+        case 6:                                     /* switch 1 */
+        case 7:                                     /* switch 1 */
+            temp_r3_7 = psCmdListArray[arg1][arg2];
+            temp_f2_2 = temp_r3_7->param1;
+            if ((temp_f2_2 == 0.0f) && (temp_r3_7->param2 == 0.0f)) {
+                var_r29->param1 = 0.0f;
+                var_r29->param2 = 6.2831855f;
+            } else {
+                var_r29->param1 = temp_f2_2;
+                var_r29->param2 = psCmdListArray[arg1][arg2]->param2;
+            }
+            var_r29->param3 = psCmdListArray[arg1][arg2]->param3;
+            break;
+        case 5:                                     /* switch 1 */
+            temp_f0_2 = psCmdListArray[arg1][arg2]->param1;
+            var_r29->param1 = temp_f0_2;
+            var_r29->axisXX = temp_f0_2;
+            temp_f0_3 = psCmdListArray[arg1][arg2]->param2;
+            var_r29->param2 = temp_f0_3;
+            var_r29->axisYY = temp_f0_3;
+            temp_f0_4 = psCmdListArray[arg1][arg2]->param3;
+            var_r29->param3 = temp_f0_4;
+            var_r29->axisZZ = temp_f0_4;
+            var_r29->axisZY = 0.0f;
+            var_r29->axisZX = 0.0f;
+            var_r29->axisYZ = 0.0f;
+            var_r29->axisYX = 0.0f;
+            var_r29->axisXZ = 0.0f;
+            var_r29->axisXY = 0.0f;
+            var_r29->edgeFlags = 0;
+            if (psCmdListArray[arg1][arg2]->param1 < 0.0f) {
+                var_r29->edgeFlags |= 1;
+            }
+            if (psCmdListArray[arg1][arg2]->param2 < 0.0f) {
+                var_r29->edgeFlags |= 2;
+            }
+            if (psCmdListArray[arg1][arg2]->param3 < 0.0f) {
+                var_r29->edgeFlags |= 4;
+            }
+            break;
+        case 8:                                     /* switch 1 */
+            var_f4 = hsdSqrt(var_r29->velocity.x * var_r29->velocity.x + var_r29->velocity.y * var_r29->velocity.y + var_r29->velocity.z * var_r29->velocity.z);
+            var_r29->param1 = var_f4;
+            var_f2_2 = hsdSqrt(var_r29->velocity.x * var_r29->velocity.x + var_r29->velocity.z * var_r29->velocity.z);
+            if (var_f2_2 < __float_min[0]) {
+                if (var_r29->velocity.y >= 0.0f) {
+                    var_r29->param2 = 1.5707964f;
+                } else {
+                    var_r29->param2 = -1.5707964f;
+                }
+            } else {
+                var_r29->param2 = (f32) atan2((f64) var_r29->velocity.y, (f64) var_f2_2);
+            }
+            temp_f2_4 = var_r29->velocity.x;
+            if (__fabs(temp_f2_4) < __float_min[0]) {
+                if (var_r29->velocity.z >= 0.0f) {
+                    var_r29->axisXX = 1.5707964f;
+                } else {
+                    var_r29->axisXX = -1.5707964f;
+                }
+            } else {
+                var_r29->axisXX = (f32) atan2((f64) var_r29->velocity.z, (f64) temp_f2_4);
+            }
+            var_r29->param3 = psCmdListArray[arg1][arg2]->param1;
+            temp_f1_9 = var_r29->param3;
+            if (temp_f1_9 < 0.0f) {
+                var_r29->param3 = -temp_f1_9;
+                var_r29->param1 = -var_r29->param1;
+            }
+            var_r29->axisXY = psCmdListArray[arg1][arg2]->param2;
+            break;
+        case 2:
+            break;
+        default:                                    /* switch 1 */
+            if (((void (*)(PSGenerator *)) psExtCreateGenFunc) != NULL) {
+                psExtCreateGenFunc(var_r29);
+            }
+            break;
+        }
+        if (var_r29->kind & 0x20000) {
+            var_r29->type |= 0x800;
+            psAddGeneratorAppSRT(var_r29, 0);
+            temp_r3_10 = var_r29->appsrt;
+            if (temp_r3_10 != NULL) {
+                temp_r3_10->generatorOwned = 1;
+                var_r29->appsrt->generator = var_r29;
+            }
+        }
+        var_r29->transformFlags = 2;
+        var_r29->jobj = NULL;
+        var_r29->rotation.z = 0.0f;
+        var_r29->rotation.y = 0.0f;
+        var_r29->rotation.x = 0.0f;
+        var_r29->scale.z = 1.0f;
+        var_r29->scale.y = 1.0f;
+        var_r29->scale.x = 1.0f;
+        var_r29->nodeScale.z = 1.0f;
+        var_r29->nodeScale.y = 1.0f;
+        var_r29->nodeScale.x = 1.0f;
+    }
+    return var_r29;
+}
+
+void psSetBillboardCamera(PSCamera *arg0) {
+    if (arg0 != psCamera) {
+        psCameraUnref(psCamera);
+        if (arg0 != NULL) {
+            if (arg0 != NULL) {
+                arg0->references++;
+                if (arg0->references == 0xFFFF) {
+                    __assert("object.h", 0x5D, "HSD_OBJ(o)->ref_count != HSD_OBJ_NOREF");
+                }
+            }
+        }
+        psCamera = arg0;
+    }
+}
+
+void psGeneratorSetCamera(PSGenerator *arg0, s32 arg1) {
+    arg0->camera = arg1;
+}
+
+s32 psGeneratorGetCamera(PSGenerator *arg0) {
+    return arg0->camera;
 }
