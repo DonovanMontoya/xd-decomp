@@ -1,137 +1,19 @@
 #include <game/pxdvs/GSAPI/GSmovie/moviePrivate.hpp>
 #include <libc/string.h>
-extern "C" void _StreamQuit(__GSmovieStreaming* movie) {
-    MovieDecoder* decoder=movie->decoder;
-    sndStreamFree(decoder->leftStream);
-    decoder->leftStream=-1;
-    if(decoder->rightStream!=-1U) { sndStreamFree(decoder->rightStream); decoder->rightStream=-1; }
-}
-extern "C" u8 _StreamPlay(__GSmovieStreaming* movie) {
-    MovieDecoder* decoder=movie->decoder;
-    if(decoder->leftStream!=-1U && sndStreamActivate(decoder->leftStream)) {
-        if(decoder->rightStream!=-1U) {
-            if(sndStreamActivate(decoder->rightStream)) return 1;
-            sndStreamDeactivate(decoder->leftStream);
-        } else return 1;
-    }
-    return 0;
-}
+
+static u32 GetAudioSample(__GSmovieStreaming*, s16*, s16*, u32, s32*);
+static void _movieStreamPrepareGetDataCallback(s32, void*, s32);
+static u32 _VideoDecode(__GSmovieStreaming*, THPReadBuffer*, THPTextureSet*);
 
 extern u32 StreamUpdateCallback(void*,u32,void*,u32,u32);
 extern "C" u32 sndStreamAllocEx(u8,void*,u32,u32,u8,u32,u8,u8,u32,u32,u32,u32(*)(void*,u32,void*,u32,u32),void*,u32);
-extern "C" u8 _StreamInit(__GSmovieStreaming* movie) {
-    u32 samples;
-    MovieDecoder* decoder=movie->decoder;
-    u32 rate=decoder->sampleRate;
-    samples=((u32)(0.5f+(f32)(rate*60)/1000.0f)+31)&~31;
-    decoder->leftStream=sndStreamAllocEx(255,decoder->leftBuffer,samples,rate,127,decoder->channels==2?0:64,0,0,0,0,0x30000,StreamUpdateCallback,movie,0);
-    if(decoder->leftStream==-1U) return 0;
-    if(decoder->channels==2) {
-        decoder->rightStream=sndStreamAllocEx(255,decoder->rightBuffer,samples,decoder->sampleRate,127,127,0,0,0,0,0x30000,StreamUpdateCallback,0,0);
-        if(decoder->rightStream==-1U) { sndStreamFree(decoder->leftStream); return 0; }
-    }
-    decoder->markRead=0; decoder->markWrite=0;
-    decoder->reserved8260[1]=0; decoder->reserved8260[0]=0;
-    decoder->reserved8260[3]=0; decoder->reserved8260[2]=0;
-    decoder->samplesPlayed=0;
-    return 1;
-}
-#pragma force_active on
-static u32 GetAudioSample(__GSmovieStreaming* movie,s16* left,s16* right,u32 requested,s32* status) {
-    u32 result=(u32)movie;
-    MovieDecoder* decoder=movie->decoder;
-    if(!decoder->currentAudio) {
-        if(!decoder->audio[decoder->audioRead].state[0]) { *status=2; return 0; }
-        decoder->currentAudio=&decoder->audio[decoder->audioRead];
-    }
-    THPAudioBuffer* audio=decoder->currentAudio;
-    u32 count=audio->samples;
-    if(count) {
-        if(count>=requested) count=requested;
-        s16* input=audio->current;
-        result=count;
-        if(!right) {
-            for(count=0;count<result;++count) { *left++=input[1]; input+=2; }
-        } else {
-            for(count=0;count<result;++count) { *right++=input[0]; *left++=input[1]; input+=2; }
-        }
-        decoder->currentAudio->samples-=result;
-        decoder->currentAudio->current=input;
-        if(!decoder->currentAudio->samples) {
-            decoder->currentAudio->state[0]=0;
-            ++decoder->audioRead;
-            if(decoder->audioRead>=6) decoder->audioRead=0;
-            decoder->currentAudio=0;
-            *status=1;
-            return result;
-        }
-        *status=0;
-        return result;
-    }
-    // The release build returns the incoming descriptor when its current buffer is empty.
-    return result;
-}
-#pragma force_active reset
+
+
 
 extern "C" u32 GSfsysStreamGetCacheSize();
 extern void _movieStreamPrepareGetDataCallback_Exec(__GSmovieStreaming*,u32,u32);
 extern "C" s32 THPVideoDecode(void*,void*,void*,void*,void*);
-#pragma force_active on
-static void _movieStreamPrepareGetDataCallback(s32,void* result,s32 context) {
-    __GSmovieStreaming* movie=(__GSmovieStreaming*)context;
-    u32 bytes=(u32)result;
-    MovieDecoder* decoder=movie->decoder;
-    decoder->streamOffset+=0x8000;
-    if(decoder->preload) {
-        if(decoder->streamOffset>=decoder->movieBytes) decoder->streamOffset=0;
-    } else if(decoder->streamOffset>=decoder->movieBytes) decoder->streamOffset=0;
-    else if(decoder->streamOffset>=GSfsysStreamGetCacheSize()) decoder->streamOffset=0;
-    _movieStreamPrepareGetDataCallback_Exec(movie,0,bytes);
-}
-static u32 _VideoDecode(__GSmovieStreaming* s, THPReadBuffer* rb, THPTextureSet* ts) {
-    u32 i;
-    s32* sizes;
-    u8* data;
-    MovieDecoder* p = s->decoder;
-    u32 result = 0;
-    sizes = (s32*)(rb->data + 8);
-    data = rb->data + 8 + p->componentCount * 4;
-    for (i = 0; i < p->componentCount; i++) {
-        switch (p->componentTypes[i]) {
-        case 0:
-                s32 err = THPVideoDecode(data, ts->y, ts->u, ts->v, p->videoWork);
-                p->audioError = err;
-                if (err != 0) {
-                    if (s->reading == 1) {
-                        s->ready = 0;
-                        s->reading = 0;
-                    }
-                    p->state = 5;
-                }
-                ts->frame = rb->frame;
-                ts->valid = 1;
-                p->texWrite++;
-                if (p->texWrite >= 3) {
-                    p->texWrite = 0;
-                }
-                {
-                    s32 old = p->framesDecoded;
-                    s32 cur = p->lastAudioFrame + 1;
-                    result = cur > old ? cur - old : 0;
-                    p->framesDecoded = old + 1;
-                }
-            break;
-        }
-        data += *sizes;
-        sizes++;
-    }
-    if (s->reading == 1) {
-        s->ready = 1;
-        s->reading = 0;
-    }
-    return result;
-}
-#pragma force_active reset
+
 
 extern "C" void DCFlushRange(void*,u32);
 extern "C" void sndStreamARAMUpdate(u32,u32,u32,u32,u32);
@@ -159,26 +41,6 @@ static inline void _fillStreamChannel(__GSmovieStreaming* movie,u64 playedIn,u32
         }
         memset(left,0,remaining*2);if(right)memset(right,0,remaining*2);break;
     }
-}
-extern "C" u8 _StreamInitFillStreamBuffer(__GSmovieStreaming* movie) {
-    MovieDecoder* decoder=movie->decoder;
-    u32 samples=((u32)(0.5f+(f32)(decoder->sampleRate*60)/1000.0f)+31)&~31;
-    if(decoder->channels==2) {
-        _fillStreamChannel(movie,decoder->samplesPlayed,samples,decoder->rightBuffer,decoder->leftBuffer);
-        decoder->samplesPlayed+=samples;
-    } else {
-        _fillStreamChannel(movie,decoder->samplesPlayed,samples,0,decoder->leftBuffer);
-        decoder->samplesPlayed+=samples;
-    }
-    u32 bytes=samples*2;
-    DCFlushRange(decoder->leftBuffer,bytes);
-    sndStreamARAMUpdate(decoder->leftStream,0,samples,0,0);
-    if(decoder->channels==2) {
-        DCFlushRange(decoder->rightBuffer,bytes);
-        sndStreamARAMUpdate(decoder->rightStream,0,samples,0,0);
-    }
-    *(u8*)&movie->reserved1a=1;
-    return 1;
 }
 
 extern "C" u8 GSfsysStreamGetData(u32,u32,void*,u32,u32,void(*)(s32,void*,s32),void*,s32);
@@ -226,9 +88,23 @@ static inline void prepareMovieStreamGetData(__GSmovieStreaming* movie) {
     OSRestoreInterrupts(interrupts);
 }
 
-extern "C" void _movieStreamPrepareGetData(__GSmovieStreaming* movie) {
-    prepareMovieStreamGetData(movie);
+static inline void releaseMovieRead(__GSmovieStreaming* movie, THPReadBuffer* read) {
+    MovieDecoder* decoder = movie->decoder;
+    if (read->video && read->audio) {
+        read->valid = 0;
+        read->video = 0;
+        ++decoder->readVideo;
+        if (decoder->readVideo >= 10) decoder->readVideo = 0;
+        if (decoder->hasAudio) {
+            read->audio = 0;
+            ++decoder->readAudio;
+            if (decoder->readAudio >= 10) decoder->readAudio = 0;
+        }
+    }
 }
+extern "C" u32 THPAudioDecode(s16*, u8*, s32);
+
+extern "C" void OSReport(const char*, ...);
 
 void _movieStreamPrepareGetDataCallback_Exec(__GSmovieStreaming* movie, u32 offset, u32 size) {
     s32 count = 0x8000 - offset;
@@ -266,21 +142,70 @@ void _movieStreamPrepareGetDataCallback_Exec(__GSmovieStreaming* movie, u32 offs
     prepareMovieStreamGetData(movie);
 }
 
-static inline void releaseMovieRead(__GSmovieStreaming* movie, THPReadBuffer* read) {
-    MovieDecoder* decoder = movie->decoder;
-    if (read->video && read->audio) {
-        read->valid = 0;
-        read->video = 0;
-        ++decoder->readVideo;
-        if (decoder->readVideo >= 10) decoder->readVideo = 0;
-        if (decoder->hasAudio) {
-            read->audio = 0;
-            ++decoder->readAudio;
-            if (decoder->readAudio >= 10) decoder->readAudio = 0;
-        }
-    }
+#pragma force_active on
+static void _movieStreamPrepareGetDataCallback(s32,void* result,s32 context) {
+    __GSmovieStreaming* movie=(__GSmovieStreaming*)context;
+    u32 bytes=(u32)result;
+    MovieDecoder* decoder=movie->decoder;
+    decoder->streamOffset+=0x8000;
+    if(decoder->preload) {
+        if(decoder->streamOffset>=decoder->movieBytes) decoder->streamOffset=0;
+    } else if(decoder->streamOffset>=decoder->movieBytes) decoder->streamOffset=0;
+    else if(decoder->streamOffset>=GSfsysStreamGetCacheSize()) decoder->streamOffset=0;
+    _movieStreamPrepareGetDataCallback_Exec(movie,0,bytes);
 }
-extern "C" u32 THPAudioDecode(s16*, u8*, s32);
+#pragma force_active reset
+
+extern "C" void _movieStreamPrepareGetData(__GSmovieStreaming* movie) {
+    prepareMovieStreamGetData(movie);
+}
+
+#pragma force_active on
+static u32 _VideoDecode(__GSmovieStreaming* s, THPReadBuffer* rb, THPTextureSet* ts) {
+    u32 i;
+    s32* sizes;
+    u8* data;
+    MovieDecoder* p = s->decoder;
+    u32 result = 0;
+    sizes = (s32*)(rb->data + 8);
+    data = rb->data + 8 + p->componentCount * 4;
+    for (i = 0; i < p->componentCount; i++) {
+        switch (p->componentTypes[i]) {
+        case 0:
+                s32 err = THPVideoDecode(data, ts->y, ts->u, ts->v, p->videoWork);
+                p->audioError = err;
+                if (err != 0) {
+                    if (s->reading == 1) {
+                        s->ready = 0;
+                        s->reading = 0;
+                    }
+                    p->state = 5;
+                }
+                ts->frame = rb->frame;
+                ts->valid = 1;
+                p->texWrite++;
+                if (p->texWrite >= 3) {
+                    p->texWrite = 0;
+                }
+                {
+                    s32 old = p->framesDecoded;
+                    s32 cur = p->lastAudioFrame + 1;
+                    result = cur > old ? cur - old : 0;
+                    p->framesDecoded = old + 1;
+                }
+            break;
+        }
+        data += *sizes;
+        sizes++;
+    }
+    if (s->reading == 1) {
+        s->ready = 1;
+        s->reading = 0;
+    }
+    return result;
+}
+#pragma force_active reset
+
 extern "C" void _movieStreamDecode(__GSmovieStreaming* movie) {
     u32* sizes;
     u32 component;
@@ -354,7 +279,43 @@ decodeDone:
     ;
 }
 
-extern "C" void OSReport(const char*, ...);
+#pragma force_active on
+static u32 GetAudioSample(__GSmovieStreaming* movie,s16* left,s16* right,u32 requested,s32* status) {
+    u32 result=(u32)movie;
+    MovieDecoder* decoder=movie->decoder;
+    if(!decoder->currentAudio) {
+        if(!decoder->audio[decoder->audioRead].state[0]) { *status=2; return 0; }
+        decoder->currentAudio=&decoder->audio[decoder->audioRead];
+    }
+    THPAudioBuffer* audio=decoder->currentAudio;
+    u32 count=audio->samples;
+    if(count) {
+        if(count>=requested) count=requested;
+        s16* input=audio->current;
+        result=count;
+        if(!right) {
+            for(count=0;count<result;++count) { *left++=input[1]; input+=2; }
+        } else {
+            for(count=0;count<result;++count) { *right++=input[0]; *left++=input[1]; input+=2; }
+        }
+        decoder->currentAudio->samples-=result;
+        decoder->currentAudio->current=input;
+        if(!decoder->currentAudio->samples) {
+            decoder->currentAudio->state[0]=0;
+            ++decoder->audioRead;
+            if(decoder->audioRead>=6) decoder->audioRead=0;
+            decoder->currentAudio=0;
+            *status=1;
+            return result;
+        }
+        *status=0;
+        return result;
+    }
+    // The release build returns the incoming descriptor when its current buffer is empty.
+    return result;
+}
+#pragma force_active reset
+
 u32 StreamUpdateCallback(void* first, u32 firstSamples, void* second, u32 secondSamples, u32 context) {
     __GSmovieStreaming* movie = (__GSmovieStreaming*)context;
     if (!movie) return 0;
@@ -414,4 +375,61 @@ u32 StreamUpdateCallback(void* first, u32 firstSamples, void* second, u32 second
         return samples;
     }
     return 0;
+}
+
+extern "C" u8 _StreamInit(__GSmovieStreaming* movie) {
+    u32 samples;
+    MovieDecoder* decoder=movie->decoder;
+    u32 rate=decoder->sampleRate;
+    samples=((u32)(0.5f+(f32)(rate*60)/1000.0f)+31)&~31;
+    decoder->leftStream=sndStreamAllocEx(255,decoder->leftBuffer,samples,rate,127,decoder->channels==2?0:64,0,0,0,0,0x30000,StreamUpdateCallback,movie,0);
+    if(decoder->leftStream==-1U) return 0;
+    if(decoder->channels==2) {
+        decoder->rightStream=sndStreamAllocEx(255,decoder->rightBuffer,samples,decoder->sampleRate,127,127,0,0,0,0,0x30000,StreamUpdateCallback,0,0);
+        if(decoder->rightStream==-1U) { sndStreamFree(decoder->leftStream); return 0; }
+    }
+    decoder->markRead=0; decoder->markWrite=0;
+    decoder->reserved8260[1]=0; decoder->reserved8260[0]=0;
+    decoder->reserved8260[3]=0; decoder->reserved8260[2]=0;
+    decoder->samplesPlayed=0;
+    return 1;
+}
+
+extern "C" u8 _StreamInitFillStreamBuffer(__GSmovieStreaming* movie) {
+    MovieDecoder* decoder=movie->decoder;
+    u32 samples=((u32)(0.5f+(f32)(decoder->sampleRate*60)/1000.0f)+31)&~31;
+    if(decoder->channels==2) {
+        _fillStreamChannel(movie,decoder->samplesPlayed,samples,decoder->rightBuffer,decoder->leftBuffer);
+        decoder->samplesPlayed+=samples;
+    } else {
+        _fillStreamChannel(movie,decoder->samplesPlayed,samples,0,decoder->leftBuffer);
+        decoder->samplesPlayed+=samples;
+    }
+    u32 bytes=samples*2;
+    DCFlushRange(decoder->leftBuffer,bytes);
+    sndStreamARAMUpdate(decoder->leftStream,0,samples,0,0);
+    if(decoder->channels==2) {
+        DCFlushRange(decoder->rightBuffer,bytes);
+        sndStreamARAMUpdate(decoder->rightStream,0,samples,0,0);
+    }
+    *(u8*)&movie->reserved1a=1;
+    return 1;
+}
+
+extern "C" u8 _StreamPlay(__GSmovieStreaming* movie) {
+    MovieDecoder* decoder=movie->decoder;
+    if(decoder->leftStream!=-1U && sndStreamActivate(decoder->leftStream)) {
+        if(decoder->rightStream!=-1U) {
+            if(sndStreamActivate(decoder->rightStream)) return 1;
+            sndStreamDeactivate(decoder->leftStream);
+        } else return 1;
+    }
+    return 0;
+}
+
+extern "C" void _StreamQuit(__GSmovieStreaming* movie) {
+    MovieDecoder* decoder=movie->decoder;
+    sndStreamFree(decoder->leftStream);
+    decoder->leftStream=-1;
+    if(decoder->rightStream!=-1U) { sndStreamFree(decoder->rightStream); decoder->rightStream=-1; }
 }
