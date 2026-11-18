@@ -1,73 +1,8 @@
 #include <game/pxdvs/GSAPI/GSshape/GSshape.hpp>
 
-bool GsKeyObject::GetGradationParameter(u8* type, tagGScol4ub* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
-    *type=a->gradationType;
-    tagGScol4ub *first, *second;
-    u32 count;
-    if(((volatile tagGsFilePrimKeyFrame*)a)->gradationType==0) { first=a->gradationU; second=b->gradationU; count=a->gradationCountU; }
-    else { first=a->gradationV; second=b->gradationV; count=a->gradationCountV; }
-    for(u32 i=0;i<count;i++) {
-        out[i].r=(1.0f-t)*first[i].r+t*second[i].r;
-        out[i].g=(1.0f-t)*first[i].g+t*second[i].g;
-        out[i].b=(1.0f-t)*first[i].b+t*second[i].b;
-        out[i].a=(1.0f-t)*first[i].a+t*second[i].a;
-    }
-    return true;
-}
 static inline f32* keyFrameTwist(const tagGsFilePrimKeyFrame* key) { return key->twist; }
 static inline f32* keyFrameDeformU(const tagGsFilePrimKeyFrame* key) { return key->deformU; }
 static inline f32* keyFrameDeformV(const tagGsFilePrimKeyFrame* key) { return key->deformV; }
-bool GsKeyObject::GetTwistParameter(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
-    f32 *first=keyFrameTwist(a);
-    f32 *second=keyFrameTwist(b);
-    u32 i=0;
-    u32 count=a->twistCount;
-    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
-    return true;
-}
-bool GsKeyObject::GetDeformParameterU(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
-    f32 *first=keyFrameDeformU(a);
-    f32 *second=keyFrameDeformU(b);
-    u32 i=0;
-    u32 count=a->deformCountU;
-    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
-    return true;
-}
-bool GsKeyObject::GetDeformParameterV(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
-    f32 *first=keyFrameDeformV(a);
-    f32 *second=keyFrameDeformV(b);
-    u32 i=0;
-    u32 count=a->deformCountV;
-    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
-    return true;
-}
-bool GsKeyObject::GetLinearParameterU(f32* out, const tagGsFilePrimKeyFrame* a) {
-    u32 i=0;
-    u32 count=a->deformCountU;
-    f32 denominator=(u32)(count-1);
-    for(;i<count;i++) out[i]=(f32)i/denominator;
-    return true;
-}
-bool GsKeyObject::GetLinearParameterV(f32* out, const tagGsFilePrimKeyFrame* a) {
-    u32 i=0;
-    u32 count=a->deformCountV;
-    f32 denominator=(u32)(count-1);
-    for(;i<count;i++) out[i]=(f32)i/denominator;
-    return true;
-}
-bool GsKeyObject::GetFrameInterval(u32 frame, tagGsFilePrimKeyFrame*& a, tagGsFilePrimKeyFrame*& b, f32& t) {
-    for(u32 i=0;i<entry->frameCount;i++) {
-        if(frame<=frames[i]->frame) {
-            u32 previous=i;
-            if(i!=0) previous=i-1;
-            a=frames[previous]; b=frames[i];
-            if(i!=previous) t=(f32)(frame-a->frame)/(f32)(b->frame-a->frame);
-            else t=0.0f;
-            return true;
-        }
-    }
-    return false;
-}
 
 // Curves store cubic Bezier control points; successive segments share their endpoint.
 static inline f32 shapeCurve(const GsShapeCurvePoint* points, u8 count, f32 time) {
@@ -85,19 +20,22 @@ static inline f32 shapeCurve(const GsShapeCurvePoint* points, u8 count, f32 time
     remaining=1.0f-t; square=t*t; remainingSquare=remaining*remaining;
     return first[3].value*(square*t)+(first[2].value*(3.0f*square*remaining)+(first[0].value*(remainingSquare*remaining)+first[1].value*(3.0f*t*remainingSquare)));
 }
-#pragma push
-#pragma opt_common_subs off
-f32 GsKeyObject::GetShapeColorAlpha(const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
-    f32 alpha;
-    f32 inverse=1.0f-t;
-    if(a->colorCurveCount[3]) {
-        alpha=255.0f*shapeCurve(a->colorCurves[3],a->colorCurveCount[3],t);
-        if(alpha<0.0f) alpha=0.0f;
-        else if(alpha>255.0f) alpha=255.0f;
-    } else alpha=inverse*a->color.a+t*b->color.a;
-    return alpha/255.0f;
+
+extern "C" GSmtx mtxIdent;
+
+bool GsKeyObject::GetFrameInterval(u32 frame, tagGsFilePrimKeyFrame*& a, tagGsFilePrimKeyFrame*& b, f32& t) {
+    for(u32 i=0;i<entry->frameCount;i++) {
+        if(frame<=frames[i]->frame) {
+            u32 previous=i;
+            if(i!=0) previous=i-1;
+            a=frames[previous]; b=frames[i];
+            if(i!=previous) t=(f32)(frame-a->frame)/(f32)(b->frame-a->frame);
+            else t=0.0f;
+            return true;
+        }
+    }
+    return false;
 }
-#pragma pop
 
 tagGScol4ub GsKeyObject::GetShapeColor(const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
     f32 values[4];
@@ -114,6 +52,21 @@ tagGScol4ub GsKeyObject::GetShapeColor(const tagGsFilePrimKeyFrame* a, const tag
     color.r=values[0]; color.g=values[1]; color.b=values[2]; color.a=values[3];
     return color;
 }
+
+#pragma push
+#pragma opt_common_subs off
+f32 GsKeyObject::GetShapeColorAlpha(const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
+    f32 alpha;
+    f32 inverse=1.0f-t;
+    if(a->colorCurveCount[3]) {
+        alpha=255.0f*shapeCurve(a->colorCurves[3],a->colorCurveCount[3],t);
+        if(alpha<0.0f) alpha=0.0f;
+        else if(alpha>255.0f) alpha=255.0f;
+    } else alpha=inverse*a->color.a+t*b->color.a;
+    return alpha/255.0f;
+}
+#pragma pop
+
 bool GsKeyObject::GetShapeRadius(f32* u, f32* v, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
     f32* outputs[2]={0,0}; outputs[0]=u; outputs[1]=v;
     for(int i=0;i<2;i++) {
@@ -124,6 +77,7 @@ bool GsKeyObject::GetShapeRadius(f32* u, f32* v, const tagGsFilePrimKeyFrame* a,
     }
     return true;
 }
+
 bool GsKeyObject::GetShapeShowAngle(f32* u, f32* v, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
     f32* outputs[2]={0,0}; outputs[0]=u; outputs[1]=v;
     f32 inverse=1.0f-t;
@@ -133,6 +87,7 @@ bool GsKeyObject::GetShapeShowAngle(f32* u, f32* v, const tagGsFilePrimKeyFrame*
     }
     return true;
 }
+
 GsShapePair GsKeyObject::GetTextureScale(const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t, u32 texture) const {
     GsShapePair value; f32* out=&value.u;
     const f32 *first=&a->textureScale[texture].u, *second=&b->textureScale[texture].u;
@@ -143,6 +98,7 @@ GsShapePair GsKeyObject::GetTextureScale(const tagGsFilePrimKeyFrame* a, const t
     }
     return value;
 }
+
 GsShapePair GsKeyObject::GetTextureOffset(const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t, u32 texture) const {
     GsShapePair value; f32* out=&value.u;
     const f32 *first=&a->textureOffset[texture].u, *second=&b->textureOffset[texture].u;
@@ -153,6 +109,7 @@ GsShapePair GsKeyObject::GetTextureOffset(const tagGsFilePrimKeyFrame* a, const 
     }
     return value;
 }
+
 tagGScol4ub GsKeyObject::GetTextureColor(const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t, u32 texture) const {
     tagGScol4ub color;
     if(!entry->textureColorAnimated[texture]) {
@@ -172,6 +129,7 @@ tagGScol4ub GsKeyObject::GetTextureColor(const tagGsFilePrimKeyFrame* a, const t
     color.r=values[0]; color.g=values[1]; color.b=values[2]; color.a=values[3];
     return color;
 }
+
 tagGScol4ub GsKeyObject::GetTextureColorLow(const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t, u32 texture) const {
     tagGScol4ub color;
     if(!entry->textureColorAnimated[texture]) {
@@ -192,7 +150,64 @@ tagGScol4ub GsKeyObject::GetTextureColorLow(const tagGsFilePrimKeyFrame* a, cons
     return color;
 }
 
-extern "C" GSmtx mtxIdent;
+bool GsKeyObject::GetLinearParameterU(f32* out, const tagGsFilePrimKeyFrame* a) {
+    u32 i=0;
+    u32 count=a->deformCountU;
+    f32 denominator=(u32)(count-1);
+    for(;i<count;i++) out[i]=(f32)i/denominator;
+    return true;
+}
+
+bool GsKeyObject::GetLinearParameterV(f32* out, const tagGsFilePrimKeyFrame* a) {
+    u32 i=0;
+    u32 count=a->deformCountV;
+    f32 denominator=(u32)(count-1);
+    for(;i<count;i++) out[i]=(f32)i/denominator;
+    return true;
+}
+
+bool GsKeyObject::GetDeformParameterU(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
+    f32 *first=keyFrameDeformU(a);
+    f32 *second=keyFrameDeformU(b);
+    u32 i=0;
+    u32 count=a->deformCountU;
+    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
+    return true;
+}
+
+bool GsKeyObject::GetDeformParameterV(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
+    f32 *first=keyFrameDeformV(a);
+    f32 *second=keyFrameDeformV(b);
+    u32 i=0;
+    u32 count=a->deformCountV;
+    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
+    return true;
+}
+
+bool GsKeyObject::GetTwistParameter(f32* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
+    f32 *first=keyFrameTwist(a);
+    f32 *second=keyFrameTwist(b);
+    u32 i=0;
+    u32 count=a->twistCount;
+    for(;i<count;i++) out[i]=(1.0f-t)*first[i]+t*second[i];
+    return true;
+}
+
+bool GsKeyObject::GetGradationParameter(u8* type, tagGScol4ub* out, const tagGsFilePrimKeyFrame* a, const tagGsFilePrimKeyFrame* b, f32 t) const {
+    *type=a->gradationType;
+    tagGScol4ub *first, *second;
+    u32 count;
+    if(((volatile tagGsFilePrimKeyFrame*)a)->gradationType==0) { first=a->gradationU; second=b->gradationU; count=a->gradationCountU; }
+    else { first=a->gradationV; second=b->gradationV; count=a->gradationCountV; }
+    for(u32 i=0;i<count;i++) {
+        out[i].r=(1.0f-t)*first[i].r+t*second[i].r;
+        out[i].g=(1.0f-t)*first[i].g+t*second[i].g;
+        out[i].b=(1.0f-t)*first[i].b+t*second[i].b;
+        out[i].a=(1.0f-t)*first[i].a+t*second[i].a;
+    }
+    return true;
+}
+
 bool GsKeyObject::GetShapeMatrix(GSmtx* shape,GSmtx* transform,const tagGsFilePrimObjectEntry* object,u8 count,const u8* order,const tagGsFilePrimKeyFrame* a,const tagGsFilePrimKeyFrame* b,f32 t) const {
     Vec axis2,axis1,scale,position,pivot,rotation;
     f32* output=&scale.x;
