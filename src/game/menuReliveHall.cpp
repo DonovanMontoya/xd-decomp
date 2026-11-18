@@ -1820,7 +1820,7 @@ f32 CMenuReliveHall::starTimeFromBorn(f32 &x, f32 &y, f32 direction) {
 
 void CMenuReliveHall::drawStarLightOne(long aisyou, f32 x, f32 y, long index) {
     f32 master;
-    long t = calcAnimationTimeRate0toX(0.32f, 10);
+    long t = calcAnimationTimeRate0toX(0.32000002f, 10);
     unsigned long step = t + index;
     master = starMasterScaleTbl[step % 10];
     f32 scale = _aisyou2ScaleTbl[aisyou];
