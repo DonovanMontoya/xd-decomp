@@ -743,6 +743,7 @@ void particleEngineUpdate(f32 time) {
     EngineBank* bank=g_particleBanks;
     while(bank){peBankUpdate(bank,time);bank=bank->next;}
 }
+#pragma opt_propagation off
 u8 particleEnginePrepareUpdate(u32 camera) {
     Vec side;
     struct Matrix {Mtx values;};
@@ -753,15 +754,26 @@ u8 particleEnginePrepareUpdate(u32 camera) {
     GScameraLoadCameraMatrix(camera,-1);GSgfxProjectSetupCameraParameters(camera);
     GScameraGetPosition(camera,&g_CameraPosition);
     PSMTXTranspose(g_CameraMatrix,transpose.values);copy=transpose;PSMTXCopy(copy.values,basis.values);
-    struct CameraAxis:Vec {CameraAxis(f32 a,f32 b,f32 c){x=a;y=b;z=c;}};
-    g_CameraSideDir=CameraAxis(basis.values[0][0],basis.values[1][0],basis.values[2][0]);
-    g_CameraUpDir=CameraAxis(basis.values[0][1],basis.values[1][1],basis.values[2][1]);
+    f32 upX, sideX, sideY, sideZ, upY, upZ;
+    sideX = basis.values[0][0];
+    upY = basis.values[1][1];
+    sideY = basis.values[1][0];
+    sideZ = basis.values[2][0];
+    upZ = basis.values[2][1];
+    upX = basis.values[0][1];
+    g_CameraSideDir.x = sideX;
+    g_CameraSideDir.y = sideY;
+    g_CameraSideDir.z = sideZ;
+    g_CameraUpDir.x = upX;
+    g_CameraUpDir.y = upY;
+    g_CameraUpDir.z = upZ;
     PSVECNormalize(&g_CameraUpDir,&g_CameraUpDir);PSVECNormalize(&g_CameraSideDir,&g_CameraSideDir);
     g_CameraSideDir.x=-g_CameraSideDir.x;g_CameraSideDir.y=-g_CameraSideDir.y;g_CameraSideDir.z=-g_CameraSideDir.z;
     PSVECCrossProduct(&g_CameraSideDir,&g_CameraUpDir,&side);
     g_CameraLookDir=side;
     return 1;
 }
+#pragma opt_propagation reset
 void particleEngineInit(void) {
     GSgfxVFInit(&g_ext_vertex_format);
     GSgfxVFCreate(&g_ext_vertex_format);

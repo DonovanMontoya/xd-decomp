@@ -1068,7 +1068,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSparticle/peDistortion.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peParticleStrip.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSparticle/peSpline.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/particleEngine.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSparticle/particleEngine.cpp"),
             Object(NonMatching, "game/pxdvs/GSAPI/GSparticle/peShape.cpp"),
 
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSeffect/GSeffect.cpp"),
