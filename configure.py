@@ -189,34 +189,36 @@ if args.map:
 config.reconfig_deps = []
 
 if config.version == "GXXE01":
-    from tools.extract_pokecolo_assets import ASSETS
+    from tools.extract_pokecolo_assets import ASSET_GROUPS
 
-    pokecolo_extractor = Path("tools/extract_pokecolo_assets.py")
-    pokecolo_dol = Path("orig/GXXE01/sys/main.dol")
-    pokecolo_include_dir = config.out_path() / "include/game/pokecolo"
-    config.reconfig_deps = (config.reconfig_deps or []) + [pokecolo_extractor]
-    config.custom_build_rules = (config.custom_build_rules or []) + [
+    extractor = Path("tools/extract_pokecolo_assets.py")
+    retail_dol = Path("orig/GXXE01/sys/main.dol")
+    config.reconfig_deps.append(extractor)
+    config.custom_build_rules = [
         {
-            "name": "pokecolo_assets",
-            "command": '$python "$extractor" --dol "$dol" --output-dir "$asset_dir"',
-            "description": "Extract private pokecolo initializers",
+            "name": "retail_assets",
+            "command": '$python "$extractor" --dol "$dol" --group "$group" --output-dir "$asset_dir"',
+            "description": "Extract private $group initializers",
             "restat": True,
         }
     ]
-    config.custom_build_steps = config.custom_build_steps or {}
-    config.custom_build_steps.setdefault("pre-compile", []).append(
-        {
-            "rule": "pokecolo_assets",
-            "outputs": [pokecolo_include_dir / (name + ".inc") for name, _, _ in ASSETS],
-            "inputs": [pokecolo_dol],
-            "implicit": [pokecolo_extractor],
-            "variables": {
-                "extractor": pokecolo_extractor,
-                "dol": pokecolo_dol,
-                "asset_dir": pokecolo_include_dir,
-            },
-        }
-    )
+    config.custom_build_steps = {"pre-compile": []}
+    for group, assets in ASSET_GROUPS.items():
+        asset_dir = config.out_path() / "include/game" / group
+        config.custom_build_steps["pre-compile"].append(
+            {
+                "rule": "retail_assets",
+                "outputs": [asset_dir / (name + ".inc") for name, _, _ in assets],
+                "inputs": [retail_dol],
+                "implicit": [extractor],
+                "variables": {
+                    "extractor": extractor,
+                    "dol": retail_dol,
+                    "group": group,
+                    "asset_dir": asset_dir,
+                },
+            }
+        )
 
 # Optional numeric ID for decomp.me preset
 # Can be overridden in libraries or objects

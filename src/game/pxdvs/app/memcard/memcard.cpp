@@ -3,6 +3,18 @@
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 
+#if defined(VERSION_GXXE01)
+static const u8 _memcardBannerImage[] = {
+#include <game/memcard/_memcardBannerImage.inc>
+};
+static const u8 _memcardIconImage[] = {
+#include <game/memcard/_memcardIconImage.inc>
+};
+#else
+extern "C" const u8 _memcardBannerImage[0x1800];
+extern "C" const u8 _memcardIconImage[0x2200];
+#endif
+
 static u8 _memcardInitializeFlag;
 static MemcardStatus* _memcardStatusPtr;
 static u8 _memcard_anySaveOFF_Flag;
@@ -819,17 +831,15 @@ void memcardInitialize(void)
 extern "C" {
 s32 pokecoloGetCountryCode();
 char* strcpy(char*, const char*);
-extern const u8 _memcardBannerImage[];
 s32 fn_801CC508() {
-    const u8* images = _memcardBannerImage;
     OSCalendarTime calendar;
     OSTicksToCalendarTime(OSGetTime(), &calendar);
     char* buffer = (char*)_memcardStatusPtr->buf50;
     memset(buffer, 0, 0x6000);
     switch (pokecoloGetCountryCode()) {
     case 0:
-        strcpy(buffer, (const char*)images + 0x3A1C);
-        strcpy(buffer + 0x20, (const char*)images + 0x3A2C);
+        strcpy(buffer, "ポケモンＸＤ");
+        strcpy(buffer + 0x20, "セーブファイル Yy/Mm/Dd");
         buffer[0x2F] = (calendar.year / 10) % 10 + '0';
         buffer[0x30] = calendar.year % 10 + '0';
         buffer[0x32] = ((calendar.mon + 1) / 10) % 10 + '0';
@@ -839,8 +849,8 @@ s32 fn_801CC508() {
         break;
     case 1:
     case 2:
-        strcpy(buffer, (const char*)images + 0x3A44);
-        strcpy(buffer + 0x20, (const char*)images + 0x3A50);
+        strcpy(buffer, "POKeMON XD");
+        strcpy(buffer + 0x20, "SAVE FILE Mm/Dd/20Yy");
         buffer[3] = 0xE9;
         buffer[0x32] = (calendar.year / 10) % 10 + '0';
         buffer[0x33] = calendar.year % 10 + '0';
@@ -850,8 +860,8 @@ s32 fn_801CC508() {
         buffer[0x2E] = calendar.mday % 10 + '0';
         break;
     }
-    memcpy(buffer + 0x40, (const void*)images, 0x1800);
-    memcpy(buffer + 0x1840, images + 0x1800, 0x2200);
+    memcpy(buffer + 0x40, _memcardBannerImage, sizeof(_memcardBannerImage));
+    memcpy(buffer + 0x1840, _memcardIconImage, sizeof(_memcardIconImage));
     for (u32 i=0; i<0xE90; ++i) *(u32*)(buffer + 0x3A40) += ((u32*)buffer)[i];
     return 0x12;
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate private USA pokecolo C initializers; never commit generated files."""
+"""Generate private USA asset initializers; never commit generated files."""
 
 import argparse
 import hashlib
@@ -18,6 +18,21 @@ ASSETS = (
     ("system_error_fnt", 0x804E7F9C, 8),
 )
 
+ASSET_GROUPS = {
+    "pokecolo": ASSETS,
+    "menu": (
+        ("uv_cmn_win_00", 0x803D5280, 0x6E0),
+        ("tex_warning", 0x803D5960, 0x21480),
+        ("tex_warning_pstar", 0x803F6DE0, 0x3980),
+        ("uv_cmn_csr_00", 0x803FA760, 0x1680),
+        ("uv_common_icon_00", 0x803FBDE0, 0x1C0),
+    ),
+    "memcard": (
+        ("_memcardBannerImage", 0x802F4D08, 0x1800),
+        ("_memcardIconImage", 0x802F6508, 0x2200),
+    ),
+}
+
 
 def extract(dol, address, size):
     offsets = struct.unpack_from(">18I", dol, 0)
@@ -32,13 +47,13 @@ def extract(dol, address, size):
     raise ValueError(f"DOL has no file-backed range {address:#x}+{size:#x}")
 
 
-def generate(dol_path, output_dir):
+def generate(dol_path, output_dir, assets=ASSETS):
     dol = dol_path.read_bytes()
     digest = hashlib.sha1(dol).hexdigest()
     if digest != DOL_SHA1:
         raise ValueError(f"expected USA main.dol SHA1 {DOL_SHA1}, got {digest}")
     # Validate every range before writing any output.
-    payloads = [(name, extract(dol, address, size)) for name, address, size in ASSETS]
+    payloads = [(name, extract(dol, address, size)) for name, address, size in assets]
     output_dir.mkdir(parents=True, exist_ok=True)
     for name, data in payloads:
         text = "/* Private build asset. Do not commit. */\n" + "".join(
@@ -57,9 +72,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dol", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument("--group", choices=ASSET_GROUPS, default="pokecolo")
     args = parser.parse_args()
     try:
-        generate(args.dol, args.output_dir)
+        generate(args.dol, args.output_dir, ASSET_GROUPS[args.group])
     except (OSError, ValueError) as error:
         parser.exit(1, f"{error}\n")
 

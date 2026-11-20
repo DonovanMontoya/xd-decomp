@@ -195,11 +195,29 @@ void* memset(void* dst, int val, u32 size);
 
 extern WINDOW_SYS_WORK winSysWork;
 extern WINDOW_SYS_WORK winSysWork2;
+#if defined(VERSION_GXXE01)
+static u8 uv_cmn_win_00[] __attribute__((aligned(32))) = {
+#include <game/menu/uv_cmn_win_00.inc>
+};
+static u8 tex_warning[] __attribute__((aligned(32))) = {
+#include <game/menu/tex_warning.inc>
+};
+static u8 tex_warning_pstar[] __attribute__((aligned(32))) = {
+#include <game/menu/tex_warning_pstar.inc>
+};
+static u8 uv_cmn_csr_00[] __attribute__((aligned(32))) = {
+#include <game/menu/uv_cmn_csr_00.inc>
+};
+static u8 uv_common_icon_00[] __attribute__((aligned(32))) = {
+#include <game/menu/uv_common_icon_00.inc>
+};
+#else
 extern u8 uv_cmn_win_00[];
 extern u8 tex_warning[];
 extern u8 tex_warning_pstar[];
 extern u8 uv_cmn_csr_00[];
 extern u8 uv_common_icon_00[];
+#endif
 }
 
 GSgfxVF menuHyperModeVf;
