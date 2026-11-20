@@ -280,6 +280,8 @@ adapted from `src/game/maximum/GSAPI/baselib/texpopt.cpp` at XD commit
 `f109416dd73aa8100b15d5b74381442509211343`. All six functions in the unit
 match, and linking the compiled unit reproduces the retail USA DOL.
 
+The spot-texture renderer in `game/pxdvs/app/wazaSequence/pachiru.cpp` uses the pixel bounds and spot iteration from the same XD checkpoint, with the local texture API. All three functions match the retail link.
+
 ## Colosseum license notice
 
 ```text

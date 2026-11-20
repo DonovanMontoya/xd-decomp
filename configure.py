@@ -1322,7 +1322,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/app/wazaSequence/wazaSequenceEntry.cpp", extra_cflags=["-inline auto,deferred", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/wazaSequence/deoxyspokemonPKXData.c"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/wazaSequence/rareDeoxysPokemonPKXData.c"),
-            Object(NonMatching, "game/pxdvs/app/wazaSequence/pachiru.cpp", extra_cflags=["-inline noauto", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/wazaSequence/pachiru.cpp", extra_cflags=["-inline noauto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/wazaSequence/leaffx.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/wazaSequence/billboard.cpp", extra_cflags=["-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/wazaSequence/wazaeffects.cpp"),
