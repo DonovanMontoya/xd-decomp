@@ -28,7 +28,12 @@ struct tigaVariant {
     void add(tigaVariant*, tigaVariant*);
 };
 struct tigaArrayFixed {
-    s32 count; u32 cursor; u8 isDynamic; u8 pad09[3]; u32 reserved0C;
+    s32 count;
+    u32 cursor;
+    u8 isDynamic;
+    u8 pad09;
+    u16 arrayIndex;
+    u32 reserved0C;
     tigaVariant values[1];
     void push_back(tigaVariant*);
     void resize(int);

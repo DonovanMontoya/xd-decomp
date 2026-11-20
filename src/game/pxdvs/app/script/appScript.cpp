@@ -325,8 +325,8 @@ int AppScript::getExtendVariable(tigaVariant* var, int id, int) {
     }
     if (id >= 0x200 && id <= 0x2FF) {
         int idx = id - 0x200;
-        if (idx >= 0 && idx < field968) {
-            appScriptSetVar(var, 7, (void*)((s32*)field96C)[idx]);
+        if (idx >= 0 && idx < arrayCount) {
+            appScriptSetVar(var, 7, arrays[idx]);
         } else {
             var->type = 1;
             var->value.integer = 0;

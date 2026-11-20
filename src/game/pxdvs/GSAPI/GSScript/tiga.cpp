@@ -98,13 +98,13 @@ void Tiga::makeStateData(GSBinWriteStream* stream) {
     for (i = 0; i < globalCount; i++) {
         globals[i].makeStateData(stream);
     }
-    stream->writeU32(field968);
-    for (i = 0; i < field968; i++) {
-        stream->writeBool(((tigaArrayFixed**)field96C)[i]->isDynamic);
-        if (((tigaArrayFixed**)field96C)[i]->isDynamic == 0) {
-            stream->writeU32(((tigaArrayFixed**)field96C)[i]->count);
-            for (int j = 0; j < ((tigaArrayFixed**)field96C)[i]->count; j++) {
-                ((tigaArrayFixed**)field96C)[i]->get(j)->makeStateData(stream);
+    stream->writeU32(arrayCount);
+    for (i = 0; i < arrayCount; i++) {
+        stream->writeBool(arrays[i]->isDynamic);
+        if (arrays[i]->isDynamic == 0) {
+            stream->writeU32(arrays[i]->count);
+            for (int j = 0; j < arrays[i]->count; j++) {
+                arrays[i]->get(j)->makeStateData(stream);
             }
         }
     }
@@ -147,13 +147,13 @@ bool Tiga::restoreStateData(void* data, unsigned long size) {
     for (i = 0; i < globalCount; i++) {
         globals[i].restoreStateData(&stream);
     }
-    field968 = stream.readU32();
-    for (i = 0; i < field968; i++) {
+    arrayCount = stream.readU32();
+    for (i = 0; i < arrayCount; i++) {
         stream.readU8();
-        if (((tigaArrayFixed**)field96C)[i]->isDynamic == 0) {
+        if (arrays[i]->isDynamic == 0) {
             stream.readU32();
-            for (int j = 0; j < ((tigaArrayFixed**)field96C)[i]->count; j++) {
-                ((tigaArrayFixed**)field96C)[i]->get(j)->restoreStateData(&stream);
+            for (int j = 0; j < arrays[i]->count; j++) {
+                arrays[i]->get(j)->restoreStateData(&stream);
             }
         }
     }
@@ -489,6 +489,12 @@ struct TigaChunkHeader {
     u32 flags;
     u32 reserved1C;
 };
+struct TigaArrayTable {
+    u32 count;
+    u8 reserved04[12];
+    tigaArrayFixed* entries[1];
+};
+
 int Tiga::setTpcChank(CChank* source) {
     if(source==0){unmappingScript();return 0;}
     currentThread=0;
@@ -528,20 +534,22 @@ int Tiga::setTpcChank(CChank* source) {
         }
     }else codeTable=0;
     header=(TigaChunkHeader*)source->searchChankID("ARRY",0);
-    if(header){
-        u8* base;
+    if (header) {
+        TigaArrayTable* table = (TigaArrayTable*)&header->count;
         int offset;
         int i;
-        base=(u8*)header+0x10;
-        field968=*(u32*)base;
-        field96C=(s32)(base+0x10);
-        i=0;
-        offset=0;
-        for(;i<field968;++i,offset+=4){
-            *(u32*)(field96C+offset)=(u32)base+*(u32*)(field96C+offset);
-            ((u16*)*(u32*)(field96C+offset))[5]=i;
+        arrayCount = table->count;
+        arrays = table->entries;
+        i = 0;
+        offset = 0;
+        for (; i < arrayCount; ++i, offset += sizeof(*arrays)) {
+            *(u32*)((u32)arrays + offset) = (u32)table + *(u32*)((u32)arrays + offset);
+            (*(tigaArrayFixed**)((u32)arrays + offset))->arrayIndex = i;
         }
-    }else{field968=0;field96C=0;}
+    } else {
+        arrayCount = 0;
+        arrays = 0;
+    }
     mapping();
     return 1;
 }

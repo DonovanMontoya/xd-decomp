@@ -83,13 +83,13 @@ void tigaVariant::restoreStateData(GSBinReadStream* stream) {
     case 7: {
         Tiga* tiga = Tiga::m_cpCurrentObject;
         s32 index = stream->readU32();
-        s32 entry;
-        if (index < 0 || index >= tiga->field968) {
+        tigaArrayFixed* entry;
+        if (index < 0 || index >= tiga->arrayCount) {
             entry = 0;
         } else {
-            entry = ((s32*)tiga->field96C)[index];
+            entry = tiga->arrays[index];
         }
-        value.integer = entry;
+        value.pointer = entry;
         if (value.pointer == 0) {
             type = 1;
             value.integer = 0;
@@ -153,7 +153,7 @@ void tigaVariant::makeStateData(GSBinWriteStream* stream) {
         stream->writeFloat(value.single);
         break;
     case 7:
-        stream->writeU32(*(u16*)((u8*)value.pointer + 0xA));
+        stream->writeU32(((tigaArrayFixed*)value.pointer)->arrayIndex);
         break;
     case 4:
         stream->writeFloat(value.vector->param1);

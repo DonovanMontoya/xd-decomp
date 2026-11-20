@@ -270,8 +270,8 @@ public:
     s32 field95C;                   // 0x95c
     s32 resIdCount;                 // 0x960
     u32* resIdTable;                // 0x964
-    s32 field968;                   // 0x968
-    s32 field96C;                   // 0x96c
+    s32 arrayCount;                 // 0x968
+    tigaArrayFixed** arrays;        // 0x96c
     s32 codeCount;                  // 0x970
     u32* codeTable;                 // 0x974
     s32 field978;                   // 0x978
