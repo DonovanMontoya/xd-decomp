@@ -275,6 +275,11 @@ ring updates. Bounded execution of the retail and candidate instruction words
 agrees in 260 cases. Register assignments still differ, so the callback remains
 partially matching and contributes no new exact bytes.
 
+The TEV expression optimizer's `SimplifyByMerge` and its merge checks were
+adapted from `src/game/maximum/GSAPI/baselib/texpopt.cpp` at XD commit
+`f109416dd73aa8100b15d5b74381442509211343`. All six functions in the unit
+match, and linking the compiled unit reproduces the retail USA DOL.
+
 ## Colosseum license notice
 
 ```text
