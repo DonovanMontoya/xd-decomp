@@ -1,3 +1,4 @@
+#pragma dollar_identifiers on
 #include <game/menuShopLayout.hpp>
 #include <libc/stdarg.h>
 
@@ -170,8 +171,10 @@ static void _setBattleDiskSellOut__Fi(s32);
 static u8 _isBattleDiskShop__Fv(void);
 static s32 _getBattleDiskShopLevel__Fv(void);
 s32 shopmode[7] = { 0xC5E2, 0xC5E4, 0xC5E9, 0xC5E9, 0xC5E9, 0xC5F1, 0xC5E3 };
-static ShopMenuItem DefMenuItem = { 0x64, 0 };
+static ShopMenuItem DefMenuItem[] = { { 0x64, 0 } };
 s32 _shopDataBattleDiskTbl[3] = { 0x10, 0x11, 0x12 };
+static s32 msgIDTbl$698[3] = { 0x3AB3, 0x3AB4, 0x3AB5 };
+static s32 msgIDTbl$610[4] = { 0x3AB9, 0x3ABA, 0x3ABB, 0x3ABC };
 static const s32 NumWinItem[2][2] = { { 0x94, 0x92 }, { 0x1A6, 0x93 } };
 
 typedef struct ShopWorkData {
@@ -179,14 +182,16 @@ typedef struct ShopWorkData {
     s32 pop;
 } ShopWorkData;
 
-static ShopWorkData ShopWork;
-static f32 CurPos;
-static s32 IsScroll;
-static f32 RollUpTime;
-static s32 ExplanationMsgID;
-static s32 NumValue;
-static void *PPcboxBackup;
+static s8 init$524;
+static s32 first$523;
 static s32 CouponBackup;
+static void *PPcboxBackup;
+static s32 NumValue;
+static s32 ExplanationMsgID;
+static f32 RollUpTime;
+static s32 IsScroll;
+static f32 CurPos;
+static ShopWorkData ShopWork;
 
 static s32 memCardSave__FP7VPC_BOX(VPC_BOX *box) {
     return memcardTaskCall(4, 2, 0) == 4;
@@ -718,14 +723,14 @@ s32 menuShopDrawRollUp(ShopWindow *win, ShopSprite *spr) {
 s32 menuShopDrawListText(ShopWindow *win, ShopSprite *spr) {
     ShopMenuArg *arg;
     s32 start;
-    s32 limit;
-    s32 scroll;
+    int limit;
+    int scroll;
     ShopItemInfo *view;
     ShopItemInfo *info;
     s32 idx;
     s32 nb;
-    s32 i;
-    s32 x;
+    int i;
+    int x;
     s32 rowY;
     u32 w;
     u32 secondWidth;
@@ -738,8 +743,8 @@ s32 menuShopDrawListText(ShopWindow *win, ShopSprite *spr) {
     view = menuItemBiosGetPtr(win->menu, 0x66);
     info = menuItemBiosGetPtr(win->menu, spr->id);
     spriteSetScissor(win->layer, view->x - info->x, view->y - info->y, view->width, view->height);
-    idx = win->first;
     nb = getNbItem__FP13SHOP_MENU_ARG(arg);
+    idx = win->first;
     msgctrlSetValue(0x50, 99999);
     w = GSmsgGetRect(0x434E) >> 16;
     secondWidth=GSmsgGetRect(0x42AF) >> 16;
@@ -751,7 +756,7 @@ s32 menuShopDrawListText(ShopWindow *win, ShopSprite *spr) {
         } else {
             limit = 11;
         }
-        scroll = (s32)*arg->curPos;
+        scroll = (int)*arg->curPos;
     }
     i = start;
     for (; i < limit && idx < nb; i++, idx++) {
@@ -780,6 +785,7 @@ s32 menuShopDrawListText(ShopWindow *win, ShopSprite *spr) {
     }
     if (i < limit) {
         s32 text;
+        rowY = i * 30 - scroll;
         if ((arg->flags & 1) != 0) {
             text = 0x3ABE;
         } else {
@@ -788,7 +794,7 @@ s32 menuShopDrawListText(ShopWindow *win, ShopSprite *spr) {
         if (arg->mode == 1) {
             text = 0x3C3F;
         }
-        GSmsgPrint2(win->layer, 0, i * 30 - scroll, -1, text);
+        GSmsgPrint2(win->layer, 0, rowY, -1, text);
     }
     spriteClearScissor(win->layer);
     spriteSetEnv(win->layer);
@@ -979,15 +985,13 @@ s32 menuShopCtrl(ShopWindow *win) {
 }
 
 static u16 selectItem__FiUcUcP13SHOP_MENU_ARG(s32 shop, u8 mode, u8 flags, ShopMenuArg *arg) {
-    static s32 first;
-    static s8 init;
-    if (init == 0) {
-        first = 1;
-        init = 1;
+    if (init$524 == 0) {
+        first$523 = 1;
+        init$524 = 1;
     }
-    if (first != 0) {
+    if (first$523 != 0) {
         setDefMenuItem__Fv();
-        first = 0;
+        first$523 = 0;
     }
     arg->item = 0;
     arg->goods = getGoodsList__FiPi(shop, &arg->nbItem);
@@ -1002,17 +1006,14 @@ static u16 selectItem__FiUcUcP13SHOP_MENU_ARG(s32 shop, u8 mode, u8 flags, ShopM
     return arg->item;
 }
 
-#pragma push
-#pragma opt_propagation off
-#pragma scheduling off
 static void setDefMenuItem__Fv(void) {
-    ShopMenuItem *item = &DefMenuItem;
-    s32 id=item->id;
-    s16 y = menuItemBiosGetPtr(0x3C, id)->y;
-    item->y = y;
+    ShopMenuItem *item = DefMenuItem;
+    s32 i;
+    for (i = 0; i < (s32)(sizeof(DefMenuItem) / sizeof(*item)); ++i, ++item) {
+        item->y = menuItemBiosGetPtr(0x3C, item->id)->y;
+    }
 }
 
-#pragma pop
 static s32 getExchangeMax__FUsUc(u16 item, u8 mode) {
     s32 point = getItemCouponPoint__FUs(item);
     s32 max;
@@ -1141,8 +1142,7 @@ static void couponExchangeMain__FiUc(s32 shop, u8 mode) {
 }
 
 static s32 selectExchangeMode__Fv(void) {
-    static s32 msgIDTbl[4] = { 0x3AB9, 0x3ABA, 0x3ABB, 0x3ABC };
-    s32 sel = menuSubOpenSelect(0, msgIDTbl, 4, 0x46, 0x3C, 0);
+    s32 sel = menuSubOpenSelect(0, msgIDTbl$610, 4, 0x46, 0x3C, 0);
     switch (sel) {
     case 0:
         return 0;
@@ -1300,8 +1300,7 @@ static void shopBuyMain__FiUc(s32 shop, u8 mode) {
 }
 
 static s32 selectDealMode__Fv(void) {
-    static s32 msgIDTbl[3] = { 0x3AB3, 0x3AB4, 0x3AB5 };
-    s32 sel = menuSubOpenSelect(0, msgIDTbl, 3, 0x46, 0x3C, 0);
+    s32 sel = menuSubOpenSelect(0, msgIDTbl$698, 3, 0x46, 0x3C, 0);
     if (sel == -1 || sel == 2) {
         return 2;
     }
