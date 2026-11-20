@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fight/fightSeq/fightSeqDamage.hpp>
 #include <game/pxdvs/app/fight/fightSeq/fightSeq.hpp>
 #define FIGHT_POKEMON_MENUS_NO_PROTOTYPES
 #include <game/pxdvs/app/fight/fightPokemonMenus.hpp>

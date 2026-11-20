@@ -1,5 +1,6 @@
 #ifndef FIGHT_SEQ_WSWAZA_PRIVATE_HPP
 #define FIGHT_SEQ_WSWAZA_PRIVATE_HPP
+#include <game/pxdvs/app/fight/fightSeq/fightSeqDamage.hpp>
 #include <game/pxdvs/app/fight/fightSeq/fightSeqWazaseqPrivate.hpp>
 #define POKEMON_HPP_NO_PROTOTYPES
 #define POKEMON_FIGHT_RECORDS_NO_PROTOTYPES
@@ -25,7 +26,6 @@ extern s32 fight_waza_critical_data_number;
 u8 fightWaza_GetCritical(void*);
 void fightWaza_SetCritical(void*, u8);
 u8 fightWaza_GetDamageValue(void*);
-s32 fightSeqWazaDamageCalcHikaePokemon(void*, void*, void*, u16, u16, u16);
 void* fightPokemon_GetPokemonBuffPtr(void*);
 u16 pokemon_GetPokemonDataId(void*);
 u8 pokemon_GetTokuseiFlag(void*);
