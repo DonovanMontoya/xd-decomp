@@ -282,6 +282,8 @@ match, and linking the compiled unit reproduces the retail USA DOL.
 
 The spot-texture renderer in `game/pxdvs/app/wazaSequence/pachiru.cpp` uses the pixel bounds and spot iteration from the same XD checkpoint, with the local texture API. All three functions match the retail link.
 
+Particle generation was adapted from the same XD checkpoint. The double-precision absolute-value wrapper preserves the retail instructions in all six magnitude checks.
+
 ## Colosseum license notice
 
 ```text

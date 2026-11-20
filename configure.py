@@ -1519,7 +1519,7 @@ config.libs = [
             Object(NonMatching, "game/maximum/GSAPI/particle/psdisp.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/particle/psdisptev.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/particle/psinterpret.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
-            Object(NonMatching, "game/maximum/GSAPI/particle/generator.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
+            Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/particle/generator.cpp", extra_cflags=["-lang c", "-str reuse,nopool,readonly", "-inline auto,deferred"]),
 
             # hsdbase_gs
             Object(MatchingFor("GXXE01"), "game/maximum/GSAPI/baselib/wobj.cpp", extra_cflags=["-str reuse,nopool,readonly", "-inline auto,deferred"]),
