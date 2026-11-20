@@ -1,9 +1,9 @@
 #include <game/pxdvs/app/fight/fightTrainerAiComboPrivate.hpp>
 extern "C" {
-u8 fixAct_v05_1[]={1,3,2,3,3,3,4,3,6};
-u8 fixAct_v35_1[]={4,4,3,5,2,5,4,5,4,5,6};
-u8 fixAct_v35_2[]={1,5,3,4,3,3,3,3,3,3,6};
-u8 fixAct_v18_1[]={1,5,1,5,1,5,1,5,2,5,6};
+extern u8 fixAct_v05_1[];
+extern u8 fixAct_v35_1[];
+extern u8 fixAct_v35_2[];
+extern u8 fixAct_v18_1[];
 u8 fixAct_v02_1[]={1,3,2,3,7};
 u8 fixAct_v04_1[]={1,5,1,5,6};
 u8 fixAct_v04_2[]={1,5,2,5,6};
@@ -38,6 +38,11 @@ FixedActionShell fixAiShell[]={
 {0,{0,0,0},{fixAct_oore1,0}},
 {0,{0,0,0},{fixAct_v09_1,0}}
 };
+u8 fixAct_v05_1[]={1,3,2,3,3,3,4,3,6};
+u8 fixAct_v35_1[]={4,4,3,5,2,5,4,5,4,5,6};
+u8 fixAct_v35_2[]={1,5,3,4,3,3,3,3,3,3,6};
+u8 fixAct_v18_1[]={1,5,1,5,1,5,1,5,2,5,6};
+
 void fightAi_FixedActIrekaeInit(FightOutPokemon *pokemon){
     void *deck=getDeckTrainerObj__11DeckTrainerFUl((u16)deckDataVirtualDB_GetEnemyDeck__FUs(fightEncountDataBiosGetDiskId(fightEncountDataBiosGetPtr(fightFloor_GetEncountDataId(0)))));
     if(fixAiShell[getFixedActionID__11DeckTrainerCFv(deck)].reset==0)fightOutPokemon_SetFixAiWaza(pokemon,6);
