@@ -1,11 +1,6 @@
 extern "C" float __float_nan[];
 #include <game/pxdvs/app/hero/heroMovePrivate.hpp>
 
-struct HeroMoveSlot {
-    u32 fn;
-    s32 arg;
-};
-
 static HeroMoveWork HeroMove;
 
 static void _heroMoveSlowStopFactor(float, bool);
@@ -13,9 +8,9 @@ static bool getResID(unsigned long*, unsigned long*, HEROMOVE_MEMBER);
 static void* getModel(HEROMOVE_MEMBER);
 
 static void _heroMoveInitialize(unsigned int, FloorEnterMode mode) {
-    HeroMove.raw[0x3AD] = 0;
-    HeroMove.raw[0x3AC] = 0;
-    HeroMove.raw[0x3AE] = 0;
+    HeroMove.state.started = 0;
+    HeroMove.state.smoothFloorLink = 0;
+    HeroMove.state.stickOverride = 0;
     if (mode == 3) {
         heroMoveSetLockFrame(4);
     }
@@ -32,11 +27,11 @@ static const char* _heroMoveGetModuleName() {
 extern "C" {
 
 u8 heroMoveIsSmoothFloorLink() {
-    return HeroMove.raw[0x3AC];
+    return HeroMove.state.smoothFloorLink;
 }
 
 void heroMoveSetSmoothFloorLink(u8 v) {
-    HeroMove.raw[0x3AC] = v;
+    HeroMove.state.smoothFloorLink = v;
 }
 
 }
@@ -62,11 +57,11 @@ static u8 isStoryMode() {
 }
 
 static void _setStickData(s8 a, s8 b, s8 c, s8 d) {
-    HeroMove.raw[0x3AE] = 1;
-    HeroMove.raw[0x3AF] = a;
-    HeroMove.raw[0x3B0] = b;
-    HeroMove.raw[0x3B1] = c;
-    HeroMove.raw[0x3B2] = d;
+    HeroMove.state.stickOverride = 1;
+    HeroMove.state.stickData[0] = a;
+    HeroMove.state.stickData[1] = b;
+    HeroMove.state.stickData[2] = c;
+    HeroMove.state.stickData[3] = d;
 }
 
 static s8 abs(s8 v) {
@@ -89,17 +84,17 @@ void heroMoveSlowStop() {
 
 void heroMoveSetLockFrame(s32 frames) {
     if (frames >= 0) {
-        *(s32*)&HeroMove.raw[0x3A8] = frames;
-        ((AnalogStickEmu*)&HeroMove.raw[0x654])->init();
+        HeroMove.state.lockFrame = frames;
+        HeroMove.state.analog.init();
     }
 }
 
 void heroMoveAddAutoEvent(s32 a, s32 b, s32 c, s32 d, s32 e) {
-    *(s32*)&HeroMove.raw[0x3B4] = a;
-    *(s32*)&HeroMove.raw[0x3B8] = b;
-    *(s32*)&HeroMove.raw[0x3BC] = c;
-    *(s32*)&HeroMove.raw[0x3C0] = d;
-    *(s32*)&HeroMove.raw[0x3C4] = e;
+    HeroMove.state.autoEvent[0] = a;
+    HeroMove.state.autoEvent[1] = b;
+    HeroMove.state.autoEvent[2] = c;
+    HeroMove.state.autoEvent[3] = d;
+    HeroMove.state.autoEvent[4] = e;
 }
 
 }
@@ -191,7 +186,7 @@ bool heroMoveIsMember(s32 member) {
 }
 
 s32 heroMoveGetLeader() {
-    return *(s32*)&HeroMove.raw[0];
+    return HeroMove.leader;
 }
 
 s32 heroMoveGetNeckMode(s32 member) {
@@ -204,15 +199,15 @@ s32 heroMoveGetNeckMode(s32 member) {
 }
 
 static void initLeaderLog() {
-    *(s32*)&HeroMove.raw[0x84] = 0;
-    *(s32*)&HeroMove.raw[0x88] = 0;
+    HeroMove.leaderLog.field00 = 0;
+    HeroMove.leaderLog.count = 0;
 }
 
 extern "C" void fn_80151F6C() {
-    *(s32*)&HeroMove.raw[0x644] = 0;
-    *(s32*)&HeroMove.raw[0x648] = 0;
-    *(s32*)&HeroMove.raw[0x64C] = 0;
-    *(s32*)&HeroMove.raw[0x650] = 0;
+    HeroMove.state.stepPool[0] = 0;
+    HeroMove.state.stepPool[1] = 0;
+    HeroMove.state.stepPool[2] = 0;
+    HeroMove.state.stepPool[3] = 0;
 }
 
 static void remakeFormation();
@@ -281,15 +276,15 @@ static void actionFriendSet(Pokemon* pokemon, u16 level) {
 }
 
 static bool getLeaderLog(GSvec* out, int index) {
-    if (index >= *(s32*)&HeroMove.raw[0x88]) {
+    if (index >= HeroMove.leaderLog.count) {
         return false;
     }
     if (index >= 0x3C) {
         return false;
     }
-    out->param1 = HeroMove.leaderLog.log[index].param1;
-    out->param2 = HeroMove.leaderLog.log[index].param2;
-    out->param3 = HeroMove.leaderLog.log[index].param3;
+    out->param1 = HeroMove.leaderLog.positions[index].param1;
+    out->param2 = HeroMove.leaderLog.positions[index].param2;
+    out->param3 = HeroMove.leaderLog.positions[index].param3;
     return true;
 }
 
@@ -298,10 +293,10 @@ static void initHeroMove() {
     HeroMove.members[1].flags = 0;
     HeroMove.members[2].flags = 0;
     HeroMove.members[3].flags = 0;
-    *(s32*)&HeroMove.raw[0] = 0;
-    *(s32*)&HeroMove.raw[0x3A8] = 0;
-    HeroMove.raw[0x3AE] = 0;
-    ((AnalogStickEmu*)&HeroMove.raw[0x654])->init();
+    HeroMove.leader = 0;
+    HeroMove.state.lockFrame = 0;
+    HeroMove.state.stickOverride = 0;
+    HeroMove.state.analog.init();
 }
 
 extern "C" {
@@ -310,7 +305,7 @@ bool heroMoveAppointLeader(s32 member) {
     if (!heroMoveIsMember(member)) {
         return false;
     }
-    *(s32*)&HeroMove.raw[0] = member;
+    HeroMove.leader = member;
     if (heroMoveGetNeckMode(member) == 1) {
         heroMoveSetNeckMode(member, 0);
     }
@@ -347,7 +342,7 @@ void heroMoveMoveParty() {
 
 }
 
-extern "C" void heroMoveCallStepCallback(s32 a, s32 b);
+extern "C" void heroMoveCallStepCallback(FootStepCounter counter, s32 amount);
 
 extern "C" {
 
@@ -419,7 +414,7 @@ void heroMoveTermEvent() {
         }
         i++;
     } while (i < 4);
-    ((AnalogStickEmu*)&HeroMove.raw[0x654])->init();
+    HeroMove.state.analog.init();
     peopleRemoveNeckTarget(0, 0x64, 1.0f);
 }
 #pragma optimization_level reset
@@ -442,19 +437,19 @@ void heroMoveInitEvent() {
     } while (i < 4);
 }
 
-void heroMoveSetEventList(u8 kind, void* list, s32 owner) {
+void heroMoveSetEventList(u8 kind, void* list, s32 count) {
     switch (kind) {
     case 1:
-        memcpy(&HeroMove.raw[0x498], (void*)list, 0xD0);
-        *(s32*)&HeroMove.raw[0x63C] = owner;
+        memcpy(HeroMove.state.events1, list, sizeof(HeroMove.state.events1));
+        HeroMove.state.eventCount1 = count;
         break;
     case 2:
-        memcpy(&HeroMove.raw[0x568], (void*)list, 0xD0);
-        *(s32*)&HeroMove.raw[0x640] = owner;
+        memcpy(HeroMove.state.events2, list, sizeof(HeroMove.state.events2));
+        HeroMove.state.eventCount2 = count;
         break;
     case 3:
-        memcpy(&HeroMove.raw[0x3C8], (void*)list, 0xD0);
-        *(s32*)&HeroMove.raw[0x638] = owner;
+        memcpy(HeroMove.state.events3, list, sizeof(HeroMove.state.events3));
+        HeroMove.state.eventCount3 = count;
         break;
     }
 }
@@ -462,31 +457,30 @@ void heroMoveSetEventList(u8 kind, void* list, s32 owner) {
 void heroMovePoolCounter(s32 kind, s32 amount) {
     switch (kind) {
     case 0:
-        *(s32*)&HeroMove.raw[0x644] += amount;
+        HeroMove.state.stepPool[0] += amount;
         break;
     case 1:
-        *(s32*)&HeroMove.raw[0x648] += amount;
+        HeroMove.state.stepPool[1] += amount;
         break;
     case 2:
-        *(s32*)&HeroMove.raw[0x64C] += amount;
+        HeroMove.state.stepPool[2] += amount;
         break;
     case 3:
-        *(s32*)&HeroMove.raw[0x650] += amount;
+        HeroMove.state.stepPool[3] += amount;
         break;
     }
 }
 
 }
 
-extern "C" void heroMoveCallStepCallback(s32 a, s32 b) {
+extern "C" void heroMoveCallStepCallback(FootStepCounter counter, s32 amount) {
     s32 i;
     for (i = 0; i < 8; i++) {
-        HeroMoveSlot* p = (HeroMoveSlot*)&HeroMove + i;
-        HeroMoveSlot* e = &p[0x6C];
-        if (e != 0) {
-            u32 fn = e->fn;
+        HeroMoveCallbackSlot* slot = &HeroMove.footsteps.callbacks[i];
+        if (slot != 0) {
+            HeroMoveStepCallback fn = slot->fn;
             if (fn != 0) {
-                ((void (*)(s32, s32, s32))fn)(e->arg, a, b);
+                fn(slot->arg, counter, amount);
             }
         }
     }
@@ -495,37 +489,37 @@ extern "C" void heroMoveCallStepCallback(s32 a, s32 b) {
 extern "C" u8 heroMoveCallStepCallbackAll() {
     u8 called = 0;
     s32 count;
-    count = *(s32*)&HeroMove.raw[0x644];
+    count = HeroMove.state.stepPool[0];
     if (count != 0) {
-        heroMoveCallStepCallback(0, count);
+        heroMoveCallStepCallback(FOOTSTEP_COUNTER_0, count);
         called = 1;
-        *(s32*)&HeroMove.raw[0x644] = 0;
+        HeroMove.state.stepPool[0] = 0;
     }
-    count = *(s32*)&HeroMove.raw[0x648];
+    count = HeroMove.state.stepPool[1];
     if (count != 0) {
-        heroMoveCallStepCallback(1, count);
+        heroMoveCallStepCallback(FOOTSTEP_COUNTER_1, count);
         called = 1;
-        *(s32*)&HeroMove.raw[0x648] = 0;
+        HeroMove.state.stepPool[1] = 0;
     }
-    count = *(s32*)&HeroMove.raw[0x64C];
+    count = HeroMove.state.stepPool[2];
     if (count != 0) {
-        heroMoveCallStepCallback(2, count);
+        heroMoveCallStepCallback(FOOTSTEP_COUNTER_2, count);
         called = 1;
-        *(s32*)&HeroMove.raw[0x64C] = 0;
+        HeroMove.state.stepPool[2] = 0;
     }
-    count = *(s32*)&HeroMove.raw[0x650];
+    count = HeroMove.state.stepPool[3];
     if (count != 0) {
-        heroMoveCallStepCallback(3, count);
+        heroMoveCallStepCallback(FOOTSTEP_COUNTER_3, count);
         called = 1;
-        *(s32*)&HeroMove.raw[0x650] = 0;
+        HeroMove.state.stepPool[3] = 0;
     }
     return called;
 }
 
 static void cbTsureFriend(long, FootStepCounter counter, long amount) {
     if (counter != 1) {
-        *(s32*)&HeroMove.raw[0x3A4] += amount;
-        while (*(s32*)&HeroMove.raw[0x3A4] > 0x100) {
+        HeroMove.footsteps.friendshipSteps += amount;
+        while (HeroMove.footsteps.friendshipSteps > 0x100) {
             s32 i = 0;
             for (; i < 6; i++) {
                 Pokemon* p = (Pokemon*)heroGetStatus(0, 3, i);
@@ -533,7 +527,7 @@ static void cbTsureFriend(long, FootStepCounter counter, long amount) {
                     actionFriendSet(p, 5);
                 }
             }
-            *(s32*)&HeroMove.raw[0x3A4] -= 0x100;
+            HeroMove.footsteps.friendshipSteps -= 0x100;
         }
     }
 }
@@ -541,9 +535,9 @@ static void cbTsureFriend(long, FootStepCounter counter, long amount) {
 static void remakeFormation() {
     f32 d = 12.0f;
     s32 i;
-    HeroMove.members[HeroMove.members[0].x0].dist = 0.0f;
+    HeroMove.members[HeroMove.leader].dist = 0.0f;
     for (i = 0; i < 4; i++) {
-        if ((HeroMove.members[i].flags & 1) && HeroMove.members[0].x0 != i) {
+        if ((HeroMove.members[i].flags & 1) && HeroMove.leader != i) {
             HeroMove.members[i].dist = d;
             d += 12.0f;
         }
@@ -587,8 +581,8 @@ s32 heroMoveJoinMember(s32 member) {
 }
 
 static void _heroMoveFinalize(unsigned int floorId, FloorEnterMode) {
-    HeroMove.raw[0x3AD] = 0;
-    if (HeroMove.raw[0x3AC] != 0) {
+    HeroMove.state.started = 0;
+    if (HeroMove.state.smoothFloorLink != 0) {
         if (floorDataBiosGetFloorKind(floorDataBiosGetPtr(floorId)) == 1) {
             floorCreateThread(0x80, 0, 1, _closeHeroThread);
         }
@@ -597,20 +591,18 @@ static void _heroMoveFinalize(unsigned int floorId, FloorEnterMode) {
 
 extern "C" {
 
-s32 heroMoveAddStepCallback(void (*fn)(long, FootStepCounter, long), s32 arg) {
+s32 heroMoveAddStepCallback(HeroMoveStepCallback fn, s32 arg) {
     s32 i = 0;
-    HeroMoveSlot* p = (HeroMoveSlot*)&HeroMove;
-    for (; i < 8; i++, p++) {
-        if (p[0x6C].fn == 0) {
+    for (; i < 8; i++) {
+        if (HeroMove.footsteps.callbacks[i].fn == 0) {
             break;
         }
     }
     if (i >= 8) {
         return -1;
     }
-    p = (HeroMoveSlot*)&HeroMove + i;
-    p[0x6C].fn = (u32)fn;
-    p[0x6C].arg = arg;
+    HeroMove.footsteps.callbacks[i].fn = fn;
+    HeroMove.footsteps.callbacks[i].arg = arg;
     return i;
 }
 
@@ -618,26 +610,26 @@ void heroMoveAllInit() {
     initHeroMove();
     heroMoveJoinMember(0);
     heroMoveAppointLeader(0);
-    *(f32*)&HeroMove.raw[0x35C] = 0.0f;
-    *(s32*)&HeroMove.raw[0x3B4] = 0;
-    *(s32*)&HeroMove.raw[0x360] = 0;
-    *(s32*)&HeroMove.raw[0x368] = 0;
-    *(s32*)&HeroMove.raw[0x370] = 0;
-    *(s32*)&HeroMove.raw[0x378] = 0;
-    *(s32*)&HeroMove.raw[0x380] = 0;
-    *(s32*)&HeroMove.raw[0x388] = 0;
-    *(s32*)&HeroMove.raw[0x390] = 0;
-    *(s32*)&HeroMove.raw[0x398] = 0;
-    *(s32*)&HeroMove.raw[0x3A0] = 0;
+    HeroMove.footsteps.distance = 0.0f;
+    HeroMove.state.autoEvent[0] = 0;
+    HeroMove.footsteps.callbacks[0].fn = 0;
+    HeroMove.footsteps.callbacks[1].fn = 0;
+    HeroMove.footsteps.callbacks[2].fn = 0;
+    HeroMove.footsteps.callbacks[3].fn = 0;
+    HeroMove.footsteps.callbacks[4].fn = 0;
+    HeroMove.footsteps.callbacks[5].fn = 0;
+    HeroMove.footsteps.callbacks[6].fn = 0;
+    HeroMove.footsteps.callbacks[7].fn = 0;
+    HeroMove.footsteps.poisonSteps = 0;
     heroMoveAddStepCallback(cbPoison, 0);
-    *(s32*)&HeroMove.raw[0x3A4] = 0;
+    HeroMove.footsteps.friendshipSteps = 0;
     heroMoveAddStepCallback(cbTsureFriend, 0);
-    HeroMove.raw[0x3AE] = 0;
-    *(s32*)&HeroMove.raw[0x644] = 0;
-    *(s32*)&HeroMove.raw[0x648] = 0;
-    *(s32*)&HeroMove.raw[0x64C] = 0;
-    *(s32*)&HeroMove.raw[0x650] = 0;
-    ((AnalogStickEmu*)&HeroMove.raw[0x654])->init();
+    HeroMove.state.stickOverride = 0;
+    HeroMove.state.stepPool[0] = 0;
+    HeroMove.state.stepPool[1] = 0;
+    HeroMove.state.stepPool[2] = 0;
+    HeroMove.state.stepPool[3] = 0;
+    HeroMove.state.analog.init();
     FloorModuleInterface_clear(&_floorModuleHero);
     _floorModuleHero.pre = _heroMoveInitialize;
     _floorModuleHero.post = _heroMoveFinalize;
@@ -698,11 +690,11 @@ static void proc1Step(f32 dt) {
         unsigned long res;
         heroMoveGetResID(&group, &res, (HEROMOVE_MEMBER)heroMoveGetLeader());
         if (peopleCheckFlag(group, res, 0x80000000) == 0) {
-            f32* accum = (f32*)&HeroMove.raw[0x35C];
+            f32* accum = &HeroMove.footsteps.distance;
             *accum = *accum + dt;
             while (*accum >= 7.0f) {
                 hero->addFootStep(1);
-                heroMoveCallStepCallback(0, 1);
+                heroMoveCallStepCallback(FOOTSTEP_COUNTER_0, 1);
                 *accum = *accum - 7.0f;
             }
         }
@@ -958,7 +950,7 @@ static void _heroMoveSlowStopFactor(float factor, bool moveFollowers) {
         GSthreadSwitch();
         weight -= factor * timeGetLastFrameSec();
     }
-    HeroMove.raw[0x3AE] = 0;
+    HeroMove.state.stickOverride = 0;
 }
 
 extern "C" {
@@ -992,8 +984,8 @@ static void cbPoison(long, FootStepCounter counter, long) {
     faintedCount = 0;
     poisoned = 0;
     if (counter == 0) {
-        if (++*(s32*)&HeroMove.raw[0x3A0] >= 4) {
-            *(s32*)&HeroMove.raw[0x3A0] = 0;
+        if (++HeroMove.footsteps.poisonSteps >= 4) {
+            HeroMove.footsteps.poisonSteps = 0;
             healthyCount = 0;
             for (i = 0; i < 6; ++i) {
                 pokemon = (Pokemon*)heroGetStatus(0, 3, i);
@@ -1113,11 +1105,11 @@ s32 heroMoveInit(GSvec* position, GSvec* rotation) {
     } while (animationIndex < 4);
     initFloor();
     initLeaderLog();
-    *(s32*)&HeroMove.raw[0x63C] = 0;
-    *(s32*)&HeroMove.raw[0x640] = 0;
-    *(s32*)&HeroMove.raw[0x638] = 0;
-    *(s32*)&HeroMove.raw[0x3A8] = 0;
-    ((AnalogStickEmu*)&HeroMove.raw[0x654])->init();
+    HeroMove.state.eventCount1 = 0;
+    HeroMove.state.eventCount2 = 0;
+    HeroMove.state.eventCount3 = 0;
+    HeroMove.state.lockFrame = 0;
+    HeroMove.state.analog.init();
     Hero* hero = Hero::getHeroPtr();
     u8 follower = hero->getFollowerID();
     u8 level = hero->getFollowerModelLevel();
@@ -1194,15 +1186,15 @@ static void initFloor() {
     if (!GSfloorIsPop()) {
         for (i = 1; i < 4; ++i) setDisp((HEROMOVE_MEMBER)i, heroMoveIsMember(i));
     }
-    for (i = 0; i < 4; ++i) initFootWork((FOOTWORK*)(HeroMove.raw + i * 0x20 + 0x14));
+    for (i = 0; i < 4; ++i) initFootWork(&HeroMove.members[i].footWork);
     for (i = 0; i < 4; ++i) {
         if (heroMoveIsMember(i)) heroMoveSetNeckMode(i, heroMoveGetNeckMode(i));
     }
-    *(s32*)&HeroMove.raw[0x10] = 300;
-    *(s32*)&HeroMove.raw[0x30] = 300;
-    *(s32*)&HeroMove.raw[0x50] = 300;
-    *(s32*)&HeroMove.raw[0x70] = 300;
-    *(f32*)&HeroMove.raw[0x35C] = 0.0f;
+    HeroMove.members[0].field0C = 300;
+    HeroMove.members[1].field0C = 300;
+    HeroMove.members[2].field0C = 300;
+    HeroMove.members[3].field0C = 300;
+    HeroMove.footsteps.distance = 0.0f;
 }
 
 extern "C" {
@@ -1214,11 +1206,11 @@ s8 GSinputGetRightStickYData(u32, u8);
 
 static void _getStickData(s8& x, s8& y, s8& rawX, s8& rawY) {
     s8 sx, sy, rx, ry;
-    if (HeroMove.raw[0x3AE]) {
-        sx = *(s8*)&HeroMove.raw[0x3AF];
-        sy = *(s8*)&HeroMove.raw[0x3B0];
-        rx = *(s8*)&HeroMove.raw[0x3B1];
-        ry = *(s8*)&HeroMove.raw[0x3B2];
+    if (HeroMove.state.stickOverride) {
+        sx = HeroMove.state.stickData[0];
+        sy = HeroMove.state.stickData[1];
+        rx = HeroMove.state.stickData[2];
+        ry = HeroMove.state.stickData[3];
     } else {
         sx = GSinputGetLeftStickXData(1, 1);
         sy = GSinputGetLeftStickYData(1, 1);
@@ -1249,7 +1241,7 @@ static void _getStickData(s8& x, s8& y, s8& rawX, s8& rawY) {
         }
     }
     x = sx; y = sy; rawX = rx; rawY = ry;
-    ((AnalogStickEmu*)&HeroMove.raw[0x654])->calculate(x, y, rawX, rawY);
+    HeroMove.state.analog.calculate(x, y, rawX, rawY);
     if (gimmickBoxIsGimmickMoving()) { x = 0; y = 0; rawX = 0; rawY = 0; }
 }
 
@@ -1328,15 +1320,17 @@ static void updateLeaderLog() {
     } else append=1;
     if(append) {
         for(s32 i=58;i>=0;i--) {
-            HeroMove.leaderLog.log[i+1].param1=HeroMove.leaderLog.log[i].param1;
-            HeroMove.leaderLog.log[i+1].param2=HeroMove.leaderLog.log[i].param2;
-            HeroMove.leaderLog.log[i+1].param3=HeroMove.leaderLog.log[i].param3;
+            HeroMove.leaderLog.positions[i + 1].param1 = HeroMove.leaderLog.positions[i].param1;
+            HeroMove.leaderLog.positions[i + 1].param2 = HeroMove.leaderLog.positions[i].param2;
+            HeroMove.leaderLog.positions[i + 1].param3 = HeroMove.leaderLog.positions[i].param3;
         }
-        *(s32*)&HeroMove.raw[0x84]=0;
-        HeroMove.leaderLog.log[0].param1=current.param1;
-        HeroMove.leaderLog.log[0].param2=current.param2;
-        HeroMove.leaderLog.log[0].param3=current.param3;
-        if(*(s32*)&HeroMove.raw[0x88]<60)(*(s32*)&HeroMove.raw[0x88])++;
+        HeroMove.leaderLog.field00 = 0;
+        HeroMove.leaderLog.positions[0].param1 = current.param1;
+        HeroMove.leaderLog.positions[0].param2 = current.param2;
+        HeroMove.leaderLog.positions[0].param3 = current.param3;
+        if (HeroMove.leaderLog.count < 60) {
+            ++HeroMove.leaderLog.count;
+        }
     }
 }
 
@@ -1548,7 +1542,9 @@ static void procStep(HEROMOVE_MEMBER member) {
     FOOTSTEP step;
     __construct_array(step.positions,__ct__5GSvecFv,0,12,4);
     _GSmodel* model=(_GSmodel*)getModel(member);
-    if(model)getStep(&step,model,parts[member],(FOOTWORK*)(HeroMove.raw+member*0x20+0x14));
+    if (model) {
+        getStep(&step, model, parts[member], &HeroMove.members[member].footWork);
+    }
 }
 
 #pragma dollar_identifiers on
@@ -1576,7 +1572,7 @@ static f32 moveParty(HEROMOVE_MEMBER member) {
     tagPeopleWork* current=(tagPeopleWork*)_heroGetPeople(member);
     if (!current) return 0.0f;
     if (current->attachIndex>0) {
-        *(s32*)&HeroMove.raw[0x88]=0;
+        HeroMove.leaderLog.count = 0;
         return 0.0f;
     }
     tagPeopleWork* leader=(tagPeopleWork*)peopleGet(0,0x64);
@@ -1589,18 +1585,18 @@ static f32 moveParty(HEROMOVE_MEMBER member) {
     GSvec* position=(GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(follower);
     s32 followerID=heroGetFollower();
     if (!followerID) return 0.0f;
-    if (heroMoveChkHinderClear(followerID) && !follower->followerMotion) *(s32*)&HeroMove.raw[0x88]=0;
+    if (heroMoveChkHinderClear(followerID) && !follower->followerMotion) HeroMove.leaderLog.count = 0;
     if (!init$2458) { init$2458=1;radius_fix$2457=3.0f; }
-    for(s32 i=0;i<*(s32*)&HeroMove.raw[0x88];i++) {
-        if(PSVECDistance(position,&HeroMove.leaderLog.log[i])<radius_fix$2457) {
-            *(s32*)&HeroMove.raw[0x88]=i+1;
+    for(s32 i=0;i<HeroMove.leaderLog.count;i++) {
+        if(PSVECDistance(position,&HeroMove.leaderLog.positions[i])<radius_fix$2457) {
+            HeroMove.leaderLog.count = i + 1;
             break;
         }
     }
     if(current->followerMotion) return 0.0f;
-    s32 count=*(s32*)&HeroMove.raw[0x88];
+    s32 count=HeroMove.leaderLog.count;
     if(count>0) {
-        GSvec* point=&HeroMove.leaderLog.log[count-1];
+        GSvec* point=&HeroMove.leaderLog.positions[count - 1];
         destination.param1=point->param1;destination.param2=point->param2;destination.param3=point->param3;
     }
     else {
@@ -1658,7 +1654,7 @@ extern "C" __declspec(weak) HeroMoveQueuedEvent* constructHeroMoveQueuedEvent(He
 
 extern "C" {
 static void __sinit_heroMove_cpp() {
-    __construct_array(HeroMove.leaderLog.log, __ct__5GSvecFv, 0, sizeof(GSvec), 60);
+    __construct_array(HeroMove.leaderLog.positions, __ct__5GSvecFv, 0, sizeof(GSvec), 60);
     __construct_array(HeroMove.state.events3, (void (*)(void*))constructHeroMoveQueuedEvent, 0, sizeof(HeroMoveQueuedEvent), 4);
     __construct_array(HeroMove.state.events1, (void (*)(void*))constructHeroMoveQueuedEvent, 0, sizeof(HeroMoveQueuedEvent), 4);
     __construct_array(HeroMove.state.events2, (void (*)(void*))constructHeroMoveQueuedEvent, 0, sizeof(HeroMoveQueuedEvent), 4);

@@ -26,13 +26,26 @@ struct AnalogStickEmu {
     void calculate(s8&, s8&, s8&, s8&);
 };
 
+struct FOOTWORK {
+    f32 v[4];
+};
+
+enum FootStepCounter { FOOTSTEP_COUNTER_0, FOOTSTEP_COUNTER_1, FOOTSTEP_COUNTER_2, FOOTSTEP_COUNTER_3 };
+
+typedef void (*HeroMoveStepCallback)(long, FootStepCounter, long);
+
+struct HeroMoveCallbackSlot {
+    HeroMoveStepCallback fn;
+    s32 arg;
+};
+
 struct HeroMoveMember {
-    s32 x0;
     u16 flags;
-    u8 pad06[2];
+    u8 pad02[2];
     f32 dist;
     s32 neckMode;
-    u8 pad10[0x10];
+    s32 field0C;
+    FOOTWORK footWork;
 };
 
 struct HeroMoveQueuedEvent {
@@ -43,50 +56,51 @@ struct HeroMoveQueuedEvent {
 };
 
 struct HeroMoveWork {
-    union {
-        u8 raw[0x660];
-        struct {
-            u8 padState[0x3A8];
-            s32 lockFrame;
-            u8 smoothFloorLink;
-            u8 started;
-            u8 stickOverride;
-            s8 stickData[4];
-            u8 pad3B3;
-            u32 autoEvent[5];
-            HeroMoveQueuedEvent events3[4];
-            HeroMoveQueuedEvent events1[4];
-            HeroMoveQueuedEvent events2[4];
-            s32 eventCount3;
-            s32 eventCount1;
-            s32 eventCount2;
-            s32 stepPool[4];
-            AnalogStickEmu analog;
-            s32 frameCounter;
-        } state;
-        HeroMoveMember members[4];
-        struct {
-            u8 pad00[0x8C];
-            GSvec log[60];
-        } leaderLog;
-    };
+    s32 leader;
+    HeroMoveMember members[4];
+    struct {
+        s32 field00;
+        s32 count;
+        GSvec positions[60];
+    } leaderLog;
+    struct {
+        f32 distance;
+        HeroMoveCallbackSlot callbacks[8];
+        s32 poisonSteps;
+        s32 friendshipSteps;
+    } footsteps;
+    struct {
+        s32 lockFrame;
+        u8 smoothFloorLink;
+        u8 started;
+        u8 stickOverride;
+        s8 stickData[4];
+        u8 pad3B3;
+        u32 autoEvent[5];
+        HeroMoveQueuedEvent events3[4];
+        HeroMoveQueuedEvent events1[4];
+        HeroMoveQueuedEvent events2[4];
+        s32 eventCount3;
+        s32 eventCount1;
+        s32 eventCount2;
+        s32 stepPool[4];
+        AnalogStickEmu analog;
+        s32 frameCounter;
+    } state;
 };
-
 
 typedef char HeroMoveQueuedEvent_size_check[(sizeof(HeroMoveQueuedEvent) == 0x34) ? 1 : -1];
 typedef char HeroMoveQueuedEvent_position_check[(offsetof(HeroMoveQueuedEvent, position) == 0) ? 1 : -1];
 typedef char HeroMoveQueuedEvent_eventID_check[(offsetof(HeroMoveQueuedEvent, eventID) == 0x30) ? 1 : -1];
+typedef char HeroMoveMember_size_check[(sizeof(HeroMoveMember) == 0x20) ? 1 : -1];
+typedef char HeroMoveWork_members_check[(offsetof(HeroMoveWork, members) == 0x4) ? 1 : -1];
+typedef char HeroMoveMember_footWork_check[(offsetof(HeroMoveMember, footWork) == 0x10) ? 1 : -1];
+typedef char HeroMoveWork_callbacks_check[(offsetof(HeroMoveWork, footsteps.callbacks) == 0x360) ? 1 : -1];
 typedef char HeroMoveWork_size_check[(sizeof(HeroMoveWork) == 0x660) ? 1 : -1];
-typedef char HeroMoveWork_log_check[(offsetof(HeroMoveWork, leaderLog.log) == 0x8C) ? 1 : -1];
+typedef char HeroMoveWork_log_check[(offsetof(HeroMoveWork, leaderLog.positions) == 0x8C) ? 1 : -1];
 typedef char HeroMoveWork_events3_check[(offsetof(HeroMoveWork, state.events3) == 0x3C8) ? 1 : -1];
 typedef char HeroMoveWork_events1_check[(offsetof(HeroMoveWork, state.events1) == 0x498) ? 1 : -1];
 typedef char HeroMoveWork_events2_check[(offsetof(HeroMoveWork, state.events2) == 0x568) ? 1 : -1];
-
-struct FOOTWORK {
-    f32 v[4];
-};
-
-enum FootStepCounter { FOOTSTEP_COUNTER_0, FOOTSTEP_COUNTER_1, FOOTSTEP_COUNTER_2, FOOTSTEP_COUNTER_3 };
 
 struct FloorModuleInterface {
     void (*create)(unsigned int, FloorEnterMode);
@@ -134,7 +148,7 @@ void floorCreateThread(u32, u32, u32, void (*)());
 u8 pokemonCheckValid(void*);
 void heroMoveSetLockFrame(s32);
 bool heroMoveAppointLeader(s32);
-s32 heroMoveAddStepCallback(void (*)(long, FootStepCounter, long), s32);
+s32 heroMoveAddStepCallback(HeroMoveStepCallback, s32);
 void peopleRemoveNeckTarget(u32, u32, f32);
 void peopleSetNeckTargetHero(u32, u32);
 void peopleSetCollision(u32, u32, u32);
