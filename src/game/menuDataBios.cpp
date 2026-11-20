@@ -11,12 +11,13 @@ extern MenuSoundRecord* menu_se;
 extern u32* menu_se_number;
 s32 pokecoloGetLanguage();
 u32 dbgMenuGetLayerID();
-MenuItemRecord* windowGetCursorToItem(s32);
+struct tagWINDOW_WORK;
+MenuItemRecord* windowGetCursorToItem(tagWINDOW_WORK* window);
 MenuDataRecord* menuDataBiosGetPtr(s32);
 MenuItemRecord* menuItemBiosGetPtr(s32, s32);
 #pragma dont_inline on
-u32 menuBiosGetCursorSize(s32 menu) {
-    MenuItemRecord* item = windowGetCursorToItem(menu);
+u32 menuBiosGetCursorSize(tagWINDOW_WORK* window) {
+    MenuItemRecord* item = windowGetCursorToItem(window);
     menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(item->sprite));
     u32 size = 0;
     switch (item->sprite) {

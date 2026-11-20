@@ -117,7 +117,7 @@ void characterInit();
 void cameraInit();
 void lightInit();
 void heroMoveAllInit();
-void peopleInit(u32);
+void peopleInit(s32 count);
 void floorFieldCameraInit();
 void sodateyaHeroCallBackInit();
 void reliveHallCallBackInit();

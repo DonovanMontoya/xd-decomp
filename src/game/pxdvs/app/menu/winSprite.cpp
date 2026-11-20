@@ -12,7 +12,7 @@ void GSlogWrite(const char *, ...);
 MenuData *menuDataBiosGetPtr(s32);
 MENU_ITEM_dd_ *menuItemBiosGetPtr(s32, s16);
 u32 menuSeqBiosGetPtr(u32);
-s32 menuBiosGetCursorSize();
+u32 menuBiosGetCursorSize(tagWINDOW_WORK* window);
 s32 dbgMenuGetLayerID();
 s32 floorGetMenuLayerID();
 tagWINDOW_WORK *windowSearchID(s32);
@@ -707,7 +707,7 @@ void winSpriteDraw(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite) {
 }
 extern "C" {
 void winAnimeCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
-    menuBiosGetCursorSize();
+    menuBiosGetCursorSize(win);
     if (*(s16 *)((u8 *)win + 0xA2) != win->cursorIndex) {
         winSetSequence(sprite->sequence, 0x141);
     }

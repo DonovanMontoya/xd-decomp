@@ -1659,7 +1659,7 @@ void* floorOpenObject(u32);
 void GSresRegisterResource(void*, u32, u32, void*);
 void* floorCreateThread(u32, u32, u32, void (*)());
 u32 GSthreadGetCurrentThread();
-void peopleBiosAllocWork();
+void peopleBiosAllocWork(s32 count);
 void GSmodelSetVisibility(GSmodel*, u8);
 void GSmodelGetPosition(GSmodel*, GSvec*);
 void GSmodelGetRotation(GSmodel*, GSvec*);
@@ -1717,8 +1717,8 @@ void _peopleInitShadow__Fv() {
         GSlightSetActive(shadowLight[i], 0);
     }
 }
-void peopleInit() {
-    peopleBiosAllocWork();
+void peopleInit(s32 count) {
+    peopleBiosAllocWork(count);
     _peopleInitShadow__Fv();
     FloorModuleInterface_clear(&_floorModulePeople);
     _floorModulePeople.saveState = _peopleMakeStateData__F14FloorStateModePvUl;
