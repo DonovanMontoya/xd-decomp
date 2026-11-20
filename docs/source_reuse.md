@@ -296,6 +296,8 @@ Particle model rendering follows the per-node render routine from the same XD ch
 
 The PDA monitor location sort follows the same XD checkpoint. The party slot has an eight-bit index, and the monitor routines follow the order of the retail object.
 
+The runtime light setup and active light list follow the same XD checkpoint, adapted to the local light object and matrix interfaces.
+
 ## Colosseum license notice
 
 ```text
