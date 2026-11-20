@@ -1424,7 +1424,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/effectEditor/effectEditor.cpp"),
 
             # flashmenu
-            Object(NonMatching, "game/pxdvs/app/flashmenu/flashmenu.cpp", extra_cflags=["-opt nopeephole"]),
+            Object(NonMatching, "game/pxdvs/app/flashmenu/flashmenu.cpp", extra_cflags=["-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/app/flashmenu/flashcalc.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(NonMatching, "game/pxdvs/app/flashmenu/vecGraph.cpp", extra_cflags=["-opt nopeephole", "-inline noauto"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/flashmenu/flashsystem.cpp", extra_cflags=["-inline auto,deferred", "-opt nopeephole"]),
