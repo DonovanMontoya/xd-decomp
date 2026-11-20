@@ -284,6 +284,8 @@ The spot-texture renderer in `game/pxdvs/app/wazaSequence/pachiru.cpp` uses the 
 
 Particle generation was adapted from the same XD checkpoint. The double-precision absolute-value wrapper preserves the retail instructions in all six magnitude checks.
 
+The floor map resource iterator uses separate resource indices and table cursors as in the same XD checkpoint.
+
 ## Colosseum license notice
 
 ```text
