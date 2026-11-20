@@ -1394,7 +1394,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/app/fight/fightSeq/fightSeqBasis.cpp", cflags=cflags_xd_app_fight),
             Object(NonMatching, "game/pxdvs/app/fight/fightSeq/fightSeqItemseq.cpp", cflags=cflags_xd_app_fight),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightSeq/fightSeqMsg.c"),
-            Object(NonMatching, "game/pxdvs/app/fight/fightSeq/fightSeqSpAction.cpp", cflags=cflags_xd_app_fight),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightSeq/fightSeqSpAction.cpp", cflags=cflags_xd_app_fight),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightSeq/fightSeqStatus.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(NonMatching, "game/pxdvs/app/fight/fightSeq/fightSeqWazaseq.cpp", cflags=cflags_xd_app_fight),
             Object(NonMatching, "game/pxdvs/app/fight/fightSeq/fightSeq.cpp", cflags=cflags_xd_app_fight),
