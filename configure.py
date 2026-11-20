@@ -1170,7 +1170,7 @@ config.libs = [
 
             # menu
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/menu/winSprite.cpp", extra_cflags=["-inline noauto,deferred", "-opt nopeephole"]),
-            Object(NonMatching, "game/pxdvs/app/menu/menu.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/menu/menu.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/menu/menuFace.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/menu/menuFaceBios.cpp", extra_cflags=["-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/menu/menuModel.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-use_lmw_stmw on", "-str reuse,nopool,readonly"]),

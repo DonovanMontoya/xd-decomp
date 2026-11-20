@@ -222,6 +222,12 @@ extern u8 uv_common_icon_00[];
 
 GSgfxVF menuHyperModeVf;
 
+struct MenuPadIds {
+    s32 ids[4];
+};
+
+static const MenuPadIds menuPadIds = { 1, 2, 3, 4 };
+
 static u8 connect_bak[4];
 static u8 connect[4];
 static f32 _currentTime;
@@ -1041,7 +1047,7 @@ static u8 _menuGetAgbKeyInfo(s32 port, u16* keys) {
 }
 
 static u8 _menuGetGcKeyInfo(s32 port, u16* keys, u16* keys2) {
-    s32 padIds[4] = { 1, 2, 3, 4 };
+    MenuPadIds padIds = menuPadIds;
     u16 result = 0;
     u16 result2 = 0;
     s32 padId;
@@ -1052,7 +1058,7 @@ static u8 _menuGetGcKeyInfo(s32 port, u16* keys, u16* keys2) {
     u32 buttons;
     f32 angle;
 
-    padId = padIds[port];
+    padId = padIds.ids[port];
     if (GSinputIsConnected(padId) == 0) {
         return 0;
     }
@@ -1116,24 +1122,19 @@ static u8 _menuGetGcKeyInfo(s32 port, u16* keys, u16* keys2) {
 }
 
 static void _menuUpdateKeyInfo(WINDOW_SYS_WORK* a, WINDOW_SYS_WORK* b) {
+    s32 i;
     KeyInfo* k1;
-    u16 bit;
+    u16 bit2;
+    KeyInfo* k2;
     s32 port;
     u16 keys;
-    KeyInfo* k2;
     u16 keys2;
-    s32 i;
-    u16 repeat;
-    u16 held;
-    u16 pressed;
     MenuWindow* window;
-    u16 repeat2;
     u8 type;
-    u16 held2;
 
     for (port = 0; port < 4; port++) {
-        k2 = &winSysWork2.port[port];
         k1 = &winSysWork.port[port];
+        k2 = &winSysWork2.port[port];
         connect_bak[port] = connect[port];
         keys = 0;
         keys2 = 0;
@@ -1184,67 +1185,74 @@ static void _menuUpdateKeyInfo(WINDOW_SYS_WORK* a, WINDOW_SYS_WORK* b) {
             break;
         }
 
-        k1->up = k1->on;
-        pressed = (k1->up ^ 0xFFFF) & keys;
-        repeat = 0;
-        held = 0;
-        for (i = 0; i < 16; i++) {
-            bit = 1 << i;
-            if (bit & pressed) {
-                k1->timer[i] = 15;
-                repeat |= bit;
-            } else if (keys & bit) {
-                k1->timer[i] -= timeGetLastFrameTime();
-                if (k1->timer[i] <= 0) {
-                    k1->timer[i] = 5;
+        {
+            u16 pressed, repeat, held;
+            u16 bit;
+            k1->up = k1->on;
+            pressed = (k1->up ^ 0xFFFF) & keys;
+            repeat = 0;
+            held = 0;
+            for (i = 0; i < 16; i++) {
+                bit = 1 << i;
+                if (pressed & bit) {
+                    k1->timer[i] = 15;
                     repeat |= bit;
-                    held |= bit;
-                } else {
-                    held |= bit & k1->rel;
+                } else if (keys & bit) {
+                    k1->timer[i] -= timeGetLastFrameTime();
+                    if (k1->timer[i] <= 0) {
+                        k1->timer[i] = 5;
+                        repeat |= bit;
+                        held |= bit;
+                    } else {
+                        held |= bit & k1->rel;
+                    }
                 }
             }
+            if (pressed & 0xF) {
+                k1->timer[0] = 15;
+                k1->timer[1] = 15;
+                k1->timer[2] = 15;
+                k1->timer[3] = 15;
+            }
+            k1->on = keys;
+            k1->trg = pressed;
+            k1->rep = repeat;
+            k1->rel = held;
         }
-        if (pressed & 0xF) {
-            k1->timer[0] = 15;
-            k1->timer[1] = 15;
-            k1->timer[2] = 15;
-            k1->timer[3] = 15;
-        }
-        k1->on = keys;
-        k1->trg = pressed;
-        k1->rep = repeat;
-        k1->rel = held;
 
-        k2->up = k2->on;
-        pressed = (k2->up ^ 0xFFFF) & keys2;
-        repeat2 = 0;
-        held2 = 0;
-        for (i = 0; i < 16; i++) {
-            bit = 1 << i;
-            if (pressed & bit) {
-                k2->timer[i] = 15;
-                repeat2 |= bit;
-            } else if (keys2 & bit) {
-                k2->timer[i] -= timeGetLastFrameTime();
-                if (k2->timer[i] <= 0) {
-                    k2->timer[i] = 5;
-                    repeat2 |= bit;
-                    held2 |= bit;
-                } else {
-                    held2 |= bit & k2->rel;
+        {
+            u16 pressed, repeat2, held2;
+            k2->up = k2->on;
+            pressed = (k2->up ^ 0xFFFF) & keys2;
+            repeat2 = 0;
+            held2 = 0;
+            for (i = 0; i < 16; i++) {
+                bit2 = 1 << i;
+                if (pressed & bit2) {
+                    k2->timer[i] = 15;
+                    repeat2 |= bit2;
+                } else if (keys2 & bit2) {
+                    k2->timer[i] -= timeGetLastFrameTime();
+                    if (k2->timer[i] <= 0) {
+                        k2->timer[i] = 5;
+                        repeat2 |= bit2;
+                        held2 |= bit2;
+                    } else {
+                        held2 |= bit2 & k2->rel;
+                    }
                 }
             }
+            if (pressed & 0xF) {
+                k2->timer[0] = 15;
+                k2->timer[1] = 15;
+                k2->timer[2] = 15;
+                k2->timer[3] = 15;
+            }
+            k2->on = keys2;
+            k2->trg = pressed;
+            k2->rep = repeat2;
+            k2->rel = held2;
         }
-        if (pressed & 0xF) {
-            k2->timer[0] = 15;
-            k2->timer[1] = 15;
-            k2->timer[2] = 15;
-            k2->timer[3] = 15;
-        }
-        k2->on = keys2;
-        k2->trg = pressed;
-        k2->rep = repeat2;
-        k2->rel = held2;
     }
 
     window = windowSearchID(windowGetActiveID());
