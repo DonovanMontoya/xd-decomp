@@ -40,4 +40,10 @@ typedef char FightLayoutAssert_trainer_size[(sizeof(FightTrainerInfoRecord)==8) 
 typedef char FightLayoutAssert_inputDevice[(offsetof(FightTrainerInfoRecord,inputDevice)==4) ? 1 : -1];
 typedef char FightLayoutAssert_entryPokemonId[(offsetof(FightDeckRecord,entryPokemonId)==8) ? 1 : -1];
 typedef char FightLayoutAssert_fightoutPokemonId[(offsetof(FightDeckRecord,fightoutPokemonId)==12) ? 1 : -1];
+
+extern "C" {
+FightEncountRecord *fightEncountDataBiosGetPtr(u16 encounterID);
+u32 fightEncountDataBiosGetFightTrainerDataId(FightEncountRecord *encounter, u8 side);
+}
+
 #endif

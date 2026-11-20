@@ -2,6 +2,7 @@
 #pragma force_active on
 /* Debug menu entries for the fight (battle) debug menu. */
 #include <global.h>
+#include <game/pxdvs/app/deck/deck.h>
 
 typedef struct DbgFightWindow {
     u8 unk0[4];
@@ -65,7 +66,6 @@ extern u32 fightTrainerGetFightPokemonPtrToFightOutPokemonPtr(u32, u32);
 extern u32 fightTrainerGetStatus(u32, u16, s32, u8);
 extern u32 fightTrainerGetValidFightPokemonPtr(u32, s32);
 extern u8 figthPokemonGetLevel(u32);
-extern s16* getDeckMsgID(u16, s32, s32);
 extern void menuCloseCustom(s32, s32, s32);
 extern void menuFaceGetID(u32);
 extern void menuFaceLoad(u32, s32, s32);
@@ -408,7 +408,7 @@ s32 dbgMenuFightEncountSelect(void);
 static void _dbgMenuFightGetFightEncountDataIdSub(u32 id) {
     s16 close[2];
     u32 msg;
-    s16* msgId;
+    const char* trainerName;
 
     if (id >= 1 && id <= _readEncountDataCnt) {
         msg = _readEncountDataName[id - 1];
@@ -419,9 +419,9 @@ static void _dbgMenuFightGetFightEncountDataIdSub(u32 id) {
         msg = 0xEB63;
     }
     if (id <= _readEncountDataCnt) {
-        msgId = getDeckMsgID(_readEncountDataID[id - 1], 1, (s32)_readEncountDataID);
+        trainerName = getDeckMsgID(_readEncountDataID[id - 1], 1);
         GScharMakeFromSJIS(strbuf, "[");
-        GScharMakeFromSJIS(&strbuf[1], (const char*)msgId);
+        GScharMakeFromSJIS(&strbuf[1], trainerName);
         GScharMakeFromSJIS(close, "]");
         GScharCat(strbuf, close);
     } else {

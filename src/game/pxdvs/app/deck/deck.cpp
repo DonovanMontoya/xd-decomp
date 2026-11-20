@@ -1,4 +1,6 @@
+#include <game/pxdvs/app/deck/deck.h>
 #include <game/pxdvs/app/deck/deck_layout.hpp>
+#include <game/pxdvs/app/fight/fightEncountBiosLayout.hpp>
 
 class CChank {
     u32 fields[3];
@@ -33,8 +35,6 @@ static u32 _deckDarkPokemonSize;
 static u32 _deckTrainerAISize;
 static void *_deckIDNameStr;
 void *getDeckDarkPokemonObj__15DeckDarkPokemonFUl(u32 index);
-void *fightEncountDataBiosGetPtr(void);
-u16 fightEncountDataBiosGetFightTrainerDataId(void *, s32);
 void *GSresGetResource(s32, s32);
 void *savedataGetStatus(s32, s32);
 s32 darkPokemonListBiosGetPokemonID(u16);
@@ -97,14 +97,14 @@ static inline void deckSetFriendship(DeckPokemonLayout *p, u8 value) { if (p != 
 
 static inline void deckSetAbility(DeckPokemonLayout *p, u8 value) { if (p != 0) reinterpret_cast<DeckPokemonFlagByte *>(&p->flags)->tokusei = value; }
 
-void *getDeckMsgID(s32 unused, s32 encounter) {
-    void *fight = fightEncountDataBiosGetPtr();
-    u16 trainerID = fightEncountDataBiosGetFightTrainerDataId(fight, encounter);
+const char *getDeckMsgID(u16 encounterID, u8 side) {
+    FightEncountRecord *fight = fightEncountDataBiosGetPtr(encounterID);
+    u16 trainerID = fightEncountDataBiosGetFightTrainerDataId(fight, side);
     DeckTrainerLayout *trainer = static_cast<DeckTrainerLayout *>(deckTrainerObject(trainerID));
     u16 offset;
     if (trainer == 0) offset = 0;
     else offset = trainer->nameStringOffset;
-    return bytes(_deckIDNameStr) + offset;
+    return static_cast<const char *>(_deckIDNameStr) + offset;
 }
 
 void deckCreate(u16 index, s16 species, void *pokemon) {
