@@ -185,7 +185,7 @@ FightOutPokemon* fightFloorBiosGetKizetuPokemonPtr(FIGHT_FLOOR*);
 FightOutPokemon* fightFloorBiosGetTuikakoukaPokemonPtr(FIGHT_FLOOR*);
 FightOutPokemon* fightFloorBiosGetTokuseiPokemonPtr(FIGHT_FLOOR*);
 TrainerInventoryItem* fightFloorBiosGetItemPokemonPtr(FIGHT_FLOOR*);
-u32 fightFloorBiosGetEncountFloorId(FIGHT_FLOOR*);
+u32 fightFloorBiosGetEncountFloorId();
 FightOutPokemon* fightFloorBiosGetAppointPokemonPtr(FIGHT_FLOOR*);
 FightTrainer* fightFloorBiosGetAppointTrainerPtr(FIGHT_FLOOR*);
 FightWaza* fightFloorBiosGetAppointWazaPtr(FIGHT_FLOOR*);
@@ -2038,7 +2038,7 @@ u32 fightFloorGetStatus(FIGHT_FLOOR* floor, u16 dataId, u16 property, u16 index)
     case FLOOR_STATUS_TUIKAKOUKA_POKEMON_PTR: return reinterpret_cast<u32>(fightFloorBiosGetTuikakoukaPokemonPtr(static_cast<FIGHT_FLOOR*>(object)));
     case FLOOR_STATUS_TOKUSEI_POKEMON_PTR: return reinterpret_cast<u32>(fightFloorBiosGetTokuseiPokemonPtr(static_cast<FIGHT_FLOOR*>(object)));
     case FLOOR_STATUS_ITEM_POKEMON_PTR: return reinterpret_cast<u32>(fightFloorBiosGetItemPokemonPtr(static_cast<FIGHT_FLOOR*>(object)));
-    case FLOOR_STATUS_ENCOUNT_FLOOR_ID: return fightFloorBiosGetEncountFloorId(static_cast<FIGHT_FLOOR*>(object));
+    case FLOOR_STATUS_ENCOUNT_FLOOR_ID: return fightFloorBiosGetEncountFloorId();
     case FLOOR_STATUS_APPOINT_POKEMON_PTR: return reinterpret_cast<u32>(fightFloorBiosGetAppointPokemonPtr(static_cast<FIGHT_FLOOR*>(object)));
     case FLOOR_STATUS_APPOINT_TRAINER_PTR: return reinterpret_cast<u32>(fightFloorBiosGetAppointTrainerPtr(static_cast<FIGHT_FLOOR*>(object)));
     case FLOOR_STATUS_APPOINT_WAZA_PTR: return reinterpret_cast<u32>(fightFloorBiosGetAppointWazaPtr(static_cast<FIGHT_FLOOR*>(object)));

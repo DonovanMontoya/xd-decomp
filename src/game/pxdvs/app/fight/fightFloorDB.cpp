@@ -37,7 +37,7 @@ void fightFloorBiosSetIrekaePokemonPtr(FIGHT_FLOOR*, u32);
 void fightFloorBiosSetEscapePokemonPtr(FIGHT_FLOOR*, u32);
 void fightFloorBiosSetEncountDataId(FIGHT_FLOOR*, u32);
 void fightFloorBiosSetTurnCount(FIGHT_FLOOR*, u32);
-u32 fightFloorBiosGetEncountFloorId(FIGHT_FLOOR*);
+u32 fightFloorBiosGetEncountFloorId();
 u32 fightFloorIsJoutaiDataId(FIGHT_FLOOR*, u16);
 FightOutPokemon* fightFloorBiosGetAttackPokemonPtr(FIGHT_FLOOR*);
 void fightOutPokemon_SetWazaTargetId(FightOutPokemon*, u16);
@@ -336,7 +336,7 @@ void fightFloor_SetTurnCount(FIGHT_FLOOR* floor, u32 value) {
     fightFloorBiosSetTurnCount(floor, value);
 }
 
-u32 fightFloor_GetEncountFloorId(FIGHT_FLOOR* floor) { return fightFloorBiosGetEncountFloorId(floor); }
+u32 fightFloor_GetEncountFloorId() { return fightFloorBiosGetEncountFloorId(); }
 
 FightSide* fightFloor_GetFightSidePtr(FIGHT_FLOOR* floor, u16 side) {
     if (!floor) { floor = fightFloorBiosGetFightFloorPtr(); if (!floor) return 0; }
