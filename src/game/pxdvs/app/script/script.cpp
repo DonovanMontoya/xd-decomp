@@ -17,8 +17,8 @@ static glowEffect* m_glow;
 u8 scriptSoundOpenPlayME(u32 id, u32 time, u8 flag)
 {
     u32 bgm;
-    s32 env;
-    s32 volume;
+    u32 env;
+    u32 volume;
     u8 ret;
     FloorBgmMask* mask;
     f32 wait;
@@ -26,7 +26,7 @@ u8 scriptSoundOpenPlayME(u32 id, u32 time, u8 flag)
     wait = (f32)time / 1000.0f;
     bgm = soundGetBGMID();
     env = soundGetEnvID();
-    volume = soundGetVolume();
+    volume = soundGetVolume(env);
     GSflagSet(0x8FA, 1);
     if (mask) {
         mask->startMECallback();

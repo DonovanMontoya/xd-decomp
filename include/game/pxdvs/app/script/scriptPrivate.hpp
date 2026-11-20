@@ -46,7 +46,7 @@ extern "C" {
 FloorBgmMask* floorSound_getBgmMaskObj();
 u32 soundGetBGMID();
 u32 soundGetEnvID();
-u32 soundGetVolume();
+u32 soundGetVolume(u32);
 void GSflagSet(u32, u32);
 void GSsndPause(u32, u32, u32);
 void GSsndContinue(u32, u32, u32);

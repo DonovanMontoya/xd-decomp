@@ -6,6 +6,8 @@
 
 #pragma force_active on
 
+struct PokemonData;
+
 struct ItemCraneMemo {
     u16 item;
     u16 index;
@@ -100,7 +102,7 @@ void menuPokemonCloseWazaLight(void);
 u8 pokemonCheckValid(Pokemon*);
 u16 itemDataBiosGetWazaIDByWazaMachineNo(u8);
 u16 pokemonBiosGetPokemonWazaDataId(Pokemon*, u16);
-u8 pokemonDataBiosGetWazaMcn(u32, u16);
+bool pokemonDataBiosGetWazaMcn(PokemonData*, u16);
 s32 evolutionWazaLearn(Pokemon*, u16, u8*, s32, s8 (*)(Pokemon*, u16, long), void*);
 s32 itemDataBiosGetPtr(u16);
 u32 itemDataBiosGetWazaMachineNo(void*);
@@ -116,9 +118,9 @@ s32 menuPokemonStatusOpenWazaMachine(Pokemon*, u16);
 void menuScriptUsohachi2(void);
 s32 menuSubOpenYesNo(s32, s32, s32, s32);
 void msgctrlSetValue(s32, s32);
-void pokemonBiosGetPokemonDataId(Pokemon*);
-u32 pokemonDataBiosGetPtr(void);
-u32 pokemonDataBiosGetVoice(void*);
+u32 pokemonBiosGetPokemonDataId(Pokemon*);
+PokemonData* pokemonDataBiosGetPtr(u32);
+u16 pokemonDataBiosGetVoice(PokemonData*);
 void pokemonGetFriendFormPokemonFriendFilterId(Pokemon*, s32, s32);
 s32 pokemonGetSoubiItemSoubiDataId(Pokemon*);
 void pokemonWazaCreate(Pokemon*, u32, u16);
@@ -146,7 +148,7 @@ extern "C" { u32 item_crane_memo_number = 5; }
 static void getLogMsgField(unsigned short*, int, ITEMUSE2POKEMON_LOG1*, short, Pokemon*);
 static void getPokemonLvupStatus(MENU_LVUP_STATUS*, Pokemon*);
 static void getDifLvupStatus(MENU_LVUP_STATUS*, MENU_LVUP_STATUS*, MENU_LVUP_STATUS*);
-static u32 getPokemonData(Pokemon* pokemon);
+static PokemonData* getPokemonData(Pokemon* pokemon);
 static u16 playPokemonVoice(Pokemon* pokemon);
 static void waitTime(float seconds);
 static s32 dispMsgYesNo(unsigned long msg);
@@ -168,7 +170,7 @@ s32 menuUseItemScriptCologn(u32 item, s32 slot);
 s32 menuUseItemWPointUp(u32 item, s32* out);
 }
 
-static u32 getPokemonData(Pokemon* pokemon);
+static PokemonData* getPokemonData(Pokemon* pokemon);
 
 static u16 playPokemonVoice(Pokemon* pokemon);
 
@@ -241,7 +243,7 @@ s32 menuUseItemDummy(u32 item, s32* out);
 
 
 
-static u32 getPokemonData(Pokemon* pokemon);
+static PokemonData* getPokemonData(Pokemon* pokemon);
 
 static u16 playPokemonVoice(Pokemon* pokemon);
 
@@ -311,24 +313,24 @@ s32 menuUseItemDummy(u32 item, s32* out);
 
 
 #pragma defer_codegen off
-static u32 getPokemonData(Pokemon* pokemon) {
+static PokemonData* getPokemonData(Pokemon* pokemon) {
     if (pokemon == 0) {
         return 0;
     }
     if (!pokemonCheckValid(pokemon)) {
         return 0;
     }
-    pokemonBiosGetPokemonDataId(pokemon);
-    return pokemonDataBiosGetPtr();
+    u32 id = pokemonBiosGetPokemonDataId(pokemon);
+    return pokemonDataBiosGetPtr(id);
 }
 
 static u16 playPokemonVoice(Pokemon* pokemon) {
-    u16 voice;
-    u32 data = getPokemonData(pokemon);
+    u32 voice;
+    PokemonData* data = getPokemonData(pokemon);
     if (data == 0) {
         return 0;
     }
-    voice = pokemonDataBiosGetVoice((void*)data);
+    voice = pokemonDataBiosGetVoice(data);
     GSsndPlayNow(voice);
     return voice;
 }
@@ -874,8 +876,8 @@ static s32 wazaMachineProc(Pokemon* pokemon, int machine) {
         dispMsg(0xC368);
         return 0;
     }
-    pokemonBiosGetPokemonDataId(pokemon);
-    if (pokemonDataBiosGetWazaMcn(pokemonDataBiosGetPtr(), machine) == 0) {
+    PokemonData* data = pokemonDataBiosGetPtr(pokemonBiosGetPokemonDataId(pokemon));
+    if (!pokemonDataBiosGetWazaMcn(data, machine)) {
         msgctrlSetValue(0x32, pokemonBiosGetNicknamePtr(pokemon));
         msgctrlSetValue(0x39, (u16)move);
         dispMsg(0xC369);

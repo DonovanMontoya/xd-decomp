@@ -221,7 +221,7 @@ extern "C" s32 menuFieldMainCtrl(tagWINDOW_WORK *arg0) {
 
 class GSvec {public:f32 x,y,z;GSvec(){}};
 struct FieldEvent {GSvec points[3];u8 pad24[12];u16 script;u8 pad32[2];};
-extern "C" {u8 GSgfxVideoGetVsyncRate();void GSgfxVideoSetLockFrameRate(s32);void GSmodelAllPauseAnimation();void GSmodelAllUnpauseAnimation();void GSsndPopVolumeALL(s32,s32,s32);void GSsndPushVolumeALL(s32,s32,s32,s32);void GSthreadSwitch();s8 fadeCheck(s32);void floorEventExecScript(s32,u16);void floorFieldCameraPause();void floorFieldCameraUnpause();void fn_80233AB4();void heroMoveAddAutoEvent(u32,u32,s32,s32,s32);s32 heroMoveCheckEvent(FieldEvent*);void heroMoveInitEvent();void heroMoveTermEvent();void mailMainReceiveTerminate();void menuClose(s32);void menuCloseCustom(s32,s32,s32);void menuCloseSync(s32,s32);void menuCreateOffScreen(f32,f32);u8 menuGetOffScreenFlag();void menuIntUnderTakerDispIconOff2();void menuIntUnderTakerDispIconRestore2();void menuOffScreenRelease();s32 menuOpen(s32,s32);void menuPdaOpen();u32 menuPocket2GetItemScript(u16);u16 menuPocket2Open(s32,s32*,s32);void menuPokemonOpen(s32,s32,s32);void menuReleaseOffScreen(f32);void menuReport();s32 scriptContinueSave();u32 soundGetEnvID();s32 soundGetVolume();void soundSetVolumeID(u32,s32,s32);}
+extern "C" {u8 GSgfxVideoGetVsyncRate();void GSgfxVideoSetLockFrameRate(s32);void GSmodelAllPauseAnimation();void GSmodelAllUnpauseAnimation();void GSsndPopVolumeALL(s32,s32,s32);void GSsndPushVolumeALL(s32,s32,s32,s32);void GSthreadSwitch();s8 fadeCheck(s32);void floorEventExecScript(s32,u16);void floorFieldCameraPause();void floorFieldCameraUnpause();void fn_80233AB4();void heroMoveAddAutoEvent(u32,u32,s32,s32,s32);s32 heroMoveCheckEvent(FieldEvent*);void heroMoveInitEvent();void heroMoveTermEvent();void mailMainReceiveTerminate();void menuClose(s32);void menuCloseCustom(s32,s32,s32);void menuCloseSync(s32,s32);void menuCreateOffScreen(f32,f32);u8 menuGetOffScreenFlag();void menuIntUnderTakerDispIconOff2();void menuIntUnderTakerDispIconRestore2();void menuOffScreenRelease();s32 menuOpen(s32,s32);void menuPdaOpen();u32 menuPocket2GetItemScript(u16);u16 menuPocket2Open(s32,s32*,s32);void menuPokemonOpen(s32,s32,s32);void menuReleaseOffScreen(f32);void menuReport();s32 scriptContinueSave();u32 soundGetEnvID();u32 soundGetVolume(u32);void soundSetVolumeID(u32,s32,s32);}
 
 #pragma defer_codegen on
 static u8 _menuFieldCheckPDA(void) {
@@ -282,7 +282,7 @@ extern "C" s32 menuFieldMain(u8 arg0) {
     }
     _soundEnvID = soundGetEnvID();
     if (_soundEnvID != 0U) {
-        _soundEnvVol = soundGetVolume();
+        _soundEnvVol = soundGetVolume(_soundEnvID);
     }
     GSsndPushVolumeALL(0x55, 0x1F4, 1, 1);
     GSgfxVideoSetLockFrameRate(0);
