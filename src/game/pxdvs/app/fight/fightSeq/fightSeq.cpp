@@ -202,7 +202,7 @@ u32 figthOutPokemonGetSoubiItemBuff(FightOutPokemon*);
 u32 heroGetStatus(Hero*, u32, u32);
 u32 joutaiDataBiosGetName(u16);
 u8 pokemonDB_GetTokuseiDataId(u16, u8);
-u8 pokemonGetDarkPokemonHyperJoutaiKakuritu();
+u32 pokemonGetDarkPokemonHyperJoutaiKakuritu(Pokemon*);
 u32 pokemonGetJoutaiMsgId(Pokemon *);
 u16 pokemonGetSoubiItemBuff(Pokemon*);
 u16 pokemonGetSoubiItemSoubiDataId(Pokemon*);
@@ -1823,7 +1823,7 @@ s32 fightSeqCheckDarkPokemonJoutaiHyperAct(FightOutPokemon *arg0, u8 arg1) {
     u16 temp_r3;
     u8 temp_r31;
     u32 temp_r3_2;
-    u8 temp_r29;
+    u32 hyperChance;
     FightOutPokemon *temp_r29_2;
     FightOutPokemon *temp_r29_3;
     FightOutPokemon *temp_r29_4;
@@ -1853,10 +1853,9 @@ s32 fightSeqCheckDarkPokemonJoutaiHyperAct(FightOutPokemon *arg0, u8 arg1) {
         if (fightOutPokemonIsJoutaiDataId(arg0, 8U) == 1) {
             return 0;
         }
-        fightOutPokemonGetPokemonPtr(arg0);
-        temp_r29 = pokemonGetDarkPokemonHyperJoutaiKakuritu();
+        hyperChance = pokemonGetDarkPokemonHyperJoutaiKakuritu(fightOutPokemonGetPokemonPtr(arg0));
         fightOutPokemon_GetUseWazaDataId(arg0);
-        if ((s32) (HSD_Rand() % 100) < (s32) temp_r29) {
+        if (HSD_Rand() % 100 < (u8)hyperChance) {
             fightOutPokemonDarkPokemonEffect(arg0, 1U, 1U, 0U);
             temp_r29_2 = fightFloor_GetAttackPokemonPtr(NULL);
             fightFloor_SetAttackPokemonPtr(NULL, (u8 *) arg0);
