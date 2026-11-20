@@ -286,6 +286,8 @@ Particle generation was adapted from the same XD checkpoint. The double-precisio
 
 The floor map resource iterator uses separate resource indices and table cursors as in the same XD checkpoint.
 
+The Poké Spot food placement routine uses the inventory and storage accounting from the same XD checkpoint.
+
 ## Colosseum license notice
 
 ```text

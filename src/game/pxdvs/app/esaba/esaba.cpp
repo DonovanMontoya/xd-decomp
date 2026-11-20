@@ -78,110 +78,103 @@ s32 esabaPut(s32 arg0) {
     return 0;
 }
 
-s32 esabaSet(s32 arg0) {
-    s32 sp8;
-    s32 temp_r4;
-    s32 var_r29;
-    u32 temp_r26;
-    s32 temp_r3;
-    s32 temp_r3_2;
-    s32 var_r28;
-    s32 var_r27;
-    s32 var_r6;
-    u16 temp_r3_3;
+s32 esabaSet(s32 place) {
+    s32 num = GSflagGet(esabadata[place].amountFlag);
+    s32 orig = num;
+    s32 bag = itemQuantity__4HeroFUs(getHeroPtr__4HeroFv(), 0x1FF);
+    s32 diff;
+    s32 fromBag;
+    s32 fromBox;
+    s32 n;
+    s32 max;
+    s32 msg;
 
-    
-    
-    temp_r3 = GSflagGet(esabadata[arg0].amountFlag);
-    sp8 = temp_r3;
-    temp_r26 = itemQuantity__4HeroFUs(getHeroPtr__4HeroFv(),0x1FF);
     GSthreadSwitch();
-    s32 messageId = 0xC92E;
-    messageId += ((s32) (-sp8 | sp8) >> 0x1F);
-    msgctrlSetValue(0x2F, sp8);
-    winMsgOpen(2, messageId, 0, 1);
-    var_r6 = sp8 + temp_r26;
-    if (var_r6 > 0xA) {
-        var_r6 = 0xA;
+    msg = num != 0 ? 0xC92D : 0xC92E;
+    msgctrlSetValue(0x2F, num);
+    winMsgOpen(2, msg, 0, 1);
+    max = num + bag;
+    if (max > 10) {
+        max = 10;
     }
-    if (menuPanelInputNumber(sp8,&sp8,0,var_r6,1) != 0) {
-        var_r27 = (s16) sp8;
-        GSflagSet(esabadata[arg0].amountFlag, var_r27);
-        if (var_r27 == 0) {
-            GSflagSet(esabadata[arg0].appFlag, 0U);
-            GSflagSet(esabadata[arg0].stepFlag, 0U);
+    if (menuPanelInputNumber(num, &num, 0, max, 1)) {
+        n = (s16)num;
+        GSflagSet(esabadata[place].amountFlag, n);
+        if (n == 0) {
+            GSflagSet(esabadata[place].appFlag, 0);
+            GSflagSet(esabadata[place].stepFlag, 0);
         }
-        var_r27 = 0;
-        var_r28 = 0;
-        var_r29 = sp8 - temp_r3;
-        if (var_r29 != 0) {
-            if (var_r29 > 0) {
-                heroItemDecItemDataId(0, 0x1FF, (u16) var_r29, -1);
+        fromBox = 0;
+        diff = num - orig;
+        fromBag = 0;
+        if (diff != 0) {
+            if (diff > 0) {
+                heroItemDecItemDataId(0, 0x1FF, (u16)diff, -1);
             } else {
-                temp_r26 = -var_r29;
-                temp_r3_2 = heroItemAddItemDataId(0, 0x1FF, (u16) temp_r26, -1);
-                if (temp_r3_2 == 0) {
-                    var_r28 = temp_r26;
-                } else if (temp_r3_2 > 0) {
-                    temp_r26 = temp_r3_2;
-                    var_r28 = -(var_r29 + temp_r3_2);
-                    temp_r3_3 = pcboxAddItem(0, 0x1FF, (u16) temp_r3_2);
-                    if (temp_r3_3 != 0) {
-                        var_r27 = temp_r26 - temp_r3_3;
+                s32 need = -diff;
+                s32 rest = heroItemAddItemDataId(0, 0x1FF, (u16)need, -1);
+                if (rest == 0) {
+                    fromBag = need;
+                } else if (rest > 0) {
+                    u32 left = rest;
+                    fromBag = -(diff + rest);
+                    n = (u16)pcboxAddItem(0, 0x1FF, rest);
+                    if (n != 0) {
+                        fromBox = left - n;
                     } else {
-                        var_r27 = temp_r26;
+                        fromBox = left;
                     }
                 }
             }
         }
     } else {
-        var_r29 = 0;
+        diff = 0;
         winMsgClose(1);
     }
-    if (var_r29 != 0) {
-        if (var_r29 >= 0) {
+    if (diff != 0) {
+        if (diff >= 0) {
             winMsgClose(1);
-            msgctrlSetValue(0x2F, var_r29);
+            msgctrlSetValue(0x2F, diff);
             winMsgOpen(2, 0xC930, 1, 1);
             winMsgClose(1);
         } else {
             winMsgClose(1);
-            if ((var_r28 == 0) && (var_r27 == 0)) {
+            if (fromBag == 0 && fromBox == 0) {
                 winMsgOpen(2, 0xC932, 1, 1);
                 winMsgClose(1);
-                var_r29 = 0;
-                var_r27 = (s16) temp_r3;
-                GSflagSet(esabadata[arg0].amountFlag, var_r27);
-                if (var_r27 == 0) {
-                    GSflagSet(esabadata[arg0].appFlag, 0U);
-                    GSflagSet(esabadata[arg0].stepFlag, 0U);
+                n = (s16)orig;
+                diff = 0;
+                GSflagSet(esabadata[place].amountFlag, n);
+                if (n == 0) {
+                    GSflagSet(esabadata[place].appFlag, 0);
+                    GSflagSet(esabadata[place].stepFlag, 0);
                 }
             } else {
-                if (var_r28 > 0) {
-                    msgctrlSetValue(0x2F, var_r28);
+                if (fromBag > 0) {
+                    msgctrlSetValue(0x2F, fromBag);
                     winMsgOpen(2, 0xC92F, 1, 1);
                     winMsgClose(1);
                 }
-                if (var_r27 > 0) {
-                    msgctrlSetValue(0x2F, var_r27);
+                if (fromBox > 0) {
+                    msgctrlSetValue(0x2F, fromBox);
                     winMsgOpen(2, 0xC933, 1, 1);
                     winMsgClose(1);
                 }
-                temp_r4 = (temp_r3 - var_r28) - var_r27;
-                if (temp_r4 != 0) {
-                    var_r29 = -(temp_r3 - temp_r4);
-                    var_r27 = (s16) temp_r4;
-                    GSflagSet(esabadata[arg0].amountFlag, var_r27);
-                    if (var_r27 == 0) {
-                        GSflagSet(esabadata[arg0].appFlag, 0U);
-                        GSflagSet(esabadata[arg0].stepFlag, 0U);
+                s32 t = orig - fromBag - fromBox;
+                if (t != 0) {
+                    diff = -(orig - t);
+                    s32 m = (s16)t;
+                    GSflagSet(esabadata[place].amountFlag, m);
+                    if (m == 0) {
+                        GSflagSet(esabadata[place].appFlag, 0);
+                        GSflagSet(esabadata[place].stepFlag, 0);
                     }
                 }
             }
         }
     }
     winMsgClose(1);
-    return var_r29;
+    return diff;
 }
 
 void esabaHeroCallBackInit(){_esabaHandle=heroMoveAddStepCallback(_esabaCallBackFunc__Fl15FootStepCounterl,0);}

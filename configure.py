@@ -1446,7 +1446,7 @@ config.libs = [
             Object(NonMatching, "game/pxdvs/app/light/lightEditor.cpp", extra_cflags=["-inline on,noauto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/light/light.cpp", extra_cflags=["-inline off", "-str reuse,nopool,readonly"]),
 
-            Object(NonMatching, "game/pxdvs/app/esaba/esaba.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/esaba/esaba.cpp"),
 
             # undertaker
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/underTaker/undertaker.cpp"),
