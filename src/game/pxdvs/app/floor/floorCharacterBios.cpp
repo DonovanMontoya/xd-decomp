@@ -40,7 +40,7 @@ floorCharacter_dd_ *floorCharacterBiosFindByResID(u32 groupID, u32 resourceID) {
         if (resourceID == 0x68) return &_globalCharacter[2];
         return 0;
     } else {
-        FloorData *floor = floorDataBiosGetPtr(GSfloorGetCurrent());
+        GSfloor_dd_ *floor = floorDataBiosGetPtr(GSfloorGetCurrent());
         if (groupID != floorDataBiosGetGroupID(floor)) return 0;
         return floorDataBiosGetCharInfo(floor, resourceID);
     }

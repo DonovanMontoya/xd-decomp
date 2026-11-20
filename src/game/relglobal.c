@@ -7,6 +7,8 @@
 
 /* MWCC emits these C tentative definitions in reverse declaration order. */
 struct DebugEntry;
+struct GSfloor_dd_;
+struct PokemonData;
 
 #define REL_TABLE(name) \
     void *name; \
@@ -15,7 +17,8 @@ struct DebugEntry;
     REL_TABLE(name); \
     void *name##_top
 
-REL_TABLE(pokemon_data);
+struct PokemonData *pokemon_data;
+u32 *pokemon_data_number;
 
 REL_TABLE(floor_resource_data_S1_out);
 REL_TABLE(floor_resource_data_S1_shop_1F);
@@ -698,7 +701,8 @@ FLOOR_LIST(floor_offscreen_data_list_M6_crab_2F);
 FLOOR_LIST(floor_offscreen_data_list_M6_houseA);
 FLOOR_LIST(floor_offscreen_data_list_M6_houseB);
 
-REL_TABLE(floordata);
+struct GSfloor_dd_ *floordata;
+u32 *floordata_number;
 REL_TABLE(snd_wave_data);
 REL_TABLE(snd_data);
 REL_TABLE(snd_rev_data);

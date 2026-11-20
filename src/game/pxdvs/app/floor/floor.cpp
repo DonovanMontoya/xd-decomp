@@ -6,8 +6,6 @@ void GSlogWrite(const char *, ...);
 void GSprint(s32, s32, s32, u32, const char *, ...);
 s32 dbgMenuGetLayerID();
 
-GSfloor_dd_ *floorDataBiosGetPtr(u32);
-GSfloor_dd_ *floorDataBiosGetCurrentPtr();
 u32 floorDataBiosGetGroupID(GSfloor_dd_ *);
 u32 floorDataBiosGetMapResID(GSfloor_dd_ *);
 u8 floorDataBiosGetFloorKind(GSfloor_dd_ *);
