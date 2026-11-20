@@ -219,7 +219,10 @@ static s32 writeBackPcBox__FiUcP7VPC_BOX(s32 shop, u8 mode, VPC_BOX *box) {
     u8 sprite;
     s32 answer;
     if (checkExchangeVpc__FP7VPC_BOX(box) == 0) {
-        winMsgOpenWithSE(2, menuShopGetCouponMsgID(&sprite, shop, 0xD, -1), 1, 0, sprite);
+        {
+            s32 message = menuShopGetCouponMsgID(&sprite, shop, 0xD, -1);
+            winMsgOpenWithSE(2, message, 1, 0, sprite);
+        }
         answer = menuSubOpenYesNo(0, -1, -1, 0);
         winMsgClose(1);
         if (answer == 1 || answer == -1) {
@@ -227,7 +230,10 @@ static s32 writeBackPcBox__FiUcP7VPC_BOX(s32 shop, u8 mode, VPC_BOX *box) {
         }
         return 1;
     }
-    winMsgOpenWithSE(2, menuShopGetCouponMsgID(&sprite, shop, 0xF, -1), 1, 0, sprite);
+    {
+        s32 message = menuShopGetCouponMsgID(&sprite, shop, 0xF, -1);
+        winMsgOpenWithSE(2, message, 1, 0, sprite);
+    }
     answer = menuSubOpenYesNo(0, -1, -1, 0);
     winMsgClose(1);
     if (answer == 1 || answer == -1) {
@@ -409,7 +415,10 @@ static void openCouponMsgWin__Fi20MENU_COUPON_MSG_CODEie(s32 shop, s32 code, s32
         break;
     }
     va_start(args, value);
-    winMsgOpenWithSE(2, getCouponMsgID__FPUci20MENU_COUPON_MSG_CODEiP16__va_list_struct(&sprite, shop, code, value, args), 1, 0, sprite);
+    {
+        s32 message = getCouponMsgID__FPUci20MENU_COUPON_MSG_CODEiP16__va_list_struct(&sprite, shop, code, value, args);
+        winMsgOpenWithSE(2, message, 1, 0, sprite);
+    }
     winMsgClose(1);
 }
 
@@ -425,7 +434,10 @@ static void openMsgWin__Fi18MENU_SHOP_MSG_CODEie(s32 shop, s32 code, s32 value, 
         break;
     }
     va_start(args, value);
-    winMsgOpenWithSE(2, getMsgID__FPUci18MENU_SHOP_MSG_CODEiP16__va_list_struct(&sprite, shop, code, value, args), 1, 0, sprite);
+    {
+        s32 message = getMsgID__FPUci18MENU_SHOP_MSG_CODEiP16__va_list_struct(&sprite, shop, code, value, args);
+        winMsgOpenWithSE(2, message, 1, 0, sprite);
+    }
     winMsgClose(1);
 }
 
@@ -1089,7 +1101,10 @@ static void couponExchangeMain__FiUc(s32 shop, u8 mode) {
                     continue;
                 }
                 cost = num * point;
-                winMsgOpenWithSE(2, menuShopGetCouponMsgID(&sprite, shop, 5, 0x2D, item, 0x2F, num, 0x4B, cost, -1), 1, 0, sprite);
+                {
+                    s32 message = menuShopGetCouponMsgID(&sprite, shop, 5, 0x2D, item, 0x2F, num, 0x4B, cost, -1);
+                    winMsgOpenWithSE(2, message, 1, 0, sprite);
+                }
                 answer = menuSubOpenYesNo(0, -1, -1, 0);
                 winMsgClose(1);
                 if (answer == 1 || answer == -1) {
@@ -1105,7 +1120,10 @@ static void couponExchangeMain__FiUc(s32 shop, u8 mode) {
                 if (mode != 4) {
                     continue;
                 }
-                winMsgOpenWithSE(2, menuShopGetCouponMsgID(&sprite, shop, 7, -1), 1, 0, sprite);
+                {
+                    s32 message = menuShopGetCouponMsgID(&sprite, shop, 7, -1);
+                    winMsgOpenWithSE(2, message, 1, 0, sprite);
+                }
                 answer = menuSubOpenYesNo(0, -1, -1, 0);
                 winMsgClose(1);
                 if (answer == -1 || answer == 1) {
@@ -1143,7 +1161,10 @@ static void couponProc__FiUc(s32 shop, u8 mode) {
     s32 done = 0;
     PPcboxBackup = GSmemAlloc(0xBC50);
     msgctrlSetValue(0x59, 0x1772);
-    winMsgOpenWithSE(2, menuShopGetCouponMsgID(&sprite, shop, 0, -1), 1, 0, sprite);
+    {
+        s32 message = menuShopGetCouponMsgID(&sprite, shop, 0, -1);
+        winMsgOpenWithSE(2, message, 1, 0, sprite);
+    }
     while ((sel = selectExchangeMode__Fv()) != 3) {
         winMsgClose(1);
         switch (sel) {
@@ -1163,7 +1184,10 @@ static void couponProc__FiUc(s32 shop, u8 mode) {
         if (done != 0) {
             break;
         }
-        winMsgOpenWithSE(2, menuShopGetCouponMsgID(&sprite, shop, 1, -1), 1, 0, sprite);
+        {
+            s32 message = menuShopGetCouponMsgID(&sprite, shop, 1, -1);
+            winMsgOpenWithSE(2, message, 1, 0, sprite);
+        }
     }
     if (mode != 2) {
         openCouponMsgWin__Fi20MENU_COUPON_MSG_CODEie(shop, 2, -1);
@@ -1247,7 +1271,10 @@ static void shopBuyMain__FiUc(s32 shop, u8 mode) {
                         }
                     }
                     cost = num * price;
-                    winMsgOpenWithSE(2, menuShopGetMsgID(&sprite, shop, 3, 0x2D, item, 0x2F, num, 0x4B, cost, -1), 1, 0, sprite);
+                    {
+                        s32 message = menuShopGetMsgID(&sprite, shop, 3, 0x2D, item, 0x2F, num, 0x4B, cost, -1);
+                        winMsgOpenWithSE(2, message, 1, 0, sprite);
+                    }
                     answer = menuSubOpenYesNo(0, -1, -1, 0);
                     winMsgClose(1);
                     if (answer != 1 && answer != -1) {
@@ -1298,7 +1325,10 @@ static void shopProc__FiUc(s32 shop, u8 mode) {
             menuPocket2Call(3, shop, 0);
             break;
         }
-        winMsgOpenWithSE(2, menuShopGetMsgID(&sprite, shop, 1, -1), 1, 0, sprite);
+        {
+            s32 message = menuShopGetMsgID(&sprite, shop, 1, -1);
+            winMsgOpenWithSE(2, message, 1, 0, sprite);
+        }
     }
     openMsgWin__Fi18MENU_SHOP_MSG_CODEie(shop, 2, -1);
 }
