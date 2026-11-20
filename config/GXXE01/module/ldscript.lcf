@@ -322,6 +322,20 @@ FORCEACTIVE
     menuWorldMapMoveDemoExit
     menuWorldMapMoveDemoMain
     menuWorldMapMoveDemoInit
+/* Floor callbacks imported by common.rel. */
+    menuPokemonChangeInit
+    menuPokemonChangeMain
+    menuPokemonChangeExit
+    menuScriptMailOpenInit
+    menuScriptMailOpenMain
+    menuScriptMailOpenExit
+    menuShopMain
+    menuBingoInit
+    menuBingoMain
+    menuBingoExit
+    menuScriptPdaAddFuncInit
+    menuScriptPdaAddFuncMain
+    menuScriptPdaAddFuncExit
 /* Retain every original packed-stream API name, including unused entries. */
     ItemBallTbl
     ItemNormalTbl
