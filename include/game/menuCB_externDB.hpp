@@ -182,7 +182,11 @@ typedef struct MenuDBState {
     s32 unkB1E0;
     u8 reservedB1E4[0x2BC];
     u8 unkB4A0;
-    u8 reservedB4A1[0x4B5F];
+#if defined(VERSION_NXXJ01)
+    u8 reservedB4A1[0xB4EC - 0xB4A1];
+#else
+    u8 reservedB4A1[0xB5F8 - 0xB4A1];
+#endif
 } MenuDBState;
 extern MenuDBState _CB;
 typedef struct MenuDBGBA {

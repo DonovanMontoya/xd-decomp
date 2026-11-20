@@ -298,6 +298,8 @@ The PDA monitor location sort follows the same XD checkpoint. The party slot has
 
 The runtime light setup and active light list follow the same XD checkpoint, adapted to the local light object and matrix interfaces.
 
+Three cable battle menu routines and the rules controller were adapted from the same XD checkpoint. The cable battle state declaration follows the extent in each version’s symbol map.
+
 ## Colosseum license notice
 
 ```text

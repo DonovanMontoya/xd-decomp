@@ -1,4 +1,5 @@
 #include <game/menuCB_externDB.hpp>
+#include <libc/stddef.h>
 #pragma auto_inline off
 
 // Field views describe only offsets accessed by this module.
@@ -1712,19 +1713,19 @@ void menuCB_Cursol_Disp(MenuDBWindow *arg0, MenuDBSprite *arg1) {
     }
 }
 
-void menuTool_Cursol_Button(MenuDBWindow *arg0) {
-    if ((s32) _CB.unkB108 == 1) {
-        if ((s32) _CB.unkB110 != 0) {
-            _CB.unkB110 -= 1;
+void menuTool_Cursol_Button(MenuDBWindow* window) {
+    if (_CB.unkB108 == 1) {
+        if (_CB.unkB110 != 0) {
+            _CB.unkB110--;
             return;
         }
-        _CB.unkAFE0 = (s32) arg0->unk9E;
-        if (pauseIsPause() == 0) {
-            if ((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) {
+        _CB.unkAFE0 = window->unk9E;
+        if (!pauseIsPause()) {
+            if (windowGetKeyInfo()->unk4 & 0x10) {
                 _CB.unkB060 = 1;
                 return;
             }
-            if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
+            if (windowGetKeyInfo()->unk4 & 0x20) {
                 _CB.unkAFE0 = 1;
                 _CB.unkB060 = 1;
             }
@@ -2848,94 +2849,86 @@ void menuTool_tunaideGCEntry00_Button(MenuDBWindow *arg0) {
     // The original callback contains only blr.
 }
 
-void menuTool_tunaideGCEntry00_Ctrl(MenuDBWindow *arg0) {
-    s32 stageIndex;
-    s32 temp_r28;
-    s32 temp_r29;
-    s32 var_r29;
-
-    temp_r28 = _CB.unkB0F8;
-    menuCB_DispEffect(arg0);
-    menuSetStatus(arg0->unk4, 0x10);
-    if (((s8) (u8) arg0->unk1 == 2) && (pauseIsPause() == 0)) {
-        if ((s32) _CB.unkB150 != 0) {
-            if ((s32) _CB.unkB158 == 0) {
+void menuTool_tunaideGCEntry00_Ctrl(MenuDBWindow* window) {
+    s32 qty;
+    s32 prev = _CB.unkB0F8;
+    menuCB_DispEffect(window);
+    menuSetStatus(window->unk4, 0x10);
+    if ((s8) window->unk1 == 2 && !pauseIsPause()) {
+        if (_CB.unkB150 != 0) {
+            if (_CB.unkB158 == 0) {
                 _CB.unkB150 = 0;
-                return;
+            } else {
+                _CB.unkB154 += _CB.unkB150;
+                _CB.unkB158 += _CB.unkB150;
             }
-            _CB.unkB154 += _CB.unkB150;
-            _CB.unkB158 += _CB.unkB150;
-            return;
-        }
-        if (((s32) _CB.unkB0FC < 2) && ((s32) _CB.unkB0FC != 1) && ((s32) _CB.unkB0F4 != 1)) {
-            if (((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) || (((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) && ((s32) _CB.unkB0F8 == 0x24))) {
+        } else if (_CB.unkB0FC < 2 && _CB.unkB0FC != 1 && _CB.unkB0F4 != 1) {
+            if ((windowGetKeyInfo()->unk4 & 0x20) || ((windowGetKeyInfo()->unk4 & 0x10) && _CB.unkB0F8 == 0x24)) {
                 menuCB_SE_Play(0x443);
-                if ((s32) _CB.unkB100 == 0) {
+                if (_CB.unkB100 == 0) {
                     _CB.unkAFF0 = 1;
                     _CB.unkB070 = 1;
                     _CB.unkB0F4 = 1;
-                    return;
+                } else {
+                    menuCBGCDelPokemon();
                 }
-                menuCBGCDelPokemon();
-                return;
-            }
-            if ((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) {
-                if ((s32) _CB.unkB0F8 == 0x25) {
+            } else if (windowGetKeyInfo()->unk4 & 0x10) {
+                if (_CB.unkB0F8 == 0x25) {
                     menuCB_SE_Play(0x442);
                     menuCB_GCEntry_OkPushErrorCheck();
-                    if ((s32) _CB.unkB0FC < 2) {
+                    if (_CB.unkB0FC < 2) {
                         _CB.unkAFF0 = 1;
                         _CB.unkB0F4 = 1;
                     }
                 } else {
                     menuCBGCEntryTypeIndex();
-                    if ((menuCBPokemonCheck(_CB.unkB1D4, _CB.unkB1D8) != 0) && ((s32) _CB.unkB0F8 <= 0x23)) {
+                    if (menuCBPokemonCheck(_CB.unkB1D4, _CB.unkB1D8) && _CB.unkB0F8 <= 0x23) {
                         _CB.unkB0FC = 1;
                     }
                 }
-            } else if ((s32) (windowGetKeyInfo()->unk6 & 0x400) != 0) {
+            } else if (windowGetKeyInfo()->unk6 & 0x400) {
                 menuCB2DPokemonClearSHIFT(0);
                 menuCB_SE_Play(0x444);
-                switch ((s32) _CB.unkB0F0) {        /* switch 1; irregular */
-                case 0:                             /* switch 1 */
+                switch (_CB.unkB0F0) {
+                case 0:
                     _CB.unkB0F0 = 1;
                     _CB.unkB0E8 = 0;
                     _CB.unkB0F8 = 0;
                     break;
-                case 1:                             /* switch 1 */
-                    _CB.unkB0E8 += 1;
-                    if ((s32) _CB.unkB0E8 == 8) {
-                        if ((u8) _CB.unkB4A0 == 1) {
+                case 1:
+                    _CB.unkB0E8++;
+                    if (_CB.unkB0E8 == 8) {
+                        if (_CB.unkB4A0 == 1) {
                             _CB.unkB0F0 = 2;
                             _CB.unkB0EC = 0;
                         } else {
                             _CB.unkB0F0 = 0;
                         }
                         _CB.unkB0F8 = 0;
-                        _CB.unkB0E8 -= 1;
+                        _CB.unkB0E8--;
                     }
                     break;
-                case 2:                             /* switch 1 */
-                    _CB.unkB0EC += 1;
-                    if ((s32) _CB.unkB0EC == 9) {
+                case 2:
+                    _CB.unkB0EC++;
+                    if (_CB.unkB0EC == 9) {
                         _CB.unkB0F0 = 0;
                         _CB.unkB0F8 = 0;
-                        _CB.unkB0EC -= 1;
+                        _CB.unkB0EC--;
                     }
                     break;
                 }
-                if ((s32) _CB.unkB0F0 == 2) {
+                if (_CB.unkB0F0 == 2) {
                     menuCBReliveHallCursolInit();
                 }
-                if ((temp_r28 >= 0x1E) && (temp_r28 != (s32) _CB.unkB0F8)) {
-                    _CB.unkB0F8 = temp_r28;
+                if (prev >= 0x1E && prev != _CB.unkB0F8) {
+                    _CB.unkB0F8 = prev;
                 }
-            } else if ((s32) (windowGetKeyInfo()->unk6 & 0x200) != 0) {
+            } else if (windowGetKeyInfo()->unk6 & 0x200) {
                 menuCB2DPokemonClearSHIFT(1);
                 menuCB_SE_Play(0x444);
-                switch ((s32) _CB.unkB0F0) {        /* switch 2; irregular */
-                case 0:                             /* switch 2 */
-                    if ((u8) _CB.unkB4A0 == 1) {
+                switch (_CB.unkB0F0) {
+                case 0:
+                    if (_CB.unkB4A0 == 1) {
                         _CB.unkB0F0 = 2;
                         _CB.unkB0EC = 8;
                     } else {
@@ -2944,611 +2937,649 @@ void menuTool_tunaideGCEntry00_Ctrl(MenuDBWindow *arg0) {
                     }
                     _CB.unkB0F8 = 0;
                     break;
-                case 1:                             /* switch 2 */
-                    if ((s32) _CB.unkB0E8 == 0) {
+                case 1:
+                    if (_CB.unkB0E8 == 0) {
                         _CB.unkB0F0 = 0;
                         _CB.unkB0F8 = 0;
                     } else {
-                        _CB.unkB0E8 -= 1;
+                        _CB.unkB0E8--;
                     }
                     break;
-                case 2:                             /* switch 2 */
-                    if ((s32) _CB.unkB0EC == 0) {
+                case 2:
+                    if (_CB.unkB0EC == 0) {
                         _CB.unkB0F0 = 1;
                         _CB.unkB0E8 = 7;
                         _CB.unkB0F8 = 0;
                     } else {
-                        _CB.unkB0EC -= 1;
+                        _CB.unkB0EC--;
                     }
                     break;
                 }
-                if ((s32) _CB.unkB0F0 == 2) {
+                if (_CB.unkB0F0 == 2) {
                     menuCBReliveHallCursolInit();
                 }
-                if ((temp_r28 >= 0x1E) && (temp_r28 != (s32) _CB.unkB0F8)) {
-                    _CB.unkB0F8 = temp_r28;
+                if (prev >= 0x1E && prev != _CB.unkB0F8) {
+                    _CB.unkB0F8 = prev;
                 }
             } else {
-                if ((s32) _CB.unkB0F0 == 2) {
-                    temp_r29 = _CB.unkB0EC;
-                    var_r29 = getDancerQuantity__12CReliveStageFv(getStage__11CReliveHallFl(getPointer__11CReliveHallFv(), temp_r29));
+                if (_CB.unkB0F0 == 2) {
+                    s32 st = _CB.unkB0EC;
+                    void* hall = getPointer__11CReliveHallFv();
+                    qty = getDancerQuantity__12CReliveStageFv(getStage__11CReliveHallFl(hall, st));
                 }
-                if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
-                    switch ((s32) _CB.unkB0F0) {    /* switch 3; irregular */
-                    case 0:                         /* switch 3 */
-                            switch (_CB.unkB0F8) {  /* switch 4 */
-  /* switch 4 */
-                            case 37:                /* switch 4 */
-                                _CB.unkB0F8 = 5;
-                                break;
-                            case 36:                /* switch 4 */
-                                _CB.unkB0F8 = 1;
-                                break;
-                            case 31:                /* switch 4 */
-                                _CB.unkB0F8 = 0x1E;
-                                break;
-                            case 32:                /* switch 4 */
-                                _CB.unkB0F8 = 0x1F;
-                                break;
-                            case 33:                /* switch 4 */
-                                _CB.unkB0F8 = 0x20;
-                                break;
-                            case 34:                /* switch 4 */
-                                _CB.unkB0F8 = 0x21;
-                                break;
-                            case 35:                /* switch 4 */
-                                _CB.unkB0F8 = 0x22;
-                                break;
-
-                        case 1:                     /* switch 4 */
-                        case 3:                     /* switch 4 */
-                        case 4:                     /* switch 4 */
-                        case 5:                     /* switch 4 */
-                        case 6:                     /* switch 4 */
-                        case 7:                     /* switch 4 */
-                        case 8:                     /* switch 4 */
-                        case 9:                     /* switch 4 */
-                        case 10:                    /* switch 4 */
-                        case 11:                    /* switch 4 */
-                        case 12:                    /* switch 4 */
-                        case 13:                    /* switch 4 */
-                        case 14:                    /* switch 4 */
-                        case 15:                    /* switch 4 */
-                        case 16:                    /* switch 4 */
-                        case 17:                    /* switch 4 */
-                        case 18:                    /* switch 4 */
-                        case 19:                    /* switch 4 */
-                        case 20:                    /* switch 4 */
-                        case 21:                    /* switch 4 */
-                        case 22:                    /* switch 4 */
-                        case 23:                    /* switch 4 */
-                        case 24:                    /* switch 4 */
-                        case 25:                    /* switch 4 */
-                        case 26:                    /* switch 4 */
-                        case 27:                    /* switch 4 */
-                        case 28:                    /* switch 4 */
-                        case 29:                    /* switch 4 */
-                            _CB.unkB0F8 -= 1;
-                        }
-                        break;
-                    case 1:                         /* switch 3 */
-                        if ((s32) _CB.unkB0F8 != 0x1E) {
-                            if ((s32) _CB.unkB0F8 < 0x1E) {
-                                if ((s32) _CB.unkB0F8 < 6) {
-                                    if ((s32) _CB.unkB0F8 < 0) {
-                                        goto block_95;
-                                    }
-                                } else {
-block_95:
-                                    _CB.unkB0F8 -= 6;
-                                }
-                            } else {
-                                switch ((s32) _CB.unkB0F8) { /* switch 5; irregular */
-                                case 37:            /* switch 5 */
-                                    _CB.unkB0F8 = 0x1D;
-                                    break;
-                                case 36:            /* switch 5 */
-                                    _CB.unkB0F8 = 0x18;
-                                    break;
-                                default:            /* switch 5 */
-                                    _CB.unkB0F8 -= 1;
-                                    break;
-                                }
-                            }
-                        }
-                        break;
-                    case 2:                         /* switch 3 */
-                        stageIndex = _CB.unkB0EC;
-                        switch (_CB.unkB0F8) {  /* switch 6 */
+                if (((u16) windowGetKeyRepeat()) & 1) {
+                    switch (_CB.unkB0F0) {
+                    case 0:
+                        switch (_CB.unkB0F8) {
+                        case 0:
+                        case 2:
+                        case 30:
+                            break;
                         case 37:
-                            switch(var_r29) {
-                            case 0: case 1:
-                                if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) _CB.unkB0F8=4;
-                                else if(var_r29==1) _CB.unkB0F8=0;
-                                break;
-                            case 2: case 3: _CB.unkB0F8=1;break;
-                            case 4: _CB.unkB0F8=2;break;
-                            }
+                            _CB.unkB0F8 = 5;
                             break;
-                        case 36:                /* switch 6 */
-                            switch (var_r29) {  /* switch 7; irregular */
+                        case 36:
+                            _CB.unkB0F8 = 1;
+                            break;
+                        case 31:
+                            _CB.unkB0F8 = 0x1E;
+                            break;
+                        case 32:
+                            _CB.unkB0F8 = 0x1F;
+                            break;
+                        case 33:
+                            _CB.unkB0F8 = 0x20;
+                            break;
+                        case 34:
+                            _CB.unkB0F8 = 0x21;
+                            break;
+                        case 35:
+                            _CB.unkB0F8 = 0x22;
+                            break;
+                        default:
+                            _CB.unkB0F8--;
+                            break;
+                        }
+                        break;
+                    case 1:
+                        switch (_CB.unkB0F8) {
+                        case 0:
+                        case 1:
+                        case 2:
+                        case 3:
+                        case 4:
+                        case 5:
+                        case 0x1E:
+                            break;
+                        case 0x25:
+                            _CB.unkB0F8 = 0x1D;
+                            break;
+                        case 0x24:
+                            _CB.unkB0F8 = 0x18;
+                            break;
+                        case 0x1F:
+                        case 0x20:
+                        case 0x21:
+                        case 0x22:
+                        case 0x23:
+                            _CB.unkB0F8--;
+                            break;
+                        default:
+                            _CB.unkB0F8 -= 6;
+                            break;
+                        }
+                        break;
+                    case 2: {
+                            s32 stage = _CB.unkB0EC;
+                            switch (_CB.unkB0F8) {
                             case 0:
-                            case 1:
-                                if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
-                                    _CB.unkB0F8 = 4;
-                                } else if (var_r29 == 1) {
-                                    _CB.unkB0F8 = 0;
+                                break;
+                            case 5:
+                            case 6:
+                            case 7:
+                            case 8:
+                            case 9:
+                            case 10:
+                            case 11:
+                            case 12:
+                            case 13:
+                            case 14:
+                            case 15:
+                            case 16:
+                            case 17:
+                            case 18:
+                            case 19:
+                            case 20:
+                            case 21:
+                            case 22:
+                            case 23:
+                            case 24:
+                            case 25:
+                            case 26:
+                            case 27:
+                            case 28:
+                                break;
+                            case 37:
+                                switch (qty) {
+                                case 0:
+                                case 1:
+                                    if (menuCBPokemonCheck(6, ((stage << 16) & 0xFFFF0000) | 4)) {
+                                        _CB.unkB0F8 = 4;
+                                    } else if (qty == 1) {
+                                        _CB.unkB0F8 = 0;
+                                    }
+                                    break;
+                                case 2:
+                                case 3:
+                                    _CB.unkB0F8 = 1;
+                                    break;
+                                case 4:
+                                    _CB.unkB0F8 = 2;
+                                    break;
                                 }
                                 break;
-                            case 2:             /* switch 7 */
-                                _CB.unkB0F8 = 1;
+                            case 36:
+                                switch (qty) {
+                                case 0:
+                                case 1:
+                                    if (menuCBPokemonCheck(6, ((stage << 16) & 0xFFFF0000) | 4)) {
+                                        _CB.unkB0F8 = 4;
+                                    } else if (qty == 1) {
+                                        _CB.unkB0F8 = 0;
+                                    }
+                                    break;
+                                case 2:
+                                    _CB.unkB0F8 = 1;
+                                    break;
+                                case 3:
+                                    _CB.unkB0F8 = 2;
+                                    break;
+                                case 4:
+                                    _CB.unkB0F8 = 3;
+                                    break;
+                                }
                                 break;
-                            case 3:             /* switch 7 */
-                                _CB.unkB0F8 = 2;
+                            case 1:
+                                switch (qty) {
+                                case 2:
+                                case 3:
+                                    if (menuCBPokemonCheck(6, ((stage << 16) & 0xFFFF0000) | 4)) {
+                                        _CB.unkB0F8 = 4;
+                                    } else {
+                                        _CB.unkB0F8 = 0;
+                                    }
+                                    break;
+                                }
                                 break;
-                            case 4:             /* switch 7 */
-                                _CB.unkB0F8 = 3;
+                            case 2:
+                                if (menuCBPokemonCheck(6, ((stage << 16) & 0xFFFF0000) | 4)) {
+                                    _CB.unkB0F8 = 4;
+                                } else if (qty == 3) {
+                                    _CB.unkB0F8 = 0;
+                                } else {
+                                    _CB.unkB0F8 = 1;
+                                }
                                 break;
-                            }
-                            break;
-                        case 1:                 /* switch 6 */
-                            if (var_r29 < 4) {
-                                if (var_r29 < 2) {
-
-                                } else if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
+                            case 3:
+                                if (menuCBPokemonCheck(6, ((stage << 16) & 0xFFFF0000) | 4)) {
                                     _CB.unkB0F8 = 4;
                                 } else {
                                     _CB.unkB0F8 = 0;
                                 }
+                                break;
+                            case 4:
+                                switch (qty) {
+                                case 0:
+                                    break;
+                                case 1:
+                                case 2:
+                                case 3:
+                                case 4:
+                                    _CB.unkB0F8 = 0;
+                                    break;
+                                }
+                                break;
+                            case 31:
+                            case 32:
+                            case 33:
+                            case 34:
+                            case 35:
+                                _CB.unkB0F8--;
+                                break;
                             }
-                            break;
-                        case 2:                 /* switch 6 */
-                            if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
-                                _CB.unkB0F8 = 4;
-                            } else if (var_r29 == 3) {
-                                _CB.unkB0F8 = 0;
-                            } else {
-                                _CB.unkB0F8 = 1;
-                            }
-                            break;
-                        case 3:                 /* switch 6 */
-                            if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
-                                _CB.unkB0F8 = 4;
-                            } else {
-                                _CB.unkB0F8 = 0;
-                            }
-                            break;
-                        case 4:                 /* switch 6 */
-                            switch(var_r29) {
-                            case 1: case 2: case 3: case 4: _CB.unkB0F8=0;break;
-                            }
-                            break;
-                        case 31:                /* switch 6 */
-                        case 32:                /* switch 6 */
-                        case 33:                /* switch 6 */
-                        case 34:                /* switch 6 */
-                        case 35:                /* switch 6 */
-                            _CB.unkB0F8 -= 1;
                             break;
                         }
-                        break;
                     }
-                    if (temp_r28 != (s32) _CB.unkB0F8) {
+                    if (prev != _CB.unkB0F8) {
                         menuCB_SE_Play(0x441);
                     }
-                } else if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
-                    switch ((s32) _CB.unkB0F0) {    /* switch 8; irregular */
-                    case 0:                         /* switch 8 */
-                        switch ((s32) _CB.unkB0F8) { /* switch 9; irregular */
-                        case 1:                     /* switch 9 */
+                } else if (((u16) windowGetKeyRepeat()) & 2) {
+                    switch (_CB.unkB0F0) {
+                    case 0:
+                        switch (_CB.unkB0F8) {
+                        case 1:
                             _CB.unkB0F8 = 0x24;
                             break;
-                        case 5:                     /* switch 9 */
+                        case 5:
                             _CB.unkB0F8 = 0x25;
+                            break;
+                        case 0x23:
+                        case 0x24:
+                        case 0x25:
                             break;
                         case 0:
                         case 2:
                         case 3:
                         case 4:
-                        case 30:
-                        case 31:
-                        case 32:
-                        case 33:
-                        case 34:
-                            _CB.unkB0F8 += 1;
-                            break;
-                        case 35:
-                        case 36:
-                        case 37:
+                        case 0x1E:
+                        case 0x1F:
+                        case 0x20:
+                        case 0x21:
+                        case 0x22:
+                            _CB.unkB0F8++;
                             break;
                         }
                         break;
-                    case 1:                         /* switch 8 */
-                        if ((s32) _CB.unkB0F8 < 0x1E) {
-                            if ((s32) _CB.unkB0F8 < 0x1B) {
-                                if ((s32) _CB.unkB0F8 < 0x18) {
-                                    goto block_173;
-                                }
-                                _CB.unkB0F8 = 0x24;
-                            } else {
-                                _CB.unkB0F8 = 0x25;
-                            }
-                        } else if ((s32) _CB.unkB0F8 < 0x26) {
-                            if ((s32) _CB.unkB0F8 < 0x23) {
-                                _CB.unkB0F8 += 1;
-                            }
-                        } else {
-block_173:
+                    case 1:
+                        switch (_CB.unkB0F8) {
+                        case 0x1E:
+                        case 0x1F:
+                        case 0x20:
+                        case 0x21:
+                        case 0x22:
+                            _CB.unkB0F8++;
+                            break;
+                        case 0x23:
+                        case 0x24:
+                        case 0x25:
+                            break;
+                        case 0x18:
+                        case 0x19:
+                        case 0x1A:
+                            _CB.unkB0F8 = 0x24;
+                            break;
+                        case 0x1B:
+                        case 0x1C:
+                        case 0x1D:
+                            _CB.unkB0F8 = 0x25;
+                            break;
+                        default:
                             _CB.unkB0F8 += 6;
+                            break;
                         }
                         break;
-                    case 2:                         /* switch 8 */
-                        stageIndex = _CB.unkB0EC;
-                        switch ((s32) _CB.unkB0F8) { /* switch 10; irregular */
-                        case 0:                     /* switch 10 */
-                            if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
-                                _CB.unkB0F8 = 4;
-                            } else {
-                                switch (var_r29) {  /* switch 11; irregular */
-                                case 1:             /* switch 11 */
+                    case 2: {
+                            s32 stage = _CB.unkB0EC;
+                            switch (_CB.unkB0F8) {
+                            case 0:
+                                if (menuCBPokemonCheck(6, ((stage << 16) & 0xFFFF0000) | 4)) {
+                                    _CB.unkB0F8 = 4;
+                                } else {
+                                    switch (qty) {
+                                    case 1:
+                                        _CB.unkB0F8 = 0x25;
+                                        break;
+                                    case 2:
+                                        _CB.unkB0F8 = 1;
+                                        break;
+                                    case 3:
+                                        _CB.unkB0F8 = 2;
+                                        break;
+                                    case 4:
+                                        _CB.unkB0F8 = 3;
+                                        break;
+                                    }
+                                }
+                                break;
+                            case 1:
+                                switch (qty) {
+                                case 2:
+                                case 3:
                                     _CB.unkB0F8 = 0x25;
                                     break;
-                                case 2:             /* switch 11 */
+                                case 4:
+                                    if (menuCBPokemonCheck(6, ((stage << 16) & 0xFFFF0000) | 4)) {
+                                        _CB.unkB0F8 = 4;
+                                    } else {
+                                        _CB.unkB0F8 = 2;
+                                    }
+                                    break;
+                                }
+                                break;
+                            case 2:
+                                switch (qty) {
+                                case 3:
+                                    _CB.unkB0F8 = 0x24;
+                                    break;
+                                case 4:
+                                    _CB.unkB0F8 = 0x25;
+                                    break;
+                                }
+                                break;
+                            case 3:
+                                _CB.unkB0F8 = 0x24;
+                                break;
+                            case 4:
+                                switch (qty) {
+                                case 0:
+                                case 1:
+                                    _CB.unkB0F8 = 0x25;
+                                    break;
+                                case 2:
                                     _CB.unkB0F8 = 1;
                                     break;
-                                case 3:             /* switch 11 */
+                                case 3:
                                     _CB.unkB0F8 = 2;
                                     break;
-                                case 4:             /* switch 11 */
+                                case 4:
                                     _CB.unkB0F8 = 3;
                                     break;
                                 }
-                            }
-                            break;
-                        case 1:                     /* switch 10 */
-                            if (var_r29 != 4) {
-                                if (var_r29 < 4) {
-                                    if (var_r29 < 2) {
-
-                                    } else {
-                                        _CB.unkB0F8 = 0x25;
-                                    }
-                                }
-                            } else if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
-                                _CB.unkB0F8 = 4;
-                            } else {
-                                _CB.unkB0F8 = 2;
-                            }
-                            break;
-                        case 2:                     /* switch 10 */
-                            switch (var_r29) {      /* switch 12; irregular */
-                            case 3:                 /* switch 12 */
-                                _CB.unkB0F8 = 0x24;
                                 break;
-                            case 4:                 /* switch 12 */
-                                _CB.unkB0F8 = 0x25;
+                            case 0x1E:
+                            case 0x1F:
+                            case 0x20:
+                            case 0x21:
+                            case 0x22:
+                                _CB.unkB0F8++;
+                                break;
+                            case 0x23:
+                            case 0x24:
+                            case 0x25:
                                 break;
                             }
-                            break;
-                        case 3:                     /* switch 10 */
-                            _CB.unkB0F8 = 0x24;
-                            break;
-                        case 4:                     /* switch 10 */
-                            switch (var_r29) {      /* switch 13; irregular */
-                            default:                /* switch 13 */
-                                _CB.unkB0F8 = 0x25;
-                                break;
-                            case 2:                 /* switch 13 */
-                                _CB.unkB0F8 = 1;
-                                break;
-                            case 3:                 /* switch 13 */
-                                _CB.unkB0F8 = 2;
-                                break;
-                            case 4:                 /* switch 13 */
-                                _CB.unkB0F8 = 3;
-                                break;
-                            }
-                            break;
-                        case 30:
-                        case 31:
-                        case 32:
-                        case 33:
-                        case 34:
-                            _CB.unkB0F8 += 1;
-                            break;
-                        case 35:
-                        case 36:
-                        case 37:
                             break;
                         }
-                        break;
                     }
-                    if (temp_r28 != (s32) _CB.unkB0F8) {
+                    if (prev != _CB.unkB0F8) {
                         menuCB_SE_Play(0x441);
                     }
                 }
-                if ((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) {
-                    switch ((s32) _CB.unkB0F0) {    /* switch 14; irregular */
-                    case 0:                         /* switch 14 */
-                        switch (_CB.unkB0F8) {  /* switch 15 */
-                        case 37:                /* switch 15 */
+                if (((u16) windowGetKeyRepeat()) & 4) {
+                    switch (_CB.unkB0F0) {
+                    case 0:
+                        switch (_CB.unkB0F8) {
+                        case 37:
                             _CB.unkB0F8 = 0x24;
                             break;
-                        case 30:                /* switch 15 */
+                        case 30:
                             _CB.unkB0F8 = 2;
                             break;
-                        case 31:                /* switch 15 */
+                        case 31:
                             _CB.unkB0F8 = 3;
                             break;
-                        case 32:                /* switch 15 */
+                        case 32:
                             _CB.unkB0F8 = 4;
                             break;
-                        case 33:                /* switch 15 */
+                        case 33:
                             _CB.unkB0F8 = 5;
                             break;
-                        case 34:                /* switch 15 */
-                        case 35:                /* switch 15 */
+                        case 34:
+                        case 35:
                             _CB.unkB0F8 = 0x25;
                             break;
-                        case 2:                 /* switch 15 */
+                        case 2:
                             _CB.unkB0F8 = 0;
                             break;
-                        case 3:                 /* switch 15 */
+                        case 3:
                             _CB.unkB0F8 = 0;
                             break;
-                        case 4:                 /* switch 15 */
+                        case 4:
                             _CB.unkB0F8 = 1;
                             break;
-                        case 5:                 /* switch 15 */
+                        case 5:
                             _CB.unkB0F8 = 1;
                             break;
                         }
                         break;
-                    case 1:                         /* switch 14 */
-                            switch (_CB.unkB0F8) {  /* switch 16 */
-  /* switch 16 */
-                            case 37:                /* switch 16 */
-                                _CB.unkB0F8 = 0x24;
-                                break;
-                            case 30:                /* switch 16 */
-                                _CB.unkB0F8 = 5;
-                                break;
-                            case 31:                /* switch 16 */
-                                _CB.unkB0F8 = 0xB;
-                                break;
-                            case 32:                /* switch 16 */
-                                _CB.unkB0F8 = 0x11;
-                                break;
-                            case 33:                /* switch 16 */
-                                _CB.unkB0F8 = 0x17;
-                                break;
-                            case 34:                /* switch 16 */
-                                _CB.unkB0F8 = 0x1D;
-                                break;
-                            case 35:                /* switch 16 */
-                                _CB.unkB0F8 = 0x25;
-                                break;
-
-                        case 1:                     /* switch 16 */
-                        case 2:                     /* switch 16 */
-                        case 3:                     /* switch 16 */
-                        case 4:                     /* switch 16 */
-                        case 5:                     /* switch 16 */
-                        case 7:                     /* switch 16 */
-                        case 8:                     /* switch 16 */
-                        case 9:                     /* switch 16 */
-                        case 10:                    /* switch 16 */
-                        case 11:                    /* switch 16 */
-                        case 13:                    /* switch 16 */
-                        case 14:                    /* switch 16 */
-                        case 15:                    /* switch 16 */
-                        case 16:                    /* switch 16 */
-                        case 17:                    /* switch 16 */
-                        case 19:                    /* switch 16 */
-                        case 20:                    /* switch 16 */
-                        case 21:                    /* switch 16 */
-                        case 22:                    /* switch 16 */
-                        case 23:                    /* switch 16 */
-                        case 25:                    /* switch 16 */
-                        case 26:                    /* switch 16 */
-                        case 27:                    /* switch 16 */
-                        case 28:                    /* switch 16 */
-                        case 29:                    /* switch 16 */
-                            _CB.unkB0F8 -= 1;
-                        }
-                        break;
-                    case 2:                         /* switch 14 */
-                        stageIndex = _CB.unkB0EC;
-                        switch ((s32) _CB.unkB0F8) { /* switch 17; irregular */
-                        case 1:                     /* switch 17 */
-                            switch (var_r29) {      /* switch 18; irregular */
-                            case 3:                 /* switch 18 */
-                                _CB.unkB0F8 = 2;
-                                break;
-                            case 4:                 /* switch 18 */
-                                _CB.unkB0F8 = 0;
-                                break;
-                            }
+                    case 1:
+                        switch (_CB.unkB0F8) {
+                        case 0:
+                        case 6:
+                        case 12:
+                        case 18:
+                        case 24:
+                        case 36:
                             break;
-                        case 2:                     /* switch 17 */
-                            if (var_r29 != 4) {
-
-                            } else {
-                                _CB.unkB0F8 = 3;
-                            }
-                            break;
-                        case 4:                     /* switch 17 */
-                            switch (var_r29) {      /* switch 19; irregular */
-                            case 3:                 /* switch 19 */
-                                _CB.unkB0F8 = 2;
-                                break;
-                            case 4:                 /* switch 19 */
-                                _CB.unkB0F8 = 0;
-                                break;
-                            }
-                            break;
-                        case 37:                    /* switch 17 */
+                        case 37:
                             _CB.unkB0F8 = 0x24;
                             break;
                         case 30:
+                            _CB.unkB0F8 = 5;
+                            break;
                         case 31:
+                            _CB.unkB0F8 = 0xB;
+                            break;
                         case 32:
+                            _CB.unkB0F8 = 0x11;
+                            break;
                         case 33:
+                            _CB.unkB0F8 = 0x17;
+                            break;
                         case 34:
+                            _CB.unkB0F8 = 0x1D;
+                            break;
                         case 35:
-                            if (menuCBPokemonCheck(6, ((stageIndex * 0x10000) & 0xFFFF0000) | 4) != 0) {
-                                _CB.unkB0F8 = 4;
-                            } else {
-                                _CB.unkB0F8 = 0x25;
-                            }
-                            break;
-                        }
-                        break;
-                    }
-                    if (temp_r28 != (s32) _CB.unkB0F8) {
-                        menuCB_SE_Play(0x441);
-                    }
-                } else if ((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) {
-                    switch ((s32) _CB.unkB0F0) {    /* switch 20; irregular */
-                    case 0:                         /* switch 20 */
-                        switch (_CB.unkB0F8) {  /* switch 21 */
-                        case 0:                 /* switch 21 */
-                            _CB.unkB0F8 = 2;
-                            break;
-                        case 1:                 /* switch 21 */
-                            _CB.unkB0F8 = 4;
-                            break;
-                        case 2:                 /* switch 21 */
-                            _CB.unkB0F8 = 0x1E;
-                            break;
-                        case 3:                 /* switch 21 */
-                            _CB.unkB0F8 = 0x1F;
-                            break;
-                        case 4:                 /* switch 21 */
-                            _CB.unkB0F8 = 0x20;
-                            break;
-                        case 5:                 /* switch 21 */
-                            _CB.unkB0F8 = 0x21;
-                            break;
-                        case 37:                /* switch 21 */
-                            _CB.unkB0F8 = 0x22;
-                            break;
-                        case 36:                /* switch 21 */
                             _CB.unkB0F8 = 0x25;
-                            break;
-                        case 30:
-                        case 31:
-                        case 32:
-                        case 33:
-                        case 34:
-                        case 35:
-                            break;
-                        }
-                        break;
-                    case 1:                         /* switch 20 */
-                        switch (_CB.unkB0F8) {      /* switch 22 */
-                        case 5:                     /* switch 22 */
-                            _CB.unkB0F8 = 0x1E;
-                            break;
-                        case 11:                    /* switch 22 */
-                            _CB.unkB0F8 = 0x1F;
-                            break;
-                        case 17:                    /* switch 22 */
-                            _CB.unkB0F8 = 0x20;
-                            break;
-                        case 23:                    /* switch 22 */
-                            _CB.unkB0F8 = 0x21;
-                            break;
-                        case 29:                    /* switch 22 */
-                            _CB.unkB0F8 = 0x22;
-                            break;
-                        case 37:                    /* switch 22 */
-                            _CB.unkB0F8 = 0x23;
-                            break;
-                        case 36:                    /* switch 22 */
-                            _CB.unkB0F8 = 0x25;
-                            break;
-                        case 30:
-                        case 31:
-                        case 32:
-                        case 33:
-                        case 34:
-                        case 35:
                             break;
                         default:
-                            _CB.unkB0F8 += 1;
+                            _CB.unkB0F8--;
                             break;
                         }
                         break;
-                    case 2:                         /* switch 20 */
-                        switch ((s32) _CB.unkB0F8) { /* switch 23; irregular */
-                        case 0:                     /* switch 23 */
-                            if (var_r29 != 4) {
-                                if (var_r29 < 4) {
-                                    if (var_r29 < 1) {
-
-                                    } else {
-                                        _CB.unkB0F8 = 0x1E;
-                                    }
+                    case 2: {
+                            s32 stage = _CB.unkB0EC;
+                            switch (_CB.unkB0F8) {
+                            case 0:
+                                break;
+                            case 1:
+                                switch (qty) {
+                                case 3:
+                                    _CB.unkB0F8 = 2;
+                                    break;
+                                case 4:
+                                    _CB.unkB0F8 = 0;
+                                    break;
                                 }
-                            } else {
-                                _CB.unkB0F8 = 1;
-                            }
-                            break;
-                        case 1:                     /* switch 23 */
-                            if (var_r29 < 5) {
-                                if (var_r29 < 2) {
-
+                                break;
+                            case 2:
+                                switch (qty) {
+                                case 4:
+                                    _CB.unkB0F8 = 3;
+                                    break;
+                                }
+                                break;
+                            case 4:
+                                switch (qty) {
+                                case 3:
+                                    _CB.unkB0F8 = 2;
+                                    break;
+                                case 4:
+                                    _CB.unkB0F8 = 0;
+                                    break;
+                                }
+                                break;
+                            case 0x25:
+                                _CB.unkB0F8 = 0x24;
+                                break;
+                            case 0x1E:
+                            case 0x1F:
+                            case 0x20:
+                            case 0x21:
+                            case 0x22:
+                            case 0x23:
+                                if (menuCBPokemonCheck(6, ((stage << 16) & 0xFFFF0000) | 4)) {
+                                    _CB.unkB0F8 = 4;
                                 } else {
-                                    _CB.unkB0F8 = 0x1E;
+                                    _CB.unkB0F8 = 0x25;
                                 }
+                                break;
                             }
                             break;
-                        case 2:                     /* switch 23 */
-                            switch (var_r29) {      /* switch 24; irregular */
-                            case 3:                 /* switch 24 */
+                        }
+                    }
+                    if (prev != _CB.unkB0F8) {
+                        menuCB_SE_Play(0x441);
+                    }
+                } else if (((u16) windowGetKeyRepeat()) & 8) {
+                    switch (_CB.unkB0F0) {
+                    case 0:
+                        switch (_CB.unkB0F8) {
+                        case 0:
+                            _CB.unkB0F8 = 2;
+                            break;
+                        case 1:
+                            _CB.unkB0F8 = 4;
+                            break;
+                        case 2:
+                            _CB.unkB0F8 = 0x1E;
+                            break;
+                        case 3:
+                            _CB.unkB0F8 = 0x1F;
+                            break;
+                        case 4:
+                            _CB.unkB0F8 = 0x20;
+                            break;
+                        case 5:
+                            _CB.unkB0F8 = 0x21;
+                            break;
+                        case 37:
+                            _CB.unkB0F8 = 0x22;
+                            break;
+                        case 36:
+                            _CB.unkB0F8 = 0x25;
+                            break;
+                        case 6:
+                        case 7:
+                        case 8:
+                        case 9:
+                        case 10:
+                        case 11:
+                        case 12:
+                        case 13:
+                        case 14:
+                        case 15:
+                        case 16:
+                        case 17:
+                        case 18:
+                        case 19:
+                        case 20:
+                        case 21:
+                        case 22:
+                        case 23:
+                        case 24:
+                        case 25:
+                        case 26:
+                        case 27:
+                        case 28:
+                            break;
+                        }
+                        break;
+                    case 1:
+                        switch (_CB.unkB0F8) {
+                        case 30:
+                        case 31:
+                        case 32:
+                        case 33:
+                        case 34:
+                        case 35:
+                            break;
+                        case 5:
+                            _CB.unkB0F8 = 0x1E;
+                            break;
+                        case 11:
+                            _CB.unkB0F8 = 0x1F;
+                            break;
+                        case 17:
+                            _CB.unkB0F8 = 0x20;
+                            break;
+                        case 23:
+                            _CB.unkB0F8 = 0x21;
+                            break;
+                        case 29:
+                            _CB.unkB0F8 = 0x22;
+                            break;
+                        case 37:
+                            _CB.unkB0F8 = 0x23;
+                            break;
+                        case 36:
+                            _CB.unkB0F8 = 0x25;
+                            break;
+                        default:
+                            _CB.unkB0F8++;
+                            break;
+                        }
+                        break;
+                    case 2:
+                        switch (_CB.unkB0F8) {
+                        case 0:
+                            switch (qty) {
+                            case 1:
+                            case 2:
+                            case 3:
+                                _CB.unkB0F8 = 0x1E;
+                                break;
+                            case 4:
                                 _CB.unkB0F8 = 1;
                                 break;
-                            case 4:                 /* switch 24 */
+                            }
+                            break;
+                        case 1:
+                            switch (qty) {
+                            case 2:
+                            case 3:
+                            case 4:
                                 _CB.unkB0F8 = 0x1E;
                                 break;
                             }
                             break;
-                        case 3:                     /* switch 23 */
-                            _CB.unkB0F8 = 2;
-                            break;
-                        case 4:                     /* switch 23 */
-                            if (var_r29 < 3) {
-                                if (var_r29 < 0) {
-
-                                } else {
-                                    _CB.unkB0F8 = 0x1E;
-                                }
-                            } else if (var_r29 < 5) {
+                        case 2:
+                            switch (qty) {
+                            case 3:
                                 _CB.unkB0F8 = 1;
+                                break;
+                            case 4:
+                                _CB.unkB0F8 = 0x1E;
+                                break;
                             }
                             break;
-                        case 37:                    /* switch 23 */
+                        case 3:
+                            _CB.unkB0F8 = 2;
+                            break;
+                        case 4:
+                            switch (qty) {
+                            case 0:
+                            case 1:
+                            case 2:
+                                _CB.unkB0F8 = 0x1E;
+                                break;
+                            case 3:
+                            case 4:
+                                _CB.unkB0F8 = 1;
+                                break;
+                            }
+                            break;
+                        case 0x25:
                             _CB.unkB0F8 = 0x23;
                             break;
-                        case 36:                    /* switch 23 */
+                        case 0x24:
                             _CB.unkB0F8 = 0x25;
                             break;
-                        case 30:
-                        case 31:
-                        case 32:
-                        case 33:
-                        case 34:
-                        case 35:
+                        case 0x1E:
+                        case 0x1F:
+                        case 0x20:
+                        case 0x21:
+                        case 0x22:
+                        case 0x23:
                             break;
                         }
                         break;
                     }
-                    if (temp_r28 != (s32) _CB.unkB0F8) {
+                    if (prev != _CB.unkB0F8) {
                         menuCB_SE_Play(0x441);
                     }
                 }
-                if (((s32) (windowGetKeyInfo()->unk4 & 0x800) != 0) && ((s32) _CB.unkB0F8 != 0x25)) {
+                if ((windowGetKeyInfo()->unk4 & 0x800) && _CB.unkB0F8 != 0x25) {
                     _CB.unkB0F8 = 0x25;
                     menuCB_SE_Play(0x441);
                 }
@@ -7644,287 +7675,282 @@ void menuTool_tunaide02_Button(MenuDBWindow *arg0) {
     }
 }
 
-void menuCB_Tunaide01_3_Disp(MenuDBWindow *arg0, MenuDBSprite *arg1) {
-    s16 temp_r0;
-
-    temp_r0 = arg1->unk6;
-    switch (temp_r0) {                              /* switch 1; irregular */
-    case 0x2A3:                                     /* switch 1 */
+void menuCB_Tunaide01_3_Disp(MenuDBWindow* window, MenuDBSprite* sprite) {
+    s16 spriteId;
+    spriteId = sprite->unk6;
+    switch (spriteId) {
+    case 0x2A3:
         if ((s32) _CB.unkB114 == 0) {
-            menuCB_SetSprite(arg1, menuSpriteBiosGetPtr(BATTLE_FIELD_Char[_CB.unkAFFC]));
+            menuCB_SetSprite(sprite, (menuSpriteBiosGetPtr(BATTLE_FIELD_Char[_CB.unkAFFC])));
             return;
         }
-        winSpriteSetDisp(arg1, 0);
-        if (_CB.unkB114 != 0)
-        switch ((s32) _CB.unkB114) {                /* switch 2; irregular */
-        case 1:                                     /* switch 2 */
-            field_anime.unk0 = 0;
-            field_anime.unk2 = 0;
-            field_anime.unk4 = 0x116;
-            field_anime.unk6 = 0;
-            field_anime.unk8 = -1;
-            field_anime.unkE = 0;
-            field_anime.unk10 = 0xA7;
-            field_anime.unkC = (u16) BATTLE_FIELD_Char[_CB.unkAFFC];
-            field_anime.unk14 = 0;
-            field_anime.unk18 = 0;
-            field_anime.unk1A = 0;
-            field_anime.unk1C = 0x116;
-            field_anime.unk1E = 0xA7;
-            field_anime.unk20 = -1;
-            field_anime.unk26 = 0;
-            field_anime.unk28 = 0;
-            field_anime.unk24 = (u16) BATTLE_FIELD_Char[_CB.unkB000];
-            field_anime.unk2C = 0;
-            _CB.unkB114 = 2;
-            return;
-        case 3:                                     /* switch 2 */
-            field_anime.unk0 = 0;
-            field_anime.unk2 = 0xA7;
-            field_anime.unk4 = 0x116;
-            field_anime.unk6 = 0;
-            field_anime.unk8 = -1;
-            field_anime.unkE = 0;
-            field_anime.unk10 = 0;
-            field_anime.unkC = (u16) BATTLE_FIELD_Char[_CB.unkAFFC];
-            field_anime.unk14 = 0;
-            field_anime.unk18 = 0;
-            field_anime.unk1A = 0;
-            field_anime.unk1C = 0x116;
-            field_anime.unk1E = 0xA7;
-            field_anime.unk20 = -1;
-            field_anime.unk26 = 0;
-            field_anime.unk28 = 0;
-            field_anime.unk24 = (u16) BATTLE_FIELD_Char[_CB.unkB000];
-            field_anime.unk2C = 0;
-            _CB.unkB114 = 4;
-            return;
-        case 2:                                     /* switch 2 */
-            field_anime.unk6 += 0xF;
-            if (field_anime.unk6 >= 0xA7) {
+        winSpriteSetDisp(sprite, 0U);
+        if (_CB.unkB114 != 0) {
+            switch ((s32) _CB.unkB114) {
+            case 1:
+                field_anime.unk0 = 0;
+                field_anime.unk2 = 0;
+                field_anime.unk4 = 0x116;
                 field_anime.unk6 = 0;
-                _CB.unkB114 = 0;
-                winSpriteSetDisp(arg1, 1);
-                menuCB_SetSprite(arg1, menuSpriteBiosGetPtr(BATTLE_FIELD_Char[_CB.unkAFFC]));
-            }
-            field_anime.unk1A = (s16) field_anime.unk6;
-            field_anime.unk10 = (s16) (0xA7 - field_anime.unk6);
-            field_anime.unk1E = (s16) (0xA7 - field_anime.unk6);
-            return;
-        case 4:                                     /* switch 2 */
-            field_anime.unk6 += 0xF;
-            if (field_anime.unk6 >= 0xA7) {
+                field_anime.unk8 = -1;
+                field_anime.unkC = (u16) BATTLE_FIELD_Char[_CB.unkAFFC];
+                field_anime.unkE = 0;
+                field_anime.unk10 = 0xA7;
+                field_anime.unk14 = 0;
+                field_anime.unk18 = 0;
+                field_anime.unk1A = 0;
+                field_anime.unk1C = 0x116;
+                field_anime.unk1E = 0xA7;
+                field_anime.unk20 = -1;
+                field_anime.unk24 = (u16) BATTLE_FIELD_Char[_CB.unkB000];
+                field_anime.unk26 = 0;
+                field_anime.unk28 = 0;
+                field_anime.unk2C = 0;
+                _CB.unkB114 = 2;
+                return;
+            case 3:
+                field_anime.unk0 = 0;
+                field_anime.unk2 = 0xA7;
+                field_anime.unk4 = 0x116;
                 field_anime.unk6 = 0;
-                _CB.unkB114 = 0;
-                winSpriteSetDisp(arg1, 1);
-                menuCB_SetSprite(arg1, menuSpriteBiosGetPtr(BATTLE_FIELD_Char[_CB.unkAFFC]));
+                field_anime.unk8 = -1;
+                field_anime.unkC = (u16) BATTLE_FIELD_Char[_CB.unkAFFC];
+                field_anime.unkE = 0;
+                field_anime.unk10 = 0;
+                field_anime.unk14 = 0;
+                field_anime.unk18 = 0;
+                field_anime.unk1A = 0;
+                field_anime.unk1C = 0x116;
+                field_anime.unk1E = 0xA7;
+                field_anime.unk20 = -1;
+                field_anime.unk24 = (u16) BATTLE_FIELD_Char[_CB.unkB000];
+                field_anime.unk26 = 0;
+                field_anime.unk28 = 0;
+                field_anime.unk2C = 0;
+                _CB.unkB114 = 4;
+                return;
+            case 2:
+                field_anime.unk6 += 0xF;
+                if (field_anime.unk6 >= 0xA7) {
+                    field_anime.unk6 = 0;
+                    _CB.unkB114 = 0;
+                    winSpriteSetDisp(sprite, 1U);
+                    menuCB_SetSprite(sprite, (menuSpriteBiosGetPtr(BATTLE_FIELD_Char[_CB.unkAFFC])));
+                }
+                {
+                    s16 remaining = 0xA7 - field_anime.unk6;
+                    field_anime.unk1A = field_anime.unk6;
+                    field_anime.unk10 = remaining;
+                    field_anime.unk1E = (s16)(0xA7 - field_anime.unk6);
+                }
+                return;
+            case 4:
+                field_anime.unk6 += 0xF;
+                if (field_anime.unk6 >= 0xA7) {
+                    field_anime.unk6 = 0;
+                    _CB.unkB114 = 0;
+                    winSpriteSetDisp(sprite, 1U);
+                    menuCB_SetSprite(sprite, (menuSpriteBiosGetPtr(BATTLE_FIELD_Char[_CB.unkAFFC])));
+                }
+                {
+                    s16 remaining = 0xA7 - field_anime.unk6;
+                    field_anime.unk28 = field_anime.unk6;
+                    field_anime.unk2 = remaining;
+                    field_anime.unk1E = (s16)(0xA7 - field_anime.unk6);
+                }
+                return;
             }
-            field_anime.unk28 = (s16) field_anime.unk6;
-            field_anime.unk2 = (s16) (0xA7 - field_anime.unk6);
-            field_anime.unk1E = (s16) (0xA7 - field_anime.unk6);
-            return;
         }
         break;
-    case 0x2D9:                                     /* switch 1 */
+    case 0x2D9:
         if ((s32) _CB.unkB114 != 0) {
-            windowDrawSprite3(field_anime.unk0, field_anime.unk2, field_anime.unk4, field_anime.unk6, field_anime.unk8, arg0, field_anime.unkC, field_anime.unkE, field_anime.unk10, field_anime.unk4, field_anime.unk6, field_anime.unk14, arg0->unk1C);
+            s32 height = field_anime.unk6;
+            windowDrawSprite3(field_anime.unk0, field_anime.unk2, field_anime.unk4, height, field_anime.unk8, window, field_anime.unkC, field_anime.unkE, field_anime.unk10, field_anime.unk4, field_anime.unk6, field_anime.unk14, window->unk1C);
             return;
         }
         break;
-    case 0x2D8:                                     /* switch 1 */
+    case 0x2D8:
         if ((s32) _CB.unkB114 != 0) {
-            windowDrawSprite3(field_anime.unk18, field_anime.unk1A, field_anime.unk1C, field_anime.unk1E, field_anime.unk20, arg0, field_anime.unk24, field_anime.unk26, field_anime.unk28, field_anime.unk1C, field_anime.unk1E, field_anime.unk2C, arg0->unk1C);
+            windowDrawSprite3(field_anime.unk18, field_anime.unk1A, field_anime.unk1C, field_anime.unk1E, field_anime.unk20, window, field_anime.unk24, field_anime.unk26, field_anime.unk28, field_anime.unk1C, field_anime.unk1E, field_anime.unk2C, window->unk1C);
             return;
         }
         break;
-    case 0x2A1:                                     /* switch 1 */
+    case 0x2A1:
         if ((s32) _CB.unkB10C != 1) {
-            arg1->unk67 = 0x7F;
+            sprite->unk67 = 0x7F;
         }
-        menuCB_SpriteDispCheckONorOFF(arg1, (s32) ((u32) ((6 - _CB.unkAFFC) | (_CB.unkAFFC - 6)) >> 0x1FU));
+        menuCB_SpriteDispCheckONorOFF(sprite, _CB.unkAFFC != 6);
         return;
-    case 0x2A2:                                     /* switch 1 */
+    case 0x2A2:
         if ((s32) _CB.unkB10C != 1) {
-            arg1->unk67 = 0x7F;
+            sprite->unk67 = 0x7F;
         }
-        menuCB_SpriteDispCheckONorOFF(arg1, _CB.unkAFFC != 0);
+        menuCB_SpriteDispCheckONorOFF(sprite, (_CB.unkAFFC != 0));
         return;
     case 0x3ED:
     case 0x3EE:
     case 0x3EF:
         if ((s32) _CB.unkB114 != 0) {
-            winSpriteSetDisp(arg1, 0);
+            winSpriteSetDisp(sprite, 0U);
             return;
         }
-        winSpriteSetDisp(arg1, 1);
-        menuCB_Cursol_Disp_AlphaSet(arg0, arg1, _CB.unkB10C == 1);
+        winSpriteSetDisp(sprite, 1U);
+        menuCB_Cursol_Disp_AlphaSet(window, sprite, (_CB.unkB10C == 1));
         break;
     }
 }
 
-void menuTool_Rule00_Ctrl(MenuDBWindow *arg0) {
-    s16 temp_r0_5;
-    s16 temp_r0_6;
+void menuTool_Rule00_Ctrl(MenuDBWindow* window) {
+    s16 temp_r30;
+    s32 temp_r7;
     s16 temp_r0_7;
     s16 temp_r0_8;
-    s32 temp_r29;
-    s32 temp_r29_2;
-    s32 temp_r29_3;
-    s32 temp_r29_4;
-    s32 temp_r30;
-    s16 temp_r3_2;
-    s16 temp_r3_3;
+    s16 temp_r29;
+    s16 temp_r29_2;
+    s16 temp_r29_3;
+    s16 temp_r29_4;
+    s16 temp_r0_5;
+    s32 temp_r3_2;
+    s32 temp_r3_3;
     s16 temp_r4;
     s16 temp_r4_2;
-    s32 temp_r0;
+    s32 temp_r9;
+    s16 temp_r0_6;
     s32 temp_r0_2;
     s32 temp_r0_3;
     s32 temp_r0_4;
     s32 temp_r10;
     s32 temp_r11;
+    u16 temp_r3;
     s32 temp_r3_4;
     s32 temp_r3_5;
     s32 temp_r6;
-    s32 temp_r7;
+    s32 temp_r0;
     s32 temp_r8;
-    s32 temp_r9;
+    s32 *var_r3;
     s32 var_ctr;
-    s32 var_ctr_2;
-    u16 temp_r29_10;
-    u16 temp_r29_11;
-    u16 temp_r29_12;
-    u16 temp_r29_13;
-    u16 temp_r29_14;
-    u16 temp_r29_15;
-    u16 temp_r29_16;
-    u16 temp_r29_17;
-    u16 temp_r29_18;
-    u16 temp_r29_19;
-    u16 temp_r29_20;
-    u16 temp_r29_21;
-    u16 temp_r29_5;
-    u16 temp_r29_6;
-    u16 temp_r29_7;
-    u16 temp_r29_8;
-    u16 temp_r29_9;
+    u8 *rowFlags;
     u32 var_r5;
     u8 temp_r6_2;
     u8 temp_r7_2;
-    u8 *temp_r3;
-    u8 *var_r7;
+    s32 var_ctr_2;
 
-    menuCB_DispEffect(arg0);
-    menuSetStatus(arg0->unk4, 0x10);
+    menuCB_DispEffect(window);
+    menuSetStatus(window->unk4, 0x10);
     if (pauseIsPause() == 0) {
-        menuCB_AlphaGet(arg0);
-        _CB.unkB120 += 1;
+        menuCB_AlphaGet(window);
+        _CB.unkB120 = (s32) (_CB.unkB120 + 1);
         if ((s32) _CB.unkB124 != -1) {
-            _CB.unkB128 -= 0x10;
-            _CB.unkB12C += 0x10;
+            _CB.unkB128 = (s32) (_CB.unkB128 - 0x10);
+            _CB.unkB12C = (s32) (_CB.unkB12C + 0x10);
             if ((s32) _CB.unkB12C >= 0xFF) {
                 _CB.unkB12C = 0xFF;
                 _CB.unkB128 = 0xF;
                 _CB.unkB124 = -1;
             }
-        } else if ((s32) _CB.unkB010 < 1) {
-            if ((s32) _CB.unkB090 >= 1) {
+        } else {
+            if ((s32) _CB.unkB010 >= 1 || (s32) _CB.unkB090 >= 1) {
                 return;
             }
-            if ((s32) _CB.unkB0B0 != 0) {
-                if ((s32) _CB.unkB0B4 == 0) {
-                    return;
-                }
-                if ((s32) _CB.unkB118 == 5) {
-                    if ((s32) _ruleCursol2 != -1) {
-                        if ((s32) _ruleCursol2 != (s32) _CB.unkB028) {
-                            if ((s32) _ruleCursol2 > (s32) _CB.unkB028) {
-                                _CB.unkB028 += 1;
-                                return;
-                            }
-                            _CB.unkB028 -= 1;
+            if ((s32) _CB.unkB0B0 == 0 || (s32) _CB.unkB0B4 == 0) {
+                return;
+            }
+            if ((s32) _CB.unkB118 == 5) {
+                if ((s32) _ruleCursol2 != -1) {
+                    if ((s32) _ruleCursol2 != (s32) _CB.unkB028) {
+                        if ((s32) _ruleCursol2 > (s32) _CB.unkB028) {
+                            _CB.unkB028 = (s32) (_CB.unkB028 + 1);
                             return;
                         }
-                        _ruleCursol2 = -1;
-                        goto block_17;
+                        _CB.unkB028 = (s32) (_CB.unkB028 - 1);
+                        return;
                     }
-block_17:
-                    if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
-                        for (var_r5 = 0; var_r5 < 0x3E; ++var_r5) {
-                            _CB.unk9C78->itemFlags[var_r5] = _ruleTempBuff_DB.itemFlags[var_r5];
-                        }
+                    _ruleCursol2 = -1;
+                    goto block_17;
+                }
+                block_17:
+                if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
+                    for (var_r5 = 0; var_r5 < 0x3E; var_r5++) {
+                        _CB.unk9C78->itemFlags[var_r5] = _ruleTempBuff_DB.itemFlags[var_r5];
+                    }
+                    _CB.unkB118 = 1;
+                    _CB.unkB02C = 0;
+                    _CB.unkB028 = 0;
+                    _CB.unkB130 = 0x37;
+                    menuCB_SE_Play(0x15);
+                    return;
+                }
+                if ((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) {
+                    if ((s32) (_CB.unkB028 + _CB.unkB02C) >= 0x3E) {
                         _CB.unkB118 = 1;
                         _CB.unkB02C = 0;
                         _CB.unkB028 = 0;
+                        _CB.unkB11C = 0;
                         _CB.unkB130 = 0x37;
                         menuCB_SE_Play(0x15);
                         return;
                     }
-                    if ((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) {
-                        if ((s32) (_CB.unkB028 + _CB.unkB02C) >= 0x3E) {
-                            _CB.unkB118 = 1;
-                            _CB.unkB02C = 0;
-                            _CB.unkB028 = 0;
-                            _CB.unkB11C = 0;
-                            _CB.unkB130 = 0x37;
-                            menuCB_SE_Play(0x15);
-                            return;
-                        }
-                        menuCB_SE_Play(0x11);
-                        temp_r3 = _CB.unk9C78->itemFlags + _CB.unkB02C;
-                        *(_CB.unkB028 + temp_r3) = *(_CB.unkB028 + temp_r3) ^ 1;
-                        goto block_27;
+                    menuCB_SE_Play(0x11);
+                    rowFlags = (u8*) _CB.unk9C78;
+                    rowFlags += _CB.unkB02C + offsetof(MenuDBRule, itemFlags);
+                    *(_CB.unkB028 + rowFlags) ^= 1;
+                    goto block_27;
+                }
+                block_27:
+                if ((s32) (((u16) windowGetKeyRepeat()) & 1) != 0) {
+                    if ((s32) _CB.unkB02C != 0) {
+                        _CB.unkB02C = (s32) (_CB.unkB02C - 1);
+                        menuCB_SE_Play(0x10);
+                        return;
                     }
-block_27:
-                    if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
-                        if ((s32) _CB.unkB02C != 0) {
-                            _CB.unkB02C -= 1;
-                            menuCB_SE_Play(0x10);
-                            return;
-                        }
-                        if ((s32) _CB.unkB028 != 0) {
-                            _CB.unkB028 -= 1;
-                            menuCB_SE_Play(0x10);
-                        }
-                    } else if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
-                        if ((s32) _CB.unkB02C != 0xA) {
-                            _CB.unkB02C += 1;
-                            menuCB_SE_Play(0x10);
-                            return;
-                        }
-                        if ((s32) _CB.unkB028 != 0x34) {
-                            _CB.unkB028 += 1;
-                            menuCB_SE_Play(0x10);
-                        }
-                    } else if ((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) {
-                        temp_r0_3 = _CB.unkB028 - 0xA;
-                        _ruleCursol2 = temp_r0_3;
-                        if (temp_r0_3 <= 0) {
-                            _ruleCursol2 = 0;
-                        }
-                        if ((s32) _ruleCursol2 != (s32) _CB.unkB028) {
-                            menuCB_SE_Play(0x10);
-                        }
-                    } else if ((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) {
-                        temp_r0_4 = _CB.unkB028 + 0xA;
-                        _ruleCursol2 = temp_r0_4;
-                        if (temp_r0_4 >= 0x34) {
-                            _ruleCursol2 = 0x34;
-                        }
-                        if ((s32) _ruleCursol2 != (s32) _CB.unkB028) {
-                            menuCB_SE_Play(0x10);
-                        }
+                    if ((s32) _CB.unkB028 != 0) {
+                        _CB.unkB028 = (s32) (_CB.unkB028 - 1);
+                        menuCB_SE_Play(0x10);
                     }
-                } else {
-                    if ((s32) _CB.unkB11C != 0) {
-                    switch ((s32) _CB.unkB11C) {    /* switch 1; irregular */
-                    case 0x10:                      /* switch 1 */
-                        temp_r30 = (s16) _CB.unk9C78->unk0;
-                        temp_r29 = (s16) _CB.unk9C78->unk2;
+                } else if ((s32) (((u16) windowGetKeyRepeat()) & 2) != 0) {
+                    if ((s32) _CB.unkB02C != 0xA) {
+                        _CB.unkB02C = (s32) (_CB.unkB02C + 1);
+                        menuCB_SE_Play(0x10);
+                        return;
+                    }
+                    if ((s32) _CB.unkB028 != 0x34) {
+                        _CB.unkB028 = (s32) (_CB.unkB028 + 1);
+                        menuCB_SE_Play(0x10);
+                    }
+                } else if ((s32) (((u16) windowGetKeyRepeat()) & 4) != 0) {
+                    s32 currentCursor = _CB.unkB028;
+                    temp_r0_3 = currentCursor - 0xA;
+                    _ruleCursol2 = temp_r0_3;
+                    if (temp_r0_3 <= 0) {
+                        _ruleCursol2 = 0;
+                    }
+                    if ((s32) _ruleCursol2 != currentCursor) {
+                        menuCB_SE_Play(0x10);
+                    }
+                } else if ((s32) (((u16) windowGetKeyRepeat()) & 8) != 0) {
+                    s32 currentCursor = _CB.unkB028;
+                    temp_r0_4 = currentCursor + 0xA;
+                    _ruleCursol2 = temp_r0_4;
+                    if (temp_r0_4 >= 0x34) {
+                        _ruleCursol2 = 0x34;
+                    }
+                    if ((s32) _ruleCursol2 != currentCursor) {
+                        menuCB_SE_Play(0x10);
+                        return;
+                    }
+                }
+                return;
+            } else {
+                if (_CB.unkB11C != 0) {
+                    switch ((s32) _CB.unkB11C) {
+                    case 0x10:
+                        temp_r30 = _CB.unk9C78->unk0;
+                        temp_r29 = _CB.unk9C78->unk2;
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk0 = _ruleTempBuff_DB.unk0;
-                            _CB.unk9C78->unk2 = _ruleTempBuff_DB.unk2;
-                            _CB.unk9C78->unk4 = _ruleTempBuff_DB.unk4;
+                            _CB.unk9C78->unk0 = (s16) _ruleTempBuff_DB.unk0;
+                            _CB.unk9C78->unk2 = (s16) _ruleTempBuff_DB.unk2;
+                            _CB.unk9C78->unk4 = (s16) _ruleTempBuff_DB.unk4;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -7933,34 +7959,34 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        if (((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) && ((s32) _ruleCursol.unk0 != 0)) {
-                            _ruleCursol.unk0 -= 1;
+                        if (((s32) (((u16) windowGetKeyRepeat()) & 4) != 0) && ((s32) _ruleCursol.unk0 != 0)) {
+                            _ruleCursol.unk0 = (s32) (_ruleCursol.unk0 - 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
-                        if (((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) && ((s32) _ruleCursol.unk0 != 5)) {
-                            _ruleCursol.unk0 += 1;
+                        if (((s32) (((u16) windowGetKeyRepeat()) & 8) != 0) && ((s32) _ruleCursol.unk0 != 5)) {
+                            _ruleCursol.unk0 = (s32) (_ruleCursol.unk0 + 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
-                        if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
-                            switch ((s32) _ruleCursol.unk0) { /* switch 2; irregular */
-                            case 0:                 /* switch 2 */
+                        if ((s32) (((u16) windowGetKeyRepeat()) & 1) != 0) {
+                            switch ((s32) _ruleCursol.unk0) {
+                            case 0:
                                 _CB.unk9C78->unk0 += 0x64;
                                 break;
-                            case 1:                 /* switch 2 */
+                            case 1:
                                 _CB.unk9C78->unk0 += 0xA;
                                 break;
-                            case 2:                 /* switch 2 */
+                            case 2:
                                 _CB.unk9C78->unk0 += 1;
                                 break;
-                            case 3:                 /* switch 2 */
+                            case 3:
                                 _CB.unk9C78->unk2 += 0x64;
                                 break;
-                            case 4:                 /* switch 2 */
+                            case 4:
                                 _CB.unk9C78->unk2 += 0xA;
                                 break;
-                            case 5:                 /* switch 2 */
+                            case 5:
                                 _CB.unk9C78->unk2 += 1;
                                 break;
                             }
@@ -7970,30 +7996,29 @@ block_27:
                             if ((s16) _CB.unk9C78->unk2 >= 0x64) {
                                 _CB.unk9C78->unk2 = 0x64;
                             }
-                            temp_r4 = (s16) _CB.unk9C78->unk0;
-                            if (temp_r4 >= (s16) _CB.unk9C78->unk2) {
+                            if ((temp_r4 = _CB.unk9C78->unk0) >= (s16) _CB.unk9C78->unk2) {
                                 _CB.unk9C78->unk2 = temp_r4;
                             }
-                            _CB.unk9C78->unk4 = (s16) ((s16) _CB.unk9C78->unk2 * 6);
+                            _CB.unk9C78->unk4 = (s16) (_CB.unk9C78->unk2 * 6);
                         }
-                        if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
-                            switch ((s32) _ruleCursol.unk0) { /* switch 3; irregular */
-                            case 0:                 /* switch 3 */
+                        if ((s32) (((u16) windowGetKeyRepeat()) & 2) != 0) {
+                            switch ((s32) _ruleCursol.unk0) {
+                            case 0:
                                 _CB.unk9C78->unk0 -= 0x64;
                                 break;
-                            case 1:                 /* switch 3 */
+                            case 1:
                                 _CB.unk9C78->unk0 -= 0xA;
                                 break;
-                            case 2:                 /* switch 3 */
+                            case 2:
                                 _CB.unk9C78->unk0 -= 1;
                                 break;
-                            case 3:                 /* switch 3 */
+                            case 3:
                                 _CB.unk9C78->unk2 -= 0x64;
                                 break;
-                            case 4:                 /* switch 3 */
+                            case 4:
                                 _CB.unk9C78->unk2 -= 0xA;
                                 break;
-                            case 5:                 /* switch 3 */
+                            case 5:
                                 _CB.unk9C78->unk2 -= 1;
                                 break;
                             }
@@ -8003,22 +8028,21 @@ block_27:
                             if ((s16) _CB.unk9C78->unk2 <= 1) {
                                 _CB.unk9C78->unk2 = 1;
                             }
-                            temp_r4_2 = (s16) _CB.unk9C78->unk2;
-                            if ((s16) _CB.unk9C78->unk0 >= temp_r4_2) {
-                                _CB.unk9C78->unk0 = _CB.unk9C78->unk2;
+                            if ((s16) _CB.unk9C78->unk0 >= (temp_r4_2 = _CB.unk9C78->unk2)) {
+                                _CB.unk9C78->unk0 = temp_r4_2;
                             }
-                            _CB.unk9C78->unk4 = (s16) ((s16) _CB.unk9C78->unk2 * 6);
+                            _CB.unk9C78->unk4 = (s16) (_CB.unk9C78->unk2 * 6);
                         }
                         if ((temp_r30 != (s16) _CB.unk9C78->unk0) || (temp_r29 != (s16) _CB.unk9C78->unk2)) {
                             menuCB_SE_Play(0x10);
                             return;
                         }
                         break;
-                    case 0x11:                      /* switch 1 */
-                        temp_r29_2 = (s16) _CB.unk9C78->unk4;
+                    case 0x11:
+                        temp_r29_2 = _CB.unk9C78->unk4;
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk4 = _ruleTempBuff_DB.unk4;
+                            _CB.unk9C78->unk4 = (s16) _ruleTempBuff_DB.unk4;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8027,55 +8051,51 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        if (((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) && ((s32) _ruleCursol.unk4 != 0)) {
-                            _ruleCursol.unk4 -= 1;
+                        if (((s32) (((u16) windowGetKeyRepeat()) & 4) != 0) && ((s32) _ruleCursol.unk4 != 0)) {
+                            _ruleCursol.unk4 = (s32) (_ruleCursol.unk4 - 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
-                        if (((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) && ((s32) _ruleCursol.unk4 != 2)) {
-                            _ruleCursol.unk4 += 1;
+                        if (((s32) (((u16) windowGetKeyRepeat()) & 8) != 0) && ((s32) _ruleCursol.unk4 != 2)) {
+                            _ruleCursol.unk4 = (s32) (_ruleCursol.unk4 + 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
-                        if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
-                            switch ((s32) _ruleCursol.unk4) { /* switch 4; irregular */
-                            case 0:                 /* switch 4 */
+                        if ((s32) (((u16) windowGetKeyRepeat()) & 1) != 0) {
+                            switch ((s32) _ruleCursol.unk4) {
+                            case 0:
                                 _CB.unk9C78->unk4 += 0x64;
                                 break;
-                            case 1:                 /* switch 4 */
+                            case 1:
                                 _CB.unk9C78->unk4 += 0xA;
                                 break;
-                            case 2:                 /* switch 4 */
+                            case 2:
                                 _CB.unk9C78->unk4 += 1;
                                 break;
                             }
-                            temp_r0_5 = (s16) _CB.unk9C78->unk0 * 6;
-                            if ((s16) _CB.unk9C78->unk4 <= temp_r0_5) {
+                            if ((s16) _CB.unk9C78->unk4 <= (temp_r0_5 = _CB.unk9C78->unk0 * 6)) {
                                 _CB.unk9C78->unk4 = temp_r0_5;
                             }
-                            temp_r0_6 = (s16) _CB.unk9C78->unk2 * 6;
-                            if ((s16) _CB.unk9C78->unk4 >= temp_r0_6) {
+                            if ((s16) _CB.unk9C78->unk4 >= (temp_r0_6 = _CB.unk9C78->unk2 * 6)) {
                                 _CB.unk9C78->unk4 = temp_r0_6;
                             }
                         }
-                        if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
-                            switch ((s32) _ruleCursol.unk4) { /* switch 5; irregular */
-                            case 0:                 /* switch 5 */
+                        if ((s32) (((u16) windowGetKeyRepeat()) & 2) != 0) {
+                            switch ((s32) _ruleCursol.unk4) {
+                            case 0:
                                 _CB.unk9C78->unk4 -= 0x64;
                                 break;
-                            case 1:                 /* switch 5 */
+                            case 1:
                                 _CB.unk9C78->unk4 -= 0xA;
                                 break;
-                            case 2:                 /* switch 5 */
+                            case 2:
                                 _CB.unk9C78->unk4 -= 1;
                                 break;
                             }
-                            temp_r0_7 = (s16) _CB.unk9C78->unk0 * 6;
-                            if ((s16) _CB.unk9C78->unk4 <= temp_r0_7) {
+                            if ((s16) _CB.unk9C78->unk4 <= (temp_r0_7 = _CB.unk9C78->unk0 * 6)) {
                                 _CB.unk9C78->unk4 = temp_r0_7;
                             }
-                            temp_r0_8 = (s16) _CB.unk9C78->unk2 * 6;
-                            if ((s16) _CB.unk9C78->unk4 >= temp_r0_8) {
+                            if ((s16) _CB.unk9C78->unk4 >= (temp_r0_8 = _CB.unk9C78->unk2 * 6)) {
                                 _CB.unk9C78->unk4 = temp_r0_8;
                             }
                         }
@@ -8084,10 +8104,10 @@ block_27:
                             return;
                         }
                         break;
-                    case 0x12:                      /* switch 1 */
+                    case 0x12:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk14 = _ruleTempBuff_DB.unk14;
+                            _CB.unk9C78->unk14 = (s16) _ruleTempBuff_DB.unk14;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8096,37 +8116,37 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        if ((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) {
+                        if ((s32) (((u16) windowGetKeyRepeat()) & 4) != 0) {
                             if ((s32) _ruleCursol.unk8 != 0) {
-                                _ruleCursol.unk8 -= 1;
+                                _ruleCursol.unk8 = (s32) (_ruleCursol.unk8 - 1);
                                 menuCB_SE_Play(0x10);
                             }
-                            _CB.unk9C78->unk14 = abs((s16) _CB.unk9C78->unk14);
+                            _CB.unk9C78->unk14 = abs((s32) _CB.unk9C78->unk14);
                             if ((s32) _ruleCursol.unk8 == 2) {
-                                _CB.unk9C78->unk14 = (s16) (abs((s16) _CB.unk9C78->unk14) * -1);
+                                _CB.unk9C78->unk14 = (s16) (abs((s32) _CB.unk9C78->unk14) * -1);
                                 return;
                             }
-                        } else if ((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) {
+                        } else if ((s32) (((u16) windowGetKeyRepeat()) & 8) != 0) {
                             if ((s32) _ruleCursol.unk8 != 2) {
-                                _ruleCursol.unk8 += 1;
+                                _ruleCursol.unk8 = (s32) (_ruleCursol.unk8 + 1);
                                 menuCB_SE_Play(0x10);
                             }
-                            _CB.unk9C78->unk14 = abs((s16) _CB.unk9C78->unk14);
+                            _CB.unk9C78->unk14 = abs((s32) _CB.unk9C78->unk14);
                             if ((s32) _ruleCursol.unk8 == 2) {
-                                _CB.unk9C78->unk14 = (s16) (abs((s16) _CB.unk9C78->unk14) * -1);
+                                _CB.unk9C78->unk14 = (s16) (abs((s32) _CB.unk9C78->unk14) * -1);
                                 return;
                             }
                         } else {
-                            temp_r29_3 = (s16) _CB.unk9C78->unk14;
-                            if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
-                                switch ((s32) _ruleCursol.unk8) { /* switch 6; irregular */
-                                case 0:             /* switch 6 */
+                            temp_r29_3 = _CB.unk9C78->unk14;
+                            if ((s32) (((u16) windowGetKeyRepeat()) & 1) != 0) {
+                                switch ((s32) _ruleCursol.unk8) {
+                                case 0:
                                     _CB.unk9C78->unk14 += 0xA;
                                     if ((s16) _CB.unk9C78->unk14 >= 0x63) {
                                         _CB.unk9C78->unk14 = 0x63;
                                     }
                                     break;
-                                case 1:             /* switch 6 */
+                                case 1:
                                     _CB.unk9C78->unk14 += 1;
                                     if ((s16) _CB.unk9C78->unk14 >= 0x63) {
                                         _CB.unk9C78->unk14 = 0x63;
@@ -8134,15 +8154,15 @@ block_27:
                                     break;
                                 }
                             }
-                            if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
-                                switch ((s32) _ruleCursol.unk8) { /* switch 7; irregular */
-                                case 0:             /* switch 7 */
+                            if ((s32) (((u16) windowGetKeyRepeat()) & 2) != 0) {
+                                switch ((s32) _ruleCursol.unk8) {
+                                case 0:
                                     _CB.unk9C78->unk14 -= 0xA;
                                     if ((s16) _CB.unk9C78->unk14 <= 1) {
                                         _CB.unk9C78->unk14 = 1;
                                     }
                                     break;
-                                case 1:             /* switch 7 */
+                                case 1:
                                     _CB.unk9C78->unk14 -= 1;
                                     if ((s16) _CB.unk9C78->unk14 <= 1) {
                                         _CB.unk9C78->unk14 = 1;
@@ -8156,10 +8176,10 @@ block_27:
                             }
                         }
                         break;
-                    case 0x13:                      /* switch 1 */
+                    case 0x13:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk16 = _ruleTempBuff_DB.unk16;
+                            _CB.unk9C78->unk16 = (s16) _ruleTempBuff_DB.unk16;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8168,37 +8188,37 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        if ((s32) (((u16)windowGetKeyRepeat()) & 4) != 0) {
+                        if ((s32) (((u16) windowGetKeyRepeat()) & 4) != 0) {
                             if ((s32) _ruleCursol.unkC != 0) {
-                                _ruleCursol.unkC -= 1;
+                                _ruleCursol.unkC = (s32) (_ruleCursol.unkC - 1);
                                 menuCB_SE_Play(0x10);
                             }
-                            _CB.unk9C78->unk16 = abs((s16) _CB.unk9C78->unk16);
+                            _CB.unk9C78->unk16 = abs((s32) _CB.unk9C78->unk16);
                             if ((s32) _ruleCursol.unkC == 2) {
-                                _CB.unk9C78->unk16 = (s16) (abs((s16) _CB.unk9C78->unk16) * -1);
+                                _CB.unk9C78->unk16 = (s16) (abs((s32) _CB.unk9C78->unk16) * -1);
                                 return;
                             }
-                        } else if ((s32) (((u16)windowGetKeyRepeat()) & 8) != 0) {
+                        } else if ((s32) (((u16) windowGetKeyRepeat()) & 8) != 0) {
                             if ((s32) _ruleCursol.unkC != 2) {
-                                _ruleCursol.unkC += 1;
+                                _ruleCursol.unkC = (s32) (_ruleCursol.unkC + 1);
                                 menuCB_SE_Play(0x10);
                             }
-                            _CB.unk9C78->unk16 = abs((s16) _CB.unk9C78->unk16);
+                            _CB.unk9C78->unk16 = abs((s32) _CB.unk9C78->unk16);
                             if ((s32) _ruleCursol.unkC == 2) {
-                                _CB.unk9C78->unk16 = (s16) (abs((s16) _CB.unk9C78->unk16) * -1);
+                                _CB.unk9C78->unk16 = (s16) (abs((s32) _CB.unk9C78->unk16) * -1);
                                 return;
                             }
                         } else {
-                            temp_r29_4 = (s16) _CB.unk9C78->unk16;
-                            if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
-                                switch ((s32) _ruleCursol.unkC) { /* switch 8; irregular */
-                                case 0:             /* switch 8 */
+                            temp_r29_4 = _CB.unk9C78->unk16;
+                            if ((s32) (((u16) windowGetKeyRepeat()) & 1) != 0) {
+                                switch ((s32) _ruleCursol.unkC) {
+                                case 0:
                                     _CB.unk9C78->unk16 += 0xA;
                                     if ((s16) _CB.unk9C78->unk16 >= 0x63) {
                                         _CB.unk9C78->unk16 = 0x63;
                                     }
                                     break;
-                                case 1:             /* switch 8 */
+                                case 1:
                                     _CB.unk9C78->unk16 += 1;
                                     if ((s16) _CB.unk9C78->unk16 >= 0x63) {
                                         _CB.unk9C78->unk16 = 0x63;
@@ -8206,15 +8226,15 @@ block_27:
                                     break;
                                 }
                             }
-                            if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
-                                switch ((s32) _ruleCursol.unkC) { /* switch 9; irregular */
-                                case 0:             /* switch 9 */
+                            if ((s32) (((u16) windowGetKeyRepeat()) & 2) != 0) {
+                                switch ((s32) _ruleCursol.unkC) {
+                                case 0:
                                     _CB.unk9C78->unk16 -= 0xA;
                                     if ((s16) _CB.unk9C78->unk16 <= 0xA) {
                                         _CB.unk9C78->unk16 = 0xA;
                                     }
                                     break;
-                                case 1:             /* switch 9 */
+                                case 1:
                                     _CB.unk9C78->unk16 -= 1;
                                     if ((s16) _CB.unk9C78->unk16 <= 0xA) {
                                         _CB.unk9C78->unk16 = 0xA;
@@ -8228,11 +8248,11 @@ block_27:
                             }
                         }
                         break;
-                    case 0x14:                      /* switch 1 */
+                    case 0x14:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk1A = _ruleTempBuff_DB.unk1A;
-                            _CB.unk9C78->unk1C = _ruleTempBuff_DB.unk1C;
+                            _CB.unk9C78->unk1A = (s16) _ruleTempBuff_DB.unk1A;
+                            _CB.unk9C78->unk1C = (s16) _ruleTempBuff_DB.unk1C;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8241,45 +8261,41 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_5 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_5) & 4) != 0) {
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 4) != 0) {
                             _ruleCursol.unk10 = 0;
-                            if ((s16) _CB.unk9C78->unk1C != 0) {
+                            if ((s16) _CB.unk9C78->unk1C != _ruleCursol.unk10) {
                                 _CB.unk9C78->unk1C = 0;
                                 menuCB_SE_Play(0x10);
                                 return;
                             }
                         }
-                        temp_r29_6 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_6) & 8) != 0) {
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 8) != 0) {
                             _ruleCursol.unk10 = 1;
-                            if ((s16) _CB.unk9C78->unk1C != 1) {
+                            if ((s16) _CB.unk9C78->unk1C != _ruleCursol.unk10) {
                                 _CB.unk9C78->unk1C = 1;
                                 menuCB_SE_Play(0x10);
                                 return;
                             }
                         }
-                        if (((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) && ((s32) _ruleCursol.unk10 == 0)) {
-                            temp_r3_2 = (s16) _CB.unk9C78->unk1A;
-                            if (temp_r3_2 != 6) {
+                        if (((s32) (((u16) windowGetKeyRepeat()) & 1) != 0) && ((s32) _ruleCursol.unk10 == 0)) {
+                            if ((temp_r3_2 = _CB.unk9C78->unk1A) != 6) {
                                 _CB.unk9C78->unk1A += 1;
                                 menuCB_SE_Play(0x10);
                                 return;
                             }
                         }
-                        if (((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) && ((s32) _ruleCursol.unk10 == 0)) {
-                            temp_r3_3 = (s16) _CB.unk9C78->unk1A;
-                            if (temp_r3_3 != 1) {
+                        if (((s32) (((u16) windowGetKeyRepeat()) & 2) != 0) && ((s32) _ruleCursol.unk10 == 0)) {
+                            if ((temp_r3_3 = _CB.unk9C78->unk1A) != 1) {
                                 _CB.unk9C78->unk1A -= 1;
                                 menuCB_SE_Play(0x10);
                                 return;
                             }
                         }
                         break;
-                    case 0x20:                      /* switch 1 */
+                    case 0x20:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unkC = _ruleTempBuff_DB.unkC;
+                            _CB.unk9C78->unkC = (u8) _ruleTempBuff_DB.unkC;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8288,17 +8304,16 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_7 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_7) & 3) != 0) {
-                            _CB.unk9C78->unkC ^= 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 3) != 0) {
+                            _CB.unk9C78->unkC = (u8) (_CB.unk9C78->unkC ^ 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
                         break;
-                    case 0x21:                      /* switch 1 */
+                    case 0x21:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk8 = _ruleTempBuff_DB.unk8;
+                            _CB.unk9C78->unk8 = (s32) _ruleTempBuff_DB.unk8;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8315,11 +8330,9 @@ block_27:
                             menuCB_SE_Play(0x14);
                             return;
                         }
-                        temp_r29_8 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_8) & 1) != 0) {
-                            temp_r3_4 = _CB.unk9C78->unk8;
-                            if (temp_r3_4 != 0) {
-                                _CB.unk9C78->unk8 = temp_r3_4 - 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 1) != 0) {
+                            if ((temp_r3_4 = _CB.unk9C78->unk8) != 0) {
+                                _CB.unk9C78->unk8 = (s32) (temp_r3_4 - 1);
                                 menuCB_SE_Play(0x10);
                                 return;
                             }
@@ -8327,11 +8340,9 @@ block_27:
                             menuCB_SE_Play(0x10);
                             return;
                         }
-                        temp_r29_9 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_9) & 2) != 0) {
-                            temp_r3_5 = _CB.unk9C78->unk8;
-                            if (temp_r3_5 != 2) {
-                                _CB.unk9C78->unk8 = temp_r3_5 + 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 2) != 0) {
+                            if ((temp_r3_5 = _CB.unk9C78->unk8) != 2) {
+                                _CB.unk9C78->unk8 = (s32) (temp_r3_5 + 1);
                                 menuCB_SE_Play(0x10);
                                 return;
                             }
@@ -8340,10 +8351,10 @@ block_27:
                             return;
                         }
                         break;
-                    case 0x22:                      /* switch 1 */
+                    case 0x22:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unkD = _ruleTempBuff_DB.unkD;
+                            _CB.unk9C78->unkD = (u8) _ruleTempBuff_DB.unkD;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8352,17 +8363,16 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_10 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_10) & 3) != 0) {
-                            _CB.unk9C78->unkD ^= 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 3) != 0) {
+                            _CB.unk9C78->unkD = (u8) (_CB.unk9C78->unkD ^ 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
                         break;
-                    case 0x30:                      /* switch 1 */
+                    case 0x30:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk19 = _ruleTempBuff_DB.unk19;
+                            _CB.unk9C78->unk19 = (u8) _ruleTempBuff_DB.unk19;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8371,17 +8381,16 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_11 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_11) & 3) != 0) {
-                            _CB.unk9C78->unk19 ^= 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 3) != 0) {
+                            _CB.unk9C78->unk19 = (u8) (_CB.unk9C78->unk19 ^ 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
                         break;
-                    case 0x31:                      /* switch 1 */
+                    case 0x31:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unkE = _ruleTempBuff_DB.unkE;
+                            _CB.unk9C78->unkE = (u8) _ruleTempBuff_DB.unkE;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8390,17 +8399,16 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_12 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_12) & 3) != 0) {
-                            _CB.unk9C78->unkE ^= 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 3) != 0) {
+                            _CB.unk9C78->unkE = (u8) (_CB.unk9C78->unkE ^ 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
                         break;
-                    case 0x32:                      /* switch 1 */
+                    case 0x32:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk10 = _ruleTempBuff_DB.unk10;
+                            _CB.unk9C78->unk10 = (u8) _ruleTempBuff_DB.unk10;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8409,17 +8417,16 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_13 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_13) & 3) != 0) {
-                            _CB.unk9C78->unk10 ^= 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 3) != 0) {
+                            _CB.unk9C78->unk10 = (u8) (_CB.unk9C78->unk10 ^ 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
                         break;
-                    case 0x40:                      /* switch 1 */
+                    case 0x40:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk11 = _ruleTempBuff_DB.unk11;
+                            _CB.unk9C78->unk11 = (u8) _ruleTempBuff_DB.unk11;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8428,17 +8435,16 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_14 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_14) & 3) != 0) {
-                            _CB.unk9C78->unk11 ^= 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 3) != 0) {
+                            _CB.unk9C78->unk11 = (u8) (_CB.unk9C78->unk11 ^ 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
                         break;
-                    case 0x41:                      /* switch 1 */
+                    case 0x41:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk12 = _ruleTempBuff_DB.unk12;
+                            _CB.unk9C78->unk12 = (u8) _ruleTempBuff_DB.unk12;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8447,17 +8453,16 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_15 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_15) & 3) != 0) {
-                            _CB.unk9C78->unk12 ^= 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 3) != 0) {
+                            _CB.unk9C78->unk12 = (u8) (_CB.unk9C78->unk12 ^ 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
                         break;
-                    case 0x42:                      /* switch 1 */
+                    case 0x42:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unkF = _ruleTempBuff_DB.unkF;
+                            _CB.unk9C78->unkF = (u8) _ruleTempBuff_DB.unkF;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8466,17 +8471,16 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_16 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_16) & 3) != 0) {
-                            _CB.unk9C78->unkF ^= 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 3) != 0) {
+                            _CB.unk9C78->unkF = (u8) (_CB.unk9C78->unkF ^ 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
                         break;
-                    case 0x43:                      /* switch 1 */
+                    case 0x43:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
-                            _CB.unk9C78->unk13 = _ruleTempBuff_DB.unk13;
+                            _CB.unk9C78->unk13 = (u8) _ruleTempBuff_DB.unk13;
                             menuCB_SE_Play(0x12);
                             return;
                         }
@@ -8485,14 +8489,13 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_17 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_17) & 3) != 0) {
-                            _CB.unk9C78->unk13 ^= 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 3) != 0) {
+                            _CB.unk9C78->unk13 = (u8) (_CB.unk9C78->unk13 ^ 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
                         break;
-                    case 0x50:                      /* switch 1 */
+                    case 0x50:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
                             _CB.unkB030 = 1;
@@ -8507,14 +8510,13 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_18 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_18) & 3) != 0) {
-                            _CB.unkB030 ^= 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 3) != 0) {
+                            _CB.unkB030 = (s32) (_CB.unkB030 ^ 1);
                             menuCB_SE_Play(0x10);
                             return;
                         }
                         break;
-                    case 0x51:                      /* switch 1 */
+                    case 0x51:
                         if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
                             _CB.unkB11C = 0;
                             _CB.unkB034 = 1;
@@ -8529,213 +8531,210 @@ block_27:
                             menuCB_SE_Play(0x11);
                             return;
                         }
-                        temp_r29_19 = windowGetKeyInfo2()->unk4;
-                        if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_19) & 3) != 0) {
-                            _CB.unkB034 ^= 1;
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 3) != 0) {
+                            _CB.unkB034 = (s32) (_CB.unkB034 ^ 1);
                             menuCB_SE_Play(0x10);
-                            return;
                         }
                         break;
                     }
-                    } else {
-                        if ((s32) (windowGetKeyInfo()->unk4 & 0x820) != 0) {
-                            _CB.unkB010 = 1;
-                            menuCB_SE_Play(0x12);
-                            return;
-                        }
-                        if (((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) && ((s32) _CB.unkB118 == 4) && ((s32) _CB.unkB024 == 2)) {
-                            _CB.unkB010 = 2;
-                            menuCB_SE_Play(0x11);
-                            return;
-                        }
-                        if ((s32) _CB.unkB014 == -1) {
-                            temp_r29_20 = windowGetKeyInfo2()->unk4;
-                            if ((s32) ((windowGetKeyInfo()->unk4 | temp_r29_20) & 1) != 0) {
-                                if ((s32) _CB.unkB118 != 0) {
-                                    _menuCB_Rule_Page_Chenge_Init__Fv();
-                                    _CB.unkB118 -= 1;
-                                    menuCB_SE_Play(0x15);
-                                    menuCB_SE_Play(0x14);
-                                    return;
-                                }
-                            } else {
-                                temp_r29_21 = windowGetKeyInfo2()->unk4;
-                                if (((s32) ((windowGetKeyInfo()->unk4 | temp_r29_21) & 2) != 0) && ((s32) _CB.unkB118 != 3)) {
-                                    _menuCB_Rule_Page_Chenge_Init__Fv();
-                                    _CB.unkB118 += 1;
-                                    menuCB_SE_Play(0x15);
-                                    menuCB_SE_Play(0x14);
-                                    return;
-                                }
+                    return;
+                } else {
+                    if ((s32) (windowGetKeyInfo()->unk4 & 0x820) != 0) {
+                        _CB.unkB010 = 1;
+                        menuCB_SE_Play(0x12);
+                        return;
+                    }
+                    if (((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) && ((s32) _CB.unkB118 == 4) && ((s32) _CB.unkB024 == 2)) {
+                        _CB.unkB010 = 2;
+                        menuCB_SE_Play(0x11);
+                        return;
+                    }
+                    if ((s32) _CB.unkB014 == -1) {
+                        if ((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 1) != 0) {
+                            if ((s32) _CB.unkB118 != 0) {
+                                _menuCB_Rule_Page_Chenge_Init__Fv();
+                                _CB.unkB118 = (s32) (_CB.unkB118 - 1);
+                                menuCB_SE_Play(0x15);
+                                menuCB_SE_Play(0x14);
+                                return;
                             }
                         } else {
-                            if ((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) {
-                                menuCBRule_Copy(&_ruleTempBuff_DB, _CB.unk9C78);
-                                _CB.unkB11C = (_CB.unkB118 + 1) * 0x10;
-                                switch ((s32) _CB.unkB118) { /* switch 10; irregular */
-                                case 0:             /* switch 10 */
-                                    _CB.unkB11C += _CB.unkB014;
-                                    switch ((s32) _CB.unkB014) { /* switch 11; irregular */
-                                    case 0:         /* switch 11 */
-                                    case 1:
-                                        _ruleCursol.unk0 = 0;
-                                        _ruleCursol.unk4 = 0;
-                                        break;
-                                    case 2:         /* switch 11 */
-                                        if ((s32) ((s16) _CB.unk9C78->unk14 & 0x8000) != 0) {
-                                            _ruleCursol.unk8 = 2;
-                                        } else {
-                                            _ruleCursol.unk8 = 0;
-                                        }
-                                        break;
-                                    case 3:         /* switch 11 */
-                                        if ((s32) ((s16) _CB.unk9C78->unk16 & 0x8000) != 0) {
-                                            _ruleCursol.unkC = 2;
-                                        } else {
-                                            _ruleCursol.unkC = 0;
-                                        }
-                                        break;
-                                    case 4:         /* switch 11 */
-                                        if ((s16) _CB.unk9C78->unk1C == 1) {
-                                            _ruleCursol.unk10 = 1;
-                                        } else {
-                                            _ruleCursol.unk10 = 0;
-                                        }
-                                        break;
-                                    }
-                                    break;
-                                case 1:             /* switch 10 */
-                                    _CB.unkB11C += _CB.unkB018;
-                                    break;
-                                case 2:             /* switch 10 */
-                                    _CB.unkB11C += _CB.unkB01C;
-                                    break;
-                                case 3:             /* switch 10 */
-                                    _CB.unkB11C += _CB.unkB020;
-                                    break;
-                                case 4:             /* switch 10 */
-                                    _CB.unkB11C += _CB.unkB024;
-                                    break;
-                                }
-                                menuCB_SE_Play(0x11);
-                            }
-                            if ((s32) (((u16)windowGetKeyRepeat()) & 1) != 0) {
-                                switch ((s32) _CB.unkB118) { /* switch 12; irregular */
-                                case 0:             /* switch 12 */
-                                    if ((s32) _CB.unkB014 != 0) {
-                                        _CB.unkB014 -= 1;
-                                        menuCB_SE_Play(0x10);
-                                        return;
-                                    }
-                                    break;
-                                case 1:             /* switch 12 */
-                                    if ((s32) _CB.unkB018 == 0) {
-                                        _menuCB_Rule_Page_Chenge_Init__Fv();
-                                        _CB.unkB118 -= 1;
-                                        menuCB_SE_Play(0x15);
-                                        menuCB_SE_Play(0x14);
-                                        return;
-                                    }
-                                    _CB.unkB018 -= 1;
-                                    menuCB_SE_Play(0x10);
-                                    return;
-                                case 2:             /* switch 12 */
-                                    if ((s32) _CB.unkB01C == 0) {
-                                        _menuCB_Rule_Page_Chenge_Init__Fv();
-                                        _CB.unkB118 -= 1;
-                                        menuCB_SE_Play(0x15);
-                                        menuCB_SE_Play(0x14);
-                                        return;
-                                    }
-                                    _CB.unkB01C -= 1;
-                                    menuCB_SE_Play(0x10);
-                                    return;
-                                case 3:             /* switch 12 */
-                                    if ((s32) _CB.unkB020 == 0) {
-                                        _menuCB_Rule_Page_Chenge_Init__Fv();
-                                        _CB.unkB118 -= 1;
-                                        menuCB_SE_Play(0x15);
-                                        menuCB_SE_Play(0x14);
-                                        return;
-                                    }
-                                    _CB.unkB020 -= 1;
-                                    menuCB_SE_Play(0x10);
-                                    return;
-                                case 4:             /* switch 12 */
-                                    if ((s32) _CB.unkB024 == 0) {
-                                        _menuCB_Rule_Page_Chenge_Init__Fv();
-                                        _CB.unkB118 -= 1;
-                                        menuCB_SE_Play(0x15);
-                                        menuCB_SE_Play(0x14);
-                                        return;
-                                    }
-                                    _CB.unkB024 -= 1;
-                                    menuCB_SE_Play(0x10);
-                                    return;
-                                }
-                            } else if ((s32) (((u16)windowGetKeyRepeat()) & 2) != 0) {
-                                switch ((s32) _CB.unkB118) { /* switch 13; irregular */
-                                case 0:             /* switch 13 */
-                                    _CB.unkB014 += 1;
-                                    if ((s32) _CB.unkB014 == 5) {
-                                        _CB.unkB014 -= 1;
-                                        _menuCB_Rule_Page_Chenge_Init__Fv();
-                                        _CB.unkB118 += 1;
-                                        menuCB_SE_Play(0x15);
-                                        menuCB_SE_Play(0x14);
-                                        return;
-                                    }
-                                    menuCB_SE_Play(0x10);
-                                    return;
-                                case 1:             /* switch 13 */
-                                    _CB.unkB018 += 1;
-                                    if ((s32) _CB.unkB018 == 3) {
-                                        _CB.unkB018 -= 1;
-                                        _menuCB_Rule_Page_Chenge_Init__Fv();
-                                        _CB.unkB118 += 1;
-                                        menuCB_SE_Play(0x15);
-                                        menuCB_SE_Play(0x14);
-                                        return;
-                                    }
-                                    menuCB_SE_Play(0x10);
-                                    return;
-                                case 2:             /* switch 13 */
-                                    _CB.unkB01C += 1;
-                                    if ((s32) _CB.unkB01C == 3) {
-                                        _CB.unkB01C -= 1;
-                                        _menuCB_Rule_Page_Chenge_Init__Fv();
-                                        _CB.unkB118 += 1;
-                                        menuCB_SE_Play(0x15);
-                                        menuCB_SE_Play(0x14);
-                                        return;
-                                    }
-                                    menuCB_SE_Play(0x10);
-                                    return;
-                                case 3:             /* switch 13 */
-                                    _CB.unkB020 += 1;
-                                    if ((s32) _CB.unkB020 == 4) {
-                                        _CB.unkB020 -= 1;
-                                        _menuCB_Rule_Page_Chenge_Init__Fv();
-                                        _CB.unkB118 += 1;
-                                        menuCB_SE_Play(0x15);
-                                        menuCB_SE_Play(0x14);
-                                        return;
-                                    }
-                                    menuCB_SE_Play(0x10);
-                                    return;
-                                case 4:             /* switch 13 */
-                                    _CB.unkB024 += 1;
-                                    if ((s32) _CB.unkB024 == 3) {
-                                        _CB.unkB024 -= 1;
-                                        return;
-                                    }
-                                    menuCB_SE_Play(0x10);
-                                    break;
-                                }
+                            if (((s32) ((windowGetKeyInfo()->unk4 | (u16)(windowGetKeyInfo2()->unk4)) & 2) != 0) && ((s32) _CB.unkB118 != 3)) {
+                                _menuCB_Rule_Page_Chenge_Init__Fv();
+                                _CB.unkB118 = (s32) (_CB.unkB118 + 1);
+                                menuCB_SE_Play(0x15);
+                                menuCB_SE_Play(0x14);
+                                return;
                             }
                         }
+                        return;
+                    } else {
+                        if ((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) {
+                            menuCBRule_Copy(&_ruleTempBuff_DB, _CB.unk9C78);
+                            _CB.unkB11C = (s32) ((_CB.unkB118 + 1) * 0x10);
+                            switch ((s32) _CB.unkB118) {
+                            case 0:
+                                _CB.unkB11C = (s32) (_CB.unkB11C + _CB.unkB014);
+                                switch ((s32) _CB.unkB014) {
+                                case 0:
+                                case 1:
+                                    _ruleCursol.unk0 = 0;
+                                    _ruleCursol.unk4 = 0;
+                                    break;
+                                case 2:
+                                    if ((s32) (_CB.unk9C78->unk14 & 0x8000) != 0) {
+                                        _ruleCursol.unk8 = 2;
+                                    } else {
+                                        _ruleCursol.unk8 = 0;
+                                    }
+                                    break;
+                                case 3:
+                                    if ((s32) (_CB.unk9C78->unk16 & 0x8000) != 0) {
+                                        _ruleCursol.unkC = 2;
+                                    } else {
+                                        _ruleCursol.unkC = 0;
+                                    }
+                                    break;
+                                case 4:
+                                    if ((s16) _CB.unk9C78->unk1C == 1) {
+                                        _ruleCursol.unk10 = 1;
+                                    } else {
+                                        _ruleCursol.unk10 = 0;
+                                    }
+                                    break;
+                                }
+                                break;
+                            case 1:
+                                _CB.unkB11C = (s32) (_CB.unkB11C + _CB.unkB018);
+                                break;
+                            case 2:
+                                _CB.unkB11C = (s32) (_CB.unkB11C + _CB.unkB01C);
+                                break;
+                            case 3:
+                                _CB.unkB11C = (s32) (_CB.unkB11C + _CB.unkB020);
+                                break;
+                            case 4:
+                                _CB.unkB11C = (s32) (_CB.unkB11C + _CB.unkB024);
+                                break;
+                            }
+                            menuCB_SE_Play(0x11);
+                        }
+                        if ((s32) (((u16) windowGetKeyRepeat()) & 1) != 0) {
+                            switch ((s32) _CB.unkB118) {
+                            case 0:
+                                if ((s32) _CB.unkB014 != 0) {
+                                    _CB.unkB014 = (s32) (_CB.unkB014 - 1);
+                                    menuCB_SE_Play(0x10);
+                                    return;
+                                }
+                                break;
+                            case 1:
+                                if ((s32) _CB.unkB018 == 0) {
+                                    _menuCB_Rule_Page_Chenge_Init__Fv();
+                                    _CB.unkB118 = (s32) (_CB.unkB118 - 1);
+                                    menuCB_SE_Play(0x15);
+                                    menuCB_SE_Play(0x14);
+                                    return;
+                                }
+                                _CB.unkB018 = (s32) (_CB.unkB018 - 1);
+                                menuCB_SE_Play(0x10);
+                                return;
+                            case 2:
+                                if ((s32) _CB.unkB01C == 0) {
+                                    _menuCB_Rule_Page_Chenge_Init__Fv();
+                                    _CB.unkB118 = (s32) (_CB.unkB118 - 1);
+                                    menuCB_SE_Play(0x15);
+                                    menuCB_SE_Play(0x14);
+                                    return;
+                                }
+                                _CB.unkB01C = (s32) (_CB.unkB01C - 1);
+                                menuCB_SE_Play(0x10);
+                                return;
+                            case 3:
+                                if ((s32) _CB.unkB020 == 0) {
+                                    _menuCB_Rule_Page_Chenge_Init__Fv();
+                                    _CB.unkB118 = (s32) (_CB.unkB118 - 1);
+                                    menuCB_SE_Play(0x15);
+                                    menuCB_SE_Play(0x14);
+                                    return;
+                                }
+                                _CB.unkB020 = (s32) (_CB.unkB020 - 1);
+                                menuCB_SE_Play(0x10);
+                                return;
+                            case 4:
+                                if ((s32) _CB.unkB024 == 0) {
+                                    _menuCB_Rule_Page_Chenge_Init__Fv();
+                                    _CB.unkB118 = (s32) (_CB.unkB118 - 1);
+                                    menuCB_SE_Play(0x15);
+                                    menuCB_SE_Play(0x14);
+                                    return;
+                                }
+                                _CB.unkB024 = (s32) (_CB.unkB024 - 1);
+                                menuCB_SE_Play(0x10);
+                                return;
+                            }
+                        } else if ((s32) (((u16) windowGetKeyRepeat()) & 2) != 0) {
+                            switch ((s32) _CB.unkB118) {
+                            case 0:
+                                _CB.unkB014 = (s32) (_CB.unkB014 + 1);
+                                if ((s32) _CB.unkB014 == 5) {
+                                    _CB.unkB014 = (s32) (_CB.unkB014 - 1);
+                                    _menuCB_Rule_Page_Chenge_Init__Fv();
+                                    _CB.unkB118 = (s32) (_CB.unkB118 + 1);
+                                    menuCB_SE_Play(0x15);
+                                    menuCB_SE_Play(0x14);
+                                    return;
+                                }
+                                menuCB_SE_Play(0x10);
+                                return;
+                            case 1:
+                                _CB.unkB018 = (s32) (_CB.unkB018 + 1);
+                                if ((s32) _CB.unkB018 == 3) {
+                                    _CB.unkB018 = (s32) (_CB.unkB018 - 1);
+                                    _menuCB_Rule_Page_Chenge_Init__Fv();
+                                    _CB.unkB118 = (s32) (_CB.unkB118 + 1);
+                                    menuCB_SE_Play(0x15);
+                                    menuCB_SE_Play(0x14);
+                                    return;
+                                }
+                                menuCB_SE_Play(0x10);
+                                return;
+                            case 2:
+                                _CB.unkB01C = (s32) (_CB.unkB01C + 1);
+                                if ((s32) _CB.unkB01C == 3) {
+                                    _CB.unkB01C = (s32) (_CB.unkB01C - 1);
+                                    _menuCB_Rule_Page_Chenge_Init__Fv();
+                                    _CB.unkB118 = (s32) (_CB.unkB118 + 1);
+                                    menuCB_SE_Play(0x15);
+                                    menuCB_SE_Play(0x14);
+                                    return;
+                                }
+                                menuCB_SE_Play(0x10);
+                                return;
+                            case 3:
+                                _CB.unkB020 = (s32) (_CB.unkB020 + 1);
+                                if ((s32) _CB.unkB020 == 4) {
+                                    _CB.unkB020 = (s32) (_CB.unkB020 - 1);
+                                    _menuCB_Rule_Page_Chenge_Init__Fv();
+                                    _CB.unkB118 = (s32) (_CB.unkB118 + 1);
+                                    menuCB_SE_Play(0x15);
+                                    menuCB_SE_Play(0x14);
+                                    return;
+                                }
+                                menuCB_SE_Play(0x10);
+                                return;
+                            case 4:
+                                _CB.unkB024 = (s32) (_CB.unkB024 + 1);
+                                if ((s32) _CB.unkB024 == 3) {
+                                    _CB.unkB024 = (s32) (_CB.unkB024 - 1);
+                                    return;
+                                }
+                                menuCB_SE_Play(0x10);
+                                break;
+                            }
+                        }
+                    }
 
-                                        }
                 }
             }
         }
