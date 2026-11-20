@@ -1,6 +1,7 @@
+#include <game/pxdvs/app/hero/heroParty.hpp>
 #include <game/pxdvs/app/people/runtime.hpp>
-struct GSpart;struct Pokemon;struct HeroData;struct FloorBgmMask{void stopMask();};
-extern "C" {void recoveryPokemon();void fadeSet(s32,f32);s8 fadeCheck(s32);void soundOpenPlayME(u32,u32,u8);void heroMovePoolCounter(s32,u32);FloorBgmMask*floorSound_getBgmMaskObj();u32 floorGetCurrentGroupID();GSmodel*GSresGetResource(u32,u32);tagPeopleWork*peopleGet(u32,u32);HeroData*savedataGetStatus(s32,s32);u32 heroGetPokeomCount();u32 revoceryCatchPokemonBall(u16);GSmodel*floorOpenObject(u32);void GSmodelSetVisibility(GSmodel*,s32);void GSmodelGetRotation(GSmodel*,GSvec*);void peopleRotateToTarget(u32,u32,u32,u32,f32);void peopleMoveCheck(u32,u32,s32);Pokemon*heroBiosGetPokemonPtr(HeroData*,u16);void pokemonAllKaihuku(Pokemon*);GSpart*GSmodelGetPart(GSmodel*,u32);void GSpartGetTransform(GSpart*,GSvec*,GSvec*,GSvec*);void GSpartFree(GSpart*);void GSmodelSetPosition(GSmodel*,GSvec*);void scriptWaitTime(f32);void scriptModelSetMotion(u32,u32,u32,s32);u8 GSmodelIsAnimating(GSmodel*);void GSthreadSwitch();void GSmodelFree(GSmodel*);void soundContinueBGMEX(s32,u32,s32);void peopleRotateToAngle(u32,u32,f32,f32);s32 soundPauseBGMEX(u32,s32);void GSsndPlay(u32,s32,s32);}
+struct GSpart;struct Pokemon;struct FloorBgmMask{void stopMask();};
+extern "C" {void recoveryPokemon();void fadeSet(s32,f32);s8 fadeCheck(s32);void soundOpenPlayME(u32,u32,u8);void heroMovePoolCounter(s32,u32);FloorBgmMask*floorSound_getBgmMaskObj();u32 floorGetCurrentGroupID();GSmodel*GSresGetResource(u32,u32);tagPeopleWork*peopleGet(u32,u32);Hero*savedataGetStatus(s32,s32);u32 revoceryCatchPokemonBall(u16);GSmodel*floorOpenObject(u32);void GSmodelSetVisibility(GSmodel*,s32);void GSmodelGetRotation(GSmodel*,GSvec*);void peopleRotateToTarget(u32,u32,u32,u32,f32);void peopleMoveCheck(u32,u32,s32);Pokemon*heroBiosGetPokemonPtr(Hero*,u16);void pokemonAllKaihuku(Pokemon*);GSpart*GSmodelGetPart(GSmodel*,u32);void GSpartGetTransform(GSpart*,GSvec*,GSvec*,GSvec*);void GSpartFree(GSpart*);void GSmodelSetPosition(GSmodel*,GSvec*);void scriptWaitTime(f32);void scriptModelSetMotion(u32,u32,u32,s32);u8 GSmodelIsAnimating(GSmodel*);void GSthreadSwitch();void GSmodelFree(GSmodel*);void soundContinueBGMEX(s32,u32,s32);void peopleRotateToAngle(u32,u32,f32,f32);s32 soundPauseBGMEX(u32,s32);void GSsndPlay(u32,s32,s32);}
 static s32 _recoveryPauseBGM(unsigned long);static void _recoveryEventSetSE(unsigned long);void _recoveryEventSetME(unsigned long,unsigned long,unsigned char);
 static u32 _recoveryTestBallTable[]={0x02E50400,0x02E60400,0x02E50400,0x02EC0400,0x02B70400,0x18740400,0x02E70400,0x02C10400,0x18730400,0x02EA0400,0x02ED0400,0x18720400,0x02E90400};
 extern "C" void recoveryEventCommon(u32 value){recoveryPokemon();fadeSet(3,1.0f);fadeCheck(1);soundOpenPlayME(0x3C8,0,0x7F);fadeSet(2,1.0f);fadeCheck(1);heroMovePoolCounter(3,value);}
@@ -11,7 +12,7 @@ GSmodel*balls[6];
 GSmodel*ball;
 u32 j;
 GSmodel*model;
-HeroData*hero;
+Hero*hero;
 bool hasPerson;
 s32 bgm;
 FloorBgmMask*mask;
@@ -19,7 +20,7 @@ GSpart*part;
 tagPeopleWork*person;
 u32 count;
 u32 i;
-position.param1=0.0f;position.param2=10.0f;position.param3=0.0f;mask=floorSound_getBgmMaskObj();model=GSresGetResource(floorGetCurrentGroupID(),modelResource);person=peopleGet(group,resource);hero=savedataGetStatus(0,2);count=heroGetPokeomCount();hasPerson=person!=0;
+position.param1=0.0f;position.param2=10.0f;position.param3=0.0f;mask=floorSound_getBgmMaskObj();model=GSresGetResource(floorGetCurrentGroupID(),modelResource);person=peopleGet(group,resource);hero=savedataGetStatus(0,2);count=heroGetPokeomCount(hero);hasPerson=person!=0;
  for(u32 i=0;i<count;i++){balls[(s32)i]=floorOpenObject(_recoveryTestBallTable[(u8)revoceryCatchPokemonBall((u16)i)]);GSmodelSetVisibility(balls[(s32)i],0);}
  if(hasPerson){GSmodelGetRotation(person->model,&rotation);peopleRotateToTarget(group,resource,floorGetCurrentGroupID(),modelResource,1.0f);peopleMoveCheck(group,resource,1);}if(mask)mask->stopMask();bgm=_recoveryPauseBGM(0x1F4);
  for(j=0;j<count;j++){pokemonAllKaihuku(heroBiosGetPokemonPtr(hero,(u16)j));part=GSmodelGetPart(model,parts[(s32)j]);GSpartGetTransform(part,&position,0,0);GSpartFree(part);ball=balls[(s32)j];GSmodelSetPosition(ball,&position);GSmodelSetVisibility(ball,1);_recoveryEventSetSE(0x19);scriptWaitTime(0.5f);}

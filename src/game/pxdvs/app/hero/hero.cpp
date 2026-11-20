@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/hero/heroParty.hpp>
 #include <game/pxdvs/app/hero/heroPrivate.hpp>
 
 static FloorModuleInterface _floorModuleHero;
@@ -53,7 +54,7 @@ static void _heroMakeStateData(FloorStateMode mode, void*, unsigned long) {
 
 extern "C" {
 
-u16 heroGetPokeomCount(Hero* hero) {
+u32 heroGetPokeomCount(Hero* hero) {
     u16 i = 0;
     u16 count = 0;
     for (; i < 6; i++) {
