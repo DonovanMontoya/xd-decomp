@@ -45,7 +45,7 @@ void AnalogStickEmu::init() {
     b5 = 10;
 }
 
-static void* _heroGetPeople(HEROMOVE_MEMBER member) {
+static tagPeopleWork* _heroGetPeople(HEROMOVE_MEMBER member) {
     unsigned long group;
     unsigned long res;
     getResID(&group, &res, member);
@@ -643,7 +643,7 @@ extern "C" s32 heroGetFollower() {
     tagPeopleWork* people;
     Hero* hero;
     hero = Hero::getHeroPtr();
-    people = (tagPeopleWork*)peopleGet(hero->getFollowerGrpID(), hero->getFollowerResID());
+    people = peopleGet(hero->getFollowerGrpID(), hero->getFollowerResID());
     if (people == 0) {
         return 0;
     }
@@ -807,8 +807,6 @@ s32 heroMoveMain() {
 }
 
 extern "C" {
-void* peopleBiosGetPosPtr();
-void* peopleBiosGetRotPtr(void*);
 void PSVECAdd(GSvec*, GSvec*, GSvec*);
 s32 GScolsys2CheckGetEventID(GSvec*, GSvec*, void*);
 double sin(double);
@@ -818,21 +816,21 @@ s32 heroMoveCheckEvent(void* arg) {
     unsigned long group;
     unsigned long res;
     s32 result;
-    void* people;
+    tagPeopleWork* people;
     getResID(&group, &res, (HEROMOVE_MEMBER)heroMoveGetLeader());
     people = peopleSearchID(peopleGetHumanID(group, res));
     if (people != 0) {
-        GSvec* pos = (GSvec*)peopleBiosGetPosPtr();
-        f32* rot = (f32*)peopleBiosGetRotPtr(people);
+        GSvec* pos = peopleBiosGetPosPtr(people);
+        GSvec* rot = peopleBiosGetRotPtr(people);
         GSvec start;
         GSvec dir;
         start.param1 = pos->param1;
         start.param2 = pos->param2;
         start.param3 = pos->param3;
         start.param2 += 5.0f;
-        dir.param1 = 10.0f * (f32)sin(rot[1]);
+        dir.param1 = 10.0f * (f32)sin(rot->param2);
         dir.param2 = 0.0f;
-        dir.param3 = 10.0f * (f32)cos(rot[1]);
+        dir.param3 = 10.0f * (f32)cos(rot->param2);
         PSVECAdd(&start, &dir, &dir);
         result = GScolsys2CheckGetEventID(&start, &dir, arg);
     }
@@ -1554,7 +1552,6 @@ static s8 init$2458;
 static f32 len_fix$2474;
 static s8 init$2475;
 u8 peopleBiosCheckFlag(void*,u32);
-GSvec* peopleBiosGetPrevPosPtr(void*);
 f32 peopleVecCalcRotY(GSvec*,GSvec*,f32);
 f32 peopleGetBlendFactor(f32,f32,f32);
 f32 GScolsys2HumanGetWalkHeight(GSvec*);
@@ -1569,20 +1566,20 @@ static f32 moveParty(HEROMOVE_MEMBER member) {
     GSvec difference;
     GSvec added;
     s8 x,y,rx,ry;
-    tagPeopleWork* current=(tagPeopleWork*)_heroGetPeople(member);
+    tagPeopleWork* current=_heroGetPeople(member);
     if (!current) return 0.0f;
     if (current->attachIndex>0) {
         HeroMove.leaderLog.count = 0;
         return 0.0f;
     }
-    tagPeopleWork* leader=(tagPeopleWork*)peopleGet(0,0x64);
+    tagPeopleWork* leader=peopleGet(0,0x64);
     if (!leader) return 0.0f;
     Hero* hero=Hero::getHeroPtr();
-    tagPeopleWork* follower=(tagPeopleWork*)peopleGet(hero->getFollowerGrpID(),hero->getFollowerResID());
+    tagPeopleWork* follower=peopleGet(hero->getFollowerGrpID(),hero->getFollowerResID());
     if (!follower) return 0.0f;
     if (peopleBiosCheckFlag(follower,0x80000000)) return 0.0f;
-    GSvec* leaderPosition=(GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(leader);
-    GSvec* position=(GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(follower);
+    GSvec* leaderPosition = peopleBiosGetPosPtr(leader);
+    GSvec* position = peopleBiosGetPosPtr(follower);
     s32 followerID=heroGetFollower();
     if (!followerID) return 0.0f;
     if (heroMoveChkHinderClear(followerID) && !follower->followerMotion) HeroMove.leaderLog.count = 0;
@@ -1647,7 +1644,7 @@ static f32 moveParty(HEROMOVE_MEMBER member) {
     } else speed=leader->unknown24;
     peopleRotateToAngle(hero->getFollowerGrpID(),hero->getFollowerResID(),facingAngle,20.0f);
     peopleMoveAlongAngle(hero->getFollowerGrpID(),hero->getFollowerResID(),speed,movementAngle);
-    return GSvecDistanceXZ((GSvec*)((void*(*)(void*))peopleBiosGetPosPtr)(follower),peopleBiosGetPrevPosPtr(follower));
+    return GSvecDistanceXZ(peopleBiosGetPosPtr(follower), peopleBiosGetPrevPosPtr(follower));
 }
 
 extern "C" __declspec(weak) HeroMoveQueuedEvent* constructHeroMoveQueuedEvent(HeroMoveQueuedEvent*);
