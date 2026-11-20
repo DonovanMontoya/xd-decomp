@@ -979,7 +979,7 @@ config.libs = [
         "progress_category": "game",
         "objects": [
             Object(MatchingFor("GXXE01"), "game/character.cpp"),
-            Object(NonMatching, "game/relglobal.c"),
+            Object(MatchingFor("GXXE01"), "game/relglobal.c"),
             Object(MatchingFor("GXXE01"), "game/pause.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/time.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/main.cpp", extra_cflags=["-opt nopeephole"]),
