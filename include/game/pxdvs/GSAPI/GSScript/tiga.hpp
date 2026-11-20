@@ -134,7 +134,14 @@ struct GSBinReadStream {
         return c.f;
     }
 };
-struct TPCCode;
+struct TPCCode {
+    u8 opcode;
+    u8 subcode;
+    union Operand {
+        s16 signedValue;
+        u16 unsignedValue;
+    } argument;
+};
 
 class CChank {
 public:
@@ -179,7 +186,7 @@ public:
     tigaVariant* stackBase38;   // 0x38
     s32* stackBase3C;           // 0x3c
     u8 pad40[0x10C];
-    s32 field14C;               // 0x14c
+    s32 lineNumber;             // 0x14c
     tigaVariant* stackArea;     // 0x150
     s32 stackCount;             // 0x154
     s32* stackArea2;            // 0x158
@@ -254,7 +261,7 @@ public:
     tigaVariant* resultVar;         // 0x938
     s32 funcCount;                  // 0x93c
     s32 field940;                   // 0x940
-    s32 field944;                   // 0x944
+    TPCCode* codeBase;              // 0x944
     s32 globalCount;                // 0x948
     tigaVariant* globals;           // 0x94c
     s32 field950;                   // 0x950

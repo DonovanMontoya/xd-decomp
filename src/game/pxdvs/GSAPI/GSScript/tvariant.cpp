@@ -68,7 +68,7 @@ void tigaVariant::restoreStateData(GSBinReadStream* stream) {
     case 0x35: {
         u32 index = stream->readU32();
         if (index != 0) {
-            value.integer = Tiga::m_cpCurrentObject->field944 + index * 4;
+            value.pointer = Tiga::m_cpCurrentObject->codeBase + index;
         } else {
             value.integer = index;
         }
@@ -140,7 +140,7 @@ void tigaVariant::makeStateData(GSBinWriteStream* stream) {
     case 0x35: {
         u32 pointer = value.integer;
         if (pointer != 0) {
-            stream->writeU32((pointer - Tiga::m_cpCurrentObject->field944) >> 2);
+            stream->writeU32((pointer - (u32)Tiga::m_cpCurrentObject->codeBase) / sizeof(TPCCode));
         } else {
             stream->writeU32(0);
         }
