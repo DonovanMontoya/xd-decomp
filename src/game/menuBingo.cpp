@@ -2,6 +2,7 @@
 #pragma pool_strings off
 #include <dolphin/types.h>
 #include <game/menuBingoLayout.hpp>
+#include <game/menuDataBiosPrivate.hpp>
 
 struct BINGO_PANEL_dd_ {
     u8 type;
@@ -301,12 +302,6 @@ struct GSvec2 {
     f32 y;
 };
 
-struct MenuSpriteVal {
-    u8 pad0[4];
-    s16 w;
-    s16 h;
-};
-
 extern "C" {
 s16 lbl_804EAA00;
 }
@@ -335,7 +330,6 @@ char* GSmsgGetGSchar(u32 msg);
 u32 pokemonGetStatus(void* ptr, u16 pokemonDataId, u16 kind, u16 index);
 s32 menuSubGetPokemonSexForDisp(void* pokemon);
 u16 zokuseiGetPokemonSpriteID(void* pokemon, u16 idx);
-MenuSpriteVal* menuSpriteBiosGetValPtr(void);
 void FlashSystemSetNowFrame(u32 id, u32 frame);
 void windowDrawSprite2(s16 x, s16 y, s16 w, s16 h, u32 color, void* ctx, u16 key, u32 flags, s32 layer);
 f32 timeGetLastFrameSec(void);
@@ -354,7 +348,6 @@ u32 floorGetCurrentGroupID(void);
 s8 fadeCheck(s32);
 u16 fadeGetType(void);
 void fadeSet(s32 type, f32 time);
-void* menuSpriteBiosGetPtr(u32 id);
 u32 windowGetKeyRepeat(void);
 u16 windowGetKeyTrg(void);
 void menuPlaySe(s32 menu, s32 se);
@@ -420,7 +413,7 @@ void menuCloseCustom(s32 menuID, s32 a, s32 b);
 }
 
 extern "C" {
-void menuSubCalcColor(void);
+u32 menuSubCalcColor(tagWINDOW_WORK*, tagSPRITE_WORK*);
 u16 pokemon_GetPokemonDataId(void* poke);
 u8 pokemonDB_GetTokuseiDataId(u16 id, u16 idx);
 u32 pokemonTokuseiDataBiosGetPtr(u16 index);
@@ -566,7 +559,7 @@ s32 menuBingoPokemonDraw(tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
     u16 tok;
     BingoPokemon* q;
     u32 n = 0;
-    menuSubCalcColor();
+    menuSubCalcColor(w, sp);
     u32 rf_t = gBingo.f12c;
     int cur = findPokemonOrder(rf_t + 1);
     BingoPokemon* p = &mPokemon[cur];
@@ -2818,14 +2811,13 @@ void cBingo::dispPkmPanel(u32 n, tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
             GSmsgPrint2(layer, xoff + 0xA0, 9, color | w->alpha, 0x4278);
         }
         u32 spr = zokuseiGetPokemonSpriteID(pk->pkm.getPokemonDataPtr(), 0);
-        menuSpriteBiosGetPtr(spr);
-        MenuSpriteVal* val = menuSpriteBiosGetValPtr();
+        MenuSpriteValue* val = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(spr));
         if (spr != 0) {
-            windowDrawSprite2((s16)(xoff + 0x66), 0x19, val->w, val->h, color | w->alpha, w, spr, 0, layer);
+            windowDrawSprite2((s16)(xoff + 0x66), 0x19, val->width, val->height, color | w->alpha, w, spr, 0, layer);
             if (spr != zokuseiGetPokemonSpriteID(pk->pkm.getPokemonDataPtr(), 1)) {
-                menuSpriteBiosGetPtr(zokuseiGetPokemonSpriteID(pk->pkm.getPokemonDataPtr(), 1));
-                MenuSpriteVal* val2 = menuSpriteBiosGetValPtr();
-                windowDrawSprite2((s16)(xoff + 0x66), 0x2D, val2->w, val2->h, color | w->alpha, w,
+                MenuSpriteValue* val2 = menuSpriteBiosGetValPtr(
+                    menuSpriteBiosGetPtr(zokuseiGetPokemonSpriteID(pk->pkm.getPokemonDataPtr(), 1)));
+                windowDrawSprite2((s16)(xoff + 0x66), 0x2D, val2->width, val2->height, color | w->alpha, w,
                                   zokuseiGetPokemonSpriteID(pk->pkm.getPokemonDataPtr(), 1), 0, layer);
             }
         }

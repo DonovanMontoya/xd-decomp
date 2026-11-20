@@ -14,8 +14,6 @@ u32 dbgMenuGetLayerID();
 MenuItemRecord* windowGetCursorToItem(s32);
 MenuDataRecord* menuDataBiosGetPtr(s32);
 MenuItemRecord* menuItemBiosGetPtr(s32, s32);
-MenuSpriteRecord* menuSpriteBiosGetPtr(u32);
-MenuSpriteValue* menuSpriteBiosGetValPtr(MenuSpriteRecord*);
 #pragma dont_inline on
 u32 menuBiosGetCursorSize(s32 menu) {
     MenuItemRecord* item = windowGetCursorToItem(menu);
