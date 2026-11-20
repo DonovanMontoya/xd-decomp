@@ -1,6 +1,7 @@
 #include <game/menuFightStatusPrivate.hpp>
+#include <game/menuPokemonStatus.hpp>
 #include <libc/string.h>
-struct MENU_POKEMON_STATUS {u8 pad0[0x16];u8 special,pad17;s16 maxHP,hp;u32 maxEXP,exp;union {u8 pad24[12];struct {u16 condition,face;u8 sex,side,pad2A[3],dark,pad2E[2];} details;};};
+
 struct StatusTween {s16 hp,frames,timer;u16 levelUp;u32 exp;s16 expFrames,expTimer;};
 static f32 menuStatusTime,menuStatusOldTime;
 extern "C" {tagWINDOW_WORK *windowSearchID(s32);StatusTween *windowGetFreeWork(tagWINDOW_WORK*);MENU_POKEMON_STATUS *windowGetAllocPtr(tagWINDOW_WORK*);MENU_POKEMON_STATUS *windowAllocMemory(tagWINDOW_WORK*,s32);void GSthreadSwitch();void GSsndPlayNow(u32);void GSsndStopNow(u32);f32 timeGetLastFrameSec();u8 fightKind_CheckFightKind(s32);s32 menuFightGetStatus();void menuFightSetStatus(s32);void menuFightSetSeq();void *menuSeqBiosGetPtr(s32);}
@@ -63,11 +64,11 @@ extern "C" void menuFightDrawParam(tagWINDOW_WORK* w,tagSPRITE_WORK* s);
 
 s32 menuFightStatusWaitAnimeEXP(s32 id,u8 wait){for(;;){tagWINDOW_WORK *w=windowSearchID(id);if(!w)return 0;if(windowGetFreeWork(w)->expFrames==0)return 0;if(wait)GSthreadSwitch();else return 1;}}
 
-void menuFightStatusStartAnimEXP(s32 id,u32 exp){tagWINDOW_WORK *w=windowSearchID(id);if(w){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);StatusTween *t=windowGetFreeWork(w);u32 diff;if(exp>status->exp)diff=exp-status->exp;else diff=status->exp-exp;t->expFrames=(s16)((diff*100)/status->maxEXP);if(t->expFrames<15)t->expFrames=15;t->exp=status->exp;status->exp=exp;t->expTimer=0;if(exp==status->maxEXP)t->levelUp=1;GSsndPlayNow(0x24);}}
+void menuFightStatusStartAnimEXP(s32 id,u32 exp){tagWINDOW_WORK *w=windowSearchID(id);if(w){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);StatusTween *t=windowGetFreeWork(w);u32 diff;if(exp>status->nowExp)diff=exp-status->nowExp;else diff=status->nowExp-exp;t->expFrames=(s16)((diff*100)/status->nextExp);if(t->expFrames<15)t->expFrames=15;t->exp=status->nowExp;status->nowExp=exp;t->expTimer=0;if(exp==status->nextExp)t->levelUp=1;GSsndPlayNow(0x24);}}
 
 s32 menuFightStatusWaitAnimeHP(s32 id,u8 wait){for(;;){tagWINDOW_WORK *w=windowSearchID(id);if(!w)return 0;if(windowGetFreeWork(w)->frames==0)return 0;if(wait)GSthreadSwitch();else return 1;}}
 
-void menuFightStatusStartAnimHP(s32 id,s16 hp){tagWINDOW_WORK *w=windowSearchID(id);if(w){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);StatusTween *t=windowGetFreeWork(w);s32 diff=status->hp-hp;if(diff<0)diff=-diff;t->frames=(s16)((diff*100)/status->maxHP);if(t->frames<=0)t->frames=1;t->hp=status->hp;status->hp=hp;t->timer=0;}}
+void menuFightStatusStartAnimHP(s32 id,s16 hp){tagWINDOW_WORK *w=windowSearchID(id);if(w){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);StatusTween *t=windowGetFreeWork(w);s32 diff=status->hp-hp;if(diff<0)diff=-diff;t->frames=(s16)((diff*100)/status->maxHp);if(t->frames<=0)t->frames=1;t->hp=status->hp;status->hp=hp;t->timer=0;}}
 
 void menuFightStatusSetActive(){}
 
@@ -108,10 +109,10 @@ extern "C" void menuFightDrawParam(tagWINDOW_WORK* w,tagSPRITE_WORK* s){
     color=w->alpha|0xFFFFFF00;
     switch(s->id){
     case 0xD5:case 0xD6:case 0xEF:
-        if(status->details.side==2)winSpriteSetDisp(s,0);break;
+        if(status->darkState==2)winSpriteSetDisp(s,0);break;
     case 0xD7:case 0xD8:case 0xF0:
-        if(status->details.side==2)winSpriteSetDisp(s,1);else winSpriteSetDisp(s,0);break;
-    case 0xD2:case 0xED:menuFaceDispFromID(w,s,status->details.face);break;
+        if(status->darkState==2)winSpriteSetDisp(s,1);else winSpriteSetDisp(s,0);break;
+    case 0xD2:case 0xED:menuFaceDispFromID(w,s,status->faceId);break;
     case 0xF4:alternate=1;
     case 0xE8:
         if(fightFloorGetStatus(0,0,0x32,0)==0||alternate==0){
@@ -119,13 +120,13 @@ extern "C" void menuFightDrawParam(tagWINDOW_WORK* w,tagSPRITE_WORK* s){
             GSmsgPrint2(winSpriteGetLayerID(w,s),32,0,color,0x42C2);
             msgctrlSetValue(0x5F,hp);x=24-(s16)(GSmsgGetRect(0x4272)>>16);
             GSmsgPrint2(winSpriteGetLayerID(w,s),x,1,color,0x4272);
-            msgctrlSetValue(0x5F,status->maxHP);width=GSmsgGetRect(0x4272)>>16;
+            msgctrlSetValue(0x5F,status->maxHp);width=GSmsgGetRect(0x4272)>>16;
             GSmsgPrint2(winSpriteGetLayerID(w,s),(s16)(s->width-width),1,color,0x4272);
         }break;
-    case 0xEA:case 0xF7:winSpriteSetDisp(s,1);if(status->details.dark)winSpriteSetDisp(s,0);break;
+    case 0xEA:case 0xF7:winSpriteSetDisp(s,1);if(status->opening)winSpriteSetDisp(s,0);break;
     case 0xE9:case 0xF5:
-        if(status->details.dark==0){
-            if(menuCBBios_CurrentlyWorkingToolBattle()==0&&status->details.side!=0){
+        if(status->opening==0){
+            if(menuCBBios_CurrentlyWorkingToolBattle()==0&&status->darkState!=0){
                 trainer=fightSideGetValidFightTrainerPtr(fightFloorGetValidFightSidePtr(fightFloorGetNowPtr(),0),0);
                 fightFloorGetFightTrainerFightOutPokemonPtrAry(fightFloorGetNowPtr(),trainer,pokemon,0,0);
                 if(w->menu==0x37){
@@ -151,21 +152,21 @@ extern "C" void menuFightDrawParam(tagWINDOW_WORK* w,tagSPRITE_WORK* s){
                 }else goto drawLevel;
             }else{
 drawLevel:
-                msgctrlSetValue(0x5F,status->pad17);width=GSmsgGetRect(0x4272)>>16;
+                msgctrlSetValue(0x5F,status->level);width=GSmsgGetRect(0x4272)>>16;
                 GSmsgPrint2(winSpriteGetLayerID(w,s),(s16)(s->width-width),1,w->alpha|0xFFFFFF00,0x4272);
             }
         }break;
     case 0xE7:case 0xF3:
-        msgctrlSetValue(0x37,(u32)status);GSmsgPrint2(winSpriteGetLayerID(w,s),0,1,color,0x4279);
+        msgctrlSetValue(0x37,(u32)status->name);GSmsgPrint2(winSpriteGetLayerID(w,s),0,1,color,0x4279);
         x=(GSmsgGetRect(0x4279)>>16)+4;
-        switch(status->details.sex){case 0:message=0x9C5;break;case 1:message=0x9C6;break;case 2:default:message=0;break;}
+        switch(status->sex){case 0:message=0x9C5;break;case 1:message=0x9C6;break;case 2:default:message=0;break;}
         if(message){msgctrlSetValue(0x37,(u32)GSmsgGetGSchar(message));GSmsgPrint2(winSpriteGetLayerID(w,s),x,0,color,0x4278);}break;
-    case 0xEB:case 0xF8:windowDrawSprite2(0,0,s->width,s->height,color,w,status->details.condition,0,winSpriteGetLayerID(w,s));break;
+    case 0xEB:case 0xF8:windowDrawSprite2(0,0,s->width,s->height,color,w,status->joutaiSprite,0,winSpriteGetLayerID(w,s));break;
     case 0xDA:case 0xF2:
         layer=GSgfxLayerFindByID(winSpriteGetLayerID(w,s));
         if(layer){
             if(tween->frames)hpf=((f32)tween->timer/(f32)tween->frames)*(f32)(status->hp-tween->hp)+(f32)tween->hp;else hpf=status->hp;
-            maxf=status->maxHP;
+            maxf=status->maxHp;
             if(tween->frames){
                 if(tween->hp<=0)oldColor=0;else if((f32)tween->hp<=20.0f*maxf/100.0f)oldColor=0x80000000;else if((f32)tween->hp<=50.0f*maxf/100.0f)oldColor=0x64640000;else oldColor=0x00800000;
                 oldColor|=w->alpha;
@@ -181,8 +182,8 @@ drawLevel:
             if(sprite)windowDrawSprite2(0,0,width,s->height,color,w,sprite,0,winSpriteGetLayerID(w,s));
         }break;
     case 0xDC:
-        if(tween->expFrames)exp=((f32)tween->expTimer/(f32)tween->expFrames)*(f32)(status->exp-tween->exp)+(f32)tween->exp;else exp=status->exp;
-        maxExp=status->maxEXP;if(exp>maxExp)exp=maxExp;
+        if(tween->expFrames)exp=((f32)tween->expTimer/(f32)tween->expFrames)*(f32)(status->nowExp-tween->exp)+(f32)tween->exp;else exp=status->nowExp;
+        maxExp=status->nextExp;if(exp>maxExp)exp=maxExp;
         if(maxExp>0){
             exp=maxExp+exp*s->width;
             width=(exp-1)/maxExp;
@@ -200,11 +201,11 @@ drawLevel:
                 cFlash+=timeGetLastFrameSec();if(1.0<=cFlash){cFlash=1.0f;tween->levelUp=0;}
             }
         }break;
-    case 0xE6:fraction=*(f32*)&status->exp / *(f32*)&status->maxEXP;if(fraction<0.2f)width=(f32)s->width*(fraction/0.2f);else width=s->width;if(width<0)width=0;windowDrawSprite2(0,0,width,s->height,color,w,0x91,0,winSpriteGetLayerID(w,s));break;
-    case 0xE5:fraction=*(f32*)&status->exp / *(f32*)&status->maxEXP;if(fraction<0.4f)width=(f32)s->width*((fraction-0.2f)/0.2f);else width=s->width;if(width<0)width=0;windowDrawSprite2(0,0,width,s->height,color,w,0x91,0,winSpriteGetLayerID(w,s));break;
-    case 0xE4:fraction=*(f32*)&status->exp / *(f32*)&status->maxEXP;if(fraction<0.6f)width=(f32)s->width*((fraction-0.4f)/0.2f);else width=s->width;if(width<0)width=0;windowDrawSprite2(0,0,width,s->height,color,w,0x91,0,winSpriteGetLayerID(w,s));break;
-    case 0xE3:fraction=*(f32*)&status->exp / *(f32*)&status->maxEXP;if(fraction<0.8f)width=(f32)s->width*((fraction-0.6f)/0.2f);else width=s->width;if(width<0)width=0;windowDrawSprite2(0,0,width,s->height,color,w,0x91,0,winSpriteGetLayerID(w,s));break;
-    case 0xE2:fraction=*(f32*)&status->exp / *(f32*)&status->maxEXP;if(fraction<1.0f)width=(f32)s->width*((fraction-0.8f)/0.2f);else width=s->width;if(width<0)width=0;windowDrawSprite2(0,0,width,s->height,color,w,0x91,0,winSpriteGetLayerID(w,s));break;
+    case 0xE6:fraction=status->darkNow / status->darkMax;if(fraction<0.2f)width=(f32)s->width*(fraction/0.2f);else width=s->width;if(width<0)width=0;windowDrawSprite2(0,0,width,s->height,color,w,0x91,0,winSpriteGetLayerID(w,s));break;
+    case 0xE5:fraction=status->darkNow / status->darkMax;if(fraction<0.4f)width=(f32)s->width*((fraction-0.2f)/0.2f);else width=s->width;if(width<0)width=0;windowDrawSprite2(0,0,width,s->height,color,w,0x91,0,winSpriteGetLayerID(w,s));break;
+    case 0xE4:fraction=status->darkNow / status->darkMax;if(fraction<0.6f)width=(f32)s->width*((fraction-0.4f)/0.2f);else width=s->width;if(width<0)width=0;windowDrawSprite2(0,0,width,s->height,color,w,0x91,0,winSpriteGetLayerID(w,s));break;
+    case 0xE3:fraction=status->darkNow / status->darkMax;if(fraction<0.8f)width=(f32)s->width*((fraction-0.6f)/0.2f);else width=s->width;if(width<0)width=0;windowDrawSprite2(0,0,width,s->height,color,w,0x91,0,winSpriteGetLayerID(w,s));break;
+    case 0xE2:fraction=status->darkNow / status->darkMax;if(fraction<1.0f)width=(f32)s->width*((fraction-0.8f)/0.2f);else width=s->width;if(width<0)width=0;windowDrawSprite2(0,0,width,s->height,color,w,0x91,0,winSpriteGetLayerID(w,s));break;
     case 0xF6:winSpriteSetDisp(s,0);if(gamedataBiosGetFlag(0,14,0)!=0)winSpriteSetDisp(s,1);break;
     case 0xD1:alternate=1;
     case 0xD0:case 0xEC:
@@ -224,9 +225,9 @@ drawLevel:
 
 static s32 menuFightDrawDarkPanel(tagWINDOW_WORK *w,tagSPRITE_WORK *s,Pokemon *pokemon,MENU_POKEMON_STATUS*){if(pokemon && pokemon->isDarkPokemon()){msgctrlSetValue(0x37,(u32)GSmsgGetGSchar(0x4443));s16 width=GSmsgGetRect(0x4278)>>16;GSmsgPrint2(winSpriteGetLayerID(w,s),(s16)(s->width-width),0,w->alpha|0xFFFFFF00,0x4278);msgctrlSetValue(0x5F,deckGetDeckDarkPokemon(pokemon->getDarkPokemon()->getDarkPokemonID())->getPlayerLevel());s16 x=(s->width-width)-(GSmsgGetRect(0x4272)>>16);GSmsgPrint2(winSpriteGetLayerID(w,s),x,1,w->alpha|0xFFFFFF00,0x4272);return 1;}return 0;}
 
-extern "C" void menuFightDrawCheckDark(tagWINDOW_WORK *w,tagSPRITE_WORK *sprite){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);s16 id=sprite->id;u8 special=status->special;s32 show=1;switch(id){case 0xD3:case 0xD4:case 0xDB:case 0xDC:case 0xEE:if(status->pad24[5])show=0;else show=1;break;case 0xD5:case 0xD6:case 0xDD:case 0xDE:case 0xDF:case 0xE0:case 0xE1:case 0xE2:case 0xE3:case 0xE4:case 0xE5:case 0xE6:case 0xEF:if(status->pad24[5])show=1;else show=0;break;}switch(id){case 0xD4:case 0xD6:case 0xDB:case 0xDC:case 0xDD:case 0xDE:case 0xDF:case 0xE0:case 0xE1:case 0xE2:case 0xE3:case 0xE4:case 0xE5:case 0xE6:if(special==1)show=0;break;}winSpriteSetDisp(sprite,show);}
+extern "C" void menuFightDrawCheckDark(tagWINDOW_WORK *w,tagSPRITE_WORK *sprite){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);s16 id=sprite->id;u8 hideSubbar=status->hideSubbar;s32 show=1;switch(id){case 0xD3:case 0xD4:case 0xDB:case 0xDC:case 0xEE:if(status->darkState)show=0;else show=1;break;case 0xD5:case 0xD6:case 0xDD:case 0xDE:case 0xDF:case 0xE0:case 0xE1:case 0xE2:case 0xE3:case 0xE4:case 0xE5:case 0xE6:case 0xEF:if(status->darkState)show=1;else show=0;break;}switch(id){case 0xD4:case 0xD6:case 0xDB:case 0xDC:case 0xDD:case 0xDE:case 0xDF:case 0xE0:case 0xE1:case 0xE2:case 0xE3:case 0xE4:case 0xE5:case 0xE6:if(hideSubbar==1)show=0;break;}winSpriteSetDisp(sprite,show);}
 
-s32 menuFightStatusCtrl(tagWINDOW_WORK *w){StatusTween *t=windowGetFreeWork(w);u32 reset=0;if(w->phase==0){MENU_POKEMON_STATUS *status=windowAllocMemory(w,0x30);if(status){memcpy(status,(void*)w->parameters[0],0x30);if(fightKind_CheckFightKind(13))status->special=1;if(fightKind_CheckFightKind(14))status->special=1;if(fightKind_CheckFightKind(15))status->special=1;if(menuFightGetStatus())menuFightSetSeq();}}else if(w->phase==1 && menuFightGetStatus()){if(*(void**)((u8*)w+0x2C)==menuSeqBiosGetPtr(0x1A5))reset=1;if(*(void**)((u8*)w+0x2C)==menuSeqBiosGetPtr(0x1A9))reset=1;if(reset)menuFightSetStatus(0);}windowGetAllocPtr(w);if(t->frames){t->timer+= (s32)(60.0f*timeGetLastFrameSec());if(t->timer>t->frames)t->frames=0;}if(t->expFrames){t->expTimer+=(s32)(60.0f*timeGetLastFrameSec());if(t->expTimer>t->expFrames){t->expFrames=0;GSsndStopNow(0x24);}}menuUpdateStatusTime();return 0;}
+s32 menuFightStatusCtrl(tagWINDOW_WORK *w){StatusTween *t=windowGetFreeWork(w);u32 reset=0;if(w->phase==0){MENU_POKEMON_STATUS *status=windowAllocMemory(w,sizeof(*status));if(status){memcpy(status,(void*)w->parameters[0],sizeof(*status));if(fightKind_CheckFightKind(13))status->hideSubbar=1;if(fightKind_CheckFightKind(14))status->hideSubbar=1;if(fightKind_CheckFightKind(15))status->hideSubbar=1;if(menuFightGetStatus())menuFightSetSeq();}}else if(w->phase==1 && menuFightGetStatus()){if(*(void**)((u8*)w+0x2C)==menuSeqBiosGetPtr(0x1A5))reset=1;if(*(void**)((u8*)w+0x2C)==menuSeqBiosGetPtr(0x1A9))reset=1;if(reset)menuFightSetStatus(0);}windowGetAllocPtr(w);if(t->frames){t->timer+= (s32)(60.0f*timeGetLastFrameSec());if(t->timer>t->frames)t->frames=0;}if(t->expFrames){t->expTimer+=(s32)(60.0f*timeGetLastFrameSec());if(t->expTimer>t->expFrames){t->expFrames=0;GSsndStopNow(0x24);}}menuUpdateStatusTime();return 0;}
 
 static void menuUpdateStatusTime(){f32 time=timeGetLastFrameSec();if(time!=menuStatusOldTime){menuStatusOldTime=time;menuStatusTime+=time;}}
 

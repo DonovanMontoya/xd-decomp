@@ -90,6 +90,7 @@ FightTrainer* fightFloorGetFightOutPokemonPtrToFightTrainerPtr(void*, FightOutPo
 
 }
 
+#include <game/menuPokemonStatus.hpp>
 #include <game/pxdvs/app/fight/fightPokemonMenus.hpp>
 extern "C" {
 
@@ -189,7 +190,6 @@ extern "C++" { static u32 _fightOutPokemonGetTenkiyaPkxDataId(u16 weather); }
 extern "C" { void fightPokemonSetNonTrainerPokemonIsActiveFlag(u8 active); }
 extern "C" { u8 fightPokemonGetNonTrainerPokemonIsActiveFlag(); }
 extern "C" { void fightOutPokemonGetRndStatus(FightOutPokemon* poke, u32* personality, u32* trainerRnd); }
-extern "C" { void fightOutPokemonToMenuPokemonStatus(FightOutPokemon* poke, FightMenuPokemonStatus* menu); }
 extern "C" { void fightOutPokemonToMenuWazaStatus(FightOutPokemon* poke, FightMenuWazaStatus* menu); }
 extern "C" { void fightPokemonToMenuWazaStatus(FightPokemon* poke, FightMenuWazaStatus* menu); }
 extern "C" { void fightPokemonToMenuLvupStatus(FightPokemon* poke, FightMenuLvupStatus* menu); }
@@ -719,7 +719,7 @@ void fightOutPokemonWazaEffect(FightOutPokemon* poke, u32 effect, u32 slot, u8 p
     u8 type = fightFloor_GetFightType(nullptr);
     sequence = fightOutPokemon_GetSequencePtr(poke);
     if (sequence != nullptr) {
-        FightMenuPokemonStatus menu;
+        MENU_POKEMON_STATUS menu;
         fightOutPokemonToMenuPokemonStatus(poke, &menu);
         if (menuId >= 0) {
             menuId = fightMenuGetFightOutPokemonPtrToStatusMenuId(poke, type, 1);
@@ -2509,7 +2509,7 @@ void fightOutPokemonToMenuWazaStatus(FightOutPokemon* poke, FightMenuWazaStatus*
 }
 }
 extern "C" {
-void fightOutPokemonToMenuPokemonStatus(FightOutPokemon* poke, FightMenuPokemonStatus* menu) {
+void fightOutPokemonToMenuPokemonStatus(FightOutPokemon* poke, MENU_POKEMON_STATUS* menu) {
     Pokemon* original;
     FightPokemon* current;
     s8 rare = -1;
@@ -2525,7 +2525,7 @@ void fightOutPokemonToMenuPokemonStatus(FightOutPokemon* poke, FightMenuPokemonS
         rare = pokemonCheckRare(
             fightPokemonGetPokemonPtr(fightOutPokemon_GetMotoFightPokemonPtr(poke)));
     }
-    ((void (*)(Pokemon*, FightPokemon*, FightMenuPokemonStatus*, s8))pokemonToMenuPokemonStatus)(&temporary, current, menu, rare);
+    pokemonToMenuPokemonStatus(&temporary, current, menu, rare);
     original = fightPokemonGetPokemonPtr(fightOutPokemon_GetMotoFightPokemonPtr(poke));
     if (original != nullptr) {
         pokemonToMenuPokemonStatusSubBar(original, menu);
@@ -2534,7 +2534,7 @@ void fightOutPokemonToMenuPokemonStatus(FightOutPokemon* poke, FightMenuPokemonS
     menu->hideSubbar = 1;
     if (fightOutPokemonIsGcHeroFightOutPokemon(poke) == 1) menu->hideSubbar = 0;
     if (fightFloor_GetFightKindPokemonStatusMenuSubbarFlag(nullptr) == 0) menu->hideSubbar = 1;
-    menu->reserved2d = 0;
+    menu->opening = 0;
 }
 }
 extern "C" {

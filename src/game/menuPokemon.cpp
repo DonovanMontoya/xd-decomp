@@ -9,8 +9,6 @@ enum MENU_POKEMON_CB_TYPE {
     MENU_POKEMON_CB_NEXT
 };
 
-struct MENU_POKEMON_STATUS_TBL;
-
 extern "C" {
 s32 heroItemCheckAddItemDataId(Hero*,u16);
 void heroItemAddItemDataId(Hero*,u16,s32,s32);
@@ -79,7 +77,6 @@ void menuPokemonStatusOpenFightMenu(FIGHT_TRAINER *, Pokemon *, Pokemon *(*)(Pok
 s32 menuOpen(s32, s32);
 void menuClose(s32);
 u8 menuPokemonCheckPokemonChange(void *, FIGHT_TRAINER *, s32);
-void pokemonToMenuPokemonStatus(Pokemon *, s32, MENU_POKEMON_STATUS_TBL *, s32);
 u16 pokemonGetJoutaiMenuSpriteId(Pokemon *);
 u16 menuPocket2Call(s32, s32, s32);
 u32 wazaGetStatus(void*,u32,u16,u16);
@@ -349,18 +346,18 @@ static void _menuPokemonMakeStatus(MENU_POKEMON_STATUS_TBL *tbl)
     MENU_POKEMON_STATUS_TBL *e;
     Pokemon *p;
     u16 i;
-    memset(tbl, 0, 0x120);
+    memset(tbl, 0, sizeof(_menuPokemonStatusAll));
     for (i = 0; i < 6; i++) {
         e = &tbl[i];
         p = _menuPokemonGetPokemonPtr(i);
         if (p == 0) {
-            e->unk0 = 0;
+            e->status.name[0] = 0;
         } else {
-            pokemonToMenuPokemonStatus(p, 0, e, -1);
+            pokemonToMenuPokemonStatus(p, 0, &e->status, -1);
             if ((u32)(pokemonGetStatus(p, 0, 0x7B, 0) != 0) == 1) {
-                e->unk1A = 0;
+                e->status.hp = 0;
             }
-            e->unk24 = menuPokemonGetJoutaiSpriteID(p, 0);
+            e->status.joutaiSprite = menuPokemonGetJoutaiSpriteID(p, 0);
         }
     }
 }
@@ -1106,9 +1103,9 @@ extern "C" void menuPokemonDrawItem(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite)
     if (info == 0)
         return;
 
-    if (info->unk0 == 0)
+    if (info->status.name[0] == 0)
         panelState = -1;
-    else if (info->unk1A == 0)
+    else if (info->status.hp == 0)
         panelState = 1;
 
     if ((u8)_menuPokemonCheckItem(sprite, panelState) == 0)
@@ -1198,7 +1195,7 @@ extern "C" void menuPokemonDrawItem(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite)
     switch (sprite->unk6) {
     case 306:
     case 316:
-        if (info->state == 0)
+        if (info->status.darkState == 0)
             winSpriteSetDisp(sprite, 1);
         else
             winSpriteSetDisp(sprite, 0);
@@ -1206,7 +1203,7 @@ extern "C" void menuPokemonDrawItem(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite)
 
     case 317:
     case 452:
-        if (info->state == 1)
+        if (info->status.darkState == 1)
             winSpriteSetDisp(sprite, 1);
         else
             winSpriteSetDisp(sprite, 0);
@@ -1214,7 +1211,7 @@ extern "C" void menuPokemonDrawItem(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite)
 
     case 719:
     case 720:
-        if (info->state == 2)
+        if (info->status.darkState == 2)
             winSpriteSetDisp(sprite, 1);
         else
             winSpriteSetDisp(sprite, 0);
@@ -1222,14 +1219,14 @@ extern "C" void menuPokemonDrawItem(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite)
 
     case 315:
     case 326:
-        if (info->unk24 != 0)
+        if (info->status.joutaiSprite != 0)
             windowDrawSprite2(0, 0, sprite->width, sprite->height, color, win,
-                                    info->unk24, 0, winSpriteGetLayerID(win, sprite));
+                                    info->status.joutaiSprite, 0, winSpriteGetLayerID(win, sprite));
         return;
 
     case 314:
     case 325:
-        if (info->item != 0)
+        if (info->status.itemId != 0)
             winSpriteSetDisp(sprite, 1);
         else
             winSpriteSetDisp(sprite, 0);
@@ -1238,28 +1235,28 @@ extern "C" void menuPokemonDrawItem(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite)
     case 310:
     case 321:
         GSmsgPrint2(winSpriteGetLayerID(win, sprite), 44, 0, color, 15080);
-        ((void (*)(s32,u32))msgctrlSetValue)(0x5F, info->unk1A);
+        ((void (*)(s32,u32))msgctrlSetValue)(0x5F, info->status.hp);
         GSmsgPrintRect(winSpriteGetLayerID(win, sprite), 0, 0, 42, sprite->height, color,
                     17239);
-        ((void (*)(s32,u32))msgctrlSetValue)(0x5F, info->hpMax);
+        ((void (*)(s32,u32))msgctrlSetValue)(0x5F, info->status.maxHp);
         GSmsgPrintRect(winSpriteGetLayerID(win, sprite), 0, 0, sprite->width - 2, sprite->height,
                     color, 17239);
         return;
 
     case 309:
     case 320:
-        ((void (*)(s32,u32))msgctrlSetValue)(0x5F, info->level);
+        ((void (*)(s32,u32))msgctrlSetValue)(0x5F, info->status.level);
         GSmsgPrintRect(winSpriteGetLayerID(win, sprite), 0, 0, sprite->width, sprite->height, color,
                     0x4351);
         return;
 
     case 307:
     case 318: {
-        ((void (*)(s32,u32))msgctrlSetValue)(0x37, (u32)info);
+        ((void (*)(s32,u32))msgctrlSetValue)(0x37, (u32)info->status.name);
         GSmsgPrint2(winSpriteGetLayerID(win, sprite), 0, 0, color, 0x4277);
         width = (s16)((GSmsgGetRect(0x4277) >> 16) + 4);
 
-        switch (info->sex) {
+        switch (info->status.sex) {
         case 0:
             sexId = 0x9C5;
             break;
@@ -1280,24 +1277,24 @@ extern "C" void menuPokemonDrawItem(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite)
 
     case 305:
     case 733:
-        menuFaceDispFromID(win, sprite, info->faceId);
+        menuFaceDispFromID(win, sprite, info->status.faceId);
         return;
 
     case 312:
     case 323: {
-        s16 maxHp = info->hpMax;
+        s16 maxHp = info->status.maxHp;
 
-        if (info->unk1A <= 0)
+        if (info->status.hp <= 0)
             gauge = 0;
-        else if (info->unk1A <= (maxHp * 20) / 100)
+        else if (info->status.hp <= (maxHp * 20) / 100)
             gauge = 245;
-        else if (info->unk1A <= (maxHp * 50) / 100)
+        else if (info->status.hp <= (maxHp * 50) / 100)
             gauge = 244;
         else
             gauge = 243;
 
         {
-            gaugeWidth = (info->unk1A * sprite->width + (maxHp - 1)) / maxHp;
+            gaugeWidth = (info->status.hp * sprite->width + (maxHp - 1)) / maxHp;
 
             if (gauge == 0)
                 return;

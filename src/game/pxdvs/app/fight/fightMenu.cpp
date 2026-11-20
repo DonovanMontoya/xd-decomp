@@ -639,14 +639,6 @@ extern "C" s16 fightMenuFightTrainerAgbHeroSelectIrekaeFightPokemon(FIGHT_TRAINE
 
 // @@MID2@@
 
-struct FightMenuPokeStBuf {
-    u8 pad00[0x29];
-    u8 f29;
-    u8 pad2a[3];
-    u8 f2d;
-    u8 pad2e[2];
-};
-
 struct FightMenuBallStBuf {
     u16 a[3];
 };
@@ -716,16 +708,16 @@ void fightMenuFightOutPokemonOpenStatusMenu(FightOutPokemon* poke, u16 idx, bool
 }
 
 static void _fightMenuFightOutPokemonOpenStatusMenuSub(FightOutPokemon* poke, u16 idx, bool a, bool b, bool c) {
-    FightMenuPokeStBuf buf;
+    MENU_POKEMON_STATUS buf;
     u32 id = fightMenuGetFightOutPokemonPtrToStatusMenuId(poke, idx, b);
     fightOutPokemonToMenuPokemonStatus(poke, &buf);
     if (!a) {
-        buf.f29 = 0;
+        buf.darkState = 0;
     }
     if (c) {
-        buf.f2d = 1;
+        buf.opening = 1;
     } else {
-        buf.f2d = 0;
+        buf.opening = 0;
     }
     if (dbgMenuFightGetFightPokeStMenuOpenFlag() == 1) {
         menuOpenCustom(id, -1, 0, 0, 0, 1, buf);

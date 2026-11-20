@@ -2,6 +2,7 @@
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/pxdvs/app/pokemon/pokemonStatusDispatch.hpp>
 #include <game/pxdvs/app/pokemon/pokemonPrivate.hpp>
+#include <game/menuPokemonStatus.hpp>
 
 //TODO this is simply a first pass through this class many things might need changed and or cleaned up even if the function already matches
 const f32 zero = 0.0f;
@@ -192,27 +193,6 @@ u32 pokemonCreateRndFit(Pokemon* poke, s8 sex, s8 seikaku, s8 rare, u32 trainerR
 
 void pokemonGetFriendFormPokemonFriendFilterId(Pokemon* poke, u16 itemKind, u16 filterId);
 
-struct PokemonMenuStatus {
-    u16 name[11];
-    u8 pad16;
-    u8 level;
-    u16 maxHp;
-    u16 hp;
-    union {
-        s32 nextExp;
-        f32 darkMax;
-    };
-    union {
-        s32 nowExp;
-        f32 darkNow;
-    };
-    u16 joutaiSprite;
-    u16 faceId;
-    u8 sex;
-    u8 darkState;
-    u16 itemId;
-};
-
 struct PokemonMenuWaza {
     u32 name;
     u32 zokuseiName;
@@ -225,10 +205,6 @@ struct PokemonMenuWazaStatus {
     u32 nickname;
     PokemonMenuWaza waza[4];
 };
-
-void pokemonToMenuPokemonStatusSubBar(Pokemon* poke, PokemonMenuStatus* out);
-
-void pokemonToMenuPokemonStatus(Pokemon* poke, void* fightPokemon, PokemonMenuStatus* out, u32 extra);
 
 #pragma opt_common_subs off
 void pokemonToMenuWazaStatus(Pokemon* poke, PokemonMenuWazaStatus* out);
@@ -2239,7 +2215,7 @@ void pokemonToMenuWazaStatus(Pokemon* poke, PokemonMenuWazaStatus* out)
 #pragma opt_common_subs reset
 
 extern "C" {
-void pokemonToMenuPokemonStatusSubBar(Pokemon* poke, PokemonMenuStatus* out)
+void pokemonToMenuPokemonStatusSubBar(Pokemon* poke, MENU_POKEMON_STATUS* out)
 {
     u8 level = pokemon_GetLevel(poke);
     s32 base = pokemonGetLevelToExp(poke, level);
@@ -2254,10 +2230,10 @@ void pokemonToMenuPokemonStatusSubBar(Pokemon* poke, PokemonMenuStatus* out)
 }
 
 extern "C" {
-void pokemonToMenuPokemonStatus(Pokemon* poke, void* fightPokemon, PokemonMenuStatus* out, u32 extra)
+void pokemonToMenuPokemonStatus(Pokemon* poke, FightPokemon* fightPokemon, MENU_POKEMON_STATUS* out, s8 rare)
 {
     pokemon_GetPokemonDataId(poke);
-    GScharCpy(out, pokemon_GetNicknamePtr(poke));
+    GScharCpy(out->name, pokemon_GetNicknamePtr(poke));
     out->level = pokemon_GetLevel(poke);
     out->maxHp = pokemon_GetMaxHp(poke);
     out->hp = pokemon_GetHp(poke);
@@ -2266,7 +2242,7 @@ void pokemonToMenuPokemonStatus(Pokemon* poke, void* fightPokemon, PokemonMenuSt
     if (fightPokemon == 0) {
         out->faceId = menuFaceGetID(poke);
     } else {
-        out->faceId = menuFaceGetID3(poke, pokemonGetFightPokemonDeoxysSel(fightPokemon), extra);
+        out->faceId = menuFaceGetID3(poke, pokemonGetFightPokemonDeoxysSel(fightPokemon), rare);
     }
     out->sex = menuSubGetPokemonSexForFightDisp(poke);
     if (!pokemonIsDarkPokemon(poke)) {

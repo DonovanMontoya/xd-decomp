@@ -1,6 +1,6 @@
 #ifndef GAME_MENUPOKEMON_LAYOUT_HPP
 #define GAME_MENUPOKEMON_LAYOUT_HPP
-#include <dolphin/types.h>
+#include <game/menuPokemonStatus.hpp>
 
 struct Pokemon;
 struct Hero;
@@ -32,18 +32,7 @@ struct MENU_POKEMON_WORK {
 };
 
 struct MENU_POKEMON_STATUS_TBL {
-    u16 unk0;
-    u8 reserved2[0x15];
-    u8 level;
-    s16 hpMax;
-    s16 unk1A;
-    u8 reserved1C[8];
-    u16 unk24;
-    u16 faceId;
-    u8 sex;
-    u8 state;
-    u16 item;
-    u8 reserved2C[4];
+    MENU_POKEMON_STATUS status;
 };
 
 struct tagWINDOW_WORK {

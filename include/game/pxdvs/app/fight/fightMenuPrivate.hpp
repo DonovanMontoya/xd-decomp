@@ -1,6 +1,6 @@
 #ifndef FIGHT_MENU_PRIVATE_HPP
 #define FIGHT_MENU_PRIVATE_HPP
-#include <dolphin/types.h>
+#include <game/menuPokemonStatus.hpp>
 
 struct FightOutPokemon;
 struct FIGHT_TRAINER;
@@ -56,7 +56,6 @@ Pokemon* fightOutPokemonGetPokemonPtr(FightOutPokemon*);
 u16 fightOutPokemonGetSoubiItemDataId(FightOutPokemon*);
 void fightOutPokemonInitFightActionBuff(FightOutPokemon*);
 u8 fightOutPokemonIsJoutaiDataId(FightOutPokemon*, u16);
-void fightOutPokemonToMenuPokemonStatus(FightOutPokemon*, void*);
 void fightOutPokemonToMenuWazaStatus(FightOutPokemon*, void*);
 s8 fightPokemonCheckFightOut(FightPokemon*);
 u8 fightPokemonCheckValid(void*);
