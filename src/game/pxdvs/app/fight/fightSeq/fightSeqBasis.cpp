@@ -326,7 +326,7 @@ u8 menuCBRule_ProhibitionSuicide();
 s32 menuFightStatusStartAnimEXP(s32, s32);
 s32 menuFightStatusWaitAnimeEXP(s32, s32);
 s32 menuFightStatusWaitAnimeHP(s32, s32);
-u8 menuIsCheck();
+s32 menuIsCheck(s32);
 u8 pokemonCheckInfectPokerus(Pokemon *, s32);
 u16 pokemonDB_GetGiveExp(u16);
 u8 pokemonDB_GetTokuseiDataId(u16, u8);
@@ -3250,7 +3250,7 @@ void WS_HP_DEC_WAIT(void) {
     fightType = fightFloor_GetFightType(NULL);
     temp_r3 = fightTargetGetPtrAsNowFightType(*(u8 *)(fightSeq_GetWazaSeq() + 0x1), NULL);
     temp_r31 = fightMenuGetFightOutPokemonPtrToStatusMenuId(temp_r3, fightType, 1);
-    if (menuIsCheck() == 1) {
+    if ((u8)menuIsCheck(temp_r31) == 1) {
         menuFightStatusWaitAnimeHP(temp_r31, 1);
     }
     if (fightOutPokemonIsHinsi(temp_r3) == 1) {
@@ -3402,7 +3402,7 @@ void WS_HP_DEC(void) {
             fightSeqCheckSetHensinBuffToMotoPokemon(fop, 0x83U);
             menuId = fightMenuGetFightOutPokemonPtrToStatusMenuId(fop, fightType, 1);
             animHp = hp;
-            if (menuIsCheck() == 0) {
+            if ((u8)menuIsCheck(menuId) == 0) {
                 fightMenuFightOutPokemonOpenStatusMenu(fop, fightType, 1U);
                 fightMenuFightOutPokemonCloseStatusMenuAnotherMine(0, fop, fightType, 0U, 1U);
             }
