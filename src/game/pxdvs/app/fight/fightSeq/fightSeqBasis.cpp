@@ -249,7 +249,7 @@ FIGHT_TRAINER * fightSide_GetFightTrainerPtr(FightSide *,u16);
 s32 fightSide_SetMakibisiCheckFlag(FightSide *, s32);
 s32 fightTargetDataBiosGetBuff(void *);
 void * fightTargetDataBiosGetPtr(s32);
-FightOutPokemon * fightTargetGetPtr(u16,FightOutPokemon *,u16);
+void* fightTargetGetPtr(u16, void*, u16);
 FightOutPokemon * fightTargetGetPtrAsNowFightType(u32, FightOutPokemon *);
 FightTarget* fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(u32, u16);
 u32 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(FightTarget*, u8);
@@ -3966,21 +3966,21 @@ void fightSeqPpdecMonomane(FightOutPokemon *arg0, u8 arg1, s32 arg2) {
 void WS_ATTACK_MESSAGE(void) {
     FightOutPokemon *temp_r3;
     u8 temp_r30;
-    FightOutPokemon *temp_r29;
-    FightOutPokemon *temp_r28_2;
+    FIGHT_TRAINER* firstOpponent;
+    FIGHT_TRAINER* secondOpponent;
     s16 var_r27;
     u16 temp_r27;
     void *temp_r26;
     WazaSequence *temp_r26_2;
-    FIGHT_TRAINER *temp_r28;
+    FIGHT_TRAINER* attackerTrainer;
 
     temp_r30 = fightFloor_GetFightType(NULL);
     fightSeq_GetWazaSeq();
     if (!(ServerStatusFlag & 0x600)) {
         temp_r3 = fightTargetGetPtrAsNowFightType(0x11U, NULL);
-        temp_r28 = fightFloorGetFightOutPokemonPtrToFightTrainerPtr(NULL, temp_r3);
-        temp_r29 = ((FightOutPokemon *(*)(u8, FightOutPokemon *, u8))fightTargetGetPtr)(9U, (FightOutPokemon *) temp_r28, fightFloor_GetFightType(NULL));
-        temp_r28_2 = ((FightOutPokemon *(*)(u8, FightOutPokemon *, u8))fightTargetGetPtr)(0xAU, (FightOutPokemon *) temp_r28, fightFloor_GetFightType(NULL));
+        attackerTrainer = fightFloorGetFightOutPokemonPtrToFightTrainerPtr(NULL, temp_r3);
+        firstOpponent = static_cast<FIGHT_TRAINER*>(fightTargetGetPtr(9U, attackerTrainer, (u8)fightFloor_GetFightType(NULL)));
+        secondOpponent = static_cast<FIGHT_TRAINER*>(fightTargetGetPtr(0xAU, attackerTrainer, (u8)fightFloor_GetFightType(NULL)));
         fightOutPokemonGetNicknamePtr(temp_r3);
         temp_r27 = fightOutPokemon_GetUseWazaDataId(temp_r3);
         temp_r26 = fightOutPokemon_GetSequencePtr(temp_r3);
@@ -3992,13 +3992,13 @@ void WS_ATTACK_MESSAGE(void) {
             msgFrame = 0x50;
             ServerWork.flags[7] = 2;
         }
-        if ((temp_r29 != NULL) && (fightTrainerAiDB_GetParamStoreFlag(fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId((FIGHT_TRAINER *) temp_r29))) == 1)) {
-            fightAi_AddStoreWaza(temp_r3, (FIGHT_TRAINER *) temp_r29, temp_r27);
-            fightAi_DereteExpectWaza(temp_r3, (FIGHT_TRAINER *) temp_r29, temp_r27);
+        if ((firstOpponent != NULL) && (fightTrainerAiDB_GetParamStoreFlag(fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(firstOpponent))) == 1)) {
+            fightAi_AddStoreWaza(temp_r3, firstOpponent, temp_r27);
+            fightAi_DereteExpectWaza(temp_r3, firstOpponent, temp_r27);
         }
-        if ((temp_r28_2 != NULL) && (fightTrainerAiDB_GetParamStoreFlag(fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId((FIGHT_TRAINER *) temp_r28_2))) == 1)) {
-            fightAi_AddStoreWaza(temp_r3, (FIGHT_TRAINER *) temp_r29, temp_r27);
-            fightAi_DereteExpectWaza(temp_r3, (FIGHT_TRAINER *) temp_r29, temp_r27);
+        if ((secondOpponent != NULL) && (fightTrainerAiDB_GetParamStoreFlag(fightTrainerDB_GetAiDataId(fightTrainer_GetFightTrainerDataId(secondOpponent))) == 1)) {
+            fightAi_AddStoreWaza(temp_r3, firstOpponent, temp_r27);
+            fightAi_DereteExpectWaza(temp_r3, firstOpponent, temp_r27);
         }
         if (temp_r26 != NULL) {
             temp_r26_2 = Sequence_GetWaza(temp_r26, 0x9EU, 4U);
@@ -4632,7 +4632,7 @@ FightOutPokemon *fightSeqSelectDefensePokemonPtr(FightOutPokemon *arg0, u16 arg1
     case 6:
     case 7:
         if (arg4 == 1) {
-            var_r31 = fightTargetGetPtr(0xFU, arg0, arg2);
+            var_r31 = static_cast<FightOutPokemon*>(fightTargetGetPtr(0xFU, arg0, arg2));
             if (fightOutPokemonCheckFightOut(var_r31) == 0) {
                 var_r31 = fightTargetGetPtrAsNowFightType(0xEU, var_r31);
             }
