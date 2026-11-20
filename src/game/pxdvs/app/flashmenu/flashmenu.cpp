@@ -971,57 +971,85 @@ void flcalcUnitMatrix(FLASHMATRIXF*);
 void flcalcCreateCxform(FLASHCXFORM*, u32);
 }
 void FlashMenu::DrawText(_DEFINETEXT* text, FLASHMATRIXF* parent, FLASHMATRIXF* matrix, FLASHCXFORM* color, u8 flags) {
-    u16 fontId = 0;
-    s16 x = 0, y = 0;
+    u16 fontId;
+    s16 x, y;
     FLASHMATRIXF local;
     FLASHMATRIXF combined;
     FLASHCXFORM glyphColor;
     FlashPoint scale, translation;
-    u16 height = 0;
-    s32 currentColor = 0;
-    s32 offset = 0;
-    TextRecord* record = (TextRecord*)text->records;
+    _DEFINEFONT2* font;
+    FlashGlyph* glyph;
+    s32 advance;
+    u16 height;
+    TextRecord* record;
+    TextGlyphs* glyphs;
+    u32 currentColor;
+    s32 offset;
+    s32 glyphScale;
+    s32 i;
+
+    record = (TextRecord*)text->records;
+    fontId = 0;
+    x = 0;
+    y = 0;
+    height = 0;
+    currentColor = 0;
+    offset = 0;
     flcalcMatrixCopy(&local, matrix);
     for (;;) {
         switch (record->type) {
+        case 0:
+            break;
         case 1: {
             FlashTextStyle* style = (FlashTextStyle*)record->data;
             u8 styleFlags = style->flags;
             s32 changeFont = styleFlags & 8;
             if (changeFont) fontId = style->font;
             if (styleFlags & 4) currentColor = style->color;
-            if (styleFlags & 1) { x = style->x; x = style->x / 20; }
-            if (styleFlags & 2) { y = style->y; y = style->y / 20; }
-            if (changeFont) height = style->height / 20;
+            if (styleFlags & 1) {
+                x = style->x;
+                x /= 20;
+            }
+            if (styleFlags & 2) {
+                y = style->y;
+                y /= 20;
+            }
+            if (changeFont) {
+                height = style->height;
+                height /= 20;
+            }
             break;
         }
         case 2: {
-            TextGlyphs* glyphs = (TextGlyphs*)record->data;
-            _DEFINEFONT2* font = (_DEFINEFONT2*)memory[fontId].data;
-            if (font) {
-                FlashGlyph* glyph = (FlashGlyph*)glyphs->data;
-                for (s32 i = 0; i < glyphs->count; ++i, ++glyph) {
-                    flcalcCreateCxform(&glyphColor, currentColor);
-                    flcalcMulCxform(&glyphColor, &glyphColor, color);
-                    s32 glyphScale = glyph->scale;
-                    flcalcMatrixCopy(&local, matrix);
-                    if (parent) flcalcMatrixCopy(&combined, parent);
-                    else flcalcUnitMatrix(&combined);
-                    scale.y = scale.x = (f32)glyphScale * 0.0009765625f;
-                    flcalcMatrixScale(&local, &local, &scale);
-                    translation.x = x; translation.y = y;
-                    flcalcMatrixTranslate(&local, &local, &translation);
-                    s32 previous = offset;
-                    offset += height;
-                    local.m[4] += previous;
-                    _DEFINESHAPE* shape = ((_DEFINESHAPE**)font->shapes)[glyph->index];
-                    if (*(u32*)((u8*)shape->records + 8)) {
-                        vectorGraph(field34, &shape->fillCount, &shape->lineCount, shape->records, &combined, &local, &glyphColor, flags);
-                    }
+            glyphs = (TextGlyphs*)record->data;
+            font = (_DEFINEFONT2*)memory[fontId].data;
+            FlashGlyph* entries = (FlashGlyph*)glyphs->data;
+            if (!font) break;
+            glyph = entries;
+            advance = height;
+            for (i = 0; i < glyphs->count; ++glyph, ++i) {
+                flcalcCreateCxform(&glyphColor, currentColor);
+                flcalcMulCxform(&glyphColor, &glyphColor, color);
+                glyphScale = glyph->scale;
+                flcalcMatrixCopy(&local, matrix);
+                if (parent) flcalcMatrixCopy(&combined, parent);
+                else flcalcUnitMatrix(&combined);
+                scale.x = scale.y = (f32)glyphScale / 1024.0f;
+                flcalcMatrixScale(&local, &local, &scale);
+                translation.x = x;
+                translation.y = y;
+                flcalcMatrixTranslate(&local, &local, &translation);
+                local.m[4] += offset;
+                offset += advance;
+                _DEFINESHAPE* shape = ((_DEFINESHAPE**)font->shapes)[glyph->index];
+                if (shape->records->next) {
+                    vectorGraph(field34, &shape->fillCount, &shape->lineCount, shape->records, &combined, &local, &glyphColor, flags);
                 }
             }
             break;
         }
+        default:
+            break;
         }
         TextRecord* next = (TextRecord*)record->next;
         if (!next) return;
