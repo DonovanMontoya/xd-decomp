@@ -290,6 +290,8 @@ The Poké Spot food placement routine uses the inventory and storage accounting 
 
 Battle status recovery uses the item effect buffer and item ID width from the same XD checkpoint.
 
+The hologram renderer uses the GX vertex writes and hall alpha field identified in the same XD checkpoint.
+
 ## Colosseum license notice
 
 ```text
