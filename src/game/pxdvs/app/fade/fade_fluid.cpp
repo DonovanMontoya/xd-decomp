@@ -112,7 +112,6 @@ struct FadeFluidWork {
     GSvec* velocityX;
     GSvec* velocityY;
     GSvec2* texCoord;
-    u8 pad_3C[4];
 };
 
 extern "C" {
