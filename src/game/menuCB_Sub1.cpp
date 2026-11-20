@@ -20,7 +20,11 @@ void spriteSetScissor(s32,s32,s32,s16,s16); void spriteClearScissor(s32);
 u16 *heroBiosGetNamePtr(void *);
 s32 menuCBBattleStartGetStatus(void); u8 menuCBPokemonEntryGetReadFlag(void);
 MenuSubPokemon *toolentryTaisenGetPokemonPtr(u32,s32); MenuSubPokemon *toolentryTaisenGetEntryPokemonPtr(u32,s32); u16 toolentryTaisenGetEntryPokemonNum(u32);
-s32 menuCBBios_GetTrainerOrgImmediately(void); s32 menuCBTrainerBios_GetHomePlace(void); u8 heroBiosGetSexDataId(s32);
+struct MenuCBBiosTrainer;
+struct Hero;
+struct MenuCBBiosTrainer *menuCBBios_GetTrainerOrgImmediately(s32 port);
+s32 menuCBTrainerBios_GetHomePlace(struct MenuCBBiosTrainer *trainer);
+u8 heroBiosGetSexDataId(struct Hero *hero);
 void fadeSet(s32,f32);
 void menuCBPokemonEntryDispPokemonFace(s32,s32,s32,s32);
 void *itemDataBiosGetPtr(u32); s32 itemDataBiosGetName(void *);
@@ -208,7 +212,7 @@ void menuCBpokemonFaceReadWait(void);
 void toobattle_drawHeroName2(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg2);
 void toobattle_drawHeroNames(MenuSubWindow *arg0, s32 arg1);
 void toobattle_drawHeroName(MenuSubWindow *arg0, s32 arg1);
-s32 toolbattle_trainerFace(void);
+u32 toolbattle_trainerFace(s32 port);
 u8 menuCBPokemonGetDataId_NULL();
 u8 menuCBPokemonGetDataId();
 u8 menuCBPokemonGetItemDataId();
@@ -2949,20 +2953,18 @@ void toolbattle_drawHeroID(MenuSubWindow *window, s32 player) {
 }
 #pragma pop
 
-s32 toolbattle_trainerFace(void) {
-    s32 temp_r31;
-    s32 temp_r3;
+u32 toolbattle_trainerFace(s32 port) {
+    struct MenuCBBiosTrainer *trainer;
     u8 temp_r3_2;
     u8 temp_r3_3;
     u8 temp_r3_4;
 
-    temp_r31 = menuCBBios_GetTrainerOrgImmediately();
-    temp_r3 = menuCBTrainerBios_GetHomePlace();
-    switch (temp_r3) {
+    trainer = menuCBBios_GetTrainerOrgImmediately(port);
+    switch (menuCBTrainerBios_GetHomePlace(trainer)) {
     case 0:
         return 0;
     case 1:
-        temp_r3_2 = heroBiosGetSexDataId(temp_r31 + 0x9A4);
+        temp_r3_2 = heroBiosGetSexDataId((struct Hero *)((u8 *)trainer + 0x9A4));
         switch ((s32) temp_r3_2) {
         case 0: return 3;
         case 1: return 4;
@@ -2971,7 +2973,7 @@ s32 toolbattle_trainerFace(void) {
         }
         break;
     case 2:
-        temp_r3_3 = heroBiosGetSexDataId(temp_r31 + 0x9A4);
+        temp_r3_3 = heroBiosGetSexDataId((struct Hero *)((u8 *)trainer + 0x9A4));
         switch ((s32) temp_r3_3) {
         case 0: return 1;
         case 1: return 2;
@@ -2980,7 +2982,7 @@ s32 toolbattle_trainerFace(void) {
         }
         break;
     case 3:
-        temp_r3_4 = heroBiosGetSexDataId(temp_r31 + 0x9A4);
+        temp_r3_4 = heroBiosGetSexDataId((struct Hero *)((u8 *)trainer + 0x9A4));
         switch ((s32) temp_r3_4) {
         case 0: return 5;
         case 1: return 6;

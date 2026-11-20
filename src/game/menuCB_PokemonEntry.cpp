@@ -10,7 +10,7 @@ struct EntryTrainer {u32 field0;s32 type;u32 order[6];s32 count;u32 field24;s32 
 struct EntryPlayerView{u8 pad0[0x3C];s32 controller;u8 pad40[0x12E0];};
 struct EntryCB {union {u8 bytes[0xB4C0];EntryPlayerView players[4];struct {u8 pad0[4];s32 mode;u8 pad8[45016];s32 selected;u8 padAFE4[124];s32 selectionDone;u8 padB064[160];s32 fieldB104;s32 state;u8 padB10C[4];s32 fieldB110;u8 padB114[140];s32 cancel;u8 padB1A4[692];s16 activeCount[4][6];s8 active[4][6];} fields;};};
 extern EntryCB _CB;extern u8 *pGCB;u16 uToolPokemon_faceId;
-extern "C" {u8 menuCBRule_DEOKISISUCamouflage();u16 menuGBACGetRomVer(u16);u16 menuCBBios_ParticipationPokemonMax();u16 toolentryTaisenGetPokemonNum(s32);u16 toolentryTaisenGetEntryPokemonNum(s32);s32 toolentryTaisenGetBattleType();s32 toolentryTaisenGetBattleVersus();EntryTrainer *menuCBBios_GetTrainerFromVersusBattleID(s32);EntryTrainer *menuCBBios_GetTrainerImmediately(s32);s32 menuCBTrainerBios_GetControlerID();void *menuCBBios_GetHeroImmediately(s32);void gbaCommandSendWazaText(s32,void*);void gbaCommandEntryRequest(s32,u32,u32,s32);void toolentryTaisenInitPokemonOrder(s32);s32 toolentryTaisenGetEntryPlayerNum();void menuFaceLoad_Tool(s32,s32(*)(void*),s32);s32 menuCBBattleStartGetStatus();Pokemon *toolentryTaisenGetPokemonPtr(s32,s32);Pokemon *toolentryTaisenGetEntryPokemonPtr(s32,s32);u16 menuFaceGetID2(Pokemon*,u8);s32 pokemonGetStatus(Pokemon*,s32,s32,s32);void menuFaceDispFromID(s32,s32,u16);void menuCBPokemonEntryTexWorkInit();u16 menuCBPokemonEntryPokemonNumMin(s32);}
+extern "C" {u8 menuCBRule_DEOKISISUCamouflage();u16 menuGBACGetRomVer(u16);u16 menuCBBios_ParticipationPokemonMax();u16 toolentryTaisenGetPokemonNum(s32);u16 toolentryTaisenGetEntryPokemonNum(s32);s32 toolentryTaisenGetBattleType();s32 toolentryTaisenGetBattleVersus();EntryTrainer *menuCBBios_GetTrainerFromVersusBattleID(s32);EntryTrainer *menuCBBios_GetTrainerImmediately(s32);s32 menuCBTrainerBios_GetControlerID(EntryTrainer*);void *menuCBBios_GetHeroImmediately(s32);void gbaCommandSendWazaText(s32,void*);void gbaCommandEntryRequest(s32,u32,u32,s32);void toolentryTaisenInitPokemonOrder(s32);s32 toolentryTaisenGetEntryPlayerNum();void menuFaceLoad_Tool(s32,s32(*)(void*),s32);s32 menuCBBattleStartGetStatus();Pokemon *toolentryTaisenGetPokemonPtr(s32,s32);Pokemon *toolentryTaisenGetEntryPokemonPtr(s32,s32);u16 menuFaceGetID2(Pokemon*,u8);s32 pokemonGetStatus(Pokemon*,s32,s32,s32);void menuFaceDispFromID(s32,s32,u16);void menuCBPokemonEntryTexWorkInit();u16 menuCBPokemonEntryPokemonNumMin(s32);}
 static u8 _menuCB_pokemonGetDeoxysSel(u16 player,bool camouflage);
 
 struct DeoxysStats {s32 attack,defense,specialAttack,specialDefense,speed;};
@@ -154,11 +154,11 @@ static void _menuCBPokemonEntryWorkInit(void) {
     _menuCBPokemonWork.field0 = 0;
     _menuCBPokemonWork.fieldC = 0;
     for (i = 0; i < count; i++) {
-        void* trainer = menuCBBios_GetTrainerImmediately(i);
-        pad = menuCBTrainerBios_GetControlerID();
+        EntryTrainer* trainer = menuCBBios_GetTrainerImmediately(i);
+        pad = menuCBTrainerBios_GetControlerID(trainer);
         hero = menuCBBios_GetHeroImmediately(i);
         _menuCBPokemonEntrySetEntryFlag(i, false);
-        if (*(s32*)((u8*)trainer + 4) != 0) {
+        if (trainer->type != 0) {
             s32 mode;
             gbaCommandSendWazaText(pad, hero);
             if (type == 1) {
