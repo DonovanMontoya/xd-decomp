@@ -3,6 +3,7 @@
 
 #include <global.h>
 #include <game/pxdvs/app/hero/hero.hpp>
+#include <game/pxdvs/app/hero/heroMove.hpp>
 #include <game/pxdvs/app/people/runtime.hpp>
 
 enum HEROMOVE_MEMBER {
@@ -48,13 +49,6 @@ struct HeroMoveMember {
     FOOTWORK footWork;
 };
 
-struct HeroMoveQueuedEvent {
-    GSvec position[3];
-    u32 reserved24[3];
-    u16 eventID;
-    u16 reserved32;
-};
-
 struct HeroMoveWork {
     s32 leader;
     HeroMoveMember members[4];
@@ -89,9 +83,6 @@ struct HeroMoveWork {
     } state;
 };
 
-typedef char HeroMoveQueuedEvent_size_check[(sizeof(HeroMoveQueuedEvent) == 0x34) ? 1 : -1];
-typedef char HeroMoveQueuedEvent_position_check[(offsetof(HeroMoveQueuedEvent, position) == 0) ? 1 : -1];
-typedef char HeroMoveQueuedEvent_eventID_check[(offsetof(HeroMoveQueuedEvent, eventID) == 0x30) ? 1 : -1];
 typedef char HeroMoveMember_size_check[(sizeof(HeroMoveMember) == 0x20) ? 1 : -1];
 typedef char HeroMoveWork_members_check[(offsetof(HeroMoveWork, members) == 0x4) ? 1 : -1];
 typedef char HeroMoveMember_footWork_check[(offsetof(HeroMoveMember, footWork) == 0x10) ? 1 : -1];

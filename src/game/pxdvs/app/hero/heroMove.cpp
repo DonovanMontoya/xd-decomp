@@ -437,7 +437,7 @@ void heroMoveInitEvent() {
     } while (i < 4);
 }
 
-void heroMoveSetEventList(u8 kind, void* list, s32 count) {
+void heroMoveSetEventList(u8 kind, HeroMoveQueuedEvent* list, s32 count) {
     switch (kind) {
     case 1:
         memcpy(HeroMove.state.events1, list, sizeof(HeroMove.state.events1));
@@ -808,11 +808,11 @@ s32 heroMoveMain() {
 
 extern "C" {
 void PSVECAdd(GSvec*, GSvec*, GSvec*);
-s32 GScolsys2CheckGetEventID(GSvec*, GSvec*, void*);
+s32 GScolsys2CheckGetEventID(GSvec*, GSvec*, HeroMoveQueuedEvent*);
 double sin(double);
 double cos(double);
 
-s32 heroMoveCheckEvent(void* arg) {
+s32 heroMoveCheckEvent(HeroMoveQueuedEvent* events) {
     unsigned long group;
     unsigned long res;
     s32 result;
@@ -832,7 +832,7 @@ s32 heroMoveCheckEvent(void* arg) {
         dir.param2 = 0.0f;
         dir.param3 = 10.0f * (f32)cos(rot->param2);
         PSVECAdd(&start, &dir, &dir);
-        result = GScolsys2CheckGetEventID(&start, &dir, arg);
+        result = GScolsys2CheckGetEventID(&start, &dir, events);
     }
     return result;
 }
@@ -1468,7 +1468,6 @@ u8 heroMoveChkHinderClear(s32 member) {
 }
 }
 
-struct HeroMoveEvent {GSvec points[3]; u8 data[16];};
 extern "C" {
 void __ct__5GSvecFv(void*);
 void __construct_array(void*,void (*)(void*),void (*)(void*),u32,u32);
@@ -1489,7 +1488,7 @@ void peopleTalkMsgEnd(u32,u32);
 u8 peopleBiosCheckFlag(void*,u32);
 }
 static u8 updateChat(HEROMOVE_MEMBER member) {
-    HeroMoveEvent events[4];
+    HeroMoveQueuedEvent events[4];
     GSvec neck;
     unsigned long group,res;
     getResID(&group,&res,member);
@@ -1497,10 +1496,10 @@ static u8 updateChat(HEROMOVE_MEMBER member) {
     s32 script;
     if(!person) {
         s32 count;
-        __construct_array(events[0].points,__ct__5GSvecFv,0,12,3);
-        __construct_array(events[1].points,__ct__5GSvecFv,0,12,3);
-        __construct_array(events[2].points,__ct__5GSvecFv,0,12,3);
-        __construct_array(events[3].points,__ct__5GSvecFv,0,12,3);
+        __construct_array(events[0].vertices,__ct__5GSvecFv,0,sizeof(GSvec),3);
+        __construct_array(events[1].vertices,__ct__5GSvecFv,0,sizeof(GSvec),3);
+        __construct_array(events[2].vertices,__ct__5GSvecFv,0,sizeof(GSvec),3);
+        __construct_array(events[3].vertices,__ct__5GSvecFv,0,sizeof(GSvec),3);
         count=heroMoveCheckEvent(events);
         heroMoveSetEventList(3,events,count);
         if(count) {peopleRotateStop(0,100);return 1;}
@@ -1658,7 +1657,7 @@ static void __sinit_heroMove_cpp() {
 }
 }
 extern "C" __declspec(weak) HeroMoveQueuedEvent* constructHeroMoveQueuedEvent(HeroMoveQueuedEvent* event) {
-    __construct_array(event->position, __ct__5GSvecFv, 0, sizeof(GSvec), 3);
+    __construct_array(event->vertices, __ct__5GSvecFv, 0, sizeof(GSvec), 3);
     return event;
 }
 

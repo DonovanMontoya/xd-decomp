@@ -1,5 +1,6 @@
 #include <game/pxdvs/app/people/runtime.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
+#include <game/pxdvs/app/hero/heroMove.hpp>
 #pragma dont_inline on
 namespace GSscript { struct Tiga { int getNameToFuncId(const char*); }; }
 extern "C" {
@@ -2786,19 +2787,17 @@ s32 _peopleSideStepCheck__Fv() {
 }
 
 extern "C" {
-struct PeopleCollisionSurface { GSvec vertices[3]; u8 reserved[16]; };
 struct PeopleWalkSurface { f32 height; u32 flags[2]; };
 void __ct__5GSvecFv(GSvec*);
 void __construct_array(void*,void*,void*,u32,u32);
-s32 GScolsys2ThruGetEventID(GSvec*,GSvec*,PeopleCollisionSurface*,f32);
-s32 GScolsys2ThruPassEventID(GSvec*,GSvec*,PeopleCollisionSurface*);
-void heroMoveSetEventList(s32,PeopleCollisionSurface*,s32);
+s32 GScolsys2ThruGetEventID(GSvec*,GSvec*,HeroMoveQueuedEvent*,f32);
+s32 GScolsys2ThruPassEventID(GSvec*,GSvec*,HeroMoveQueuedEvent*);
 u8 gimmickBoxIsPushBoxFloor();
 s32 GScolsys2WalkGetHeight(GSvec*,PeopleWalkSurface*);
 GSvec* peopleBiosGetPrevPosPtr(tagPeopleWork*);
 u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* work,GSvec* output,GSvec* previous) {
     PeopleWalkSurface surfaces[8];
-    PeopleCollisionSurface events[4];
+    HeroMoveQueuedEvent events[4];
     GSvec oldPosition,position,start,end,hit;
     __construct_array(events[0].vertices,(void*)__ct__5GSvecFv,0,12,3);
     __construct_array(events[1].vertices,(void*)__ct__5GSvecFv,0,12,3);
