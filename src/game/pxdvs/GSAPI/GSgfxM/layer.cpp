@@ -10,6 +10,16 @@ extern void* fbTexPtr__10GSgfxLayer;
 extern u16 fbTexRefCount__10GSgfxLayer;
 extern void* distTexPtr__10GSgfxLayer;
 extern u16 distTexRefCount__10GSgfxLayer;
+// This unit supplies the shared lookup tables for the inline GX register writers.
+#pragma push
+#pragma dollar_identifiers on
+__declspec(weak) u8 c2r$localstatic3$GSgfx_GCWriteTevOrder[16] = {
+    0, 1, 0, 1, 0, 1, 7, 5, 6, 0, 0, 0, 0, 0, 0, 7
+};
+__declspec(weak) u8 cm2hw$localstatic3$GSgfx_GCWriteCullMode[4] = {0, 2, 1, 3};
+__declspec(weak) u8 pxf2hw$localstatic3$GSgfx_GCWritePixelFmt[8] = {0, 1, 2, 3, 4, 4, 4, 5};
+__declspec(weak) u8 yuvmap$localstatic4$GSgfx_GCWritePixelFmt[4] = {0, 1, 2, 2};
+#pragma pop
 u8 gsgfx_layer_inPrimitive;
 void* gsgfx_layer_activeFifo;
 }
