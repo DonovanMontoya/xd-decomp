@@ -1095,12 +1095,13 @@ static inline void retainExpression(tigaVariant* value) {
 static inline void clearExpression(tigaVariant* value) {
     value->type=0;value->value.integer=0;
 }
-static inline void prepareVector(Tiga* owner,tigaVariant* value) {
-    if(value->type!=4){
-        releaseExpression(value);
-        GSvec* vector=(GSvec*)owner->objManager.newVector();
-        value->type=4;value->flags=0;value->value.vector=vector;
-    }
+static inline void prepareVector(Tiga* owner, tigaVariant* value, u8 requestedType) {
+    if (requestedType != 4 || value->type == 4) return;
+    releaseExpression(value);
+    GSvec* vector = owner->objManager.newVector();
+    value->type = 4;
+    value->flags = 0;
+    value->value.vector = vector;
 }
 int Tiga::execute(TigaThread* thread) {
     tigaVariant result;
@@ -1169,15 +1170,15 @@ int Tiga::execute(TigaThread* thread) {
             u32 kind=instruction->subcode&15;
             --thread->stackPtr10;
             if(kind==0){
-                tigaVariant* value=&globals[index];
-                if(pc[1].subcode==4)prepareVector(this,value);
+                prepareVector(this, &globals[index], pc[1].subcode);
                 *thread->stackPtr10=globals[index];}
             else if(kind==1){
-                tigaVariant* value=&thread->stackPtr0C[index];
-                if(pc[1].subcode==4)prepareVector(this,value);
+                prepareVector(this, &thread->stackPtr0C[index], pc[1].subcode);
                 *thread->stackPtr10=thread->stackPtr0C[index];}
             else if(kind==2){
-                if(pc[1].subcode==4)prepareVector(this,&(&thread->retVar)[index]);
+                if (pc[1].subcode == 4) {
+                    prepareVector(this, &(&thread->retVar)[index], 4);
+                }
                 *thread->stackPtr10=(&thread->retVar)[index];}
             else if(kind==3){getPresetVar(thread->stackPtr10,index,0);}
             if(thread->stackPtr10->type==4){
