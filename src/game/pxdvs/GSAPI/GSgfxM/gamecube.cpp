@@ -5,7 +5,6 @@
 
 extern "C" {
 
-extern GCGraphicsState *gsgfxState;
 struct GCTmemRegion { u32 even, odd; };
 GCTmemRegion GSgfx_GCTmemRegions[8] = {
     {0, 0x80000}, {0x10000, 0x88000}, {0x20000, 0x90000}, {0x30000, 0x98000},
@@ -80,26 +79,6 @@ inline void GSgfx_GCSetScissorCached(u16 x, u16 y, u16 w, u16 h, s32 ox, s32 oy)
     GC_HALF(0x448) = w; GC_HALF(0x44a) = h;
     GC_WORD(0x44c) = ox; GC_WORD(0x450) = oy;
 }
-inline void GSgfx_GCWriteViewport(f32 x, f32 y, f32 width, f32 height, f32 nearZ, f32 farZ, u32 mode) {
-    if (mode == 0) y -= 0.5f;
-    f32 halfWidth = width / 2.0f;
-    f32 halfHeight = height / 2.0f;
-    f32 zScale = 16777216.0f;
-    f32 zOffset = 0.0f;
-    f32 farDepth = farZ * zScale;
-    GCWriteByte(0x10); GCWriteHalf(5); GCWriteHalf(0x101a);
-    GXWGFifo.f32 = halfWidth;
-    GXWGFifo.f32 = -halfHeight;
-    GXWGFifo.f32 = -(nearZ * zScale - farDepth);
-    GXWGFifo.f32 = 342.0f + (x + halfWidth);
-    GXWGFifo.f32 = 342.0f + (y + halfHeight);
-    GXWGFifo.f32 = farDepth + zOffset;
-    GC_FLOAT(0xc24) = x; GC_FLOAT(0xc28) = y;
-    GC_FLOAT(0xc2c) = width; GC_FLOAT(0xc30) = height;
-    GC_FLOAT(0xc34) = nearZ; GC_FLOAT(0xc38) = farZ;
-    GC_WORD(0xc3c) = mode;
-}
-
 inline void GSgfx_GCWriteChanCtrl(s32 chan, u8 enable, s32 ambient, s32 material, s32 lights, s32 diffuse, s32 attenuation) {
     s32 diffuseFunction = diffuse;
     if (attenuation == 0) diffuseFunction = 0;
@@ -852,13 +831,13 @@ void GSgfx_GCInvalidateState(void) {
     GC_HALF(0x44A) = 0xFEFE;
     GC_WORD(0x44C) = invalid;
     GC_WORD(0x450) = invalid;
-    GC_FLOAT(0xC24) = -1.0f;
-    GC_FLOAT(0xC28) = -1.0f;
-    GC_FLOAT(0xC2C) = -1.0f;
-    GC_FLOAT(0xC30) = -1.0f;
-    GC_FLOAT(0xC34) = 0.0f;
-    GC_FLOAT(0xC38) = 1.0f;
-    GC_WORD(0xC3C) = invalid;
+    gsgfxState->viewportX = -1.0f;
+    gsgfxState->viewportY = -1.0f;
+    gsgfxState->viewportWidth = -1.0f;
+    gsgfxState->viewportHeight = -1.0f;
+    gsgfxState->viewportNear = 0.0f;
+    gsgfxState->viewportFar = 1.0f;
+    gsgfxState->viewportField = invalid;
     GC_BYTE(0x454) = 0xFE;
     GC_BYTE(0x458) = 0xFE;
     GC_WORD(0x45C) = invalid;
@@ -2015,14 +1994,14 @@ void GSgfx_GCReset(void) {
     GC_WORD(0x44c) = 0; GC_WORD(0x450) = 0;
     GSgfxVideoGetEFBSize(&GC_HALF(0x448), &GC_HALF(0x44a));
     GSgfx_GCSetScissorCached(0, 0, GC_HALF(0x448), GC_HALF(0x44a), 0, 0);
-    GC_FLOAT(0xc24) = 0.0f; GC_FLOAT(0xc28) = 0.0f;
+    gsgfxState->viewportX = 0.0f; gsgfxState->viewportY = 0.0f;
     u16 efbWidth = GC_HALF(0x448);
-    GC_FLOAT(0xc2c) = __OSu16tof32(&efbWidth);
+    gsgfxState->viewportWidth = __OSu16tof32(&efbWidth);
     u16 efbHeight = GC_HALF(0x44a);
-    GC_FLOAT(0xc30) = __OSu16tof32(&efbHeight);
-    GC_FLOAT(0xc34) = 0.0f; GC_FLOAT(0xc38) = 1.0f;
-    GC_WORD(0xc3c) = 1;
-    GSgfx_GCWriteViewport(GC_FLOAT(0xc24), GC_FLOAT(0xc28), GC_FLOAT(0xc2c), GC_FLOAT(0xc30), GC_FLOAT(0xc34), GC_FLOAT(0xc38), GC_WORD(0xc3c));
+    gsgfxState->viewportHeight = __OSu16tof32(&efbHeight);
+    gsgfxState->viewportNear = 0.0f; gsgfxState->viewportFar = 1.0f;
+    gsgfxState->viewportField = 1;
+    GSgfx_GCWriteViewport(gsgfxState->viewportX, gsgfxState->viewportY, gsgfxState->viewportWidth, gsgfxState->viewportHeight, gsgfxState->viewportNear, gsgfxState->viewportFar, gsgfxState->viewportField);
     GC_BYTE(0x454) = 0; GC_REG(0x30, GCGenModeRegister).channels = 0;
     gsgfxState->dirty |= 0x01000001; GC_BYTE(0x454) = 0;
     for (i = 0; i < 4; ++i) {

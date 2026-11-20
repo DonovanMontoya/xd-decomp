@@ -48,6 +48,9 @@ struct GCCombinerInputs { s32 a, b, c, d; };
 struct GCCombinerOperation { s32 operation, bias, scale; u8 clamp; u8 padding[3]; s32 output; };
 struct GCStageSwapCache { s32 raster, texture; };
 struct GCTlutUploadCache { u32 source; u16 count, region; };
+struct RenderEntry;
+struct GSgfx_GCFifoObj;
+
 struct GCGraphicsState {
     u32 dirty;
     u32 dirtyGroups[11];
@@ -100,7 +103,20 @@ struct GCGraphicsState {
     u8 unmodelledB24[0xB64 - 0xB24];
     u8 indirectMode[16];
     GCIndirectOrderCache indirectOrders[4];
-    u8 unmodelledB94[0xC64 - 0xB94];
+    u8 unmodelledB94[0xC24 - 0xB94];
+    f32 viewportX, viewportY, viewportWidth, viewportHeight, viewportNear, viewportFar;
+    u32 viewportField;
+    void* layer;
+    void* xfb;
+    s32 copyState;
+    RenderEntry* list;
+    GSgfx_GCFifoObj* sourceFifo;
+    GSgfx_GCFifoObj* gpuFifo;
+    void* start;
+    void* end;
+    u8 complete;
+    u8 active;
+    u8 padC62[2];
 };
 typedef char GCTextureGeneratorCacheSizeCheck[sizeof(GCTextureGeneratorCache) == 0x14 ? 1 : -1];
 typedef char GCGraphicsStateSizeCheck[sizeof(GCGraphicsState) == 0xC64 ? 1 : -1];
@@ -169,5 +185,32 @@ typedef char GCGlobalRegisterStateSizeCheck[sizeof(GCGlobalRegisterState) == 5 ?
 inline void GCWriteByte(u8 value) { GXWGFifo.u8 = value; }
 inline void GCWriteHalf(u16 value) { GXWGFifo.u16 = value; }
 inline void GCWriteWord(u32 value) { GXWGFifo.u32 = value; }
+
+extern "C" GCGraphicsState* gsgfxState;
+
+inline void GSgfx_GCWriteViewport(f32 x, f32 y, f32 width, f32 height, f32 nearZ, f32 farZ, u32 mode) {
+    if (mode == 0) y -= 0.5f;
+    f32 halfWidth = width / 2.0f;
+    f32 halfHeight = height / 2.0f;
+    f32 zScale = 16777216.0f;
+    f32 zOffset = 0.0f;
+    f32 farDepth = farZ * zScale;
+    GCWriteByte(0x10);
+    GCWriteHalf(5);
+    GCWriteHalf(0x101a);
+    GXWGFifo.f32 = halfWidth;
+    GXWGFifo.f32 = -halfHeight;
+    GXWGFifo.f32 = -(nearZ * zScale - farDepth);
+    GXWGFifo.f32 = 342.0f + (x + halfWidth);
+    GXWGFifo.f32 = 342.0f + (y + halfHeight);
+    GXWGFifo.f32 = farDepth + zOffset;
+    gsgfxState->viewportX = x;
+    gsgfxState->viewportY = y;
+    gsgfxState->viewportWidth = width;
+    gsgfxState->viewportHeight = height;
+    gsgfxState->viewportNear = nearZ;
+    gsgfxState->viewportFar = farZ;
+    gsgfxState->viewportField = mode;
+}
 
 #endif

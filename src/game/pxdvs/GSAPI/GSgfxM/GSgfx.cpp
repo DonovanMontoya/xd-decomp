@@ -9,16 +9,16 @@ void GSgfxHaltInit__Fv(); void GSmathInit(); void GSgfxRenderInit__Fv(); void GS
 void GSlogWrite(const char*,...);
 GSgfxLayer *__ct__10GSgfxLayerF12GSgfxLayerIDPcUlUlUl14GSgfxLayerType(void*,s32,char*,u32,u32,u32,s32);
 }
-static GraphicsState _gfxMemoryState;
-extern "C" { GraphicsState *gsgfxState; }
+static GCGraphicsState _gfxMemoryState;
+extern "C" { GCGraphicsState *gsgfxState; }
 extern "C" { static void _gfxScratchNotify__F15GSscratchNotifyPvUc(GSscratchNotify,void*,u8); }
 extern "C" void GSgfxRelocToScratch() {
-    GraphicsState *state = (GraphicsState*)GSscratchAlloc(12,_gfxScratchNotify__F15GSscratchNotifyPvUc);
-    memcpy(state,gsgfxState,sizeof(GraphicsState)); gsgfxState=state;
+    GCGraphicsState *state = (GCGraphicsState*)GSscratchAlloc(12,_gfxScratchNotify__F15GSscratchNotifyPvUc);
+    memcpy(state,gsgfxState,sizeof(GCGraphicsState)); gsgfxState=state;
 }
 extern "C" void GSgfxShutdown__Fv() { GSgfxVideoShutdown__Fv(); GSgfxGPUShutdown__Fv(); }
 extern "C" void GSgfxInit__FP15_GSgfxInitParms(_GSgfxInitParms *p) {
-    gsgfxState=&_gfxMemoryState; memset(&_gfxMemoryState,0,sizeof(GraphicsState));
+    gsgfxState=&_gfxMemoryState; memset(&_gfxMemoryState,0,sizeof(GCGraphicsState));
     GSgfx_GCFirstInit(); GSgfx_GCInitState(); GSgfxVideoInit__FUcUs14GSgfxVideoMode(p->buffers,p->height,p->mode); GSgfxGPUInit__Fv(); GSgfxVideoSecondInit__Fv();
     if(p->halt==1) GSgfxHaltInit__Fv();
     GSmathInit(); GSgfxRenderInit__Fv(); GSgfxVFInit__Fv(); GSgfxLayerInit__Fv(); GSgfxTokenInit__Fv(); GSgfxPerfbarInit__FUc(4); GSgfxBackFBInit__Fv(); GSgfxResetInit__Fv(); HSD_Init();
@@ -26,6 +26,6 @@ extern "C" void GSgfxInit__FP15_GSgfxInitParms(_GSgfxInitParms *p) {
     GSgfxRenderSetupFirstFrame__Fv(); GSlogWrite("GSgfx: Init OK, state located at %08Xh (size=%d)\n",gsgfxState,0xc64);
 }
 static void _gfxScratchNotify__F15GSscratchNotifyPvUc(GSscratchNotify n,void *p,u8) {
-    switch(n) { case ScratchOut: memcpy(&_gfxMemoryState,p,sizeof(GraphicsState)); gsgfxState=&_gfxMemoryState; break;
-    case ScratchIn: memcpy(p,&_gfxMemoryState,sizeof(GraphicsState)); gsgfxState=(GraphicsState*)p; break; }
+    switch(n) { case ScratchOut: memcpy(&_gfxMemoryState,p,sizeof(GCGraphicsState)); gsgfxState=&_gfxMemoryState; break;
+    case ScratchIn: memcpy(p,&_gfxMemoryState,sizeof(GCGraphicsState)); gsgfxState=(GCGraphicsState*)p; break; }
 }

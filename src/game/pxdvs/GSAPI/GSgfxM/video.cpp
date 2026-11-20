@@ -143,28 +143,31 @@ void GSgfxVideoInit__FUcUs14GSgfxVideoMode(u8 count,u16 height,s32 mode) {
     VISetBlack(1);VIConfigure((GXRenderModeObj*)&_videoState.mode);VIFlush();VIWaitForRetrace();VIWaitForRetrace();
 }
 
-inline void writeViewport(float x,float y,float width,float height,float nearZ,float farZ,u32 field,float depthScale,float depthBias) {
-    if(gsgfxState->vx!=x || gsgfxState->vy!=y || gsgfxState->vw!=width || gsgfxState->vh!=height || gsgfxState->vnear!=nearZ || gsgfxState->vfar!=farZ || gsgfxState->field!=field) {
-        if(field==0) y-=0.5f;
-        GXWGFifo.u8=0x10;
-        float hh=height*0.5f;
-        GXWGFifo.u16=5;
-        float hw=width*0.5f;float z=farZ*depthScale;
-        GXWGFifo.u16=0x101a;
-        GXWGFifo.f32=hw;
-        GXWGFifo.f32=-hh;
-        GXWGFifo.f32=-(nearZ*depthScale-z);
-        GXWGFifo.f32=342.0f+(x+hw);
-        GXWGFifo.f32=342.0f+(y+hh);
-        GXWGFifo.f32=z+depthBias;
-        gsgfxState->vx=x;gsgfxState->vy=y;gsgfxState->vw=width;gsgfxState->vh=height;gsgfxState->vnear=nearZ;gsgfxState->vfar=farZ;gsgfxState->field=field;
+inline void writeViewport(f32 x, f32 y, f32 width, f32 height, f32 nearZ, f32 farZ, u32 field) {
+    if (gsgfxState->viewportX != x || gsgfxState->viewportY != y ||
+        gsgfxState->viewportWidth != width || gsgfxState->viewportHeight != height ||
+        gsgfxState->viewportNear != nearZ || gsgfxState->viewportFar != farZ ||
+        gsgfxState->viewportField != field) {
+        GSgfx_GCWriteViewport(x, y, width, height, nearZ, farZ, field);
     }
 }
+
 static void _videoUpdateViewport__Fb(bool noOffset) {
-    VideoState *state=&_videoState;float x,y;
-    if(!noOffset) GSgfxSSGetViewportOffset__FPfPf(&x,&y);else {x=0;y=0;}
-    if(state->mode.field) writeViewport(_viewport.x+x,_viewport.y+y,_viewport.width,_viewport.height,_viewport.nearZ,_viewport.farZ,_videoState.field,16777216.0f,0.0f);
-    else writeViewport(_viewport.x+x,_viewport.y+y,_viewport.width,_viewport.height,_viewport.nearZ,_viewport.farZ,1,16777216.0f,0.0f);
+    VideoState* state = &_videoState;
+    f32 x, y;
+    if (!noOffset) {
+        GSgfxSSGetViewportOffset__FPfPf(&x, &y);
+    } else {
+        x = 0;
+        y = 0;
+    }
+    if (state->mode.field) {
+        writeViewport(_viewport.x + x, _viewport.y + y, _viewport.width, _viewport.height,
+                      _viewport.nearZ, _viewport.farZ, _videoState.field);
+    } else {
+        writeViewport(_viewport.x + x, _viewport.y + y, _viewport.width, _viewport.height,
+                      _viewport.nearZ, _viewport.farZ, 1);
+    }
 }
 
 static u8 _videoSetupRenderMode__F14GSgfxVideoMode15GSgfxVideoFrameb16GSgfxVideoFilterb(s32 mode,s32 frame,bool interlace,s32 filter,bool progressive) {
