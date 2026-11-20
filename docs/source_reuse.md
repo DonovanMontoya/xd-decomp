@@ -294,6 +294,8 @@ The hologram renderer uses the GX vertex writes and hall alpha field identified 
 
 Particle model rendering follows the per-node render routine from the same XD checkpoint, using the local matrix and shape APIs.
 
+The PDA monitor location sort follows the same XD checkpoint. The party slot has an eight-bit index, and the monitor routines follow the order of the retail object.
+
 ## Colosseum license notice
 
 ```text
