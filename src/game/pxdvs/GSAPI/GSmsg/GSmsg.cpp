@@ -915,8 +915,10 @@ static inline u8 &msgLayerByte(GSgfxLayer* layer,u32 offset) {return *((u8*)laye
 #pragma dont_inline off
 extern "C" u8 lbl_804E834C=3;
 extern "C" {
-static s32 cnt$2342, cnt$2348;
-static s8 init$2343, init$2349;
+static s32 cnt$2342;
+static s8 init$2343;
+static s32 cnt$2348;
+static s8 init$2349;
 }
 s32 _msgMainSub__FP13MSG_TASK_WORKUcUlb(MsgTask *task,u8 mode,u32 buttons,bool paused) {
  u8 quote=0,speaking=0;MsgColor white={0xffffffff};

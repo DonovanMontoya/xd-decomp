@@ -20,8 +20,8 @@ __declspec(weak) u8 cm2hw$localstatic3$GSgfx_GCWriteCullMode[4] = {0, 2, 1, 3};
 __declspec(weak) u8 pxf2hw$localstatic3$GSgfx_GCWritePixelFmt[8] = {0, 1, 2, 3, 4, 4, 4, 5};
 __declspec(weak) u8 yuvmap$localstatic4$GSgfx_GCWritePixelFmt[4] = {0, 1, 2, 2};
 #pragma pop
-u8 gsgfx_layer_inPrimitive;
 void* gsgfx_layer_activeFifo;
+u8 gsgfx_layer_inPrimitive;
 }
 static LayerNode* _layerBottom;
 static LayerNode* _layerIDTable[16];

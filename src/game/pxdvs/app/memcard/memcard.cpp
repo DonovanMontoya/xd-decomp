@@ -15,9 +15,12 @@ extern "C" const u8 _memcardBannerImage[0x1800];
 extern "C" const u8 _memcardIconImage[0x2200];
 #endif
 
+static u16 _memcard_encrypt_key[4];
 static u8 _memcardInitializeFlag;
+static u8 _memcard_new_saveDataCrateFlag;
 static MemcardStatus* _memcardStatusPtr;
 static u8 _memcard_anySaveOFF_Flag;
+static u8 _memcard_gba2mode;
 static u8 _memcardStatusBuf[0x210] __attribute__((aligned(8)));
 
 static u8 _memcardMsgOpen(MEMCARD_MSGTYPE msg);
@@ -30,7 +33,6 @@ void _memcardStoreSaveData_multi(void*);
 void _memcardDuplicateSaveData_multi(void*);
 static void* _memcardGetMultiSaveDataToSTRUCT(void*, long);
 
-static u16 _memcard_encrypt_key[4];
 
 static inline void advanceMemcardKey() {
     u16 key[4];
@@ -866,7 +868,6 @@ s32 fn_801CC508() {
     return 0x12;
 }
 }
-static u8 _memcard_new_saveDataCrateFlag;
 extern "C" void *gamedatasaveBiosGetPtr(void *);
 extern "C" u64 gamedatasaveBiosGetMemcardID(void *);
 
@@ -1002,7 +1003,6 @@ s32 CARDWriteAsync(MemcardFileInfo*,void*,s32,s32,MemcardCallback);
 u8 GSgfxResetDisable();u8 GSgfxResetRestore(u8);void PKJB_ReturnTitle(u8);void floorMemoryCardSaveCallback();
 void gamedatasaveBiosSetMemcardID(void*,u64);s32 gbaCommandChangePokemonEnd(s32);u8 gbaCommandIsConnected(s32);
 }
-static u8 _memcard_gba2mode;
 #pragma push
 #pragma dont_inline on
 // SDK accessors for the recovered card-stat layout.
