@@ -123,8 +123,6 @@ typedef char GCGraphicsStateIndirectOrdersOffsetCheck[offsetof(GCGraphicsState, 
 struct GCTextureMatrixIndex0 { u32 reserved:2, texture3:6, texture2:6, texture1:6, texture0:6, position:6; };
 struct GCTextureMatrixIndex1 { u32 reserved:8, texture7:6, texture6:6, texture5:6, texture4:6; };
 struct GCIndirectMatrix { f32 a0, a1, a2, b0, b1, b2; };
-struct GCAASamplePattern { u8 groups[4][6]; };
-typedef char GCAASamplePatternSizeCheck[sizeof(GCAASamplePattern) == 24 ? 1 : -1];
 union GCAASampleRegister {
     u32 value;
     struct { u32 address:8, sample5:4, sample4:4, sample3:4, sample2:4, sample1:4, sample0:4; } fields;

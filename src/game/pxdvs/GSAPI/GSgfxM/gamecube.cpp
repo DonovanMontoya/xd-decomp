@@ -1,3 +1,4 @@
+#include <game/pxdvs/GSAPI/GSgfxM/copyFilter.hpp>
 #include <game/pxdvs/GSAPI/GSgfxM/gamecube_private.hpp>
 #include <libc/string.h>
 #include <dolphin/os/OSFastCast.h>
@@ -15,7 +16,10 @@ u32 GSgfx_GCTlutRegions[20] = {
     0xd0000, 0xd2000, 0xd4000, 0xd6000, 0xd8000, 0xda000, 0xdc000, 0xde000,
     0xe0000, 0xe8000, 0xf0000, 0xf8000
 };
-static GCAASamplePattern _gcDefaultAASample = {{{6,6,6,6,6,6},{6,6,6,6,6,6},{6,6,6,6,6,6},{6,6,6,6,6,6}}};
+static u8 _gcDefaultAASample[12][2] = {
+    {6, 6}, {6, 6}, {6, 6}, {6, 6}, {6, 6}, {6, 6},
+    {6, 6}, {6, 6}, {6, 6}, {6, 6}, {6, 6}, {6, 6}
+};
 u8 GSgfx_GCTexMode0Ids[8] = {0x80, 0x81, 0x82, 0x83, 0xa0, 0xa1, 0xa2, 0xa3};
 u8 GSgfx_GCTexMode1Ids[8] = {0x84, 0x85, 0x86, 0x87, 0xa4, 0xa5, 0xa6, 0xa7};
 u8 GSgfx_GCTexImage0Ids[8] = {0x88, 0x89, 0x8a, 0x8b, 0xa8, 0xa9, 0xaa, 0xab};
@@ -115,19 +119,20 @@ static inline u8 *GCAppendBP(u8 *destination, const void *registerValue) {
     return out + 5;
 }
 
-u8 *GSgfx_GCWriteCopyFilterDirect(u8 *destination, u8 antialias, const GCAASamplePattern *samples, u8 verticalFilter, const u8 filter[7]) {
-    if (antialias == 0) samples = &_gcDefaultAASample;
+u8 *GSgfx_GCWriteCopyFilterDirect(u8 *destination, u8 antialias, const u8 samples[12][2], u8 verticalFilter, const u8 filter[7]) {
+    if (antialias == 0) samples = _gcDefaultAASample;
     if (verticalFilter == 0) filter = _gcDefaultVFilt;
     GCAASampleRegister sample;
     GCCopyFilterRegister coefficients;
     for (s32 i = 0; i < 4; ++i) {
+        const u8 (*group)[2] = samples + i * 3;
         sample.fields.address = i + 1;
-        sample.fields.sample0 = samples->groups[i][0];
-        sample.fields.sample1 = samples->groups[i][1];
-        sample.fields.sample2 = samples->groups[i][2];
-        sample.fields.sample3 = samples->groups[i][2];
-        sample.fields.sample4 = samples->groups[i][4];
-        sample.fields.sample5 = samples->groups[i][4];
+        sample.fields.sample0 = group[0][0];
+        sample.fields.sample1 = group[0][1];
+        sample.fields.sample2 = group[1][0];
+        sample.fields.sample3 = group[1][0];
+        sample.fields.sample4 = group[2][0];
+        sample.fields.sample5 = group[2][0];
         destination = GCAppendBP(destination, &sample);
     }
     coefficients.fields.address = 0x53;
@@ -144,19 +149,20 @@ u8 *GSgfx_GCWriteCopyFilterDirect(u8 *destination, u8 antialias, const GCAASampl
     return GCAppendBP(destination, &coefficients);
 }
 
-void GSgfx_GCWriteCopyFilter( u8 antialias, const GCAASamplePattern *samples, u8 verticalFilter, const u8 filter[7]) {
-    if (antialias == 0) samples = &_gcDefaultAASample;
+void GSgfx_GCWriteCopyFilter(u8 antialias, const u8 samples[12][2], u8 verticalFilter, const u8 filter[7]) {
+    if (antialias == 0) samples = _gcDefaultAASample;
     if (verticalFilter == 0) filter = _gcDefaultVFilt;
     GCAASampleRegister sample;
     GCCopyFilterRegister coefficients;
     for (s32 i = 0; i < 4; ++i) {
+        const u8 (*group)[2] = samples + i * 3;
         sample.fields.address = i + 1;
-        sample.fields.sample0 = samples->groups[i][0];
-        sample.fields.sample1 = samples->groups[i][1];
-        sample.fields.sample2 = samples->groups[i][2];
-        sample.fields.sample3 = samples->groups[i][2];
-        sample.fields.sample4 = samples->groups[i][4];
-        sample.fields.sample5 = samples->groups[i][4];
+        sample.fields.sample0 = group[0][0];
+        sample.fields.sample1 = group[0][1];
+        sample.fields.sample2 = group[1][0];
+        sample.fields.sample3 = group[1][0];
+        sample.fields.sample4 = group[2][0];
+        sample.fields.sample5 = group[2][0];
         GCWriteByte(GX_LOAD_BP_REG);
         GCWriteWord(sample.value);
     }

@@ -1,3 +1,4 @@
+#include <game/pxdvs/GSAPI/GSgfxM/copyFilter.hpp>
 #include "graphics_round1.h"
 #include <dolphin/gx/GXVert.h>
 // This revision's VI mode uses the original 0x3c-byte GX layout.
@@ -20,9 +21,7 @@ extern GCRegs _gcGlobalRegState;
 
 
 void GSgfxSSGetViewportOffset__FPfPf(float*,float*);
-u8 *GSgfx_GCWriteCopyFilterDirect(void*,u8,void*,u8,void*);
 u8 *GSgfx_GCWriteCopyDispDirect(void*,CopyParams*,void*,u8,u8,u8);
-void GSgfx_GCWriteCopyFilter(u8,void*,u8,void*);
 void GSgfx_GCWriteCopyDisp(CopyParams*,void*,u8,u8,u8);
 static void _videoUpdateViewport__Fb(bool);
 static u8 _videoSetupRenderMode__F14GSgfxVideoMode15GSgfxVideoFrameb16GSgfxVideoFilterb(s32,s32,bool,s32,bool);
@@ -59,7 +58,7 @@ inline void copyParams(CopyParams &p) { p.x=0;p.y=0;p.width=640;p.height=480;p.s
 extern "C" {
 u32 GSgfxVideoBuildEFB2XFBCopy__FPvPv(void *cmd,void *xfb) {
     VideoBuffer *b=findPointer(xfb); b->state=4; CopyParams p;copyParams(p);
-    void *out=GSgfx_GCWriteCopyFilterDirect(cmd,_videoState.mode.aa,_videoState.mode.samples,1,_videoState.mode.filter);
+    void *out=GSgfx_GCWriteCopyFilterDirect(static_cast<u8*>(cmd),_videoState.mode.aa,_videoState.mode.samples,1,_videoState.mode.filter);
     u8 *end=GSgfx_GCWriteCopyDispDirect(out,&p,b->ptr,1,1,1); u32 size=end-(u8*)cmd; u32 rounded=(size+31)&~31; if(rounded-size) memset(end,0,rounded-size); DCFlushRange(cmd,rounded); return rounded;
 }
 VideoMode *GSgfxVideoGetRenderMode__Fv() { return &_videoState.mode; }
