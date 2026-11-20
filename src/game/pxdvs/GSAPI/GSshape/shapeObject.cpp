@@ -91,7 +91,13 @@ void GsShapeObject::SetVertexColorAlpha(int mode,int shape,f32 alpha,bool) {
         for(column=0;column<columns;column++) {
             u8 value=colors->a;
             f32 factor=(value/255.0f)*alpha;
-            out->r=colors->r*factor; out->g=colors->g*factor; out->b=colors->b*factor; out->a=value;
+            u8 red = colors->r;
+            u8 green = colors->g;
+            u8 blue = colors->b;
+            out->r = red * factor;
+            out->g = green * factor;
+            out->b = blue * factor;
+            out->a = value;
             colors++; out++;
         }
     }
