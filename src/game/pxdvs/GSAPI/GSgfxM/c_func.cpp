@@ -1,6 +1,7 @@
 #pragma defer_codegen on
 // Deferred code generation emits these definitions in reverse order.
 #pragma force_active on
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include "graphics_round1.h"
 #include <game/pxdvs/GSAPI/GSgfxM/c_interface.hpp>
 #include <game/pxdvs/GSAPI/GScamera/GScamera.hpp>
@@ -68,9 +69,6 @@ void GSgfxSetTUnitUserAlphaOp(u8 unit, s32 op, s32 bias, s32 scale, u8 clamp, s3
 }
 extern "C" {
 void GSgfxSetTUnitUserAlphaArg(u8 unit, s32 a, s32 b, s32 c, s32 d);
-}
-extern "C" {
-void GSgfxSetupRenderAndSelect(void* format);
 }
 extern "C" {
 void GSgfxDLDraw(void* list);

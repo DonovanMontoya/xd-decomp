@@ -1,5 +1,6 @@
 #ifndef GSCOLSYS2_HUMAN_PRIVATE_HPP
 #define GSCOLSYS2_HUMAN_PRIVATE_HPP
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <dolphin/mtx.h>
 #include <libc/stddef.h>
 struct GSvec { f32 x,y,z; };
@@ -25,8 +26,6 @@ tagPeopleWork *heroGetFollower();
 void GSgfxLayerSetActive(s32);
 void GScameraLoadActiveCameraMatrix(s32);
 void GSgfxCullMode(s32);
-void *GSgfxVFBuildTemp(s32,s32,u8,s32,u8,s32,u8,s32,s32);
-void GSgfxSetupRenderAndSelect();
 void GSgfxBlendMode(s32,s32,s32);
 void GSgfxPixelMode(s32,s32,s32);
 void GSgfxSetLineWidth(f32);

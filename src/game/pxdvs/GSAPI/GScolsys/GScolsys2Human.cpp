@@ -20,8 +20,7 @@ extern "C" void GScolsys2HumanDispColision() {
         GSgfxLayerSetActive(2);
         GScameraLoadActiveCameraMatrix(2);
         GSgfxCullMode(0);
-        GSgfxVFBuildTemp(1,4,0,0,1,5,0,0,0);
-        GSgfxSetupRenderAndSelect();
+        GSgfxSetupRenderAndSelect(GSgfxVFBuildTemp(1,4,0,0,1,5,0,0,0));
         GSgfxBlendMode(1,4,5);
         GSgfxPixelMode(1,1,1);
         GSgfxSetLineWidth(2.0f);

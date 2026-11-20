@@ -1,4 +1,5 @@
 // Default flags (no extra cflags needed).
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <game/pxdvs/app/ant/antPrivate.hpp>
 #include <libc/string.h>
 
@@ -371,8 +372,6 @@ struct GStexture;
 struct GSgfxColAu8 {u8 r,g,b,a;};
 extern "C" {
 u16 GStextureGetXsize(GStexture*);u16 GStextureGetYsize(GStexture*);
-void GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);
-void GSgfxSetupRenderAndSelect();
 void GSgfxSetTUnitUserColorArg(s32,s32,s32,s32,s32);
 void GSgfxSetTUnitUserColorOp(s32,s32,s32,s32,s32,s32);
 void GSgfxSetTUnitUserAlphaArg(s32,s32,s32,s32,s32);
@@ -410,8 +409,7 @@ void dispTexture(GStexture *texture,f32 x,f32 y,int tx,int ty,int width,int heig
         x-=width/2;
         y-=height/2;
     }
-    GSgfxVFBuildTemp(0,3,0,0,1,5,1,1,4);
-    GSgfxSetupRenderAndSelect();
+    GSgfxSetupRenderAndSelect(GSgfxVFBuildTemp(0,3,0,0,1,5,1,1,4));
     if(alpha!=255){
         color.a=alpha;
         GSgfxSetTUnitUserColorArg(0,15,15,15,8);

@@ -1,5 +1,6 @@
 #ifndef GAME_PXDVS_GSAPI_GSGFXM_VF_PRIVATE_HPP
 #define GAME_PXDVS_GSAPI_GSGFXM_VF_PRIVATE_HPP
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <dolphin/types.h>
 #include <libc/stddef.h>
 struct VFAttribute { s32 attribute, count, component; u8 fraction; u8 padding[3]; };
