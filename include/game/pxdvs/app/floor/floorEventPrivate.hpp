@@ -79,8 +79,8 @@ s32 peopleGetFlags(u32,u32);
 void peopleSetFlags(u32,u32,u32);
 void heroMoveInitEvent();
 void heroMoveTermEvent();
-void scriptSetEventColID(u32);
-void floorExecScriptInteger(u32,s32,s32,s32,s32);
+s32 scriptSetEventColID(s32);
+s32 floorExecScriptInteger(int,s32,s32,s32,s32);
 void scriptSoundOpenPlayME(u32,s32,u8);
 }
 void EvlogSet(s8,u32);

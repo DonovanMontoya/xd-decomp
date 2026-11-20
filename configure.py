@@ -1185,7 +1185,7 @@ config.libs = [
 
             # floor
             Object(NonMatching, "game/pxdvs/app/floor/floor.cpp", extra_cflags=["-inline off,deferred", "-opt nopeephole", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/app/floor/floorEvent.cpp", extra_cflags=["-inline noauto", "-use_lmw_stmw on", "-opt nopeephole"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/floor/floorEvent.cpp", extra_cflags=["-inline noauto", "-use_lmw_stmw on", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/floor/floorCharacterBios.cpp", extra_cflags=["-inline off", "-use_lmw_stmw off", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/floor/floorDataBios.cpp", extra_cflags=["-inline noauto", "-use_lmw_stmw off", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/floor/floorFieldCamera.cpp", extra_cflags=["-inline off", "-opt nopeephole", "-str reuse,nopool,readonly"]),

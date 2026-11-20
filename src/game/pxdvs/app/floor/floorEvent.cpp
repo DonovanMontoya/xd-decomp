@@ -353,10 +353,9 @@ s32 floorEventCtrlDoor(u32 floorID, u32 index, u8 control) {
 }
 s32 floorEventExecScript(s8 type, u32 collisionID) {
     u32 floorID;
-    s32 count;
     FloorEventScript *event;
     u32 i;
-    count = 0;
+    s32 count = 0;
     EvlogSet(type, collisionID);
     floorID = GSfloorGetCurrent();
     for (i = 0; i < *floor_event_list_number; ++i) {
