@@ -292,6 +292,8 @@ Battle status recovery uses the item effect buffer and item ID width from the sa
 
 The hologram renderer uses the GX vertex writes and hall alpha field identified in the same XD checkpoint.
 
+Particle model rendering follows the per-node render routine from the same XD checkpoint, using the local matrix and shape APIs.
+
 ## Colosseum license notice
 
 ```text

@@ -45,51 +45,60 @@ static inline void setModelMatrix(ModelJObj *jobj,Mtx matrix) {
  }
 }
 #pragma opt_loop_invariants off
-void peModelContainer::Render() {
- Mtx transform,rotation;
- if(active&&modelVisible(this)) {
-  if(!(model->flags&0x40)) {
-   ModelCamera *camera=GScameraGetActiveCamera();
-   if(!camera)return;
-   GXSetClipMode(GX_CLIP_ENABLE);HSD_StateInvalidate(-1);
-   HSD_CObjSetCurrent(camera->camera);GSlightSetupLights(camera->camera);
-  }
-  peModelNode *node=(peModelNode*)nodes;
-  while(node) {
-   _peModel *definition=model;
-   PSMTXQuat(rotation,&node->worldRotation);
-   PSMTXScale(transform,node->worldScale.x,node->worldScale.y,node->worldScale.z);
-   PSMTXConcat(rotation,transform,transform);
-   PSMTXTransApply(transform,transform,node->worldPosition.x,node->worldPosition.y,node->worldPosition.z);
-   if(definition->flags&0x40) {
-    u16 primitive=definition->resource.primitive-1;
-    shapeUpdate(primitive,node->life-node->time,node->instance);
-    pushMult__16GSgfxMatrixStackFP5GSmtx(((ParticleLayerState*)g_current_layer)->unk19A0,transform);
-    shapeRender(primitive,node->instance,((ParticleLayerState*)g_current_layer)->unk28);
-    pop__16GSgfxMatrixStackFv(((ParticleLayerState*)g_current_layer)->unk19A0);
-   } else {
-    ModelJObj *jobj=definition->resource.jobj;
-    if(jobj) {
-     u32 mask;
-     switch(g_render_pass) {
-     case 0:mask=1;break;
-     case 1:mask=6;break;
-     default:goto nextNode;
-     }
-     setModelMatrix(jobj,transform);
-     if(definition->duration>0.00001f) {
-      f32 rate=GSgfxVideoGetVsyncRate();f32 elapsed=node->life-node->time;
-      HSD_JObjReqAnimAll(jobj,(f32)fmod(elapsed*rate,definition->duration));
-      HSD_JObjAnimAll(jobj);HSD_JObjDispAll(jobj,0,mask,0);
-     }
+static inline void renderModelNode(peModelNode *node, _peModel *definition) {
+    Mtx rotation;
+    Mtx transform;
+    u16 primitive;
+    u32 mask;
+    ModelJObj *jobj;
+    PSMTXQuat(rotation, &node->worldRotation);
+    PSMTXScale(transform, node->worldScale.x, node->worldScale.y, node->worldScale.z);
+    PSMTXConcat(rotation, transform, transform);
+    PSMTXTransApply(transform, transform, node->worldPosition.x, node->worldPosition.y, node->worldPosition.z);
+    if (definition->flags & 0x40) {
+        primitive = definition->resource.primitive - 1;
+        shapeUpdate(primitive, node->life - node->time, node->instance);
+        pushMult__16GSgfxMatrixStackFP5GSmtx(((ParticleLayerState *)g_current_layer)->unk19A0, transform);
+        shapeRender(primitive, node->instance, ((ParticleLayerState *)g_current_layer)->unk28);
+        pop__16GSgfxMatrixStackFv(((ParticleLayerState *)g_current_layer)->unk19A0);
+    } else {
+        jobj = definition->resource.jobj;
+        if (jobj) {
+            switch (g_render_pass) {
+            case 0: mask = 1; break;
+            case 1: mask = 6; break;
+            default: return;
+            }
+            setModelMatrix(jobj, transform);
+            if (definition->duration > 0.00001f) {
+                f32 time = (node->life - node->time) * (f32)GSgfxVideoGetVsyncRate();
+                f32 frame = (f32)fmod(time, definition->duration);
+                HSD_JObjReqAnimAll(jobj, frame);
+                HSD_JObjAnimAll(jobj);
+                HSD_JObjDispAll(jobj, 0, mask, 0);
+            }
+        }
     }
-   }
-nextNode:
-   node=(peModelNode*)node->next;
-  }
-  if(!(model->flags&0x40))InvalidateState__10GSgfxLayerFv(g_current_layer);
-  particleEngineSetDefaultRenderState(1);
- }
+}
+
+void peModelContainer::Render() {
+    if (active && modelVisible(this)) {
+        if (!(model->flags & 0x40)) {
+            ModelCamera *camera = GScameraGetActiveCamera();
+            if (!camera) return;
+            GXSetClipMode(GX_CLIP_ENABLE);
+            HSD_StateInvalidate(-1);
+            HSD_CObjSetCurrent(camera->camera);
+            GSlightSetupLights(camera->camera);
+        }
+        for (peNode *node = nodes; node; node = node->next) {
+            renderModelNode((peModelNode *)node, model);
+        }
+        if (!(model->flags & 0x40)) {
+            InvalidateState__10GSgfxLayerFv(g_current_layer);
+        }
+        particleEngineSetDefaultRenderState(1);
+    }
 }
 #pragma opt_loop_invariants reset
 void peModelContainer::Update(f32 time) {
