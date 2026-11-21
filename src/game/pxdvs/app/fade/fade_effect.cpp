@@ -169,26 +169,26 @@ typedef char FadeFadeLayerConfigViewOffset1818[offsetof(FadeLayerConfigView, con
 
 typedef bool (*FadeEffectCallback)(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
 extern "C" void fadeSetFunctionOnly(FadeEffectCallback);
-extern bool fadeEffectHookFunction_virtual_hexa_decay(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_trainer_second(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_slide_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_four_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_distortion_strip_yoko(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_distortion_strip_tate(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_distortion_yoko(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_distortion_zoom_out(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_distortion_zoom_in(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_blur_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_tear_off(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_ball_second(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_bound_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_dist_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_boss_second(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_distortion(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_Doku(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_trainer(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_carde(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
-extern bool fadeEffectHookFunction_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_virtual_hexa_decay(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_trainer_second(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_slide_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_four_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_distortion_strip_yoko(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_distortion_strip_tate(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_distortion_yoko(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_distortion_zoom_out(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_distortion_zoom_in(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_blur_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_tear_off(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_ball_second(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_bound_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_dist_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_boss_second(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_distortion(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_Doku(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_trainer(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_carde(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
+static bool fadeEffectHookFunction_ball(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
 static bool fadeEffectHookFunction_tate(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
 static bool fadeEffectHookFunction_yoko(GSgfxLayerID, bool, f32, f32, f32, f32, void*);
 
@@ -495,14 +495,14 @@ typedef char FadeHexaLineDirectionOffset[offsetof(FadeHexaLine, direction) == 0x
 typedef char FadeHexaLineActiveOffset[offsetof(FadeHexaLine, active) == 0x119 ? 1 : -1];
 typedef char FadeHexaLineCountOffset[offsetof(FadeHexaLine, count) == 0x114 ? 1 : -1];
 
-extern bool fadeEffectHookFunction_distortion_zoom(GSgfxLayerID, bool, f32, f32, f32, f32, void*, bool);
+static bool fadeEffectHookFunction_distortion_zoom(GSgfxLayerID, bool, f32, f32, f32, f32, void*, bool);
 
 extern "C" void fadeFluidDispSecond(s32,GStexture*,f32,f32);
 extern "C" void fadeFluidEvaluateSecond();
 
-extern void _fadeVirtualHexaDecayNoiseDraw(GSgfxLayer*,GStexture*,f32);
-extern void _fadeVirtualHexaDecayRibbonDraw(GSgfxLayer*,GStexture*,f32);
-extern void _fadeVirtualHexaDecayLineDraw(GSgfxLayer*,f32);
+static void _fadeVirtualHexaDecayNoiseDraw(GSgfxLayer*,GStexture*,f32);
+static void _fadeVirtualHexaDecayRibbonDraw(GSgfxLayer*,GStexture*,f32);
+static void _fadeVirtualHexaDecayLineDraw(GSgfxLayer*,f32);
 
 
 extern "C" void fadeEffectInit() { _fadeEffectFirstFlag = 1; }
@@ -1272,7 +1272,7 @@ static void _fadeEffectFunction_trainer_FirstInit(GStexture* arg0) {
 }
 
 
-extern bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 elapsed, f32 duration, f32, f32, void* opaque) {
+static bool fadeEffectHookFunction_trainer(GSgfxLayerID id, bool active, f32 elapsed, f32 duration, f32, f32, void* opaque) {
     FadeMtx transform;
     f32 matrix[4][4];
     FadeMtx rotation;

@@ -1,13 +1,19 @@
 #include <game/pxdvs/GSAPI/GSprim/GSprim.hpp>
 #include <libc/string.h>
+#include <game/pxdvs/GSAPI/GSgfxM/backfbPrivate.hpp>
+
 struct FadeWork;
-typedef u8 (*FadeCallback)(u32,s32,u32,volatile FadeWork*,f32,f32,f32,f32);
-struct FadeWork { u8 unk0,busy; u16 unk2; f32 unk4,unk8; FadeCallback unkC; u32 unk10; f32 unk14,unk18; };
+typedef u8 (*FadeCallback)(u32, s32, GStexture*, volatile FadeWork*, f32, f32, f32, f32);
+struct FadeWork { u8 unk0,busy; u16 unk2; f32 unk4,unk8; FadeCallback unkC; GStexture* capture; f32 unk14,unk18; };
 static volatile FadeWork _fadeWork;
 static u8 _complete;
+static void _fadeSnapshot();
+static u8 myBackFB(GStexture*, u32, void*);
+
 extern "C" {
-void GSthreadSwitch(); void GSsndPlayNow(s32); void fadeEffectHookFunction_Doku_Init(); void fadeEffectInit(); u32 menuOffScreenGetPtr(); u8 menuOffScreenIsDoing();  s32 GSmemGetCurrentHeap(); s32 GSmemSetAllocMethodHeap(s32,s32);  void GSgfxBeginBackFBCapture(u32,s32(*)(),s32);
-void fadeSet(u16,f32); s32 fadeSetEX(u16,void(*)(),u8,f32,f32); static s32 fadeSetFunction__FPFv_vbUsf(void(*)(),u8,u16,f32); static void _fadeSnapshot__Fv(); static s32 myBackFB__FP9GStextureUlPv();
+void GSthreadSwitch(); void GSsndPlayNow(s32); void fadeEffectHookFunction_Doku_Init(); void fadeEffectInit(); GStexture* menuOffScreenGetPtr(); u8 menuOffScreenIsDoing();  s32 GSmemGetCurrentHeap(); s32 GSmemSetAllocMethodHeap(s32,s32);
+s32 GSgfxBeginBackFBCapture(GStexture*, BackFBCaptureCallback, void*);
+void fadeSet(u16,f32); s32 fadeSetEX(u16,void(*)(),u8,f32,f32); static s32 fadeSetFunction__FPFv_vbUsf(void(*)(),u8,u16,f32);
 void fadeEffectDokuStop(void) {
     if (_fadeWork.unk0 == 4) {
         _fadeWork.busy = 0;
@@ -89,12 +95,12 @@ s32 fadeSetFunction__FPFv_vbUsf(void (*arg0)(), u8 arg1, u16 arg2, f32 farg0) {
     temp_r31 = (s32)_fadeWork.unkC;
     _fadeWork.unkC = 0;
     if (arg1 == 1) {
-        _fadeSnapshot__Fv();
-    } else if (_fadeWork.unk10 != 0U) {
-        if (_fadeWork.unk10 != menuOffScreenGetPtr()) {
-            GStextureFree((GStexture*)_fadeWork.unk10);
+        _fadeSnapshot();
+    } else if (_fadeWork.capture != 0) {
+        if (_fadeWork.capture != menuOffScreenGetPtr()) {
+            GStextureFree(_fadeWork.capture);
         }
-        _fadeWork.unk10 = 0U;
+        _fadeWork.capture = 0;
     }
     fadeEffectInit();
     arg0();
@@ -105,33 +111,33 @@ void fadeSetFunctionOnly(s32 arg0) {
     _fadeWork.unkC = (FadeCallback)arg0;
 }
 
-void _fadeSnapshot__Fv(void) {
-    u32 var_r31;
-    s32 temp_r30;
+}
 
-    var_r31 = _fadeWork.unk10;
-    _fadeWork.unk10 = 0U;
-    if (menuOffScreenIsDoing() == 0) {
-        var_r31 = menuOffScreenGetPtr();
+static void _fadeSnapshot() {
+    GStexture* texture = _fadeWork.capture;
+    _fadeWork.capture = 0;
+    if (!menuOffScreenIsDoing()) {
+        texture = menuOffScreenGetPtr();
     }
-    if (var_r31 == 0U) {
-        temp_r30 = GSmemSetAllocMethodHeap(GSmemGetCurrentHeap(),3);
-        var_r31 = (u32)GStextureCreate(0, 0, 0x44, 0, 0);
-        GSmemSetAllocMethodHeap(GSmemGetCurrentHeap(),temp_r30);
+    if (!texture) {
+        s32 previousMethod = GSmemSetAllocMethodHeap(GSmemGetCurrentHeap(), 3);
+        texture = GStextureCreate(0, 0, 0x44, 0, 0);
+        GSmemSetAllocMethodHeap(GSmemGetCurrentHeap(), previousMethod);
     }
-    if (var_r31 != 0U) {
+    if (texture) {
         _complete = 0;
-        GSgfxBeginBackFBCapture(var_r31, myBackFB__FP9GStextureUlPv, 0);
-while (_complete == 0) GSthreadSwitch();
-        _fadeWork.unk10 = var_r31;
+        GSgfxBeginBackFBCapture(texture, myBackFB, 0);
+        while (!_complete) GSthreadSwitch();
+        _fadeWork.capture = texture;
     }
 }
 
-s32 myBackFB__FP9GStextureUlPv(void) {
+static u8 myBackFB(GStexture*, u32, void*) {
     _complete = 1;
     return 0;
 }
 
+extern "C" {
 void fadeInit(void) {
     _fadeWork.unk0 = 0;
     _fadeWork.busy = 0;
@@ -139,7 +145,7 @@ void fadeInit(void) {
     _fadeWork.unk4 = 0.0f;
     _fadeWork.unk8 = 0.0f;
     _fadeWork.unkC = 0;
-    _fadeWork.unk10 = 0;
+    _fadeWork.capture = 0;
     _fadeWork.unk14 = 0.0f;
     _fadeWork.unk18 = 0.0f;
 }
@@ -180,13 +186,13 @@ extern "C" void fadeDaemon() {
         f32 rate=GSgfxVideoGetVsyncRate();
         _fadeWork.unk18 += (f32)timeGetLastFrameTime()/rate;
         if (_fadeWork.unk18>=_fadeWork.unk14) _fadeWork.unk18=_fadeWork.unk14;
-        u32 texture=_fadeWork.unk10;
+        GStexture* texture = _fadeWork.capture;
         FadeCallback callback=_fadeWork.unkC;
         if (!callback(layer->id,_fadeWork.busy,texture,&_fadeWork,_fadeWork.unk8,_fadeWork.unk4,_fadeWork.unk18,_fadeWork.unk14)) {
             _fadeWork.unkC=0;
-            if (_fadeWork.unk10) {
-                if (_fadeWork.unk10!=menuOffScreenGetPtr()) GStextureFree((GStexture*)_fadeWork.unk10);
-                _fadeWork.unk10=0;
+            if (_fadeWork.capture) {
+                if (_fadeWork.capture!=menuOffScreenGetPtr()) GStextureFree(_fadeWork.capture);
+                _fadeWork.capture=0;
             }
         }
     } else if ((_fadeWork.unk2&16) && wasBusy==0) _fadeWork.unk0=5;
