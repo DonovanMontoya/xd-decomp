@@ -1,6 +1,7 @@
 #ifndef PARTICLE_ENGINE_PRIVATE_HPP
 #define PARTICLE_ENGINE_PRIVATE_HPP
 #include <global.h>
+#include <game/pxdvs/GSAPI/GSparticle/particleTexture.hpp>
 #include <dolphin/mtx.h>
 #include <libc/string.h>
 struct GStexture {u8 reserved[7];u8 dirty;};

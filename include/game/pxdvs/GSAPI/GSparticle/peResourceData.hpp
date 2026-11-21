@@ -2,6 +2,7 @@
 #define PE_RESOURCE_DATA_HPP
 
 #include <dolphin/mtx.h>
+#include <game/pxdvs/GSAPI/GSparticle/particleTexture.hpp>
 #include <game/pxdvs/GSAPI/GSparticle/peSplinePrivate.hpp>
 
 class GSgfxLight;
@@ -23,7 +24,7 @@ struct _peParticle {
             f32 yaw, roll;
         } converted;
     };
-    union { s32 textureId; void* texture; };
+    union { s32 textureId; GStexture* texture; ParticleTextureAnimation* textureAnimation; };
 };
 
 struct _peParticleStrip {
@@ -32,7 +33,7 @@ struct _peParticleStrip {
     PeColorSpline *colorSpline, *secondColorSpline;
     PeSpline* alphaSpline;
     f32 v0, v1;
-    union { s32 textureId; void* texture; };
+    union { s32 textureId; GStexture* texture; ParticleTextureAnimation* textureAnimation; };
     Vec direction;
     f32 speedMin, speedRange;
 };
@@ -45,7 +46,7 @@ struct _peDistortion {
     PeSpline *angleSpline, *alphaSpline;
     u8 reserved38[0x18];
     f32 u0, v0, u1, v1;
-    union { s32 textureId; void* texture; };
+    union { s32 textureId; GStexture* texture; };
 };
 
 struct _peModel {
@@ -68,7 +69,7 @@ struct _peShape {
     Vec position;
     GSgfxColAu8 ambient, lightColor;
     f32 shininess;
-    union { s32 textureId; void* texture; };
+    union { s32 textureId; GStexture* texture; };
     GSgfxLight *light0, *light1;
 };
 

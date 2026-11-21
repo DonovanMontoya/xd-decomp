@@ -133,7 +133,7 @@ static inline StripTextureFilter stripMinFilter(u32 flags) {
     return STRIP_NEAREST;
 }
 
-static inline void stripSetupTexture(u32 unit, void* texture, u32 flags) {
+static inline void stripSetupTexture(u32 unit, GStexture* texture, u32 flags) {
     u32 magFilter = STRIP_NEAREST;
     if (flags & 0x20) magFilter = STRIP_LINEAR;
     u32 wrapT = (flags >> 8) & 3;
@@ -169,7 +169,7 @@ void peParticleStripContainer::Render() {
         }
 
         if (flags & 0x400) {
-            StripAnimation* animation = (StripAnimation*)definition->texture;
+            ParticleTextureAnimation* animation = definition->textureAnimation;
             u16 current = frame;
             if (flags & 0x1000) {
                 u16 count = animation->count;
@@ -195,12 +195,12 @@ void peParticleStripContainer::Render() {
                     StripKColor color;
                     color.r = color.g = color.b = color.a = fraction;
                     stripSetTevKColor(0, color);
-                    stripSetupTexture(1, animation->textures[current + 1], flags);
+                    stripSetupTexture(1, animation->frames[current + 1].texture, flags);
                 }
             } else {
                 particleEngineSetupTevStages(0, extended, false);
             }
-            stripSetupTexture(0, animation->textures[current], flags);
+            stripSetupTexture(0, animation->frames[current].texture, flags);
         } else {
             particleEngineSetupTevStages(0, extended, false);
             u32 magFilter = STRIP_NEAREST;
@@ -260,7 +260,7 @@ static inline f32 stripRandomFrame(u16 frames) {
 }
 void peParticleStripContainer::Start() {
  if(!active){active=1;u32 flags=definition->flags;InitSwap();if(flags&0x400000)SetLayerVisibility((GSgfxLayerID)1,true);if(flags&0x800000)SetLayerVisibility((GSgfxLayerID)3,true);if(flags&0x1000000)SetLayerVisibility((GSgfxLayerID)5,true);
-  if((flags&0xc00)==0xc00){frame=__OSf32tou8(stripRandomFrame(((StripAnimation*)definition->texture)->count));}else frame=0;remaining=owner->emitter->duration;
+  if((flags&0xc00)==0xc00){frame=__OSf32tou8(stripRandomFrame(definition->textureAnimation->count));}else frame=0;remaining=owner->emitter->duration;
  }
 }
 peParticleStripContainer::~peParticleStripContainer(){g_particle_debug_stats.node-=0x60;g_particle_debug_stats.total-=0x60;}

@@ -20,7 +20,6 @@ extern s32 g_render_pass;
 void GSgfxVFSetArray(GSgfxVF*,s32,s32,void*,u8,u32);
 void particleEngineSetupTevStages(u8,bool,bool);
 void particleEngineSetupBlendMode(u32);
-void particleEngineSetupTexture(u8,void*,s32,s32,s32,s32);
 void dlDraw__10GSgfxLayerFP7GSgfxDL(GSgfxLayer*,GSgfxDL*);
 }
 static inline u32 &layerWord(u32 offset) {return *(u32*)((u8*)g_current_layer+offset);}
@@ -105,7 +104,6 @@ static inline s32 previousLiveParticle(peParticleContainer* container,s32 index)
  return -1;
 }
 
-struct ParticleAnimation {u32 count;void* textures[1];};
 struct ParticleKColor {u8 r,g,b,a;};
 struct ParticleRenderData {u8 reserved00[0x34];ParticleKColor color;};
 static inline f32 particleFrameFraction(f32 value,u16 frame) {return value-__OSu16tof32(&frame);}
@@ -118,7 +116,7 @@ static inline void setTevKColor(u32 id,ParticleKColor color) {
     u8* layer=(u8*)g_current_layer;
     *(u32*)(layer+0x14f4+id*4)=*(u32*)&color;*(u32*)(layer+0x16f8)|=1<<id;*(u32*)(layer+0x16a8)|=0x10;*(u32*)(layer+0x17b0)|=1<<id;*(u32*)(layer+0x1760)|=0x10;
 }
-static inline void setupParticleTexture(u8 unit,void* texture,u32 flags) {
+static inline void setupParticleTexture(u8 unit,GStexture* texture,u32 flags) {
     s32 magFilter=0;if(flags&0x100)magFilter=2;
     s32 wrapS=(flags>>12)&3;s32 wrapT=(flags>>14)&3;
     s32 minFilter=0;if(flags&0x80)minFilter=2;
@@ -144,7 +142,7 @@ static inline void particleSetKColor(u8 index, ParticleColor color) {
     *(u32*)(layer+0x1760)|=0x10;
 }
 static inline s32 particleWrap(u32 flags,u32 mask) { s32 mode=0; if(flags&mask)mode=2; return mode; }
-static inline void particleSetupFrameTexture(u8 unit,void* image,s32 filterS,s32 filterT,u32 flags,s32 wrapT) {
+static inline void particleSetupFrameTexture(u8 unit,GStexture* image,s32 filterS,s32 filterT,u32 flags,s32 wrapT) {
     s32 wrapS=0;
     if(flags&0x80)wrapS=2;
     particleEngineSetupTexture(unit,image,filterS,filterT,wrapS,wrapT);
@@ -155,7 +153,7 @@ static inline ParticleColor particleRenderColor(char* data,u16 index) {
 }
 struct ParticleDualRenderData { u8 reserved[0x34]; u32 secondColor; };
 static inline void SetBlendColor(ParticleColor color, u8 slot) { particleSetKColor(slot,color); }
-static inline void SetupTexture(u32 slot, void* texture, u32 flags) {
+static inline void SetupTexture(u32 slot, GStexture* texture, u32 flags) {
     u32 magFilter=0;
     if(flags&0x100)magFilter=2;
     u32 wrapS=(flags>>12)&3;
@@ -288,7 +286,7 @@ void peParticleContainer::Render()
         u32 magFilter = 0;
         if (flags & 0x100)
             magFilter = 2;
-        void *texture = particle->texture;
+        GStexture* texture = particle->texture;
         u32 wrapS = (flags >> 12) & 3;
         u32 wrapT = (flags >> 14) & 3;
         particleEngineSetupTexture(0, texture, wrapS, wrapT,
@@ -378,12 +376,12 @@ void peParticleNode::Render(_peParticle *particle, GSgfxDL *displayList,
                             char *renderData)
 {
     u32 flags;
-    ParticleAnimation *textures;
+    ParticleTextureAnimation *textures;
     bool extended;
     u16 textureIndex;
     f32 fraction, frame;
     flags = particle->flags;
-    textures = (ParticleAnimation*)particle->texture;
+    textures = particle->textureAnimation;
     textureIndex = texture;
     extended = (flags & 0x02000000) != 0;
     if (!renderData) return;
@@ -418,10 +416,10 @@ void peParticleNode::Render(_peParticle *particle, GSgfxDL *displayList,
                 blend.channels.a = components[3];
                 SetBlendColor(blend, 1);
             }
-            SetupTexture(1, textures->textures[textureIndex + 1], flags);
+            SetupTexture(1, textures->frames[textureIndex + 1].texture, flags);
         }
     }
-    SetupTexture(0, textures->textures[textureIndex], flags);
+    SetupTexture(0, textures->frames[textureIndex].texture, flags);
     beginSurface__10GSgfxLayerFUs(g_current_layer,4);
     u16 *indices = (u16 *)displayList->VertexData(sortIndex * 4);
     u16 corners = 4;
@@ -462,7 +460,7 @@ void peParticleNode::Start(peEmitterNode *parent, _peParticle *particle,
     angle = particle->angle;
     angularSpeed = particle->angularRange * HSD_Randf() + particle->angularMin;
     if ((flags & 0x300000) == 0x300000)
-        texture = FloatToUnsigned8(Unsigned16ToFloat(((ParticleAnimation*)particle->texture)->count) * HSD_Randf());
+        texture = FloatToUnsigned8(Unsigned16ToFloat(particle->textureAnimation->count) * HSD_Randf());
     else
         texture = 0;
     words = 13 + (extended != 0);

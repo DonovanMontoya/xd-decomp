@@ -1,5 +1,6 @@
 #include <game/pxdvs/GSAPI/GSparticle/peBankPrivate.hpp>
 #include <dolphin/os/OSFastCast.h>
+#include <game/pxdvs/GSAPI/GStexture/GStexture.hpp>
 #include <game/pxdvs/GSAPI/GSparticle/peResourceData.hpp>
 #include <game/pxdvs/GSAPI/GSgfxM/light_gfxmPrivate.hpp>
 
@@ -86,10 +87,20 @@ extern "C" void peBankUpdate(ParticleBankState* bank, f32 delta) {
     }
 }
 
-struct _gpdResourceItem { u8 id, flags; u16 reserved02; s32 kind; void* data; };
+union BankResourcePayload {
+    void* data;
+    GStexture* texture;
+    ParticleTextureAnimation* animation;
+};
+
+struct _gpdResourceItem {
+    u8 id, flags;
+    u16 reserved02;
+    s32 kind;
+    BankResourcePayload payload;
+};
 extern "C" {
 void HSD_JObjUnref(void*);
-void GStextureFree(void*);
 u32 shapeGetUsedMemorySize(u16);
 void shapeRelease(u16);
 }
@@ -255,7 +266,7 @@ extern "C" ParticleBankState* peBankCreate(_gpdHeader* file) {
 }
 
 extern "C" void peBankFreeFile(_gpdHeader *fileData) {
-    void **textures;
+    ParticleTextureFrame* frames;
     u32 index;
     u32 textureCount;
     u16 shape;
@@ -276,20 +287,20 @@ extern "C" void peBankFreeFile(_gpdHeader *fileData) {
         if ((resource->flags & 0x40) == 0x40) {
             switch (resource->kind) {
             case 0:
-                GStextureFree(resource->data);
+                GStextureFree(resource->payload.texture);
                 break;
             case 3:
-                shape = (u32)resource->data - 1;
+                shape = (u32)resource->payload.data - 1;
                 size = shapeGetUsedMemorySize(shape);
                 g_particle_debug_stats.primitiveMemory -= size;
                 g_particle_debug_stats.total -= size;
                 shapeRelease(shape);
                 break;
             case 2:
-                textureCount = *(u32 *)resource->data;
-                textures = (void **)((u32 *)resource->data + 1);
-                for (index = 0; index < textureCount; index++, textures++) {
-                    if (*textures) GStextureFree(*textures);
+                textureCount = resource->payload.animation->count;
+                frames = resource->payload.animation->frames;
+                for (index = 0; index < textureCount; index++, frames++) {
+                    if (frames->texture) GStextureFree(frames->texture);
                 }
                 break;
             }
@@ -369,7 +380,6 @@ static void _peFreeInternalBankData(_particleData* data) {
 
 extern "C" {
 #include <game/maximum/GSAPI/baselib/archive.h>
-void* GStextureLoad(void*);
 s32 shapeGenerateIndex();
 u8 shapeLoad(u16,void*);
 void* HSD_JObjLoadJoint(void*);
@@ -401,33 +411,33 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
     u32 recordCount=header->recordCount;
     _gpdResourceItem* item=items;
     while(resourceCount) {
-        bankRelocatePointer(item->data, base);
+        bankRelocatePointer(item->payload.data, base);
         item->flags&=~0x40;
         switch(item->kind) {
         case 0: {
-            void* texture=GStextureLoad(item->data);
+            GStexture* texture=GStextureLoad(item->payload.data);
             if(texture)item->flags|=0x40;
-            item->data=texture;
+            item->payload.texture=texture;
             break;
         }
         case 1: {
-            HSD_ArchiveParse(&archive,(u8*)item->data,(item->reserved02<<5)-(item->flags&0x17));
+            HSD_ArchiveParse(&archive,(u8*)item->payload.data,(item->reserved02<<5)-(item->flags&0x17));
             void* scene=HSD_ArchiveGetPublicAddress(&archive,"scene_data");
             if(scene)item->flags|=0x40;
-            item->data=scene;
+            item->payload.data=scene;
             break;
         }
         case 2:
-            if(item->data) {
-                u32* texture=(u32*)item->data;
-                u32 count=*texture++;
-                for(u32 i=0;i<count;++i,++texture) {
-                    u32 value=*texture;
+            if(item->payload.data) {
+                ParticleTextureFrame* frame = item->payload.animation->frames;
+                u32 count = item->payload.animation->count;
+                for(u32 i=0;i<count;++i,++frame) {
+                    u32 value = frame->address;
                     u8 relative=0;
                     if(value && value<0x80000000)relative=1;
-                    if(relative)value+=(u32)item->data;
-                    *texture=value;
-                    *texture=(u32)GStextureLoad((void*)*texture);
+                    if(relative)value+=(u32)item->payload.data;
+                    frame->address = value;
+                    frame->texture = GStextureLoad(frame->serialized);
                 }
                 item->flags|=0x40;
             }
@@ -436,13 +446,13 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
             u16 index=shapeGenerateIndex()+1;
             if(index) {
                 s32 shape=index-1;
-                if(shapeLoad(shape,item->data)) {
+                if(shapeLoad(shape,item->payload.data)) {
                     u32 size=shapeGetUsedMemorySize(shape);
                     g_particle_debug_stats.primitiveMemory+=size;g_particle_debug_stats.total+=size;
                     item->flags|=0x40;
                 } else index=0;
             }
-            item->data=(void*)index;
+            item->payload.data=(void*)index;
             break;
         }
         }
@@ -489,11 +499,11 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
                 if (particle->textureId == resource->id) {
                     if (resource->kind == 2) {
                         particle->flags |= 0x100000;
-                        particle->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
+                        particle->textureAnimation = (resource->flags & 0x40) == 0x40 ? resource->payload.animation : 0;
                         break;
                     } else {
                         particle->flags &= ~0x100000;
-                        particle->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
+                        particle->texture = (resource->flags & 0x40) == 0x40 ? resource->payload.texture : 0;
                         break;
                     }
                 }
@@ -531,11 +541,11 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
                     if (resource->kind == 2) {
                         strip->flags |= 0x400;
                         if (strip->flags & 0x2000) strip->flags &= ~0x40000;
-                        strip->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
+                        strip->textureAnimation = (resource->flags & 0x40) == 0x40 ? resource->payload.animation : 0;
                         break;
                     } else {
                         strip->flags &= ~0x400;
-                        strip->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
+                        strip->texture = (resource->flags & 0x40) == 0x40 ? resource->payload.texture : 0;
                         break;
                     }
                 }
@@ -555,7 +565,7 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
             _gpdResourceItem* resource = items;
             while (remaining) {
                 if (distortion->textureId == resource->id) {
-                    distortion->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
+                    distortion->texture = (resource->flags & 0x40) == 0x40 ? resource->payload.texture : 0;
                     break;
                 }
                 ++resource;
@@ -575,9 +585,9 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
             while (remaining) {
                 if (modelRecord->resource.id == resource->id) {
                     if ((modelRecord->flags & 0x40) && resource->kind == 3) {
-                        modelRecord->resource.primitive = (resource->flags & 0x40) == 0x40 ? (u32)resource->data : 0;
+                        modelRecord->resource.primitive = (resource->flags & 0x40) == 0x40 ? (u32)resource->payload.data : 0;
                     } else if (resource->kind == 1) {
-                        BankSceneModel*** scene = (BankSceneModel***)((resource->flags & 0x40) == 0x40 ? resource->data : 0);
+                        BankSceneModel*** scene = (BankSceneModel***)((resource->flags & 0x40) == 0x40 ? resource->payload.data : 0);
                         if (scene) {
                             BankSceneModel* model=**scene;
                             void* joint = HSD_JObjLoadJoint(model->joint);
@@ -626,7 +636,7 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
             _gpdResourceItem* resource = items;
             while (remaining) {
                 if (shape->textureId == resource->id) {
-                    shape->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
+                    shape->texture = (resource->flags & 0x40) == 0x40 ? resource->payload.texture : 0;
                     break;
                 }
                 ++resource;

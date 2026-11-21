@@ -72,7 +72,7 @@ GSgfxVF* unk199C;
 void* unk19A0;
 };
 extern "C" {extern s32 g_render_pass;extern MtxPtr g_CameraMatrix;
-void particleEngineSetupTexture(u8,void*,s32,s32,s32,s32);void particleEngineSetupBlendMode(u32);void particleEngineSetDefaultRenderState(u8);GSgfxVF* GSgfxVFGetPredef(u32);
+void particleEngineSetupBlendMode(u32);void particleEngineSetDefaultRenderState(u8);GSgfxVF* GSgfxVFGetPredef(u32);
 void cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(GSgfxLayer*,u8,u32,u32,u32,u32,GSgfxLight**,u32,u32);
 }
 extern "C" {f32 HSD_Randf();s32 EulerToQuat(Vec*,Quaternion*);extern Vec unitScaleVector;}

@@ -385,7 +385,7 @@ void peShapeContainer::Render() {
         if (shapeFlags & 0x40) {
             magFilter = SHAPE_FILTER_LINEAR;
         }
-        void *texture = shape->texture;
+        GStexture* texture = shape->texture;
         particleEngineSetupTexture(0, texture, 0, 0, shapeMinFilter(shapeFlags), magFilter);
         particleEngineSetupBlendMode(2);
         if (shapeFlags & 0x200) {
