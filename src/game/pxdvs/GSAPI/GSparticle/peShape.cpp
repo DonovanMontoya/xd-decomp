@@ -1,13 +1,207 @@
 #include <game/pxdvs/GSAPI/GSparticle/peShapePrivate.hpp>
-void peShapeContainer::Stop() {
-    if(active) {
-        PreUpdate();active=0;
-        if(shape->flags&0x800000)SetLayerVisibility((GSgfxLayerID)1,false);
-        if(shape->flags&0x1000000)SetLayerVisibility((GSgfxLayerID)3,false);
-        if(shape->flags&0x2000000)SetLayerVisibility((GSgfxLayerID)5,false);
-        RemoveAll();
+#pragma defer_codegen on
+
+void peShapeNode::Start(peEmitterNode* emitter,_peShape* shape,_EmitParams* params) {
+    Vec randomAngles;
+    Vec scale;
+    u32 flags=shape->flags;
+    peNode::Start(emitter,params);
+    flips=0;
+    PSVECScale(&shape->scaleRange,&scale,HSD_Randf());
+    f32 sy=scale.y,sz=scale.z,sx=scale.x;baseScale.x=sx;baseScale.y=sy;baseScale.z=sz;
+    PSVECAdd(&baseScale,&shape->scale,&baseScale);
+    randomRotation.x=0.0f;randomRotation.y=0.0f;randomRotation.z=0.0f;randomRotation.w=1.0f;
+    world.position.x=0.0f;world.position.y=0.0f;world.position.z=0.0f;
+    world.rotation.x=0.0f;world.rotation.y=0.0f;world.rotation.z=0.0f;world.rotation.w=1.0f;
+    world.scale=unitScaleVector;
+    if(!(emitter->emitter->flags&0x400)) {
+        EulerToQuat(&shape->rotation,&localRotation);
+        if(flags&0x1c7000) {
+            if(flags&0x1000){f32 random=HSD_Randf();randomAngles.x=6.2831855f*random;}else randomAngles.x=0.0f;
+            if(flags&0x2000)randomAngles.y=6.2831855f*HSD_Randf();else randomAngles.y=0.0f;
+            if(flags&0x4000)randomAngles.z=6.2831855f*HSD_Randf();else randomAngles.z=0.0f;
+            if((flags&0x40000) && HSD_Randf()<0.5f)flips|=1;
+            if((flags&0x80000) && HSD_Randf()<0.5f)flips|=2;
+            if((flags&0x100000) && HSD_Randf()<0.5f)flips|=4;
+            EulerToQuat(&randomAngles,&randomRotation);
+        }
+    }
+    angularSpeed=shape->angularSpeed;
+    if(flags&0x8000)angularSpeed.x*=HSD_Randf();
+    if(flags&0x10000)angularSpeed.y*=HSD_Randf();
+    if(flags&0x20000)angularSpeed.z*=HSD_Randf();
+}
+
+#include <dolphin/os/OSFastCast.h>
+static inline f32 shapeSpline(ShapeSpline* spline,f32 progress) {
+    if(!spline || !(spline->flags&3))return 1.0f;
+    f32 difference=spline->time-progress;if(difference<0.0f)difference=-difference;
+    if(difference<=0.00001f)return spline->value;
+    return peSplineGetValue(spline,progress);
+}
+static inline u8 shapeColorByte(f32 value) {
+    return __OSf32tou8(value);
+}
+extern "C" { extern f32 __float_nan[]; }
+static inline s32 shapeFloatClass(f32 x) {
+    union {f32 value;s32 bits;} v;v.value=x;
+    switch(v.bits&0x7f800000) {
+    case 0x7f800000:if(v.bits&0x7fffff)return 1;return 2;
+    case 0:if(v.bits&0x7fffff)return 5;return 3;
+    default:return 4;
     }
 }
+static inline f32 shapeSqrt(f32 x) {
+    if(x>0.0f) {
+        f64 guess=__frsqrte(x);
+        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
+        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
+        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
+        return (f32)((f64)x*guess);
+    }
+    if((f64)x<0.0)return __float_nan[0];
+    if(shapeFloatClass(x)==1)return __float_nan[0];
+    return x;
+}
+static inline f32 shapeU8(u8 value) { return __OSu8tof32(&value); }
+static inline void shapeUpdateColor(GSgfxColAu8 *color, peEmitterNode *emitter, _peShape *shape, f32 progress) {
+    peColorSplineGetValue(color, shape->colorSpline, progress);
+    color->r = shapeColorByte(emitter->color[0] * shapeU8(color->r));
+    color->g = shapeColorByte(emitter->color[1] * shapeU8(color->g));
+    color->b = shapeColorByte(emitter->color[2] * shapeU8(color->b));
+    color->a = shapeColorByte((255.0f * emitter->color[3]) * shapeSpline(shape->alphaSpline, progress));
+}
+bool peShapeNode::Update(peEmitterNode* emitter,_peShape* shape,f32 delta) {
+    if(!peNode::Update(emitter,delta))return false;
+    u32 emitterFlags=emitter->emitter->flags;
+    f32 progress=1.0f-time/life;
+    Vec angles;
+    Quaternion flipped;
+    Vec direction;
+    Quaternion step;
+    Vec copy;
+    Vec distance;
+    Vec rotationVector;
+    Quaternion rotation;
+    NodeTransform local;
+    Mtx rotationMatrix;
+    if(emitterFlags&0x400) {
+        direction.x=velocity.x;direction.y=velocity.y;direction.z=velocity.z;
+        if(emitterFlags&0x40) {
+            PSMTXQuat(rotationMatrix,&transform->rotation);
+            PSMTXMultVecSR(rotationMatrix,&direction,&direction);
+        }
+        f32 horizontal=shapeSqrt(direction.x*direction.x+direction.z*direction.z);
+        angles.x=(f32)atan2(-direction.y,horizontal);
+        angles.y=(f32)atan2(direction.x,direction.z);angles.z=0.0f;
+        EulerToQuat(&angles,&localRotation);
+    } else if(shape->flags&0x100) {
+        angles.x=shape->rotation.x*shapeSpline(shape->rotationSpline[0],progress);
+        angles.y=shape->rotation.y*shapeSpline(shape->rotationSpline[1],progress);
+        angles.z=shape->rotation.z*shapeSpline(shape->rotationSpline[2],progress);
+        EulerToQuat(&angles,&localRotation);
+    } else {
+        PSVECScale(&angularSpeed,&rotationVector,delta);angles=rotationVector;
+        EulerToQuat(&angles,&step);PSQUATMultiply(&localRotation,&step,&localRotation);
+    }
+    angles.x=baseScale.x*shapeSpline(shape->scaleSpline[0],progress);
+    angles.y=baseScale.y*shapeSpline(shape->scaleSpline[1],progress);
+    angles.z=baseScale.z*shapeSpline(shape->scaleSpline[2],progress);
+    shapeUpdateColor(&color, emitter, shape, progress);
+    if(flips&1)flipped.x=-localRotation.x;else flipped.x=localRotation.x;
+    if(flips&2)flipped.y=-localRotation.y;else flipped.y=localRotation.y;
+    if(flips&4)flipped.z=-localRotation.z;else flipped.z=localRotation.z;
+    flipped.w=localRotation.w;
+    local.position=position;
+    PSQUATMultiply(&randomRotation,&flipped,&rotation);
+    local.rotation.x=rotation.x;local.rotation.y=rotation.y;local.rotation.z=rotation.z;local.rotation.w=rotation.w;
+    local.scale=angles;
+    peNodeTransformsConcat(&world,transform,&local,false);
+    PSVECSubtract(&world.position,&g_CameraPosition,&distance);
+    copy.x=distance.x;copy.y=distance.y;copy.z=distance.z;depth=PSVECDotProduct(&g_CameraLookDir,&copy);
+    return true;
+}
+
+static inline void shapeSetKColor(GSgfxColAu8 color) {
+    ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+    state->unk14F4=*(u32*)&color;
+    state->unk16F8|=1;state->unk16A8|=0x10;
+    state->unk17B0|=1;state->unk1760|=0x10;
+}
+static inline void shapeSetChannelColor(u8 channel,GSgfxColAu8 ambient,GSgfxColAu8 material) {
+    ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+    ((u32*)&state->unkE9C)[channel]=*(u32*)&ambient;
+    ((u32*)&state->unkEA4)[channel]=*(u32*)&material;
+    u32 bit=1<<channel;
+    state->unk16C4|=bit;state->unk16C8|=bit;state->unk16A8|=4;
+    state->unk177C|=bit;state->unk1780|=bit;state->unk1760|=4;
+}
+void peShapeNode::Render(_peShape* shape) {
+    Mtx sp50;
+    Mtx sp20;
+    u32 temp_r31=shape->flags;
+    u32 temp_r0;
+    GSgfxColAu8 black={0,0,0,0};
+    shapeSetKColor(color);
+    if(temp_r31&0x200) {
+        shapeSetChannelColor(0,shape->ambient,color);
+        if(temp_r31&0x400)shapeSetChannelColor(1,black,color);
+    }
+    PSMTXQuat(sp20, &world.rotation);
+    PSMTXScale(sp50, world.scale.x, world.scale.y, world.scale.z);
+    PSMTXConcat(sp20, sp50, sp50);
+    PSMTXTransApply(sp50, sp50, world.position.x, world.position.y, world.position.z);
+    pushMult__16GSgfxMatrixStackFP5GSmtx(((ParticleLayerState*)g_current_layer)->unk19A0, sp50);
+    temp_r0 = temp_r31 & 7;
+    switch (temp_r0) {
+    case 0:
+        drawCube__10GSgfxLayerFv(g_current_layer);
+        break;
+    case 1:
+        drawCylinder__10GSgfxLayerFUc(g_current_layer, shape->segments1);
+        break;
+    case 2:
+        drawDodecaedron__10GSgfxLayerFv(g_current_layer);
+        break;
+    case 3:
+        drawIcosahedron__10GSgfxLayerFv(g_current_layer);
+        break;
+    case 4:
+        drawOctahedron__10GSgfxLayerFv(g_current_layer);
+        break;
+    case 7:
+        drawTorus__10GSgfxLayerFfUcUc(g_current_layer,shape->radius,shape->segments0,shape->segments1);
+        break;
+    case 6:
+        drawSphere__10GSgfxLayerFUc(g_current_layer, shape->segments1);
+        break;
+    default:
+        drawSphere__10GSgfxLayerFUcUc(g_current_layer, shape->segments0, shape->segments1);
+        break;
+    }
+    pop__16GSgfxMatrixStackFv(((ParticleLayerState*)g_current_layer)->unk19A0);
+}
+
+peShapeContainer::peShapeContainer(peEmitterNode* emitter,_peShape* data,u16 maximum):peContainer(emitter,0x9c,maximum){shape=data;g_particle_debug_stats.node+=0x24;g_particle_debug_stats.total+=0x24;}
+
+peShapeContainer::~peShapeContainer(){g_particle_debug_stats.node-=0x24;g_particle_debug_stats.total-=0x24;}
+
+void peShapeContainer::Start() {
+    if(!active) {
+        active=1;
+        if(shape->flags&0x800000)SetLayerVisibility((GSgfxLayerID)1,true);
+        if(shape->flags&0x1000000)SetLayerVisibility((GSgfxLayerID)3,true);
+        if(shape->flags&0x2000000)SetLayerVisibility((GSgfxLayerID)5,true);
+    }
+}
+
+u16 peShapeContainer::Emit(u16 requested) {
+    if(!active)return 0;
+    u16 remaining=CreateNodes(requested);_EmitParams* params=g_emitParams;peNode* node=nodes;peNode* next;u16 result=remaining;
+    while(remaining){next=node->next;((peShapeNode*)node)->Start(owner,shape,params);node=next;--remaining;++params;}
+    return result;
+}
+
 void peShapeContainer::Update(f32 time) {
     if(active) {
         peShapeNode* node=(peShapeNode*)nodes;
@@ -25,22 +219,6 @@ void peShapeContainer::Update(f32 time) {
         }
     }
 }
-u16 peShapeContainer::Emit(u16 requested) {
-    if(!active)return 0;
-    u16 remaining=CreateNodes(requested);_EmitParams* params=g_emitParams;peNode* node=nodes;peNode* next;u16 result=remaining;
-    while(remaining){next=node->next;((peShapeNode*)node)->Start(owner,shape,params);node=next;--remaining;++params;}
-    return result;
-}
-void peShapeContainer::Start() {
-    if(!active) {
-        active=1;
-        if(shape->flags&0x800000)SetLayerVisibility((GSgfxLayerID)1,true);
-        if(shape->flags&0x1000000)SetLayerVisibility((GSgfxLayerID)3,true);
-        if(shape->flags&0x2000000)SetLayerVisibility((GSgfxLayerID)5,true);
-    }
-}
-peShapeContainer::~peShapeContainer(){g_particle_debug_stats.node-=0x24;g_particle_debug_stats.total-=0x24;}
-peShapeContainer::peShapeContainer(peEmitterNode* emitter,_peShape* data,u16 maximum):peContainer(emitter,0x9c,maximum){shape=data;g_particle_debug_stats.node+=0x24;g_particle_debug_stats.total+=0x24;}
 
 inline void GSgfxLayer::tunitKRegSel(u8 arg1,GSgfxTunitKReg arg2) {
     ParticleLayerState *temp_r5_3;
@@ -112,592 +290,394 @@ inline void GSgfxLayer::tunitKRegSel(u8 arg1,GSgfxTunitKReg arg2) {
     }
 }
 
-
-void peShapeContainer::Render() {
-    peShapeContainer* arg0=this;
-    Vec position, direction, transformed;
-    ParticleLight* light0;
-    ParticleLight* light1;
-    struct LightList {ParticleLight* entries[2];};
-    LightList lights;
-    s32 var_r7,var_r8;
-    f32 temp_f1,temp_f2;
-    s32 temp_cr0_eq;
-    s32 temp_r0;
-    s32 temp_r0_2;
-    s32 temp_r0_3;
-    s32 temp_r31;
-    s32 temp_r4;
-    s32 temp_r9_2;
-    u8 var_r0;
-    u8 var_r30;
-    u8 var_r7_2;
-    ParticleLight *temp_r11;
-    _peShape *temp_r5;
-    ParticleLight *temp_r9;
-    peShapeNode *var_r30_2;
-
-    if (arg0->active) {
-        if (!arg0->active) {
-            var_r0 = 0;
-        } else {
-            temp_r4 = arg0->shape->flags;
-            if ((u16) arg0->count == 0) {
-                var_r0 = 0;
-            } else if ((s32) g_render_pass != 1) {
-                var_r0 = 0;
-            } else {
-                temp_r0 = ((ParticleLayerState*)g_current_layer)->unk28;
-                switch (temp_r0) {                  /* switch 1; irregular */
-                case 0:                             /* switch 1 */
-                    if (temp_r4 & 0x200000) {
-                        var_r0 = 1;
-                    } else {
-block_31:
-                        var_r0 = 0;
-                    }
-                    break;
-                case 2:                             /* switch 1 */
-                    if (temp_r4 & 0x400000) {
-                        var_r0 = 1;
-                    } else if (!(temp_r4 & 0x03E00008)) {
-                        var_r0 = 1;
-                    } else {
-                        goto block_31;
-                    }
-                    break;
-                case 4:                             /* switch 1 */
-                    if (temp_r4 & 8) {
-                        var_r0 = 1;
-                    } else {
-                        goto block_31;
-                    }
-                    break;
-                case 1:                             /* switch 1 */
-                    if (temp_r4 & 0x800000) {
-                        var_r0 = 1;
-                    } else {
-                        goto block_31;
-                    }
-                    break;
-                case 3:                             /* switch 1 */
-                    if (temp_r4 & 0x01000000) {
-                        var_r0 = 1;
-                    } else {
-                        goto block_31;
-                    }
-                    break;
-                case 5:                             /* switch 1 */
-                    if (temp_r4 & 0x02000000) {
-                        var_r0 = 1;
-                    } else {
-                        goto block_31;
-                    }
-                    break;
-                default:                            /* switch 1 */
-                    var_r0 = 0;
-                    break;
-                }
-            }
-        }
-        if (var_r0 != 0) {
-            temp_r31 = arg0->shape->flags;
-            if (temp_r31 & 0x800) {
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unkD8C = 2;
-                state->unk16B8 = (s32) (state->unk16B8 | 2);
-                state->unk16A8 = (s32) (state->unk16A8 | 2);
-                state->unk1770 = (s32) (state->unk1770 | 2);
-                state->unk1760 = (s32) (state->unk1760 | 2);
-                }
-            } else {
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unkD8C = 0;
-                state->unk16B8 = (s32) (state->unk16B8 | 2);
-                state->unk16A8 = (s32) (state->unk16A8 | 2);
-                state->unk1770 = (s32) (state->unk1770 | 2);
-                state->unk1760 = (s32) (state->unk1760 | 2);
-                }
-            }
-            var_r8 = 0;
-            if (temp_r31 & 0x40) {
-                var_r8 = 2;
-            }
-            var_r7 = 0;
-            if (temp_r31 & 0x20) {
-                var_r7 = 2;
-            }
-            particleEngineSetupTexture(0, arg0->shape->texture, 0, 0, var_r7, var_r8);
-            particleEngineSetupBlendMode(2);
-            if (temp_r31 & 0x200) {
-                temp_r9 = arg0->shape->light0;
-                light0 = temp_r9;
-                LightList empty={0,0};lights=empty;
-                var_r30 = 1;
-
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unkEAC = 1;
-
-                state->unk16CC = (s32) (state->unk16CC | 1);
-                lights.entries[0] = temp_r9;
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1784 = (s32) (state->unk1784 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 8);
-                }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unkDB8 = 1;
-                state->unk16BC = (s32) (state->unk16BC | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 4);
-                state->unk1774 = (s32) (state->unk1774 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 4);
-                }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unk1170 = 0;
-                state->unk1174 = 0;
-                state->unk1178 = 0;
-                state->unk117C = 1;
-                state->unk1180 = 0;
-                state->unk16DC = (s32) (state->unk16DC | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1794 = (s32) (state->unk1794 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 8);
-                }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unk12B0 = 0;
-                state->unk12B4 = 0;
-                state->unk12B8 = 0;
-                state->unk12BC = 1;
-                state->unk12C0 = 0;
-                state->unk16E0 = (s32) (state->unk16E0 | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1798 = (s32) (state->unk1798 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 8);
-                }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unkF70 = 0xF;
-                state->unkF74 = 0xA;
-                state->unkF78 = 8;
-                state->unkF7C = 0xF;
-                state->unk16D4 = (s32) (state->unk16D4 | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk178C = (s32) (state->unk178C | 1);
-                state->unk1760 = (s32) (state->unk1760 | 8);
-                }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unk1544 = 0x1C;
-                state->unk1700 = (s32) (state->unk1700 | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 0x10);
-                state->unk17B8 = (s32) (state->unk17B8 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 0x10);
-                }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unk1070 = 7;
-                state->unk1074 = 6;
-                state->unk1078 = 4;
-                state->unk107C = 7;
-                state->unk16D8 = (s32) (state->unk16D8 | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1790 = (s32) (state->unk1790 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 8);
-                }
-                PSMTXMultVec(g_CameraMatrix,&arg0->shape->position,&position);
-                ParticleLight* positionLight=light0;
-                temp_r0_2 = positionLight->type;
-                transformed.x = position.x;
-                transformed.y = position.y;
-                transformed.z = position.z;
-                switch (temp_r0_2) {
-                case 0:
-                    goto positionDone;
-                case 2:
-                    positionLight->position.x = transformed.x;
-                    positionLight->position.y = transformed.y;
-                    positionLight->position.z = transformed.z;
-                    break;
-                case 1:
-                    positionLight->position.x = transformed.x;
-                    positionLight->position.y = transformed.y;
-                    positionLight->position.z = transformed.z;
-                    break;
-                }
-                positionLight->flags = (u16)(positionLight->flags | 2);
-positionDone:
-
-                cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(g_current_layer,0,0,0,0,1,&light0,2,2);
-                if (temp_r31 & 0x400) {
-                    temp_r11 = arg0->shape->light1;
-                    light1 = temp_r11;
-                    { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                    state->unkEAC = 2;
-                    var_r30 = 2;
-                    lights.entries[1] = temp_r11;
-                    state->unk16CC = (s32) (state->unk16CC | 1);
-                    state->unk16A8 = (s32) (state->unk16A8 | 8);
-                    state->unk1784 = (s32) (state->unk1784 | 1);
-                    state->unk1760 = (s32) (state->unk1760 | 8);
-                    }
-                    { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                    state->unkEBC = 0xFF;
-                    state->unkEC0 = 0xFF;
-                    state->unkEC4 = 5;
-                    state->unk16D0 = (s32) (state->unk16D0 | 2);
-                    state->unk16A8 = (s32) (state->unk16A8 | 8);
-                    state->unk1788 = (s32) (state->unk1788 | 2);
-                    state->unk1760 = (s32) (state->unk1760 | 8);
-                    }
-                    { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                    state->unk1184 = 0;
-                    state->unk1188 = 0;
-                    state->unk118C = 0;
-                    state->unk1190 = 1;
-                    state->unk1194 = 0;
-                    state->unk16DC = (s32) (state->unk16DC | 2);
-                    state->unk16A8 = (s32) (state->unk16A8 | 8);
-                    state->unk1794 = (s32) (state->unk1794 | 2);
-                    state->unk1760 = (s32) (state->unk1760 | 8);
-                    }
-                    { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                    state->unk12C4 = 0;
-                    state->unk12C8 = 0;
-                    state->unk12CC = 0;
-                    state->unk12D0 = 0;
-                    state->unk12D4 = 0;
-                    state->unk16E0 = (s32) (state->unk16E0 | 2);
-                    state->unk16A8 = (s32) (state->unk16A8 | 8);
-                    state->unk1798 = (s32) (state->unk1798 | 2);
-                    state->unk1760 = (s32) (state->unk1760 | 8);
-                    }
-                    { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                    state->unkF80 = 0xF;
-                    state->unkF84 = 0xA;
-                    state->unkF88 = 0xC;
-                    state->unkF8C = 0;
-                    state->unk16D4 = (s32) (state->unk16D4 | 2);
-                    state->unk16A8 = (s32) (state->unk16A8 | 8);
-                    state->unk178C = (s32) (state->unk178C | 2);
-                    state->unk1760 = (s32) (state->unk1760 | 8);
-                    }
-                    { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                    state->unk1080 = 7;
-                    state->unk1084 = 7;
-                    state->unk1088 = 7;
-                    state->unk108C = 0;
-                    state->unk16D8 = (s32) (state->unk16D8 | 2);
-                    state->unk16A8 = (s32) (state->unk16A8 | 8);
-                    state->unk1790 = (s32) (state->unk1790 | 2);
-                    state->unk1760 = (s32) (state->unk1760 | 8);
-                    }
-                    { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                    state->unkDB8 = 2;
-                    state->unk16BC = (s32) (state->unk16BC | 1);
-                    state->unk16A8 = (s32) (state->unk16A8 | 4);
-                    state->unk1774 = (s32) (state->unk1774 | 1);
-                    state->unk1760 = (s32) (state->unk1760 | 4);
-                    }
-
-                    cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(g_current_layer,1,0,0,0,1,&light1,0,2);
-                    if (PSVECSquareMag(&arg0->shape->position) < 0.00001f) {
-                        direction.x = 0.0f;
-                        direction.y = -1.0f;
-                        direction.z = 0.0f;
-                    } else {
-                        temp_r5 = arg0->shape;
-                        temp_f2 = temp_r5->position.y;
-                        temp_f1 = temp_r5->position.z;
-                        f32 directionX = temp_r5->position.x;
-                        direction.y = -temp_f2;
-                        direction.x = -directionX;
-                        direction.z = -temp_f1;
-                        PSVECNormalize(&direction,&direction);
-                    }
-                    PSMTXMultVecSR(g_CameraMatrix,&direction,&direction);
-                    ParticleLight* directionLight=light1;
-                    temp_r0_3 = directionLight->type;
-                    switch (temp_r0_3) {
-                    case 0:
-                    case 1:
-                        directionLight->direction.x = direction.x;
-                        directionLight->direction.y = direction.y;
-                        directionLight->direction.z = direction.z;
-                        directionLight->flags = (u16)(directionLight->flags | 4);
-                        break;
-                    }
-
-                }
-                var_r7_2 = 0;
-                ParticleLayerState* lightState=(ParticleLayerState*)g_current_layer;
-                lightState->unkD94 = var_r30;
-                while (var_r7_2 < 8U) {
-                    if (var_r7_2 < var_r30) {
-                        temp_r9_2 = (var_r7_2 * 4) & 0x3FC;
-                        lightState->lights[var_r7_2]=lights.entries[var_r7_2];
-                    } else {
-                        lightState->lights[var_r7_2]=0;
-                    }
-                    var_r7_2 += 1;
-                }
-                { ParticleLayerState* state=lightState;
-                state->unk16BC = (s32) (state->unk16BC | 0x10);
-                state->unk16A8 = (s32) (state->unk16A8 | 4);
-                state->unk1774 = (s32) (state->unk1774 | 0x10);
-                state->unk1760 = (s32) (state->unk1760 | 4);
-                }
-            } else {
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unkDB8 = 0;
-                state->unk16BC = (s32) (state->unk16BC | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 4);
-                state->unk1774 = (s32) (state->unk1774 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 4);
-                }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unkEAC = 1;
-                state->unk16CC = (s32) (state->unk16CC | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1784 = (s32) (state->unk1784 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 8);
-                }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unkEB0 = 0;
-                state->unkEB4 = 0;
-                state->unkEB8 = 0xFF;
-                state->unk16D0 = (s32) (state->unk16D0 | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1788 = (s32) (state->unk1788 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 8);
-                }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unk1170 = 0;
-                state->unk1174 = 0;
-                state->unk1178 = 0;
-                state->unk117C = 1;
-                state->unk1180 = 0;
-                state->unk16DC = (s32) (state->unk16DC | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1794 = (s32) (state->unk1794 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 8);
-                }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unk12B0 = 0;
-                state->unk12B4 = 0;
-                state->unk12B8 = 0;
-                state->unk12BC = 1;
-                state->unk12C0 = 0;
-                state->unk16E0 = (s32) (state->unk16E0 | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1798 = (s32) (state->unk1798 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 8);
-                }
-                g_current_layer->tunitKRegSel(0,PARTICLE_KREG_DEFAULT);
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unkF70 = 0xF;
-                state->unkF74 = 0xE;
-                state->unkF78 = 8;
-                state->unkF7C = 0xF;
-                state->unk16D4 = (s32) (state->unk16D4 | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk178C = (s32) (state->unk178C | 1);
-                state->unk1760 = (s32) (state->unk1760 | 8);
-                }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unk1070 = 7;
-                state->unk1074 = 6;
-                state->unk1078 = 4;
-                state->unk107C = 7;
-                state->unk16D8 = (s32) (state->unk16D8 | 1);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1790 = (s32) (state->unk1790 | 1);
-                state->unk1760 = (s32) (state->unk1760 | 8);
-                }
-            }
-            ((ParticleLayerState*)g_current_layer)->unk199C = GSgfxVFGetPredef(4);
-            var_r30_2=(peShapeNode*)arg0->nodes;
-            while(var_r30_2 != NULL) {
-                var_r30_2->Render(arg0->shape);
-                var_r30_2=(peShapeNode*)var_r30_2->next;
-            }
-            particleEngineSetDefaultRenderState(1);
-        }
-    }
-}
-
-
-void peShapeNode::Start(peEmitterNode* emitter,_peShape* shape,_EmitParams* params) {
-    Vec randomAngles;
-    Vec scale;
-    u32 flags=shape->flags;
-    peNode::Start(emitter,params);
-    flips=0;
-    PSVECScale(&shape->scaleRange,&scale,HSD_Randf());
-    f32 sy=scale.y,sz=scale.z,sx=scale.x;baseScale.x=sx;baseScale.y=sy;baseScale.z=sz;
-    PSVECAdd(&baseScale,&shape->scale,&baseScale);
-    randomRotation.x=0.0f;randomRotation.y=0.0f;randomRotation.z=0.0f;randomRotation.w=1.0f;
-    world.position.x=0.0f;world.position.y=0.0f;world.position.z=0.0f;
-    world.rotation.x=0.0f;world.rotation.y=0.0f;world.rotation.z=0.0f;world.rotation.w=1.0f;
-    world.scale=unitScaleVector;
-    if(!(emitter->emitter->flags&0x400)) {
-        EulerToQuat(&shape->rotation,&localRotation);
-        if(flags&0x1c7000) {
-            if(flags&0x1000){f32 random=HSD_Randf();randomAngles.x=6.2831855f*random;}else randomAngles.x=0.0f;
-            if(flags&0x2000)randomAngles.y=6.2831855f*HSD_Randf();else randomAngles.y=0.0f;
-            if(flags&0x4000)randomAngles.z=6.2831855f*HSD_Randf();else randomAngles.z=0.0f;
-            if((flags&0x40000) && HSD_Randf()<0.5f)flips|=1;
-            if((flags&0x80000) && HSD_Randf()<0.5f)flips|=2;
-            if((flags&0x100000) && HSD_Randf()<0.5f)flips|=4;
-            EulerToQuat(&randomAngles,&randomRotation);
-        }
-    }
-    angularSpeed=shape->angularSpeed;
-    if(flags&0x8000)angularSpeed.x*=HSD_Randf();
-    if(flags&0x10000)angularSpeed.y*=HSD_Randf();
-    if(flags&0x20000)angularSpeed.z*=HSD_Randf();
-}
-
-struct ShapeColor {u8 r,g,b,a;};
-static inline void shapeSetKColor(ShapeColor color) {
-    ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-    state->unk14F4=*(u32*)&color;
-    state->unk16F8|=1;state->unk16A8|=0x10;
-    state->unk17B0|=1;state->unk1760|=0x10;
-}
-static inline void shapeSetChannelColor(u8 channel,ShapeColor ambient,ShapeColor material) {
-    ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-    ((u32*)&state->unkE9C)[channel]=*(u32*)&ambient;
-    ((u32*)&state->unkEA4)[channel]=*(u32*)&material;
-    u32 bit=1<<channel;
-    state->unk16C4|=bit;state->unk16C8|=bit;state->unk16A8|=4;
-    state->unk177C|=bit;state->unk1780|=bit;state->unk1760|=4;
-}
-void peShapeNode::Render(_peShape* shape) {
-    Mtx sp50;
-    Mtx sp20;
-    u32 temp_r31=shape->flags;
-    u32 temp_r0;
-    ShapeColor black={0,0,0,0};
-    shapeSetKColor(*(ShapeColor*)&color);
-    if(temp_r31&0x200) {
-        shapeSetChannelColor(0,*(ShapeColor*)&shape->ambient,*(ShapeColor*)&color);
-        if(temp_r31&0x400)shapeSetChannelColor(1,black,*(ShapeColor*)&color);
-    }
-    PSMTXQuat(sp20, &world.rotation);
-    PSMTXScale(sp50, world.scale.x, world.scale.y, world.scale.z);
-    PSMTXConcat(sp20, sp50, sp50);
-    PSMTXTransApply(sp50, sp50, world.position.x, world.position.y, world.position.z);
-    pushMult__16GSgfxMatrixStackFP5GSmtx(((ParticleLayerState*)g_current_layer)->unk19A0, sp50);
-    temp_r0 = temp_r31 & 7;
-    switch (temp_r0) {
+static inline bool shapeRendersOnLayer(peShapeContainer *container) {
+    if (!container->active)
+        return false;
+    u32 flags = container->shape->flags;
+    if (!container->count)
+        return false;
+    if (g_render_pass != 1)
+        return false;
+    switch (((ParticleLayerState*)g_current_layer)->unk28) {
     case 0:
-        drawCube__10GSgfxLayerFv(g_current_layer);
-        break;
-    case 1:
-        drawCylinder__10GSgfxLayerFUc(g_current_layer, shape->segments1);
+        if (flags & 0x200000) return true;
         break;
     case 2:
-        drawDodecaedron__10GSgfxLayerFv(g_current_layer);
-        break;
-    case 3:
-        drawIcosahedron__10GSgfxLayerFv(g_current_layer);
+        if (flags & 0x400000) return true;
+        if (!(flags & 0x03E00008)) return true;
         break;
     case 4:
-        drawOctahedron__10GSgfxLayerFv(g_current_layer);
+        if (flags & 8) return true;
         break;
-    case 7:
-        drawTorus__10GSgfxLayerFfUcUc(g_current_layer,shape->radius,shape->segments0,shape->segments1);
+    case 1:
+        if (flags & 0x800000) return true;
         break;
-    case 6:
-        drawSphere__10GSgfxLayerFUc(g_current_layer, shape->segments1);
+    case 3:
+        if (flags & 0x01000000) return true;
+        break;
+    case 5:
+        if (flags & 0x02000000) return true;
         break;
     default:
-        drawSphere__10GSgfxLayerFUcUc(g_current_layer, shape->segments0, shape->segments1);
-        break;
+        return false;
     }
-    pop__16GSgfxMatrixStackFv(((ParticleLayerState*)g_current_layer)->unk19A0);
+    return false;
 }
 
-#include <dolphin/os/OSFastCast.h>
-static inline f32 shapeSpline(ShapeSpline* spline,f32 progress) {
-    if(!spline || !(spline->flags&3))return 1.0f;
-    f32 difference=spline->time-progress;if(difference<0.0f)difference=-difference;
-    if(difference<=0.00001f)return spline->value;
-    return peSplineGetValue(spline,progress);
+enum ShapeTextureFilter {
+    SHAPE_FILTER_NEAREST = 0,
+    SHAPE_FILTER_LINEAR = 2
+};
+
+static inline ShapeTextureFilter shapeMinFilter(u32 flags) {
+    if (flags & 0x20)
+        return SHAPE_FILTER_LINEAR;
+    return SHAPE_FILTER_NEAREST;
 }
-static inline u8 shapeColorByte(f32 value) {
-    return __OSf32tou8(value);
-}
-extern "C" { extern f32 __float_nan[]; }
-static inline s32 shapeFloatClass(f32 x) {
-    union {f32 value;s32 bits;} v;v.value=x;
-    switch(v.bits&0x7f800000) {
-    case 0x7f800000:if(v.bits&0x7fffff)return 1;return 2;
-    case 0:if(v.bits&0x7fffff)return 5;return 3;
-    default:return 4;
+
+struct CameraSpacePosition : GSvec {
+    CameraSpacePosition(f32 px, f32 py, f32 pz) {
+        x = px;
+        y = py;
+        z = pz;
     }
+};
+
+static inline CameraSpacePosition shapeLightPosition(const Vec *position) {
+    Vec point;
+    PSMTXMultVec(g_CameraMatrix, position, &point);
+    return CameraSpacePosition(point.x, point.y, point.z);
 }
-static inline f32 shapeSqrt(f32 x) {
-    if(x>0.0f) {
-        f64 guess=__frsqrte(x);
-        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
-        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
-        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
-        return (f32)((f64)x*guess);
-    }
-    if((f64)x<0.0)return __float_nan[0];
-    if(shapeFloatClass(x)==1)return __float_nan[0];
-    return x;
-}
-static inline f32 shapeU8(u8 value) { return __OSu8tof32(&value); }
-bool peShapeNode::Update(peEmitterNode* emitter,_peShape* shape,f32 delta) {
-    if(!peNode::Update(emitter,delta))return false;
-    u32 emitterFlags=emitter->emitter->flags;
-    f32 progress=1.0f-time/life;
-    Vec angles;
-    Quaternion flipped;
-    Vec direction;
-    Quaternion step;
-    Vec copy;
-    Vec distance;
-    Vec rotationVector;
-    Quaternion rotation;
-    NodeTransform local;
-    Mtx rotationMatrix;
-    if(emitterFlags&0x400) {
-        direction.x=velocity.x;direction.y=velocity.y;direction.z=velocity.z;
-        if(emitterFlags&0x40) {
-            PSMTXQuat(rotationMatrix,(Quaternion*)((u8*)transform+12));
-            PSMTXMultVecSR(rotationMatrix,&direction,&direction);
+
+void peShapeContainer::Render() {
+    GSgfxLight* light0;
+    GSgfxLight* light1;
+    s32 magFilter;
+    f32 directionZ, directionY;
+    s32 shapeFlags;
+    u8 lightCount;
+    u8 lightIndex;
+    _peShape *definition;
+    peShapeNode *node;
+
+    if (active && shapeRendersOnLayer(this)) {
+        shapeFlags = shape->flags;
+        if (shapeFlags & 0x800) {
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unkD8C = 2;
+            state->unk16B8 = (s32) (state->unk16B8 | 2);
+            state->unk16A8 = (s32) (state->unk16A8 | 2);
+            state->unk1770 = (s32) (state->unk1770 | 2);
+            state->unk1760 = (s32) (state->unk1760 | 2);
+            }
+        } else {
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unkD8C = 0;
+            state->unk16B8 = (s32) (state->unk16B8 | 2);
+            state->unk16A8 = (s32) (state->unk16A8 | 2);
+            state->unk1770 = (s32) (state->unk1770 | 2);
+            state->unk1760 = (s32) (state->unk1760 | 2);
+            }
         }
-        f32 horizontal=shapeSqrt(direction.x*direction.x+direction.z*direction.z);
-        angles.x=(f32)atan2(-direction.y,horizontal);
-        angles.y=(f32)atan2(direction.x,direction.z);angles.z=0.0f;
-        EulerToQuat(&angles,&localRotation);
-    } else if(shape->flags&0x100) {
-        angles.x=shape->rotation.x*shapeSpline(shape->rotationSpline[0],progress);
-        angles.y=shape->rotation.y*shapeSpline(shape->rotationSpline[1],progress);
-        angles.z=shape->rotation.z*shapeSpline(shape->rotationSpline[2],progress);
-        EulerToQuat(&angles,&localRotation);
-    } else {
-        PSVECScale(&angularSpeed,&rotationVector,delta);angles=rotationVector;
-        EulerToQuat(&angles,&step);PSQUATMultiply(&localRotation,&step,&localRotation);
+        magFilter = SHAPE_FILTER_NEAREST;
+        if (shapeFlags & 0x40) {
+            magFilter = SHAPE_FILTER_LINEAR;
+        }
+        void *texture = shape->texture;
+        particleEngineSetupTexture(0, texture, 0, 0, shapeMinFilter(shapeFlags), magFilter);
+        particleEngineSetupBlendMode(2);
+        if (shapeFlags & 0x200) {
+            GSgfxLight *firstLight = shape->light0;
+            light0 = firstLight;
+            GSgfxLight* lights[2] = {0, 0};
+            lightCount = 1;
+
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unkEAC = 1;
+
+            state->unk16CC = (s32) (state->unk16CC | 1);
+            lights[0] = firstLight;
+            state->unk16A8 = (s32) (state->unk16A8 | 8);
+            state->unk1784 = (s32) (state->unk1784 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 8);
+            }
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unkDB8 = 1;
+            state->unk16BC = (s32) (state->unk16BC | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 4);
+            state->unk1774 = (s32) (state->unk1774 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 4);
+            }
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unk1170 = 0;
+            state->unk1174 = 0;
+            state->unk1178 = 0;
+            state->unk117C = 1;
+            state->unk1180 = 0;
+            state->unk16DC = (s32) (state->unk16DC | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 8);
+            state->unk1794 = (s32) (state->unk1794 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 8);
+            }
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unk12B0 = 0;
+            state->unk12B4 = 0;
+            state->unk12B8 = 0;
+            state->unk12BC = 1;
+            state->unk12C0 = 0;
+            state->unk16E0 = (s32) (state->unk16E0 | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 8);
+            state->unk1798 = (s32) (state->unk1798 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 8);
+            }
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unkF70 = 0xF;
+            state->unkF74 = 0xA;
+            state->unkF78 = 8;
+            state->unkF7C = 0xF;
+            state->unk16D4 = (s32) (state->unk16D4 | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 8);
+            state->unk178C = (s32) (state->unk178C | 1);
+            state->unk1760 = (s32) (state->unk1760 | 8);
+            }
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unk1544 = 0x1C;
+            state->unk1700 = (s32) (state->unk1700 | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 0x10);
+            state->unk17B8 = (s32) (state->unk17B8 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 0x10);
+            }
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unk1070 = 7;
+            state->unk1074 = 6;
+            state->unk1078 = 4;
+            state->unk107C = 7;
+            state->unk16D8 = (s32) (state->unk16D8 | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 8);
+            state->unk1790 = (s32) (state->unk1790 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 8);
+            }
+            const CameraSpacePosition& position = shapeLightPosition(&shape->position);
+            GSgfxLight* positionLight=light0;
+            switch (positionLight->mode) {
+            case 0:
+                goto positionDone;
+            case 2:
+                positionLight->position.x = position.x;
+                positionLight->position.y = position.y;
+                positionLight->position.z = position.z;
+                break;
+            case 1:
+                positionLight->position.x = position.x;
+                positionLight->position.y = position.y;
+                positionLight->position.z = position.z;
+                break;
+            }
+            positionLight->flags = (u16)(positionLight->flags | 2);
+positionDone:
+
+            cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(g_current_layer,0,0,0,0,1,&light0,2,2);
+            if (shapeFlags & 0x400) {
+                GSgfxLight *secondLight = shape->light1;
+                light1 = secondLight;
+                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+                state->unkEAC = 2;
+                lightCount = 2;
+                lights[1] = secondLight;
+                state->unk16CC = (s32) (state->unk16CC | 1);
+                state->unk16A8 = (s32) (state->unk16A8 | 8);
+                state->unk1784 = (s32) (state->unk1784 | 1);
+                state->unk1760 = (s32) (state->unk1760 | 8);
+                }
+                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+                state->unkEBC = 0xFF;
+                state->unkEC0 = 0xFF;
+                state->unkEC4 = 5;
+                state->unk16D0 = (s32) (state->unk16D0 | 2);
+                state->unk16A8 = (s32) (state->unk16A8 | 8);
+                state->unk1788 = (s32) (state->unk1788 | 2);
+                state->unk1760 = (s32) (state->unk1760 | 8);
+                }
+                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+                state->unk1184 = 0;
+                state->unk1188 = 0;
+                state->unk118C = 0;
+                state->unk1190 = 1;
+                state->unk1194 = 0;
+                state->unk16DC = (s32) (state->unk16DC | 2);
+                state->unk16A8 = (s32) (state->unk16A8 | 8);
+                state->unk1794 = (s32) (state->unk1794 | 2);
+                state->unk1760 = (s32) (state->unk1760 | 8);
+                }
+                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+                state->unk12C4 = 0;
+                state->unk12C8 = 0;
+                state->unk12CC = 0;
+                state->unk12D0 = 0;
+                state->unk12D4 = 0;
+                state->unk16E0 = (s32) (state->unk16E0 | 2);
+                state->unk16A8 = (s32) (state->unk16A8 | 8);
+                state->unk1798 = (s32) (state->unk1798 | 2);
+                state->unk1760 = (s32) (state->unk1760 | 8);
+                }
+                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+                state->unkF80 = 0xF;
+                state->unkF84 = 0xA;
+                state->unkF88 = 0xC;
+                state->unkF8C = 0;
+                state->unk16D4 = (s32) (state->unk16D4 | 2);
+                state->unk16A8 = (s32) (state->unk16A8 | 8);
+                state->unk178C = (s32) (state->unk178C | 2);
+                state->unk1760 = (s32) (state->unk1760 | 8);
+                }
+                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+                state->unk1080 = 7;
+                state->unk1084 = 7;
+                state->unk1088 = 7;
+                state->unk108C = 0;
+                state->unk16D8 = (s32) (state->unk16D8 | 2);
+                state->unk16A8 = (s32) (state->unk16A8 | 8);
+                state->unk1790 = (s32) (state->unk1790 | 2);
+                state->unk1760 = (s32) (state->unk1760 | 8);
+                }
+                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+                state->unkDB8 = 2;
+                state->unk16BC = (s32) (state->unk16BC | 1);
+                state->unk16A8 = (s32) (state->unk16A8 | 4);
+                state->unk1774 = (s32) (state->unk1774 | 1);
+                state->unk1760 = (s32) (state->unk1760 | 4);
+                }
+
+                cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(g_current_layer,1,0,0,0,1,&light1,0,2);
+                Vec direction;
+                if (PSVECSquareMag(&shape->position) < 0.00001f) {
+                    direction.x = 0.0f;
+                    direction.y = -1.0f;
+                    direction.z = 0.0f;
+                } else {
+                    definition = this->shape;
+                    directionY = definition->position.y;
+                    directionZ = definition->position.z;
+                    f32 directionX = definition->position.x;
+                    direction.y = -directionY;
+                    direction.x = -directionX;
+                    direction.z = -directionZ;
+                    PSVECNormalize(&direction,&direction);
+                }
+                PSMTXMultVecSR(g_CameraMatrix,&direction,&direction);
+                GSgfxLight* directionLight=light1;
+                switch (directionLight->mode) {
+                case 0:
+                case 1:
+                    directionLight->direction.x = direction.x;
+                    directionLight->direction.y = direction.y;
+                    directionLight->direction.z = direction.z;
+                    directionLight->flags = (u16)(directionLight->flags | 4);
+                    break;
+                }
+
+            }
+            lightIndex = 0;
+            ParticleLayerState* lightState=(ParticleLayerState*)g_current_layer;
+            lightState->unkD94 = lightCount;
+            while (lightIndex < 8U) {
+                if (lightIndex < lightCount) {
+                    lightState->lights[lightIndex]=lights[lightIndex];
+                } else {
+                    lightState->lights[lightIndex]=0;
+                }
+                lightIndex += 1;
+            }
+            { ParticleLayerState* state=lightState;
+            state->unk16BC = (s32) (state->unk16BC | 0x10);
+            state->unk16A8 = (s32) (state->unk16A8 | 4);
+            state->unk1774 = (s32) (state->unk1774 | 0x10);
+            state->unk1760 = (s32) (state->unk1760 | 4);
+            }
+        } else {
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unkDB8 = 0;
+            state->unk16BC = (s32) (state->unk16BC | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 4);
+            state->unk1774 = (s32) (state->unk1774 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 4);
+            }
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unkEAC = 1;
+            state->unk16CC = (s32) (state->unk16CC | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 8);
+            state->unk1784 = (s32) (state->unk1784 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 8);
+            }
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unkEB0 = 0;
+            state->unkEB4 = 0;
+            state->unkEB8 = 0xFF;
+            state->unk16D0 = (s32) (state->unk16D0 | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 8);
+            state->unk1788 = (s32) (state->unk1788 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 8);
+            }
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unk1170 = 0;
+            state->unk1174 = 0;
+            state->unk1178 = 0;
+            state->unk117C = 1;
+            state->unk1180 = 0;
+            state->unk16DC = (s32) (state->unk16DC | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 8);
+            state->unk1794 = (s32) (state->unk1794 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 8);
+            }
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unk12B0 = 0;
+            state->unk12B4 = 0;
+            state->unk12B8 = 0;
+            state->unk12BC = 1;
+            state->unk12C0 = 0;
+            state->unk16E0 = (s32) (state->unk16E0 | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 8);
+            state->unk1798 = (s32) (state->unk1798 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 8);
+            }
+            g_current_layer->tunitKRegSel(0,PARTICLE_KREG_DEFAULT);
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unkF70 = 0xF;
+            state->unkF74 = 0xE;
+            state->unkF78 = 8;
+            state->unkF7C = 0xF;
+            state->unk16D4 = (s32) (state->unk16D4 | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 8);
+            state->unk178C = (s32) (state->unk178C | 1);
+            state->unk1760 = (s32) (state->unk1760 | 8);
+            }
+            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
+            state->unk1070 = 7;
+            state->unk1074 = 6;
+            state->unk1078 = 4;
+            state->unk107C = 7;
+            state->unk16D8 = (s32) (state->unk16D8 | 1);
+            state->unk16A8 = (s32) (state->unk16A8 | 8);
+            state->unk1790 = (s32) (state->unk1790 | 1);
+            state->unk1760 = (s32) (state->unk1760 | 8);
+            }
+        }
+        ((ParticleLayerState*)g_current_layer)->unk199C = GSgfxVFGetPredef(4);
+        node=(peShapeNode*)this->nodes;
+        while(node != NULL) {
+            node->Render(this->shape);
+            node=(peShapeNode*)node->next;
+        }
+        particleEngineSetDefaultRenderState(1);
     }
-    angles.x=baseScale.x*shapeSpline(shape->scaleSpline[0],progress);
-    angles.y=baseScale.y*shapeSpline(shape->scaleSpline[1],progress);
-    angles.z=baseScale.z*shapeSpline(shape->scaleSpline[2],progress);
-    peColorSplineGetValue(&color,shape->colorSpline,progress);
-    u8* rgba=(u8*)&color;
-    rgba[0]=shapeColorByte(emitter->color[0]*shapeU8(rgba[0]));
-    rgba[1]=shapeColorByte(emitter->color[1]*shapeU8(rgba[1]));
-    rgba[2]=shapeColorByte(emitter->color[2]*shapeU8(rgba[2]));
-    rgba[3]=shapeColorByte((255.0f*emitter->color[3])*shapeSpline(shape->alphaSpline,progress));
-    if(flips&1)flipped.x=-localRotation.x;else flipped.x=localRotation.x;
-    if(flips&2)flipped.y=-localRotation.y;else flipped.y=localRotation.y;
-    if(flips&4)flipped.z=-localRotation.z;else flipped.z=localRotation.z;
-    flipped.w=localRotation.w;
-    local.position=position;
-    PSQUATMultiply(&randomRotation,&flipped,&rotation);
-    local.rotation.x=rotation.x;local.rotation.y=rotation.y;local.rotation.z=rotation.z;local.rotation.w=rotation.w;
-    local.scale=angles;
-    peNodeTransformsConcat(&world,transform,&local,false);
-    PSVECSubtract(&world.position,&g_CameraPosition,&distance);
-    copy.x=distance.x;copy.y=distance.y;copy.z=distance.z;depth=PSVECDotProduct(&g_CameraLookDir,&copy);
-    return true;
+}
+
+void peShapeContainer::Stop() {
+    if(active) {
+        PreUpdate();active=0;
+        if(shape->flags&0x800000)SetLayerVisibility((GSgfxLayerID)1,false);
+        if(shape->flags&0x1000000)SetLayerVisibility((GSgfxLayerID)3,false);
+        if(shape->flags&0x2000000)SetLayerVisibility((GSgfxLayerID)5,false);
+        RemoveAll();
+    }
 }

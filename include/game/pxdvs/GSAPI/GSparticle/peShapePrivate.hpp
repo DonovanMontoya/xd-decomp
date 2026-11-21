@@ -1,10 +1,10 @@
 #ifndef PE_SHAPE_PRIVATE_HPP
 #define PE_SHAPE_PRIVATE_HPP
 #include <game/pxdvs/GSAPI/GSparticle/peContainerPrivate.hpp>
-struct ParticleLight {u16 flags,reserved02;s32 type;u32 reserved08;Vec position,direction;};
+#include <game/pxdvs/GSAPI/GSgfxM/light_gfxmPrivate.hpp>
 struct ShapeSpline {u8 flags;u8 reserved01[3];f32 value,time;};
-struct _peShape {u32 flags;Vec rotation,angularSpeed,scale,scaleRange;ShapeSpline* rotationSpline[3];ShapeSpline* scaleSpline[3];void* colorSpline;ShapeSpline* alphaSpline;f32 radius;u8 segments0,segments1;u16 reserved5a;Vec position;u32 ambient;u8 reserved6c[8];void* texture;ParticleLight* light0;ParticleLight* light1;};
-struct peShapeNode:peNode {NodeTransform world;Quaternion randomRotation,localRotation;Vec baseScale;f32 depth;u32 flips;Vec angularSpeed;u32 color;bool Update(peEmitterNode*,_peShape*,f32);void Start(peEmitterNode*,_peShape*,_EmitParams*);void Render(_peShape*);};
+struct _peShape {u32 flags;Vec rotation,angularSpeed,scale,scaleRange;ShapeSpline* rotationSpline[3];ShapeSpline* scaleSpline[3];void* colorSpline;ShapeSpline* alphaSpline;f32 radius;u8 segments0,segments1;u16 reserved5a;Vec position;GSgfxColAu8 ambient;u8 reserved6c[8];void* texture;GSgfxLight* light0;GSgfxLight* light1;};
+struct peShapeNode:peNode {NodeTransform world;Quaternion randomRotation,localRotation;Vec baseScale;f32 depth;u32 flips;Vec angularSpeed;GSgfxColAu8 color;bool Update(peEmitterNode*,_peShape*,f32);void Start(peEmitterNode*,_peShape*,_EmitParams*);void Render(_peShape*);};
 struct peShapeContainer:peContainer {
     _peShape* shape;
     peShapeContainer(peEmitterNode*,_peShape*,u16);virtual ~peShapeContainer();void Start();void Stop();void Update(f32);u16 Emit(u16);void Render();
@@ -22,7 +22,7 @@ u32 unkD8C;
 u8 reservedd90[0x4];
 u8 unkD94;
 u8 reservedd95[0x3];
-ParticleLight* lights[8];
+GSgfxLight* lights[8];
 u8 unkDB8;
 u8 reserveddb9[0xe3];
 u32 unkE9C,unkEA0,unkEA4,unkEA8;
@@ -126,7 +126,7 @@ void* unk19A0;
 };
 extern "C" {extern s32 g_render_pass;extern MtxPtr g_CameraMatrix;
 void particleEngineSetupTexture(u8,void*,s32,s32,s32,s32);void particleEngineSetupBlendMode(u32);void particleEngineSetDefaultRenderState(u8);GSgfxVF* GSgfxVFGetPredef(u32);
-void cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(GSgfxLayer*,u8,u32,u32,u32,u32,ParticleLight**,u32,u32);
+void cunitChannelGen__10GSgfxLayerFUc15GSgfxCunitAlpha13GSgfxCunitSrc13GSgfxCunitSrcUlPP10GSgfxLight14GSgfxLightType16GSgfxDiffuseFunc(GSgfxLayer*,u8,u32,u32,u32,u32,GSgfxLight**,u32,u32);
 }
 extern "C" {f32 HSD_Randf();s32 EulerToQuat(Vec*,Quaternion*);extern Vec unitScaleVector;}
 extern "C" {
