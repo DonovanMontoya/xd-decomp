@@ -2663,7 +2663,7 @@ void _peopleUpdateNeck__FP13tagPeopleWorkf(tagPeopleWork* work,f32 limit) {
         f32 step;
         if(work->neckInstant==1) {step=3.1415927f;work->neckInstant=0;}
         else if(distance<work->neckDistance) {
-            if(work->neckMinStep>0.05f) {work->neckMinStep-=0.019634955f;step=work->neckMinStep;}
+            if (work->neckMinStep > 0.05) {work->neckMinStep-=0.019634955f;step=work->neckMinStep;}
             else {work->neckMinStep=0.015707964f;step=work->neckMinStep;}
         } else {
             if(work->neckMinStep<work->neckMaxStep) {work->neckMinStep+=0.0058904868f;step=work->neckMinStep;}
