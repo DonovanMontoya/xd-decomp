@@ -100,9 +100,8 @@ struct DeckTrainerAILayout {
     u8 annihilateDetermRate;
     u8 lowHPDetermRate;
     u8 lastPPDetermRate;
-    u8 attrTypeID;
-    u8 reserved15;
-    u8 attrTypeParam;
+    u8 attrTypeID[2];
+    u8 attrTypeParam[2];
     u16 wazaKindID[2];
     u8 wazaKindParam[2];
     u8 totalCorrection;

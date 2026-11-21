@@ -270,21 +270,42 @@ DECK_AI_SET_BYTE(setTotalCorrection__13DeckTrainerAIFUc, 0x1E)
 
 DECK_AI_GET_BYTE(getTotalCorrection__13DeckTrainerAICFv, 0x1E)
 
-void setWazaKindParam__13DeckTrainerAIFUcUc(void *p, u8 index, u8 value) { if (p) bytes(p)[0x1C + index] = value; }
+void setWazaKindParam__13DeckTrainerAIFUcUc(void* data, u8 index, u8 value) {
+    DeckTrainerAILayout* record = static_cast<DeckTrainerAILayout*>(data);
+    if (record) record->wazaKindParam[index] = value;
+}
 
-u8 getWazaKindParam__13DeckTrainerAICFUc(void *p, u8 index) { if (p == 0) return 0; return bytes(p)[0x1C + index]; }
+u8 getWazaKindParam__13DeckTrainerAICFUc(void* data, u8 index) {
+    const DeckTrainerAILayout* record = static_cast<const DeckTrainerAILayout*>(data);
+    if (record == 0) return 0;
+    return record->wazaKindParam[index];
+}
 
 void setWazaKindID__13DeckTrainerAIFUcUs(DeckTrainerAILayout *p, u8 index, u16 value) { if (p) p->wazaKindID[index] = value; }
 
 u16 getWazaKindID__13DeckTrainerAICFUc(DeckTrainerAILayout *p, u8 index) { if (p == 0) return 0; return p->wazaKindID[index]; }
 
-void setAttrTypeParam__13DeckTrainerAIFUcUc(void *p, u8 index, u8 value) { if (p) bytes(p)[0x16 + index] = value; }
+void setAttrTypeParam__13DeckTrainerAIFUcUc(void* data, u8 index, u8 value) {
+    DeckTrainerAILayout* record = static_cast<DeckTrainerAILayout*>(data);
+    if (record) record->attrTypeParam[index] = value;
+}
 
-u8 getAttrTypeParam__13DeckTrainerAICFUc(void *p, u8 index) { if (p == 0) return 0; return bytes(p)[0x16 + index]; }
+u8 getAttrTypeParam__13DeckTrainerAICFUc(void* data, u8 index) {
+    const DeckTrainerAILayout* record = static_cast<const DeckTrainerAILayout*>(data);
+    if (record == 0) return 0;
+    return record->attrTypeParam[index];
+}
 
-void setAttrTypeID__13DeckTrainerAIFUcUc(void *p, u8 index, u8 value) { if (p) bytes(p)[0x14 + index] = value; }
+void setAttrTypeID__13DeckTrainerAIFUcUc(void* data, u8 index, u8 value) {
+    DeckTrainerAILayout* record = static_cast<DeckTrainerAILayout*>(data);
+    if (record) record->attrTypeID[index] = value;
+}
 
-u8 getAttrTypeID__13DeckTrainerAICFUc(void *p, u8 index) { if (p == 0) return 0; return bytes(p)[0x14 + index]; }
+u8 getAttrTypeID__13DeckTrainerAICFUc(void* data, u8 index) {
+    const DeckTrainerAILayout* record = static_cast<const DeckTrainerAILayout*>(data);
+    if (record == 0) return 0;
+    return record->attrTypeID[index];
+}
 
 DECK_AI_SET_BYTE(setLastPPDetermRate__13DeckTrainerAIFUc, 0x13)
 
