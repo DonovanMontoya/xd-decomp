@@ -68,8 +68,8 @@ public:
     u8 getRandomSetting() const;
     u8 getLevel() const;
     u8 getFriendLevel() const;
-    s8 getSex() const;
-    s8 getSeikakuID() const;
+    u8 getSex() const;
+    u8 getSeikakuID() const;
     u8 getTokuseiFlag() const;
     u16 getHoldItem() const;
     u8 getComboPartnerAll() const;
@@ -201,7 +201,7 @@ void fightTrainerAllInitFightActionBuff(FightTrainer* trainer);
 void fightEncountDataBiosSetFightTrainerDataId(void* encount, u32 side, u16 id);
 void fightEncountDataBiosSetPokemon(void* encount, u8 num);
 void pokemonSetTokuseiFlag(Pokemon* pokemon, u8 flag);
-u32 pokemonCreateRndFit(Pokemon* pokemon, s8 sex, s8 seikaku, u32 a, u32 rnd);
+u32 pokemonCreateRndFit(Pokemon* pokemon, s8 sex, s8 seikaku, s8 rare, u32 rnd);
 void pokemon_SetRnd(Pokemon* pokemon, u32 rnd);
 void pokemonWazaInit(Pokemon* pokemon, u32 index);
 void pokemonWazaCreate(Pokemon* pokemon, u8 index, u16 waza);
@@ -218,7 +218,7 @@ void darkPokemonBiosSetRnd(u16 id, u32 rnd);
 u32 heroBiosGetRnd(Hero* hero);
 void pokemon_SetFriend(Pokemon* pokemon, u8 level);
 void pokemon_SetComboPartnerAll(Pokemon* pokemon, u8 combo);
-void pokemonDoItemSoubi(Pokemon* pokemon, u16 item, u32 mode);
+u16 pokemonDoItemSoubi(Pokemon* pokemon, u16 item, u8 set);
 u8 wazaCheckDarkWaza(u16 waza);
 void pokemonSetDarkPokemonStatus(Pokemon* pokemon, u16 darkId);
 s8 underTakerDeckRand = -1;
@@ -1124,9 +1124,8 @@ u8 fightTrainerCheckTrainerDataIdValid(u16 id, s32 allowNoAi) {
 }
 
 u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 id, Pokemon* pokemon, u32 unused, u16 darkId, u16 encountId) {
-    enum TsE { TsE0 };
     u16 rndKinds[6] = {0x93, 0x94, 0x95, 0x96, 0x97, 0x98};
-    enum TsE sex;
+    u8 sex;
     u8 statusRnd[6];
     u8 statusEffort[6];
     u16 waza[4];
@@ -1135,7 +1134,7 @@ u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 id, Pokemon* pokemon
     Hero* save;
     u8 fightKind;
     u16 pokemonId;
-    u32 heroRnd;
+    u32 seed;
     u8 level;
     u32 friendLevel;
     u16 effortKinds[6] = {0x8D, 0x8E, 0x8F, 0x90, 0x91, 0x92};
@@ -1152,7 +1151,6 @@ u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 id, Pokemon* pokemon
     u8 j;
     u8 done;
     u16 w;
-    u32 rnd;
 
     deck = DeckPokemon::getDeckPokemonObj(id);
     darkFlag = 0;
@@ -1168,7 +1166,7 @@ u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 id, Pokemon* pokemon
     random = deck->getRandomSetting() != 0;
     level = deck->getLevel();
     friendLevel = deck->getFriendLevel();
-    sex = (enum TsE)(deck->getSex());
+    sex = deck->getSex();
     seikaku = deck->getSeikakuID();
     tokusei = deck->getTokuseiFlag();
     item = deck->getHoldItem();
@@ -1192,7 +1190,7 @@ u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 id, Pokemon* pokemon
             darkFlag = 0;
         }
     }
-    heroRnd = heroBiosGetRnd(save);
+    seed = heroBiosGetRnd(save);
     if (darkId != 0 && darkFlag == 1) {
         for (i = 0; i < 6; i++) {
             s32 tmp4 = (u16)darkPokemonBiosGetStatusRnd(darkId, i);
@@ -1203,7 +1201,7 @@ u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 id, Pokemon* pokemon
     if (darkId == 0) {
         pokemon_SetFriend(pokemon, friendLevel);
         if (random == 0) {
-            pokemon_SetRnd(pokemon, pokemonCreateRndFit(pokemon, sex, seikaku, 0, heroRnd));
+            pokemon_SetRnd(pokemon, pokemonCreateRndFit(pokemon, sex, seikaku, 0, seed));
             pokemonSetTokuseiFlag(pokemon, tokusei != 0);
             for (i = 0; i < 6; i++) {
                 pokemonSetStatus(pokemon, 0, rndKinds[i], 0, statusRnd[i]);
@@ -1213,7 +1211,7 @@ u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 id, Pokemon* pokemon
             }
         }
         if (random == 1) {
-            pokemon_SetRnd(pokemon, pokemonCreateRndFit(pokemon, -1, -1, 0, heroRnd));
+            pokemon_SetRnd(pokemon, pokemonCreateRndFit(pokemon, -1, -1, 0, seed));
             for (i = 0; i < 6; i++) {
                 statusEffort[i] = 0;
             }
@@ -1221,7 +1219,8 @@ u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 id, Pokemon* pokemon
             do {
                 total = 0;
                 for (j = 0; j < 6; j++) {
-                    statusEffort[j] += (u16)HSD_Rand() % 256;
+                    u8 increment = HSD_Rand() % 256;
+                    statusEffort[j] += increment;
                     total += statusEffort[j];
                 }
                 if (fightKind == 10 || fightKind == 17) {
@@ -1288,11 +1287,11 @@ u8 fightTrainerCreateFightTrainerPokemonDataIdToPokemon(u16 id, Pokemon* pokemon
     if (darkId != 0) {
         pokemonSetDarkPokemonStatus(pokemon, darkId);
         if (darkFlag == 0) {
-            rnd = pokemonCreateRndFit(pokemon, -1, -1, 0, heroRnd);
-            darkPokemonBiosSetRnd((u16)darkId, rnd);
-            pokemon_SetRnd(pokemon, rnd);
+            seed = pokemonCreateRndFit(pokemon, -1, -1, 0, seed);
+            darkPokemonBiosSetRnd(darkId, seed);
+            pokemon_SetRnd(pokemon, seed);
             if (dark != 0) {
-                dark->setRnd(rnd);
+                dark->setRnd(seed);
             }
             for (i = 0; i < 6; i++) {
                 s32 tmp2 = pokemonGetStatus(pokemon, 0, rndKinds[i], 0);
