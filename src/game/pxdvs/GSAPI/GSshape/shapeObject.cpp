@@ -337,87 +337,180 @@ bool GsShapeObject::DeformVertexCoordSpiral(bool deform,const f32* u,const f32* 
     return true;
 }
 
-bool GsShapeObject::DeformVertexCoordSphere(bool deform,const f32* u,const f32* v,bool radius,f32 radiusU,f32 radiusV,bool angle,f32 angleU,f32 angleV,bool twistEnabled,const f32* twist) {
-    Vec *out=(Vec*)vertexArrays[0];
-    if(!out)return false;
-    int columns=entry->segmentsU+1,rows=entry->segmentsV+1;
-    if(!angle){angleU=entry->shearAngle;angleV=*(f32*)((u8*)entry+0x60);}
-    if(angleU<0.00001f)angleU=0.00001f;
-    if(angleU>360.0f)angleU=360.0f;
-    if(angleV<0.00001f)angleV=0.00001f;
-    if(angleV>360.0f)angleV=360.0f;
-    f32 start;
-    if(angleU<0.00001f)start=0.0f;else start=0.5f*(360.0f-angleU);
-    f32 bottom;
-    if(*((u8*)entry+0xCF)==0)bottom=0.017453292f*(0.5f*-angleV);else bottom=-1.5707964f;
-    if(!radius)radiusU=entry->width;
-    f32 scale;
-    for(int row=0;row<rows;row++,twist++,v++){
-        if(twistEnabled==1)scale=1.0f+*twist;
-        f32 vertical;
-        if(deform)vertical=*v;else vertical=(f32)row/(f32)(rows-1);
-        f32 verticalSine=0.017453292f*angleV*vertical+bottom,verticalCosine;
-        shapeFastSinCos(verticalSine,verticalCosine);
-        f32 ring=radiusU*verticalCosine;
-        const f32 *horizontal=u;
-        for(int column=0;column<columns;column++,horizontal++){
-            f32 across;
-            if(deform)across=*horizontal;else across=(f32)column/(f32)(columns-1);
-            f32 current=ring;
-            f32 sine=angleU*0.017453292f*across+(start+90.0f)*0.017453292f;
-            if(twistEnabled==1)current=ring*scale;
-            f32 cosine;
-            if(column==0||column==columns-1){f32 theta=sine;sine=(f32)sin(theta);cosine=(f32)cos(theta);}
-            else shapeFastSinCos(sine,cosine);
-            out->x=current*cosine;out->y=current*sine;out->z=radiusU*verticalSine;out++;
-        }
+bool GsShapeObject::DeformVertexCoordSphere(bool deform, const f32* u, const f32* v, bool radius,
+                                          f32 radiusU, f32 radiusV, bool angle, f32 angleU, f32 angleV,
+                                          bool twistEnabled, const f32* twist) {
+    f32 ring, height, start, radiansU, bottom, radiansV, current, scale, sine;
+    const f32* horizontal;
+    const f32* rowTwist;
+    const f32* rowV;
+    int column, row, columns, rows;
+    Vec* out;
+    Vec* vertices = (Vec*)vertexArrays[0];
+    if (!vertices) {
+        return false;
     }
-    return true;
-}
-
-bool GsShapeObject::DeformVertexCoordTorus(bool deform,const f32* u,const f32* v,bool radius,f32 radiusU,f32 radiusV,bool angle,f32 angleU,f32 angleV,bool twistEnabled,const f32* twist) {
-    Vec *out=(Vec*)vertexArrays[0];
-    if(!out)return false;
-    int columns=entry->segmentsU+1,rows=entry->segmentsV+1;
-    if(!radius){radiusV=entry->height;radiusU=entry->width;}
+    out = vertices;
+    columns = entry->segmentsU + 1;
+    rows = entry->segmentsV + 1;
     f32 sweepU, sweepV;
     if (angle) {
         sweepU = angleU;
         sweepV = angleV;
     } else {
         sweepU = entry->shearAngle;
-        sweepV = *(f32*)((u8*)entry+0x60);
+        sweepV = *(f32*)((u8*)entry + 0x60);
     }
-    if(sweepU<0.00001f)sweepU=0.00001f;
-    if(sweepU>360.0f)sweepU=360.0f;
-    if(sweepV<0.00001f)sweepV=0.00001f;
-    if(sweepV>360.0f)sweepV=360.0f;
-    f32 start;
-    if(sweepU<0.00001f)start=0.0f;else start=0.5f*(360.0f-sweepU);
+    if (sweepU < 0.00001f) sweepU = 0.00001f;
+    if (sweepU > 360.0f) sweepU = 360.0f;
+    if (sweepV < 0.00001f) sweepV = 0.00001f;
+    if (sweepV > 360.0f) sweepV = 360.0f;
+    if (sweepU < 0.00001f) {
+        start = 0.0f;
+    } else {
+        start = 0.5f * (360.0f - sweepU);
+    }
+    radiansU = sweepU;
     start += 90.0f;
-    f32 bottom;
-    if(sweepV<0.00001f)bottom=0.0f;else bottom=0.5f*(360.0f-sweepV);
+    radiansU *= 0.017453292f;
+    start *= 0.017453292f;
+    if (*((u8*)entry + 0xCF) == 0) {
+        bottom = 0.017453292f * (0.5f * -sweepV);
+    } else {
+        bottom = -1.5707964f;
+    }
+    radiansV = 0.017453292f * sweepV;
+    if (!radius) radiusU = entry->width;
+    rowTwist = twist;
+    rowV = v;
+    for (row = 0; row < rows; ++rowTwist, ++rowV, ++row) {
+        if (twistEnabled == 1) scale = 1.0f + *rowTwist;
+        f32 vertical;
+        if (deform) {
+            vertical = *rowV;
+        } else {
+            vertical = (f32)row / (f32)(rows - 1);
+        }
+        f32 latitude = radiansV * vertical + bottom;
+        f32 verticalCosine, verticalSine;
+        verticalSine = latitude;
+        shapeFastSinCos(verticalSine, verticalCosine);
+        ring = radiusU * verticalCosine;
+        height = radiusU * verticalSine;
+        horizontal = u;
+        for (column = 0; column < columns; horizontal++, column++) {
+            f32 across;
+            if (deform) {
+                across = *horizontal;
+            } else {
+                across = (f32)column / (f32)(columns - 1);
+            }
+            current = ring;
+            f32 theta = radiansU * across + start;
+            if (twistEnabled == 1) current *= scale;
+            f32 cosine;
+            if (column == 0 || column == columns - 1) {
+                f32 result = (f32)sin(theta);
+                sine = result;
+                cosine = (f32)cos(theta);
+            } else {
+                sine = theta;
+                shapeFastSinCos(sine, cosine);
+            }
+            out->x = current * cosine;
+            out->y = current * sine;
+            out->z = height;
+            out++;
+        }
+    }
+    return true;
+}
+
+bool GsShapeObject::DeformVertexCoordTorus(bool deform, const f32* u, const f32* v, bool radius,
+                                          f32 radiusU, f32 radiusV, bool angle, f32 angleU, f32 angleV,
+                                          bool twistEnabled, const f32* twist) {
+    f32 ring, height, start, radiansU, bottom, radiansV, sine;
+    const f32* horizontal;
+    const f32* rowV;
+    int column, row, columns, rows;
+    Vec* out;
+    Vec* vertices = (Vec*)vertexArrays[0];
+    if (!vertices) {
+        return false;
+    }
+    out = vertices;
+    columns = entry->segmentsU + 1;
+    rows = entry->segmentsV + 1;
+    if (!radius) {
+        radiusV = entry->height;
+        radiusU = entry->width;
+    }
+    f32 sweepU, sweepV;
+    if (angle) {
+        sweepU = angleU;
+        sweepV = angleV;
+    } else {
+        sweepU = entry->shearAngle;
+        sweepV = *(f32*)((u8*)entry + 0x60);
+    }
+    if (sweepU < 0.00001f) sweepU = 0.00001f;
+    if (sweepU > 360.0f) sweepU = 360.0f;
+    if (sweepV < 0.00001f) sweepV = 0.00001f;
+    if (sweepV > 360.0f) sweepV = 360.0f;
+    if (sweepU < 0.00001f) {
+        start = 0.0f;
+    } else {
+        start = 0.5f * (360.0f - sweepU);
+    }
+    radiansU = sweepU;
+    start += 90.0f;
+    if (sweepV < 0.00001f) {
+        bottom = 0.0f;
+    } else {
+        bottom = 0.5f * (360.0f - sweepV);
+    }
+    radiansV = sweepV;
     bottom += 180.0f;
     start *= 0.017453292f;
-    f32 radiansU = sweepU * 0.017453292f;
+    radiansU *= 0.017453292f;
     bottom *= 0.017453292f;
-    f32 radiansV = sweepV * 0.017453292f;
-    for(int row=0;row<rows;row++,v++){
+    radiansV *= 0.017453292f;
+    rowV = v;
+    for (row = 0; row < rows; rowV++, row++) {
         f32 vertical;
-        if(deform)vertical=*v;else vertical=(f32)row/(f32)(rows-1);
-        f32 verticalSine=radiansV*vertical+bottom,verticalCosine;
-        shapeFastSinCos(verticalSine,verticalCosine);
-        f32 ring=radiusV*verticalCosine+radiusU;
-        const f32 *horizontal=u;
-        for(int column=0;column<columns;column++,horizontal++){
+        if (deform) {
+            vertical = *rowV;
+        } else {
+            vertical = (f32)row / (f32)(rows - 1);
+        }
+        f32 latitude = radiansV * vertical + bottom;
+        f32 verticalCosine, verticalSine;
+        verticalSine = latitude;
+        shapeFastSinCos(verticalSine, verticalCosine);
+        ring = radiusV * verticalCosine + radiusU;
+        height = radiusV * verticalSine;
+        horizontal = u;
+        for (column = 0; column < columns; horizontal++, column++) {
             f32 across;
-            if(deform)across=*horizontal;else across=(f32)column/(f32)(columns-1);
-            f32 current=ring;
-            f32 sine=radiansU*across+start;
+            if (deform) {
+                across = *horizontal;
+            } else {
+                across = (f32)column / (f32)(columns - 1);
+            }
+            f32 theta = radiansU * across + start;
             f32 cosine;
-            if(column==0||column==columns-1){f32 theta=sine;sine=(f32)sin(theta);cosine=(f32)cos(theta);}
-            else shapeFastSinCos(sine,cosine);
-            out->x=current*cosine;out->y=current*sine;out->z=radiusV*verticalSine;out++;
+            if (column == 0 || column == columns - 1) {
+                f32 result = (f32)sin(theta);
+                sine = result;
+                cosine = (f32)cos(theta);
+            } else {
+                sine = theta;
+                shapeFastSinCos(sine, cosine);
+            }
+            out->x = ring * cosine;
+            out->y = ring * sine;
+            out->z = height;
+            out++;
         }
     }
     return true;
