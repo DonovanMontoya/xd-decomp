@@ -1,32 +1,27 @@
 #include <game/pxdvs/GSAPI/GSshape/shapeObjectPrivate.hpp>
 #include <dolphin/gx.h>
-u32 GsShapeObject::GetPolygonCount() { return entry->segmentsU*entry->segmentsV*2; }
-bool GsShapeObject::FreeShapeDrawBuffer(s16 instance) {
-    if(instance<0 || instance>=256) return false;
-    if(drawBuffers[instance]) { GSmemFree(drawBuffers[instance]); drawBuffers[instance]=0; return true; }
-    return false;
+
+extern "C" {
+void GSgfxDLBegin(void*, void*, u32, u32);
+void GSgfxDLEnd();
+void GSgfxDLPrimitiveType(u32);
+void GSgfxDLBeginSurface(u16);
+void GSgfxDLEndSurface();
 }
-bool GsShapeObject::CreateShapeDrawBuffer(s16 instance) {
-    if(instance<0 || instance>=256) return false;
-    drawBuffers[instance]=(u8*)GSmemAlloc(entry->vertexCount*(entry->textureCount*8+16)*2);
-    if(!drawBuffers[instance]) return false;
-    u32 count=entry->vertexCount;
-    int texture;
-    for(int buffer=0;buffer<2;buffer++) {
-        u32 offset=0;
-        if(buffer!=0) offset=count*(entry->textureCount*8+16);
-        u8* vertices=drawBuffers[instance]+offset;
-        memcpy(vertices,entry->vertices,count*12);
-        u8* colors=vertices+count*12;
-        memcpy(colors,entry->colors,count*4);
-        for(texture=0;texture<entry->textureCount;texture++)
-            memcpy(colors+count*(texture*8u+4),entry->textureCoords,count*8);
-    }
-    return true;
-}
-void GsShapeObject::FreeDisplayListShape() {
-    if(displayList) { GSgfxDLFree(displayList); GSmemFree(displayList); displayList=0; }
-}
+
+extern "C" double sin(double);
+extern "C" double cos(double);
+extern "C" double tan(double);
+
+extern "C" double acos(double);
+
+extern "C" void GSgfxVFSetArray(void*, s32, s32, void*, u8, u32);
+extern "C" void dlDraw__10GSgfxLayerFP7GSgfxDL(GSgfxLayer*, void*);
+extern "C" void beginSurface__10GSgfxLayerFUs(GSgfxLayer*, u16);
+extern "C" void endSurface__10GSgfxLayerFv(GSgfxLayer*);
+
+extern "C" void DrawShapeGfx__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject* self, GSgfxLayer* layer, s16 s, u8 c);
+
 void GsShapeObject::SetVertexColorSpecify(const tagGScol4ub& value,bool) {
     tagGScol4ub* colors=(tagGScol4ub*)vertexArrays[1];
     if(colors) {
@@ -137,80 +132,6 @@ void GsShapeObject::SetVertexColorGradation(u8 axis,const tagGScol4ub* colors,in
     }
 }
 
-extern "C" {
-void GSgfxDLBegin(void*, void*, u32, u32);
-void GSgfxDLEnd();
-void GSgfxDLPrimitiveType(u32);
-void GSgfxDLBeginSurface(u16);
-void GSgfxDLEndSurface();
-}
-void GsShapeObject::MakeShapeGfxDL() {
-    u32 vertexCount;
-    u16 row;
-    u16 base;
-    u16 textureCount;
-    u16 columns;
-    columns = entry->segmentsU + 1;
-    textureCount = entry->textureCount;
-    GSgfxDLPrimitiveType(0x98);
-    vertexCount = columns * 2;
-    for (row = 0; row < entry->segmentsV; ++row) {
-        u16 column;
-        base = row * columns;
-        GSgfxDLBeginSurface(vertexCount);
-        u16 next = (row + 1) * columns;
-        for (column = 0; column < columns; ++column) {
-            u16 first = column + base;
-            u16 second = column + next;
-            u16 i;
-            GXWGFifo.u16 = first;
-            GXWGFifo.u16 = first;
-            for (i = 0; i < textureCount; ++i) GXWGFifo.u16 = first;
-            GXWGFifo.u16 = second;
-            GXWGFifo.u16 = second;
-            for (i = 0; i < textureCount; ++i) GXWGFifo.u16 = second;
-        }
-        GSgfxDLEndSurface();
-    }
-}
-void GsShapeObject::MakeDisplayListShape() {
-    displayList=GSmemAlloc(16);
-    if(displayList) {
-s32 rows=entry->segmentsV;
-        u32 columns=entry->segmentsU+1;
-        u16 indices=rows*(columns*2);
-        memset(displayList,0,16);
-        GSgfxDLBegin(displayList,vertexFormat,rows,indices);
-        MakeShapeGfxDL();
-        GSgfxDLEnd();
-    }
-}
-bool GsShapeObject::DeformTextureCoord(u32 texture,bool deform,const f32* u,const f32* v,bool twistEnabled,const f32* twist) {
-    int row; int column; int columns; f32 offset; int rows; const GsShapePair* original; GsShapePair* out;
-    if(!vertexArrays[texture+2]) return false;
-    out=(GsShapePair*)vertexArrays[texture+2];
-    original=entry->textureCoords;
-    columns=entry->segmentsU+1;
-    rows=entry->segmentsV+1;
-    offset=0.0f;
-    for(row=0;row<rows;row++) {
-        if(twistEnabled==1) offset=*twist;
-        if(deform==1) {
-            for(column=0;column<columns;column++) {
-                out->u=offset+u[column]; out->v=*v; out++;
-            }
-        } else {
-            for(column=0;column<columns;column++) {
-                out->u=original->u+offset; out->v=original->v; out++; original++;
-            }
-        }
-        twist++; v++;
-    }
-    return true;
-}
-extern "C" double sin(double);
-extern "C" double cos(double);
-extern "C" double tan(double);
 bool GsShapeObject::DeformVertexCoord(bool deform,const f32* u,const f32* v,bool radius,f32 radiusU,f32 radiusV,bool angle,f32 angleU,f32 angleV,bool twistEnabled,const f32* twist) {
     switch(entry->geometryType) {
     case 30: {
@@ -459,19 +380,32 @@ bool GsShapeObject::DeformVertexCoordTorus(bool deform,const f32* u,const f32* v
     if(!out)return false;
     int columns=entry->segmentsU+1,rows=entry->segmentsV+1;
     if(!radius){radiusV=entry->height;radiusU=entry->width;}
-    if(!angle){angleU=entry->shearAngle;angleV=*(f32*)((u8*)entry+0x60);}
-    if(angleU<0.00001f)angleU=0.00001f;
-    if(angleU>360.0f)angleU=360.0f;
-    if(angleV<0.00001f)angleV=0.00001f;
-    if(angleV>360.0f)angleV=360.0f;
+    f32 sweepU, sweepV;
+    if (angle) {
+        sweepU = angleU;
+        sweepV = angleV;
+    } else {
+        sweepU = entry->shearAngle;
+        sweepV = *(f32*)((u8*)entry+0x60);
+    }
+    if(sweepU<0.00001f)sweepU=0.00001f;
+    if(sweepU>360.0f)sweepU=360.0f;
+    if(sweepV<0.00001f)sweepV=0.00001f;
+    if(sweepV>360.0f)sweepV=360.0f;
     f32 start;
-    if(angleU<0.00001f)start=0.0f;else start=0.5f*(360.0f-angleU);
+    if(sweepU<0.00001f)start=0.0f;else start=0.5f*(360.0f-sweepU);
+    start += 90.0f;
     f32 bottom;
-    if(angleV<0.00001f)bottom=0.0f;else bottom=0.5f*(360.0f-angleV);
+    if(sweepV<0.00001f)bottom=0.0f;else bottom=0.5f*(360.0f-sweepV);
+    bottom += 180.0f;
+    start *= 0.017453292f;
+    f32 radiansU = sweepU * 0.017453292f;
+    bottom *= 0.017453292f;
+    f32 radiansV = sweepV * 0.017453292f;
     for(int row=0;row<rows;row++,v++){
         f32 vertical;
         if(deform)vertical=*v;else vertical=(f32)row/(f32)(rows-1);
-        f32 verticalSine=angleV*0.017453292f*vertical+(bottom+180.0f)*0.017453292f,verticalCosine;
+        f32 verticalSine=radiansV*vertical+bottom,verticalCosine;
         shapeFastSinCos(verticalSine,verticalCosine);
         f32 ring=radiusV*verticalCosine+radiusU;
         const f32 *horizontal=u;
@@ -479,7 +413,7 @@ bool GsShapeObject::DeformVertexCoordTorus(bool deform,const f32* u,const f32* v
             f32 across;
             if(deform)across=*horizontal;else across=(f32)column/(f32)(columns-1);
             f32 current=ring;
-            f32 sine=angleU*0.017453292f*across+(start+90.0f)*0.017453292f;
+            f32 sine=radiansU*across+start;
             f32 cosine;
             if(column==0||column==columns-1){f32 theta=sine;sine=(f32)sin(theta);cosine=(f32)cos(theta);}
             else shapeFastSinCos(sine,cosine);
@@ -488,6 +422,34 @@ bool GsShapeObject::DeformVertexCoordTorus(bool deform,const f32* u,const f32* v
     }
     return true;
 }
+
+#pragma dont_inline off
+
+bool GsShapeObject::DeformTextureCoord(u32 texture,bool deform,const f32* u,const f32* v,bool twistEnabled,const f32* twist) {
+    int row; int column; int columns; f32 offset; int rows; const GsShapePair* original; GsShapePair* out;
+    if(!vertexArrays[texture+2]) return false;
+    out=(GsShapePair*)vertexArrays[texture+2];
+    original=entry->textureCoords;
+    columns=entry->segmentsU+1;
+    rows=entry->segmentsV+1;
+    offset=0.0f;
+    for(row=0;row<rows;row++) {
+        if(twistEnabled==1) offset=*twist;
+        if(deform==1) {
+            for(column=0;column<columns;column++) {
+                out->u=offset+u[column]; out->v=*v; out++;
+            }
+        } else {
+            for(column=0;column<columns;column++) {
+                out->u=original->u+offset; out->v=original->v; out++; original++;
+            }
+        }
+        twist++; v++;
+    }
+    return true;
+}
+
+#pragma dont_inline on
 
 bool GsShapeObject::WaveTextureCoord(u32 texture,f32 offsetU,f32 offsetV,const GSmtx* matrix,bool accumulate) {
     GsShapePair* out=(GsShapePair*)vertexArrays[texture+2];
@@ -548,70 +510,220 @@ bool GsShapeObject::WaveTextureCoord(u32 texture,f32 offsetU,f32 offsetV,const G
     return true;
 }
 
-void GSgfxLayer::tunitAlphaOp(u8 unit, GSgfxTunitOp operation, GSgfxTunitBias bias, GSgfxTunitScale scale, bool clamp, GSgfxTunitReg output) {
-    alphaOps[unit].operation = operation;
-    alphaOps[unit].bias = bias;
-    alphaOps[unit].scale = scale;
-    alphaOps[unit].clamp = clamp;
-    alphaOps[unit].output = output;
-    alphaOpDirty |= 1 << unit;
-    dirty |= 8;
-    savedAlphaOpDirty |= 1 << unit;
-    savedDirty |= 8;
+#pragma dont_inline off
+extern Mtx mtxIdent;
+static inline f32 (*shapeBillboardMatrix(GsShapeObject* object))[4] { return (f32 (*)[4])((u8*)object+0x470); }
+#define BB_MATRIX shapeBillboardMatrix(self)
+static inline f32 shapeDot2(f32 ax,f32 az,f32 bx,f32 bz) { return ax*bx+az*bz; }
+static inline bool shapeBillboardYaw(GsShapeObject* self,f32 x,f32 depth) {
+    Vec direction;
+    Mtx rotationNegative;
+    Mtx rotationPositive;
+    direction.x=x; direction.y=0.0f; direction.z=depth;
+    if((f32)__fabs(direction.x)>0.00001f || (f32)__fabs(direction.z)>0.00001f) {
+        PSVECNormalize(&direction,&direction);
+        f32 dot=shapeDot2(0.0f,1.0f,direction.x,direction.z);
+        if(dot>=-1.0f && dot<=1.0f) {
+            f32 angle=(f32)acos(dot);
+            if(direction.x>0.0f) {
+                PSMTXRotRad(rotationPositive,'Y',angle);
+                PSMTXConcat(rotationPositive,BB_MATRIX,BB_MATRIX);
+            } else {
+                PSMTXRotRad(rotationNegative,'Y',-angle);
+                PSMTXConcat(rotationNegative,BB_MATRIX,BB_MATRIX);
+            }
+            return true;
+        }
+    }
+    return false;
 }
-void GSgfxLayer::tunitAlphaArg(u8 unit, GSgfxTunitAArg a, GSgfxTunitAArg b, GSgfxTunitAArg c, GSgfxTunitAArg d) {
-    alphaArgs[unit][0] = a;
-    alphaArgs[unit][1] = b;
-    alphaArgs[unit][2] = c;
-    alphaArgs[unit][3] = d;
-    alphaArgDirty |= 1 << unit;
-    dirty |= 8;
-    savedAlphaArgDirty |= 1 << unit;
-    savedDirty |= 8;
+static inline bool shapeBillboardFull(GsShapeObject* self,f32 x,f32 y,f32 depth) {
+    Vec axis;
+    Vec direction;
+    Vec reference;
+    Mtx rotation;
+    reference.x=0.0f; reference.y=0.0f; reference.z=1.0f;
+    direction.x=x; direction.y=y; direction.z=depth;
+    if((f32)__fabs(direction.x)>0.00001f || (f32)__fabs(direction.y)>0.00001f || (f32)__fabs(direction.z)>0.00001f) {
+        PSVECNormalize(&direction,&direction);
+        PSVECCrossProduct(&reference,&direction,&axis);
+        if((f32)__fabs(axis.x)>0.00001f || (f32)__fabs(axis.y)>0.00001f || (f32)__fabs(axis.z)>0.00001f) {
+            PSVECNormalize(&axis,&axis);
+            f32 dot=PSVECDotProduct(&reference,&direction);
+            if(dot>=-1.0f && dot<=1.0f) {
+                PSMTXRotAxisRad(rotation,&axis,(f32)acos(dot));
+                PSMTXConcat(rotation,BB_MATRIX,BB_MATRIX);
+                return true;
+            }
+        }
+    }
+    return false;
 }
-void GSgfxLayer::tunitColorOp(u8 unit, GSgfxTunitOp operation, GSgfxTunitBias bias, GSgfxTunitScale scale, bool clamp, GSgfxTunitReg output) {
-    colorOps[unit].operation = operation;
-    colorOps[unit].bias = bias;
-    colorOps[unit].scale = scale;
-    colorOps[unit].clamp = clamp;
-    colorOps[unit].output = output;
-    colorOpDirty |= 1 << unit;
-    dirty |= 8;
-    savedColorOpDirty |= 1 << unit;
-    savedDirty |= 8;
+#pragma opt_common_subs off
+extern "C" void MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(GsShapeObject* self,GSmtx* source,f32 depth) {
+    f32 x=source->matrix[0][3];
+    f32 y=source->matrix[1][3];
+    f32 z=source->matrix[2][3];
+    f32 scaleX=PSVECMag((Vec*)source->matrix[0]);
+    f32 scaleY=PSVECMag((Vec*)source->matrix[1]);
+    PSMTXScale(BB_MATRIX,scaleX,scaleY,PSVECMag((Vec*)source->matrix[2]));
+    switch(*((u8*)self->entry+0xCD)) {
+    case 1:
+        PSMTXTransApply(BB_MATRIX,BB_MATRIX,x,y,z);
+        break;
+    case 2:
+        if(!shapeBillboardYaw(self,-x,depth-z)) memcpy(BB_MATRIX,mtxIdent,0x30);
+        PSMTXTransApply(BB_MATRIX,BB_MATRIX,x,y,z);
+        break;
+    case 3:
+        if(!shapeBillboardFull(self,-x,-y,depth-z)) memcpy(BB_MATRIX,mtxIdent,0x30);
+        PSMTXTransApply(BB_MATRIX,BB_MATRIX,x,y,z);
+        break;
+    }
 }
-void GSgfxLayer::tunitColorArg(u8 unit, GSgfxTunitCArg a, GSgfxTunitCArg b, GSgfxTunitCArg c, GSgfxTunitCArg d) {
-    colorArgs[unit][0] = a;
-    colorArgs[unit][1] = b;
-    colorArgs[unit][2] = c;
-    colorArgs[unit][3] = d;
-    colorArgDirty |= 1 << unit;
-    dirty |= 8;
-    savedColorArgDirty |= 1 << unit;
-    savedDirty |= 8;
+#pragma opt_common_subs reset
+#undef BB_MATRIX
+
+static inline f32 shapeAngleWeight(f32 dot,f32 width) {
+ f32 result;
+ if(dot>1.0f||width<0.00001f)result=1.0f;
+ else {
+  f32 distance=shapeSqrt(1.0f-dot),threshold=1.0f-width;
+  if(distance<=threshold)result=1.0f;
+  else {f32 weight=(f32)cos((1.5707964f*(distance-threshold))/width);result=weight*weight;}
+ }
+ return result;
 }
-void GSgfxLayer::tunitMapping(u8 unit, u8 texture, u8 coordinate, u8 color) {
-    mapping[unit].texture = texture;
-    mapping[unit].coordinate = coordinate;
-    if (color != 0xff) mapping[unit].color = color + 4;
-    else mapping[unit].color = 0xff;
-    mappingDirty |= 1 << unit;
-    dirty |= 8;
-    savedMappingDirty |= 1 << unit;
-    savedDirty |= 8;
+static inline f32 shapeAngularWeight(Vec *normal,Vec *view,GsShapeObject *self) {
+ f64 absolute=__fabs(PSVECDotProduct(normal,view));f32 dot=(f32)absolute;
+ return shapeAngleWeight(dot,*(f32*)((u8*)self->entry+0xd0));
 }
-void GSgfxLayer::texSelect(u8 unit, GStexture* texture) {
-    if (textures[unit] == texture && savedTextures[unit] == texture && !texture->dirty) return;
-    textures[unit] = texture;
-    textureDirty |= 1 << unit;
-    savedTextures[unit] = texture;
-    savedTextureDirty |= 1 << unit;
+#pragma dont_inline on
+extern "C" bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShapeObject *self,GSmtx *first,GSmtx *second,GSmtx *third,f32 distance,bool preserveNormal) {
+ if(!self->vertexArrays[1])return false;
+ Mtx transform,rotation;PSMTXCopy(second->matrix,transform);PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);
+ Vec *normals;Vec *positions;tagGScol4ub *colors;int i;int count;
+ normals=(Vec*)self->entry->reserved1C;count=self->entry->vertexCount;positions=self->entry->vertices;colors=(tagGScol4ub*)self->vertexArrays[1];i=0;
+ for(;i<count;++i) {
+  Vec normalInput,position,normal,view;normalInput.x=normals[i].x;normalInput.y=normals[i].y;normalInput.z=normals[i].z;position.x=positions[i].x;position.y=positions[i].y;position.z=positions[i].z;PSMTXMultVecSR(transform,&normalInput,&normal);PSMTXMultVec(transform,&position,&view);f32 viewZ=view.z;view.z=viewZ-distance;
+  f32 weight;
+  if(self->entry->colorMode==1) {normal.y=0.0f;view.y=0.0f;
+   if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
+  else if(self->entry->colorMode==2) {normal.x=0.0f;view.x=0.0f;
+   if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
+  else if(self->entry->colorMode==3) {
+   if((self->entry->geometryType==31&&*((u8*)self->entry+0xce)==1&&!preserveNormal)||(self->entry->geometryType==32&&(*((u8*)self->entry+0xcc)%2)==0)) {
+    Vec forward,axis;forward.x=0.0f;forward.y=0.0f;forward.z=1.0f;PSMTXMultVecSR(transform,&forward,&forward);PSVECCrossProduct(&view,&forward,&axis);
+    if(PSVECSquareMag(&axis)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&axis,&axis);PSVECNormalize(&view,&view);PSMTXRotAxisRad(rotation,&axis,1.5707964f-(f32)acos(PSVECDotProduct(&forward,&view)));PSMTXMultVecSR(rotation,&normal,&normal);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;
+   }else if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
+  else weight=1.0f;
+  if(viewZ>0.0f&&distance>0.00001f){f32 attenuation;if(viewZ>distance)attenuation=0.0f;else attenuation=(distance-viewZ)/distance;weight*=attenuation;}
+  switch(self->entry->shapeType){case 2:case 8:case 10:((u8*)self->vertexArrays[1])[(i*4+3)]=weight*colors[i].a;break;default:((u8*)self->vertexArrays[1])[(i*4+0)]=weight*colors[i].r;((u8*)self->vertexArrays[1])[(i*4+1)]=weight*colors[i].g;((u8*)self->vertexArrays[1])[(i*4+2)]=weight*colors[i].b;break;}
+ }
+ return true;
 }
 
-extern "C" void GSgfxVFSetArray(void*, s32, s32, void*, u8, u32);
-extern "C" void dlDraw__10GSgfxLayerFP7GSgfxDL(GSgfxLayer*, void*);
-extern "C" void beginSurface__10GSgfxLayerFUs(GSgfxLayer*, u16);
-extern "C" void endSurface__10GSgfxLayerFv(GSgfxLayer*);
+#pragma dont_inline off
+
+extern "C" f32* GSgfxMatrixGetPtr(s32);
+static inline void refractCopy(Vec* out,const Vec* in) {f32 x=in->x,y=in->y,z=in->z;out->x=x;out->y=y;out->z=z;}
+extern "C" bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(GsShapeObject *self,f32 offsetU,f32 offsetV,GSmtx *first,GSmtx *second,GSmtx *third,f32) {
+ Mtx transform,projectionMatrix;f32 *sourceProjection=GSgfxMatrixGetPtr(4);
+ f32 projection[7];
+ f32 viewport[6];
+ f32 screenWidth,screenHeight;
+ projection[0]=0.0f;projection[1]=sourceProjection[0];projection[2]=sourceProjection[2];projection[3]=sourceProjection[5];projection[4]=sourceProjection[6];projection[5]=sourceProjection[10];projection[6]=sourceProjection[11];
+ viewport[0]=0.0f;viewport[1]=0.0f;viewport[2]=640.0f;viewport[3]=480.0f;viewport[4]=0.0f;viewport[5]=1.0f;
+ screenWidth=viewport[2];screenHeight=viewport[3];
+ u32 copySize=self->entry->vertexCount*sizeof(GsShapePair);
+ for(s32 texture=0;texture<self->entry->textureCount;++texture) {
+  const Vec *normalGrid=(const Vec*)self->entry->reserved1C;const Vec *positions=self->entry->vertices;
+  if(!normalGrid)continue;GsShapePair *out=(GsShapePair*)self->vertexArrays[texture+2];if(!out)continue;
+  if(texture==0){PSMTXCopy(second->matrix,transform);PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);memcpy(projectionMatrix,transform,sizeof(Mtx));}
+  else {PSMTXCopy(second->matrix,transform);memcpy(out,self->entry->textureCoords,copySize);}
+  u16 segmentsU=self->entry->segmentsU,segmentsV=self->entry->segmentsV;int columns=segmentsU+1,rows=segmentsV+1;
+  if(offsetU>1.0f)offsetU-=(f32)(int)offsetU;else if(offsetU<0.0f)offsetU-=(f32)((int)offsetU-1);
+  if(offsetV>1.0f)offsetV-=(f32)(int)offsetV;else if(offsetV<0.0f)offsetV-=(f32)((int)offsetV-1);
+  int shiftU=(int)(offsetU*(f32)segmentsU)%segmentsU,shiftV=(int)(offsetV*(f32)segmentsV)%segmentsV;
+  f32 fractionU=(f32)segmentsU*(offsetU-(f32)shiftU/(f32)segmentsU),fractionV=(f32)segmentsV*(offsetV-(f32)shiftV/(f32)segmentsV);
+  fractionU-=(f32)(int)fractionU;fractionV-=(f32)(int)fractionV;
+  f32 diagonalWeight=fractionU*fractionV,verticalWeight=(1.0f-fractionU)*fractionV,horizontalWeight=fractionU*(1.0f-fractionV),originWeight=(1.0f-fractionU)*(1.0f-fractionV);
+  int rowOffset=0;
+  for(int row=0;row<rows;++row,rowOffset+=columns) {
+   int index=rowOffset;
+   for(int column=0;column<columns;++column,++index) {
+    int sampleU=(column+shiftU)%self->entry->segmentsU;int sampleV=(row+shiftV)%self->entry->segmentsV;
+    if(sampleU==0&&column==columns-1)sampleU=self->entry->segmentsU;
+    if(sampleV==0&&row==rows-1)sampleV=self->entry->segmentsV;
+    int sample=sampleU+sampleV*columns;Vec value;
+    if(sampleU==columns-1) {
+     if(sampleV==rows-1) {value.x=normalGrid[sample].x;value.y=normalGrid[sample].y;value.z=normalGrid[sample].z;}
+     else {
+      int diagonal=sample+columns+1,vertical=sample+columns,horizontal=sample-1;
+      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
+      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
+      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
+      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
+      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
+      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
+      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
+      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
+
+     }
+    } else if(sampleV==rows-1) {
+      int diagonal=sample-columns+1,vertical=sample-columns,horizontal=sample+1;
+      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
+      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
+      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
+      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
+      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
+      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
+      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
+      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
+
+    } else {
+      int diagonal=sample+columns+1,vertical=sample+columns,horizontal=sample+1;
+      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
+      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
+      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
+      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
+      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
+      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
+      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
+      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
+
+    }
+    PSMTXMultVecSR(transform,&value,&value);
+    if(texture==0) {
+     f32 x,y,z;GXProject(positions[index].x,positions[index].y,positions[index].z,projectionMatrix,projection,viewport,&x,&y,&z);
+     if((f32)__fabs(value.x)>0.00001f||(f32)__fabs(value.y)>0.00001f||(f32)__fabs(value.z)>0.00001f) {
+      PSVECNormalize(&value,&value);
+      if(value.x<=0.0f)x=x*(1.0f+value.x);else x=value.x*(screenWidth-x)+x;
+      if(value.y<=0.0f)y+=-value.y*(screenHeight-y);else y*=1.0f-value.y;
+     }
+     out[index].u=x/screenWidth;out[index].v=y/screenHeight;
+    }else {out[index].u+=value.x;out[index].v+=value.y;}
+   }
+  }
+ }
+ return true;
+}
+
+void GsShapeObject::MakeDisplayListShape() {
+    displayList=GSmemAlloc(16);
+    if(displayList) {
+s32 rows=entry->segmentsV;
+        u32 columns=entry->segmentsU+1;
+        u16 indices=rows*(columns*2);
+        memset(displayList,0,16);
+        GSgfxDLBegin(displayList,vertexFormat,rows,indices);
+        MakeShapeGfxDL();
+        GSgfxDLEnd();
+    }
+}
+
+#pragma dont_inline on
+
 #pragma push
 #pragma dont_inline off
 static inline bool shapeSetupVF(GsShapeObject* self, u16 n) {
@@ -640,6 +752,20 @@ static inline bool shapeSetupVF(GsShapeObject* self, u16 n) {
     return true;
 }
 #pragma pop
+
+extern "C" void CallDisplayListShape__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject* self, GSgfxLayer* layer, s16 instance, u8 flags) {
+    if (self->displayList) {
+        shapeSetupVF(self, self->entry->vertexCount);
+        dlDraw__10GSgfxLayerFP7GSgfxDL(layer, self->displayList);
+    } else {
+        DrawShapeGfx__13GsShapeObjectFP10GSgfxLayersUc(self, layer, instance, flags);
+    }
+}
+
+void GsShapeObject::FreeDisplayListShape() {
+    if(displayList) { GSgfxDLFree(displayList); GSmemFree(displayList); displayList=0; }
+}
+
 extern "C" void DrawShapeGfx__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject* self, GSgfxLayer* layer, s16 s, u8 c) {
     u16 b;
     u16 a;
@@ -674,6 +800,36 @@ extern "C" void DrawShapeGfx__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject* se
             }
             endSurface__10GSgfxLayerFv(layer);
         }
+    }
+}
+
+void GsShapeObject::MakeShapeGfxDL() {
+    u32 vertexCount;
+    u16 row;
+    u16 base;
+    u16 textureCount;
+    u16 columns;
+    columns = entry->segmentsU + 1;
+    textureCount = entry->textureCount;
+    GSgfxDLPrimitiveType(0x98);
+    vertexCount = columns * 2;
+    for (row = 0; row < entry->segmentsV; ++row) {
+        u16 column;
+        base = row * columns;
+        GSgfxDLBeginSurface(vertexCount);
+        u16 next = (row + 1) * columns;
+        for (column = 0; column < columns; ++column) {
+            u16 first = column + base;
+            u16 second = column + next;
+            u16 i;
+            GXWGFifo.u16 = first;
+            GXWGFifo.u16 = first;
+            for (i = 0; i < textureCount; ++i) GXWGFifo.u16 = first;
+            GXWGFifo.u16 = second;
+            GXWGFifo.u16 = second;
+            for (i = 0; i < textureCount; ++i) GXWGFifo.u16 = second;
+        }
+        GSgfxDLEndSurface();
     }
 }
 
@@ -737,31 +893,64 @@ extern "C" void SetStateMode__13GsShapeObjectFP10GSgfxLayer(GsShapeObject* self,
     }
 }
 
-extern "C" void CallDisplayListShape__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject* self, GSgfxLayer* layer, s16 instance, u8 flags) {
-    if (self->displayList) {
-        s32 vertexCount;
-        tagGsFilePrimObjectEntry* entry = self->entry;
-        u32 attributes[4] = {13, 14, 15, 16};
-        vertexCount = entry->vertexCount;
-        if (self->vertexArrays[0] != 0) {
-            if (self->vertexArrays[0] != 0) {
-                GSgfxVFSetArray(self->vertexFormat, 9, 3, self->vertexArrays[0], 12, vertexCount * 12);
-                if (self->vertexArrays[1] != 0) {
-                    GSgfxVFSetArray(self->vertexFormat, 11, 3, self->vertexArrays[1], 4, vertexCount * 4);
-                    GsShapeObject* arrays = self;
-                    u32* attribute = attributes;
-                    u32 size = vertexCount * 8;
-                    for (vertexCount = 0; vertexCount < self->entry->textureCount; arrays = (GsShapeObject*)((u8*)arrays + 4), ++attribute, ++vertexCount) {
-                        if (arrays->vertexArrays[2] == 0) break;
-                        GSgfxVFSetArray(self->vertexFormat, *attribute, 3, arrays->vertexArrays[2], 8, size);
-                    }
-                }
-            }
-        }
-        dlDraw__10GSgfxLayerFP7GSgfxDL(layer, self->displayList);
-    } else {
-        DrawShapeGfx__13GsShapeObjectFP10GSgfxLayersUc(self, layer, instance, flags);
-    }
+inline void GSgfxLayer::tunitAlphaOp(u8 unit, GSgfxTunitOp operation, GSgfxTunitBias bias, GSgfxTunitScale scale, bool clamp, GSgfxTunitReg output) {
+    alphaOps[unit].operation = operation;
+    alphaOps[unit].bias = bias;
+    alphaOps[unit].scale = scale;
+    alphaOps[unit].clamp = clamp;
+    alphaOps[unit].output = output;
+    alphaOpDirty |= 1 << unit;
+    dirty |= 8;
+    savedAlphaOpDirty |= 1 << unit;
+    savedDirty |= 8;
+}
+inline void GSgfxLayer::tunitAlphaArg(u8 unit, GSgfxTunitAArg a, GSgfxTunitAArg b, GSgfxTunitAArg c, GSgfxTunitAArg d) {
+    alphaArgs[unit][0] = a;
+    alphaArgs[unit][1] = b;
+    alphaArgs[unit][2] = c;
+    alphaArgs[unit][3] = d;
+    alphaArgDirty |= 1 << unit;
+    dirty |= 8;
+    savedAlphaArgDirty |= 1 << unit;
+    savedDirty |= 8;
+}
+inline void GSgfxLayer::tunitColorOp(u8 unit, GSgfxTunitOp operation, GSgfxTunitBias bias, GSgfxTunitScale scale, bool clamp, GSgfxTunitReg output) {
+    colorOps[unit].operation = operation;
+    colorOps[unit].bias = bias;
+    colorOps[unit].scale = scale;
+    colorOps[unit].clamp = clamp;
+    colorOps[unit].output = output;
+    colorOpDirty |= 1 << unit;
+    dirty |= 8;
+    savedColorOpDirty |= 1 << unit;
+    savedDirty |= 8;
+}
+inline void GSgfxLayer::tunitColorArg(u8 unit, GSgfxTunitCArg a, GSgfxTunitCArg b, GSgfxTunitCArg c, GSgfxTunitCArg d) {
+    colorArgs[unit][0] = a;
+    colorArgs[unit][1] = b;
+    colorArgs[unit][2] = c;
+    colorArgs[unit][3] = d;
+    colorArgDirty |= 1 << unit;
+    dirty |= 8;
+    savedColorArgDirty |= 1 << unit;
+    savedDirty |= 8;
+}
+inline void GSgfxLayer::tunitMapping(u8 unit, u8 texture, u8 coordinate, u8 color) {
+    mapping[unit].texture = texture;
+    mapping[unit].coordinate = coordinate;
+    if (color != 0xff) mapping[unit].color = color + 4;
+    else mapping[unit].color = 0xff;
+    mappingDirty |= 1 << unit;
+    dirty |= 8;
+    savedMappingDirty |= 1 << unit;
+    savedDirty |= 8;
+}
+inline void GSgfxLayer::texSelect(u8 unit, GStexture* texture) {
+    if (textures[unit] == texture && savedTextures[unit] == texture && !texture->dirty) return;
+    textures[unit] = texture;
+    textureDirty |= 1 << unit;
+    savedTextures[unit] = texture;
+    savedTextureDirty |= 1 << unit;
 }
 
 #pragma dont_inline off
@@ -1087,202 +1276,31 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
  }
 }
 
-#pragma dont_inline off
+#pragma dont_inline reset
 
-extern "C" f32* GSgfxMatrixGetPtr(s32);
-static inline void refractCopy(Vec* out,const Vec* in) {f32 x=in->x,y=in->y,z=in->z;out->x=x;out->y=y;out->z=z;}
-extern "C" bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(GsShapeObject *self,f32 offsetU,f32 offsetV,GSmtx *first,GSmtx *second,GSmtx *third,f32) {
- Mtx transform,projectionMatrix;f32 *sourceProjection=GSgfxMatrixGetPtr(4);
- f32 projection[7];
- f32 viewport[6];
- f32 screenWidth,screenHeight;
- projection[0]=0.0f;projection[1]=sourceProjection[0];projection[2]=sourceProjection[2];projection[3]=sourceProjection[5];projection[4]=sourceProjection[6];projection[5]=sourceProjection[10];projection[6]=sourceProjection[11];
- viewport[0]=0.0f;viewport[1]=0.0f;viewport[2]=640.0f;viewport[3]=480.0f;viewport[4]=0.0f;viewport[5]=1.0f;
- screenWidth=viewport[2];screenHeight=viewport[3];
- u32 copySize=self->entry->vertexCount*sizeof(GsShapePair);
- for(s32 texture=0;texture<self->entry->textureCount;++texture) {
-  const Vec *normalGrid=(const Vec*)self->entry->reserved1C;const Vec *positions=self->entry->vertices;
-  if(!normalGrid)continue;GsShapePair *out=(GsShapePair*)self->vertexArrays[texture+2];if(!out)continue;
-  if(texture==0){PSMTXCopy(second->matrix,transform);PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);memcpy(projectionMatrix,transform,sizeof(Mtx));}
-  else {PSMTXCopy(second->matrix,transform);memcpy(out,self->entry->textureCoords,copySize);}
-  u16 segmentsU=self->entry->segmentsU,segmentsV=self->entry->segmentsV;int columns=segmentsU+1,rows=segmentsV+1;
-  if(offsetU>1.0f)offsetU-=(f32)(int)offsetU;else if(offsetU<0.0f)offsetU-=(f32)((int)offsetU-1);
-  if(offsetV>1.0f)offsetV-=(f32)(int)offsetV;else if(offsetV<0.0f)offsetV-=(f32)((int)offsetV-1);
-  int shiftU=(int)(offsetU*(f32)segmentsU)%segmentsU,shiftV=(int)(offsetV*(f32)segmentsV)%segmentsV;
-  f32 fractionU=(f32)segmentsU*(offsetU-(f32)shiftU/(f32)segmentsU),fractionV=(f32)segmentsV*(offsetV-(f32)shiftV/(f32)segmentsV);
-  fractionU-=(f32)(int)fractionU;fractionV-=(f32)(int)fractionV;
-  f32 diagonalWeight=fractionU*fractionV,verticalWeight=(1.0f-fractionU)*fractionV,horizontalWeight=fractionU*(1.0f-fractionV),originWeight=(1.0f-fractionU)*(1.0f-fractionV);
-  int rowOffset=0;
-  for(int row=0;row<rows;++row,rowOffset+=columns) {
-   int index=rowOffset;
-   for(int column=0;column<columns;++column,++index) {
-    int sampleU=(column+shiftU)%self->entry->segmentsU;int sampleV=(row+shiftV)%self->entry->segmentsV;
-    if(sampleU==0&&column==columns-1)sampleU=self->entry->segmentsU;
-    if(sampleV==0&&row==rows-1)sampleV=self->entry->segmentsV;
-    int sample=sampleU+sampleV*columns;Vec value;
-    if(sampleU==columns-1) {
-     if(sampleV==rows-1) {value.x=normalGrid[sample].x;value.y=normalGrid[sample].y;value.z=normalGrid[sample].z;}
-     else {
-      int diagonal=sample+columns+1,vertical=sample+columns,horizontal=sample-1;
-      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
-      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
-      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
-      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
-      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
-      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
-      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
-      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
-
-     }
-    } else if(sampleV==rows-1) {
-      int diagonal=sample-columns+1,vertical=sample-columns,horizontal=sample+1;
-      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
-      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
-      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
-      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
-      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
-      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
-      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
-      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
-
-    } else {
-      int diagonal=sample+columns+1,vertical=sample+columns,horizontal=sample+1;
-      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
-      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
-      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
-      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
-      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
-      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
-      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
-      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
-
+bool GsShapeObject::CreateShapeDrawBuffer(s16 instance) {
+    if(instance<0 || instance>=256) return false;
+    drawBuffers[instance]=(u8*)GSmemAlloc(entry->vertexCount*(entry->textureCount*8+16)*2);
+    if(!drawBuffers[instance]) return false;
+    u32 count=entry->vertexCount;
+    int texture;
+    for(int buffer=0;buffer<2;buffer++) {
+        u32 offset=0;
+        if(buffer!=0) offset=count*(entry->textureCount*8+16);
+        u8* vertices=drawBuffers[instance]+offset;
+        memcpy(vertices,entry->vertices,count*12);
+        u8* colors=vertices+count*12;
+        memcpy(colors,entry->colors,count*4);
+        for(texture=0;texture<entry->textureCount;texture++)
+            memcpy(colors+count*(texture*8u+4),entry->textureCoords,count*8);
     }
-    PSMTXMultVecSR(transform,&value,&value);
-    if(texture==0) {
-     f32 x,y,z;GXProject(positions[index].x,positions[index].y,positions[index].z,projectionMatrix,projection,viewport,&x,&y,&z);
-     if((f32)__fabs(value.x)>0.00001f||(f32)__fabs(value.y)>0.00001f||(f32)__fabs(value.z)>0.00001f) {
-      PSVECNormalize(&value,&value);
-      if(value.x<=0.0f)x=x*(1.0f+value.x);else x=value.x*(screenWidth-x)+x;
-      if(value.y<=0.0f)y+=-value.y*(screenHeight-y);else y*=1.0f-value.y;
-     }
-     out[index].u=x/screenWidth;out[index].v=y/screenHeight;
-    }else {out[index].u+=value.x;out[index].v+=value.y;}
-   }
-  }
- }
- return true;
+    return true;
 }
 
-#pragma dont_inline off
-extern "C" double acos(double);
-static f32 shapeAngleWeight(f32 dot,f32 width) {
- f32 result;
- if(dot>1.0f||width<0.00001f)result=1.0f;
- else {
-  f32 distance=shapeSqrt(1.0f-dot),threshold=1.0f-width;
-  if(distance<=threshold)result=1.0f;
-  else {f32 weight=(f32)cos((1.5707964f*(distance-threshold))/width);result=weight*weight;}
- }
- return result;
-}
-static f32 shapeAngularWeight(Vec *normal,Vec *view,GsShapeObject *self) {
- f64 absolute=__fabs(PSVECDotProduct(normal,view));f32 dot=(f32)absolute;
- return shapeAngleWeight(dot,*(f32*)((u8*)self->entry+0xd0));
-}
-#pragma dont_inline on
-extern "C" bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShapeObject *self,GSmtx *first,GSmtx *second,GSmtx *third,f32 distance,bool preserveNormal) {
- if(!self->vertexArrays[1])return false;
- Mtx transform,rotation;PSMTXCopy(second->matrix,transform);PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);
- Vec *normals;Vec *positions;tagGScol4ub *colors;int i;int count;
- normals=(Vec*)self->entry->reserved1C;count=self->entry->vertexCount;positions=self->entry->vertices;colors=(tagGScol4ub*)self->vertexArrays[1];i=0;
- for(;i<count;++i) {
-  Vec normalInput,position,normal,view;normalInput.x=normals[i].x;normalInput.y=normals[i].y;normalInput.z=normals[i].z;position.x=positions[i].x;position.y=positions[i].y;position.z=positions[i].z;PSMTXMultVecSR(transform,&normalInput,&normal);PSMTXMultVec(transform,&position,&view);f32 viewZ=view.z;view.z=viewZ-distance;
-  f32 weight;
-  if(self->entry->colorMode==1) {normal.y=0.0f;view.y=0.0f;
-   if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
-  else if(self->entry->colorMode==2) {normal.x=0.0f;view.x=0.0f;
-   if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
-  else if(self->entry->colorMode==3) {
-   if((self->entry->geometryType==31&&*((u8*)self->entry+0xce)==1&&!preserveNormal)||(self->entry->geometryType==32&&(*((u8*)self->entry+0xcc)%2)==0)) {
-    Vec forward,axis;forward.x=0.0f;forward.y=0.0f;forward.z=1.0f;PSMTXMultVecSR(transform,&forward,&forward);PSVECCrossProduct(&view,&forward,&axis);
-    if(PSVECSquareMag(&axis)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&axis,&axis);PSVECNormalize(&view,&view);PSMTXRotAxisRad(rotation,&axis,1.5707964f-(f32)acos(PSVECDotProduct(&forward,&view)));PSMTXMultVecSR(rotation,&normal,&normal);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;
-   }else if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
-  else weight=1.0f;
-  if(viewZ>0.0f&&distance>0.00001f){f32 attenuation;if(viewZ>distance)attenuation=0.0f;else attenuation=(distance-viewZ)/distance;weight*=attenuation;}
-  switch(self->entry->shapeType){case 2:case 8:case 10:((u8*)self->vertexArrays[1])[(i*4+3)]=weight*colors[i].a;break;default:((u8*)self->vertexArrays[1])[(i*4+0)]=weight*colors[i].r;((u8*)self->vertexArrays[1])[(i*4+1)]=weight*colors[i].g;((u8*)self->vertexArrays[1])[(i*4+2)]=weight*colors[i].b;break;}
- }
- return true;
-}
-#pragma dont_inline off
-extern Mtx mtxIdent;
-static inline f32 (*shapeBillboardMatrix(GsShapeObject* object))[4] { return (f32 (*)[4])((u8*)object+0x470); }
-#define BB_MATRIX shapeBillboardMatrix(self)
-static inline f32 shapeDot2(f32 ax,f32 az,f32 bx,f32 bz) { return ax*bx+az*bz; }
-static inline bool shapeBillboardYaw(GsShapeObject* self,f32 x,f32 depth) {
-    Vec direction;
-    Mtx rotationNegative;
-    Mtx rotationPositive;
-    direction.x=x; direction.y=0.0f; direction.z=depth;
-    if((f32)__fabs(direction.x)>0.00001f || (f32)__fabs(direction.z)>0.00001f) {
-        PSVECNormalize(&direction,&direction);
-        f32 dot=shapeDot2(0.0f,1.0f,direction.x,direction.z);
-        if(dot>=-1.0f && dot<=1.0f) {
-            f32 angle=(f32)acos(dot);
-            if(direction.x>0.0f) {
-                PSMTXRotRad(rotationPositive,'Y',angle);
-                PSMTXConcat(rotationPositive,BB_MATRIX,BB_MATRIX);
-            } else {
-                PSMTXRotRad(rotationNegative,'Y',-angle);
-                PSMTXConcat(rotationNegative,BB_MATRIX,BB_MATRIX);
-            }
-            return true;
-        }
-    }
+bool GsShapeObject::FreeShapeDrawBuffer(s16 instance) {
+    if(instance<0 || instance>=256) return false;
+    if(drawBuffers[instance]) { GSmemFree(drawBuffers[instance]); drawBuffers[instance]=0; return true; }
     return false;
 }
-static inline bool shapeBillboardFull(GsShapeObject* self,f32 x,f32 y,f32 depth) {
-    Vec axis;
-    Vec direction;
-    Vec reference;
-    Mtx rotation;
-    reference.x=0.0f; reference.y=0.0f; reference.z=1.0f;
-    direction.x=x; direction.y=y; direction.z=depth;
-    if((f32)__fabs(direction.x)>0.00001f || (f32)__fabs(direction.y)>0.00001f || (f32)__fabs(direction.z)>0.00001f) {
-        PSVECNormalize(&direction,&direction);
-        PSVECCrossProduct(&reference,&direction,&axis);
-        if((f32)__fabs(axis.x)>0.00001f || (f32)__fabs(axis.y)>0.00001f || (f32)__fabs(axis.z)>0.00001f) {
-            PSVECNormalize(&axis,&axis);
-            f32 dot=PSVECDotProduct(&reference,&direction);
-            if(dot>=-1.0f && dot<=1.0f) {
-                PSMTXRotAxisRad(rotation,&axis,(f32)acos(dot));
-                PSMTXConcat(rotation,BB_MATRIX,BB_MATRIX);
-                return true;
-            }
-        }
-    }
-    return false;
-}
-#pragma opt_common_subs off
-extern "C" void MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(GsShapeObject* self,GSmtx* source,f32 depth) {
-    f32 x=source->matrix[0][3];
-    f32 y=source->matrix[1][3];
-    f32 z=source->matrix[2][3];
-    f32 scaleX=PSVECMag((Vec*)source->matrix[0]);
-    f32 scaleY=PSVECMag((Vec*)source->matrix[1]);
-    PSMTXScale(BB_MATRIX,scaleX,scaleY,PSVECMag((Vec*)source->matrix[2]));
-    switch(*((u8*)self->entry+0xCD)) {
-    case 1:
-        PSMTXTransApply(BB_MATRIX,BB_MATRIX,x,y,z);
-        break;
-    case 2:
-        if(!shapeBillboardYaw(self,-x,depth-z)) memcpy(BB_MATRIX,mtxIdent,0x30);
-        PSMTXTransApply(BB_MATRIX,BB_MATRIX,x,y,z);
-        break;
-    case 3:
-        if(!shapeBillboardFull(self,-x,-y,depth-z)) memcpy(BB_MATRIX,mtxIdent,0x30);
-        PSMTXTransApply(BB_MATRIX,BB_MATRIX,x,y,z);
-        break;
-    }
-}
-#pragma opt_common_subs reset
-#undef BB_MATRIX
+
+u32 GsShapeObject::GetPolygonCount() { return entry->segmentsU*entry->segmentsV*2; }
