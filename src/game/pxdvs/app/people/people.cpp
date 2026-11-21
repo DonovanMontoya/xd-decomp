@@ -2601,28 +2601,58 @@ void _peopleUpdateNeck__FP13tagPeopleWorkf(tagPeopleWork* work,f32 limit) {
     case 2:case 3: {
         if(!_getNeck__FP13tagPeopleWorkP14PeopleNeckInfo(work,&info))return;
         f32 distance=PSVECDistance(&work->neckTargetPosition,&info.position);
-        if(distance<=limit || !(limit>=0.0f) || work->neckEnabled==3) {
-            f32 pitch=adjustPIPI__Ff((f32)atan2(info.position.param2-work->neckTargetPosition.param2,distance)-work->chestRotation.param1);
-            f32 rise=info.position.param2-work->neckTargetPosition.param2;
-            if((distance<0.00001f && distance>-0.00001f) || (rise<0.00001f && rise>-0.00001f))pitch=0.0f;
-            if(pitch<info.up)pitch=info.up;else if(pitch>info.down)pitch=info.down;
-            f32 yaw=-adjustPIPI__Ff(_peopleGetDiffAngleFix__Fff(info.rotation.param2+work->chestRotation.param2,(f32)atan2(work->neckTargetPosition.param1-info.position.param1,work->neckTargetPosition.param3-info.position.param3)));
-            if(_distanceXZ__FP5GSvecP5GSvec(&info.position,&work->neckTargetPosition)<0.00001f && _distanceXZ__FP5GSvecP5GSvec(&info.position,&work->neckTargetPosition)>-0.00001f)yaw=0.0f;
-            u8 blocked=0;
-            if((getFlags__13tagPeopleWorkCFv(work)&0x80200000)==0x200000 && distance<limit && peopleBiosCheckFlag(work,0x100) && GScolsys2HitCollision(&info.position,&work->neckTargetPosition,3.0f,0))blocked=1;
-            if(!blocked && yaw>=info.left && yaw<=info.right) {
-                work->neckTargetRotation.param2=yaw;
-                work->neckTargetRotation.param1=pitch;
-            } else if(!blocked && peopleBiosCheckFlag(work,2)) {
-                if(yaw<info.left)yaw=info.left;else if(yaw>info.right)yaw=info.right;
-                work->neckTargetRotation.param2=yaw;
-                work->neckTargetRotation.param1=pitch;
-            } else if(yaw<info.left-0.034906585f || yaw>0.034906585f+info.right) {
-                work->neckTargetPosition.param1=work->unknownEC.param1;work->neckTargetPosition.param2=work->unknownEC.param2;work->neckTargetPosition.param3=work->unknownEC.param3;
-                if(!peopleBiosCheckFlag(work,2)) {
-                    work->neckTargetRotation.param2=0.0f;
-                    work->neckTargetRotation.param1=0.0f;
-                }
+        if (distance > limit && limit >= 0.0f && work->neckEnabled != 3) {
+            break;
+        }
+        f32 pitch = adjustPIPI__Ff(
+            (f32)atan2(info.position.param2 - work->neckTargetPosition.param2, distance) -
+            work->chestRotation.param1);
+        if ((distance < 0.00001f && distance > -0.00001f) ||
+            (info.position.param2 - work->neckTargetPosition.param2 < 0.00001f &&
+             info.position.param2 - work->neckTargetPosition.param2 > -0.00001f)) {
+            pitch = 0.0f;
+        }
+        f32 up = info.up;
+        f32 down = info.down;
+        if (pitch < up) pitch = up;
+        else if (pitch > down) pitch = down;
+        f32 yaw = -adjustPIPI__Ff(_peopleGetDiffAngleFix__Fff(
+            info.rotation.param2 + work->chestRotation.param2,
+            (f32)atan2(work->neckTargetPosition.param1 - info.position.param1,
+                       work->neckTargetPosition.param3 - info.position.param3)));
+        if (_distanceXZ__FP5GSvecP5GSvec(&info.position, &work->neckTargetPosition) < 0.00001f &&
+            _distanceXZ__FP5GSvecP5GSvec(&info.position, &work->neckTargetPosition) > -0.00001f) {
+            yaw = 0.0f;
+        }
+        u8 blocked = 0;
+        if ((getFlags__13tagPeopleWorkCFv(work) & 0x80200000) == 0x200000 &&
+            distance < limit && peopleBiosCheckFlag(work, 0x100) &&
+            GScolsys2HitCollision(&info.position, &work->neckTargetPosition, 3.0f, 0)) {
+            blocked = 1;
+        }
+        if (!blocked) {
+            if (yaw >= info.left && yaw <= info.right) {
+                work->neckTargetRotation.param2 = yaw;
+                work->neckTargetRotation.param1 = pitch;
+                break;
+            }
+            if (peopleBiosCheckFlag(work, 2)) {
+                f32 left = info.left;
+                f32 right = info.right;
+                if (yaw < left) yaw = left;
+                else if (yaw > right) yaw = right;
+                work->neckTargetRotation.param2 = yaw;
+                work->neckTargetRotation.param1 = pitch;
+                break;
+            }
+        }
+        if (yaw < info.left - 0.034906585f || yaw > 0.034906585f + info.right) {
+            work->neckTargetPosition.param1 = work->unknownEC.param1;
+            work->neckTargetPosition.param2 = work->unknownEC.param2;
+            work->neckTargetPosition.param3 = work->unknownEC.param3;
+            if (!peopleBiosCheckFlag(work, 2)) {
+                work->neckTargetRotation.param2 = 0.0f;
+                work->neckTargetRotation.param1 = 0.0f;
             }
         }
         break;
@@ -2636,25 +2666,7 @@ void _peopleUpdateNeck__FP13tagPeopleWorkf(tagPeopleWork* work,f32 limit) {
     }
     f32 pitchDelta=work->neckTargetRotation.param1-work->neckRotation.param1;
     f32 yawDelta=_peopleGetDiffAngleFix__Fff(work->neckTargetRotation.param2,work->neckRotation.param2);
-    f32 distance=pitchDelta*pitchDelta+yawDelta*yawDelta;
-    if(distance>0.0f) {
-        f64 magnitude=distance;
-        f64 guess=__frsqrte(magnitude);
-        guess=0.5*guess*(3.0-guess*guess*magnitude);
-        guess=0.5*guess*(3.0-guess*guess*magnitude);
-        guess=0.5*guess*(3.0-guess*guess*magnitude);
-        distance=(f32)(magnitude*guess);
-    } else if(distance<0.0)distance=*(f32*)__float_nan;
-    else {
-        int category;
-        u32 bits=*(u32*)&distance;
-        switch(bits&0x7f800000) {
-        case 0x7f800000:category=(bits&0x7fffff)?1:2;break;
-        case 0:category=(bits&0x7fffff)?5:3;break;
-        default:category=4;break;
-        }
-        if(category==1)distance=*(f32*)__float_nan;
-    }
+    f32 distance = sqrtf(pitchDelta * pitchDelta + yawDelta * yawDelta);
     if(distance<0.00001f && distance>-0.00001f) {
         work->neckUnknownC3=1;
         if(work->neckInstant==1)work->neckInstant=0;
