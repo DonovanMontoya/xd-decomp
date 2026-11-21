@@ -847,11 +847,11 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
     f32 temp_f21_2;
     f32 temp_f22;
     f32 temp_f22_2;
-    f32 temp_f2_4;
-    f32 temp_f3;
+    f32 dy;
+    f32 dx;
     f32 temp_f3_2;
     f32 temp_f3_3;
-    f32 temp_f4;
+    f32 dz;
     f32 temp_f4_2;
     f32 temp_f4_3;
     f32 temp_f5;
@@ -1153,10 +1153,14 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                 }
             }
             if (!(fabs(var_f0) < __float_min[0])) {
-                temp_f3 = farg0 - var_f14_2;
-                temp_f2_4 = farg1 - var_f15_2;
-                temp_f4 = farg2 - var_f16_2;
-                var_f5 = (temp_f4 * temp_f4) + ((temp_f3 * temp_f3) + (temp_f2_4 * temp_f2_4));
+                f32 dx2, dy2, dz2;
+                dx = farg0 - var_f14_2;
+                dy = farg1 - var_f15_2;
+                dz = farg2 - var_f16_2;
+                dx2 = dx * dx;
+                dy2 = dy * dy;
+                dz2 = dz * dz;
+                var_f5 = dz2 + (dx2 + dy2);
                 if (var_f5 > 0.0f) {
                     temp_f2_5 = __frsqrte(var_f5);
                     temp_f2_6 = 0.5 * temp_f2_5 * -(((f64) var_f5 * (temp_f2_5 * temp_f2_5)) - 3.0);
