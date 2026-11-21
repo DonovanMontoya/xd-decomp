@@ -172,6 +172,7 @@ public:
 };
 
 class Tiga;
+struct TigaFunctionEntry;
 
 class TigaThread {
 public:
@@ -272,7 +273,7 @@ public:
     s32 arrayCount;                 // 0x968
     tigaArrayFixed** arrays;        // 0x96c
     s32 codeCount;                  // 0x970
-    u32* codeTable;                 // 0x974
+    TigaFunctionEntry* codeTable;   // 0x974
     s32 field978;                   // 0x978
     u8 field97C;                    // 0x97c
     u8 pad97D[3];
@@ -305,7 +306,7 @@ public:
     void makeStateData(GSBinWriteStream*);
     int getNameToFuncId(const char*);
     int getResultValue(long);
-    void* getIdToCodeAdress(int);
+    TPCCode* getIdToCodeAdress(int);
     u32* searchResID(unsigned long, unsigned long);
     int setPresetVar(tigaVariant*, int, int);
     void getPresetVar(tigaVariant*, int, int);

@@ -36,38 +36,55 @@ struct TigaCurrentScope {
     ~TigaCurrentScope() { Tiga::m_cpCurrentObject = previous; }
 };
 
-
+struct TigaFunctionEntry {
+    union Address {
+        u32 index;
+        TPCCode* pointer;
+    } code;
+    union Name {
+        u32 offset;
+        const char* string;
+    } name;
+};
 
 void Tiga::debugDump() {
-    GSprint(GSgfxLayerFindByName_C("debug menu"),16,40,0xe0d0ffff,"run thread size = %d",threadCount);
-    GSprint(GSgfxLayerFindByName_C("debug menu"),16,52,0xe0d0ffff,"timer");
-    GSprint(GSgfxLayerFindByName_C("debug menu"),60,52,0xe0d0ffff,"%3.1f",timers[0]);
-    GSprint(GSgfxLayerFindByName_C("debug menu"),108,52,0xe0d0ffff,"%3.1f",timers[1]);
-    GSprint(GSgfxLayerFindByName_C("debug menu"),156,52,0xe0d0ffff,"%3.1f",timers[2]);
-    GSprint(GSgfxLayerFindByName_C("debug menu"),204,52,0xe0d0ffff,"%3.1f",timers[3]);
-    GSprint(GSgfxLayerFindByName_C("debug menu"),16,64,0xe0d0ffff,"- : Line  sp  ");
-    GSprint(GSgfxLayerFindByName_C("debug menu"),16,76,0xe0d0ffff,"------------------");
-    int row=88;
-    for(int i=0;i<8;++i,row+=12){
-        TigaThread* thread=threads[i];
-        if(thread->state==0){
-            GSprint(GSgfxLayerFindByName_C("debug menu"),16,row,0xe0d0ffff,"%d : --",i);
-        }else{
-            u32* previous=0;
-            u32* entry=codeTable;
-            u32* end=codeTable+codeCount*2;
-            u32 depth=((u32)thread->stackPtr10-(u32)thread->stackBase38)>>3;
-            while(entry!=end){
-                u32* saved=previous;
-                previous=entry;
-                if(entry[0]==(u32)thread->code)break;
-                if(entry[0]>(u32)thread->code){previous=saved;break;}
-                entry+=2;
+    GSprint(GSgfxLayerFindByName_C("debug menu"), 16, 40, 0xe0d0ffff, "run thread size = %d", threadCount);
+    GSprint(GSgfxLayerFindByName_C("debug menu"), 16, 52, 0xe0d0ffff, "timer");
+    GSprint(GSgfxLayerFindByName_C("debug menu"), 60, 52, 0xe0d0ffff, "%3.1f", timers[0]);
+    GSprint(GSgfxLayerFindByName_C("debug menu"), 108, 52, 0xe0d0ffff, "%3.1f", timers[1]);
+    GSprint(GSgfxLayerFindByName_C("debug menu"), 156, 52, 0xe0d0ffff, "%3.1f", timers[2]);
+    GSprint(GSgfxLayerFindByName_C("debug menu"), 204, 52, 0xe0d0ffff, "%3.1f", timers[3]);
+    GSprint(GSgfxLayerFindByName_C("debug menu"), 16, 64, 0xe0d0ffff, "- : Line  sp  ");
+    GSprint(GSgfxLayerFindByName_C("debug menu"), 16, 76, 0xe0d0ffff, "------------------");
+    int row = 88;
+    for (int i = 0; i < 8; ++i, row += 12) {
+        TigaThread* thread = threads[i];
+        if (thread->state == 0) {
+            GSprint(GSgfxLayerFindByName_C("debug menu"), 16, row, 0xe0d0ffff, "%d : --", i);
+        } else {
+            TigaFunctionEntry* previous = 0;
+            TigaFunctionEntry* entry = codeTable;
+            TigaFunctionEntry* end = codeTable + codeCount;
+            u32 depth = ((u32)thread->stackPtr10 - (u32)thread->stackBase38) / sizeof(tigaVariant);
+            while (entry != end) {
+                TigaFunctionEntry* saved = previous;
+                previous = entry;
+                if (entry->code.pointer == thread->code) {
+                    break;
+                }
+                if (entry->code.pointer > thread->code) {
+                    previous = saved;
+                    break;
+                }
+                ++entry;
             }
             const char* name;
-            if(previous==0)name="unknown";
-            else name=(const char*)previous[1];
-            GSprint(GSgfxLayerFindByName_C("debug menu"),16,row,0xe0d0ffff,"%d : %4d %3d %s",i,thread->lineNumber,depth,name);
+            if (previous == 0) {
+                name = "unknown";
+            } else {
+                name = previous->name.string;
+            }
+            GSprint(GSgfxLayerFindByName_C("debug menu"), 16, row, 0xe0d0ffff, "%d : %4d %3d %s", i, thread->lineNumber, depth, name);
         }
     }
 }
@@ -190,8 +207,8 @@ int Tiga::getNameToFuncId(const char* name) {
     if (funcCount == 0) {
         return 0;
     }
-    for (u32* p = codeTable; p != codeTable + codeCount * 2; p += 2, index++) {
-        if (strcmp((const char*)p[1], name) == 0) {
+    for (TigaFunctionEntry* p = codeTable; p != codeTable + codeCount; ++p, ++index) {
+        if (strcmp(p->name.string, name) == 0) {
             return index | 0x01000000;
         }
     }
@@ -212,12 +229,12 @@ int Tiga::getResultValue(long) {
     return 0;
 }
 
-void* Tiga::getIdToCodeAdress(int id) {
-    u16 index = id;
-    if ((int)index < 0 || (int)index > codeCount) {
+TPCCode* Tiga::getIdToCodeAdress(int id) {
+    int index = (u16)id;
+    if (index < 0 || index > codeCount) {
         return 0;
     }
-    return (void*)codeTable[index * 2];
+    return codeTable[index].code.pointer;
 }
 
 u32* Tiga::searchResID(unsigned long a, unsigned long b) {
@@ -464,7 +481,7 @@ long Tiga::runParams(int id, tigaVariant* params, int count, bool flag) {
     if (index >= funcCount || index < 0) {
         return 0;
     }
-    TPCCode* code = (TPCCode*)getIdToCodeAdress(index);
+    TPCCode* code = getIdToCodeAdress(index);
     return runParamsPC(code, params, count, flag);
 }
 
@@ -523,16 +540,18 @@ int Tiga::setTpcChank(CChank* source) {
     field95C=(s32)(header+1);
     header=(TigaChunkHeader*)source->searchChankID("GIRI",0);
     if(header){resIdCount=header->count;resIdTable=(u32*)(header+1);}
-    header=(TigaChunkHeader*)source->searchChankID("FTBL",0);
-    if(header){
-        codeCount=header->count;
-        chunk.blockA=header->flags;
-        codeTable=(u32*)(header+1);
-        for(u32* entry=codeTable;entry!=codeTable+codeCount*2;entry+=2){
-            entry[0]=(u32)(codeBase + entry[0]);
-            entry[1]=(u32)header+entry[1];
+    header = (TigaChunkHeader*)source->searchChankID("FTBL", 0);
+    if (header) {
+        codeCount = header->count;
+        chunk.blockA = header->flags;
+        codeTable = (TigaFunctionEntry*)(header + 1);
+        for (TigaFunctionEntry* entry = codeTable; entry != codeTable + codeCount; ++entry) {
+            entry->code.pointer = codeBase + entry->code.index;
+            entry->name.string = (const char*)header + entry->name.offset;
         }
-    }else codeTable=0;
+    } else {
+        codeTable = 0;
+    }
     header=(TigaChunkHeader*)source->searchChankID("ARRY",0);
     if (header) {
         TigaArrayTable* table = (TigaArrayTable*)&header->count;
