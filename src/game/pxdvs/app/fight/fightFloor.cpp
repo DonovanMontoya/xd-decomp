@@ -1,4 +1,5 @@
 #pragma force_active on
+#include <game/menuFightAction.hpp>
 #include <dolphin/types.h>
 
 struct FIGHT_FLOOR;
@@ -434,8 +435,6 @@ extern "C" {
 }
 
 struct FightActionBuff;
-// The action menu begins with an eleven-character name and its escape lock.
-struct FightFloorActionMenu { u16 name[11]; u8 escapeDisabled; };
 struct FightOutPokemonEnemy { u8 reserved[12]; };
 extern "C" {
 u8 fightOutPokemonIsFightActionAttackWazaOut(FightOutPokemon*, u32, u32);
@@ -558,7 +557,6 @@ extern "C" { u8 fightFloorIsNowEncountHostEnemyPokemonKime(FIGHT_FLOOR* floor); 
 extern "C" { u8 fightFloorIsNowEncountSnatchOnly(FIGHT_FLOOR* floor); }
 extern "C" { u8 fightFloorIsNowEncountTuusinTaisen(FIGHT_FLOOR* floor); }
 extern "C" { u32 fightFloorGetBgmSndDataId(FIGHT_FLOOR* floor); }
-extern "C" { void fightFloorSetMenuFightAction(FIGHT_FLOOR* floor, FightOutPokemon* pokemon, FightFloorActionMenu* menu); }
 extern "C" { void fightFloorSetShadow(); }
 extern "C" { u8 fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(FIGHT_FLOOR* floor, void* target, u8 ally, u8 fightOutOnly, u32 move, u32 mode); }
 extern "C" { u16 fightFloorGetFightTrainerFightPokemonPtrAry(FIGHT_FLOOR* floor, void* target, FightPokemon** output, u8 ally, u8 fightOutOnly); }

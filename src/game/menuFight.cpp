@@ -1,5 +1,6 @@
 #pragma dollar_identifiers on
 #include <game/menuFightLayout.hpp>
+#include <game/menuFightAction.hpp>
 #include <game/gbaBattleCommand.hpp>
 #include <libc/stddef.h>
 
@@ -2727,18 +2728,18 @@ extern "C" s32 menuFightCloseTop(s32 arg) {
     return 0;
 }
 
-extern "C" s32 menuFightOpenTop(s32, u8 *work, s32 *cursor, s32 wait) {
+extern "C" s32 menuFightOpenTop(FIGHT_TRAINER*, FightFloorActionMenu *work, s32 *cursor, s32 wait) {
     s32 result;
     s32 response;
     menuFightSetStatus(0);
     if (isImasugu()) return 0;
     if (fightKind_CheckFightKind(15)) menuOpen(0xB5, 0);
     for (;;) {
-        switch (work[0x17]) {
+        switch (work->online) {
         case 0: result = menuOpenCustom(0x3A, 0, cursor, 0, wait, 1, work); break;
         case 1: result = menuOpenCustom(0x8E, 0, cursor, 0, wait, 1, work); break;
         }
-        if (!work[0x16] || fightKind_CheckFightKind(13) || fightKind_CheckFightKind(15) || fightKind_CheckFightKind(14) || fightKind_CheckFightKind(6) || fightKind_CheckFightKind(7)) {
+        if (!work->escapeDisabled || fightKind_CheckFightKind(13) || fightKind_CheckFightKind(15) || fightKind_CheckFightKind(14) || fightKind_CheckFightKind(6) || fightKind_CheckFightKind(7)) {
             if (result == 3) {
                 s32 selected = 0;
                 menuFightSetSeqOut();
@@ -2759,7 +2760,7 @@ extern "C" s32 menuFightOpenTop(s32, u8 *work, s32 *cursor, s32 wait) {
                     continue;
                 }
             }
-        } else if (work[0x16] && (result == 1 || result == 2)) {
+        } else if (work->escapeDisabled && (result == 1 || result == 2)) {
             menuFightSetSeqOut();
         }
         if (fightKind_CheckFightKind(15) && (result == 1 || result == 2)) menuClose(0xB5);

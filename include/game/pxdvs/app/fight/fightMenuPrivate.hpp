@@ -2,6 +2,7 @@
 #define FIGHT_MENU_PRIVATE_HPP
 #include <game/menuWazaStatus.hpp>
 #include <game/gbaBattleCommand.hpp>
+#include <game/menuFightAction.hpp>
 #include <game/menuPokemonStatus.hpp>
 
 struct FightOutPokemon;
@@ -38,7 +39,6 @@ u8 fightFloorIsUseFightTimerCommand(void*);
 typedef s32 (*FightMenuFloorCb)(void*, u16, void*);
 u8 fightFloorLoopValidFightOutPokemon(void*, FightMenuFloorCb, void*, u8);
 u8 fightFloorLoopValidFightTrainer(void*, FightMenuFloorCb, void*, u8);
-void fightFloorSetMenuFightAction(void*, FightOutPokemon*, void*);
 void fightFloorSetStatus(void*, u16, u16, u32, u32);
 u8 fightFloor_GetFightKind(void*);
 u8 fightFloor_GetFightKindNigeruFlag(void*);
@@ -102,7 +102,6 @@ u32 menuFightGetKeyWaitMenuId(FIGHT_TRAINER*, u16);
 void menuFightOpenCountDown();
 s32 menuFightOpenPokemon(FIGHT_TRAINER*, FightOutPokemon*, u16, u8, u8);
 s32 menuFightOpenTarget(void*, u32, u32);
-s32 menuFightOpenTop(FIGHT_TRAINER*, void*, s32*, u32);
 void menuFightOpenTotalTimer();
 s32 menuFightOpenWaza(FIGHT_TRAINER*, MENU_WAZA_STATUS*, s32*, s32);
 void menuFightSetSeqOut__Fv();

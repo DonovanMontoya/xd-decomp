@@ -914,7 +914,7 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubWaza(FIGHT_TRAINER* trainer,Fig
 }
 
 extern "C" s32 fightMenuFightTrainerGcHeroOpenMenu(FIGHT_TRAINER* trainer,u16 type,u8 canCancel) {
-    u8 data[0x18];
+    FightFloorActionMenu menu;
     s32 selection;
     s32 choice;
     u8 result;
@@ -944,9 +944,9 @@ timeout:
     selection=0;
 openTop:
     fightOutPokemonInitFightActionBuff(pokemon);
-    fightFloorSetMenuFightAction(0,pokemon,data);
-    data[0x17]=fightFloorIsNowEncountTuusinTaisen(0);
-    choice=menuFightOpenTop(trainer,data,&selection,1);
+    fightFloorSetMenuFightAction(0, pokemon, &menu);
+    menu.online = fightFloorIsNowEncountTuusinTaisen(0);
+    choice = menuFightOpenTop(trainer, &menu, &selection, 1);
     if(fightGetFightResultId()==1){fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon,type,0);menuFightCloseTop(1);goto clearActions;}
     if(fightFloorIsUseFightTimerCommand(0)==1&&fightTimerCommandIsOver()==1&&choice<0){fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon,type,0);menuFightCloseTop(1);goto timeout;}
     if(choice>=0)menuFightCloseTop(1);
