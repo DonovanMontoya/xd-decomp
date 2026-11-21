@@ -5,13 +5,15 @@ static u32 GetAudioSample(__GSmovieStreaming*, s16*, s16*, u32, s32*);
 static void _movieStreamPrepareGetDataCallback(s32, void*, s32);
 static u32 _VideoDecode(__GSmovieStreaming*, THPReadBuffer*, THPTextureSet*);
 
-extern u32 StreamUpdateCallback(void*,u32,void*,u32,u32);
-extern "C" u32 sndStreamAllocEx(u8,void*,u32,u32,u8,u32,u8,u8,u32,u32,u32,u32(*)(void*,u32,void*,u32,u32),void*,u32);
-
-
+static u32 StreamUpdateCallback(void*, u32, void*, u32, u32);
+struct SND_ADPCMSTREAM_INFO;
+extern "C" u32 sndStreamAllocEx(u8 priority, void* buffer, u32 samples, u32 frequency, u8 volume,
+                                u8 pan, u8 span, u8 auxA, u8 auxB, u8 studio, u32 flags,
+                                u32 (*update)(void*, u32, void*, u32, u32), u32 user,
+                                SND_ADPCMSTREAM_INFO* adpcmInfo);
 
 extern "C" u32 GSfsysStreamGetCacheSize();
-extern void _movieStreamPrepareGetDataCallback_Exec(__GSmovieStreaming*,u32,u32);
+static void _movieStreamPrepareGetDataCallback_Exec(__GSmovieStreaming*, u32, u32);
 extern "C" s32 THPVideoDecode(void*,void*,void*,void*,void*);
 
 
@@ -34,7 +36,7 @@ static inline void _fillStreamChannel(__GSmovieStreaming* movie,u64 playedIn,u32
         if(status==1) {
             remaining-=count;left+=count;if(right)right+=count;
             MovieDecoder* current=movie->decoder;
-            current->marks[current->markWrite]=played;
+            current->audioFrameEnds[current->markWrite]=played;
             current->markWrite++;
             if(current->markWrite>=5) current->markWrite=0;
             continue;
@@ -326,25 +328,25 @@ u32 StreamUpdateCallback(void* first, u32 firstSamples, void* second, u32 second
         return 0;
     }
     u32 samples = (((u32)(0.5f + (f32)(decoder->sampleRate * 60) / 1000.0f) + 31) & ~31) / 2;
-    *(u64*)&decoder->reserved8260[2] = *(u64*)&decoder->reserved8260[0] + firstSamples + secondSamples;
+    decoder->playbackPosition = decoder->samplesSubmitted + firstSamples + secondSamples;
     MovieDecoder* timing = movie->decoder;
-    u64 position = *(u64*)&decoder->reserved8260[2];
-    while ((s32)timing->markRead != timing->markWrite) {
-        if (position < timing->marks[timing->markRead]) break;
+    u64 position = decoder->playbackPosition;
+    while (timing->markRead != timing->markWrite) {
+        if (position < timing->audioFrameEnds[timing->markRead]) break;
         ++timing->markRead;
-        if ((s32)timing->markRead >= 5) timing->markRead = 0;
+        if (timing->markRead >= 5) timing->markRead = 0;
         ++timing->playedAudioFrame;
     }
     if (firstSamples + secondSamples >= samples) {
         if (first == decoder->leftBuffer) {
             if (decoder->channels == 2) {
                 MovieDecoder* current = movie->decoder;
-                _fillStreamChannel(movie, current->samplesPlayed, samples, decoder->rightBuffer, decoder->leftBuffer);
-                current->samplesPlayed += samples;
+                _fillStreamChannel(movie, current->samplesWritten, samples, decoder->rightBuffer, decoder->leftBuffer);
+                current->samplesWritten += samples;
             } else {
                 MovieDecoder* current = movie->decoder;
-                _fillStreamChannel(movie, current->samplesPlayed, samples, 0, decoder->leftBuffer);
-                current->samplesPlayed += samples;
+                _fillStreamChannel(movie, current->samplesWritten, samples, 0, decoder->leftBuffer);
+                current->samplesWritten += samples;
             }
             u32 bytes = samples * 2;
             DCFlushRange(decoder->leftBuffer, bytes);
@@ -356,12 +358,12 @@ u32 StreamUpdateCallback(void* first, u32 firstSamples, void* second, u32 second
         } else {
             if (decoder->channels == 2) {
                 MovieDecoder* current = movie->decoder;
-                _fillStreamChannel(movie, current->samplesPlayed, samples, decoder->rightBuffer + samples, decoder->leftBuffer + samples);
-                current->samplesPlayed += samples;
+                _fillStreamChannel(movie, current->samplesWritten, samples, decoder->rightBuffer + samples, decoder->leftBuffer + samples);
+                current->samplesWritten += samples;
             } else {
                 MovieDecoder* current = movie->decoder;
-                _fillStreamChannel(movie, current->samplesPlayed, samples, 0, decoder->leftBuffer + samples);
-                current->samplesPlayed += samples;
+                _fillStreamChannel(movie, current->samplesWritten, samples, 0, decoder->leftBuffer + samples);
+                current->samplesWritten += samples;
             }
             u32 bytes = samples * 2;
             DCFlushRange(decoder->leftBuffer + samples, bytes);
@@ -371,7 +373,7 @@ u32 StreamUpdateCallback(void* first, u32 firstSamples, void* second, u32 second
                 sndStreamARAMUpdate(decoder->rightStream, samples, samples, 0, 0);
             }
         }
-        *(u64*)&decoder->reserved8260[0] += samples;
+        decoder->samplesSubmitted += samples;
         return samples;
     }
     return 0;
@@ -379,19 +381,27 @@ u32 StreamUpdateCallback(void* first, u32 firstSamples, void* second, u32 second
 
 extern "C" u8 _StreamInit(__GSmovieStreaming* movie) {
     u32 samples;
-    MovieDecoder* decoder=movie->decoder;
-    u32 rate=decoder->sampleRate;
-    samples=((u32)(0.5f+(f32)(rate*60)/1000.0f)+31)&~31;
-    decoder->leftStream=sndStreamAllocEx(255,decoder->leftBuffer,samples,rate,127,decoder->channels==2?0:64,0,0,0,0,0x30000,StreamUpdateCallback,movie,0);
-    if(decoder->leftStream==-1U) return 0;
-    if(decoder->channels==2) {
-        decoder->rightStream=sndStreamAllocEx(255,decoder->rightBuffer,samples,decoder->sampleRate,127,127,0,0,0,0,0x30000,StreamUpdateCallback,0,0);
-        if(decoder->rightStream==-1U) { sndStreamFree(decoder->leftStream); return 0; }
+    MovieDecoder* decoder = movie->decoder;
+    u32 rate = decoder->sampleRate;
+    samples = ((u32)(0.5f + (f32)(rate * 60) / 1000.0f) + 31) & ~31;
+    decoder->leftStream = sndStreamAllocEx(
+        255, decoder->leftBuffer, samples, rate, 127, decoder->channels == 2 ? (u8)0 : (u8)64,
+        0, 0, 0, 0, 0x30000, StreamUpdateCallback, (u32)movie, 0);
+    if (decoder->leftStream == -1U) return 0;
+    if (decoder->channels == 2) {
+        decoder->rightStream = sndStreamAllocEx(
+            255, decoder->rightBuffer, samples, decoder->sampleRate, 127, 127,
+            0, 0, 0, 0, 0x30000, StreamUpdateCallback, 0, 0);
+        if (decoder->rightStream == -1U) {
+            sndStreamFree(decoder->leftStream);
+            return 0;
+        }
     }
-    decoder->markRead=0; decoder->markWrite=0;
-    decoder->reserved8260[1]=0; decoder->reserved8260[0]=0;
-    decoder->reserved8260[3]=0; decoder->reserved8260[2]=0;
-    decoder->samplesPlayed=0;
+    decoder->markRead = 0;
+    decoder->markWrite = 0;
+    decoder->samplesSubmitted = 0;
+    decoder->playbackPosition = 0;
+    decoder->samplesWritten = 0;
     return 1;
 }
 
@@ -399,11 +409,11 @@ extern "C" u8 _StreamInitFillStreamBuffer(__GSmovieStreaming* movie) {
     MovieDecoder* decoder=movie->decoder;
     u32 samples=((u32)(0.5f+(f32)(decoder->sampleRate*60)/1000.0f)+31)&~31;
     if(decoder->channels==2) {
-        _fillStreamChannel(movie,decoder->samplesPlayed,samples,decoder->rightBuffer,decoder->leftBuffer);
-        decoder->samplesPlayed+=samples;
+        _fillStreamChannel(movie,decoder->samplesWritten,samples,decoder->rightBuffer,decoder->leftBuffer);
+        decoder->samplesWritten+=samples;
     } else {
-        _fillStreamChannel(movie,decoder->samplesPlayed,samples,0,decoder->leftBuffer);
-        decoder->samplesPlayed+=samples;
+        _fillStreamChannel(movie,decoder->samplesWritten,samples,0,decoder->leftBuffer);
+        decoder->samplesWritten+=samples;
     }
     u32 bytes=samples*2;
     DCFlushRange(decoder->leftBuffer,bytes);

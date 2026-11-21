@@ -331,7 +331,7 @@ extern "C" void GSmoviePlay(u32 handle,s8 preload,s8 loop,u32 layer) {
                 decoder->token1=0;decoder->token2=0;decoder->displayTexture=0;decoder->currentAudio=0;
                 decoder->readWrite=0;decoder->readVideo=0;decoder->readAudio=0;decoder->texWrite=0;decoder->texRead=0;decoder->audioWrite=0;decoder->audioRead=0;
                 decoder->leftStream=-1;decoder->rightStream=-1;decoder->leftBuffer=0;decoder->rightBuffer=0;
-                memset(decoder->marks,0,0x48);
+                memset(decoder->audioFrameEnds,0,0x48);
                 if(!GSfsysReadStreaming(handle)) {
                     s32 interrupts=OSDisableInterrupts();movie->state=0;movie->handle=0;
                     if(movie->decoder) {GSmemFree(movie->decoder);movie->decoder=0;}

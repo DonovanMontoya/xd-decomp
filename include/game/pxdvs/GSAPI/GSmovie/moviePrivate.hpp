@@ -17,7 +17,12 @@ struct MovieDecoder {
     THPTextureSet textures[3]; u32 texWrite,texRead;
     THPAudioBuffer audio[6]; u32 audioWrite,audioRead;
     u32 leftStream,rightStream; s16* leftBuffer; s16* rightBuffer;
-    u32 reserved822c; u64 marks[5]; u32 markRead; s32 markWrite; u32 reserved8260[4]; u64 samplesPlayed;
+    u32 reserved822c;
+    u64 audioFrameEnds[5];
+    s32 markRead, markWrite;
+    u64 samplesSubmitted;
+    u64 playbackPosition;
+    u64 samplesWritten;
 };
 struct __GSmovieStreaming {s32 state; u32 layer,handle; u16 x,y; u8* workBuffer; u8 ready,reading,loop,track; u16 token; u16 reserved1a; MovieDecoder* decoder;};
 typedef char MovieDescriptorSize[sizeof(__GSmovieStreaming)==0x20?1:-1];
