@@ -830,7 +830,7 @@ extern "C" s32 fightMenuFightTrainerAgbHeroOpenMenu(FIGHT_TRAINER* t, u16 type) 
     return 1;
 }
 
-extern "C" s32 fightMenuOpenMsg(u32 msg) {
+extern "C" u8 fightMenuOpenMsg(u32 msg) {
     if (ServerWork[7] == 2) {
         fightMainWaitFrame(msgFrame);
         ServerWork[7] = 0;

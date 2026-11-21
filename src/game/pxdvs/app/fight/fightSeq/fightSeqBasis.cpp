@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fight/fightMenuMessage.hpp>
 #include <game/pxdvs/app/fight/fightWaza.hpp>
 #include <game/menuFightStatus.hpp>
 #include <game/pxdvs/app/fight/fightSeq/fightSeqBasis.hpp>
@@ -97,7 +98,6 @@ void fightMenuFightOutPokemonCloseStatusMenuAnotherMine(s32, FightOutPokemon*, u
 void fightMenuFightOutPokemonOpenStatusMenu(FightOutPokemon*, u16, u32);
 void fightMenuFightOutPokemonRenewStatusMenu(FightOutPokemon*, u8, u32);
 s32 fightMenuGetFightOutPokemonPtrToStatusMenuId(FightOutPokemon *,u8,s32);
-u8 fightMenuOpenMsg(u32);
 u8 fightMenuWazaKoukaMsg(u32,FightOutPokemon *,u16);
 u8 fightMenuWazaOutMsg(FightOutPokemon *,u16);
 void fightMsgctrlSetValue(u32, void*);

@@ -1,5 +1,6 @@
 #ifndef FIGHT_SEQ_SP_ACTION_PRIVATE_HPP
 #define FIGHT_SEQ_SP_ACTION_PRIVATE_HPP
+#include <game/pxdvs/app/fight/fightMenuMessage.hpp>
 #include <game/pxdvs/app/fight/fightWaza.hpp>
 
 struct FightOutPokemon;
@@ -69,7 +70,6 @@ void fightMenuFightOutPokemonCloseStatusMenuAnotherMine(s32, FightOutPokemon*, u
 void fightMenuFightOutPokemonOpenStatusMenu(FightOutPokemon*, u8, u32);
 void fightMenuFightOutPokemonOpenStatusMenuStart(FightOutPokemon*, u8, u32);
 void fightMenuOpenLevelUpStatusMenu(void*, u32);
-u8 fightMenuOpenMsg(u32);
 void fightMenuSubMenuLvupStatus(void*, void*, void*);
 s32 fightMenuWazaWasure(Pokemon*, u16);
 u8 fightMenuYesNo();

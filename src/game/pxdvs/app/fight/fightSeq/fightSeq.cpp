@@ -1,3 +1,5 @@
+#include <game/pxdvs/app/fight/fightMenuMessage.hpp>
+#include <game/pxdvs/app/fight/fightPokemonDarkEffects.hpp>
 #include <game/pxdvs/app/fight/fightSeq/fightSeqDamage.hpp>
 #include <game/pxdvs/app/fight/fightSeq/fightSeq.hpp>
 #define FIGHT_POKEMON_MENUS_NO_PROTOTYPES
@@ -91,15 +93,12 @@ void fightMenuFightOutPokemonCloseStatusMenu(FightOutPokemon*, u8, u32);
 void fightMenuFightOutPokemonCloseStatusMenuAnotherMine(s32, FightOutPokemon*, u8, u32, u32);
 void fightMenuFightOutPokemonOpenStatusMenu(FightOutPokemon*, u8, u32);
 void fightMenuFightOutPokemonRenewStatusMenu(FightOutPokemon*, u8, u32);
-void fightMenuOpenMsg(void*);
 void fightMsgctrlSetValue(u32,u32);
 u8 fightOutPokemonCheckFightOut(FightOutPokemon *);
 u8 fightOutPokemonCheckNoAttackFlag(FightOutPokemon *);
 u8 fightOutPokemonCheckWriteJoutaiDataId(FightOutPokemon*, u16);
 void fightOutPokemonCopyAllAbiCnt(FightOutPokemon*, FightOutPokemon*);
 void fightOutPokemonCopyJoutaiDataId(FightOutPokemon*, FightOutPokemon*, u16);
-void fightOutPokemonDarkPokemonEffect(FightOutPokemon*, u8, u8, u8);
-void fightOutPokemonDarkPokemonKaijoEffect(FightOutPokemon*, u8, u8, u8, void*, u8);
 u32 fightOutPokemonGetBuffJoutaiDataId(FightOutPokemon *,u16);
 u32 fightOutPokemonGetCountAsJoutaiDataId(FightOutPokemon*, u16);
 u16 fightOutPokemonGetIdBuffJoutaiDataId(FightOutPokemon*, u16);
@@ -1653,7 +1652,7 @@ void fightSeqEventKurein(u8 arg0) {
         temp_r31_3 = Sequence_GetWaza(kureinSequencePtr, 0x13CU, 4U);
         battleGridStoreModelVisibilityFlags();
         WazaSequence_Start(temp_r31_3, 1U);
-        fightMenuOpenMsg((void *)0x5004);
+        fightMenuOpenMsg(0x5004);
         while (WazaSequence_IsActive(temp_r31_3) != 0) {
             GSthreadSwitch();
         }
@@ -1724,7 +1723,7 @@ void fightSeqFightOutPokemonDarkCheckAppear(FightOutPokemon *pokemon,u8 mode) {
                 if(encounter==0xE0)message=0x4FCF;
                 else if(encounter==0x191)message=0x5010;
                 else message=0x4FCE;
-                fightMenuOpenMsg((void*)message);
+                fightMenuOpenMsg(message);
                 fightOutPokemonDarkPokemonEffect(pokemon,0,0,2);
                 fightMenuCloseMsg();
                 fightPokemon_SetDarkOutFlag(fightPokemon,1);
@@ -1865,7 +1864,7 @@ s32 fightSeqCheckDarkPokemonJoutaiHyperAct(FightOutPokemon *arg0, u8 arg1) {
             fightSeqCheckSetHensinBuffToMotoPokemon(arg0, 0xC8U);
             fightOutPokemonDarkPokemonEffect(arg0, 1U, 1U, 1U);
             fightMenuFightOutPokemonRenewStatusMenu(arg0, temp_r31, 1U);
-            fightMenuOpenMsg((void *)0x4FE2);
+            fightMenuOpenMsg(0x4FE2);
             fightOutPokemonDarkPokemonEffect(arg0, 1U, 1U, 2U);
             fightMenuCloseMsg();
             fightMenuFightOutPokemonCloseStatusMenu(arg0, temp_r31, 0U);
@@ -1884,7 +1883,7 @@ s32 fightSeqCheckDarkPokemonJoutaiHyperAct(FightOutPokemon *arg0, u8 arg1) {
         fightOutPokemonDarkPokemonEffect(arg0, 0U, 2U, 1U);
         fightMenuFightOutPokemonOpenStatusMenu(arg0, temp_r31, 1U);
         fightMenuFightOutPokemonCloseStatusMenuAnotherMine(0, arg0, temp_r31, 0U, 1U);
-        fightMenuOpenMsg((void *)0x4FE3);
+        fightMenuOpenMsg(0x4FE3);
         fightOutPokemonDarkPokemonEffect(arg0, 0U, 2U, 2U);
         fightMenuCloseMsg();
         fightMenuFightOutPokemonCloseStatusMenu(arg0, temp_r31, 0U);
@@ -1898,7 +1897,7 @@ s32 fightSeqCheckDarkPokemonJoutaiHyperAct(FightOutPokemon *arg0, u8 arg1) {
             return 0;
         }
         fightOutPokemonIsJoutaiDataId(arg0, 8U);
-        fightOutPokemonDarkPokemonKaijoEffect(arg0, 1U, 1U, 0U, NULL, 0U);
+        fightOutPokemonDarkPokemonKaijoEffect(arg0, 1U, 1U, 0U, 0, 0U);
         temp_r29_4 = fightFloor_GetAttackPokemonPtr(NULL);
         fightFloor_SetAttackPokemonPtr(NULL, (u8 *) arg0);
         fightOutPokemonInitJoutaiDataId(arg0, 0x3EU);
@@ -1906,12 +1905,12 @@ s32 fightSeqCheckDarkPokemonJoutaiHyperAct(FightOutPokemon *arg0, u8 arg1) {
         fightOutPokemonInitJoutaiDataId(arg0, 0x17U);
         fightSeqCheckSetHensinBuffToMotoPokemon(arg0, 0xC8U);
         fightSeqCheckSetHensinBuffToMotoPokemon(arg0, 0x7CU);
-        fightOutPokemonDarkPokemonKaijoEffect(arg0, 1U, 1U, 0U, (void *)0x4FD7, 1U);
-        fightOutPokemonDarkPokemonKaijoEffect(arg0, 1U, 1U, 0U, NULL, 2U);
+        fightOutPokemonDarkPokemonKaijoEffect(arg0, 1U, 1U, 0U, 0x4FD7, 1U);
+        fightOutPokemonDarkPokemonKaijoEffect(arg0, 1U, 1U, 0U, 0, 2U);
         fightMenuCloseMsg();
         fightMenuFightOutPokemonCloseStatusMenu(arg0, temp_r31, 0U);
         fightFloor_SetAttackPokemonPtr(NULL, (u8 *) temp_r29_4);
-        fightOutPokemonDarkPokemonKaijoEffect(arg0, 1U, 1U, 0U, NULL, 3U);
+        fightOutPokemonDarkPokemonKaijoEffect(arg0, 1U, 1U, 0U, 0, 3U);
     }
     return 1;
 }

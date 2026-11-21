@@ -1,4 +1,6 @@
 #pragma force_active on
+#include <game/pxdvs/app/fight/fightMenuMessage.hpp>
+#include <game/pxdvs/app/fight/fightPokemonDarkEffects.hpp>
 #include <game/pxdvs/app/fight/fightSeq/fightSeqDamage.hpp>
 #include <game/pxdvs/app/fight/fightWaza.hpp>
 
@@ -134,7 +136,6 @@ s32 fightOutPokemonGetBuffJoutaiDataId(FightOutPokemon*, u16);
 FightAction* fightOutPokemonCreateFightActionAttackWaza(FightOutPokemon*, s32, s32, s32, void*, u16, u16, s8, u8);
 u8 fightOutPokemon_GetAbicntAverage(FightOutPokemon*);
 void fightOutPokemon_SetAbicntAverage(FightOutPokemon*, u8);
-void fightOutPokemonDarkPokemonKaijoEffect(FightOutPokemon*, u8, u8, u8, u16, u8);
 u8 fightOutPokemonIsGcHeroFightOutPokemon(FightOutPokemon*);
 u32 fightOutPokemonGetNicknamePtr(FightOutPokemon*);
 void fightOutPokemon_SetHitWazaDataId(FightOutPokemon*, u16);
@@ -208,7 +209,6 @@ u32 GSmsgGetGSchar(u32);
 void fightMsgctrlSetValue(s32, u32);
 void fightMainAllCamera(u32, u32);
 void fightMainWaitFrame(u32);
-u8 fightMenuOpenMsg(u32);
 void fightMenuCloseMsg(void);
 void fightMenuFightOutPokemonOpenStatusMenu(FightOutPokemon*, u8, u32);
 void fightMenuFightOutPokemonCloseStatusMenu(FightOutPokemon*, u8, u32);
@@ -1437,7 +1437,7 @@ extern "C" void fightSeqCallExec(void)
     }
 
     fightTrainerCallEffect(trainer, 0);
-    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 0);
+    fightOutPokemonDarkPokemonKaijoEffect(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 0);
     fightMsgctrlSetValue(19, (u32)fightTrainerGetNamePtr(trainer));
     fightMainAllCamera(1, 0);
     fightMenuOpenMsg(20432);
@@ -1463,12 +1463,12 @@ extern "C" void fightSeqCallExec(void)
             fightSeqCheckSetHensinBuffToMotoPokemon(attacker, 197);
         }
     }
-    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, msgId, 1);
-    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 2);
+    fightOutPokemonDarkPokemonKaijoEffect(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, msgId, 1);
+    fightOutPokemonDarkPokemonKaijoEffect(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 2);
     fightMenuCloseMsg();
     fightMenuFightOutPokemonCloseStatusMenu(attacker, fightType, 0);
     fightTrainerCallEffect(trainer, 3);
-    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 3);
+    fightOutPokemonDarkPokemonKaijoEffect(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 3);
     wazaSequenceSysFreeAllWaza();
     fightMenuAllFightTrainerCloseStatusMenu(0);
     fightMenuAllFightOutPokemonCloseStatusMenu(0);

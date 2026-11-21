@@ -1,5 +1,7 @@
 #ifndef FIGHT_POKEMON_EFFECTS_HPP
 #define FIGHT_POKEMON_EFFECTS_HPP
+#include <game/pxdvs/app/fight/fightMenuMessage.hpp>
+#include <game/pxdvs/app/fight/fightPokemonDarkEffects.hpp>
 #include <game/pxdvs/app/fade/fade.hpp>
 #include <game/pxdvs/app/fight/fightPokemon.hpp>
 
@@ -35,9 +37,7 @@ void WazaSequence_Free(WazaSequence*);
 u8 wazaSequenceSysLastWazaIsImpactPoint(void*);
 void GSthreadSwitch();
 void GSsndPlayVolume(u32, u32, u32, u32);
-void fightMenuOpenMsg(void*);
 void fightMenuFightOutPokemonRenewStatusMenu(FightOutPokemon*, u8, u32);
-void fightOutPokemonDarkPokemonKaijoEffect(FightOutPokemon*, u8, u8, u8, void*, u8);
 void fightOutPokemonDasuEffect(FightTrainer*, FightOutPokemon*, u8);
 u32 fightFloor_GetTrainer(void*);
 u32 fightFloor_GetFightKind(void*);
@@ -68,7 +68,6 @@ void fadeCheck(u32);
 void fightMainAllCamera(u32, u32);
 void* fightOutPokemonGetNamePtr(FightOutPokemon*);
 void fightMsgctrlSetValue(u32, void*);
-void fightMenuOpenMsg2(u32, u32);
 void fightMenuCloseMsg();
 extern u8 wildPokemonDownFlag;
 void WazaSequence_Stop(WazaSequence*);
@@ -80,7 +79,6 @@ void GSmodelSetVisibility(void*, u32);
 void fightOutPokemonSetVisibility(FightOutPokemon*, u8);
 void fightMainWaitFrame(u32);
 void fightOutPokemonKizetuEffect(FightOutPokemon*, u8);
-void fightOutPokemonDarkPokemonEffect(FightOutPokemon*, u8, u8, u8);
 void fightOutPokemonModosuEffect(FightOutPokemon*, u8);
 void fightOutPokemonDamageEffect(FightOutPokemon*);
 }

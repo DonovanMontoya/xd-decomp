@@ -343,9 +343,6 @@ extern "C" { void fightOutPokemonSetWazaEffectDownFlag(FightOutPokemon* poke, u8
 extern "C" { extern "C" void* fightOutPokemonCreateSequence(FightOutPokemon* poke, u16 weather, s8 rare); }
 extern "C" { extern "C" void fightOutPokemonRegWzxFree(FightOutPokemon* poke); }
 extern "C" { u32 fightOutPokemonRegWzxLoad(FightOutPokemon* poke); }
-extern "C" { extern "C" void fightOutPokemonDarkPokemonKaijoEffect(FightOutPokemon* poke,
-    u8 reverse, u8 dark, u8 release, void* message, u8 phase); }
-extern "C" { extern "C" void fightOutPokemonDarkPokemonEffect(FightOutPokemon* poke, u8 openMenu, u8 kind, u8 phase); }
 extern "C" { void fightOutPokemonWazaEffect(FightOutPokemon* poke, u32 effect, u32 slot, u8 phase, s32 menuId); }
 extern "C" { void fightOutPokemonFreeAllSequenceWaza(FightOutPokemon* poke); }
 extern "C" { void fightOutPokemonFreeWazaEffect(FightOutPokemon* poke, u16 move, u32 slot); }
@@ -764,8 +761,8 @@ extern "C" void fightOutPokemonDarkPokemonEffect(FightOutPokemon* poke, u8 openM
 }
 }
 extern "C" {
-extern "C" void fightOutPokemonDarkPokemonKaijoEffect(FightOutPokemon* poke,
-    u8 reverse, u8 dark, u8 release, void* message, u8 phase) {
+void fightOutPokemonDarkPokemonKaijoEffect(FightOutPokemon* poke,
+    u8 wokeFromSleep, u8 endedHyperMode, u8 raisedAccuracy, u32 messageId, u8 phase) {
     void* sequence;
     WazaSequence* animation;
     u16 animationId;
@@ -773,54 +770,54 @@ extern "C" void fightOutPokemonDarkPokemonKaijoEffect(FightOutPokemon* poke,
     sequence = fightOutPokemon_GetSequencePtr(poke);
     if (sequence == nullptr) return;
     if (phase == 0) {
-        if (reverse == 1) Sequence_LoadWaza(sequence, 0xa3, 4, 0);
-        if (dark == 1) Sequence_LoadWaza(sequence, 0x9f, 4, 0);
-        if (release == 1) {
+        if (wokeFromSleep == 1) Sequence_LoadWaza(sequence, 0xa3, 4, 0);
+        if (endedHyperMode == 1) Sequence_LoadWaza(sequence, 0x9f, 4, 0);
+        if (raisedAccuracy == 1) {
             Sequence_LoadWaza(sequence, 0x9f, 4, 0);
             Sequence_LoadWaza(sequence, 0x2c, 4, 0);
         }
-        if (reverse == 0 && dark == 0 && release == 0)
+        if (wokeFromSleep == 0 && endedHyperMode == 0 && raisedAccuracy == 0)
             Sequence_LoadWaza(sequence, 0x57, 4, 0);
     } else if (phase == 1) {
-        if (reverse == 1) {
+        if (wokeFromSleep == 1) {
             WazaSequence_Start(Sequence_GetWaza(sequence, 0xa3, 4), 1);
             GSsndPlayVolume(static_cast<u16>(fightOutPokemonGetVoiceSndId(poke)), 0, 255, 0);
-            fightMenuOpenMsg(message);
-            if (dark == 0) fightMenuFightOutPokemonRenewStatusMenu(poke, fightType, 1);
+            fightMenuOpenMsg(messageId);
+            if (endedHyperMode == 0) fightMenuFightOutPokemonRenewStatusMenu(poke, fightType, 1);
         }
-        if (dark == 1) {
-            if (reverse == 1) {
+        if (endedHyperMode == 1) {
+            if (wokeFromSleep == 1) {
                 animation = Sequence_GetWaza(sequence, 0xa3, 4);
                 while (WazaSequence_IsActive(animation)) GSthreadSwitch();
             }
             WazaSequence_Start(Sequence_GetWaza(sequence, 0x9f, 4), 1);
-            if (reverse == 0) {
+            if (wokeFromSleep == 0) {
                 GSsndPlayVolume(static_cast<u16>(fightOutPokemonGetVoiceSndId(poke)), 0, 255, 0);
-                fightMenuOpenMsg(message);
+                fightMenuOpenMsg(messageId);
             }
             fightMenuFightOutPokemonRenewStatusMenu(poke, fightType, 1);
         }
-        if (release == 1) {
+        if (raisedAccuracy == 1) {
             WazaSequence_Start(Sequence_GetWaza(sequence, 0x2c, 4), 1);
-            fightMenuOpenMsg(message);
-            if (dark == 0) fightMenuFightOutPokemonRenewStatusMenu(poke, fightType, 1);
+            fightMenuOpenMsg(messageId);
+            if (endedHyperMode == 0) fightMenuFightOutPokemonRenewStatusMenu(poke, fightType, 1);
         }
-        if (reverse == 0 && dark == 0 && release == 0) {
+        if (wokeFromSleep == 0 && endedHyperMode == 0 && raisedAccuracy == 0) {
             WazaSequence_Start(Sequence_GetWaza(sequence, 0x57, 4), 1);
-            fightMenuOpenMsg(message);
+            fightMenuOpenMsg(messageId);
         }
     } else if (phase == 2) {
-        if (reverse == 1) animationId = 0xa3;
-        if (dark == 1) animationId = 0x9f;
-        if (release == 1) animationId = 0x2c;
-        if (reverse == 0 && dark == 0 && release == 0) animationId = 0x57;
+        if (wokeFromSleep == 1) animationId = 0xa3;
+        if (endedHyperMode == 1) animationId = 0x9f;
+        if (raisedAccuracy == 1) animationId = 0x2c;
+        if (wokeFromSleep == 0 && endedHyperMode == 0 && raisedAccuracy == 0) animationId = 0x57;
         animation = Sequence_GetWaza(sequence, animationId, 4);
         while (WazaSequence_IsActive(animation)) GSthreadSwitch();
     } else if (phase == 3) {
-        if (reverse == 1) WazaSequence_Free(Sequence_GetWaza(sequence, 0xa3, 4));
-        if (dark == 1) WazaSequence_Free(Sequence_GetWaza(sequence, 0x9f, 4));
-        if (release == 1) WazaSequence_Free(Sequence_GetWaza(sequence, 0x2c, 4));
-        if (reverse == 0 && dark == 0 && release == 0)
+        if (wokeFromSleep == 1) WazaSequence_Free(Sequence_GetWaza(sequence, 0xa3, 4));
+        if (endedHyperMode == 1) WazaSequence_Free(Sequence_GetWaza(sequence, 0x9f, 4));
+        if (raisedAccuracy == 1) WazaSequence_Free(Sequence_GetWaza(sequence, 0x2c, 4));
+        if (wokeFromSleep == 0 && endedHyperMode == 0 && raisedAccuracy == 0)
             WazaSequence_Free(Sequence_GetWaza(sequence, 0x57, 4));
     }
 }

@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fight/fightMenuMessage.hpp>
 #include <game/pxdvs/app/fade/fade.hpp>
 #include <game/pxdvs/app/fight/fightWaza.hpp>
 #include <dolphin/types.h>
@@ -176,7 +177,6 @@ void WazaSequence_Free(u32);
 extern "C" {
 u8 fightFloorIsGcHeroWin(void *, u16);
 void fightMsgctrlSetValue(u32, void *);
-u8 fightMenuOpenMsg(u32);
 void fightMenuCloseMsg(void);
 void *pokemon_GetNicknamePtr(Pokemon *);
 u32 fightFloor_GetFightFloorDataId(void *);

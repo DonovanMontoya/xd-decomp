@@ -1,5 +1,6 @@
 #ifndef FIGHT_MENU_PRIVATE_HPP
 #define FIGHT_MENU_PRIVATE_HPP
+#include <game/pxdvs/app/fight/fightMenuMessage.hpp>
 #include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuWazaStatus.hpp>
 #include <game/gbaBattleCommand.hpp>
@@ -138,7 +139,6 @@ void fightMenuFightOutPokemonSetStatusMenuActiveFlag(FightOutPokemon*, u16, u32)
 void fightMenuFightOutPokemonOpenStatusMenu(FightOutPokemon*, u16, bool);
 u32 fightMenuGetFightTrainerPtrToKeyWaitMenuId(FIGHT_TRAINER*, u16);
 void fightMenuCloseMsg();
-s32 fightMenuOpenMsg(u32);
 void fightMenuCloseInfoMenu(u8);
 void fightMenuOpenInfoMenu(s8);
 s32 fightMenuFightTrainerAgbHeroOpenMenu(FIGHT_TRAINER*, u16);
