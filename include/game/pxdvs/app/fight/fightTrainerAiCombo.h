@@ -20,6 +20,11 @@ typedef struct FightAiAllWazaValid {
     u16 field28;
 } FightAiAllWazaValid;
 
+typedef struct AiWazaWork {
+    u8 count;
+    u8 reserved[3];
+} AiWazaWork;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,6 +40,7 @@ typedef struct FightComboId {
 } FightComboId;
 
 extern FightComboId comboid[];
+extern AiWazaWork ai_allwaza_valid_work;
 
 s32 fightAiCombo_Act(FIGHT_TRAINER*, FightOutPokemon**, u16, s32);
 s32 fightAiCombo_ActContinue(FIGHT_TRAINER*, FightOutPokemon*, s32);

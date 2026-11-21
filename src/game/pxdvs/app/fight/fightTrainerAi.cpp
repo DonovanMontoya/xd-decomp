@@ -44,7 +44,6 @@ typedef struct FightActionBuff FightActionBuff;
 typedef struct FightTrainerEnemyPokemon FightTrainerEnemyPokemon;
 typedef struct FightTrainerKindData FightTrainerKindData;
 typedef struct Hero Hero;
-typedef struct AiWazaWork { u8 count; u8 reserved[3]; } AiWazaWork;
 AiWazaCandidate ai_allwaza_valid_tbl[64];
 AiWazaWork ai_allwaza_valid_work;
 s32 fightTrainerAiAddValue(s32, s32);
