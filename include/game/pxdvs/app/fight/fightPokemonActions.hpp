@@ -25,11 +25,11 @@ u8 fightOutPokemonCheckFightActionWazaSelect(FightOutPokemon*, u8);
 u8 fightOutPokemonCheckFightActionSelect(FightOutPokemon*, u8);
 FightTarget* fightSeqSelectDefensePokemonPtr(FightOutPokemon*, u32, u8,
     FightTarget* (*)(FightOutPokemon*, u16, u16), u32, u32, s32);
-u32 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(FightTarget*, u8);
+u16 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(void*, u16);
 FightTarget* fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(u32, u16);
 extern FightActionData fight_action_data_waza;
 FightActionBuff* fightOutPokemonCreateFightActionAttackWaza(FightOutPokemon*, u32, u32, u32,
-    FightActionData*, u32, u32, s32, u8);
+    FightActionData*, u32, u16, s32, u8);
 u8 fightWazaCheckValid(FightWaza*);
 u32 fightWaza_GetUseWazaDataId(FightWaza*);
 u32 fightWaza_GetTargetDataId(FightWaza*);

@@ -299,105 +299,105 @@ s32 fightMenuOpenMsg(u32 msg) {
 }
 
 extern "C" s32 fightMenuFightTrainerAgbHeroOpenMenu(FIGHT_TRAINER* t, u16 type) {
-    void* status;
-    u16 cnt;
-    u32 n;
-    u16 last;
-    u16 i;
-    FightOutPokemon* poke;
-    s32 gba;
-    s32 act;
-    s8 wi;
-    u16 waza;
+    u16 trainerCount;
+    s32 port;
+    FightOutPokemon* attacker;
     FightOutPokemon* target;
-    FightOutPokemon* sel;
-    u16 tgt;
-    u16 counter;
-    u8 found;
-    u16 s;
+    u16 slot;
+    u32 activeCount;
+    u16 targetIndex;
+    u16 move;
+    u16 previousSlot;
+    u16 sideIndex;
+    u16 trainerIndex;
+    u16 ordinal;
+    u16 activeSlot;
+    s8 moveSlot;
+    FIGHT_TRAINER* targetTrainer;
     void* side;
-    u16 tr;
-    void* ft;
-    u16 k;
-    s16 v;
-    status = fightTrainerGetStatus(t, 0, 0x4b, 0);
+    u8 found;
+    u32 command;
+    s32 action;
+    FightOutPokemon* selected;
+    s16 partySlot;
+    port = (s32)fightTrainerGetStatus(t, 0, 0x4b, 0);
     if (fightFloorIsNowEncountTuusinTaisen(0)) {
         menuOpenCustom(fightMenuGetFightTrainerPtrToKeyWaitMenuId(t, type), 0, 0, 0, 0, 0);
     }
-    cnt = fightFloorGetStatus(0, 0, 0x16, 0);
-    n = fightTypeDataBiosGetFightoutPokemonNum(fightTypeDataBiosGetPtr(type));
-    last = 0;
-    for (i = 0; i < n; i++) {
+    trainerCount = fightFloorGetStatus(0, 0, 0x16, 0);
+    activeCount = fightTypeDataBiosGetFightoutPokemonNum(fightTypeDataBiosGetPtr(type));
+    previousSlot = 0;
+    for (slot = 0; slot < activeCount; slot++) {
     refetch:
-        poke = fightTrainerGetValidFightOutPokemonPtr(t, i);
-        if (poke == 0) {
-            last = i;
+        attacker = fightTrainerGetValidFightOutPokemonPtr(t, slot);
+        if (attacker == 0) {
+            previousSlot = slot;
             continue;
         }
-        if (!fightOutPokemonCheckFightActionSelect(poke, 1)) {
-            last = i;
+        if (!fightOutPokemonCheckFightActionSelect(attacker, 1)) {
+            previousSlot = slot;
             continue;
         }
     retry:
-        fightOutPokemonInitFightActionBuff(poke);
+        fightOutPokemonInitFightActionBuff(attacker);
         if (fightGetFightResultId() == 1) {
             goto abort;
         }
         if (fightFloorIsUseFightTimerCommand(0) == 1 && fightTimerCommandIsOver() == 1) {
             goto timeout;
         }
-        gba = menuFightOpenGBAMain((u32)status, t, i, type);
-        act = gbaCommandGetAction(gba);
+        command = menuFightOpenGBAMain(port, t, slot, type);
+        action = gbaCommandGetAction(command);
         if (fightGetFightResultId() == 1) {
             goto abort;
         }
-        if (act == 3) {
-            fightOutPokemonCreateFightAction(poke, 0, 8, 0, fight_action_data_turn, 0);
+        if (action == 3) {
+            fightOutPokemonCreateFightAction(attacker, 0, 8, 0, fight_action_data_turn, 0);
             break;
-        } else if (act == 1) {
-            if (fightOutPokemonCheckFightActionWazaSelect(poke, 1)) {
-                last = i;
+        } else if (action == 1) {
+            if (fightOutPokemonCheckFightActionWazaSelect(attacker, 1)) {
+                previousSlot = slot;
                 continue;
             }
-            wi = gbaCommandGetWazaDataId(gba);
-            if (wi < 0) {
+            moveSlot = (s8)gbaCommandGetWazaDataId(command);
+            if (moveSlot < 0) {
                 goto retry;
             }
-            waza = pokemonGetStatus(fightOutPokemonGetPokemonPtr(poke), 0, 0x7f, wi);
-            if (waza == 0) {
+            move = pokemonGetStatus(fightOutPokemonGetPokemonPtr(attacker), 0, 0x7f, moveSlot);
+            if (move == 0) {
                 goto retry;
             }
-            if (waza >= *waza_data_number) {
+            if (move >= *waza_data_number) {
                 goto retry;
             }
-            if (waza == 0x176) {
+            if (move == 0x176) {
                 goto retry;
             }
             target = 0;
-            sel = fightSeqSelectDefensePokemonPtr(poke, waza, type, _fightMenuFightTrainerAgbHeroSelectDefensePokemon, 1, 0, -1);
-            if (sel != 0) {
-                target = sel;
+            selected = fightSeqSelectDefensePokemonPtr(attacker, move, type, _fightMenuFightTrainerAgbHeroSelectDefensePokemon, 1, 0, -1);
+            if (selected != 0) {
+                target = selected;
             } else {
-                tgt = gbaCommandGetWazaTarget(gba);
-                counter = 0;
+                targetIndex = gbaCommandGetWazaTarget(command);
+                ordinal = 0;
                 found = 0;
-                for (s = 0; s < 2; s++) {
-                    side = fightFloorGetValidFightSidePtr(0, s);
+                for (sideIndex = 0; sideIndex < 2; sideIndex++) {
+                    side = fightFloorGetValidFightSidePtr(0, sideIndex);
                     if (side == 0) {
                         continue;
                     }
-                    for (tr = 0; tr < cnt; tr++) {
-                        ft = fightSideGetValidFightTrainerPtr(side, tr);
-                        if (ft == 0) {
+                    for (trainerIndex = 0; trainerIndex < trainerCount; trainerIndex++) {
+                        targetTrainer = fightSideGetValidFightTrainerPtr(side, trainerIndex);
+                        if (targetTrainer == 0) {
                             continue;
                         }
-                        for (k = 0; k < n; k++) {
-                            target = (FightOutPokemon*)fightTrainerGetStatus((FIGHT_TRAINER*)ft, 0, 0x46, k);
-                            if (counter == tgt) {
+                        for (activeSlot = 0; activeSlot < activeCount; activeSlot++) {
+                            target = (FightOutPokemon*)fightTrainerGetStatus(targetTrainer, 0, 0x46, activeSlot);
+                            if (ordinal == targetIndex) {
                                 found = 1;
                                 break;
                             }
-                            counter++;
+                            ordinal++;
                         }
                         if (found == 1) {
                             break;
@@ -411,19 +411,18 @@ extern "C" s32 fightMenuFightTrainerAgbHeroOpenMenu(FIGHT_TRAINER* t, u16 type) 
             if (target == 0) {
                 goto retry;
             }
-            fightOutPokemonCreateFightActionAttackWaza(poke, 0, 0x13, 0, fight_action_data_waza, waza,
-                fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, type), wi, 0);
-            last = i;
-        } else if (act == 2) {
-            v = pokemonGetStatus(fightTrainerGetStatus(t, 0, 0x45, gbaCommandGetGBAChangePokemon(gba)), 0, 0xce, 0);
-            if (v < 0) {
+            fightOutPokemonCreateFightActionAttackWaza(attacker, 0, 0x13, 0, &fight_action_data_waza, move,
+                fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, type), moveSlot, 0);
+        } else if (action == 2) {
+            partySlot = pokemonGetStatus(fightTrainerGetStatus(t, 0, 0x45, gbaCommandGetGBAChangePokemon(command)), 0, 0xce, 0);
+            if (partySlot < 0) {
                 goto retry;
             }
-            fightOutPokemonCreateFightAction(poke, 0, 9, 0, fight_action_data_turn, v);
-            last = i;
-        } else if (act == 4) {
-            goto timeout;
-        } else if (act == 5) {
+            fightOutPokemonCreateFightAction(attacker, 0, 9, 0, fight_action_data_turn, partySlot);
+        } else if (action == 4) {
+        timeout:
+            fightTrainerTimeOutSelectFightAction(t, attacker, type);
+        } else if (action == 5) {
         abort:
             fightTrainerAllInitFightActionBuff(t);
             if (fightFloorIsNowEncountTuusinTaisen(0)) {
@@ -432,16 +431,15 @@ extern "C" s32 fightMenuFightTrainerAgbHeroOpenMenu(FIGHT_TRAINER* t, u16 type) 
                 }
             }
             return 0;
-        } else if (act == 0) {
-            if (i != 0) {
-                i = last;
+        } else if (action == 0) {
+            if (slot != 0) {
+                slot = previousSlot;
             }
             goto refetch;
         } else {
-        timeout:
-            fightTrainerTimeOutSelectFightAction(t, poke, type);
-            last = i;
+            goto timeout;
         }
+        previousSlot = slot;
     }
     if (fightFloorIsNowEncountTuusinTaisen(0)) {
         if (menuIsCheck(fightMenuGetFightTrainerPtrToKeyWaitMenuId(t, type))) {
@@ -586,10 +584,10 @@ extern "C" s16 fightMenuFightTrainerAgbHeroSelectIrekaeFightPokemon(FIGHT_TRAINE
     s16 ret;
     s32 act;
     u16 i;
-    void* status;
-    s32 gba;
+    s32 port;
+    u32 command;
     u16 n;
-    status = fightTrainerGetStatus(t, 0, 0x4b, 0);
+    port = (s32)fightTrainerGetStatus(t, 0, 0x4b, 0);
     n = fightTypeDataBiosGetFightoutPokemonNum(fightTypeDataBiosGetPtr(type));
     for (i = 0; i < n; i++) {
         if (fightTrainerGetStatus(t, 0, 0x46, i) == poke) {
@@ -614,13 +612,13 @@ extern "C" s16 fightMenuFightTrainerAgbHeroSelectIrekaeFightPokemon(FIGHT_TRAINE
     if (fightFloorIsUseFightTimerAll(0) == 1) {
         menuFightOpenTotalTimer();
     }
-    gba = menuFightOpenGBAIrekae((u32)status, t, i, type);
-    act = gbaCommandGetAction(gba);
+    command = menuFightOpenGBAIrekae(port, t, i, type);
+    act = gbaCommandGetAction(command);
     if (fightGetFightResultId() == 1) {
         goto retm2;
     }
     if (act == 2) {
-        ret = pokemonGetStatus(fightTrainerGetStatus(t, 0, 0x45, gbaCommandGetGBAChangePokemon(gba)), 0, 0xce, 0);
+        ret = pokemonGetStatus(fightTrainerGetStatus(t, 0, 0x45, gbaCommandGetGBAChangePokemon(command)), 0, 0xce, 0);
     } else if (act == 4) {
     timeout:
         ret = fightTrainerTimeOutSelectIrekaeFightPokemon(t, poke, type);
@@ -785,7 +783,7 @@ u32 fightMenuGetFightTrainerPtrToStatusMenuId(FIGHT_TRAINER* t, u16 idx) {
         return 0;
     }
     side = fightSideGetStatus(p, 0, 5, 0);
-    rel = fightTargetGetTragetPtrToRelativeHostSideFightTargetId((FightOutPokemon*)t, idx);
+    rel = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(t, idx);
     if (rel == 0) {
         return 0;
     }
@@ -869,7 +867,7 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubWaza(FIGHT_TRAINER* trainer,Fig
     u8 outCount;
     s32* cursor;
     MENU_WAZA_STATUS status;
-    s32 relative;
+    u16 relative;
     outCount=(u8)fightTypeDataBiosGetFightoutPokemonNum(fightTypeDataBiosGetPtr(type));
     for(;;){
         fightOutPokemonToMenuWazaStatus(attacker, &status);
@@ -905,9 +903,9 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubWaza(FIGHT_TRAINER* trainer,Fig
             target=fightSeqSelectDefensePokemonPtr(attacker,move,type,_fightMenuFightTrainerGcHeroOpenMenuSubWazaSelectDefensePokemon,1,0,-1);
             if((fightFloorIsNowEncountTuusinTaisen(0)!=1&&fightKind_CheckFightKind(10)==0&&fightKind_CheckFightKind(17)==0)||_fightMenuGcHeroDefenseFlag!=0||(outCount<2&&fightTypeDataBiosGetTrainerNum(fightTypeDataBiosGetPtr(type))!=2)||_fightMenuFightTrainerGcHeroOpenMenuSubWazaSelectDefensePokemon(attacker,move,type)!=0){
                 if(target){
-                    relative=((u32(*)(FightOutPokemon*,u16))fightTargetGetTragetPtrToRelativeHostSideFightTargetId)(target,type);
+                    relative = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, type);
                     menuFightCloseWaza(1);
-                    ((void(*)(FightOutPokemon*,u32,u32,u32,void*,u16,u32,s8,u8))fightOutPokemonCreateFightActionAttackWaza)(attacker,0,0x13,0,fight_action_data_waza,move,relative,selected,0);
+                    ((FightActionBuff* (*)(FightOutPokemon*, u32, u32, u32, FightActionData*, u16, u16, s8, u8))fightOutPokemonCreateFightActionAttackWaza)(attacker, 0, 0x13, 0, &fight_action_data_waza, move, relative, selected, 0);
                     return 1;
                 }
             }

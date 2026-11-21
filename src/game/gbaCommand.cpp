@@ -1,4 +1,4 @@
-#include <dolphin/types.h>
+#include <game/gbaBattleCommand.hpp>
 
 #pragma force_active on
 
@@ -7,7 +7,6 @@ struct FIGHT_FLOOR;
 struct FightFloor;
 struct FightOutPokemon;
 struct FightPokemon;
-struct FightTrainer;
 struct FightTypeData;
 struct GamedataAttest;
 struct Pokemon;
@@ -28,9 +27,6 @@ struct FightOutPokemon {
     u8 _draft[1];
 };
 struct FightPokemon {
-    u8 _draft[1];
-};
-struct FightTrainer {
     u8 _draft[1];
 };
 struct FightTypeData {
@@ -77,10 +73,10 @@ u16 fightPokemonGetSoubiItemDataId(FightPokemon* fp);
 s32 fightSeqSelectDefensePokemonPtr(FightOutPokemon*, u16, u16, void*, s32, s32, s32);
 void* fightTargetGetPtr(u16 slotType, void* ptr, u16 type);
 bool fightTimerCommandIsOver(void);
-u8 fightTrainerBiosGetControllerId(FightTrainer* trainer);
-u8 fightTrainerCheckCanIrekaeFightPokemon(FightTrainer* trainer, FightPokemon* fp);
-FightOutPokemon* fightTrainerGetValidFightOutPokemonPtr(FightTrainer* trainer, u16 index);
-FightPokemon* fightTrainerGetValidFightPokemonPtr(FightTrainer* trainer, u16 index);
+u8 fightTrainerBiosGetControllerId(FIGHT_TRAINER* trainer);
+u8 fightTrainerCheckCanIrekaeFightPokemon(FIGHT_TRAINER* trainer, FightPokemon* fp);
+FightOutPokemon* fightTrainerGetValidFightOutPokemonPtr(FIGHT_TRAINER* trainer, u16 index);
+FightPokemon* fightTrainerGetValidFightPokemonPtr(FIGHT_TRAINER* trainer, u16 index);
 u8 fightTypeDataBiosGetEntryPokemonNum(FightTypeData* data);
 u8 fightTypeDataBiosGetFightoutPokemonNum(FightTypeData* data);
 FightTypeData* fightTypeDataBiosGetPtr(u16 id);
@@ -94,7 +90,6 @@ void gbaCommandEntryRequest(s32 p0, s32 p1, s32 p2, s32 p3);
 s32 gbaCommandEntryResult(s32 p0, u32 *p1);
 bool gbaCommandIsConnected(s32 gba);
 u16 gbaCommandKeyPressed(s32 p0);
-u32 gbaCommandRequestAction(s32 p0, s32 p1, s32 p2, s32 p3);
 void gbaCommandSendWazaText(s32 p0, s32 p1);
 s32 gbaCommandSetKeyState(s32 chan, s32 state);
 u16 gbaPokemonConditonFromGC(s32);
@@ -219,14 +214,14 @@ s32 gbaCommandChangePokemon(s32 p0, s32 p1, u32 p2, s32 p3) {
 }
 #pragma peephole reset
 }
-u16 gbaCommandGetGBAChangePokemon(u32 value) {
-    return value;
+u32 gbaCommandGetGBAChangePokemon(u32 value) {
+    return value & 0xffff;
 }
 
 u32 gbaCommandGetWazaTarget(u32 state){return (state>>8)&0xff;}
 
-u8 gbaCommandGetWazaDataId(u32 value) {
-    return value;
+u32 gbaCommandGetWazaDataId(u32 value) {
+    return value & 0xff;
 }
 
 u32 gbaCommandGetAction(u32 value) {
@@ -286,7 +281,7 @@ struct GbaBattleSnapshot {
 #pragma push
 #pragma peephole off
 #pragma dont_inline on
-u32 gbaCommandRequestAction(s32 port, s32 trainer, s32 slot, s32 irekae) {
+u32 gbaCommandRequestAction(s32 port, FIGHT_TRAINER* trainer, s32 slot, s32 irekae) {
     GbaBattleSnapshot snap;
     FightOutPokemon* targets[4];
     u8 controllers[4];
@@ -301,8 +296,8 @@ u32 gbaCommandRequestAction(s32 port, s32 trainer, s32 slot, s32 irekae) {
     u8 entryNum;
     u8 outNum;
     u8 fighterNum;
-    FightTrainer* enemy;
-    FightTrainer* other;
+    FIGHT_TRAINER* enemy;
+    FIGHT_TRAINER* other;
     FightOutPokemon* out;
     s32 i;
     u16 condition;
@@ -339,33 +334,33 @@ u32 gbaCommandRequestAction(s32 port, s32 trainer, s32 slot, s32 irekae) {
     outNum = fightTypeDataBiosGetFightoutPokemonNum(type);
     fighterNum = trainerNum * outNum * 2;
 
-    enemy = (FightTrainer*)fightTargetGetPtr(0xB, (void*)trainer, fightType);
+    enemy = (FIGHT_TRAINER*)fightTargetGetPtr(0xB, trainer, fightType);
     targets[0] = fightTrainerGetValidFightOutPokemonPtr(enemy, 0);
     controllers[0] = 1;
     if (trainerNum == 2) {
-        other = (FightTrainer*)fightTargetGetPtr(7, enemy, fightType);
+        other = (FIGHT_TRAINER*)fightTargetGetPtr(7, enemy, fightType);
         targets[1] = fightTrainerGetValidFightOutPokemonPtr(other, 0);
         controllers[1] = fightTrainerBiosGetControllerId(other);
-        other = (FightTrainer*)fightTargetGetPtr(9, enemy, fightType);
+        other = (FIGHT_TRAINER*)fightTargetGetPtr(9, enemy, fightType);
         targets[2] = fightTrainerGetValidFightOutPokemonPtr(other, 0);
         controllers[2] = fightTrainerBiosGetControllerId(other);
-        other = (FightTrainer*)fightTargetGetPtr(10, enemy, fightType);
+        other = (FIGHT_TRAINER*)fightTargetGetPtr(10, enemy, fightType);
         targets[3] = fightTrainerGetValidFightOutPokemonPtr(other, 0);
         controllers[3] = fightTrainerBiosGetControllerId(other);
     } else if (outNum == 2) {
         targets[1] = fightTrainerGetValidFightOutPokemonPtr(enemy, 1);
-        other = (FightTrainer*)fightTargetGetPtr(9, enemy, fightType);
+        other = (FIGHT_TRAINER*)fightTargetGetPtr(9, enemy, fightType);
         targets[2] = fightTrainerGetValidFightOutPokemonPtr(other, 0);
         targets[3] = fightTrainerGetValidFightOutPokemonPtr(other, 1);
         controllers[1] = 1;
         controllers[2] = 2;
         controllers[3] = 2;
     } else {
-        targets[1] = fightTrainerGetValidFightOutPokemonPtr((FightTrainer*)fightTargetGetPtr(9, enemy, fightType), 0);
+        targets[1] = fightTrainerGetValidFightOutPokemonPtr((FIGHT_TRAINER*)fightTargetGetPtr(9, enemy, fightType), 0);
         controllers[1] = 1;
     }
 
-    out = fightTrainerGetValidFightOutPokemonPtr((FightTrainer*)trainer, slot);
+    out = fightTrainerGetValidFightOutPokemonPtr(trainer, slot);
     snap.activeSlot = (u8)(outNum == 2 ? slot + 1 : 0);
     snap.isIrekae = (u8)irekae;
     snap.fighterCount = fighterNum;
@@ -373,13 +368,13 @@ u32 gbaCommandRequestAction(s32 port, s32 trainer, s32 slot, s32 irekae) {
     partyIds = 0;
     canSwitch = 0;
     for (i = 0; i < entryNum; i++) {
-        fightPokemon = fightTrainerGetValidFightPokemonPtr((FightTrainer*)trainer, i);
+        fightPokemon = fightTrainerGetValidFightPokemonPtr(trainer, i);
         if (fightPokemon == 0) {
             break;
         }
         pokemon = fightPokemonGetPokemonPtr(fightPokemon);
         partyIds |= pokemonBiosGetFightTrainerPokemonDataId(pokemon) << (i * 4 + 8);
-        canSwitch |= fightTrainerCheckCanIrekaeFightPokemon((FightTrainer*)trainer, fightPokemon) << (i * 4 + 8);
+        canSwitch |= fightTrainerCheckCanIrekaeFightPokemon(trainer, fightPokemon) << (i * 4 + 8);
         pokerus = pokemonBiosGetPokerus(pokemon);
         snap.party[i].hp = _swap16(pokemonBiosGetHp(pokemon));
         condition = ((s32 (*)(Pokemon*))gbaPokemonConditonFromGC)(pokemon);

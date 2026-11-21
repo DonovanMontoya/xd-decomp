@@ -1,5 +1,6 @@
 #pragma dollar_identifiers on
 #include <game/menuFightLayout.hpp>
+#include <game/gbaBattleCommand.hpp>
 #include <libc/stddef.h>
 
 typedef u8 MoveStatusBytes[sizeof(MENU_WAZA_STATUS)];
@@ -17,7 +18,6 @@ u8 fightFloorIsUseFightTimerCommand(s32);
 u8 fightTimerCommandIsOver(void);
 u16 fightGetFightResultId(void);
 u32 fightMenuGetFightTrainerPtrToStatusMenuId(FIGHT_TRAINER *, u16);
-void gbaCommandRequestAction(s32, s32, s32, s32);
 u8 menuIsCheck(s32);
 s32 menuOpen(s32, s32);
 s32 menuOpenCustom(s32, s32, s32 *, s32, s32, s32, ...);
@@ -2452,12 +2452,12 @@ extern "C" u8 menuPokemonCheckPokemonChange(s32 *outInfo, FIGHT_TRAINER *trainer
     }
 }
 
-extern "C" void menuFightOpenGBAMain(s32 a, s32 b, s32 c) {
-    gbaCommandRequestAction(a, b, c, 0);
+extern "C" u32 menuFightOpenGBAMain(s32 port, FIGHT_TRAINER* trainer, s32 slot, u16) {
+    return gbaCommandRequestAction(port, trainer, slot, 0);
 }
 
-extern "C" void menuFightOpenGBAIrekae(s32 a, s32 b, s32 c) {
-    gbaCommandRequestAction(a, b, c, 1);
+extern "C" u32 menuFightOpenGBAIrekae(s32 port, FIGHT_TRAINER* trainer, s32 slot, u16) {
+    return gbaCommandRequestAction(port, trainer, slot, 1);
 }
 
 extern "C" s32 menuFightCloseTarget(s32 arg) {

@@ -149,7 +149,7 @@ u8 fightActionCreate(FightActionBuff*, u32, FightOutPokemon*, u32, u32, FightAct
 void fightActionBiosSetBuffDataId(FightActionBuff*, u32);
 void fightItemCreate(FightItem*, u32, u32, s32);
 void fightItem_SetBuff(FightItem*, u8);
-void fightWazaCreate(FightWaza*, s32, u32, u32, u8);
+void fightWazaCreate(FightWaza*, s32, u32, u16, u8);
 void fightFloorSetShadow();
 u8 pokemonDB_GetZokuseiDataId(u32, u16);
 u32 pokemonGetTokuseiDataId(Pokemon*);
@@ -302,7 +302,7 @@ extern "C" { FightActionBuff* fightOutPokemonCreateFightActionUseItem(FightOutPo
     u32 priority, u32 speed, FightActionData* data, u32 itemId, u32 target, s32 slot, u8 value); }
 extern "C" { u8 fightOutPokemonIsFightActionAttackWazaOut(FightOutPokemon* fop, u16 waza, FightTarget* targetFop); }
 extern "C" { FightActionBuff* fightOutPokemonCreateFightActionAttackWaza(FightOutPokemon* poke, u32 kind,
-    u32 priority, u32 speed, FightActionData* data, u32 moveId, u32 target, s32 slot, u8 value); }
+    u32 priority, u32 speed, FightActionData* data, u32 moveId, u16 target, s32 slot, u8 value); }
 extern "C" { FightActionBuff* fightOutPokemonCreateFightAction(FightOutPokemon* poke, u32 kind,
     u32 priority, u32 speed, FightActionData* data, u32 value); }
 extern "C" { s32 fightOutPokemonGetFightActionPri(FightOutPokemon* poke); }
@@ -1176,8 +1176,8 @@ extern "C" u8 fightOutPokemonCheckFightActionSelect(FightOutPokemon* poke, u8 cr
                 u32 move = fightWaza_GetUseWazaDataId(keep);
                 s32 index = fightWaza_GetWazaBanme(keep);
                 FightTarget* target = fightSeqSelectDefensePokemonPtr(poke, move, fightType, _fightOutPokemonCheckFightActionSelectSub, 1, 0, -1);
-                u32 targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, fightType);
-                ((FightActionBuff* (*)(FightOutPokemon*, u32, u32, u32, FightActionData*, u16, u32, s32, u8))fightOutPokemonCreateFightActionAttackWaza)(poke, 0, 0x13, 0, &fight_action_data_waza, move, targetId, index, 1);
+                u16 targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, fightType);
+                ((FightActionBuff* (*)(FightOutPokemon*, u32, u32, u32, FightActionData*, u16, u16, s32, u8))fightOutPokemonCreateFightActionAttackWaza)(poke, 0, 0x13, 0, &fight_action_data_waza, move, targetId, index, 1);
             }
         }
         return 0;
@@ -1311,7 +1311,7 @@ FightActionBuff* fightOutPokemonCreateFightAction(FightOutPokemon* poke, u32 kin
 }
 extern "C" {
 FightActionBuff* fightOutPokemonCreateFightActionAttackWaza(FightOutPokemon* poke, u32 kind,
-    u32 priority, u32 speed, FightActionData* data, u32 moveId, u32 target, s32 slot, u8 value) {
+    u32 priority, u32 speed, FightActionData* data, u32 moveId, u16 target, s32 slot, u8 value) {
     u16 move = moveId;
     FightWaza* waza = fightOutPokemon_GetFightWazaPtr(poke);
     if (waza == nullptr) return nullptr;
@@ -1333,7 +1333,7 @@ u8 fightOutPokemonIsFightActionAttackWazaOut(FightOutPokemon* fop, u16 waza, Fig
     if (targetFop == 0) {
         target = 0;
     } else {
-        target = ((u16(*)(FightTarget*,u8))fightTargetGetTragetPtrToRelativeHostSideFightTargetId)(targetFop, type);
+        target = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(targetFop, type);
     }
     action = fightOutPokemon_GetFightActionBuffPtr(fop);
     if (action == 0) {
@@ -1356,7 +1356,7 @@ u8 fightOutPokemonIsFightActionAttackWazaOut(FightOutPokemon* fop, u16 waza, Fig
     }
     u16 wazaTarget = ((u16(*)(FightWaza*))fightWaza_GetTargetDataId)(fightWaza);
     if (seq == 0xB0) {
-        wazaTarget = ((u16(*)(FightTarget*,u8))fightTargetGetTragetPtrToRelativeHostSideFightTargetId)(
+        wazaTarget = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(
             fightTargetGetPtrAsNowFightType(0xE, fop), type);
     }
     if (target != 0 && wazaTarget != target) {
@@ -1396,7 +1396,7 @@ extern "C" {
 u8 fightOutPokemonIsFightActionUseItem(FightOutPokemon* poke, u16 item, FightTarget* target) {
     u8 type = fightFloor_GetFightType(nullptr);
     if (poke == nullptr) return 0;
-    u32 targetId;
+    u16 targetId;
     if (target == nullptr) targetId = 0;
     else targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, type);
     FightActionBuff* action = fightOutPokemon_GetFightActionBuffPtr(poke);
@@ -1408,7 +1408,7 @@ u8 fightOutPokemonIsFightActionUseItem(FightOutPokemon* poke, u16 item, FightTar
     u32 selectedItem = fightItem_GetItemDataId(itemRecord);
     u32 selectedTarget = fightItem_GetTargetDataId(itemRecord);
     if (item != 0 && static_cast<u16>(selectedItem) != item) return 0;
-    if (static_cast<u16>(targetId) != 0 && static_cast<u16>(selectedTarget) != static_cast<u16>(targetId)) return 0;
+    if (targetId != 0 && static_cast<u16>(selectedTarget) != targetId) return 0;
     return 1;
 }
 }
@@ -2324,7 +2324,7 @@ extern "C" u8 fightOutPokemonCheckFightActionWazaSelect(FightOutPokemon* poke, u
     if (fightOutPokemonCheckWaruagaki(poke) == 1) {
         if (createAction != 0) {
             FightTarget* target = fightSeqSelectDefensePokemonPtr(poke, 0xa5, fightType, nullptr, 1, 1, -1);
-            u32 targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, fightType);
+            u16 targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, fightType);
             fightOutPokemonCreateFightActionAttackWaza(poke, 0, 0x13, 0, &fight_action_data_waza, 0xa5, targetId, -1, 1);
         }
         return 1;
@@ -2337,8 +2337,8 @@ extern "C" u8 fightOutPokemonCheckFightActionWazaSelect(FightOutPokemon* poke, u
         if (createAction != 0) {
             if (static_cast<u16>(encoreMove) != static_cast<u16>(move)) fightOutPokemonInitJoutaiDataId(poke, 0x2a);
             FightTarget* target = fightSeqSelectDefensePokemonPtr(poke, move, fightType, nullptr, 1, 1, -1);
-            u32 targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, fightType);
-            ((void (*)(FightOutPokemon*, u32, u32, u32, FightActionData*, u16, u32, s8, u8))fightOutPokemonCreateFightActionAttackWaza)(poke, 0, 0x13, 0, &fight_action_data_waza, move, targetId, index, 1);
+            u16 targetId = fightTargetGetTragetPtrToRelativeHostSideFightTargetId(target, fightType);
+            ((void (*)(FightOutPokemon*, u32, u32, u32, FightActionData*, u16, u16, s8, u8))fightOutPokemonCreateFightActionAttackWaza)(poke, 0, 0x13, 0, &fight_action_data_waza, move, targetId, index, 1);
         }
         return 2;
     }

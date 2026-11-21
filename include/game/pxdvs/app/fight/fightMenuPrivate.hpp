@@ -1,10 +1,13 @@
 #ifndef FIGHT_MENU_PRIVATE_HPP
 #define FIGHT_MENU_PRIVATE_HPP
 #include <game/menuWazaStatus.hpp>
+#include <game/gbaBattleCommand.hpp>
 #include <game/menuPokemonStatus.hpp>
 
 struct FightOutPokemon;
 struct FIGHT_TRAINER;
+struct FightActionData;
+struct FightActionBuff;
 struct Pokemon;
 struct FightPokemon;
 
@@ -14,7 +17,7 @@ extern s16 msgFrame;
 extern u32* waza_data_number;
 extern u8 fight_action_data_item[];
 extern u8 fight_action_data_turn[];
-extern u8 fight_action_data_waza[];
+extern FightActionData fight_action_data_waza;
 extern u32 msgCtrlVal[4];
 
 u8 GSgfxVideoGetVsyncRate();
@@ -50,7 +53,7 @@ u8 fightOutPokemonCheckFightActionSelect(FightOutPokemon*, u8);
 u8 fightOutPokemonCheckFightActionWazaSelect(FightOutPokemon*, u8);
 u8 fightOutPokemonCheckFightOut(FightOutPokemon*);
 void fightOutPokemonCreateFightAction(FightOutPokemon*, u32, u32, u32, void*, s32);
-void fightOutPokemonCreateFightActionAttackWaza(FightOutPokemon*, u32, u32, u32, void*, u16, u32, s32, u8);
+FightActionBuff* fightOutPokemonCreateFightActionAttackWaza(FightOutPokemon*, u32, u32, u32, FightActionData*, u32, u16, s32, u8);
 void fightOutPokemonCreateFightActionUseItem(FightOutPokemon*, u32, u32, u32, void*, u32, u16, s32, s32);
 s32 fightOutPokemonGetNicknamePtr(FightOutPokemon*);
 Pokemon* fightOutPokemonGetPokemonPtr(FightOutPokemon*);
@@ -63,11 +66,11 @@ u8 fightPokemonCheckValid(void*);
 FightOutPokemon* fightSeqSelectDefensePokemonPtr(FightOutPokemon*, u16, u16, FightOutPokemon* (*)(FightOutPokemon*, u16, u16), u8, u8, s16);
 void fightSetFightResultId(u16);
 u32 fightSideGetStatus(void*, u16, u16, u16);
-void* fightSideGetValidFightTrainerPtr(void*, u16);
+FIGHT_TRAINER* fightSideGetValidFightTrainerPtr(void*, u16);
 s32 fightTargetDataBiosGetBuff(void*);
 void* fightTargetDataBiosGetPtr(u16);
 FightOutPokemon* fightTargetGetPtr(u32, FightOutPokemon*, u16);
-u16 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(FightOutPokemon*, u16);
+u16 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(void*, u16);
 u8 fightTargetIsHostSide(FightOutPokemon*, u16);
 u8 fightTimerCommandIsOver();
 s16 fightTrainerAiSelectIrekaeDasuFightPokemon(FIGHT_TRAINER*, u16, s32, u32);
@@ -84,10 +87,6 @@ void fightTrainerToMenuBallStatus(FIGHT_TRAINER*, void*);
 u8 fightTypeDataBiosGetFightoutPokemonNum(void*);
 void* fightTypeDataBiosGetPtr(u16);
 u8 fightTypeDataBiosGetTrainerNum(void*);
-s32 gbaCommandGetAction(s32);
-u32 gbaCommandGetGBAChangePokemon(s32);
-s8 gbaCommandGetWazaDataId(s32);
-u16 gbaCommandGetWazaTarget(s32);
 u32 itemGetStatus(void*, u16, u32, u32);
 void menuCloseCustom(u32, s32, s32);
 void menuCreateOffScreen(u8, f32, f32);
@@ -101,8 +100,6 @@ void menuFightCloseTotalTimer();
 void menuFightCloseWaza(u32);
 u32 menuFightGetKeyWaitMenuId(FIGHT_TRAINER*, u16);
 void menuFightOpenCountDown();
-s32 menuFightOpenGBAIrekae(u32, FIGHT_TRAINER*, u32, u16);
-s32 menuFightOpenGBAMain(u32, FIGHT_TRAINER*, u16, u16);
 s32 menuFightOpenPokemon(FIGHT_TRAINER*, FightOutPokemon*, u16, u8, u8);
 s32 menuFightOpenTarget(void*, u32, u32);
 s32 menuFightOpenTop(FIGHT_TRAINER*, void*, s32*, u32);
