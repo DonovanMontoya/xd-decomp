@@ -183,66 +183,115 @@ void memcard_debug_Save(void* data) {
 
 }
 
-#define MEMCARD_STORE(idx, off, max)                                          \
-    dst = _memcardGetMultiSaveDataToSTRUCT(arg, idx);                         \
-    src = savedataGetStatus(_memcardStatusPtr->saveData, idx);                \
-    size = *(u16*)((u8*)arg + (off));                                         \
-    if (size > (max)) {                                                       \
-        size = (max);                                                         \
-    }                                                                         \
+enum MemcardSection {
+    SectionSystem,
+    SectionHero,
+    SectionPcBox,
+    SectionMailbox,
+    SectionSodateya,
+    SectionMemo,
+    SectionTool,
+    SectionDarkPokemon,
+    SectionFlags,
+    SectionExRibbon,
+    SectionYobi1,
+    SectionYobi2,
+    SectionYobi3,
+    SectionYobi4,
+    SectionRelive,
+    SectionFloor,
+    SectionCount
+};
+
+struct MemcardHalfWords {
+    u16 low;
+    u16 high;
+};
+
+struct MemcardPackHeader {
+    u16 key[4];
+    MemcardHalfWords checksums[4];
+    u16 sizes[SectionCount];
+    MemcardHalfWords offsets[SectionCount];
+    u16 flagLevel0Size;
+    u16 flagLevel1Size;
+    u16 flagLevel2Size;
+    u16 battleDiskFlagsSize;
+    u16 pcBoxSizeHigh;
+    u16 bingoFlagsSize;
+    u8 reserved84[0x1C];
+
+    u8* setSectionOffset(MemcardSection section, u32 offset) {
+        offsets[section].low = offset;
+        offsets[section].high = offset >> 16;
+        return (u8*)((u32)(this + 1) + offset);
+    }
+};
+
+typedef char MemcardPackHeaderSize[sizeof(MemcardPackHeader) == 0xA0 ? 1 : -1];
+typedef char MemcardSectionSizesOffset[offsetof(MemcardPackHeader, sizes) == 0x18 ? 1 : -1];
+typedef char MemcardSectionOffsetsOffset[offsetof(MemcardPackHeader, offsets) == 0x38 ? 1 : -1];
+
+#define MEMCARD_STORE(idx, section, max)                                     \
+    dst = _memcardGetMultiSaveDataToSTRUCT(arg, idx);                        \
+    src = savedataGetStatus(_memcardStatusPtr->saveData, idx);               \
+    size = header->sizes[section];                                           \
+    if (size > (max)) {                                                      \
+        size = (max);                                                        \
+    }                                                                        \
     memcpy(src, dst, size)
 
-#define MEMCARD_STORE2(dst3, idx, off, max)                                         \
-    dst3 = (u8*)_memcardGetMultiSaveDataToSTRUCT(arg, idx);                        \
-    src = savedataGetStatus(_memcardStatusPtr->saveData, idx);                \
-    size = *(u16*)((u8*)arg + (off));                                         \
-    if (size > (max)) {                                                       \
-        size = (max);                                                         \
-    }                                                                         \
+#define MEMCARD_STORE2(dst3, idx, section, max)                              \
+    dst3 = (u8*)_memcardGetMultiSaveDataToSTRUCT(arg, idx);                  \
+    src = savedataGetStatus(_memcardStatusPtr->saveData, idx);               \
+    size = header->sizes[section];                                           \
+    if (size > (max)) {                                                      \
+        size = (max);                                                        \
+    }                                                                        \
     memcpy(src, dst3, size)
 
 void _memcardStoreSaveData_multi(void* arg) {
+    const MemcardPackHeader* header = (const MemcardPackHeader*)arg;
     void* dst;
-    u16 size16;
     u8* dst2;
     u8* dst3;
     u8* dst4;
     u8* dst5;
     void* src;
     u32 size;
-    MEMCARD_STORE(1, 0x18, sizeof(GamedataSaveRecord));
-    MEMCARD_STORE(2, 0x1A, 0x978);
+    MEMCARD_STORE(1, SectionSystem, sizeof(GamedataSaveRecord));
+    MEMCARD_STORE(2, SectionHero, sizeof(Hero));
     dst = _memcardGetMultiSaveDataToSTRUCT(arg, 3);
     src = savedataGetStatus(_memcardStatusPtr->saveData, 3);
-    size = (u32)*(u16*)((u8*)arg + 0x80) << 16;
-    size += *(u16*)((u8*)arg + 0x1C);
+    size = (u32)header->pcBoxSizeHigh << 16;
+    size += header->sizes[SectionPcBox];
     if (size > 0xBC50) {
         size = 0xBC50;
     }
     memcpy(src, dst, size);
-    MEMCARD_STORE(0xA, 0x1E, 0x4A);
-    MEMCARD_STORE(0xB, 0x20, 0xCC);
-    MEMCARD_STORE(0xC, 0x22, 0x1774);
-    MEMCARD_STORE(0xE, 0x24, 0x364);
-    MEMCARD_STORE(0xF, 0x26, 0x2400);
+    MEMCARD_STORE(0xA, SectionMailbox, 0x4A);
+    MEMCARD_STORE(0xB, SectionSodateya, 0xCC);
+    MEMCARD_STORE(0xC, SectionMemo, 0x1774);
+    MEMCARD_STORE(0xE, SectionTool, 0x364);
+    MEMCARD_STORE(0xF, SectionDarkPokemon, 0x2400);
     dst2 = (u8*)_memcardGetMultiSaveDataToSTRUCT(arg, 0x17);
-    size16 = *(u16*)((u8*)arg + 0x28);
-    if (size16 == 0x6B4) {
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 4), dst2, *(u16*)((u8*)arg + 0x78));
-        dst2 += *(u16*)((u8*)arg + 0x78);
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 5), dst2, *(u16*)((u8*)arg + 0x7A));
-        dst2 += *(u16*)((u8*)arg + 0x7A);
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 6), dst2, *(u16*)((u8*)arg + 0x7C));
-        dst2 += *(u16*)((u8*)arg + 0x7C);
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x18), dst2, *(u16*)((u8*)arg + 0x7E));
-        dst2 += *(u16*)((u8*)arg + 0x7E);
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x1B), dst2, *(u16*)((u8*)arg + 0x82));
+    size = header->sizes[SectionFlags];
+    if (size == 0x6B4) {
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 4), dst2, header->flagLevel0Size);
+        dst2 += header->flagLevel0Size;
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 5), dst2, header->flagLevel1Size);
+        dst2 += header->flagLevel1Size;
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 6), dst2, header->flagLevel2Size);
+        dst2 += header->flagLevel2Size;
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x18), dst2, header->battleDiskFlagsSize);
+        dst2 += header->battleDiskFlagsSize;
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x1B), dst2, header->bingoFlagsSize);
     } else {
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x17), dst2, size16);
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x17), dst2, size);
     }
-    MEMCARD_STORE2(dst3, 0x10, 0x2A, 0xB);
-    MEMCARD_STORE2(dst4, 0x16, 0x36, 0xC800);
-    MEMCARD_STORE2(dst5, 0x15, 0x34, 0x2298);
+    MEMCARD_STORE2(dst3, 0x10, SectionExRibbon, 0xB);
+    MEMCARD_STORE2(dst4, 0x16, SectionFloor, 0xC800);
+    MEMCARD_STORE2(dst5, 0x15, SectionRelive, 0x2298);
     _memcardGetMultiSaveDataToSTRUCT(arg, 0x11);
     _memcardGetMultiSaveDataToSTRUCT(arg, 0x12);
     _memcardGetMultiSaveDataToSTRUCT(arg, 0x13);
@@ -273,65 +322,66 @@ static s32 _memcardMergeDataPack(void) {
 }
 #pragma pop
 
-#define MEMCARD_MULTI_ADD(base, off)                      \
-    {                                                     \
-        u32 hi = ((u16*)(base))[((off) + 2) / 2];         \
-        u32 lo = ((u16*)(base))[(off) / 2];               \
-        data = (hi << 16) + data;                         \
-        data = lo + data;                                 \
+#define MEMCARD_MULTI_ADD(section)                                           \
+    {                                                                        \
+        u32 hi = header->offsets[section].high;                              \
+        u32 lo = header->offsets[section].low;                               \
+        data = (hi << 16) + data;                                            \
+        data = lo + data;                                                    \
     }
 
 #pragma opt_dead_assignments off
 static void* _memcardGetMultiSaveDataToSTRUCT(void* base, long index) {
-    u32 data = (u32)base + 0xA0;
+    const MemcardPackHeader* header = (const MemcardPackHeader*)base;
+    u32 data = (u32)(header + 1);
     switch (index) {
     case 1:
-        MEMCARD_MULTI_ADD(base, 0x38)
+        MEMCARD_MULTI_ADD(SectionSystem)
         break;
     case 2:
-        MEMCARD_MULTI_ADD(base, 0x3C)
+        MEMCARD_MULTI_ADD(SectionHero)
         break;
     case 3:
-        MEMCARD_MULTI_ADD(base, 0x40)
+        MEMCARD_MULTI_ADD(SectionPcBox)
         break;
     case 0x17:
-        MEMCARD_MULTI_ADD(base, 0x58)
+        MEMCARD_MULTI_ADD(SectionFlags)
         break;
     case 0xA:
-        MEMCARD_MULTI_ADD(base, 0x44)
+        MEMCARD_MULTI_ADD(SectionMailbox)
         break;
     case 0xB:
-        MEMCARD_MULTI_ADD(base, 0x48)
+        MEMCARD_MULTI_ADD(SectionSodateya)
         break;
     case 0xC:
-        MEMCARD_MULTI_ADD(base, 0x4C)
+        MEMCARD_MULTI_ADD(SectionMemo)
         break;
     case 0xE:
-        MEMCARD_MULTI_ADD(base, 0x50)
+        MEMCARD_MULTI_ADD(SectionTool)
         break;
     case 0xF:
-        MEMCARD_MULTI_ADD(base, 0x54)
+        MEMCARD_MULTI_ADD(SectionDarkPokemon)
         break;
     case 0x10:
-        MEMCARD_MULTI_ADD(base, 0x5C)
+        MEMCARD_MULTI_ADD(SectionExRibbon)
         break;
     case 0x16:
-        MEMCARD_MULTI_ADD(base, 0x74)
+        MEMCARD_MULTI_ADD(SectionFloor)
         break;
     case 0x11:
-        MEMCARD_MULTI_ADD(base, 0x60)
+        MEMCARD_MULTI_ADD(SectionYobi1)
         break;
     case 0x12:
-        MEMCARD_MULTI_ADD(base, 0x64)
+        MEMCARD_MULTI_ADD(SectionYobi2)
         break;
     case 0x13:
-        MEMCARD_MULTI_ADD(base, 0x68)
+        MEMCARD_MULTI_ADD(SectionYobi3)
         break;
     case 0x14:
-        MEMCARD_MULTI_ADD(base, 0x6C)
+        MEMCARD_MULTI_ADD(SectionYobi4)
         break;
     case 0x15:
-        MEMCARD_MULTI_ADD(base, 0x70)
+        MEMCARD_MULTI_ADD(SectionRelive)
         break;
     case 0:
     case 4:
@@ -364,7 +414,7 @@ static s32 _memcardExamineDataPack(void) {
         sum += pack[6];
         sum += pack[7];
         u8 checked;
-        if (*(u16*)(pack + 0x20) == sizeof(GamedataSaveRecord)) {
+        if (((MemcardPackHeader*)data)->sizes[SectionSystem] == sizeof(GamedataSaveRecord)) {
             if (sum == gamedatasaveGetStatus(_memcardGetMultiSaveDataToSTRUCT(data, 1), 0xD)) {
                 checked = 1;
             } else {
@@ -1941,8 +1991,8 @@ void _memcardJobMain(u32, u32)
 #pragma pop
 
 extern "C" {
-s32 floorGetNextFloorID();
-void floorMakeSaveData(void**,u32*);
+u32 floorGetNextFloorID();
+s32 floorMakeSaveData(void**, u32*);
 void* __copy(void*,const void*,u32);
 }
 
@@ -1971,7 +2021,6 @@ struct MemcardSavePartyGroup {
 
 #pragma push
 #pragma peephole off
-#pragma opt_loop_invariants off
 typedef char MemcardBoxSize[sizeof(MemcardSaveBox)==0x170C?1:-1];
 typedef char MemcardPartySize[sizeof(MemcardSaveParty)==0xCC?1:-1];
 typedef char MemcardPartyGroupSize[sizeof(MemcardSavePartyGroup)==0x3D8?1:-1];
@@ -1979,169 +2028,201 @@ typedef char MemcardPartyGroupSize[sizeof(MemcardSavePartyGroup)==0x3D8?1:-1];
 void _memcardDuplicateSaveData_multi(void* buffer) {
     u32 floorSize;
     void* floorData;
-    s8 order[16];
-    u8* data=(u8*)buffer;
-    u16* header=(u16*)buffer;
-    if(_memcardStatusPtr->state==11) { s32 next=floorGetNextFloorID(); gamedatasaveSetStatus(0,5,next); }
-    u16* seed=_memcard_encrypt_key;
-    s32 seedCount=0;
-    do {u16 random=HSD_Rand();++seedCount;*seed=random;++seed;}while(seedCount<4);
-    s32 word=0;
-    s32 byteOffset=0;
-    for(;word<0x13FE8;word+=4) {
-        s32 second=(word+1)*2;
-        *(u16*)(data+byteOffset)+=_memcard_encrypt_key[0];
-        s32 third=(word+2)*2;
-        s32 fourth=(word+3)*2;
-        byteOffset+=8;
-        *(u16*)(data+second)+=_memcard_encrypt_key[1];
-        *(u16*)(data+third)+=_memcard_encrypt_key[2];
-        *(u16*)(data+fourth)+=_memcard_encrypt_key[3];
+    s8 order[SectionCount];
+    MemcardPackHeader* header = (MemcardPackHeader*)buffer;
+    u16* words = (u16*)buffer;
+    if (_memcardStatusPtr->state == 11) {
+        u32 next = floorGetNextFloorID();
+        gamedatasaveSetStatus(0, 5, next);
+    }
+
+    s32 i, word;
+    for (i = 0; i < 4; i++) {
+        _memcard_encrypt_key[i] = HSD_Rand();
+    }
+    for (word = 0; word < 0x13FE8; word += 4) {
+        for (i = 0; i < 4; ++i) {
+            words[word + i] += _memcard_encrypt_key[i];
+        }
         advanceMemcardKey();
     }
-    header[0x18/2] = sizeof(GamedataSaveRecord);
-    header[0x1A/2]=0x978;
-    header[0x1C/2]=0xBC50;
-    header[0x80/2]=0;
-    header[0x1E/2]=0x4A;
-    header[0x20/2]=0xCC;
-    header[0x22/2]=0x1774;
-    header[0x24/2]=0x364;
-    header[0x26/2]=0x2400;
-    header[0x28/2]=0x6B4;
-    header[0x2A/2]=0xB;
-    header[0x36/2]=0xC800;
-    header[0x2C/2]=0x400;
-    header[0x2E/2]=0x800;
-    header[0x30/2]=0x1000;
-    header[0x32/2]=0x2000;
-    header[0x34/2]=0x2298;
-    header[0]=HSD_Rand();header[1]=HSD_Rand();header[2]=HSD_Rand();header[3]=HSD_Rand();
-    for(s16 i=0;i<15;++i)order[i]=i+1;
-    header[0x38/2]=0;
-    order[15]=-1;
-    header[0x3A/2]=0;
-    *(GamedataSaveRecord*)(data + 0xA0) = *(const GamedataSaveRecord*)savedataGetStatus(0, 1);
-    u32 offset=0xA0;
-    s16 count=15;
-    while(count!=0) {
-        s16 selected=(s32)(u16)HSD_Rand()%count;
-        s8* entry=&order[selected];
-        s8 section=*entry;
-        if((u32)section<=15) {
-            switch(section) {
-            case 1:
-                if(_memcardStatusPtr->state!=8 && _memcardStatusPtr->state!=13 && _memcardStatusPtr->state!=7 && _memcard_anySaveOFF_Flag==0)
-                    Hero::getHeroPtr()->setRestertPos();
-                header[0x3C/2]=offset;header[0x3E/2]=offset>>16;
-                memcpy(data+0xA0+offset,savedataGetStatus(0,2),sizeof(Hero));
-                offset+=0x990;
-                break;
-            case 2: {
-                header[0x40/2]=offset;header[0x42/2]=offset>>16;
-                u8* dst=data+0xA0+offset;
-                u8* src=(u8*)savedataGetStatus(0,3);
-                MemcardSaveBox* boxDst=(MemcardSaveBox*)dst;
-                MemcardSaveBox* boxSrc=(MemcardSaveBox*)src;
-                do { *boxDst=*boxSrc; ++boxDst;++boxSrc; } while((u8*)boxDst<dst+0xB860);
-                *(MemcardWords<235>*)(dst+0xB860)=*(MemcardWords<235>*)(src+0xB860);
-                offset+=0xBC60;
-                *(u32*)(dst+0xBC0C)=*(u32*)(src+0xBC0C);
-                *(MemcardWords<16>*)(dst+0xBC10)=*(MemcardWords<16>*)(src+0xBC10);
-                break;
+
+    header->sizes[SectionSystem] = sizeof(GamedataSaveRecord);
+    header->sizes[SectionHero] = sizeof(Hero);
+    header->sizes[SectionPcBox] = 0xBC50;
+    header->pcBoxSizeHigh = 0;
+    header->sizes[SectionMailbox] = 0x4A;
+    header->sizes[SectionSodateya] = 0xCC;
+    header->sizes[SectionMemo] = 0x1774;
+    header->sizes[SectionTool] = 0x364;
+    header->sizes[SectionDarkPokemon] = 0x2400;
+    header->sizes[SectionFlags] = 0x6B4;
+    header->sizes[SectionExRibbon] = 0xB;
+    header->sizes[SectionFloor] = 0xC800;
+    header->sizes[SectionYobi1] = 0x400;
+    header->sizes[SectionYobi2] = 0x800;
+    header->sizes[SectionYobi3] = 0x1000;
+    header->sizes[SectionYobi4] = 0x2000;
+    header->sizes[SectionRelive] = 0x2298;
+    header->key[0] = HSD_Rand();
+    header->key[1] = HSD_Rand();
+    header->key[2] = HSD_Rand();
+    header->key[3] = HSD_Rand();
+    for (s16 i = 0; i < SectionCount - 1; ++i) {
+        order[i] = i + 1;
+    }
+    header->offsets[SectionSystem].low = 0;
+    order[SectionCount - 1] = -1;
+    header->offsets[SectionSystem].high = 0;
+    *(GamedataSaveRecord*)(header + 1) = *(const GamedataSaveRecord*)savedataGetStatus(0, 1);
+
+    u32 offset = 0xA0;
+    s16 count = SectionCount - 1;
+    while (count != 0) {
+        s16 selected = (s32)(u16)HSD_Rand() % count;
+        s8 section = order[selected];
+        switch (section) {
+        case SectionSystem:
+            break;
+        case SectionHero: {
+            if (_memcardStatusPtr->state != 8 && _memcardStatusPtr->state != 13 &&
+                _memcardStatusPtr->state != 7 && _memcard_anySaveOFF_Flag == 0) {
+                Hero::getHeroPtr()->setRestertPos();
             }
-            case 3: {
-                header[0x44/2]=offset;header[0x46/2]=offset>>16;
-                u8* dst=data+0xA0+offset;
-                u8* src=(u8*)savedataGetStatus(0,10);
-                offset+=0x60;
-                *(MemcardWords<16>*)dst=*(MemcardWords<16>*)src;
-                *(u16*)(dst+0x40)=*(u16*)(src+0x40);
-                *(u32*)(dst+0x42)=*(u32*)(src+0x42);
-                dst[0x46]=src[0x46];dst[0x47]=src[0x47];
-                *(u16*)(dst+0x48)=*(u16*)(src+0x48);
-                break;
-            }
-            case 4:
-                header[0x48/2]=offset;header[0x4A/2]=offset>>16;
-                *(MemcardSaveParty*)(data+0xA0+offset)=*(MemcardSaveParty*)savedataGetStatus(0,11);
-                offset+=0xE0;
-                break;
-            case 5: {
-                header[0x4C/2]=offset;header[0x4E/2]=offset>>16;
-                u8* dst=data+0xA0+offset;
-                u8* src=(u8*)savedataGetStatus(0,12);
-                *(u16*)dst=*(u16*)src;
-                *(MemcardWords<1500>*)(dst+4)=*(MemcardWords<1500>*)(src+4);
-                offset+=0x1790;
-                break;
-            }
-            case 6: {
-                header[0x50/2]=offset;header[0x52/2]=offset>>16;
-                u8* dst=data+0xA0+offset;
-                u8* src=(u8*)savedataGetStatus(0,14);
-                *(MemcardWords<216>*)dst=*(MemcardWords<216>*)src;
-                offset+=0x380;
-                dst[0x360]=src[0x360];
-                break;
-            }
-            case 7:
-                header[0x54/2]=offset;header[0x56/2]=offset>>16;
-                *(MemcardWords<2304>*)(data+0xA0+offset)=*(MemcardWords<2304>*)savedataGetStatus(0,15);
-                offset+=0x2410;
-                break;
-            case 8: {
-                header[0x58/2]=offset;header[0x5A/2]=offset>>16;
-                header[0x78/2]=(u32)savedataGetStatus(0,7)*4;
-                header[0x7A/2]=(u32)savedataGetStatus(0,8)*4;
-                header[0x7C/2]=(u32)savedataGetStatus(0,9)*4;
-                header[0x7E/2]=(u32)savedataGetStatus(0,25)*4;
-                header[0x82/2]=(u32)savedataGetStatus(0,28)*4;
-                u8* dst=data+0xA0+offset;
-                u8* src=(u8*)savedataGetStatus(0,23);
-                *(MemcardWords<8>*)dst=*(MemcardWords<8>*)src;
-                *(MemcardWords<32>*)(dst+0x20)=*(MemcardWords<32>*)(src+0x20);
-                *(MemcardWords<384>*)(dst+0xA0)=*(MemcardWords<384>*)(src+0xA0);
-                offset+=0x6D0;
-                *(MemcardWords<5>*)(dst+0x6A0)=*(MemcardWords<5>*)(src+0x6A0);
-                break;
-            }
-            case 9:
-                header[0x5C/2]=offset;header[0x5E/2]=offset>>16;
-                __copy(data+0xA0+offset,savedataGetStatus(0,16),11);
-                offset+=0x20;
-                break;
-            case 15: {
-                if(_memcardStatusPtr->state!=8 && _memcardStatusPtr->state!=13 && _memcardStatusPtr->state!=7 && _memcard_anySaveOFF_Flag==0)
-                    floorMakeSaveData(&floorData,&floorSize);
-                header[0x74/2]=offset;header[0x76/2]=offset>>16;
-                void* dst=data+0xA0+offset;
-                void* src=savedataGetStatus(0,22);
-                if(_memcardStatusPtr->state!=8 && _memcardStatusPtr->state!=13 && _memcardStatusPtr->state!=7 && _memcard_anySaveOFF_Flag==0) {
-                    memcpy(src,floorData,floorSize);
-                    GSmemFree(floorData);
-                }
-                if(_memcard_anySaveOFF_Flag==0)memcpy(dst,src,0xC800);else memset(dst,0,0xC800);
-                offset+=0xC810;
-                break;
-            }
-            case 10:header[0x60/2]=offset;header[0x62/2]=offset>>16;offset+=0x410;break;
-            case 11:header[0x64/2]=offset;header[0x66/2]=offset>>16;offset+=0x810;break;
-            case 12:header[0x68/2]=offset;header[0x6A/2]=offset>>16;offset+=0x1010;break;
-            case 13:header[0x6C/2]=offset;header[0x6E/2]=offset>>16;offset+=0x2010;break;
-            case 14: {
-                header[0x70/2]=offset;header[0x72/2]=offset>>16;
-                MemcardSavePartyGroup* dst=(MemcardSavePartyGroup*)(data+0xA0+offset);
-                MemcardSavePartyGroup* end=(MemcardSavePartyGroup*)((u8*)dst+0x2298);
-                MemcardSavePartyGroup* src=(MemcardSavePartyGroup*)savedataGetStatus(0,21);
-                do { *dst=*src; ++dst;++src; }while(dst<end);
-                offset+=0x22B0;
-                break;
-            }
-            }
+            u8* dst = header->setSectionOffset(SectionHero, offset);
+            memcpy(dst, savedataGetStatus(0, 2), sizeof(Hero));
+            offset += 0x990;
+            break;
         }
-        s8* following=&order[selected];
-        while(selected<count) { *entry++=*++following;++selected; }
+        case SectionPcBox: {
+            u8* dst = header->setSectionOffset(SectionPcBox, offset);
+            u8* src = (u8*)savedataGetStatus(0, 3);
+            MemcardSaveBox* boxDst = (MemcardSaveBox*)dst;
+            MemcardSaveBox* boxSrc = (MemcardSaveBox*)src;
+            do {
+                *boxDst = *boxSrc;
+                ++boxDst;
+                ++boxSrc;
+            } while ((u8*)boxDst < dst + 0xB860);
+            *(MemcardWords<235>*)(dst + 0xB860) = *(MemcardWords<235>*)(src + 0xB860);
+            offset += 0xBC60;
+            *(u32*)(dst + 0xBC0C) = *(u32*)(src + 0xBC0C);
+            *(MemcardWords<16>*)(dst + 0xBC10) = *(MemcardWords<16>*)(src + 0xBC10);
+            break;
+        }
+        case SectionMailbox: {
+            u8* dst = header->setSectionOffset(SectionMailbox, offset);
+            u8* src = (u8*)savedataGetStatus(0, 10);
+            offset += 0x60;
+            *(MemcardWords<16>*)dst = *(MemcardWords<16>*)src;
+            *(u16*)(dst + 0x40) = *(u16*)(src + 0x40);
+            *(u32*)(dst + 0x42) = *(u32*)(src + 0x42);
+            dst[0x46] = src[0x46];
+            dst[0x47] = src[0x47];
+            *(u16*)(dst + 0x48) = *(u16*)(src + 0x48);
+            break;
+        }
+        case SectionSodateya: {
+            u8* dst = header->setSectionOffset(SectionSodateya, offset);
+            *(MemcardSaveParty*)dst = *(MemcardSaveParty*)savedataGetStatus(0, 11);
+            offset += 0xE0;
+            break;
+        }
+        case SectionMemo: {
+            u8* dst = header->setSectionOffset(SectionMemo, offset);
+            u8* src = (u8*)savedataGetStatus(0, 12);
+            *(u16*)dst = *(u16*)src;
+            *(MemcardWords<1500>*)(dst+4) = *(MemcardWords<1500>*)(src+4);
+            offset += 0x1790;
+            break;
+        }
+        case SectionTool: {
+            u8* dst = header->setSectionOffset(SectionTool, offset);
+            u8* src = (u8*)savedataGetStatus(0, 14);
+            *(MemcardWords<216>*)dst = *(MemcardWords<216>*)src;
+            offset += 0x380;
+            dst[0x360] = src[0x360];
+            break;
+        }
+        case SectionDarkPokemon: {
+            u8* dst = header->setSectionOffset(SectionDarkPokemon, offset);
+            *(MemcardWords<2304>*)dst = *(MemcardWords<2304>*)savedataGetStatus(0, 15);
+            offset += 0x2410;
+            break;
+        }
+        case SectionFlags: {
+            u8* dst = header->setSectionOffset(SectionFlags, offset);
+            header->flagLevel0Size = (u32)savedataGetStatus(0, 7) * 4;
+            header->flagLevel1Size = (u32)savedataGetStatus(0, 8) * 4;
+            header->flagLevel2Size = (u32)savedataGetStatus(0, 9) * 4;
+            header->battleDiskFlagsSize = (u32)savedataGetStatus(0, 25) * 4;
+            header->bingoFlagsSize = (u32)savedataGetStatus(0, 28) * 4;
+            u8* src = (u8*)savedataGetStatus(0, 23);
+            *(MemcardWords<8>*)dst = *(MemcardWords<8>*)src;
+            *(MemcardWords<32>*)(dst + 0x20) = *(MemcardWords<32>*)(src + 0x20);
+            *(MemcardWords<384>*)(dst + 0xA0) = *(MemcardWords<384>*)(src + 0xA0);
+            offset += 0x6D0;
+            *(MemcardWords<5>*)(dst + 0x6A0) = *(MemcardWords<5>*)(src + 0x6A0);
+            break;
+        }
+        case SectionExRibbon: {
+            u8* dst = header->setSectionOffset(SectionExRibbon, offset);
+            __copy(dst, savedataGetStatus(0, 16), 11);
+            offset += 0x20;
+            break;
+        }
+        case SectionFloor: {
+            if (_memcardStatusPtr->state != 8 && _memcardStatusPtr->state != 13 &&
+                _memcardStatusPtr->state != 7 && _memcard_anySaveOFF_Flag == 0) {
+                floorMakeSaveData(&floorData, &floorSize);
+            }
+            void* dst = header->setSectionOffset(SectionFloor, offset);
+            void* src = savedataGetStatus(0, 22);
+            if (_memcardStatusPtr->state != 8 && _memcardStatusPtr->state != 13 &&
+                _memcardStatusPtr->state != 7 && _memcard_anySaveOFF_Flag == 0) {
+                memcpy(src, floorData, floorSize);
+                GSmemFree(floorData);
+            }
+            if (_memcard_anySaveOFF_Flag == 0) {
+                memcpy(dst, src, 0xC800);
+            } else {
+                memset(dst, 0, 0xC800);
+            }
+            offset += 0xC810;
+            break;
+        }
+        case SectionYobi1:
+            header->setSectionOffset(SectionYobi1, offset);
+            offset += 0x410;
+            break;
+        case SectionYobi2:
+            header->setSectionOffset(SectionYobi2, offset);
+            offset += 0x810;
+            break;
+        case SectionYobi3:
+            header->setSectionOffset(SectionYobi3, offset);
+            offset += 0x1010;
+            break;
+        case SectionYobi4:
+            header->setSectionOffset(SectionYobi4, offset);
+            offset += 0x2010;
+            break;
+        case SectionRelive: {
+            MemcardSavePartyGroup* dst = (MemcardSavePartyGroup*)header->setSectionOffset(SectionRelive, offset);
+            MemcardSavePartyGroup* end = (MemcardSavePartyGroup*)((u8*)dst + 0x2298);
+            MemcardSavePartyGroup* src = (MemcardSavePartyGroup*)savedataGetStatus(0, 21);
+            do {
+                *dst = *src;
+                ++dst;
+                ++src;
+            } while (dst < end);
+            offset += 0x22B0;
+            break;
+        }
+        }
+        for (; selected < count; ++selected) {
+            order[selected] = order[selected + 1];
+        }
         --count;
     }
 }
