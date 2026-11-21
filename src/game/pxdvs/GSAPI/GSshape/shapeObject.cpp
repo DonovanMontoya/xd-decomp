@@ -42,6 +42,13 @@ void GsShapeObject::SetVertexColorSpecify(const tagGScol4ub& value,bool) {
         }
     }
 }
+static inline void writeScaledVertexColor(tagGScol4ub* out, u8 red, u8 green, u8 blue, u8 opacity, f32 alpha) {
+    out->r = red * ((opacity / 255.0f) * alpha);
+    out->g = green * ((opacity / 255.0f) * alpha);
+    out->b = blue * ((opacity / 255.0f) * alpha);
+    out->a = opacity;
+}
+
 void GsShapeObject::SetVertexColorAlpha(int mode,int shape,f32 alpha,bool) {
     void* array=vertexArrays[1];
     if(!array) return;
@@ -85,15 +92,7 @@ void GsShapeObject::SetVertexColorAlpha(int mode,int shape,f32 alpha,bool) {
     }
     for(row=0;row<rows;row++) {
         for(column=0;column<columns;column++) {
-            u8 value=colors->a;
-            f32 factor=(value/255.0f)*alpha;
-            u8 red = colors->r;
-            u8 green = colors->g;
-            u8 blue = colors->b;
-            out->r = red * factor;
-            out->g = green * factor;
-            out->b = blue * factor;
-            out->a = value;
+            writeScaledVertexColor(out, colors->r, colors->g, colors->b, colors->a, alpha);
             colors++; out++;
         }
     }
