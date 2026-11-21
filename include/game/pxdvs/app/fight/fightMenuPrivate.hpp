@@ -108,8 +108,6 @@ s32 menuFightOpenTop(FIGHT_TRAINER*, void*, s32*, u32);
 void menuFightOpenTotalTimer();
 s32 menuFightOpenWaza(FIGHT_TRAINER*, void*, s32, u32);
 void menuFightSetSeqOut__Fv();
-void menuFightStatusSetActive(u32, u32);
-void menuFightStatusStartAnimHP(s32, s32);
 u8 menuIsCheck(u32);
 void menuOffScreenFadeSync(u32);
 s32 menuOpenCustom(u32, s32, u32, u32, u32, u32, ...);

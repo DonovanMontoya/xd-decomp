@@ -1,3 +1,4 @@
+#include <game/menuFightStatus.hpp>
 #include <game/menuFightStatusPrivate.hpp>
 #include <game/menuPokemonStatus.hpp>
 #include <libc/string.h>
@@ -6,15 +7,7 @@ struct StatusTween {s16 hp,frames,timer;u16 levelUp;u32 exp;s16 expFrames,expTim
 static f32 menuStatusTime,menuStatusOldTime;
 extern "C" {tagWINDOW_WORK *windowSearchID(s32);StatusTween *windowGetFreeWork(tagWINDOW_WORK*);MENU_POKEMON_STATUS *windowGetAllocPtr(tagWINDOW_WORK*);MENU_POKEMON_STATUS *windowAllocMemory(tagWINDOW_WORK*,s32);void GSthreadSwitch();void GSsndPlayNow(u32);void GSsndStopNow(u32);f32 timeGetLastFrameSec();u8 fightKind_CheckFightKind(s32);s32 menuFightGetStatus();void menuFightSetStatus(s32);void menuFightSetSeq();void *menuSeqBiosGetPtr(s32);}
 static void menuUpdateStatusTime();
-extern "C" {
-s32 menuFightStatusWaitAnimeEXP(s32 id,u8 wait);
-void menuFightStatusStartAnimEXP(s32 id,u32 exp);
-s32 menuFightStatusWaitAnimeHP(s32 id,u8 wait);
-void menuFightStatusStartAnimHP(s32 id,s16 hp);
-void menuFightStatusSetActive();
-void menuFightStatusSetHP(s32 id,s16 hp);
-s32 menuFightStatusCtrl(tagWINDOW_WORK *w);
-}
+extern "C" s32 menuFightStatusCtrl(tagWINDOW_WORK *w);
 extern "C" void winSpriteSetDisp(tagSPRITE_WORK*,s32);
 extern "C" void menuFightDrawCheckDark(tagWINDOW_WORK *w,tagSPRITE_WORK *sprite);
 
@@ -70,7 +63,7 @@ s32 menuFightStatusWaitAnimeHP(s32 id,u8 wait){for(;;){tagWINDOW_WORK *w=windowS
 
 void menuFightStatusStartAnimHP(s32 id,s16 hp){tagWINDOW_WORK *w=windowSearchID(id);if(w){MENU_POKEMON_STATUS *status=windowGetAllocPtr(w);StatusTween *t=windowGetFreeWork(w);s32 diff=status->hp-hp;if(diff<0)diff=-diff;t->frames=(s16)((diff*100)/status->maxHp);if(t->frames<=0)t->frames=1;t->hp=status->hp;status->hp=hp;t->timer=0;}}
 
-void menuFightStatusSetActive(){}
+void menuFightStatusSetActive(u32 menuId, u32 active) {}
 
 void menuFightStatusSetHP(s32 id,s16 hp){tagWINDOW_WORK *w=windowSearchID(id);if(w)windowGetAllocPtr(w)->hp=hp;}
 

@@ -196,7 +196,6 @@ u32 heroGetStatus(void*, u16, u16);
 u32 itemDB_GetName(u16);
 u8 itemDataCheckValid(u16);
 u8 joutaiDataBiosGetMaxCount(u16);
-void menuFightStatusSetHP(s32, s32);
 u8 pokemonCheckFightOut(void*);
 u16 pokemonDB_GetBasisPhyAtk(u16);
 u32 pokemonDB_GetBasisPhyDef(u32);

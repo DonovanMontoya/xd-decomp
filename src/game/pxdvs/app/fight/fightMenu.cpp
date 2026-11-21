@@ -1,3 +1,4 @@
+#include <game/menuFightStatus.hpp>
 #include "game/pxdvs/app/fight/fightMenuPrivate.hpp"
 
 
@@ -691,9 +692,9 @@ void fightMenuFightOutPokemonRenewStatusMenu(FightOutPokemon* poke, u16 idx, boo
     }
 }
 
-void fightMenuFightStatusStartAnimHP(s32 a, s32 b) {
+void fightMenuFightStatusStartAnimHP(s32 menuId, s16 hp) {
     if (dbgMenuFightGetFightPokeStMenuOpenFlag() == 1) {
-        menuFightStatusStartAnimHP(a, b);
+        menuFightStatusStartAnimHP(menuId, hp);
     }
 }
 

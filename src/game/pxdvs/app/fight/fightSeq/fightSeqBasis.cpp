@@ -1,3 +1,4 @@
+#include <game/menuFightStatus.hpp>
 #include <game/pxdvs/app/fight/fightSeq/fightSeqBasis.hpp>
 #undef NULL
 #define NULL 0
@@ -94,7 +95,6 @@ void fightMenuFightOutPokemonCloseStatusMenu(FightOutPokemon*, u16, u32);
 void fightMenuFightOutPokemonCloseStatusMenuAnotherMine(s32, FightOutPokemon*, u16, u32, u32);
 void fightMenuFightOutPokemonOpenStatusMenu(FightOutPokemon*, u16, u32);
 void fightMenuFightOutPokemonRenewStatusMenu(FightOutPokemon*, u8, u32);
-s32 fightMenuFightStatusStartAnimHP(s32, s16);
 s32 fightMenuGetFightOutPokemonPtrToStatusMenuId(FightOutPokemon *,u8,s32);
 u8 fightMenuOpenMsg(u32);
 u8 fightMenuWazaKoukaMsg(u32,FightOutPokemon *,u16);
@@ -323,9 +323,6 @@ u8 menuCBRule_EnableSkillSwap();
 u8 menuCBRule_EnableSkill_Michidure();
 u8 menuCBRule_EnableSkill_SonicBoom();
 u8 menuCBRule_ProhibitionSuicide();
-s32 menuFightStatusStartAnimEXP(s32, s32);
-s32 menuFightStatusWaitAnimeEXP(s32, s32);
-s32 menuFightStatusWaitAnimeHP(s32, s32);
 s32 menuIsCheck(s32);
 u8 pokemonCheckInfectPokerus(Pokemon *, s32);
 u16 pokemonDB_GetGiveExp(u16);
