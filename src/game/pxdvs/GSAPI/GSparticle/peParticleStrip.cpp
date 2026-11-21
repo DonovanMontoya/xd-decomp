@@ -4,7 +4,7 @@ static inline f32 emitterFloat(peEmitterNode *owner,u32 offset) {return *(f32*)(
 static inline u32 &layerWord(u32 offset) {return *(u32*)((u8*)g_current_layer+offset);}
 static inline u8 byte(f32 value) {if(value<0)return 0;if(value>255)return 255;return (u8)value;}
 static inline s16 shortValue(f32 value) {if(value<-32768)return -32768;if(value>32767)return 32767;return (s16)value;}
-static inline f32 spline(ShapeSpline *s,f32 t) {if(!s||!(s->flags&3))return 1;f32 d=s->time-t;if(d<0)d=-d;return d<=0.00001f?s->value:peSplineGetValue(s,t);}
+static inline f32 spline(PeSpline *s,f32 t) {if(!s||!(s->flags&3))return 1;f32 d=s->time-t;if(d<0)d=-d;return d<=0.00001f?s->value:peSplineGetValue(s,t);}
 #pragma opt_unroll_loops off
 void peParticleStripContainer::RearrangeIndices() {
  if(active) {
@@ -151,12 +151,12 @@ peParticleStripContainer::peParticleStripContainer(peEmitterNode *emitter,_pePar
 void peParticleStripNode::UpdateRenderData(peEmitterNode *emitter,_peParticleStrip *d,char *data,f32 progress) {
  u32 flags=d->flags;u32 extended=(flags>>18)&1;Mtx matrix;Mtx segmentMatrix;NodeTransform *parent=transform;Vec world,segment;
  Vec offset,half;
- u8 color[4];u8 red,green,blue;
+ GSgfxColAu8 color;u8 red,green,blue;
  f32 wy=position.y*parent->scale.y;f32 wz=position.z*parent->scale.z;f32 wx=position.x*parent->scale.x;world.x=wx;world.y=wy;world.z=wz;PSMTXQuat(matrix,&parent->rotation);PSMTXMultVecSR(matrix,&world,&world);PSVECAdd(&world,&transform->position,&world);
  char *out;if(extended)out=data+index*0x30;else out=data+index*0x2c;
  parent=transform;f32 sy=this->segment.y*parent->scale.y;f32 sz=this->segment.z*parent->scale.z;f32 sx=this->segment.x*parent->scale.x;segment.x=sx;segment.y=sy;segment.z=sz;PSMTXQuat(segmentMatrix,&parent->rotation);PSMTXMultVecSR(segmentMatrix,&segment,&segment);
  if(flags&0x4000){PSVECScale(&segment,&half,0.5f);offset=half;PSVECSubtract(&world,&offset,&world);}
  *(Vec*)out=world;if(g_currentBound)GSboundAddPoint(g_currentBound,world.x,world.y,world.z);PSVECAdd(&world,&segment,&world);*(Vec*)(out+0xc)=world;if(g_currentBound)GSboundAddPoint(g_currentBound,world.x,world.y,world.z);
- peColorSplineGetValue(color,d->colorSpline,progress);red=color[0];color[0]=__OSf32tou8(__OSu8tof32(&red)*emitter->color[0]);green=color[1];color[1]=__OSf32tou8(__OSu8tof32(&green)*emitter->color[1]);blue=color[2];color[2]=__OSf32tou8(__OSu8tof32(&blue)*emitter->color[2]);color[3]=__OSf32tou8((255.0f*emitter->color[3])*spline(d->alphaSpline,progress));*(u32*)(out+0x18)=*(u32*)color;
- if(extended){peColorSplineGetValue(color,d->secondColorSpline,progress);*(u32*)(out+0x2c)=*(u32*)color;}
+ peColorSplineGetValue(&color,d->colorSpline,progress);red=color.r;color.r=__OSf32tou8(__OSu8tof32(&red)*emitter->color[0]);green=color.g;color.g=__OSf32tou8(__OSu8tof32(&green)*emitter->color[1]);blue=color.b;color.b=__OSf32tou8(__OSu8tof32(&blue)*emitter->color[2]);color.a=__OSf32tou8((255.0f*emitter->color[3])*spline(d->alphaSpline,progress));*(u32*)(out+0x18)=*(u32*)&color;
+ if(extended){peColorSplineGetValue(&color,d->secondColorSpline,progress);*(u32*)(out+0x2c)=*(u32*)&color;}
 }

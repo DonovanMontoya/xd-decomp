@@ -1,7 +1,7 @@
 #include <game/pxdvs/GSAPI/GSparticle/peDistortionPrivate.hpp>
 #include <dolphin/os/OSFastCast.h>
 #include <dolphin/os.h>
-static inline f32 spline(ShapeSpline *s,f32 t) {
+static inline f32 spline(PeSpline *s,f32 t) {
  if(!s || !(s->flags&3))return 1.0f;
  f32 d=s->time-t;if(d<0)d=-d;
  return d<=0.00001f?s->value:peSplineGetValue(s,t);
@@ -114,7 +114,7 @@ static inline s32 distortionFloatClass(f32 x) {
     }
     return result;
 }
-static inline f32 distortionSpline(ShapeSpline* spline,f32 progress) {
+static inline f32 distortionSpline(PeSpline* spline,f32 progress) {
     if(!spline || !(spline->flags&3))return 1.0f;
     f32 difference=spline->time-progress;
     if(difference<0.0f)difference=-difference;

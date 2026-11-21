@@ -33,7 +33,7 @@ void peShapeNode::Start(peEmitterNode* emitter,_peShape* shape,_EmitParams* para
 }
 
 #include <dolphin/os/OSFastCast.h>
-static inline f32 shapeSpline(ShapeSpline* spline,f32 progress) {
+static inline f32 shapeSpline(PeSpline* spline,f32 progress) {
     if(!spline || !(spline->flags&3))return 1.0f;
     f32 difference=spline->time-progress;if(difference<0.0f)difference=-difference;
     if(difference<=0.00001f)return spline->value;

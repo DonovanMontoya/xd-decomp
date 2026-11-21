@@ -1,6 +1,7 @@
 #ifndef PE_CONTAINER_PRIVATE_HPP
 #define PE_CONTAINER_PRIVATE_HPP
 #include <global.h>
+#include <game/pxdvs/GSAPI/GSparticle/particleDebugStats.hpp>
 #include <game/pxdvs/GSAPI/GSparticle/peNode.hpp>
 #include <game/pxdvs/GSAPI/GSparticle/peEmitterData.hpp>
 #include <libc/string.h>
@@ -8,13 +9,18 @@ struct GSgfxVF;
 enum GSgfxPrimType { PARTICLE_PRIMITIVE_DEFAULT };
 enum GSgfxLayerID { PARTICLE_LAYER_DEFAULT };
 enum GSgfxTunitKReg {PARTICLE_KREG_DEFAULT};
-struct GSgfxLayer {u16 tokenMark();void SetLayerVisibility(bool);void tunitKRegSel(u8,GSgfxTunitKReg);};
+struct GSgfxLayer {
+    u8 reserved00[0x28];
+    s32 id;
+    u16 tokenMark();
+    void SetLayerVisibility(bool);
+    void tunitKRegSel(u8, GSgfxTunitKReg);
+};
 struct GSgfxDL {u16 flags,stride;u8* data;u32 size,reserved;
     char* VertexData(u16 vertex) { if (!(flags & 1)) return 0; return (char*)data + vertex * stride + 3; }
     GSgfxVF* VertexFormat() { if (!(flags & 1)) return 0; return (GSgfxVF*)reserved; }
     void Invalidate() { flags |= 2; }
 };
-struct ParticleDebugStats {u32 bank,node,displayList,renderData,reserved10,total,reserved18[3];};
 struct peContainer {
     peEmitterNode* owner;peContainer* next;u8* memory;peNode* freeNodes;peNode* nodes;u16 count,capacity;u8 dirty,active;u8 reserved1a[2];
     peContainer(peEmitterNode*,u32,u16);virtual ~peContainer();virtual void Start();virtual void PreUpdate();virtual u16 Emit(u16)=0;virtual void Update(f32)=0;virtual void Render()=0;virtual void Stop()=0;
@@ -26,7 +32,7 @@ struct peRenderContainer:peContainer {
     void ResetSwap();void InitSwap();void ResolveMultipleSwap();void MarkForSwap();
 };
 extern "C" {
-extern GSgfxLayer* g_current_layer;extern u16 g_bank_token;extern ParticleDebugStats g_particle_debug_stats;
+extern GSgfxLayer* g_current_layer;extern u16 g_bank_token;
 GSgfxLayer* GSgfxLayerFindByID(GSgfxLayerID);void GSgfxTokenWaitForClear(u16);
 void* GSmemAllocClr(u32);void* GSmemAllocAlignClr(u32,u32);void GSmemFree(void*);u32 GSmemGetSize(void*);
 void GSgfxDLCreate(GSgfxDL*,GSgfxPrimType,GSgfxVF*,u16);void GSgfxDLFree(GSgfxDL*);void DCFlushRange(void*,u32);

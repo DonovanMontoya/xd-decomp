@@ -2,7 +2,7 @@
 #include <dolphin/os/OSFastCast.h>
 
 static inline f32 byteToFloat(u8 value) { return __OSu8tof32(&value); }
-static inline void lerpColor(PeColor *destination, PeColor *start, PeColor *end, f32 weight) {
+static inline void lerpColor(GSgfxColAu8 *destination, GSgfxColAu8 *start, GSgfxColAu8 *end, f32 weight) {
     f32 fsr = byteToFloat(start->r);
     f32 fsg = byteToFloat(start->g);
     f32 fsb = byteToFloat(start->b);
@@ -13,16 +13,16 @@ static inline void lerpColor(PeColor *destination, PeColor *start, PeColor *end,
     destination->g = __OSf32tou8(weight * (feg - fsg) + fsg);
     destination->b = __OSf32tou8(weight * (feb - fsb) + fsb);
 }
-static inline void copyColor(PeColor *destination, const PeColor *source) {
+static inline void copyColor(GSgfxColAu8 *destination, const GSgfxColAu8 *source) {
     destination->r = source->r;
     destination->g = source->g;
     destination->b = source->b;
 }
-extern "C" void peColorSplineGetValue(PeColor *result, PeColorSpline *spline, f32 time) {
+extern "C" void peColorSplineGetValue(GSgfxColAu8 *result, PeColorSpline *spline, f32 time) {
     u8 count = spline->count;
     u8 interval;
     if (count < 2) return;
-    PeColor *points = spline->points;
+    GSgfxColAu8 *points = spline->points;
     if (time <= 0.0f) { copyColor(result, points); return; }
     if (time >= 1.0f) { points += (s32)count - 1; copyColor(result, points); return; }
     f32 difference = spline->time - time;

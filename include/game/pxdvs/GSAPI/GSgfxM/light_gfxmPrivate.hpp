@@ -3,7 +3,7 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <libc/stddef.h>
-struct GSgfxColAu8 {u8 r,g,b,a;};
+#include <game/pxdvs/GSAPI/GSgfxM/GSgfxColAu8.hpp>
 struct GSvec {f32 x,y,z;};
 class GSgfxLight {
 public:

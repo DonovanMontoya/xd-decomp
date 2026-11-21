@@ -132,7 +132,7 @@ extern "C" double fmod(double, double);
 extern "C" void beginSurface__10GSgfxLayerFUs(GSgfxLayer*, u16);
 extern "C" void endSurface__10GSgfxLayerFv(GSgfxLayer*);
 struct ParticleColor {
-    union { struct { u8 r,g,b,a; } channels; u32 word; };
+    union { GSgfxColAu8 channels; u32 word; };
     ParticleColor() {}
 };
 static inline void particleSetKColor(u8 index, ParticleColor color) {
@@ -174,7 +174,6 @@ void GSboundAddPoint(void*,f32,f32,f32);
 }
 
 struct ParticleData {Vec vertices[4];u32 color,extraColor;};
-extern "C" void peColorSplineGetValue(ParticleColor*,void*,f32);
 static inline s32 particleFloatClass(f32 x) {
     union {f32 value;s32 bits;} v;v.value=x;
     s32 result;
@@ -185,7 +184,7 @@ static inline s32 particleFloatClass(f32 x) {
     }
     return result;
 }
-static inline f32 particleSpline(ParticleSpline* spline,f32 progress) {
+static inline f32 particleSpline(PeSpline* spline,f32 progress) {
     if(!spline || !(spline->flags&3))return 1.0f;
     f32 difference=spline->time-progress;
     if(difference<0.0f)difference=-difference;
@@ -315,7 +314,7 @@ void peParticleContainer::Update(f32 time) {
             else {
                 f32 progress=1.0f-(node->time/node->life);
                 if(definition->flags&0x10000) {
-                    ParticleSpline* spline=definition->angleSpline;
+                    PeSpline* spline=definition->angleSpline;
                     f32 value;
                     if(!spline || !(spline->flags&3))value=1.0f;
                     else {
@@ -358,13 +357,13 @@ peParticleContainer::peParticleContainer(peEmitterNode* emitter,_peParticle* def
     f32 *coordinates=uv;
     _peParticle* texture=particle;
     s16 sv0,sv1,sv2,sv3;
-    sv0=texture->u0;
+    sv0=texture->converted.u0;
     f32 fu0=__OSs16tof32(&sv0)/1024.0f;
-    sv1=texture->v0;
+    sv1=texture->converted.v0;
     f32 fv0=__OSs16tof32(&sv1)/1024.0f;
-    sv2=texture->u1;
+    sv2=texture->converted.u1;
     f32 fu1=__OSs16tof32(&sv2)/1024.0f;
-    sv3=texture->v1;
+    sv3=texture->converted.v1;
     f32 fv1=__OSs16tof32(&sv3)/1024.0f;
     coordinates[0]=fu1;coordinates[1]=fv1;coordinates[2]=fu0;coordinates[3]=fv1;coordinates[4]=fu0;coordinates[5]=fv0;coordinates[6]=fu1;coordinates[7]=fv0;
     DCFlushRange(coordinates,0x20);
@@ -517,10 +516,10 @@ center.x=cx;center.y=cy;center.z=cz;
             if(flags&0x400)up=yAxisVector;else up=g_CameraUpDir;
             right=g_CameraSideDir;
         }
-        baseAngle=definition->yaw;
+        baseAngle=definition->converted.yaw;
     } else {
-        C_QUATRotAxisRad(&orientation,&yAxisVector,definition->yaw);
-        C_QUATRotAxisRad(&basis,&zAxisVector,definition->roll);
+        C_QUATRotAxisRad(&orientation,&yAxisVector,definition->converted.yaw);
+        C_QUATRotAxisRad(&basis,&zAxisVector,definition->converted.roll);
         PSQUATMultiply(&basis,&orientation,&basis);
         PSMTXQuat(m228,&basis);PSMTXMultVecSR(m228,&xAxisVector,&rotatedRight);right=rotatedRight;
         PSMTXQuat(m1f8,&basis);PSMTXMultVecSR(m1f8,&yAxisVector,&rotatedUp);up=rotatedUp;
@@ -621,7 +620,7 @@ center.x=cx;center.y=cy;center.z=cz;
     PSVECAdd(&work,&center,&work);
     output->vertices[3].x=work.x;output->vertices[3].y=work.y;output->vertices[3].z=work.z;
     if(g_currentBound)GSboundAddPoint(g_currentBound,work.x,work.y,work.z);
-    peColorSplineGetValue(&color,definition->colorSpline,progress);
+    peColorSplineGetValue(&color.channels,definition->colorSpline,progress);
     u8 red=color.channels.r;
     redValue=emitter->color[0]*__OSu8tof32(&red);
     OSf32tou8(&redValue,&color.channels.r);
@@ -634,5 +633,5 @@ center.x=cx;center.y=cy;center.z=cz;
     alphaValue=(255.0f*emitter->color[3])*particleSpline(definition->alphaSpline,progress);
     color.channels.a=__OSf32tou8(alphaValue);
     output->color=*(u32*)&color;
-    if(extended) {peColorSplineGetValue(&color,definition->extraColorSpline,progress);output->extraColor=*(u32*)&color;}
+    if(extended) {peColorSplineGetValue(&color.channels,definition->extraColorSpline,progress);output->extraColor=*(u32*)&color;}
 }

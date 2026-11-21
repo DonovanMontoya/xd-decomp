@@ -2,10 +2,10 @@
 #include <dolphin/gx.h>
 static u32 _primitive_instance_memory;
 static inline void updatePrimitiveMemory() {
- g_particle_debug_stats.reserved10-=_primitive_instance_memory;
+ g_particle_debug_stats.primitiveMemory-=_primitive_instance_memory;
  g_particle_debug_stats.total-=_primitive_instance_memory;
  _primitive_instance_memory=shapeGetInstancedMemorySizeAll();
- g_particle_debug_stats.reserved10+=_primitive_instance_memory;
+ g_particle_debug_stats.primitiveMemory+=_primitive_instance_memory;
  g_particle_debug_stats.total+=_primitive_instance_memory;
 }
 static inline void freeModelInstance(peModelNode *node,_peModel *model) {
@@ -130,7 +130,7 @@ u16 peModelContainer::Emit(u16 requested) {
 }
 peModelContainer::~peModelContainer(){g_particle_debug_stats.node-=0x24;g_particle_debug_stats.total-=0x24;}
 peModelContainer::peModelContainer(peEmitterNode *emitter,_peModel *data,u16 maximum):peContainer(emitter,0x98,maximum) {model=data;g_particle_debug_stats.node+=0x24;g_particle_debug_stats.total+=0x24;}
-static inline f32 modelSpline(ShapeSpline *spline,f32 progress) {
+static inline f32 modelSpline(PeSpline *spline,f32 progress) {
  if(!spline||!(spline->flags&3))return 1.0f;
  f32 difference=spline->time-progress;if(difference<0.0f)difference=-difference;
  if(difference<=0.00001f)return spline->value;

@@ -2,7 +2,6 @@
 #define PE_PARTICLE_STRIP_PRIVATE_HPP
 #include <game/pxdvs/GSAPI/GSparticle/peShapePrivate.hpp>
 struct StripAnimation {u32 count;void *textures[1];};
-struct _peParticleStrip {u32 flags;f32 frameRate;void *colorSpline,*secondColorSpline;ShapeSpline *alphaSpline;f32 v0,v1;void *texture;Vec direction;f32 speedMin,speedRange;};
 struct peParticleStripNode:peNode {u16 index,sortIndex;Vec segment;void UpdateRenderData(peEmitterNode*,_peParticleStrip*,char*,f32);};
 struct peParticleStripContainer:peRenderContainer {_peParticleStrip *definition;f32 remaining;u8 frame,padding[3];
  peParticleStripContainer(peEmitterNode*,_peParticleStrip*,u16);virtual ~peParticleStripContainer();void RearrangeIndices();void Start();void Stop();void Render();void Update(f32);u16 Emit(u16);

@@ -1,19 +1,11 @@
 #include <game/pxdvs/GSAPI/GSparticle/peEmitterPrivate.hpp>
 #include <dolphin/os/OSFastCast.h>
-#include <game/pxdvs/GSAPI/GSparticle/peSplinePrivate.hpp>
+#include <game/pxdvs/GSAPI/GSparticle/peDistortionPrivate.hpp>
+#include <game/pxdvs/GSAPI/GSparticle/peModelPrivate.hpp>
+#include <game/pxdvs/GSAPI/GSparticle/peParticlePrivate.hpp>
+#include <game/pxdvs/GSAPI/GSparticle/peParticleStripPrivate.hpp>
+#include <game/pxdvs/GSAPI/GSparticle/peShapePrivate.hpp>
 
-extern "C" u32 g_particle_debug_stats[6];
-
-struct _peParticle { u8 reserved00[0x54]; s32 texture; };
-struct _peParticleStrip { u8 reserved00[0x1c]; s32 texture; };
-struct _peDistortion { u8 reserved00[0x60]; s32 texture; };
-struct _peModel { u8 reserved00[0x4c]; s32 resource; };
-struct _peShape { u8 reserved00[0x74]; s32 resource; };
-struct peParticleContainer : peContainer { u8 reserved20[0x7c - 0x20]; peParticleContainer(peEmitterNode*, _peParticle*, u16); };
-struct peParticleStripContainer : peContainer { u8 reserved20[0x60 - 0x20]; peParticleStripContainer(peEmitterNode*, _peParticleStrip*, u16); };
-struct peDistortionContainer : peContainer { u8 reserved20[0x78 - 0x20]; peDistortionContainer(peEmitterNode*, _peDistortion*, u16); };
-struct peModelContainer : peContainer { u8 reserved20[0x24 - 0x20]; peModelContainer(peEmitterNode*, _peModel*, u16); };
-struct peShapeContainer : peContainer { u8 reserved20[0x24 - 0x20]; peShapeContainer(peEmitterNode*, _peShape*, u16); };
 inline peEmitterContainer::peEmitterContainer(peEmitterNode* owner, _peEmitter* definition, u16 maximum) : peContainer(owner, sizeof(peEmitterNode), maximum) {
     emitter = definition;
     peNode* node = freeNodes;
@@ -22,8 +14,8 @@ inline peEmitterContainer::peEmitterContainer(peEmitterNode* owner, _peEmitter* 
         static_cast<peEmitterNode*>(node)->Init(definition);
         node = next;
     }
-    g_particle_debug_stats[1] += 0x24;
-    g_particle_debug_stats[5] += 0x24;
+    g_particle_debug_stats.node += sizeof(peEmitterContainer);
+    g_particle_debug_stats.total += sizeof(peEmitterContainer);
 }
 
 extern "C" {
@@ -463,7 +455,7 @@ bool peEmitterNode::Update(peEmitterNode* parent,_peEmitter* definition,f32 delt
     Mtx matrix;
     Vec angles,velocity;
     Quaternion rotation;
-    PeColor sample;
+    GSgfxColAu8 sample;
     u32 definitionFlags=definition->flags;
     if(!peNode::Update(parent,delta)) {
         if(!parent && (definitionFlags&1)) {
@@ -571,25 +563,34 @@ void peEmitterNode::Init(_peEmitter* definition) {
             container = 0;
             switch (resource->kind) {
             case 0: {
-                _peEmitter* child = (_peEmitter*)data;
+                _peEmitter* child = static_cast<_peEmitter*>(data);
                 if (child->resources) container = new peEmitterContainer(this, child, maximum);
-
                 break;
             }
             case 1:
-                if (((_peParticle*)data)->texture) container = new peParticleContainer(this, (_peParticle*)data, maximum);
+                if (static_cast<_peParticle*>(data)->textureId) {
+                    container = new peParticleContainer(this, static_cast<_peParticle*>(data), maximum);
+                }
                 break;
             case 6:
-                if (((_peParticleStrip*)data)->texture) container = new peParticleStripContainer(this, (_peParticleStrip*)data, maximum);
+                if (static_cast<_peParticleStrip*>(data)->textureId) {
+                    container = new peParticleStripContainer(this, static_cast<_peParticleStrip*>(data), maximum);
+                }
                 break;
             case 3:
-                if (((_peDistortion*)data)->texture) container = new peDistortionContainer(this, (_peDistortion*)data, maximum);
+                if (static_cast<_peDistortion*>(data)->textureId) {
+                    container = new peDistortionContainer(this, static_cast<_peDistortion*>(data), maximum);
+                }
                 break;
             case 2:
-                if (((_peModel*)data)->resource) container = new peModelContainer(this, (_peModel*)data, maximum);
+                if (static_cast<_peModel*>(data)->resource.id) {
+                    container = new peModelContainer(this, static_cast<_peModel*>(data), maximum);
+                }
                 break;
             case 4:
-                if (((_peShape*)data)->resource) container = new peShapeContainer(this, (_peShape*)data, maximum);
+                if (static_cast<_peShape*>(data)->textureId) {
+                    container = new peShapeContainer(this, static_cast<_peShape*>(data), maximum);
+                }
                 break;
             }
             if (container) {
@@ -623,8 +624,8 @@ peEmitterContainer::~peEmitterContainer() {
         static_cast<peEmitterNode*>(node)->Release();
         node = next;
     }
-    g_particle_debug_stats[1] -= 0x24;
-    g_particle_debug_stats[5] -= 0x24;
+    g_particle_debug_stats.node -= sizeof(peEmitterContainer);
+    g_particle_debug_stats.total -= sizeof(peEmitterContainer);
 }
 
 void peEmitterContainer::PreUpdate() {
@@ -687,7 +688,7 @@ bool peEmitterContainer::DoRender() {
     case 1: if (!(flags & 0x1000)) return false; break;
     default: return false;
     }
-    switch (g_current_layer->kind) {
+    switch (g_current_layer->id) {
     case 0: if (flags & 0x2000) return true; break;
     case 2:
         if (flags & 0x4000) return true;

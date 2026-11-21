@@ -2,8 +2,7 @@
 #define PE_SHAPE_PRIVATE_HPP
 #include <game/pxdvs/GSAPI/GSparticle/peContainerPrivate.hpp>
 #include <game/pxdvs/GSAPI/GSgfxM/light_gfxmPrivate.hpp>
-struct ShapeSpline {u8 flags;u8 reserved01[3];f32 value,time;};
-struct _peShape {u32 flags;Vec rotation,angularSpeed,scale,scaleRange;ShapeSpline* rotationSpline[3];ShapeSpline* scaleSpline[3];void* colorSpline;ShapeSpline* alphaSpline;f32 radius;u8 segments0,segments1;u16 reserved5a;Vec position;GSgfxColAu8 ambient;u8 reserved6c[8];void* texture;GSgfxLight* light0;GSgfxLight* light1;};
+#include <game/pxdvs/GSAPI/GSparticle/peResourceData.hpp>
 struct peShapeNode:peNode {NodeTransform world;Quaternion randomRotation,localRotation;Vec baseScale;f32 depth;u32 flips;Vec angularSpeed;GSgfxColAu8 color;bool Update(peEmitterNode*,_peShape*,f32);void Start(peEmitterNode*,_peShape*,_EmitParams*);void Render(_peShape*);};
 struct peShapeContainer:peContainer {
     _peShape* shape;
@@ -133,5 +132,5 @@ extern "C" {
 void pushMult__16GSgfxMatrixStackFP5GSmtx(void*,Mtx);void pop__16GSgfxMatrixStackFv(void*);
 void drawCube__10GSgfxLayerFv(GSgfxLayer*);void drawCylinder__10GSgfxLayerFUc(GSgfxLayer*,u8);void drawDodecaedron__10GSgfxLayerFv(GSgfxLayer*);void drawIcosahedron__10GSgfxLayerFv(GSgfxLayer*);void drawOctahedron__10GSgfxLayerFv(GSgfxLayer*);void drawTorus__10GSgfxLayerFfUcUc(GSgfxLayer*,f32,u8,u8);void drawSphere__10GSgfxLayerFUc(GSgfxLayer*,u8);void drawSphere__10GSgfxLayerFUcUc(GSgfxLayer*,u8,u8);
 }
-extern "C" {f32 peSplineGetValue(ShapeSpline*,f32);void peColorSplineGetValue(void*,void*,f32);extern Vec g_CameraPosition,g_CameraLookDir;double atan2(double,double);}
+extern "C" {extern Vec g_CameraPosition,g_CameraLookDir;double atan2(double,double);}
 #endif

@@ -1,11 +1,6 @@
 #ifndef PE_DISTORTION_PRIVATE_HPP
 #define PE_DISTORTION_PRIVATE_HPP
 #include <game/pxdvs/GSAPI/GSparticle/peShapePrivate.hpp>
-struct _peDistortion {
- u32 flags;f32 width,height,widthRange,heightRange;ShapeSpline *widthSpline,*heightSpline;
- f32 offsetX,offsetY,angle,angularMin,angularRange;ShapeSpline *angleSpline,*alphaSpline;
- u8 reserved38[0x18];f32 u0,v0,u1,v1;void *texture;
-};
 struct peDistortionNode:peNode {u16 index,flags;f32 width,height,rotation,angle,angularSpeed;void UpdateRenderData(peEmitterNode*,_peDistortion*,char*,f32);};
 struct peDistortionContainer:peRenderContainer {
  _peDistortion *definition;f32 uv[8];

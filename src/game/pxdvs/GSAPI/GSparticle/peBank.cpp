@@ -1,5 +1,7 @@
 #include <game/pxdvs/GSAPI/GSparticle/peBankPrivate.hpp>
 #include <dolphin/os/OSFastCast.h>
+#include <game/pxdvs/GSAPI/GSparticle/peResourceData.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/light_gfxmPrivate.hpp>
 
 extern "C" {
 ParticleBankState* g_currentBank;
@@ -36,7 +38,7 @@ extern u16 g_bank_token;
 extern void* g_CameraMatrix;
 void push__16GSgfxMatrixStackFP5GSmtx(void*,void*);
 void pop__16GSgfxMatrixStackFv(void*);
-void GSboundDraw__FP7GSboundP10GSgfxLayer(void*,ParticleLayer*);
+void GSboundDraw__FP7GSboundP10GSgfxLayer(void*,GSgfxLayer*);
 }
 #pragma opt_dead_assignments off
 extern "C" void peBankRender(ParticleBankState* bank) {
@@ -44,7 +46,7 @@ extern "C" void peBankRender(ParticleBankState* bank) {
     if (!(bank->flags & 1)) return;
     if (!(bank->flags & 4)) return;
     if (!(bank->flags & 8)) return;
-    u32 kind=g_current_layer->kind;u32 mask=1<<kind;
+    u32 kind=g_current_layer->id;u32 mask=1<<kind;
     if (g_render_pass == 1) mask <<= 16;
     if (bank->rendered & mask) return;
     g_currentBank = bank;
@@ -55,7 +57,7 @@ extern "C" void peBankRender(ParticleBankState* bank) {
         g_bank_token = 0;
         bank->node.Render(bank->data->emitter);
         if (g_bank_token) bank->token = g_bank_token;
-        if ((bank->flags & 0x10) && (bank->flags & 0x20) && g_current_layer->kind == 4 && g_render_pass == 1)
+        if ((bank->flags & 0x10) && (bank->flags & 0x20) && g_current_layer->id == 4 && g_render_pass == 1)
             GSboundDraw__FP7GSboundP10GSgfxLayer(bank->bound,g_current_layer);
         pop__16GSgfxMatrixStackFv(*(void**)((u8*)g_current_layer + 0x19a0));
     }
@@ -84,11 +86,8 @@ extern "C" void peBankUpdate(ParticleBankState* bank, f32 delta) {
     }
 }
 
-struct _gpdResourceItem { u8 reserved00, flags; u16 reserved02; s32 kind; void* data; };
-struct BankModel { u32 flags; u8 reserved04[0x48]; void* model; };
-struct BankDistortion { u8 reserved00[0x78]; u8* first; u8* second; };
+struct _gpdResourceItem { u8 id, flags; u16 reserved02; s32 kind; void* data; };
 extern "C" {
-extern u32 g_particle_debug_stats[6];
 void HSD_JObjUnref(void*);
 void GStextureFree(void*);
 u32 shapeGetUsedMemorySize(u16);
@@ -103,7 +102,6 @@ static inline _particleData* _peBankData(_gpdHeader* header) {
 extern "C" {
 void GSboundCreate(void*, void*);
 u8 GSgfxVideoGetVsyncRate();
-void* memset(void*, int, u32);
 u32 GSmemGetSize(void*);
 extern ParticleBankState* g_particleBanks;
 }
@@ -157,8 +155,8 @@ extern "C" void peBankFree(ParticleBankState* bank) {
         GSboundFree(bank->bound);
         if (bank && g_maxEmitParams && bank == g_emitParamsBank) {
             _EmitParams* old = g_emitParams;
-            g_particle_debug_stats[5] -= g_particle_debug_stats[0];
-            g_particle_debug_stats[0] = 0;
+            g_particle_debug_stats.total -= g_particle_debug_stats.bank;
+            g_particle_debug_stats.bank = 0;
             delete[] old;
             g_emitParams = 0;
             g_emitParamsBank = 0;
@@ -177,8 +175,8 @@ extern "C" void peBankFree(ParticleBankState* bank) {
             u16 count = g_maxEmitParams;
             if (count) {
                 g_emitParams = new _EmitParams[count];
-                g_particle_debug_stats[0] += g_maxEmitParams * sizeof(_EmitParams);
-                g_particle_debug_stats[5] += g_maxEmitParams * sizeof(_EmitParams);
+                g_particle_debug_stats.bank += g_maxEmitParams * sizeof(_EmitParams);
+                g_particle_debug_stats.total += g_maxEmitParams * sizeof(_EmitParams);
             }
         }
         ParticleBankState* previous = 0;
@@ -192,8 +190,8 @@ extern "C" void peBankFree(ParticleBankState* bank) {
         else g_particleBanks = current->next;
         current->next = 0;
         u32 bytes = GSmemGetSize(bank);
-        g_particle_debug_stats[1] -= bytes;
-        g_particle_debug_stats[5] -= bytes;
+        g_particle_debug_stats.node -= bytes;
+        g_particle_debug_stats.total -= bytes;
         delete bank;
     }
 }
@@ -206,8 +204,8 @@ extern "C" ParticleBankState* peBankCreate(_gpdHeader* file) {
     ParticleBankState* bank = new ParticleBankState;
     if (!bank) return 0;
     u32 size = GSmemGetSize(bank);
-    g_particle_debug_stats[1] += size;
-    g_particle_debug_stats[5] += size;
+    g_particle_debug_stats.node += size;
+    g_particle_debug_stats.total += size;
     GSboundCreate(bank->bound, 0);
     _particleData* data = _peBankData(file);
     bank->file = file;
@@ -241,8 +239,8 @@ extern "C" ParticleBankState* peBankCreate(_gpdHeader* file) {
     if (bank && bank->maxParams > g_maxEmitParams) {
         _EmitParams* old = g_emitParams;
         if (old) {
-            g_particle_debug_stats[5] -= g_particle_debug_stats[0];
-            g_particle_debug_stats[0] = 0;
+            g_particle_debug_stats.total -= g_particle_debug_stats.bank;
+            g_particle_debug_stats.bank = 0;
             delete[] old;
         }
         u16 max = bank->maxParams;
@@ -250,8 +248,8 @@ extern "C" ParticleBankState* peBankCreate(_gpdHeader* file) {
         g_maxEmitParams = (max + 9) / 10 * 10;
         u16 count = g_maxEmitParams;
         g_emitParams = new _EmitParams[count];
-        g_particle_debug_stats[0] += g_maxEmitParams * sizeof(_EmitParams);
-        g_particle_debug_stats[5] += g_maxEmitParams * sizeof(_EmitParams);
+        g_particle_debug_stats.bank += g_maxEmitParams * sizeof(_EmitParams);
+        g_particle_debug_stats.total += g_maxEmitParams * sizeof(_EmitParams);
     }
     return bank;
 }
@@ -283,8 +281,8 @@ extern "C" void peBankFreeFile(_gpdHeader *fileData) {
             case 3:
                 shape = (u32)resource->data - 1;
                 size = shapeGetUsedMemorySize(shape);
-                g_particle_debug_stats[4] -= size;
-                g_particle_debug_stats[5] -= size;
+                g_particle_debug_stats.primitiveMemory -= size;
+                g_particle_debug_stats.total -= size;
                 shapeRelease(shape);
                 break;
             case 2:
@@ -344,24 +342,24 @@ static void _peFreeInternalBankData(_particleData* data) {
             break;
         }
         case 2: {
-            BankModel* model = (BankModel*)object;
-            if (!model || (model->flags & 0x40) || !model->model) return;
-            HSD_JObjUnref(model->model);
+            _peModel* model = static_cast<_peModel*>(object);
+            if (!model || (model->flags & 0x40) || !model->resource.jobj) return;
+            HSD_JObjUnref(model->resource.jobj);
             break;
         }
         case 4: {
-            BankDistortion* distortion = (BankDistortion*)object;
-            if (distortion->first) {
-                g_particle_debug_stats[1] -= 128;
-                g_particle_debug_stats[5] -= 128;
-                delete distortion->first;
-                distortion->first = 0;
+            _peShape* shape = static_cast<_peShape*>(object);
+            if (shape->light0) {
+                g_particle_debug_stats.node -= sizeof(GSgfxLight);
+                g_particle_debug_stats.total -= sizeof(GSgfxLight);
+                delete shape->light0;
+                shape->light0 = 0;
             }
-            if (distortion->second) {
-                g_particle_debug_stats[1] -= 128;
-                g_particle_debug_stats[5] -= 128;
-                delete distortion->second;
-                distortion->second = 0;
+            if (shape->light1) {
+                g_particle_debug_stats.node -= sizeof(GSgfxLight);
+                g_particle_debug_stats.total -= sizeof(GSgfxLight);
+                delete shape->light1;
+                shape->light1 = 0;
             }
             break;
         }
@@ -380,11 +378,7 @@ void HSD_JObjReqAnimAll(void*,f32);
 void HSD_JObjAnimAll(void*);
 void HSD_ForeachAnim(void*,s32,u32,void*,s32,...);
 void HSD_AObjSetFlags();void HSD_AObjClearFlags();void HSD_AObjSetRate();void _modelGetEndFrame();
-void* __nw__FUl(u32);
-void* __ct__10GSgfxLightFv(void*);
-void MakeDiff__10GSgfxLightFP11GSgfxColAu8P5GSvecb(void*,void*,Vec*,bool);
-void MakeSpec__10GSgfxLightFP11GSgfxColAu8P5GSvecfP5GSvec(void*,void*,Vec*,f32,Vec*);
-extern Vec zeroVector,zAxisVector;
+extern GSvec zeroVector, zAxisVector;
 }
 static inline u32 bankRelocate(u32 value,const char* base) {
     u8 offset=0;
@@ -396,10 +390,7 @@ template <class T>
 static inline void bankRelocatePointer(T*& pointer, const char* base) {
     pointer = (T*)bankRelocate((u32)pointer, base);
 }
-#define BANK_WORD(offset) definition[(offset)/4]
-#define BANK_FLOAT(offset) (*(f32*)((u8*)definition+(offset)))
 struct BankSceneModel {void* joint;void** animation;void** material;void** shape;};
-struct BankScene {BankSceneModel*** models;};
 // Keep field addresses local to each conversion, as in the original code.
 #pragma opt_common_subs off
 bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData* records,const char* base) {
@@ -447,7 +438,7 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
                 s32 shape=index-1;
                 if(shapeLoad(shape,item->data)) {
                     u32 size=shapeGetUsedMemorySize(shape);
-                    g_particle_debug_stats[4]+=size;g_particle_debug_stats[5]+=size;
+                    g_particle_debug_stats.primitiveMemory+=size;g_particle_debug_stats.total+=size;
                     item->flags|=0x40;
                 } else index=0;
             }
@@ -460,7 +451,7 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
     while(recordCount) {
         bankRelocatePointer(records->data, base);
         bankRelocatePointer(records->next, base);
-        u32* definition=(u32*)records->data;
+        void* definition = records->data;
         if(!definition) {
             ++records;
             --recordCount;
@@ -491,162 +482,186 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
             break;
         }
         case 1: {
-            u32 remaining=header->resourceCount;
-            _gpdResourceItem* resource=items;
-            while(remaining) {
-                if((s32)BANK_WORD(0x54)==resource->reserved00) {
-                    if(resource->kind==2) {
-                        BANK_WORD(0)|=0x100000;
-                        BANK_WORD(0x54)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+            _peParticle* particle = static_cast<_peParticle*>(definition);
+            u32 remaining = header->resourceCount;
+            _gpdResourceItem* resource = items;
+            while (remaining) {
+                if (particle->textureId == resource->id) {
+                    if (resource->kind == 2) {
+                        particle->flags |= 0x100000;
+                        particle->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
                         break;
                     } else {
-                        BANK_WORD(0)&=~0x100000;
-                        BANK_WORD(0x54)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+                        particle->flags &= ~0x100000;
+                        particle->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
                         break;
                     }
                 }
-                ++resource;--remaining;
+                ++resource;
+                --remaining;
             }
-            if(!remaining)BANK_WORD(0x54)=0;
-            BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
-            BANK_WORD(0x14)=bankRelocate(BANK_WORD(0x14),base);
-            BANK_WORD(0x18)=bankRelocate(BANK_WORD(0x18),base);
-            BANK_WORD(0x38)=bankRelocate(BANK_WORD(0x38),base);
-            BANK_WORD(0x3c)=bankRelocate(BANK_WORD(0x3c),base);
-            if(!BANK_WORD(0x3c))BANK_WORD(0)&=~0x2000000;
-            BANK_WORD(0x40)=bankRelocate(BANK_WORD(0x40),base);
-            if(!(BANK_WORD(0)&8)) {
+            if (remaining == 0) particle->texture = 0;
+            bankRelocatePointer(particle->angleSpline, base);
+            bankRelocatePointer(particle->widthSpline, base);
+            bankRelocatePointer(particle->heightSpline, base);
+            bankRelocatePointer(particle->colorSpline, base);
+            bankRelocatePointer(particle->extraColorSpline, base);
+            if (!particle->extraColorSpline) particle->flags &= ~0x2000000;
+            bankRelocatePointer(particle->alphaSpline, base);
+            if (!(particle->flags & 8)) {
                 // Read each float pair before overwriting it with packed s16 values.
-                f32 x=BANK_FLOAT(0x44),y=BANK_FLOAT(0x48);
-                *(s16*)((u8*)definition+0x44)=(s16)(1024.0f*x);
-                *(s16*)((u8*)definition+0x46)=(s16)(1024.0f*y);
-                f32 z=BANK_FLOAT(0x4c),w=BANK_FLOAT(0x50);
-                *(s16*)((u8*)definition+0x48)=(s16)(1024.0f*z);
-                *(s16*)((u8*)definition+0x4a)=(s16)(1024.0f*w);
-                BANK_FLOAT(0x50)=0.0f;BANK_FLOAT(0x4c)=0.0f;
-                BANK_WORD(0)|=8;
+                f32 x = particle->textureCoordinates[0], y = particle->textureCoordinates[1];
+                particle->converted.u0 = (s16)(1024.0f * x);
+                particle->converted.v0 = (s16)(1024.0f * y);
+                f32 z = particle->textureCoordinates[2], w = particle->textureCoordinates[3];
+                particle->converted.u1 = (s16)(1024.0f * z);
+                particle->converted.v1 = (s16)(1024.0f * w);
+                particle->converted.roll = 0.0f;
+                particle->converted.yaw = 0.0f;
+                particle->flags |= 8;
             }
             break;
         }
         case 6: {
-            u32 remaining=header->resourceCount;
-            _gpdResourceItem* resource=items;
-            while(remaining) {
-                if((s32)BANK_WORD(0x1c)==resource->reserved00) {
-                    if(resource->kind==2) {
-                        BANK_WORD(0)|=0x400;
-                        if(BANK_WORD(0)&0x2000)BANK_WORD(0)&=~0x40000;
-                        BANK_WORD(0x1c)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+            _peParticleStrip* strip = static_cast<_peParticleStrip*>(definition);
+            u32 remaining = header->resourceCount;
+            _gpdResourceItem* resource = items;
+            while (remaining) {
+                if (strip->textureId == resource->id) {
+                    if (resource->kind == 2) {
+                        strip->flags |= 0x400;
+                        if (strip->flags & 0x2000) strip->flags &= ~0x40000;
+                        strip->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
                         break;
                     } else {
-                        BANK_WORD(0)&=~0x400;
-                        BANK_WORD(0x1c)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+                        strip->flags &= ~0x400;
+                        strip->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
                         break;
                     }
                 }
-                ++resource;--remaining;
+                ++resource;
+                --remaining;
             }
-            if(!remaining)BANK_WORD(0x1c)=0;
-            BANK_WORD(8)=bankRelocate(BANK_WORD(8),base);
-            BANK_WORD(12)=bankRelocate(BANK_WORD(12),base);
-            if(!BANK_WORD(12))BANK_WORD(0)&=~0x40000;
-            BANK_WORD(16)=bankRelocate(BANK_WORD(16),base);
+            if (remaining == 0) strip->texture = 0;
+            bankRelocatePointer(strip->colorSpline, base);
+            bankRelocatePointer(strip->secondColorSpline, base);
+            if (!strip->secondColorSpline) strip->flags &= ~0x40000;
+            bankRelocatePointer(strip->alphaSpline, base);
             break;
         }
         case 3: {
-            u32 remaining=header->resourceCount;
-            _gpdResourceItem* resource=items;
-            while(remaining) {
-                if((s32)BANK_WORD(0x60)==resource->reserved00) {
-                    BANK_WORD(0x60)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+            _peDistortion* distortion = static_cast<_peDistortion*>(definition);
+            u32 remaining = header->resourceCount;
+            _gpdResourceItem* resource = items;
+            while (remaining) {
+                if (distortion->textureId == resource->id) {
+                    distortion->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
                     break;
                 }
-                ++resource;--remaining;
+                ++resource;
+                --remaining;
             }
-            if(!remaining)BANK_WORD(0x60)=0;
-            BANK_WORD(0x30)=bankRelocate(BANK_WORD(0x30),base);
-            BANK_WORD(0x14)=bankRelocate(BANK_WORD(0x14),base);
-            BANK_WORD(0x18)=bankRelocate(BANK_WORD(0x18),base);
-            BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
+            if (remaining == 0) distortion->texture = 0;
+            bankRelocatePointer(distortion->angleSpline, base);
+            bankRelocatePointer(distortion->widthSpline, base);
+            bankRelocatePointer(distortion->heightSpline, base);
+            bankRelocatePointer(distortion->alphaSpline, base);
             break;
         }
         case 2: {
-            u32 remaining=header->resourceCount;
-            _gpdResourceItem* resource=items;
-            while(remaining) {
-                if((s32)BANK_WORD(0x4c)==resource->reserved00) {
-                    if((BANK_WORD(0)&0x40) && resource->kind==3)BANK_WORD(0x4c)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
-                    else if(resource->kind==1) {
-                        BankSceneModel*** scene=(BankSceneModel***)((resource->flags&0x40)==0x40?resource->data:0);
-                        if(scene) {
+            _peModel* modelRecord = static_cast<_peModel*>(definition);
+            u32 remaining = header->resourceCount;
+            _gpdResourceItem* resource = items;
+            while (remaining) {
+                if (modelRecord->resource.id == resource->id) {
+                    if ((modelRecord->flags & 0x40) && resource->kind == 3) {
+                        modelRecord->resource.primitive = (resource->flags & 0x40) == 0x40 ? (u32)resource->data : 0;
+                    } else if (resource->kind == 1) {
+                        BankSceneModel*** scene = (BankSceneModel***)((resource->flags & 0x40) == 0x40 ? resource->data : 0);
+                        if (scene) {
                             BankSceneModel* model=**scene;
-                            void* joint=HSD_JObjLoadJoint(model->joint);
-                            if(joint) {
-                                BANK_WORD(0x4c)=(u32)joint;
-                                void* animation=0;void* material=0;void* shape=0;
-                                BANK_FLOAT(0x54)=0.0f;BANK_FLOAT(0x50)=0.0f;
-                                if(model->animation)animation=*model->animation;
-                                if(model->material)material=*model->material;
-                                if(model->shape)shape=*model->shape;
-                                HSD_JObjAddAnimAll(joint,animation,material,shape);
-                                if(BANK_WORD(0)&4)HSD_ForeachAnim(joint,6,0xffff,(void*)HSD_AObjSetFlags,3,0x20000000);
-                                else HSD_ForeachAnim(joint,6,0xffff,(void*)HSD_AObjClearFlags,3,0x20000000);
-                                HSD_ForeachAnim(joint,6,0xffff,(void*)HSD_AObjSetRate,1,0.0);
-                                HSD_ForeachAnim(joint,6,0xffff,(void*)_modelGetEndFrame,2,(u8*)definition+0x50);
-                                HSD_JObjReqAnimAll(joint,0.0f);HSD_JObjAnimAll(joint);
-                                BANK_FLOAT(0x50)/=60.0f;
-                            } else BANK_WORD(0x4c)=0;
+                            void* joint = HSD_JObjLoadJoint(model->joint);
+                            if (joint) {
+                                modelRecord->resource.jobj = static_cast<ModelJObj*>(joint);
+                                void* animation = 0;
+                                void* material = 0;
+                                void* shape = 0;
+                                modelRecord->field54 = 0.0f;
+                                modelRecord->duration = 0.0f;
+                                if (model->animation) animation=*model->animation;
+                                if (model->material) material=*model->material;
+                                if (model->shape) shape=*model->shape;
+                                HSD_JObjAddAnimAll(joint, animation, material, shape);
+                                if (modelRecord->flags & 4) HSD_ForeachAnim(joint, 6, 0xffff, (void*)HSD_AObjSetFlags, 3, 0x20000000);
+                                else HSD_ForeachAnim(joint, 6, 0xffff, (void*)HSD_AObjClearFlags, 3, 0x20000000);
+                                HSD_ForeachAnim(joint, 6, 0xffff, (void*)HSD_AObjSetRate, 1, 0.0);
+                                HSD_ForeachAnim(joint, 6, 0xffff, (void*)_modelGetEndFrame, 2, &modelRecord->duration);
+                                HSD_JObjReqAnimAll(joint, 0.0f);
+                                HSD_JObjAnimAll(joint);
+                                modelRecord->duration /= 60.0f;
+                            } else {
+                                modelRecord->resource.id = 0;
+                            }
                         }
-                    } else BANK_WORD(0x4c)=0;
+                    } else {
+                        modelRecord->resource.id = 0;
+                    }
                     break;
                 }
-                ++resource;--remaining;
+                ++resource;
+                --remaining;
             }
-            if(!remaining)BANK_WORD(0x4c)=0;
-            BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
-            BANK_WORD(0x38)=bankRelocate(BANK_WORD(0x38),base);
-            BANK_WORD(0x3c)=bankRelocate(BANK_WORD(0x3c),base);
-            BANK_WORD(0x40)=bankRelocate(BANK_WORD(0x40),base);
-            BANK_WORD(0x44)=bankRelocate(BANK_WORD(0x44),base);
-            BANK_WORD(0x48)=bankRelocate(BANK_WORD(0x48),base);
+            if (remaining == 0) modelRecord->resource.id = 0;
+            bankRelocatePointer(modelRecord->rotationSpline[0], base);
+            bankRelocatePointer(modelRecord->rotationSpline[1], base);
+            bankRelocatePointer(modelRecord->rotationSpline[2], base);
+            bankRelocatePointer(modelRecord->scaleSpline[0], base);
+            bankRelocatePointer(modelRecord->scaleSpline[1], base);
+            bankRelocatePointer(modelRecord->scaleSpline[2], base);
             break;
         }
         case 4: {
-            u32 remaining=header->resourceCount;
-            _gpdResourceItem* resource=items;
-            while(remaining) {
-                if((s32)BANK_WORD(0x74)==resource->reserved00) {
-                    BANK_WORD(0x74)=(resource->flags&0x40)==0x40?(u32)resource->data:0;
+            _peShape* shape = static_cast<_peShape*>(definition);
+            u32 remaining = header->resourceCount;
+            _gpdResourceItem* resource = items;
+            while (remaining) {
+                if (shape->textureId == resource->id) {
+                    shape->texture = (resource->flags & 0x40) == 0x40 ? resource->data : 0;
                     break;
                 }
-                ++resource;--remaining;
+                ++resource;
+                --remaining;
             }
-            if(!remaining)BANK_WORD(0x74)=0;
-            BANK_WORD(0x4c)=bankRelocate(BANK_WORD(0x4c),base);
-            BANK_WORD(0x50)=bankRelocate(BANK_WORD(0x50),base);
-            BANK_WORD(0x34)=bankRelocate(BANK_WORD(0x34),base);
-            BANK_WORD(0x38)=bankRelocate(BANK_WORD(0x38),base);
-            BANK_WORD(0x3c)=bankRelocate(BANK_WORD(0x3c),base);
-            BANK_WORD(0x40)=bankRelocate(BANK_WORD(0x40),base);
-            BANK_WORD(0x44)=bankRelocate(BANK_WORD(0x44),base);
-            BANK_WORD(0x48)=bankRelocate(BANK_WORD(0x48),base);
-            if(BANK_WORD(0)&0x200) {
-                void* light=__nw__FUl(128);
-                if(light)light=__ct__10GSgfxLightFv(light);
-                if(light) {
-                    g_particle_debug_stats[1]+=128;g_particle_debug_stats[5]+=128;
-                    MakeDiff__10GSgfxLightFP11GSgfxColAu8P5GSvecb(light,(u8*)definition+0x6c,&zeroVector,false);
-                    BANK_WORD(0x78)=(u32)light;
-                    if(BANK_WORD(0)&0x400) {
-                        void* specular=__nw__FUl(128);
-                        if(specular)specular=__ct__10GSgfxLightFv(specular);
-                        if(specular) {
-                            g_particle_debug_stats[1]+=128;g_particle_debug_stats[5]+=128;
-                            MakeSpec__10GSgfxLightFP11GSgfxColAu8P5GSvecfP5GSvec(specular,(u8*)definition+0x6c,&zAxisVector,BANK_FLOAT(0x70),0);
-                            BANK_WORD(0x7c)=(u32)specular;
-                        } else BANK_WORD(0)&=~0x400;
+            if (remaining == 0) shape->texture = 0;
+            bankRelocatePointer(shape->colorSpline, base);
+            bankRelocatePointer(shape->alphaSpline, base);
+            bankRelocatePointer(shape->rotationSpline[0], base);
+            bankRelocatePointer(shape->rotationSpline[1], base);
+            bankRelocatePointer(shape->rotationSpline[2], base);
+            bankRelocatePointer(shape->scaleSpline[0], base);
+            bankRelocatePointer(shape->scaleSpline[1], base);
+            bankRelocatePointer(shape->scaleSpline[2], base);
+            if (shape->flags & 0x200) {
+                GSgfxLight* light = new GSgfxLight;
+                if (light) {
+                    g_particle_debug_stats.node += sizeof(GSgfxLight);
+                    g_particle_debug_stats.total += sizeof(GSgfxLight);
+                    light->MakeDiff(&shape->lightColor, &zeroVector, false);
+                    shape->light0 = light;
+                    if (shape->flags & 0x400) {
+                        GSgfxLight* specular = new GSgfxLight;
+                        if (specular) {
+                            g_particle_debug_stats.node += sizeof(GSgfxLight);
+                            g_particle_debug_stats.total += sizeof(GSgfxLight);
+                            specular->MakeSpec(&shape->lightColor, &zAxisVector, shape->shininess, 0);
+                            shape->light1 = specular;
+                        } else {
+                            shape->flags &= ~0x400;
+                        }
                     }
-                } else BANK_WORD(0)&=~0x600;
+                } else {
+                    shape->flags &= ~0x600;
+                }
             }
             break;
         }
@@ -655,7 +670,5 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
     }
     return true;
 }
-#undef BANK_WORD
-#undef BANK_FLOAT
 
 #pragma opt_common_subs reset
