@@ -1,11 +1,10 @@
 #ifndef PE_SHAPE_PRIVATE_HPP
 #define PE_SHAPE_PRIVATE_HPP
 #include <game/pxdvs/GSAPI/GSparticle/peContainerPrivate.hpp>
-struct _EmitParams {u8 data[0x48];};
 struct ParticleLight {u16 flags,reserved02;s32 type;u32 reserved08;Vec position,direction;};
 struct ShapeSpline {u8 flags;u8 reserved01[3];f32 value,time;};
 struct _peShape {u32 flags;Vec rotation,angularSpeed,scale,scaleRange;ShapeSpline* rotationSpline[3];ShapeSpline* scaleSpline[3];void* colorSpline;ShapeSpline* alphaSpline;f32 radius;u8 segments0,segments1;u16 reserved5a;Vec position;u32 ambient;u8 reserved6c[8];void* texture;ParticleLight* light0;ParticleLight* light1;};
-struct peShapeNode:peNode {Vec worldPosition;Quaternion worldRotation;Vec worldScale;Quaternion randomRotation,localRotation;Vec baseScale;f32 depth;u32 flips;Vec angularSpeed;u32 color;bool Update(peEmitterNode*,_peShape*,f32);void Start(peEmitterNode*,_peShape*,_EmitParams*);void Render(_peShape*);};
+struct peShapeNode:peNode {NodeTransform world;Quaternion randomRotation,localRotation;Vec baseScale;f32 depth;u32 flips;Vec angularSpeed;u32 color;bool Update(peEmitterNode*,_peShape*,f32);void Start(peEmitterNode*,_peShape*,_EmitParams*);void Render(_peShape*);};
 struct peShapeContainer:peContainer {
     _peShape* shape;
     peShapeContainer(peEmitterNode*,_peShape*,u16);virtual ~peShapeContainer();void Start();void Stop();void Update(f32);u16 Emit(u16);void Render();
@@ -134,6 +133,5 @@ extern "C" {
 void pushMult__16GSgfxMatrixStackFP5GSmtx(void*,Mtx);void pop__16GSgfxMatrixStackFv(void*);
 void drawCube__10GSgfxLayerFv(GSgfxLayer*);void drawCylinder__10GSgfxLayerFUc(GSgfxLayer*,u8);void drawDodecaedron__10GSgfxLayerFv(GSgfxLayer*);void drawIcosahedron__10GSgfxLayerFv(GSgfxLayer*);void drawOctahedron__10GSgfxLayerFv(GSgfxLayer*);void drawTorus__10GSgfxLayerFfUcUc(GSgfxLayer*,f32,u8,u8);void drawSphere__10GSgfxLayerFUc(GSgfxLayer*,u8);void drawSphere__10GSgfxLayerFUcUc(GSgfxLayer*,u8,u8);
 }
-struct ShapeTransform {Vec position;Quaternion rotation;Vec scale;};
-extern "C" {f32 peSplineGetValue(ShapeSpline*,f32);void peColorSplineGetValue(void*,void*,f32);void peNodeTransformsConcat(ShapeTransform*,void*,ShapeTransform*,u8);extern Vec g_CameraPosition,g_CameraLookDir;double atan2(double,double);}
+extern "C" {f32 peSplineGetValue(ShapeSpline*,f32);void peColorSplineGetValue(void*,void*,f32);extern Vec g_CameraPosition,g_CameraLookDir;double atan2(double,double);}
 #endif

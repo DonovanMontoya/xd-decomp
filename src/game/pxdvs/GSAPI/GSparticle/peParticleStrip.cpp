@@ -149,12 +149,12 @@ peParticleStripContainer::peParticleStripContainer(peEmitterNode *emitter,_pePar
  definition=d;frame=0xff;peParticleStripNode *node=(peParticleStripNode*)freeNodes;s16 index=0;while(node){node->index=index;node->sortIndex=index;++index;node=(peParticleStripNode*)node->next;}g_particle_debug_stats.node+=0x60;g_particle_debug_stats.total+=0x60;
 }
 void peParticleStripNode::UpdateRenderData(peEmitterNode *emitter,_peParticleStrip *d,char *data,f32 progress) {
- u32 flags=d->flags;u32 extended=(flags>>18)&1;Mtx matrix;Mtx segmentMatrix;ShapeTransform *parent=(ShapeTransform*)transform;Vec world,segment;
+ u32 flags=d->flags;u32 extended=(flags>>18)&1;Mtx matrix;Mtx segmentMatrix;NodeTransform *parent=transform;Vec world,segment;
  Vec offset,half;
  u8 color[4];u8 red,green,blue;
- f32 wy=position.y*parent->scale.y;f32 wz=position.z*parent->scale.z;f32 wx=position.x*parent->scale.x;world.x=wx;world.y=wy;world.z=wz;PSMTXQuat(matrix,&parent->rotation);PSMTXMultVecSR(matrix,&world,&world);PSVECAdd(&world,&((ShapeTransform*)transform)->position,&world);
+ f32 wy=position.y*parent->scale.y;f32 wz=position.z*parent->scale.z;f32 wx=position.x*parent->scale.x;world.x=wx;world.y=wy;world.z=wz;PSMTXQuat(matrix,&parent->rotation);PSMTXMultVecSR(matrix,&world,&world);PSVECAdd(&world,&transform->position,&world);
  char *out;if(extended)out=data+index*0x30;else out=data+index*0x2c;
- parent=(ShapeTransform*)transform;f32 sy=this->segment.y*parent->scale.y;f32 sz=this->segment.z*parent->scale.z;f32 sx=this->segment.x*parent->scale.x;segment.x=sx;segment.y=sy;segment.z=sz;PSMTXQuat(segmentMatrix,&parent->rotation);PSMTXMultVecSR(segmentMatrix,&segment,&segment);
+ parent=transform;f32 sy=this->segment.y*parent->scale.y;f32 sz=this->segment.z*parent->scale.z;f32 sx=this->segment.x*parent->scale.x;segment.x=sx;segment.y=sy;segment.z=sz;PSMTXQuat(segmentMatrix,&parent->rotation);PSMTXMultVecSR(segmentMatrix,&segment,&segment);
  if(flags&0x4000){PSVECScale(&segment,&half,0.5f);offset=half;PSVECSubtract(&world,&offset,&world);}
  *(Vec*)out=world;if(g_currentBound)GSboundAddPoint(g_currentBound,world.x,world.y,world.z);PSVECAdd(&world,&segment,&world);*(Vec*)(out+0xc)=world;if(g_currentBound)GSboundAddPoint(g_currentBound,world.x,world.y,world.z);
  peColorSplineGetValue(color,d->colorSpline,progress);red=color[0];color[0]=__OSf32tou8(__OSu8tof32(&red)*emitter->color[0]);green=color[1];color[1]=__OSf32tou8(__OSu8tof32(&green)*emitter->color[1]);blue=color[2];color[2]=__OSf32tou8(__OSu8tof32(&blue)*emitter->color[2]);color[3]=__OSf32tou8((255.0f*emitter->color[3])*spline(d->alphaSpline,progress));*(u32*)(out+0x18)=*(u32*)color;

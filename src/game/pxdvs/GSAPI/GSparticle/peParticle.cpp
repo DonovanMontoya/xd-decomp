@@ -172,7 +172,6 @@ f64 atan2(f64,f64);
 void EulerToQuat(Vec*,Quaternion*);
 void GSboundAddPoint(void*,f32,f32,f32);
 }
-struct ParticleTransform {Vec position;Quaternion rotation;Vec scale;};
 
 struct ParticleData {Vec vertices[4];u32 color,extraColor;};
 extern "C" void peColorSplineGetValue(ParticleColor*,void*,f32);
@@ -493,14 +492,14 @@ void peParticleNode::UpdateRenderData(peEmitterNode* emitter,_peParticle* defini
     u32 extended=(flags>>25)&1;
     f32 baseAngle;
     f32 redValue,greenValue,blueValue,alphaValue;
-    ParticleTransform* transform=(ParticleTransform*)this->transform;
+    NodeTransform* transform=this->transform;
 f32 cx=position.x*transform->scale.x;
 f32 cy=position.y*transform->scale.y;
 f32 cz=position.z*transform->scale.z;
 center.x=cx;center.y=cy;center.z=cz;
     PSMTXQuat(m438,&transform->rotation);
     PSMTXMultVecSR(m438,&center,&center);
-    PSVECAdd(&center,&((ParticleTransform*)this->transform)->position,&center);
+    PSVECAdd(&center,&this->transform->position,&center);
 
     if(flags&0x200) {
         if(flags&0x20000) {
@@ -542,8 +541,8 @@ center.x=cx;center.y=cy;center.z=cz;
             PSMTXQuat(m408,&orientation);PSMTXMultVecSR(m408,&right,&right);
             PSMTXQuat(m3d8,&orientation);PSMTXMultVecSR(m3d8,&up,&up);
         }
-        PSMTXQuat(m3a8,&((ParticleTransform*)this->transform)->rotation);PSMTXMultVecSR(m3a8,&right,&right);
-        PSMTXQuat(m378,&((ParticleTransform*)this->transform)->rotation);PSMTXMultVecSR(m378,&up,&up);
+        PSMTXQuat(m3a8,&this->transform->rotation);PSMTXMultVecSR(m3a8,&right,&right);
+        PSMTXQuat(m378,&this->transform->rotation);PSMTXMultVecSR(m378,&up,&up);
         baseAngle=0.0f;
     }
     PSVECCrossProduct(&up,&right,&crossNormal);normal=crossNormal;
@@ -559,17 +558,17 @@ center.x=cx;center.y=cy;center.z=cz;
             PSMTXQuat(m318,&orientation);PSMTXMultVecSR(m318,&right,&right);
         }
     }
-    PSQUATInverse(&((ParticleTransform*)this->transform)->rotation,&inverseRightResult);
+    PSQUATInverse(&this->transform->rotation,&inverseRightResult);
     inverseRight=inverseRightResult;
     PSMTXQuat(m1c8,&inverseRight);PSMTXMultVecSR(m1c8,&right,&localRight);work=localRight;
-    transform=(ParticleTransform*)this->transform;
+    transform=this->transform;
     work.x*=transform->scale.x;work.y*=transform->scale.y;work.z*=transform->scale.z;
     PSMTXQuat(m2e8,&transform->rotation);PSMTXMultVecSR(m2e8,&work,&work);
     PSVECScale(&right,&right,PSVECDotProduct(&right,&work));
-    PSQUATInverse(&((ParticleTransform*)this->transform)->rotation,&inverseUpResult);
+    PSQUATInverse(&this->transform->rotation,&inverseUpResult);
     inverseUp=inverseUpResult;
     PSMTXQuat(m198,&inverseUp);PSMTXMultVecSR(m198,&up,&localUp);work=localUp;
-    transform=(ParticleTransform*)this->transform;
+    transform=this->transform;
     work.x*=transform->scale.x;work.y*=transform->scale.y;work.z*=transform->scale.z;
     PSMTXQuat(m2b8,&transform->rotation);PSMTXMultVecSR(m2b8,&work,&work);
     PSVECScale(&up,&up,PSVECDotProduct(&up,&work));

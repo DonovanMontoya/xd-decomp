@@ -1,7 +1,6 @@
 #ifndef PE_PARTICLE_PRIVATE_HPP
 #define PE_PARTICLE_PRIVATE_HPP
 #include <game/pxdvs/GSAPI/GSparticle/peContainerPrivate.hpp>
-struct _EmitParams {u8 data[0x48];};
 struct ParticleSpline {u8 flags;u8 reserved01[3];f32 value,time;};
 struct _peParticle {u32 flags;f32 sizeX,sizeY,rangeX,rangeY;ParticleSpline *widthSpline,*heightSpline;f32 offsetX,offsetY;f32 angle,angularMin,angularRange,frameDuration;ParticleSpline* angleSpline;void *colorSpline,*extraColorSpline;ParticleSpline *alphaSpline;s16 u0,v0,u1,v1;f32 yaw,roll;void* texture;};
 struct peParticleNode:peNode {

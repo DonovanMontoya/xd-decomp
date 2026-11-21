@@ -532,9 +532,9 @@ void peShapeNode::Start(peEmitterNode* emitter,_peShape* shape,_EmitParams* para
     f32 sy=scale.y,sz=scale.z,sx=scale.x;baseScale.x=sx;baseScale.y=sy;baseScale.z=sz;
     PSVECAdd(&baseScale,&shape->scale,&baseScale);
     randomRotation.x=0.0f;randomRotation.y=0.0f;randomRotation.z=0.0f;randomRotation.w=1.0f;
-    worldPosition.x=0.0f;worldPosition.y=0.0f;worldPosition.z=0.0f;
-    worldRotation.x=0.0f;worldRotation.y=0.0f;worldRotation.z=0.0f;worldRotation.w=1.0f;
-    worldScale=unitScaleVector;
+    world.position.x=0.0f;world.position.y=0.0f;world.position.z=0.0f;
+    world.rotation.x=0.0f;world.rotation.y=0.0f;world.rotation.z=0.0f;world.rotation.w=1.0f;
+    world.scale=unitScaleVector;
     if(!(emitter->emitter->flags&0x400)) {
         EulerToQuat(&shape->rotation,&localRotation);
         if(flags&0x1c7000) {
@@ -579,10 +579,10 @@ void peShapeNode::Render(_peShape* shape) {
         shapeSetChannelColor(0,*(ShapeColor*)&shape->ambient,*(ShapeColor*)&color);
         if(temp_r31&0x400)shapeSetChannelColor(1,black,*(ShapeColor*)&color);
     }
-    PSMTXQuat(sp20, &worldRotation);
-    PSMTXScale(sp50, worldScale.x, worldScale.y, worldScale.z);
+    PSMTXQuat(sp20, &world.rotation);
+    PSMTXScale(sp50, world.scale.x, world.scale.y, world.scale.z);
     PSMTXConcat(sp20, sp50, sp50);
-    PSMTXTransApply(sp50, sp50, worldPosition.x, worldPosition.y, worldPosition.z);
+    PSMTXTransApply(sp50, sp50, world.position.x, world.position.y, world.position.z);
     pushMult__16GSgfxMatrixStackFP5GSmtx(((ParticleLayerState*)g_current_layer)->unk19A0, sp50);
     temp_r0 = temp_r31 & 7;
     switch (temp_r0) {
@@ -658,7 +658,7 @@ bool peShapeNode::Update(peEmitterNode* emitter,_peShape* shape,f32 delta) {
     Vec distance;
     Vec rotationVector;
     Quaternion rotation;
-    ShapeTransform local;
+    NodeTransform local;
     Mtx rotationMatrix;
     if(emitterFlags&0x400) {
         direction.x=velocity.x;direction.y=velocity.y;direction.z=velocity.z;
@@ -696,8 +696,8 @@ bool peShapeNode::Update(peEmitterNode* emitter,_peShape* shape,f32 delta) {
     PSQUATMultiply(&randomRotation,&flipped,&rotation);
     local.rotation.x=rotation.x;local.rotation.y=rotation.y;local.rotation.z=rotation.z;local.rotation.w=rotation.w;
     local.scale=angles;
-    peNodeTransformsConcat((ShapeTransform*)&worldPosition,transform,&local,0);
-    PSVECSubtract(&worldPosition,&g_CameraPosition,&distance);
+    peNodeTransformsConcat(&world,transform,&local,false);
+    PSVECSubtract(&world.position,&g_CameraPosition,&distance);
     copy.x=distance.x;copy.y=distance.y;copy.z=distance.z;depth=PSVECDotProduct(&g_CameraLookDir,&copy);
     return true;
 }

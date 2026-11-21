@@ -1,11 +1,9 @@
 #ifndef PE_CONTAINER_PRIVATE_HPP
 #define PE_CONTAINER_PRIVATE_HPP
 #include <global.h>
+#include <game/pxdvs/GSAPI/GSparticle/peNode.hpp>
 #include <game/pxdvs/GSAPI/GSparticle/peEmitterData.hpp>
 #include <libc/string.h>
-struct peEmitterNode {u8 reserved00[0x38];f32 color[4];u8 reserved48[0x60];u8 world[0x28];u8 previousWorld[0x28];f32 depth;_peEmitter* emitter;void* containers;};
-struct _EmitParams;
-struct peNode {f32 life,time;Vec position,velocity;void* transform;u32 reserved24;peNode* next;peNode* previous;void Start(peEmitterNode*,_EmitParams*);u8 Update(peEmitterNode*,f32);};
 struct GSgfxVF;
 enum GSgfxPrimType { PARTICLE_PRIMITIVE_DEFAULT };
 enum GSgfxLayerID { PARTICLE_LAYER_DEFAULT };

@@ -16,7 +16,7 @@ extern "C" u8 peBankIsInfinite(ParticleBankState* bank) {
 }
 extern "C" f32 peBankGetLife(ParticleBankState* bank) {
     if (!bank) return 0.0f;
-    if (bank->flags & 1) return bank->node.life;
+    if (bank->flags & 1) return bank->node.time;
     return 0.0f;
 }
 extern "C" void peBankStopLoop(ParticleBankState* bank) {
@@ -120,7 +120,7 @@ inline u16 GScast_float_to_u16(f32 value) {
 extern "C" u8 peBankStart(ParticleBankState* bank) {
     static _EmitParams params;
     if (!bank) return 0;
-    params.time = 1.0f;
+    params.life = 1.0f;
     peBankStop(bank);
     g_currentBank = bank;
     g_currentBound = 0;
@@ -214,16 +214,16 @@ extern "C" ParticleBankState* peBankCreate(_gpdHeader* file) {
     file->references++;
     memset(&bank->node, 0, sizeof(peEmitterNode));
     bank->data = data;
-    bank->transform[0] = 0.0f;
-    bank->transform[1] = 0.0f;
-    bank->transform[2] = 0.0f;
-    bank->transform[3] = 0.0f;
-    bank->transform[4] = 0.0f;
-    bank->transform[5] = 0.0f;
-    bank->transform[6] = 1.0f;
-    bank->transform[7] = 1.0f;
-    bank->transform[8] = 1.0f;
-    bank->transform[9] = 1.0f;
+    bank->transform.position.x = 0.0f;
+    bank->transform.position.y = 0.0f;
+    bank->transform.position.z = 0.0f;
+    bank->transform.rotation.x = 0.0f;
+    bank->transform.rotation.y = 0.0f;
+    bank->transform.rotation.z = 0.0f;
+    bank->transform.rotation.w = 1.0f;
+    bank->transform.scale.x = 1.0f;
+    bank->transform.scale.y = 1.0f;
+    bank->transform.scale.z = 1.0f;
     bank->flags = 0;
     bank->rendered = 0;
     bank->token = 0;
@@ -235,7 +235,7 @@ extern "C" ParticleBankState* peBankCreate(_gpdHeader* file) {
     } else g_particleBanks = bank;
     bank->next = 0;
     g_currentBank = bank;
-    bank->node.transformParent = bank->transform;
+    bank->node.transform = &bank->transform;
     bank->node.Init(data->emitter);
     bank->maxParams = _peBankCalculateMaxParticles(data, 4.0f / GSgfxVideoGetVsyncRate());
     if (bank && bank->maxParams > g_maxEmitParams) {

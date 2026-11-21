@@ -51,10 +51,10 @@ static inline void renderModelNode(peModelNode *node, _peModel *definition) {
     u16 primitive;
     u32 mask;
     ModelJObj *jobj;
-    PSMTXQuat(rotation, &node->worldRotation);
-    PSMTXScale(transform, node->worldScale.x, node->worldScale.y, node->worldScale.z);
+    PSMTXQuat(rotation, &node->world.rotation);
+    PSMTXScale(transform, node->world.scale.x, node->world.scale.y, node->world.scale.z);
     PSMTXConcat(rotation, transform, transform);
-    PSMTXTransApply(transform, transform, node->worldPosition.x, node->worldPosition.y, node->worldPosition.z);
+    PSMTXTransApply(transform, transform, node->world.position.x, node->world.position.y, node->world.position.z);
     if (definition->flags & 0x40) {
         primitive = definition->resource.primitive - 1;
         shapeUpdate(primitive, node->life - node->time, node->instance);
@@ -148,7 +148,7 @@ static inline s32 modelFloatClass(f32 x) {
 }
 extern "C" f32 __float_nan[];
 u8 peModelNode::Update(peEmitterNode *emitter,_peModel *model,f32 delta) {
- ShapeTransform local;
+ NodeTransform local;
  Mtx matrix;
  Vec angles;
  Quaternion flipped;
@@ -193,8 +193,8 @@ u8 peModelNode::Update(peEmitterNode *emitter,_peModel *model,f32 delta) {
  angles.y=baseScale.y*modelSpline(model->scaleSpline[1],progress);
  angles.z=baseScale.z*modelSpline(model->scaleSpline[2],progress);
  local.position=position;PSQUATMultiply(&randomRotation,&flipped,&combined);local.rotation=combined;local.scale=angles;
- peNodeTransformsConcat((ShapeTransform*)&worldPosition,transform,&local,0);
- PSVECSubtract(&worldPosition,&g_CameraPosition,&distance);copy.x=distance.x;copy.y=distance.y;copy.z=distance.z;depth=PSVECDotProduct(&g_CameraLookDir,&copy);
+ peNodeTransformsConcat(&world,transform,&local,false);
+ PSVECSubtract(&world.position,&g_CameraPosition,&distance);copy.x=distance.x;copy.y=distance.y;copy.z=distance.z;depth=PSVECDotProduct(&g_CameraLookDir,&copy);
  return 1;
 }
 void peModelNode::Start(peEmitterNode *emitter,_peModel *model,_EmitParams *params) {
@@ -203,8 +203,8 @@ void peModelNode::Start(peEmitterNode *emitter,_peModel *model,_EmitParams *para
  PSVECScale(&model->scaleRange,&scale,HSD_Randf());
  f32 sy=scale.y,sz=scale.z,sx=scale.x;baseScale.x=sx;baseScale.y=sy;baseScale.z=sz;PSVECAdd(&baseScale,&model->scale,&baseScale);
  randomRotation.x=0.0f;randomRotation.y=0.0f;randomRotation.z=0.0f;randomRotation.w=1.0f;
- worldPosition.x=0.0f;worldPosition.y=0.0f;worldPosition.z=0.0f;
- worldRotation.x=0.0f;worldRotation.y=0.0f;worldRotation.z=0.0f;worldRotation.w=1.0f;worldScale=unitScaleVector;
+ world.position.x=0.0f;world.position.y=0.0f;world.position.z=0.0f;
+ world.rotation.x=0.0f;world.rotation.y=0.0f;world.rotation.z=0.0f;world.rotation.w=1.0f;world.scale=unitScaleVector;
  if(!(emitter->emitter->flags&0x400)) {
   EulerToQuat(&model->rotation,&localRotation);
   if(flags&0xe380) {
