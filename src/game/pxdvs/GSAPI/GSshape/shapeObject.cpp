@@ -1127,6 +1127,7 @@ static inline void shapeKAlphaSelect(GSgfxLayer *layer,u8 stage,GXTevKAlphaSel v
 extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(GsShapeObject *self,GSgfxLayer *layer,GsShapeTexture *textures,GStexture *refract) {
  GXTevKColorSel colorRegisters[4]={GX_TEV_KCSEL_K0,GX_TEV_KCSEL_K1,GX_TEV_KCSEL_K2,GX_TEV_KCSEL_K3};
  GXTevKAlphaSel alphaRegisters[4]={GX_TEV_KASEL_K0_A,GX_TEV_KASEL_K1_A,GX_TEV_KASEL_K2_A,GX_TEV_KASEL_K3_A};
+ GXTevKAlphaSel mixAlpha = alphaRegisters[1];
  u8 stage=0,textureIndex=0,count=self->entry->textureCount;
  int var_r5_2,var_r5_3,var_r5_4,var_r5_5,var_r6_2,var_r6_3,var_r6_4,var_r7,var_r7_2,var_r7_3,var_r8,var_r8_10,var_r8_11,var_r8_12,var_r8_13,var_r8_14,var_r8_2,var_r8_3,var_r8_4,var_r8_5,var_r8_6,var_r8_7,var_r8_8,var_r8_9;
  while(textureIndex<count) {
@@ -1168,8 +1169,9 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
   } else if(textureIndex<2) {
    if(texture->entry->colorRange) {
     int middle=stage+1,mixStage=stage+2;
+    int secondRegister = textureIndex * 2 + 1;
     shapeKColorSelect(layer,stage,colorRegisters[index*2]);shapeKAlphaSelect(layer,stage,alphaRegisters[index*2]);
-    shapeKColorSelect(layer,middle,colorRegisters[index*2+1]);shapeKAlphaSelect(layer,middle,alphaRegisters[index*2+1]);shapeKAlphaSelect(layer,mixStage,alphaRegisters[1]);
+    shapeKColorSelect(layer,middle,colorRegisters[secondRegister]);shapeKAlphaSelect(layer,middle,alphaRegisters[secondRegister]);shapeKAlphaSelect(layer,mixStage,mixAlpha);
     layer->texSelect(index,selected);layer->tunitMapping(stage,index,index,0);
     layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)14);
     layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)1);
@@ -1277,7 +1279,7 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
     }stage+=3;
    } else {
     int mixStage=stage+1;
-    shapeKColorSelect(layer,stage,colorRegisters[index*2]);shapeKAlphaSelect(layer,stage,alphaRegisters[index*2]);shapeKAlphaSelect(layer,mixStage,alphaRegisters[1]);
+    shapeKColorSelect(layer,stage,colorRegisters[index*2]);shapeKAlphaSelect(layer,stage,alphaRegisters[index*2]);shapeKAlphaSelect(layer,mixStage,mixAlpha);
     layer->texSelect(index,selected);layer->tunitMapping(stage,index,index,0);
     layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)14,(GSgfxTunitCArg)8,(GSgfxTunitCArg)15);
     layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)1);
