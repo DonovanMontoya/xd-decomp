@@ -64,11 +64,11 @@ u16 fightAi_GetWazaDataIDFromFixActWaza(FIGHT_TRAINER*,FightOutPokemon *pokemon,
 }
 
 s16 fightAiCombo_GetAllWazaValueTable(ComboWaza *table,s16 value,FIGHT_TRAINER *trainer,FightOutPokemon **,FightOutPokemon **enemies,s8 weather){return fightAiCombo_GetAllWazaTableDefValue(trainer,enemies,table,value,weather);}
-s32 fightAiCombo_Act(FIGHT_TRAINER *trainer,FightOutPokemon **allies,u16 allyCount){
+s32 fightAiCombo_Act(FIGHT_TRAINER *trainer,FightOutPokemon **allies,u16 allyCount, s32){
     void *deck;
-    ComboAction action;
+    FightComboAction* action;
     ComboWaza selected;
-    ComboDispatch *entry;
+    FightComboId *entry;
     u8 active;
     FightOutPokemon *enemies[8];
     u8 i;
@@ -85,11 +85,11 @@ s32 fightAiCombo_Act(FIGHT_TRAINER *trainer,FightOutPokemon **allies,u16 allyCou
     return 0;
 }
 
-s32 fightAiCombo_ActContinue(FIGHT_TRAINER *trainer,FightOutPokemon *pokemon){
+s32 fightAiCombo_ActContinue(FIGHT_TRAINER *trainer,FightOutPokemon *pokemon, s32){
     FightOutPokemon *enemies[8];
     u16 count=fightFloorGetFightTrainerFightOutPokemonPtrAry(0,trainer,enemies,0,1);
     u8 id=getComboFuncId__15FightOutPokemonFv(pokemon);
-    ComboContinue action=comboid[id].continuation;
+    FightComboContinue* action=comboid[id].continuation;
     if(!id)return 0;
     if(!action){setComboFuncId__15FightOutPokemonFUc(pokemon,0);return 0;}
     if(action(trainer,pokemon,enemies,count)==0){setComboFuncId__15FightOutPokemonFUc(pokemon,0);return 0;}

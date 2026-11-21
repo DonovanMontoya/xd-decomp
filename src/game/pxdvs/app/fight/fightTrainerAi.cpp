@@ -1,4 +1,4 @@
-#include <dolphin/types.h>
+#include <game/pxdvs/app/fight/fightTrainerAiCombo.h>
 #include <game/pxdvs/app/fight/fightWazaBiosLayout.hpp>
 #include <game/pxdvs/app/fight/fightTrainerAiPrivate.hpp>
 #undef NULL
@@ -39,16 +39,11 @@ extern const u16 moukakeiTbl[] = {66, 65, 68, 67};
 typedef struct FIGHT_TRAINER FIGHT_TRAINER; typedef struct Pokemon Pokemon; typedef struct FightPokemon FightPokemon; typedef struct FightOutPokemon FightOutPokemon; typedef struct FightSide FightSide; typedef struct FightWaza FightWaza;
 typedef struct AiAbilitySearch { s32 ability; FightOutPokemon *result; s32 side; FightOutPokemon *relative; FIGHT_TRAINER *trainer; } AiAbilitySearch;
 typedef FIGHT_TRAINER FightTrainer;
-typedef struct AiWazaCandidate AiWazaCandidate;
+typedef FightAiAllWazaValid AiWazaCandidate;
 typedef struct FightActionBuff FightActionBuff;
 typedef struct FightTrainerEnemyPokemon FightTrainerEnemyPokemon;
 typedef struct FightTrainerKindData FightTrainerKindData;
 typedef struct Hero Hero;
-typedef struct AiWazaCandidate {
- FightOutPokemon *attackers[2]; FightOutPokemon *defenders[2]; u16 moves[2];
- s8 slots[2]; u8 eligible[2]; u8 probability[2]; u8 combination;
- u16 damage[2][2]; u8 result[2]; u8 reserved26; u16 threat;
-} AiWazaCandidate;
 typedef struct AiWazaWork { u8 count; u8 reserved[3]; } AiWazaWork;
 AiWazaCandidate ai_allwaza_valid_tbl[64];
 AiWazaWork ai_allwaza_valid_work;
@@ -300,8 +295,6 @@ FightOutPokemon * fightTrainerGetValidFightOutPokemonPtr(FIGHT_TRAINER *, u16);
 u8 fightOutPokemonCheckFightActionWazaSelect(FightOutPokemon *, u8);
 u8 fightOutPokemonCheckFightActionSelect(FightOutPokemon *, u8);
 void fightOutPokemonInitFightActionBuff(FightOutPokemon *);
-void fightAiCombo_Act(FIGHT_TRAINER *, FightOutPokemon **, u16, s32);
-void fightAiCombo_ActContinue(FIGHT_TRAINER *, FightOutPokemon *, s32);
 void fightAi_FixedAct(FIGHT_TRAINER *, s32);
 u8 fightFloorCheckFightActionFightOutPokemonIrekaeSelect(void *, FightOutPokemon *, u8);
 u8 fightFloor_GetFightKindUseItemFlag(void *);
@@ -341,7 +334,6 @@ s32 fightTrainerAiWazaDoWazaDamageFightPokemonFunc(FIGHT_TRAINER *, FightOutPoke
 void fightPokemon_SetAiDamage(FightPokemon *, u16, u8, s32);
 s16 fightOutPokemonGetFightEntryId(FightOutPokemon *);
 void fightTrainerInitEnemyPokemonFightOutStatus(FIGHT_TRAINER *, u8);
-s32 fightAi_CopyAllWazaValidTable(AiWazaCandidate *, AiWazaCandidate *);
 void fightAi_InitAllWazaValidSub(AiWazaCandidate *);
 void fightAi_InitAllWazaValid(void);
 void fightAi_CreateAction_FromAllWazaValid(FIGHT_TRAINER *, AiWazaCandidate *);
@@ -3416,8 +3408,6 @@ void fightAi_CheckDoFightActionStroke(FIGHT_TRAINER *trainer){
     }
 }
 
-struct AiComboRecord { u8 count, inverted; u8 rest[10]; };
-extern AiComboRecord comboid[];
 u8 pokemon_GetComboPartner(Pokemon*,u8,u8);
 static inline u32 isPokemonComboPartner(Pokemon *pokemon,u8 slot,u8 side) {
     return pokemon_GetComboPartner(pokemon,slot,side)!=0;
@@ -3436,7 +3426,7 @@ u8 fightTrainerAi_SelComboPartner(Pokemon **candidates, Pokemon **out, u8 count,
     for(i=0;i<4;i++) {
         u16 id=getComboID__11DeckTrainerCFUc(deck,order[i]);
         if(id) {
-            AiComboRecord *combo=&comboid[id];u8 inverted=combo->inverted;
+            FightComboId *combo=&comboid[id];u8 inverted=combo->inverted;
             if(combo->count==2) {
                 if(outCount==1)continue;
                 u8 firstCount=0,secondCount,j;
