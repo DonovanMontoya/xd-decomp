@@ -6,12 +6,10 @@
 #include <game/menuBingoLayout.hpp>
 #include <game/menuDataBiosPrivate.hpp>
 
-class Pokemon {
-public:
-    void* getPokemonDataPtr() const;
-    u8 data[0xC4];
-    char* getNicknamePtr();
-};
+#include <game/pxdvs/GSAPI/GSmsg/GSchar.hpp>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#undef POKEMON_HPP_NO_PROTOTYPES
 
 struct BingoPokemon {
     Pokemon pkm;
@@ -270,7 +268,6 @@ void menuFaceDispFromID2(tagWINDOW_WORK*, tagSPRITE_WORK*, u16, GSvec2*);
 u16 pokemonDataBiosGetStatusFaceMenuSpriteId(void* pdata, u16 unk);
 void GSmsgPrint2(s32, s32, s32, u32, s32);
 u32 GSmsgGetRect(u32 msg);
-char* GSmsgGetGSchar(u32 msg);
 u32 pokemonGetStatus(void* ptr, u16 pokemonDataId, u16 kind, u16 index);
 s32 menuSubGetPokemonSexForDisp(void* pokemon);
 u16 zokuseiGetPokemonSpriteID(void* pokemon, u16 idx);
@@ -637,7 +634,7 @@ s32 menuBingoMessageDraw(tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
     enum TsE { TsE0 };
     s16 b;
     u32 msg = gBingo.f13c;
-    char* nick;
+    u16* nick;
     switch (sp->id) {
     case 0x8D8: {
         gBingo.f140 += timeGetLastFrameSec();
