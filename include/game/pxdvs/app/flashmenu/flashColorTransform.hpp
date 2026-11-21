@@ -16,6 +16,8 @@ struct FLASHCXFORM {
 };
 
 extern "C" {
+s32 flcalcBlend(s32 from, s32 to, f32 t);
+u32 flcalcBlendColor(u32 from, u32 to, f32 t);
 void flcalcUnitCxform(FLASHCXFORM *out);
 void flcalcCreateCxform(FLASHCXFORM *out, u32 color);
 void flcalcMulCxform(FLASHCXFORM *out, FLASHCXFORM *a, FLASHCXFORM *b);

@@ -7,9 +7,6 @@ extern "C" {
 #include <game/pxdvs/app/flashmenu/flashShape.hpp>
 
 struct GStexture;
-struct GSvec2 {
-    f32 x, y;
-};
 struct VEC_GRAPH_DATA {
     s32 fill[2],shift[2],previous[2];
     s16 minX,minY,maxX,maxY,centerX,centerY,width,height;
@@ -253,7 +250,6 @@ void getCrossPoint(long column,short y,short x1,short x2,short originX,short ori
 }
 
 extern "C" {
-void flcalcMatrix(GSvec2*,FLASHMATRIXF*,GSvec2*);
 extern f32 __float_nan[];
 }
 static inline s32 vecFloatClass(f32 x) {
@@ -497,8 +493,6 @@ static void SBscan() {
 
 
 extern "C" {
-void flcalcMulMatrixf(FLASHMATRIXF*,FLASHMATRIXF*,FLASHMATRIXF*);
-void flcalcBezier3(GSvec2*,GSvec2*,f32);
 f64 acos(f64);
 f64 sin(f64);
 f64 cos(f64);

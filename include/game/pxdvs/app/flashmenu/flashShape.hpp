@@ -1,6 +1,7 @@
 #ifndef PXDVS_APP_FLASHMENU_FLASH_SHAPE_HPP
 #define PXDVS_APP_FLASHMENU_FLASH_SHAPE_HPP
 
+#include <game/pxdvs/GSAPI/GSmath/GSvec2.hpp>
 #include <game/pxdvs/app/flashmenu/flashColorTransform.hpp>
 
 struct FLASHMATRIX {
@@ -9,6 +10,18 @@ struct FLASHMATRIX {
 struct FLASHMATRIXF {
     f32 m[6];
 };
+
+extern "C" {
+void flcalcBezier3(GSvec2* out, GSvec2 points[3], f32 t);
+void flcalcConvFlashMatrix(FLASHMATRIXF* out, FLASHMATRIX* in);
+void flcalcMulMatrixf(FLASHMATRIXF* out, FLASHMATRIXF* left, FLASHMATRIXF* right);
+void flcalcUnitMatrix2(FLASHMATRIX* out);
+void flcalcUnitMatrix(FLASHMATRIXF* out);
+void flcalcMatrixCopy(FLASHMATRIXF* out, FLASHMATRIXF* in);
+void flcalcMatrixTranslate(FLASHMATRIXF* out, FLASHMATRIXF* in, GSvec2* translation);
+void flcalcMatrixScale(FLASHMATRIXF* out, FLASHMATRIXF* in, GSvec2* scale);
+void flcalcMatrix(GSvec2* out, FLASHMATRIXF* matrix, GSvec2* point);
+}
 
 struct VecGradientStop {
     u8 ratio;

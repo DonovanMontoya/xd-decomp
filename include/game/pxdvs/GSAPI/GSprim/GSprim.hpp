@@ -1,6 +1,7 @@
 #ifndef GS_PRIM_HPP
 #define GS_PRIM_HPP
 #include <global.h>
+#include <game/pxdvs/GSAPI/GSmath/GSvec2.hpp>
 #include <dolphin/mtx.h>
 #include <libc/stddef.h>
 #include <game/pxdvs/GSAPI/GStexture/GStexture.hpp>
@@ -169,7 +170,6 @@ typedef char GSgfxLayerTevConstantOffset[offsetof(GSgfxLayer, tevConstant) == 0x
 typedef char GSgfxLayerBlendOffset[offsetof(GSgfxLayer, blendMode) == 0x1644 ? 1 : -1];
 typedef char GSgfxLayerShaderOffset[offsetof(GSgfxLayer, shader) == 0x1990 ? 1 : -1];
 typedef char GSgfxLayerMatrixStackOffset[offsetof(GSgfxLayer, matrixStack) == 0x19a0 ? 1 : -1];
-struct GSvec2 { f32 x, y; };
 struct GSprimPixel { s16 x, y; };
 struct GSprimData { GSgfxLayer* layer; s32 lineState; f32 lineWidth, textWidth; s32 quadOrder; u32 quadPrimitive; };
 typedef char GSprimDataSizeCheck[sizeof(GSprimData) == 0x18 ? 1 : -1];

@@ -4,11 +4,9 @@
 
 extern "C" {
 void GSmemFree(void *);
-void flcalcUnitMatrix2(FLASHMATRIX *);
 void GSprimSetBlendMode(s32);
 void GSgfxLayerSetActive(s32);
 void *GSgfxLayerFindByID(s32);
-s32 flcalcBlend(s32, s32, f32);
 s32 winSpriteGetLayerID(tagWINDOW_WORK *, tagSPRITE_WORK *);
 u32 GSgfxVideoGetVsyncRate();
 u32 timeGetLastFrameTime();
@@ -178,9 +176,6 @@ inline void flashDefineBits(FlashMenu* menu,FlashBitmap* bitmap,bool load) {
 }
 
 extern "C" {
-s32 flcalcBlendColor(s32,s32,f32);
-void flcalcConvFlashMatrix(FLASHMATRIXF*,FLASHMATRIX*);
-void flcalcMulMatrixf(FLASHMATRIXF*,FLASHMATRIXF*,FLASHMATRIXF*);
 void msgctrlSetValue(s32,u32);
 void GSmsgPrint2(s32,s32,s32,s32,u32);
 }
@@ -198,13 +193,6 @@ struct FlashTextStyle {
     u32 color;
 };
 struct FlashGlyph { s32 index, scale; };
-struct FlashPoint { f32 x, y; };
-extern "C" {
-void flcalcMatrixCopy(FLASHMATRIXF*, FLASHMATRIXF*);
-void flcalcMatrixScale(FLASHMATRIXF*, FLASHMATRIXF*, FlashPoint*);
-void flcalcMatrixTranslate(FLASHMATRIXF*, FLASHMATRIXF*, FlashPoint*);
-void flcalcUnitMatrix(FLASHMATRIXF*);
-}
 
 extern "C" void vectroGraphSetBlendMode(s32,s32);
 
@@ -447,7 +435,7 @@ void FlashMenu::DrawText(_DEFINETEXT* text, FLASHMATRIXF* parent, FLASHMATRIXF* 
     FLASHMATRIXF local;
     FLASHMATRIXF combined;
     FLASHCXFORM glyphColor;
-    FlashPoint scale, translation;
+    GSvec2 scale, translation;
     _DEFINEFONT2* font;
     FlashGlyph* glyph;
     s32 advance;
@@ -559,7 +547,7 @@ void FlashMenu::DrawSprite(_DEFINESPRITE* sprite,FLASHMATRIXF* parent,FLASHCXFOR
                 fill=inputOffset=outputOffset=0;
                 for(;fill<(s32)morph->fillCount;inputOffset+=0xD4,outputOffset+=0x80,fill++) {
                     FlashMorphFillStyle* source=(FlashMorphFillStyle*)((u8*)morph->fills+inputOffset);
-                    if(source->flags==0) { s32 color=flcalcBlendColor(source->colorA,source->colorB,ratio); ((VecFillStyle*)((u8*)drawShape.fills.styles+outputOffset))->color=color; }
+                    if(source->flags==0) { u32 color=flcalcBlendColor(source->colorA,source->colorB,ratio); ((VecFillStyle*)((u8*)drawShape.fills.styles+outputOffset))->color=color; }
                     else if(source->flags&16) {
                         u8* count=(u8*)source+0x3C;
                         u8* input=count;
