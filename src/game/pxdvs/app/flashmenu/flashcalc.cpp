@@ -154,4 +154,11 @@ extern "C" void flcalcMatrixScale(FlashMatrix *out, FlashMatrix *in, FlashPoint 
     concatLinearValues(out, in, point->unk0, 0.0f, 0.0f, point->unk4);
 }
 
-extern "C" void flcalcMatrix(FlashPoint*out,FlashMatrix*matrix,FlashPoint*point){FlashPoint p=*point;f32 x=matrix->unk0*p.unk0+matrix->unk8*p.unk4;f32 y=matrix->unk4*p.unk0+matrix->unkC*p.unk4;out->unk0=matrix->unk10+x;out->unk4=matrix->unk14+y;}
+extern "C" void flcalcMatrix(FlashPoint *out, FlashMatrix *matrix, FlashPoint *point) {
+    FlashPoint p = *point;
+    f32 m00 = matrix->unk0, m10 = matrix->unk4;
+    f32 m01 = matrix->unk8, m11 = matrix->unkC;
+
+    out->unk0 = matrix->unk10 + (m00 * p.unk0 + m01 * p.unk4);
+    out->unk4 = matrix->unk14 + (m10 * p.unk0 + m11 * p.unk4);
+}
