@@ -94,6 +94,7 @@ struct GsShapeObject {
     void FreeDisplayListShape();
     void MakeDisplayListShape();
     void MakeShapeGfxDL();
+    bool RefractTextureCoord(f32, f32, GSmtx*, GSmtx*, GSmtx*, f32);
     bool DeformTextureCoord(u32, bool, const f32*, const f32*, bool, const f32*);
     bool WaveTextureCoord(u32, f32, f32, const GSmtx*, bool);
     bool DeformVertexCoord(bool, const f32*, const f32*, bool, f32, f32, bool, f32, f32, bool, const f32*);

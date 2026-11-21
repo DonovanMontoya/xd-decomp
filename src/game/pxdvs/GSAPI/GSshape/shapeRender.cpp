@@ -104,7 +104,6 @@ void GScameraGetPerspective(u32,f32 *,f32 *,f32 *,f32 *);
 u16 GSgfxTokenMark();
 void MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(GsShapeObject *,GSmtx *,f32);
 bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShapeObject *,GSmtx *,GSmtx *,GSmtx *,f32,bool);
-bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(GsShapeObject *,f32,f32,GSmtx *,GSmtx *,GSmtx *,f32);
 void SetStateMode__13GsShapeObjectFP10GSgfxLayer(GsShapeObject *,GSgfxLayer *);
 void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(GsShapeObject *,GSgfxLayer *,GsShapeTexture *,GStexture *);
 void CallDisplayListShape__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject *,GSgfxLayer *,s16,u8);
@@ -510,7 +509,7 @@ void GsShapeRender::Render(s16 instanceId,GSgfxLayerID layerId)
                             GsShapePair scale=key->GetTextureScale(first,second,t,0);
                             offset.u*=scale.u;
                             offset.v*=scale.v;
-                            RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(object,offset.u,offset.v,&key->transformMatrix,&key->shapeMatrix,view,depth);
+                            object->RefractTextureCoord(offset.u, offset.v, &key->transformMatrix, &key->shapeMatrix, view, depth);
                         }
                     }
                 }

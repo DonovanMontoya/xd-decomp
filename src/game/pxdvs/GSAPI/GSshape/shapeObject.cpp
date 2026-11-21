@@ -750,87 +750,142 @@ extern "C" bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShap
 #pragma dont_inline off
 
 extern "C" f32* GSgfxMatrixGetPtr(s32);
-static inline void refractCopy(Vec* out,const Vec* in) {f32 x=in->x,y=in->y,z=in->z;out->x=x;out->y=y;out->z=z;}
-extern "C" bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(GsShapeObject *self,f32 offsetU,f32 offsetV,GSmtx *first,GSmtx *second,GSmtx *third,f32) {
- Mtx transform,projectionMatrix;f32 *sourceProjection=GSgfxMatrixGetPtr(4);
- f32 projection[7];
- f32 viewport[6];
- f32 screenWidth,screenHeight;
- projection[0]=0.0f;projection[1]=sourceProjection[0];projection[2]=sourceProjection[2];projection[3]=sourceProjection[5];projection[4]=sourceProjection[6];projection[5]=sourceProjection[10];projection[6]=sourceProjection[11];
- viewport[0]=0.0f;viewport[1]=0.0f;viewport[2]=640.0f;viewport[3]=480.0f;viewport[4]=0.0f;viewport[5]=1.0f;
- screenWidth=viewport[2];screenHeight=viewport[3];
- u32 copySize=self->entry->vertexCount*sizeof(GsShapePair);
- for(s32 texture=0;texture<self->entry->textureCount;++texture) {
-  const Vec *normalGrid=self->entry->normals;const Vec *positions=self->entry->vertices;
-  if(!normalGrid)continue;GsShapePair *out=(GsShapePair*)self->vertexArrays[texture+2];if(!out)continue;
-  if(texture==0){PSMTXCopy(second->matrix,transform);PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);memcpy(projectionMatrix,transform,sizeof(Mtx));}
-  else {PSMTXCopy(second->matrix,transform);memcpy(out,self->entry->textureCoords,copySize);}
-  u16 segmentsU=self->entry->segmentsU,segmentsV=self->entry->segmentsV;int columns=segmentsU+1,rows=segmentsV+1;
-  if(offsetU>1.0f)offsetU-=(f32)(int)offsetU;else if(offsetU<0.0f)offsetU-=(f32)((int)offsetU-1);
-  if(offsetV>1.0f)offsetV-=(f32)(int)offsetV;else if(offsetV<0.0f)offsetV-=(f32)((int)offsetV-1);
-  int shiftU=(int)(offsetU*(f32)segmentsU)%segmentsU,shiftV=(int)(offsetV*(f32)segmentsV)%segmentsV;
-  f32 fractionU=(f32)segmentsU*(offsetU-(f32)shiftU/(f32)segmentsU),fractionV=(f32)segmentsV*(offsetV-(f32)shiftV/(f32)segmentsV);
-  fractionU-=(f32)(int)fractionU;fractionV-=(f32)(int)fractionV;
-  f32 diagonalWeight=fractionU*fractionV,verticalWeight=(1.0f-fractionU)*fractionV,horizontalWeight=fractionU*(1.0f-fractionV),originWeight=(1.0f-fractionU)*(1.0f-fractionV);
-  int rowOffset=0;
-  for(int row=0;row<rows;++row,rowOffset+=columns) {
-   int index=rowOffset;
-   for(int column=0;column<columns;++column,++index) {
-    int sampleU=(column+shiftU)%self->entry->segmentsU;int sampleV=(row+shiftV)%self->entry->segmentsV;
-    if(sampleU==0&&column==columns-1)sampleU=self->entry->segmentsU;
-    if(sampleV==0&&row==rows-1)sampleV=self->entry->segmentsV;
-    int sample=sampleU+sampleV*columns;Vec value;
-    if(sampleU==columns-1) {
-     if(sampleV==rows-1) {value.x=normalGrid[sample].x;value.y=normalGrid[sample].y;value.z=normalGrid[sample].z;}
-     else {
-      int diagonal=sample+columns+1,vertical=sample+columns,horizontal=sample-1;
-      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
-      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
-      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
-      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
-      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
-      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
-      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
-      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
-
-     }
-    } else if(sampleV==rows-1) {
-      int diagonal=sample-columns+1,vertical=sample-columns,horizontal=sample+1;
-      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
-      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
-      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
-      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
-      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
-      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
-      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
-      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
-
-    } else {
-      int diagonal=sample+columns+1,vertical=sample+columns,horizontal=sample+1;
-      Vec a,b,c,d,sum1,sum2;Vec scaleA,scaleB,scaleC,scaleD,add1,add2,add3;
-      PSVECScale(&normalGrid[diagonal],&scaleA,diagonalWeight);refractCopy(&a,&scaleA);
-      PSVECScale(&normalGrid[vertical],&scaleB,verticalWeight);refractCopy(&b,&scaleB);
-      PSVECScale(&normalGrid[horizontal],&scaleC,horizontalWeight);refractCopy(&c,&scaleC);
-      PSVECScale(&normalGrid[sample],&scaleD,originWeight);refractCopy(&d,&scaleD);
-      PSVECAdd(&d,&c,&add1);refractCopy(&sum1,&add1);
-      PSVECAdd(&sum1,&b,&add2);refractCopy(&sum2,&add2);
-      PSVECAdd(&sum2,&a,&add3);refractCopy(&value,&add3);
-
+struct ShapeVector : Vec {
+    ShapeVector() {}
+    ShapeVector(const Vec& v) { x = v.x; y = v.y; z = v.z; }
+    ShapeVector& operator=(const ShapeVector& v) {
+        x = v.x;
+        y = v.y;
+        z = v.z;
+        return *this;
     }
-    PSMTXMultVecSR(transform,&value,&value);
-    if(texture==0) {
-     f32 x,y,z;GXProject(positions[index].x,positions[index].y,positions[index].z,projectionMatrix,projection,viewport,&x,&y,&z);
-     if((f32)__fabs(value.x)>0.00001f||(f32)__fabs(value.y)>0.00001f||(f32)__fabs(value.z)>0.00001f) {
-      PSVECNormalize(&value,&value);
-      if(value.x<=0.0f)x=x*(1.0f+value.x);else x=value.x*(screenWidth-x)+x;
-      if(value.y<=0.0f)y+=-value.y*(screenHeight-y);else y*=1.0f-value.y;
-     }
-     out[index].u=x/screenWidth;out[index].v=y/screenHeight;
-    }else {out[index].u+=value.x;out[index].v+=value.y;}
-   }
-  }
- }
- return true;
+};
+
+static inline ShapeVector operator*(const Vec& v, f32 weight) {
+    Vec scaled;
+    PSVECScale(&v, &scaled, weight);
+    return ShapeVector(scaled);
+}
+
+static inline ShapeVector operator+(const Vec& left, const Vec& right) {
+    Vec sum;
+    PSVECAdd(&left, &right, &sum);
+    return ShapeVector(sum);
+}
+
+bool GsShapeObject::RefractTextureCoord(f32 offsetU, f32 offsetV, GSmtx* first, GSmtx* second,
+                                       GSmtx* third, f32) {
+    int texture, column, row, columns, rows, shiftU, sample;
+    Mtx transform, projectionMatrix;
+    f32* sourceProjection = GSgfxMatrixGetPtr(4);
+    f32 projection[7];
+    f32 viewport[6];
+    f32 screenWidth, screenHeight;
+    projection[0] = 0.0f;
+    projection[1] = sourceProjection[0];
+    projection[2] = sourceProjection[2];
+    projection[3] = sourceProjection[5];
+    projection[4] = sourceProjection[6];
+    projection[5] = sourceProjection[10];
+    projection[6] = sourceProjection[11];
+    viewport[0] = 0.0f;
+    viewport[1] = 0.0f;
+    viewport[2] = 640.0f;
+    viewport[3] = 480.0f;
+    viewport[4] = 0.0f;
+    viewport[5] = 1.0f;
+    screenWidth = viewport[2];
+    screenHeight = viewport[3];
+    u32 copySize = entry->vertexCount * sizeof(GsShapePair);
+
+    for (texture = 0; texture < entry->textureCount; ++texture) {
+        struct {
+            const Vec* positions;
+            const Vec* normals;
+            GsShapePair* coords;
+        } arrays;
+        arrays.positions = entry->vertices;
+        arrays.normals = entry->normals;
+        if (!arrays.normals) continue;
+        if (!vertexArrays[texture + 2]) continue;
+        arrays.coords = (GsShapePair*)vertexArrays[texture + 2];
+        if (texture == 0) {
+            PSMTXCopy(second->matrix, transform);
+            PSMTXConcat(first->matrix, transform, transform);
+            PSMTXConcat(third->matrix, transform, transform);
+            memcpy(projectionMatrix, transform, sizeof(Mtx));
+        } else {
+            PSMTXCopy(second->matrix, transform);
+            memcpy(arrays.coords, entry->textureCoords, copySize);
+        }
+
+        u16 segmentsU = entry->segmentsU, segmentsV = entry->segmentsV;
+        columns = segmentsU + 1;
+        rows = segmentsV + 1;
+        if (offsetU > 1.0f) offsetU -= (f32)(int)offsetU;
+        else if (offsetU < 0.0f) offsetU -= (f32)((int)offsetU - 1);
+        if (offsetV > 1.0f) offsetV -= (f32)(int)offsetV;
+        else if (offsetV < 0.0f) offsetV -= (f32)((int)offsetV - 1);
+        shiftU = (int)(offsetU * (f32)segmentsU) % segmentsU;
+        int shiftV = (int)(offsetV * (f32)segmentsV) % segmentsV;
+        f32 fractionU = (f32)segmentsU * (offsetU - (f32)shiftU / (f32)segmentsU);
+        f32 fractionV = (f32)segmentsV * (offsetV - (f32)shiftV / (f32)segmentsV);
+        fractionU -= (f32)(int)fractionU;
+        fractionV -= (f32)(int)fractionV;
+        f32 diagonalWeight = fractionU * fractionV;
+        f32 verticalWeight = (1.0f - fractionU) * fractionV;
+        f32 horizontalWeight = fractionU * (1.0f - fractionV);
+        f32 originWeight = (1.0f - fractionU) * (1.0f - fractionV);
+        for (row = 0; row < rows; ++row) {
+            for (column = 0; column < columns; ++column) {
+                int index = row * columns + column;
+                int sampleU = (column + shiftU) % entry->segmentsU;
+                int sampleV = (row + shiftV) % entry->segmentsV;
+                if (sampleU == 0 && column == columns - 1) sampleU = entry->segmentsU;
+                if (sampleV == 0 && row == rows - 1) sampleV = entry->segmentsV;
+                sample = sampleU + sampleV * columns;
+                ShapeVector value;
+                if (sampleU == columns - 1) {
+                    if (sampleV == rows - 1) {
+                        value.x = arrays.normals[sample].x;
+                        value.y = arrays.normals[sample].y;
+                        value.z = arrays.normals[sample].z;
+                    } else {
+                        int diagonal = sample + columns + 1, vertical = sample + columns, horizontal = sample - 1;
+                        value = arrays.normals[sample] * originWeight + arrays.normals[horizontal] * horizontalWeight
+                              + arrays.normals[vertical] * verticalWeight + arrays.normals[diagonal] * diagonalWeight;
+                    }
+                } else if (sampleV == rows - 1) {
+                    int diagonal = sample - columns + 1, vertical = sample - columns, horizontal = sample + 1;
+                    value = arrays.normals[sample] * originWeight + arrays.normals[horizontal] * horizontalWeight
+                          + arrays.normals[vertical] * verticalWeight + arrays.normals[diagonal] * diagonalWeight;
+                } else {
+                    int diagonal = sample + columns + 1, vertical = sample + columns, horizontal = sample + 1;
+                    value = arrays.normals[sample] * originWeight + arrays.normals[horizontal] * horizontalWeight
+                          + arrays.normals[vertical] * verticalWeight + arrays.normals[diagonal] * diagonalWeight;
+                }
+                PSMTXMultVecSR(transform, &value, &value);
+                const Vec* position = &arrays.positions[index];
+                if (texture == 0) {
+                    f32 x, y, z;
+                    GXProject(position->x, position->y, position->z, projectionMatrix, projection, viewport, &x, &y, &z);
+                    if ((f32)__fabs(value.x) > 0.00001f || (f32)__fabs(value.y) > 0.00001f || (f32)__fabs(value.z) > 0.00001f) {
+                        PSVECNormalize(&value, &value);
+                        if (value.x <= 0.0f) x = x * (1.0f + value.x);
+                        else x = value.x * (screenWidth - x) + x;
+                        if (value.y <= 0.0f) y += -value.y * (screenHeight - y);
+                        else y *= 1.0f - value.y;
+                    }
+                    arrays.coords[index].u = x / screenWidth;
+                    arrays.coords[index].v = y / screenHeight;
+                } else {
+                    arrays.coords[index].u += value.x;
+                    arrays.coords[index].v += value.y;
+                }
+            }
+        }
+    }
+    return true;
 }
 
 void GsShapeObject::MakeDisplayListShape() {
