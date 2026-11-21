@@ -2877,7 +2877,7 @@ void cBingo::SetupSheet(u32 n) {
     menuFaceLoad(0, loadPkmFace, &idx);
 }
 
-void* cBingo::loadPkmFace(void* arg) {
+inline void* cBingo::loadPkmFace(void* arg) {
     u32* counter = (u32*)arg;
     BingoPokemon* result = 0;
     if (*counter < 14) {
