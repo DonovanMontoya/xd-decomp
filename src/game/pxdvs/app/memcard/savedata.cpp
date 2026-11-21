@@ -1,5 +1,6 @@
 #include <global.h>
 #include <game/pxdvs/app/hero/hero.hpp>
+#include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 
 extern "C" {
 u32 savedataGetStatus(void*,u16);
@@ -149,12 +150,12 @@ extern "C" void savedataCreate(void* save,const char16* name) {
 }
 
 extern "C" void savedataInit(void* save) {
-    u8 game[0x88];
+    GamedataSaveRecord game;
     u8 rules[0x364];
-    memcpy(game,(void*)savedataGetStatus(save,1),sizeof(game));
+    memcpy(&game,(void*)savedataGetStatus(save,1),sizeof(game));
     memcpy(rules,(void*)savedataGetStatus(save,14),sizeof(rules));
     memset((void*)savedataGetStatus(0,0),0,0x27FD0);
-    memcpy((void*)savedataGetStatus(save,1),game,sizeof(game));
+    memcpy((void*)savedataGetStatus(save,1),&game,sizeof(game));
     memcpy((void*)savedataGetStatus(save,14),rules,sizeof(rules));
     gamedataInit((void*)savedataGetStatus(save,1));
     heroInit((void*)savedataGetStatus(save,2));

@@ -1,7 +1,7 @@
 #pragma force_active on
 #include <global.h>
 
-struct GamedataAttest { u8 ver; u8 gen; u8 area; u8 langarea; };
+#include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 extern "C" {
 void gamedataAttestBiosSetLangareaId(GamedataAttest* p, s8 v) { if (p) p->langarea = v; }
 void gamedataAttestBiosSetAreaId(GamedataAttest* p, s8 v) { if (p) p->area = v; }

@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 #include <game/pxdvs/app/memcard/memcardPrivate.hpp>
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
@@ -209,7 +210,7 @@ void _memcardStoreSaveData_multi(void* arg) {
     u8* dst5;
     void* src;
     u32 size;
-    MEMCARD_STORE(1, 0x18, 0x88);
+    MEMCARD_STORE(1, 0x18, sizeof(GamedataSaveRecord));
     MEMCARD_STORE(2, 0x1A, 0x978);
     dst = _memcardGetMultiSaveDataToSTRUCT(arg, 3);
     src = savedataGetStatus(_memcardStatusPtr->saveData, 3);
@@ -363,7 +364,7 @@ static s32 _memcardExamineDataPack(void) {
         sum += pack[6];
         sum += pack[7];
         u8 checked;
-        if (*(u16*)(pack + 0x20) == 0x88) {
+        if (*(u16*)(pack + 0x20) == sizeof(GamedataSaveRecord)) {
             if (sum == gamedatasaveGetStatus(_memcardGetMultiSaveDataToSTRUCT(data, 1), 0xD)) {
                 checked = 1;
             } else {
@@ -868,13 +869,15 @@ s32 fn_801CC508() {
     return 0x12;
 }
 }
-extern "C" void *gamedatasaveBiosGetPtr(void *);
-extern "C" u64 gamedatasaveBiosGetMemcardID(void *);
 
 inline u64 memcardCurrentID(void *pack)
 {
-    if(pack==0) return gamedatasaveBiosGetMemcardID(gamedatasaveBiosGetPtr(savedataGetStatus(pack,1)));
-    return gamedatasaveBiosGetMemcardID((u8 *)_memcardGetMultiSaveDataToSTRUCT(pack,1)+8);
+    if (pack == 0) {
+        return gamedatasaveBiosGetMemcardID(
+            gamedatasaveBiosGetPtr((GamedataSaveRecord*)savedataGetStatus(pack, 1)));
+    }
+    return gamedatasaveBiosGetMemcardID(
+        &((GamedataSaveRecord*)_memcardGetMultiSaveDataToSTRUCT(pack, 1))->payload);
 }
 
 inline void decryptMemcardHeader(void *buffer)
@@ -1001,7 +1004,7 @@ s32 CARDMountAsync(s32,void*,MemcardCallback,MemcardCallback);s32 CARDProbeEx(s3
 s32 CARDReadAsync(MemcardFileInfo*,void*,s32,s32,MemcardCallback);s32 CARDSetAttributesAsync(s32,s32,u8,MemcardCallback);s32 CARDSetStatusAsync(s32,s32,MemcardCardStat*,MemcardCallback);s32 CARDUnmount(s32);
 s32 CARDWriteAsync(MemcardFileInfo*,void*,s32,s32,MemcardCallback);
 u8 GSgfxResetDisable();u8 GSgfxResetRestore(u8);void PKJB_ReturnTitle(u8);void floorMemoryCardSaveCallback();
-void gamedatasaveBiosSetMemcardID(void*,u64);s32 gbaCommandChangePokemonEnd(s32);u8 gbaCommandIsConnected(s32);
+s32 gbaCommandChangePokemonEnd(s32);u8 gbaCommandIsConnected(s32);
 }
 #pragma push
 #pragma dont_inline on
@@ -1146,9 +1149,11 @@ static inline s32 _memcardBeginHeaderRead(void)
 static inline void _memcardSetSaveId(void* data, u64 serial)
 {
     if (data == 0) {
-        gamedatasaveBiosSetMemcardID(gamedatasaveBiosGetPtr(savedataGetStatus(data, 1)), serial);
+        gamedatasaveBiosSetMemcardID(
+            gamedatasaveBiosGetPtr((GamedataSaveRecord*)savedataGetStatus(data, 1)), serial);
     } else {
-        gamedatasaveBiosSetMemcardID((void*)((u8*)_memcardGetMultiSaveDataToSTRUCT(data, 1) + 8), serial);
+        gamedatasaveBiosSetMemcardID(
+            &((GamedataSaveRecord*)_memcardGetMultiSaveDataToSTRUCT(data, 1))->payload, serial);
     }
 }
 
@@ -1942,12 +1947,6 @@ void* __copy(void*,const void*,u32);
 }
 
 template <unsigned N> struct MemcardWords { u32 words[N]; };
-struct MemcardSaveBios {
-    u32 header;
-    f64 records[7];
-    u16 flags;
-    u32 values[16];
-};
 struct MemcardSavePokemon : Pokemon {
     MemcardSavePokemon& operator=(const MemcardSavePokemon& other) {
         memcpy(this,&other,sizeof(Pokemon));
@@ -1973,7 +1972,6 @@ struct MemcardSavePartyGroup {
 #pragma push
 #pragma peephole off
 #pragma opt_loop_invariants off
-typedef char MemcardBiosSize[sizeof(MemcardSaveBios)==0x88?1:-1];
 typedef char MemcardBoxSize[sizeof(MemcardSaveBox)==0x170C?1:-1];
 typedef char MemcardPartySize[sizeof(MemcardSaveParty)==0xCC?1:-1];
 typedef char MemcardPartyGroupSize[sizeof(MemcardSavePartyGroup)==0x3D8?1:-1];
@@ -2001,7 +1999,7 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
         *(u16*)(data+fourth)+=_memcard_encrypt_key[3];
         advanceMemcardKey();
     }
-    header[0x18/2]=0x88;
+    header[0x18/2] = sizeof(GamedataSaveRecord);
     header[0x1A/2]=0x978;
     header[0x1C/2]=0xBC50;
     header[0x80/2]=0;
@@ -2023,7 +2021,7 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
     header[0x38/2]=0;
     order[15]=-1;
     header[0x3A/2]=0;
-    *(MemcardSaveBios*)(data+0xA0)=*(MemcardSaveBios*)savedataGetStatus(0,1);
+    *(GamedataSaveRecord*)(data + 0xA0) = *(const GamedataSaveRecord*)savedataGetStatus(0, 1);
     u32 offset=0xA0;
     s16 count=15;
     while(count!=0) {
