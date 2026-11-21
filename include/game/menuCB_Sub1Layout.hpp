@@ -1,6 +1,6 @@
 #ifndef GAME_MENUCB_SUB1_LAYOUT_HPP
 #define GAME_MENUCB_SUB1_LAYOUT_HPP
-#include <dolphin/types.h>
+#include <game/menuCBRule.hpp>
 
 // Partial views: each named field is tied to an original load/store width.
 typedef struct MenuSubWindow {
@@ -35,13 +35,12 @@ typedef struct MenuSubSprite {
     f32 unk68;
     f32 unk6C;
 } MenuSubSprite;
-typedef struct MenuSubRule { s16 unk0; s16 unk2; s16 unk4; u8 reserved6[2]; s32 unk8; u8 reservedC[8]; s16 unk14; s16 unk16; u8 reserved18[2]; s16 unk1A; s16 unk1C; u8 reserved1E[0x72]; } MenuSubRule;
 typedef struct MenuSubItem { u8 reserved0[6]; s16 unk6; s16 unk8; s16 unkA; s16 unkC; } MenuSubItem;
 typedef struct MenuSubState {
     u8 reserved0[0x8];
     s32 unk8;
     u8 reservedC[0x9C6C];
-    MenuSubRule * unk9C78;
+    MenuCBRule * unk9C78;
     u8 reserved9C7C[0x8];
     u8 unk9C84;
     u8 unk9C85;

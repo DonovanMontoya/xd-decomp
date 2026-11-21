@@ -6,7 +6,6 @@ void *memcpy(void *, const void *, u32);
 void *memset(void *, int, u32);
 int memcmp(const void *, const void *, u32);
 u16 *GSmsgGetGSchar(s32);
-MenuCBRule *menuCBBios_CurrentRule(void);
 u8 menuCBBios_CurrentlyWorkingToolBattle(void);
 Pokemon *heroBiosGetPokemonPtr(Hero *, u16);
 bool itemDataCheckValid(u16);
@@ -55,8 +54,6 @@ u8 menuCBRule_CheckRegulationAll(Hero *, MenuCBRule *);
 u8 menuCBRule_CheckPokemonEventFlag(Pokemon *);
 s16 menuCBRule_ParticipationPokemonMax2(void);
 u16 menuCBRule_RegulationItemID(s32);
-MenuCBRule *menuCBRule_ConstantRule2(s32);
-MenuCBRule *menuCBRule_ConstantRule(s32);
 }
 static u8 _menuCBRule_IsTamagoPokemon(Pokemon *);
 extern "C" {
@@ -736,14 +733,14 @@ MenuCBRule *menuCBRule_ConstantRule(s32 idx)
     return 0;
 }
 
-void menuCBRule_Copy(void *dst, const void *src)
+void menuCBRule_Copy(MenuCBRule *dst, const MenuCBRule *src)
 {
-    memcpy(dst, src, 0x90);
+    memcpy(dst, src, sizeof(MenuCBRule));
 }
 
-bool menuCBRule_IsEquals(const void *a, const void *b)
+bool menuCBRule_IsEquals(const MenuCBRule *a, const MenuCBRule *b)
 {
-    return memcmp(a, b, 0x90) == 0;
+    return memcmp(a, b, sizeof(MenuCBRule)) == 0;
 }
 
 }

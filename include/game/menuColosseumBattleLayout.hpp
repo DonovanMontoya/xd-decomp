@@ -1,15 +1,9 @@
 #ifndef GAME_MENUCOLOSSEUMBATTLE_LAYOUT_HPP
 #define GAME_MENUCOLOSSEUMBATTLE_LAYOUT_HPP
-#include <dolphin/types.h>
+#include <game/menuCBRule.hpp>
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
-
-struct CBRule {
-    u8 reserved0[0x1E];
-    u16 name[21];               // 0x1E
-    u8 reserved48[0x90 - 0x48];
-};
 
 struct _MENUCBTRAINER {
     u8 reserved0[4];
@@ -29,8 +23,8 @@ struct _MENUCBWORK {
     s32 unk14;                  // 0x14
     _MENUCBTRAINER trainers[4];     // 0x18
     _MENUCBTRAINER orgTrainers[4];  // 0x4C98
-    CBRule rules[6];            // 0x9918
-    CBRule* unk9C78;            // 0x9C78
+    MenuCBRule rules[6];            // 0x9918
+    MenuCBRule* unk9C78;            // 0x9C78
     u8 reserved9C7C[4];
     s32 unk9C80;                // 0x9C80
     u8 reserved9C84[0xA65C - 0x9C84];

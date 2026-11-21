@@ -111,7 +111,7 @@ void menuCBRULE_EditNameDisp(MenuSubWindow *arg0, MenuSubSprite *arg1, s32 arg2)
 void menuCB_GCEntry_PokemonStatusDisp(void);
 s32 heroItemCheckAddItemDataId(void *,u32); void heroItemAddItemDataId(void *,u32,s32,s32);
 s32 heroItemDecItemDataId(void *,u32,s32,u8); u32 pokemonDoItemSoubi(MenuSubPokemon *,u32,s32);
-MenuSubRule *menuCBBios_CurrentRule(void); u32 menuPocket2Call(s32,s32,void *); u32 menuPocket2GetLastSlotID(void);
+u32 menuPocket2Call(s32,s32,void *); u32 menuPocket2GetLastSlotID(void);
 void menuCBRule_ErrorFlagSetItemGetTiming(void *,MenuSubPokemon *,u32);
 s8 menuSubOpenYesNo(s32,s32,s32,s32); u16 pokemonBiosGetMaxHp(MenuSubPokemon *);
 void menuCB_SetSprite(MenuSubSprite *,s32); s32 menuSpriteBiosGetPtr(s32); u16 toolentryTaisenGetBattlePlayerID(s32);

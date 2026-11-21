@@ -1,6 +1,6 @@
 #ifndef GAME_MENUCB_RULE_LAYOUT_HPP
 #define GAME_MENUCB_RULE_LAYOUT_HPP
-#include <dolphin/types.h>
+#include <game/menuCBRule.hpp>
 
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
@@ -32,33 +32,6 @@ typedef struct MenuCBRuleFlagEntry {
     MenuCBRuleFlags1 f1;
     u8 reserved2[2];
 } MenuCBRuleFlagEntry;
-
-typedef struct MenuCBRule {
-    s16 unk0;
-    s16 unk2;
-    s16 unk4;
-    s16 unk6;
-    s32 unk8;
-    u8 unkC;
-    u8 unkD;
-    u8 unkE;
-    u8 unkF;
-    u8 unk10;
-    u8 unk11;
-    u8 unk12;
-    u8 unk13;
-    s16 unk14;
-    s16 unk16;
-    u8 unk18;
-    u8 unk19;
-    s16 unk1A;
-    s16 unk1C;
-    u16 name[21];
-    u8 unk48[8];
-    u16 unk50;
-    u8 itemFlags[60];
-    u16 unk8E;
-} MenuCBRule;
 
 typedef struct MenuCBRuleState {
     u8 reserved0[0x8];

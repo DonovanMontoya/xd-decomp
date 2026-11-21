@@ -15,9 +15,6 @@ void fightTrainerCreateFightTrainerDataIdToHero(u16, s32, Hero *, s32);
 void pokemonAllKaihuku(Pokemon *);
 u8 menuCBRule_IsBlankPokemon(Pokemon *);
 s16 menuCBRule_ParticipationPokemonMax(void);
-MenuCBBiosRule *menuCBRule_ConstantRule(s32);
-MenuCBBiosRule *menuCBRule_ConstantRule2(s32);
-MenuCBBiosRule *menuCB_OreRule(void);
 void menuCB_InitMenu(s32);
 _TOOL_SAVEDATA *savedataGetStatus(s32, s32);
 
@@ -36,7 +33,6 @@ s32 menuCBBios_PortIDtoControlerID(s32);
 s32 menuCBBios_ControlerIDtoPortID(s32);
 u16 menuCBTrainerBios_GetPlayerID(MenuCBBiosTrainer *);
 s32 menuCBBios_CurrentRuleType(void);
-MenuCBBiosRule *menuCBBios_GetRule(s32);
 u8 menuCBBios_ContextIsLocked(void);
 void menuCBBios_UnlockContext(void);
 void menuCBBios_InitTrainerFromDataID(MenuCBBiosTrainer *, u16, s32);
@@ -310,9 +306,9 @@ s32 menuCBBios_CurrentRuleType(void)
     return _CB.unkC;
 }
 
-MenuCBBiosRule *menuCBBios_CurrentRule(void)
+MenuCBRule *menuCBBios_CurrentRule(void)
 {
-    MenuCBBiosRule *rule = menuCB_OreRule();
+    MenuCBRule *rule = menuCB_OreRule();
     if (rule != 0) {
         return rule;
     }
@@ -333,7 +329,7 @@ MenuCBBiosRule *menuCBBios_CurrentRule(void)
     return menuCBBios_GetRule(menuCBBios_CurrentRuleType());
 }
 
-MenuCBBiosRule *menuCBBios_GetRule(s32 idx)
+MenuCBRule *menuCBBios_GetRule(s32 idx)
 {
     if (idx < 0 || (u32)idx >= 6) {
         return 0;
@@ -501,8 +497,8 @@ static void menuCBBios_InitContextAtFirst(_MENUCBWORK *work, _TOOL_SAVEDATA *sav
     u32 i;
     menuCBBios_UnlockContext();
     memset(work, 0, sizeof(_MENUCBWORK));
-    MenuCBBiosRule *r;
-    MenuCBBiosRule *d;
+    MenuCBRule *r;
+    MenuCBRule *d;
     r = menuCBRule_ConstantRule(0);
     d = &work->rules[0];
     *d = *r;

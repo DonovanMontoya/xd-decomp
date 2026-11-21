@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 static MenuDBCursor _ruleCursol;
-static MenuDBRule _ruleTempBuff_DB;
+static MenuCBRule _ruleTempBuff_DB;
 static MenuDBFieldAnime field_anime;
 static const s32 Port_Icon_Char[2] = {0x3C8, 0x3C9};
 static s16 tool_gba_x_anime[4] = { -1, 0, 1, 0 };
@@ -6302,7 +6302,7 @@ void menuTool_Rule00_Ctrl(MenuDBWindow* window) {
                 }
                 block_17:
                 if ((s32) (windowGetKeyInfo()->unk4 & 0x20) != 0) {
-                    for (var_r5 = 0; var_r5 < 0x3E; var_r5++) {
+                    for (var_r5 = 0; var_r5 < sizeof(_ruleTempBuff_DB.itemFlags); var_r5++) {
                         _CB.unk9C78->itemFlags[var_r5] = _ruleTempBuff_DB.itemFlags[var_r5];
                     }
                     _CB.unkB118 = 1;
@@ -6313,7 +6313,7 @@ void menuTool_Rule00_Ctrl(MenuDBWindow* window) {
                     return;
                 }
                 if ((s32) (windowGetKeyInfo()->unk4 & 0x10) != 0) {
-                    if ((s32) (_CB.unkB028 + _CB.unkB02C) >= 0x3E) {
+                    if ((s32) (_CB.unkB028 + _CB.unkB02C) >= (s32)sizeof(_ruleTempBuff_DB.itemFlags)) {
                         _CB.unkB118 = 1;
                         _CB.unkB02C = 0;
                         _CB.unkB028 = 0;
@@ -6324,7 +6324,7 @@ void menuTool_Rule00_Ctrl(MenuDBWindow* window) {
                     }
                     menuCB_SE_Play(0x11);
                     rowFlags = (u8*) _CB.unk9C78;
-                    rowFlags += _CB.unkB02C + offsetof(MenuDBRule, itemFlags);
+                    rowFlags += _CB.unkB02C + offsetof(MenuCBRule, itemFlags);
                     *(_CB.unkB028 + rowFlags) ^= 1;
                     goto block_27;
                 }
