@@ -1020,7 +1020,7 @@ extern "C" void SetStateMode__13GsShapeObjectFP10GSgfxLayer(GsShapeObject* self,
     layer->savedDirty |= 2;
     type = self->entry->shapeType;
     if (type == 10 && self->entry->textureCount >= 2) {
-        u8 blend = *((u8*)self->entry->textures[1] + 0xa);
+        u8 blend = self->entry->textures[1]->blend;
         switch (blend) {
         case 2:
         case 4:
@@ -1124,14 +1124,14 @@ static inline void shapeKAlphaSelect(GSgfxLayer *layer,u8 stage,GXTevKAlphaSel v
  layer->konstAlphas[stage]=value;layer->konstAlphaDirty|=1<<stage;layer->dirty|=0x10;layer->savedKonstAlphaDirty|=1<<stage;layer->savedDirty|=0x10;
 }
 #pragma dont_inline on
-extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(GsShapeObject* self, GSgfxLayer* layer, GsShapeTexture* textures, GStexture* refract) {
+void GsShapeObject::SetStateTexture(GSgfxLayer* layer, GsShapeTexture* textures, GStexture* refract) {
     GXTevKColorSel colorRegisters[4] = {GX_TEV_KCSEL_K0, GX_TEV_KCSEL_K1, GX_TEV_KCSEL_K2, GX_TEV_KCSEL_K3};
     GXTevKAlphaSel alphaRegisters[4] = {GX_TEV_KASEL_K0_A, GX_TEV_KASEL_K1_A, GX_TEV_KASEL_K2_A, GX_TEV_KASEL_K3_A};
     GXTevKAlphaSel mixAlpha = alphaRegisters[1];
-    u8 stage = 0, textureIndex = 0, count = self->entry->textureCount;
+    u8 stage = 0, textureIndex = 0, count = entry->textureCount;
     while (textureIndex < count) {
         u32 index = textureIndex;
-        ShapeTextureBinding* binding = (ShapeTextureBinding*)self->entry->textures[textureIndex];
+        GsShapeTextureMapping* binding = entry->textures[textureIndex];
         GsShapeTexture* texture = &textures[binding->index];
         int mipFilter = 1;
         if (binding->minFilter) mipFilter = 2;
@@ -1144,7 +1144,7 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
         GStextureSetWrap(texture->texture, binding->wrapS, binding->wrapT);
         GStexture* selected = texture->texture;
         if (textureIndex == 0 && refract) selected = refract;
-        if (self->entry->shapeType == 10 && textureIndex == 0 && self->entry->textureCount >= 2) {
+        if (entry->shapeType == 10 && textureIndex == 0 && entry->textureCount >= 2) {
             layer->texSelect(index, selected);
             layer->tunitMapping(stage, index, index, 0);
             layer->tunitColorArg(stage, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO);

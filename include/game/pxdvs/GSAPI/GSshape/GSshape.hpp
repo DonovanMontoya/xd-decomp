@@ -68,10 +68,30 @@ struct GsKeyObject {
     tagGScol4ub GetTextureColor(const tagGsFilePrimKeyFrame*, const tagGsFilePrimKeyFrame*, f32, u32) const;
     tagGScol4ub GetTextureColorLow(const tagGsFilePrimKeyFrame*, const tagGsFilePrimKeyFrame*, f32, u32) const;
 };
+struct GStexture;
+struct GSgfxLayer;
+
+struct GsShapeTextureMapping {
+    u32 reserved00;
+    u16 index;
+    u8 minFilter, magFilter, wrapS, wrapT, blend, scaleBeforeOffset;
+    f32 minU, maxU, minV, maxV;
+};
+
+struct GsShapeFileTexture {
+    u8 reserved00[0xE], colorRange, reserved0F[5];
+    u32 imageOffset;
+};
+
+struct GsShapeTexture {
+    GsShapeFileTexture* entry;
+    GStexture* texture;
+};
+
 struct tagGsFilePrimObjectEntry {
     u8 reserved00[4]; u8 dynamic, reserved05[3], shapeType, colorMode; u16 segmentsU, segmentsV, vertexCount;
     Vec* vertices; tagGScol4ub* colors; GsShapePair* textureCoords; Vec* normals;
-    u8 reserved20[6]; u16 textureCount; void* textures[4];
+    u8 reserved20[6]; u16 textureCount; GsShapeTextureMapping* textures[4];
     u16 geometryType, reserved3A; f32 width, height;
     u8 reserved44[0x18]; f32 shearAngle; f32 angleV, stripWidthStart, stripWidthEnd;
     u8 reserved6C, transformEnabled, rotation1Enabled, rotation2Enabled;
@@ -102,13 +122,13 @@ struct GsShapeObject {
     bool DeformVertexCoordSpiral(bool, const f32*, const f32*, bool, f32, f32, bool, f32, f32, bool, const f32*);
     bool DeformVertexCoordSphere(bool, const f32*, const f32*, bool, f32, f32, bool, f32, f32, bool, const f32*);
     bool DeformVertexCoordTorus(bool, const f32*, const f32*, bool, f32, f32, bool, f32, f32, bool, const f32*);
+    void SetStateTexture(GSgfxLayer*, GsShapeTexture*, GStexture*);
     void SetVertexColorSpecify(const tagGScol4ub&, bool);
     void SetVertexColorAlpha(int, int, f32, bool);
     void SetVertexColorGradation(u8, const tagGScol4ub*, int, f32, bool);
 };
 typedef char GsShapeObjectSizeCheck[sizeof(GsShapeObject)==0x8A4?1:-1];
 enum GSgfxLayerID { GS_SHAPE_LAYER_DEFAULT=2, GS_SHAPE_LAYER_ALTERNATE=4 };
-struct GStexture;
 struct GsShapeFileAnimation {
     u32 reserved00, frameCount; u32 frameRate; u16 keyCount, reserved0E; u32 keysOffset;
     u8 loop, transformCount, reserved16[2]; u8 transformOrder[5];
@@ -118,7 +138,7 @@ struct GsShapeRender {
     GSgfxLayerID layer; u32 flags; GsShapeFileAnimation* animation;
     u16 keyCount, reserved1A; GsKeyObject* keys;
     u16 objectCount, reserved22; GsShapeObject* objects;
-    u16 textureCount, reserved2A; void* textures;
+    u16 textureCount, reserved2A; GsShapeTexture* textures;
     u16 deformCountU, deformCountV, twistCount, gradationCount;
     f32 *deformU, *deformV, *twist; tagGScol4ub* gradation;
     GStexture* refractTexture;

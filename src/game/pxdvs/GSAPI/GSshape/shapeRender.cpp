@@ -23,8 +23,6 @@ struct GsShapeFileHeader {
     u32 animationOffset, objectsOffset, texturesOffset;
 };
 struct GsShapeFileTable { u32 reserved; u16 count, reserved06; u32 entriesOffset; };
-struct GsShapeFileTexture { u32 reserved00[3]; u8 reserved0C[2], usesExtraStage, reserved0F[5]; u32 imageOffset; };
-struct GsShapeTextureLink { GsShapeFileTexture* entry; GStexture* texture; };
 struct GSgfxVF;
 extern "C" {
 void GSgfxVFInit(GSgfxVF*);
@@ -37,15 +35,9 @@ GStexture* GStextureCreate(u16,u16,s32,s32,u8);
 static inline void* shapeFilePointer(u8* base,u32 offset) { return base+offset; }
 static inline void shapeRelocateCurve(u8* base,GsShapeCurvePoint*& curve) { curve=(GsShapeCurvePoint*)((u8*)curve+(u32)base); }
 
-// Per-object texture mapping data stored in the primitive file.
-struct GsShapeTextureMapping {
-    u8 reserved00[0xB], scaleBeforeOffset;
-    f32 minU,maxU,minV,maxV;
-};
 extern "C" GSmtx mtxIdent;
 
 struct GSgfxVF;
-struct GsShapeTexture;
 enum GSgfxTgenFunc { SHAPE_TGEN_DEFAULT };
 enum GSgfxTgenSrc { SHAPE_TGEN_SRC_DEFAULT };
 enum GSgfxLayerPass { SHAPE_PASS_DEFAULT };
@@ -105,7 +97,6 @@ u16 GSgfxTokenMark();
 void MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(GsShapeObject *,GSmtx *,f32);
 bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShapeObject *,GSmtx *,GSmtx *,GSmtx *,f32,bool);
 void SetStateMode__13GsShapeObjectFP10GSgfxLayer(GsShapeObject *,GSgfxLayer *);
-void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(GsShapeObject *,GSgfxLayer *,GsShapeTexture *,GStexture *);
 void CallDisplayListShape__13GsShapeObjectFP10GSgfxLayersUc(GsShapeObject *,GSgfxLayer *,s16,u8);
 }
 
@@ -244,29 +235,32 @@ bool GsShapeRender::LoadShapeRender(void* file) {
         entry->colors=(tagGScol4ub*)((u8*)entry->colors+(u32)base);
         entry->textureCoords=(GsShapePair*)((u8*)entry->textureCoords+(u32)base);
         if(entry->normals) entry->normals=(Vec*)((u8*)entry->normals+(u32)base);
-        for(j=0;j<entry->textureCount;j++) if(entry->textures[j]) entry->textures[j]=(u8*)entry->textures[j]+(u32)base;
+        for (j = 0; j < entry->textureCount; j++) {
+            if (entry->textures[j])
+                entry->textures[j] = (GsShapeTextureMapping*)((u8*)entry->textures[j] + (u32)base);
+        }
         if(entry->dynamic==1 && entry->shapeType==8) needsRefraction=1;
         memset(objects[i].drawBuffers,0,sizeof(objects[i].drawBuffers));
     }
     GsShapeFileTable* textureTable=(GsShapeFileTable*)shapeFilePointer(base,header->texturesOffset);
     u32* textureOffsets=(u32*)shapeFilePointer(base,textureTable->entriesOffset);
     textureCount=textureTable->count;
-    if(textureCount) textures=GSmemAlloc(textureCount*sizeof(GsShapeTextureLink));
+    if(textureCount) textures=(GsShapeTexture*)GSmemAlloc(textureCount*sizeof(GsShapeTexture));
     else textures=0;
     for(i=0;i<textureCount;i++) {
         GsShapeFileTexture* entry=(GsShapeFileTexture*)shapeFilePointer(base,textureOffsets[i]);
-        ((GsShapeTextureLink*)textures)[i].entry=entry;
-        ((GsShapeTextureLink*)textures)[i].texture=GStextureLoad(shapeFilePointer(base,entry->imageOffset));
-        GStextureSetWrap(((GsShapeTextureLink*)textures)[i].texture,1,1);
+        textures[i].entry=entry;
+        textures[i].texture=GStextureLoad(shapeFilePointer(base,entry->imageOffset));
+        GStextureSetWrap(textures[i].texture,1,1);
     }
     for(i=0;i<objectCount;i++) {
         u8 stages=0;
         for(j=0;j<objects[i].entry->textureCount;j++) {
-            void* tex=objects[i].entry->textures[j];
+            GsShapeTextureMapping* mapping = objects[i].entry->textures[j];
             stages++;
             if(j<2) {
-                u16 texture=*(u16*)((u8*)tex+4);
-                if(((GsShapeTextureLink*)textures)[texture].entry->usesExtraStage) stages+=2;
+                u16 texture = mapping->index;
+                if(textures[texture].entry->colorRange) stages+=2;
                 else stages++;
             }
         }
@@ -292,7 +286,7 @@ bool GsShapeRender::LoadShapeRender(void* file) {
     for(i=0;i<objectCount;i++) polygonCount+=objects[i].GetPolygonCount();
     active=1;
     usedMemory=0; usedMemory+=sizeof(GsShapeRender); usedMemory+=keyCount*sizeof(GsKeyObject);
-    usedMemory+=objectCount*sizeof(GsShapeObject); usedMemory+=textureCount*sizeof(GsShapeTextureLink);
+    usedMemory+=objectCount*sizeof(GsShapeObject); usedMemory+=textureCount*sizeof(GsShapeTexture);
     if(refractTexture) usedMemory+=0x12C080;
     instancedMemory=0; freeCount[0]=0; freeCount[1]=0;
     return true;
@@ -377,7 +371,7 @@ void GsShapeRender::Update(f32 time,s16 id) {
                 object->WaveTextureCoord(texture,offset.u,offset.v,&key->shapeMatrix,false);
             }
             u32 textureIndex=texture;
-            GsShapeTextureMapping* mapping=(GsShapeTextureMapping*)object->entry->textures[textureIndex];
+            GsShapeTextureMapping* mapping=object->entry->textures[textureIndex];
             if(primitive->shapeType==8 && texture==0) memcpy(&key->textureMatrices[textureIndex],&mtxIdent,sizeof(GSmtx));
             else if(channel->channelFlags[12+textureIndex]==1) {
                 f32 offsetU,offsetV,scaleU,scaleV;
@@ -531,7 +525,7 @@ void GsShapeRender::Render(s16 instanceId,GSgfxLayerID layerId)
                     } else renderLayer->setRenderStateAndSelect((GSgfxVF *)object->vertexFormat);
                     SetStateMode__13GsShapeObjectFP10GSgfxLayer(object,renderLayer);
                     if(primitive->shapeType==8 && refractTexture) renderLayer->textureCopy(renderLayer->pass,refractTexture,false,0,false,false,false);
-                    SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(object,renderLayer,(GsShapeTexture *)textures,primitive->shapeType==8?refractTexture:0);
+                    object->SetStateTexture(renderLayer, textures, primitive->shapeType == 8 ? refractTexture : 0);
                     for(texture=0;texture<count;texture++) renderLayer->tgenFunc(texture,(GSgfxTgenFunc)1,sources[texture],&key->textureMatrices[texture],false,0);
                     bool billboard=shapeObjectBillboard(primitive);
                     if(billboard==1) renderLayer->matrixStack->push((GSmtx *)((u8 *)object+0x470));
