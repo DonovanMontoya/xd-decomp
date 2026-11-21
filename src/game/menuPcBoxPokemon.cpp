@@ -1,6 +1,7 @@
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/hero/hero.hpp>
 #include <game/menuPcBoxPokemonLayout.hpp>
+#include <game/pxdvs/app/pcbox/pcbox.hpp>
 
 enum MENU_POKEMON_CB_TYPE {
     MENU_POKEMON_CB_TYPE_0,
@@ -75,18 +76,6 @@ inline void CState::change(s32 value) {sub=value;memset(saved,0,0x40);}
 
 inline void *operator new(unsigned long, void *p) { return p; }
 
-class PCBOX {
-public:
-    static PCBOX *getPointer();
-    s8 getPokemonBoxNbUsedSlot(s8);
-    s8 getPokemonBoxNbEmptySlot(s8);
-    void setPokemon(Pokemon *, s8, s8);
-    void addPokemon(Pokemon *, s8);
-    void delPokemon(s8, s8);
-    Pokemon *getPokemon(s8, s8);
-    char *getPokemonBoxName(s8);
-    static s8 lastWatchBoxID;
-};
 
 class CMenuPokemonLeave;
 
@@ -221,11 +210,11 @@ inline void setAntHidden(CAnt *ant, u32 hidden) {
 }  // namespace
 
 long menuPcBoxGetLastViewBox(void) {
-    return *(s32 *)(savedataGetStatus(0, 3) + 0xBC0C);
+    return ((PCBOX*)savedataGetStatus(0, 3))->lastViewBox;
 }
 
 void menuPcBoxSetLastViewBox(long box) {
-    *(s32 *)(savedataGetStatus(0, 3) + 0xBC0C) = box;
+    ((PCBOX*)savedataGetStatus(0, 3))->lastViewBox = box;
 }
 
 namespace {
@@ -770,7 +759,7 @@ void CMenuPokemonLeave::depositMenuDraw(long win) {
 void CMenuPokemonLeave::boxNameDraw(int box, long win, u32 item) {
     tagWINDOW_WORK *w = windowSearchID(win);
     tagSPRITE_WORK *sp = menuPtSpriteWorkGetByItemID(w, item, 0);
-    char *name = PCBOX::getPointer()->getPokemonBoxName(box);
+    char16 *name = PCBOX::getPointer()->getPokemonBoxName(box);
     msgctrlSetValue(0x37, (u32)name);
     s16 width = GSmsgGetRect(0x4276) >> 16;
     s16 off = sp->width / 2 - width / 2;
@@ -1781,7 +1770,7 @@ int CMenuPokemonLeave::pcBoxEmptyQuantity(int box) {
 }
 
 int CMenuPokemonLeave::pcBoxUsedQuantity(int box) {
-    return PCBOX::getPointer()->getPokemonBoxNbUsedSlot(box);
+    return (s8)PCBOX::getPointer()->getPokemonBoxNbUsedSlot(box);
 }
 
 CAnt *CMenuPokemonLeave::cursorUnderPokemonGetAntPointer() {

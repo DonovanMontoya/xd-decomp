@@ -1,7 +1,7 @@
 #include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 #include <game/pxdvs/app/memcard/memcardPrivate.hpp>
 #define POKEMON_HPP_NO_PROTOTYPES
-#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/pcbox/pcbox.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 
 #if defined(VERSION_GXXE01)
@@ -265,8 +265,8 @@ void _memcardStoreSaveData_multi(void* arg) {
     src = savedataGetStatus(_memcardStatusPtr->saveData, 3);
     size = (u32)header->pcBoxSizeHigh << 16;
     size += header->sizes[SectionPcBox];
-    if (size > 0xBC50) {
-        size = 0xBC50;
+    if (size > sizeof(PCBOX)) {
+        size = sizeof(PCBOX);
     }
     memcpy(src, dst, size);
     MEMCARD_STORE(0xA, SectionMailbox, 0x4A);
@@ -1997,31 +1997,19 @@ void* __copy(void*,const void*,u32);
 }
 
 template <unsigned N> struct MemcardWords { u32 words[N]; };
-struct MemcardSavePokemon : Pokemon {
-    MemcardSavePokemon& operator=(const MemcardSavePokemon& other) {
-        memcpy(this,&other,sizeof(Pokemon));
-        return *this;
-    }
-};
-struct MemcardSaveBox {
-    u32 header[4];
-    u16 flags;
-    MemcardSavePokemon pokemon[30];
-};
 struct MemcardSaveParty {
     u8 first,second;
     u16 flags;
     u32 header;
-    MemcardSavePokemon pokemon;
+    Pokemon pokemon;
 };
 struct MemcardSavePartyGroup {
-    MemcardSavePokemon first,second,third,fourth,fifth;
+    Pokemon first,second,third,fourth,fifth;
     u8 flags;
 };
 
 #pragma push
 #pragma peephole off
-typedef char MemcardBoxSize[sizeof(MemcardSaveBox)==0x170C?1:-1];
 typedef char MemcardPartySize[sizeof(MemcardSaveParty)==0xCC?1:-1];
 typedef char MemcardPartyGroupSize[sizeof(MemcardSavePartyGroup)==0x3D8?1:-1];
 
@@ -2049,7 +2037,7 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
 
     header->sizes[SectionSystem] = sizeof(GamedataSaveRecord);
     header->sizes[SectionHero] = sizeof(Hero);
-    header->sizes[SectionPcBox] = 0xBC50;
+    header->sizes[SectionPcBox] = sizeof(PCBOX);
     header->pcBoxSizeHigh = 0;
     header->sizes[SectionMailbox] = 0x4A;
     header->sizes[SectionSodateya] = 0xCC;
@@ -2095,19 +2083,9 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
             break;
         }
         case SectionPcBox: {
-            u8* dst = header->setSectionOffset(SectionPcBox, offset);
-            u8* src = (u8*)savedataGetStatus(0, 3);
-            MemcardSaveBox* boxDst = (MemcardSaveBox*)dst;
-            MemcardSaveBox* boxSrc = (MemcardSaveBox*)src;
-            do {
-                *boxDst = *boxSrc;
-                ++boxDst;
-                ++boxSrc;
-            } while ((u8*)boxDst < dst + 0xB860);
-            *(MemcardWords<235>*)(dst + 0xB860) = *(MemcardWords<235>*)(src + 0xB860);
+            PCBOX* dst = (PCBOX*)header->setSectionOffset(SectionPcBox, offset);
+            *dst = *(const PCBOX*)savedataGetStatus(0, 3);
             offset += 0xBC60;
-            *(u32*)(dst + 0xBC0C) = *(u32*)(src + 0xBC0C);
-            *(MemcardWords<16>*)(dst + 0xBC10) = *(MemcardWords<16>*)(src + 0xBC10);
             break;
         }
         case SectionMailbox: {

@@ -5,7 +5,7 @@
 #include <game/pxdvs/app/hero/heroPokemonGet.hpp>
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
 #include <game/pxdvs/app/people/runtime.hpp>
-#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/pcbox/pcbox.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 struct _GSmodel;
 struct FloorBgmMask {
@@ -26,10 +26,6 @@ struct glowEffect : GSeffect {
     f32 scale;
     u8 r, g, b, flag, blend;
     glowEffect();
-};
-struct PCBOX {
-    static PCBOX* getPointer();
-    Pokemon* getPokemon(s8, s8);
 };
 struct PeopleRangeInfo_t;
 struct GSlight;

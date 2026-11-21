@@ -48,7 +48,7 @@ s32 PCBOX::setPokemon(Pokemon* src, s8 box, s8 slot) {
         ok = 0;
     } else {
         DarkPokemon* dark;
-        memcpy(dst, src, sizeof(Pokemon));
+        *dst = *src;
         pokemonAllKaihuku(dst);
         dark = dst->getDarkPokemon();
         if (dark != 0) {
@@ -116,11 +116,11 @@ static inline void initBoxes(PCBOX* self) {
     s32 i;
     for (i = 0; i < 8; i++) {
         msgctrlSetValue(0x34, i + 1);
-        GSmsgMakeGScharStr(&self->boxes[i], 9, 0x3B39);
+        GSmsgMakeGScharStr(self->boxes[i].name, 9, 0x3B39);
         pokemonInitAry((u32)self->boxes[i].pokemon, 0x1E);
     }
     itemInitAry(self->items, 0xEB);
-    self->lastItemSlot = 0;
+    self->lastViewBox = 0;
 }
 
 void PCBOX::init() {
@@ -131,14 +131,14 @@ void PCBOX::init() {
     }
     for (i = 0; i < 8; i++) {
         msgctrlSetValue(0x34, i + 1);
-        GSmsgMakeGScharStr(&self->boxes[i], 9, 0x3B39);
+        GSmsgMakeGScharStr(self->boxes[i].name, 9, 0x3B39);
         pokemonInitAry((u32)self->boxes[i].pokemon, 0x1E);
     }
     itemInitAry(self->items, 0xEB);
-    self->lastItemSlot = 0;
+    self->lastViewBox = 0;
 }
 
-inline PCBOXItem* PCBOX::getItem(s16 idx) {
+inline ItemBiosRecord* PCBOX::getItem(s16 idx) {
     PCBOX* self = this;
     if (self == 0) {
         self = getPointer();
@@ -170,7 +170,7 @@ s32 pcboxGetNbPokemonBox() {
     return 8;
 }
 
-PCBOXItem* pcboxGetItem(PCBOX* pcbox, s16 idx) {
+ItemBiosRecord* pcboxGetItem(PCBOX* pcbox, s16 idx) {
     return pcbox->getItem(idx);
 }
 
@@ -284,9 +284,9 @@ u16 pcboxDelItem(PCBOX* box, u16 id, u16 count) {
     return delItem(box, id, count);
 }
 s32 pcboxSwapItemSlot(PCBOX* self, s16 a, s16 b) {
-    PCBOXItem* first = self->getItem(a);
+    ItemBiosRecord* first = self->getItem(a);
     if (!first) return 0;
-    PCBOXItem* second = self->getItem(b);
+    ItemBiosRecord* second = self->getItem(b);
     if (!second) return 0;
     itemReplace(first, second);
     return 1;
@@ -304,7 +304,7 @@ s32 pcboxSetPokemonBoxName(PCBOX* self, s8 box, const u16* name) {
 }
 }
 
-s32 PCBOX::isPokemonFull() {
+bool PCBOX::isPokemonFull() {
     for (s32 box = 0; box < 8; ++box) {
         if (getPointer()->getPokemonBoxNbEmptySlot(box) != 0) return 0;
     }
@@ -312,7 +312,7 @@ s32 PCBOX::isPokemonFull() {
 }
 
 static inline u16 itemCount(PCBOX* self, s16 slot) {
-    PCBOXItem* item;
+    ItemBiosRecord* item;
     if (slot < 0 || slot >= 0xEB) item = 0;
     else item = &self->items[slot];
     if (!item) return 0xFFFF;
@@ -378,7 +378,7 @@ extern "C" s32 pcboxAddPokemon(PCBOX* pcbox, Pokemon* src, s8 box) {
     if (!self) self = PCBOX::getPointer();
     Pokemon* dst = pokemonSlot(self, box, slot);
     if (!dst) return 0;
-    memcpy(dst, src, sizeof(Pokemon));
+    *dst = *src;
     pokemonAllKaihuku(dst);
     DarkPokemon* dark = dst->getDarkPokemon();
     if (dark) dark->setPlace(place2, box);

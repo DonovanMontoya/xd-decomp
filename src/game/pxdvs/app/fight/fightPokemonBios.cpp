@@ -1,13 +1,6 @@
-#include <dolphin/types.h>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 
-extern "C" void* memcpy(void*, const void*, u32);
-struct Pokemon {
-    u8 data[0xC4];
-    Pokemon& operator=(const Pokemon& o) {
-        memcpy(this, &o, 0xC4);
-        return *this;
-    }
-};
 struct u64x { u32 a, b; };
 struct Joutai16 { u32 w[4]; };
 struct ArrA { u64x v[4]; };

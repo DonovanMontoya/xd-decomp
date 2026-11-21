@@ -1,5 +1,6 @@
 #include <game/menuReliveHallLayout.hpp>
 #include <game/maximum/GSAPI/baselib/math_support.h>
+#include <game/pxdvs/app/pcbox/pcbox.hpp>
 
 inline void *operator new(unsigned long, void *p) {
     return p;
@@ -97,12 +98,6 @@ public:
     void putVisitor(Pokemon &);
     void pickupDancer(Pokemon &, long);
     void pickupVisitor(Pokemon &);
-};
-
-class PCBOX {
-public:
-    static PCBOX *getPointer();
-    bool isPokemonFull();
 };
 
 class CReliveHall {

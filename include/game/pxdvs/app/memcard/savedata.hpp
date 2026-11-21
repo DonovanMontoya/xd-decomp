@@ -4,6 +4,7 @@
 #include <global.h>
 #include <libc/stddef.h>
 #include <game/pxdvs/app/hero/hero.hpp>
+#include <game/pxdvs/app/pcbox/pcbox.hpp>
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
 
 // In-memory save data (pokecolo_savedata, 0x287D0 bytes). The live pointer is now_savedata_ptr
@@ -16,7 +17,8 @@ struct savedata {
   u8 gamedata[0x140 - 0xA0];       // 0xA0
   Hero hero;                       // 0x140
   u8 unkAB8[0xAD0 - 0xAB8];        // 0xAB8
-  u8 pcbox[0xC730 - 0xAD0];        // 0xAD0
+  PCBOX pcbox;                     // 0xAD0
+  u8 unkC720[0x10];                // 0xC720
   u8 mailbox[0xC790 - 0xC730];     // 0xC730
   u8 sodateya[0xC870 - 0xC790];    // 0xC790
   u8 memoData[0xE000 - 0xC870];    // 0xC870

@@ -4,6 +4,8 @@
 #include <global.h>
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
 
+extern "C" void* memcpy(void*, const void*, unsigned long);
+
 class Hero;
 
 struct PokemonStatusRnd {
@@ -236,6 +238,11 @@ struct Pokemon {
   void setCatchTrainerNamePtr(u16*);
   bool checkValid() const;
   void clear();
+  Pokemon& operator=(const Pokemon& other) {
+    memcpy(this, &other, sizeof(Pokemon));
+    return *this;
+  }
+
   bool isLegend() const;
   u8 getSex() const;
   bool isTokuseiFlag() const;
