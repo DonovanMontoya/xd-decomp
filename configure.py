@@ -1097,7 +1097,7 @@ config.libs = [
 
             # GSmovie
             Object(NonMatching, "game/pxdvs/GSAPI/GSmovie/movieStream.cpp", cflags=cflags_xd_app_balanced, extra_cflags=["-inline auto,deferred"]),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSmovie/GSmovie.cpp", cflags=cflags_xd_app_balanced, extra_cflags=["-inline auto,deferred", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmovie/GSmovie.cpp", cflags=cflags_xd_app_balanced, extra_cflags=["-inline auto,deferred", "-str reuse,nopool,readonly"]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSmovie/THPDraw.cpp", cflags=cflags_xd_app_balanced),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmovie/THPDec.cpp",
                    source="game/pxdvs/GSAPI/GSmovie/THPDec.c",

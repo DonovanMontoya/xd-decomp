@@ -106,7 +106,7 @@ struct GStexture;
 struct GSgfxLayer { u8 reserved0[0x28]; s32 id; void textureCopy(GSgfxLayerPass,GStexture*,bool,u8*,bool,bool,bool); };
 static void _movieRender(GSgfxLayer*,GSgfxLayerPass);
 static void _movieBeforeRender(f32);
-extern void _movieDaemon();
+static void _movieDaemon();
 extern "C" void GSgfxTokenWaitForClearAndReset(u16*);
 
 struct GSgfxRenderModule {void* reserved00;void(*update)(f32);void(*render)(GSgfxLayer*,GSgfxLayerPass);void(*fastRender)();void* reserved10;void* reserved14;u32 id;};
@@ -265,7 +265,7 @@ s32 Add__16GSgfxLayerConfigFPcUlUlUl14GSgfxLayerTypebbb12GSgfxLayerID16GSgfxLaye
 
 }
 
-void _PlayControlExec(__GSmovieStreaming*);
+static void _PlayControlExec(__GSmovieStreaming*);
 extern "C" u8 GSmoviePlayCheck(u32);
 extern "C" s32 fn_801E3C5C(u32);
 static s32 _THPPlayerSetBuffer(__GSmovieStreaming*);
@@ -434,29 +434,47 @@ static void _movieRender(GSgfxLayer* layer,GSgfxLayerPass pass) {
     }
 }
 
+static inline u8 movieHandleIsPlaying(u32 handle) {
+    if (!_initFlag) return 0;
+    __GSmovieStreaming* movie = findMovieStream(handle);
+    if (!movie) return 0;
+    return 1;
+}
+
+static inline void releaseDisplayedTextures(MovieDecoder* decoder) {
+    for (s32 i = 0; i < 3; ++i) {
+        if (decoder->textures[i].displayed == 1) {
+            decoder->textures[i].valid = decoder->textures[i].displayed = 0;
+        }
+    }
+}
+
 #pragma force_active on
 static void _movieBeforeRender(f32) {
-    u8 active=0;
-    for(u32 i=0;i<_maxStreaming;++i) {
-        __GSmovieStreaming* movie=&_movieStreaming[i];
-        if(movie->state && GSmoviePlayCheck(movie->handle)) {
-            active=1;
-            switch((s32)movie->decoder->state) {
-            case 3:case 5: movie->state=10;break;
-            case 4:break;
+    __GSmovieStreaming* movie;
+    u8 active = 0;
+    for (u32 i = 0; i < _maxStreaming; ++i) {
+        movie = &_movieStreaming[i];
+        if (movie->state && movieHandleIsPlaying(movie->handle)) {
+            active = 1;
+            switch ((s32)movie->decoder->state) {
+            case 3:
+            case 5:
+                movie->state = 10;
+                break;
+            case 4:
+                break;
             }
         }
     }
-    if(active==1) {
+    if (active == 1) {
         MovieDecoder* decoder;
-        for(u32 i=0;i<_maxStreaming;++i) {
-            __GSmovieStreaming* movie=&_movieStreaming[i];
-            if(movie->state) {
-                decoder=movie->decoder;
-                GSgfxTokenWaitForClearAndReset(&movie->token);
-                for(s32 j=0;j<3;++j) {
-                    if(decoder->textures[j].displayed==1) {decoder->textures[j].valid=decoder->textures[j].displayed=0;}
-                }
+        for (u32 i = 0; i < _maxStreaming; ++i) {
+            __GSmovieStreaming* stream = &_movieStreaming[i];
+            if (stream->state) {
+                decoder = stream->decoder;
+                GSgfxTokenWaitForClearAndReset(&stream->token);
+                releaseDisplayedTextures(decoder);
             }
         }
     }
