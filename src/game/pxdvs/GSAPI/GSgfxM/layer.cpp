@@ -652,27 +652,35 @@ void Prerender__10GSgfxLayerFv(void* layer) {
     else EffectScreenClear__10GSgfxLayerFbbb(layer,color,alpha,depth);
 }
 
+static inline bool isEmptyFifoBlock(const u32* words, u32 bytes) {
+    if (bytes == 0) return true;
+    if (bytes != 32) return false;
+
+    u32 combined = 0;
+    for (u32 i = 0; i < 8; ++i) {
+        combined |= words[i];
+    }
+    return combined == 0;
+}
+
 void SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(void* layer,void* object) {
     u8* fifo=static_cast<u8*>(object);
     if (layerField<void*>(fifo,0)) {
         if (reinterpret_cast<GXFifoObj*>(fifo+8)==GXGetCPUFifo()) updateLayerFifo(fifo);
         layerField<void*>(fifo,0x8c)=layerField<void*>(fifo,0x20);
     }
-    u32* begin=layerField<u32*>(fifo,0x88);
-    u32 bytes=(u8*)layerField<void*>(fifo,0x8c)-(u8*)begin;
-    u8 empty;
-    if (!bytes) empty=1;
-    else if (bytes!=32) empty=0;
-    else empty=(begin[0]|begin[1]|begin[2]|begin[3]|begin[4]|begin[5]|begin[6]|begin[7])==0;
-    if (empty==1) {
-        GSgfxGPUSetFifoWritePtr__FP15GSgfx_GCFifoObjPv(reinterpret_cast<GSgfx_GCFifoObj*>(fifo+8),layerField<void*>(fifo,0x88));
+    u32* begin = layerField<u32*>(fifo, 0x88);
+    u32 bytes = static_cast<u8*>(layerField<void*>(fifo, 0x8c)) - reinterpret_cast<u8*>(begin);
+    if (isEmptyFifoBlock(begin, bytes) == true) {
+        GSgfxGPUSetFifoWritePtr__FP15GSgfx_GCFifoObjPv(reinterpret_cast<GSgfx_GCFifoObj*>(fifo+8),begin);
         layerField<void*>(fifo,0x8c)=layerField<void*>(fifo,0x88);
         layerField<u16>(fifo,0xac)=0; layerField<u16>(fifo,0xae)=0;
     }
     updateLayerFifoUsage(fifo);
     if (layerField<u16>(fifo,0xae)==1) {
-        const char* pass="xluc"; if (layerField<s32>(layer,0x1994)==0) pass="opaque";
-        GSlogWrite("fifo overflow in [%s]: %s pass",static_cast<u8*>(layer)+8,pass); return;
+        GSlogWrite("fifo overflow in [%s]: %s pass", static_cast<LayerNode*>(layer)->name,
+                   layerField<s32>(layer, 0x1994) == 0 ? "opaque" : "xluc");
+        return;
     }
     void* start=layerField<void*>(fifo,0x88);
     for (s32 i=0;i<4;i++) {
