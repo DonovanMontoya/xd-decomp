@@ -1,6 +1,7 @@
 #ifndef GS_PARTICLE_H
 #define GS_PARTICLE_H
 #include <global.h>
+#include "psform.h"
 #include "game/maximum/GSAPI/baselib/quatlib.h"
 typedef struct PSParticle PSParticle; typedef struct PSGenerator PSGenerator; typedef struct PSAppSRT PSAppSRT;
 typedef HSD_Vec3 PSVec;
@@ -144,7 +145,7 @@ s32 psGeneratorGetCamera(PSGenerator*); void psGeneratorSetCamera(PSGenerator*,s
 void HSD_JObjSetupMatrixSub(PSJObj*); void HSD_JObjUnref(PSJObj*); f32 HSD_Randf(void); void* HSD_SListRemove(void*);
 extern u16 numActiveParticles,numPeakParticles,numActiveGenerators,numPeakGenerators,numActivePSAppSRT,numPeakPSAppSRT;
 extern PSGenerator *activeGenerator,*freeGenerator,*lastGP;
-extern PSCmd** psCmdListArray[64]; extern PSTex** psTexGroupArray[64]; extern s32 psNumCmdList[64]; extern void* psFormGroupArray[64]; extern s32 psNumTexGroup[64]; extern void* ptclref[64];
+extern PSCmd** psCmdListArray[64]; extern PSTex** psTexGroupArray[64]; extern s32 psNumCmdList[64]; extern PSFormGroup** psFormGroupArray[64]; extern s32 psNumTexGroup[64]; extern void* ptclref[64];
 
 typedef struct PSClass PSClass;
 typedef struct PSObject { PSClass* methods; u16 references; } PSObject;

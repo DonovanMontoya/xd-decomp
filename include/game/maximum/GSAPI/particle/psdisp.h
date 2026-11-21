@@ -10,9 +10,9 @@ typedef HSD_Mtx PSMtx;
 void* memcpy(void*,const void*,u32); void OSReport(const char*,...);
 void psDispParticles(u32,s32,u32); void psDispSetProjection(f32*);
 
-void psDispSub(PSParticle*,u32*); void psDispSubAppSRT(PSParticle*,u32*);
+void psDispSub(PSParticle*,const PSForm*); void psDispSubAppSRT(PSParticle*,const PSForm*);
 void psDispSubAPPSRTPoint(PSParticle*); PSParticle* psDispSubPointTrail(PSParticle*);
-void psDispSubMakePolygon(PSParticle*,u32*,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32);
+void psDispSubMakePolygon(PSParticle*,const PSForm*,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32);
 void setupChanReg(PSParticle*); void setupTevReg(PSParticle*);
 void psSetupTev(PSParticle*); void psSetupTevCommon(void); void psSetupTevInvalidState(void);
 PSCamera* HSD_CObjGetCurrent(void); void HSD_CObjGetViewingMtx(PSCamera*,PSMtx);

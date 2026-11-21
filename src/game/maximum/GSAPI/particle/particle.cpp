@@ -1,7 +1,7 @@
 
 
 
-#include <dolphin/types.h>
+#include "game/maximum/GSAPI/particle/psform.h"
 
 #pragma pool_strings off
 
@@ -103,11 +103,6 @@ typedef struct PSTexGroup {
     u16 palflag;
     u8* texTable[1];
 } PSTexGroup;
-
-typedef struct PSFormGroup {
-    u32 num;
-    u8* formTable[1];
-} PSFormGroup;
 
 typedef struct PSCmdList {
     u16 type;
@@ -305,7 +300,7 @@ void psInitDataBankLocate(int* cmdBank, int* texBank, int* formBank)
             fg = (PSFormGroup*) formBank[i];
             for (fi = 0; fi < fg->num; fi++) {
                 if (fg->formTable[fi] != NULL) {
-                    fg->formTable[fi] += (u32) formBank;
+                    fg->formTable[fi] = (PSForm*) ((u8*) fg->formTable[fi] + (u32) formBank);
                 }
             }
         }
