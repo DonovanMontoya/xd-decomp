@@ -32,70 +32,72 @@ static inline s32 textureGetGXformat(const GStexture* texture, u8 direct) {
     }
 }
 static inline void textureCopyRow(const u16*& source, u16*& destination) {
-    for (s32 i=0;i<4;++i) *destination++ = *source++;
+    for (s32 i = 0; i < 4; ++i) {
+        *destination++ = *source++;
+    }
 }
 
 extern "C" {
 void GStextureConvertToHW(GStexture* texture) {
     s32 format = texture->format;
-    if ((format == 0x44 || format == 0x90) && !(texture->width & 2)) {
-        if (texture->height & 2) return;
-        s32 y = 0;
-        ++texture->lockCount;
-        u8* image = (u8*)texture->images[0];
-        while (y < texture->height) {
-            u16* out = _texXformBuf;
-            s32 x = 0;
-            s32 byteOffset = 0;
-            u16 width;
-            while ((width = texture->width), x < width) {
-                x += 4;
-                const u16* row = (const u16*)(image + y * width * 2 + byteOffset);
-                byteOffset += 8;
-                textureCopyRow(row, out);
-                row = (const u16*)((const u8*)row + texture->width * 2 - 8);
-                textureCopyRow(row, out);
-                row = (const u16*)((const u8*)row + texture->width * 2 - 8);
-                textureCopyRow(row, out);
-                row = (const u16*)((const u8*)row + texture->width * 2 - 8);
-                textureCopyRow(row, out);
-            }
-            memcpy(image + y * width * 2, _texXformBuf, width * 8);
-            y += 4;
+    if (format != 0x44 && format != 0x90) return;
+    if ((texture->width & 2) || (texture->height & 2)) return;
+
+    s32 y = 0;
+    ++texture->lockCount;
+    u8* image = (u8*)texture->images[0];
+    while (y < texture->height) {
+        u16* out = _texXformBuf;
+        s32 x = 0;
+        s32 byteOffset = 0;
+        u16 width;
+        while ((width = texture->width), x < width) {
+            x += 4;
+            const u16* row = (const u16*)(image + y * width * 2 + byteOffset);
+            byteOffset += 8;
+            textureCopyRow(row, out);
+            row = (const u16*)((const u8*)row + texture->width * 2 - 8);
+            textureCopyRow(row, out);
+            row = (const u16*)((const u8*)row + texture->width * 2 - 8);
+            textureCopyRow(row, out);
+            row = (const u16*)((const u8*)row + texture->width * 2 - 8);
+            textureCopyRow(row, out);
         }
-        DCStoreRange(texture->images[0], texture->imageSize);
-        GXInvalidateTexAll();
-        --texture->lockCount;
+        memcpy(image + y * width * 2, _texXformBuf, width * 8);
+        y += 4;
     }
+    DCStoreRange(texture->images[0], texture->imageSize);
+    GXInvalidateTexAll();
+    --texture->lockCount;
 }
 
 void GStextureConvertFromHW(GStexture* texture) {
-    if ((texture->format == 0x44 || texture->format == 0x90) && !(texture->width & 2)) {
-        if (texture->height & 2) return;
-        ++texture->lockCount;
-        u8* image = (u8*)texture->images[0];
-        for (s32 y = 0; y < texture->height; y += 4) {
-            u16* out = _texXformBuf;
-            u16* tile = (u16*)(image + y * texture->width * 2);
-            for (s32 x = 0; x < texture->width; x += 4) {
-                u16* row = out;
-                const u16* input = tile;
-                out += 4;
-                textureCopyRow(input, row);
-                row = (u16*)((u8*)row + texture->width * 2 - 8);
-                textureCopyRow(input, row);
-                row = (u16*)((u8*)row + texture->width * 2 - 8);
-                textureCopyRow(input, row);
-                row = (u16*)((u8*)row + texture->width * 2 - 8);
-                textureCopyRow(input, row);
-                tile += 16;
-            }
-            memcpy(image + y * texture->width * 2, _texXformBuf, texture->width * 8);
+    if (texture->format != 0x44 && texture->format != 0x90) return;
+    if ((texture->width & 2) || (texture->height & 2)) return;
+
+    ++texture->lockCount;
+    u8* image = (u8*)texture->images[0];
+    for (s32 y = 0; y < texture->height; y += 4) {
+        u16* out = _texXformBuf;
+        u16* tile = (u16*)(image + y * texture->width * 2);
+        for (s32 x = 0; x < texture->width; x += 4) {
+            u16* row = out;
+            const u16* input = tile;
+            out += 4;
+            textureCopyRow(input, row);
+            row = (u16*)((u8*)row + texture->width * 2 - 8);
+            textureCopyRow(input, row);
+            row = (u16*)((u8*)row + texture->width * 2 - 8);
+            textureCopyRow(input, row);
+            row = (u16*)((u8*)row + texture->width * 2 - 8);
+            textureCopyRow(input, row);
+            tile += 16;
         }
-        DCStoreRange(texture->images[0], texture->imageSize);
-        GXInvalidateTexAll();
-        --texture->lockCount;
+        memcpy(image + y * texture->width * 2, _texXformBuf, texture->width * 8);
     }
+    DCStoreRange(texture->images[0], texture->imageSize);
+    GXInvalidateTexAll();
+    --texture->lockCount;
 }
 
 s32 GStextureGetGXformat(const GStexture* texture, u8 direct) {
@@ -172,34 +174,6 @@ void GStextureFree(GStexture* texture) {
         if (texture->allocation) GSmemFree(texture->allocation);
     }
 }
-void GStextureInit(u32 count) {
-    _textureStructCount = count;
-    _textureStructList = (GStexture*)GSmemAlloc(count * sizeof(GStexture));
-    if (_textureStructList) {
-        for (u32 i = 0; i < _textureStructCount; ++i) _textureStructList[i].inUse = 0;
-    }
-}
-
-s32 GXFmtToGStextureFmt(GXTexFmt format) {
-    switch (format) {
-    case GX_TF_C4: return 0;
-    case GX_TF_C8: return 1;
-    case GX_TF_C14X2: return 0x30;
-    case GX_TF_I4: return 0x40;
-    case GX_TF_IA4: return 0x41;
-    case GX_TF_I8: return 0x42;
-    case GX_TF_IA8: return 0x43;
-    case GX_TF_RGB565: return 0x44;
-    case GX_TF_RGBA8: return 0x45;
-    case GX_TF_RGB5A3: return 0x90;
-    case GX_TF_CMPR: return 0xb0;
-    case GX_CTF_A8: return 0xa0;
-    case GX_CTF_R8: return 0xa1;
-    case GX_CTF_G8: return 0xa2;
-    case GX_CTF_B8: return 0xa3;
-    default: return -1;
-    }
-}
 
 }
 
@@ -231,24 +205,6 @@ static inline void textureInitHardware(GStexture* texture) {
         GXTexFmt format = (GXTexFmt)textureGetGXformat(texture, 1);
         GXInitTexObj(&texture->texObj, texture->images[0], texture->width, texture->height,
                      format, GX_CLAMP, GX_CLAMP, texture->mipCount > 1);
-    }
-}
-
-static inline void textureSetMipImages(GStexture* texture, u32 imageBytes, s32 tlutFormat) {
-    for (s32 i = 1; i < 8; ++i) {
-        if (i < texture->mipCount) {
-            texture->images[i] = (u8*)texture->images[i - 1] + imageBytes;
-            imageBytes >>= 1;
-        } else {
-            texture->images[i] = 0;
-        }
-    }
-    switch (tlutFormat) {
-    case 1: case 2: case 3: {
-        texture->palette = (u8*)texture->images[texture->mipCount - 1] + imageBytes;
-        break;
-    }
-    default: texture->palette = 0; break;
     }
 }
 
@@ -323,9 +279,9 @@ extern "C" void GSlogWrite(const char* format, ...);
 extern "C" void* GSmemAllocAlign(u32 size, u16 alignment);
 
 static inline GStexture* textureFindFree() {
-    GStexture* texture = _textureStructList;
-    for (u32 i = 0; i < _textureStructCount; ++i, ++texture) {
-        if (!texture->inUse) return texture;
+    for (u32 i = 0; i < _textureStructCount; ++i) {
+        GStexture* slot = &_textureStructList[i];
+        if (!slot->inUse) return slot;
     }
     return 0;
 }
@@ -406,7 +362,23 @@ extern "C" GStexture* GStextureCreate(u16 width, u16 height, s32 format,
     else texture->mipFilter = 0;
     texture->lockCount = 0;
     texture->reserved = 0;
-    textureSetMipImages(texture, (u32)(texture->bitsPerPixel * (width * height)) >> 3, tlutFormat);
+    u32 imageBytes = (u32)(texture->bitsPerPixel * (width * height)) >> 3;
+    for (s32 i = 1; i < 8; ++i) {
+        if (i < texture->mipCount) {
+            texture->images[i] = (u8*)texture->images[i - 1] + imageBytes;
+            imageBytes >>= 1;
+        } else {
+            texture->images[i] = 0;
+        }
+    }
+    switch (tlutFormat) {
+    case 1: case 2: case 3:
+        texture->palette = (u8*)texture->images[texture->mipCount - 1] + imageBytes;
+        break;
+    default:
+        texture->palette = 0;
+        break;
+    }
     textureInitHardware(texture);
     texture->dirty = 1;
     return texture;
@@ -426,4 +398,35 @@ extern "C" GStexture* GStextureLoad(void* serialized) {
     texture->allocation = 0;
     DCStoreRange(texture->images[0], texture->imageSize);
     return texture;
+}
+
+extern "C" {
+void GStextureInit(u32 count) {
+    _textureStructCount = count;
+    _textureStructList = (GStexture*)GSmemAlloc(count * sizeof(GStexture));
+    if (_textureStructList) {
+        for (u32 i = 0; i < _textureStructCount; ++i) _textureStructList[i].inUse = 0;
+    }
+}
+
+s32 GXFmtToGStextureFmt(GXTexFmt format) {
+    switch (format) {
+    case GX_TF_C4: return 0;
+    case GX_TF_C8: return 1;
+    case GX_TF_C14X2: return 0x30;
+    case GX_TF_I4: return 0x40;
+    case GX_TF_IA4: return 0x41;
+    case GX_TF_I8: return 0x42;
+    case GX_TF_IA8: return 0x43;
+    case GX_TF_RGB565: return 0x44;
+    case GX_TF_RGBA8: return 0x45;
+    case GX_TF_RGB5A3: return 0x90;
+    case GX_TF_CMPR: return 0xb0;
+    case GX_CTF_A8: return 0xa0;
+    case GX_CTF_R8: return 0xa1;
+    case GX_CTF_G8: return 0xa2;
+    case GX_CTF_B8: return 0xa3;
+    default: return -1;
+    }
+}
 }

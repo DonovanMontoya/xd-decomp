@@ -1037,7 +1037,7 @@ config.libs = [
 
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSpart/GSpart.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSscratch/GSscratch.cpp"),
-            Object(NonMatching, "game/pxdvs/GSAPI/GStexture/GStexture.cpp", extra_cflags=["-O4", "-inline deferred,auto", "-str reuse,nopool,readonly"]),
+            Object(NonMatching, "game/pxdvs/GSAPI/GStexture/GStexture.cpp", extra_cflags=["-O4", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSthread/GSthread.cpp", extra_cflags=["-inline off", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSinput/GSinput.cpp", cflags=cflags_xd_input),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSres/GSres.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
