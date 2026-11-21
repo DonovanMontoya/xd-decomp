@@ -34,22 +34,28 @@ void GSgfx_GCWriteIndTexMtx(s32,const float (*)[3],s8);
 void GXDrawSphere1(u8); void GXDrawSphere(u8,u8); void GXDrawTorus(float,u8,u8);
 void GXDrawOctahedron(); void GXDrawIcosahedron(); void GXDrawDodeca(); void GXDrawCylinder(u8); void GXDrawCube();
 }
-struct LayerNode { LayerNode* next; u8 reserved4[0x24]; s32 id; };
+struct LayerNode {
+    LayerNode* next;
+    u32 flags;
+    char name[32];
+    s32 id;
+};
 // LayerConfig allocates 0x1a14 bytes for the layer, including four render callbacks.
+enum GSgfxLayerID { GSgfxLayerID_Invalid = -1, GSgfxLayerID_Auto = 255 };
+enum GSgfxLayerType { GSgfxLayerType_Default = 0, GSgfxLayerType_FBCopy = 4 };
 class GSgfxLayer : public LayerNode {
 public:
+    GSgfxLayer(GSgfxLayerID, char*, u32, u32, u32, GSgfxLayerType);
     ~GSgfxLayer();
 private:
     u8 reserved2C[0x1a14-sizeof(LayerNode)];
 };
 ABI_SIZE(GSgfxLayer,0x1a14);
 struct LayerConfigData { s32 id; char* name; s32 type; bool clearColor,clearAlpha,clearDepth,visible; u32 opaqueSize,translucentSize,matrixCount; };
-ABI_OFF(LayerNode,id,0x28); ABI_SIZE(LayerConfigData,0x1c);
+ABI_OFF(LayerNode,name,0x8); ABI_OFF(LayerNode,id,0x28); ABI_SIZE(LayerConfigData,0x1c);
 extern "C" {
 LayerNode* GetLayerList__10GSgfxLayerFv();
 LayerNode* GSgfxLayerFindByName(char*);
-void* __nw__FUl(u32);
-LayerNode* __ct__10GSgfxLayerF12GSgfxLayerIDPcUlUlUl14GSgfxLayerType(void*,s32,char*,u32,u32,u32,s32);
 void* __dt__10GSgfxLayerFv(void*,s16);
 void SetPriority__10GSgfxLayerF16GSgfxLayerOffsetP10GSgfxLayer(void*,s32,void*);
 void SetLayerType__10GSgfxLayerF14GSgfxLayerType(void*,s32);

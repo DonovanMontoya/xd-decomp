@@ -52,7 +52,6 @@ LayerNode* GSgfxLayerFindByID(s32);
 void CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(void*,s32,u32);
 void SetTextureCopy__10GSgfxLayerFP9GStexturebPUc(void*,void*,bool,u8*);
 }
-struct LayerNamed { LayerNode* next; u8 reserved4[4]; char name[32]; };
 
 #pragma inline_max_size(800)
 static void updateLayerFifoUsage(u8* f) {
@@ -186,31 +185,52 @@ void GSgfxLayerUpdateActiveFifoStats__Fv() {
     updateLayerFifo(fifo);
 }
 
-LayerNode* __ct__10GSgfxLayerF12GSgfxLayerIDPcUlUlUl14GSgfxLayerType(void* object,s32 id,char* name,u32 opaque,u32 translucent,u32 matrices,s32 type) {
-    LayerNode* layer=static_cast<LayerNode*>(object);
-    if (!opaque && !translucent) return layer;
-    if (!name || GSgfxLayerFindByName(name)) return layer;
-    if (!matrices) return layer;
-    layer->id=id; layerField<u32>(layer,4)=7; layerField<u8>(layer,0x19b3)=1; layerField<s32>(layer,0x2c)=0;
-    SetLayerType__10GSgfxLayerF14GSgfxLayerType(layer,type);
-    layerField<s32>(layer,0x1994)=2;
-    u32 count=strlen(name)+1; if (count>32) count=32;
-    memcpy(reinterpret_cast<u8*>(layer)+8,name,count); layerField<u8>(layer,count+7)=0;
-    CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(layer,0,opaque);
-    CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(layer,1,translucent);
-    LoadHWState__10GSgfxLayerFv(layer); GSgfx_GCInitState(); memset(reinterpret_cast<u8*>(layer)+0x30,0,0x1678);
-    layerField<GSgfxMatrixStack*>(layer,0x19a0)=new GSgfxMatrixStack(matrices);
-    if (!_layerBottom) { _layerBottom=layer; layer->next=0; }
-    else { LayerNode* p=_layerBottom; while (p->next) p=p->next; layer->next=p->next; p->next=layer; }
-    layerField<void*>(layer,0x199c)=0; layerField<s32>(layer,0x1998)=0x98;
-    layerField<void*>(layer,0x19a4)=0; layerField<s32>(layer,0x19a8)=0;
-    memset(reinterpret_cast<u8*>(layer)+0x19b4,0,0x20);
-    PrepareNextFrame__10GSgfxLayerFv(layer);
-    if (layerField<void*>(layer,0x1818)) selectLayerPass(static_cast<GraphicsLayerState*>(object),0);
-    else selectLayerPass(static_cast<GraphicsLayerState*>(object),1);
-    _layerIDTable[layer->id]=layer; return layer;
 }
 
+GSgfxLayer::GSgfxLayer(GSgfxLayerID layerID, char* layerName, u32 opaqueSize, u32 translucentSize,
+                       u32 matrixCount, GSgfxLayerType type) {
+    if (!opaqueSize && !translucentSize) return;
+    if (!layerName || GSgfxLayerFindByName(layerName)) return;
+    if (!matrixCount) return;
+
+    id = layerID;
+    flags = 7;
+    layerField<u8>(this, 0x19b3) = 1;
+    layerField<s32>(this, 0x2c) = 0;
+    SetLayerType__10GSgfxLayerF14GSgfxLayerType(this, type);
+    layerField<s32>(this, 0x1994) = 2;
+
+    u32 count = strlen(layerName) + 1;
+    if (count > sizeof(name)) count = sizeof(name);
+    memcpy(name, layerName, count);
+    name[count - 1] = 0;
+
+    CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(this, 0, opaqueSize);
+    CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(this, 1, translucentSize);
+    LoadHWState__10GSgfxLayerFv(this);
+    GSgfx_GCInitState();
+    memset(reinterpret_cast<u8*>(this) + 0x30, 0, 0x1678);
+    layerField<GSgfxMatrixStack*>(this, 0x19a0) = new GSgfxMatrixStack(matrixCount);
+
+    if (!_layerBottom) {
+        _layerBottom = this;
+        next = 0;
+    } else {
+        LayerNode* tail = _layerBottom;
+        while (tail->next) tail = tail->next;
+        next = tail->next;
+        tail->next = this;
+    }
+
+    layerField<void*>(this, 0x199c) = 0;
+    layerField<s32>(this, 0x1998) = 0x98;
+    layerField<void*>(this, 0x19a4) = 0;
+    layerField<s32>(this, 0x19a8) = 0;
+    memset(reinterpret_cast<u8*>(this) + 0x19b4, 0, 0x20);
+    PrepareNextFrame__10GSgfxLayerFv(this);
+    if (layerField<void*>(this, 0x1818)) selectLayerPass(reinterpret_cast<GraphicsLayerState*>(this), 0);
+    else selectLayerPass(reinterpret_cast<GraphicsLayerState*>(this), 1);
+    _layerIDTable[id] = this;
 }
 
 GSgfxLayer::~GSgfxLayer() {
@@ -478,9 +498,8 @@ void GSgfxLayerInit__Fv() {
 LayerNode* GSgfxLayerFindByName(char* name) {
     for (LayerNode* p=_layerBottom;p;p=p->next) {
         char local[32];
-        LayerNamed* n=(LayerNamed*)p;
-        if ((s32)((u8)strlen(n->name)+1)<=32) memcpy(local,n->name,(u8)strlen(n->name)+1);
-        else { memcpy(local,n->name,31); local[31]=0; }
+        if ((s32)((u8)strlen(p->name)+1)<=32) memcpy(local,p->name,(u8)strlen(p->name)+1);
+        else { memcpy(local,p->name,31); local[31]=0; }
         if (stricmp(local,name)==0) return p;
     }
     return 0;
@@ -877,9 +896,8 @@ extern "C" void GSgfxLayerRenderStats__FP10GSgfxLayer(void* layer) {
         GetPassVisibility(p,&opaqueVisible,&xlucVisible);
         if (IsLayerVisible(p)!=true) { GSprimSetTextColor(inactive); opaqueVisible=false; xlucVisible=false; }
         GSprimSetTextSize(8.5f,10.0f);
-        LayerNamed* named=(LayerNamed*)p;
-        if ((s32)((u8)strlen(named->name)+1)<=19) memcpy(name,named->name,(u8)strlen(named->name)+1);
-        else { memcpy(name,named->name,18); name[18]=0; }
+        if ((s32)((u8)strlen(p->name)+1)<=19) memcpy(name,p->name,(u8)strlen(p->name)+1);
+        else { memcpy(name,p->name,18); name[18]=0; }
         GSprimWriteStr(85.0f,y,"%s",name);
         GSprimSetTextSize(10.0f,10.0f);
         char status[5];
@@ -936,9 +954,8 @@ extern "C" void GSgfxLayerRenderStats__FP10GSgfxLayer(void* layer) {
             GSprimSetTextColor(red); GSprimWriteChar(40.0f,y,redirects[i].marker);
             GSprimSetTextColor(white);
             LayerNode* target=redirects[i].target;
-            LayerNamed* named=(LayerNamed*)target;
-            if ((s32)((u8)strlen(named->name)+1)<=19) memcpy(name,named->name,(u8)strlen(named->name)+1);
-            else { memcpy(name,named->name,18); name[18]=0; }
+            if ((s32)((u8)strlen(target->name)+1)<=19) memcpy(name,target->name,(u8)strlen(target->name)+1);
+            else { memcpy(name,target->name,18); name[18]=0; }
             const char* pass=redirects[i].pass==0?"opaque":"xluc";
             const char* order=redirects[i].order==1?"before":"after";
             GSprimWriteStr(60.0f,y,"redirected %s: %s %s pass",order,name,pass);
