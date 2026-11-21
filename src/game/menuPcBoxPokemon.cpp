@@ -763,7 +763,7 @@ void CMenuPokemonLeave::boxNameDraw(int box, long win, u32 item) {
     msgctrlSetValue(0x37, (u32)name);
     s16 width = GSmsgGetRect(0x4276) >> 16;
     s16 off = sp->width / 2 - width / 2;
-    GSmsgPrint2(w->layer, w->x + (sp->x + off), w->y + sp->y, -1, 0x4276);
+    GSmsgPrint2(w->layer, w->x + sp->x + off, w->y + sp->y, -1, 0x4276);
 }
 
 void CMenuPokemonLeave::markingMenuItemCallBack(tagWINDOW_WORK *win, tagSPRITE_WORK *sp) {
