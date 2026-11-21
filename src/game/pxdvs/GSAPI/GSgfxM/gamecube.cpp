@@ -94,11 +94,19 @@ inline void GSgfx_GCWriteChanCtrl(s32 chan, u8 enable, s32 ambient, s32 material
     GC_FIELD(s32, chan * 24 + 0x468) = diffuse; GC_FIELD(s32, chan * 24 + 0x46c) = attenuation;
 }
 
-static inline u8 *GCAppendBP(u8 *destination, const void *registerValue) {
-    u8 *out = static_cast<u8 *>(destination);
-    out[0] = GX_LOAD_BP_REG;
-    *reinterpret_cast<u32 *>(out + 1) = *static_cast<const u32 *>(registerValue);
-    return out + 5;
+#pragma pack(push, 1)
+struct GCDisplayListBP {
+    u8 opcode;
+    u32 value;
+};
+#pragma pack(pop)
+typedef char GCDisplayListBPSizeCheck[sizeof(GCDisplayListBP) == 5 ? 1 : -1];
+
+static inline u8* GCAppendBP(u8* destination, const void* registerValue) {
+    GCDisplayListBP* command = reinterpret_cast<GCDisplayListBP*>(destination);
+    command->opcode = GX_LOAD_BP_REG;
+    command->value = *static_cast<const u32*>(registerValue);
+    return destination + sizeof(*command);
 }
 
 static inline void GCFlushBP(u32 value) { GCWriteByte(GX_LOAD_BP_REG); GCWriteWord(value); }
