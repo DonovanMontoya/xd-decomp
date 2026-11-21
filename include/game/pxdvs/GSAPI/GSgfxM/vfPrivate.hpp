@@ -10,4 +10,12 @@ struct VFFormat { u16 flags; u8 colors, textures; u32 index; VFAttribute formats
 struct VFLayer { VFLayer *next; };
 typedef char VFFormatSizeCheck[sizeof(VFFormat) == 0x440 ? 1 : -1];
 typedef char VFArrayOffsetCheck[offsetof(VFFormat, arrays) == 0x290 ? 1 : -1];
+typedef char VFDescriptorsOffsetCheck[offsetof(VFFormat, descriptors) == 0x1b8 ? 1 : -1];
+
+extern "C" {
+void GSgfxVFInit(VFFormat *format);
+void GSgfxVFCreate(VFFormat *format);
+void GSgfxVFSetElement(VFFormat *format, s32 attribute, s32 count, s32 component, u8 fraction);
+}
+
 #endif

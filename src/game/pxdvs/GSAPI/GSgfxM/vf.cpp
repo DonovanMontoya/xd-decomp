@@ -1,4 +1,5 @@
 #include <game/pxdvs/GSAPI/GSgfxM/vfPrivate.hpp>
+#include <dolphin/gx/GXEnum.h>
 #include <libc/string.h>
 extern "C" {
 static VFFormat _vfPredefFmt[9] = {
@@ -108,7 +109,14 @@ static VFFormat _vfPredefFmt[9] = {
         {0x0, 0, 0, 255, 0, 0},
     }},
 };
-static s32 _vfElemTable[23] = {0,1,2,3,4,5,6,7,8,9,10,25,11,12,13,14,15,16,17,18,19,20,255};
+static GXAttr _vfElemTable[] = {
+    GX_VA_PNMTXIDX,
+    GX_VA_TEX0MTXIDX, GX_VA_TEX1MTXIDX, GX_VA_TEX2MTXIDX, GX_VA_TEX3MTXIDX,
+    GX_VA_TEX4MTXIDX, GX_VA_TEX5MTXIDX, GX_VA_TEX6MTXIDX, GX_VA_TEX7MTXIDX,
+    GX_VA_POS, GX_VA_NRM, GX_VA_NBT, GX_VA_CLR0, GX_VA_CLR1,
+    GX_VA_TEX0, GX_VA_TEX1, GX_VA_TEX2, GX_VA_TEX3,
+    GX_VA_TEX4, GX_VA_TEX5, GX_VA_TEX6, GX_VA_TEX7, GX_VA_NULL
+};
 static VFFormat _vfLocal;
 static u32 _vfAllocIndex;
 VFLayer *GSgfxLayerGetLayerList();
@@ -135,7 +143,7 @@ static inline VFArray *findArray(VFFormat *format, s32 attribute) {
 static inline u32 elementIndex(s32 attribute) {
     u32 index = 0;
     s32 value;
-    for (s32 *p = _vfElemTable; (value = *p) != 255; ++p, ++index)
+    for (const GXAttr *p = _vfElemTable; (value = *p) != 255; ++p, ++index)
         if (attribute == value) return index;
     return 0;
 }
@@ -191,11 +199,11 @@ void GSgfxVFSetArray(VFFormat *format, s32 attribute, s32 type, void *data, u8 s
         VFArray *array = findArray(format, attribute);
         if (!array) {
             u32 index = elementIndex(attribute);
-            s32 *element = _vfElemTable + index;
+            const GXAttr *element = _vfElemTable + index;
             VFArray *end;
             VFArray *insert;
             while (index != 0) {
-                int previous = *--element;
+                GXAttr previous = *--element;
                 --index;
                 VFArray *found = findArray(format, previous);
                 if (found) { insert = found + 1; goto insertionFound; }
@@ -270,7 +278,7 @@ void GSgfxVFRemoveElement(VFFormat *format, s32 attribute) {
 void GSgfxVFSetElement(VFFormat *format, s32 attribute, s32 count, s32 component, u8 fraction) {
     GSgfxVFRemoveElement(format, attribute);
     u32 index = elementIndex(attribute);
-    s32 *element = _vfElemTable + index;
+    const GXAttr *element = _vfElemTable + index;
     VFDescriptor *insert = 0;
     while (index != 0) {
         s32 previous = *--element;
@@ -289,7 +297,7 @@ void GSgfxVFSetElement(VFFormat *format, s32 attribute, s32 count, s32 component
     insert->type = 1;
     if (attribute >= 9 || attribute < 0) {
         u32 index = elementIndex(attribute);
-        s32 *element = _vfElemTable + index;
+        const GXAttr *element = _vfElemTable + index;
         VFAttribute *insert = 0;
         while (index != 0) {
             s32 previous = *--element;

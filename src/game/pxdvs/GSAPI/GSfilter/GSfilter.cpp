@@ -3,9 +3,6 @@
 #include <libc/string.h>
 extern "C" {
 void* GSmemAlloc(unsigned long);
-void GSgfxVFInit(VFFormat*);
-void GSgfxVFCreate(VFFormat*);
-void GSgfxVFSetElement(VFFormat*, s32, s32, s32, u8);
 void GSgfxVFSetArray(VFFormat*, s32, s32, void*, u8, u32);
 void GSmtx44Ortho(f32*, f32, f32, f32, f32, f32, f32);
 void DCFlushRange(void*, u32);

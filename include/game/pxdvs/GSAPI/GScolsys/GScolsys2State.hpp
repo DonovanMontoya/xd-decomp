@@ -6,6 +6,7 @@
 
 struct CCD_FILEHEAD;
 struct DLDisplayList;
+struct VFFormat;
 
 struct GSCOLSYS2_OBJ {
     f32 position[3], rotation[3], scale[3];
@@ -30,7 +31,7 @@ struct GSCOLSYS2_STATE {
     CCD_FILEHEAD *head;
     GSCOLSYS2_FLOOR floor[1];
     s32 currentFloor;
-    void *format;
+    VFFormat *format;
     DLDisplayList *displayList;
 };
 

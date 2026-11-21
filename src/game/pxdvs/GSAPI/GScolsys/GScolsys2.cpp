@@ -1,16 +1,13 @@
 #include <game/pxdvs/GSAPI/GScolsys/GScolsys2.hpp>
 #include <game/pxdvs/GSAPI/GScolsys/GScolsys2Private.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/dlPrivate.hpp>
 #include <libc/string.h>
 extern "C" {
 GSCOLSYS2_STATE GScolsys2;
 FloorModuleInterface _floorModuleColsys;
-static u8 _colsysVF[0x440];
+static VFFormat _colsysVF;
 s32 _hModuleField;
 extern Mtx mtxIdent;
-void GSgfxDLFree(DLDisplayList *);
-void GSgfxVFInit(void *);
-void GSgfxVFCreate(void *);
-void GSgfxVFSetElement(void *, s32, s32, s32, u8);
 void FloorModuleInterface_clear(FloorModuleInterface *);
 s32 floorRegisterModule(u32, u32, FloorModuleInterface *);
 
@@ -190,11 +187,11 @@ static void _gscolsysMakeStateData__F14FloorStateModePvUl(FloorStateMode mode, v
 void GScolsys2Init(void) {
     GScolsys2.currentFloor = 0;
     GScolsys2.displayList = 0;
-    GSgfxVFInit(_colsysVF);
-    GSgfxVFCreate(_colsysVF);
-    GScolsys2.format = _colsysVF;
-    GSgfxVFSetElement(GScolsys2.format, 9, 1, 4, 0);
-    GSgfxVFSetElement(GScolsys2.format, 11, 1, 5, 0);
+    GSgfxVFInit(&_colsysVF);
+    GSgfxVFCreate(&_colsysVF);
+    GScolsys2.format = &_colsysVF;
+    GSgfxVFSetElement(GScolsys2.format, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GSgfxVFSetElement(GScolsys2.format, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
     FloorModuleInterface_clear(&_floorModuleColsys);
     _floorModuleColsys.saveState = _gscolsysMakeStateData__F14FloorStateModePvUl;
     _floorModuleColsys.loadState = _gscolsysRestoreStateData__F14FloorStateModePvUl;
