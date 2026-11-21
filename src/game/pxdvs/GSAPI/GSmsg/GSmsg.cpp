@@ -1,6 +1,7 @@
 #pragma dollar_identifiers on
 extern "C" {
 #include <libc/string.h>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 }
 #include <game/pxdvs/GSAPI/GSmsg/GSchar.hpp>
 #include <game/pxdvs/GSAPI/GSmsg/message_layout.hpp>
@@ -897,7 +898,6 @@ void _msgDispRuby(MSG_TASK_WORK* t)
 
 extern "C" {
 void spriteSetEnv(s32);s32 timeGetLastFrameTime();u16 *windowGetKeyInfo();
-void *GSgfxVFBuildTemp(s32,s32,u8,s32,u8,s32,u8,s32,s32);
 void setRenderStateAndSelect__10GSgfxLayerFP7GSgfxVF(GSgfxLayer*,void*);
 void beginSurface__10GSgfxLayerFUs(GSgfxLayer*,u16);void endSurface__10GSgfxLayerFv(GSgfxLayer*);
 s32 GSsndPlayNow(u32);s32 menuSubGetKaiwaCsrID();s32 menuSubGetKaiwaCloseWindowID();

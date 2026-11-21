@@ -2,6 +2,7 @@
 // Needs extra cflags: -inline noauto,deferred -opt nopeephole
 // Native definitions follow retail order; scratch storage retains its recovered layout.
 #include <game/pxdvs/app/menu/winSpritePrivate.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <libc/string.h>
 #include <dolphin/gx/GXVert.h>
 #include <game/pxdvs/app/menu/menuOffScreenPrivate.hpp>
@@ -64,7 +65,6 @@ extern "C" { void winSeqMoveMenu(tagWINDOW_WORK *win); }
 extern "C" { s32 winSeqCheckMove(s32 id); }
 extern "C" {
 
-GSgfxVF* GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);
 void* GSresGetResourceAllGroup(u32);
 u16 GStextureGetXsize(void*);
 u16 GStextureGetYsize(void*);

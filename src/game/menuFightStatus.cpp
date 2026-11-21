@@ -1,4 +1,5 @@
 #include <game/menuFightStatus.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <game/menuFightStatusPrivate.hpp>
 #include <game/menuPokemonStatus.hpp>
 #include <libc/string.h>
@@ -40,7 +41,6 @@ u8 fightTrainerIsGcHero(void*);
 Pokemon* fightOutPokemonGetPokemonPtr(void*);
 void windowDrawSprite2(s16,s16,s16,s16,u32,tagWINDOW_WORK*,u16,s32,s32);
 GSgfxLayer* GSgfxLayerFindByID(s32);
-GSgfxVF* GSgfxVFBuildTemp(s32,s32,u8,u8,s32,s32,s32,s32,s32);
 GSgfxVF* GSgfxVFGetPredef(s32);
 u16 gamedataBiosGetFlag(s32,s32,s32);
 s32 menuCloseSync(s32,s32);

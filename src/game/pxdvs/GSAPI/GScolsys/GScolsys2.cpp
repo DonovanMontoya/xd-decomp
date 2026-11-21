@@ -5,7 +5,7 @@
 extern "C" {
 GSCOLSYS2_STATE GScolsys2;
 FloorModuleInterface _floorModuleColsys;
-static VFFormat _colsysVF;
+static GSgfxVF _colsysVF;
 s32 _hModuleField;
 extern Mtx mtxIdent;
 void FloorModuleInterface_clear(FloorModuleInterface *);

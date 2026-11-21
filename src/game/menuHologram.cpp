@@ -1,4 +1,5 @@
 #include <game/menuHologramLayout.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <game/menuReliveMeter.h>
 #include <dolphin/gx/GXVert.h>
 
@@ -122,7 +123,6 @@ void Sequence_SetRotation(u32, f32 *);
 }
 
 extern "C" {
-GSgfxVF *GSgfxVFBuildTemp(s32, s32, s32, s32, s32, s32, s32, s32, s32);
 void spriteSetOffset(s32, s32, s32);
 void spriteClearScissor(s32);
 void spriteSetEnv(s32);

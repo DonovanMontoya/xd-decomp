@@ -2,7 +2,7 @@
 #include <dolphin/gx/GXEnum.h>
 #include <libc/string.h>
 extern "C" {
-static VFFormat _vfPredefFmt[9] = {
+static GSgfxVF _vfPredefFmt[9] = {
     {0x8001, 1, 0, 7, {
         {9, 1, 4, 0},
         {11, 1, 5, 0},
@@ -117,24 +117,24 @@ static GXAttr _vfElemTable[] = {
     GX_VA_TEX0, GX_VA_TEX1, GX_VA_TEX2, GX_VA_TEX3,
     GX_VA_TEX4, GX_VA_TEX5, GX_VA_TEX6, GX_VA_TEX7, GX_VA_NULL
 };
-static VFFormat _vfLocal;
+static GSgfxVF _vfLocal;
 static u32 _vfAllocIndex;
 VFLayer *GSgfxLayerGetLayerList();
-void ResetVertexFormat__10GSgfxLayerFP7GSgfxVF(VFLayer *, VFFormat *);
+void ResetVertexFormat__10GSgfxLayerFP7GSgfxVF(VFLayer *, GSgfxVF *);
 
-static inline VFDescriptor *findDescriptor(VFFormat *format, s32 attribute) {
+static inline VFDescriptor *findDescriptor(GSgfxVF *format, s32 attribute) {
     s32 value;
     for (VFDescriptor *p = format->descriptors; (value = p->attribute) != 255; ++p)
         if (value == attribute) return p;
     return 0;
 }
-static inline VFAttribute *findFormat(VFFormat *format, s32 attribute) {
+static inline VFAttribute *findFormat(GSgfxVF *format, s32 attribute) {
     s32 value;
     for (VFAttribute *p = format->formats; (value = p->attribute) != 255; ++p)
         if (value == attribute) return p;
     return 0;
 }
-static inline VFArray *findArray(VFFormat *format, s32 attribute) {
+static inline VFArray *findArray(GSgfxVF *format, s32 attribute) {
     s32 value;
     for (VFArray *p = format->arrays; (value = p->attribute) != 255; ++p)
         if (value == attribute) return p;
@@ -147,7 +147,7 @@ static inline u32 elementIndex(s32 attribute) {
         if (attribute == value) return index;
     return 0;
 }
-static inline void recountDescriptorTypes(VFFormat *format) {
+static inline void recountDescriptorTypes(GSgfxVF *format) {
     for (u8 i = 0; i < 27; ++i) {
         if (format->descriptors[i].attribute == 255) break;
         s32 type = format->descriptors[i].type;
@@ -155,7 +155,7 @@ static inline void recountDescriptorTypes(VFFormat *format) {
     }
     format->flags |= 6;
 }
-static inline void recountElements(VFFormat *format) {
+static inline void recountElements(GSgfxVF *format) {
     format->colors = 0;
     format->textures = 0;
     format->flags &= ~8;
@@ -170,13 +170,13 @@ static inline void recountElements(VFFormat *format) {
     recountDescriptorTypes(format);
 }
 
-static inline VFAttribute *findRecountFormat(VFFormat *format, const s32& attribute) {
+static inline VFAttribute *findRecountFormat(GSgfxVF *format, const s32& attribute) {
     s32 value;
     for (VFAttribute *p = format->formats; (value = p->attribute) != 255; ++p)
         if (value == attribute) return p;
     return 0;
 }
-static inline void recountRemovedElements(VFFormat *format) {
+static inline void recountRemovedElements(GSgfxVF *format) {
     format->colors = 0;
     format->textures = 0;
     format->flags &= ~8;
@@ -191,9 +191,9 @@ static inline void recountRemovedElements(VFFormat *format) {
     }
     recountDescriptorTypes(format);
 }
-u8 GSgfxVFGetTextureCount(VFFormat *format) { return format->textures; }
-u8 GSgfxVFGetColorCount(VFFormat *format) { return format->colors; }
-void GSgfxVFSetArray(VFFormat *format, s32 attribute, s32 type, void *data, u8 stride, u32 size) {
+u8 GSgfxVFGetTextureCount(GSgfxVF *format) { return format->textures; }
+u8 GSgfxVFGetColorCount(GSgfxVF *format) { return format->colors; }
+void GSgfxVFSetArray(GSgfxVF *format, s32 attribute, s32 type, void *data, u8 stride, u32 size) {
     if (data != 0 || size == 0xffffffff || (data != 0 && size != 0)) {
         findDescriptor(format, attribute)->type = type;
         VFArray *array = findArray(format, attribute);
@@ -229,7 +229,7 @@ void GSgfxVFSetArray(VFFormat *format, s32 attribute, s32 type, void *data, u8 s
         format->flags |= 12;
     }
 }
-static inline void removeDescriptor(VFFormat *format, s32 attribute, u8 &changed) {
+static inline void removeDescriptor(GSgfxVF *format, s32 attribute, u8 &changed) {
     VFDescriptor *descriptor = findDescriptor(format, attribute);
     if (descriptor) {
         VFDescriptor *next = descriptor + 1;
@@ -241,7 +241,7 @@ static inline void removeDescriptor(VFFormat *format, s32 attribute, u8 &changed
         changed = 1;
     }
 }
-static inline void removeFormat(VFFormat *format, s32 attribute, u8 &changed) {
+static inline void removeFormat(GSgfxVF *format, s32 attribute, u8 &changed) {
     VFAttribute *entry = findFormat(format, attribute);
     if (entry) {
         VFAttribute *next = entry + 1;
@@ -255,7 +255,7 @@ static inline void removeFormat(VFFormat *format, s32 attribute, u8 &changed) {
         changed = 1;
     }
 }
-void GSgfxVFRemoveElement(VFFormat *format, s32 attribute) {
+void GSgfxVFRemoveElement(GSgfxVF *format, s32 attribute) {
     VFArray *nextArray;
     u8 changed = 0;
     removeDescriptor(format, attribute, changed);
@@ -275,7 +275,7 @@ void GSgfxVFRemoveElement(VFFormat *format, s32 attribute) {
     }
     if (changed == 1) recountRemovedElements(format);
 }
-void GSgfxVFSetElement(VFFormat *format, s32 attribute, s32 count, s32 component, u8 fraction) {
+void GSgfxVFSetElement(GSgfxVF *format, s32 attribute, s32 count, s32 component, u8 fraction) {
     GSgfxVFRemoveElement(format, attribute);
     u32 index = elementIndex(attribute);
     const GXAttr *element = _vfElemTable + index;
@@ -321,20 +321,20 @@ void GSgfxVFSetElement(VFFormat *format, s32 attribute, s32 count, s32 component
     }
     recountElements(format);
 }
-u8 GSgfxVFHasElement(VFFormat *format, s32 attribute) {
+u8 GSgfxVFHasElement(GSgfxVF *format, s32 attribute) {
     if (findDescriptor(format, attribute)) return 1;
     return 0;
 }
-void GSgfxVFFree(VFFormat *format) {
+void GSgfxVFFree(GSgfxVF *format) {
     if (format != &_vfLocal && (format->flags & 1)) {
         format->flags &= ~1;
         for (VFLayer *layer = GSgfxLayerGetLayerList(); layer; layer = layer->next)
             ResetVertexFormat__10GSgfxLayerFP7GSgfxVF(layer, format);
     }
 }
-u32 GSgfxVFIsUsed(VFFormat *format) { return format->flags & 1; }
-VFFormat *GSgfxVFGetPredef(s32 index) { return &_vfPredefFmt[index]; }
-void GSgfxVFCreate(VFFormat *format) {
+u32 GSgfxVFIsUsed(GSgfxVF *format) { return format->flags & 1; }
+GSgfxVF *GSgfxVFGetPredef(s32 index) { return &_vfPredefFmt[index]; }
+void GSgfxVFCreate(GSgfxVF *format) {
     u32 i;
     u32 index = _vfAllocIndex;
     u32 next;
@@ -347,14 +347,14 @@ void GSgfxVFCreate(VFFormat *format) {
     for (i = 0; (s32)i < 27; ++i) format->arrays[i].attribute = 255;
     format->flags |= 6;
 }
-void GSgfxVFInit(VFFormat *format) { memset(format, 0, sizeof(*format)); }
-VFFormat *GSgfxVFBuildTemp(s32 positionCount, s32 positionComponent, u8 normal, s32 normalCount, u8 colors, s32 colorComponent, u8 textures, s32 textureCount, s32 textureComponent) {
+void GSgfxVFInit(GSgfxVF *format) { memset(format, 0, sizeof(*format)); }
+GSgfxVF *GSgfxVFBuildTemp(s32 positionCount, s32 positionComponent, u8 normal, s32 normalCount, u8 colors, s32 colorComponent, u8 textures, s32 textureCount, s32 textureComponent) {
     if (normalCount == 2) return 0;
     if (colors > 2) return 0;
     if (textures > 8) return 0;
     if (colorComponent < 0) return 0;
     if (textureComponent > 4) return 0;
-    VFFormat* format = &_vfLocal;
+    GSgfxVF* format = &_vfLocal;
     format->formats[0].attribute = 9;
     _vfLocal.formats[0].count = positionCount;
     _vfLocal.formats[0].component = positionComponent;

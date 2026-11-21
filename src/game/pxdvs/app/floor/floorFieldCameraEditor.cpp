@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/floor/floorFieldCameraEditorPrivate.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 
 extern "C" {
 static void GXParam1u8(u8 value);
@@ -7,7 +8,7 @@ inline void GSvecCopy(GSvec* to, const GSvec* from);
 }
 
 static FieldCameraEditor gFieldCameraEditorData;
-extern "C" {void*memset(void*,int,unsigned long);void*memcpy(void*,const void*,unsigned long);void*GSmemAlloc(u32);void GSmemFree(void*);u32 GSgappCreate(s32,s32,s32,void(*)());void GSgappTerminate(u32);u32 GSfloorGetCurrent();u8 floorFieldCameraGetMode();u8 cameraGetType();void GScameraLoadActiveCameraMatrix(s32);ActiveCamera*GScameraGetActiveCamera();void cameraGetTargetOfs(GSvec*);u8 dbgMenuIsOpen();u8 menuIsCheck(s32);u32 GSinputButtonsChanged(s32);u32 GSinputButtonsPressed(s32);GSgfxLayer*GSgfxLayerFindByID(s32);GSgfxVF*GSgfxVFBuildTemp(s32,s32,u8,s32,u8,s32,u8,s32,s32);f32 cameraGetDistance();f32 cameraGetHeight();f32 cameraGetRotY();f32 cameraGetFov();void floorFieldCameraEditorStopTest();void floorUpdateFieldCameraEditor();}
+extern "C" {void*memset(void*,int,unsigned long);void*memcpy(void*,const void*,unsigned long);void*GSmemAlloc(u32);void GSmemFree(void*);u32 GSgappCreate(s32,s32,s32,void(*)());void GSgappTerminate(u32);u32 GSfloorGetCurrent();u8 floorFieldCameraGetMode();u8 cameraGetType();void GScameraLoadActiveCameraMatrix(s32);ActiveCamera*GScameraGetActiveCamera();void cameraGetTargetOfs(GSvec*);u8 dbgMenuIsOpen();u8 menuIsCheck(s32);u32 GSinputButtonsChanged(s32);u32 GSinputButtonsPressed(s32);GSgfxLayer*GSgfxLayerFindByID(s32);f32 cameraGetDistance();f32 cameraGetHeight();f32 cameraGetRotY();f32 cameraGetFov();void floorFieldCameraEditorStopTest();void floorUpdateFieldCameraEditor();}
 void floorInitFieldCamera(GSfloor_dd_*);
 extern "C" u8 floorFieldCameraEditorGetMode(){return gFieldCameraEditorData.mode;}
 extern "C" void floorReleaseFieldCameraEditor(){floorFieldCameraEditorStopTest();if(gFieldCameraEditorData.application)GSgappTerminate(gFieldCameraEditorData.application);GSmemFree(gFieldCameraEditorData.cameraAllocation);GSmemFree(gFieldCameraEditorData.headerAllocation);memset(&gFieldCameraEditorData,0,sizeof(gFieldCameraEditorData));}

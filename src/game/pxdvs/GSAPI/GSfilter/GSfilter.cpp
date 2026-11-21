@@ -3,7 +3,7 @@
 #include <libc/string.h>
 extern "C" {
 void* GSmemAlloc(unsigned long);
-void GSgfxVFSetArray(VFFormat*, s32, s32, void*, u8, u32);
+void GSgfxVFSetArray(GSgfxVF*, s32, s32, void*, u8, u32);
 void GSmtx44Ortho(f32*, f32, f32, f32, f32, f32, f32);
 void DCFlushRange(void*, u32);
 extern f32 mtxIdent[3][4];

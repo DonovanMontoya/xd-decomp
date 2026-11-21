@@ -1,6 +1,7 @@
 #pragma defer_codegen on
 #pragma force_active on
 #include <game/pxdvs/app/fade/fade.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <game/menuNameEntryLayout.hpp>
 #include <game/pxdvs/GSAPI/GSprim/GSprim.hpp>
 
@@ -67,7 +68,6 @@ void menuModelSetOffset(MENU_MODEL *, Vec *);
 void menuModelSetZoom(MENU_MODEL *, f32);
 GStexture* menuModelRender(MENU_MODEL *);
 
-GSgfxVF* GSgfxVFBuildTemp(u32,u32,u32,u32,u32,u32,u32,u32,u32);
 s32 GScharCmp(u16 *, u16 *);
 void menuTitleBattleSelectFree(void);
 void dbgMenuSetEnable(u8);

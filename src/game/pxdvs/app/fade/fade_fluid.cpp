@@ -1,5 +1,6 @@
 #pragma peephole off
 #include <dolphin/types.h>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #pragma pool_strings off
 #include <dolphin/gx/GXVert.h>
 
@@ -116,7 +117,6 @@ struct FadeFluidWork {
 
 extern "C" {
 GSgfxLayer* GSgfxLayerFindByID(int id);
-GSgfxVF* GSgfxVFBuildTemp(s32, s32, s32, s32, s32, s32, s32, s32, s32);
 void spriteSetEnv(int layerID);
 void GSlerpGetLinearInterpolationVector(GSvec* out, GSvec* a, GSvec* b, f32 t);
 void GSmemFree(void* ptr);

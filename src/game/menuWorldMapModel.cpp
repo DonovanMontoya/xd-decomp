@@ -1,4 +1,5 @@
 #include <game/menuWorldMapModelPrivate.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <dolphin/gx/GXVert.h>
 
 #pragma force_active on
@@ -127,7 +128,7 @@ static s32 _unloadLight(void *p,u32,u32);
 extern "C" {GSmodel *GSmodelLoad(void*,s32);GSlight *GSlightLoad(void*);void GSresRegisterResource(void*,u32,u32,s32(*)(void*,u32,u32));void GSlogWrite(const char*,...);u8 GSmodelCanAnimate(GSmodel*);u8 GSmodelCanTexAnimate(GSmodel*);void GSmodelSetTexAnimIndex(GSmodel*,s32);void GSmodelSetTexAnimRate(GSmodel*,f32);void GSmodelStartTexAnimation(GSmodel*);void GSlightSetType(GSlight*,s32);void GSlightSetActive(GSlight*,bool);u8 GSlightCanAnimate(GSlight*);void GSlightSetAnimIndex(GSlight*,s32);void GSlightSetAnimRate(GSlight*,f32);void GSlightStartAnimation(GSlight*);}
 
 
-extern "C" {GSgfxVF* GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);void spriteSetOffset(s32,s32,s32);void spriteClearScissor(s32);void spriteSetEnv(s32);void GSmtx44Ortho(f32*,f32,f32,f32,f32,f32,f32);void* memcpy(void*,const void*,u32);extern f32 mtxIdent[12];}
+extern "C" {void spriteSetOffset(s32,s32,s32);void spriteClearScissor(s32);void spriteSetEnv(s32);void GSmtx44Ortho(f32*,f32,f32,f32,f32,f32,f32);void* memcpy(void*,const void*,u32);extern f32 mtxIdent[12];}
 
 
 

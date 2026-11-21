@@ -1,4 +1,5 @@
 #include <game/menuSubLayout.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <game/pxdvs/GSAPI/GSprim/GSprim.hpp>
 #include <dolphin/gx/GXVert.h>
 #include <libc/string.h>
@@ -63,7 +64,6 @@ s32 windowGetValue(s32);
 tagWINDOW_WORK* windowSearchID(s32);
 void windowDrawSprite2(s16, s16, s16, s16, u32, void*, u32, s32, s32);
 void menuSubCursorAnimeInit(void);
-GSgfxVF* GSgfxVFBuildTemp(s32, s32, u8, u8, s32, s32, s32, s32, s32);
 }
 
 static s32 _animAlpha(void);

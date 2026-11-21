@@ -1,5 +1,6 @@
 #pragma defer_codegen on
 #include "game/pxdvs/app/fade/fade_effect.hpp"
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <libc/stddef.h>
 
 #include "game/pxdvs/GSAPI/GSmath/GSvec.hpp"
@@ -108,7 +109,6 @@ void GSgfxVFCreate(GSgfxVF*);
 void GSgfxVFFree(GSgfxVF*);
 u8 GSgfxVFIsUsed(GSgfxVF*);
 void GSgfxVFSetElement(GSgfxVF*, s32, s32, s32, u8);
-GSgfxVF* GSgfxVFBuildTemp(s32, s32, u8, u8, s32, s32, s32, s32, s32);
 GSgfxLayer* GSgfxLayerFindByID(GSgfxLayerID);
 void GSmtx44Ortho(f32 (*)[4], f32, f32, f32, f32, f32, f32);
 extern f32 mtxIdent[3][4];

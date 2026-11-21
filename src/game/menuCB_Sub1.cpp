@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/fade/fade.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <game/menuCB_Sub1Layout.hpp>
 #pragma dont_inline on
 
@@ -246,7 +247,6 @@ typedef struct MenuSubPos { s16 x; s16 y; } MenuSubPos;
 typedef struct MenuSubTexture{u8 reserved0[7];u8 dirty;}MenuSubTexture;
 typedef struct MenuSubLayer{u8 reserved0[0x173C];u32 flags0;MenuSubTexture*texture0;u8 reserved1744[0xB0];u32 flags1;MenuSubTexture*texture1;u8 reserved17FC[0x19C];u32 primitive;}MenuSubLayer;
 MenuSubLayer*GSgfxLayerFindByID(s32);
-void*GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);
 void setRenderStateAndSelect__10GSgfxLayerFP7GSgfxVF(void*,void*);
 void beginSurface__10GSgfxLayerFUs(void*,u16);
 void endSurface__10GSgfxLayerFv(void*);

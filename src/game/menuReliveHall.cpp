@@ -1,4 +1,5 @@
 #include <game/menuReliveHallLayout.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <game/menuReliveMeter.h>
 #include <game/maximum/GSAPI/baselib/math_support.h>
 #include <game/pxdvs/app/pcbox/pcbox.hpp>
@@ -575,7 +576,6 @@ void* GSresGetResourceAllGroup(u32);
 u16 GStextureGetXsize(void*);
 u16 GStextureGetYsize(void*);
 void GSprimSetQuadVertexOrder(s32);
-void* GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);
 void GSgfxSetupRenderAndSelect(void*);
 void GSgfxSetTUnitUserColorArg(s32,s32,s32,s32,s32);
 void GSgfxSetTUnitUserColorOp(s32,s32,s32,s32,s32,s32);

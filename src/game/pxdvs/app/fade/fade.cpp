@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/fade/fade.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <game/pxdvs/GSAPI/GSprim/GSprim.hpp>
 #include <libc/string.h>
 #include <game/pxdvs/GSAPI/GSgfxM/backfbPrivate.hpp>
@@ -153,7 +154,7 @@ void fadeInit(void) {
 
 }
 
-extern "C" { u8 GSgfxVideoGetVsyncRate(); u32 timeGetLastFrameTime(); GSgfxVF* GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32); }
+extern "C" { u8 GSgfxVideoGetVsyncRate(); u32 timeGetLastFrameTime();  }
 extern "C" void fadeDaemon() {
     Mtx44 projection;
     GXColor white={255,255,255,255};

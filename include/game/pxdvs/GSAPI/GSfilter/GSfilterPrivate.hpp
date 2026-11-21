@@ -111,7 +111,7 @@ struct FilterData {
  GSfilter* handles;
  GXColor* colors;
  s16 vertices[4][2];
- VFFormat format;
+ GSgfxVF format;
  u8 capacity, allocated, visible;
  u8 padding;
 };
