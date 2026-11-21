@@ -31,8 +31,26 @@ static ModeEntry _videoModeList[]={
  {8,&GXNtsc480Prog,0,0,0},{9,&GXNtsc480ProgSoft,0,0,0},{10,&GXNtsc480ProgAa,0,0,0},{0,0,0,0,0}
 };
 static VideoState _videoState; static Viewport _viewport; static u8 _videoDefaultFilter[7]={8,8,10,12,10,8,8}; static void(*_videoOneShotPostCB)(void*);
-inline VideoBuffer *findPointer(void *ptr) { VideoState *scan=&_videoState; s32 i=0;while(i<_videoState.count) {if(scan->buffers[0].ptr==ptr) return &_videoState.buffers[i];scan=(VideoState*)((u8*)scan+8);i++;}return 0; }
-inline VideoBuffer *findState(s32 state) { VideoState *base=&_videoState;VideoState *scan=base;s32 i=0;while(i<base->count) {if(scan->buffers[0].state==state) return &_videoState.buffers[i];scan=(VideoState*)((u8*)scan+8);i++;}return 0; }
+inline VideoBuffer* findPointer(void* pointer) {
+    VideoState* video = &_videoState;
+    for (s32 i = 0; i < _videoState.count; ++i) {
+        if (video->buffers[i].ptr == pointer) {
+            return &_videoState.buffers[i];
+        }
+    }
+    return 0;
+}
+
+inline VideoBuffer* findState(s32 state) {
+    VideoState* video = &_videoState;
+    for (s32 i = 0; i < video->count; ++i) {
+        if (video->buffers[i].state == state) {
+            return &_videoState.buffers[i];
+        }
+    }
+    return 0;
+}
+
 inline VideoBuffer *waitFree(bool wait) {
     if(_videoState.count==1) return 0;
     GSgfxRenderWaitData data; GSgfxRenderWaitInit__FP19GSgfxRenderWaitData(&data);
@@ -101,7 +119,12 @@ float GSgfxVideoGetLastRenderTime() { if(GSgfxRenderIsPaused()==1) return 0; if(
 s32 GSgfxVideoGetVsyncCount() { return _videoState.vsync; }
 u8 GSgfxVideoGetVsyncRate() { return _videoState.rate; }
 u8 GSgfxVideoSetXFBReady__FPv(void *ptr) { return ready(ptr); }
-void *GSgfxVideoFindFreeXFB__Fb(bool wait) { VideoBuffer *b=freeBuffer(wait); if(!b) return 0; return b->ptr; }
+#pragma opt_common_subs off
+void* GSgfxVideoFindFreeXFB__Fb(bool wait) {
+    VideoBuffer* buffer = freeBuffer(wait);
+    return buffer == 0 ? 0 : buffer->ptr;
+}
+#pragma opt_common_subs reset
 u8 GSgfxVideoGetXFBCount() { return _videoState.count; }
 u8 GSgfxVideoGetLockFrameActive() { return _videoState.lockActive; }
 s32 GSgfxVideoGetLockFrameRate() { return _videoState.lockRate; }
