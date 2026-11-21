@@ -261,7 +261,7 @@ void FlashMenu::Update() {
         FlashItem *item = items;
         s32 i = 0;
         FlashHeader *hdr = header;
-        for (; i < hdr->itemCount; i++, item++) {
+        for (; i < hdr->itemCount; ++item, ++i) {
             item->field30 = 0;
             item->placement = 0;
             item->frame = 0;
@@ -269,12 +269,9 @@ void FlashMenu::Update() {
             flcalcUnitCxform(&item->cxform);
             flcalcUnitMatrix2(&item->matrix);
         }
-        s32 l = 0;
-        s32 off = 0;
-        for (; l < hdr->layerCount; l++, off += 8) {
-            s32 j = 0;
-            FlashLayer *layer = (FlashLayer *)((u8 *)layers + off);
-            for (; j < hdr->itemCount; j++) {
+        for (s32 l = 0; l < hdr->layerCount; ++l) {
+            for (s32 j = 0; j < hdr->itemCount; ++j) {
+                FlashLayer* layer = &layers[l];
                 layer->items[j].frame = 0;
                 layer->items[j].depth = 0.0f;
                 layer->items[j].field30 = 0;
@@ -291,12 +288,12 @@ void FlashMenu::Update() {
             pos = start;
             frameStart = target;
             field14 = 0;
-            u8 *tag = (u8 *)header + pos;
+            FlashTag* tag = (FlashTag*)((u8*)header + pos);
             for (;;) {
-                if (ParseTag(*(u32 *)tag, *(u32 *)(tag + 4), 0, 0, 0)) {
+                if (ParseTag(tag->type, tag->size, false, false, false)) {
                     break;
                 }
-                tag = (u8 *)header + pos;
+                tag = (FlashTag*)((u8*)header + pos);
             }
         }
         field20 = 0;
