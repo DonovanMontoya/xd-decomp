@@ -35,9 +35,7 @@ __declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *arg0);
 __declspec(weak) void psDispSubAppSRT(PSParticle *arg0, const PSForm *form);
 __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, const PSForm *form, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5, f32 farg6, f32 farg7, f32 arg_sp8, f32 arg_spC, f32 arg_sp10, f32 arg_sp14);
 __declspec(weak) void psDispSub(PSParticle *arg0, const PSForm *form);
-static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3);
-void psDispSetProjection(f32 *arg0);
-void psDispParticles(u32 arg0, s32 arg1, u32 arg2);
+static void _psDispParticlesSub(u32 linkMask, s32 pass, PSGenerator *generator, void *camera);
 
 void psDispBeginFrame(void) {
     u8 var_r0;
@@ -1607,7 +1605,7 @@ static inline void psSetupVtxFormat(GXVtxFmt format, BOOL has_color,
     }
 }
 
-static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3) {
+static void _psDispParticlesSub(u32 linkMask, s32 pass, PSGenerator *generator, void *camera) {
     typedef struct _HSD_TlutDesc {
         u16* lut;
         GXTlutFmt fmt;
@@ -1638,9 +1636,9 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
     prevACmpParam2 = 0xFF;
     needs_setup = 1;
     for (linkNo = 0; linkNo < 16; linkNo++) {
-        if (arg0 & (1 << linkNo)) {
+        if (linkMask & (1 << linkNo)) {
             particleSort(linkNo, &sorted_particles, &non_edge_particles);
-            switch (arg1) {
+            switch (pass) {
             case 1:
                 pp = sorted_particles;
                 break;
@@ -1668,12 +1666,12 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
                 GXTexWrapMode wrap_t;
                 void** tex_table;
 
-                if (((u32) arg1 == 1) && !(pp->kind & TexEdge)) {
+                if (((u32) pass == 1) && !(pp->kind & TexEdge)) {
                     break;
                 }
                 if (!(pp->size < __float_epsilon[0]) &&
-                    (arg2 == NULL || pp->id == arg2->id) &&
-                    (u32) pp->generator->camera == arg3 &&
+                    (generator == NULL || pp->id == generator->id) &&
+                    pp->generator->camera == camera &&
                     !(pp->kind & PS_FLAG_HIDDEN))
                 {
                     if (needs_setup != 0) {
@@ -1986,10 +1984,10 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
     }
 }
 
-void psDispSetProjection(f32 *arg0) {
-    memcpy(prj, arg0, 0x1CU);
+void psDispSetProjection(const PSProjection *projection) {
+    memcpy(prj, projection, sizeof(prj));
 }
 
-void psDispParticles(u32 arg0, s32 arg1, u32 arg2) {
-    _psDispParticlesSub(arg0, arg1, NULL, arg2);
+void psDispParticles(s32 linkMask, s32 pass, void *camera) {
+    _psDispParticlesSub(linkMask, pass, NULL, camera);
 }

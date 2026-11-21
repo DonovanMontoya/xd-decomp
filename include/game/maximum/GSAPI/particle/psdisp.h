@@ -8,7 +8,6 @@
 typedef HSD_Mtx PSMtx;
 
 void* memcpy(void*,const void*,u32); void OSReport(const char*,...);
-void psDispParticles(u32,s32,u32); void psDispSetProjection(f32*);
 
 void psDispSub(PSParticle*,const PSForm*); void psDispSubAppSRT(PSParticle*,const PSForm*);
 void psDispSubAPPSRTPoint(PSParticle*); PSParticle* psDispSubPointTrail(PSParticle*);

@@ -1,35 +1,16 @@
 #pragma defer_codegen on
-#include <global.h>
+#include <game/maximum/GSAPI/particle/particle.h>
 
 struct _GSparticleGen;
 struct _GSparticleBank;
 enum GenKind { GEN_PS = 0, GEN_BANK = 1 };
-
-struct psGenX {
-    u8 reserved0[0x15];
-    u8 familyB;
-    u8 reserved16[2];
-    u16 familyA;
-    u8 reserved1a[6];
-    f32 x, y, z;
-};
-
-struct psCtl {
-    u8 reserved0[0x10];
-    u16 lifeA;
-    u8 reserved12[5];
-    u8 flag17;
-    u8 reserved18[0x90 - 0x18];
-    f32 rx, ry, rz;
-    f32 sx, sy, sz;
-};
 
 struct peBankX {
     u8 isInfinite0;
     u8 kind1;
     u8 reserved2[2];
     u32 birth;
-    psGenX *ps;
+    PSGenerator *ps;
     f32 x, y, z;
     u8 reserved18[0x118 - 0x18];
     f32 qx, qy, qz, qw;
@@ -44,7 +25,7 @@ struct psWrap {
     u8 isFinite;
     u16 id;
     u32 birth;
-    psCtl *ps;
+    PSGenerator *ps;
     u8 reserved0c[0xc];
     f32 x, y, z;
     f32 sx, sy, sz;
@@ -83,19 +64,10 @@ void GSgfxRenderWaitForDrawComplete__Fv(void);
 void GSparticleDestroyGenerator(_GSparticleGen *, u8);
 void GSparticleDestroyAllGenerators(_GSparticleBank *, u8);
 void peBankFreeFile(void *);
-void psSetParticleVisibility(psGenX *, u8);
-void psSetRandomVelocityScaling(psGenX *, u8);
-void psSetNodeScaling(psGenX *, u8);
-void psSetTornadoScaling(psGenX *, u8, u8);
-void psSetParticleTexScaling(psGenX *, u8);
-void psSetOffsetRotationInLocal(psGenX *, u8, u8);
-void psSetVelocityRotationInLocal(psGenX *, u8);
-void psGeneratorSetCamera(psGenX *, void *);
 u8 peBankIsInfinite(peBankX *);
 void peBankStop(peBankX *);
 void peBankStopLoop(peBankX *);
 void peBankFree(peBankX *);
-void psKillFamily(u16, u8);
 s32 GSgfxPerfbarCPUEntry(s32);
 void particleEnginePostUpdate(void);
 u8 GScameraIsValid(u32);
@@ -103,19 +75,10 @@ void * GScameraGetActiveCamera(void);
 void * memset(void *, int, unsigned long);
 void particleEngineUpdate(f32);
 void psDispBeginFrame(void);
-void psExecGenerator(int);
-void * psGeneratorGetCamera(psGenX *);
 void psInterpretParticles(int);
-void psSetBillboardCamera(void *);
-u32 psGetGeneratorChildMaxLife(psCtl *);
-u32 psGetParticleChildCount(psCtl *);
-void psSetGeneratorAngleRadiusScale(psCtl *, f32 *, u8);
 f32 peBankGetLife(peBankX *);
 u8 GSgfxVideoGetVsyncRate(void);
-void EulerToQuat(void *, f32 *);
-void psKillGenerator(void *);
 void * GSmemAlloc(u32);
-psCtl * psCreateGeneratorID(u8, u8, u32);
 peBankX * peBankCreate(void *);
 void peBankStart(peBankX *);
 u32 GSgfxVideoGetVsyncCount(void);
@@ -124,22 +87,16 @@ void GScameraLoadProjection(void *, void *);
 void GScameraLoadActiveCameraMatrix(s32);
 void particleEngineRender(void *);
 s32 psDispHasRenderData(s32);
-void psDispParticles(s32, s32, void *);
-void psDispSetProjection(void *);
-void psSetToken(s16);
 void GSlogWrite(const char *, ...);
 void * GSmemAllocClr(u32);
 void DCFlushRange(void *, u32);
 void * peBankLoadFile(void *);
 void psInitDataBank(s32, void *, void *, void *, s32);
 void GSvecMakeFromQuat(void *, f32 *);
-void psLinkChildGensToJObj(void *, void *);
 void GSmodelSet60fpsAnimFlag(s32, s32);
-void psUnlinkChildGensFromJObj(void *);
 void psInitParticle(s32);
 void psInitGenerator(s32);
 s32 psInitAppSRT(s32, s32);
-void psSetPointJObjNodup(void *, s32);
 void particleEngineInit(void);
 s32 GSmodelSearchModelList(void *);
 s32 GSmodelGetLinkedGSparticleBank(void);
@@ -155,13 +112,11 @@ struct partX {
     u8 reserved0[2];
     u16 id;
     s32 model;
-    void *jobj;
+    PSJObj *jobj;
 };
-struct VecX3 { f32 x, y, z; };
-struct QuatX4 { f32 x, y, z, w; };
-extern VecX3 zeroVector;
-extern QuatX4 zeroQuaternion;
-extern VecX3 unitScaleVector;
+extern PSVec zeroVector;
+extern HSD_Quaternion zeroQuaternion;
+extern PSVec unitScaleVector;
 extern "C" void GSparticleAttachGeneratorToGSpart(_GSparticleGen *, partX *, s32, s8, u8, u8);
 
 struct _HSD_JObj {
@@ -171,7 +126,7 @@ struct _HSD_JObj {
 };
 extern "C" void HSD_JObjSetSPtclCallback(void (*)(int, int, int, _HSD_JObj *));
 extern "C" void HSD_JObjSetDPtclCallback(void (*)(int, int, int, _HSD_JObj *));
-extern "C" void HSD_JObjSetPtclTargetCallback(void (*)(void *, s32));
+extern "C" void HSD_JObjSetPtclTargetCallback(void (*)(PSObject *, s32));
 extern "C" void GSgfxRenderModuleRegister__FUcP17GSgfxRenderModulePv(u8, void *, void *);
 static void _particleJObjCallback(int, int, int, _HSD_JObj *);
 struct ParticleRenderModule {
@@ -184,7 +139,7 @@ enum GSgfxLayerPass { PARTICLE_PASS_DEFAULT };
 struct GSgfxCamX {
     u32 reserved0;
     u32 reserved4;
-    void *obj;
+    PSCamera *obj;
 };
 
 struct GSgfxLayer {
@@ -196,7 +151,8 @@ struct GSgfxLayer {
     u8 flagD44;
     u8 flagD45;
     u8 reservedD46[0xd54 - 0xd46];
-    u8 projection[0xd90 - 0xd54];
+    PSProjection projection;
+    u8 reservedD70[0xd90 - 0xd70];
     s32 fieldD90;
     u8 reservedD94[0x16a6 - 0xd94];
     u8 flag16A6;
@@ -867,19 +823,19 @@ _GSparticleGen * GSparticleCreateGenerator(_GSparticleBank *bank, u32 id, u8 fla
         if (w == 0) {
             return 0;
         }
-        u8 type = 0;
+        s32 type = 0;
         if (flag == 1) type = 1;
         w->ps = psCreateGeneratorID(type, bank->kind, id);
         if (w->ps == 0) {
             GSmemFree(w);
             return 0;
         }
-        w->ps->flag17 = 1;
-        psGeneratorSetCamera((psGenX *)w->ps, bank->camera);
+        w->ps->state = 1;
+        psGeneratorSetCamera(w->ps, bank->camera);
         w->id = id;
         w->flag0 = flag;
         w->birth = GSgfxVideoGetVsyncCount();
-        if (w->ps->lifeA == 0) {
+        if (w->ps->life == 0) {
             w->isFinite = 1;
         } else {
             w->isFinite = 0;
@@ -920,9 +876,9 @@ void GSparticleAttachGeneratorToGSpart(_GSparticleGen *g, partX *p, s32 mode, s8
             peBankX *b = g->bank;
             f32 q[4];
             if (b != 0) {
-                g->px = ((VecX3 *)((u8 *)b + 0x10C))->x;
-                g->py = ((VecX3 *)((u8 *)b + 0x10C))->y;
-                g->pz = ((VecX3 *)((u8 *)b + 0x10C))->z;
+                g->px = ((PSVec *)((u8 *)b + 0x10C))->x;
+                g->py = ((PSVec *)((u8 *)b + 0x10C))->y;
+                g->pz = ((PSVec *)((u8 *)b + 0x10C))->z;
             } else {
                 g->px = 0.0f;
                 g->py = 0.0f;
@@ -969,9 +925,9 @@ void GSparticleAttachGeneratorToGSpart(_GSparticleGen *g, partX *p, s32 mode, s8
         if (g->isBank != 0) {
             peBankX *b = g->bank;
             if (b != 0) {
-                ((VecX3 *)((u8 *)b + 0x10C))->x = zeroVector.x;
-                ((VecX3 *)((u8 *)b + 0x10C))->y = zeroVector.y;
-                ((VecX3 *)((u8 *)b + 0x10C))->z = zeroVector.z;
+                ((PSVec *)((u8 *)b + 0x10C))->x = zeroVector.x;
+                ((PSVec *)((u8 *)b + 0x10C))->y = zeroVector.y;
+                ((PSVec *)((u8 *)b + 0x10C))->z = zeroVector.z;
             }
             b = g->bank;
             if (b != 0) {
@@ -1050,9 +1006,9 @@ void GSparticleSetGeneratorPosition(_GSparticleGen *g, f32 *pos) {
             b->x = pos[0];
             b->y = pos[1];
             b->z = pos[2];
-            b->ps->x = pos[0];
-            b->ps->y = pos[1];
-            b->ps->z = pos[2];
+            b->ps->position.x = pos[0];
+            b->ps->position.y = pos[1];
+            b->ps->position.z = pos[2];
         }
     } else {
         g->px = pos[0];
@@ -1068,23 +1024,23 @@ void GSparticleSetGeneratorRotation(_GSparticleGen *g, f32 *rot) {
     if (b != 0) {
         if (g->part == 0) {
             if (g->isBank != 0) {
-                f32 quat[4];
-                EulerToQuat(rot, quat);
+                HSD_Quaternion quat;
+                EulerToQuat((PSVec*)rot, &quat);
                 peBankX *bank = g->bank;
                 if (bank != 0) {
-                    bank->qx = quat[0];
-                    bank->qy = quat[1];
-                    bank->qz = quat[2];
-                    bank->qw = quat[3];
+                    bank->qx = quat.x;
+                    bank->qy = quat.y;
+                    bank->qz = quat.z;
+                    bank->qw = quat.w;
                 }
             } else {
                 psWrap *w = (psWrap *)b;
                 w->x = rot[0];
                 w->y = rot[1];
                 w->z = rot[2];
-                w->ps->rx = rot[0];
-                w->ps->ry = rot[1];
-                w->ps->rz = rot[2];
+                w->ps->rotation.x = rot[0];
+                w->ps->rotation.y = rot[1];
+                w->ps->rotation.z = rot[2];
             }
         } else {
             g->rx = rot[0];
@@ -1114,9 +1070,9 @@ void GSparticleSetGeneratorScale(_GSparticleGen *g, f32 *scale, u8 flag, u32 rad
                 w->sx = scale[0];
                 w->sy = scale[1];
                 w->sz = scale[2];
-                w->ps->sx = scale[0];
-                w->ps->sy = scale[1];
-                w->ps->sz = scale[2];
+                w->ps->scale.x = scale[0];
+                w->ps->scale.y = scale[1];
+                w->ps->scale.z = scale[2];
             }
         } else {
             g->sx = scale[0];
@@ -1124,7 +1080,7 @@ void GSparticleSetGeneratorScale(_GSparticleGen *g, f32 *scale, u8 flag, u32 rad
             g->sz = scale[2];
         }
         if (g->isBank == 0 && flag == 1) {
-            psSetGeneratorAngleRadiusScale(((psWrap *)g->bank)->ps, scale, radius);
+            psSetGeneratorAngleRadiusScale(((psWrap *)g->bank)->ps, (PSVec*)scale, radius);
         }
     }
 }
@@ -1256,8 +1212,8 @@ void GSparticleDestroyGenerator(_GSparticleGen *g, u8 flag) {
             g->bank = 0;
         } else {
             if (flag == 1) {
-                psGenX *ps = g->bank->ps;
-                psKillFamily(ps->familyA, ps->familyB);
+                PSGenerator *ps = g->bank->ps;
+                psKillFamily(ps->id, ps->link);
             }
             psKillGenerator(g->bank->ps);
             if (g->bank != 0) {
@@ -1319,16 +1275,16 @@ void GSparticleGeneratorSetCamera(_GSparticleGen *g, void *cam) {
 #pragma opt_loop_invariants off
 extern "C++" {
 static void _particleUpdateAttachment(_GSparticleGen *arg0) {
-    VecX3 position;
-    VecX3 rotation;
-    VecX3 scale;
-    QuatX4 quaternion;
-    VecX3 offset;
-    QuatX4 q48;
-    QuatX4 q38;
-    QuatX4 q28;
-    QuatX4 q18;
-    QuatX4 q8;
+    PSVec position;
+    PSVec rotation;
+    PSVec scale;
+    HSD_Quaternion quaternion;
+    PSVec offset;
+    HSD_Quaternion q48;
+    HSD_Quaternion q38;
+    HSD_Quaternion q28;
+    HSD_Quaternion q18;
+    HSD_Quaternion q8;
     f32 temp_f2;
     f32 temp_f2_2;
     f32 temp_f2_3;
@@ -1399,7 +1355,7 @@ static void _particleUpdateAttachment(_GSparticleGen *arg0) {
         temp_r30 = GSmodelGetPart(PARTICLE_FIELD(arg0, s32, 0xC), PARTICLE_FIELD(arg0, s32, 0x4));
         GSpartGetTransform(temp_r30, &position.x, &rotation.x, &scale.x);
         GSpartFree(temp_r30);
-        EulerToQuat(&rotation.x, &quaternion.x);
+        EulerToQuat(&rotation, &quaternion);
         GSvecTransformQuat(&offset.x, &quaternion.x, (u8*)arg0 + 0x10);
         PSVECAdd(&position.x, &offset.x, &position.x);
         PSVECAdd(&rotation.x, (u8*)arg0 + 0x1C, &rotation.x);
@@ -1423,7 +1379,7 @@ static void _particleUpdateAttachment(_GSparticleGen *arg0) {
             PARTICLE_FIELD(PARTICLE_FIELD(temp_r4, void*, 8), f32, 0x28) = (f32) PARTICLE_FIELD(arg0, f32, 0x18);
         }
         if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
-            EulerToQuat((u8*)arg0 + 0x1C, &q48.x);
+            EulerToQuat((PSVec*)((u8*)arg0 + 0x1C), &q48);
             temp_r3_2 = PARTICLE_FIELD(arg0, void*, 0x38);
             if (temp_r3_2 != NULL) {
                 PARTICLE_FIELD(temp_r3_2, f32, 0x118) = q48.x;
@@ -1482,7 +1438,7 @@ static void _particleUpdateAttachment(_GSparticleGen *arg0) {
                 break;
             case 2:
                 if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
-                    EulerToQuat(&rotation.x, &q38.x);
+                    EulerToQuat(&rotation, &q38);
                     temp_r3_5 = PARTICLE_FIELD(arg0, void*, 0x38);
                     if (temp_r3_5 != NULL) {
                         PARTICLE_FIELD(temp_r3_5, f32, 0x118) = q38.x;
@@ -1539,7 +1495,7 @@ static void _particleUpdateAttachment(_GSparticleGen *arg0) {
                     PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_7, void*, 8), f32, 0x28) = position.z;
                 }
                 if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
-                    EulerToQuat(&rotation.x, &q28.x);
+                    EulerToQuat(&rotation, &q28);
                     temp_r3_8 = PARTICLE_FIELD(arg0, void*, 0x38);
                     if (temp_r3_8 != NULL) {
                         PARTICLE_FIELD(temp_r3_8, f32, 0x118) = q28.x;
@@ -1559,7 +1515,7 @@ static void _particleUpdateAttachment(_GSparticleGen *arg0) {
                 break;
             case 5:
                 if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
-                    EulerToQuat(&rotation.x, &q18.x);
+                    EulerToQuat(&rotation, &q18);
                     temp_r3_9 = PARTICLE_FIELD(arg0, void*, 0x38);
                     if (temp_r3_9 != NULL) {
                         PARTICLE_FIELD(temp_r3_9, f32, 0x118) = q18.x;
@@ -1651,7 +1607,7 @@ static void _particleUpdateAttachment(_GSparticleGen *arg0) {
                     PARTICLE_FIELD(PARTICLE_FIELD(temp_r4_13, void*, 8), f32, 0x28) = position.z;
                 }
                 if ((u8) PARTICLE_FIELD(arg0, u8, 0x0) != 0) {
-                    EulerToQuat(&rotation.x, &q8.x);
+                    EulerToQuat(&rotation, &q8);
                     temp_r3_14 = PARTICLE_FIELD(arg0, void*, 0x38);
                     if (temp_r3_14 != NULL) {
                         PARTICLE_FIELD(temp_r3_14, f32, 0x118) = q8.x;
@@ -1852,7 +1808,7 @@ static void _particleRender(GSgfxLayer *layer, GSgfxLayerPass pass) {
                 layer->f1760 |= 2;
                 GScameraLoadProjection(cam, layer);
                 layer->FlushState();
-                psDispSetProjection(layer->projection);
+                psDispSetProjection(&layer->projection);
                 psSetBillboardCamera(cam->obj);
                 psDispParticles(type, 1, 0);
                 psDispParticles(type, 2, 0);
@@ -1863,7 +1819,7 @@ static void _particleRender(GSgfxLayer *layer, GSgfxLayerPass pass) {
                         any = 1;
                         GScameraLoadProjection(c, layer);
                         layer->FlushState();
-                        psDispSetProjection(layer->projection);
+                        psDispSetProjection(&layer->projection);
                         psSetBillboardCamera(c->obj);
                         psDispParticles(type, 1, c);
                         psDispParticles(type, 2, c);

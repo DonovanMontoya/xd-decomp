@@ -1153,10 +1153,10 @@ void psSetBillboardCamera(PSCamera *arg0) {
     }
 }
 
-void psGeneratorSetCamera(PSGenerator *arg0, s32 arg1) {
-    arg0->camera = arg1;
+void psGeneratorSetCamera(PSGenerator *generator, void *camera) {
+    generator->camera = camera;
 }
 
-s32 psGeneratorGetCamera(PSGenerator *arg0) {
-    return arg0->camera;
+void* psGeneratorGetCamera(PSGenerator *generator) {
+    return generator->camera;
 }

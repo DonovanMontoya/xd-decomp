@@ -61,7 +61,7 @@ struct PSGenerator {
     f32 axisZZ; /* 0x80 */
     u16 edgeFlags; /* 0x84 */
     u8 opaque86[2];
-    s32 camera; /* 0x88 */
+    void* camera; /* 0x88 */
     u16 transformFlags; /* 0x8C */
     u16 commandID; /* 0x8E */
     PSVec rotation; /* 0x90 */
@@ -130,18 +130,29 @@ struct PSParticle {
 };
 typedef struct PSCmd { u16 type,texGroup,genLife,life; u32 kind; f32 gravity,friction; PSVec velocity; f32 radius,angle,random,size,param1,param2,param3; u8 commands[1]; } PSCmd;
 typedef struct PSTex { u32 count,format,paletteFormat,width,height; u16 palettes,paletteFlags; void* textures[1]; } PSTex;
+#ifdef __cplusplus
+extern "C" {
+#endif
 void* HSD_Alloc(u32); void HSD_Free(void*); void* memset(void*,int,u32); void __assert(const char*,int,const char*); void OSPanic(const char*,int,const char*,...);
 PSParticle* particleSort(s32,PSParticle**,PSParticle**); PSParticle* _psListGetFirst(s32); void _psListDelete(PSParticle*,PSParticle*); PSParticle* _psListNew(PSParticle*,s32); void _psListClear(void); s32 _psLinkInit(s32);
 s32 psRemoveGeneratorAppSRT(PSGenerator*); s32 psRemoveParticleAppSRT(PSParticle*); s32 psChangeGeneratorAppSRT(PSGenerator*,PSAppSRT*); s32 psChangeParticleAppSRT(PSParticle*,PSAppSRT*); s32 psAttachGeneratorAppSRT(PSGenerator*,PSAppSRT*); s32 psAttachParticleAppSRT(PSParticle*,PSAppSRT*); PSAppSRT* psAddGeneratorAppSRT(PSGenerator*,s8); void psRemoveAppSRT(void); s32 psInitAppSRT(s32,s32);
 void psSetToken(s16); void psSetParticleVisibility(PSGenerator*,u8); void psSetGeneratorAngleRadiusScale(PSGenerator*,PSVec*,u8);
-void psSetRandomVelocityScaling(PSGenerator*,u8); void psSetNodeScaling(PSGenerator*,u8); void psSetTornadoScaling(PSGenerator*,u8,u8); void psSetParticleTexScaling(PSGenerator*,u8); void psSetOffsetRotationInLocal(PSGenerator*,u8,u8); void psSetVelocityRotationInLocal(PSGenerator*,u8); void psUnlinkChildGensFromJObj(PSGenerator*); void psLinkChildGensToJObj(PSGenerator*,PSJObj*); s32 psGetParticleChildCount(PSGenerator*); u32 psGetGeneratorChildMaxLife(PSGenerator*); void psKillGeneratorChild(PSGenerator*); void psKillFamily(u16,s32); void psDeletePntJObjwithParticle(PSParticle*); void psKillAllParticle(void); void psRemoveParticle(void); void psInitParticle(s32);
+void psSetRandomVelocityScaling(PSGenerator*,u8); void psSetNodeScaling(PSGenerator*,u8); void psSetTornadoScaling(PSGenerator*,u8,u8); void psSetParticleTexScaling(PSGenerator*,u8); void psSetOffsetRotationInLocal(PSGenerator*,u8,u8); void psSetVelocityRotationInLocal(PSGenerator*,u8); void psUnlinkChildGensFromJObj(PSGenerator*); void psLinkChildGensToJObj(PSGenerator*,PSJObj*); u32 psGetParticleChildCount(PSGenerator*); u32 psGetGeneratorChildMaxLife(PSGenerator*); void psKillGeneratorChild(PSGenerator*); void psKillFamily(u16,s32); void psDeletePntJObjwithParticle(PSParticle*); void psKillAllParticle(void); void psRemoveParticle(void); void psInitParticle(s32);
 PSParticle* psGenerateParticle0(PSParticle* parent, s32 link, s32 bank, void* unused6,
     s32 unused7, u32 kind, u16 texGroup, u8* commands, s32 life,
     f32 x, f32 y, f32 z, f32 vx, f32 vy, f32 vz, f32 size,
     f32 gravity, f32 friction, s32 paletteFlags, PSGenerator* generator, s32 interpret);
 PSParticle* psGenerateParticle(s32,s32,s32,u32,s32,u8*,s32,f32,f32,f32,f32,f32,f32,f32,f32,f32,s32,PSGenerator*);
 PSParticle* psGenerateParticleID0(PSParticle*,s32,s32,s32,s32); PSParticle* psInterpretParticle0(PSParticle*,PSParticle*);
-s32 psGeneratorGetCamera(PSGenerator*); void psGeneratorSetCamera(PSGenerator*,s32); PSGenerator* psCreateGeneratorID(s32,s32,s32); void psExecGenerator(s32); f32 generateParticle(PSGenerator*); void psKillAllGenerator(void); void psKillGeneratorID(u16); void psKillGenerator(PSGenerator*); void psRemoveGenerator(void); void psInitGenerator(s32); void genPosUpdate(PSGenerator*); u16 psGetNewIDNum(void);
+void* psGeneratorGetCamera(PSGenerator*);
+void psGeneratorSetCamera(PSGenerator*, void* camera);
+void psDispParticles(s32 linkMask, s32 pass, void* camera);
+typedef struct PSProjection {
+    s32 type;
+    f32 coefficients[6];
+} PSProjection;
+void psDispSetProjection(const PSProjection* projection);
+PSGenerator* psCreateGeneratorID(s32,s32,s32); void psExecGenerator(s32); f32 generateParticle(PSGenerator*); void psKillAllGenerator(void); void psKillGeneratorID(u16); void psKillGenerator(PSGenerator*); void psRemoveGenerator(void); void psInitGenerator(s32); void genPosUpdate(PSGenerator*); u16 psGetNewIDNum(void);
 void HSD_JObjSetupMatrixSub(PSJObj*); void HSD_JObjUnref(PSJObj*); f32 HSD_Randf(void); void* HSD_SListRemove(void*);
 extern u16 numActiveParticles,numPeakParticles,numActiveGenerators,numPeakGenerators,numActivePSAppSRT,numPeakPSAppSRT;
 extern PSGenerator *activeGenerator,*freeGenerator,*lastGP;
@@ -155,4 +166,7 @@ typedef struct PSCamera { PSClass* methods; u16 references; u8 opaque[0x1E]; PSW
 void psSetBillboardCamera(PSCamera*); void psSetPointJObjNodup(PSObject*,s32); void psSetPointJObj(s32,PSObject*);
 void HSD_CObjGetUpVector(PSCamera*,PSVec*); void PSMTXConcat(f32 (*)[4],f32 (*)[4],f32 (*)[4]); void PSMTXIdentity(f32 (*)[4]); void PSMTXMultVec(f32 (*)[4],PSVec*,PSVec*); void PSMTXRotRad(f32 (*)[4],char,f32); void PSVECCrossProduct(PSVec*,PSVec*,PSVec*); void PSVECNormalize(PSVec*,PSVec*);
 f64 atan2(f64,f64); f64 cos(f64); f64 sin(f64);
+#ifdef __cplusplus
+}
+#endif
 #endif
