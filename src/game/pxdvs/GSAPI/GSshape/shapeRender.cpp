@@ -244,7 +244,7 @@ bool GsShapeRender::LoadShapeRender(void* file) {
         entry->vertices=(Vec*)((u8*)entry->vertices+(u32)base);
         entry->colors=(tagGScol4ub*)((u8*)entry->colors+(u32)base);
         entry->textureCoords=(GsShapePair*)((u8*)entry->textureCoords+(u32)base);
-        if(entry->reserved1C) entry->reserved1C=(u8*)entry->reserved1C+(u32)base;
+        if(entry->normals) entry->normals=(Vec*)((u8*)entry->normals+(u32)base);
         for(j=0;j<entry->textureCount;j++) if(entry->textures[j]) entry->textures[j]=(u8*)entry->textures[j]+(u32)base;
         if(entry->dynamic==1 && entry->shapeType==8) needsRefraction=1;
         memset(objects[i].drawBuffers,0,sizeof(objects[i].drawBuffers));
@@ -482,7 +482,7 @@ void GsShapeRender::Render(s16 instanceId,GSgfxLayerID layerId)
                     billboard=shapeObjectBillboard(primitive);
                     if(billboard==1) MakeMatrixBillboard__13GsShapeObjectFP5GSmtxf(object,camera,depth);
                     view=billboard==1?(GSmtx *)((u8 *)object+0x470):camera;
-                    if(primitive->colorMode && object->entry->reserved1C) {
+                    if(primitive->colorMode && object->entry->normals) {
                         tagGsFilePrimKeyFrame *first,*second;
                         f32 t;
                         if(!key->GetFrameInterval(frame,first,second,t)) continue;

@@ -70,12 +70,16 @@ struct GsKeyObject {
 };
 struct tagGsFilePrimObjectEntry {
     u8 reserved00[4]; u8 dynamic, reserved05[3], shapeType, colorMode; u16 segmentsU, segmentsV, vertexCount;
-    Vec* vertices; tagGScol4ub* colors; GsShapePair* textureCoords; void* reserved1C;
+    Vec* vertices; tagGScol4ub* colors; GsShapePair* textureCoords; Vec* normals;
     u8 reserved20[6]; u16 textureCount; void* textures[4];
     u16 geometryType, reserved3A; f32 width, height;
-    u8 reserved44[0x18]; f32 shearAngle; u8 reserved60[0xD], transformEnabled, rotation1Enabled, rotation2Enabled;
+    u8 reserved44[0x18]; f32 shearAngle; f32 angleV, stripWidthStart, stripWidthEnd;
+    u8 reserved6C, transformEnabled, rotation1Enabled, rotation2Enabled;
     Vec position; u8 reserved7C[0x18]; Vec rotationAxis1, rotationAxis2;
     f32 rotationAngle1, rotationAngle2;
+    u8 reservedB4[0x14];
+    f32 length;
+    u8 spiralMode;
 };
 struct GsShapeObject {
     tagGsFilePrimObjectEntry* entry;

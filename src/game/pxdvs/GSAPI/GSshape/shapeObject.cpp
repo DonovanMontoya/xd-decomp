@@ -183,7 +183,6 @@ static inline void shapeFastSinCos(f32& angle,f32& cosine) {
     cosine=1.0f+square*(-0.125f+square*(0.0026041667f+-0.00002170139f*square));
     if(magnitude>1.5707964f) cosine=-cosine;
 }
-static inline f32 shapeEntryLength(const tagGsFilePrimObjectEntry* e) { return *(const f32*)((const u8*)e+0xC8); }
 bool GsShapeObject::DeformVertexCoordCylinderEx(bool deform,const f32* u,const f32* v,bool radius,f32 radiusU,f32 radiusV,bool angle,f32 angleU,bool twistEnabled,const f32* twist) {
     f32 ring,z,start,sweep,length,radiusDelta,current,sine,scale;
     const f32* horizontal; const f32* tw; const f32* vp; int column,row,columns,rows; Vec* out;
@@ -203,7 +202,7 @@ bool GsShapeObject::DeformVertexCoordCylinderEx(bool deform,const f32* u,const f
     start*=0.017453292f;
     if(!radius) { radiusU=entry->width; radiusV=entry->height; }
     radiusDelta=radiusU-radiusV;
-    length=*(const f32*)((const u8*)entry+0xC8);
+    length=entry->length;
     tw=twist; vp=v;
     for(row=0;row<rows;tw++,vp++,row++) {
         if(twistEnabled==1) scale=1.0f+*tw;
@@ -260,78 +259,110 @@ static inline f32 shapeSqrt(f32 x) {
     return x;
 }
 #pragma dont_inline on
-bool GsShapeObject::DeformVertexCoordSpiral(bool deform,const f32* u,const f32* v,bool radius,f32 radiusU,f32 radiusV,bool angle,f32 angleU,f32 angleV,bool twistEnabled,const f32* twist) {
-    Vec *array=(Vec*)vertexArrays[0];
-    if(!array)return false;
-    Vec *out=array;
-    int row,column;
-    const f32 *horizontal;
-    Vec *normals=0;
-    int columns=entry->segmentsU+1,rows=entry->segmentsV+1;
-    if(!radius){radiusU=entry->width;radiusV=entry->height;}
-    if(angle)normals=(Vec*)entry->reserved1C;
-    else {angleU=entry->shearAngle;angleV=*(f32*)((u8*)entry+0x60);}
-    f32 delta=radiusV-radiusU,length=shapeEntryLength(entry);
-    f32 angleStart=0.017453292f*angleU;
-    f32 angleSweep=0.017453292f*(angleV-angleU);
-    f32 widthStart=*(f32*)((u8*)entry+0x64),widthEnd=*(f32*)((u8*)entry+0x68);
-    f32 lengthSquared=length*length;
-    f32 slant=shapeSqrt(lengthSquared+(f32)(delta*delta));
-    u32 mode=*((u8*)entry+0xCC);
-    u32 even=((s32)mode%2==0),rounded=(mode>=2);
-    f32 quarter=0.25f*lengthSquared;
-    f32 taper=1.0f-2.0f/(f32)entry->segmentsU;
-    f32 scale;
-    for(row=0;row<rows;row++,twist++,v++){
-        if(twistEnabled==1)scale=1.0f+*twist;
-        f32 vertical;
-        if(deform)vertical=*v;else vertical=(f32)row/(f32)(rows-1);
-        horizontal=u;
-        for(column=0;column<columns;column++,horizontal++){
+bool GsShapeObject::DeformVertexCoordSpiral(bool deform, const f32* u, const f32* v, bool radius,
+                                          f32 radiusU, f32 radiusV, bool angle, f32 angleU, f32 angleV,
+                                          bool twistEnabled, const f32* twist) {
+    f32 vertical, slant, current, width, length, scale, sample, widthStart, widthEnd;
+    f32 angleStart, angleSweep, quarterLengthSquared, taper;
+    f32 theta, sine;
+    bool even, rounded;
+    const f32 *horizontal, *rowTwist, *rowV;
+    int column, row, columns, rows;
+    Vec *out, *normals;
+    Vec* vertices = (Vec*)vertexArrays[0];
+    if (!vertices) return false;
+    out = vertices;
+    normals = 0;
+    columns = entry->segmentsU + 1;
+    rows = entry->segmentsV + 1;
+    if (!radius) {
+        radiusU = entry->width;
+        radiusV = entry->height;
+    }
+    if (angle) {
+        normals = entry->normals;
+    } else {
+        angleU = entry->shearAngle;
+        angleV = entry->angleV;
+    }
+    f32 delta = radiusV - radiusU;
+    length = entry->length;
+    angleStart = 0.017453292f * angleU;
+    angleSweep = 0.017453292f * (angleV - angleU);
+    widthStart = entry->stripWidthStart;
+    widthEnd = entry->stripWidthEnd;
+    f32 lengthSquared = length * length;
+    slant = shapeSqrt(lengthSquared + (f32)(delta * delta));
+    u32 mode = entry->spiralMode;
+    even = (s32)mode % 2 ? 0 : 1;
+    rounded = mode >= 2;
+    quarterLengthSquared = 0.25f * lengthSquared;
+    taper = 1.0f - 2.0f / (f32)entry->segmentsU;
+
+    rowTwist = twist;
+    rowV = v;
+    for (row = 0; row < rows; rowTwist++, rowV++, row++) {
+        if (twistEnabled == 1) scale = 1.0f + *rowTwist;
+        if (deform) vertical = *rowV;
+        else vertical = (f32)row / (f32)(rows - 1);
+        horizontal = u;
+        for (column = 0; column < columns; horizontal++, column++) {
             f32 across;
-            if(deform)across=*horizontal;else across=(f32)column/(f32)(columns-1);
-            f32 complement=1.0f-across;
-            f32 theta=angleSweep*across+angleStart;
-            f32 width=widthStart*complement+widthEnd*across;
-            f32 sine,cosine;
-            if(even==1||slant<0.00001f){
-                f32 sample=across;
-                f32 current;
-                if(rounded==1){
-                    sample=(across-0.5f)*taper+0.5f;
-                    current=radiusU*(1.0f-sample)+radiusV*sample;
-                    f32 distance=length*(f32)__fabs(sample-0.5f);
-                    f32 bulge=quarter-distance*distance;
-                    if(bulge>0.0f)current+=shapeSqrt(bulge);
-                }else current=radiusU*complement+radiusV*across;
-                if(twistEnabled==1)current*=scale;
-                sine=theta;shapeFastSinCos(sine,cosine);
-                out->x=current*cosine;out->y=current*sine;
-                out->z=width*vertical+(length*sample-0.5f*width);out++;
-            }else{
-                f32 fraction,sample;
-                f32 current;
-                if(rounded==1){
-                    fraction=width/slant;
-                    sample=(across-0.5f)*(1.0f-fraction)+0.5f;
-                    f32 position=((fraction*vertical+(sample-0.5f*fraction))-0.5f)*taper+0.5f;
-                    current=radiusU*(1.0f-position)+radiusV*position;
-                    f32 distance=length*(f32)__fabs(position-0.5f);
-                    f32 bulge=quarter-distance*distance;
-                    if(bulge>0.0f)current+=shapeSqrt(bulge);
-                }else{
-                    fraction=width/slant;
-                    sample=(across-0.5f)*(1.0f-fraction)+0.5f;
-                    f32 position=fraction*vertical+(sample-0.5f*fraction);
-                    current=radiusU*(1.0f-position)+radiusV*position;
+            if (deform) across = *horizontal;
+            else across = (f32)column / (f32)(columns - 1);
+            f32 complement = 1.0f - across;
+            theta = angleSweep * across + angleStart;
+            width = widthStart * complement + widthEnd * across;
+            f32 cosine;
+            sample = across;
+            if (even == 1 || slant < 0.00001f) {
+                if (rounded == 1) {
+                    sample = (across - 0.5f) * taper + 0.5f;
+                    current = radiusU * (1.0f - sample) + radiusV * sample;
+                    f32 distance = length * (f32)__fabs(sample - 0.5f);
+                    f32 bulge = quarterLengthSquared - distance * distance;
+                    if (bulge > 0.0f) current += shapeSqrt(bulge);
+                } else {
+                    current = radiusU * complement + radiusV * across;
                 }
-                if(twistEnabled==1)current*=scale;
-                sine=theta;shapeFastSinCos(sine,cosine);
-                f32 stripLength=length*fraction;
-                out->x=current*cosine;out->y=current*sine;
-                out->z=stripLength*vertical+(length*sample-0.5f*stripLength);out++;
+                if (twistEnabled == 1) current *= scale;
+                sine = theta;
+                shapeFastSinCos(sine, cosine);
+                out->x = current * cosine;
+                out->y = current * sine;
+                out->z = width * vertical + (length * sample - 0.5f * width);
+                out++;
+            } else {
+                f32 fraction;
+                if (rounded == 1) {
+                    fraction = width / slant;
+                    sample = (across - 0.5f) * (1.0f - fraction) + 0.5f;
+                    f32 position = ((fraction * vertical + (sample - 0.5f * fraction)) - 0.5f) * taper + 0.5f;
+                    current = radiusU * (1.0f - position) + radiusV * position;
+                    f32 distance = length * (f32)__fabs(position - 0.5f);
+                    f32 bulge = quarterLengthSquared - distance * distance;
+                    if (bulge > 0.0f) current += shapeSqrt(bulge);
+                } else {
+                    fraction = width / slant;
+                    sample = (across - 0.5f) * (1.0f - fraction) + 0.5f;
+                    f32 position = fraction * vertical + (sample - 0.5f * fraction);
+                    current = radiusU * (1.0f - position) + radiusV * position;
+                }
+                if (twistEnabled == 1) current *= scale;
+                sine = theta;
+                shapeFastSinCos(sine, cosine);
+                f32 stripLength = length * fraction;
+                out->x = current * cosine;
+                out->y = current * sine;
+                out->z = stripLength * vertical + (length * sample - 0.5f * stripLength);
+                out++;
             }
-            if(normals){normals->x=cosine;normals->y=sine;normals->z=0.0f;normals++;}
+            if (normals) {
+                normals->x = cosine;
+                normals->y = sine;
+                normals->z = 0.0f;
+                normals++;
+            }
         }
     }
     return true;
@@ -359,7 +390,7 @@ bool GsShapeObject::DeformVertexCoordSphere(bool deform, const f32* u, const f32
         sweepV = angleV;
     } else {
         sweepU = entry->shearAngle;
-        sweepV = *(f32*)((u8*)entry + 0x60);
+        sweepV = entry->angleV;
     }
     if (sweepU < 0.00001f) sweepU = 0.00001f;
     if (sweepU > 360.0f) sweepU = 360.0f;
@@ -451,7 +482,7 @@ bool GsShapeObject::DeformVertexCoordTorus(bool deform, const f32* u, const f32*
         sweepV = angleV;
     } else {
         sweepU = entry->shearAngle;
-        sweepV = *(f32*)((u8*)entry + 0x60);
+        sweepV = entry->angleV;
     }
     if (sweepU < 0.00001f) sweepU = 0.00001f;
     if (sweepU > 360.0f) sweepU = 360.0f;
@@ -548,7 +579,7 @@ bool GsShapeObject::WaveTextureCoord(u32 texture,f32 offsetU,f32 offsetV,const G
     GsShapePair* out=(GsShapePair*)vertexArrays[texture+2];
     if(!out) return false;
     if(texture==0 && entry->textureCount>=2) return false;
-    const Vec* displacement=(const Vec*)entry->reserved1C;
+    const Vec* displacement=entry->normals;
     if(!displacement) return false;
     if(!accumulate) memcpy(out,entry->textureCoords,entry->vertexCount*sizeof(GsShapePair));
     u16 segmentsU=entry->segmentsU,segmentsV=entry->segmentsV;
@@ -696,7 +727,7 @@ extern "C" bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShap
  if(!self->vertexArrays[1])return false;
  Mtx transform,rotation;PSMTXCopy(second->matrix,transform);PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);
  Vec *normals;Vec *positions;tagGScol4ub *colors;int i;int count;
- normals=(Vec*)self->entry->reserved1C;count=self->entry->vertexCount;positions=self->entry->vertices;colors=(tagGScol4ub*)self->vertexArrays[1];i=0;
+ normals=self->entry->normals;count=self->entry->vertexCount;positions=self->entry->vertices;colors=(tagGScol4ub*)self->vertexArrays[1];i=0;
  for(;i<count;++i) {
   Vec normalInput,position,normal,view;normalInput.x=normals[i].x;normalInput.y=normals[i].y;normalInput.z=normals[i].z;position.x=positions[i].x;position.y=positions[i].y;position.z=positions[i].z;PSMTXMultVecSR(transform,&normalInput,&normal);PSMTXMultVec(transform,&position,&view);f32 viewZ=view.z;view.z=viewZ-distance;
   f32 weight;
@@ -705,7 +736,7 @@ extern "C" bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShap
   else if(self->entry->colorMode==2) {normal.x=0.0f;view.x=0.0f;
    if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
   else if(self->entry->colorMode==3) {
-   if((self->entry->geometryType==31&&*((u8*)self->entry+0xce)==1&&!preserveNormal)||(self->entry->geometryType==32&&(*((u8*)self->entry+0xcc)%2)==0)) {
+   if((self->entry->geometryType==31&&*((u8*)self->entry+0xce)==1&&!preserveNormal)||(self->entry->geometryType==32&&(self->entry->spiralMode%2)==0)) {
     Vec forward,axis;forward.x=0.0f;forward.y=0.0f;forward.z=1.0f;PSMTXMultVecSR(transform,&forward,&forward);PSVECCrossProduct(&view,&forward,&axis);
     if(PSVECSquareMag(&axis)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&axis,&axis);PSVECNormalize(&view,&view);PSMTXRotAxisRad(rotation,&axis,1.5707964f-(f32)acos(PSVECDotProduct(&forward,&view)));PSMTXMultVecSR(rotation,&normal,&normal);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;
    }else if(PSVECSquareMag(&normal)>9.9999994e-11f&&PSVECSquareMag(&view)>9.9999994e-11f){PSVECNormalize(&normal,&normal);PSVECNormalize(&view,&view);weight=shapeAngularWeight(&normal,&view,self);}else weight=0.0f;}
@@ -730,7 +761,7 @@ extern "C" bool RefractTextureCoord__13GsShapeObjectFffP5GSmtxP5GSmtxP5GSmtxf(Gs
  screenWidth=viewport[2];screenHeight=viewport[3];
  u32 copySize=self->entry->vertexCount*sizeof(GsShapePair);
  for(s32 texture=0;texture<self->entry->textureCount;++texture) {
-  const Vec *normalGrid=(const Vec*)self->entry->reserved1C;const Vec *positions=self->entry->vertices;
+  const Vec *normalGrid=self->entry->normals;const Vec *positions=self->entry->vertices;
   if(!normalGrid)continue;GsShapePair *out=(GsShapePair*)self->vertexArrays[texture+2];if(!out)continue;
   if(texture==0){PSMTXCopy(second->matrix,transform);PSMTXConcat(first->matrix,transform,transform);PSMTXConcat(third->matrix,transform,transform);memcpy(projectionMatrix,transform,sizeof(Mtx));}
   else {PSMTXCopy(second->matrix,transform);memcpy(out,self->entry->textureCoords,copySize);}
