@@ -1,4 +1,5 @@
 extern "C" float __float_nan[];
+#include <game/pxdvs/GSAPI/GScolsys/GScolsys2Walk.hpp>
 #include <game/pxdvs/app/hero/heroMovePrivate.hpp>
 
 static HeroMoveWork HeroMove;
@@ -1126,13 +1127,11 @@ s32 heroMoveInit(GSvec* position, GSvec* rotation) {
 extern "C" {
 double sin(double);
 double cos(double);
-struct WalkHeight { f32 height; u8 reserved[8]; };
-s32 GScolsys2WalkGetHeight(GSvec*, WalkHeight*);
 }
 
 static void initFloor() {
     GSvec rotation, position, followerPosition;
-    WalkHeight heights[8];
+    GSwalkHit heights[8];
     s32 i;
     if (!GSfloorIsPop()) {
         getPos(&position, (HEROMOVE_MEMBER)heroMoveGetLeader());

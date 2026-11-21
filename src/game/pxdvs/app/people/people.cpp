@@ -1,3 +1,4 @@
+#include <game/pxdvs/GSAPI/GScolsys/GScolsys2Walk.hpp>
 #include <game/pxdvs/app/people/runtime.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 #include <game/pxdvs/app/hero/heroMove.hpp>
@@ -2787,16 +2788,14 @@ s32 _peopleSideStepCheck__Fv() {
 }
 
 extern "C" {
-struct PeopleWalkSurface { f32 height; u32 flags[2]; };
 void __ct__5GSvecFv(GSvec*);
 void __construct_array(void*,void*,void*,u32,u32);
 s32 GScolsys2ThruGetEventID(GSvec*,GSvec*,HeroMoveQueuedEvent*,f32);
 s32 GScolsys2ThruPassEventID(GSvec*,GSvec*,HeroMoveQueuedEvent*);
 u8 gimmickBoxIsPushBoxFloor();
-s32 GScolsys2WalkGetHeight(GSvec*,PeopleWalkSurface*);
 GSvec* peopleBiosGetPrevPosPtr(tagPeopleWork*);
 u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* work,GSvec* output,GSvec* previous) {
-    PeopleWalkSurface surfaces[8];
+    GSwalkHit surfaces[8];
     HeroMoveQueuedEvent events[4];
     GSvec oldPosition,position,start,end,hit;
     __construct_array(events[0].vertices,(void*)__ct__5GSvecFv,0,12,3);
@@ -2843,7 +2842,7 @@ u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* wor
                 if((f32)fabs(position.param2-peopleBiosGetPrevPosPtr(work)->param2)>=10.0f) {
                     f32 height=surfaces[0].height;
                     f32 difference=(f32)fabs(peopleBiosGetPrevPosPtr(work)->param2-surfaces[0].height);
-                    PeopleWalkSurface* surface=surfaces+1;
+                    GSwalkHit* surface=surfaces+1;
                     for(s32 i=1;i<count;++surface,++i) {
                         f32 otherDifference=(f32)fabs(peopleBiosGetPrevPosPtr(work)->param2-surface->height);
                         if(difference>otherDifference) {difference=otherDifference;height=surface->height;}

@@ -1,19 +1,18 @@
 #ifndef GSCOLSYS2_HUMAN_PRIVATE_HPP
 #define GSCOLSYS2_HUMAN_PRIVATE_HPP
+#include <game/pxdvs/GSAPI/GScolsys/GScolsys2Walk.hpp>
 #include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <dolphin/mtx.h>
 #include <libc/stddef.h>
 struct GSvec { f32 x,y,z; };
 struct GSCOLSYS2_HUMAN { s32 group; u32 resource; f32 radius,height; u16 flags,padding; };
 struct HumanFloor { u8 objects[0xa00]; GSCOLSYS2_HUMAN humans[48]; };
-struct HumanHeight { f32 height; u16 upper,lower; s8 layer,floor; u16 padding; };
 struct tagPeopleWork { u8 isHero() const; u8 isFollower() const; };
 typedef char HumanRecordSize[sizeof(GSCOLSYS2_HUMAN)==20?1:-1];
 typedef char HumanArrayOffset[offsetof(HumanFloor,humans)==0xa00?1:-1];
 typedef char HumanFloorSize[sizeof(HumanFloor)==0xdc0?1:-1];
 extern "C" {
 HumanFloor *GScolsys2GetCurFloor();
-s32 GScolsys2WalkGetHeight(GSvec *,HumanHeight *);
 u32 peopleGetHumanID(s32,u32);
 tagPeopleWork *peopleSearchID(u32);
 GSvec *peopleBiosGetPosPtr(tagPeopleWork *);

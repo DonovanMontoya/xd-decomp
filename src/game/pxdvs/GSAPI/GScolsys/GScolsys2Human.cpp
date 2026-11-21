@@ -209,7 +209,7 @@ extern "C" s32 GScolsys2HumanAddCurrentFloor(int *index,GSCOLSYS2_HUMAN *input) 
     return 0;
 }
 extern "C" f32 GScolsys2HumanGetWalkHeight(GSvec *input) {
-    HumanHeight heights[8];
+    GSwalkHit heights[8];
     GSvec point;
     point.x=input->x;point.y=input->y;point.z=input->z;
     s32 count=GScolsys2WalkGetHeight(&point,heights);
@@ -218,7 +218,7 @@ extern "C" f32 GScolsys2HumanGetWalkHeight(GSvec *input) {
         preferred=-1000000.0f;
         u8 found=0;
         highest=-1000000.0f;
-        HumanHeight *entry=heights;
+        GSwalkHit *entry=heights;
         for(s32 i=0;i<count;i++,entry++) {
             height=entry->height;
             if(highest<height) highest=height;
@@ -247,12 +247,12 @@ extern "C" f32 GScolsys2HumanGetWalkHeight(GSvec *input) {
     return point.y;
 }
 extern "C" f32 GScolsys2HumanGetWalkHighest(GSvec *input) {
-    HumanHeight heights[8];
+    GSwalkHit heights[8];
     GSvec point;
     point.x=input->x;point.y=input->y;point.z=input->z;
     s32 count=GScolsys2WalkGetHeight(&point,heights);
     if(count>=2) {
-        HumanHeight *entry=heights;
+        GSwalkHit *entry=heights;
         f32 highest=-1000000.0f;
         for(s32 i=0;i<count;i++,entry++) if(highest<entry->height) highest=entry->height;
         return highest;
