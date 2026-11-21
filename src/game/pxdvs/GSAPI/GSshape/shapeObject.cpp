@@ -1,4 +1,5 @@
 #include <game/pxdvs/GSAPI/GSshape/shapeObjectPrivate.hpp>
+#include <game/maximum/GSAPI/baselib/math_support.h>
 #include <dolphin/gx.h>
 
 extern "C" {
@@ -166,6 +167,12 @@ bool GsShapeObject::DeformVertexCoord(bool deform,const f32* u,const f32* v,bool
     }
 }
 
+static inline f32 shapeMagnitude(f32 value) {
+    union { f32 scalar; u32 bits; } magnitude;
+    magnitude.scalar = value;
+    magnitude.bits &= 0x7fffffff;
+    return magnitude.scalar;
+}
 static inline void shapeFastSinCos(f32& angle,f32& cosine) {
     f32 reduced=angle;
     if(angle>3.1415927f) {
@@ -177,8 +184,7 @@ static inline void shapeFastSinCos(f32& angle,f32& cosine) {
     }
     f32 doubled=2.0f*(reduced<-1.5707964f?-3.1415927f-reduced:(reduced<=1.5707964f?reduced:3.1415927f-reduced));
     f32 square=doubled*doubled;
-    f32 magnitude=reduced;
-    (*(int*)&magnitude)&=0x7fffffff;
+    f32 magnitude = shapeMagnitude(reduced);
     angle=doubled*(0.5f+square*(-0.020833334f+square*(0.00026041668f+-0.0000015500992f*square)));
     cosine=1.0f+square*(-0.125f+square*(0.0026041667f+-0.00002170139f*square));
     if(magnitude>1.5707964f) cosine=-cosine;
@@ -237,32 +243,12 @@ bool GsShapeObject::DeformVertexCoordCylinderEx(bool deform,const f32* u,const f
     return true;
 }
 
-#pragma dont_inline off
-extern "C" { extern f32 __float_nan[]; }
-static inline f32 shapeSqrt(f32 x) {
-    if(x>0.0f) {
-        f64 guess=__frsqrte(x);
-        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
-        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
-        guess=0.5*guess*(3.0-(f64)x*(guess*guess));
-        return (f32)((f64)x*guess);
-    }
-    if((f64)x<0.0)return __float_nan[0];
-    union {f32 value;s32 bits;} v;v.value=x;
-    s32 type;
-    switch(v.bits&0x7f800000) {
-    case 0x7f800000:if(v.bits&0x7fffff)type=1;else type=2;break;
-    case 0:if(v.bits&0x7fffff)type=5;else type=3;break;
-    default:type=4;break;
-    }
-    if(type==1)return __float_nan[0];
-    return x;
-}
 #pragma dont_inline on
 bool GsShapeObject::DeformVertexCoordSpiral(bool deform, const f32* u, const f32* v, bool radius,
                                           f32 radiusU, f32 radiusV, bool angle, f32 angleU, f32 angleV,
                                           bool twistEnabled, const f32* twist) {
-    f32 vertical, slant, current, width, length, scale, sample, widthStart, widthEnd;
+    GsShapePair coordinate;
+    f32 slant, current, width, length, scale, sample, widthStart, widthEnd;
     f32 angleStart, angleSweep, quarterLengthSquared, taper;
     f32 theta, sine;
     bool even, rounded;
@@ -292,7 +278,7 @@ bool GsShapeObject::DeformVertexCoordSpiral(bool deform, const f32* u, const f32
     widthStart = entry->stripWidthStart;
     widthEnd = entry->stripWidthEnd;
     f32 lengthSquared = length * length;
-    slant = shapeSqrt(lengthSquared + (f32)(delta * delta));
+    slant = hsdSqrt(lengthSquared + (f32)(delta * delta));
     u32 mode = entry->spiralMode;
     even = (s32)mode % 2 ? 0 : 1;
     rounded = mode >= 2;
@@ -303,50 +289,50 @@ bool GsShapeObject::DeformVertexCoordSpiral(bool deform, const f32* u, const f32
     rowV = v;
     for (row = 0; row < rows; rowTwist++, rowV++, row++) {
         if (twistEnabled == 1) scale = 1.0f + *rowTwist;
-        if (deform) vertical = *rowV;
-        else vertical = (f32)row / (f32)(rows - 1);
+        if (deform) coordinate.v = *rowV;
+        else coordinate.v = (f32)row / (f32)(rows - 1);
         horizontal = u;
         for (column = 0; column < columns; horizontal++, column++) {
-            f32 across;
-            if (deform) across = *horizontal;
-            else across = (f32)column / (f32)(columns - 1);
-            f32 complement = 1.0f - across;
-            theta = angleSweep * across + angleStart;
-            width = widthStart * complement + widthEnd * across;
+            if (deform) coordinate.u = *horizontal;
+            else coordinate.u = (f32)column / (f32)(columns - 1);
+            f32 complement = 1.0f - coordinate.u;
+            theta = angleSweep * coordinate.u + angleStart;
+            width = widthStart * complement + widthEnd * coordinate.u;
             f32 cosine;
-            sample = across;
+            sample = coordinate.u;
             if (even == 1 || slant < 0.00001f) {
                 if (rounded == 1) {
-                    sample = (across - 0.5f) * taper + 0.5f;
+                    sample = (coordinate.u - 0.5f) * taper + 0.5f;
                     current = radiusU * (1.0f - sample) + radiusV * sample;
                     f32 distance = length * (f32)__fabs(sample - 0.5f);
                     f32 bulge = quarterLengthSquared - distance * distance;
-                    if (bulge > 0.0f) current += shapeSqrt(bulge);
+                    if (bulge > 0.0f) current += hsdSqrt(bulge);
                 } else {
-                    current = radiusU * complement + radiusV * across;
+                    current = radiusU * complement + radiusV * coordinate.u;
                 }
                 if (twistEnabled == 1) current *= scale;
                 sine = theta;
                 shapeFastSinCos(sine, cosine);
                 out->x = current * cosine;
                 out->y = current * sine;
-                out->z = width * vertical + (length * sample - 0.5f * width);
+                out->z = width * coordinate.v + (length * sample - 0.5f * width);
                 out++;
             } else {
                 f32 fraction;
                 if (rounded == 1) {
                     fraction = width / slant;
-                    sample = (across - 0.5f) * (1.0f - fraction) + 0.5f;
-                    f32 position = ((fraction * vertical + (sample - 0.5f * fraction)) - 0.5f) * taper + 0.5f;
-                    current = radiusU * (1.0f - position) + radiusV * position;
-                    f32 distance = length * (f32)__fabs(position - 0.5f);
+                    sample = (coordinate.u - 0.5f) * (1.0f - fraction) + 0.5f;
+                    coordinate.u = fraction * coordinate.v + (sample - 0.5f * fraction);
+                    coordinate.u = (coordinate.u - 0.5f) * taper + 0.5f;
+                    current = radiusU * (1.0f - coordinate.u) + radiusV * coordinate.u;
+                    f32 distance = length * (f32)__fabs(coordinate.u - 0.5f);
                     f32 bulge = quarterLengthSquared - distance * distance;
-                    if (bulge > 0.0f) current += shapeSqrt(bulge);
+                    if (bulge > 0.0f) current += hsdSqrt(bulge);
                 } else {
                     fraction = width / slant;
-                    sample = (across - 0.5f) * (1.0f - fraction) + 0.5f;
-                    f32 position = fraction * vertical + (sample - 0.5f * fraction);
-                    current = radiusU * (1.0f - position) + radiusV * position;
+                    sample = (coordinate.u - 0.5f) * (1.0f - fraction) + 0.5f;
+                    coordinate.u = fraction * coordinate.v + (sample - 0.5f * fraction);
+                    current = radiusU * (1.0f - coordinate.u) + radiusV * coordinate.u;
                 }
                 if (twistEnabled == 1) current *= scale;
                 sine = theta;
@@ -354,7 +340,7 @@ bool GsShapeObject::DeformVertexCoordSpiral(bool deform, const f32* u, const f32
                 f32 stripLength = length * fraction;
                 out->x = current * cosine;
                 out->y = current * sine;
-                out->z = stripLength * vertical + (length * sample - 0.5f * stripLength);
+                out->z = stripLength * coordinate.v + (length * sample - 0.5f * stripLength);
                 out++;
             }
             if (normals) {
@@ -733,7 +719,7 @@ static inline f32 shapeAngleWeight(f32 dot,f32 width) {
  f32 result;
  if(dot>1.0f||width<0.00001f)result=1.0f;
  else {
-  f32 distance=shapeSqrt(1.0f-dot),threshold=1.0f-width;
+  f32 distance=hsdSqrt(1.0f-dot),threshold=1.0f-width;
   if(distance<=threshold)result=1.0f;
   else {f32 weight=(f32)cos((1.5707964f*(distance-threshold))/width);result=weight*weight;}
  }
