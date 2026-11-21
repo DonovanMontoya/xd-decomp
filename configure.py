@@ -1360,7 +1360,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightPokemonEnemy.cpp", cflags=cflags_xd_app_balanced),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightActionBios.cpp", cflags=cflags_xd_app_fight),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightAction.cpp", cflags=cflags_xd_app_fight),
-            Object(NonMatching, "game/pxdvs/app/fight/fightActionFlow.cpp", cflags=cflags_xd_app_fight, extra_cflags=["-str reuse,nopool,readonly"]),
+            Object(NonMatching, "game/pxdvs/app/fight/fightActionFlow.cpp", cflags=cflags_xd_app_fight, extra_cflags=["-inline noauto,deferred", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightActionDisp.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightKouka.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightKoukaBios.cpp"),
