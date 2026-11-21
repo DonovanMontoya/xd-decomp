@@ -29,6 +29,13 @@ typedef struct MenuCBRule {
     u8 itemFlags[62];
 } MenuCBRule;
 
+typedef struct _TOOL_SAVEDATA {
+    MenuCBRule rules[6];
+    s8 currentlyWorkingToolBattle;
+} _TOOL_SAVEDATA;
+
+typedef char ToolSaveDataSize[sizeof(_TOOL_SAVEDATA) == 0x364 ? 1 : -1];
+
 #ifdef __cplusplus
 extern "C" {
 #endif

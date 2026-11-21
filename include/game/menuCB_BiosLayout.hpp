@@ -33,12 +33,6 @@ typedef struct _MENUCBWORK {
     u8 reservedB0E4[0xB5F4 - 0xB0E4];
 } _MENUCBWORK;
 
-typedef struct _TOOL_SAVEDATA {
-    MenuCBRule rules[6];
-    s8 unk360;
-    u8 reserved361[3];
-} _TOOL_SAVEDATA;
-
 extern _MENUCBWORK _CB;
 extern _MENUCBWORK *pGCB;
 #endif

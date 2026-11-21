@@ -1,4 +1,5 @@
 #include <global.h>
+#include <game/menuCBRule.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 #include <game/pxdvs/app/sodateya/sodateya.hpp>
 #include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
@@ -32,7 +33,7 @@ void pcboxInit(void*);
 void GSflagClear(s32);
 void GSflagOn(s32);
 void mailInitMailbox(void*);
-void menuCB_RULE_INIT(void*);
+void menuCB_RULE_INIT(_TOOL_SAVEDATA*);
 void memoInit(void*);
 void darkpokemonValInit(void*);
 void exribbonInit(void*);
@@ -151,12 +152,12 @@ extern "C" void savedataCreate(void* save,const char16* name) {
 
 extern "C" void savedataInit(void* save) {
     GamedataSaveRecord game;
-    u8 rules[0x364];
+    _TOOL_SAVEDATA rules;
     memcpy(&game,(void*)savedataGetStatus(save,1),sizeof(game));
-    memcpy(rules,(void*)savedataGetStatus(save,14),sizeof(rules));
+    memcpy(&rules,(void*)savedataGetStatus(save,14),sizeof(rules));
     memset((void*)savedataGetStatus(0,0),0,0x27FD0);
     memcpy((void*)savedataGetStatus(save,1),&game,sizeof(game));
-    memcpy((void*)savedataGetStatus(save,14),rules,sizeof(rules));
+    memcpy((void*)savedataGetStatus(save,14),&rules,sizeof(rules));
     gamedataInit((void*)savedataGetStatus(save,1));
     heroInit((void*)savedataGetStatus(save,2));
     pcboxInit((void*)savedataGetStatus(save,3));
@@ -169,7 +170,7 @@ extern "C" void savedataInit(void* save) {
     memset((void*)savedataGetStatus(save,27),0,bytes);
     mailInitMailbox((void*)savedataGetStatus(save,10));
     sodateyaInit((Sodateya*)savedataGetStatus(save,11));
-    menuCB_RULE_INIT((void*)savedataGetStatus(save,14));
+    menuCB_RULE_INIT((_TOOL_SAVEDATA*)savedataGetStatus(save,14));
     memoInit((void*)savedataGetStatus(save,12));
     darkpokemonValInit((void*)savedataGetStatus(save,15));
     exribbonInit((void*)savedataGetStatus(save,16));

@@ -1,4 +1,5 @@
 #include <dolphin/os.h>
+#include <game/menuCBRule.hpp>
 #include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 #include <game/pxdvs/app/memcard/memcardPrivate.hpp>
 #define POKEMON_HPP_NO_PROTOTYPES
@@ -1304,7 +1305,7 @@ static s32 _memcardMergeDataPack(void) {
         break;
     case 13: {
         void* save = savedataGetStatus(0, 0xE);
-        memcpy(_memcardGetMultiSaveDataToSTRUCT(pack, 0xE), save, 0x364);
+        memcpy(_memcardGetMultiSaveDataToSTRUCT(pack, 0xE), save, sizeof(_TOOL_SAVEDATA));
         break;
     }
     }
@@ -1629,8 +1630,8 @@ void _memcardStoreSaveData_multi(void* arg) {
     MEMCARD_STORE(0xA, SectionMailbox, sizeof(Mailbox));
     MEMCARD_STORE(0xB, SectionSodateya, sizeof(Sodateya));
     MEMCARD_STORE(0xC, SectionMemo, sizeof(Memo));
-    MEMCARD_STORE(0xE, SectionTool, 0x364);
-    MEMCARD_STORE(0xF, SectionDarkPokemon, 0x2400);
+    MEMCARD_STORE(0xE, SectionTool, sizeof(_TOOL_SAVEDATA));
+    MEMCARD_STORE(0xF, SectionDarkPokemon, sizeof(DarkPokemonSaveData));
     dst2 = (u8*)_memcardGetMultiSaveDataToSTRUCT(arg, 0x17);
     size = header->sizes[SectionFlags];
     if (size == 0x6B4) {
@@ -1695,8 +1696,8 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
     header->sizes[SectionMailbox] = sizeof(Mailbox);
     header->sizes[SectionSodateya] = sizeof(Sodateya);
     header->sizes[SectionMemo] = sizeof(Memo);
-    header->sizes[SectionTool] = 0x364;
-    header->sizes[SectionDarkPokemon] = 0x2400;
+    header->sizes[SectionTool] = sizeof(_TOOL_SAVEDATA);
+    header->sizes[SectionDarkPokemon] = sizeof(DarkPokemonSaveData);
     header->sizes[SectionFlags] = 0x6B4;
     header->sizes[SectionExRibbon] = 0xB;
     header->sizes[SectionFloor] = 0xC800;
@@ -1760,26 +1761,25 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
             break;
         }
         case SectionTool: {
-            u8* dst = pack->setSectionOffset(SectionTool, offset);
-            u8* src = (u8*)savedataGetStatus(0, 14);
-            *(MemcardWords<216>*)dst = *(MemcardWords<216>*)src;
+            _TOOL_SAVEDATA* dst = (_TOOL_SAVEDATA*)pack->setSectionOffset(SectionTool, offset);
+            *dst = *(const _TOOL_SAVEDATA*)savedataGetStatus(0, 14);
             offset += 0x380;
-            dst[0x360] = src[0x360];
             break;
         }
         case SectionDarkPokemon: {
-            u8* dst = pack->setSectionOffset(SectionDarkPokemon, offset);
-            *(MemcardWords<2304>*)dst = *(MemcardWords<2304>*)savedataGetStatus(0, 15);
+            DarkPokemonSaveData* dst = (DarkPokemonSaveData*)pack->setSectionOffset(SectionDarkPokemon, offset);
+            *dst = *(const DarkPokemonSaveData*)savedataGetStatus(0, 15);
             offset += 0x2410;
             break;
         }
         case SectionFlags: {
-            u8* dst = pack->setSectionOffset(SectionFlags, offset);
+            pack->setSectionOffset(SectionFlags, offset);
             header->flagLevel0Size = (u32)savedataGetStatus(0, 7) * 4;
             header->flagLevel1Size = (u32)savedataGetStatus(0, 8) * 4;
             header->flagLevel2Size = (u32)savedataGetStatus(0, 9) * 4;
             header->battleDiskFlagsSize = (u32)savedataGetStatus(0, 25) * 4;
             header->bingoFlagsSize = (u32)savedataGetStatus(0, 28) * 4;
+            u8* dst = &pack->payload[offset];
             u8* src = (u8*)savedataGetStatus(0, 23);
             *(MemcardWords<8>*)dst = *(MemcardWords<8>*)src;
             *(MemcardWords<32>*)(dst + 0x20) = *(MemcardWords<32>*)(src + 0x20);

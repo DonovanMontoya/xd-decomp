@@ -370,7 +370,7 @@ void menuCBBios_RuleEditSaveON(u8 on)
 
 void menuCBBios_CurrentlyWorkingToolBattleSet(s8 flag)
 {
-    savedataGetStatus(0, 0xE)->unk360 = flag;
+    savedataGetStatus(0, 0xE)->currentlyWorkingToolBattle = flag;
 }
 
 u8 menuCBBios_CurrentlyWorkingToolBattle(void)
@@ -379,7 +379,7 @@ u8 menuCBBios_CurrentlyWorkingToolBattle(void)
     if (save == 0) {
         return 0;
     }
-    return save->unk360;
+    return save->currentlyWorkingToolBattle;
 }
 
 _MENUCBWORK *menuCBBios_WorkContext(void)
@@ -423,7 +423,7 @@ void menuCB_RULE_INIT(_TOOL_SAVEDATA *save)
         menuCBBios_RuleConstRuleSet();
         return;
     }
-    memset(save, 0, 0x364);
+    memset(save, 0, sizeof(*save));
     save->rules[0] = *menuCBRule_ConstantRule(0);
     save->rules[1] = *menuCBRule_ConstantRule(1);
     save->rules[2] = *menuCBRule_ConstantRule(2);
@@ -488,7 +488,7 @@ void menuCB_RULE_INIT(_TOOL_SAVEDATA *save)
         }
     }
     menuCBBios_InitContextAtFirst(&_CB, save);
-    save->unk360 = 0;
+    save->currentlyWorkingToolBattle = 0;
 }
 }
 
