@@ -630,11 +630,16 @@ static inline BingoPokemon* panelPokemon(int i) {
     return &mPokemon[gBingo.panel[i].idx];
 }
 
+static inline void setBingoNicknameMessage(tagSPRITE_WORK* sp, u32 msg, u16* nickname) {
+    msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(msg));
+    msgctrlSetValue(0x32, (u32)nickname);
+    sp->msgID = 0x4276;
+}
+
 s32 menuBingoMessageDraw(tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
     enum TsE { TsE0 };
     s16 b;
     u32 msg = gBingo.f13c;
-    u16* nick;
     switch (sp->id) {
     case 0x8D8: {
         gBingo.f140 += timeGetLastFrameSec();
@@ -671,26 +676,17 @@ s32 menuBingoMessageDraw(tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
         case 0xDAF3:
         case 0xDB22:
             if (panelPokemon(gBingo.f134) == 0) break;
-            nick = panelPokemon(gBingo.f134)->pkm.getNicknamePtr();
-            msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(msg));
-            msgctrlSetValue(0x32, (u32)nick);
-            sp->msgID = 0x4276;
+            setBingoNicknameMessage(sp, msg, panelPokemon(gBingo.f134)->pkm.getNicknamePtr());
             break;
         case 0xDAF4: {
             if (panelPokemon(gBingo.f138) == 0) break;
-            nick = panelPokemon(gBingo.f138)->pkm.getNicknamePtr();
-            msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(msg));
-            msgctrlSetValue(0x32, (u32)nick);
-            sp->msgID = 0x4276;
+            setBingoNicknameMessage(sp, msg, panelPokemon(gBingo.f138)->pkm.getNicknamePtr());
             break;
         }
         case 0xDAE7: {
             if (pokemonNo(gBingo.f12c) == 0) break;
             int j = findPokemonNo(gBingo.f12c);
-            nick = mPokemon[j].pkm.getNicknamePtr();
-            msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(msg));
-            msgctrlSetValue(0x32, (u32)nick);
-            sp->msgID = 0x4276;
+            setBingoNicknameMessage(sp, msg, mPokemon[j].pkm.getNicknamePtr());
             break;
         }
         case 0xDAEA: {
