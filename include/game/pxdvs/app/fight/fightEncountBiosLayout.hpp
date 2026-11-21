@@ -2,6 +2,7 @@
 #define GAME_PXDVS_APP_FIGHT_FIGHT_ENCOUNT_BIOS_LAYOUT_HPP
 #include <libc/stddef.h>
 #include <dolphin/types.h>
+#include <game/pxdvs/app/fight/fightEncountWipe.h>
 struct FightTrainerInfoRecord { u32 trainerData; u32 inputDevice; };
 struct FightEncountRecord {
     u8 kind, trainer, pokemon, entry;
@@ -15,13 +16,6 @@ struct FightEncountRecord {
     u32 wipeId;
     u32 syoukaiWzxDataId;
     FightTrainerInfoRecord trainerInfo[4];
-};
-struct FightEncountWipeRecord {
-    u8 snapshotUse;
-    u8 pad01;
-    u16 effectSndId;
-    f32 effectTime;
-    u32 function;
 };
 struct FightTypeRecord { u8 trainerCount; };
 struct FightDeckRecord { u8 pad00[2]; u8 pokemonCount; u8 pad03[5]; u32 entryPokemonId; u32 fightoutPokemonId; };
@@ -44,6 +38,17 @@ typedef char FightLayoutAssert_fightoutPokemonId[(offsetof(FightDeckRecord,fight
 extern "C" {
 FightEncountRecord *fightEncountDataBiosGetPtr(u16 encounterID);
 u32 fightEncountDataBiosGetFightTrainerDataId(FightEncountRecord *encounter, u8 side);
+u8 fightEncountDataBiosGetFightKind(FightEncountRecord*);
+u8 fightEncountDataBiosGetZenmetuFlag(FightEncountRecord*);
+u16 fightEncountDataBiosGetDiskId(FightEncountRecord*);
+u16 fightEncountDataBiosGetFightFloorDataId(FightEncountRecord*);
+u32 fightEncountDataBiosGetBgmSndId(FightEncountRecord*);
+u32 fightEncountDataBiosGetWipeId(FightEncountRecord*);
+FightEncountWipeRecord* fightEncountWipeDataBiosGetPtr(u32 wipeID);
+u8 fightEncountDataBiosGetWipeSnapshotUse(FightEncountWipeRecord*);
+FightEncountWipeFunction fightEncountDataBiosGetWipeFunction(FightEncountWipeRecord*);
+f32 fightEncountDataBiosGetWipeEffectTime(FightEncountWipeRecord*);
+u16 fightEncountDataBiosGetWipeEffectSndID(FightEncountWipeRecord*);
 }
 
 #endif
