@@ -1195,10 +1195,10 @@ static void initFloor() {
 }
 
 extern "C" {
-s8 GSinputGetLeftStickXData(u32, u8);
-s8 GSinputGetLeftStickYData(u32, u8);
-s8 GSinputGetRightStickXData(u32, u8);
-s8 GSinputGetRightStickYData(u32, u8);
+s8 GSinputGetLeftStickXData(s32, s32);
+s8 GSinputGetLeftStickYData(s32, s32);
+s8 GSinputGetRightStickXData(s32, s32);
+s8 GSinputGetRightStickYData(s32, s32);
 }
 
 static void _getStickData(s8& x, s8& y, s8& rawX, s8& rawY) {

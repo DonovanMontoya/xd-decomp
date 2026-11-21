@@ -183,10 +183,10 @@ void GSgfxVFSetElement(GSgfxVF* vf, s32 a, s32 b, s32 c, s32 d);
 void GSresRegisterResource(void* mem, u32 grp, u32 id, void* freeFunc);
 void* GStextureLoad(void* tex);
 u8 GSinputIsConnected(s32 pad);
-u32 GSinputGetLeftStickXData(s32 pad, s32 mode);
-u32 GSinputGetLeftStickYData(s32 pad, s32 mode);
-u32 GSinputGetRightStickXData(s32 pad, s32 mode);
-u32 GSinputGetRightStickYData(s32 pad, s32 mode);
+s8 GSinputGetLeftStickXData(s32 pad, s32 mode);
+s8 GSinputGetLeftStickYData(s32 pad, s32 mode);
+s8 GSinputGetRightStickXData(s32 pad, s32 mode);
+s8 GSinputGetRightStickYData(s32 pad, s32 mode);
 u32 GSinputButtonsPressed(s32 pad);
 u8 gbaCommandIsConnected(s32 gba);
 u16 gbaCommandKeyPressed(s32 gba);
@@ -1051,10 +1051,10 @@ static u8 _menuGetGcKeyInfo(s32 port, u16* keys, u16* keys2) {
     u16 result = 0;
     u16 result2 = 0;
     s32 padId;
-    u32 lx;
-    u32 ly;
-    u32 rx;
-    u32 ry;
+    s8 lx;
+    s8 ly;
+    s8 rx;
+    s8 ry;
     u32 buttons;
     f32 angle;
 
@@ -1068,8 +1068,8 @@ static u8 _menuGetGcKeyInfo(s32 port, u16* keys, u16* keys2) {
     ry = GSinputGetRightStickYData(padId, 0);
     rx = GSinputGetRightStickXData(padId, 0);
 
-    if (((s8)lx < 0 ? -(s8)lx : (s8)lx) > 0x20 || ((s8)ly < 0 ? -(s8)ly : (s8)ly) > 0x20) {
-        angle = atan2((s8)lx, (s8)ly);
+    if ((lx < 0 ? -lx : lx) > 0x20 || (ly < 0 ? -ly : ly) > 0x20) {
+        angle = atan2(lx, ly);
         if ((angle > 0.0f ? angle : -angle) < 0.9599311f) {
             result |= 2;
         } else if ((angle > 0.0f ? angle : -angle) > 2.1816616f) {
@@ -1085,8 +1085,8 @@ static u8 _menuGetGcKeyInfo(s32 port, u16* keys, u16* keys2) {
         }
     }
 
-    if (((s8)rx < 0 ? -(s8)rx : (s8)rx) > 0x16 || ((s8)ry < 0 ? -(s8)ry : (s8)ry) > 0x16) {
-        angle = atan2((s8)rx, (s8)ry);
+    if ((rx < 0 ? -rx : rx) > 0x16 || (ry < 0 ? -ry : ry) > 0x16) {
+        angle = atan2(rx, ry);
         if ((angle > 0.0f ? angle : -angle) < 0.9599311f) {
             result2 |= 2;
         } else if ((angle > 0.0f ? angle : -angle) > 2.1816616f) {
