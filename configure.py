@@ -1215,7 +1215,7 @@ config.libs = [
             # hero
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/hero/hero.cpp", extra_cflags=["-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/hero/heroBios.cpp"),
-            Object(NonMatching, "game/pxdvs/app/hero/heroMove.cpp", extra_cflags=["-inline off", "-str reuse,nopool,readonly"]),
+            Object(NonMatching, "game/pxdvs/app/hero/heroMove.cpp", extra_cflags=["-inline noauto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/hero/heroPokemonGet.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/hero/heroMemberFunctions.cpp"),
 

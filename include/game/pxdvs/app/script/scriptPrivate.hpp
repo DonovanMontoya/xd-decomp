@@ -80,7 +80,7 @@ void peopleGetPos(u32, u32, GSvec*);
 void peopleGetNeckPos(u32, u32, GSvec*);
 void peopleInitEvent(u32, u32);
 void peopleTermEvent(u32, u32);
-void peopleWalkTo(u32, u32, u8, GSvec*);
+void peopleWalkTo(u32, u32, u8, GSvecData*);
 void peopleRotateToXYZ(u32, u32, f32, f32, f32, f32);
 PeopleInfo* peopleInfoBiosGetPtr(u32);
 f32 peopleInfoBiosGetColBallSize(PeopleInfo*);

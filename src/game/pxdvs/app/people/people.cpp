@@ -2,7 +2,7 @@
 #include <game/pxdvs/app/people/runtime.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 #include <game/pxdvs/app/hero/heroMove.hpp>
-#pragma dont_inline on
+#pragma auto_inline off
 namespace GSscript { struct Tiga { int getNameToFuncId(const char*); }; }
 extern "C" {
 f64 fmod(f64, f64);
@@ -23,7 +23,7 @@ void peoplePartAnimationBlinkStop(tagPeopleWork*);
 void peoplePartAnimationBlinkStart(tagPeopleWork*);
 void peoplePartAnimationBlinkOnce(tagPeopleWork*);
 void GSthreadSwitch();
-void peopleWalkTo(u32, u32, u8, GSvec*);
+void peopleWalkTo(u32, u32, u8, GSvecData*);
 f32 adjustPIPI__Ff(f32);
 void peopleSetCollision(u32, u32, u8);
 tagPeopleWork* peopleGet(u32 group, u32 resource) { return peopleBiosGetPeopleWork(group, resource); }
@@ -681,7 +681,7 @@ void peopleMoveNeckTarget(u32 group, u32 resource, u32 targetGroup, u32 targetRe
 void peopleMoveNeckTargetHero(u32 group, u32 resource, f32 rate) { peopleMoveNeckTarget(group, resource, 0, 100, rate); }
 f64 sin(f64);
 f64 cos(f64);
-#pragma dont_inline reset
+#pragma auto_inline reset
 inline s32 __fpclassifyf(f32 value) {
     union { f32 value; u32 bits; } number;
     number.value = value;
@@ -783,7 +783,7 @@ void peopleMoveNeckAngle(u32 group, u32 resource, f32 yaw, f32 pitch, f32 rate) 
         }
     }
 }
-#pragma dont_inline on
+#pragma auto_inline off
 void fn_8029CD20(u32 group, u32 resource, u32 targetGroup, u32 targetResource, f32 rate) {
     PeopleNeckInfo info;
     tagPeopleWork* work = peopleGet(group, resource);
@@ -1277,7 +1277,7 @@ void peopleRotateToTarget(u32 group, u32 resource, u32 targetGroup, u32 targetRe
         }
     }
 }
-void peopleWalkTo(u32 group, u32 resource, u8 rotate, GSvec* target) {
+void peopleWalkTo(u32 group, u32 resource, u8 rotate, GSvecData* target) {
     GSvec difference, rotation;
     tagPeopleWork* work = peopleGet(group, resource);
     if (work) {
@@ -2138,7 +2138,7 @@ static u8 m_hero_move = 1;
 static u8 m_bPeopleOpenWithModel = 1;
 static f32 m_hero_idling_time;
 static f32 m_hero_next_special_idling_time;
-#pragma dont_inline reset
+#pragma auto_inline reset
 u8 isWalkStartMotion__13tagPeopleWorkCFv(tagPeopleWork*);
 u8 gimmickBoxOnBox(tagPeopleWork*, GSvec*, GSvec*);
 u32 _peopleAdjustPosition__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork*, GSvec*, GSvec*);
@@ -2219,7 +2219,7 @@ s32 peopleMoveAlongAngle(u32 group, u32 resource, f32 speed, f32 angle) {
     }
     return _peopleAdjustPosition__FP13tagPeopleWorkP5GSvecP5GSvec(work, &position, &work->previousPosition);
 }
-#pragma dont_inline on
+#pragma auto_inline off
 static s32 m_before_special_effect;
 enum PeopleEnterMode { PEOPLE_ENTER_0 = 0, PEOPLE_ENTER_1 = 1, PEOPLE_ENTER_3 = 3 };
 void _peopleEnterFloor__FUi14FloorEnterMode(u32 floor, s32 modeValue) {
@@ -2580,7 +2580,7 @@ void _peopleAnimEndCallback__FP8_GSmodelP18_GSmodelAnimCBData(GSmodel* model,_GS
 extern "C" {
 u32 getFlags__13tagPeopleWorkCFv(tagPeopleWork*);
 bool GScolsys2HitCollision(GSvec*,GSvec*,f32,GSvec*);
-#pragma dont_inline reset
+#pragma auto_inline reset
 void _peopleUpdateNeck__FP13tagPeopleWorkf(tagPeopleWork* work,f32 limit) {
     PeopleNeckInfo info;
     f32 frame=30.0f*_getLastFrameSec__Fv();
@@ -2690,7 +2690,7 @@ void _peopleUpdateNeck__FP13tagPeopleWorkf(tagPeopleWork* work,f32 limit) {
         else work->neckRotation.param2+=yawStep;
     }
 }
-#pragma dont_inline on
+#pragma auto_inline off
 }
 
 extern "C" {
@@ -2800,8 +2800,6 @@ s32 _peopleSideStepCheck__Fv() {
 }
 
 extern "C" {
-void __ct__5GSvecFv(GSvec*);
-void __construct_array(void*,void*,void*,u32,u32);
 s32 GScolsys2ThruGetEventID(GSvec*,GSvec*,HeroMoveQueuedEvent*,f32);
 s32 GScolsys2ThruPassEventID(GSvec*,GSvec*,HeroMoveQueuedEvent*);
 u8 gimmickBoxIsPushBoxFloor();
@@ -2810,10 +2808,6 @@ u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* wor
     GSwalkHit surfaces[8];
     HeroMoveQueuedEvent events[4];
     GSvec oldPosition,position,start,end,hit;
-    __construct_array(events[0].vertices,(void*)__ct__5GSvecFv,0,12,3);
-    __construct_array(events[1].vertices,(void*)__ct__5GSvecFv,0,12,3);
-    __construct_array(events[2].vertices,(void*)__ct__5GSvecFv,0,12,3);
-    __construct_array(events[3].vertices,(void*)__ct__5GSvecFv,0,12,3);
     if(peopleBiosCheckFlag(work,0x700)) {
         position.param1=output->param1;position.param2=output->param2;position.param3=output->param3;
         oldPosition.param1=previous->param1;oldPosition.param2=previous->param2;oldPosition.param3=previous->param3;
@@ -2941,7 +2935,7 @@ s32 getRunMotion__13tagPeopleWorkFv(tagPeopleWork*);
 void peopleViewerDisplayAnimRate(tagPeopleWork*,f32);
 
 #pragma push
-#pragma dont_inline off
+#pragma auto_inline on
 static inline f32 peopleFrameFraction(f32 frame,f32 count) {
     f32 fraction=0.0f;if(count>0.0f)fraction=frame/count;return fraction;
 }

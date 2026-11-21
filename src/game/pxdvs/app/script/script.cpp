@@ -10,7 +10,7 @@ static void _scriptEventSetMotion(_GSmodel*, s16, f32);
 
 extern "C" {
 static s32 _scriptEventColID = -1;
-static GSvec _vHizukiWalkkPos[3];
+static GSvecData _vHizukiWalkkPos[3];
 static s32 _vHizukiWalkPosCount;
 static glowEffect* m_glow;
 

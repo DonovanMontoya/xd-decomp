@@ -1468,8 +1468,6 @@ u8 heroMoveChkHinderClear(s32 member) {
 }
 
 extern "C" {
-void __ct__5GSvecFv(void*);
-void __construct_array(void*,void (*)(void*),void (*)(void*),u32,u32);
 tagPeopleWork* peopleTalkCheck(u32,u32,f32,f32);
 void GSinputResetLeftSmoothing(u32,s32,s32);
 void GSinputResetRightSmoothing(u32,s32,s32);
@@ -1487,18 +1485,14 @@ void peopleTalkMsgEnd(u32,u32);
 u8 peopleBiosCheckFlag(void*,u32);
 }
 static u8 updateChat(HEROMOVE_MEMBER member) {
-    HeroMoveQueuedEvent events[4];
     GSvec neck;
     unsigned long group,res;
     getResID(&group,&res,member);
     tagPeopleWork* person=peopleTalkCheck(group,res,0.3f,40.0f);
     s32 script;
     if(!person) {
+        HeroMoveQueuedEvent events[4];
         s32 count;
-        __construct_array(events[0].vertices,__ct__5GSvecFv,0,sizeof(GSvec),3);
-        __construct_array(events[1].vertices,__ct__5GSvecFv,0,sizeof(GSvec),3);
-        __construct_array(events[2].vertices,__ct__5GSvecFv,0,sizeof(GSvec),3);
-        __construct_array(events[3].vertices,__ct__5GSvecFv,0,sizeof(GSvec),3);
         count=heroMoveCheckEvent(events);
         heroMoveSetEventList(3,events,count);
         if(count) {peopleRotateStop(0,100);return 1;}
@@ -1536,7 +1530,6 @@ static void procStep(HEROMOVE_MEMBER member) {
     int parts[2][4]={{0x35,0x30,-1,-1},{0x2E,0x29,-1,-1}};
     GSgfxVideoGetLastRenderTime();
     FOOTSTEP step;
-    __construct_array(step.positions,__ct__5GSvecFv,0,12,4);
     _GSmodel* model=(_GSmodel*)getModel(member);
     if (model) {
         getStep(&step, model, parts[member], &HeroMove.members[member].footWork);
@@ -1644,20 +1637,3 @@ static f32 moveParty(HEROMOVE_MEMBER member) {
     peopleMoveAlongAngle(hero->getFollowerGrpID(),hero->getFollowerResID(),speed,movementAngle);
     return GSvecDistanceXZ(peopleBiosGetPosPtr(follower), peopleBiosGetPrevPosPtr(follower));
 }
-
-extern "C" __declspec(weak) HeroMoveQueuedEvent* constructHeroMoveQueuedEvent(HeroMoveQueuedEvent*);
-
-extern "C" {
-static void __sinit_heroMove_cpp() {
-    __construct_array(HeroMove.leaderLog.positions, __ct__5GSvecFv, 0, sizeof(GSvec), 60);
-    __construct_array(HeroMove.state.events3, (void (*)(void*))constructHeroMoveQueuedEvent, 0, sizeof(HeroMoveQueuedEvent), 4);
-    __construct_array(HeroMove.state.events1, (void (*)(void*))constructHeroMoveQueuedEvent, 0, sizeof(HeroMoveQueuedEvent), 4);
-    __construct_array(HeroMove.state.events2, (void (*)(void*))constructHeroMoveQueuedEvent, 0, sizeof(HeroMoveQueuedEvent), 4);
-}
-}
-extern "C" __declspec(weak) HeroMoveQueuedEvent* constructHeroMoveQueuedEvent(HeroMoveQueuedEvent* event) {
-    __construct_array(event->vertices, __ct__5GSvecFv, 0, sizeof(GSvec), 3);
-    return event;
-}
-
-__declspec(section ".ctors") static void (*const heroMoveInitializer)() = __sinit_heroMove_cpp;

@@ -102,6 +102,8 @@ FieldCameraList *floorDataBiosGetFieldCameraListPtr(GSfloor_dd_ *floor) {
     if (table == 0) return 0;
     return *table;
 }
+#pragma push
+#pragma dont_inline on
 s32 floorDataBiosGetPosListData(u32 index, GSvec *position, f32 *rotation) {
     FloorPositionList *list = floorDataBiosGetPosListPtr(floorDataBiosGetCurrentPtr());
     if (list == 0) return 0;
@@ -113,6 +115,7 @@ s32 floorDataBiosGetPosListData(u32 index, GSvec *position, f32 *rotation) {
     }
     return 0;
 }
+#pragma pop
 FloorPositionList *floorDataBiosGetPosListPtr(GSfloor_dd_ *floor) {
     if (floor == 0) return 0;
     FloorPositionList **table = floor->positions;

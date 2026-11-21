@@ -198,6 +198,8 @@ s32 floorEventCtrlTresure(u32 group, u32 resourceID, u8 control) {
     }
     return 0;
 }
+#pragma push
+#pragma dont_inline on
 s32 floorEventCtrlElevator(u32 floorID, u32 index, u16 control, u32 group, u32 person) {
     FloorEventDoor *door;
     s32 sound;
@@ -206,7 +208,6 @@ s32 floorEventCtrlElevator(u32 floorID, u32 index, u16 control, u32 group, u32 p
     s16 motion = -1;
     f32 frame = 0.0f;
     GSvec position;
-    __ct__5GSvecFv(&position);
     if (index >= *floor_door_list_number) return -1;
     door = &floor_door_list[index];
     if (door->resourceID == 0) return -1;
@@ -230,7 +231,7 @@ s32 floorEventCtrlElevator(u32 floorID, u32 index, u16 control, u32 group, u32 p
         } else {
             peopleDetach(group, person, 0);
             peopleGetPos(group, person, &position);
-            position.z += 25.0f;
+            position.param3 += 25.0f;
             peopleWalkTo(group, person, 1, &position);
             peopleMoveCheck(group, person, 1);
         }
@@ -265,6 +266,7 @@ s32 floorEventCtrlElevator(u32 floorID, u32 index, u16 control, u32 group, u32 p
     GSmodelGetFrameCount(model, &frame, 0);
     return static_cast<s32>(100.0f * ((2.0f * frame) / static_cast<f32>(GSgfxVideoGetVsyncRate())));
 }
+#pragma pop
 s32 floorEventCtrlDoor(u32 floorID, u32 index, u8 control) {
     s16 motion = -1;
     u32 soundID = 0;

@@ -8,7 +8,7 @@ floorCharacter_dd_ *floorCharacterBiosGetPtr(u32, u32);
 static floorCharacter_dd_ _globalCharacter[3];
 void floorCharacterBiosSetVisibility(floorCharacter_dd_ *character, u8 visible) { if (character) { u32 value = visible; character->visibility = value; } }
 void floorCharacterBiosSetPos(floorCharacter_dd_ *character, GSvec *position) {
-    if (character && position) { character->x=position->x; character->y=position->y; character->z=position->z; }
+    if (character && position) { character->x=position->param1; character->y=position->param2; character->z=position->param3; }
 }
 u32 floorCharacterBiosGetTalkSctID(floorCharacter_dd_ *character) { if (character) return character->talkScriptID; return 0; }
 u32 floorCharacterBiosGetMoveSctID(floorCharacter_dd_ *character) { if (character) return character->moveScriptID; return 0; }
@@ -84,5 +84,5 @@ void floorCharacterBiosInitGlobalCharacter() {
 }
 
 extern "C" {
-inline void GSvecSet(GSvec *vector, f32 x, f32 y, f32 z) { vector->x=x; vector->y=y; vector->z=z; }
+inline void GSvecSet(GSvec *vector, f32 x, f32 y, f32 z) { vector->param1=x; vector->param2=y; vector->param3=z; }
 }

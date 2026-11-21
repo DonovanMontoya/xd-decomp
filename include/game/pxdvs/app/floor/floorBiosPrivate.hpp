@@ -2,7 +2,7 @@
 #define FLOOR_BIOS_PRIVATE_HPP
 #include <dolphin/types.h>
 #include <game/pxdvs/app/floor/floorData.hpp>
-struct GSvec { f32 x, y, z; void set(f32, f32, f32); };
+#include <game/pxdvs/GSAPI/GSmath/GSvec.hpp>
 struct floorCharacter_dd_ {
     u8 visibility:1, loadInit:1, isHit:1, flag4:1, talkWallThrough:1, flag2:1, reservedFlags:2;
     u8 moveType:3, talkStartType:2, talkEndType:2, reservedType:1;
