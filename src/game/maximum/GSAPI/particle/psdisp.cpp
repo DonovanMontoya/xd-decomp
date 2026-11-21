@@ -1682,7 +1682,7 @@ static void _psDispParticlesSub(u32 linkMask, s32 pass, PSGenerator *generator, 
                         prevChanCtrl = -1;
                         psSetupTevInvalidState();
                         prevMirror = (u32) -1;
-                        prev_kind &= 0xFEFFFFFF;
+                        prev_kind = 0;
                         prevTexEdge = (u32) -1;
                         HSD_FogSet(NULL);
                         prevChanMat.r = prevChanMat.g = prevChanMat.b = 0xFF;
