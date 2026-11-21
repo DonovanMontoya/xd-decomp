@@ -1,5 +1,6 @@
 #ifndef FIGHT_MENU_PRIVATE_HPP
 #define FIGHT_MENU_PRIVATE_HPP
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuWazaStatus.hpp>
 #include <game/gbaBattleCommand.hpp>
 #include <game/menuFightAction.hpp>
@@ -29,7 +30,6 @@ u8 dbgMenuFightGetFightPokeStMenuOpenFlag();
 void decStaticBall__10bingo_biosFv();
 u8 getStaticBall__10bingo_biosFv();
 void fadeCheck(s32);
-void fadeSet(s32, f32);
 s32 fightFloorGetStatus(void*, s32, s32, s32);
 void* fightFloorGetValidFightSidePtr(void*, u16);
 u8 fightFloorIsNowEncountSnatchOnly(void*);

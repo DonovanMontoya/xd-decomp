@@ -1,5 +1,6 @@
 #ifndef SCRIPT_PRIVATE_HPP
 #define SCRIPT_PRIVATE_HPP
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <global.h>
 #include <game/pxdvs/GSAPI/GSmath/GSvec.hpp>
 #include <game/pxdvs/app/hero/heroPokemonGet.hpp>
@@ -161,7 +162,6 @@ u32 fightEncount(u32);
 u8 fightEncountDataBiosGetZenmetuFlag(void*);
 u32 fightGetFightResultId();
 u8 fightFloorIsGcHeroWin(s32, u32);
-void fadeSet(s32, f32);
 s32 floorEventCtrlElevatorHero(u32, u32, u16, u32);
 s32 floorEventCtrlElevatorFollower(u32, u32, u16, u32);
 s32 scriptGetPoint();

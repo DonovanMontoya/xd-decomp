@@ -1,5 +1,6 @@
 #pragma defer_codegen on
 #pragma force_active on
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuPocketToolLayout.hpp>
 
 extern "C" {
@@ -34,7 +35,6 @@ u32 timeGetLastFrameTime(void);
 s8 fadeCheck(s32);
 void fadeSetToBlackOutIfNotBlack(f32);
 void fadeSetToBlackInIfBlack(f32);
-void fadeSet(s32, f32);
 void GSprimSetQuadVertexOrder(s32);
 void GSprimDraw2DQuad4V(const f32 (*)[2], GSgfxColAu8);
 u8 GSgfxVideoGetVsyncRate(void);

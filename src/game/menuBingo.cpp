@@ -1,5 +1,6 @@
 #pragma peephole off
 #pragma pool_strings off
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <dolphin/types.h>
 #include <game/maximum/app/bingo/bingoBios.hpp>
 #include <game/menuBingoLayout.hpp>
@@ -290,7 +291,6 @@ s32 pokecoloGetLanguage(void);
 u32 floorGetCurrentGroupID(void);
 s8 fadeCheck(s32);
 u16 fadeGetType(void);
-void fadeSet(s32 type, f32 time);
 u32 windowGetKeyRepeat(void);
 u16 windowGetKeyTrg(void);
 void menuPlaySe(s32 menu, s32 se);

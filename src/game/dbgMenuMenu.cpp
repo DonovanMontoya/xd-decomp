@@ -1,5 +1,6 @@
 #pragma defer_codegen on
 /* Debug menu entries for testing menus, PDA, memo, esaba and Shadow Pokemon state. */
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <global.h>
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
@@ -63,7 +64,6 @@ void esabaSetPokemon(u16, u16);
 void esabaSetPokemonRnd(s32, s32);
 void evolutionOpen(Pokemon*, Pokemon*, s32, s16*, s32, void*);
 void fadeCheck(s32);
-void fadeSet(s32, f32);
 s32 gamedataGetStatus(s32, s32);
 Pokemon* heroBiosGetPokemonPtr(u32*, s32);
 void heroCatchPokemon(s32, Pokemon*, s32, s32, s32);

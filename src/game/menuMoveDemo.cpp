@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuWorldMapModelPrivate.hpp>
 #include <libc/string.h>
 struct GScamera;
@@ -14,7 +15,7 @@ static u8 _glowwidth=20,_glowblend=1,_glownormalize=1,_glowsamples=1;
 static u8 _glowmethod;
 static f32 _fadeFrame=40.0f,_fadeTime=0.7f;
 extern u8 *worldmapXD_data;
-extern "C" {void GScameraGetPerspective(GScamera*,f32*,f32*,f32*,f32*);void GScameraSetPerspective(GScamera*,f32,f32,f32,f32);u32 GSflagGet(u32);void GSflagSet(u32,u32);void GSgfxVideoSetLockFrameRate(bool);void GSmodelSetBoundCheck(void*,bool);void *GSresGetResourceAllGroup(u32);void GSsndPlayNow(u32);void GSsndStopNow(u32);void GSthreadSwitch();void cameraPlayAnime(u32,u32,f32,bool);void cameraSetType(s32);s8 fadeCheck(s32);void fadeSet(s32,f32);void floorChange(u32);u32 floorGetCurrentGroupID();void floorLink(u32,s32);void floorSetFadeScript(u32,u32);void soundOpenPlay(u32,u32,u32);void soundStopEnv(u32);}
+extern "C" {void GScameraGetPerspective(GScamera*,f32*,f32*,f32*,f32*);void GScameraSetPerspective(GScamera*,f32,f32,f32,f32);u32 GSflagGet(u32);void GSflagSet(u32,u32);void GSgfxVideoSetLockFrameRate(bool);void GSmodelSetBoundCheck(void*,bool);void *GSresGetResourceAllGroup(u32);void GSsndPlayNow(u32);void GSsndStopNow(u32);void GSthreadSwitch();void cameraPlayAnime(u32,u32,f32,bool);void cameraSetType(s32);s8 fadeCheck(s32);void floorChange(u32);u32 floorGetCurrentGroupID();void floorLink(u32,s32);void floorSetFadeScript(u32,u32);void soundOpenPlay(u32,u32,u32);void soundStopEnv(u32);}
 #pragma force_active on
 kyogreMoveDemo::~kyogreMoveDemo(){Release();}
 kyogreMoveDemo::kyogreMoveDemo(){Init();}

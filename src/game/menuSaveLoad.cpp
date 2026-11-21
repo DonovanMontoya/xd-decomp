@@ -1,7 +1,8 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuSaveLoadPrivate.hpp>
 #include <libc/string.h>
 extern "C" {
-u8 GSflagTest(s32);u32 GSflagGet(s32);void fadeSet(s32,f32);s32 floorGetNextFloorID();u32 gamedatasaveGetStatus(void*,s32);void gamedatasaveSetStatus(void*,s32,s32);u32 heroGetStatus(void*,s32,s32);void *memcardMemAllocForSavedata();void memcardMemFreeForSavedata(void*);s32 memcardTaskCall(s32,s32,s32);void menuClose(s32);void menuCloseSync(s32,s32);void menuOpen(s32,s32);s8 menuSubOpenYesNo(s32,s32,s32,s32);void msgctrlSetValue(s32,u32);u32 pokecoloGetPlayTimeValue();s32 pokecoloGetRomVersion();void pokecoloSetPlayTime(f64);void *savedataGetStatus(void*,s32);void winMsgClose(s32);void winMsgOpen(s32,u32,s32,s32);void winSeqSetMenu(s32,s32);void winSpriteSetDisp(tagSPRITE_WORK*,s32);s32 darkPokemonGetReliveNum();u32 darkPokemonGetSnatchSuccessNum();
+u8 GSflagTest(s32);u32 GSflagGet(s32);s32 floorGetNextFloorID();u32 gamedatasaveGetStatus(void*,s32);void gamedatasaveSetStatus(void*,s32,s32);u32 heroGetStatus(void*,s32,s32);void *memcardMemAllocForSavedata();void memcardMemFreeForSavedata(void*);s32 memcardTaskCall(s32,s32,s32);void menuClose(s32);void menuCloseSync(s32,s32);void menuOpen(s32,s32);s8 menuSubOpenYesNo(s32,s32,s32,s32);void msgctrlSetValue(s32,u32);u32 pokecoloGetPlayTimeValue();s32 pokecoloGetRomVersion();void pokecoloSetPlayTime(f64);void *savedataGetStatus(void*,s32);void winMsgClose(s32);void winMsgOpen(s32,u32,s32,s32);void winSeqSetMenu(s32,s32);void winSpriteSetDisp(tagSPRITE_WORK*,s32);s32 darkPokemonGetReliveNum();u32 darkPokemonGetSnatchSuccessNum();
 }
 extern u32 *flag_etc;
 static menuSaveload *_saveload;

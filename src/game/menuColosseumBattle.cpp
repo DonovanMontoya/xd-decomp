@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuColosseumBattleLayout.hpp>
 
 #pragma force_active on
@@ -97,7 +98,6 @@ u8 gbaCommandIsConnected(s32);
 s32 menuCB_MenuPop(void);
 void menuCB_MenuPush(s32);
 void menuCB_WaitGCControler1(void);
-void fadeSet(s32, f32);
 void systemInit__4CAntFv(void);
 void menuCB2DPokemonALLClear(void);
 void cursorBiosInit(void);

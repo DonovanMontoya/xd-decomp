@@ -1,5 +1,6 @@
 #pragma defer_codegen on
 extern "C" {
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <libc/stdio.h>
 }
 #include <dolphin/types.h>
@@ -208,7 +209,6 @@ s32 heroGetStatus(void* hero, s32 kind, s32 arg);
 void GSmsgPrint2(s32 layer, s32 x, s32 y, u32 color, u32 msg);
 u32 GSmsgGetRect(u32 msg);
 void winSeqSetMenu(s32 seq, s32 menu);
-void fadeSet(s32 mode, f32 time);
 s8 fadeCheck(s32 mode);
 u32 menuGetCursorItemID(s32 menu);
 void* savedataGetStatus(s32, s32);

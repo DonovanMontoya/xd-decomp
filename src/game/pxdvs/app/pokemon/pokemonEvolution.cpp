@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <global.h>
 struct EvoInfo {u8 unk0,pad;u16 unk2;};
 extern "C" {
@@ -5,7 +6,7 @@ void *heroGetStatus(void*,u16,u16);u8 pokemonCheckValid(void*);u16 pokemonBiosGe
 
 s32 pokemonEvolutionCreateAddPokemon(void*,void*,u16);s32 pokemonEvolution(void*,void*,u16,EvoInfo*,u16*);
 static void *getPokemonData__FP7Pokemon(void*);static s8 getEmptySlotID__FP4Hero(void*);
-void pokemonBiosCopy(void*,void*);void pokemonBiosSetPokemonDataId(void*,u16);void pokemonBiosSetNicknamePtr(void*,const u16*);void pokemonBiosSetItemDataId(void*,u16);void pokemonSetStatus(void*,s32,u16,u32,u32);void pokemonInitJoutai(void*);void pokemonResetBasisStatus(void*);u8 pokemonDataCheckValid(void*,u16);void *pokemonBiosGetAttest(void*);u8 gamedataAttestBiosGetLangareaId(void*);u32 pokemonDataBiosGetName(void*);const u16 *GSmsgGetGSchar(u32);const u16 *pokemonBiosGetNicknamePtr(void*);s32 GScharCmp(const u16*,const u16*);void *savedataGetStatus(void*,u16);void *gamedataBiosGetGamedataAtttestPtr(void*);void pokemonDoItemSoubi(void*,s32,s32);u16 pokemonGetOboeWazaDataId(void*,u8,u8*);s8 pokemonSearchWazaDataId(void*,u16);void heroAddPokemon(void*,void*);void memoDataSet(void*,void*);void fadeSet(u16,f32);void fadeCheck(u8);s32 evolutionOpen(void*,void*,s32,u16*,s32,u8*);void pokemonWazaCreate(void*,u8,u16);void heroItemDecItemDataId(void*,u16,u16,s32);
+void pokemonBiosCopy(void*,void*);void pokemonBiosSetPokemonDataId(void*,u16);void pokemonBiosSetNicknamePtr(void*,const u16*);void pokemonBiosSetItemDataId(void*,u16);void pokemonSetStatus(void*,s32,u16,u32,u32);void pokemonInitJoutai(void*);void pokemonResetBasisStatus(void*);u8 pokemonDataCheckValid(void*,u16);void *pokemonBiosGetAttest(void*);u8 gamedataAttestBiosGetLangareaId(void*);u32 pokemonDataBiosGetName(void*);const u16 *GSmsgGetGSchar(u32);const u16 *pokemonBiosGetNicknamePtr(void*);s32 GScharCmp(const u16*,const u16*);void *savedataGetStatus(void*,u16);void *gamedataBiosGetGamedataAtttestPtr(void*);void pokemonDoItemSoubi(void*,s32,s32);u16 pokemonGetOboeWazaDataId(void*,u8,u8*);s8 pokemonSearchWazaDataId(void*,u16);void heroAddPokemon(void*,void*);void memoDataSet(void*,void*);void fadeCheck(u8);s32 evolutionOpen(void*,void*,s32,u16*,s32,u8*);void pokemonWazaCreate(void*,u8,u16);void heroItemDecItemDataId(void*,u16,u16,s32);
 
 static s8 getEmptySlotID__FP4Hero(void *hero){s32 i=0;do {if(!pokemonCheckValid(heroGetStatus(hero,3,i)))break;i++;}while(i<6);if(i>=6)return -1;return (s8)i;}
 static void evolutionAddPokemon__FP7PokemonUsP4Heroi(void *pokemon,u16 id,void *hero,s32 memo){u8 extra[196];if(id&&getEmptySlotID__FP4Hero(hero)>=0){pokemonEvolutionCreateAddPokemon(extra,pokemon,id);heroAddPokemon(hero,extra);if(memo)memoDataSet(0,extra);}}

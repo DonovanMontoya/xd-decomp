@@ -1,5 +1,6 @@
 #ifndef FIGHT_POKEMON_EFFECTS_HPP
 #define FIGHT_POKEMON_EFFECTS_HPP
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/pxdvs/app/fight/fightPokemon.hpp>
 
 struct FightTrainer;
@@ -63,7 +64,6 @@ u32 fightTrainerIsGcHero(FightTrainer*);
 u32 fightFloor_GetEncountDataId(void*);
 void wazaSequenceSysFreeAllWazaExcept(void*, WazaSequence*);
 void fightPokemonSetNonTrainerPokemonIsActiveFlag(u8);
-void fadeSet(u32, float);
 void fadeCheck(u32);
 void fightMainAllCamera(u32, u32);
 void* fightOutPokemonGetNamePtr(FightOutPokemon*);

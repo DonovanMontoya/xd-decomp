@@ -430,7 +430,7 @@ static int doWazaSequence(WORK* work, STEP step, int cancelable, FADE_CTRL fade)
     WazaSequence_Start(wazaSeq, 1);
     while (cancelled == 0) {
         if (fade & 0xA) {
-            u32 mode = 4;
+            u16 mode = 4;
             if (fade & 2) {
                 mode = 2;
             }
@@ -453,7 +453,7 @@ static int doWazaSequence(WORK* work, STEP step, int cancelable, FADE_CTRL fade)
     }
     restoreCamera(&cam);
     if (fade & 0x14) {
-        u32 mode = 5;
+        u16 mode = 5;
         if (fade & 4) {
             mode = 3;
         }

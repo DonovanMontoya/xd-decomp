@@ -1,6 +1,7 @@
 #pragma defer_codegen on
 #pragma force_active on
 #pragma dollar_identifiers on
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuWazaStatus.hpp>
 #include <game/menuPokemonLayout.hpp>
 
@@ -71,7 +72,6 @@ s32 menuOpenCustom(s32, s32, s32 *, s32, bool, s32, ...);
 void* windowSearchID(s32);
 void menuDataBiosGetXY(s16, s16 *, s16 *);
 void winSeqSetMenu(s32, s32);
-void fadeSet(s32, f32);
 void fadeCheck(s32);
 void menuPokemonStatusOpenFieldMenu(Pokemon *, Pokemon *(*)(Pokemon *, MENU_POKEMON_CB_TYPE, long), s32);
 void menuPokemonStatusOpenFightMenu(FIGHT_TRAINER *, Pokemon *, Pokemon *(*)(Pokemon *, MENU_POKEMON_CB_TYPE, long), s32);

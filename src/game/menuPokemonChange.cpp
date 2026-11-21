@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuPokemonChangeLayout.hpp>
 
 extern "C" {
@@ -43,7 +44,6 @@ void *GSresGetResource(s32, void *);
 void cameraPlayAnime(s32, u32, s32, f32);
 void cameraSetType(s32);
 void GSmodelSetVisibility(void *, s32);
-void fadeSet(s32, f32);
 void GSfsysReadWait(s32);
 void *memcardMemAllocForSavedata(void);
 void menuGBACSetRomVer(s32, s32);

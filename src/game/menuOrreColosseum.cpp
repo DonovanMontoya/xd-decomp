@@ -1,4 +1,5 @@
 #pragma defer_codegen on
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuOrreColosseumLayout.hpp>
 
 enum MENU_POKEMON_CB_TYPE {
@@ -180,7 +181,6 @@ u8 FlashSystemIsLastFrame(u32);
 s32 menuOpenCustom(s32,s32,...);
 void menuClose(s32);
 void menuCloseSync(s32,s32);
-void fadeSet(s32,f32);
 void menuPokemonStatusOpenFromPokemonChange(Pokemon *,Pokemon *(*)(Pokemon *,MENU_POKEMON_CB_TYPE,long),long);
 u8 menuFaceCheckLoading();
 void pokemonInit(Pokemon *);

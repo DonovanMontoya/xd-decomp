@@ -1,5 +1,6 @@
 #pragma defer_codegen on
 #define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 #include <game/menuSubLayout.hpp>
@@ -58,7 +59,6 @@ s32 GSmsgGetGSchar(u32);
 void GSsndPlayNow(u32);
 void GSthreadSwitch(void);
 void fadeCheck(s32);
-void fadeSet(s32, f32);
 void* getPlaceMsg__14underTakerBiosFv(void*);
 void itemParamConvertOrigFormat(void*, void*);
 s32 itemParamGetRecoverType(void*);

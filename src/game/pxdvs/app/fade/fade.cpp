@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/pxdvs/GSAPI/GSprim/GSprim.hpp>
 #include <libc/string.h>
 #include <game/pxdvs/GSAPI/GSgfxM/backfbPrivate.hpp>
@@ -13,7 +14,7 @@ static u8 myBackFB(GStexture*, u32, void*);
 extern "C" {
 void GSthreadSwitch(); void GSsndPlayNow(s32); void fadeEffectHookFunction_Doku_Init(); void fadeEffectInit(); GStexture* menuOffScreenGetPtr(); u8 menuOffScreenIsDoing();  s32 GSmemGetCurrentHeap(); s32 GSmemSetAllocMethodHeap(s32,s32);
 s32 GSgfxBeginBackFBCapture(GStexture*, BackFBCaptureCallback, void*);
-void fadeSet(u16,f32); s32 fadeSetEX(u16,void(*)(),u8,f32,f32); static s32 fadeSetFunction__FPFv_vbUsf(void(*)(),u8,u16,f32);
+s32 fadeSetEX(u16,void(*)(),u8,f32,f32); static s32 fadeSetFunction__FPFv_vbUsf(void(*)(),u8,u16,f32);
 void fadeEffectDokuStop(void) {
     if (_fadeWork.unk0 == 4) {
         _fadeWork.busy = 0;

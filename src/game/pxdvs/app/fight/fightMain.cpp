@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <global.h>
 #include <game/pxdvs/app/fight/fightAction.hpp>
 static FIGHT_ACTION fight_action;
@@ -54,7 +55,7 @@ void fightMainDebugMenu(){u16 keys[16];s32 frames;s32 previous=dbgMenuGetEnable(
 extern "C" {
 void *fightEncountDataBiosGetPtr(u16);u16 fightEncountDataBiosGetDiskId(void*);
 u32 fightFloor_GetEnvSndId(void*);void fightActionFlowKaisiPreSubLoad();
-u8 fightFloorIsNowEncountOpeningVirtualBattle(void*);void fadeSet(u16,f32);s32 fadeCheck(u8);
+u8 fightFloorIsNowEncountOpeningVirtualBattle(void*);s32 fadeCheck(u8);
 u16 fightGetFightResultId();u8 fightFloorIsNowEncountSnatchOnly(void*);void fightSeqEventKurein(u16);
 u8 fightFloorIsNowEncountHostEnemyPokemonKime(void*);u8 fightFloorIsNowEncountHostPokemonKime(void*);
 void fightActionDispFifoAll();u8 fightFloorIsUseFightTimerAll(void*);void fightTimerAllInit();void fightTimerAllStart();u8 fightTimerAllIsOver();

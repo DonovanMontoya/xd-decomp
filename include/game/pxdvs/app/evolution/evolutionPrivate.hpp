@@ -1,6 +1,7 @@
 #ifndef EVOLUTION_PRIVATE_H
 #define EVOLUTION_PRIVATE_H
 
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <global.h>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 
@@ -102,7 +103,6 @@ void* GSresGetResourceAllGroup(u32);
 void GSmodelSetForceUseFractionalFramesFlag(void*, u32);
 void GSmodelSetSkipFractionalFramesFlag(void*, u32);
 void GSmodelSetAnimType(void*, u32);
-void fadeSet(u32, f32);
 s8 fadeCheck(u32);
 void msgctrlSetValue(u32, u32);
 u16* pokemonBiosGetNicknamePtr(Pokemon*);

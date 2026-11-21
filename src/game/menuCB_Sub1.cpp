@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuCB_Sub1Layout.hpp>
 #pragma dont_inline on
 
@@ -25,7 +26,6 @@ struct Hero;
 struct MenuCBBiosTrainer *menuCBBios_GetTrainerOrgImmediately(s32 port);
 s32 menuCBTrainerBios_GetHomePlace(struct MenuCBBiosTrainer *trainer);
 u8 heroBiosGetSexDataId(struct Hero *hero);
-void fadeSet(s32,f32);
 void menuCBPokemonEntryDispPokemonFace(s32,s32,s32,s32);
 void *itemDataBiosGetPtr(u32); s32 itemDataBiosGetName(void *);
 u32 wazaGetStatus(s32,u16,s32,s32);

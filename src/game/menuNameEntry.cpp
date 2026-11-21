@@ -1,5 +1,6 @@
 #pragma defer_codegen on
 #pragma force_active on
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuNameEntryLayout.hpp>
 #include <game/pxdvs/GSAPI/GSprim/GSprim.hpp>
 
@@ -56,7 +57,6 @@ void menuCloseSync(s32, s32);
 void FlashSystemSetPlayFrameLabel(u32, const char *, const char *);
 void FlashSystemSetLoopFlag(u32, s32);
 void FlashSystemSetNowFrameLabel(u32, const char *);
-void fadeSet(s32, f32);
 void fadeCheck(s32);
 void menuModelTerm(MENU_MODEL *);
 void menuModelAdjustCamera(MENU_MODEL *);

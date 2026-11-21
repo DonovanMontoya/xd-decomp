@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <global.h>
 #include <game/pxdvs/app/fight/fightEncountBiosLayout.hpp>
 #define POKEMON_HPP_NO_PROTOTYPES
@@ -64,7 +65,6 @@ u32 soundGetBGMID();
 u32 soundGetEnvID();
 s32 soundOpenPlay(u32, s32, s32);
 void soundStopEnv(u32);
-void fadeSet(u16, f32);
 s8 fadeCheck(u8);
 s32 fadeSetEX(u16, FightEncountWipeFunction, u8, f32, f32);
 s32 GSsndPlay(u32, u16, u32);

@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuWorldMapMXLayout.hpp>
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/hero/hero.hpp>
@@ -556,7 +557,6 @@ void winSpriteSetDisp(tagSPRITE_WORK *,u8);
 }
 void WorldMap::CallBackFunc(tagWINDOW_WORK *win,tagSPRITE_WORK *sprite);
 extern "C" {
-void fadeSet(s32,f32);
 void floorLink(u32,u32);
 void floorSetFadeScript(u32,u32);
 void heroMovePoolCounter(u32,s32);

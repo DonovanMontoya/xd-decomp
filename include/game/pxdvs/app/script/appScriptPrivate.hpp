@@ -1,5 +1,6 @@
 #ifndef APPSCRIPT_PRIVATE_HPP
 #define APPSCRIPT_PRIVATE_HPP
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <global.h>
 #include <game/pxdvs/GSAPI/GSScript/tiga.hpp>
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
@@ -362,7 +363,6 @@ s32 sodateyaeChekcRais(void);
 void scriptSetCol(s32, u8);
 s32 scriptGetEventColID(void);
 void scriptSetEventCol(u8);
-void fadeSet(u16, f32);
 s8 fadeCheck(u8);
 void GSinputMotorStart(s32, u8, u8, u32, u8);
 void GSmodelSetVisibility(_GSmodel*, u8);

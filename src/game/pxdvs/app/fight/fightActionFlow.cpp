@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/pxdvs/app/fight/fightWaza.hpp>
 #include <dolphin/types.h>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
@@ -1163,7 +1164,6 @@ void WazaSequence_Start(u32,u32);
 void WazaSequence_Stop(u32);
 void Sequence_Talk(void *);
 void battleCameraStartRandom(u32);
-void fadeSet(s32,f32);
 void fightMainSetAllDispFlag(u8);
 u32 fightFloor_GetBgmSndId(void *);
 void soundOpenPlay(u32,u32,u32);
