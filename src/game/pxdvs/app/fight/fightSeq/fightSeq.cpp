@@ -1964,7 +1964,7 @@ loop_1:
                 var_r22 = 2;
             } else {
                 temp_r21 = ((s32 (*)(FightOutPokemon *, u16))fightOutPokemonGetNowKaisuuJoutaiDataId)(temp_r3, 8U) + nemuriInc(temp_r25);
-                if ((s8)temp_r21 >= ((s8 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(temp_r3, 8U)) {
+                if ((s8)temp_r21 >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(temp_r3, 8U)) {
                     fightOutPokemonInitJoutaiDataId(temp_r3, 8U);
                     fightOutPokemonInitJoutaiDataId(temp_r3, 0x17U);
                 } else {
@@ -2077,7 +2077,7 @@ block_23:
     case 9:
         if (fightOutPokemonIsJoutaiDataId(temp_r3, 9U) == 1) {
             temp_r22 = fightOutPokemonGetNowKaisuuJoutaiDataId(temp_r3, 9U);
-            if (temp_r22 >= ((s8 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(temp_r3, 9U)) {
+            if (temp_r22 >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(temp_r3, 9U)) {
                 fightOutPokemonInitJoutaiDataId(temp_r3, 9U);
                 fightSeq_CallWazaSeq(WAZA_KonranEnd);
             } else {
@@ -2131,7 +2131,7 @@ block_23:
     case 12:
         if (fightOutPokemonIsJoutaiDataId(temp_r3, 0xCU) == 1) {
             temp_r22_2 = fightOutPokemonGetNowKaisuuJoutaiDataId(temp_r3, 0xCU);
-            if ((s8) (temp_r22_2 + 1) >= ((s8 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(temp_r3, 0xCU)) {
+            if ((s8) (temp_r22_2 + 1) >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(temp_r3, 0xCU)) {
                 fightOutPokemonInitJoutaiDataId(temp_r3, 0xCU);
                 fightOutPokemonInitJoutaiDataId(temp_r3, 0x22U);
                 ServerStatusFlag |= 0x02000000;
@@ -2474,7 +2474,7 @@ s32 _fightSeqSideJoutaiCheckSub__FPvUsPv(void *rawPokemon, u16 arg1, void *arg2)
         temp_r27 = fightOutPokemonGetNowKaisuuJoutaiDataId(arg0, 0xEU);
         temp_r3_3 = fightOutPokemonGetIdBuffJoutaiDataId(arg0, 0xEU);
         fightMsgctrlSetValue(0xDU, (u32)(GSmsgGetGSchar(wazaDB_GetName(temp_r3_3))));
-        if (temp_r27 >= ((s8 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(arg0, 0xEU)) {
+        if (temp_r27 >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(arg0, 0xEU)) {
             fightOutPokemonInitJoutaiDataId(arg0, 0xEU);
             var_r3 = WAZA_ShimeEnd;
         } else {
@@ -2512,7 +2512,7 @@ s32 _fightSeqSideJoutaiCheckSub__FPvUsPv(void *rawPokemon, u16 arg1, void *arg2)
         fightFloorLoopValidFightOutPokemon(NULL, _fightSeqSideJoutaiCheckSubSawagu__FPvUsPv, NULL, 0U);
         fightFloor_SetAttackPokemonPtr(NULL, (u8 *) arg0);
         temp_r26_2 = fightOutPokemonGetNowKaisuuJoutaiDataId(arg0, 0xBU);
-        if ((s8) (temp_r26_2 + 1) >= (s8) ((s32 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(arg0, 0xBU)) {
+        if ((s8) (temp_r26_2 + 1) >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(arg0, 0xBU)) {
             fightOutPokemonInitJoutaiDataId(arg0, 0xBU);
         } else {
             fightOutPokemonSetNowKaisuuJoutaiDataId(arg0, 0xBU, (s8) (temp_r26_2 + 1));
@@ -2538,7 +2538,7 @@ block_64:
     ServerStatusFlag = ServerStatusFlag | 0x01000000 | 0x20;
     if (fightOutPokemonIsJoutaiDataId(arg0, 0xDU) == 1) {
         temp_r26_3 = fightOutPokemonGetNowKaisuuJoutaiDataId(arg0, 0xDU);
-        if ((s8) (temp_r26_3 + 1) >= (s8) ((s32 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(arg0, 0xDU)) {
+        if ((s8) (temp_r26_3 + 1) >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(arg0, 0xDU)) {
             fightOutPokemonInitJoutaiDataId(arg0, 0xDU);
         } else {
             fightOutPokemonSetNowKaisuuJoutaiDataId(arg0, 0xDU, (s8) (temp_r26_3 + 1));
@@ -2574,7 +2574,7 @@ block_64:
         fightOutPokemonSetNowKaisuuJoutaiDataId(arg0, 0x29U, (s8) (temp_r26_4 + 1));
         if (pokemonSearchWazaDataId(temp_r29, (u16) temp_r25_3) < 0) {
             fightOutPokemonInitJoutaiDataId(arg0, 0x29U);
-        } else if ((s8) (temp_r26_4 + 1) >= (s8) ((s32 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(arg0, 0x29U)) {
+        } else if ((s8) (temp_r26_4 + 1) >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(arg0, 0x29U)) {
             fightOutPokemonInitJoutaiDataId(arg0, 0x29U);
             fightSeq_CallWazaSeq(WAZA_KanashibariEnd);
         }
@@ -2594,7 +2594,7 @@ block_64:
         fightOutPokemonSetNowKaisuuJoutaiDataId(arg0, 0x2AU, (s8) (temp_r27_3 + 1));
         if (temp_r27_4 != (u16) temp_r26_5) {
             fightOutPokemonInitJoutaiDataId(arg0, 0x2AU);
-        } else if (((s8) (temp_r27_3 + 1) >= ((s8 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(arg0, 0x2AU)) || ((u8) pokemon_GetPokemonWazaPp(temp_r29, (u16) temp_r3_4) == 0)) {
+        } else if (((s8) (temp_r27_3 + 1) >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(arg0, 0x2AU)) || ((u8) pokemon_GetPokemonWazaPp(temp_r29, (u16) temp_r3_4) == 0)) {
             fightOutPokemonInitJoutaiDataId(arg0, 0x2AU);
             fightSeq_CallWazaSeq(WAZA_EncoreEnd);
         }
@@ -2607,7 +2607,7 @@ block_64:
     ServerStatusFlag = ServerStatusFlag | 0x01000000 | 0x20;
     if (fightOutPokemonIsJoutaiDataId(arg0, 0x1DU) == 1) {
         temp_r27_5 = fightOutPokemonGetNowKaisuuJoutaiDataId(arg0, 0x1DU);
-        if ((s8) (temp_r27_5 + 1) >= (s8) ((s32 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(arg0, 0x1DU)) {
+        if ((s8) (temp_r27_5 + 1) >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(arg0, 0x1DU)) {
             fightOutPokemonInitJoutaiDataId(arg0, 0x1DU);
         } else {
             fightOutPokemonSetNowKaisuuJoutaiDataId(arg0, 0x1DU, (s8) (temp_r27_5 + 1));
@@ -2621,7 +2621,7 @@ block_64:
     ServerStatusFlag = ServerStatusFlag | 0x01000000 | 0x20;
     if (fightOutPokemonIsJoutaiDataId(arg0, 0x24U) == 1) {
         temp_r27_6 = fightOutPokemonGetNowKaisuuJoutaiDataId(arg0, 0x24U);
-        if ((s8) (temp_r27_6 + 1) >= (s8) ((s32 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(arg0, 0x24U)) {
+        if ((s8) (temp_r27_6 + 1) >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(arg0, 0x24U)) {
             fightOutPokemonInitJoutaiDataId(arg0, 0x24U);
         } else {
             fightOutPokemonSetNowKaisuuJoutaiDataId(arg0, 0x24U, (s8) (temp_r27_6 + 1));
@@ -2635,7 +2635,7 @@ block_64:
     ServerStatusFlag = ServerStatusFlag | 0x01000000 | 0x20;
     if (fightOutPokemonIsJoutaiDataId(arg0, 0x30U) == 1) {
         temp_r27_7 = fightOutPokemonGetNowKaisuuJoutaiDataId(arg0, 0x30U);
-        if ((s8) (temp_r27_7 + 1) >= (s8) ((s32 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(arg0, 0x30U)) {
+        if ((s8) (temp_r27_7 + 1) >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(arg0, 0x30U)) {
             fightOutPokemonInitJoutaiDataId(arg0, 0x30U);
         } else {
             fightOutPokemonSetNowKaisuuJoutaiDataId(arg0, 0x30U, (s8) (temp_r27_7 + 1));
@@ -2649,7 +2649,7 @@ block_64:
     ServerStatusFlag = ServerStatusFlag | 0x01000000 | 0x20;
     if (fightOutPokemonIsJoutaiDataId(arg0, 0x26U) == 1) {
         temp_r27_8 = fightOutPokemonGetNowKaisuuJoutaiDataId(arg0, 0x26U);
-        if ((s8) (temp_r27_8 + 1) >= (s8) ((s32 (*)(FightOutPokemon *, u16))fightOutPokemonGetKaisuuJoutaiDataId)(arg0, 0x26U)) {
+        if ((s8) (temp_r27_8 + 1) >= (s8)fightOutPokemonGetKaisuuJoutaiDataId(arg0, 0x26U)) {
             fightOutPokemonInitJoutaiDataId(arg0, 0x26U);
             if ((fightOutPokemonIsJoutaiNormal(arg0) == 1) && (temp_r28 != 0x48) && (temp_r28 != 0xF) && (fightSeqSawaguCheck((u8 *) arg0) == 0) && (fightSeqRegulationOverTwoCheck(8U, arg0) != 1) && (fightOutPokemonCheckWriteJoutaiDataId(arg0, 8U) == 2)) {
                 fightOutPokemonWriteJoutaiDataId(arg0, 8U, 0U);
