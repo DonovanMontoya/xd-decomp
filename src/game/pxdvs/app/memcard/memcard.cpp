@@ -1,3 +1,4 @@
+#include <dolphin/os.h>
 #include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 #include <game/pxdvs/app/memcard/memcardPrivate.hpp>
 #define POKEMON_HPP_NO_PROTOTYPES
@@ -31,13 +32,19 @@ static u8 _memcardStatusBuf[0x210] __attribute__((aligned(8)));
 static u8 _memcardMsgOpen(MEMCARD_MSGTYPE msg);
 
 // Save task and data helper entry points.
-void _memcardJobMain(u32, u32);
-u8 _memcard_Decryption(void*);
-void _memcard_Encryption(void*);
-void _memcardStoreSaveData_multi(void*);
-void _memcardDuplicateSaveData_multi(void*);
+static void _memcardJobMain(u32, u32);
+static u8 _memcard_Decryption(void*);
+static void _memcard_Encryption(void*);
+static void _memcardStoreSaveData_multi(void*);
+static void _memcardDuplicateSaveData_multi(void*);
 static void* _memcardGetMultiSaveDataToSTRUCT(void*, long);
 
+static s32 _memcardMergeDataPack();
+static s32 _memcardExamineDataPack();
+static s32 _memcardExamineHeader();
+static s32 _memcardCardOpen();
+static void _memcardCallback(long, long);
+extern "C" s32 fn_801CC508();
 
 static inline void advanceMemcardKey() {
     u16 key[4];
@@ -51,64 +58,6 @@ static inline void advanceMemcardKey() {
     _memcard_encrypt_key[1] = ((key[0]&0xF0)>>4) | (key[1]&0xF0) | ((key[2]&0xF0)<<4) | ((key[3]&0xF0)<<8);
     _memcard_encrypt_key[2] = ((key[0]&0xF00)>>8) | ((key[1]&0xF00)>>4) | (key[2]&0xF00) | ((key[3]&0xF00)<<4);
     _memcard_encrypt_key[3] = ((key[0]&0xF000)>>12) | ((key[1]&0xF000)>>8) | ((key[2]&0xF000)>>4) | (key[3]&0xF000);
-}
-
-u8 _memcard_Decryption(void* buffer) {
-    s32 word;
-    s32 i;
-    u32 check[4];
-    u32 sums[4];
-    u16* data;
-    data = (u16*)buffer;
-    _memcard_encrypt_key[0] = data[0];
-    _memcard_encrypt_key[1] = data[1];
-    _memcard_encrypt_key[2] = data[2];
-    _memcard_encrypt_key[3] = data[3];
-    sums[0]=0; sums[1]=0; sums[2]=0; sums[3]=0;
-    for (word=4; word<0x13FE8; word+=4) {
-        for (i = 0; i < 4; i++) {
-            data[word+i] -= _memcard_encrypt_key[i];
-        }
-        advanceMemcardKey();
-    }
-    check[0] = (data[11]<<16) | data[10];
-    check[1] = data[8] | (data[9]<<16);
-    check[2] = data[6] | (data[7]<<16);
-    check[3] = data[4] | (data[5]<<16);
-    data[10]=0; data[11]=0; data[8]=0; data[9]=0;
-    data[6]=0; data[7]=0; data[4]=0; data[5]=0;
-    for (i = 0; i < 4; i++) {
-        for (word = i*0x4FFA; word < (i+1)*0x4FFA; word++) sums[i] += data[word];
-    }
-    if (sums[0]==check[0] && sums[1]==check[1] && sums[2]==check[2] && sums[3]==check[3]) return 1;
-    return 0;
-}
-
-void _memcard_Encryption(void* buffer) {
-    s32 word;
-    s32 i;
-    u32 sums[4];
-    sums[0]=0; sums[1]=0; sums[2]=0; sums[3]=0;
-    u16* data = (u16*)buffer;
-    _memcard_encrypt_key[0] = data[0];
-    _memcard_encrypt_key[1] = data[1];
-    _memcard_encrypt_key[2] = data[2];
-    _memcard_encrypt_key[3] = data[3];
-    data[10]=0; data[11]=0; data[8]=0; data[9]=0;
-    data[6]=0; data[7]=0; data[4]=0; data[5]=0;
-    for (i = 0; i < 4; i++) {
-        for (word = i*0x4FFA; word < (i+1)*0x4FFA; word++) sums[i] += data[word];
-    }
-    data[10]=sums[0]; data[11]=sums[0]>>16;
-    data[8]=sums[1]; data[9]=sums[1]>>16;
-    data[6]=sums[2]; data[7]=sums[2]>>16;
-    data[4]=sums[3]; data[5]=sums[3]>>16;
-    for (word=4; word<0x13FE8; word+=4) {
-        for (i = 0; i < 4; i++) {
-            data[word+i] += _memcard_encrypt_key[i];
-        }
-        advanceMemcardKey();
-    }
 }
 
 static inline s32 _memcardPollTask(void) {
@@ -187,6 +136,64 @@ void memcard_debug_Save(void* data) {
 
 }
 
+u8 _memcard_Decryption(void* buffer) {
+    s32 word;
+    s32 i;
+    u32 check[4];
+    u32 sums[4];
+    u16* data;
+    data = (u16*)buffer;
+    _memcard_encrypt_key[0] = data[0];
+    _memcard_encrypt_key[1] = data[1];
+    _memcard_encrypt_key[2] = data[2];
+    _memcard_encrypt_key[3] = data[3];
+    sums[0]=0; sums[1]=0; sums[2]=0; sums[3]=0;
+    for (word=4; word<0x13FE8; word+=4) {
+        for (i = 0; i < 4; i++) {
+            data[word+i] -= _memcard_encrypt_key[i];
+        }
+        advanceMemcardKey();
+    }
+    check[0] = (data[11]<<16) | data[10];
+    check[1] = data[8] | (data[9]<<16);
+    check[2] = data[6] | (data[7]<<16);
+    check[3] = data[4] | (data[5]<<16);
+    data[10]=0; data[11]=0; data[8]=0; data[9]=0;
+    data[6]=0; data[7]=0; data[4]=0; data[5]=0;
+    for (i = 0; i < 4; i++) {
+        for (word = i*0x4FFA; word < (i+1)*0x4FFA; word++) sums[i] += data[word];
+    }
+    if (sums[0]==check[0] && sums[1]==check[1] && sums[2]==check[2] && sums[3]==check[3]) return 1;
+    return 0;
+}
+
+void _memcard_Encryption(void* buffer) {
+    s32 word;
+    s32 i;
+    u32 sums[4];
+    sums[0]=0; sums[1]=0; sums[2]=0; sums[3]=0;
+    u16* data = (u16*)buffer;
+    _memcard_encrypt_key[0] = data[0];
+    _memcard_encrypt_key[1] = data[1];
+    _memcard_encrypt_key[2] = data[2];
+    _memcard_encrypt_key[3] = data[3];
+    data[10]=0; data[11]=0; data[8]=0; data[9]=0;
+    data[6]=0; data[7]=0; data[4]=0; data[5]=0;
+    for (i = 0; i < 4; i++) {
+        for (word = i*0x4FFA; word < (i+1)*0x4FFA; word++) sums[i] += data[word];
+    }
+    data[10]=sums[0]; data[11]=sums[0]>>16;
+    data[8]=sums[1]; data[9]=sums[1]>>16;
+    data[6]=sums[2]; data[7]=sums[2]>>16;
+    data[4]=sums[3]; data[5]=sums[3]>>16;
+    for (word=4; word<0x13FE8; word+=4) {
+        for (i = 0; i < 4; i++) {
+            data[word+i] += _memcard_encrypt_key[i];
+        }
+        advanceMemcardKey();
+    }
+}
+
 enum MemcardSection {
     SectionSystem,
     SectionHero,
@@ -242,242 +249,6 @@ typedef char MemcardPackHeaderSize[sizeof(MemcardPackHeader) == 0xA0 ? 1 : -1];
 typedef char MemcardSectionSizesOffset[offsetof(MemcardPackHeader, sizes) == 0x18 ? 1 : -1];
 typedef char MemcardSectionOffsetsOffset[offsetof(MemcardPackHeader, offsets) == 0x38 ? 1 : -1];
 
-#define MEMCARD_STORE(idx, section, max)                                     \
-    dst = _memcardGetMultiSaveDataToSTRUCT(arg, idx);                        \
-    src = savedataGetStatus(_memcardStatusPtr->saveData, idx);               \
-    size = header->sizes[section];                                           \
-    if (size > (max)) {                                                      \
-        size = (max);                                                        \
-    }                                                                        \
-    memcpy(src, dst, size)
-
-#define MEMCARD_STORE2(dst3, idx, section, max)                              \
-    dst3 = (u8*)_memcardGetMultiSaveDataToSTRUCT(arg, idx);                  \
-    src = savedataGetStatus(_memcardStatusPtr->saveData, idx);               \
-    size = header->sizes[section];                                           \
-    if (size > (max)) {                                                      \
-        size = (max);                                                        \
-    }                                                                        \
-    memcpy(src, dst3, size)
-
-void _memcardStoreSaveData_multi(void* arg) {
-    const MemcardPackHeader* header = (const MemcardPackHeader*)arg;
-    void* dst;
-    u8* dst2;
-    u8* dst3;
-    u8* dst4;
-    u8* dst5;
-    void* src;
-    u32 size;
-    MEMCARD_STORE(1, SectionSystem, sizeof(GamedataSaveRecord));
-    MEMCARD_STORE(2, SectionHero, sizeof(Hero));
-    dst = _memcardGetMultiSaveDataToSTRUCT(arg, 3);
-    src = savedataGetStatus(_memcardStatusPtr->saveData, 3);
-    size = (u32)header->pcBoxSizeHigh << 16;
-    size += header->sizes[SectionPcBox];
-    if (size > sizeof(PCBOX)) {
-        size = sizeof(PCBOX);
-    }
-    memcpy(src, dst, size);
-    MEMCARD_STORE(0xA, SectionMailbox, sizeof(Mailbox));
-    MEMCARD_STORE(0xB, SectionSodateya, sizeof(Sodateya));
-    MEMCARD_STORE(0xC, SectionMemo, sizeof(Memo));
-    MEMCARD_STORE(0xE, SectionTool, 0x364);
-    MEMCARD_STORE(0xF, SectionDarkPokemon, 0x2400);
-    dst2 = (u8*)_memcardGetMultiSaveDataToSTRUCT(arg, 0x17);
-    size = header->sizes[SectionFlags];
-    if (size == 0x6B4) {
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 4), dst2, header->flagLevel0Size);
-        dst2 += header->flagLevel0Size;
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 5), dst2, header->flagLevel1Size);
-        dst2 += header->flagLevel1Size;
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 6), dst2, header->flagLevel2Size);
-        dst2 += header->flagLevel2Size;
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x18), dst2, header->battleDiskFlagsSize);
-        dst2 += header->battleDiskFlagsSize;
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x1B), dst2, header->bingoFlagsSize);
-    } else {
-        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x17), dst2, size);
-    }
-    MEMCARD_STORE2(dst3, 0x10, SectionExRibbon, 0xB);
-    MEMCARD_STORE2(dst4, 0x16, SectionFloor, 0xC800);
-    MEMCARD_STORE2(dst5, 0x15, SectionRelive, sizeof(CReliveHall));
-    _memcardGetMultiSaveDataToSTRUCT(arg, 0x11);
-    _memcardGetMultiSaveDataToSTRUCT(arg, 0x12);
-    _memcardGetMultiSaveDataToSTRUCT(arg, 0x13);
-    _memcardGetMultiSaveDataToSTRUCT(arg, 0x14);
-}
-
-#pragma push
-#pragma dont_inline on
-static s32 _memcardMergeDataPack(void) {
-    void* data;
-    u8* pack = (u8*)_memcardStatusPtr->buf50 + 8;
-    data = _memcardGetMultiSaveDataToSTRUCT(pack, 1);
-    switch (_memcardStatusPtr->state) {
-    case 9:
-        _memcardDuplicateSaveData_multi(pack);
-        _memcardStoreSaveData_multi(pack);
-        break;
-    case 13: {
-        void* save = savedataGetStatus(0, 0xE);
-        memcpy(_memcardGetMultiSaveDataToSTRUCT(pack, 0xE), save, 0x364);
-        break;
-    }
-    }
-    gamedatasaveSetStatus(data, 9, (u8)gamedatasaveGetStatus(0, 9));
-    gamedatasaveSetStatus(data, 0xA, (u8)gamedatasaveGetStatus(0, 0xA));
-    gamedatasaveSetStatus(data, 0xB, (u8)gamedatasaveGetStatus(0, 0xB));
-    return 0x25;
-}
-#pragma pop
-
-#define MEMCARD_MULTI_ADD(section)                                           \
-    {                                                                        \
-        u32 hi = header->offsets[section].high;                              \
-        u32 lo = header->offsets[section].low;                               \
-        data = (hi << 16) + data;                                            \
-        data = lo + data;                                                    \
-    }
-
-#pragma opt_dead_assignments off
-static void* _memcardGetMultiSaveDataToSTRUCT(void* base, long index) {
-    const MemcardSavePack* pack = (const MemcardSavePack*)base;
-    const MemcardPackHeader* header = &pack->header;
-    u32 data = (u32)pack->payload;
-    switch (index) {
-    case 1:
-        MEMCARD_MULTI_ADD(SectionSystem)
-        break;
-    case 2:
-        MEMCARD_MULTI_ADD(SectionHero)
-        break;
-    case 3:
-        MEMCARD_MULTI_ADD(SectionPcBox)
-        break;
-    case 0x17:
-        MEMCARD_MULTI_ADD(SectionFlags)
-        break;
-    case 0xA:
-        MEMCARD_MULTI_ADD(SectionMailbox)
-        break;
-    case 0xB:
-        MEMCARD_MULTI_ADD(SectionSodateya)
-        break;
-    case 0xC:
-        MEMCARD_MULTI_ADD(SectionMemo)
-        break;
-    case 0xE:
-        MEMCARD_MULTI_ADD(SectionTool)
-        break;
-    case 0xF:
-        MEMCARD_MULTI_ADD(SectionDarkPokemon)
-        break;
-    case 0x10:
-        MEMCARD_MULTI_ADD(SectionExRibbon)
-        break;
-    case 0x16:
-        MEMCARD_MULTI_ADD(SectionFloor)
-        break;
-    case 0x11:
-        MEMCARD_MULTI_ADD(SectionYobi1)
-        break;
-    case 0x12:
-        MEMCARD_MULTI_ADD(SectionYobi2)
-        break;
-    case 0x13:
-        MEMCARD_MULTI_ADD(SectionYobi3)
-        break;
-    case 0x14:
-        MEMCARD_MULTI_ADD(SectionYobi4)
-        break;
-    case 0x15:
-        MEMCARD_MULTI_ADD(SectionRelive)
-        break;
-    case 0:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-    case 8:
-    case 9:
-    case 0xD:
-        break;
-    }
-    return (void*)data;
-}
-#pragma opt_dead_assignments reset
-
-#pragma push
-#pragma opt_propagation off
-static s32 _memcardExamineDataPack(void) {
-    u8 valid;
-    u8* pack = (u8*)_memcardStatusPtr->buf50;
-    s32 sum;
-    valid = _memcard_Decryption(pack + 8);
-    if (valid) {
-        void* data = pack + 8;
-        sum = pack[0] + pack[1];
-        sum += pack[2];
-        sum += pack[3];
-        sum += pack[4];
-        sum += pack[5];
-        sum += pack[6];
-        sum += pack[7];
-        u8 checked;
-        if (((MemcardPackHeader*)data)->sizes[SectionSystem] == sizeof(GamedataSaveRecord)) {
-            if (sum == gamedatasaveGetStatus(_memcardGetMultiSaveDataToSTRUCT(data, 1), 0xD)) {
-                checked = 1;
-            } else {
-                checked = 0;
-            }
-        } else {
-            checked = 1;
-        }
-        valid = checked;
-    }
-    if (valid) {
-        _memcardGetMultiSaveDataToSTRUCT(pack + 8, 1);
-    }
-    if (valid) {
-        if (_memcardStatusPtr->state != 3) {
-            _memcardStatusPtr->unk2C = *(s32*)(pack + 4);
-            if (_memcardStatusPtr->limit > _memcardStatusPtr->unk2C) {
-                _memcardStatusPtr->unk2C = _memcardStatusPtr->limit;
-                _memcardStatusPtr->msg = 5;
-                switch (_memcardStatusPtr->state) {
-                case 1: case 2:
-                    _memcardStoreSaveData_multi(pack + 8);
-                    _memcardStatusPtr->nextTask = 0x25;
-                    break;
-                default:
-                    _memcardStatusPtr->nextTask = 0x24;
-                }
-                return 0x30;
-            }
-        }
-        switch (_memcardStatusPtr->state) {
-        case 1: case 2: case 3: {
-            s32 next;
-            _memcardStoreSaveData_multi(pack + 8);
-            _memcardStatusPtr->msg = 0xC;
-            _memcardStatusPtr->result = 3;
-            next = 0x2C;
-            if (_memcardStatusPtr->unk40 != 0) {
-                next = 0x11;
-            }
-            return next;
-        }
-        }
-        return 0x24;
-    }
-    s32* block = (s32*)(_memcardStatusPtr->index * 0x200 + 0x28000 + _memcardStatusPtr->buf50);
-    block[1] = 0;
-    return 0x1F;
-}
-#pragma pop
-
-
 extern "C" {
 s32 CARDFreeBlocks(s32, s32*, s32*);
 s32 CARDFastOpen(s32, s32, void*);
@@ -486,7 +257,6 @@ s32 pokecoloGetCountryCode(void);
 int strcmp(const char*, const char*);
 }
 
-static const char lbl_804EE7B4[]="GXXP";
 static inline u8 _memcardIsXDSave(MemcardCardStat* stat,s32 result) {
     if(result==0) switch (pokecoloGetCountryCode()) {
     case 0:
@@ -496,7 +266,7 @@ static inline u8 _memcardIsXDSave(MemcardCardStat* stat,s32 result) {
         if (strcmp(stat->fileName, "PokemonXD") == 0 && *(u32*)stat->gameName == *(u32*)"GXXE" && *(u16*)stat->company == *(u16*)"01") return 1;
         break;
     case 2:
-        if (strcmp(stat->fileName, "PokemonXD") == 0 && *(u32*)stat->gameName == *(const u32*)lbl_804EE7B4 && *(u16*)stat->company == *(u16*)"01") return 1;
+        if (strcmp(stat->fileName, "PokemonXD") == 0 && *(u32*)stat->gameName == *(u32*)"GXXP" && *(u16*)stat->company == *(u16*)"01") return 1;
         break;
     }
     return 0;
@@ -529,406 +299,6 @@ static inline s32 _memcardFindSave() {
                 }
             }
         return result;
-}
-
-static s32 _memcardCardOpen(void) {
-    s32 freeBytes;
-    s32 freeFiles;
-    MemcardCardStat stat2;
-    s32 status;
-    CARDFreeBlocks(*(s32*)((u8*)_memcardStatusPtr + 0x14), &freeBytes, &freeFiles);
-    switch (pokecoloGetCountryCode()) {
-    case 0: {
-        void* info;
-        s32 chan;
-        s32 result;
-        s32 i;
-        MemcardCardStat stat;
-        chan = *(s32*)((u8*)_memcardStatusPtr + 0x14);
-        info = (u8*)_memcardStatusPtr + 0x8C;
-        i = 0;
-            for (;;) {
-                result = CARDFastOpen(chan, i, info);
-                if (result == 0) {
-                    result = CARDGetStatus(chan, i, &stat);
-                    u8 found;
-                    found = _memcardIsXDSave(&stat,result);
-                    if (found) {
-                        result = 0;
-                        break;
-                    }
-                }
-                ++i;
-                if (i >= 0x7F) {
-                    if (result == 0) result = -4;
-                    break;
-                }
-            }
-        status = result;
-        break;
-    }
-    case 1:
-    case 2: {
-        status = _memcardFindSave();
-        break;
-    }
-    }
-    switch (status) {
-    case 0: {
-        _memcardStatusPtr->unk3E = 1;
-        status = CARDGetStatus(*(s32*)((u8*)_memcardStatusPtr + 0x14), *(s32*)((u8*)_memcardStatusPtr + 0x90), &stat2);
-        if (status != 0) goto fail;
-        if (stat2.commentAddr + 0x10000 != 0xFFFF) {
-            if (_memcardStatusPtr->state == 0xC) {
-                _memcardStatusPtr->msg = 2;
-                _memcardStatusPtr->nextTask = 0xB;
-                return 0x30;
-            }
-            s32 ret = 0x19;
-            if (_memcardStatusPtr->state == 3) ret = 0x1C;
-            return ret;
-        }
-        status = -4;
-        freeBytes += 0x56000;
-        freeFiles += 1;
-    }
-    // fall through
-    case -4:
-        switch (_memcardStatusPtr->state) {
-        case 1:
-            if (freeBytes < 0x56000) { status = -9; goto fail; }
-            if (freeFiles < 1) { status = -8; goto fail; }
-            _memcardStatusPtr->msg = 6;
-            _memcardStatusPtr->nextTask = 0xA;
-            return 0x30;
-        case 9:
-            _memcardStatusPtr->msg = 2;
-            _memcardStatusPtr->nextTask = 0xB;
-            return 0x30;
-        }
-        // fall through
-    default:
-    fail:
-        _memcardStatusPtr->msg = status;
-        return 0x2B;
-    }
-}
-
-static void _memcardCallback(long, long) {
-    _memcardStatusPtr->callbackDone = 1;
-}
-
-static u8 _memcardMsgOpen(MEMCARD_MSGTYPE msg) {
-    u8 retry = 0;
-    u8 confirm = 0;
-    s32 yes;
-    s32 id;
-    switch (msg) {
-    case 0:
-        return 0;
-    case 1:
-        id = 0x6A;
-        break;
-    case 2:
-        switch (_memcardStatusPtr->state) {
-        case 5:
-        case 6:
-        case 7:
-        case 0xD:
-            id = 0x6C;
-            break;
-        default:
-            id = 0x90;
-            break;
-        }
-        break;
-    case 3:
-        id = 0x84;
-        break;
-    case 4:
-        id = 0x73;
-        break;
-    case 5:
-        id = 0x7B;
-        break;
-    case 6:
-        id = 0x83;
-        retry = 1;
-        yes = 0;
-        break;
-    case 7:
-        id = 0x71;
-        retry = 1;
-        yes = 0;
-        confirm = 1;
-        break;
-    case 8:
-        id = 0x7A;
-        retry = 1;
-        yes = 1;
-        break;
-    case 9:
-        id = 0x74;
-        break;
-    case 10:
-        switch (_memcardStatusPtr->state) {
-        case 5:
-        case 6:
-        case 7:
-        case 0xD:
-            id = 0x6D;
-            break;
-        default:
-            id = 0x91;
-            break;
-        }
-        GSsndPlay(0x1D, 0, 0);
-        break;
-    case 11:
-        id = 0x85;
-        break;
-    case 12:
-        id = 0x81;
-        GSsndPlay(0x1D, 0, 0);
-        break;
-    case 13:
-        id = 0x79;
-        break;
-    case 14:
-        id = 0x9B;
-        break;
-    case 15:
-        switch (_memcardStatusPtr->state) {
-        case 5:
-        case 6:
-        case 7:
-        case 0xD:
-            id = 0x9B;
-            break;
-        default:
-            id = 0x97;
-            break;
-        }
-        break;
-    case 16:
-        id = 0x72;
-        break;
-    case 17:
-        id = 0x7C;
-        if (_memcardStatusPtr->state != 2) {
-            winMsgOpen(_memcardStatusPtr->priority, 0x7C, 1, 1);
-            id = 0x80;
-        }
-        break;
-    case 18:
-        id = 0x7D;
-        break;
-    case -2:
-        id = 0x77;
-        break;
-    case -3:
-        id = 0x70;
-        break;
-    case -4:
-        id = 0x6F;
-        break;
-    case -5:
-        id = 0x76;
-        break;
-    case -13:
-    case -6:
-        switch (_memcardStatusPtr->state) {
-        case 1:
-        case 2:
-            id = 0x7E;
-            if (_memcardStatusPtr->unk60 == 0x32) {
-                break;
-            }
-        default:
-            id = 0x6E;
-            break;
-        }
-        break;
-    case -9:
-    case -8:
-        id = 0x78;
-        msgctrlSetValue(0x2F, 0x2B);
-        break;
-    case 19:
-        winMsgOpen(_memcardStatusPtr->priority, 0x7C, 1, 1);
-        id = 0x80;
-        break;
-    default:
-        id = 0x6E;
-        break;
-    }
-    winMsgOpen(_memcardStatusPtr->priority, id, 1, 1);
-    if (retry) {
-        if (menuSubOpenYesNo(0, 0x3C, 0xAA, yes)) {
-            retry = 0;
-        } else {
-            retry = 1;
-            if (confirm) {
-                winMsgOpen(_memcardStatusPtr->priority, 0xF3, 1, 1);
-                if (menuSubOpenYesNo(0, 0x3C, 0xAA, 1)) {
-                    retry = 0;
-                } else {
-                    retry = 1;
-                }
-            }
-        }
-    }
-    return retry;
-}
-
-extern "C" {
-
-void* memcardMemFreeForSavedata(void* p) {
-    GSmemFree(p);
-    return 0;
-}
-
-void* memcardMemAllocForSavedata(void) {
-    return GSmemAllocAlign(sizeof(MemcardSavePack), 0x20);
-}
-
-void memcardFinalizeTask(void) {
-    _memcardFinish();
-}
-
-void memcardUnlockWaitGBA(u8 flag) {
-    if (_memcardStatusPtr->task == 0x31 && flag != 0) {
-        _memcardStatusPtr->task = _memcardStatusPtr->nextTask;
-        _memcardStatusPtr->timer = ((HSD_Rand() << 16) | HSD_Rand()) % 0x3C;
-        _memcardStatusPtr->timer = _memcardStatusPtr->timer + 1;
-        s32 rnd = (u16)HSD_Rand();
-        _memcardStatusPtr->timer = _memcardStatusPtr->timer + rnd % 0x3C;
-    } else {
-        _memcardStatusPtr->msg = 0xF;
-        _memcardStatusPtr->task = 0x2B;
-    }
-}
-
-s32 memcardCheckTaskWaitGBA(void) {
-    return _memcardStatusPtr->task == 0x31 ? 1 : 0;
-}
-
-u8 memcardIsMemCardValid(void) {
-    return _memcardStatusPtr->valid;
-}
-
-s32 memcardGetTaskResult(void) {
-    if (_memcardStatusPtr->task == 0x30) {
-        _memcardStatusPtr->msg = _memcardMsgOpen((MEMCARD_MSGTYPE)_memcardStatusPtr->msg);
-        _memcardStatusPtr->task = _memcardStatusPtr->nextTask;
-    }
-    if (_memcardStatusPtr->task != 0x32) {
-        return 0;
-    }
-    return _memcardStatusPtr->result;
-}
-
-void memcardSetupTask(s32 state, s32 priority, s32 param) {
-    if (_memcardStatusPtr->state != 0) {
-        do {
-            GSthreadSwitch();
-        } while (_memcardPollTask() == 0);
-        _memcardFinish();
-    }
-    if (priority == 0) {
-        priority = 2;
-    }
-    _memcardStatusPtr->state = state;
-    _memcardStatusPtr->param = param;
-    _memcardStatusPtr->priority = priority;
-    _memcardStatusPtr->result = 0;
-    _memcardStatusPtr->task = 0;
-    _memcardStatusPtr->msg = 0;
-    _memcardStatusPtr->unk3E = 0;
-    _memcardStatusPtr->buf50 = (u8*)GSmemAllocAlign(0x28400, 0x20);
-    _memcardStatusPtr->buf54 = (u8*)GSmemAllocAlign(0xA000, 0x20);
-    _memcardStatusPtr->gapp = GSgappCreate(1, 0x17, 0, _memcardJobMain);
-    _memcardStatusPtr->saveData = savedataGetStatus(0, 0);
-}
-
-s32 memcardTaskCall(s32 state, s32 priority, s32 param) {
-    s32 result;
-    if (state == 1) {
-        memset(savedataGetStatus(0, 0), 0, 0x27FD0);
-        menuCBBios_RuleEditSaveON(0);
-    }
-    if (state == 0xE) {
-        state = 4;
-        _memcard_anySaveOFF_Flag = 1;
-    } else {
-        _memcard_anySaveOFF_Flag = 0;
-    }
-    _memcardStart(state, priority, param);
-    do {
-        GSthreadSwitch();
-        result = _memcardPollTask();
-    } while (result == 0);
-    _memcardFinish();
-    return result;
-}
-
-void memcardInitialize(void)
-{
-    if (!_memcardInitializeFlag) {
-        u32 lo;
-        u16 hi;
-        CARDInit();
-        lo = HSD_Rand();
-        hi = HSD_Rand();
-        _memcardStatusPtr = (MemcardStatus*)(_memcardStatusBuf + (((hi << 16) | lo) & 0xf8));
-        _memcardStatusPtr->state = 0;
-        _memcardStatusPtr->buf50 = 0;
-        _memcardStatusPtr->buf54 = 0;
-        _memcardStatusPtr->unk2C = 0;
-        _memcardInitializeFlag = 1;
-    }
-}
-
-}
-
-#include <dolphin/os.h>
-extern "C" {
-s32 pokecoloGetCountryCode();
-char* strcpy(char*, const char*);
-s32 fn_801CC508() {
-    OSCalendarTime calendar;
-    OSTicksToCalendarTime(OSGetTime(), &calendar);
-    char* buffer = (char*)_memcardStatusPtr->buf50;
-    memset(buffer, 0, 0x6000);
-    switch (pokecoloGetCountryCode()) {
-    case 0:
-        strcpy(buffer, "ポケモンＸＤ");
-        strcpy(buffer + 0x20, "セーブファイル Yy/Mm/Dd");
-        buffer[0x2F] = (calendar.year / 10) % 10 + '0';
-        buffer[0x30] = calendar.year % 10 + '0';
-        buffer[0x32] = ((calendar.mon + 1) / 10) % 10 + '0';
-        buffer[0x33] = (calendar.mon + 1) % 10 + '0';
-        buffer[0x35] = (calendar.mday / 10) % 10 + '0';
-        buffer[0x36] = calendar.mday % 10 + '0';
-        break;
-    case 1:
-    case 2:
-        strcpy(buffer, "POKeMON XD");
-        strcpy(buffer + 0x20, "SAVE FILE Mm/Dd/20Yy");
-        buffer[3] = 0xE9;
-        buffer[0x32] = (calendar.year / 10) % 10 + '0';
-        buffer[0x33] = calendar.year % 10 + '0';
-        buffer[0x2A] = ((calendar.mon + 1) / 10) % 10 + '0';
-        buffer[0x2B] = (calendar.mon + 1) % 10 + '0';
-        buffer[0x2D] = (calendar.mday / 10) % 10 + '0';
-        buffer[0x2E] = calendar.mday % 10 + '0';
-        break;
-    }
-    memcpy(buffer + 0x40, _memcardBannerImage, sizeof(_memcardBannerImage));
-    memcpy(buffer + 0x1840, _memcardIconImage, sizeof(_memcardIconImage));
-    for (u32 i=0; i<0xE90; ++i) *(u32*)(buffer + 0x3A40) += ((u32*)buffer)[i];
-    return 0x12;
-}
 }
 
 inline u64 memcardCurrentID(void *pack)
@@ -974,86 +344,6 @@ static inline MemcardSaveHeader *_memcardGetHeader(s32 offset)
 {
     return (MemcardSaveHeader *)((u8 *)_memcardStatusPtr->buf50+offset);
 }
-
-#pragma push
-static s32 _memcardExamineHeader()
-{
-    s32 i;
-    s32 selected;
-    MemcardSaveHeader *header;
-    s32 sequence;
-    sequence=0;
-    selected=-1;
-    for(i=0;i<2;i++) {
-        header=_memcardGetHeader(0x28000+i*0x200);
-        if(_memcardHeaderValid(header)==0) {
-            _memcardStatusPtr->msg=0x13;
-            return 0x2B;
-        }
-        if(header->sequence>sequence) {
-            sequence=header->sequence;
-            selected=i;
-            if(header->sequence>_memcardStatusPtr->limit) _memcardStatusPtr->limit=header->sequence;
-        }
-    }
-    _memcardStatusPtr->index=selected;
-    switch(_memcardStatusPtr->state) {
-    case 10:
-    case 11:
-        _memcardDuplicateSaveData_multi((u8 *)_memcardStatusPtr->buf50+8);
-        _memcardStatusPtr->unk2C=_memcardStatusPtr->limit;
-        return 0x25;
-    case 1:case 2:case 3:case 5:case 7:case 9:case 13:
-        if(selected==-1) {
-            if(_memcardStatusPtr->limit>0) {
-                switch(_memcardStatusPtr->state) {
-                case 9:return 0xB;
-                case 3:break;
-                default:
-                    _memcardStatusPtr->msg=0x11;
-                    return 0x2B;
-                }
-            }
-            switch(_memcardStatusPtr->state) {
-            case 1:case 2:case 3:
-                _memcardStatusPtr->msg=0xC;
-                _memcardStatusPtr->result=1;
-                if(_memcardStatusPtr->unk40) return 0x11;
-                return 0x2C;
-            }
-            memset(_memcardStatusPtr->buf50,0,0x28000);
-            {
-                u8 *dst=(u8 *)_memcardStatusPtr->buf50+8;
-                _memcard_new_saveDataCrateFlag=0;
-                _memcardDuplicateSaveData_multi(dst);
-            }
-            _memcard_new_saveDataCrateFlag=1;
-            _memcardStatusPtr->unk2C=0;
-            _memcardStatusPtr->index=-1;
-            return 0x24;
-        }
-        return 0x20;
-    case 4:case 6:case 8:
-        if(selected!=-1 && sequence<=_memcardStatusPtr->unk2C) {
-            header=(MemcardSaveHeader *)((u8 *)_memcardStatusPtr->buf50+(selected*0x200+0x28000));
-            u64 id=memcardCurrentID(0);
-            decryptMemcardHeader(header->payload);
-            if(id==memcardCurrentID(header->payload)) {
-                if(_memcardStatusPtr->state==6) {
-                    _memcardStatusPtr->index=selected;
-                    return 0x20;
-                }
-                _memcardDuplicateSaveData_multi((u8 *)_memcardStatusPtr->buf50+8);
-                return 0x25;
-            }
-        }
-        break;
-    }
-    _memcardStatusPtr->msg=0x13;
-    return 0x2B;
-}
-
-#pragma pop
 
 // Card operations advance until an asynchronous request needs another frame.
 extern "C" {
@@ -2001,6 +1291,370 @@ void _memcardJobMain(u32, u32)
 
 #pragma pop
 
+#pragma push
+#pragma dont_inline on
+static s32 _memcardMergeDataPack(void) {
+    void* data;
+    u8* pack = (u8*)_memcardStatusPtr->buf50 + 8;
+    data = _memcardGetMultiSaveDataToSTRUCT(pack, 1);
+    switch (_memcardStatusPtr->state) {
+    case 9:
+        _memcardDuplicateSaveData_multi(pack);
+        _memcardStoreSaveData_multi(pack);
+        break;
+    case 13: {
+        void* save = savedataGetStatus(0, 0xE);
+        memcpy(_memcardGetMultiSaveDataToSTRUCT(pack, 0xE), save, 0x364);
+        break;
+    }
+    }
+    gamedatasaveSetStatus(data, 9, (u8)gamedatasaveGetStatus(0, 9));
+    gamedatasaveSetStatus(data, 0xA, (u8)gamedatasaveGetStatus(0, 0xA));
+    gamedatasaveSetStatus(data, 0xB, (u8)gamedatasaveGetStatus(0, 0xB));
+    return 0x25;
+}
+#pragma pop
+
+#pragma push
+#pragma opt_propagation off
+static s32 _memcardExamineDataPack(void) {
+    u8 valid;
+    u8* pack = (u8*)_memcardStatusPtr->buf50;
+    s32 sum;
+    valid = _memcard_Decryption(pack + 8);
+    if (valid) {
+        void* data = pack + 8;
+        sum = pack[0] + pack[1];
+        sum += pack[2];
+        sum += pack[3];
+        sum += pack[4];
+        sum += pack[5];
+        sum += pack[6];
+        sum += pack[7];
+        u8 checked;
+        if (((MemcardPackHeader*)data)->sizes[SectionSystem] == sizeof(GamedataSaveRecord)) {
+            if (sum == gamedatasaveGetStatus(_memcardGetMultiSaveDataToSTRUCT(data, 1), 0xD)) {
+                checked = 1;
+            } else {
+                checked = 0;
+            }
+        } else {
+            checked = 1;
+        }
+        valid = checked;
+    }
+    if (valid) {
+        _memcardGetMultiSaveDataToSTRUCT(pack + 8, 1);
+    }
+    if (valid) {
+        if (_memcardStatusPtr->state != 3) {
+            _memcardStatusPtr->unk2C = *(s32*)(pack + 4);
+            if (_memcardStatusPtr->limit > _memcardStatusPtr->unk2C) {
+                _memcardStatusPtr->unk2C = _memcardStatusPtr->limit;
+                _memcardStatusPtr->msg = 5;
+                switch (_memcardStatusPtr->state) {
+                case 1: case 2:
+                    _memcardStoreSaveData_multi(pack + 8);
+                    _memcardStatusPtr->nextTask = 0x25;
+                    break;
+                default:
+                    _memcardStatusPtr->nextTask = 0x24;
+                }
+                return 0x30;
+            }
+        }
+        switch (_memcardStatusPtr->state) {
+        case 1: case 2: case 3: {
+            s32 next;
+            _memcardStoreSaveData_multi(pack + 8);
+            _memcardStatusPtr->msg = 0xC;
+            _memcardStatusPtr->result = 3;
+            next = 0x2C;
+            if (_memcardStatusPtr->unk40 != 0) {
+                next = 0x11;
+            }
+            return next;
+        }
+        }
+        return 0x24;
+    }
+    s32* block = (s32*)(_memcardStatusPtr->index * 0x200 + 0x28000 + _memcardStatusPtr->buf50);
+    block[1] = 0;
+    return 0x1F;
+}
+#pragma pop
+
+#pragma push
+static s32 _memcardExamineHeader()
+{
+    s32 i;
+    s32 selected;
+    MemcardSaveHeader *header;
+    s32 sequence;
+    sequence=0;
+    selected=-1;
+    for(i=0;i<2;i++) {
+        header=_memcardGetHeader(0x28000+i*0x200);
+        if(_memcardHeaderValid(header)==0) {
+            _memcardStatusPtr->msg=0x13;
+            return 0x2B;
+        }
+        if(header->sequence>sequence) {
+            sequence=header->sequence;
+            selected=i;
+            if(header->sequence>_memcardStatusPtr->limit) _memcardStatusPtr->limit=header->sequence;
+        }
+    }
+    _memcardStatusPtr->index=selected;
+    switch(_memcardStatusPtr->state) {
+    case 10:
+    case 11:
+        _memcardDuplicateSaveData_multi((u8 *)_memcardStatusPtr->buf50+8);
+        _memcardStatusPtr->unk2C=_memcardStatusPtr->limit;
+        return 0x25;
+    case 1:case 2:case 3:case 5:case 7:case 9:case 13:
+        if(selected==-1) {
+            if(_memcardStatusPtr->limit>0) {
+                switch(_memcardStatusPtr->state) {
+                case 9:return 0xB;
+                case 3:break;
+                default:
+                    _memcardStatusPtr->msg=0x11;
+                    return 0x2B;
+                }
+            }
+            switch(_memcardStatusPtr->state) {
+            case 1:case 2:case 3:
+                _memcardStatusPtr->msg=0xC;
+                _memcardStatusPtr->result=1;
+                if(_memcardStatusPtr->unk40) return 0x11;
+                return 0x2C;
+            }
+            memset(_memcardStatusPtr->buf50,0,0x28000);
+            {
+                u8 *dst=(u8 *)_memcardStatusPtr->buf50+8;
+                _memcard_new_saveDataCrateFlag=0;
+                _memcardDuplicateSaveData_multi(dst);
+            }
+            _memcard_new_saveDataCrateFlag=1;
+            _memcardStatusPtr->unk2C=0;
+            _memcardStatusPtr->index=-1;
+            return 0x24;
+        }
+        return 0x20;
+    case 4:case 6:case 8:
+        if(selected!=-1 && sequence<=_memcardStatusPtr->unk2C) {
+            header=(MemcardSaveHeader *)((u8 *)_memcardStatusPtr->buf50+(selected*0x200+0x28000));
+            u64 id=memcardCurrentID(0);
+            decryptMemcardHeader(header->payload);
+            if(id==memcardCurrentID(header->payload)) {
+                if(_memcardStatusPtr->state==6) {
+                    _memcardStatusPtr->index=selected;
+                    return 0x20;
+                }
+                _memcardDuplicateSaveData_multi((u8 *)_memcardStatusPtr->buf50+8);
+                return 0x25;
+            }
+        }
+        break;
+    }
+    _memcardStatusPtr->msg=0x13;
+    return 0x2B;
+}
+
+#pragma pop
+
+extern "C" {
+char* strcpy(char*, const char*);
+s32 fn_801CC508() {
+    OSCalendarTime calendar;
+    OSTicksToCalendarTime(OSGetTime(), &calendar);
+    char* buffer = (char*)_memcardStatusPtr->buf50;
+    memset(buffer, 0, 0x6000);
+    switch (pokecoloGetCountryCode()) {
+    case 0:
+        strcpy(buffer, "ポケモンＸＤ");
+        strcpy(buffer + 0x20, "セーブファイル Yy/Mm/Dd");
+        buffer[0x2F] = (calendar.year / 10) % 10 + '0';
+        buffer[0x30] = calendar.year % 10 + '0';
+        buffer[0x32] = ((calendar.mon + 1) / 10) % 10 + '0';
+        buffer[0x33] = (calendar.mon + 1) % 10 + '0';
+        buffer[0x35] = (calendar.mday / 10) % 10 + '0';
+        buffer[0x36] = calendar.mday % 10 + '0';
+        break;
+    case 1:
+    case 2:
+        strcpy(buffer, "POKeMON XD");
+        strcpy(buffer + 0x20, "SAVE FILE Mm/Dd/20Yy");
+        buffer[3] = 0xE9;
+        buffer[0x32] = (calendar.year / 10) % 10 + '0';
+        buffer[0x33] = calendar.year % 10 + '0';
+        buffer[0x2A] = ((calendar.mon + 1) / 10) % 10 + '0';
+        buffer[0x2B] = (calendar.mon + 1) % 10 + '0';
+        buffer[0x2D] = (calendar.mday / 10) % 10 + '0';
+        buffer[0x2E] = calendar.mday % 10 + '0';
+        break;
+    }
+    memcpy(buffer + 0x40, _memcardBannerImage, sizeof(_memcardBannerImage));
+    memcpy(buffer + 0x1840, _memcardIconImage, sizeof(_memcardIconImage));
+    for (u32 i=0; i<0xE90; ++i) *(u32*)(buffer + 0x3A40) += ((u32*)buffer)[i];
+    return 0x12;
+}
+}
+
+static s32 _memcardCardOpen(void) {
+    s32 freeBytes;
+    s32 freeFiles;
+    MemcardCardStat stat2;
+    s32 status;
+    CARDFreeBlocks(*(s32*)((u8*)_memcardStatusPtr + 0x14), &freeBytes, &freeFiles);
+    switch (pokecoloGetCountryCode()) {
+    case 0: {
+        void* info;
+        s32 chan;
+        s32 result;
+        s32 i;
+        MemcardCardStat stat;
+        chan = *(s32*)((u8*)_memcardStatusPtr + 0x14);
+        info = (u8*)_memcardStatusPtr + 0x8C;
+        i = 0;
+            for (;;) {
+                result = CARDFastOpen(chan, i, info);
+                if (result == 0) {
+                    result = CARDGetStatus(chan, i, &stat);
+                    u8 found;
+                    found = _memcardIsXDSave(&stat,result);
+                    if (found) {
+                        result = 0;
+                        break;
+                    }
+                }
+                ++i;
+                if (i >= 0x7F) {
+                    if (result == 0) result = -4;
+                    break;
+                }
+            }
+        status = result;
+        break;
+    }
+    case 1:
+    case 2: {
+        status = _memcardFindSave();
+        break;
+    }
+    }
+    switch (status) {
+    case 0: {
+        _memcardStatusPtr->unk3E = 1;
+        status = CARDGetStatus(*(s32*)((u8*)_memcardStatusPtr + 0x14), *(s32*)((u8*)_memcardStatusPtr + 0x90), &stat2);
+        if (status != 0) goto fail;
+        if (stat2.commentAddr + 0x10000 != 0xFFFF) {
+            if (_memcardStatusPtr->state == 0xC) {
+                _memcardStatusPtr->msg = 2;
+                _memcardStatusPtr->nextTask = 0xB;
+                return 0x30;
+            }
+            s32 ret = 0x19;
+            if (_memcardStatusPtr->state == 3) ret = 0x1C;
+            return ret;
+        }
+        status = -4;
+        freeBytes += 0x56000;
+        freeFiles += 1;
+    }
+    // fall through
+    case -4:
+        switch (_memcardStatusPtr->state) {
+        case 1:
+            if (freeBytes < 0x56000) { status = -9; goto fail; }
+            if (freeFiles < 1) { status = -8; goto fail; }
+            _memcardStatusPtr->msg = 6;
+            _memcardStatusPtr->nextTask = 0xA;
+            return 0x30;
+        case 9:
+            _memcardStatusPtr->msg = 2;
+            _memcardStatusPtr->nextTask = 0xB;
+            return 0x30;
+        }
+        // fall through
+    default:
+    fail:
+        _memcardStatusPtr->msg = status;
+        return 0x2B;
+    }
+}
+
+static void _memcardCallback(long, long) {
+    _memcardStatusPtr->callbackDone = 1;
+}
+
+#define MEMCARD_STORE(idx, section, max)                                     \
+    dst = _memcardGetMultiSaveDataToSTRUCT(arg, idx);                        \
+    src = savedataGetStatus(_memcardStatusPtr->saveData, idx);               \
+    size = header->sizes[section];                                           \
+    if (size > (max)) {                                                      \
+        size = (max);                                                        \
+    }                                                                        \
+    memcpy(src, dst, size)
+
+#define MEMCARD_STORE2(dst3, idx, section, max)                              \
+    dst3 = (u8*)_memcardGetMultiSaveDataToSTRUCT(arg, idx);                  \
+    src = savedataGetStatus(_memcardStatusPtr->saveData, idx);               \
+    size = header->sizes[section];                                           \
+    if (size > (max)) {                                                      \
+        size = (max);                                                        \
+    }                                                                        \
+    memcpy(src, dst3, size)
+
+void _memcardStoreSaveData_multi(void* arg) {
+    const MemcardPackHeader* header = (const MemcardPackHeader*)arg;
+    void* dst;
+    u8* dst2;
+    u8* dst3;
+    u8* dst4;
+    u8* dst5;
+    void* src;
+    u32 size;
+    MEMCARD_STORE(1, SectionSystem, sizeof(GamedataSaveRecord));
+    MEMCARD_STORE(2, SectionHero, sizeof(Hero));
+    dst = _memcardGetMultiSaveDataToSTRUCT(arg, 3);
+    src = savedataGetStatus(_memcardStatusPtr->saveData, 3);
+    size = (u32)header->pcBoxSizeHigh << 16;
+    size += header->sizes[SectionPcBox];
+    if (size > sizeof(PCBOX)) {
+        size = sizeof(PCBOX);
+    }
+    memcpy(src, dst, size);
+    MEMCARD_STORE(0xA, SectionMailbox, sizeof(Mailbox));
+    MEMCARD_STORE(0xB, SectionSodateya, sizeof(Sodateya));
+    MEMCARD_STORE(0xC, SectionMemo, sizeof(Memo));
+    MEMCARD_STORE(0xE, SectionTool, 0x364);
+    MEMCARD_STORE(0xF, SectionDarkPokemon, 0x2400);
+    dst2 = (u8*)_memcardGetMultiSaveDataToSTRUCT(arg, 0x17);
+    size = header->sizes[SectionFlags];
+    if (size == 0x6B4) {
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 4), dst2, header->flagLevel0Size);
+        dst2 += header->flagLevel0Size;
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 5), dst2, header->flagLevel1Size);
+        dst2 += header->flagLevel1Size;
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 6), dst2, header->flagLevel2Size);
+        dst2 += header->flagLevel2Size;
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x18), dst2, header->battleDiskFlagsSize);
+        dst2 += header->battleDiskFlagsSize;
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x1B), dst2, header->bingoFlagsSize);
+    } else {
+        memcpy(savedataGetStatus(_memcardStatusPtr->saveData, 0x17), dst2, size);
+    }
+    MEMCARD_STORE2(dst3, 0x10, SectionExRibbon, 0xB);
+    MEMCARD_STORE2(dst4, 0x16, SectionFloor, 0xC800);
+    MEMCARD_STORE2(dst5, 0x15, SectionRelive, sizeof(CReliveHall));
+    _memcardGetMultiSaveDataToSTRUCT(arg, 0x11);
+    _memcardGetMultiSaveDataToSTRUCT(arg, 0x12);
+    _memcardGetMultiSaveDataToSTRUCT(arg, 0x13);
+    _memcardGetMultiSaveDataToSTRUCT(arg, 0x14);
+}
+
 extern "C" {
 u32 floorGetNextFloorID();
 s32 floorMakeSaveData(void**, u32*);
@@ -2191,3 +1845,352 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
 }
 
 #pragma pop
+
+#define MEMCARD_MULTI_ADD(section)                                           \
+    {                                                                        \
+        u32 hi = header->offsets[section].high;                              \
+        u32 lo = header->offsets[section].low;                               \
+        data = (hi << 16) + data;                                            \
+        data = lo + data;                                                    \
+    }
+
+#pragma opt_dead_assignments off
+static void* _memcardGetMultiSaveDataToSTRUCT(void* base, long index) {
+    const MemcardSavePack* pack = (const MemcardSavePack*)base;
+    const MemcardPackHeader* header = &pack->header;
+    u32 data = (u32)pack->payload;
+    switch (index) {
+    case 1:
+        MEMCARD_MULTI_ADD(SectionSystem)
+        break;
+    case 2:
+        MEMCARD_MULTI_ADD(SectionHero)
+        break;
+    case 3:
+        MEMCARD_MULTI_ADD(SectionPcBox)
+        break;
+    case 0x17:
+        MEMCARD_MULTI_ADD(SectionFlags)
+        break;
+    case 0xA:
+        MEMCARD_MULTI_ADD(SectionMailbox)
+        break;
+    case 0xB:
+        MEMCARD_MULTI_ADD(SectionSodateya)
+        break;
+    case 0xC:
+        MEMCARD_MULTI_ADD(SectionMemo)
+        break;
+    case 0xE:
+        MEMCARD_MULTI_ADD(SectionTool)
+        break;
+    case 0xF:
+        MEMCARD_MULTI_ADD(SectionDarkPokemon)
+        break;
+    case 0x10:
+        MEMCARD_MULTI_ADD(SectionExRibbon)
+        break;
+    case 0x16:
+        MEMCARD_MULTI_ADD(SectionFloor)
+        break;
+    case 0x11:
+        MEMCARD_MULTI_ADD(SectionYobi1)
+        break;
+    case 0x12:
+        MEMCARD_MULTI_ADD(SectionYobi2)
+        break;
+    case 0x13:
+        MEMCARD_MULTI_ADD(SectionYobi3)
+        break;
+    case 0x14:
+        MEMCARD_MULTI_ADD(SectionYobi4)
+        break;
+    case 0x15:
+        MEMCARD_MULTI_ADD(SectionRelive)
+        break;
+    case 0:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+    case 0xD:
+        break;
+    }
+    return (void*)data;
+}
+#pragma opt_dead_assignments reset
+
+static u8 _memcardMsgOpen(MEMCARD_MSGTYPE msg) {
+    u8 retry = 0;
+    u8 confirm = 0;
+    s32 yes;
+    s32 id;
+    switch (msg) {
+    case 0:
+        return 0;
+    case 1:
+        id = 0x6A;
+        break;
+    case 2:
+        switch (_memcardStatusPtr->state) {
+        case 5:
+        case 6:
+        case 7:
+        case 0xD:
+            id = 0x6C;
+            break;
+        default:
+            id = 0x90;
+            break;
+        }
+        break;
+    case 3:
+        id = 0x84;
+        break;
+    case 4:
+        id = 0x73;
+        break;
+    case 5:
+        id = 0x7B;
+        break;
+    case 6:
+        id = 0x83;
+        retry = 1;
+        yes = 0;
+        break;
+    case 7:
+        id = 0x71;
+        retry = 1;
+        yes = 0;
+        confirm = 1;
+        break;
+    case 8:
+        id = 0x7A;
+        retry = 1;
+        yes = 1;
+        break;
+    case 9:
+        id = 0x74;
+        break;
+    case 10:
+        switch (_memcardStatusPtr->state) {
+        case 5:
+        case 6:
+        case 7:
+        case 0xD:
+            id = 0x6D;
+            break;
+        default:
+            id = 0x91;
+            break;
+        }
+        GSsndPlay(0x1D, 0, 0);
+        break;
+    case 11:
+        id = 0x85;
+        break;
+    case 12:
+        id = 0x81;
+        GSsndPlay(0x1D, 0, 0);
+        break;
+    case 13:
+        id = 0x79;
+        break;
+    case 14:
+        id = 0x9B;
+        break;
+    case 15:
+        switch (_memcardStatusPtr->state) {
+        case 5:
+        case 6:
+        case 7:
+        case 0xD:
+            id = 0x9B;
+            break;
+        default:
+            id = 0x97;
+            break;
+        }
+        break;
+    case 16:
+        id = 0x72;
+        break;
+    case 17:
+        id = 0x7C;
+        if (_memcardStatusPtr->state != 2) {
+            winMsgOpen(_memcardStatusPtr->priority, 0x7C, 1, 1);
+            id = 0x80;
+        }
+        break;
+    case 18:
+        id = 0x7D;
+        break;
+    case -2:
+        id = 0x77;
+        break;
+    case -3:
+        id = 0x70;
+        break;
+    case -4:
+        id = 0x6F;
+        break;
+    case -5:
+        id = 0x76;
+        break;
+    case -13:
+    case -6:
+        switch (_memcardStatusPtr->state) {
+        case 1:
+        case 2:
+            id = 0x7E;
+            if (_memcardStatusPtr->unk60 == 0x32) {
+                break;
+            }
+        default:
+            id = 0x6E;
+            break;
+        }
+        break;
+    case -9:
+    case -8:
+        id = 0x78;
+        msgctrlSetValue(0x2F, 0x2B);
+        break;
+    case 19:
+        winMsgOpen(_memcardStatusPtr->priority, 0x7C, 1, 1);
+        id = 0x80;
+        break;
+    default:
+        id = 0x6E;
+        break;
+    }
+    winMsgOpen(_memcardStatusPtr->priority, id, 1, 1);
+    if (retry) {
+        if (menuSubOpenYesNo(0, 0x3C, 0xAA, yes)) {
+            retry = 0;
+        } else {
+            retry = 1;
+            if (confirm) {
+                winMsgOpen(_memcardStatusPtr->priority, 0xF3, 1, 1);
+                if (menuSubOpenYesNo(0, 0x3C, 0xAA, 1)) {
+                    retry = 0;
+                } else {
+                    retry = 1;
+                }
+            }
+        }
+    }
+    return retry;
+}
+
+extern "C" {
+
+void* memcardMemFreeForSavedata(void* p) {
+    GSmemFree(p);
+    return 0;
+}
+
+void* memcardMemAllocForSavedata(void) {
+    return GSmemAllocAlign(sizeof(MemcardSavePack), 0x20);
+}
+
+void memcardFinalizeTask(void) {
+    _memcardFinish();
+}
+
+void memcardUnlockWaitGBA(u8 flag) {
+    if (_memcardStatusPtr->task == 0x31 && flag != 0) {
+        _memcardStatusPtr->task = _memcardStatusPtr->nextTask;
+        _memcardStatusPtr->timer = ((HSD_Rand() << 16) | HSD_Rand()) % 0x3C;
+        _memcardStatusPtr->timer = _memcardStatusPtr->timer + 1;
+        s32 rnd = (u16)HSD_Rand();
+        _memcardStatusPtr->timer = _memcardStatusPtr->timer + rnd % 0x3C;
+    } else {
+        _memcardStatusPtr->msg = 0xF;
+        _memcardStatusPtr->task = 0x2B;
+    }
+}
+
+s32 memcardCheckTaskWaitGBA(void) {
+    return _memcardStatusPtr->task == 0x31 ? 1 : 0;
+}
+
+u8 memcardIsMemCardValid(void) {
+    return _memcardStatusPtr->valid;
+}
+
+s32 memcardGetTaskResult(void) {
+    if (_memcardStatusPtr->task == 0x30) {
+        _memcardStatusPtr->msg = _memcardMsgOpen((MEMCARD_MSGTYPE)_memcardStatusPtr->msg);
+        _memcardStatusPtr->task = _memcardStatusPtr->nextTask;
+    }
+    if (_memcardStatusPtr->task != 0x32) {
+        return 0;
+    }
+    return _memcardStatusPtr->result;
+}
+
+void memcardSetupTask(s32 state, s32 priority, s32 param) {
+    if (_memcardStatusPtr->state != 0) {
+        do {
+            GSthreadSwitch();
+        } while (_memcardPollTask() == 0);
+        _memcardFinish();
+    }
+    if (priority == 0) {
+        priority = 2;
+    }
+    _memcardStatusPtr->state = state;
+    _memcardStatusPtr->param = param;
+    _memcardStatusPtr->priority = priority;
+    _memcardStatusPtr->result = 0;
+    _memcardStatusPtr->task = 0;
+    _memcardStatusPtr->msg = 0;
+    _memcardStatusPtr->unk3E = 0;
+    _memcardStatusPtr->buf50 = (u8*)GSmemAllocAlign(0x28400, 0x20);
+    _memcardStatusPtr->buf54 = (u8*)GSmemAllocAlign(0xA000, 0x20);
+    _memcardStatusPtr->gapp = GSgappCreate(1, 0x17, 0, _memcardJobMain);
+    _memcardStatusPtr->saveData = savedataGetStatus(0, 0);
+}
+
+s32 memcardTaskCall(s32 state, s32 priority, s32 param) {
+    s32 result;
+    if (state == 1) {
+        memset(savedataGetStatus(0, 0), 0, 0x27FD0);
+        menuCBBios_RuleEditSaveON(0);
+    }
+    if (state == 0xE) {
+        state = 4;
+        _memcard_anySaveOFF_Flag = 1;
+    } else {
+        _memcard_anySaveOFF_Flag = 0;
+    }
+    _memcardStart(state, priority, param);
+    do {
+        GSthreadSwitch();
+        result = _memcardPollTask();
+    } while (result == 0);
+    _memcardFinish();
+    return result;
+}
+
+void memcardInitialize(void)
+{
+    if (!_memcardInitializeFlag) {
+        u32 lo;
+        u16 hi;
+        CARDInit();
+        lo = HSD_Rand();
+        hi = HSD_Rand();
+        _memcardStatusPtr = (MemcardStatus*)(_memcardStatusBuf + (((hi << 16) | lo) & 0xf8));
+        _memcardStatusPtr->state = 0;
+        _memcardStatusPtr->buf50 = 0;
+        _memcardStatusPtr->buf54 = 0;
+        _memcardStatusPtr->unk2C = 0;
+        _memcardInitializeFlag = 1;
+    }
+}
+
+}
