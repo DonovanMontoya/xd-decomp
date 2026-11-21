@@ -20,7 +20,7 @@ static void psApplyVelocityLocalRotation(PSParticle *arg0);
 static void psApplyOffsetLocalRotation(PSParticle *arg0, PSVec *arg1);
 static void psCopyGeneratorData(PSGenerator *arg0, PSGenerator *arg1);
 PSParticle * _psListGetNext(PSParticle *arg0);
-static void HSD_MTXSRT(f32 (*arg0)[4], PSVec *arg1, PSVec *arg2, PSVec *arg3, s32 arg4);
+static void HSD_MTXSRT(PSMtx matrix, PSVec* scale, PSVec* rotation, PSVec* translation, PSVec* parentScale);
 s32 U8ClampAdd(u8 arg0, f32 farg0);
 static inline void HSD_JObjSetupMatrix(PSJObj *arg0);
 static void HSD_JObjAddTx(PSJObj *arg0, f32 farg0);
@@ -1047,7 +1047,7 @@ loop_30:
                 if ((temp_r3_33 != NULL) && ((u8) temp_r3_33->generatorOwned == 0)) {
                     genPosUpdate(temp_r3_33->generator);
                     temp_r6_2 = arg0->appsrt;
-                    HSD_MTXSRT((f32 (*)[4]) temp_r6_2->matrix[0], &temp_r6_2->scale, &temp_r6_2->rotation, &temp_r6_2->translate, 0);
+                    HSD_MTXSRT(temp_r6_2->matrix, &temp_r6_2->scale, &temp_r6_2->rotation, &temp_r6_2->translate, 0);
                     temp_r4_14 = arg0->appsrt;
                     temp_f3_4 = arg0->position.y;
                     temp_f6 = arg0->position.x;
@@ -1898,8 +1898,8 @@ __declspec(weak) s32 U8ClampAdd(u8 arg0, f32 farg0) {
     }
     return (s32) var_f1;
 }
-static void HSD_MTXSRT(f32 (*arg0)[4], PSVec *arg1, PSVec *arg2, PSVec *arg3, s32 arg4) {
-    HSD_MtxSRT(arg0, arg1, arg2, arg3, arg4);
+static void HSD_MTXSRT(PSMtx matrix, PSVec* scale, PSVec* rotation, PSVec* translation, PSVec* parentScale) {
+    HSD_MtxSRT(matrix, scale, rotation, translation, parentScale);
 }
 __declspec(weak) PSParticle * _psListGetNext(PSParticle *arg0) {
     return arg0->next;

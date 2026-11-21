@@ -1,8 +1,9 @@
 #ifndef GS_PARTICLE_H
 #define GS_PARTICLE_H
 #include <global.h>
+#include "game/maximum/GSAPI/baselib/quatlib.h"
 typedef struct PSParticle PSParticle; typedef struct PSGenerator PSGenerator; typedef struct PSAppSRT PSAppSRT;
-typedef struct PSVec { f32 x,y,z; } PSVec;
+typedef HSD_Vec3 PSVec;
 typedef struct PSJObj { u8 prefix[0x14]; u32 flags; u8 prefix18[0x2c]; f32 matrix[3][4]; } PSJObj;
 struct PSAppSRT {
     PSAppSRT* next; /* 0x0 */

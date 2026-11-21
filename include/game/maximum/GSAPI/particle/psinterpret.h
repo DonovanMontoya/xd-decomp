@@ -1,11 +1,11 @@
 #ifndef GS_PSINTERPRET_H
 #define GS_PSINTERPRET_H
 #include "particle.h"
+#include "game/maximum/GSAPI/baselib/mtx_base.h"
 PSParticle* psInterpretParticle0(PSParticle*, PSParticle*);
-typedef f32 PSMtx[3][4];
+typedef HSD_Mtx PSMtx;
 void HSD_JObjSetMtxDirtySub(PSJObj*); PSJObj* HSD_JObjAlloc(void);
 
-void HSD_MtxSRT(PSMtx,PSVec*,PSVec*,PSVec*,s32);
 s32 U8ClampAdd(u8,f32); PSParticle* _psListGetNext(PSParticle*);
 
 void PSMTXScale(PSMtx,f32,f32,f32); void PSMTXCopy(PSMtx,PSMtx); s32 PSMTXInverse(PSMtx,PSMtx);

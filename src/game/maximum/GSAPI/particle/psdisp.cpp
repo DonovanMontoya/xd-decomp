@@ -240,7 +240,6 @@ static inline void reuseCalcTornadoLastPos(PSParticle* pp, f32* x, f32* y, f32* 
     *y = -px * sina * sinb + py * cosa + pz * sina * cosb + gp->position.y;
     *z = -px * cosa * sinb - py * sina + pz * cosa * cosb + gp->position.z;
 }
-void HSD_MtxSRT(PSMtx,PSVec*,PSVec*,PSVec*,PSVec*);
 #pragma push
 #pragma optimization_level 3
 void psDispSubAPPSRTPoint(PSParticle *arg0)
@@ -304,7 +303,7 @@ void psDispSubAPPSRTPoint(PSParticle *arg0)
   {
     if (((u8) temp_r6->status) != 2)
     {
-      HSD_MtxSRT((f32 (*)[4]) temp_r6->matrix[0], &temp_r6->scale, &temp_r6->rotation, &temp_r6->translate, 0);
+      HSD_MtxSRT(temp_r6->matrix, &temp_r6->scale, &temp_r6->rotation, &temp_r6->translate, 0);
     }
     temp_r3 = arg0->appsrt;
     if (((u8) temp_r3->status) == 1)
