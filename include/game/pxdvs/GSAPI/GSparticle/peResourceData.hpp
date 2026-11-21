@@ -6,7 +6,7 @@
 #include <game/pxdvs/GSAPI/GSparticle/peSplinePrivate.hpp>
 
 class GSgfxLight;
-struct ModelJObj;
+struct HSD_JObj;
 
 // Bank conversion replaces each signed resource ID with the resolved resource.
 struct _peParticle {
@@ -53,7 +53,7 @@ struct _peModel {
     u32 flags;
     Vec rotation, angularSpeed, scale, scaleRange;
     PeSpline *rotationSpline[3], *scaleSpline[3];
-    union { s32 id; ModelJObj* jobj; u32 primitive; } resource;
+    union { s32 id; HSD_JObj* jobj; u32 primitive; } resource;
     f32 duration, field54;
 };
 

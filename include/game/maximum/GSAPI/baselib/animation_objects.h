@@ -1,7 +1,7 @@
 #ifndef HSD_ANIMATION_OBJECTS_H
 #define HSD_ANIMATION_OBJECTS_H
 #include "game/maximum/GSAPI/baselib/quatlib.h"
-typedef struct HSD_AObj HSD_AObj;
+#include "game/maximum/GSAPI/baselib/animation.h"
 typedef struct HSD_SList { struct HSD_SList* next; void* data; } HSD_SList;
 typedef struct HSD_Obj { void* class_info; unsigned short ref_count, ref_count_individual; } HSD_Obj;
 typedef struct HSD_JObj HSD_JObj;
@@ -19,48 +19,6 @@ typedef struct HSD_RObjAnimJoint HSD_RObjAnimJoint;
 typedef struct HSD_ShapeSet HSD_ShapeSet;
 typedef unsigned int HSD_IDKey;
 typedef void (*Event)(void);
-typedef enum _HSD_Type {
-    AOBJ_TYPE = 1,
-    COBJ_TYPE,
-    DOBJ_TYPE,
-    FOBJ_TYPE,
-    FOG_TYPE,
-    JOBJ_TYPE,
-    LOBJ_TYPE,
-    MOBJ_TYPE,
-    POBJ_TYPE,
-    ROBJ_TYPE,
-    TOBJ_TYPE,
-    WOBJ_TYPE,
-    RENDER_TYPE,
-    CHAN_TYPE,
-    TEVREG_TYPE,
-    CBOBJ_TYPE,
-    HSD_MAX_TYPE,
-} HSD_Type;
-
-#define MASK_OF(type) (1 << ((type) - 1))
-
-typedef enum _HSD_TypeMask {
-    AOBJ_MASK = MASK_OF(AOBJ_TYPE),
-    COBJ_MASK = MASK_OF(COBJ_TYPE),
-    DOBJ_MASK = MASK_OF(DOBJ_TYPE),
-    FOBJ_MASK = MASK_OF(FOBJ_TYPE),
-    FOG_MASK = MASK_OF(FOG_TYPE),
-    JOBJ_MASK = MASK_OF(JOBJ_TYPE),
-    LOBJ_MASK = MASK_OF(LOBJ_TYPE),
-    MOBJ_MASK = MASK_OF(MOBJ_TYPE),
-    POBJ_MASK = MASK_OF(POBJ_TYPE),
-    ROBJ_MASK = MASK_OF(ROBJ_TYPE),
-    TOBJ_MASK = MASK_OF(TOBJ_TYPE),
-    WOBJ_MASK = MASK_OF(WOBJ_TYPE),
-    RENDER_MASK = MASK_OF(RENDER_TYPE),
-    CHAN_MASK = MASK_OF(CHAN_TYPE),
-    TEVREG_MASK = MASK_OF(TEVREG_TYPE),
-    CBOBJ_MASK = MASK_OF(CBOBJ_TYPE),
-    ALL_TYPE_MASK = MASK_OF(HSD_MAX_TYPE) - 1,
-} HSD_TypeMask;
-
 
 /* Layouts used by animation traversal. Opaque members preserve fields whose
  * detailed descriptors are reconstructed with their owning modules. */

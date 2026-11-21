@@ -1,5 +1,7 @@
 #include <game/pxdvs/GSAPI/GSparticle/peBankPrivate.hpp>
 #include <dolphin/os/OSFastCast.h>
+#include <game/maximum/GSAPI/baselib/animation.h>
+#include <game/maximum/GSAPI/baselib/scene.h>
 #include <game/pxdvs/GSAPI/GStexture/GStexture.hpp>
 #include <game/pxdvs/GSAPI/GSparticle/peResourceData.hpp>
 #include <game/pxdvs/GSAPI/GSgfxM/light_gfxmPrivate.hpp>
@@ -91,16 +93,17 @@ union BankResourcePayload {
     void* data;
     GStexture* texture;
     ParticleTextureAnimation* animation;
+    _HSD_SceneDesc* scene;
 };
 
 struct _gpdResourceItem {
     u8 id, flags;
-    u16 reserved02;
+    u16 sizeInBlocks;
     s32 kind;
     BankResourcePayload payload;
 };
 extern "C" {
-void HSD_JObjUnref(void*);
+void HSD_JObjUnref(HSD_JObj*);
 u32 shapeGetUsedMemorySize(u16);
 void shapeRelease(u16);
 }
@@ -382,12 +385,11 @@ extern "C" {
 #include <game/maximum/GSAPI/baselib/archive.h>
 s32 shapeGenerateIndex();
 u8 shapeLoad(u16,void*);
-void* HSD_JObjLoadJoint(void*);
-void HSD_JObjAddAnimAll(void*,void*,void*,void*);
-void HSD_JObjReqAnimAll(void*,f32);
-void HSD_JObjAnimAll(void*);
-void HSD_ForeachAnim(void*,s32,u32,void*,s32,...);
-void HSD_AObjSetFlags();void HSD_AObjClearFlags();void HSD_AObjSetRate();void _modelGetEndFrame();
+HSD_JObj* HSD_JObjLoadJoint(HSD_Joint*);
+void HSD_JObjAddAnimAll(HSD_JObj*, HSD_AnimJoint*, HSD_MatAnimJoint*, HSD_ShapeAnimJoint*);
+void HSD_JObjReqAnimAll(HSD_JObj*, f32);
+void HSD_JObjAnimAll(HSD_JObj*);
+void _modelGetEndFrame(HSD_AObj*, f32*);
 extern GSvec zeroVector, zAxisVector;
 }
 static inline u32 bankRelocate(u32 value,const char* base) {
@@ -400,7 +402,6 @@ template <class T>
 static inline void bankRelocatePointer(T*& pointer, const char* base) {
     pointer = (T*)bankRelocate((u32)pointer, base);
 }
-struct BankSceneModel {void* joint;void** animation;void** material;void** shape;};
 // Keep field addresses local to each conversion, as in the original code.
 #pragma opt_common_subs off
 bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData* records,const char* base) {
@@ -421,10 +422,12 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
             break;
         }
         case 1: {
-            HSD_ArchiveParse(&archive,(u8*)item->payload.data,(item->reserved02<<5)-(item->flags&0x17));
-            void* scene=HSD_ArchiveGetPublicAddress(&archive,"scene_data");
-            if(scene)item->flags|=0x40;
-            item->payload.data=scene;
+            HSD_ArchiveParse(&archive, (u8*)item->payload.data,
+                             (item->sizeInBlocks << 5) - (item->flags & 0x17));
+            _HSD_SceneDesc* scene = static_cast<_HSD_SceneDesc*>(
+                HSD_ArchiveGetPublicAddress(&archive, "scene_data"));
+            if (scene) item->flags |= 0x40;
+            item->payload.scene = scene;
             break;
         }
         case 2:
@@ -587,25 +590,32 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
                     if ((modelRecord->flags & 0x40) && resource->kind == 3) {
                         modelRecord->resource.primitive = (resource->flags & 0x40) == 0x40 ? (u32)resource->payload.data : 0;
                     } else if (resource->kind == 1) {
-                        BankSceneModel*** scene = (BankSceneModel***)((resource->flags & 0x40) == 0x40 ? resource->payload.data : 0);
+                        _HSD_SceneDesc* scene = (resource->flags & 0x40) == 0x40 ? resource->payload.scene : 0;
                         if (scene) {
-                            BankSceneModel* model=**scene;
-                            void* joint = HSD_JObjLoadJoint(model->joint);
+                            _HSD_SceneModelSet* model = scene->models[0];
+                            HSD_JObj* joint = HSD_JObjLoadJoint(model->joint);
                             if (joint) {
-                                modelRecord->resource.jobj = static_cast<ModelJObj*>(joint);
-                                void* animation = 0;
-                                void* material = 0;
-                                void* shape = 0;
+                                modelRecord->resource.jobj = joint;
+                                HSD_AnimJoint* animation = 0;
+                                HSD_MatAnimJoint* material = 0;
+                                HSD_ShapeAnimJoint* shape = 0;
                                 modelRecord->field54 = 0.0f;
                                 modelRecord->duration = 0.0f;
-                                if (model->animation) animation=*model->animation;
-                                if (model->material) material=*model->material;
-                                if (model->shape) shape=*model->shape;
+                                if (model->animations) animation = model->animations[0];
+                                if (model->materialAnimations) material = model->materialAnimations[0];
+                                if (model->shapeAnimations) shape = model->shapeAnimations[0];
                                 HSD_JObjAddAnimAll(joint, animation, material, shape);
-                                if (modelRecord->flags & 4) HSD_ForeachAnim(joint, 6, 0xffff, (void*)HSD_AObjSetFlags, 3, 0x20000000);
-                                else HSD_ForeachAnim(joint, 6, 0xffff, (void*)HSD_AObjClearFlags, 3, 0x20000000);
-                                HSD_ForeachAnim(joint, 6, 0xffff, (void*)HSD_AObjSetRate, 1, 0.0);
-                                HSD_ForeachAnim(joint, 6, 0xffff, (void*)_modelGetEndFrame, 2, &modelRecord->duration);
+                                if (modelRecord->flags & 4) {
+                                    HSD_ForeachAnim(joint, JOBJ_TYPE, ALL_TYPE_MASK,
+                                                    (void*)HSD_AObjSetFlags, AOBJ_ARG_AU, AOBJ_LOOP);
+                                } else {
+                                    HSD_ForeachAnim(joint, JOBJ_TYPE, ALL_TYPE_MASK,
+                                                    (void*)HSD_AObjClearFlags, AOBJ_ARG_AU, AOBJ_LOOP);
+                                }
+                                HSD_ForeachAnim(joint, JOBJ_TYPE, ALL_TYPE_MASK,
+                                                (void*)HSD_AObjSetRate, AOBJ_ARG_AF, 0.0);
+                                HSD_ForeachAnim(joint, JOBJ_TYPE, ALL_TYPE_MASK,
+                                                (void*)_modelGetEndFrame, AOBJ_ARG_AV, &modelRecord->duration);
                                 HSD_JObjReqAnimAll(joint, 0.0f);
                                 HSD_JObjAnimAll(joint);
                                 modelRecord->duration /= 60.0f;

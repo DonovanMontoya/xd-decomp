@@ -1,15 +1,9 @@
 #ifndef FLOOR_READ_PRIVATE_HPP
 #define FLOOR_READ_PRIVATE_HPP
 #include <dolphin/types.h>
+#include <game/maximum/GSAPI/baselib/scene.h>
 
 typedef u8 (*FloorReadFreeFunc)(void *, u32, u32);
-
-struct _HSD_SceneDesc {
-    void **jobjs;
-    void *cameras;
-    void **lights;
-    void **fogs;
-};
 
 struct FloorReadData {
     u32 reserved0;

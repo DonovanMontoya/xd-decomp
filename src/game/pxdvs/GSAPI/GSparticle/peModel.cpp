@@ -62,7 +62,7 @@ static inline void renderModelNode(peModelNode *node, _peModel *definition) {
         shapeRender(primitive, node->instance, ((ParticleLayerState *)g_current_layer)->unk28);
         pop__16GSgfxMatrixStackFv(((ParticleLayerState *)g_current_layer)->unk19A0);
     } else {
-        jobj = definition->resource.jobj;
+        jobj = reinterpret_cast<ModelJObj*>(definition->resource.jobj);
         if (jobj) {
             switch (g_render_pass) {
             case 0: mask = 1; break;
