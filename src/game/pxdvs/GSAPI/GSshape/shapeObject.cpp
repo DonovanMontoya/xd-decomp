@@ -573,62 +573,83 @@ bool GsShapeObject::DeformTextureCoord(u32 texture,bool deform,const f32* u,cons
     return true;
 }
 
-#pragma dont_inline on
+struct ShapeVector : Vec {
+    ShapeVector() {}
+    ShapeVector(const Vec& v) { x = v.x; y = v.y; z = v.z; }
+    ShapeVector& operator=(const ShapeVector& v) {
+        x = v.x;
+        y = v.y;
+        z = v.z;
+        return *this;
+    }
+};
 
-bool GsShapeObject::WaveTextureCoord(u32 texture,f32 offsetU,f32 offsetV,const GSmtx* matrix,bool accumulate) {
-    GsShapePair* out=(GsShapePair*)vertexArrays[texture+2];
-    if(!out) return false;
-    if(texture==0 && entry->textureCount>=2) return false;
-    const Vec* displacement=entry->normals;
-    if(!displacement) return false;
-    if(!accumulate) memcpy(out,entry->textureCoords,entry->vertexCount*sizeof(GsShapePair));
-    u16 segmentsU=entry->segmentsU,segmentsV=entry->segmentsV;
-    int columns=segmentsU+1,rows=segmentsV+1;
-    if(offsetU>1.0f) offsetU-=(f32)(int)offsetU;
-    else if(offsetU<0.0f) offsetU-=(f32)((int)offsetU-1);
-    if(offsetV>1.0f) offsetV-=(f32)(int)offsetV;
-    else if(offsetV<0.0f) offsetV-=(f32)((int)offsetV-1);
-    int shiftU=(int)(offsetU*(f32)segmentsU)%segmentsU;
-    int shiftV=(int)(offsetV*(f32)segmentsV)%segmentsV;
-    f32 fractionU=(f32)segmentsU*(offsetU-(f32)shiftU/(f32)segmentsU);
-    f32 fractionV=(f32)segmentsV*(offsetV-(f32)shiftV/(f32)segmentsV);
-    fractionU-=(f32)(int)fractionU; fractionV-=(f32)(int)fractionV;
-    f32 diagonalWeight=fractionU*fractionV;
-    f32 verticalWeight=(1.0f-fractionU)*fractionV;
-    f32 horizontalWeight=fractionU*(1.0f-fractionV);
-    f32 originWeight=(1.0f-fractionU)*(1.0f-fractionV);
-    int rowOffset=0;
-    for(int row=0;row<rows;row++,rowOffset+=columns) {
-        for(int column=0;column<columns;column++) {
-            u16 sampleU=(column+shiftU)%entry->segmentsU;
-            int sampleV=(row+shiftV)%entry->segmentsV;
-            if(sampleU==0 && column==columns-1) sampleU=entry->segmentsU;
-            if(sampleV==0 && row==rows-1) sampleV=entry->segmentsV;
-            int sample=sampleU+sampleV*columns;
-            Vec value;
-            if(sampleU==columns-1 || sampleV==rows-1) {
-                value.x=displacement[sample].x; value.y=displacement[sample].y; value.z=displacement[sample].z;
+static inline ShapeVector operator*(const Vec& v, f32 weight) {
+    Vec scaled;
+    PSVECScale(&v, &scaled, weight);
+    return ShapeVector(scaled);
+}
+
+static inline ShapeVector operator+(const Vec& left, const Vec& right) {
+    Vec sum;
+    PSVECAdd(&left, &right, &sum);
+    return ShapeVector(sum);
+}
+
+bool GsShapeObject::WaveTextureCoord(u32 texture, f32 offsetU, f32 offsetV, const GSmtx* matrix, bool accumulate) {
+    int column, row, columns, rows, shiftU, shiftV, sample;
+    struct {
+        const Vec* displacement;
+        GsShapePair* coords;
+    } arrays;
+    if (!vertexArrays[texture + 2]) return false;
+    if (texture == 0 && entry->textureCount >= 2) return false;
+    arrays.displacement = entry->normals;
+    if (!arrays.displacement) return false;
+    arrays.coords = (GsShapePair*)vertexArrays[texture + 2];
+    int vertexCount = entry->vertexCount;
+    if (!accumulate) memcpy(arrays.coords, entry->textureCoords, vertexCount * sizeof(GsShapePair));
+
+    u16 segmentsU = entry->segmentsU, segmentsV = entry->segmentsV;
+    columns = segmentsU + 1;
+    rows = segmentsV + 1;
+    if (offsetU > 1.0f) offsetU -= (f32)(int)offsetU;
+    else if (offsetU < 0.0f) offsetU -= (f32)((int)offsetU - 1);
+    if (offsetV > 1.0f) offsetV -= (f32)(int)offsetV;
+    else if (offsetV < 0.0f) offsetV -= (f32)((int)offsetV - 1);
+    shiftU = (int)(offsetU * (f32)segmentsU) % segmentsU;
+    shiftV = (int)(offsetV * (f32)segmentsV) % segmentsV;
+    f32 fractionU = (f32)segmentsU * (offsetU - (f32)shiftU / (f32)segmentsU);
+    f32 fractionV = (f32)segmentsV * (offsetV - (f32)shiftV / (f32)segmentsV);
+    fractionU -= (f32)(int)fractionU;
+    fractionV -= (f32)(int)fractionV;
+    f32 diagonalWeight = fractionU * fractionV;
+    f32 verticalWeight = (1.0f - fractionU) * fractionV;
+    f32 horizontalWeight = fractionU * (1.0f - fractionV);
+    f32 originWeight = (1.0f - fractionU) * (1.0f - fractionV);
+
+    for (row = 0; row < rows; row++) {
+        for (column = 0; column < columns; column++) {
+            int index = row * columns + column;
+            int sampleU = (column + shiftU) % entry->segmentsU;
+            int sampleV = (row + shiftV) % entry->segmentsV;
+            if (sampleU == 0 && column == columns - 1) sampleU = entry->segmentsU;
+            if (sampleV == 0 && row == rows - 1) sampleV = entry->segmentsV;
+            sample = sampleU + sampleV * columns;
+            ShapeVector value;
+            if (sampleU == columns - 1 || sampleV == rows - 1) {
+                value.x = arrays.displacement[sample].x;
+                value.y = arrays.displacement[sample].y;
+                value.z = arrays.displacement[sample].z;
             } else {
-                Vec result, diagonal,vertical,horizontal,origin,sumHorizontal,sumVertical;
-                int nextRow=sample+columns;
-                PSVECScale(&displacement[nextRow+1],&result,diagonalWeight);
-                diagonal.x=result.x; diagonal.y=result.y; diagonal.z=result.z;
-                PSVECScale(&displacement[nextRow],&result,verticalWeight);
-                vertical.x=result.x; vertical.y=result.y; vertical.z=result.z;
-                PSVECScale(&displacement[sample+1],&result,horizontalWeight);
-                horizontal.x=result.x; horizontal.y=result.y; horizontal.z=result.z;
-                PSVECScale(&displacement[sample],&result,originWeight);
-                origin.x=result.x; origin.y=result.y; origin.z=result.z;
-                PSVECAdd(&origin,&horizontal,&result);
-                sumHorizontal.x=result.x; sumHorizontal.y=result.y; sumHorizontal.z=result.z;
-                PSVECAdd(&sumHorizontal,&vertical,&result);
-                sumVertical.x=result.x; sumVertical.y=result.y; sumVertical.z=result.z;
-                PSVECAdd(&sumVertical,&diagonal,&result);
-                value.x=result.x; value.y=result.y; value.z=result.z;
+                value = arrays.displacement[sample] * originWeight + arrays.displacement[sample + 1] * horizontalWeight
+                      + arrays.displacement[sample + columns] * verticalWeight
+                      + arrays.displacement[sample + columns + 1] * diagonalWeight;
             }
-            PSMTXMultVecSR(matrix->matrix,&value,&value);
-            GsShapePair* coordinate=&out[rowOffset+column];
-            coordinate->u+=value.x; coordinate->v+=value.y;
+            PSMTXMultVecSR(matrix->matrix, &value, &value);
+            GsShapePair* coordinate = &arrays.coords[index];
+            coordinate->u += value.x;
+            coordinate->v += value.y;
         }
     }
     return true;
@@ -750,29 +771,6 @@ extern "C" bool ShadeVertexColor__13GsShapeObjectFP5GSmtxP5GSmtxP5GSmtxfb(GsShap
 #pragma dont_inline off
 
 extern "C" f32* GSgfxMatrixGetPtr(s32);
-struct ShapeVector : Vec {
-    ShapeVector() {}
-    ShapeVector(const Vec& v) { x = v.x; y = v.y; z = v.z; }
-    ShapeVector& operator=(const ShapeVector& v) {
-        x = v.x;
-        y = v.y;
-        z = v.z;
-        return *this;
-    }
-};
-
-static inline ShapeVector operator*(const Vec& v, f32 weight) {
-    Vec scaled;
-    PSVECScale(&v, &scaled, weight);
-    return ShapeVector(scaled);
-}
-
-static inline ShapeVector operator+(const Vec& left, const Vec& right) {
-    Vec sum;
-    PSVECAdd(&left, &right, &sum);
-    return ShapeVector(sum);
-}
-
 bool GsShapeObject::RefractTextureCoord(f32 offsetU, f32 offsetV, GSmtx* first, GSmtx* second,
                                        GSmtx* third, f32) {
     int texture, column, row, columns, rows, shiftU, sample;
