@@ -1,5 +1,9 @@
 #pragma defer_codegen on
+#include <global.h>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/pxdvs/app/menu/menuModelPrivate.hpp>
+#include <dolphin/gx/GXStruct.h>
 #include <dolphin/mtx.h>
 #include <libc/string.h>
 
@@ -35,7 +39,7 @@ void GSlightSetActive(GSlight*, u8);
 void GSlightFree(GSlight*);
 GSlight* GSlightCreate();
 void GSlightSetType(GSlight*, s32);
-void GSlightSetColor(GSlight*, MENU_COLOR);
+void GSlightSetColor(GSlight*, GXColor);
 void GSlightSetPosition(GSlight*, f32 *);
 void GSlightSetTarget(GSlight*, f32 *);
 u32 GScameraCreate();
@@ -75,7 +79,7 @@ static MenuModelVector _lightOffset;
 static s32 _layerID=2;
 static f32 _menuModelScaleMultiValue=1.0f;
 static f32 _camFov=35.0f;
-static MENU_COLOR _lightColor={128,128,128,255};
+static GXColor _lightColor={128,128,128,255};
 static s32 _waitframe=3;
 static f32 _disp_scale=0.7f;
 static u8 _litonoff[3]={1,1,1};
@@ -118,23 +122,17 @@ u32 menuModelGetModelPtr(MENU_MODEL *m);
 
 void menuModelSetClip(MENU_MODEL *m, u8 clip);
 
-void menuModelSetZoom(MENU_MODEL *m, f32 zoom);
-
 void menuModelSetOffset(MENU_MODEL *m, f32 *v);
 
 void menuModelSetAngle(MENU_MODEL *m, f32 *v);
 
 void menuModelAdjustCamera2(MENU_MODEL *a, MENU_MODEL *b);
 
-void menuModelAdjustCamera(MENU_MODEL *m);
-
 }
 
 extern "C" {
 
 s32 menuModelRender2(MENU_MODEL *a, MENU_MODEL *b);
-
-s32 menuModelRender(MENU_MODEL *m);
 
 }
 
@@ -144,20 +142,14 @@ extern "C" {
 
 void menuModelRenderOffAll(MENU_MODEL *m);
 
-bool menuModelCheck(MENU_MODEL *m, u8 wait);
-
 s32 menuModelFreeNext(MENU_MODEL *m);
 
 void menuModelWazaFree(MENU_MODEL *m);
-
-s32 menuModelFree(MENU_MODEL *m);
 
 u8 menuModelComparePokemon(MENU_MODEL *m, Pokemon *pokemon);
 u8 menuModelCompareObject(MENU_MODEL *m, u32 id);
 
 s32 fn_80112AAC(MENU_MODEL *m, Pokemon *pokemon);
-
-s32 menuModelLoadPokemon(MENU_MODEL *m, Pokemon *pokemon);
 
 s32 menuModelLoad(MENU_MODEL *m, u32 id);
 
@@ -170,20 +162,6 @@ u8 menuModelCompareObject(MENU_MODEL *m, u32 id);
 static u8 _menuModelCmpLoadInfo(MENU_MODEL_LOAD *a, MENU_MODEL_LOAD *b);
 
 extern "C" void _menuModelMakeLoadInfo__FP15MENU_MODEL_LOADP7PokemonUs(MENU_MODEL_LOAD *info, Pokemon *pokemon, u16 waza, u8 withShiny);
-
-extern "C" {
-
-s32 menuModelInit(MENU_MODEL *m, s32 a, s32 b);
-
-s32 menuModelSetSize(MENU_MODEL *m, s32 x, s32 y, s32 w, s32 h);
-
-}
-
-extern "C" {
-
-s32 menuModelTerm(MENU_MODEL *m);
-
-}
 
 static s32 _menuModelTerm(MENU_MODEL *m);
 
@@ -323,7 +301,7 @@ static s32 _menuModelAdjustCamera(MENU_MODEL* m,bool) {
     f32 fov,aspect,nearPlane,farPlane;
     f32 scale;
     s32 angle;
-    MENU_COLOR color;
+    GXColor color;
     f32 sizeRatio;
     f32 size;
     u32 model;
@@ -450,7 +428,7 @@ static s32 _menuModelAdjustCamera2(MENU_MODEL* a,MENU_MODEL* b) {
     Vec positionB;
     Vec light;
     s32 angle;
-    MENU_COLOR color;
+    GXColor color;
     u32 modelA;
     u32 bound;
     u32 modelB;
@@ -642,8 +620,8 @@ extern "C" s32 menuModelInit(MENU_MODEL *m, s32 a, s32 b) {
     target[0] = 0.0f;
     target[1] = 0.0f;
     target[2] = 0.0f;
-    MENU_COLOR colorA = {0xFF, 0xFF, 0xFF, 0xFF};
-    MENU_COLOR colorB = {0x80, 0x80, 0x80, 0xFF};
+    GXColor colorA = {0xFF, 0xFF, 0xFF, 0xFF};
+    GXColor colorB = {0x80, 0x80, 0x80, 0xFF};
     if (m == 0) {
         return 0;
     }
@@ -947,7 +925,7 @@ static void _menuModelRenderOff(MENU_MODEL *m) {
     }
 }
 
-extern "C" s32 menuModelRender(MENU_MODEL *m) {
+extern "C" GStexture *menuModelRender(MENU_MODEL *m) {
     u32 model;
     s32 i;
     if (_modeloff) {

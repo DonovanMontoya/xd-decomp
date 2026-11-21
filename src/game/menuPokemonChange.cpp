@@ -12,10 +12,6 @@ void GSmsgPrintRect(s32,s16,s16,s16,s16,u32,u32);
 u32 heroBiosGetNamePtr(Hero*);
 void menuFaceDisp(tagWINDOW_WORK*,tagSPRITE_WORK*,Pokemon*);
 void menuCBMessageCenterDisp(tagWINDOW_WORK*,tagSPRITE_WORK*,u32);
-void menuModelAdjustCamera(MENU_MODEL*);
-void menuModelSetSize(MENU_MODEL*,s32,s16,s16,s16);
-void menuModelSetZoom(MENU_MODEL*,f32);
-void menuModelRender(MENU_MODEL*);
 u8 menuSubGetPokemonSexForFightDisp(Pokemon*);
 u8 fn_80098B44(u8,Pokemon*);
 u16 pokemonBiosGetItemDataId(Pokemon*);
@@ -141,15 +137,6 @@ struct MenuItemSimple {
 };
 MenuItemSimple *menuPtItemGetByMenuIdAndItemId(long, u32, long);
 s32 menuPtSpriteWorkGetIndexFromId(tagWINDOW_WORK*,tagSPRITE_WORK*,u32);
-struct MENU_MODEL;
-extern "C" {
-void menuModelInit(MENU_MODEL *, long, long);
-void menuModelLoadPokemon(MENU_MODEL *, Pokemon *);
-void menuModelCheck(MENU_MODEL *, s32);
-void menuModelFree(MENU_MODEL *);
-void menuModelTerm(MENU_MODEL *);
-}
-
 struct PokemonChangeKeys {
     u8 pad0[0x14];
     u16 hold;

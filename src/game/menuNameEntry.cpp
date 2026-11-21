@@ -4,12 +4,7 @@
 #include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <game/menuNameEntryLayout.hpp>
 #include <game/pxdvs/GSAPI/GSprim/GSprim.hpp>
-
-struct Pokemon;
-struct MENU_MODEL {
-    u8 data[0xEC];
-    MENU_MODEL() {}
-};
+#include <game/pxdvs/app/menu/menuModelPrivate.hpp>
 
 extern "C" {
 void GScharCpy(u16 *, u16 *);
@@ -59,14 +54,9 @@ void FlashSystemSetPlayFrameLabel(u32, const char *, const char *);
 void FlashSystemSetLoopFlag(u32, s32);
 void FlashSystemSetNowFrameLabel(u32, const char *);
 void fadeCheck(s32);
-void menuModelTerm(MENU_MODEL *);
-void menuModelAdjustCamera(MENU_MODEL *);
-void menuModelSetSize(MENU_MODEL *, s16, s16, s16, s16);
 void menuModelSetClip(MENU_MODEL *, u8);
 void menuModelSetAngle(MENU_MODEL *, Vec *);
 void menuModelSetOffset(MENU_MODEL *, Vec *);
-void menuModelSetZoom(MENU_MODEL *, f32);
-GStexture* menuModelRender(MENU_MODEL *);
 
 s32 GScharCmp(u16 *, u16 *);
 void menuTitleBattleSelectFree(void);
@@ -78,13 +68,10 @@ struct MenuItemInfo {
     s16 b;
 };
 MenuItemInfo* menuItemBiosGetPtr(s32, s32);
-void menuModelInit(MENU_MODEL *, s16, s16);
 void menuModelLoad(MENU_MODEL *, s32);
 void* peopleInfoBiosGetPtr(s32);
 void peopleInfoBiosGetMotion(void *, s32, s32 *, s32 *);
 void menuModelSetMotion(MENU_MODEL *, s32);
-void menuModelLoadPokemon(MENU_MODEL *, Pokemon *);
-void menuModelCheck(MENU_MODEL *, s32);
 void winSpriteSetDisp(tagSPRITE_WORK *, s32);
 s32 winSpriteGetLayerID(tagWINDOW_WORK *, tagSPRITE_WORK *);
 void menuSubDrawCursorBackAnimeOnOffAuto(tagWINDOW_WORK *, s32, s32, s32, s16, s16, u8, s32);
@@ -729,7 +716,7 @@ s32 menuNameEntryBackDrawPokemonModel(tagWINDOW_WORK *window, tagSPRITE_WORK *sp
         f32 zoom = 1.2f;
         angle.x = 0.0f; angle.y = 0.3f; angle.z = 0.0f;
         offset.x = 0.0f; offset.y = 0.0f; offset.z = 0.0f;
-        switch (*(u16 *)(MenuModel.data + 0x24)) {
+        switch (MenuModel.cur.u.p.id) {
         case 40: case 62: case 71: case 87: case 95: case 96: case 108:
         case 163: case 174: case 192: case 230: case 340: case 398:
             zoom = 1.0f; break;

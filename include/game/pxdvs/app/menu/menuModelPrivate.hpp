@@ -1,25 +1,18 @@
 #ifndef MENU_MODEL_PRIVATE_H
 #define MENU_MODEL_PRIVATE_H
 
-#include <global.h>
-#define POKEMON_HPP_NO_PROTOTYPES
-#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <dolphin/types.h>
 
 struct GSlight;
-
-struct MENU_COLOR {
-    u8 r;
-    u8 g;
-    u8 b;
-    u8 a;
-};
+struct GStexture;
+struct Pokemon;
 
 struct MENU_MODEL_LOAD {
     u8 isPokemon;   // 0x0
     u8 pad1[3];
-    union {
+    union Resource {
         u32 objectId;
-        struct {
+        struct PokemonResource {
             u16 id;
             u16 waza;
         } p;
@@ -31,6 +24,8 @@ struct MENU_MODEL_LOAD {
 };
 
 struct MENU_MODEL {
+    MENU_MODEL() {}
+
     u8 state;               // 0x0
     u8 loading;             // 0x1
     u8 initialized;         // 0x2
@@ -65,5 +60,20 @@ struct MENU_MODEL {
     f32 boundMin[3];        // 0xD4
     f32 boundMax[3];        // 0xE0
 };
+
+typedef char MenuModelLoadSizeCheck[sizeof(MENU_MODEL_LOAD) == 0x10 ? 1 : -1];
+typedef char MenuModelSizeCheck[sizeof(MENU_MODEL) == 0xEC ? 1 : -1];
+
+extern "C" {
+s32 menuModelInit(MENU_MODEL *model, s32 width, s32 height);
+s32 menuModelTerm(MENU_MODEL *model);
+s32 menuModelLoadPokemon(MENU_MODEL *model, Pokemon *pokemon);
+s32 menuModelFree(MENU_MODEL *model);
+bool menuModelCheck(MENU_MODEL *model, u8 wait);
+s32 menuModelSetSize(MENU_MODEL *model, s32 x, s32 y, s32 width, s32 height);
+void menuModelAdjustCamera(MENU_MODEL *model);
+void menuModelSetZoom(MENU_MODEL *model, f32 zoom);
+GStexture *menuModelRender(MENU_MODEL *model);
+}
 
 #endif
