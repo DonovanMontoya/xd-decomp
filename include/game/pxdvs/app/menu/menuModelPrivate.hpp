@@ -5,6 +5,8 @@
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 
+struct GSlight;
+
 struct MENU_COLOR {
     u8 r;
     u8 g;
@@ -50,7 +52,7 @@ struct MENU_MODEL {
     s32 sizeW;              // 0x64
     s32 sizeH;              // 0x68
     u32 camera;             // 0x6C
-    u32 light[3];           // 0x70
+    GSlight* light[3];      // 0x70
     f32 zoom;               // 0x7C
     s32 unk80;              // 0x80
     u8 unk84;               // 0x84
