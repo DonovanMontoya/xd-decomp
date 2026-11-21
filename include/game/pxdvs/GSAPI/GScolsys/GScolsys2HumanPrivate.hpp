@@ -3,16 +3,10 @@
 #include <game/pxdvs/GSAPI/GScolsys/GScolsys2Walk.hpp>
 #include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <dolphin/mtx.h>
-#include <libc/stddef.h>
+#include <game/pxdvs/GSAPI/GScolsys/GScolsys2State.hpp>
 struct GSvec { f32 x,y,z; };
-struct GSCOLSYS2_HUMAN { s32 group; u32 resource; f32 radius,height; u16 flags,padding; };
-struct HumanFloor { u8 objects[0xa00]; GSCOLSYS2_HUMAN humans[48]; };
 struct tagPeopleWork { u8 isHero() const; u8 isFollower() const; };
-typedef char HumanRecordSize[sizeof(GSCOLSYS2_HUMAN)==20?1:-1];
-typedef char HumanArrayOffset[offsetof(HumanFloor,humans)==0xa00?1:-1];
-typedef char HumanFloorSize[sizeof(HumanFloor)==0xdc0?1:-1];
 extern "C" {
-HumanFloor *GScolsys2GetCurFloor();
 u32 peopleGetHumanID(s32,u32);
 tagPeopleWork *peopleSearchID(u32);
 GSvec *peopleBiosGetPosPtr(tagPeopleWork *);

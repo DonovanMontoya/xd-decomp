@@ -1,7 +1,7 @@
 #include <game/pxdvs/GSAPI/GScolsys/GScolsys2HumanPrivate.hpp>
 static inline s32 getHuman(int index,GSCOLSYS2_HUMAN **out) {
     if(index<0 || index>=48) return 4;
-    HumanFloor *floor=GScolsys2GetCurFloor();
+    GSCOLSYS2_FLOOR *floor=GScolsys2GetCurFloor();
     if(!floor) return 1;
     GSCOLSYS2_HUMAN *human=&floor->humans[index];
     if(!(human->flags&1)) return 4;
@@ -15,7 +15,7 @@ extern "C" f32 GScolsys2HumanGetHumanRadius(int index) {
 }
 extern "C" void GScolsys2HumanDispColision() {
     GSvec position;
-    HumanFloor *floor=GScolsys2GetCurFloor();
+    GSCOLSYS2_FLOOR *floor=GScolsys2GetCurFloor();
     if(floor) {
         GSgfxLayerSetActive(2);
         GScameraLoadActiveCameraMatrix(2);
@@ -131,7 +131,7 @@ static u8 checkCollisionHeadToHead(GSCOLSYS2_HUMAN *other,GSCOLSYS2_HUMAN *self,
     return 1;
 }
 static u8 checkCollision(GSCOLSYS2_HUMAN *self,int index,GSvec *start,GSvec *end,GSvec *out) {
-    HumanFloor *floor;
+    GSCOLSYS2_FLOOR *floor;
     s32 i;
     s32 passes;
     GSCOLSYS2_HUMAN *other;
@@ -192,7 +192,7 @@ extern "C" s32 GScolsys2HumanEnable(int index,u8 enabled) {
     return 0;
 }
 extern "C" s32 GScolsys2HumanAddCurrentFloor(int *index,GSCOLSYS2_HUMAN *input) {
-    HumanFloor *floor=GScolsys2GetCurFloor();
+    GSCOLSYS2_FLOOR *floor=GScolsys2GetCurFloor();
     if(!floor) return 1;
     s32 i=0;
     for(;i<48;i++) if(!(floor->humans[i].flags&1)) break;

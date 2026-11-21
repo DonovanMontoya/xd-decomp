@@ -7,7 +7,7 @@ FloorModuleInterface _floorModuleColsys;
 static u8 _colsysVF[0x440];
 s32 _hModuleField;
 extern Mtx mtxIdent;
-void GSgfxDLFree(void *);
+void GSgfxDLFree(DLDisplayList *);
 void GSgfxVFInit(void *);
 void GSgfxVFCreate(void *);
 void GSgfxVFSetElement(void *, s32, s32, s32, u8);
@@ -134,7 +134,7 @@ s32 GScolsys2LoadCCD(void *resource) {
     CCD_FILEHEAD *head = static_cast<CCD_FILEHEAD *>(resource);
     if (GScolsys2.currentFloor < 0) return 0;
     GSCOLSYS2_FLOOR *floor = &GScolsys2.floor[GScolsys2.currentFloor];
-    for (u32 i = 0; i < 48; ++i) floor->auxiliary[i].flags &= ~1;
+    for (u32 i = 0; i < 48; ++i) floor->humans[i].flags &= ~1;
     _offsetCCD(head);
     GScolsys2.head = static_cast<CCD_FILEHEAD *>(resource);
     const CCD_FILEHEAD *file = GScolsys2.head;
