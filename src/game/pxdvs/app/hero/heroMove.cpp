@@ -709,7 +709,7 @@ static f32 moveLeaderPosition(HEROMOVE_MEMBER member) {
     float move;
     unsigned long group;
     unsigned long res;
-    f32 rateF = (u8)GSgfxVideoGetVsyncRate();
+    f32 rateF = GSgfxVideoGetVsyncRate();
     f32 frameTime = (f32)timeGetLastFrameTime();
     f32 step = (30.0f * frameTime) / rateF;
     getPos(&prev, member);

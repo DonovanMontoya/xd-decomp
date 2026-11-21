@@ -8,7 +8,7 @@ void GSprimSetBlendMode(s32);
 void GSgfxLayerSetActive(s32);
 void *GSgfxLayerFindByID(s32);
 s32 winSpriteGetLayerID(tagWINDOW_WORK *, tagSPRITE_WORK *);
-u32 GSgfxVideoGetVsyncRate();
+u8 GSgfxVideoGetVsyncRate();
 u32 timeGetLastFrameTime();
 }
 void GSprimSetup2DRender(GSgfxLayer *);
@@ -216,7 +216,7 @@ FlashMenu::FlashMenu() {
 
 void FlashMenu::Draw(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
     u32 frame;
-    u8 rate;
+    u32 rate;
     if (memory != 0) {
         s32 layerId = winSpriteGetLayerID(win, sprite);
         GSgfxLayerSetActive(layerId);
