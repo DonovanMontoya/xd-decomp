@@ -41,7 +41,7 @@ u8 fightWaza_GetDamageValue(FightWazaRecord* data) { if (data == 0) { return 0; 
 
 u8 fightWaza_GetCritical(FightWazaRecord* data) { if (data == 0) { return 0; } else { return data->critical; } }
 
-WazaStatusRecord* fightWaza_GetJoutaiPtr(FightWazaRecord* data, u16 index) { if (!data) return 0; if (index >= 9) return 0; return &data->statuses[index]; }
+FightJoutai* fightWaza_GetJoutaiPtr(FightWazaRecord* data, u16 index) { if (!data) return 0; if (index >= 9) return 0; return &data->statuses[index]; }
 
 u16 fightWaza_GetTargetDataId(FightWazaRecord* data) { if (data == 0) { return 0; } else { return data->targetDataId; } }
 

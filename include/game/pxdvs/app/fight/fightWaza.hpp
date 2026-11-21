@@ -4,25 +4,32 @@
 #include <dolphin/types.h>
 #include <libc/stddef.h>
 
-struct WazaStatusRecord { u8 storage[0x10]; };
+struct FightJoutai {
+    u16 dataId;
+    u16 userFightTargetId;
+    u8 kaisuu;
+    u8 nowKaisuu;
+    u8 count;
+    u8 reserved07;
+    u32 buff;
+    u16 idBuff;
+};
+typedef char FightJoutaiSize[sizeof(FightJoutai) == 0x10 ? 1 : -1];
 
 struct FightWaza {
     u8 wazaBanme;
-    u8 reserved01[0x1];
     u16 motoWazaDataId;
     u16 useWazaDataId;
     u16 targetDataId;
-    WazaStatusRecord statuses[9];
+    FightJoutai statuses[9];
     u8 critical;
     u8 damageValue;
-    u8 reserved9a[0x2];
     u32 damage;
     u32 hitDamage;
     u16 iryoku;
     u16 zokusei;
     u8 kaisuu;
     u8 autoMakeFlag;
-    u8 reservedaa[0x2];
 };
 typedef char FightWazaRecordSize[sizeof(FightWaza) == 0xac ? 1 : -1];
 typedef char FightWazaRecord_wazaBanmeOffset[offsetof(FightWaza, wazaBanme) == 0x0 ? 1 : -1];

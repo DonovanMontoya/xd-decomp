@@ -95,7 +95,7 @@ u32 fightWaza_GetHitDamage(FightWazaRecord* data);
 u32 fightWaza_GetDamage(FightWazaRecord* data);
 u8 fightWaza_GetDamageValue(FightWazaRecord* data);
 u8 fightWaza_GetCritical(FightWazaRecord* data);
-WazaStatusRecord* fightWaza_GetJoutaiPtr(FightWazaRecord* data, u16 index);
+FightJoutai* fightWaza_GetJoutaiPtr(FightWazaRecord* data, u16 index);
 u16 fightWaza_GetTargetDataId(FightWazaRecord* data);
 u16 fightWaza_GetUseWazaDataId(FightWazaRecord* data);
 u16 fightWaza_GetMotoWazaDataId(FightWazaRecord* data);
