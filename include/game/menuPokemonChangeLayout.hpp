@@ -56,7 +56,7 @@ public:
 
 struct MENU_MODEL {
     u8 data[0xEC];
-    MENU_MODEL();
+    MENU_MODEL() {}
 };
 
 enum MENU_POKEMON_CB_TYPE {

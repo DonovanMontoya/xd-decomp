@@ -957,7 +957,7 @@ config.libs = [
             Object(NonMatching, "game/menuBingo.cpp", extra_cflags=["-lang c++", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/menuItemBT.c"),
             Object(MatchingFor("GXXE01"), "game/menuReliveHallTutorial.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
-            Object(NonMatching, "game/menuPokemonChange.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
+            Object(NonMatching, "game/menuPokemonChange.cpp", extra_cflags=["-inline deferred,noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuWorldMapMoveDemo.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
             Object(MatchingFor("GXXE01"), "game/menuWorldMapModel.cpp", extra_cflags=["-inline noauto", "-opt nopeephole", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/menuItem.c"),
