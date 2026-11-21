@@ -435,8 +435,8 @@ s32 Tiga::runParamsPC(TPCCode* code, tigaVariant* args, int count, bool useThrea
         sp->flags = 0;
         sp->value.integer = 0;
         t->stackPtr10 = sp;
-        t->stackPtr14--;
-        *t->stackPtr14 = (s32)t->stackPtr0C;
+        t->frameStackPtr--;
+        *t->frameStackPtr = t->stackPtr0C;
         t->stackPtr0C = sp;
         if (useThread) {
             void* g = floorCreateThreadLocal(1, 0x2000, 1, _executeScriptThread);
@@ -649,9 +649,9 @@ bool TigaThread::restoreStateData(GSBinReadStream* stream) {
     code = codeBase + codeOffset;
     stackPtr0C = stackBase38 + offset0C;
     stackPtr10 = stackBase38 + offset10;
-    stackPtr14 = stackBase3C + offset14;
+    frameStackPtr = frameStackBase + offset14;
     for (i = 0; i < 4; i++) {
-        (&retVar)[i].restoreStateData(stream);
+        registers[i].restoreStateData(stream);
     }
     lineNumber = stream->readU32();
     stackCount = stream->readU32();
@@ -660,7 +660,7 @@ bool TigaThread::restoreStateData(GSBinReadStream* stream) {
     }
     stackCount2 = stream->readU32();
     for (i = 0; i < stackCount2; i++) {
-        ((tigaVariant**)stackArea2)[i] = stackBase38 + stream->readU32();
+        frameStack[i] = stackBase38 + stream->readU32();
     }
     timerIndex = stream->readU8();
     timerLimit = stream->readFloat();
@@ -678,14 +678,14 @@ void TigaThread::makeStateData(GSBinWriteStream* stream) {
         stream->writeU32(0);
     }
     stream->writeFloat(sleepTime);
-    u32 offset14 = ((u32)stackPtr14 - (u32)stackBase3C) >> 2;
+    u32 offset14 = ((u32)frameStackPtr - (u32)frameStackBase) >> 2;
     u32 codeOffset = ((u32)code - (u32)owner->codeBase) / sizeof(TPCCode);
     stream->writeU32(codeOffset);
     stream->writeU32(((u32)stackPtr0C - (u32)stackBase38) >> 3);
     stream->writeU32(((u32)stackPtr10 - (u32)stackBase38) >> 3);
     stream->writeU32(offset14);
     for (i = 0; i < 4; i++) {
-        (&retVar)[i].makeStateData(stream);
+        registers[i].makeStateData(stream);
     }
     stream->writeU32(lineNumber);
     stream->writeU32(stackCount);
@@ -694,7 +694,7 @@ void TigaThread::makeStateData(GSBinWriteStream* stream) {
     }
     stream->writeU32(stackCount2);
     for (i = 0; i < stackCount2; i++) {
-        codeOffset = ((u32)(stackArea2 + i) - (u32)stackBase3C) >> 2;
+        codeOffset = ((u32)(frameStack + i) - (u32)frameStackBase) >> 2;
         stream->writeU32(codeOffset);
     }
     stream->writeU8(timerIndex);
@@ -730,9 +730,9 @@ bool TigaThread::checkSleepEnd() {
 void TigaThread::initTiga() {
     memset(&sleepTime + 1, 0, 0x144);
     stackPtr10 = stackArea + stackCount;
-    stackPtr14 = (s32*)((u8*)stackArea2 + stackCount2 * 4);
+    frameStackPtr = frameStack + stackCount2;
     stackBase38 = stackArea;
-    stackBase3C = stackArea2;
+    frameStackBase = frameStack;
     stackPtr10 = stackPtr10 - 1;
     stackPtr10->type = 0x35;
     *(s32*)&stackPtr10->value = 0;
@@ -746,26 +746,26 @@ void TigaThread::initTiga() {
 void TigaThread::setStackArea(int count, int count2) {
     free();
     stackArea = new tigaVariant[count];
-    stackArea2 = new s32[count2];
+    frameStack = new tigaVariant*[count2];
     stackCount = count;
     stackCount2 = count2;
 }
 
 
 void TigaThread::free() {
-    if (retVar.type == 1 || retVar.type == 2) {
-        retVar.type = 0;
+    if (registers[0].type == 1 || registers[0].type == 2) {
+        registers[0].type = 0;
     } else {
-        Tiga::m_cpCurrentObject->cellMemory->freeVariant(&retVar);
-        retVar.type = 0;
+        Tiga::m_cpCurrentObject->cellMemory->freeVariant(&registers[0]);
+        registers[0].type = 0;
     }
     if (stackArea != 0) {
         delete[] stackArea;
         stackArea = 0;
     }
-    if (stackArea2 != 0) {
-        delete[] stackArea2;
-        stackArea2 = 0;
+    if (frameStack != 0) {
+        delete[] frameStack;
+        frameStack = 0;
     }
     state = 0;
 }
@@ -778,7 +778,7 @@ TigaThread::~TigaThread() {
 TigaThread::TigaThread() {
     state = 0;
     stackArea = 0;
-    stackArea2 = 0;
+    frameStack = 0;
     memset(&sleepTime + 1, 0, 0x144);
     thread = 0;
     setStackArea(0x100, 0x80);
@@ -1167,7 +1167,7 @@ int Tiga::execute(TigaThread* thread) {
             --thread->stackPtr10;
             if(kind==0){*thread->stackPtr10=globals[index];}
             else if(kind==1){*thread->stackPtr10=thread->stackPtr0C[index];}
-            else if(kind==2){*thread->stackPtr10=(&thread->retVar)[index];}
+            else if(kind==2){*thread->stackPtr10=thread->registers[index];}
             else if(kind==3){getPresetVar(thread->stackPtr10,index,0);}
             retainExpression(thread->stackPtr10);
             ++pc;
@@ -1185,9 +1185,9 @@ int Tiga::execute(TigaThread* thread) {
                 *thread->stackPtr10=thread->stackPtr0C[index];}
             else if(kind==2){
                 if (pc[1].subcode == 4) {
-                    prepareVector(this, &(&thread->retVar)[index], 4);
+                    prepareVector(this, &thread->registers[index], 4);
                 }
-                *thread->stackPtr10=(&thread->retVar)[index];}
+                *thread->stackPtr10=thread->registers[index];}
             else if(kind==3){getPresetVar(thread->stackPtr10,index,0);}
             if(thread->stackPtr10->type==4){
                 GSvec* vector;
@@ -1203,7 +1203,7 @@ int Tiga::execute(TigaThread* thread) {
             u32 kind=instruction->subcode&15;
             if(kind==0){releaseExpression(&globals[index]);globals[index]=*thread->stackPtr10;}
             else if(kind==1){releaseExpression(&thread->stackPtr0C[index]);thread->stackPtr0C[index]=*thread->stackPtr10;}
-            else if(kind==2){releaseExpression(&(&thread->retVar)[index]);(&thread->retVar)[index]=*thread->stackPtr10;}
+            else if(kind==2){releaseExpression(&thread->registers[index]);thread->registers[index]=*thread->stackPtr10;}
             else if(kind==3){setPresetVar(stack,index,0);}
             clearExpression(thread->stackPtr10);
             ++thread->stackPtr10;
@@ -1216,7 +1216,7 @@ int Tiga::execute(TigaThread* thread) {
             int component=(kind>>4)&15;
             if((u32)(kind&15)==0)globals[index].setVectorIdx(component,stack);
             else if((u32)(kind&15)==1)thread->stackPtr0C[index].setVectorIdx(component,stack);
-            else if((u32)(kind&15)==2)(&thread->retVar)[index].setVectorIdx(component,stack);
+            else if((u32)(kind&15)==2)thread->registers[index].setVectorIdx(component,stack);
             else if((u32)(kind&15)==3)setPresetVar(stack,index,component);
             clearExpression(thread->stackPtr10);
             ++thread->stackPtr10;
@@ -1235,27 +1235,27 @@ int Tiga::execute(TigaThread* thread) {
             thread->stackPtr10->value.pointer = pc + 1;
             instruction = pc;
             pc = codeBase + (instruction->argument.unsignedValue + (instruction->subcode << 16));
-            --thread->stackPtr14;
-            *thread->stackPtr14=(s32)thread->stackPtr0C;
+            --thread->frameStackPtr;
+            *thread->frameStackPtr=thread->stackPtr0C;
             thread->stackPtr0C=thread->stackPtr10;
             break;
         case 8:{
-            thread->stackPtr0C=(tigaVariant*)*thread->stackPtr14;
-            ++thread->stackPtr14;
+            thread->stackPtr0C=*thread->frameStackPtr;
+            ++thread->frameStackPtr;
             void* address=thread->stackPtr10->value.pointer;
             if(address){
                 pc = (TPCCode*)address;
                 clearExpression(thread->stackPtr10);
                 ++thread->stackPtr10;
             }else{
-                resultVar=&thread->retVar;
+                resultVar=&thread->registers[0];
                 ++thread->stackPtr10;
                 thread->stop();running=0;--threadCount;
             }
             break;
         }
         case 9:{
-            int wait=execMethod(instruction->subcode,instruction->argument.signedValue,stack,&thread->retVar);
+            int wait=execMethod(instruction->subcode,instruction->argument.signedValue,stack,&thread->registers[0]);
             workBuffer=(TigaWorkPrefix*)&thread->code;
             running=(u8)wait==0;
             ++pc;

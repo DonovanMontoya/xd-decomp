@@ -180,16 +180,15 @@ public:
     TPCCode* code;              // 0x08
     tigaVariant* stackPtr0C;    // 0x0c
     tigaVariant* stackPtr10;    // 0x10
-    s32* stackPtr14;            // 0x14
-    tigaVariant retVar;         // 0x18
-    u8 pad20[0x18];
+    tigaVariant** frameStackPtr;// 0x14
+    tigaVariant registers[4];   // 0x18 (slot 0 holds the return value)
     tigaVariant* stackBase38;   // 0x38
-    s32* stackBase3C;           // 0x3c
+    tigaVariant** frameStackBase;// 0x3c
     u8 pad40[0x10C];
     s32 lineNumber;             // 0x14c
     tigaVariant* stackArea;     // 0x150
     s32 stackCount;             // 0x154
-    s32* stackArea2;            // 0x158
+    tigaVariant** frameStack;   // 0x158
     s32 stackCount2;            // 0x15c
     u8 timerIndex;              // 0x160
     u8 pad161[3];
