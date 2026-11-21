@@ -3589,7 +3589,7 @@ game/pxdvs/GSAPI/GSgfxM/layer.cpp:
 
 game/pxdvs/GSAPI/GSgfxM/render.cpp:
 	.text       start:0x802AAF90 end:0x802ABFE4
-	.bss        start:0x804E1B60 end:0x804E2240
+	.bss        start:0x804E1B60 end:0x804E2240 align:32
 	.sbss       start:0x804EBCB0 end:0x804EBCC8
 	.sdata2     start:0x804EFA80 end:0x804EFA90
 	.sbss2      start:0x804EFD50 end:0x804EFD58

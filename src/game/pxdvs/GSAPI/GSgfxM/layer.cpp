@@ -26,254 +26,8 @@ u8 gsgfx_layer_inPrimitive;
 static LayerNode* _layerBottom;
 static LayerNode* _layerIDTable[16];
 static u8 _layerRenderStats;
-extern "C" {
-void GetFifoSize__10GSgfxLayerFPUlPUl(void *arg0, s32 *arg1, s32 *arg2) {
-    if (arg1 != NULL) {
-        *arg1 = layerField<u32>(arg0, 0x181C);
-    }
-    if (arg2 != NULL) {
-        *arg2 = layerField<u32>(arg0, 0x18D8);
-    }
-}
-
-void* GetTextureCopy__10GSgfxLayerFv(void *arg0) {
-    if (layerField<u32>(arg0, 0x4) & 0x200) {
-        return layerField<void*>(arg0, 0x19A4);
-    }
-    return 0;
-}
-
-void SetWantClearFlags__10GSgfxLayerFbbb(void *arg0, bool arg1, bool arg2, bool arg3) {
-    layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) & 0xFFFFFE3F);
-    if (arg1 != 0) {
-        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 0x40);
-    }
-    if (arg2 != 0) {
-        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 0x80);
-    }
-    if (arg3 != 0) {
-        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 0x100);
-    }
-}
-
-void SetClearFlags__10GSgfxLayerFbbb(void *arg0, u8 arg1, u8 arg2, u8 arg3) {
-    layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) & 0xFFFFFFC7);
-    if (arg1 != 0) {
-        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 8);
-    }
-    if (arg2 != 0) {
-        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 0x10);
-    }
-    if (arg3 != 0) {
-        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 0x20);
-    }
-}
-
-void SetPassVisibility__10GSgfxLayerFbb(void *arg0, bool arg1, bool arg2) {
-    if (arg1 == 1) {
-        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 2);
-    } else {
-        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) & 0xFFFFFFFD);
-    }
-    if (arg2 == 1) {
-        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 4);
-        return;
-    }
-    layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) & 0xFFFFFFFB);
-}
-
-s32 IsLayerVisible__10GSgfxLayerFv(void *arg0) {
-    return layerField<u32>(arg0, 0x4) & 1;
-}
-
-void SetLayerVisibility__10GSgfxLayerFb(void *arg0, bool arg1) {
-    u8 temp_r4;
-
-    if (arg1 == 1) {
-        layerField<u8>(arg0, 0x19B3) = (u8) (layerField<u8>(arg0, 0x19B3) + 1);
-        return;
-    }
-    temp_r4 = layerField<u8>(arg0, 0x19B3);
-    if (temp_r4 != 0) {
-        layerField<u8>(arg0, 0x19B3) = (u8) (temp_r4 - 1);
-    }
-}
-
-void SetLayerType__10GSgfxLayerF14GSgfxLayerType(void *arg0, s32 arg1) {
-    s32 temp_r0;
-    u16 temp_r3;
-    u16 temp_r3_2;
-    u16 temp_r3_4;
-    u16 temp_r3_5;
-    u16 temp_r3_7;
-    void* temp_r3_3;
-    void* temp_r3_6;
-    u8 var_r31;
-    u8 var_r30;
-    u8 var_r3;
-    u8 var_r4;
-
-    var_r31 = 0;
-    var_r30 = 0;
-    var_r4 = 0;
-    temp_r0 = layerField<u32>(arg0, 0x2C);
-    var_r3 = 0;
-    if (arg1 != temp_r0) {
-        switch (temp_r0) {                          /* switch 1; irregular */
-        case 1:                                     /* switch 1 */
-            var_r31 = 1;
-            var_r3 = 1;
-            break;
-        case 4:                                     /* switch 1 */
-            var_r3 = 1;
-            break;
-        }
-        switch (arg1) {                             /* switch 2; irregular */
-        case 1:                                     /* switch 2 */
-            var_r30 = 1;
-            layerField<float>(arg0, 0x19BC) = 0.0f;
-            var_r4 = 1;
-            layerField<float>(arg0, 0x19C0) = 0.5f;
-            layerField<float>(arg0, 0x19C4) = 0.0f;
-            layerField<float>(arg0, 0x19C8) = 0.0f;
-            layerField<float>(arg0, 0x19CC) = 0.5f;
-            layerField<float>(arg0, 0x19D0) = 0.0f;
-            layerField<u8>(arg0, 0x19B8) = 0;
-            break;
-        case 4:                                     /* switch 2 */
-            var_r4 = 1;
-            break;
-        }
-        if ((var_r3 != 0) && (var_r4 == 0)) {
-            if (--fbTexRefCount__10GSgfxLayer == 0) {
-                GStextureFree(fbTexPtr__10GSgfxLayer);
-                fbTexPtr__10GSgfxLayer = 0;
-            }
-            goto block_22;
-        }
-        if ((var_r3 == 0) && (var_r4 != 0)) {
-            if (++fbTexRefCount__10GSgfxLayer == 1) {
-                temp_r3_3 = GStextureCreate(0, 0, 0x45, 0, 0);
-                fbTexPtr__10GSgfxLayer = temp_r3_3;
-                if (temp_r3_3 == 0) {
-                    layerField<u32>(arg0, 0x2C) = 0;
-                    fbTexRefCount__10GSgfxLayer = 0;
-                    return;
-                }
-            }
-        }
-block_22:
-        if ((var_r31 != 0) && (var_r30 == 0)) {
-            if (--distTexRefCount__10GSgfxLayer == 0) {
-                GStextureFree(distTexPtr__10GSgfxLayer);
-                distTexPtr__10GSgfxLayer = 0;
-            }
-            goto block_32;
-        }
-        if ((var_r31 == 0) && (var_r30 != 0) && (++distTexRefCount__10GSgfxLayer == 1) && (temp_r3_6 = GStextureCreate(0, 0, 0xA3, 0, 0), distTexPtr__10GSgfxLayer = temp_r3_6, ((temp_r3_6 == 0) != 0))) {
-            layerField<u32>(arg0, 0x2C) = 0;
-            distTexRefCount__10GSgfxLayer = 0;
-            if (--fbTexRefCount__10GSgfxLayer == 0) {
-                GStextureFree(fbTexPtr__10GSgfxLayer);
-                fbTexPtr__10GSgfxLayer = 0;
-            }
-        } else {
-block_32:
-            layerField<u32>(arg0, 0x2C) = arg1;
-        }
-    }
-}
-
-u8 GSgfxLayerGetStatsRenderMode() { return _layerRenderStats; }
-void GSgfxLayerSetStatsRenderMode(u8 enabled) { _layerRenderStats=enabled; }
-void GSgfxLayerInvalidateAll__Fv() {
-    for (LayerNode* p=_layerBottom;p;p=p->next) InvalidateState__10GSgfxLayerFv(p);
-}
-void GSgfxLayerPrepareNextFrame__Fv() {
-    if (_layerBottom) for (LayerNode* p=_layerBottom;p;p=p->next) PrepareNextFrame__10GSgfxLayerFv(p);
-}
-LayerNode* GetLayerList__10GSgfxLayerFv() { return _layerBottom; }
-LayerNode* GSgfxLayerGetLayerList() { return _layerBottom; }
-void* GetFBTexture__10GSgfxLayerFv() { return fbTexPtr__10GSgfxLayer; }
-s32 GSgfxLayerGetActive() {
-    for (s32 i=0;i<16;i++) if (_layerIDTable[i]==gsgfxState->layer) return i;
-    return -1;
-}
-void GSgfxLayerSetActive(s32 id) { if (id<16) gsgfxState->layer=_layerIDTable[id]; }
-LayerNode* GSgfxLayerFindByID(s32 id) {
-    if (id==-1) return 0;
-    if (id<16) return _layerIDTable[id];
-    // The original only defines a result for -1 and registered layer IDs.
-}
-struct LayerNamed { LayerNode* next; u8 reserved4[4]; char name[32]; };
-LayerNode* GSgfxLayerFindByName(char* name) {
-    for (LayerNode* p=_layerBottom;p;p=p->next) {
-        char local[32];
-        LayerNamed* n=(LayerNamed*)p;
-        if ((s32)((u8)strlen(n->name)+1)<=32) memcpy(local,n->name,(u8)strlen(n->name)+1);
-        else { memcpy(local,n->name,31); local[31]=0; }
-        if (stricmp(local,name)==0) return p;
-    }
-    return 0;
-}
-s32 GSgfxLayerFindByName_C(char* name) {
-    LayerNode* p=GSgfxLayerFindByName(name);
-    if (p==0) { return -1; } else { return p->id; }
-}
-#pragma scheduling off
-void GSgfxLayerInit__Fv() {
-    _layerIDTable[0]=0; _layerIDTable[1]=0; _layerIDTable[2]=0; _layerIDTable[3]=0;
-    _layerIDTable[4]=0; _layerIDTable[5]=0; _layerIDTable[6]=0; _layerIDTable[7]=0;
-    _layerIDTable[8]=0; _layerIDTable[9]=0; _layerIDTable[10]=0; _layerIDTable[11]=0;
-    _layerIDTable[12]=0; _layerIDTable[13]=0; _layerIDTable[14]=0;
-    _layerBottom=0; _layerIDTable[15]=0; gsgfx_layer_inPrimitive=0;
-}
-#pragma scheduling reset
-void SetPriority__10GSgfxLayerF16GSgfxLayerOffsetP10GSgfxLayer(void* object,s32 offset,void* relative) {
-    LayerNode* layer=static_cast<LayerNode*>(object); LayerNode* other=static_cast<LayerNode*>(relative);
-    LayerNode* p;
-    if (_layerBottom==layer) _layerBottom=layer->next;
-    else for (p=_layerBottom;p;p=p->next) if (p->next==layer) { p->next=layer->next; break; }
-    switch (offset) {
-    case 1:
-        p=_layerBottom;
-        if (!p || p==other) { _layerBottom=layer; layer->next=p; return; }
-        for (;p->next;p=p->next) if (p->next==other) break;
-        layer->next=p->next; p->next=layer; return;
-    case 2:
-        for (p=_layerBottom;p;p=p->next) if (p==other) { layer->next=p->next; p->next=layer; return; }
-        return;
-    case 3: layer->next=_layerBottom; _layerBottom=layer; return;
-    case 4:
-        p=_layerBottom; layer->next=0;
-        if (!p) { _layerBottom=layer; return; }
-        while (p->next) p=p->next;
-        p->next=layer; return;
-    case 0: return;
-    }
-}
-void SetTextureCopy__10GSgfxLayerFP9GStexturebPUc(void* layer,void* texture,bool copy,u8* params) {
-    if (!texture) {
-        layerField<u32>(layer,4)&=~0x200;
-        if (fbTexPtr__10GSgfxLayer && layerField<void*>(layer,0x19a4)==fbTexPtr__10GSgfxLayer) {
-            if (--fbTexRefCount__10GSgfxLayer==0) { GStextureFree(fbTexPtr__10GSgfxLayer); fbTexPtr__10GSgfxLayer=0; }
-        }
-        layerField<void*>(layer,0x19a4)=0;
-    } else {
-        if ((u32)texture==0xfefefefe) {
-            if (++fbTexRefCount__10GSgfxLayer==1) {
-                fbTexPtr__10GSgfxLayer=GStextureCreate(0,0,0x45,0,0);
-                if (!fbTexPtr__10GSgfxLayer) { fbTexRefCount__10GSgfxLayer=0; return; }
-            }
-            texture=fbTexPtr__10GSgfxLayer;
-        }
-        layerField<u32>(layer,4)|=0x200; layerField<void*>(layer,0x19a4)=texture;
-    }
-    if (!copy) layerField<u32>(layer,0x19a8)=0;
-    else if (!params) layerField<u32>(layer,0x19a8)=1;
-    else { layerField<u32>(layer,0x19a8)=2; memcpy(&layerField<u8>(layer,0x19ac),params,7); }
-}
-}
+static u32 _layerPerfColor[8]={0x000000ff,0x00008000,0x00800000,0x00008080,0x00800080,0x00808000,0x000080ff,0x00808080};
+static u32 _layerPerfUserColor=0x00ff8000;
 
 extern "C" {
 void GSlogWrite(const char*,...);
@@ -282,29 +36,24 @@ void MarkAndInvalidate__10GSgfxLayerFv(void*);
 void PrepareDistortion__10GSgfxLayerFv(void*);
 void PrepareFBCopy__10GSgfxLayerFv(void*);
 void SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(void*,void*);
-void PrepareNextFrame__10GSgfxLayerFv(void* layer) {
-    MarkAndInvalidate__10GSgfxLayerFv(layer);
-    switch (layerField<s32>(layer,0x2c)) {
-    case 1: PrepareDistortion__10GSgfxLayerFv(layer); break;
-    case 4: PrepareFBCopy__10GSgfxLayerFv(layer); break;
-    case 0: break;
-    }
-    layerField<void*>(layer,0x19dc)=0; layerField<void*>(layer,0x19ec)=0;
-    layerField<void*>(layer,0x19fc)=0; layerField<void*>(layer,0x1a0c)=0;
+void GSgfxRenderAddToFifoList__FP15GSgfx_GCFifoObjPvPvUlPFPv_vPv(void*,void*,void*,u32,void(*)(void*),void*);
+void GSgfxRenderModuleDoRender__FP10GSgfxLayer14GSgfxLayerPass(void*,s32);
+void EffectDistortion__10GSgfxLayerFv(void*);
+void EffectTextureCopy__10GSgfxLayerFP9GStexturebPUcbbb(void*,void*,bool,u8*,bool,bool,bool);
+void EffectScreenClear__10GSgfxLayerFbbb(void*,bool,bool,bool);
+void GSgfxGPUEnterBufferedMode__FP15GSgfx_GCFifoObj(void*);
+void GSmemFree(void*);
+void __dl__FPv(void*);
+void GSgfxRenderWaitForDrawComplete__Fv();
+void LoadHWState__10GSgfxLayerFv(void*);
+extern void* _layerStateLastHWState;
+void GSgfxRenderModuleDoRenderFast__Fv();
+LayerNode* GSgfxLayerFindByID(s32);
+void CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(void*,s32,u32);
+void SetTextureCopy__10GSgfxLayerFP9GStexturebPUc(void*,void*,bool,u8*);
 }
-#pragma auto_inline off
-void BuildRenderListPass__10GSgfxLayerF14GSgfxLayerPass(void* layer,s32 pass) {
-    u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
-    if (layerField<void*>(fifo,0xa4)) SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(layer,layerField<void*>(fifo,0xa4));
-    if (layerField<void*>((u8*)layer+0x1818,pass*0xbc) && !layerField<u8>(fifo,0x94)) SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(layer,fifo);
-    if (layerField<void*>(fifo,0xa8)) SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(layer,layerField<void*>(fifo,0xa8));
-}
-void BuildRenderList__10GSgfxLayerFv(void* layer) {
-    BuildRenderListPass__10GSgfxLayerF14GSgfxLayerPass(layer,0);
-    BuildRenderListPass__10GSgfxLayerF14GSgfxLayerPass(layer,1);
-}
-#pragma auto_inline reset
-}
+struct LayerNamed { LayerNode* next; u8 reserved4[4]; char name[32]; };
+
 #pragma inline_max_size(800)
 static void updateLayerFifoUsage(u8* f) {
     u8* write;
@@ -413,33 +162,348 @@ static void updateLayerFifo(void* fifo) {
     }
     GSgfxRenderWaitExit__FP19GSgfxRenderWaitData(&wait);
 }
+
+static inline void disableLayerPassRedirect(void* layer,s32 pass) {
+    if (layerField<void*>(layer,0x1818+pass*0xbc)) {
+        if (layerField<u8>(layer,0x18ac+pass*0xbc)) {
+            LayerNode* targetLayer=GSgfxLayerFindByID(layerField<s32>(layer,0x18b0+pass*0xbc));
+            u8* target=reinterpret_cast<u8*>(targetLayer)+0x1818+layerField<s32>(layer,0x18b4+pass*0xbc)*0xbc;
+            void** link=layerField<s32>(layer,0x18b8+pass*0xbc)==1 ? &layerField<void*>(target,0xa4) : &layerField<void*>(target,0xa8);
+            layerField<u8>(layer,0x18ac+pass*0xbc)=0; layerField<s32>(layer,0x18b0+pass*0xbc)=-1;
+            layerField<s32>(layer,0x18b4+pass*0xbc)=2; layerField<s32>(layer,0x18b8+pass*0xbc)=0; *link=0;
+        }
+    }
+}
+
 extern "C" {
+LayerNode* GSgfxLayerGetLayerList() { return _layerBottom; }
+
+LayerNode* GetLayerList__10GSgfxLayerFv() { return _layerBottom; }
+
 void GSgfxLayerUpdateActiveFifoStats__Fv() {
     void* fifo;
     if (gsgfx_gpu_mode==1 || (fifo=gsgfx_layer_activeFifo)==0) return;
     updateLayerFifo(fifo);
 }
-void SetupFifo__10GSgfxLayerFv(void* object) {
-    GraphicsLayerState* layer = static_cast<GraphicsLayerState*>(object);
-    if (gsgfx_gpu_mode == 2) {
-        BlendRecord* fifo = static_cast<BlendRecord*>(gsgfx_layer_activeFifo);
-        if (fifo != layer->currentBlend) {
-            if (gsgfx_gpu_mode != 1 && fifo) {
-                updateLayerFifo(fifo);
+
+LayerNode* __ct__10GSgfxLayerF12GSgfxLayerIDPcUlUlUl14GSgfxLayerType(void* object,s32 id,char* name,u32 opaque,u32 translucent,u32 matrices,s32 type) {
+    LayerNode* layer=static_cast<LayerNode*>(object);
+    if (!opaque && !translucent) return layer;
+    if (!name || GSgfxLayerFindByName(name)) return layer;
+    if (!matrices) return layer;
+    layer->id=id; layerField<u32>(layer,4)=7; layerField<u8>(layer,0x19b3)=1; layerField<s32>(layer,0x2c)=0;
+    SetLayerType__10GSgfxLayerF14GSgfxLayerType(layer,type);
+    layerField<s32>(layer,0x1994)=2;
+    u32 count=strlen(name)+1; if (count>32) count=32;
+    memcpy(reinterpret_cast<u8*>(layer)+8,name,count); layerField<u8>(layer,count+7)=0;
+    CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(layer,0,opaque);
+    CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(layer,1,translucent);
+    LoadHWState__10GSgfxLayerFv(layer); GSgfx_GCInitState(); memset(reinterpret_cast<u8*>(layer)+0x30,0,0x1678);
+    layerField<GSgfxMatrixStack*>(layer,0x19a0)=new GSgfxMatrixStack(matrices);
+    if (!_layerBottom) { _layerBottom=layer; layer->next=0; }
+    else { LayerNode* p=_layerBottom; while (p->next) p=p->next; layer->next=p->next; p->next=layer; }
+    layerField<void*>(layer,0x199c)=0; layerField<s32>(layer,0x1998)=0x98;
+    layerField<void*>(layer,0x19a4)=0; layerField<s32>(layer,0x19a8)=0;
+    memset(reinterpret_cast<u8*>(layer)+0x19b4,0,0x20);
+    PrepareNextFrame__10GSgfxLayerFv(layer);
+    if (layerField<void*>(layer,0x1818)) selectLayerPass(static_cast<GraphicsLayerState*>(object),0);
+    else selectLayerPass(static_cast<GraphicsLayerState*>(object),1);
+    _layerIDTable[layer->id]=layer; return layer;
+}
+
+}
+
+GSgfxLayer::~GSgfxLayer() {
+    LayerNode* layer=reinterpret_cast<LayerNode*>(this);
+    GSgfxRenderWaitForDrawComplete__Fv();
+    disableLayerPassRedirect(layer,0);
+    disableLayerPassRedirect(layer,1);
+    SetLayerType__10GSgfxLayerF14GSgfxLayerType(layer,0);
+    SetTextureCopy__10GSgfxLayerFP9GStexturebPUc(layer,0,0,0);
+    if (_layerBottom==layer) _layerBottom=layer->next;
+    else {
+        LayerNode* p=_layerBottom;
+        while (p && p->next!=layer) p=p->next;
+        p->next=layer->next;
+    }
+    void* fifo=gsgfx_layer_activeFifo;
+    if (fifo && (fifo==reinterpret_cast<u8*>(layer)+0x1818 || fifo==reinterpret_cast<u8*>(layer)+0x18d4)) {
+        updateLayerFifo(fifo); GXSetCPUFifo(sdk(GSgfxGPUGetImmediateFifo__Fv())); gsgfx_layer_activeFifo=0;
+    }
+    if (_layerStateLastHWState==reinterpret_cast<u8*>(layer)+0x30) _layerStateLastHWState=0;
+    delete layerField<GSgfxMatrixStack*>(layer,0x19a0); _layerIDTable[layer->id]=0;
+    if (layerField<void*>(layer,0x1818)) { GSmemFree(layerField<void*>(layer,0x1818)); layerField<void*>(layer,0x1818)=0; }
+    if (layerField<void*>(layer,0x18d4)) { GSmemFree(layerField<void*>(layer,0x18d4)); layerField<void*>(layer,0x18d4)=0; }
+}
+
+extern "C" {
+
+void CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(void* layer,s32 pass,u32 bytes) {
+    u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
+    layerField<void*>(fifo,0)=0; layerField<u32>(fifo,4)=0; memset(fifo+8,0,0x80);
+    s32 id=layerField<s32>(layer,0x28);
+    if (id<8) layerField<u32>(fifo,0x90)=_layerPerfColor[id];
+    else layerField<u32>(fifo,0x90)=_layerPerfUserColor;
+    layerField<u16>(fifo,0xac)=0; layerField<u16>(fifo,0xae)=0;
+    layerField<u32>(fifo,0xb0)=0; layerField<u32>(fifo,0xb4)=0; layerField<u32>(fifo,0xb8)=0;
+    layerField<void*>(fifo,0x88)=0; layerField<void*>(fifo,0x8c)=0;
+    layerField<u8>(fifo,0x94)=0; layerField<s32>(fifo,0x98)=-1;
+    layerField<s32>(fifo,0x9c)=2; layerField<s32>(fifo,0xa0)=0;
+    layerField<void*>(fifo,0xa4)=0; layerField<void*>(fifo,0xa8)=0;
+    if (bytes) {
+        layerField<u32>(fifo,4)=(bytes+31)&~31u;
+        layerField<void*>(fifo,0)=GSmemAlloc(layerField<u32>(fifo,4));
+        DCFlushRange(layerField<void*>(fifo,0),layerField<u32>(fifo,4));
+        GSgfxGPUInitFifoBase__FP15GSgfx_GCFifoObjPvUl(reinterpret_cast<GSgfx_GCFifoObj*>(fifo+8),layerField<void*>(fifo,0),layerField<u32>(fifo,4));
+        GXInitFifoPtrs(reinterpret_cast<GXFifoObj*>(fifo+8),layerField<void*>(fifo,0),layerField<void*>(fifo,0));
+        if (gsgfx_gpu_mode==0) { gsgfx_layer_activeFifo=fifo; GSgfxGPUEnterBufferedMode__FP15GSgfx_GCFifoObj(fifo+8); }
+    }
+}
+
+void SetLayerType__10GSgfxLayerF14GSgfxLayerType(void *arg0, s32 arg1) {
+    s32 temp_r0;
+    u16 temp_r3;
+    u16 temp_r3_2;
+    u16 temp_r3_4;
+    u16 temp_r3_5;
+    u16 temp_r3_7;
+    void* temp_r3_3;
+    void* temp_r3_6;
+    u8 var_r31;
+    u8 var_r30;
+    u8 var_r3;
+    u8 var_r4;
+
+    var_r31 = 0;
+    var_r30 = 0;
+    var_r4 = 0;
+    temp_r0 = layerField<u32>(arg0, 0x2C);
+    var_r3 = 0;
+    if (arg1 != temp_r0) {
+        switch (temp_r0) {                          /* switch 1; irregular */
+        case 1:                                     /* switch 1 */
+            var_r31 = 1;
+            var_r3 = 1;
+            break;
+        case 4:                                     /* switch 1 */
+            var_r3 = 1;
+            break;
+        }
+        switch (arg1) {                             /* switch 2; irregular */
+        case 1:                                     /* switch 2 */
+            var_r30 = 1;
+            layerField<float>(arg0, 0x19BC) = 0.0f;
+            var_r4 = 1;
+            layerField<float>(arg0, 0x19C0) = 0.5f;
+            layerField<float>(arg0, 0x19C4) = 0.0f;
+            layerField<float>(arg0, 0x19C8) = 0.0f;
+            layerField<float>(arg0, 0x19CC) = 0.5f;
+            layerField<float>(arg0, 0x19D0) = 0.0f;
+            layerField<u8>(arg0, 0x19B8) = 0;
+            break;
+        case 4:                                     /* switch 2 */
+            var_r4 = 1;
+            break;
+        }
+        if ((var_r3 != 0) && (var_r4 == 0)) {
+            if (--fbTexRefCount__10GSgfxLayer == 0) {
+                GStextureFree(fbTexPtr__10GSgfxLayer);
+                fbTexPtr__10GSgfxLayer = 0;
             }
-            GXSetCPUFifo(sdk(&layer->currentBlend->fifoObject));
-            gsgfx_layer_activeFifo = layer->currentBlend;
-            gsgfxState->layer = layer;
+            goto block_22;
+        }
+        if ((var_r3 == 0) && (var_r4 != 0)) {
+            if (++fbTexRefCount__10GSgfxLayer == 1) {
+                temp_r3_3 = GStextureCreate(0, 0, 0x45, 0, 0);
+                fbTexPtr__10GSgfxLayer = temp_r3_3;
+                if (temp_r3_3 == 0) {
+                    layerField<u32>(arg0, 0x2C) = 0;
+                    fbTexRefCount__10GSgfxLayer = 0;
+                    return;
+                }
+            }
+        }
+block_22:
+        if ((var_r31 != 0) && (var_r30 == 0)) {
+            if (--distTexRefCount__10GSgfxLayer == 0) {
+                GStextureFree(distTexPtr__10GSgfxLayer);
+                distTexPtr__10GSgfxLayer = 0;
+            }
+            goto block_32;
+        }
+        if ((var_r31 == 0) && (var_r30 != 0) && (++distTexRefCount__10GSgfxLayer == 1) && (temp_r3_6 = GStextureCreate(0, 0, 0xA3, 0, 0), distTexPtr__10GSgfxLayer = temp_r3_6, ((temp_r3_6 == 0) != 0))) {
+            layerField<u32>(arg0, 0x2C) = 0;
+            distTexRefCount__10GSgfxLayer = 0;
+            if (--fbTexRefCount__10GSgfxLayer == 0) {
+                GStextureFree(fbTexPtr__10GSgfxLayer);
+                fbTexPtr__10GSgfxLayer = 0;
+            }
+        } else {
+block_32:
+            layerField<u32>(arg0, 0x2C) = arg1;
         }
     }
 }
+
+void* GetFBTexture__10GSgfxLayerFv() { return fbTexPtr__10GSgfxLayer; }
+
+void SetPriority__10GSgfxLayerF16GSgfxLayerOffsetP10GSgfxLayer(void* object,s32 offset,void* relative) {
+    LayerNode* layer=static_cast<LayerNode*>(object); LayerNode* other=static_cast<LayerNode*>(relative);
+    LayerNode* p;
+    if (_layerBottom==layer) _layerBottom=layer->next;
+    else for (p=_layerBottom;p;p=p->next) if (p->next==layer) { p->next=layer->next; break; }
+    switch (offset) {
+    case 1:
+        p=_layerBottom;
+        if (!p || p==other) { _layerBottom=layer; layer->next=p; return; }
+        for (;p->next;p=p->next) if (p->next==other) break;
+        layer->next=p->next; p->next=layer; return;
+    case 2:
+        for (p=_layerBottom;p;p=p->next) if (p==other) { layer->next=p->next; p->next=layer; return; }
+        return;
+    case 3: layer->next=_layerBottom; _layerBottom=layer; return;
+    case 4:
+        p=_layerBottom; layer->next=0;
+        if (!p) { _layerBottom=layer; return; }
+        while (p->next) p=p->next;
+        p->next=layer; return;
+    case 0: return;
+    }
 }
-extern "C" {
-void GSgfxRenderAddToFifoList__FP15GSgfx_GCFifoObjPvPvUlPFPv_vPv(void*,void*,void*,u32,void(*)(void*),void*);
-void GSgfxRenderModuleDoRender__FP10GSgfxLayer14GSgfxLayerPass(void*,s32);
-void EffectDistortion__10GSgfxLayerFv(void*);
-void EffectTextureCopy__10GSgfxLayerFP9GStexturebPUcbbb(void*,void*,bool,u8*,bool,bool,bool);
-void EffectScreenClear__10GSgfxLayerFbbb(void*,bool,bool,bool);
+
+void SetLayerVisibility__10GSgfxLayerFb(void *arg0, bool arg1) {
+    u8 temp_r4;
+
+    if (arg1 == 1) {
+        layerField<u8>(arg0, 0x19B3) = (u8) (layerField<u8>(arg0, 0x19B3) + 1);
+        return;
+    }
+    temp_r4 = layerField<u8>(arg0, 0x19B3);
+    if (temp_r4 != 0) {
+        layerField<u8>(arg0, 0x19B3) = (u8) (temp_r4 - 1);
+    }
+}
+
+s32 IsLayerVisible__10GSgfxLayerFv(void *arg0) {
+    return layerField<u32>(arg0, 0x4) & 1;
+}
+
+void SetPassVisibility__10GSgfxLayerFbb(void *arg0, bool arg1, bool arg2) {
+    if (arg1 == 1) {
+        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 2);
+    } else {
+        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) & 0xFFFFFFFD);
+    }
+    if (arg2 == 1) {
+        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 4);
+        return;
+    }
+    layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) & 0xFFFFFFFB);
+}
+
+void SetClearFlags__10GSgfxLayerFbbb(void *arg0, u8 arg1, u8 arg2, u8 arg3) {
+    layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) & 0xFFFFFFC7);
+    if (arg1 != 0) {
+        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 8);
+    }
+    if (arg2 != 0) {
+        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 0x10);
+    }
+    if (arg3 != 0) {
+        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 0x20);
+    }
+}
+
+void SetWantClearFlags__10GSgfxLayerFbbb(void *arg0, bool arg1, bool arg2, bool arg3) {
+    layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) & 0xFFFFFE3F);
+    if (arg1 != 0) {
+        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 0x40);
+    }
+    if (arg2 != 0) {
+        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 0x80);
+    }
+    if (arg3 != 0) {
+        layerField<u32>(arg0, 0x4) = (s32) (layerField<u32>(arg0, 0x4) | 0x100);
+    }
+}
+
+void SetTextureCopy__10GSgfxLayerFP9GStexturebPUc(void* layer,void* texture,bool copy,u8* params) {
+    if (!texture) {
+        layerField<u32>(layer,4)&=~0x200;
+        if (fbTexPtr__10GSgfxLayer && layerField<void*>(layer,0x19a4)==fbTexPtr__10GSgfxLayer) {
+            if (--fbTexRefCount__10GSgfxLayer==0) { GStextureFree(fbTexPtr__10GSgfxLayer); fbTexPtr__10GSgfxLayer=0; }
+        }
+        layerField<void*>(layer,0x19a4)=0;
+    } else {
+        if ((u32)texture==0xfefefefe) {
+            if (++fbTexRefCount__10GSgfxLayer==1) {
+                fbTexPtr__10GSgfxLayer=GStextureCreate(0,0,0x45,0,0);
+                if (!fbTexPtr__10GSgfxLayer) { fbTexRefCount__10GSgfxLayer=0; return; }
+            }
+            texture=fbTexPtr__10GSgfxLayer;
+        }
+        layerField<u32>(layer,4)|=0x200; layerField<void*>(layer,0x19a4)=texture;
+    }
+    if (!copy) layerField<u32>(layer,0x19a8)=0;
+    else if (!params) layerField<u32>(layer,0x19a8)=1;
+    else { layerField<u32>(layer,0x19a8)=2; memcpy(&layerField<u8>(layer,0x19ac),params,7); }
+}
+
+void* GetTextureCopy__10GSgfxLayerFv(void *arg0) {
+    if (layerField<u32>(arg0, 0x4) & 0x200) {
+        return layerField<void*>(arg0, 0x19A4);
+    }
+    return 0;
+}
+
+void GetFifoSize__10GSgfxLayerFPUlPUl(void *arg0, s32 *arg1, s32 *arg2) {
+    if (arg1 != NULL) {
+        *arg1 = layerField<u32>(arg0, 0x181C);
+    }
+    if (arg2 != NULL) {
+        *arg2 = layerField<u32>(arg0, 0x18D8);
+    }
+}
+
+#pragma scheduling off
+void GSgfxLayerInit__Fv() {
+    _layerIDTable[0]=0; _layerIDTable[1]=0; _layerIDTable[2]=0; _layerIDTable[3]=0;
+    _layerIDTable[4]=0; _layerIDTable[5]=0; _layerIDTable[6]=0; _layerIDTable[7]=0;
+    _layerIDTable[8]=0; _layerIDTable[9]=0; _layerIDTable[10]=0; _layerIDTable[11]=0;
+    _layerIDTable[12]=0; _layerIDTable[13]=0; _layerIDTable[14]=0;
+    _layerBottom=0; _layerIDTable[15]=0; gsgfx_layer_inPrimitive=0;
+}
+#pragma scheduling reset
+
+LayerNode* GSgfxLayerFindByName(char* name) {
+    for (LayerNode* p=_layerBottom;p;p=p->next) {
+        char local[32];
+        LayerNamed* n=(LayerNamed*)p;
+        if ((s32)((u8)strlen(n->name)+1)<=32) memcpy(local,n->name,(u8)strlen(n->name)+1);
+        else { memcpy(local,n->name,31); local[31]=0; }
+        if (stricmp(local,name)==0) return p;
+    }
+    return 0;
+}
+
+s32 GSgfxLayerFindByName_C(char* name) {
+    LayerNode* p=GSgfxLayerFindByName(name);
+    if (p==0) { return -1; } else { return p->id; }
+}
+
+LayerNode* GSgfxLayerFindByID(s32 id) {
+    if (id==-1) return 0;
+    if (id<16) return _layerIDTable[id];
+    // The original only defines a result for -1 and registered layer IDs.
+}
+
+void GSgfxLayerSetActive(s32 id) { if (id<16) gsgfxState->layer=_layerIDTable[id]; }
+
+s32 GSgfxLayerGetActive() {
+    for (s32 i=0;i<16;i++) if (_layerIDTable[i]==gsgfxState->layer) return i;
+    return -1;
+}
+
 void MarkAndInvalidate__10GSgfxLayerFv(void* layer) {
     u32 wrapped;
     {
@@ -471,6 +535,104 @@ void MarkAndInvalidate__10GSgfxLayerFv(void* layer) {
     }
     layerField<u32>(layer,0x16a8)|=0x40; layerField<u32>(layer,0x1760)|=0x40;
 }
+
+void SetupFifo__10GSgfxLayerFv(void* object) {
+    GraphicsLayerState* layer = static_cast<GraphicsLayerState*>(object);
+    if (gsgfx_gpu_mode == 2) {
+        BlendRecord* fifo = static_cast<BlendRecord*>(gsgfx_layer_activeFifo);
+        if (fifo != layer->currentBlend) {
+            if (gsgfx_gpu_mode != 1 && fifo) {
+                updateLayerFifo(fifo);
+            }
+            GXSetCPUFifo(sdk(&layer->currentBlend->fifoObject));
+            gsgfx_layer_activeFifo = layer->currentBlend;
+            gsgfxState->layer = layer;
+        }
+    }
+}
+
+void SetPassRedirect__10GSgfxLayerF14GSgfxLayerPassbP10GSgfxLayer14GSgfxLayerPass16GSgfxLayerOffset(void* layer,s32 pass,bool enabled,LayerNode* other,s32 otherPass,s32 offset) {
+    if (enabled==1) {
+        u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
+        u8* target=reinterpret_cast<u8*>(other)+0x1818+otherPass*0xbc;
+        void** link=offset==1 ? &layerField<void*>(target,0xa4) : &layerField<void*>(target,0xa8);
+        layerField<u8>(fifo,0x94)=1; layerField<s32>(fifo,0x98)=other->id;
+        layerField<s32>(fifo,0x9c)=otherPass; layerField<s32>(fifo,0xa0)=offset; *link=fifo; return;
+    }
+    if (layerField<void*>((u8*)layer+0x1818,pass*0xbc)) {
+        u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
+        if (layerField<u8>(fifo,0x94)) {
+            LayerNode* targetLayer=GSgfxLayerFindByID(layerField<s32>(fifo,0x98));
+            u8* target=reinterpret_cast<u8*>(targetLayer)+0x1818+layerField<s32>(fifo,0x9c)*0xbc;
+            void** link=layerField<s32>(fifo,0xa0)==1 ? &layerField<void*>(target,0xa4) : &layerField<void*>(target,0xa8);
+            layerField<u8>(fifo,0x94)=0; layerField<s32>(fifo,0x98)=-1;
+            layerField<s32>(fifo,0x9c)=2; layerField<s32>(fifo,0xa0)=0; *link=0;
+        }
+    }
+}
+
+void PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(GraphicsLayerState* layer, s32 pass) {
+    if (layer->blendRecords[pass].buffer) {
+        u32 visible = pass == 0 ? 3 : 5;
+        if (visible == (visible & layerField<u32>(layer, 4))) {
+            selectLayerPass(layer, pass);
+            SetupFifo__10GSgfxLayerFv(layer);
+            GSgfxRenderModuleDoRender__FP10GSgfxLayer14GSgfxLayerPass(layer, pass);
+            return;
+        }
+        BlendRecord* fifo = &layer->blendRecords[pass];
+        if (fifo == gsgfx_layer_activeFifo) {
+            updateLayerFifo(gsgfx_layer_activeFifo);
+        }
+        GSgfxGPUSetFifoWritePtr__FP15GSgfx_GCFifoObjPv(&fifo->fifoObject, layer->blendRecords[pass].start);
+        layer->blendRecords[pass].end = layer->blendRecords[pass].start;
+        layer->blendRecords[pass].wrapCount = 0;
+        layer->blendRecords[pass].overflow = 0;
+        InvalidateState__10GSgfxLayerFv(layer);
+    }
+}
+
+static inline void getWantClearFlags(void* layer, bool* color, bool* alpha, bool* depth) {
+    if (color) *color = (layerField<u32>(layer,4) >> 6) & 1;
+    if (alpha) *alpha = (layerField<u32>(layer,4) >> 7) & 1;
+    if (depth) *depth = (layerField<u32>(layer,4) >> 8) & 1;
+}
+static inline void getNextClearFlags(void* layer, bool* color, bool* alpha, bool* depth) {
+    LayerNode* next = layerField<LayerNode*>(layer,0);
+    bool c, a, d;
+    if (!next) { c = false; a = false; d = false; }
+    else {
+        bool wc, wa, wd;
+        getWantClearFlags(next, &wc, &wa, &wd);
+        c = (u8)((layerField<u32>(layer,4) & 8) || wc) != 0;
+        a = (u8)((layerField<u32>(layer,4) & 0x10) || wa) != 0;
+        d = (u8)((layerField<u32>(layer,4) & 0x20) || wd) != 0;
+    }
+    if (color) *color = c;
+    if (alpha) *alpha = a;
+    if (depth) *depth = d;
+}
+
+void Prerender__10GSgfxLayerFv(void* layer) {
+    PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(static_cast<GraphicsLayerState*>(layer),0);
+    PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(static_cast<GraphicsLayerState*>(layer),1);
+    bool color,alpha,depth;
+    getNextClearFlags(layer, &color, &alpha, &depth);
+    if (layerField<void*>(layer,0x18d4)) selectLayerPass(static_cast<GraphicsLayerState*>(layer),1);
+    else selectLayerPass(static_cast<GraphicsLayerState*>(layer),0);
+    if (layerField<u32>(layer,4)&1) switch (layerField<s32>(layer,0x2c)) {
+    case 1: EffectDistortion__10GSgfxLayerFv(layer); break;
+    case 0: break;
+    case 4: break;
+    }
+    if (layerField<u32>(layer,4)&0x200) switch (layerField<s32>(layer,0x19a8)) {
+    case 0: EffectTextureCopy__10GSgfxLayerFP9GStexturebPUcbbb(layer,layerField<void*>(layer,0x19a4),0,0,color,alpha,depth); return;
+    case 1: EffectTextureCopy__10GSgfxLayerFP9GStexturebPUcbbb(layer,layerField<void*>(layer,0x19a4),1,0,color,alpha,depth); return;
+    case 2: EffectTextureCopy__10GSgfxLayerFP9GStexturebPUcbbb(layer,layerField<void*>(layer,0x19a4),1,static_cast<u8*>(layer)+0x19ac,color,alpha,depth); return;
+    }
+    else EffectScreenClear__10GSgfxLayerFbbb(layer,color,alpha,depth);
+}
+
 void SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(void* layer,void* object) {
     u8* fifo=static_cast<u8*>(object);
     if (layerField<void*>(fifo,0)) {
@@ -505,101 +667,32 @@ void SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(void* layer,void* objec
     }
     GSgfxRenderAddToFifoList__FP15GSgfx_GCFifoObjPvPvUlPFPv_vPv(fifo+8,start,layerField<void*>(fifo,0x8c),layerField<u32>(fifo,0x90),0,0);
 }
-void SetPassRedirect__10GSgfxLayerF14GSgfxLayerPassbP10GSgfxLayer14GSgfxLayerPass16GSgfxLayerOffset(void* layer,s32 pass,bool enabled,LayerNode* other,s32 otherPass,s32 offset) {
-    if (enabled==1) {
-        u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
-        u8* target=reinterpret_cast<u8*>(other)+0x1818+otherPass*0xbc;
-        void** link=offset==1 ? &layerField<void*>(target,0xa4) : &layerField<void*>(target,0xa8);
-        layerField<u8>(fifo,0x94)=1; layerField<s32>(fifo,0x98)=other->id;
-        layerField<s32>(fifo,0x9c)=otherPass; layerField<s32>(fifo,0xa0)=offset; *link=fifo; return;
-    }
-    if (layerField<void*>((u8*)layer+0x1818,pass*0xbc)) {
-        u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
-        if (layerField<u8>(fifo,0x94)) {
-            LayerNode* targetLayer=GSgfxLayerFindByID(layerField<s32>(fifo,0x98));
-            u8* target=reinterpret_cast<u8*>(targetLayer)+0x1818+layerField<s32>(fifo,0x9c)*0xbc;
-            void** link=layerField<s32>(fifo,0xa0)==1 ? &layerField<void*>(target,0xa4) : &layerField<void*>(target,0xa8);
-            layerField<u8>(fifo,0x94)=0; layerField<s32>(fifo,0x98)=-1;
-            layerField<s32>(fifo,0x9c)=2; layerField<s32>(fifo,0xa0)=0; *link=0;
-        }
-    }
+
+#pragma auto_inline off
+void BuildRenderListPass__10GSgfxLayerF14GSgfxLayerPass(void* layer,s32 pass) {
+    u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
+    if (layerField<void*>(fifo,0xa4)) SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(layer,layerField<void*>(fifo,0xa4));
+    if (layerField<void*>((u8*)layer+0x1818,pass*0xbc) && !layerField<u8>(fifo,0x94)) SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(layer,fifo);
+    if (layerField<void*>(fifo,0xa8)) SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(layer,layerField<void*>(fifo,0xa8));
 }
-void PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(GraphicsLayerState* layer, s32 pass) {
-    if (layer->blendRecords[pass].buffer) {
-        u32 visible = pass == 0 ? 3 : 5;
-        if (visible == (visible & layerField<u32>(layer, 4))) {
-            selectLayerPass(layer, pass);
-            SetupFifo__10GSgfxLayerFv(layer);
-            GSgfxRenderModuleDoRender__FP10GSgfxLayer14GSgfxLayerPass(layer, pass);
-            return;
-        }
-        BlendRecord* fifo = &layer->blendRecords[pass];
-        if (fifo == gsgfx_layer_activeFifo) {
-            updateLayerFifo(gsgfx_layer_activeFifo);
-        }
-        GSgfxGPUSetFifoWritePtr__FP15GSgfx_GCFifoObjPv(&fifo->fifoObject, layer->blendRecords[pass].start);
-        layer->blendRecords[pass].end = layer->blendRecords[pass].start;
-        layer->blendRecords[pass].wrapCount = 0;
-        layer->blendRecords[pass].overflow = 0;
-        InvalidateState__10GSgfxLayerFv(layer);
-    }
+
+void BuildRenderList__10GSgfxLayerFv(void* layer) {
+    BuildRenderListPass__10GSgfxLayerF14GSgfxLayerPass(layer,0);
+    BuildRenderListPass__10GSgfxLayerF14GSgfxLayerPass(layer,1);
 }
-static inline void getWantClearFlags(void* layer, bool* color, bool* alpha, bool* depth) {
-    if (color) *color = (layerField<u32>(layer,4) >> 6) & 1;
-    if (alpha) *alpha = (layerField<u32>(layer,4) >> 7) & 1;
-    if (depth) *depth = (layerField<u32>(layer,4) >> 8) & 1;
-}
-static inline void getNextClearFlags(void* layer, bool* color, bool* alpha, bool* depth) {
-    LayerNode* next = layerField<LayerNode*>(layer,0);
-    bool c, a, d;
-    if (!next) { c = false; a = false; d = false; }
-    else {
-        bool wc, wa, wd;
-        getWantClearFlags(next, &wc, &wa, &wd);
-        c = (u8)((layerField<u32>(layer,4) & 8) || wc) != 0;
-        a = (u8)((layerField<u32>(layer,4) & 0x10) || wa) != 0;
-        d = (u8)((layerField<u32>(layer,4) & 0x20) || wd) != 0;
-    }
-    if (color) *color = c;
-    if (alpha) *alpha = a;
-    if (depth) *depth = d;
-}
-void Prerender__10GSgfxLayerFv(void* layer) {
-    PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(static_cast<GraphicsLayerState*>(layer),0);
-    PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(static_cast<GraphicsLayerState*>(layer),1);
-    bool color,alpha,depth;
-    getNextClearFlags(layer, &color, &alpha, &depth);
-    if (layerField<void*>(layer,0x18d4)) selectLayerPass(static_cast<GraphicsLayerState*>(layer),1);
-    else selectLayerPass(static_cast<GraphicsLayerState*>(layer),0);
-    if (layerField<u32>(layer,4)&1) switch (layerField<s32>(layer,0x2c)) {
-    case 1: EffectDistortion__10GSgfxLayerFv(layer); break;
+#pragma auto_inline reset
+
+void PrepareNextFrame__10GSgfxLayerFv(void* layer) {
+    MarkAndInvalidate__10GSgfxLayerFv(layer);
+    switch (layerField<s32>(layer,0x2c)) {
+    case 1: PrepareDistortion__10GSgfxLayerFv(layer); break;
+    case 4: PrepareFBCopy__10GSgfxLayerFv(layer); break;
     case 0: break;
-    case 4: break;
     }
-    if (layerField<u32>(layer,4)&0x200) switch (layerField<s32>(layer,0x19a8)) {
-    case 0: EffectTextureCopy__10GSgfxLayerFP9GStexturebPUcbbb(layer,layerField<void*>(layer,0x19a4),0,0,color,alpha,depth); return;
-    case 1: EffectTextureCopy__10GSgfxLayerFP9GStexturebPUcbbb(layer,layerField<void*>(layer,0x19a4),1,0,color,alpha,depth); return;
-    case 2: EffectTextureCopy__10GSgfxLayerFP9GStexturebPUcbbb(layer,layerField<void*>(layer,0x19a4),1,static_cast<u8*>(layer)+0x19ac,color,alpha,depth); return;
-    }
-    else EffectScreenClear__10GSgfxLayerFbbb(layer,color,alpha,depth);
+    layerField<void*>(layer,0x19dc)=0; layerField<void*>(layer,0x19ec)=0;
+    layerField<void*>(layer,0x19fc)=0; layerField<void*>(layer,0x1a0c)=0;
 }
-}
-static u32 _layerPerfColor[8]={0x000000ff,0x00008000,0x00800000,0x00008080,0x00800080,0x00808000,0x000080ff,0x00808080};
-static u32 _layerPerfUserColor=0x00ff8000;
-extern "C" {
-void GSgfxGPUEnterBufferedMode__FP15GSgfx_GCFifoObj(void*);
-void GSmemFree(void*);
-void __dl__FPv(void*);
-void GSgfxRenderWaitForDrawComplete__Fv();
-void LoadHWState__10GSgfxLayerFv(void*);
-extern void* _layerStateLastHWState;
-void GSgfxRenderModuleDoRenderFast__Fv();
-void GSgfxLayerBuildRenderList__Fv() {
-    if (_layerBottom) {
-        if (gsgfx_gpu_mode!=1 && gsgfx_layer_activeFifo) updateLayerFifo(gsgfx_layer_activeFifo);
-        for (LayerNode* p=_layerBottom;p;p=p->next) BuildRenderList__10GSgfxLayerFv(p);
-    }
-}
+
 LayerNode* GSgfxLayerPrerender__Fv() {
     // No value is assigned for an empty list in the original implementation.
     LayerNode* p;
@@ -612,84 +705,26 @@ LayerNode* GSgfxLayerPrerender__Fv() {
     for (p=_layerBottom;p;p=p->next) { Prerender__10GSgfxLayerFv(p); last=p; }
     return last;
 }
-void CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(void* layer,s32 pass,u32 bytes) {
-    u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
-    layerField<void*>(fifo,0)=0; layerField<u32>(fifo,4)=0; memset(fifo+8,0,0x80);
-    s32 id=layerField<s32>(layer,0x28);
-    if (id<8) layerField<u32>(fifo,0x90)=_layerPerfColor[id];
-    else layerField<u32>(fifo,0x90)=_layerPerfUserColor;
-    layerField<u16>(fifo,0xac)=0; layerField<u16>(fifo,0xae)=0;
-    layerField<u32>(fifo,0xb0)=0; layerField<u32>(fifo,0xb4)=0; layerField<u32>(fifo,0xb8)=0;
-    layerField<void*>(fifo,0x88)=0; layerField<void*>(fifo,0x8c)=0;
-    layerField<u8>(fifo,0x94)=0; layerField<s32>(fifo,0x98)=-1;
-    layerField<s32>(fifo,0x9c)=2; layerField<s32>(fifo,0xa0)=0;
-    layerField<void*>(fifo,0xa4)=0; layerField<void*>(fifo,0xa8)=0;
-    if (bytes) {
-        layerField<u32>(fifo,4)=(bytes+31)&~31u;
-        layerField<void*>(fifo,0)=GSmemAlloc(layerField<u32>(fifo,4));
-        DCFlushRange(layerField<void*>(fifo,0),layerField<u32>(fifo,4));
-        GSgfxGPUInitFifoBase__FP15GSgfx_GCFifoObjPvUl(reinterpret_cast<GSgfx_GCFifoObj*>(fifo+8),layerField<void*>(fifo,0),layerField<u32>(fifo,4));
-        GXInitFifoPtrs(reinterpret_cast<GXFifoObj*>(fifo+8),layerField<void*>(fifo,0),layerField<void*>(fifo,0));
-        if (gsgfx_gpu_mode==0) { gsgfx_layer_activeFifo=fifo; GSgfxGPUEnterBufferedMode__FP15GSgfx_GCFifoObj(fifo+8); }
+
+void GSgfxLayerBuildRenderList__Fv() {
+    if (_layerBottom) {
+        if (gsgfx_gpu_mode!=1 && gsgfx_layer_activeFifo) updateLayerFifo(gsgfx_layer_activeFifo);
+        for (LayerNode* p=_layerBottom;p;p=p->next) BuildRenderList__10GSgfxLayerFv(p);
     }
 }
-LayerNode* __ct__10GSgfxLayerF12GSgfxLayerIDPcUlUlUl14GSgfxLayerType(void* object,s32 id,char* name,u32 opaque,u32 translucent,u32 matrices,s32 type) {
-    LayerNode* layer=static_cast<LayerNode*>(object);
-    if (!opaque && !translucent) return layer;
-    if (!name || GSgfxLayerFindByName(name)) return layer;
-    if (!matrices) return layer;
-    layer->id=id; layerField<u32>(layer,4)=7; layerField<u8>(layer,0x19b3)=1; layerField<s32>(layer,0x2c)=0;
-    SetLayerType__10GSgfxLayerF14GSgfxLayerType(layer,type);
-    layerField<s32>(layer,0x1994)=2;
-    u32 count=strlen(name)+1; if (count>32) count=32;
-    memcpy(reinterpret_cast<u8*>(layer)+8,name,count); layerField<u8>(layer,count+7)=0;
-    CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(layer,0,opaque);
-    CreateFifo__10GSgfxLayerF14GSgfxLayerPassUl(layer,1,translucent);
-    LoadHWState__10GSgfxLayerFv(layer); GSgfx_GCInitState(); memset(reinterpret_cast<u8*>(layer)+0x30,0,0x1678);
-    layerField<GSgfxMatrixStack*>(layer,0x19a0)=new GSgfxMatrixStack(matrices);
-    if (!_layerBottom) { _layerBottom=layer; layer->next=0; }
-    else { LayerNode* p=_layerBottom; while (p->next) p=p->next; layer->next=p->next; p->next=layer; }
-    layerField<void*>(layer,0x199c)=0; layerField<s32>(layer,0x1998)=0x98;
-    layerField<void*>(layer,0x19a4)=0; layerField<s32>(layer,0x19a8)=0;
-    memset(reinterpret_cast<u8*>(layer)+0x19b4,0,0x20);
-    PrepareNextFrame__10GSgfxLayerFv(layer);
-    if (layerField<void*>(layer,0x1818)) selectLayerPass(static_cast<GraphicsLayerState*>(object),0);
-    else selectLayerPass(static_cast<GraphicsLayerState*>(object),1);
-    _layerIDTable[layer->id]=layer; return layer;
+
+void GSgfxLayerPrepareNextFrame__Fv() {
+    if (_layerBottom) for (LayerNode* p=_layerBottom;p;p=p->next) PrepareNextFrame__10GSgfxLayerFv(p);
 }
+
+void GSgfxLayerInvalidateAll__Fv() {
+    for (LayerNode* p=_layerBottom;p;p=p->next) InvalidateState__10GSgfxLayerFv(p);
 }
-static inline void disableLayerPassRedirect(void* layer,s32 pass) {
-    if (layerField<void*>(layer,0x1818+pass*0xbc)) {
-        if (layerField<u8>(layer,0x18ac+pass*0xbc)) {
-            LayerNode* targetLayer=GSgfxLayerFindByID(layerField<s32>(layer,0x18b0+pass*0xbc));
-            u8* target=reinterpret_cast<u8*>(targetLayer)+0x1818+layerField<s32>(layer,0x18b4+pass*0xbc)*0xbc;
-            void** link=layerField<s32>(layer,0x18b8+pass*0xbc)==1 ? &layerField<void*>(target,0xa4) : &layerField<void*>(target,0xa8);
-            layerField<u8>(layer,0x18ac+pass*0xbc)=0; layerField<s32>(layer,0x18b0+pass*0xbc)=-1;
-            layerField<s32>(layer,0x18b4+pass*0xbc)=2; layerField<s32>(layer,0x18b8+pass*0xbc)=0; *link=0;
-        }
-    }
-}
-GSgfxLayer::~GSgfxLayer() {
-    LayerNode* layer=reinterpret_cast<LayerNode*>(this);
-    GSgfxRenderWaitForDrawComplete__Fv();
-    disableLayerPassRedirect(layer,0);
-    disableLayerPassRedirect(layer,1);
-    SetLayerType__10GSgfxLayerF14GSgfxLayerType(layer,0);
-    SetTextureCopy__10GSgfxLayerFP9GStexturebPUc(layer,0,0,0);
-    if (_layerBottom==layer) _layerBottom=layer->next;
-    else {
-        LayerNode* p=_layerBottom;
-        while (p && p->next!=layer) p=p->next;
-        p->next=layer->next;
-    }
-    void* fifo=gsgfx_layer_activeFifo;
-    if (fifo && (fifo==reinterpret_cast<u8*>(layer)+0x1818 || fifo==reinterpret_cast<u8*>(layer)+0x18d4)) {
-        updateLayerFifo(fifo); GXSetCPUFifo(sdk(GSgfxGPUGetImmediateFifo__Fv())); gsgfx_layer_activeFifo=0;
-    }
-    if (_layerStateLastHWState==reinterpret_cast<u8*>(layer)+0x30) _layerStateLastHWState=0;
-    delete layerField<GSgfxMatrixStack*>(layer,0x19a0); _layerIDTable[layer->id]=0;
-    if (layerField<void*>(layer,0x1818)) { GSmemFree(layerField<void*>(layer,0x1818)); layerField<void*>(layer,0x1818)=0; }
-    if (layerField<void*>(layer,0x18d4)) { GSmemFree(layerField<void*>(layer,0x18d4)); layerField<void*>(layer,0x18d4)=0; }
+
+void GSgfxLayerSetStatsRenderMode(u8 enabled) { _layerRenderStats=enabled; }
+
+u8 GSgfxLayerGetStatsRenderMode() { return _layerRenderStats; }
+
 }
 
 extern "C" {
