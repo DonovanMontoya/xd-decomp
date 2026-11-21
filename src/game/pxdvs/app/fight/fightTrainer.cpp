@@ -1326,7 +1326,7 @@ static void _fightTrainer_SortUnderTakerDarkPoke(u8* list, u8 count) {
 }
 
 static void _fightTrainer_GetUnderTakerDarkPoke(u8* list, u8 count, u8 start, Hero* hero, u8 num, u16 encountId) {
-    f32 step = 20.0f / count;
+    f32 step;
     u8 i;
     u8 first = start;
     DeckDarkPokemon* deckDark;
@@ -1339,6 +1339,7 @@ static void _fightTrainer_GetUnderTakerDarkPoke(u8* list, u8 count, u8 start, He
     u8 used[2] = {0, 0};
     Pokemon pokemon;
 
+    step = 20.0f / count;
     do {
         total += step;
         loops++;
@@ -1733,6 +1734,7 @@ static void _fightTrainerCreateDeckNormal(u16 id, Hero* hero, u16 encountId) {
 
 static bool _fightTrainerCreateDeckPokemon(Hero* hero, u16 pokemonId, u16 darkId, u16 ballId, Pokemon* pokemon, u8 index,
                                            u16 encountId) {
+    DeckDarkPokemon* deckDark;
     u16 swapDeck;
     DarkPokemon* dark;
     u8 addId;
@@ -1756,26 +1758,26 @@ static bool _fightTrainerCreateDeckPokemon(Hero* hero, u16 pokemonId, u16 darkId
             return true;
         }
         if (swapMode == 1) {
-            darkId = swapDeck;
-            if (darkId == 0) {
+            u32 trainerId = swapDeck;
+            if (trainerId == 0) {
                 return true;
             }
-            pokemonId = fightTrainerDB_GetTemotiPokemonId(darkId, index);
-            darkId = DeckTrainer::getDeckTrainerObj(darkId)->getDarkPokemonDataID(0);
+            pokemonId = fightTrainerDB_GetTemotiPokemonId(trainerId, index);
+            darkId = DeckTrainer::getDeckTrainerObj(trainerId)->getDarkPokemonDataID(0);
         }
     }
     if (addMode == 1 && addPlace == index) {
         u8 deckId = addId;
-        DeckDarkPokemon* deckDark = DeckDarkPokemon::getDeckDarkPokemonObj(deckId);
-        DarkPokemon* addDark = darkPokemonGetDarkPokemon(deckId);
+        deckDark = DeckDarkPokemon::getDeckDarkPokemonObj(deckId);
+        dark = darkPokemonGetDarkPokemon(deckId);
         pokemonId = deckDark->getDeckPokemonID();
-        darkId = addDark->getDarkPokemonID();
+        darkId = dark->getDarkPokemonID();
     } else if (addMode == 2 && addPlace == index) {
         u8 deckId = addId;
-        DeckDarkPokemon* deckDark = DeckDarkPokemon::getDeckDarkPokemonObj(deckId);
-        DarkPokemon* addDark = darkPokemonGetDarkPokemon(deckId);
+        deckDark = DeckDarkPokemon::getDeckDarkPokemonObj(deckId);
+        dark = darkPokemonGetDarkPokemon(deckId);
         pokemonId = deckDark->getDeckPokemonID();
-        darkId = addDark->getDarkPokemonID();
+        darkId = dark->getDarkPokemonID();
     }
     if (!fightTrainerCreateFightTrainerPokemonDataIdToPokemon(pokemonId, pokemon, heroGetStatus(hero, 2, 0), darkId, encountId)) {
         return false;

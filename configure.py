@@ -1349,7 +1349,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightSideBios.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightSide.cpp", cflags=cflags_xd_app_fight),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightSideDB.cpp"),
-            Object(NonMatching, "game/pxdvs/app/fight/fightTrainer.cpp", cflags=cflags_xd_app_fight),
+            Object(NonMatching, "game/pxdvs/app/fight/fightTrainer.cpp", cflags=cflags_xd_app_fight, extra_cflags=["-inline noauto,deferred"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightTrainerBios.cpp", cflags=cflags_xd_app_fight),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightTrainerDB.cpp", cflags=cflags_xd_app_fight),
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightTrainerEnemy.cpp", cflags=cflags_xd_app_fight),
