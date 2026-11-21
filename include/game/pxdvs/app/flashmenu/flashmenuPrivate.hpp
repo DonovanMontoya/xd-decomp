@@ -1,10 +1,9 @@
 #ifndef PXDVS_APP_FLASHMENU_FLASHMENU_PRIVATE_HPP
 #define PXDVS_APP_FLASHMENU_FLASHMENU_PRIVATE_HPP
 
-#include <game/pxdvs/app/flashmenu/flashColorTransform.hpp>
+#include <game/pxdvs/app/flashmenu/flashShape.hpp>
 
 struct _PLACEOBJECT2;
-struct _SHAPERECORD;
 struct _DEFINETEXT;
 struct _DEFINEFONT2;
 struct _DEFINESHAPE;
@@ -15,13 +14,6 @@ struct GSgfxLayer;
 enum GSgfxLayerID { GSGFX_LAYER_ID_DUMMY };
 struct tagWINDOW_WORK;
 struct tagSPRITE_WORK;
-
-struct FLASHMATRIX {
-    s32 m[6];
-};
-struct FLASHMATRIXF {
-    f32 m[6];
-};
 
 struct FlashHeader {
     u8 reserved0[6];

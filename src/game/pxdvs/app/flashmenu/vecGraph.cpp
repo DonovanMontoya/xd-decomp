@@ -4,17 +4,11 @@ extern "C" {
 #include <dolphin/os/OSFastCast.h>
 }
 
-#include <game/pxdvs/app/flashmenu/flashColorTransform.hpp>
+#include <game/pxdvs/app/flashmenu/flashShape.hpp>
 
 struct GStexture;
 struct GSvec2 {
     f32 x, y;
-};
-struct FLASHMATRIXF {
-    f32 m[6];
-};
-struct FLASHMATRIX {
-    s32 m[6];
 };
 struct VEC_GRAPH_DATA {
     s32 fill[2],shift[2],previous[2];
@@ -40,18 +34,6 @@ struct GXColor {
 struct GXColorS10 {
     s16 r, g, b, a;
 };
-struct SHAPEMOVE {
-    s32 pad;
-    s32 x;
-    s32 y;
-};
-struct _SHAPERECORD {
-    u8 type;
-    u8 pad[3];
-    SHAPEMOVE *move;
-    _SHAPERECORD *next;
-};
-
 extern "C" {
 GStexture *FlashSystemGetGStexture(u32 id, long index);
 void GSprimDraw2DTexQuad4V(const GSvec2 *, const GSvec2 *, GStexture *, const GXColor *);
@@ -176,8 +158,8 @@ static _SHAPERECORD *SpriteCode(u32 id, _SHAPERECORD *rec, u16 index, FLASHMATRI
     s32 n = 0;
     do {
         if (rec->type == 2) {
-            x += rec->move->x;
-            y += rec->move->y;
+            x += ((SRecordLine*)rec->data)->x;
+            y += ((SRecordLine*)rec->data)->y;
             last = rec;
             q = &pts[n++];
             q->x = (f32)x / 20.0f;
@@ -326,8 +308,6 @@ static void getUV(GSvec2* output,GSvec2* uv,GSvec2* quad,FLASHMATRIXF* transform
     }
 }
 
-struct _FILLSTYLEARRAY {u32 count;void* styles;};
-struct _LINESTYLEARRAY {u32 count;void* styles;};
 static void vecExec(u32,_FILLSTYLEARRAY*,_LINESTYLEARRAY*,_SHAPERECORD*,FLASHMATRIXF*,FLASHMATRIXF*,FLASHCXFORM*);
 struct GSgfxLayer {
     u8 reserved0[0x1644];
@@ -516,24 +496,6 @@ static void SBscan() {
 }
 
 
-struct VecGradientStop {u8 ratio;u8 padding[3];u32 color;};
-struct VecGradient {u8 count;u8 padding[3];VecGradientStop stops[8];};
-struct VecFillStyle {
-    u8 type;u8 padding[3];u32 color;
-    FLASHMATRIX matrix;
-    VecGradient gradient;
-    u32 texture;
-    FLASHMATRIX textureMatrix;
-};
-typedef char VecFillStyleSize[sizeof(VecFillStyle)==0x80?1:-1];
-typedef char VecFillTextureOffset[(u32)&((VecFillStyle*)0)->texture==0x64?1:-1];
-typedef char VecFillTextureMatrixOffset[(u32)&((VecFillStyle*)0)->textureMatrix==0x68?1:-1];
-struct VecStyleChange {
-    u8 flags;u8 reserved[3];s32 x,y;
-    u8 left,right,line,padding;
-    void* lineStyles;void* fillStyles;
-};
-struct VecCurve {s32 controlX,controlY,endX,endY;};
 extern "C" {
 void flcalcMulMatrixf(FLASHMATRIXF*,FLASHMATRIXF*,FLASHMATRIXF*);
 void flcalcBezier3(GSvec2*,GSvec2*,f32);
@@ -556,7 +518,7 @@ static void vecExec(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines,_SHAPER
     GSvec2 curve[3],current,previous;
     s32 x,y;
     u8 sprite=0,more=1;
-    if(fills->count==0 && fills->styles)((VecFillStyle*)fills->styles)->color=0xffffffff;
+    if(fills->count==0 && fills->styles)fills->styles->color=0xffffffff;
     x=0;y=0;
     if(matrix)flcalcMulMatrixf(&combined,parent,matrix);
     else for(s32 component=0;component<6;++component)combined.m[component]=parent->m[component];
@@ -564,7 +526,7 @@ static void vecExec(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines,_SHAPER
         switch(shape->type) {
         case 0:more=0;break;
         case 1: {
-            VecStyleChange* change=(VecStyleChange*)shape->move;
+            VecStyleChange* change=(VecStyleChange*)shape->data;
             sprite=0;
             if(change->flags&1) {
                 x=change->x;y=change->y;
@@ -587,11 +549,11 @@ static void vecExec(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines,_SHAPER
                     }
                 }
             }
-            if((change->flags&16) && change->fillStyles) {
+            if((change->flags&16) && change->fills.styles) {
                 SBscan();
                 ((VEC_GRAPH_DATA*)gVecDat)->minY=0x7fff;((VEC_GRAPH_DATA*)gVecDat)->minX=0x7fff;((VEC_GRAPH_DATA*)gVecDat)->maxY=-0x8000;((VEC_GRAPH_DATA*)gVecDat)->maxX=-0x8000;
                 memset(scanline_buffer,0,sizeof(scanline_buffer));
-                ((VEC_GRAPH_DATA*)gVecDat)->fillStyles=change->fillStyles;
+                ((VEC_GRAPH_DATA*)gVecDat)->fillStyles=change->fills.styles;
                 ((VEC_GRAPH_DATA*)gVecDat)->shift[1]=0;((VEC_GRAPH_DATA*)gVecDat)->shift[0]=0;((VEC_GRAPH_DATA*)gVecDat)->fill[1]=0;((VEC_GRAPH_DATA*)gVecDat)->fill[0]=0;
                 if(!(change->flags&4)){((VEC_GRAPH_DATA*)gVecDat)->shift[1]=0;((VEC_GRAPH_DATA*)gVecDat)->fill[1]=0;}
                 if(!(change->flags&2)){((VEC_GRAPH_DATA*)gVecDat)->shift[0]=0;((VEC_GRAPH_DATA*)gVecDat)->fill[0]=0;}
@@ -612,7 +574,7 @@ static void vecExec(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines,_SHAPER
             break;
         }
         case 2:
-            x+=shape->move->x;y+=shape->move->y;
+            x+=((SRecordLine*)shape->data)->x;y+=((SRecordLine*)shape->data)->y;
             local.x=(f32)x/20.0f;local.y=(f32)y/20.0f;
             if(!sprite) {
                 flcalcMatrix(&points[1],&combined,&local);
@@ -622,7 +584,7 @@ static void vecExec(u32 id,_FILLSTYLEARRAY* fills,_LINESTYLEARRAY* lines,_SHAPER
             }
             break;
         case 3: {
-            VecCurve* edge=(VecCurve*)shape->move;
+            VecCurve* edge=(VecCurve*)shape->data;
             s32 controlX=x+edge->controlX,controlY=y+edge->controlY;
             local.x=(f32)controlX/20.0f;local.y=(f32)controlY/20.0f;
             flcalcMatrix(&points[2],&combined,&local);

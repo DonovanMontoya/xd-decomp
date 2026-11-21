@@ -53,30 +53,6 @@ struct _DEFINEFONT2 {
     u32 shapes;
 };
 
-struct _SHAPERECORD {
-    u8 type;
-    u8 pad[3];
-    void *data;
-    _SHAPERECORD *next;
-};
-struct SRecordStyle {
-    u8 flags;
-    u8 pad[3];
-    s32 x;
-    s32 y;
-};
-struct SRecordLine {
-    s32 pad;
-    s32 x;
-    s32 y;
-};
-struct SRecordCurve {
-    s32 a;
-    s32 b;
-    s32 c;
-    s32 d;
-};
-
 struct _PLACEOBJECT2 {
     u8 flags;u8 reserved1[3];s32 character,depth;
     FLASHMATRIX matrix;FLASHCXFORM cxform;u32 ratio,name;
@@ -123,10 +99,13 @@ inline void flashPlaceRatio(FlashMenu* menu,s32 depth,u32 ratio) {
     } else {menu->items[depth].depth=(f32)ratio/65536.0f;}
 }
 
-struct FlashGradientEntry {u8 ratio;u8 reserved1[3];u32 color;};
-struct FlashFillStyle {u8 flags;u8 reserved1[3];u32 color;s32 matrix[6];u8 count;u8 reserved21[3];FlashGradientEntry gradients[8];u8 reserved64[0x1C];};
-struct _DEFINESHAPE {u32 id;s32 fillCount;FlashFillStyle* fills;s32 lineCount;void* lines;u32 reserved14;_SHAPERECORD* records;};
-struct FlashShapeEdges {u8 flags;u8 reserved1[0xF];s32 pointCount;void* points;s32 edgeCount;void* edges;};
+struct _DEFINESHAPE {
+    u32 id;
+    _FILLSTYLEARRAY fills;
+    _LINESTYLEARRAY lines;
+    u32 reserved14;
+    _SHAPERECORD* records;
+};
 
 struct FlashMorphGradientEntry {u8 ratioA,ratioB;u8 reserved2[2];u32 colorA,colorB;};
 struct FlashMorphFillStyle {u8 flags;u8 reserved1[3];u32 colorA,colorB;s32 matrixA[6],matrixB[6];u8 count;u8 reserved3D[3];FlashMorphGradientEntry gradients[8];u8 reservedA0[0x34];};
@@ -202,7 +181,6 @@ extern "C" {
 s32 flcalcBlendColor(s32,s32,f32);
 void flcalcConvFlashMatrix(FLASHMATRIXF*,FLASHMATRIX*);
 void flcalcMulMatrixf(FLASHMATRIXF*,FLASHMATRIXF*,FLASHMATRIXF*);
-void vectorGraph(s32,s32*,s32*,_SHAPERECORD*,FLASHMATRIXF*,FLASHMATRIXF*,FLASHCXFORM*,u8);
 void msgctrlSetValue(s32,u32);
 void GSmsgPrint2(s32,s32,s32,s32,u32);
 }
@@ -536,7 +514,7 @@ void FlashMenu::DrawText(_DEFINETEXT* text, FLASHMATRIXF* parent, FLASHMATRIXF* 
                 offset += advance;
                 _DEFINESHAPE* shape = ((_DEFINESHAPE**)font->shapes)[glyph->index];
                 if (shape->records->next) {
-                    vectorGraph(field34, &shape->fillCount, &shape->lineCount, shape->records, &combined, &local, &glyphColor, flags);
+                    vectorGraph(field34, &shape->fills, &shape->lines, shape->records, &combined, &local, &glyphColor, flags);
                 }
             }
             break;
@@ -573,24 +551,24 @@ void FlashMenu::DrawSprite(_DEFINESPRITE* sprite,FLASHMATRIXF* parent,FLASHCXFOR
                 u8 drawFlags=item->flag;
                 _DEFINEMORPHSHAPE* morph=(_DEFINEMORPHSHAPE*)entry->data;
                 memset(&drawShape,0,0x1C);
-                drawShape.fillCount=morph->reserved18;
-                drawShape.fills=(FlashFillStyle*)morph->start;
-                drawShape.lineCount=morph->reserved20;
-                drawShape.lines=morph->end;
+                drawShape.fills.count=morph->reserved18;
+                drawShape.fills.styles=(VecFillStyle*)morph->start;
+                drawShape.lines.count=morph->reserved20;
+                drawShape.lines.styles=morph->end;
                 s32 inputOffset,outputOffset,fill;
                 fill=inputOffset=outputOffset=0;
                 for(;fill<(s32)morph->fillCount;inputOffset+=0xD4,outputOffset+=0x80,fill++) {
                     FlashMorphFillStyle* source=(FlashMorphFillStyle*)((u8*)morph->fills+inputOffset);
-                    if(source->flags==0) { s32 color=flcalcBlendColor(source->colorA,source->colorB,ratio); ((FlashFillStyle*)((u8*)drawShape.fills+outputOffset))->color=color; }
+                    if(source->flags==0) { s32 color=flcalcBlendColor(source->colorA,source->colorB,ratio); ((VecFillStyle*)((u8*)drawShape.fills.styles+outputOffset))->color=color; }
                     else if(source->flags&16) {
                         u8* count=(u8*)source+0x3C;
                         u8* input=count;
-                        u8* output=(u8*)drawShape.fills+outputOffset+0x20;
+                        u8* output=(u8*)drawShape.fills.styles+outputOffset+0x20;
                         for(s32 j=0;j<*count;input+=0xC,output+=8,j++) {
                             output[4]=flcalcBlend(input[4],input[5],ratio);
                             *(u32*)(output+8)=flcalcBlendColor(*(u32*)(input+8),*(u32*)(input+12),ratio);
                         }
-                        s32* matrix=((FlashFillStyle*)((u8*)drawShape.fills+outputOffset))->matrix;
+                        s32* matrix=((VecFillStyle*)((u8*)drawShape.fills.styles+outputOffset))->matrix.m;
                         matrix[0]=flcalcBlend(source->matrixA[0],source->matrixB[0],ratio);
                         matrix[1]=flcalcBlend(source->matrixA[1],source->matrixB[1],ratio);
                         matrix[2]=flcalcBlend(source->matrixA[2],source->matrixB[2],ratio);
@@ -600,7 +578,7 @@ void FlashMenu::DrawSprite(_DEFINESPRITE* sprite,FLASHMATRIXF* parent,FLASHCXFOR
                     }
                 }
                 BlendShapeRecord(morph->shapes[2]->records,morph->shapes[0]->records,morph->shapes[1]->records,ratio);
-                vectorGraph(field34,&drawShape.fillCount,&drawShape.lineCount,morph->shapes[2]->records,parent,&local,&combinedColor,drawFlags);
+                vectorGraph(field34,&drawShape.fills,&drawShape.lines,morph->shapes[2]->records,parent,&local,&combinedColor,drawFlags);
             }
             if(entry->type&4) {
                 _DEFINESPRITE* child=(_DEFINESPRITE*)entry->data;
@@ -620,7 +598,7 @@ void FlashMenu::DrawSprite(_DEFINESPRITE* sprite,FLASHMATRIXF* parent,FLASHCXFOR
             }
             if(entry->type&2) {
                 _DEFINESHAPE* shape=(_DEFINESHAPE*)entry->data;
-                if(_drawflag) vectorGraph(field34,&shape->fillCount,&shape->lineCount,shape->records,parent,&local,&combinedColor,item->flag);
+                if(_drawflag) vectorGraph(field34,&shape->fills,&shape->lines,shape->records,parent,&local,&combinedColor,item->flag);
                 field20++;
             }
             if(entry->type&0x10) {
@@ -688,24 +666,24 @@ void FlashMenu::DrawSub(GSgfxLayerID, tagWINDOW_WORK*, tagSPRITE_WORK* sprite) {
                 f32 ratio=((FlashItem*)((u8*)items + offset))->depth;
                 _DEFINEMORPHSHAPE* morph=(_DEFINEMORPHSHAPE*)entry->data;
                 memset(&drawShape,0,0x1C);
-                drawShape.fillCount=morph->reserved18;
-                drawShape.fills=(FlashFillStyle*)morph->start;
-                drawShape.lineCount=morph->reserved20;
-                drawShape.lines=morph->end;
+                drawShape.fills.count=morph->reserved18;
+                drawShape.fills.styles=(VecFillStyle*)morph->start;
+                drawShape.lines.count=morph->reserved20;
+                drawShape.lines.styles=morph->end;
                 s32 inputOffset=0,outputOffset=0;
                 for(s32 fill=0;fill<(s32)morph->fillCount;inputOffset+=0xD4,outputOffset+=0x80,fill++) {
                     FlashMorphFillStyle* source=(FlashMorphFillStyle*)((u8*)morph->fills+inputOffset);
 
-                    if(source->flags==0) ((FlashFillStyle*)((u8*)drawShape.fills+outputOffset))->color=flcalcBlendColor(source->colorA,source->colorB,ratio);
+                    if(source->flags==0) ((VecFillStyle*)((u8*)drawShape.fills.styles+outputOffset))->color=flcalcBlendColor(source->colorA,source->colorB,ratio);
                     else if(source->flags&16) {
                         u8* gradient=(u8*)source+0x3C;
                         u8* input=gradient;
-                        u8* output=(u8*)drawShape.fills+outputOffset+0x20;
+                        u8* output=(u8*)drawShape.fills.styles+outputOffset+0x20;
                         for(s32 j=0;j<*gradient;input+=0xC,output+=8,j++) {
                             output[4]=flcalcBlend(input[4],input[5],ratio);
                             *(u32*)(output+8)=flcalcBlendColor(*(u32*)(input+8),*(u32*)(input+12),ratio);
                         }
-                        s32* matrix=((FlashFillStyle*)((u8*)drawShape.fills+outputOffset))->matrix;
+                        s32* matrix=((VecFillStyle*)((u8*)drawShape.fills.styles+outputOffset))->matrix.m;
                         matrix[0]=flcalcBlend(source->matrixA[0],source->matrixB[0],ratio);
                         matrix[1]=flcalcBlend(source->matrixA[1],source->matrixB[1],ratio);
                         matrix[2]=flcalcBlend(source->matrixA[2],source->matrixB[2],ratio);
@@ -715,7 +693,7 @@ void FlashMenu::DrawSub(GSgfxLayerID, tagWINDOW_WORK*, tagSPRITE_WORK* sprite) {
                     }
                 }
                 BlendShapeRecord(morph->shapes[2]->records,morph->shapes[0]->records,morph->shapes[1]->records,ratio);
-                vectorGraph(field34,&drawShape.fillCount,&drawShape.lineCount,morph->shapes[2]->records,0,&local,colorTransform,drawFlags);
+                vectorGraph(field34,&drawShape.fills,&drawShape.lines,morph->shapes[2]->records,0,&local,colorTransform,drawFlags);
             }
 
             if (entry->type & 4) {
@@ -735,7 +713,7 @@ void FlashMenu::DrawSub(GSgfxLayerID, tagWINDOW_WORK*, tagSPRITE_WORK* sprite) {
             if (entry->type & 2) {
                 u8 shapeFlags = item->flag;
                 _DEFINESHAPE* shape = (_DEFINESHAPE*)entry->data;
-                if (_drawflag) vectorGraph(field34, &shape->fillCount, &shape->lineCount, shape->records, 0, &local, colorTransform, shapeFlags);
+                if (_drawflag) vectorGraph(field34, &shape->fills, &shape->lines, shape->records, 0, &local, colorTransform, shapeFlags);
                 field20++;
             }
             if (entry->type & 0x10) {
@@ -1035,20 +1013,20 @@ void FlashMenu::ParsePlaceObject2Sub(_PLACEOBJECT2* object) {
 }
 
 void FlashMenu::ParseDefineShapeSub(_DEFINESHAPE* shape) {
-    FlashFillStyle* fills;
-    s32 fillCount=shape->fillCount;
-    if(header->relocated==0 && field1E!=0) {fills=(FlashFillStyle*)((u32)shape+(u32)shape->fills);shape->fills=fills;}
-    else fills=shape->fills;
-    FlashFillStyle* fill=fills;
-    s32 gradient=fills->flags&0x10;
+    VecFillStyle* fills;
+    s32 fillCount=shape->fills.count;
+    if(header->relocated==0 && field1E!=0) {fills=(VecFillStyle*)((u32)shape+(u32)shape->fills.styles);shape->fills.styles=fills;}
+    else fills=shape->fills.styles;
+    VecFillStyle* fill=fills;
+    s32 gradient=fills->type&0x10;
     for(s32 i=0;i<fillCount;fill++,i++) {
         if(gradient) {
-            s32 count=fill->count;
+            s32 count=fill->gradient.count;
             for(s32 j=0;j<count;j++) {}
         }
     }
-    s32 lineCount=shape->lineCount;
-    if(header->relocated==0 && field1E!=0) shape->lines=(void*)((u32)shape+(u32)shape->lines);
+    s32 lineCount=shape->lines.count;
+    if(header->relocated==0 && field1E!=0) shape->lines.styles=(void*)((u32)shape+(u32)shape->lines.styles);
     for(s32 i=0;i<lineCount;i++) {}
     _SHAPERECORD* record;
     if(header->relocated==0 && field1E!=0) {record=(_SHAPERECORD*)((u32)shape+(u32)shape->records);shape->records=record;}
@@ -1061,16 +1039,24 @@ void FlashMenu::ParseDefineShapeSub(_DEFINESHAPE* shape) {
         switch(record->type) {
         case 0:break;
         case 1:{
-            FlashShapeEdges* edges;
-            if(header->relocated==0 && field1E!=0) {edges=(FlashShapeEdges*)((u32)shape+(u32)record->data);record->data=edges;}
-            else edges=(FlashShapeEdges*)record->data;
-            if(edges->flags&0x10) {
-                s32 points=edges->pointCount;
-                if(header->relocated==0 && field1E!=0) edges->points=(void*)((u32)shape+(u32)edges->points);
-                while(points-- > 0) {}
-                s32 count=edges->edgeCount;
-                if(header->relocated==0 && field1E!=0) edges->edges=(void*)((u32)shape+(u32)edges->edges);
-                for(s32 i=0;i<count;i++) {}
+            VecStyleChange* change;
+            if (header->relocated == 0 && field1E != 0) {
+                change = (VecStyleChange*)((u32)shape + (u32)record->data);
+                record->data = change;
+            } else {
+                change = (VecStyleChange*)record->data;
+            }
+            if (change->flags & 0x10) {
+                s32 fillsRemaining = change->fills.count;
+                if (header->relocated == 0 && field1E != 0)
+                    change->fills.styles = (VecFillStyle*)((u32)shape + (u32)change->fills.styles);
+                while (fillsRemaining > 0) {
+                    --fillsRemaining;
+                }
+                s32 count = change->lines.count;
+                if (header->relocated == 0 && field1E != 0)
+                    change->lines.styles = (void*)((u32)shape + (u32)change->lines.styles);
+                for (s32 i = 0; i < count; i++) {}
             }
             break;
         }
@@ -1101,9 +1087,9 @@ void FlashMenu::BlendShapeRecord(_SHAPERECORD *dst, _SHAPERECORD *a, _SHAPERECOR
             more = 0;
             break;
         case 1: {
-            SRecordStyle *sa = (SRecordStyle *)a->data;
-            SRecordStyle *sb = (SRecordStyle *)b->data;
-            SRecordStyle *sd = (SRecordStyle *)dst->data;
+            VecStyleChange *sa = (VecStyleChange*)a->data;
+            VecStyleChange *sb = (VecStyleChange*)b->data;
+            VecStyleChange *sd = (VecStyleChange*)dst->data;
             if ((sa->flags & 1) != 0) {
                 sd->x = flcalcBlend(sa->x, sb->x, t);
                 sd->y = flcalcBlend(sa->y, sb->y, t);
@@ -1116,21 +1102,21 @@ void FlashMenu::BlendShapeRecord(_SHAPERECORD *dst, _SHAPERECORD *a, _SHAPERECOR
             break;
         }
         case 2: {
-            SRecordLine *sa = (SRecordLine *)a->data;
-            SRecordLine *sb = (SRecordLine *)b->data;
-            SRecordLine *sd = (SRecordLine *)dst->data;
+            SRecordLine *sa = (SRecordLine*)a->data;
+            SRecordLine *sb = (SRecordLine*)b->data;
+            SRecordLine *sd = (SRecordLine*)dst->data;
             sd->x = flcalcBlend(sa->x, sb->x, t);
             sd->y = flcalcBlend(sa->y, sb->y, t);
             break;
         }
         case 3: {
-            SRecordCurve *sa = (SRecordCurve *)a->data;
-            SRecordCurve *sb = (SRecordCurve *)b->data;
-            SRecordCurve *sd = (SRecordCurve *)dst->data;
-            sd->a = flcalcBlend(sa->a, sb->a, t);
-            sd->b = flcalcBlend(sa->b, sb->b, t);
-            sd->c = flcalcBlend(sa->c, sb->c, t);
-            sd->d = flcalcBlend(sa->d, sb->d, t);
+            VecCurve *sa = (VecCurve*)a->data;
+            VecCurve *sb = (VecCurve*)b->data;
+            VecCurve *sd = (VecCurve*)dst->data;
+            sd->controlX = flcalcBlend(sa->controlX, sb->controlX, t);
+            sd->controlY = flcalcBlend(sa->controlY, sb->controlY, t);
+            sd->endX = flcalcBlend(sa->endX, sb->endX, t);
+            sd->endY = flcalcBlend(sa->endY, sb->endY, t);
             break;
         }
         }
