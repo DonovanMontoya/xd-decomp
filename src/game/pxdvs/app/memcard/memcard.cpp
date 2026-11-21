@@ -2,6 +2,10 @@
 #include <game/pxdvs/app/memcard/memcardPrivate.hpp>
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/pcbox/pcbox.hpp>
+#include <game/pxdvs/app/sodateya/sodateya.hpp>
+#include <game/pxdvs/app/mail/mailbox.hpp>
+#include <game/pxdvs/app/memo/memo.hpp>
+#include <game/pxdvs/app/reliveHall/reliveHall.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 
 #if defined(VERSION_GXXE01)
@@ -220,14 +224,20 @@ struct MemcardPackHeader {
     u16 pcBoxSizeHigh;
     u16 bingoFlagsSize;
     u8 reserved84[0x1C];
+};
+
+struct MemcardSavePack {
+    MemcardPackHeader header;
+    u8 payload[0x27FD0 - sizeof(MemcardPackHeader)];
 
     u8* setSectionOffset(MemcardSection section, u32 offset) {
-        offsets[section].low = offset;
-        offsets[section].high = offset >> 16;
-        return (u8*)((u32)(this + 1) + offset);
+        header.offsets[section].low = offset;
+        header.offsets[section].high = offset >> 16;
+        return &payload[offset];
     }
 };
 
+typedef char MemcardSavePackSize[sizeof(MemcardSavePack) == 0x27FD0 ? 1 : -1];
 typedef char MemcardPackHeaderSize[sizeof(MemcardPackHeader) == 0xA0 ? 1 : -1];
 typedef char MemcardSectionSizesOffset[offsetof(MemcardPackHeader, sizes) == 0x18 ? 1 : -1];
 typedef char MemcardSectionOffsetsOffset[offsetof(MemcardPackHeader, offsets) == 0x38 ? 1 : -1];
@@ -269,9 +279,9 @@ void _memcardStoreSaveData_multi(void* arg) {
         size = sizeof(PCBOX);
     }
     memcpy(src, dst, size);
-    MEMCARD_STORE(0xA, SectionMailbox, 0x4A);
-    MEMCARD_STORE(0xB, SectionSodateya, 0xCC);
-    MEMCARD_STORE(0xC, SectionMemo, 0x1774);
+    MEMCARD_STORE(0xA, SectionMailbox, sizeof(Mailbox));
+    MEMCARD_STORE(0xB, SectionSodateya, sizeof(Sodateya));
+    MEMCARD_STORE(0xC, SectionMemo, sizeof(Memo));
     MEMCARD_STORE(0xE, SectionTool, 0x364);
     MEMCARD_STORE(0xF, SectionDarkPokemon, 0x2400);
     dst2 = (u8*)_memcardGetMultiSaveDataToSTRUCT(arg, 0x17);
@@ -291,7 +301,7 @@ void _memcardStoreSaveData_multi(void* arg) {
     }
     MEMCARD_STORE2(dst3, 0x10, SectionExRibbon, 0xB);
     MEMCARD_STORE2(dst4, 0x16, SectionFloor, 0xC800);
-    MEMCARD_STORE2(dst5, 0x15, SectionRelive, 0x2298);
+    MEMCARD_STORE2(dst5, 0x15, SectionRelive, sizeof(CReliveHall));
     _memcardGetMultiSaveDataToSTRUCT(arg, 0x11);
     _memcardGetMultiSaveDataToSTRUCT(arg, 0x12);
     _memcardGetMultiSaveDataToSTRUCT(arg, 0x13);
@@ -332,8 +342,9 @@ static s32 _memcardMergeDataPack(void) {
 
 #pragma opt_dead_assignments off
 static void* _memcardGetMultiSaveDataToSTRUCT(void* base, long index) {
-    const MemcardPackHeader* header = (const MemcardPackHeader*)base;
-    u32 data = (u32)(header + 1);
+    const MemcardSavePack* pack = (const MemcardSavePack*)base;
+    const MemcardPackHeader* header = &pack->header;
+    u32 data = (u32)pack->payload;
     switch (index) {
     case 1:
         MEMCARD_MULTI_ADD(SectionSystem)
@@ -778,7 +789,7 @@ void* memcardMemFreeForSavedata(void* p) {
 }
 
 void* memcardMemAllocForSavedata(void) {
-    return GSmemAllocAlign(0x27FD0, 0x20);
+    return GSmemAllocAlign(sizeof(MemcardSavePack), 0x20);
 }
 
 void memcardFinalizeTask(void) {
@@ -1997,27 +2008,15 @@ void* __copy(void*,const void*,u32);
 }
 
 template <unsigned N> struct MemcardWords { u32 words[N]; };
-struct MemcardSaveParty {
-    u8 first,second;
-    u16 flags;
-    u32 header;
-    Pokemon pokemon;
-};
-struct MemcardSavePartyGroup {
-    Pokemon first,second,third,fourth,fifth;
-    u8 flags;
-};
 
 #pragma push
 #pragma peephole off
-typedef char MemcardPartySize[sizeof(MemcardSaveParty)==0xCC?1:-1];
-typedef char MemcardPartyGroupSize[sizeof(MemcardSavePartyGroup)==0x3D8?1:-1];
-
 void _memcardDuplicateSaveData_multi(void* buffer) {
     u32 floorSize;
     void* floorData;
     s8 order[SectionCount];
-    MemcardPackHeader* header = (MemcardPackHeader*)buffer;
+    MemcardSavePack* pack = (MemcardSavePack*)buffer;
+    MemcardPackHeader* header = &pack->header;
     u16* words = (u16*)buffer;
     if (_memcardStatusPtr->state == 11) {
         u32 next = floorGetNextFloorID();
@@ -2028,7 +2027,7 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
     for (i = 0; i < 4; i++) {
         _memcard_encrypt_key[i] = HSD_Rand();
     }
-    for (word = 0; word < 0x13FE8; word += 4) {
+    for (word = 0; word < (s32)(sizeof(MemcardSavePack) / sizeof(u16)); word += 4) {
         for (i = 0; i < 4; ++i) {
             words[word + i] += _memcard_encrypt_key[i];
         }
@@ -2039,9 +2038,9 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
     header->sizes[SectionHero] = sizeof(Hero);
     header->sizes[SectionPcBox] = sizeof(PCBOX);
     header->pcBoxSizeHigh = 0;
-    header->sizes[SectionMailbox] = 0x4A;
-    header->sizes[SectionSodateya] = 0xCC;
-    header->sizes[SectionMemo] = 0x1774;
+    header->sizes[SectionMailbox] = sizeof(Mailbox);
+    header->sizes[SectionSodateya] = sizeof(Sodateya);
+    header->sizes[SectionMemo] = sizeof(Memo);
     header->sizes[SectionTool] = 0x364;
     header->sizes[SectionDarkPokemon] = 0x2400;
     header->sizes[SectionFlags] = 0x6B4;
@@ -2051,7 +2050,7 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
     header->sizes[SectionYobi2] = 0x800;
     header->sizes[SectionYobi3] = 0x1000;
     header->sizes[SectionYobi4] = 0x2000;
-    header->sizes[SectionRelive] = 0x2298;
+    header->sizes[SectionRelive] = sizeof(CReliveHall);
     header->key[0] = HSD_Rand();
     header->key[1] = HSD_Rand();
     header->key[2] = HSD_Rand();
@@ -2062,7 +2061,7 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
     header->offsets[SectionSystem].low = 0;
     order[SectionCount - 1] = -1;
     header->offsets[SectionSystem].high = 0;
-    *(GamedataSaveRecord*)(header + 1) = *(const GamedataSaveRecord*)savedataGetStatus(0, 1);
+    *(GamedataSaveRecord*)pack->payload = *(const GamedataSaveRecord*)savedataGetStatus(0, 1);
 
     u32 offset = 0xA0;
     s16 count = SectionCount - 1;
@@ -2077,45 +2076,37 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
                 _memcardStatusPtr->state != 7 && _memcard_anySaveOFF_Flag == 0) {
                 Hero::getHeroPtr()->setRestertPos();
             }
-            u8* dst = header->setSectionOffset(SectionHero, offset);
+            u8* dst = pack->setSectionOffset(SectionHero, offset);
             memcpy(dst, savedataGetStatus(0, 2), sizeof(Hero));
             offset += 0x990;
             break;
         }
         case SectionPcBox: {
-            PCBOX* dst = (PCBOX*)header->setSectionOffset(SectionPcBox, offset);
+            PCBOX* dst = (PCBOX*)pack->setSectionOffset(SectionPcBox, offset);
             *dst = *(const PCBOX*)savedataGetStatus(0, 3);
             offset += 0xBC60;
             break;
         }
         case SectionMailbox: {
-            u8* dst = header->setSectionOffset(SectionMailbox, offset);
-            u8* src = (u8*)savedataGetStatus(0, 10);
+            Mailbox* dst = (Mailbox*)pack->setSectionOffset(SectionMailbox, offset);
+            *dst = *(const Mailbox*)savedataGetStatus(0, 10);
             offset += 0x60;
-            *(MemcardWords<16>*)dst = *(MemcardWords<16>*)src;
-            *(u16*)(dst + 0x40) = *(u16*)(src + 0x40);
-            *(u32*)(dst + 0x42) = *(u32*)(src + 0x42);
-            dst[0x46] = src[0x46];
-            dst[0x47] = src[0x47];
-            *(u16*)(dst + 0x48) = *(u16*)(src + 0x48);
             break;
         }
         case SectionSodateya: {
-            u8* dst = header->setSectionOffset(SectionSodateya, offset);
-            *(MemcardSaveParty*)dst = *(MemcardSaveParty*)savedataGetStatus(0, 11);
+            u8* dst = pack->setSectionOffset(SectionSodateya, offset);
+            *(Sodateya*)dst = *(const Sodateya*)savedataGetStatus(0, 11);
             offset += 0xE0;
             break;
         }
         case SectionMemo: {
-            u8* dst = header->setSectionOffset(SectionMemo, offset);
-            u8* src = (u8*)savedataGetStatus(0, 12);
-            *(u16*)dst = *(u16*)src;
-            *(MemcardWords<1500>*)(dst+4) = *(MemcardWords<1500>*)(src+4);
+            Memo* dst = (Memo*)pack->setSectionOffset(SectionMemo, offset);
+            *dst = *(const Memo*)savedataGetStatus(0, 12);
             offset += 0x1790;
             break;
         }
         case SectionTool: {
-            u8* dst = header->setSectionOffset(SectionTool, offset);
+            u8* dst = pack->setSectionOffset(SectionTool, offset);
             u8* src = (u8*)savedataGetStatus(0, 14);
             *(MemcardWords<216>*)dst = *(MemcardWords<216>*)src;
             offset += 0x380;
@@ -2123,13 +2114,13 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
             break;
         }
         case SectionDarkPokemon: {
-            u8* dst = header->setSectionOffset(SectionDarkPokemon, offset);
+            u8* dst = pack->setSectionOffset(SectionDarkPokemon, offset);
             *(MemcardWords<2304>*)dst = *(MemcardWords<2304>*)savedataGetStatus(0, 15);
             offset += 0x2410;
             break;
         }
         case SectionFlags: {
-            u8* dst = header->setSectionOffset(SectionFlags, offset);
+            u8* dst = pack->setSectionOffset(SectionFlags, offset);
             header->flagLevel0Size = (u32)savedataGetStatus(0, 7) * 4;
             header->flagLevel1Size = (u32)savedataGetStatus(0, 8) * 4;
             header->flagLevel2Size = (u32)savedataGetStatus(0, 9) * 4;
@@ -2144,7 +2135,7 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
             break;
         }
         case SectionExRibbon: {
-            u8* dst = header->setSectionOffset(SectionExRibbon, offset);
+            u8* dst = pack->setSectionOffset(SectionExRibbon, offset);
             __copy(dst, savedataGetStatus(0, 16), 11);
             offset += 0x20;
             break;
@@ -2154,7 +2145,7 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
                 _memcardStatusPtr->state != 7 && _memcard_anySaveOFF_Flag == 0) {
                 floorMakeSaveData(&floorData, &floorSize);
             }
-            void* dst = header->setSectionOffset(SectionFloor, offset);
+            void* dst = pack->setSectionOffset(SectionFloor, offset);
             void* src = savedataGetStatus(0, 22);
             if (_memcardStatusPtr->state != 8 && _memcardStatusPtr->state != 13 &&
                 _memcardStatusPtr->state != 7 && _memcard_anySaveOFF_Flag == 0) {
@@ -2170,30 +2161,24 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
             break;
         }
         case SectionYobi1:
-            header->setSectionOffset(SectionYobi1, offset);
+            pack->setSectionOffset(SectionYobi1, offset);
             offset += 0x410;
             break;
         case SectionYobi2:
-            header->setSectionOffset(SectionYobi2, offset);
+            pack->setSectionOffset(SectionYobi2, offset);
             offset += 0x810;
             break;
         case SectionYobi3:
-            header->setSectionOffset(SectionYobi3, offset);
+            pack->setSectionOffset(SectionYobi3, offset);
             offset += 0x1010;
             break;
         case SectionYobi4:
-            header->setSectionOffset(SectionYobi4, offset);
+            pack->setSectionOffset(SectionYobi4, offset);
             offset += 0x2010;
             break;
         case SectionRelive: {
-            MemcardSavePartyGroup* dst = (MemcardSavePartyGroup*)header->setSectionOffset(SectionRelive, offset);
-            MemcardSavePartyGroup* end = (MemcardSavePartyGroup*)((u8*)dst + 0x2298);
-            MemcardSavePartyGroup* src = (MemcardSavePartyGroup*)savedataGetStatus(0, 21);
-            do {
-                *dst = *src;
-                ++dst;
-                ++src;
-            } while (dst < end);
+            CReliveHall* dst = (CReliveHall*)pack->setSectionOffset(SectionRelive, offset);
+            *dst = *(const CReliveHall*)savedataGetStatus(0, 21);
             offset += 0x22B0;
             break;
         }

@@ -1,4 +1,4 @@
-#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/reliveHall/reliveHall.hpp>
 
 struct FootStepCounter {
     u32 value;
@@ -37,54 +37,6 @@ struct RELIVEHALLDATA { u16 pad; u16 steps; };
 extern FLAGETC *flag_etc;
 extern RELIVEHALLDATA *relivehall_data;
 }
-
-class CReliveStage;
-
-class CReliveHall {
-public:
-    void debugPokemonSetup(long);
-    static bool isOpen();
-    static CReliveHall *getPointer();
-    CReliveStage *getStageAt(long);
-    bool isReliveReadyDarkLugiaExist();
-    s32 getReliveReadyVisitorQuantity();
-    bool isReliveReadyPokemonExist();
-    Pokemon *heroWalkReliveCallBack(long);
-    void init();
-    CReliveStage *getStage(long);
-    void allocMakeBackup();
-    void checkWithBackupSet();
-    s32 getReliveGiveStageQuantity();
-};
-
-class CReliveStage {
-public:
-    Pokemon dancer[4];
-    Pokemon visitor;
-    s8 pairIndex;
-    u8 pad[3];
-    void init();
-    void pickupVisitor(Pokemon &);
-    void insertDancer(Pokemon &, long);
-    void pickupDancer(Pokemon &, long);
-    void exchangeVisitor(Pokemon &);
-    void exchangeDancer(Pokemon &, long);
-    s32 getDancerQuantity();
-    Pokemon *getDancerPointer(long);
-    void putVisitor(Pokemon &);
-    void putDancer(Pokemon &);
-    s32 getEmptyDancerIndex();
-    Pokemon *getVisitorPointer();
-    s32 getState();
-    bool isLugiaReliveReady();
-    bool isReliveReady();
-    Pokemon *heroWalkReliveCallBack(long, bool);
-    bool isPokemonZokuseiAllUnique(bool);
-    s32 getTempo();
-    s32 getPassionWoBonus();
-    bool isBonusGet();
-    s32 getPassion();
-};
 
 extern "C" void reliveHallInfomationPokemonDP0(Pokemon*);
 static inline s32 _aisyouLevel(s32);
@@ -166,7 +118,7 @@ inline void CReliveStage::putDancer(Pokemon &pokemon) {
 }
 
 void CReliveStage::init() {
-    memset(this, 0, 0x3D8);
+    memset(this, 0, sizeof(CReliveStage));
     pokemonInitAry((u32)dancer, 4);
     pokemonInit((u32)&visitor);
 }
@@ -419,12 +371,12 @@ s32 CReliveStage::getState() {
 }
 
 CReliveStage *CReliveHall::getStage(long i) {
-    return (CReliveStage *)((u8 *)this + i * 0x3D8);
+    return &stages[i];
 }
 
 void CReliveHall::init() {
-    CReliveStage *s = (CReliveStage *)this;
-    memset(s, 0, 0x2298);
+    CReliveStage *s = stages;
+    memset(s, 0, sizeof(CReliveHall));
     u32 i = 0;
     do {
         s->init();
@@ -450,7 +402,7 @@ s32 CReliveHall::getReliveGiveStageQuantity() {
 }
 
 Pokemon *CReliveHall::heroWalkReliveCallBack(long steps) {
-    CReliveStage *s = (CReliveStage *)this;
+    CReliveStage *s = stages;
     Pokemon *r = 0;
     u32 i = 0;
     do {
@@ -466,7 +418,7 @@ Pokemon *CReliveHall::heroWalkReliveCallBack(long steps) {
 }
 
 bool CReliveHall::isReliveReadyPokemonExist() {
-    CReliveStage *s = (CReliveStage *)this;
+    CReliveStage *s = stages;
     u32 i = 0;
     do {
         if (s->isReliveReady()) {
@@ -479,7 +431,7 @@ bool CReliveHall::isReliveReadyPokemonExist() {
 }
 
 s32 CReliveHall::getReliveReadyVisitorQuantity() {
-    CReliveStage *s = (CReliveStage *)this;
+    CReliveStage *s = stages;
     s32 n = 0;
     u32 i = 0;
     do {
@@ -493,7 +445,7 @@ s32 CReliveHall::getReliveReadyVisitorQuantity() {
 }
 
 bool CReliveHall::isReliveReadyDarkLugiaExist() {
-    CReliveStage *s = (CReliveStage *)this;
+    CReliveStage *s = stages;
     u32 i = 0;
     do {
         Pokemon *v = s->getVisitorPointer();
@@ -506,7 +458,7 @@ bool CReliveHall::isReliveReadyDarkLugiaExist() {
             return false;
         }
     } while (true);
-    s = (CReliveStage *)this;
+    s = stages;
     u32 j = 0;
     do {
         if (s->getTempo() != 0x60) {
@@ -523,8 +475,8 @@ CReliveHall *CReliveHall::getPointer() {
 }
 
 void CReliveHall::allocMakeBackup() {
-    _pRelivehallCopy = GSmemAllocClr(0x2298);
-    memcpy(_pRelivehallCopy, this, 0x2298);
+    _pRelivehallCopy = GSmemAllocClr(sizeof(CReliveHall));
+    memcpy(_pRelivehallCopy, this, sizeof(CReliveHall));
 }
 
 void CReliveHall::checkWithBackupSet() {
@@ -540,7 +492,7 @@ void CReliveHall::checkWithBackupSet() {
     u16 id;
     bool found;
     u32 j;
-    stage = (CReliveStage *)this;
+    stage = stages;
     i = 0;
     offset = 0;
     do {
@@ -562,7 +514,7 @@ void CReliveHall::checkWithBackupSet() {
         if (bv) {
             id = pokemonBiosGetDarkpokemonDataId(bv);
             found = false;
-            cur = (CReliveStage *)this;
+            cur = stages;
             j = 0;
             do {
                 v = cur->getVisitorPointer();
@@ -598,9 +550,9 @@ void CReliveHall::debugPokemonSetup(long mode) {
         {0.1f,0.2f,0.3f,0.4f,0.5f,0.5f,0.5f,0.5f,0.5f,0}
     };
     if(mode==0 || mode==1) {
-        memset(this, 0, 0x2298);
+        memset(this, 0, sizeof(CReliveHall));
         u32 stageIndex = 0;
-        CReliveStage *initialStage = (CReliveStage *)this;
+        CReliveStage *initialStage = stages;
         do {
             initialStage->init();
             ++stageIndex;
@@ -629,9 +581,9 @@ void CReliveHall::debugPokemonSetup(long mode) {
         return;
     }
     if(mode==2) {
-        memset(this, 0, 0x2298);
+        memset(this, 0, sizeof(CReliveHall));
         u32 stageIndex = 0;
-        CReliveStage *initialStage = (CReliveStage *)this;
+        CReliveStage *initialStage = stages;
         do {
             initialStage->init();
             ++stageIndex;

@@ -1,7 +1,5 @@
 #pragma defer_codegen on
-#include <global.h>
-struct MemoEntry {u16 id,pad;u32 trainer,random;};
-struct Memo {u16 count,pad;MemoEntry entry[500];};
+#include <game/pxdvs/app/memo/memo.hpp>
 extern "C" {
 Memo *savedataGetStatus(void*,u16);s32 HSD_Rand();u16 pokemonBiosGetPokemonDataId(void*);u32 pokemonBiosGetRnd(void*);u32 pokemonBiosGetCatchTrainerRnd(void*);
 

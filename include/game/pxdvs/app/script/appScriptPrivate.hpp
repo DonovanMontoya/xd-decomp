@@ -3,7 +3,7 @@
 #include <global.h>
 #include <game/pxdvs/GSAPI/GSScript/tiga.hpp>
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
-#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/sodateya/sodateya.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 
 struct GSthread;
@@ -359,7 +359,6 @@ void sodateyaRaise(s32);
 void sodateyaReclaim(s32);
 s32 sodateyaCalcPrice(s32);
 s32 sodateyaeChekcRais(void);
-void* sodateyaGetPokemonPtr(s32);
 void scriptSetCol(s32, u8);
 s32 scriptGetEventColID(void);
 void scriptSetEventCol(u8);

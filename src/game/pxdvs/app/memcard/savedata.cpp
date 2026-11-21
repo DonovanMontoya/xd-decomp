@@ -1,5 +1,6 @@
 #include <global.h>
 #include <game/pxdvs/app/hero/hero.hpp>
+#include <game/pxdvs/app/sodateya/sodateya.hpp>
 #include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 
 extern "C" {
@@ -31,7 +32,6 @@ void pcboxInit(void*);
 void GSflagClear(s32);
 void GSflagOn(s32);
 void mailInitMailbox(void*);
-void sodateyaInit(void*);
 void menuCB_RULE_INIT(void*);
 void memoInit(void*);
 void darkpokemonValInit(void*);
@@ -168,7 +168,7 @@ extern "C" void savedataInit(void* save) {
     bytes=savedataGetStatus(save,28)*4;
     memset((void*)savedataGetStatus(save,27),0,bytes);
     mailInitMailbox((void*)savedataGetStatus(save,10));
-    sodateyaInit((void*)savedataGetStatus(save,11));
+    sodateyaInit((Sodateya*)savedataGetStatus(save,11));
     menuCB_RULE_INIT((void*)savedataGetStatus(save,14));
     memoInit((void*)savedataGetStatus(save,12));
     darkpokemonValInit((void*)savedataGetStatus(save,15));
