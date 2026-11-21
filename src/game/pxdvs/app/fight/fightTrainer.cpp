@@ -1,4 +1,5 @@
 #include <dolphin/types.h>
+#include <game/maximum/app/bingo/bingoBios.hpp>
 
 #pragma auto_inline off
 
@@ -81,32 +82,6 @@ static void _fightTrainer_GetUnderTakerDarkPoke(u8* list, u8 count, u8 start, He
 static void _fightTrainer_SortUnderTakerDarkPoke(u8* list, u8 count);
 static u8 _fightTrainer_GetListUnderTakerDarkPoke(u8* list);
 
-struct BINGO_PANEL_dd_ {
-    u8 type;
-    u8 tokusei;
-    u8 seikaku;
-    u8 sex;
-    u16 no;
-    u16 waza;
-    u16 hosei;
-};
-struct BINGO_DATA_dd_ {
-    u8 no;
-    u8 unk1[2];
-    u8 level;
-    u8 unk4;
-    u8 ball;
-    u8 unk6[0x10 - 6];
-    u16 score[10];
-    BINGO_PANEL_dd_ panel[14];
-};
-class bingo_bios {
-public:
-    static u8 getPanelHoseiVal(BINGO_DATA_dd_* data, u32 index);
-    static u8 getPanelHoseiKind(BINGO_DATA_dd_* data, u32 index);
-    static u8 getStaticIdx(u8 index);
-    static BINGO_DATA_dd_* getStaticSheet();
-};
 u32 deckDataVirtualDB_GetEnemyDeck(u16 id);
 u32 deckDataVirtualDB_GetAllyDeck(u16 id);
 u8 deckDataVirtualDB_GetPokemonNum(u16 id);
