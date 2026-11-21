@@ -496,75 +496,125 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubMain(FIGHT_TRAINER* t, FightOut
     return ret;
 }
 
-extern "C" s32 fightMenuFightTrainerGcHeroOpenMenu(FIGHT_TRAINER* trainer,u16 type,u8 canCancel) {
-    FightFloorActionMenu menu;
-    s32 selection;
+extern "C" s32 fightMenuFightTrainerGcHeroOpenMenu(FIGHT_TRAINER* trainer, u16 type, u8 canCancel) {
+    u16 slot;
+    FightOutPokemon* pokemon;
+    u8 activeCount;
+    u16 previousSlot;
     s32 choice;
     u8 result;
-    FightOutPokemon *pokemon;
-    u16 current,previous,i;
-    u32 count=(u8)fightTypeDataBiosGetFightoutPokemonNum(fightTypeDataBiosGetPtr(type));
-    if(fightFloorIsNowEncountTuusinTaisen(0)!=0)menuOpenCustom(fightMenuGetFightTrainerPtrToKeyWaitMenuId(trainer,type),0,0,0,0,0);
-    current=0;previous=0;selection=current;bCharSkip=current;
-    while(current<count){
-nextPokemon:
-    pokemon=fightTrainerGetValidFightOutPokemonPtr(trainer,current);
-    if(pokemon==0){previous=current;goto advance;}
-    if(fightOutPokemonCheckFightActionSelect(pokemon,1)==0){previous=current;goto advance;}
-    if(fightGetFightResultId()==1){
-clearActions:
-        fightTrainerAllInitFightActionBuff(trainer);
-        goto finish;
+    FightFloorActionMenu menu;
+    s32 selection;
+
+    activeCount = (u8)fightTypeDataBiosGetFightoutPokemonNum(fightTypeDataBiosGetPtr(type));
+    if (fightFloorIsNowEncountTuusinTaisen(0)) {
+        menuOpenCustom(fightMenuGetFightTrainerPtrToKeyWaitMenuId(trainer, type), 0, 0, 0, 0, 0);
     }
-    if(fightFloorIsUseFightTimerCommand(0)==1&&fightTimerCommandIsOver()==1){
-timeout:
-        fightOutPokemonInitFightActionBuff(pokemon);
-        fightTrainerTimeOutSelectFightAction(trainer,pokemon,type);
-        previous=current;
-        goto advance;
-    }
-    fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon,type,1);
-    selection=0;
-openTop:
-    fightOutPokemonInitFightActionBuff(pokemon);
-    fightFloorSetMenuFightAction(0, pokemon, &menu);
-    menu.online = fightFloorIsNowEncountTuusinTaisen(0);
-    choice = menuFightOpenTop(trainer, &menu, &selection, 1);
-    if(fightGetFightResultId()==1){fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon,type,0);menuFightCloseTop(1);goto clearActions;}
-    if(fightFloorIsUseFightTimerCommand(0)==1&&fightTimerCommandIsOver()==1&&choice<0){fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon,type,0);menuFightCloseTop(1);goto timeout;}
-    if(choice>=0)menuFightCloseTop(1);
-    result=_fightMenuFightTrainerGcHeroOpenMenuSubMain(trainer,pokemon,type,choice);
-    if(fightGetFightResultId()==1){fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon,type,0);menuFightCloseTop(1);goto clearActions;}
-    if(fightFloorIsUseFightTimerCommand(0)==1&&fightTimerCommandIsOver()==1&&result!=0){fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon,type,0);menuFightCloseTop(1);goto timeout;}
-    if(result==1){
-        if(bCharSkip!=0){bCharSkip=0;goto finish;}
-        if(fightTrainerIsUsedItem(trainer)!=1){
-            if(current!=0){current=previous;fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon,type,0);menuFightCloseTop(1);goto nextPokemon;}
-            if(canCancel==1&&current==0){
-                fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon,type,0);menuFightCloseTop(1);
-                for(i=0;i<count;i++){
-                    pokemon=fightTrainerGetValidFightOutPokemonPtr(trainer,i);
-                    if(pokemon)pokemonSetStatus((Pokemon*)pokemon,0,0x120,0,0);
-                }
-                return 0;
-            }
+    slot = 0;
+    previousSlot = 0;
+    selection = slot;
+    bCharSkip = slot;
+    while (slot < (u32)activeCount) {
+    nextPokemon:
+        pokemon = fightTrainerGetValidFightOutPokemonPtr(trainer, slot);
+        if (pokemon == 0) {
+            previousSlot = slot;
+            goto advance;
         }
-        goto openTop;
+        if (!fightOutPokemonCheckFightActionSelect(pokemon, 1)) {
+            previousSlot = slot;
+            goto advance;
+        }
+        if (fightGetFightResultId() == 1) {
+        clearActions:
+            fightTrainerAllInitFightActionBuff(trainer);
+            break;
+        }
+        if (fightFloorIsUseFightTimerCommand(0) == 1 && fightTimerCommandIsOver() == 1) {
+        timeout:
+            fightOutPokemonInitFightActionBuff(pokemon);
+            fightTrainerTimeOutSelectFightAction(trainer, pokemon, type);
+            previousSlot = slot;
+            goto advance;
+        }
+        fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon, type, 1);
+        selection = 0;
+    openTop:
+        fightOutPokemonInitFightActionBuff(pokemon);
+        fightFloorSetMenuFightAction(0, pokemon, &menu);
+        menu.online = fightFloorIsNowEncountTuusinTaisen(0);
+        choice = menuFightOpenTop(trainer, &menu, &selection, 1);
+        if (fightGetFightResultId() == 1) {
+            fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon, type, 0);
+            menuFightCloseTop(1);
+            goto clearActions;
+        }
+        if (fightFloorIsUseFightTimerCommand(0) == 1 && fightTimerCommandIsOver() == 1 && choice < 0) {
+            fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon, type, 0);
+            menuFightCloseTop(1);
+            goto timeout;
+        }
+        if (choice >= 0) {
+            menuFightCloseTop(1);
+        }
+        result = _fightMenuFightTrainerGcHeroOpenMenuSubMain(trainer, pokemon, type, choice);
+        if (fightGetFightResultId() == 1) {
+            fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon, type, 0);
+            menuFightCloseTop(1);
+            goto clearActions;
+        }
+        if (fightFloorIsUseFightTimerCommand(0) == 1 && fightTimerCommandIsOver() == 1 && result != 0) {
+            fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon, type, 0);
+            menuFightCloseTop(1);
+            goto timeout;
+        }
+        if (result == 1) {
+            if (bCharSkip != 0) {
+                bCharSkip = 0;
+                break;
+            }
+            if (fightTrainerIsUsedItem(trainer) != 1) {
+                if (slot != 0) {
+                    slot = previousSlot;
+                    fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon, type, 0);
+                    menuFightCloseTop(1);
+                    goto nextPokemon;
+                }
+                if (canCancel == 1 && slot == 0) {
+                    fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon, type, 0);
+                    menuFightCloseTop(1);
+                    for (slot = 0; slot < (u32)activeCount; slot++) {
+                        pokemon = fightTrainerGetValidFightOutPokemonPtr(trainer, slot);
+                        if (pokemon) {
+                            pokemonSetStatus((Pokemon*)pokemon, 0, 0x120, 0, 0);
+                        }
+                    }
+                    return 0;
+                }
+            }
+            goto openTop;
+        }
+        if (result == 2) {
+            goto openTop;
+        }
+        fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon, type, 0);
+        previousSlot = slot;
+        if (choice == 3 && fightFloor_GetFightKindNigeruFlag(0)) {
+            break;
+        }
+    advance:
+        slot++;
     }
-    if(result==2)goto openTop;
-    fightMenuFightOutPokemonSetStatusMenuActiveFlag(pokemon,type,0);
-    previous=current;
-    if(choice==3&&fightFloor_GetFightKindNigeruFlag(0)!=0)goto finish;
-advance:
-    current++;
+    if (fightFloorIsNowEncountTuusinTaisen(0)) {
+        if (menuIsCheck(fightMenuGetFightTrainerPtrToKeyWaitMenuId(trainer, type))) {
+            menuCloseCustom(fightMenuGetFightTrainerPtrToKeyWaitMenuId(trainer, type), 0, 1);
+        }
     }
-finish:
-    if(fightFloorIsNowEncountTuusinTaisen(0)!=0){
-        if(menuIsCheck(fightMenuGetFightTrainerPtrToKeyWaitMenuId(trainer,type))!=0)menuCloseCustom(fightMenuGetFightTrainerPtrToKeyWaitMenuId(trainer,type),0,1);
-    }
-    for(i=0;i<count;i++){
-        pokemon=fightTrainerGetValidFightOutPokemonPtr(trainer,i);
-        if(pokemon)pokemonSetStatus((Pokemon*)pokemon,0,0x120,0,0);
+    for (slot = 0; slot < (u32)activeCount; slot++) {
+        pokemon = fightTrainerGetValidFightOutPokemonPtr(trainer, slot);
+        if (pokemon) {
+            pokemonSetStatus((Pokemon*)pokemon, 0, 0x120, 0, 0);
+        }
     }
     return 1;
 }

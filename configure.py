@@ -1418,7 +1418,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightGSfloor.cpp", cflags=cflags_xd_app_fight),
 
             # fightMenu
-            Object(NonMatching, "game/pxdvs/app/fight/fightMenu.cpp", cflags=cflags_xd_app_fight),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightMenu.cpp", cflags=cflags_xd_app_fight),
 
             # fightTimer
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/fight/fightTimer/fightTimer.cpp", extra_cflags=["-inline off"]),
