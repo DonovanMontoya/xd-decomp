@@ -1,3 +1,4 @@
+#include <game/pxdvs/GSAPI/GSmovie/THPDraw.hpp>
 #include <game/pxdvs/GSAPI/GSmovie/moviePrivate.hpp>
 #include <libc/string.h>
 static u8 _initFlag;
@@ -105,10 +106,6 @@ struct GStexture;
 struct GSgfxLayer { u8 reserved0[0x28]; s32 id; void textureCopy(GSgfxLayerPass,GStexture*,bool,u8*,bool,bool,bool); };
 static void _movieRender(GSgfxLayer*,GSgfxLayerPass);
 static void _movieBeforeRender(f32);
-extern "C" {
-void THPGXSetRenderLayer(GSgfxLayer*); void THPGXYuv2RgbSetup(); void THPGXRestore();
-u16 THPGXYuv2RgbDraw(void*,void*,void*,s16,s16,s16,s16,s16,s16);
-}
 extern void _movieDaemon();
 extern "C" void GSgfxTokenWaitForClearAndReset(u16*);
 
