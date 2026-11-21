@@ -1,6 +1,7 @@
 #pragma defer_codegen on
 #pragma force_active on
 #pragma dollar_identifiers on
+#include <game/menuWazaStatus.hpp>
 #include <game/menuPokemonLayout.hpp>
 
 enum MENU_POKEMON_CB_TYPE {
@@ -80,8 +81,7 @@ u8 menuPokemonCheckPokemonChange(void *, FIGHT_TRAINER *, s32);
 u16 pokemonGetJoutaiMenuSpriteId(Pokemon *);
 u16 menuPocket2Call(s32, s32, s32);
 u32 wazaGetStatus(void*,u32,u16,u16);
-struct PokemonMenuWazaStatus;
-void pokemonToMenuWazaStatus(Pokemon*,PokemonMenuWazaStatus*);
+void pokemonToMenuWazaStatus(Pokemon*,MENU_WAZA_STATUS*);
 s32 menuSubOpenSelect2(s32, s32 *, s32, s32, s32, s32, s32, s32);
 MENU_POKEMON_STATUS_TBL* windowGetParam(tagWINDOW_WORK *, s32);
 void menuItemBiosSetXY(s32, s16, s16, s16);
@@ -205,7 +205,7 @@ static void _menuPokemonMakeStatus(MENU_POKEMON_STATUS_TBL *tbl);
 extern "C" u16 menuPokemonGetJoutaiSpriteID(Pokemon *p, u8 mode);
 
 extern "C" {
-static u8 wazaStatus$2693[0x48];
+static MENU_WAZA_STATUS wazaStatus$2693;
 s32 menuPokemonOpenWazaLight(s8 index);
 
 s32 menuPokemonCtrl(tagWINDOW_WORK *window);
@@ -1438,7 +1438,7 @@ s32 menuPokemonOpenWazaLight(s8 index)
     if (pokemon == 0)
         return -1;
 
-    pokemonToMenuWazaStatus(pokemon, (PokemonMenuWazaStatus*)wazaStatus$2693);
+    pokemonToMenuWazaStatus(pokemon, &wazaStatus$2693);
 
     i = count = 0;
     dst = moveIds + i;

@@ -1,5 +1,13 @@
 #pragma dollar_identifiers on
 #include <game/menuFightLayout.hpp>
+#include <libc/stddef.h>
+
+typedef u8 MoveStatusBytes[sizeof(MENU_WAZA_STATUS)];
+enum MenuWazaFieldOffset {
+    MoveEntriesOffset = offsetof(MENU_WAZA_STATUS, entries),
+    MoveCurrentPPOffset = offsetof(MENU_WAZA_STATUS, entries[0].currentPP),
+    MoveMaxPPOffset = offsetof(MENU_WAZA_STATUS, entries[0].maxPP)
+};
 
 extern "C" {
 void *memcpy(void *, const void *, u32);
@@ -38,12 +46,12 @@ u32 GSinputButtonsPressed(s32);
 void GSthreadSwitch(void);
 f32 timeGetLastFrameSec(void);
 MenuCursor windowGetCursor(s32);
-Pokemon *fightOutPokemonGetPokemonPtr(s32);
-u8 fightOutPokemonCheckCanOutOkWazaBanme(s32, u16, s32, u16 *);
+Pokemon *fightOutPokemonGetPokemonPtr(FightOutPokemon*);
+u8 fightOutPokemonCheckCanOutOkWazaBanme(FightOutPokemon*, u16, u8, u16 *);
 void *wazaGetStatus(s32, u16, s32, s32);
 u32 GSmsgGetGSchar(void *);
 void fightFloorSetStatus(s32, s32, s32, s32, s32);
-s32 fightOutPokemonGetSoubiItemDataId(s32);
+u32 fightOutPokemonGetSoubiItemDataId(FightOutPokemon*);
 u8 pokemonWazaCheckValid(void *, u16);
 void windowDrawSprite(s32, s32, tagWINDOW_WORK *, s32, s32, s32);
 s32 zokuseiBiosGetSpriteID(u16);
@@ -58,7 +66,7 @@ void GSsndPlayNow(s32);
 void windowCreateCursorSprite(tagWINDOW_WORK *);
 s32 menuGetSelectItemNum(s32);
 void pokemonWazaReplace(void *, s32, s32);
-void pokemonToMenuWazaStatus(void *, MENU_WAZA_STATUS *);
+void pokemonToMenuWazaStatus(Pokemon *, MENU_WAZA_STATUS *);
 u8 fightFloorCheckFightActionFightOutPokemonIrekaeSelect(s32, s32 *, s32 **);
 s32 fightOutPokemonGetNicknamePtr(s32 *);
 u16 fightOutPokemonGetTokuseiDataId(s32 *);
@@ -116,20 +124,13 @@ static void _menuFightKeyWait(GSinputDevice);
 static u16 _menuFightGetLeftKeyInfo(long);
 static u16 _menuFightGetRightStickInfo(long, bool);
 
-#define WZ(T, w, i, off) (*(T *)((u8 *)(w) + (i) + (off)))
-#define WZ_SLOT(w) (*(s32 *)((u8 *)(w) + 0x40))
+#define WZ_SLOT(w) (*(FightOutPokemon**)((u8*)(w) + offsetof(MENU_WAZA_STATUS, fightPokemon)))
 
 #define ABSI(v) ((v) < 0 ? -(v) : (v))
 #define FABSF(v) ((v) > 0.0f ? (v) : -(v))
 
 extern "C" {
 void menuFightButtonTimeOutCheck(tagWINDOW_WORK *);
-
-struct WazaRowB {
-    u16 type;
-    u16 pad;
-    u32 pad2[2];
-};
 
 }
 
@@ -210,8 +211,8 @@ extern "C" {
 void *fightFloorGetNowPtr();
 void *fightFloorGetValidFightSidePtr(void *, s32);
 FIGHT_TRAINER *fightSideGetValidFightTrainerPtr(void *, s32);
-s32 fightTrainerGetValidFightOutPokemonPtr(FIGHT_TRAINER *, s32);
-u32 fightOutPokemon_GetTokuseiDataId(s32);
+FightOutPokemon* fightTrainerGetValidFightOutPokemonPtr(FIGHT_TRAINER *, u16);
+u16 fightOutPokemon_GetTokuseiDataId(FightOutPokemon*);
 void *pokemonTokuseiDataBiosGetPtr(u16);
 void *pokemonTokuseiDataBiosGetName(void *);
 u16 pokemonGetSoubiItemDataId(Pokemon *);
@@ -236,7 +237,7 @@ s32 fightMenuGetFightOutPokemonPtrToStatusMenuId(s32 *, u32, s32);
 extern "C" {
 s32 menuCB_GetBattleController2P();
 u8 fightFloor_GetFightType(s32);
-u8 fightTargetIsHostSide(s32, s32);
+s32 fightTargetIsHostSide(void*, u16);
 void winMsgOpenFight(u32, s32, s32);
 void winMsgCloseFight(s32);
 
@@ -728,8 +729,8 @@ extern "C" void menuFightDrawIPokemonStatus(tagWINDOW_WORK *window, tagSPRITE_WO
 
 extern "C" void menuFightDrawIwaitStatus(tagWINDOW_WORK* window, tagSPRITE_WORK* sprite) {
     u32 color;
-    u32 fop0;
-    u32 fop1;
+    FightOutPokemon* fop0;
+    FightOutPokemon* fop1;
     Pokemon* pk0;
     Pokemon* pk1;
     FIGHT_TRAINER* trainer;
@@ -1410,7 +1411,7 @@ extern "C" void menuFightDrawSecretWazaDoc(tagWINDOW_WORK *window, tagSPRITE_WOR
         else winSpriteSetDisp(sprite, 0);
         break;
     case 0x79: case 0x252: case 0x268: {
-        u16 type = ((MenuFightWazaEntry *)(status->raw + 4))[*selected].type;
+        u16 type = status->entries[*selected].type;
         windowDrawSprite(0, 0, window, zokuseiBiosGetSpriteID(type), 0, winSpriteGetLayerID(window, sprite));
         break;
     }
@@ -1440,7 +1441,7 @@ extern "C" void menuFightDrawSecretWazaDoc(tagWINDOW_WORK *window, tagSPRITE_WOR
         break;
     }
     case 0x80: case 0x257: case 0x26D:
-        msgctrlSetValue(0x37, ((MenuFightWazaEntry *)(status->raw + 4))[*selected].name);
+        msgctrlSetValue(0x37, (u32)status->entries[*selected].name);
         GSmsgPrint2(winSpriteGetLayerID(window, sprite), 0, 0, color, 0x4276);
         break;
     case 0x82: case 0x258: case 0x26E: {
@@ -1449,9 +1450,9 @@ extern "C" void menuFightDrawSecretWazaDoc(tagWINDOW_WORK *window, tagSPRITE_WOR
         GSmsgPrint2(winSpriteGetLayerID(window, sprite), 0, 0, color, 0x42D1);
         half = (s16)((width - (s16)(GSmsgGetRect(0x42C4) >> 16)) / 2);
         GSmsgPrint2(winSpriteGetLayerID(window, sprite), label + half, 0, color, 0x42C4);
-        msgctrlSetValue(0x5F, ((MenuFightWazaEntry *)(status->raw + 4))[*selected].maxPP);
+        msgctrlSetValue(0x5F, status->entries[*selected].currentPP);
         GSmsgPrintRect(winSpriteGetLayerID(window, sprite), label, 0, half, sprite->height, color, 0x4357);
-        msgctrlSetValue(0x5F, ((MenuFightWazaEntry *)(status->raw + 4))[*selected].currentPP);
+        msgctrlSetValue(0x5F, status->entries[*selected].maxPP);
         GSmsgPrintRect(winSpriteGetLayerID(window, sprite), label, 0, width, sprite->height, color, 0x4357);
         break;
     }
@@ -1460,11 +1461,11 @@ extern "C" void menuFightDrawSecretWazaDoc(tagWINDOW_WORK *window, tagSPRITE_WOR
 
 extern "C" void menuFightDrawSecretWazaSelect(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) {
     s32 offset;
-    MenuFightWazaLayout *entry;
+    const u8* row;
     s32 index = -1;
     tagWINDOW_WORK *source = windowSearchID(windowGetParam(window, 0));
     if (source == 0) return;
-    MENU_WAZA_STATUS *status = (MENU_WAZA_STATUS *)windowGetAllocPtr(source);
+    MoveStatusBytes *status = (MoveStatusBytes *)windowGetAllocPtr(source);
     if (status == 0) return;
     u32 color = menuSubCalcColor(window, sprite);
     switch (sprite->id) {
@@ -1474,27 +1475,27 @@ extern "C" void menuFightDrawSecretWazaSelect(tagWINDOW_WORK *window, tagSPRITE_
     case 0x5A: case 0x5F: case 0x63: case 0x67: index = 3; break;
     }
     if (index < 0) return;
-    offset = index * 12;
-    entry = (MenuFightWazaLayout *)((u8 *)status + offset);
-    if (entry->entries[0].name != 0) winSpriteSetDisp(sprite, 1);
+    offset = index * (s32)sizeof(MenuFightWazaEntry);
+    row = (u8*)status + offset;
+    if (((const MenuFightWazaEntry*)(row + MoveEntriesOffset))->name != 0) winSpriteSetDisp(sprite, 1);
     else { winSpriteSetDisp(sprite, 0); return; }
     switch (sprite->id) {
         case 0x5C: case 0x5D: case 0x5E: case 0x5F: {
-            u16 type = ((MenuFightWazaEntry *)&status->raw[offset + 4])->type;
+            u16 type = ((MenuFightWazaEntry *)&(*status)[offset + MoveEntriesOffset])->type;
             windowDrawSprite(0, 0, window, zokuseiBiosGetSpriteID(type), 0, winSpriteGetLayerID(window, sprite));
             break;
         }
         case 0x60: case 0x61: case 0x62: case 0x63: {
             s16 half = (sprite->width - (s16)(GSmsgGetRect(0x42C4) >> 16)) / 2;
             GSmsgPrint2(winSpriteGetLayerID(window, sprite), half, 0, color, 0x42C4);
-            msgctrlSetValue(0x5F, status->raw[offset + 0xF]);
+            msgctrlSetValue(0x5F, (*status)[offset + MoveCurrentPPOffset]);
             GSmsgPrintRect(winSpriteGetLayerID(window, sprite), 0, 0, half, sprite->height, color, 0x4357);
-            msgctrlSetValue(0x5F, status->raw[offset + 0xE]);
+            msgctrlSetValue(0x5F, (*status)[offset + MoveMaxPPOffset]);
             GSmsgPrintRect(winSpriteGetLayerID(window, sprite), 0, 0, sprite->width, sprite->height, color, 0x4357);
             break;
         }
         case 0x57: case 0x58: case 0x59: case 0x5A:
-            msgctrlSetValue(0x37, entry->entries[0].name);
+            msgctrlSetValue(0x37, (u32)((const MenuFightWazaEntry*)(row + MoveEntriesOffset))->name);
             GSmsgPrint2(winSpriteGetLayerID(window, sprite), 0, 0, color, 0x4277);
             break;
         case 0x64: case 0x65: case 0x66: case 0x67:
@@ -1511,14 +1512,14 @@ extern "C" void menuFightButtonSecretWazaTop(tagWINDOW_WORK *arg0) {
     s32 var_r26;
     s32 temp_r4_2;
     s32 temp_r4;
-    MenuFightWazaLayout *temp_r31;
+    MENU_WAZA_STATUS *temp_r31;
 
     if ((s8) init$3040 == 0) {
         waza_no$3039 = -1;
         init$3040 = 1;
     }
     temp_r27 = windowGetKeyInfo();
-    temp_r31 = (MenuFightWazaLayout*)windowGetAllocPtr(arg0);
+    temp_r31 = (MENU_WAZA_STATUS*)windowGetAllocPtr(arg0);
     var_r26 = -1;
     var_r30 = 0;
     var_r29 = 0;
@@ -1597,7 +1598,7 @@ extern "C" void menuFightButtonSecretWazaTop(tagWINDOW_WORK *arg0) {
 
 extern "C" void menuFightButtonIwaza1p(void) {
     s32 i;
-    MenuFightWazaLayout* work;
+    MENU_WAZA_STATUS* work;
     s32 target1;
     FightTargetEntry* targets;
     u16 direction;
@@ -1636,8 +1637,8 @@ extern "C" void menuFightButtonIwaza1p(void) {
     selected1=-1;
     if(menuIsCheck(0xA1)) {
         win=windowSearchID(0xA1);
-        work=(MenuFightWazaLayout*)windowGetAllocPtr(win);
-        pokemon=fightOutPokemonGetPokemonPtr(work->slot);
+        work=(MENU_WAZA_STATUS*)windowGetAllocPtr(win);
+        pokemon=fightOutPokemonGetPokemonPtr(work->fightPokemon);
         if(menuCB_GetBattleController2P()==1) {
             key=windowGetPortKeyInfo(1);edge=_menuFightGetRightStickInfo(0,true);held=_menuFightGetRightStickInfo(0,false);
         } else {
@@ -1676,8 +1677,8 @@ extern "C" void menuFightButtonIwaza1p(void) {
     selected0=-1;
     if(menuIsCheck(0x9E)) {
         win=windowSearchID(0x9E);
-        work=(MenuFightWazaLayout*)windowGetAllocPtr(win);
-        pokemon=fightOutPokemonGetPokemonPtr(work->slot);
+        work=(MENU_WAZA_STATUS*)windowGetAllocPtr(win);
+        pokemon=fightOutPokemonGetPokemonPtr(work->fightPokemon);
         key=windowGetPortKeyInfo(1);edge=_menuFightGetRightStickInfo(0,true);held=_menuFightGetRightStickInfo(0,false);
         if(menuIsCheck(0x9F)) {
             if(!(key->unk0 & 0x40)) {menuClose(0x9F);menuSetDisp(0x9E,1);}
@@ -1832,8 +1833,8 @@ extern "C" void menuFightCurIkousan(void) {
 
 extern "C" s32 menuFightCtrlSecretWazaTop(tagWINDOW_WORK *window) {
     void *dst;
-    if (window->phase == 0 && (dst = windowAllocMemory(window, 0x48)) != 0) {
-        memcpy(dst, (void *)window->parameters[0], 0x48);
+    if (window->phase == 0 && (dst = windowAllocMemory(window, sizeof(MENU_WAZA_STATUS))) != 0) {
+        memcpy(dst, (void *)window->parameters[0], sizeof(MENU_WAZA_STATUS));
     }
     windowGetAllocPtr(window);
     return 0;
@@ -1871,17 +1872,17 @@ extern "C" s32 menuFightCtrlSecretMain(tagWINDOW_WORK *window) {
 
 extern "C" void menuFightDrawPP(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) {
     u32 color;
-    MENU_WAZA_STATUS *status;
+    MoveStatusBytes *status;
     MenuCursor cursor;
     s16 x;
-    status = (MENU_WAZA_STATUS *)windowGetAllocPtr(window);
+    status = (MoveStatusBytes *)windowGetAllocPtr(window);
     color = menuSubCalcColor(window, sprite);
     cursor = windowGetCursor(window->menu);
     x = sprite->width - (s16)(GSmsgGetRect(0x42C4) >> 16) * 5;
     GSmsgPrint2(winSpriteGetLayerID(window, sprite), x, 0, color, 0x42C4);
     if (cursor.y >= 0 && cursor.y < 4) {
-        s32 off = cursor.y * 0xC;
-        if (((MenuFightWazaEntry *)&status->raw[4])[cursor.y].name != 0) {
+        s32 off = cursor.y * (s32)sizeof(MenuFightWazaEntry);
+        if (((MenuFightWazaEntry *)&(*status)[MoveEntriesOffset])[cursor.y].name != 0) {
             s32 waza;
             Pokemon *pokemon = fightOutPokemonGetPokemonPtr(WZ_SLOT(status));
             if (pokemon != 0) {
@@ -1918,9 +1919,9 @@ extern "C" void menuFightDrawPP(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) 
                 GSmsgPrintRight(winSpriteGetLayerID(window, sprite), 0, 0, sprite->width, sprite->height, color, 0x3AD1);
                 break;
             default:
-                msgctrlSetValue(0x5F, status->raw[off + 0xF]);
+                msgctrlSetValue(0x5F, (*status)[off + MoveCurrentPPOffset]);
                 GSmsgPrintRight(winSpriteGetLayerID(window, sprite), 0, 0, x, sprite->height, color, 0x4351);
-                msgctrlSetValue(0x5F, status->raw[off + 0xE]);
+                msgctrlSetValue(0x5F, (*status)[off + MoveMaxPPOffset]);
                 GSmsgPrintRight(winSpriteGetLayerID(window, sprite), 0, 0, sprite->width, sprite->height, color, 0x4351);
                 break;
             }
@@ -1974,14 +1975,14 @@ extern "C" s32 menuFightCtrlBall(tagWINDOW_WORK *window) {
 
 static u32 _menuFightIsUse(MENU_WAZA_STATUS *status, u16 index) {
     u16 sp8;
-    s32 slot = WZ_SLOT(status);
+    FightOutPokemon* slot = WZ_SLOT(status);
     Pokemon *pokemon = fightOutPokemonGetPokemonPtr(slot);
     u8 result = fightOutPokemonCheckCanOutOkWazaBanme(slot, index, 1, &sp8);
     u16 waza = pokemonGetStatus(pokemon, 0, 0x7F, index);
     u32 msg;
     void *data;
     if (result != 0) {
-        msgctrlSetValue(0x11, slot);
+        msgctrlSetValue(0x11, (u32)slot);
         msg = (u32)wazaGetStatus(0, waza, 1, 0);
         msgctrlSetValue(0x28, GSmsgGetGSchar((void *)msg));
         s32 item = fightOutPokemonGetSoubiItemDataId(slot);
@@ -2002,10 +2003,9 @@ static u32 _menuFightIsUse(MENU_WAZA_STATUS *status, u16 index) {
 
 
 extern "C" void menuFightDrawType(tagWINDOW_WORK *window, tagSPRITE_WORK *sprite) {
-    MenuFightWazaLayout *status = (MenuFightWazaLayout *)windowGetAllocPtr(window);
+    MENU_WAZA_STATUS *status = (MENU_WAZA_STATUS *)windowGetAllocPtr(window);
     s16 cursorIndex = windowGetCursor(window->menu).y;
     if (cursorIndex >= 0 && cursorIndex < 4) {
-        s32 off = cursorIndex * 0xC;
         if (status->entries[cursorIndex].name != 0) {
             s32 waza;
             Pokemon *pokemon = fightOutPokemonGetPokemonPtr(WZ_SLOT(status));
@@ -2180,7 +2180,7 @@ extern "C" s32 menuFightWazaButton(tagWINDOW_WORK *window) {
     case 1:
         if (key & 0xD0) {
             if (pokemon != 0) {
-                s32 saved;
+                FightOutPokemon* saved;
                 pokemonWazaReplace(pokemon, (s8)work->saved, (u16)window->selected);
                 saved = WZ_SLOT(status);
                 pokemonToMenuWazaStatus(pokemon, status);
@@ -2207,9 +2207,9 @@ extern "C" s32 menuFightWazaCtrl(tagWINDOW_WORK *arg0) {
 
     temp_r0 = arg0->phase;
     if ((s8) temp_r0 == 0) {
-        temp_r3 = windowAllocMemory(arg0, 0x48);
+        temp_r3 = windowAllocMemory(arg0, sizeof(MENU_WAZA_STATUS));
         if (temp_r3 != NULL) {
-            memcpy(temp_r3, (void*)windowGetParam(arg0, 0), 0x48);
+            memcpy(temp_r3, (void*)windowGetParam(arg0, 0), sizeof(MENU_WAZA_STATUS));
         }
         temp_r3_2 = windowGetFreeWork(arg0);
         temp_r3_2->mode = 0;
@@ -2218,7 +2218,7 @@ extern "C" s32 menuFightWazaCtrl(tagWINDOW_WORK *arg0) {
     } else if ((s8) temp_r0 == 3) {
         temp_r3 = windowGetAllocPtr(arg0);
         if (temp_r3 != NULL) {
-            memcpy((void*)windowGetParam(arg0, 0), temp_r3, 0x48);
+            memcpy((void*)windowGetParam(arg0, 0), temp_r3, sizeof(MENU_WAZA_STATUS));
         }
     }
     temp_r3_4 = windowGetAllocPtr(arg0);
@@ -2227,9 +2227,9 @@ extern "C" s32 menuFightWazaCtrl(tagWINDOW_WORK *arg0) {
             menuItemBiosSetSelectFlag(arg0->menu, menu_item_waza_tbl$2480[i], 1);
         }
     } else {
-        u8 *entries = (u8 *)temp_r3_4;
+        MENU_WAZA_STATUS* status = (MENU_WAZA_STATUS*)temp_r3_4;
         for (i = 0; i < 4; i++) {
-            if (*(u32 *)(entries + i * 12 + 4) != 0U) {
+            if (status->entries[i].name != 0) {
                 menuItemBiosSetSelectFlag(arg0->menu, menu_item_waza_tbl$2480[i], 1);
             } else {
                 menuItemBiosSetSelectFlag(arg0->menu, menu_item_waza_tbl$2480[i], 0);
@@ -2615,7 +2615,7 @@ extern "C" s32 menuFightCloseWaza(s32 arg) {
     return 0;
 }
 
-extern "C" s32 menuFightOpenWaza(s32 pokemon, MENU_WAZA_STATUS *status, s32 *cursor, s32 wait) {
+extern "C" s32 menuFightOpenWaza(FIGHT_TRAINER *trainer, MENU_WAZA_STATUS *status, s32 *cursor, s32 wait) {
     u32 repeat;
     s32 response;
     s32 menu;
@@ -2625,11 +2625,11 @@ extern "C" s32 menuFightOpenWaza(s32 pokemon, MENU_WAZA_STATUS *status, s32 *cur
     repeat = 1;
     confirm = 0;
     other = 0;
-    switch (((u8 *)status)[0x44]) {
+    switch (((u8 *)status)[offsetof(MENU_WAZA_STATUS, online)]) {
     case 0:
         if (isImasugu()) {
             response = menuCB_GetBattleController2P();
-            if (fightTargetIsHostSide(pokemon, fightFloor_GetFightType(0))) {
+            if ((u8)fightTargetIsHostSide(trainer, fightFloor_GetFightType(0))) {
                 menu = 0x9E; confirm = 0x11C; other = 0xA2;
             } else {
                 menu = 0xA1; confirm = 0x11D; other = 0x9F;

@@ -190,8 +190,8 @@ extern "C++" { static u32 _fightOutPokemonGetTenkiyaPkxDataId(u16 weather); }
 extern "C" { void fightPokemonSetNonTrainerPokemonIsActiveFlag(u8 active); }
 extern "C" { u8 fightPokemonGetNonTrainerPokemonIsActiveFlag(); }
 extern "C" { void fightOutPokemonGetRndStatus(FightOutPokemon* poke, u32* personality, u32* trainerRnd); }
-extern "C" { void fightOutPokemonToMenuWazaStatus(FightOutPokemon* poke, FightMenuWazaStatus* menu); }
-extern "C" { void fightPokemonToMenuWazaStatus(FightPokemon* poke, FightMenuWazaStatus* menu); }
+extern "C" { void fightOutPokemonToMenuWazaStatus(FightOutPokemon* poke, MENU_WAZA_STATUS* menu); }
+extern "C" { void fightPokemonToMenuWazaStatus(FightPokemon* poke, MENU_WAZA_STATUS* menu); }
 extern "C" { void fightPokemonToMenuLvupStatus(FightPokemon* poke, FightMenuLvupStatus* menu); }
 extern "C" { void fightOutPokemonAddFightOutPokemonEnemyDamage(FightOutPokemon* attacker,
     FightOutPokemon* defender, u32 damage); }
@@ -2497,13 +2497,13 @@ void fightPokemonToMenuLvupStatus(FightPokemon* poke, FightMenuLvupStatus* menu)
 }
 }
 extern "C" {
-void fightPokemonToMenuWazaStatus(FightPokemon* poke, FightMenuWazaStatus* menu) {
+void fightPokemonToMenuWazaStatus(FightPokemon* poke, MENU_WAZA_STATUS* menu) {
     Pokemon* pokemon = fightPokemonGetPokemonPtr(poke);
     if (pokemon != nullptr) pokemonToMenuWazaStatus(pokemon, menu);
 }
 }
 extern "C" {
-void fightOutPokemonToMenuWazaStatus(FightOutPokemon* poke, FightMenuWazaStatus* menu) {
+void fightOutPokemonToMenuWazaStatus(FightOutPokemon* poke, MENU_WAZA_STATUS* menu) {
     fightPokemonToMenuWazaStatus(fightOutPokemon_GetFightPokemonPtr(poke), menu);
     menu->fightPokemon = poke;
 }

@@ -1,4 +1,5 @@
 #pragma defer_codegen on
+#include <game/menuWazaStatus.hpp>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/pxdvs/app/pokemon/pokemonStatusDispatch.hpp>
 #include <game/pxdvs/app/pokemon/pokemonPrivate.hpp>
@@ -193,21 +194,8 @@ u32 pokemonCreateRndFit(Pokemon* poke, s8 sex, s8 seikaku, s8 rare, u32 trainerR
 
 void pokemonGetFriendFormPokemonFriendFilterId(Pokemon* poke, u16 itemKind, u16 filterId);
 
-struct PokemonMenuWaza {
-    u32 name;
-    u32 zokuseiName;
-    u16 zokusei;
-    u8 maxPp;
-    u8 pp;
-};
-
-struct PokemonMenuWazaStatus {
-    u32 nickname;
-    PokemonMenuWaza waza[4];
-};
-
 #pragma opt_common_subs off
-void pokemonToMenuWazaStatus(Pokemon* poke, PokemonMenuWazaStatus* out);
+void pokemonToMenuWazaStatus(Pokemon* poke, MENU_WAZA_STATUS* out);
 #pragma opt_common_subs reset
 
 } // extern "C" (new functions)
@@ -2182,32 +2170,32 @@ bool pokemonCheckSetMonohiroi(Pokemon* poke)
 
 #pragma opt_common_subs off
 extern "C" {
-void pokemonToMenuWazaStatus(Pokemon* poke, PokemonMenuWazaStatus* out)
+void pokemonToMenuWazaStatus(Pokemon* poke, MENU_WAZA_STATUS* out)
 {
     u8 index;
     u16 waza;
     u32 zokusei;
     u32 i;
-    PokemonMenuWaza* entry;
-    memset(out, 0, 0x48);
-    out->nickname = (u32)pokemon_GetNicknamePtr(poke);
+    MenuFightWazaEntry* entry;
+    memset(out, 0, sizeof(*out));
+    out->nickname = pokemon_GetNicknamePtr(poke);
     for (i = 0; (u8)i < 4; i++) {
         index = i;
-        entry = &out->waza[index];
+        entry = &out->entries[index];
         if (!pokemonWazaCheckValid(poke, index)) {
             entry->name = 0;
-            entry->zokuseiName = 0;
-            entry->zokusei = 0;
-            entry->maxPp = 0;
-            entry->pp = 0;
+            entry->typeName = 0;
+            entry->type = 0;
+            entry->maxPP = 0;
+            entry->currentPP = 0;
         } else {
             waza = pokemon_GetPokemonWazaDataId(poke, index);
             zokusei = wazaDB_GetZokuseiDataId(waza);
-            entry->name = (u32)GSmsgGetGSchar(wazaDB_GetName(waza));
-            entry->zokuseiName = (u32)GSmsgGetGSchar(zokuseiBiosGetName(zokusei));
-            entry->zokusei = pokemonWazaGetZokusei(poke, index);
-            entry->maxPp = pokemonWazaGetMaxPP(poke, index);
-            entry->pp = pokemon_GetPokemonWazaPp(poke, index);
+            entry->name = GSmsgGetGSchar(wazaDB_GetName(waza));
+            entry->typeName = GSmsgGetGSchar(zokuseiBiosGetName(zokusei));
+            entry->type = pokemonWazaGetZokusei(poke, index);
+            entry->maxPP = pokemonWazaGetMaxPP(poke, index);
+            entry->currentPP = pokemon_GetPokemonWazaPp(poke, index);
         }
     }
 }

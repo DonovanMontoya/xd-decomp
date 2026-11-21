@@ -867,15 +867,16 @@ static u8 _fightMenuFightTrainerGcHeroOpenMenuSubWaza(FIGHT_TRAINER* trainer,Fig
     FightOutPokemon *target;
     u32 message;
     u8 outCount;
-    s32 wazaStatus;
-    u8 status[0x48];
+    s32* cursor;
+    MENU_WAZA_STATUS status;
     s32 relative;
     outCount=(u8)fightTypeDataBiosGetFightoutPokemonNum(fightTypeDataBiosGetPtr(type));
     for(;;){
-        fightOutPokemonToMenuWazaStatus(attacker,status);
-        status[0x44]=fightFloorIsNowEncountTuusinTaisen(0);
+        fightOutPokemonToMenuWazaStatus(attacker, &status);
+        status.online = fightFloorIsNowEncountTuusinTaisen(0);
         pokemon=fightOutPokemonGetPokemonPtr(attacker);
-        wazaStatus=pokemonGetStatus(attacker,0,0x101,0);selected=menuFightOpenWaza(trainer,status,wazaStatus,1);
+        cursor = (s32*)pokemonGetStatus(attacker, 0, 0x101, 0);
+        selected = menuFightOpenWaza(trainer, &status, cursor, 1);
         if(selected<0){menuFightCloseWaza(1);return 0;}
         if(selected>4){
             if((u8)(fightFloorGetStatus(0,0,0x22,0)!=0)==1){

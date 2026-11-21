@@ -1,5 +1,6 @@
 #ifndef FIGHT_MENU_PRIVATE_HPP
 #define FIGHT_MENU_PRIVATE_HPP
+#include <game/menuWazaStatus.hpp>
 #include <game/menuPokemonStatus.hpp>
 
 struct FightOutPokemon;
@@ -56,7 +57,7 @@ Pokemon* fightOutPokemonGetPokemonPtr(FightOutPokemon*);
 u16 fightOutPokemonGetSoubiItemDataId(FightOutPokemon*);
 void fightOutPokemonInitFightActionBuff(FightOutPokemon*);
 u8 fightOutPokemonIsJoutaiDataId(FightOutPokemon*, u16);
-void fightOutPokemonToMenuWazaStatus(FightOutPokemon*, void*);
+void fightOutPokemonToMenuWazaStatus(FightOutPokemon*, MENU_WAZA_STATUS*);
 s8 fightPokemonCheckFightOut(FightPokemon*);
 u8 fightPokemonCheckValid(void*);
 FightOutPokemon* fightSeqSelectDefensePokemonPtr(FightOutPokemon*, u16, u16, FightOutPokemon* (*)(FightOutPokemon*, u16, u16), u8, u8, s16);
@@ -106,7 +107,7 @@ s32 menuFightOpenPokemon(FIGHT_TRAINER*, FightOutPokemon*, u16, u8, u8);
 s32 menuFightOpenTarget(void*, u32, u32);
 s32 menuFightOpenTop(FIGHT_TRAINER*, void*, s32*, u32);
 void menuFightOpenTotalTimer();
-s32 menuFightOpenWaza(FIGHT_TRAINER*, void*, s32, u32);
+s32 menuFightOpenWaza(FIGHT_TRAINER*, MENU_WAZA_STATUS*, s32*, s32);
 void menuFightSetSeqOut__Fv();
 u8 menuIsCheck(u32);
 void menuOffScreenFadeSync(u32);

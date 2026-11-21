@@ -1,5 +1,6 @@
 #ifndef GAME_MENUFIGHT_LAYOUT_HPP
 #define GAME_MENUFIGHT_LAYOUT_HPP
+#include <game/menuWazaStatus.hpp>
 #include <dolphin/types.h>
 
 struct tagSPRITE_WORK {
@@ -87,23 +88,6 @@ struct Pokemon {
     void *getPokemonDataPtr() const;
     bool isDarkPokemon() const;
     DarkPokemon *getDarkPokemon();
-};
-
-struct MenuFightWazaEntry {
-    u32 name;
-    u32 reserved4;
-    u16 type;
-    u8 currentPP;
-    u8 maxPP;
-};
-struct MenuFightWazaLayout {
-    u32 leading;
-    MenuFightWazaEntry entries[5];
-    s32 slot;
-};
-
-struct MENU_WAZA_STATUS {
-    u8 raw[0x44];
 };
 
 struct MenuCursor {

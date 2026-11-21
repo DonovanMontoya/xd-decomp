@@ -1,16 +1,10 @@
 #ifndef FIGHT_POKEMON_MENUS_HPP
 #define FIGHT_POKEMON_MENUS_HPP
-#ifdef FIGHT_POKEMON_MENUS_NO_PROTOTYPES
-#include <dolphin/types.h>
-struct FightOutPokemon;
-#else
+#include <game/menuWazaStatus.hpp>
+#ifndef FIGHT_POKEMON_MENUS_NO_PROTOTYPES
 #include <game/pxdvs/app/fight/fightPokemon.hpp>
 #endif
 
-struct FightMenuWazaStatus {
-    u8 reserved00[0x40];
-    FightOutPokemon* fightPokemon;
-};
 struct FightMenuLvupStatus {
     u8 mode;
     u8 reserved01;
@@ -29,14 +23,14 @@ void fightOutPokemonGetRndStatus(FightOutPokemon*, u32*, u32*);
 u8 fightOutPokemonIsGcHeroFightOutPokemon(FightOutPokemon*);
 u32 menuSubGetPokemonSexForFightDisp(Pokemon*);
 u8 fightFloor_GetFightKindPokemonStatusMenuSubbarFlag(void*);
-void pokemonToMenuWazaStatus(Pokemon*, FightMenuWazaStatus*);
+void pokemonToMenuWazaStatus(Pokemon*, MENU_WAZA_STATUS*);
 u32 pokemon_GetMaxHp(Pokemon*);
 u32 pokemon_GetPhyAtk(Pokemon*);
 u32 pokemon_GetPhyDef(Pokemon*);
 u32 pokemon_GetSpeAtk(Pokemon*);
 u32 pokemon_GetSpeDef(Pokemon*);
-void fightOutPokemonToMenuWazaStatus(FightOutPokemon*, FightMenuWazaStatus*);
-void fightPokemonToMenuWazaStatus(FightPokemon*, FightMenuWazaStatus*);
+void fightOutPokemonToMenuWazaStatus(FightOutPokemon*, MENU_WAZA_STATUS*);
+void fightPokemonToMenuWazaStatus(FightPokemon*, MENU_WAZA_STATUS*);
 void fightPokemonToMenuLvupStatus(FightPokemon*, FightMenuLvupStatus*);
 }
 #endif
