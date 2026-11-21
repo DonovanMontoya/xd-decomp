@@ -1,6 +1,7 @@
 #include <global.h>
 #include <game/menuCBRule.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
+#include <game/pxdvs/app/hero/heroParty.hpp>
 #include <game/pxdvs/app/sodateya/sodateya.hpp>
 #include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 
@@ -44,7 +45,6 @@ s32 pokecoloGetRomVersion();
 void gamedataCreate(void*,s32,s32,s32,s32);
 void gamedatasaveSetStatus(void*,s32,s32);
 void GScharMakeFromSJIS(char16*,const char*);
-void heroCreate(Hero*,const char16*,s32);
 u8 heroBiosGetSexDataId(Hero*);
 u32 heroBiosGetRnd(Hero*);
 char16* heroBiosGetNamePtr(Hero*);

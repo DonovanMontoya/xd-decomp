@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/hero/heroParty.hpp>
 #include <game/pxdvs/app/deck/deck_layout.hpp>
 #include <game/pxdvs/app/fight/fightTrainerDB.hpp>
 #include <game/pxdvs/app/esaba/esaba.hpp>
@@ -14,7 +15,6 @@ struct FightAction;
 struct FightKindData;
 struct FightTrainerEnemyPokemon;
 struct FightTrainerKindData;
-struct Hero;
 struct Item {
     u8 unk0[4];
 };
@@ -217,9 +217,7 @@ void* savedataGetStatus(u32 a, u32 kind);
 Pokemon* heroBiosGetPokemonPtr(Hero* hero, u16 index);
 u8 pokemon_GetLevel(Pokemon* pokemon);
 u16* heroBiosGetNamePtr(Hero* hero);
-void heroCreate(Hero* hero, u16* name, u32 sex);
 s32 heroItemAddItemDataId(Hero* hero, u16 item, u8 num, s32 slot);
-u32 fightTrainerDB_GetSexDataId(u16 id);
 void pokemon_SetLevel(Pokemon* pokemon, u8 level);
 u32 pokemonGetLevelToExp(Pokemon* pokemon, u8 level);
 void pokemon_SetExp(Pokemon* pokemon, u32 exp);
@@ -1848,11 +1846,11 @@ void fightTrainerCreateFightTrainerDataIdToHero(u16 id, s32 allowNoAi, Hero* her
     Hero* player;
     u32 num;
     u8 fightKind;
-    u32 sex;
+    u8 sex;
     u8 maxLevel;
     u16 item;
-    u16 disk;
     Pokemon* p;
+    u16* name;
     u16 encountId = encountId_in;
 
     if (encountId == 0) {
@@ -1880,13 +1878,15 @@ void fightTrainerCreateFightTrainerDataIdToHero(u16 id, s32 allowNoAi, Hero* her
             return;
         }
         if (fightKind == 13) {
-            heroCreate(hero, heroBiosGetNamePtr(player), 0);
+            name = heroBiosGetNamePtr(player);
+            heroCreate(hero, name, 0);
             _fightTrainerCreateDeckBingo(id, hero);
             _fightTrainerCreateRndCheckRare(hero, false);
         } else if (fightKind == 15 || fightKind == 14) {
-            heroCreate(hero, heroBiosGetNamePtr(player), 0);
+            name = heroBiosGetNamePtr(player);
+            heroCreate(hero, name, 0);
             _fightTrainerCreateDeckVirtual(id, hero, encountId);
-            disk = fightEncountDataBiosGetDiskId(fightEncountDataBiosGetPtr(encountId));
+            u16 disk = fightEncountDataBiosGetDiskId(fightEncountDataBiosGetPtr(encountId));
             for (i = 0; i < 4; i++) {
                 item = deckDataVirtualDB_GetItemID(disk, i);
                 if (item == 0) {
@@ -1941,7 +1941,7 @@ void fightTrainerCreateFightTrainerDataIdToHero(u16 id, s32 allowNoAi, Hero* her
         _fightTrainerCreateRndCheckRare(hero, false);
     }
     if (fightKind == 15 || fightKind == 14) {
-        disk = fightEncountDataBiosGetDiskId(fightEncountDataBiosGetPtr(encountId));
+        u16 disk = fightEncountDataBiosGetDiskId(fightEncountDataBiosGetPtr(encountId));
         for (i = 0; i < 4; i++) {
             item = deckDataVirtualDB_GetItemID(disk, i);
             if (item == 0) {

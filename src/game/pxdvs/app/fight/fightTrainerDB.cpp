@@ -1775,7 +1775,7 @@ u16 fightTrainerPokemonDB_GetPokemonDataId(u16 arg0) {
     return temp_r3->getPokemonID();
 }
 
-s32 fightTrainerDB_GetSexDataId(void) {
+u8 fightTrainerDB_GetSexDataId(u16) {
     return 0;
 }
 

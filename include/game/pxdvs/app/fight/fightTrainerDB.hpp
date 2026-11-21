@@ -4,6 +4,7 @@
 #include <dolphin/types.h>
 
 extern "C" {
+u8 fightTrainerDB_GetSexDataId(u16 id);
 u16 fightTrainerDB_GetTemotiPokemonId(u16 id, u8 index);
 void fightTrainerDB_SetTemotiPokemonId(u16 id, u8 index, u16 value);
 u8 fightTrainerPokemonDB_GetStatusRnd(u16 id, u8 index);

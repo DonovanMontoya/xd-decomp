@@ -355,7 +355,7 @@ u32 heroCheckValid(Hero* hero) {
     return (u32)(((2 - type) | (type - 2))) >> 31;
 }
 
-void heroCreate(Hero* hero, void* name, u8 type) {
+void heroCreate(Hero* hero, const u16* name, u8 type) {
     u32 rnd;
     heroInit(hero);
     rnd = heroCreateRnd();
