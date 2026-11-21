@@ -1,6 +1,6 @@
 #ifndef FIGHT_SEQ_WAZASEQ_PRIVATE_HPP
 #define FIGHT_SEQ_WAZASEQ_PRIVATE_HPP
-#include <dolphin/types.h>
+#include <game/pxdvs/app/fight/fightWaza.hpp>
 
 struct FightOutPokemon;
 struct FightPokemon;
@@ -179,7 +179,6 @@ u32 fightWaza_GetDamage(void*);
 s32 fightWaza_GetHitDamage(void*);
 u16 fightWaza_GetIryoku(void*);
 u16 fightWaza_GetTargetDataId(void*);
-s32 fightWaza_GetWazaBanme(void*);
 u32 fightWaza_GetZokusei(void*);
 void fightWaza_SetDamage(void*, s32);
 void fightWaza_SetDamageValue(void*,u8);

@@ -1,6 +1,6 @@
 #pragma force_active on
 #include <game/pxdvs/app/fight/fightSeq/fightSeqDamage.hpp>
-#include <dolphin/types.h>
+#include <game/pxdvs/app/fight/fightWaza.hpp>
 
 #pragma auto_inline off
 
@@ -9,9 +9,6 @@ struct FightOutPokemon {
 };
 struct Pokemon {
     u8 data[0xC4];
-};
-struct FightWaza {
-    u8 data[0xAC];
 };
 struct FightAction {
     u8 data[0x38];

@@ -32,7 +32,6 @@ FightActionBuff* fightOutPokemonCreateFightActionAttackWaza(FightOutPokemon*, u3
     FightActionData*, u32, u32, s32, u8);
 u8 fightWazaCheckValid(FightWaza*);
 u32 fightWaza_GetUseWazaDataId(FightWaza*);
-s32 fightWaza_GetWazaBanme(FightWaza*);
 u32 fightWaza_GetTargetDataId(FightWaza*);
 u32 heroGetStatus(Hero*, u32, u32);
 u32 pokemon_GetNimbleness(Pokemon*);

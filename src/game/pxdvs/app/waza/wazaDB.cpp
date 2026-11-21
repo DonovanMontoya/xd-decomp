@@ -49,7 +49,7 @@ u16 fightWaza_GetUseWazaDataId(FightWazaRecord* data) { if (data == 0) { return 
 
 u16 fightWaza_GetMotoWazaDataId(FightWazaRecord* data) { if (data == 0) { return 0; } else { return data->motoWazaDataId; } }
 
-u8 fightWaza_GetWazaBanme(FightWazaRecord* data) { if (data == 0) { return 0; } else { return data->wazaBanme; } }
+s32 fightWaza_GetWazaBanme(FightWazaRecord* data) { if (data == 0) { return 0; } else { return data->wazaBanme; } }
 
 void* wazaDB_GetFightWazaWzxVariationFuncPtr(u32 identifier) { WazaDataRecord* data = wazaDataBiosGetPtr(identifier); if (data == 0) { return 0; } else { WazaFunctionRecord* functions = wazaFuncDataBiosGetPtr(wazaDataBiosGetWazaFuncDataId(data)); if (functions == 0) { return 0; } else { return functions->fightWazaWzxVariation; } } }
 

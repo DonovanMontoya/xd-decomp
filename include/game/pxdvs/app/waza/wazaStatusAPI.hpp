@@ -99,7 +99,6 @@ WazaStatusRecord* fightWaza_GetJoutaiPtr(FightWazaRecord* data, u16 index);
 u16 fightWaza_GetTargetDataId(FightWazaRecord* data);
 u16 fightWaza_GetUseWazaDataId(FightWazaRecord* data);
 u16 fightWaza_GetMotoWazaDataId(FightWazaRecord* data);
-u8 fightWaza_GetWazaBanme(FightWazaRecord* data);
 void* wazaDB_GetFightWazaWzxVariationFuncPtr(u32 identifier);
 void* wazaDB_GetFightWazaWzxTypeFuncPtr(u32 identifier);
 void* wazaDB_GetFightTrainerAiWazaDamageFightPokemonFuncPtr(u32 identifier);

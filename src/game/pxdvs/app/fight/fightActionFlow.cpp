@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fight/fightWaza.hpp>
 #include <dolphin/types.h>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/pxdvs/app/deck/deck_layout.hpp>
@@ -124,12 +125,11 @@ void *fightSideGetValidFightTrainerPtr(void *, u16);
 #define fightSideGetValidFightTrainerPtrU32 ((void *(*)(void *, u32))fightSideGetValidFightTrainerPtr)
 u8 fightMenuFightTrainerGcHeroOpenMenu(void *, u8, u8);
 u8 fightFloorLoopValidFightTrainer(void *, s32 (*)(void *, u16, void *), void *, u8);
-void *fightOutPokemon_GetFightWazaPtr(void *);
+FightWaza *fightOutPokemon_GetFightWazaPtr(void *);
 u8 fightWazaCheckValid(void *);
 u32 fightWaza_GetTargetDataId(void *);
 void *fightOutPokemonGetPokemonPtr(void *);
 u16 fightOutPokemon_GetMotoWazaDataId(void *);
-u8 fightWaza_GetWazaBanme(void *);
 u8 fightWaza_GetAutoMakeFlag(void *);
 u16 pokemon_GetPokemonWazaDataId(void *, u16);
 void fightWaza_SetMotoWazaDataId(void *, u16);
@@ -517,12 +517,12 @@ static inline void *_owGetAttacker(void *a) {
 
 extern "C" s32 fightActionFlowFightOutPokemonOutWaza(void *actor) {
     u16 moto;
-    void *waza;
+    FightWaza *waza;
     void *sel;
     u8 type;
     void *attacker;
     void *pk;
-    u8 banme;
+    s32 banme;
     void *def;
 
     type = fightFloor_GetFightType(0);
@@ -539,8 +539,9 @@ extern "C" s32 fightActionFlowFightOutPokemonOutWaza(void *actor) {
     moto = fightOutPokemon_GetMotoWazaDataId(attacker);
     banme = fightWaza_GetWazaBanme(waza);
     if (!fightWaza_GetAutoMakeFlag(waza)) {
-        if (moto != pokemon_GetPokemonWazaDataId(pk, banme)) {
-            moto = pokemon_GetPokemonWazaDataId(pk, banme);
+        u8 slot = (u8)banme;
+        if (moto != pokemon_GetPokemonWazaDataId(pk, slot)) {
+            moto = pokemon_GetPokemonWazaDataId(pk, slot);
             fightWaza_SetMotoWazaDataId(waza, moto);
             fightWazaSetUseWazaStatus(waza, moto);
             sel = fightSeqSelectDefensePokemonPtr(attacker, moto, type, 0, 1, 0, -1);

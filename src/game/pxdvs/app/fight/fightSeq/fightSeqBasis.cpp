@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fight/fightWaza.hpp>
 #include <game/menuFightStatus.hpp>
 #include <game/pxdvs/app/fight/fightSeq/fightSeqBasis.hpp>
 #undef NULL
@@ -300,7 +301,6 @@ u32 fightWaza_GetHitDamage(FightWaza*);
 u32 fightWaza_GetIryoku(FightWaza*);
 u8 fightWaza_GetKaisuu(FightWaza *);
 u16 fightWaza_GetUseWazaDataId(FightWaza*);
-s32 fightWaza_GetWazaBanme(FightWaza *);
 u32 fightWaza_GetZokusei(FightWaza *);
 void fightWaza_SetCritical(FightWaza*, u8);
 void fightWaza_SetDamage(FightWaza*, u32);
@@ -343,7 +343,7 @@ u32 pokemon_GetPoolExp(Pokemon *);
 u32 pokemon_GetSeikaku(Pokemon *);
 u8 pokemon_GetTokuseiFlag(Pokemon *);
 void pokemon_SetHp(Pokemon *,u16);
-void pokemon_SetPokemonWazaPp(Pokemon *,s8,u32);
+void pokemon_SetPokemonWazaPp(Pokemon *,s8,u8);
 void pokemon_SetPoolExp(Pokemon *,u32);
 s32 soundContinueBGMEX(u32, s32, s32);
 u32 soundPauseBGMEX(s32, s32);
@@ -3901,9 +3901,9 @@ void WS_CRITICAL_CHECK(void) {
 }
 
 void WS_PP_DEC(void) {
-    s32 banme;
-    s8 wazaNo;
-    u8 n;
+    s32 moveSlot;
+    s8 pokemonSlot;
+    u8 cost;
     FightOutPokemon *attacker;
     Pokemon *pokemon;
     u8 pp;
@@ -3912,7 +3912,7 @@ void WS_PP_DEC(void) {
     FightOutPokemon *defender;
     FightWaza *waza;
 
-    n = 1;
+    cost = 1;
     fightSeq_GetWazaSeq();
     attacker = fightTargetGetPtrAsNowFightType(0x11U, NULL);
     waza = fightOutPokemon_GetFightWazaPtr(attacker);
@@ -3921,29 +3921,34 @@ void WS_PP_DEC(void) {
     tokusei = fightOutPokemonGetTokuseiDataId(defender);
     if (!(ServerStatusFlag & 0xA00)) {
         range = wazaDB_GetRangeId(fightOutPokemon_GetUseWazaDataId(attacker));
-        banme = fightWaza_GetWazaBanme(waza);
-        wazaNo = banme;
-        pp = pokemon_GetPokemonWazaPp(pokemon, wazaNo);
+        moveSlot = fightWaza_GetWazaBanme(waza);
+        pokemonSlot = (s8)moveSlot;
+        pp = pokemon_GetPokemonWazaPp(pokemon, pokemonSlot);
         if (fightOutPokemon_GetNoPressureFlag(attacker) == 0) {
             switch (range) {
             case 6:
-                n = fightFloorCheckFightOutPokemonPtrAryPokemonTokuseiDataId(NULL, 0x2EU, 0U, attacker) + 1;
+                cost = fightFloorCheckFightOutPokemonPtrAryPokemonTokuseiDataId(NULL, 0x2EU, 0U, attacker) + 1;
                 break;
             case 7:
             case 4:
-                n = fightFloorCheckFightOutPokemonPtrAryPokemonTokuseiDataId(NULL, 0x2EU, 2U, attacker) + 1;
+                cost = fightFloorCheckFightOutPokemonPtrAryPokemonTokuseiDataId(NULL, 0x2EU, 2U, attacker) + 1;
                 break;
             default:
                 if (attacker != defender && tokusei == 0x2E) {
-                    n = 2;
+                    cost = 2;
                 }
                 break;
             }
         }
         if (pp != 0) {
             fightOutPokemon_SetPassPpdecFlag(attacker, 1U);
-            pokemon_SetPokemonWazaPp(pokemon, wazaNo, pp > n ? (u8)(pp - n) : 0);
-            fightSeqPpdecMonomane(attacker, banme, 0);
+            if (pp > cost) {
+                pp -= cost;
+            } else {
+                pp = 0;
+            }
+            pokemon_SetPokemonWazaPp(pokemon, pokemonSlot, pp);
+            fightSeqPpdecMonomane(attacker, moveSlot, 0);
         }
     }
     ServerStatusFlag &= 0xFFFFF7FF;
