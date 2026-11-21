@@ -1,5 +1,6 @@
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/hero/hero.hpp>
+#include <game/pxdvs/GSAPI/GSmsg/GSchar.hpp>
 #include <game/menuReliveMeter.h>
 #include <game/menuPcBoxPokemonLayout.hpp>
 #include <game/pxdvs/app/pcbox/pcbox.hpp>
@@ -31,9 +32,9 @@ void pokemonInit(Pokemon *);
 void *memcpy(void *, const void *, u32);
 void *memset(void *, int, u32);
 tagWINDOW_WORK *windowSearchID(s32);
-void GSmsgPrint2(s32, s32, s32, u32, u32);
+s32 GSmsgPrint2(u32, s32, s32, u32, u32);
 u32 GSmsgGetRect(u32);
-void msgctrlSetValue(u32, u32);
+void msgctrlSetValue(s32, u32);
 void menuModelInit(MENU_MODEL *, s16, s16);
 void menuModelSetSize(MENU_MODEL *, s16, s16, s16, s16);
 void menuModelTerm(MENU_MODEL *);
@@ -47,7 +48,6 @@ u8 menuSubGetPokemonSexForDisp(Pokemon *);
 s32 pokecoloGetCountryCode(void);
 void *itemDataBiosGetPtr(u16);
 u32 itemDataBiosGetName(void *);
-u32 GSmsgGetGSchar(u32);
 u32 pokemonDataBiosGetName(void *);
 u16 zokuseiGetPokemonSpriteID(void *, u16);
 void menuModelRenderOffAll(MENU_MODEL *);
@@ -57,7 +57,6 @@ s32 GSfsysGetStatus(u32);
 void GSfsysFree(u32);
 void GSresFreeGroup(u32);
 void GSthreadSwitch();
-void GScharCpy(u16 *,u16 *);
 u8 GSgfxVideoGetVsyncRate();
 void menuNameEntryCall(s32, s32);
 s32 menuPokemonStatusOpenFromPcBox(Pokemon *, Pokemon *(*)(Pokemon *, MENU_POKEMON_CB_TYPE, long), long);
@@ -439,7 +438,7 @@ void CMenuPokemonLeave::loop() {
             int area;
             Pokemon* p = currentPokemonGetPointer();
             setStatusAndModelDisplayPokemon(p);
-            GScharCpy(buf, (u16*)p->getNicknamePtr());
+            GScharCpy(buf, p->getNicknamePtr());
             area = currentPokemonGetArea();
             CAnt before = *currentAntGetPointer();
             currentPokemonDel(true);
@@ -1487,12 +1486,12 @@ void CMenuPokemonLeave::drawStatusArea() {
         if (item != 0) {
             void *itemData = itemDataBiosGetPtr(item);
             if (itemData != 0) {
-                msgctrlSetValue(0x37, GSmsgGetGSchar(itemDataBiosGetName(itemData)));
+                msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(itemDataBiosGetName(itemData)));
                 sp = menuPtSpriteWorkGetByItemID(w, 0x3D8, 0);
                 GSmsgPrint2(w->layer, w->x + sp->x, w->y + sp->y, -1, nameMsg);
             }
         }
-        msgctrlSetValue(0x37, GSmsgGetGSchar(pokemonDataBiosGetName(p->getPokemonDataPtr())));
+        msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(pokemonDataBiosGetName(p->getPokemonDataPtr())));
         sp = menuPtSpriteWorkGetByItemID(w, 0x3DC, 0);
         GSmsgPrint2(w->layer, w->x + sp->x, w->y + sp->y, -1, nameMsg);
         msgctrlSetValue(0x37, (u32)p->getNicknamePtr());
