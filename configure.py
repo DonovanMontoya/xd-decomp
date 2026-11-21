@@ -1123,7 +1123,10 @@ config.libs = [
 
             # GSshape
             Object(NonMatching, "game/pxdvs/GSAPI/GSshape/shapeAnim.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSshape/shapeObject.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
+            Object(NonMatching, "game/pxdvs/GSAPI/GSshape/shapeObject.cpp", extra_cflags=[
+                "-inline deferred,auto", "-str reuse,nopool,readonly",
+                '-pragma "opt_unroll_instr_count 127"',  # SetVertexColorAlpha processes eight vertices per iteration.
+            ]),
             Object(NonMatching, "game/pxdvs/GSAPI/GSshape/shapeRender.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSshape/GSshape.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
 
