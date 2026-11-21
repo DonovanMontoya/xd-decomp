@@ -62,7 +62,6 @@ extern "C++" { static void _winSeqMoveSub(SEQ_WORK_COMMON *common, tagSEQ_WORK *
 extern "C++" { static void _winSeqMoveMenu(tagWINDOW_WORK *win); }
 extern "C++" { static void _winSeqMoveSprite(s32 id, tagSPRITE_WORK *sprite); }
 extern "C" { void winSeqMoveMenu(tagWINDOW_WORK *win); }
-extern "C" { s32 winSeqCheckMove(s32 id); }
 extern "C" {
 
 void* GSresGetResourceAllGroup(u32);
@@ -104,7 +103,7 @@ static inline void spritePrimitive(GSgfxLayer* layer,u32 primitive,u16 vertices)
 
 #pragma force_active on
 extern "C" {
-s32 winSeqCheckMove(s32 id) {
+u8 winSeqCheckMove(s32 id) {
     tagWINDOW_WORK *win = windowSearchID(id);
     if (win == 0) {
         return 0;
