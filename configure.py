@@ -1027,7 +1027,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/blend.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/bound.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/animation.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
-            Object(NonMatching, "game/pxdvs/GSAPI/GSmodel/GSmodel.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/GSmodel.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/GSmodelExt.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/parse.cpp", extra_cflags=["-inline deferred,noauto", "-str reuse,nopool,readonly"]),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSmodel/part.cpp", extra_cflags=["-inline deferred,auto", "-str reuse,nopool,readonly"]),

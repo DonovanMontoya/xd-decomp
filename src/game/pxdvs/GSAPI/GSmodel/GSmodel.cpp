@@ -556,6 +556,20 @@ f32 GSmodelGetDistanceFromCamera(GSmodel* model) {
 }
 
 #pragma dont_inline on
+static inline void modelSetViewport(GSgfxLayer* layer, bool fromEFB, f32 left, f32 top, f32 right, f32 bottom) {
+    if (fromEFB) {
+        u16 halfHeight, halfWidth;
+        u16 width, height;
+        GSgfxVideoGetEFBSize(&width, &height);
+        left = top = 0.0f;
+        halfWidth = width >> 1;
+        right = __OSu16tof32(&halfWidth);
+        halfHeight = height >> 1;
+        bottom = __OSu16tof32(&halfHeight);
+    }
+    cameraSetClippedViewport(layer, left, top, right, bottom);
+}
+
 static void _modelRenderModelSub__FP10GSgfxLayer14GSgfxLayerPassP8_GSmodel(GSgfxLayer* layerPtr, s32 pass, GSmodel* model) {
     ModelRenderLayer* layer = (ModelRenderLayer*)layerPtr;
     GScamera* camera;
@@ -640,13 +654,6 @@ void GSmodelDrawModel(GSmodel* model, GSgfxLayer* layerPtr, s32 pass) {
 static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer, s32 pass) {
     s32 perf;
     u8 layerId;
-    u16 height;
-    u16 width;
-    u16 halfWidth;
-    u16 halfHeight;
-    f32 zero;
-    f32 right;
-    f32 bottom;
     u8 fogWasOn;
     GSmodel* model;
     u8 rendered;
@@ -659,32 +666,11 @@ static void _modelRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer, s32 
     if (layerId == modelShadowLayerID) {
         perf = GSgfxPerfbarCPUEntry(0xFF8000);
         modelShadowRender__FP10GSgfxLayer(layer);
-        bottom = 240.0f;
-        right = 320.0f;
-        zero = 0.0f;
-        if (pass == 0) {
-            GSgfxVideoGetEFBSize(&width, &height);
-            zero = 0.0f;
-            halfWidth = width >> 1;
-            right = __OSu16tof32(&halfWidth);
-            halfHeight = height >> 1;
-            bottom = __OSu16tof32(&halfHeight);
-        }
-        modelLayerField<f32>(layer, 0xD78) = zero;
-        modelLayerField<f32>(layer, 0xD7C) = zero;
-        modelLayerField<f32>(layer, 0xD80) = right;
-        modelLayerField<f32>(layer, 0xD84) = bottom;
-        modelLayerField<u32>(layer, 0x16B8) |= 0x10;
-        modelLayerField<u32>(layer, 0x16A8) |= 2;
-        modelLayerField<u32>(layer, 0x1770) |= 0x10;
-        modelLayerField<u32>(layer, 0x1760) |= 2;
-        modelLayerField<u16>(layer, 0xD70) = 0;
-        modelLayerField<u16>(layer, 0xD72) = 0;
-        GSgfxVideoGetEFBSize(&modelLayerField<u16>(layer, 0xD74), &modelLayerField<u16>(layer, 0xD76));
-        modelLayerField<u32>(layer, 0x16B8) |= 1;
-        modelLayerField<u32>(layer, 0x16A8) |= 2;
-        modelLayerField<u32>(layer, 0x1770) |= 1;
-        modelLayerField<u32>(layer, 0x1760) |= 2;
+        modelSetViewport(layer, pass == 0, 0.0f, 0.0f, 320.0f, 240.0f);
+        layer->scissor[0] = 0;
+        layer->scissor[1] = 0;
+        GSgfxVideoGetEFBSize(&layer->scissor[2], &layer->scissor[3]);
+        cameraMarkViewport(layer, 1);
         FlushState__10GSgfxLayerFv(layer);
     } else {
         rendered = 0;

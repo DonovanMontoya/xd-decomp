@@ -168,18 +168,7 @@ static inline f32 cameraSigned16ToFloat(register const s16* address) {
     asm { psq_l value, 0(address), 1, 3 }
     return value;
 }
-static inline void cameraMarkViewport(GSgfxLayer* layer, u32 flags) {
-    layer->renderState[0].clipping |= flags;
-    layer->renderState[0].dirty |= 2;
-    layer->renderState[1].clipping |= flags;
-    layer->renderState[1].dirty |= 2;
-}
 extern "C" {
-static inline void cameraSetClippedViewport(GSgfxLayer* layer, f32 x, f32 y, f32 w, f32 h) {
-    layer->viewport[0]=x; layer->viewport[1]=y; layer->viewport[2]=w; layer->viewport[3]=h;
-    cameraMarkViewport(layer, 0x10);
-}
-
 static inline void cameraSetClippedScissor(GSgfxLayer* layer, s16 x, s16 y, s16 w, s16 h) {
     layer->scissor[0]=x; layer->scissor[1]=y; layer->scissor[2]=w; layer->scissor[3]=h;
     cameraMarkViewport(layer, 1);

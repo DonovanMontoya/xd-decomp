@@ -27,4 +27,20 @@ struct GSgfxLayer {
     u8 reserved3[0x19a0 - 0x1818];
     GSgfxCameraMatrixStack* matrixStack;
 };
+
+static inline void cameraMarkViewport(GSgfxLayer* layer, u32 flags) {
+    layer->renderState[0].clipping |= flags;
+    layer->renderState[0].dirty |= 2;
+    layer->renderState[1].clipping |= flags;
+    layer->renderState[1].dirty |= 2;
+}
+
+static inline void cameraSetClippedViewport(GSgfxLayer* layer, f32 x, f32 y, f32 w, f32 h) {
+    layer->viewport[0] = x;
+    layer->viewport[1] = y;
+    layer->viewport[2] = w;
+    layer->viewport[3] = h;
+    cameraMarkViewport(layer, 0x10);
+}
+
 #endif
