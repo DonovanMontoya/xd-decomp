@@ -1,4 +1,5 @@
 #include <game/menuScriptLayout.hpp>
+#include <game/pxdvs/GSAPI/GSflag/GSflag.hpp>
 
 struct FLAGETC;
 extern "C" {
@@ -24,7 +25,6 @@ void menuClose(s32);
 s32 menuOpen(s32, s32);
 void menuCloseSync(s32, s32);
 void menuSetPosition(s32, s32, s32);
-void GSflagOn(void *);
 void GSfsysReadWait(s32);
 void GSresFreeGroup(s32);
 void GSthreadSwitch(void);
@@ -58,8 +58,7 @@ u8 GSgfxVideoGetVsyncRate(void);
 void menuCreateOffScreen(f32, f32);
 void menuOffScreenCheckEnable(s32);
 void menuReleaseOffScreen(f32);
-void *mailGetOpenFlag(s32);
-void GSflagSet(void *, s32);
+u32 mailGetOpenFlag(s32);
 void floorSetFadeScript(s32, s32);
 void *pokemonBiosGetNicknamePtr(void *);
 void darkPokemonBiosSetInformationFlag(u16, s32);
@@ -77,8 +76,6 @@ u8 wazaDataBiosGetZokuseiDataId(void *);
 s16 wazaDataBiosGetIryoku(void *);
 u8 wazaDataBiosGetAvg(void *);
 s32 wazaDataBiosGetDoc(void *);
-u32 GSflagGet(s32);
-u8 GSflagTest(void *, u16);
 void winSeqSetMenu(s32, s32);
 void menuSetStatus(s32, s32);
 s32 winSpriteGetLayerID(tagWINDOW_WORK *, tagSPRITE_WORK *);
@@ -106,7 +103,7 @@ struct WAZAOSHIE_ENTRY {
     u16 id;
     u16 pad;
     s32 floorIndex;
-    void *flag;
+    s32 flag;
 };
 extern WAZAOSHIE_ENTRY *wazaoshie_data;
 
@@ -120,7 +117,7 @@ struct WAZAOSHIEDEF {
     s16 power;
     u8 accuracy;
     u32 doc;
-    u8 released;
+    bool released;
 };
 static WAZAOSHIEDEF _wazawork;
 static u16 _tempwazaid[0x15];
@@ -294,7 +291,7 @@ static void _menuScriptReadMail(long id) {
     menuOffScreenCheckEnable(1);
     _menuScriptMailID = id;
     GSfloorPush(0x393);
-    void *flag = mailGetOpenFlag(id);
+    u32 flag = mailGetOpenFlag(id);
     if (flag != 0) {
         GSflagSet(flag, 1);
     }
@@ -565,7 +562,7 @@ static void _getWazaData(u16 id, WAZAOSHIEDEF *out) {
     w->power = wazaDataBiosGetIryoku(data);
     w->accuracy = wazaDataBiosGetAvg(data);
     w->doc = wazaDataBiosGetDoc(data);
-    w->released = 0;
+    w->released = false;
 }
 
 static Pokemon *_getPokemonPtr(long index) {
@@ -651,15 +648,15 @@ static u16 _checkWaza2(void) {
     u16 count = 0;
     u16 released = 0;
     u16 *ids = (u16 *)__nwa__FUl(*wazaoshie_data_number * 2);
-    u8 *rel = (u8 *)__nwa__FUl(*wazaoshie_data_number);
+    bool *releasedFlags = (bool *)__nwa__FUl(*wazaoshie_data_number);
     for (i = 0; i < *wazaoshie_data_number; i++) {
         struct { s32 value; } idx;
         idx.value = wazaoshie_data[i].floorIndex;
         if (GSflagGet(0x3C4) >= flag_etc[idx.value].value) {
             u16 id = wazaoshie_data[i].id;
             ids[(u16)count] = id;
-            rel[(u16)count] = GSflagTest(wazaoshie_data[i].flag, id);
-            if (rel[(u16)count] != 0) {
+            releasedFlags[(u16)count] = GSflagTest(wazaoshie_data[i].flag);
+            if (releasedFlags[(u16)count]) {
                 released++;
             }
             count++;
@@ -672,12 +669,12 @@ static u16 _checkWaza2(void) {
         _wazalist = (WAZAOSHIEDEF *)__nwa__FUl(count * 0x18);
         for (i = 0; i < (u16)count - 1; i++) {
             _getWazaData(ids[i], &_wazalist[i]);
-            _wazalist[i].released = rel[i];
+            _wazalist[i].released = releasedFlags[i];
         }
         _wazalist[i].id = 0;
     }
     __dla__FPv(ids);
-    __dla__FPv(rel);
+    __dla__FPv(releasedFlags);
     return count;
 }
 
@@ -1159,7 +1156,11 @@ extern "C" void menuScriptTutorialHook(tagWINDOW_WORK* window,tagSPRITE_WORK* sp
         while(index<8) {if(sprite->id==*entry)break;entry++;index++;}
         u16 id=tutorialdata[index+cursor.first];
         u32 flag=id?deckDataVirtualDB_GetFlag(id):0;
-        if(((u8(*)(void*))GSflagTest)((void*)flag) && flag)winSpriteSetDisp(sprite,true);else winSpriteSetDisp(sprite,false);
+        if (GSflagTest(flag) && flag != 0) {
+            winSpriteSetDisp(sprite, true);
+        } else {
+            winSpriteSetDisp(sprite, false);
+        }
         return;
     }
     case 0x7ee: {
