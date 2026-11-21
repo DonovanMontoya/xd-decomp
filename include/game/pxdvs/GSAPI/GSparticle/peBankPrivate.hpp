@@ -1,9 +1,14 @@
 #ifndef PE_BANK_PRIVATE_HPP
 #define PE_BANK_PRIVATE_HPP
 #include <game/pxdvs/GSAPI/GSparticle/peEmitterPrivate.hpp>
-struct ParticleBankFile { u32 flags; u32 reserved04; _peEmitter* emitter; u8 references; };
+struct _gpdHeader {
+    u32 magic, version;
+    u16 recordCount, resourceCount;
+    u8 references;
+    u8 reserved0D[3];
+};
 struct ParticleBankState {
-    ParticleBankFile* file; peEmitterNode node; ParticleBankFile* data;
+    _gpdHeader* file; peEmitterNode node; _particleData* data;
     f32 transform[10]; u32 flags, rendered; u16 token, maxParams; u8 bound[0x20]; void* camera; ParticleBankState* next;
     ParticleBankState() { node.transformParent = 0; node.next = 0; node.previous = 0; node.emitter = 0; node.containers = 0; }
     ~ParticleBankState() {}

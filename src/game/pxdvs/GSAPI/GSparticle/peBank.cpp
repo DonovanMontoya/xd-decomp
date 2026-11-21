@@ -84,9 +84,7 @@ extern "C" void peBankUpdate(ParticleBankState* bank, f32 delta) {
     }
 }
 
-struct _gpdHeader { u32 magic, version; u16 reserved08, count; u8 references, reserved0d[3]; };
 struct _gpdResourceItem { u8 reserved00, flags; u16 reserved02; s32 kind; void* data; };
-struct _particleData { u32 flags; s32 kind; void* data; _particleData* next; };
 struct BankModel { u32 flags; u8 reserved04[0x48]; void* model; };
 struct BankDistortion { u8 reserved00[0x78]; u8* first; u8* second; };
 extern "C" {
@@ -98,7 +96,7 @@ void shapeRelease(u16);
 }
 static inline _particleData* _peBankData(_gpdHeader* header) {
     u8* cursor = (u8*)header + sizeof(_gpdHeader);
-    cursor += header->count * sizeof(_gpdResourceItem);
+    cursor += header->resourceCount * sizeof(_gpdResourceItem);
     return (_particleData*)cursor;
 }
 
@@ -118,7 +116,6 @@ inline u16 GScast_float_to_u16(f32 value) {
     return result;
 }
 }
-struct EmitterRate { u8 reserved00[0xc]; f32 rate, rateRange; u8 reserved14[8]; f32 endTime; u8 reserved20[0x138 - 0x20]; _particleData* resources; };
 
 extern "C" u8 peBankStart(ParticleBankState* bank) {
     static _EmitParams params;
@@ -213,10 +210,10 @@ extern "C" ParticleBankState* peBankCreate(_gpdHeader* file) {
     g_particle_debug_stats[5] += size;
     GSboundCreate(bank->bound, 0);
     _particleData* data = _peBankData(file);
-    bank->file = (ParticleBankFile*)file;
+    bank->file = file;
     file->references++;
     memset(&bank->node, 0, sizeof(peEmitterNode));
-    bank->data = (ParticleBankFile*)data;
+    bank->data = data;
     bank->transform[0] = 0.0f;
     bank->transform[1] = 0.0f;
     bank->transform[2] = 0.0f;
@@ -239,7 +236,7 @@ extern "C" ParticleBankState* peBankCreate(_gpdHeader* file) {
     bank->next = 0;
     g_currentBank = bank;
     bank->node.transformParent = bank->transform;
-    bank->node.Init((_peEmitter*)data->data);
+    bank->node.Init(data->emitter);
     bank->maxParams = _peBankCalculateMaxParticles(data, 4.0f / GSgfxVideoGetVsyncRate());
     if (bank && bank->maxParams > g_maxEmitParams) {
         _EmitParams* old = g_emitParams;
@@ -273,10 +270,10 @@ extern "C" void peBankFreeFile(_gpdHeader *fileData) {
     if (file->magic != 0x01f056da || file->version != 0x30002) return;
     if (file->references) return;
     bankData = (char *)(file + 1);
-    bankData += file->count * sizeof(_gpdResourceItem);
+    bankData += file->resourceCount * sizeof(_gpdResourceItem);
     _peFreeInternalBankData((_particleData *)bankData);
     resource = (_gpdResourceItem *)(file + 1);
-    resourceCount = file->count;
+    resourceCount = file->resourceCount;
     while (resourceCount) {
         if ((resource->flags & 0x40) == 0x40) {
             switch (resource->kind) {
@@ -310,14 +307,14 @@ extern "C" _gpdHeader* peBankLoadFile(void* data) {
     _gpdHeader* header = (_gpdHeader*)cursor;
     cursor += sizeof(_gpdHeader);
     _gpdResourceItem* items = (_gpdResourceItem*)cursor;
-    cursor += header->count * sizeof(_gpdResourceItem);
+    cursor += header->resourceCount * sizeof(_gpdResourceItem);
     if (_peConvertFileData(header, items, (_particleData*)cursor, base)) return header;
     return 0;
 }
 
 static u16 _peBankCalculateMaxParticles(_particleData* data, f32 frameTime) {
     if (data->kind != 0) return 0;
-    EmitterRate* emitter = (EmitterRate*)data->data;
+    _peEmitter* emitter = data->emitter;
     f32 rate = emitter->rate + emitter->rateRange * GSrandf();
     u16 count;
     if (emitter->endTime <= 0.00001f) count = GScast_float_to_u16(0.5f + rate);
@@ -341,7 +338,7 @@ static void _peFreeInternalBankData(_particleData* data) {
         case 0: {
             _peEmitter* emitter = (_peEmitter*)object;
             if (emitter) {
-                _particleData* child = (_particleData*)emitter->resources;
+                _particleData* child = emitter->resources;
                 while (child) { _peFreeInternalBankData(child); child = child->next; }
             }
             break;
@@ -395,6 +392,10 @@ static inline u32 bankRelocate(u32 value,const char* base) {
     if(offset)value+=(u32)base;
     return value;
 }
+template <class T>
+static inline void bankRelocatePointer(T*& pointer, const char* base) {
+    pointer = (T*)bankRelocate((u32)pointer, base);
+}
 #define BANK_WORD(offset) definition[(offset)/4]
 #define BANK_FLOAT(offset) (*(f32*)((u8*)definition+(offset)))
 struct BankSceneModel {void* joint;void** animation;void** material;void** shape;};
@@ -405,11 +406,11 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
     HSD_Archive archive;
     if(header->magic!=0x01f056da || header->version!=0x30002)return false;
     if(header->references)return true;
-    u32 resourceCount=header->count;
-    u32 recordCount=header->reserved08;
+    u32 resourceCount=header->resourceCount;
+    u32 recordCount=header->recordCount;
     _gpdResourceItem* item=items;
     while(resourceCount) {
-        item->data=(void*)bankRelocate((u32)item->data,base);
+        bankRelocatePointer(item->data, base);
         item->flags&=~0x40;
         switch(item->kind) {
         case 0: {
@@ -457,8 +458,8 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
         ++item;--resourceCount;
     }
     while(recordCount) {
-        records->data=(void*)bankRelocate((u32)records->data,base);
-        records->next=(_particleData*)bankRelocate((u32)records->next,base);
+        bankRelocatePointer(records->data, base);
+        bankRelocatePointer(records->next, base);
         u32* definition=(u32*)records->data;
         if(!definition) {
             ++records;
@@ -466,29 +467,31 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
             continue;
         }
         switch(records->kind) {
-        case 0:
-            BANK_WORD(0x138)=bankRelocate(BANK_WORD(0x138),base);
-            BANK_WORD(0x14)=bankRelocate(BANK_WORD(0x14),base);
-            BANK_WORD(0x130)=bankRelocate(BANK_WORD(0x130),base);
-            BANK_WORD(0x134)=bankRelocate(BANK_WORD(0x134),base);
-            BANK_WORD(0xb8)=bankRelocate(BANK_WORD(0xb8),base);
-            BANK_WORD(0xbc)=bankRelocate(BANK_WORD(0xbc),base);
-            BANK_WORD(0xc0)=bankRelocate(BANK_WORD(0xc0),base);
-            BANK_WORD(0xd0)=bankRelocate(BANK_WORD(0xd0),base);
-            BANK_WORD(0xd4)=bankRelocate(BANK_WORD(0xd4),base);
-            BANK_WORD(0xd8)=bankRelocate(BANK_WORD(0xd8),base);
-            BANK_WORD(0xe8)=bankRelocate(BANK_WORD(0xe8),base);
-            BANK_WORD(0xec)=bankRelocate(BANK_WORD(0xec),base);
-            BANK_WORD(0xf0)=bankRelocate(BANK_WORD(0xf0),base);
-            BANK_WORD(0x10c)=bankRelocate(BANK_WORD(0x10c),base);
-            BANK_WORD(0x110)=bankRelocate(BANK_WORD(0x110),base);
-            BANK_WORD(0x114)=bankRelocate(BANK_WORD(0x114),base);
-            BANK_WORD(0x124)=bankRelocate(BANK_WORD(0x124),base);
-            BANK_WORD(0x128)=bankRelocate(BANK_WORD(0x128),base);
-            BANK_WORD(0x12c)=bankRelocate(BANK_WORD(0x12c),base);
+        case 0: {
+            _peEmitter* emitter = (_peEmitter*)definition;
+            bankRelocatePointer(emitter->resources, base);
+            bankRelocatePointer(emitter->rateSpline, base);
+            bankRelocatePointer(emitter->colorSpline, base);
+            bankRelocatePointer(emitter->alphaSpline, base);
+            bankRelocatePointer(emitter->forceSpline[0], base);
+            bankRelocatePointer(emitter->forceSpline[1], base);
+            bankRelocatePointer(emitter->forceSpline[2], base);
+            bankRelocatePointer(emitter->offsetSpline[0], base);
+            bankRelocatePointer(emitter->offsetSpline[1], base);
+            bankRelocatePointer(emitter->offsetSpline[2], base);
+            bankRelocatePointer(emitter->eulerSpline[0], base);
+            bankRelocatePointer(emitter->eulerSpline[1], base);
+            bankRelocatePointer(emitter->eulerSpline[2], base);
+            bankRelocatePointer(emitter->angularVelocitySpline[0], base);
+            bankRelocatePointer(emitter->angularVelocitySpline[1], base);
+            bankRelocatePointer(emitter->angularVelocitySpline[2], base);
+            bankRelocatePointer(emitter->scaleSpline[0], base);
+            bankRelocatePointer(emitter->scaleSpline[1], base);
+            bankRelocatePointer(emitter->scaleSpline[2], base);
             break;
+        }
         case 1: {
-            u32 remaining=header->count;
+            u32 remaining=header->resourceCount;
             _gpdResourceItem* resource=items;
             while(remaining) {
                 if((s32)BANK_WORD(0x54)==resource->reserved00) {
@@ -526,7 +529,7 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
             break;
         }
         case 6: {
-            u32 remaining=header->count;
+            u32 remaining=header->resourceCount;
             _gpdResourceItem* resource=items;
             while(remaining) {
                 if((s32)BANK_WORD(0x1c)==resource->reserved00) {
@@ -551,7 +554,7 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
             break;
         }
         case 3: {
-            u32 remaining=header->count;
+            u32 remaining=header->resourceCount;
             _gpdResourceItem* resource=items;
             while(remaining) {
                 if((s32)BANK_WORD(0x60)==resource->reserved00) {
@@ -568,7 +571,7 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
             break;
         }
         case 2: {
-            u32 remaining=header->count;
+            u32 remaining=header->resourceCount;
             _gpdResourceItem* resource=items;
             while(remaining) {
                 if((s32)BANK_WORD(0x4c)==resource->reserved00) {
@@ -609,7 +612,7 @@ bool _peConvertFileData(_gpdHeader* header,_gpdResourceItem* items,_particleData
             break;
         }
         case 4: {
-            u32 remaining=header->count;
+            u32 remaining=header->resourceCount;
             _gpdResourceItem* resource=items;
             while(remaining) {
                 if((s32)BANK_WORD(0x74)==resource->reserved00) {

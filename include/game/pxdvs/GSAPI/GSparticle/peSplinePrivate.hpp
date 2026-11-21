@@ -19,4 +19,6 @@ struct PeSpline {
     f32 points[1];
 };
 typedef char PeColorSplinePointsOffset[offsetof(PeColorSpline, points)==12 ? 1 : -1];
+extern "C" f32 peSplineGetValue(PeSpline* spline, f32 time);
+extern "C" void peColorSplineGetValue(PeColor* result, PeColorSpline* spline, f32 time);
 #endif
