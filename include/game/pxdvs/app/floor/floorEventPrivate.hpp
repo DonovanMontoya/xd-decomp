@@ -1,5 +1,6 @@
 #ifndef FLOOR_EVENT_PRIVATE_HPP
 #define FLOOR_EVENT_PRIVATE_HPP
+#include <game/pxdvs/app/floor/floorEvent.hpp>
 #include <game/pxdvs/app/floor/floorBiosPrivate.hpp>
 struct _GSmodel;
 struct GSthread;

@@ -2,6 +2,7 @@
 #define HERO_MOVE_PRIVATE_H
 
 #include <global.h>
+#include <game/pxdvs/app/floor/floorEvent.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 #include <game/pxdvs/app/hero/heroMove.hpp>
 #include <game/pxdvs/app/people/runtime.hpp>
@@ -120,7 +121,6 @@ u8 dbgMenuIsOpen();
 u8 menuIsCheck(u32);
 s32 floorGetFloorState();
 s32 floorExecScriptInteger(s32, s32, s32, s32, s32);
-s32 floorEventExecScript(u32, s32);
 u8 gimmickBoxIsGimmickMoving();
 FloorBgmMask* floorSound_getBgmMaskObj();
 void menuFieldMain(u32);
