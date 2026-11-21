@@ -1,10 +1,10 @@
 #pragma dollar_identifiers on
 #include <game/menuShopLayout.hpp>
+#include <game/pxdvs/app/item/item.h>
 #include <libc/stdarg.h>
 
 typedef struct VPC_BOX {
-    u8 reserved0[0x3AC];
-    u8 reserved3AC[0x3AC];
+    ITEM items[2][235];
     s32 unk758;
     s32 unk75C;
     u8 unk760;
@@ -72,7 +72,6 @@ typedef struct ShopItemInfo {
 } ShopItemInfo;
 
 s32 memcardTaskCall(s32, s32, s32);
-void itemInitAry(void *, s32);
 void *savedataGetStatus(s32, s32);
 void *memcpy(void *, const void *, u32);
 s32 heroGetStatus(s32, s32, s32);
@@ -98,7 +97,8 @@ u16 itemDataBiosGetCoupon(u32);
 u32 itemDataBiosGetPrice(u32);
 u32 itemDataBiosGetDoc(u32);
 u32 itemDataBiosGetName(u32);
-u32 *heroItemGetItemKindToItemAryPtr(s32, u8, u16 *, s32, s32, s32);
+struct Hero;
+ITEM *heroItemGetItemKindToItemAryPtr(struct Hero *, u8, u16 *, u16 *, u8 *, u8 *);
 s32 itemGetStatus(void *, s32, s32, s32);
 u32 GSmsgGetRect(s32);
 void GSmsgPrint2(s32, s32, s32, s32, s32);
@@ -205,8 +205,8 @@ static void memCardDecCouponAddItem__FiUsiP7VPC_BOX(s32 a, u16 b, s32 c, VPC_BOX
 
 static s32 memCardConnect__FP7VPC_BOX(VPC_BOX *box) {
     void *save;
-    itemInitAry(box, 0xEB);
-    itemInitAry(box->reserved3AC, 0xEB);
+    itemInitAry(box->items[0], 235);
+    itemInitAry(box->items[1], 235);
     box->unk758 = 0;
     box->unk75C = 0;
     box->unk760 = 0;
@@ -575,7 +575,7 @@ static u32 getItemPrice__FUs(u16 item) {
 
 static s32 getNbHaveItem__FUs(u16 item) {
     u16 count;
-    u32 *ary;
+    ITEM *ary;
     s32 i;
     s32 total = 0;
     if (item == 0) {

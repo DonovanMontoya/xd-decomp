@@ -1,12 +1,7 @@
 #ifndef PXDVS_APP_ITEM_ITEM_PRIVATE_HPP
 #define PXDVS_APP_ITEM_ITEM_PRIVATE_HPP
 
-#include <dolphin/types.h>
-
-struct ITEM {
-    u16 itemDataId;
-    u16 num;
-};
+#include <game/pxdvs/app/item/item.h>
 
 extern u32 *item_data_index_number;
 extern u16 item_dougu_sort[];
