@@ -1049,7 +1049,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GSgapp/GSgapp.cpp"),
 
             # GScolsys
-            Object(NonMatching, "game/pxdvs/GSAPI/GScolsys/GScolsys2.cpp"),
+            Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GScolsys/GScolsys2.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GScolsys/GScolsys2Draw.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GScolsys/GScolsys2Walk.cpp"),
             Object(MatchingFor("GXXE01"), "game/pxdvs/GSAPI/GScolsys/GScolsys2Hit.cpp"),

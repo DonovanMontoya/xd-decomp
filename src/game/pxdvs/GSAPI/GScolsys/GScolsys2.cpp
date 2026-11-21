@@ -1,3 +1,4 @@
+#include <game/pxdvs/GSAPI/GScolsys/GScolsys2.hpp>
 #include <game/pxdvs/GSAPI/GScolsys/GScolsys2Private.hpp>
 #include <libc/string.h>
 extern "C" {
@@ -93,6 +94,8 @@ s32 GScolsys2UnloadCCD(void) {
     }
     return 1;
 }
+}
+
 static inline void offsetGeometry(CCDGeometry *&geometry, u8 *base) {
     if (geometry) {
         geometry = reinterpret_cast<CCDGeometry *>((u32)geometry + (u32)base);
@@ -109,7 +112,8 @@ static inline void offsetReference(CCDReference *&reference, u8 *base) {
         if (value->entries) value->entries = reinterpret_cast<void *>((u32)value->entries + (u32)base);
     }
 }
-static void _offsetCCD__FP12CCD_FILEHEAD(CCD_FILEHEAD *head) {
+
+static void _offsetCCD(CCD_FILEHEAD *head) {
     if (head) {
         u8 *base = reinterpret_cast<u8 *>(head);
         head->objects = reinterpret_cast<CCDObject *>((u32)head->objects + (u32)base);
@@ -124,16 +128,20 @@ static void _offsetCCD__FP12CCD_FILEHEAD(CCD_FILEHEAD *head) {
         }
     }
 }
-s32 GScolsys2LoadCCD(CCD_FILEHEAD *head) {
+
+extern "C" {
+s32 GScolsys2LoadCCD(void *resource) {
+    CCD_FILEHEAD *head = static_cast<CCD_FILEHEAD *>(resource);
     if (GScolsys2.currentFloor < 0) return 0;
     GSCOLSYS2_FLOOR *floor = &GScolsys2.floor[GScolsys2.currentFloor];
     for (u32 i = 0; i < 48; ++i) floor->auxiliary[i].flags &= ~1;
-    _offsetCCD__FP12CCD_FILEHEAD(head);
-    GScolsys2.head = head;
-    if (head) {
-        CCDObject *source = head->objects;
+    _offsetCCD(head);
+    GScolsys2.head = static_cast<CCD_FILEHEAD *>(resource);
+    const CCD_FILEHEAD *file = GScolsys2.head;
+    if (file) {
+        CCDObject *source = file->objects;
         GSCOLSYS2_OBJ *object = GScolsys2.floor[GScolsys2.currentFloor].objects;
-        for (u32 i = 0; i < head->count; ++i, ++object, ++source) {
+        for (u32 i = 0; i < file->count; ++i, ++object, ++source) {
             object->position[0] = source->position[0];
             object->position[1] = source->position[1];
             object->position[2] = source->position[2];

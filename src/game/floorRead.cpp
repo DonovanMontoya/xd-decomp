@@ -482,8 +482,8 @@ static u8 _unloadMsg(void *p, u32, u32) {
     return 1;
 }
 
-static u8 _unloadColsys(void *p, u32, u32) {
-    GScolsys2UnloadCCD(p);
+static u8 _unloadColsys(void *, u32, u32) {
+    GScolsys2UnloadCCD();
     return 1;
 }
 

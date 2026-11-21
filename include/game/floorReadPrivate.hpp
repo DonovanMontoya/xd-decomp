@@ -2,6 +2,7 @@
 #define FLOOR_READ_PRIVATE_HPP
 #include <dolphin/types.h>
 #include <game/maximum/GSAPI/baselib/scene.h>
+#include <game/pxdvs/GSAPI/GScolsys/GScolsys2.hpp>
 
 typedef u8 (*FloorReadFreeFunc)(void *, u32, u32);
 
@@ -66,8 +67,6 @@ u32 FlashSystemInit(u32, void *);
 void FlashSystemRelease(u32);
 void GSfsysOSLinkPostFunc(u32, u32, u32);
 u8 ModelSequence_Load(void *, u32, u32);
-void *GScolsys2LoadCCD(void *);
-void GScolsys2UnloadCCD(void *);
 FloorReadData *floorDataBiosGetCurrentPtr();
 void floorDataBiosSetMapResID(FloorReadData *, u32);
 void floorSetLightInfo(u32, u32);
