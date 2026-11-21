@@ -1,4 +1,5 @@
 #include <game/menuHologramLayout.hpp>
+#include <game/menuReliveMeter.h>
 #include <dolphin/gx/GXVert.h>
 
 extern "C" {
@@ -56,7 +57,6 @@ u32 windowGetKeyOn();
 s32 floorGetCurrentGroupID();
 void cameraPlayAnime(s32, u32, f32, s32);
 void GScharCpy(u16 *, u16 *);
-void menuDrawReliveUpdate();
 extern GSgfxColAu8 GSgfxColAu8_Black;
 extern GSgfxColAu8 relivehallAisyou2ColorTbl[];
 }

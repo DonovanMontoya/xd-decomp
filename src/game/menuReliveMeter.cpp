@@ -1,5 +1,6 @@
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/menuReliveMeter.h>
 #include <game/pxdvs/GSAPI/GSprim/GSprim.hpp>
 extern "C" double sin(double);
 class GSgfxLayer;

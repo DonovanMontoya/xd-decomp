@@ -1,4 +1,5 @@
 #include <game/menuPdaDPMonitorLayout.hpp>
+#include <game/menuReliveMeter.h>
 
 #pragma force_active on
 #ifdef __cplusplus
@@ -33,7 +34,6 @@ void winSeqSetMenu(s32, s32);
 void GSsndPlayNow(u32);
 void menuPlaySe(s32, s32);
 void menuPdaSetSubres(s32, s32);
-void menuDrawReliveUpdate(void);
 s32 menuPdaDPMListGetDPNum(void);
 DpmDarkPokemon *darkPokemonGetDarkPokemon(u16);
 u32 menuPdaDPMListGetDarkPokemonID(s32);

@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
+#include <game/menuReliveMeter.h>
 #include <game/menuPdaDPMonitorListLayout.hpp>
 
 enum DPMSelSort {
@@ -55,7 +56,6 @@ u8 pokemonCheckValid(void *);
 u16 pokemonBiosGetDarkpokemonDataId(void *);
 u32 pokemonBiosGetPokemonDataId(void *);
 DpmMenuItem *menuItemBiosGetPtr(s32, s16);
-void menuDrawReliveMeterByDarkPokemon(DarkPokemon *, s32, s32, s16, s16, u8, s32);
 void msgctrlSetValue(s32, u32);
 void GSmsgPrint2(s32, s32, s32, u32, u32);
 }
@@ -141,7 +141,6 @@ void GSsndPlayNow(u32);
 extern "C" {
 void spriteSetScissor(s32,s32,s32,s16,s16);
 void spriteClearScissor(s32);
-void menuDrawReliveUpdate();
 u16 mballBiosGetSpriteID(u16);
 void windowDrawSprite2(s16,s16,s16,s16,u32,tagWINDOW_WORK*,u16,s32,s32);
 }

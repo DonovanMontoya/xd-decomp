@@ -1,5 +1,6 @@
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/hero/hero.hpp>
+#include <game/menuReliveMeter.h>
 #include <game/menuPcBoxPokemonLayout.hpp>
 #include <game/pxdvs/app/pcbox/pcbox.hpp>
 
@@ -48,9 +49,7 @@ void *itemDataBiosGetPtr(u16);
 u32 itemDataBiosGetName(void *);
 u32 GSmsgGetGSchar(u32);
 u32 pokemonDataBiosGetName(void *);
-s32 menuDrawReliveMeter3(Pokemon *, long, long, long, long, u8, s32);
 u16 zokuseiGetPokemonSpriteID(void *, u16);
-void menuDrawReliveUpdate(void);
 void menuModelRenderOffAll(MENU_MODEL *);
 void GSfsysRead(u32);
 void GSfsysReadWait(u32);
