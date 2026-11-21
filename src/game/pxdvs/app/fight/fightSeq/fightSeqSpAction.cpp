@@ -607,7 +607,7 @@ void WS_TRAINER_APPEAR(void) {
 }
 
 void WS_POKE_RESHUFFLE_END(void) {
-    u8 saved[0xac];
+    FightWaza saved;
     u8* seq = fightSeq_GetWazaSeq();
     FightOutPokemon* pokemon = fightTargetGetPtrAsNowFightType(seq[1], 0);
     FightSide* side = (FightSide*)fightTargetGetPtrAsNowFightType(2, pokemon);
@@ -623,7 +623,7 @@ void WS_POKE_RESHUFFLE_END(void) {
         fightOutPokemonInitJoutaiDataId(pokemon, 0x15);
         u16 damage = fightOutPokemonMaxHpWaruValue(pokemon, (5 - fightSideGetCountAsJoutaiDataId(side, 0x4a)) * 2);
         FightWaza* waza = fightOutPokemon_GetFightWazaPtr(fightTargetGetPtrAsNowFightType(0x11, 0));
-        fightWazaBiosCopy(saved, waza);
+        fightWazaBiosCopy(&saved, waza);
         fightWaza_SetDamage(waza, damage);
         fightWazaInitJoutai(waza);
         fightFloor_SetAppointPokemonPtr(0, pokemon);
@@ -637,7 +637,7 @@ void WS_POKE_RESHUFFLE_END(void) {
             callSeq = WAZA_MakibishiK;
         }
         fightSeq_CallWazaSeq(callSeq);
-        fightWazaBiosCopy(waza, saved);
+        fightWazaBiosCopy(waza, &saved);
         if (fightSide_GetMakibisiCheckFlag(side) == 0) {
             fightSeq_NextWazaSeq(2);
             return;

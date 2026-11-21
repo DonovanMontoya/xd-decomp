@@ -1,6 +1,6 @@
 #ifndef FIGHT_SEQ_SP_ACTION_PRIVATE_HPP
 #define FIGHT_SEQ_SP_ACTION_PRIVATE_HPP
-#include <dolphin/types.h>
+#include <game/pxdvs/app/fight/fightWaza.hpp>
 
 struct FightOutPokemon;
 struct FightPokemon;
@@ -162,7 +162,6 @@ u8 fightTrainer_GetOkaneBai(FIGHT_TRAINER*);
 void* fightTrainer_GetSequencePtr(FIGHT_TRAINER*);
 void fightTrainer_SetEnemyStoreTokuseiData(FIGHT_TRAINER*, s32, s32);
 void fightTrainer_SetEnemyTokuseiFlag(FIGHT_TRAINER*, s32, u8);
-void fightWazaBiosCopy(void*, void*);
 void fightWazaInitJoutai(FightWaza*);
 u8 fightWazaIsHit(FightWaza*);
 void fightWazaSetUseWazaStatus(FightWaza*, u16);

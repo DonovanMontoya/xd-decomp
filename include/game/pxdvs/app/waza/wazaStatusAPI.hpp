@@ -157,6 +157,5 @@ u16 fightWazaBiosGetTargetDataId(FightWazaRecord* p);
 u16 fightWazaBiosGetUseWazaDataId(FightWazaRecord* p);
 u16 fightWazaBiosGetMotoWazaDataId(FightWazaRecord* p);
 u8 fightWazaBiosGetWazaBanme(FightWazaRecord* p);
-void fightWazaBiosCopy(FightWazaRecord* dst,const FightWazaRecord* src);
 }
 #endif

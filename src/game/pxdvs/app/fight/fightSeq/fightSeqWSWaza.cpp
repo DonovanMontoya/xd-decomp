@@ -101,7 +101,6 @@ void fightOutPokemonBiosCopy(FightOutPokemon*, FightOutPokemon*);
 void pokemonBiosCopy(Pokemon*, Pokemon*);
 Pokemon* fightPokemon_GetPokemonBuffPtr(void*);
 FightWaza* fightOutPokemon_GetFightWazaPtr(FightOutPokemon*);
-void fightWazaBiosCopy(FightWaza*, FightWaza*);
 void fightWazaInit(FightWaza*);
 void fightWazaCreate(FightWaza*, u32, u16, u32, u32);
 u8 fightWazaIsHit(FightWaza*);

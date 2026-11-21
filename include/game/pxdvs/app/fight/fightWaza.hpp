@@ -46,6 +46,7 @@ typedef char FightWazaRecord_zokuseiOffset[offsetof(FightWaza, zokusei) == 0xa6 
 typedef char FightWazaRecord_kaisuuOffset[offsetof(FightWaza, kaisuu) == 0xa8 ? 1 : -1];
 typedef char FightWazaRecord_autoMakeFlagOffset[offsetof(FightWaza, autoMakeFlag) == 0xa9 ? 1 : -1];
 
+extern "C" void fightWazaBiosCopy(FightWaza* dst, const FightWaza* src);
 extern "C" s32 fightWaza_GetWazaBanme(FightWaza* data);
 
 #endif

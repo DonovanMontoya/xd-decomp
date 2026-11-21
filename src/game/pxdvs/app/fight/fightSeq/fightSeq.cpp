@@ -188,7 +188,6 @@ FightOutPokemon* fightTargetGetRelativeHostSideFightTargetIdToTragetPtr(u32, u16
 u16 fightTargetGetTragetPtrToRelativeHostSideFightTargetId(FightOutPokemon*, u16);
 Hero * fightTrainer_GetHeroPtr(FIGHT_TRAINER *);
 void fightTrainer_SetOkaneBai(FIGHT_TRAINER *, s32);
-s32 fightWazaBiosCopy(void *, void *);
 u8 fightWazaCheckWriteJoutaiDataId(FightWaza*, u16);
 void fightWazaCreate(void *, s32, u16, u16, s32);
 u8 fightWazaIsHit(FightWaza*);
@@ -2270,7 +2269,7 @@ s32 _SideConditionCheck2SubMiraiyoti__FPvUsPv(void *rawPokemon, u16 arg1, void *
     s8 temp_r3;
     FightOutPokemon *var_r29;
     u32 temp_r29;
-    SeqWazaSave sp8;
+    FightWaza savedWaza;
     u16 temp_r27;
 
     if (fightOutPokemonCheckFightOut(arg0) == 0) {
@@ -2297,13 +2296,13 @@ s32 _SideConditionCheck2SubMiraiyoti__FPvUsPv(void *rawPokemon, u16 arg1, void *
             arg1 = fightTargetGetTragetPtrToRelativeHostSideFightTargetId((FightOutPokemon *) arg0, arg1);
             fightFloor_SetAttackPokemonPtr(NULL, (u8 *) var_r29);
             temp_r3_3 = fightOutPokemon_GetFightWazaPtr((FightOutPokemon *) var_r29);
-            fightWazaBiosCopy((FightWaza *)&sp8, temp_r3_3);
+            fightWazaBiosCopy(&savedWaza, temp_r3_3);
             fightWazaCreate(temp_r3_3, -1, temp_r27, arg1, 0);
             fightWaza_SetDamage(temp_r3_3, temp_r28);
             fightOutPokemon_SetKaigaraDamageValue(arg0, 0xFFFF);
             fightOutPokemonInitJoutaiDataId(arg0, 0x34U);
             fightSeq_CallWazaSeq(WAZA_Miraiyochi);
-            fightWazaBiosCopy(temp_r3_3, (FightWaza *)&sp8);
+            fightWazaBiosCopy(temp_r3_3, &savedWaza);
             fightSeqGetExpCheck();
         } else {
             fightOutPokemonSetNowKaisuuJoutaiDataId(arg0, 0x34U, (s8) (temp_r3 + 1));

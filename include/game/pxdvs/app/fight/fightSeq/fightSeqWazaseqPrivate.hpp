@@ -171,7 +171,6 @@ u16 fightTrainerGetIrekaeFightPokemonAry(void*, void**);
 Hero * fightTrainer_GetHeroPtr(void*);
 u32 fightTrainer_GetKoban(void*);
 u32 fightTrainer_GetOkaneBai(void*);
-s32 fightWazaBiosCopy(void *, void *);
 void fightWazaInitJoutaiDataId(void*, u16);
 u8 fightWazaIsHit(void*);
 void fightWazaSetUseWazaStatus(void *, u16);
