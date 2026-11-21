@@ -66,6 +66,11 @@ public:
   s16 pokemonGet(HeroPokemonGetParam *, bool);
   u32 getLegendPokemonSize() const;
   u32 itemQuantity(u16);
+  Hero& operator=(const Hero& other) {
+    memcpy(this, &other, sizeof(Hero));
+    return *this;
+  }
+
   static Hero *getHeroPtr();
   void getRestertPos(GSvec *, short &) const;
   void setRestertPos();

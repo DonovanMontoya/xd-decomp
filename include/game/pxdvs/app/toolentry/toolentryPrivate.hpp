@@ -2,16 +2,7 @@
 #define TOOLENTRY_PRIVATE_H
 
 #define POKEMON_HPP_NO_PROTOTYPES
-#include <game/pxdvs/app/pokemon/pokemon.hpp>
-
-class Hero {
-public:
-    u8 raw[0x978];
-    Hero& operator=(const Hero& o) {
-        memcpy(this, &o, sizeof(Hero));
-        return *this;
-    }
-};
+#include <game/pxdvs/app/hero/hero.hpp>
 
 struct ToolentryCBTrainer {
     u16 trainerDataId;      // 0x0

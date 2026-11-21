@@ -1730,8 +1730,8 @@ void _memcardDuplicateSaveData_multi(void* buffer) {
                 _memcardStatusPtr->state != 7 && _memcard_anySaveOFF_Flag == 0) {
                 Hero::getHeroPtr()->setRestertPos();
             }
-            u8* dst = pack->setSectionOffset(SectionHero, offset);
-            memcpy(dst, savedataGetStatus(0, 2), sizeof(Hero));
+            Hero* dst = (Hero*)pack->setSectionOffset(SectionHero, offset);
+            *dst = *(const Hero*)savedataGetStatus(0, 2);
             offset += 0x990;
             break;
         }
