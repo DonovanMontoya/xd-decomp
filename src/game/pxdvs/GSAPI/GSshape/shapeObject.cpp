@@ -1076,7 +1076,7 @@ extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP
 
    }++stage;
   }
-  if(index==count-1) {
+  if (static_cast<s32>(index) == count - 1) {
    layer->tunitMapping(stage,index,index,0);
    layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)10,(GSgfxTunitCArg)0,(GSgfxTunitCArg)15);
    layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
