@@ -472,6 +472,129 @@ void ScriptTpcNode::setID(u32 v) {
     thread = 0;
 }
 
+// MWCC emits these definitions in reverse order, after the virtual table.
+#pragma defer_codegen on
+
+inline void GSscript::tigaVariant::setInteger(s32 v) {
+    type = 1;
+    value = v;
+}
+
+inline void FloorScriptModule::setIDs(u32 a, u32 b, u32 c) {
+    nodes[0].setID(a);
+    nodes[1].setID(b);
+    nodes[2].setID(c);
+}
+
+inline bool FloorModuleEntry::isTpcScript() const {
+    return type == FloorTypeTpc;
+}
+
+inline bool FloorModuleEntry::isEmpty() const {
+    return handle == 0;
+}
+
+inline u8 FloorModuleEntry::getPriority() const {
+    return priority;
+}
+
+inline void FloorModuleEntry::setNext(FloorModuleEntry *n) {
+    next = n;
+}
+
+inline void FloorModuleEntry::setPrev(FloorModuleEntry *p) {
+    prev = p;
+}
+
+inline u32 FloorModuleList::getNewHandle() {
+    handleCounter = handleCounter + 1;
+    if (handleCounter == 0) handleCounter = handleCounter + 1;
+    return handleCounter;
+}
+
+inline void FloorModuleEntry::setHandle(u32 h) {
+    handle = h;
+}
+
+inline u32 FloorModuleEntry::getHandle() const {
+    return handle;
+}
+
+inline FloorModuleInterface *FloorModuleEntry::getModuleInterface() {
+    if (type == FloorTypeFunc) return &module;
+    return 0;
+}
+
+inline FloorModuleEntry *FloorModuleEntry::getPrev() const {
+    return prev;
+}
+
+inline u32 FloorModuleEntry::getGroupID() const {
+    return groupID;
+}
+
+inline FloorModuleType FloorModuleEntry::getType() const {
+    return type;
+}
+
+inline u8 FloorModuleEntry::isBlock() const {
+    return blocked;
+}
+
+inline FloorModuleEntry *FloorModuleEntry::getNext() const {
+    return next;
+}
+
+static const char *_floorStateToStr(FloorState s) {
+    switch (s) {
+    case FloorStateUnused:
+        return "FloorStateUnused";
+    case FloorStateCreate:
+        return "FloorStateCreate";
+    case FloorStatePre:
+        return "FloorStatePre";
+    case FloorStatePreWait:
+        return "FloorStatePreWait";
+    case FloorStateNormal:
+        return "FloorStateNormal";
+    case FloorStateNormalWait:
+        return "FloorStateNormalWait";
+    case FloorStatePost:
+        return "FloorStatePost";
+    case FloorStatePostWait:
+        return "FloorStatePostWait";
+    case FloorStateFree:
+        return "FloorStateFree";
+    default:
+        return "unknownState";
+    }
+}
+
+static const char *_floorTypeToStr(FloorModuleType t) {
+    switch (t) {
+    case FloorTypeFunc:
+        return "FloorTypeFunc";
+    case FloorTypeGSvm:
+        return "FloorTypeGSvm";
+    case FloorTypeTpc:
+        return "FloorTypeTpc";
+    case FloorTypeSingleGSvm:
+        return "FloorTypeSingleGSvm";
+    case FloorTypeSingleTpc:
+        return "FloorTypeSingleTpc";
+    case FloorTypeAny:
+        return "FloorTypeAny";
+    default:
+        return "FloorUnknown";
+    }
+}
+
+void FloorModuleInterface_clear(FloorModuleInterface *m) {
+    memset(m, 0, sizeof(FloorModuleInterface));
+}
+
+static void _dispModuleName(FloorModuleInterface *, const char *) {}
+
 u8 FloorModuleInterface_exec(FloorModuleInterface *m, FloorState state, u32 a, FloorEnterMode mode, bool createThread) {
     switch (state) {
     case FloorStateCreate:
@@ -514,54 +637,4 @@ u8 FloorModuleInterface_exec(FloorModuleInterface *m, FloorState state, u32 a, F
         break;
     }
     return 0;
-}
-
-static void _dispModuleName(FloorModuleInterface *, const char *) {}
-
-void FloorModuleInterface_clear(FloorModuleInterface *m) {
-    memset(m, 0, sizeof(FloorModuleInterface));
-}
-
-static const char *_floorTypeToStr(FloorModuleType t) {
-    switch (t) {
-    case FloorTypeFunc:
-        return "FloorTypeFunc";
-    case FloorTypeGSvm:
-        return "FloorTypeGSvm";
-    case FloorTypeTpc:
-        return "FloorTypeTpc";
-    case FloorTypeSingleGSvm:
-        return "FloorTypeSingleGSvm";
-    case FloorTypeSingleTpc:
-        return "FloorTypeSingleTpc";
-    case FloorTypeAny:
-        return "FloorTypeAny";
-    default:
-        return "FloorUnknown";
-    }
-}
-
-static const char *_floorStateToStr(FloorState s) {
-    switch (s) {
-    case FloorStateUnused:
-        return "FloorStateUnused";
-    case FloorStateCreate:
-        return "FloorStateCreate";
-    case FloorStatePre:
-        return "FloorStatePre";
-    case FloorStatePreWait:
-        return "FloorStatePreWait";
-    case FloorStateNormal:
-        return "FloorStateNormal";
-    case FloorStateNormalWait:
-        return "FloorStateNormalWait";
-    case FloorStatePost:
-        return "FloorStatePost";
-    case FloorStatePostWait:
-        return "FloorStatePostWait";
-    case FloorStateFree:
-        return "FloorStateFree";
-    default:
-        return "unknownState";
-    }
 }
