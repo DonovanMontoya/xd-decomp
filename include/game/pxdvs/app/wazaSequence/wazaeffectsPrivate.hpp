@@ -48,18 +48,18 @@ public:
 class filterEffect : public GSeffect {
 public:
     void *target;
-    u8 original[4];
+    GSgfxColAu8 original;
     u8 pe, combine, saved, pad17, modulation;
-    u8 color[4];
+    GSgfxColAu8 color;
     filterEffect() : target(0), modulation(0) {
-        color[0] = color[1] = color[2] = color[3] = 0;
+        color.r = color.g = color.b = color.a = 0;
     }
     filterEffect(bool usePe, bool useCombine) : target(0), pe(usePe), combine(0), saved(0) {
         u8 mode = 2;
         if (useCombine) mode = 1;
         modulation = mode;
-        color[0] = color[1] = color[2] = 127;
-        color[3] = usePe ? 0 : 255;
+        color.r = color.g = color.b = 127;
+        color.a = usePe ? 0 : 255;
     }
     virtual ~filterEffect();
     virtual bool _start();
