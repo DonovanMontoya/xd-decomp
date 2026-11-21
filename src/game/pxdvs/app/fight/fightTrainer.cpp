@@ -1,3 +1,5 @@
+#include <game/pxdvs/app/deck/deck_layout.hpp>
+#include <game/pxdvs/app/fight/fightTrainerDB.hpp>
 #include <game/pxdvs/app/esaba/esaba.hpp>
 #include <game/maximum/app/bingo/bingoBios.hpp>
 
@@ -15,11 +17,6 @@ struct FightTrainerKindData;
 struct Hero;
 struct Item {
     u8 unk0[4];
-};
-class DeckTrainer {
-public:
-    static DeckTrainer* getDeckTrainerObj(u32 id);
-    u16 getDarkPokemonDataID(u8 index) const;
 };
 struct Pokemon {
     u8 unk0[0xC4];
@@ -44,12 +41,6 @@ public:
     s32 getSnatchFromWho() const;
     u16 getCatchFloorId() const;
     void setRnd(u32 rnd);
-};
-class DeckDarkPokemon {
-public:
-    static DeckDarkPokemon* getDeckDarkPokemonObj(u32 id);
-    u16 getDeckPokemonID() const;
-    u8 getWorth() const;
 };
 u16 deckDataVirtualDB_GetItemID(u16 disk, u8 index);
 u8 deckDataVirtualDB_GetItemNum(u16 disk, u8 index);
@@ -269,7 +260,6 @@ u16 pokemonDB_GetItemDataId(u16 id, u32 index);
 void fightTrainerDB_SetAiDataId(u16 id, u16 value);
 void fightTrainerDB_SetName(u16 id, u16 value);
 void fightTrainerDB_SetKindDataId(u16 id, u8 value);
-void fightTrainerDB_SetTemotiPokemonId(u16 id, u8 index, u16 value);
 void fightTrainerDB_SetTemotiItemDataId(u16 id, u8 index, u16 value);
 void fightTrainerDB_SetSyoukaiWzxDataId(u16 id, u16 value);
 void fightTrainerDB_SetSerihuMsgId(u16 id, u8 index, u16 value);
@@ -334,7 +324,6 @@ void fightTrainer_SetEnemyParam1bantakaiFlag(FightTrainer* trainer, s16 id, u8 f
 u8 fightTrainerEnemyPokemonRegistAry(FightTrainerEnemyPokemon* ary, u16 num, s16 id);
 u8 fightTrainerEnemyPokemonEraseAry(FightTrainerEnemyPokemon* ary, u16 num, s16 id);
 FightTrainerEnemyPokemon* fightTrainerGetFightEntryIdToEnemyPokemonPtr(FightTrainer* trainer, s16 entryId);
-u16 fightTrainerDB_GetTemotiPokemonId(u16 id, u8 index);
 u16 fightTrainerDB_GetTemotiItemDataId(u16 id, u8 index);
 u16 fightTrainerDB_GetSyoukaiWzxDataId(u16 id);
 u16 fightTrainerDB_GetSerihuMsgId(u16 id, u8 index);

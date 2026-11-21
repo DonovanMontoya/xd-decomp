@@ -1,4 +1,5 @@
-#include <dolphin/types.h>
+#include <game/pxdvs/app/deck/deck_layout.hpp>
+#include <game/pxdvs/app/fight/fightTrainerDB.hpp>
 #include <game/pxdvs/app/fight/fightPokemon.hpp>
 #include <game/pxdvs/app/fight/fightTrainerEnemy.hpp>
 struct Hero;
@@ -125,7 +126,7 @@ FightTrainerAiValueAddsubData *fightTrainerAiValueAddsubDataBiosGetPtr(u16);
 
 
 
-DeckPokemon *getDeckPokemonObj__11DeckPokemonFUl(u32); void *getDeckTrainerObj__11DeckTrainerFUl(u32); void *getDeckTrainerAIObj__13DeckTrainerAIFUl(u32); void *fightTrainerDataBiosGetPtr(u16); PokemonPart *fightTrainerPokemonPartDataBiosGetPtr(u16);
+DeckPokemon *getDeckPokemonObj__11DeckPokemonFUl(u32); void *getDeckTrainerAIObj__13DeckTrainerAIFUl(u32); void *fightTrainerDataBiosGetPtr(u16); PokemonPart *fightTrainerPokemonPartDataBiosGetPtr(u16);
 s32 getAIID__11DeckTrainerCFv(void *);
 s32 getAbilityDetermination__13DeckTrainerAICFv(void *);
 s32 getAnnihilateDetermRate__13DeckTrainerAICFv(void *);
@@ -145,7 +146,6 @@ s32 getLowHPDetermRate__13DeckTrainerAICFv(void *);
 s32 getNotSameWeekPoint__13DeckTrainerAICFv(void *);
 s32 getOrder__13DeckTrainerAICFv(void *);
 s32 getPokeChgRate__13DeckTrainerAICFv(void *);
-s32 getPokemonDataID__11DeckTrainerCFUc(void *, u8);
 s32 getPokemonID__11DeckPokemonCFv(void *);
 s32 getRespectKeyPlayer__13DeckTrainerAICFv(void *);
 s32 getRespectPokemonCondJuge__13DeckTrainerAICFv(void *);
@@ -190,7 +190,6 @@ void setLowHPDetermRate__13DeckTrainerAIFUc(void *, u8);
 void setNotSameWeekPoint__13DeckTrainerAIFb(void *, u8);
 void setOrder__13DeckTrainerAIFb(void *, u8);
 void setPokeChgRate__13DeckTrainerAIFUc(void *, u8);
-void setPokemonDataID__11DeckTrainerFUcUs(void *, u8, u16);
 void setRespectKeyPlayer__13DeckTrainerAIFb(void *, u8);
 void setRespectPokemonCondJuge__13DeckTrainerAIFb(void *, u8);
 void setRespectRole__13DeckTrainerAIFb(void *, u8);
@@ -1805,7 +1804,7 @@ void fightTrainerDB_SetTemotiItemDataId(u16 arg0, u8 arg1, u16 arg2) {
 s32 fightTrainerDB_GetTemotiItemDataId(u16 arg0, u8 arg1) {
     void *temp_r3;
 
-    temp_r3 = getDeckTrainerObj__11DeckTrainerFUl((u32) arg0);
+    temp_r3 = DeckTrainer::getDeckTrainerObj((u32) arg0);
     if (arg0 >= 0x1388U) {
         return 0;
     }
@@ -1830,7 +1829,7 @@ void fightTrainerDB_SetAiDataId(u16 arg0, u16 arg1) {
 s32 fightTrainerDB_GetAiDataId(u16 arg0) {
     void *temp_r3;
 
-    temp_r3 = getDeckTrainerObj__11DeckTrainerFUl((u32) arg0);
+    temp_r3 = DeckTrainer::getDeckTrainerObj((u32) arg0);
     if (arg0 >= 0x1388U) {
         return 0;
     }
@@ -1840,26 +1839,22 @@ s32 fightTrainerDB_GetAiDataId(u16 arg0) {
     return getAIID__11DeckTrainerCFv(temp_r3);
 }
 
-void fightTrainerDB_SetTemotiPokemonId(u16 arg0, u8 arg1, u16 arg2) {
-    void *temp_r3;
-
-    temp_r3 = getDeckTrainerObj__11DeckTrainerFUl((u32) arg0);
-    if ((arg0 < 0x1388U) && (temp_r3 != 0)) {
-        setPokemonDataID__11DeckTrainerFUcUs(temp_r3, arg1, arg2);
+void fightTrainerDB_SetTemotiPokemonId(u16 id, u8 index, u16 value) {
+    DeckTrainer* trainer = DeckTrainer::getDeckTrainerObj(id);
+    if (id < 5000 && trainer != 0) {
+        trainer->setPokemonDataID(index, value);
     }
 }
 
-s32 fightTrainerDB_GetTemotiPokemonId(u16 arg0, u8 arg1) {
-    void *temp_r3;
-
-    temp_r3 = getDeckTrainerObj__11DeckTrainerFUl((u32) arg0);
-    if (arg0 >= 0x1388U) {
+u16 fightTrainerDB_GetTemotiPokemonId(u16 id, u8 index) {
+    DeckTrainer* trainer = DeckTrainer::getDeckTrainerObj(id);
+    if (id >= 5000) {
         return 0;
     }
-    if (temp_r3 == 0) {
+    if (trainer == 0) {
         return 0;
     }
-    return getPokemonDataID__11DeckTrainerCFUc(temp_r3, arg1);
+    return trainer->getPokemonDataID(index);
 }
 
 void fightTrainerDB_SetSerihuMsgId(u16 arg0, u8 arg1, u16 arg2) {
@@ -1874,7 +1869,7 @@ void fightTrainerDB_SetSerihuMsgId(u16 arg0, u8 arg1, u16 arg2) {
 s32 fightTrainerDB_GetSerihuMsgId(u16 arg0, u8 arg1) {
     void *temp_r3;
 
-    temp_r3 = getDeckTrainerObj__11DeckTrainerFUl((u32) arg0);
+    temp_r3 = DeckTrainer::getDeckTrainerObj((u32) arg0);
     if (arg0 >= 0x1388U) {
         return 0;
     }
@@ -1899,7 +1894,7 @@ void fightTrainerDB_SetSyoukaiWzxDataId(u16 arg0, u16 arg1) {
 s32 fightTrainerDB_GetSyoukaiWzxDataId(u16 arg0) {
     void *temp_r3;
 
-    temp_r3 = getDeckTrainerObj__11DeckTrainerFUl((u32) arg0);
+    temp_r3 = DeckTrainer::getDeckTrainerObj((u32) arg0);
     if (arg0 >= 0x1388U) {
         return 0;
     }
@@ -1919,7 +1914,7 @@ void fightTrainerDB_SetPkxDataId(u16 arg0, u16 arg1) {
 }
 
 s32 fightTrainerDB_GetPkxDataId(u16 id) {
-    void *trainer = getDeckTrainerObj__11DeckTrainerFUl(id);
+    void *trainer = DeckTrainer::getDeckTrainerObj(id);
     if (((u8)getTrainerKind__11DeckTrainerCFv(trainer) == 1 || id == 5000)) {
         Hero *hero = savedataGetStatus(0, 2);
         if (hero != 0) {
@@ -1953,7 +1948,7 @@ void fightTrainerDB_SetKindDataId(u16 arg0, u8 arg1) {
 }
 
 s32 fightTrainerDB_GetKindDataId(u16 id) {
-    void *trainer = getDeckTrainerObj__11DeckTrainerFUl(id);
+    void *trainer = DeckTrainer::getDeckTrainerObj(id);
     switch (id) {
     case 5000: return 1;
     case 5001: case 5003: case 5005: return 2;
@@ -1976,7 +1971,7 @@ void fightTrainerDB_SetName(u16 arg0, u16 arg1) {
 s32 fightTrainerDB_GetName(u16 arg0) {
     void *temp_r3;
 
-    temp_r3 = getDeckTrainerObj__11DeckTrainerFUl((u32) arg0);
+    temp_r3 = DeckTrainer::getDeckTrainerObj((u32) arg0);
     if (arg0 >= 0x1388U) {
         return 0;
     }

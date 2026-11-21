@@ -65,9 +65,9 @@ u32 pokemonGetStatus(void *, u32, u16, u32);
 
 static inline u8 *bytes(void *p) { return static_cast<u8 *>(p); }
 
-static inline void *deckTrainerObject(u32 index) {
+static inline DeckTrainer *deckTrainerObject(u32 index) {
     if (_deckTrainerSize <= index) return 0;
-    return bytes(_deckTrainer) + index * 0x38;
+    return reinterpret_cast<DeckTrainer *>(bytes(_deckTrainer) + index * sizeof(DeckTrainer));
 }
 
 static inline u16 deckInitialDarkPoint(void *p) {
@@ -75,7 +75,7 @@ static inline u16 deckInitialDarkPoint(void *p) {
     return *reinterpret_cast<u16 *>(bytes(p) + 8);
 }
 
-static inline u8 trainerIsDarkPokemon(DeckTrainerLayout *p, u8 index) {
+static inline u8 trainerIsDarkPokemon(const DeckTrainer *p, u8 index) {
     if (p == 0) return 0;
     if (index >= 6) return 0;
     return (p->darkPokemonMask & (1 << index)) != 0;
@@ -100,7 +100,7 @@ static inline void deckSetAbility(DeckPokemonLayout *p, u8 value) { if (p != 0) 
 const char *getDeckMsgID(u16 encounterID, u8 side) {
     FightEncountRecord *fight = fightEncountDataBiosGetPtr(encounterID);
     u16 trainerID = fightEncountDataBiosGetFightTrainerDataId(fight, side);
-    DeckTrainerLayout *trainer = static_cast<DeckTrainerLayout *>(deckTrainerObject(trainerID));
+    DeckTrainer *trainer = deckTrainerObject(trainerID);
     u16 offset;
     if (trainer == 0) offset = 0;
     else offset = trainer->nameStringOffset;
@@ -164,7 +164,7 @@ void *getDeckPokemonObj__11DeckPokemonFUl(u32 index) {
 
 u32 deckGetTrainerSize(void) { return _deckTrainerSize; }
 
-void *getDeckTrainerObj__11DeckTrainerFUl(u32 index) { return deckTrainerObject(index); }
+DeckTrainer *DeckTrainer::getDeckTrainerObj(u32 index) { return deckTrainerObject(index); }
 
 u32 deckGetDarkPokemonSize(void) { return 0x80; }
 
@@ -448,7 +448,7 @@ DECK_GET_U16(getPokemonID__11DeckPokemonCFv, 0x00)
 
 u8 getComboActive__11DeckTrainerCFUc(void *p, u8 i) { if (p == 0) return 0; if (i >= 4) return 0; return bytes(p)[0x34 + i]; return 0; }
 
-u16 getComboID__11DeckTrainerCFUc(DeckTrainerLayout *p, u8 i) { if (p == 0) return 0; if (i >= 4) return 0; return p->comboID[i]; }
+u16 getComboID__11DeckTrainerCFUc(DeckTrainer *p, u8 i) { if (p == 0) return 0; if (i >= 4) return 0; return p->comboID[i]; }
 
 DECK_GET_U16(getFixedActionID__11DeckTrainerCFv, 0x2A)
 
@@ -456,20 +456,24 @@ DECK_SET_U16(setAIID__11DeckTrainerFUs, 0x28)
 
 DECK_GET_U16(getAIID__11DeckTrainerCFv, 0x28)
 
-void setPokemonDataID__11DeckTrainerFUcUs(DeckTrainerLayout *p, u8 i, u16 v) { if (p == 0) return; if (i >= 6) return; p->pokemonDataID[i] = v; }
+void DeckTrainer::setPokemonDataID(u8 index, u16 id) {
+    if (this == 0) return;
+    if (index >= 6) return;
+    pokemonDataID[index] = id;
+}
 
-u16 getDarkPokemonDataID__11DeckTrainerCFUc(DeckTrainerLayout *p, u8 index) {
-    if (p == 0) return 0;
+u16 DeckTrainer::getDarkPokemonDataID(u8 index) const {
+    if (this == 0) return 0;
     if (index >= 6) return 0;
-    if (trainerIsDarkPokemon(p, index)) return p->pokemonDataID[index];
+    if (trainerIsDarkPokemon(this, index)) return pokemonDataID[index];
     return 0;
 }
 
-u16 getPokemonDataID__11DeckTrainerCFUc(DeckTrainerLayout *p, u8 index) {
-    if (p == 0) return 0;
+u16 DeckTrainer::getPokemonDataID(u8 index) const {
+    if (this == 0) return 0;
     if (index >= 6) return 0;
-    u16 id = p->pokemonDataID[index];
-    if (trainerIsDarkPokemon(p, index)) {
+    u32 id = pokemonDataID[index];
+    if (trainerIsDarkPokemon(this, index)) {
         void *dark;
         if (_deckDarkPokemonSize <= id) dark = 0;
         else dark = bytes(_deckDarkPokemon) + id * 0x18;
@@ -479,9 +483,9 @@ u16 getPokemonDataID__11DeckTrainerCFUc(DeckTrainerLayout *p, u8 index) {
     return id;
 }
 
-void setTrainerMsg__11DeckTrainerFUcUs(DeckTrainerLayout *p, u8 i, u16 v) { if (p == 0) return; if (i >= 4) return; p->trainerMsg[i] = v; }
+void setTrainerMsg__11DeckTrainerFUcUs(DeckTrainer *p, u8 i, u16 v) { if (p == 0) return; if (i >= 4) return; p->trainerMsg[i] = v; }
 
-u16 getTrainerMsg__11DeckTrainerCFUc(DeckTrainerLayout *p, u8 i) { if (p == 0) return 0; if (i >= 4) return 0; return p->trainerMsg[i]; }
+u16 getTrainerMsg__11DeckTrainerCFUc(DeckTrainer *p, u8 i) { if (p == 0) return 0; if (i >= 4) return 0; return p->trainerMsg[i]; }
 
 DECK_SET_U16(setIntroWZX__11DeckTrainerFUs, 0x12)
 
@@ -491,9 +495,9 @@ DECK_SET_U16(setTrainerPKX__11DeckTrainerFUs, 0x10)
 
 DECK_GET_U16(getTrainerPKX__11DeckTrainerCFv, 0x10)
 
-void setTrainerItem__11DeckTrainerFUcUs(DeckTrainerLayout *p, u8 i, u16 v) { if (p == 0) return; if (i >= 4) return; p->trainerItem[i] = v; }
+void setTrainerItem__11DeckTrainerFUcUs(DeckTrainer *p, u8 i, u16 v) { if (p == 0) return; if (i >= 4) return; p->trainerItem[i] = v; }
 
-u16 getTrainerItem__11DeckTrainerCFUc(DeckTrainerLayout *p, u8 i) { if (p == 0) return 0; if (i >= 4) return 0; return p->trainerItem[i]; }
+u16 getTrainerItem__11DeckTrainerCFUc(DeckTrainer *p, u8 i) { if (p == 0) return 0; if (i >= 4) return 0; return p->trainerItem[i]; }
 
 DECK_SET_U16(setTrainerName__11DeckTrainerFUs, 0x06)
 

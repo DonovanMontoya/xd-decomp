@@ -43,7 +43,7 @@ struct DeckDarkPokemon {
     u8 isScenarioPokemon() const;
 };
 typedef DeckDarkPokemon DeckDarkPokemonLayout;
-struct DeckTrainerLayout {
+struct DeckTrainer {
     u16 nameStringOffset;
     u16 reserved02;
     u8 darkPokemonMask;
@@ -58,6 +58,11 @@ struct DeckTrainerLayout {
     u16 fixedActionID;
     u16 comboID[4];
     u8 reserved34[4];
+
+    static DeckTrainer* getDeckTrainerObj(u32 index);
+    u16 getPokemonDataID(u8 index) const;
+    u16 getDarkPokemonDataID(u8 index) const;
+    void setPokemonDataID(u8 index, u16 id);
 };
 struct DeckTrainerAILayout {
     u8 flags0;
@@ -91,10 +96,10 @@ typedef char DeckDarkPokemonIdCheck[offsetof(DeckDarkPokemon, pokemonId) == 0x04
 typedef char DeckDarkPokemonPointCheck[offsetof(DeckDarkPokemon, initDarkPoint) == 0x08 ? 1 : -1];
 typedef char DeckDarkPokemonMovesCheck[offsetof(DeckDarkPokemon, waza) == 0x0C ? 1 : -1];
 typedef char DeckDarkPokemonFlagsCheck[offsetof(DeckDarkPokemon, revers) == 0x14 ? 1 : -1];
-typedef char DeckTrainerSizeCheck[sizeof(DeckTrainerLayout) == 0x38 ? 1 : -1];
-typedef char DeckTrainerKindCheck[offsetof(DeckTrainerLayout, trainerKind) == 0x05 ? 1 : -1];
-typedef char DeckTrainerItemsCheck[offsetof(DeckTrainerLayout, trainerItem) == 0x08 ? 1 : -1];
-typedef char DeckTrainerPokemonIdsCheck[offsetof(DeckTrainerLayout, pokemonDataID) == 0x1C ? 1 : -1];
+typedef char DeckTrainerSizeCheck[sizeof(DeckTrainer) == 0x38 ? 1 : -1];
+typedef char DeckTrainerKindCheck[offsetof(DeckTrainer, trainerKind) == 0x05 ? 1 : -1];
+typedef char DeckTrainerItemsCheck[offsetof(DeckTrainer, trainerItem) == 0x08 ? 1 : -1];
+typedef char DeckTrainerPokemonIdsCheck[offsetof(DeckTrainer, pokemonDataID) == 0x1C ? 1 : -1];
 typedef char DeckTrainerAISizeCheck[sizeof(DeckTrainerAILayout) == 0x20 ? 1 : -1];
 typedef char DeckTrainerAITotalsCheck[offsetof(DeckTrainerAILayout, statusDetermValTotalMax) == 0x0C ? 1 : -1];
 typedef char DeckTrainerAIAttrsCheck[offsetof(DeckTrainerAILayout, attrTypeID) == 0x14 ? 1 : -1];
