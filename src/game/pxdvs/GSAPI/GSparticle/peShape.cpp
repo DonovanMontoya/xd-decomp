@@ -1,4 +1,6 @@
 #include <game/pxdvs/GSAPI/GSparticle/peShapePrivate.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/c_interface.hpp>
+#include <dolphin/gx/GXEnum.h>
 #pragma defer_codegen on
 
 void peShapeNode::Start(peEmitterNode* emitter,_peShape* shape,_EmitParams* params) {
@@ -408,37 +410,40 @@ void peShapeContainer::Render() {
             state->unk1774 = (s32) (state->unk1774 | 1);
             state->unk1760 = (s32) (state->unk1760 | 4);
             }
-            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-            state->unk1170 = 0;
-            state->unk1174 = 0;
-            state->unk1178 = 0;
-            state->unk117C = 1;
-            state->unk1180 = 0;
-            state->unk16DC = (s32) (state->unk16DC | 1);
-            state->unk16A8 = (s32) (state->unk16A8 | 8);
-            state->unk1794 = (s32) (state->unk1794 | 1);
-            state->unk1760 = (s32) (state->unk1760 | 8);
+            {
+                GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                state->colorOperations[0].op = GX_TEV_ADD;
+                state->colorOperations[0].bias = GX_TB_ZERO;
+                state->colorOperations[0].scale = GX_CS_SCALE_1;
+                state->colorOperations[0].clamp = true;
+                state->colorOperations[0].output = GX_TEVPREV;
+                state->colorOperationDirty |= 1;
+                state->dirty |= 8;
+                state->savedColorOperationDirty |= 1;
+                state->savedDirty |= 8;
             }
-            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-            state->unk12B0 = 0;
-            state->unk12B4 = 0;
-            state->unk12B8 = 0;
-            state->unk12BC = 1;
-            state->unk12C0 = 0;
-            state->unk16E0 = (s32) (state->unk16E0 | 1);
-            state->unk16A8 = (s32) (state->unk16A8 | 8);
-            state->unk1798 = (s32) (state->unk1798 | 1);
-            state->unk1760 = (s32) (state->unk1760 | 8);
+            {
+                GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                state->alphaOperations[0].op = GX_TEV_ADD;
+                state->alphaOperations[0].bias = GX_TB_ZERO;
+                state->alphaOperations[0].scale = GX_CS_SCALE_1;
+                state->alphaOperations[0].clamp = true;
+                state->alphaOperations[0].output = GX_TEVPREV;
+                state->alphaOperationDirty |= 1;
+                state->dirty |= 8;
+                state->savedAlphaOperationDirty |= 1;
+                state->savedDirty |= 8;
             }
-            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-            state->unkF70 = 0xF;
-            state->unkF74 = 0xA;
-            state->unkF78 = 8;
-            state->unkF7C = 0xF;
-            state->unk16D4 = (s32) (state->unk16D4 | 1);
-            state->unk16A8 = (s32) (state->unk16A8 | 8);
-            state->unk178C = (s32) (state->unk178C | 1);
-            state->unk1760 = (s32) (state->unk1760 | 8);
+            {
+                GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                state->colorArguments[0][0] = GX_CC_ZERO;
+                state->colorArguments[0][1] = GX_CC_RASC;
+                state->colorArguments[0][2] = GX_CC_TEXC;
+                state->colorArguments[0][3] = GX_CC_ZERO;
+                state->colorArgumentDirty |= 1;
+                state->dirty |= 8;
+                state->savedColorArgumentDirty |= 1;
+                state->savedDirty |= 8;
             }
             { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
             state->unk1544 = 0x1C;
@@ -447,15 +452,16 @@ void peShapeContainer::Render() {
             state->unk17B8 = (s32) (state->unk17B8 | 1);
             state->unk1760 = (s32) (state->unk1760 | 0x10);
             }
-            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-            state->unk1070 = 7;
-            state->unk1074 = 6;
-            state->unk1078 = 4;
-            state->unk107C = 7;
-            state->unk16D8 = (s32) (state->unk16D8 | 1);
-            state->unk16A8 = (s32) (state->unk16A8 | 8);
-            state->unk1790 = (s32) (state->unk1790 | 1);
-            state->unk1760 = (s32) (state->unk1760 | 8);
+            {
+                GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                state->alphaArguments[0][0] = GX_CA_ZERO;
+                state->alphaArguments[0][1] = GX_CA_KONST;
+                state->alphaArguments[0][2] = GX_CA_TEXA;
+                state->alphaArguments[0][3] = GX_CA_ZERO;
+                state->alphaArgumentDirty |= 1;
+                state->dirty |= 8;
+                state->savedAlphaArgumentDirty |= 1;
+                state->savedDirty |= 8;
             }
             const CameraSpacePosition& position = shapeLightPosition(&shape->position);
             GSgfxLight* positionLight=light0;
@@ -498,47 +504,51 @@ positionDone:
                 state->unk1788 = (s32) (state->unk1788 | 2);
                 state->unk1760 = (s32) (state->unk1760 | 8);
                 }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unk1184 = 0;
-                state->unk1188 = 0;
-                state->unk118C = 0;
-                state->unk1190 = 1;
-                state->unk1194 = 0;
-                state->unk16DC = (s32) (state->unk16DC | 2);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1794 = (s32) (state->unk1794 | 2);
-                state->unk1760 = (s32) (state->unk1760 | 8);
+                {
+                    GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                    state->colorOperations[1].op = GX_TEV_ADD;
+                    state->colorOperations[1].bias = GX_TB_ZERO;
+                    state->colorOperations[1].scale = GX_CS_SCALE_1;
+                    state->colorOperations[1].clamp = true;
+                    state->colorOperations[1].output = GX_TEVPREV;
+                    state->colorOperationDirty |= 2;
+                    state->dirty |= 8;
+                    state->savedColorOperationDirty |= 2;
+                    state->savedDirty |= 8;
                 }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unk12C4 = 0;
-                state->unk12C8 = 0;
-                state->unk12CC = 0;
-                state->unk12D0 = 0;
-                state->unk12D4 = 0;
-                state->unk16E0 = (s32) (state->unk16E0 | 2);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1798 = (s32) (state->unk1798 | 2);
-                state->unk1760 = (s32) (state->unk1760 | 8);
+                {
+                    GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                    state->alphaOperations[1].op = GX_TEV_ADD;
+                    state->alphaOperations[1].bias = GX_TB_ZERO;
+                    state->alphaOperations[1].scale = GX_CS_SCALE_1;
+                    state->alphaOperations[1].clamp = false;
+                    state->alphaOperations[1].output = GX_TEVPREV;
+                    state->alphaOperationDirty |= 2;
+                    state->dirty |= 8;
+                    state->savedAlphaOperationDirty |= 2;
+                    state->savedDirty |= 8;
                 }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unkF80 = 0xF;
-                state->unkF84 = 0xA;
-                state->unkF88 = 0xC;
-                state->unkF8C = 0;
-                state->unk16D4 = (s32) (state->unk16D4 | 2);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk178C = (s32) (state->unk178C | 2);
-                state->unk1760 = (s32) (state->unk1760 | 8);
+                {
+                    GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                    state->colorArguments[1][0] = GX_CC_ZERO;
+                    state->colorArguments[1][1] = GX_CC_RASC;
+                    state->colorArguments[1][2] = GX_CC_ONE;
+                    state->colorArguments[1][3] = GX_CC_CPREV;
+                    state->colorArgumentDirty |= 2;
+                    state->dirty |= 8;
+                    state->savedColorArgumentDirty |= 2;
+                    state->savedDirty |= 8;
                 }
-                { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-                state->unk1080 = 7;
-                state->unk1084 = 7;
-                state->unk1088 = 7;
-                state->unk108C = 0;
-                state->unk16D8 = (s32) (state->unk16D8 | 2);
-                state->unk16A8 = (s32) (state->unk16A8 | 8);
-                state->unk1790 = (s32) (state->unk1790 | 2);
-                state->unk1760 = (s32) (state->unk1760 | 8);
+                {
+                    GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                    state->alphaArguments[1][0] = GX_CA_ZERO;
+                    state->alphaArguments[1][1] = GX_CA_ZERO;
+                    state->alphaArguments[1][2] = GX_CA_ZERO;
+                    state->alphaArguments[1][3] = GX_CA_APREV;
+                    state->alphaArgumentDirty |= 2;
+                    state->dirty |= 8;
+                    state->savedAlphaArgumentDirty |= 2;
+                    state->savedDirty |= 8;
                 }
                 { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
                 state->unkDB8 = 2;
@@ -618,48 +628,52 @@ positionDone:
             state->unk1788 = (s32) (state->unk1788 | 1);
             state->unk1760 = (s32) (state->unk1760 | 8);
             }
-            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-            state->unk1170 = 0;
-            state->unk1174 = 0;
-            state->unk1178 = 0;
-            state->unk117C = 1;
-            state->unk1180 = 0;
-            state->unk16DC = (s32) (state->unk16DC | 1);
-            state->unk16A8 = (s32) (state->unk16A8 | 8);
-            state->unk1794 = (s32) (state->unk1794 | 1);
-            state->unk1760 = (s32) (state->unk1760 | 8);
+            {
+                GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                state->colorOperations[0].op = GX_TEV_ADD;
+                state->colorOperations[0].bias = GX_TB_ZERO;
+                state->colorOperations[0].scale = GX_CS_SCALE_1;
+                state->colorOperations[0].clamp = true;
+                state->colorOperations[0].output = GX_TEVPREV;
+                state->colorOperationDirty |= 1;
+                state->dirty |= 8;
+                state->savedColorOperationDirty |= 1;
+                state->savedDirty |= 8;
             }
-            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-            state->unk12B0 = 0;
-            state->unk12B4 = 0;
-            state->unk12B8 = 0;
-            state->unk12BC = 1;
-            state->unk12C0 = 0;
-            state->unk16E0 = (s32) (state->unk16E0 | 1);
-            state->unk16A8 = (s32) (state->unk16A8 | 8);
-            state->unk1798 = (s32) (state->unk1798 | 1);
-            state->unk1760 = (s32) (state->unk1760 | 8);
+            {
+                GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                state->alphaOperations[0].op = GX_TEV_ADD;
+                state->alphaOperations[0].bias = GX_TB_ZERO;
+                state->alphaOperations[0].scale = GX_CS_SCALE_1;
+                state->alphaOperations[0].clamp = true;
+                state->alphaOperations[0].output = GX_TEVPREV;
+                state->alphaOperationDirty |= 1;
+                state->dirty |= 8;
+                state->savedAlphaOperationDirty |= 1;
+                state->savedDirty |= 8;
             }
             g_current_layer->tunitKRegSel(0,PARTICLE_KREG_DEFAULT);
-            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-            state->unkF70 = 0xF;
-            state->unkF74 = 0xE;
-            state->unkF78 = 8;
-            state->unkF7C = 0xF;
-            state->unk16D4 = (s32) (state->unk16D4 | 1);
-            state->unk16A8 = (s32) (state->unk16A8 | 8);
-            state->unk178C = (s32) (state->unk178C | 1);
-            state->unk1760 = (s32) (state->unk1760 | 8);
+            {
+                GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                state->colorArguments[0][0] = GX_CC_ZERO;
+                state->colorArguments[0][1] = GX_CC_KONST;
+                state->colorArguments[0][2] = GX_CC_TEXC;
+                state->colorArguments[0][3] = GX_CC_ZERO;
+                state->colorArgumentDirty |= 1;
+                state->dirty |= 8;
+                state->savedColorArgumentDirty |= 1;
+                state->savedDirty |= 8;
             }
-            { ParticleLayerState* state=(ParticleLayerState*)g_current_layer;
-            state->unk1070 = 7;
-            state->unk1074 = 6;
-            state->unk1078 = 4;
-            state->unk107C = 7;
-            state->unk16D8 = (s32) (state->unk16D8 | 1);
-            state->unk16A8 = (s32) (state->unk16A8 | 8);
-            state->unk1790 = (s32) (state->unk1790 | 1);
-            state->unk1760 = (s32) (state->unk1760 | 8);
+            {
+                GraphicsLayerState* state = (GraphicsLayerState*)g_current_layer;
+                state->alphaArguments[0][0] = GX_CA_ZERO;
+                state->alphaArguments[0][1] = GX_CA_KONST;
+                state->alphaArguments[0][2] = GX_CA_TEXA;
+                state->alphaArguments[0][3] = GX_CA_ZERO;
+                state->alphaArgumentDirty |= 1;
+                state->dirty |= 8;
+                state->savedAlphaArgumentDirty |= 1;
+                state->savedDirty |= 8;
             }
         }
         ((ParticleLayerState*)g_current_layer)->unk199C = GSgfxVFGetPredef(4);
