@@ -4,6 +4,8 @@ extern "C" {
 #include <dolphin/os/OSFastCast.h>
 }
 
+#include <game/pxdvs/app/flashmenu/flashColorTransform.hpp>
+
 struct GStexture;
 struct GSvec2 {
     f32 x, y;
@@ -13,9 +15,6 @@ struct FLASHMATRIXF {
 };
 struct FLASHMATRIX {
     s32 m[6];
-};
-struct FLASHCXFORM {
-    s16 v[8];
 };
 struct VEC_GRAPH_DATA {
     s32 fill[2],shift[2],previous[2];
@@ -206,14 +205,14 @@ static void SpriteDisp(GStexture *tex, FLASHMATRIXF *m, FLASHMATRIX *fm, GSvec2 
         fl.m[4] = (f32)fm->m[4] / 20.0f;
         fl.m[5] = (f32)fm->m[5] / 20.0f;
         getUV(pos, uv, vec, m, &fl, tex);
-        col.a = (cx->v[0] * 0xff) >> 8;
-        col.r = (cx->v[2] * 0xff) >> 8;
-        col.g = (cx->v[4] * 0xff) >> 8;
-        col.b = (cx->v[6] * 0xff) >> 8;
-        add.a = cx->v[1];
-        add.r = cx->v[3];
-        add.g = cx->v[5];
-        add.b = cx->v[7];
+        col.a = (cx->alpha.multiplier * 0xff) >> 8;
+        col.r = (cx->red.multiplier * 0xff) >> 8;
+        col.g = (cx->green.multiplier * 0xff) >> 8;
+        col.b = (cx->blue.multiplier * 0xff) >> 8;
+        add.a = cx->alpha.offset;
+        add.r = cx->red.offset;
+        add.g = cx->green.offset;
+        add.b = cx->blue.offset;
         if (((s16)add.a | (s16)add.r | (s16)add.g | (s16)add.b) == 0) {
             GXColor c = col;
             GSprimDraw2DTexQuad4V(pos, uv, tex, &c);
@@ -352,7 +351,6 @@ void GSprimSetup2DRender__FP10GSgfxLayer(GSgfxLayer*);
 s32 GSgfxLayerGetActive();
 GSgfxLayer* GSgfxLayerFindByID(s32);
 void GSprimSetQuadVertexOrder(s32);
-u32 flcalcMultiTransformColor(FLASHCXFORM*,u32);
 void* memset(void*,int,unsigned long);
 }
 static inline void vecPixelDirty(GSgfxLayer* layer,u32 bits) {

@@ -1,5 +1,5 @@
-#include <dolphin/types.h>
-struct FlashPoint {f32 unk0,unk4;};struct FlashCurve {f32 unk0,unk4,unk8,unkC,unk10,unk14;};struct FlashMatrix {f32 unk0,unk4,unk8,unkC,unk10,unk14;};struct FlashFixedMatrix {s32 unk0,unk4,unk8,unkC,unk10,unk14;};struct FlashCxform {s16 unk0,unk2,unk4,unk6,unk8,unkA,unkC,unkE;};
+#include <game/pxdvs/app/flashmenu/flashColorTransform.hpp>
+struct FlashPoint {f32 unk0,unk4;};struct FlashCurve {f32 unk0,unk4,unk8,unkC,unk10,unk14;};struct FlashMatrix {f32 unk0,unk4,unk8,unkC,unk10,unk14;};struct FlashFixedMatrix {s32 unk0,unk4,unk8,unkC,unk10,unk14;};
 extern "C" void flcalcBezier3(FlashPoint *arg0, FlashCurve *arg1, f32 farg0) {
     f32 temp_f5;
     f32 temp_f6;
@@ -34,59 +34,59 @@ extern "C" s32 flcalcBlend(s32 arg0, s32 arg1, f32 farg0) {
     return (s32) ((farg0 * (f32) (arg1 - arg0)) + (f32) arg0);
 }
 
-extern "C" void flcalcCreateCxform(FlashCxform *p, u32 color) {
+extern "C" void flcalcCreateCxform(FLASHCXFORM *p, u32 color) {
     s16 r = color >> 24;
     s16 g = (color >> 16) & 0xFFU;
     s16 b = (color >> 8) & 0xFFU;
     s16 a = color & 0xFFU;
-    p->unk4 = 256;
-    p->unk8 = 256;
-    p->unkC = 256;
-    p->unk0 = 256;
-    p->unk6 = 0;
-    p->unkA = 0;
-    p->unkE = 0;
-    p->unk2 = 0;
-    p->unk4 = r;
-    p->unk8 = g;
-    p->unkC = b;
-    p->unk0 = a;
+    p->red.multiplier = 256;
+    p->green.multiplier = 256;
+    p->blue.multiplier = 256;
+    p->alpha.multiplier = 256;
+    p->red.offset = 0;
+    p->green.offset = 0;
+    p->blue.offset = 0;
+    p->alpha.offset = 0;
+    p->red.multiplier = r;
+    p->green.multiplier = g;
+    p->blue.multiplier = b;
+    p->alpha.multiplier = a;
 }
 
 #define FLCALC_CLAMP(x) ((x) < 0xFF ? (x) : 0xFF)
-extern "C" s32 flcalcMultiTransformColor(FlashCxform* ct, u32 color) {
+extern "C" u32 flcalcMultiTransformColor(FLASHCXFORM* ct, u32 color) {
     u32 cr = color >> 24;
     u32 cg = (color >> 16) & 0xFF;
     u32 cb = (color >> 8) & 0xFF;
     u32 ca = color & 0xFF;
-    u32 r = FLCALC_CLAMP(((cr * ct->unk4) >> 8) + ct->unk6);
-    u32 g = FLCALC_CLAMP(((cg * ct->unk8) >> 8) + ct->unkA);
-    u32 b = FLCALC_CLAMP(((cb * ct->unkC) >> 8) + ct->unkE);
-    u32 a = FLCALC_CLAMP(((ca * ct->unk0) >> 8) + ct->unk2);
+    u32 r = FLCALC_CLAMP(((cr * ct->red.multiplier) >> 8) + ct->red.offset);
+    u32 g = FLCALC_CLAMP(((cg * ct->green.multiplier) >> 8) + ct->green.offset);
+    u32 b = FLCALC_CLAMP(((cb * ct->blue.multiplier) >> 8) + ct->blue.offset);
+    u32 a = FLCALC_CLAMP(((ca * ct->alpha.multiplier) >> 8) + ct->alpha.offset);
     return a | (r << 24) | (g << 16) | (b << 8);
 }
 #undef FLCALC_CLAMP
 
-extern "C" void flcalcUnitCxform(FlashCxform *arg0) {
-    arg0->unk4 = 0x100;
-    arg0->unk8 = 0x100;
-    arg0->unkC = 0x100;
-    arg0->unk0 = 0x100;
-    arg0->unk6 = 0;
-    arg0->unkA = 0;
-    arg0->unkE = 0;
-    arg0->unk2 = 0;
+extern "C" void flcalcUnitCxform(FLASHCXFORM *arg0) {
+    arg0->red.multiplier = 0x100;
+    arg0->green.multiplier = 0x100;
+    arg0->blue.multiplier = 0x100;
+    arg0->alpha.multiplier = 0x100;
+    arg0->red.offset = 0;
+    arg0->green.offset = 0;
+    arg0->blue.offset = 0;
+    arg0->alpha.offset = 0;
 }
 
-extern "C" void flcalcMulCxform(FlashCxform *arg0, FlashCxform *arg1, FlashCxform *arg2) {
-    arg0->unk4 = (s16) ((s32) (arg1->unk4 * arg2->unk4) / 256);
-    arg0->unk8 = (s16) ((s32) (arg1->unk8 * arg2->unk8) / 256);
-    arg0->unkC = (s16) ((s32) (arg1->unkC * arg2->unkC) / 256);
-    arg0->unk0 = (s16) ((s32) (arg1->unk0 * arg2->unk0) / 256);
-    arg0->unk6 = (s16) (arg1->unk6 + arg2->unk6);
-    arg0->unkA = (s16) (arg1->unkA + arg2->unkA);
-    arg0->unkE = (s16) (arg1->unkE + arg2->unkE);
-    arg0->unk2 = (s16) (arg1->unk2 + arg2->unk2);
+extern "C" void flcalcMulCxform(FLASHCXFORM *arg0, FLASHCXFORM *arg1, FLASHCXFORM *arg2) {
+    arg0->red.multiplier = (s16) ((s32) (arg1->red.multiplier * arg2->red.multiplier) / 256);
+    arg0->green.multiplier = (s16) ((s32) (arg1->green.multiplier * arg2->green.multiplier) / 256);
+    arg0->blue.multiplier = (s16) ((s32) (arg1->blue.multiplier * arg2->blue.multiplier) / 256);
+    arg0->alpha.multiplier = (s16) ((s32) (arg1->alpha.multiplier * arg2->alpha.multiplier) / 256);
+    arg0->red.offset = (s16) (arg1->red.offset + arg2->red.offset);
+    arg0->green.offset = (s16) (arg1->green.offset + arg2->green.offset);
+    arg0->blue.offset = (s16) (arg1->blue.offset + arg2->blue.offset);
+    arg0->alpha.offset = (s16) (arg1->alpha.offset + arg2->alpha.offset);
 }
 
 static inline void concatLinearValues(FlashMatrix *arg0, FlashMatrix *arg1, f32 a, f32 b, f32 c, f32 d) {

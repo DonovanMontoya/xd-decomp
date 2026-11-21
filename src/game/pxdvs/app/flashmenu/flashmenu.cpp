@@ -4,7 +4,6 @@
 
 extern "C" {
 void GSmemFree(void *);
-void flcalcUnitCxform(FLASHCXFORM *);
 void flcalcUnitMatrix2(FLASHMATRIX *);
 void GSprimSetBlendMode(s32);
 void GSgfxLayerSetActive(s32);
@@ -82,14 +81,14 @@ struct _PLACEOBJECT2 {
     u8 flags;u8 reserved1[3];s32 character,depth;
     FLASHMATRIX matrix;FLASHCXFORM cxform;u32 ratio,name;
 };
-static inline u16 flashLast(FlashMenu*m, s32 layer){return ((u16*)m->items[m->field10].extra)[(u16)layer];}
+static inline u16 flashLast(FlashMenu*m, s32 layer){return m->items[m->field10].layerFrames[(u16)layer];}
 inline void flashPlaceReference(FlashMenu* menu,s32 depth, _PLACEOBJECT2* object) {
     if((s32)menu->field14 != 0) {
         if(menu->activeFrame <= flashLast(menu, menu->activeLayer)) {
             FlashItem* item=&((FlashLayer*)menu->layers)[menu->activeLayer].items[depth];
-            item->field30=0;item->field34=(s32)object;
+            item->field30=0;item->placement=object;
         }
-    } else {menu->items[depth].field30=0;menu->items[depth].field34=(s32)object;}
+    } else {menu->items[depth].field30=0;menu->items[depth].placement=object;}
 }
 inline void flashPlaceCharacter(FlashMenu* menu,s32 depth,u16 character) {
     if((s32)menu->field14 != 0) {
@@ -111,9 +110,9 @@ inline void flashPlaceColor(FlashMenu* menu,FLASHCXFORM* color,s32 depth) {
     if((s32)menu->field14 != 0) {
         if(menu->activeFrame <= flashLast(menu, menu->activeLayer)) {
             FlashItem* item=&((FlashLayer*)menu->layers)[menu->activeLayer].items[depth];
-            memcpy(&item->cxform,color,0x10);
+            memcpy(&item->cxform, color, sizeof(*color));
         }
-    } else {memcpy(&menu->items[depth].cxform,color,0x10);}
+    } else {memcpy(&menu->items[depth].cxform, color, sizeof(*color));}
 }
 inline void flashPlaceRatio(FlashMenu* menu,s32 depth,u32 ratio) {
     if((s32)menu->field14 != 0) {
@@ -203,7 +202,6 @@ extern "C" {
 s32 flcalcBlendColor(s32,s32,f32);
 void flcalcConvFlashMatrix(FLASHMATRIXF*,FLASHMATRIX*);
 void flcalcMulMatrixf(FLASHMATRIXF*,FLASHMATRIXF*,FLASHMATRIXF*);
-void flcalcMulCxform(FLASHCXFORM*,FLASHCXFORM*,FLASHCXFORM*);
 void vectorGraph(s32,s32*,s32*,_SHAPERECORD*,FLASHMATRIXF*,FLASHMATRIXF*,FLASHCXFORM*,u8);
 void msgctrlSetValue(s32,u32);
 void GSmsgPrint2(s32,s32,s32,s32,u32);
@@ -228,7 +226,6 @@ void flcalcMatrixCopy(FLASHMATRIXF*, FLASHMATRIXF*);
 void flcalcMatrixScale(FLASHMATRIXF*, FLASHMATRIXF*, FlashPoint*);
 void flcalcMatrixTranslate(FLASHMATRIXF*, FLASHMATRIXF*, FlashPoint*);
 void flcalcUnitMatrix(FLASHMATRIXF*);
-void flcalcCreateCxform(FLASHCXFORM*, u32);
 }
 
 extern "C" void vectroGraphSetBlendMode(s32,s32);
@@ -280,7 +277,7 @@ void FlashMenu::Draw(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
                     for (s32 i = 0; i < hdr->itemCount; i++, item++) {
                         item->depth = 0.0f;
                         item->field30 = 0;
-                        item->field34 = 0;
+                        item->placement = 0;
                         flcalcUnitCxform(&item->cxform);
                     }
                 } else {
@@ -300,7 +297,7 @@ void FlashMenu::Update() {
         FlashHeader *hdr = header;
         for (; i < hdr->itemCount; i++, item++) {
             item->field30 = 0;
-            item->field34 = 0;
+            item->placement = 0;
             item->frame = 0;
             item->depth = 0.0f;
             flcalcUnitCxform(&item->cxform);
@@ -315,7 +312,7 @@ void FlashMenu::Update() {
                 layer->items[j].frame = 0;
                 layer->items[j].depth = 0.0f;
                 layer->items[j].field30 = 0;
-                layer->items[j].field34 = 0;
+                layer->items[j].placement = 0;
                 layer->items[j].flag = 0;
                 flcalcUnitMatrix2(&layer->items[j].matrix);
                 flcalcUnitCxform(&layer->items[j].cxform);
@@ -340,7 +337,7 @@ void FlashMenu::Update() {
     }
 }
 
-void FlashMenu::Init(void* data,unsigned long parameter) {
+u32 FlashMenu::Init(void* data,unsigned long parameter) {
     GSgfxLayer* layer=(GSgfxLayer*)GSgfxLayerFindByID(7);
     field34=parameter;
     GSprimSetup2DRender(layer);
@@ -356,12 +353,12 @@ void FlashMenu::Init(void* data,unsigned long parameter) {
         layers[i].items=0;
         layers[i].items=new FlashItem[itemCount];
         for(s32 j=0;j<itemCount;j++) {
-            layers[i].items[j].extra=0;
-            layers[i].items[j].extra=new u16[layerCount];
+            layers[i].items[j].layerFrames=0;
+            layers[i].items[j].layerFrames=new u16[layerCount];
         }
     }
     items=(FlashItem*)GSmemAlloc(((itemCount<<6)+31)&~31);
-    for(s32 i=0;i<itemCount;i++) {items[i].extra=0;items[i].extra=new u16[layerCount];}
+    for(s32 i=0;i<itemCount;i++) {items[i].layerFrames=0;items[i].layerFrames=new u16[layerCount];}
     labels=0;
     pos=0x30;
     frameStart=0;
@@ -380,7 +377,7 @@ void FlashMenu::Init(void* data,unsigned long parameter) {
     playFrame=0;
     fps=0.0f;
     for(u16 item=0;item<hdr->itemCount;item++) {
-        for(u16 layer=0;layer<hdr->layerCount;layer++) ((u16*)items[item].extra)[layer]=0;
+        for(u16 layer=0;layer<hdr->layerCount;layer++) items[item].layerFrames[layer]=0;
     }
     for(;;) {
         const FlashTagName* name=_fltagnametable;
@@ -389,11 +386,13 @@ void FlashMenu::Init(void* data,unsigned long parameter) {
         tag=(FlashTag*)((u8*)header+pos);
     }
     if(field1E!=0 && original->relocated==0) original->relocated=(u32)header;
+    u32 frameCount = frameStart;
     loopFrame=0;
-    endFrame=frameStart-1;
+    endFrame=frameCount-1;
     loop=0;
     paused=0;
-    totalFrames=frameStart;
+    totalFrames=frameCount;
+    return frameCount;
 }
 
 void FlashMenu::Release() {
@@ -404,9 +403,9 @@ void FlashMenu::Release() {
     for (i = 0; i < headerRef.value->layerCount; i++) {
         if (layers[i].items != 0) {
             for (j = 0; j < headerRef.value->itemCount; j++) {
-                if (layers[i].items[j].extra != 0) {
-                    delete[] (u8 *)layers[i].items[j].extra;
-                    layers[i].items[j].extra = 0;
+                if (layers[i].items[j].layerFrames != 0) {
+                    delete[] layers[i].items[j].layerFrames;
+                    layers[i].items[j].layerFrames = 0;
                 }
             }
             delete[] (u8 *)layers[i].items;
@@ -415,9 +414,9 @@ void FlashMenu::Release() {
     }
     FLASH_FREE(layers)
     for (i = 0; i < headerRef.value->itemCount; i++) {
-        if (items[i].extra != 0) {
-            delete[] (u8 *)items[i].extra;
-            items[i].extra = 0;
+        if (items[i].layerFrames != 0) {
+            delete[] items[i].layerFrames;
+            items[i].layerFrames = 0;
         }
     }
     FLASH_FREE(items)
@@ -432,39 +431,36 @@ void FlashMenu::Release() {
 }
 
 void FlashMenu::InitDataPointer() {
-    FlashDataPointer *pointer = (FlashDataPointer *)memory;
-    FlashItem *item = items;
-        s32 i = 0;
-        FlashHeader *hdr = header;
-        for (s32 n = 0; n < 200; n++, pointer++) {
-            pointer->type = 0;
-            pointer->data = 0;
+    FlashDataPointer* entry = memory;
+    FlashItem* item = items;
+    FlashHeader& movie = *header;
+    s32 i;
+    for (i = 0; i < 200; ++i) {
+        entry->type = 0;
+        entry->data = 0;
+        ++entry;
+    }
+    for (i = 0; i < movie.itemCount; ++item, ++i) {
+        item->field30 = 0;
+        item->placement = 0;
+        item->frame = 0;
+        item->depth = 0.0f;
+        item->flag = 0;
+        flcalcUnitCxform(&item->cxform);
+        flcalcUnitMatrix2(&item->matrix);
+    }
+    for (s32 layerIndex = 0; layerIndex < movie.layerCount; ++layerIndex) {
+        for (i = 0; i < movie.itemCount; ++i) {
+            FlashLayer* layer = &layers[layerIndex];
+            layer->items[i].frame = 0;
+            layer->items[i].depth = 0.0f;
+            layer->items[i].field30 = 0;
+            layer->items[i].placement = 0;
+            layer->items[i].flag = 0;
+            flcalcUnitMatrix2(&layer->items[i].matrix);
+            flcalcUnitCxform(&layer->items[i].cxform);
         }
-        for (; i < hdr->itemCount; i++, item++) {
-            item->field30 = 0;
-            item->field34 = 0;
-            item->frame = 0;
-            item->depth = 0.0f;
-            item->flag = 0;
-            flcalcUnitCxform(&item->cxform);
-            flcalcUnitMatrix2(&item->matrix);
-        }
-        s32 l = 0;
-        s32 off = 0;
-        for (; l < hdr->layerCount; l++, off += 8) {
-            s32 j = 0;
-            s32 ioff = 0;
-            for (; j < hdr->itemCount; j++, ioff += 0x40) {
-                FlashLayer *layer = (FlashLayer *)((u8 *)layers + off);
-                *(s16 *)((u8 *)layer->items + ioff) = 0;
-                *(f32 *)((u8 *)layer->items + (ioff + 0x1C)) = 0.0f;
-                *(s32 *)((u8 *)layer->items + (ioff + 0x30)) = 0;
-                *(s32 *)((u8 *)layer->items + (ioff + 0x34)) = 0;
-                *(u8 *)((u8 *)layer->items + (ioff + 0x3C)) = 0;
-                flcalcUnitMatrix2((FLASHMATRIX *)((u8 *)layer->items + (ioff + 4)));
-                flcalcUnitCxform((FLASHCXFORM *)((u8 *)layer->items + (ioff + 0x20)));
-            }
-        }
+    }
 }
 
 void FlashMenu::DrawText(_DEFINETEXT* text, FLASHMATRIXF* parent, FLASHMATRIXF* matrix, FLASHCXFORM* color, u8 flags) {
@@ -565,14 +561,14 @@ void FlashMenu::DrawSprite(_DEFINESPRITE* sprite,FLASHMATRIXF* parent,FLASHCXFOR
     s32 offset=0;
     for(u32 i=0;i<hdr->itemCount;i++,offset+=0x40) {
         FlashItem* item=(FlashItem*)((u8*)layers[sprite->id].items+offset);
-        if((u32)item->field34 != 0U) {
+        if(item->placement != 0) {
             FlashDataPointer* entry=&memory[item->frame];
             flcalcConvFlashMatrix(&local,&item->matrix);
             field10=i;
             f32 ratio=((FlashItem*)((u8*)layers[sprite->id].items+offset))->depth;
             flcalcMulMatrixf(&combined,&local,parent);
             flcalcMulCxform(&combinedColor,&item->cxform,parentColor);
-            item->flag = inherited | item->flag | ((_PLACEOBJECT2*)item->field34)->flags;
+            item->flag = inherited | item->flag | item->placement->flags;
             if(entry->type&1) {
                 u8 drawFlags=item->flag;
                 _DEFINEMORPHSHAPE* morph=(_DEFINEMORPHSHAPE*)entry->data;
@@ -648,7 +644,7 @@ void FlashMenu::DrawSprite(_DEFINESPRITE* sprite,FLASHMATRIXF* parent,FLASHCXFOR
     u16 id=sprite->id;
     u16 frameCount=layers[id].reserved0;
     if(paused==0 && frameCount!=0) {
-        u16 frame=((u16*)items[parentItem].extra)[id];
+        u16 frame=items[parentItem].layerFrames[id];
         u16 elapsed=timeGetLastFrameTime();
         GSgfxVideoGetVsyncRate();
         u16 next=frame+elapsed;
@@ -660,11 +656,11 @@ void FlashMenu::DrawSprite(_DEFINESPRITE* sprite,FLASHMATRIXF* parent,FLASHCXFOR
             for(u32 i=0;i<hdr->itemCount;i++,offset+=0x40) {
                 ((FlashItem*)((u8*)layer->items+offset))->depth=0.0f;
                 ((FlashItem*)((u8*)layer->items+offset))->field30=0;
-                ((FlashItem*)((u8*)layer->items+offset))->field34=0;
+                ((FlashItem*)((u8*)layer->items+offset))->placement=0;
                 flcalcUnitCxform(&((FlashItem*)((u8*)layer->items+offset))->cxform);
             }
         }
-        ((u16*)items[parentItem].extra)[id]=next;
+        items[parentItem].layerFrames[id]=next;
     }
 }
 
@@ -677,13 +673,13 @@ void FlashMenu::DrawSub(GSgfxLayerID, tagWINDOW_WORK*, tagSPRITE_WORK* sprite) {
     s32 offset = 0;
     for (u32 i = 0; i < hdr->itemCount; offset += 0x40, ++i) {
         FlashItem* item = (FlashItem*)((u8*)items + offset);
-        if ((u32)item->field34 != 0U) {
+        if (item->placement != 0) {
             field10 = i;
             FlashItem* active = (FlashItem*)((u8*)items + offset);
             FLASHCXFORM* colorTransform = &active->cxform;
             FlashDataPointer* entry = &memory[(u16)active->frame];
             flcalcConvFlashMatrix(&local, &active->matrix);
-            item->flag = (u8)(item->flag | *(u8*)item->field34);
+            item->flag = (u8)(item->flag | item->placement->flags);
             local.m[4] += *(s16*)((u8*)sprite + 0x50);
             local.m[5] += *(s16*)((u8*)sprite + 0x52);
             if (item->flag & 0x40) vectroGraphSetBlendMode(2,5);

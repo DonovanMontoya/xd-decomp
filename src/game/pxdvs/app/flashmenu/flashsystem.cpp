@@ -8,7 +8,6 @@ static FlashSystemSlot _flashmenu[10];
 
 extern "C" {
 void GSthreadSwitch();
-s32 Init__9FlashMenuFPvUl(FlashMenu *, void *, unsigned long);
 }
 
 static inline s32 FlashSystemFindIndex(u32 id) {
@@ -46,7 +45,7 @@ GStexture *FlashSystemGetGStexture(u32 id, long index);
 void FlashSystemRelease(u32 id);
 void FlashSystemDraw(u32 id, tagWINDOW_WORK *window, tagSPRITE_WORK *sprite);
 void FlashSystemPlay(u32 id);
-s32 FlashSystemInit(u32 id, void *data);
+u32 FlashSystemInit(u32 id, void *data);
 s32 FlashSystemInitAll();
 
 s32 FlashSystemInitAll() {
@@ -57,11 +56,11 @@ s32 FlashSystemInitAll() {
     return 1;
 }
 
-s32 FlashSystemInit(u32 id, void *data) {
+u32 FlashSystemInit(u32 id, void *data) {
     FlashSystemSlot *slot = FlashSystemGetEmptySlot();
     if (slot != 0) {
         slot->menu = new FlashMenu;
-        s32 result = Init__9FlashMenuFPvUl(slot->menu, data, id);
+        u32 result = slot->menu->Init(data, id);
         slot->id = id;
         return result;
     }

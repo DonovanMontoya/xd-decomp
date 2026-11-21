@@ -68,7 +68,7 @@ void deckRegister(u32, u32);
 void deckUnRegister(u32, u32);
 void *GStextureLoad(void *);
 void GStextureFree(void *);
-void FlashSystemInit(u32, void *);
+u32 FlashSystemInit(u32, void *);
 void FlashSystemRelease(u32);
 void GSfsysOSLinkPostFunc(u32, u32, u32);
 u8 ModelSequence_Load(void *, u32, u32);
