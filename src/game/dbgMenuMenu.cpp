@@ -2,6 +2,7 @@
 /* Debug menu entries for testing menus, PDA, memo, esaba and Shadow Pokemon state. */
 #include <game/pxdvs/app/fade/fade.hpp>
 #include <global.h>
+#include <game/maximum/app/bingo/bingoBios.hpp>
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 
@@ -117,7 +118,7 @@ void pokemonCreate(Pokemon*, u16, s32, s32);
 s32 pokemonCreateRndFit(Pokemon*, s32, s32, s32, s32);
 void pokemonSetDarkPokemonStatus(Pokemon*, u16);
 void reliveHallDebugPokemonSetup(s32);
-u32* savedataGetStatus(s32, s32);
+u32 savedataGetStatus(void*, u16);
 u32 undertakerGetPlace(u32*);
 s32 undertakerGetStartFlagID(void);
 void undertakerSetPlace(u32);
@@ -567,16 +568,16 @@ s32 dbgMenuMenuTestBingo(void) {
 }
 
 s32 dbgMenuMenuTestBingoSelect(void) {
-    u32* status = savedataGetStatus(0, 0x1B);
+    BingoSaveFlags* status = (BingoSaveFlags*)savedataGetStatus(0, 0x1B);
 
-    *status |= 0x2A0000 | 0xAAAA;
+    status->sheetFlags |= 0x2A0000 | 0xAAAA;
     return 0;
 }
 
 s32 dbgMenuMenuTestBingoClear(void) {
-    u32* status = savedataGetStatus(0, 0x1B);
+    BingoSaveFlags* status = (BingoSaveFlags*)savedataGetStatus(0, 0x1B);
 
-    *status |= 0x3F0000 | 0xFFFF;
+    status->sheetFlags |= 0x3F0000 | 0xFFFF;
     return 0;
 }
 
@@ -636,7 +637,7 @@ s32 dbgMenuMenuTestPokemonChangeMenu(void) {
 }
 
 s32 dbgMenuMenuTestWazaMenu(void) {
-    u32* hero = savedataGetStatus(0, 2);
+    u32* hero = (u32*)savedataGetStatus(0, 2);
     Pokemon* pokemon;
 
     if (hero == NULL) {

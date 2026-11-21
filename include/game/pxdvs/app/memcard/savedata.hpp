@@ -3,6 +3,8 @@
 
 #include <global.h>
 #include <libc/stddef.h>
+#include <game/maximum/app/bingo/bingoBios.hpp>
+#include <game/pxdvs/app/memcard/savedataBiosLayout.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 #include <game/pxdvs/app/pcbox/pcbox.hpp>
 #include <game/pxdvs/app/sodateya/sodateya.hpp>
@@ -34,7 +36,10 @@ struct savedata {
   u8 unk10780[0x10790 - 0x10780];  // 0x10780
   u8 flagLevel0[0x107B0 - 0x10790]; // 0x10790
   u8 flagLevel1[0x10830 - 0x107B0]; // 0x107B0
-  u8 flagLevel2[0x10E60 - 0x10830]; // 0x10830
+  u8 flagLevel2[0x600];            // 0x10830
+  u32 battleDiskSellOut[2];        // 0x10E30
+  BingoSaveFlags bingoFlags;       // 0x10E38
+  u8 unk10E40[0x20];               // 0x10E40
   u8 exRibbon[0x10E80 - 0x10E60];  // 0x10E60
   u8 anywaySave[0x1D690 - 0x10E80]; // 0x10E80
   CReliveHall relive;              // 0x1D690
@@ -51,6 +56,8 @@ typedef char savedata_hero_check[(offsetof(savedata, hero) == 0x140) ? 1 : -1];
 typedef char savedata_pcbox_check[(offsetof(savedata, pcbox) == 0xAD0) ? 1 : -1];
 typedef char savedata_dark_check[(offsetof(savedata, darkPokemon) == 0xE380) ? 1 : -1];
 typedef char savedata_flags_check[(offsetof(savedata, flagLevel0) == 0x10790) ? 1 : -1];
+typedef char savedata_battle_disk_flags_check[(offsetof(savedata, battleDiskSellOut) == SAVEDATA_BATTLE_DISK_FLAGS) ? 1 : -1];
+typedef char savedata_bingo_flags_check[(offsetof(savedata, bingoFlags) == SAVEDATA_BINGO_FLAGS && sizeof(BingoSaveFlags) == 8) ? 1 : -1];
 typedef char savedata_relive_check[(offsetof(savedata, relive) == 0x1D690) ? 1 : -1];
 
 extern "C" void *savedataGetStatus(savedata *, u16);

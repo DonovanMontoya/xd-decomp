@@ -1,4 +1,5 @@
 #include <global.h>
+#include <game/pxdvs/app/memcard/savedataBiosLayout.hpp>
 #include <game/menuCBRule.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 #include <game/pxdvs/app/hero/heroParty.hpp>
@@ -188,8 +189,8 @@ extern "C" u32 savedataGetStatus(void* save,u16 section) {
     case 4:return (u32)savedataBiosGetFlagLevel0Ptr(save);
     case 5:return (u32)savedataBiosGetFlagLevel1Ptr(save);
     case 6:return (u32)savedataBiosGetFlagLevel2Ptr(save);
-    case 24:return (u32)((u8*)save+0x10E30);
-    case 27:return (u32)((u8*)save+0x10E38);
+    case 24:return (u32)((u8*)save + SAVEDATA_BATTLE_DISK_FLAGS);
+    case 27:return (u32)((u8*)save + SAVEDATA_BINGO_FLAGS);
     case 7:return 8;
     case 8:return 32;
     case 9:return 384;

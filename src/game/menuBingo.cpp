@@ -29,7 +29,7 @@ struct BingoPanel {
 
 class cBingo {
 public:
-    u32 save;
+    BingoSaveFlags* save;
     BINGO_DATA_dd_* sheet;
     BingoPanel panel[16];
     BingoPanel shuf[16];
@@ -252,7 +252,7 @@ static cBingo gBingo;
 #define mPokemon cBingo::mPokemon
 
 extern "C" {
-void* savedataGetStatus(void* save, s32 kind);
+u32 savedataGetStatus(void* save, u16 kind);
 s32 GSfloorGetCurrent(void);
 void GSthreadSwitch(void);
 u32 HSD_Rand(void);
@@ -2154,7 +2154,7 @@ void menuBingoMain(void) {
 
 void menuBingoInit(void) {
     if ((u32)GSfloorGetCurrent() == 0x388) {
-        gBingo.save = (u32)savedataGetStatus(0, 0x1B);
+        gBingo.save = (BingoSaveFlags*)savedataGetStatus(0, 0x1B);
     }
 }
 

@@ -3,6 +3,11 @@
 
 #include <dolphin/types.h>
 
+struct BingoSaveFlags {
+    u32 sheetFlags;  // Two bits per sheet for clear and select.
+    u32 clearPlus;
+};
+
 struct BINGO_PANEL_dd_ {
     u8 type;
     u8 tokusei;
