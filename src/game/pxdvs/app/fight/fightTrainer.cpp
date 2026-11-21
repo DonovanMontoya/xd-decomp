@@ -1,4 +1,4 @@
-#include <dolphin/types.h>
+#include <game/pxdvs/app/esaba/esaba.hpp>
 #include <game/maximum/app/bingo/bingoBios.hpp>
 
 #pragma auto_inline off
@@ -51,21 +51,6 @@ public:
     u16 getDeckPokemonID() const;
     u8 getWorth() const;
 };
-struct EsabaPokemonData {
-    u8 minLevel;
-    u8 maxLevel;
-    u16 pokemonId;
-    u8 unk4[8];
-};
-struct EsabaPokemonTable {
-    u32* num;
-    EsabaPokemonData* data;
-};
-struct EsabaData {
-    u8 unk0[0x18];
-    EsabaPokemonTable** pokemon;
-};
-
 u16 deckDataVirtualDB_GetItemID(u16 disk, u8 index);
 u8 deckDataVirtualDB_GetItemNum(u16 disk, u8 index);
 
@@ -278,13 +263,9 @@ s16 heroCatchPokemon(Hero* hero, Pokemon* pokemon, u32 a, u16 ballId, u32 b);
 u16 HSD_Rand(void);
 u16 fightFloor_GetFightFloorDataId(u32 side);
 void heroBiosSetRnd(Hero* hero, u32 rnd);
-u16 esabaGetPokemonID(s32 index);
-u32 esabaGetPokemonRnd(s32 index);
 u32 gamedataGetStatus(u32 a, u32 kind);
 void pokemonCreate(Pokemon* pokemon, u16 id, u8 level, u32 trainer);
 u16 pokemonDB_GetItemDataId(u16 id, u32 index);
-extern EsabaData* esabadata;
-extern u32* esabadata_number;
 void fightTrainerDB_SetAiDataId(u16 id, u16 value);
 void fightTrainerDB_SetName(u16 id, u16 value);
 void fightTrainerDB_SetKindDataId(u16 id, u8 value);
@@ -448,13 +429,6 @@ void fightTrainerInit(FightTrainer* trainer);
 void fightTrainerInitFightActionBuff(FightTrainer* trainer);
 int fightTrainerGetDoFightOutFightPokemonCount(FightTrainer* trainer);
 
-}
-
-static inline EsabaPokemonTable* _esabaGetPokemonTable(u32 index) {
-    if (index >= *esabadata_number) {
-        return 0;
-    }
-    return *esabadata[index].pokemon;
 }
 
 extern "C" {
@@ -1660,27 +1634,44 @@ static void _fightTrainerCreateDeckVirtual(u16 id, Hero* hero, u16 encountId) {
     }
 }
 
+static inline u8 esabaGetMaxLevel(u32 area, s32 slot) {
+    EsabaPokemonTable* table = esabaGetPokemonTable(area);
+    if (table != 0) {
+        return table->data[slot].maxLevel;
+    }
+    return 0;
+}
+
+static inline u8 esabaGetMinLevel(u32 area, s32 slot) {
+    EsabaPokemonTable* table = esabaGetPokemonTable(area);
+    if (table != 0) {
+        return table->data[slot].minLevel;
+    }
+    return 0;
+}
+
 static void _fightTrainerCreateDeckWildPoke(u16 id, Hero* hero) {
+    Pokemon pokemon;
     u16 trainerPokemonId;
-    u8 itemRnd = (u16)HSD_Rand() % 100;
-    u16 floorId = fightFloor_GetFightFloorDataId(0);
     u8 slot;
-    u16 pokemonId;
     u32 rnd;
+    u16 pokemonId;
+    u16 floorId;
+    u8 itemRnd;
     s32 esabaIndex;
     u8 k;
-    EsabaPokemonTable* table;
     u8 maxLevel;
     u8 minLevel;
-    u16 levelRnd;
-    Pokemon pokemon;
+    s32 levelRnd;
     u16 item0;
     u16 item1;
 
-    s32 tmp1 = heroGetStatus(0, 2, 0);
-
-    heroBiosSetRnd(hero, tmp1);
-    switch (floorId) {
+    itemRnd = (u16)HSD_Rand() % 100;
+    floorId = fightFloor_GetFightFloorDataId(0);
+    u32 trainerRnd = heroGetStatus(0, 2, 0);
+    heroBiosSetRnd(hero, trainerRnd);
+    s32 floor = floorId;
+    switch (floor) {
     case 0x39:
         esabaIndex = 0;
         break;
@@ -1694,7 +1685,7 @@ static void _fightTrainerCreateDeckWildPoke(u16 id, Hero* hero) {
     pokemonId = esabaGetPokemonID(esabaIndex);
     rnd = esabaGetPokemonRnd(esabaIndex);
     if (pokemonId == 0) {
-        switch (floorId) {
+        switch (floor) {
         case 0x39:
             pokemonId = 0x1b;
             break;
@@ -1707,16 +1698,15 @@ static void _fightTrainerCreateDeckWildPoke(u16 id, Hero* hero) {
         }
     }
     for (k = 0; k < 3; k++) {
-        table = _esabaGetPokemonTable(esabaIndex);
-        if (pokemonId == (table != 0 ? table->data[k].pokemonId : 0)) {
+        EsabaPokemonTable* table = esabaGetPokemonTable(esabaIndex);
+        u16 species = table != 0 ? table->data[k].pokemonId : 0;
+        if (pokemonId == species) {
             slot = k;
             break;
         }
     }
-    table = _esabaGetPokemonTable(esabaIndex);
-    maxLevel = table != 0 ? table->data[slot].maxLevel : 0;
-    table = _esabaGetPokemonTable(esabaIndex);
-    minLevel = table != 0 ? table->data[slot].minLevel : 0;
+    maxLevel = esabaGetMaxLevel(esabaIndex, slot);
+    minLevel = esabaGetMinLevel(esabaIndex, slot);
     levelRnd = HSD_Rand();
     trainerPokemonId = fightTrainerDB_GetTemotiPokemonId(id, 0);
     DeckTrainer::getDeckTrainerObj(id)->getDarkPokemonDataID(0);
