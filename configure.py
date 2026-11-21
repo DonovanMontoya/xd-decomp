@@ -1225,7 +1225,7 @@ config.libs = [
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/msgctrl/msgctrl.cpp", extra_cflags=["-inline noauto", "-opt nopeephole"]),
 
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/dbgMenu/dbgMenu.cpp"),
-            Object(NonMatching, "game/pxdvs/app/pcbox/pcbox.cpp"),
+            Object(NonMatching, "game/pxdvs/app/pcbox/pcbox.cpp", extra_cflags=["-inline deferred,auto"]),
 
             # gamedata
             Object(MatchingFor("GXXE01"), "game/pxdvs/app/gamedata/gamedatasaveBios.cpp"),
