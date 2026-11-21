@@ -30,10 +30,5 @@ u8 fightAi_HitCheckWazaAboutJoutaiAndType(FIGHT_TRAINER*,FightOutPokemon*,FightO
 u8 fightTrainerAiIsFightOutPokemonJoutaiDataId(FIGHT_TRAINER*,FightOutPokemon*,u16);
 u8 fightTrainerAiGetFightOutPokemonAbiCntPhyAtk(FIGHT_TRAINER*,FightOutPokemon*);u8 fightTrainerAiGetFightOutPokemonAbiCntPhyDef(FIGHT_TRAINER*,FightOutPokemon*);u8 fightTrainerAiGetFightOutPokemonAbiCntSubayasa(FIGHT_TRAINER*,FightOutPokemon*);u8 fightTrainerAiGetFightOutPokemonAbiCntSpeAtk(FIGHT_TRAINER*,FightOutPokemon*);u8 fightTrainerAiGetFightOutPokemonAbiCntSpeDef(FIGHT_TRAINER*,FightOutPokemon*);u8 fightTrainerAiGetFightOutPokemonAbiCntAvg(FIGHT_TRAINER*,FightOutPokemon*);u8 fightTrainerAiGetFightOutPokemonAbiCntAvd(FIGHT_TRAINER*,FightOutPokemon*);
 s16 fightAiCombo_GetAllWazaTableDefValue(FIGHT_TRAINER*,FightOutPokemon**,ComboWaza*,s16,s16);
-void ComboStatusUp(FIGHT_TRAINER*,ComboWaza*,s16*);
-void ComboStatusDown(FIGHT_TRAINER*,FightOutPokemon**,ComboWaza*,s16*);
-void ComboStatusChangeSub(FIGHT_TRAINER*,FightOutPokemon**,ComboWaza*,s16*,u8);
-void ComboStatusChange(FIGHT_TRAINER*,FightOutPokemon**,ComboWaza*,s16*);
-void ComboPower(FIGHT_TRAINER*,FightOutPokemon**,ComboWaza*,s16*);
 }
 #endif
