@@ -20,7 +20,6 @@ inline CChank::~CChank() {}
 inline CChankBlock::~CChankBlock() {}
 
 extern "C" {
-struct DeckPokemonFlagByte { u8 seikaku:5, sex:2, tokusei:1; };
 struct DeckFlagByte {
     u8 bit7:1, bit6:1, bit5:1, bit4:1, bit3:1, bit2:1, bit1:1, bit0:1;
 };
@@ -60,7 +59,6 @@ u32 pokemonGetStatus(void *, u32, u16, u32);
     void name(void *p, bool value) { if (p != 0) reinterpret_cast<DeckFlagByte *>(bytes(p) + off)->bit##shift = value; }
 #define DECK_GET_U8(name, off) u8 name(void *p) { if (p == 0) return 0; return bytes(p)[off]; }
 #define DECK_GET_U16(name, off) u16 name(void *p) { if (p == 0) return 0; return *reinterpret_cast<u16 *>(bytes(p) + off); }
-#define DECK_GET_FLAG(name, off, mask, shift) u8 name(void *p) { if (p == 0) return 0; return (bytes(p)[off] >> shift) & mask; }
 #define DECK_SET_U16(name, off) void name(void *p, u16 v) { if (p) *reinterpret_cast<u16 *>(bytes(p) + off) = v; }
 
 static inline u8 *bytes(void *p) { return static_cast<u8 *>(p); }
@@ -81,21 +79,21 @@ static inline u8 trainerIsDarkPokemon(const DeckTrainer *p, u8 index) {
     return (p->darkPokemonMask & (1 << index)) != 0;
 }
 
-static inline void deckSetEffort(DeckPokemonLayout *p, u8 value, u8 index) {
+static inline void deckSetEffort(DeckPokemon *p, u8 value, u8 index) {
     if (p == 0) return; if (index >= 6) return; p->statusEffort[index] = value;
 }
 
-static inline void deckSetRandomStatus(DeckPokemonLayout *p, u8 value, u8 index) {
+static inline void deckSetRandomStatus(DeckPokemon *p, u8 value, u8 index) {
     if (p == 0) return; if (index >= 6) return; p->statusRnd[index] = value;
 }
 
-static inline void deckSetWaza(void *p, u8 index, u16 value) {
-    if (p != 0 && index < 4) *reinterpret_cast<u16 *>(bytes(p) + 0x14 + index * 2) = value;
+static inline void deckSetWaza(DeckPokemon *p, u8 index, u16 value) {
+    if (p != 0 && index < 4) p->waza[index] = value;
 }
 
-static inline void deckSetFriendship(DeckPokemonLayout *p, u8 value) { if (p != 0) p->friendLevel = value; }
+static inline void deckSetFriendship(DeckPokemon *p, u8 value) { if (p != 0) p->friendLevel = value; }
 
-static inline void deckSetAbility(DeckPokemonLayout *p, u8 value) { if (p != 0) reinterpret_cast<DeckPokemonFlagByte *>(&p->flags)->tokusei = value; }
+static inline void deckSetAbility(DeckPokemon *p, u8 value) { if (p != 0) p->flags.tokusei = value; }
 
 const char *getDeckMsgID(u16 encounterID, u8 side) {
     FightEncountRecord *fight = fightEncountDataBiosGetPtr(encounterID);
@@ -108,15 +106,15 @@ const char *getDeckMsgID(u16 encounterID, u8 side) {
 }
 
 void deckCreate(u16 index, s16 species, void *pokemon) {
-    DeckPokemonLayout *deck;
+    DeckPokemon *deck;
     if (_deckPokemonSize <= index) deck = 0;
-    else deck = reinterpret_cast<DeckPokemonLayout *>(bytes(_deckPokemon) + index * 0x20);
+    else deck = reinterpret_cast<DeckPokemon*>(bytes(_deckPokemon) + index * (int)sizeof(DeckPokemon));
     u16 randomStatuses[6] = {0x93, 0x94, 0x95, 0x96, 0x97, 0x98};
     u16 effortStatuses[6] = {0x8D, 0x8E, 0x8F, 0x90, 0x91, 0x92};
     if (deck != 0) deck->pokemonId = species;
     getSex__7PokemonCFv(pokemon);
     s32 nature = getSeikaku__7PokemonCFv(pokemon);
-    if (deck != 0) reinterpret_cast<DeckPokemonFlagByte *>(&deck->flags)->seikaku = nature;
+    if (deck != 0) deck->flags.seikaku = nature;
     s8 level = getLevel__7PokemonCFv(pokemon);
     if (deck != 0) deck->level = level;
     u8 move;
@@ -157,9 +155,9 @@ void *getDeckDarkPokemonObj__15DeckDarkPokemonFUl(u32 index) {
     return bytes(_deckDarkPokemon) + index * 0x18;
 }
 
-void *getDeckPokemonObj__11DeckPokemonFUl(u32 index) {
+DeckPokemon* DeckPokemon::getDeckPokemonObj(u32 index) {
     if (_deckPokemonSize <= index) return 0;
-    return bytes(_deckPokemon) + index * 0x20;
+    return static_cast<DeckPokemon*>(_deckPokemon) + index;
 }
 
 u32 deckGetTrainerSize(void) { return _deckTrainerSize; }
@@ -406,45 +404,78 @@ DECK_GET_U8(getSnatchRatio__15DeckDarkPokemonCFv, 0x01)
 
 DECK_GET_U8(getWorth__15DeckDarkPokemonCFv, 0x00)
 
-DECK_GET_FLAG(getRandomSetting__11DeckPokemonCFv, 0x1F, 1, 7)
+u8 DeckPokemon::getRandomSetting() const {
+    if (this == 0) return 0;
+    return (randomSetting >> 7) & 1;
+}
 
-DECK_GET_FLAG(getTokuseiFlag__11DeckPokemonCFv, 0x1E, 1, 0)
+u8 DeckPokemon::getTokuseiFlag() const {
+    if (this == 0) return 0;
+    return flags.tokusei;
+}
 
-DECK_GET_FLAG(getSex__11DeckPokemonCFv, 0x1E, 3, 1)
+u8 DeckPokemon::getSex() const {
+    if (this == 0) return 0;
+    return flags.sex;
+}
 
-DECK_GET_FLAG(getSeikakuID__11DeckPokemonCFv, 0x1E, 0x1F, 3)
+u8 DeckPokemon::getSeikakuID() const {
+    if (this == 0) return 0;
+    return flags.seikaku;
+}
 
-DECK_GET_U8(getComboPartnerAll__11DeckPokemonCFv, 0x1D)
+u8 DeckPokemon::getComboPartnerAll() const {
+    if (this == 0) return 0;
+    return comboPartnerAll;
+}
 
-u16 getWazaID__11DeckPokemonCFUc(DeckPokemonLayout *p, u8 index) {
-    if (p == 0) return 0;
+u16 DeckPokemon::getWazaID(u8 index) const {
+    if (this == 0) return 0;
     if (index >= 4) return 0;
-    return p->waza[index];
+    return waza[index];
 }
 
-u8 getStatusEffort__11DeckPokemonCFUc(void *p, u8 index) {
-    if (p == 0) return 0;
+u8 DeckPokemon::getStatusEffort(u8 index) const {
+    if (this == 0) return 0;
     if (index >= 6) return 0;
-    return bytes(p)[0x0E + index];
+    return statusEffort[index];
 }
 
-u8 getStatusRnd__11DeckPokemonCFUc(void *p, u8 index) {
-    if (p == 0) return 0;
+u8 DeckPokemon::getStatusRnd(u8 index) const {
+    if (this == 0) return 0;
     if (index >= 6) return 0;
-    return bytes(p)[0x08 + index];
+    return statusRnd[index];
 }
 
-DECK_GET_U8(getKeyPlayer__11DeckPokemonCFv, 0x07)
+u8 DeckPokemon::getKeyPlayer() const {
+    if (this == 0) return 0;
+    return keyPlayer;
+}
 
-DECK_GET_U8(getRole__11DeckPokemonCFv, 0x06)
+u8 DeckPokemon::getRole() const {
+    if (this == 0) return 0;
+    return role;
+}
 
-DECK_GET_U16(getHoldItem__11DeckPokemonCFv, 0x04)
+u16 DeckPokemon::getHoldItem() const {
+    if (this == 0) return 0;
+    return holdItem;
+}
 
-DECK_GET_U8(getFriendLevel__11DeckPokemonCFv, 0x03)
+u8 DeckPokemon::getFriendLevel() const {
+    if (this == 0) return 0;
+    return friendLevel;
+}
 
-DECK_GET_U8(getLevel__11DeckPokemonCFv, 0x02)
+u8 DeckPokemon::getLevel() const {
+    if (this == 0) return 0;
+    return level;
+}
 
-DECK_GET_U16(getPokemonID__11DeckPokemonCFv, 0x00)
+u16 DeckPokemon::getPokemonID() const {
+    if (this == 0) return 0;
+    return pokemonId;
+}
 
 u8 getComboActive__11DeckTrainerCFUc(void *p, u8 i) { if (p == 0) return 0; if (i >= 4) return 0; return bytes(p)[0x34 + i]; return 0; }
 

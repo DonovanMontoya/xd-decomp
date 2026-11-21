@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fight/fightTrainerDB.hpp>
 #include <game/pxdvs/app/fight/fightTrainerAiCombo.h>
 #include <game/pxdvs/app/fight/fightWazaBiosLayout.hpp>
 #include <game/pxdvs/app/fight/fightTrainerAiPrivate.hpp>
@@ -281,8 +282,6 @@ u16 fightTrainer_GetEnemyStoreTokuseiData(FIGHT_TRAINER *, s16);
 u16 fightTrainer_GetEnemyStoreWazaData(FIGHT_TRAINER *, s16, u8);
 u8 fightTrainer_GetEnemyStoreWazaNum(FIGHT_TRAINER *, s16);
 u8 fightTrainer_GetEnemyTokuseiFlag(FIGHT_TRAINER *, s16);
-u8 fightTrainerPokemonDB_GetKeyPlayerFlag(u16);
-u8 fightTrainerPokemonDB_GetPartDataId(u16);
 FightOutPokemon ** fightAi_JudgeMoveFightOutPokemon(FIGHT_TRAINER *, FightOutPokemon **, u16 *);
 void fightAi_CreateAllWazaValid(FIGHT_TRAINER *, FightOutPokemon **, u8);
 void fightAi_CheckDoFightActionStroke(FIGHT_TRAINER *);

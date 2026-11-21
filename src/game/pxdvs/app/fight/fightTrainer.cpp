@@ -61,22 +61,6 @@ static u8 _fightTrainer_GetListUnderTakerDarkPoke(u8* list);
 u32 deckDataVirtualDB_GetEnemyDeck(u16 id);
 u32 deckDataVirtualDB_GetAllyDeck(u16 id);
 u8 deckDataVirtualDB_GetPokemonNum(u16 id);
-class DeckPokemon {
-public:
-    static DeckPokemon* getDeckPokemonObj(u32 id);
-    u16 getPokemonID() const;
-    u8 getRandomSetting() const;
-    u8 getLevel() const;
-    u8 getFriendLevel() const;
-    u8 getSex() const;
-    u8 getSeikakuID() const;
-    u8 getTokuseiFlag() const;
-    u16 getHoldItem() const;
-    u8 getComboPartnerAll() const;
-    u8 getStatusRnd(u8 index) const;
-    u8 getStatusEffort(u8 index) const;
-    u16 getWazaID(u8 index) const;
-};
 class DeckTrainerAI {
 public:
     static DeckTrainerAI* getDeckTrainerAIObj(u32 id);
@@ -330,21 +314,9 @@ u16 fightTrainerDB_GetSerihuMsgId(u16 id, u8 index);
 u32 fightTrainerPokemonPartDB_GetName(u16 id);
 u8 fightTrainerPokemonPartDB_GetWazaTypeRevise(u16 id, u8 index);
 u32 fightTrainerPokemonDB_GetNickname(u16 id);
-u8 fightTrainerPokemonDB_GetStatusRnd(u16 id, u8 index);
-u8 fightTrainerPokemonDB_GetStatusEffort(u16 id, u8 index);
-u8 fightTrainerPokemonDB_GetLevel(u16 id);
 u16 fightTrainerPokemonDB_GetItemBallId(u16 id);
 u8 fightTrainerPokemonDB_GetDarkPokemonFlag(u16 id);
-u8 fightTrainerPokemonDB_GetTokuseiFlag(u16 id);
-u16 fightTrainerPokemonDB_GetPokemonDataId(u16 id);
-u16 fightTrainerPokemonDB_GetItemDataId(u16 id);
-u16 fightTrainerPokemonDB_GetWazaDataId(u16 id, u8 index);
 u8 fightTrainerPokemonDB_GetPpCnt(u16 id, u8 index);
-u8 fightTrainerPokemonDB_GetFriend(u16 id);
-u8 fightTrainerPokemonDB_GetSexDataId(u16 id);
-u8 fightTrainerPokemonDB_GetSeikakuDataId(u16 id);
-u8 fightTrainerPokemonDB_GetKeyPlayerFlag(u16 id);
-u8 fightTrainerPokemonDB_GetPartDataId(u16 id);
 u8 fightTrainerAiDB_GetPokemonSelectRandomFlag(u16 id);
 u8 fightTrainerAiDB_GetPokemonSelectWeakPointFlag(u16 id);
 u8 fightTrainerAiDB_GetPokemonDataOrderOutFlag(u16 id);
