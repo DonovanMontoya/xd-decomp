@@ -1124,321 +1124,232 @@ static inline void shapeKAlphaSelect(GSgfxLayer *layer,u8 stage,GXTevKAlphaSel v
  layer->konstAlphas[stage]=value;layer->konstAlphaDirty|=1<<stage;layer->dirty|=0x10;layer->savedKonstAlphaDirty|=1<<stage;layer->savedDirty|=0x10;
 }
 #pragma dont_inline on
-extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(GsShapeObject *self,GSgfxLayer *layer,GsShapeTexture *textures,GStexture *refract) {
- GXTevKColorSel colorRegisters[4]={GX_TEV_KCSEL_K0,GX_TEV_KCSEL_K1,GX_TEV_KCSEL_K2,GX_TEV_KCSEL_K3};
- GXTevKAlphaSel alphaRegisters[4]={GX_TEV_KASEL_K0_A,GX_TEV_KASEL_K1_A,GX_TEV_KASEL_K2_A,GX_TEV_KASEL_K3_A};
- GXTevKAlphaSel mixAlpha = alphaRegisters[1];
- u8 stage=0,textureIndex=0,count=self->entry->textureCount;
- int var_r5_2,var_r5_3,var_r5_4,var_r5_5,var_r6_2,var_r6_3,var_r6_4,var_r7,var_r7_2,var_r7_3,var_r8,var_r8_10,var_r8_11,var_r8_12,var_r8_13,var_r8_14,var_r8_2,var_r8_3,var_r8_4,var_r8_5,var_r8_6,var_r8_7,var_r8_8,var_r8_9;
- while(textureIndex<count) {
-  u32 index=textureIndex;
-  ShapeTextureBinding *binding=(ShapeTextureBinding*)self->entry->textures[textureIndex];
-  GsShapeTexture *texture=&textures[binding->index];
-  int filter, minFilter, magFilter;
-  filter=1;
-  if(binding->minFilter) filter=2;
-  magFilter=1;
-  if(binding->magFilter) magFilter=2;
-  minFilter=1;
-  if(binding->minFilter) minFilter=2;
-  GStextureSetFilter(texture->texture,minFilter,magFilter,filter);
-  GStextureSetWrap(texture->texture,binding->wrapS,binding->wrapT);
-  GStexture *selected=texture->texture;if(textureIndex==0&&refract)selected=refract;
-  if(self->entry->shapeType==10&&textureIndex==0&&self->entry->textureCount>=2) {
-   layer->texSelect(index,selected);
-   layer->tunitMapping(stage,index,index,0);
-   layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15);
-   layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
-   layer->tunitAlphaArg(stage,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7);
-   layer->tunitAlphaOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
-   int next=stage+1;
-   layer->tunitMapping(next,index,index,0);
-   layer->tunitColorArg(next,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15);
-   layer->tunitColorOp(next,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
-   layer->tunitAlphaArg(next,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7);
-   layer->tunitAlphaOp(next,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
-   stage+=2;
-   if(texture->entry->colorRange==1) {
-    layer->tunitMapping(stage,index,index,0);
-    layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15);
-    layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
-    layer->tunitAlphaArg(stage,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7);
-    layer->tunitAlphaOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
-    ++stage;
-   }
-  } else if(textureIndex<2) {
-   if(texture->entry->colorRange) {
-    int middle=stage+1,mixStage=stage+2;
-    int secondRegister = textureIndex * 2 + 1;
-    shapeKColorSelect(layer,stage,colorRegisters[index*2]);shapeKAlphaSelect(layer,stage,alphaRegisters[index*2]);
-    shapeKColorSelect(layer,middle,colorRegisters[secondRegister]);shapeKAlphaSelect(layer,middle,alphaRegisters[secondRegister]);shapeKAlphaSelect(layer,mixStage,mixAlpha);
-    layer->texSelect(index,selected);layer->tunitMapping(stage,index,index,0);
-    layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)15,(GSgfxTunitCArg)14);
-    layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)1);
-    layer->tunitAlphaArg(stage,(GSgfxTunitAArg)7,(GSgfxTunitAArg)6,(GSgfxTunitAArg)4,(GSgfxTunitAArg)7);
-    layer->tunitAlphaOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)1);
-    layer->tunitMapping(middle,index,index,0);
-    layer->tunitColorArg(middle,(GSgfxTunitCArg)14,(GSgfxTunitCArg)2,(GSgfxTunitCArg)8,(GSgfxTunitCArg)15);
-    layer->tunitColorOp(middle,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)2);
-    layer->tunitAlphaArg(middle,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)7,(GSgfxTunitAArg)1);
-    layer->tunitAlphaOp(middle,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)2);
-    layer->tunitMapping(mixStage,index,index,0);
-    switch(binding->blend) {
-
+extern "C" void SetStateTexture__13GsShapeObjectFP10GSgfxLayerP14GsShapeTextureP9GStexture(GsShapeObject* self, GSgfxLayer* layer, GsShapeTexture* textures, GStexture* refract) {
+    GXTevKColorSel colorRegisters[4] = {GX_TEV_KCSEL_K0, GX_TEV_KCSEL_K1, GX_TEV_KCSEL_K2, GX_TEV_KCSEL_K3};
+    GXTevKAlphaSel alphaRegisters[4] = {GX_TEV_KASEL_K0_A, GX_TEV_KASEL_K1_A, GX_TEV_KASEL_K2_A, GX_TEV_KASEL_K3_A};
+    GXTevKAlphaSel mixAlpha = alphaRegisters[1];
+    u8 stage = 0, textureIndex = 0, count = self->entry->textureCount;
+    while (textureIndex < count) {
+        u32 index = textureIndex;
+        ShapeTextureBinding* binding = (ShapeTextureBinding*)self->entry->textures[textureIndex];
+        GsShapeTexture* texture = &textures[binding->index];
+        int mipFilter = 1;
+        if (binding->minFilter) mipFilter = 2;
+        int magFilter = 1;
+        if (binding->magFilter) magFilter = 2;
+        GStexture* filterTexture = texture->texture;
+        int minFilter = 1;
+        if (binding->minFilter) minFilter = 2;
+        GStextureSetFilter(filterTexture, minFilter, magFilter, mipFilter);
+        GStextureSetWrap(texture->texture, binding->wrapS, binding->wrapT);
+        GStexture* selected = texture->texture;
+        if (textureIndex == 0 && refract) selected = refract;
+        if (self->entry->shapeType == 10 && textureIndex == 0 && self->entry->textureCount >= 2) {
+            layer->texSelect(index, selected);
+            layer->tunitMapping(stage, index, index, 0);
+            layer->tunitColorArg(stage, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO);
+            layer->tunitColorOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+            layer->tunitAlphaArg(stage, GS_CA_ZERO, GS_CA_ZERO, GS_CA_ZERO, GS_CA_ZERO);
+            layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+            int next = stage + 1;
+            layer->tunitMapping(next, index, index, 0);
+            layer->tunitColorArg(next, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO);
+            layer->tunitColorOp(next, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+            layer->tunitAlphaArg(next, GS_CA_ZERO, GS_CA_ZERO, GS_CA_ZERO, GS_CA_ZERO);
+            layer->tunitAlphaOp(next, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+            stage += 2;
+            if (texture->entry->colorRange == 1) {
+                layer->tunitMapping(stage, index, index, 0);
+                layer->tunitColorArg(stage, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO);
+                layer->tunitColorOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                layer->tunitAlphaArg(stage, GS_CA_ZERO, GS_CA_ZERO, GS_CA_ZERO, GS_CA_ZERO);
+                layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                ++stage;
+            }
+        } else if (textureIndex < 2) {
+            if (texture->entry->colorRange) {
+                shapeKColorSelect(layer, stage, colorRegisters[index * 2]);
+                shapeKAlphaSelect(layer, stage, alphaRegisters[index * 2]);
+                int middle = stage + 1;
+                int secondRegister = index * 2 + 1;
+                shapeKColorSelect(layer, middle, colorRegisters[secondRegister]);
+                shapeKAlphaSelect(layer, middle, alphaRegisters[secondRegister]);
+                int mixStage = stage + 2;
+                shapeKAlphaSelect(layer, mixStage, mixAlpha);
+                layer->texSelect(index, selected);
+                layer->tunitMapping(stage, index, index, 0);
+                layer->tunitColorArg(stage, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO, GS_CC_KONST);
+                layer->tunitColorOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVREG0);
+                layer->tunitAlphaArg(stage, GS_CA_ZERO, GS_CA_KONST, GS_CA_TEXA, GS_CA_ZERO);
+                layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVREG0);
+                layer->tunitMapping(middle, index, index, 0);
+                layer->tunitColorArg(middle, GS_CC_KONST, GS_CC_C0, GS_CC_TEXC, GS_CC_ZERO);
+                layer->tunitColorOp(middle, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVREG1);
+                layer->tunitAlphaArg(middle, GS_CA_ZERO, GS_CA_ZERO, GS_CA_ZERO, GS_CA_A0);
+                layer->tunitAlphaOp(middle, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVREG1);
+                layer->tunitMapping(mixStage, index, index, 0);
+                switch (binding->blend) {
+                    case 0:
+                        layer->tunitColorArg(mixStage, GS_CC_ZERO, GS_CC_C1, textureIndex == 0 ? GS_CC_ONE : GS_CC_CPREV, GS_CC_ZERO);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_ZERO, GS_CA_A1, textureIndex == 0 ? GS_CA_KONST : GS_CA_APREV, GS_CA_ZERO);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    case 2:
+                        layer->tunitColorArg(mixStage, textureIndex == 0 ? GS_CC_C1 : GS_CC_CPREV, GS_CC_C1, GS_CC_TEXA, GS_CC_ZERO);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, textureIndex == 0 ? GS_CA_A1 : GS_CA_APREV, GS_CA_A1, GS_CA_TEXA, GS_CA_ZERO);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    case 3:
+                        layer->tunitColorArg(mixStage, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO, GS_CC_C1);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_ZERO, GS_CA_ZERO, GS_CA_ZERO, GS_CA_A1);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    case 4:
+                        layer->tunitColorArg(mixStage, GS_CC_C1, GS_CC_ZERO, GS_CC_ZERO, textureIndex == 0 ? GS_CC_ZERO : GS_CC_CPREV);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_A1, GS_CA_ZERO, GS_CA_ZERO, textureIndex == 0 ? GS_CA_ZERO : GS_CA_APREV);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    case 5:
+                        layer->tunitColorArg(mixStage, GS_CC_C1, GS_CC_ZERO, GS_CC_ZERO, textureIndex == 0 ? GS_CC_ZERO : GS_CC_CPREV);
+                        layer->tunitColorOp(mixStage, textureIndex == 0 ? GS_TEV_ADD : GS_TEV_SUB, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_A1, GS_CA_ZERO, GS_CA_ZERO, textureIndex == 0 ? GS_CA_ZERO : GS_CA_APREV);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    case 9:
+                        layer->tunitColorArg(mixStage, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO, textureIndex == 0 ? GS_CC_C1 : GS_CC_CPREV);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_ZERO, GS_CA_A1, textureIndex == 0 ? GS_CA_KONST : GS_CA_APREV, GS_CA_ZERO);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    default:
+                        layer->tunitColorArg(mixStage, GS_CC_C1, GS_CC_ZERO, GS_CC_ZERO, textureIndex == 0 ? GS_CC_RASC : GS_CC_CPREV);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_A1, GS_CA_ZERO, GS_CA_ZERO, textureIndex == 0 ? GS_CA_RASA : GS_CA_APREV);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                }
+                stage += 3;
+            } else {
+                int mixStage = stage + 1;
+                shapeKColorSelect(layer, stage, colorRegisters[index * 2]);
+                shapeKAlphaSelect(layer, stage, alphaRegisters[index * 2]);
+                shapeKAlphaSelect(layer, mixStage, mixAlpha);
+                layer->texSelect(index, selected);
+                layer->tunitMapping(stage, index, index, 0);
+                layer->tunitColorArg(stage, GS_CC_ZERO, GS_CC_KONST, GS_CC_TEXC, GS_CC_ZERO);
+                layer->tunitColorOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVREG0);
+                layer->tunitAlphaArg(stage, GS_CA_ZERO, GS_CA_KONST, GS_CA_TEXA, GS_CA_ZERO);
+                layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVREG0);
+                layer->tunitMapping(mixStage, index, index, 0);
+                switch (binding->blend) {
+                    case 0:
+                        layer->tunitColorArg(mixStage, GS_CC_ZERO, textureIndex == 0 ? GS_CC_ONE : GS_CC_CPREV, GS_CC_C0, GS_CC_ZERO);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_ZERO, textureIndex == 0 ? GS_CA_KONST : GS_CA_APREV, GS_CA_A0, GS_CA_ZERO);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    case 2:
+                        layer->tunitColorArg(mixStage, textureIndex == 0 ? GS_CC_ONE : GS_CC_CPREV, GS_CC_C0, GS_CC_TEXA, GS_CC_ZERO);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, textureIndex == 0 ? GS_CA_KONST : GS_CA_APREV, GS_CA_A0, GS_CA_TEXA, GS_CA_ZERO);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    case 3:
+                        layer->tunitColorArg(mixStage, GS_CC_ZERO, GS_CC_TEXC, GS_CC_KONST, GS_CC_ZERO);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_ZERO, GS_CA_TEXA, GS_CA_KONST, GS_CA_ZERO);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    case 4:
+                        layer->tunitColorArg(mixStage, GS_CC_C0, GS_CC_ZERO, GS_CC_ZERO, textureIndex == 0 ? GS_CC_ZERO : GS_CC_CPREV);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_A0, GS_CA_ZERO, GS_CA_ZERO, textureIndex == 0 ? GS_CA_ZERO : GS_CA_APREV);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    case 5:
+                        layer->tunitColorArg(mixStage, GS_CC_C0, GS_CC_ZERO, GS_CC_ZERO, textureIndex == 0 ? GS_CC_ZERO : GS_CC_CPREV);
+                        layer->tunitColorOp(mixStage, textureIndex == 0 ? GS_TEV_ADD : GS_TEV_SUB, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_A0, GS_CA_ZERO, GS_CA_ZERO, textureIndex == 0 ? GS_CA_ZERO : GS_CA_APREV);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    case 9:
+                        layer->tunitColorArg(mixStage, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO, textureIndex == 0 ? GS_CC_TEXC : GS_CC_CPREV);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_ZERO, textureIndex == 0 ? GS_CA_KONST : GS_CA_APREV, GS_CA_A0, GS_CA_ZERO);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                    default:
+                        layer->tunitColorArg(mixStage, GS_CC_C0, GS_CC_ZERO, GS_CC_ZERO, textureIndex == 0 ? GS_CC_ZERO : GS_CC_CPREV);
+                        layer->tunitColorOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        layer->tunitAlphaArg(mixStage, GS_CA_A0, GS_CA_ZERO, GS_CA_ZERO, textureIndex == 0 ? GS_CA_ZERO : GS_CA_APREV);
+                        layer->tunitAlphaOp(mixStage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                        break;
+                }
+                stage += 2;
+            }
+        } else {
+            layer->texSelect(index, selected);
+            layer->tunitMapping(stage, index, index, 0);
+            switch (binding->blend) {
                 case 0:
-                    var_r7 = 0;
-                    if (textureIndex == 0) {
-                        var_r7 = 0xC;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(4), (GSgfxTunitCArg)(var_r7), (GSgfxTunitCArg)(0xF));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r7_2 = 0;
-                    if (textureIndex == 0) {
-                        var_r7_2 = 6;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(2), (GSgfxTunitAArg)(var_r7_2), (GSgfxTunitAArg)(7));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
+                    layer->tunitColorArg(stage, GS_CC_ZERO, GS_CC_TEXC, GS_CC_CPREV, GS_CC_ZERO);
+                    layer->tunitColorOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                    layer->tunitAlphaArg(stage, GS_CA_ZERO, GS_CA_TEXA, GS_CA_APREV, GS_CA_ZERO);
+                    layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
                     break;
                 case 2:
-                    var_r5_2 = 0;
-                    if (textureIndex == 0) {
-                        var_r5_2 = 4;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(var_r5_2), (GSgfxTunitCArg)(4), (GSgfxTunitCArg)(9), (GSgfxTunitCArg)(0xF));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r5_3 = 0;
-                    if (textureIndex == 0) {
-                        var_r5_3 = 2;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(var_r5_3), (GSgfxTunitAArg)(2), (GSgfxTunitAArg)(4), (GSgfxTunitAArg)(7));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
+                    layer->tunitColorArg(stage, GS_CC_CPREV, GS_CC_TEXC, GS_CC_TEXA, GS_CC_ZERO);
+                    layer->tunitColorOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                    layer->tunitAlphaArg(stage, GS_CA_TEXA, GS_CA_ZERO, GS_CA_ZERO, GS_CA_APREV);
+                    layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
                     break;
                 case 3:
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(4));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(2));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
+                    layer->tunitColorArg(stage, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO, GS_CC_TEXC);
+                    layer->tunitColorOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                    layer->tunitAlphaArg(stage, GS_CA_TEXA, GS_CA_ZERO, GS_CA_ZERO, GS_CA_APREV);
+                    layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
                     break;
                 case 4:
-                    var_r8 = 0;
-                    if (textureIndex == 0) {
-                        var_r8 = 0xF;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(4), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(var_r8));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r8_2 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_2 = 7;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(2), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(var_r8_2));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
+                    layer->tunitColorArg(stage, GS_CC_TEXC, GS_CC_ZERO, GS_CC_ZERO, GS_CC_CPREV);
+                    layer->tunitColorOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                    layer->tunitAlphaArg(stage, GS_CA_TEXA, GS_CA_ZERO, GS_CA_ZERO, GS_CA_APREV);
+                    layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
                     break;
                 case 5:
-                    var_r8_3 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_3 = 0xF;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(4), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(var_r8_3));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(textureIndex != 0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r8_4 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_4 = 7;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(2), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(var_r8_4));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
+                    layer->tunitColorArg(stage, GS_CC_TEXC, GS_CC_ZERO, GS_CC_ZERO, GS_CC_CPREV);
+                    layer->tunitColorOp(stage, GS_TEV_SUB, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                    layer->tunitAlphaArg(stage, GS_CA_TEXA, GS_CA_ZERO, GS_CA_ZERO, GS_CA_APREV);
+                    layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
                     break;
                 case 9:
-                    var_r8_5 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_5 = 4;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(var_r8_5));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r7_3 = 0;
-                    if (textureIndex == 0) {
-                        var_r7_3 = 6;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(2), (GSgfxTunitAArg)(var_r7_3), (GSgfxTunitAArg)(7));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
+                    layer->tunitColorArg(stage, GS_CC_ZERO, GS_CC_ZERO, GS_CC_ZERO, GS_CC_CPREV);
+                    layer->tunitColorOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                    layer->tunitAlphaArg(stage, GS_CA_ZERO, GS_CA_TEXA, GS_CA_APREV, GS_CA_ZERO);
+                    layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
                     break;
                 default:
-                    var_r8_6 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_6 = 0xA;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(4), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(var_r8_6));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r8_7 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_7 = 5;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(2), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(var_r8_7));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
+                    layer->tunitColorArg(stage, GS_CC_TEXC, GS_CC_ZERO, GS_CC_ZERO, GS_CC_CPREV);
+                    layer->tunitColorOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+                    layer->tunitAlphaArg(stage, GS_CA_TEXA, GS_CA_ZERO, GS_CA_ZERO, GS_CA_APREV);
+                    layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
                     break;
-
-    }stage+=3;
-   } else {
-    int mixStage=stage+1;
-    shapeKColorSelect(layer,stage,colorRegisters[index*2]);shapeKAlphaSelect(layer,stage,alphaRegisters[index*2]);shapeKAlphaSelect(layer,mixStage,mixAlpha);
-    layer->texSelect(index,selected);layer->tunitMapping(stage,index,index,0);
-    layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)14,(GSgfxTunitCArg)8,(GSgfxTunitCArg)15);
-    layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)1);
-    layer->tunitAlphaArg(stage,(GSgfxTunitAArg)7,(GSgfxTunitAArg)6,(GSgfxTunitAArg)4,(GSgfxTunitAArg)7);
-    layer->tunitAlphaOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)1);
-    layer->tunitMapping(mixStage,index,index,0);
-    switch(binding->blend) {
-
-                case 0:
-                    var_r6_2 = 0;
-                    if (textureIndex == 0) {
-                        var_r6_2 = 0xC;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(var_r6_2), (GSgfxTunitCArg)(2), (GSgfxTunitCArg)(0xF));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r6_3 = 0;
-                    if (textureIndex == 0) {
-                        var_r6_3 = 6;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(var_r6_3), (GSgfxTunitAArg)(1), (GSgfxTunitAArg)(7));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    break;
-                case 2:
-                    var_r5_4 = 0;
-                    if (textureIndex == 0) {
-                        var_r5_4 = 0xC;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(var_r5_4), (GSgfxTunitCArg)(2), (GSgfxTunitCArg)(9), (GSgfxTunitCArg)(0xF));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r5_5 = 0;
-                    if (textureIndex == 0) {
-                        var_r5_5 = 6;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(var_r5_5), (GSgfxTunitAArg)(1), (GSgfxTunitAArg)(4), (GSgfxTunitAArg)(7));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    break;
-                case 3:
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(8), (GSgfxTunitCArg)(0xE), (GSgfxTunitCArg)(0xF));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(4), (GSgfxTunitAArg)(6), (GSgfxTunitAArg)(7));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    break;
-                case 4:
-                    var_r8_8 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_8 = 0xF;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(2), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(var_r8_8));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r8_9 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_9 = 7;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(1), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(var_r8_9));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    break;
-                case 5:
-                    var_r8_10 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_10 = 0xF;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(2), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(var_r8_10));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(textureIndex != 0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r8_11 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_11 = 7;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(1), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(var_r8_11));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    break;
-                case 9:
-                    var_r8_12 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_12 = 8;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(var_r8_12));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r6_4 = 0;
-                    if (textureIndex == 0) {
-                        var_r6_4 = 6;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(var_r6_4), (GSgfxTunitAArg)(1), (GSgfxTunitAArg)(7));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    break;
-                default:
-                    var_r8_13 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_13 = 0xF;
-                    }
-                    layer->tunitColorArg(mixStage, (GSgfxTunitCArg)(2), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(var_r8_13));
-                    layer->tunitColorOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    var_r8_14 = 0;
-                    if (textureIndex == 0) {
-                        var_r8_14 = 7;
-                    }
-                    layer->tunitAlphaArg(mixStage, (GSgfxTunitAArg)(1), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(var_r8_14));
-                    layer->tunitAlphaOp(mixStage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                    break;
-
-    }stage+=2;
-   }
-  } else {
-   layer->texSelect(index,selected);layer->tunitMapping(stage,index,index,0);
-   switch(binding->blend) {
-
-            case 0:
-                layer->tunitColorArg(stage, (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(8), (GSgfxTunitCArg)(0), (GSgfxTunitCArg)(0xF));
-                layer->tunitColorOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                layer->tunitAlphaArg(stage, (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(4), (GSgfxTunitAArg)(0), (GSgfxTunitAArg)(7));
-                layer->tunitAlphaOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                break;
-            case 2:
-                layer->tunitColorArg(stage, (GSgfxTunitCArg)(0), (GSgfxTunitCArg)(8), (GSgfxTunitCArg)(9), (GSgfxTunitCArg)(0xF));
-                layer->tunitColorOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                layer->tunitAlphaArg(stage, (GSgfxTunitAArg)(4), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(0));
-                layer->tunitAlphaOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                break;
-            case 3:
-                layer->tunitColorArg(stage, (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(8));
-                layer->tunitColorOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                layer->tunitAlphaArg(stage, (GSgfxTunitAArg)(4), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(0));
-                layer->tunitAlphaOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                break;
-            case 4:
-                layer->tunitColorArg(stage, (GSgfxTunitCArg)(8), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0));
-                layer->tunitColorOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                layer->tunitAlphaArg(stage, (GSgfxTunitAArg)(4), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(0));
-                layer->tunitAlphaOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                break;
-            case 5:
-                layer->tunitColorArg(stage, (GSgfxTunitCArg)(8), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0));
-                layer->tunitColorOp(stage, (GSgfxTunitOp)(1), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                layer->tunitAlphaArg(stage, (GSgfxTunitAArg)(4), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(0));
-                layer->tunitAlphaOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                break;
-            case 9:
-                layer->tunitColorArg(stage, (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0));
-                layer->tunitColorOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                layer->tunitAlphaArg(stage, (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(4), (GSgfxTunitAArg)(0), (GSgfxTunitAArg)(7));
-                layer->tunitAlphaOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                break;
-            default:
-                layer->tunitColorArg(stage, (GSgfxTunitCArg)(8), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0xF), (GSgfxTunitCArg)(0));
-                layer->tunitColorOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                layer->tunitAlphaArg(stage, (GSgfxTunitAArg)(4), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(7), (GSgfxTunitAArg)(0));
-                layer->tunitAlphaOp(stage, (GSgfxTunitOp)(0), (GSgfxTunitBias)(0), (GSgfxTunitScale)(0), 1, (GSgfxTunitReg)(0));
-                break;
-
-   }++stage;
-  }
-  if (static_cast<s32>(index) == count - 1) {
-   layer->tunitMapping(stage,index,index,0);
-   layer->tunitColorArg(stage,(GSgfxTunitCArg)15,(GSgfxTunitCArg)10,(GSgfxTunitCArg)0,(GSgfxTunitCArg)15);
-   layer->tunitColorOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
-   layer->tunitAlphaArg(stage,(GSgfxTunitAArg)7,(GSgfxTunitAArg)5,(GSgfxTunitAArg)0,(GSgfxTunitAArg)7);
-   layer->tunitAlphaOp(stage,(GSgfxTunitOp)0,(GSgfxTunitBias)0,(GSgfxTunitScale)0,true,(GSgfxTunitReg)0);
-   ++stage;
-  }++textureIndex;
- }
+            }
+            ++stage;
+        }
+        if (static_cast<s32>(index) == count - 1) {
+            layer->tunitMapping(stage, index, index, 0);
+            layer->tunitColorArg(stage, GS_CC_ZERO, GS_CC_RASC, GS_CC_CPREV, GS_CC_ZERO);
+            layer->tunitColorOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+            layer->tunitAlphaArg(stage, GS_CA_ZERO, GS_CA_RASA, GS_CA_APREV, GS_CA_ZERO);
+            layer->tunitAlphaOp(stage, GS_TEV_ADD, GS_TB_ZERO, GS_CS_SCALE_1, true, GS_TEVPREV);
+            ++stage;
+        }
+        ++textureIndex;
+    }
 }
 
 #pragma dont_inline reset
