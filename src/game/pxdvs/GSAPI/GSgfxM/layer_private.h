@@ -7,12 +7,18 @@
 template <class T> inline T& layerField(void* p, unsigned offset) {
     return *reinterpret_cast<T*>(static_cast<u8*>(p) + offset);
 }
-struct LayerVertexFormat { u32 flags, format; u8 reserved8[0x1b0]; GXVtxDescList descriptors[27]; };
+struct LayerVertexFormat {
+    u16 flags;
+    u8 colors, textures;
+    u32 format;
+    GXVtxAttrFmtList attributes[27];
+    GXVtxDescList descriptors[27];
+};
 struct LayerDisplayList { u16 flags, reserved; void* data; u32 size; LayerVertexFormat* format; };
 struct LayerTexGen { s32 function, source, matrix; u8 normalize; u8 padding[3]; s32 postMatrix, reserved; };
 struct LayerChannel { u8 enabled; u8 padding[3]; s32 ambient, material, mask, diffuse, attenuation; void* lights[8]; };
 ABI_SIZE(LayerTexGen,0x18); ABI_SIZE(LayerChannel,0x38);
-ABI_OFF(LayerVertexFormat,descriptors,0x1b8); ABI_SIZE(LayerDisplayList,0x10);
+ABI_OFF(LayerVertexFormat,attributes,0x8); ABI_OFF(LayerVertexFormat,descriptors,0x1b8); ABI_SIZE(LayerDisplayList,0x10);
 inline void selectLayerPass(GraphicsLayerState* layer, s32 pass) {
     if (layer->blendIndex != pass) {
         layer->blendIndex = pass;

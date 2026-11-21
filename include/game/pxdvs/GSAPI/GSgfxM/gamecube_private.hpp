@@ -157,15 +157,23 @@ struct GCCopyTextureInfo {
     u8 padding16[2];
 };
 typedef char GCCopyTextureInfoSizeCheck[sizeof(GCCopyTextureInfo) == 0x18 ? 1 : -1];
+#pragma pack(push, 1)
+union GCCopyDisplayColor {
+    GXColor rgba;
+    u32 value;
+};
+#pragma pack(pop)
+
 struct GCCopyDisplayInfo {
     u16 x, y, width, height;
     u16 stride;
     u8 paddingA[2];
-    GXFBClamp clamp;
+    u32 clamp;
     GXCopyMode frameToField;
     GXGamma gamma;
     f32 scale;
-    u8 clear, red, green, blue, alpha;
+    u8 clear;
+    GCCopyDisplayColor color;
     u8 padding21[3];
     u32 depth;
 };
@@ -174,7 +182,14 @@ typedef char GCCopyDisplayInfoStrideOffsetCheck[offsetof(GCCopyDisplayInfo, stri
 typedef char GCCopyDisplayInfoFrameToFieldOffsetCheck[offsetof(GCCopyDisplayInfo, frameToField) == 0x10 ? 1 : -1];
 typedef char GCCopyDisplayInfoGammaOffsetCheck[offsetof(GCCopyDisplayInfo, gamma) == 0x14 ? 1 : -1];
 typedef char GCCopyDisplayInfoScaleOffsetCheck[offsetof(GCCopyDisplayInfo, scale) == 0x18 ? 1 : -1];
-struct GCVertexAttributeFormat { s32 attribute, count, type; u8 fraction; u8 padding[3]; };
+extern "C" void GSgfx_GCWriteVtxAttrFmt(GXVtxFmt formatIndex, const GXVtxAttrFmtList* format);
+typedef char GCCopyDisplayColorOffsetCheck[offsetof(GCCopyDisplayInfo, color) == 0x1d ? 1 : -1];
+
+extern "C" {
+u8* GSgfx_GCWriteCopyDispDirect(u8* output, GCCopyDisplayInfo* info, void* destination, u32 colorUpdate, u32 alphaUpdate, u32 depthUpdate);
+void GSgfx_GCWriteCopyDisp(GCCopyDisplayInfo* info, void* destination, u32 colorUpdate, u32 alphaUpdate, u32 depthUpdate);
+}
+
 struct GCVertexDescriptor { s32 attribute, type; };
 struct GCGlobalRegisterState {
     u8 field0, field1, pixelFormat, depthFormat, field4;
@@ -187,6 +202,7 @@ inline void GCWriteHalf(u16 value) { GXWGFifo.u16 = value; }
 inline void GCWriteWord(u32 value) { GXWGFifo.u32 = value; }
 
 extern "C" GCGraphicsState* gsgfxState;
+extern "C" GCGlobalRegisterState _gcGlobalRegState;
 
 inline void GSgfx_GCWriteViewport(f32 x, f32 y, f32 width, f32 height, f32 nearZ, f32 farZ, u32 mode) {
     if (mode == 0) y -= 0.5f;

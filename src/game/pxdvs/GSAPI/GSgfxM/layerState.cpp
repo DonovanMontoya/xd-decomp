@@ -274,7 +274,7 @@ void GSgfx_GCInvalidateState();
 void PPCSync();
 void Load__10GSgfxLightFUc(void*,u8);
 void GSgfx_GCWriteLoadTlut(void*,s32); void GSgfx_GCWriteLoadTexObj(void*,s32);
-void GSgfx_GCWriteVtxDesc(void*); void GSgfx_GCWriteVtxAttrFmt(s32,void*);
+void GSgfx_GCWriteVtxDesc(void*);
 void GSgfx_GCWriteArray(s32,void*,u8);
 struct LayerHWView { u8 pad[0x30]; u8 hw[0xc40]; };
 void LoadHWState__10GSgfxLayerFv(void* layer) {
@@ -371,7 +371,8 @@ extern "C" void SetupRenderState__10GSgfxLayerFv(void* layer) {
             layerField<void*>(dirty,0x88)=format;
         }
         if (layerField<void*>(dirty,0x68+layerField<u32>(format,4)*4)!=format || (layerField<u16>(format,0)&2)) {
-            GSgfx_GCWriteVtxAttrFmt(layerField<u32>(format,4),format+8); layerField<void*>(dirty,0x68+layerField<u32>(format,4)*4)=format;
+            GSgfx_GCWriteVtxAttrFmt(layerField<GXVtxFmt>(format, 4), reinterpret_cast<LayerVertexFormat*>(format)->attributes);
+            layerField<void*>(dirty,0x68+layerField<u32>(format,4)*4)=format;
         }
         u8 sync=0;
         for (LayerArray* a=reinterpret_cast<LayerArray*>(format+0x290);a->attribute!=255;a++) if (a->flags&1) {
