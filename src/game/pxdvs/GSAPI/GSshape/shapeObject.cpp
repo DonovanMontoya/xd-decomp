@@ -1133,14 +1133,10 @@ void GsShapeObject::SetStateTexture(GSgfxLayer* layer, GsShapeTexture* textures,
         u32 index = textureIndex;
         GsShapeTextureMapping* binding = entry->textures[textureIndex];
         GsShapeTexture* texture = &textures[binding->index];
-        int mipFilter = 1;
-        if (binding->minFilter) mipFilter = 2;
-        int magFilter = 1;
-        if (binding->magFilter) magFilter = 2;
-        GStexture* filterTexture = texture->texture;
-        int minFilter = 1;
-        if (binding->minFilter) minFilter = 2;
-        GStextureSetFilter(filterTexture, minFilter, magFilter, mipFilter);
+        enum { FilterNearest = 1, FilterLinear = 2 };
+        GStextureSetFilter(texture->texture, binding->minFilter ? FilterLinear : FilterNearest,
+                           binding->magFilter ? FilterLinear : FilterNearest,
+                           binding->minFilter ? FilterLinear : FilterNearest);
         GStextureSetWrap(texture->texture, binding->wrapS, binding->wrapT);
         GStexture* selected = texture->texture;
         if (textureIndex == 0 && refract) selected = refract;
@@ -1168,10 +1164,11 @@ void GsShapeObject::SetStateTexture(GSgfxLayer* layer, GsShapeTexture* textures,
             }
         } else if (textureIndex < 2) {
             if (texture->entry->colorRange) {
-                shapeKColorSelect(layer, stage, colorRegisters[index * 2]);
-                shapeKAlphaSelect(layer, stage, alphaRegisters[index * 2]);
+                int firstRegister = index * 2;
+                shapeKColorSelect(layer, stage, colorRegisters[firstRegister]);
+                shapeKAlphaSelect(layer, stage, alphaRegisters[firstRegister]);
                 int middle = stage + 1;
-                int secondRegister = index * 2 + 1;
+                int secondRegister = firstRegister + 1;
                 shapeKColorSelect(layer, middle, colorRegisters[secondRegister]);
                 shapeKAlphaSelect(layer, middle, alphaRegisters[secondRegister]);
                 int mixStage = stage + 2;
@@ -1234,9 +1231,10 @@ void GsShapeObject::SetStateTexture(GSgfxLayer* layer, GsShapeTexture* textures,
                 }
                 stage += 3;
             } else {
+                int firstRegister = index * 2;
+                shapeKColorSelect(layer, stage, colorRegisters[firstRegister]);
+                shapeKAlphaSelect(layer, stage, alphaRegisters[firstRegister]);
                 int mixStage = stage + 1;
-                shapeKColorSelect(layer, stage, colorRegisters[index * 2]);
-                shapeKAlphaSelect(layer, stage, alphaRegisters[index * 2]);
                 shapeKAlphaSelect(layer, mixStage, mixAlpha);
                 layer->texSelect(index, selected);
                 layer->tunitMapping(stage, index, index, 0);
