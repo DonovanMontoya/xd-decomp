@@ -60,7 +60,7 @@ void tunitIndTexMtx__10GSgfxLayerF16GSgfxIndTexMtxIDPA3_fSc(GraphicsLayerState* 
     u32 index = id;
     SetupFifo__10GSgfxLayerFv(layer); GSgfx_GCWriteIndTexMtx(index,matrix,exponent);
     s32 saved = layer->blendIndex; u8 other = saved == 0;
-    if (layer->blendRecords[other].fifo != 0) {
+    if (layer->blendRecords[other].buffer != 0) {
         selectLayerPass(layer,other); SetupFifo__10GSgfxLayerFv(layer);
         GSgfx_GCWriteIndTexMtx(index,matrix,exponent);
         selectLayerPass(layer,saved); SetupFifo__10GSgfxLayerFv(layer);
@@ -77,7 +77,7 @@ void tgenFunc__10GSgfxLayerFUc13GSgfxTgenFunc12GSgfxTgenSrcP5GSmtxbP5GSmtx(Graph
         // The original intentionally passes matrix for the post-matrix load too.
         if (post) GXLoadTexMtxImm(matrix,view->gens[unit].postMatrix,GX_MTX3x4);
         s32 saved=layer->blendIndex; u8 other=saved==0;
-        if (layer->blendRecords[other].fifo!=0) {
+        if (layer->blendRecords[other].buffer!=0) {
             selectLayerPass(layer,other); SetupFifo__10GSgfxLayerFv(layer);
             if (matrix) { if (function==1) GXLoadTexMtxImm(matrix,view->gens[unit].matrix,GX_MTX2x4); else GXLoadTexMtxImm(matrix,view->gens[unit].matrix,GX_MTX3x4); }
             if (post) GXLoadTexMtxImm(matrix,view->gens[unit].postMatrix,GX_MTX3x4);

@@ -419,19 +419,22 @@ void GSgfxLayerUpdateActiveFifoStats__Fv() {
     if (gsgfx_gpu_mode==1 || (fifo=gsgfx_layer_activeFifo)==0) return;
     updateLayerFifo(fifo);
 }
-void SetupFifo__10GSgfxLayerFv(void* layer) {
-    if (gsgfx_gpu_mode==2) {
-        void* fifo=gsgfx_layer_activeFifo;
-        if (fifo!=layerField<void*>(layer,0x1990)) {
-            if (gsgfx_gpu_mode!=1 && fifo) updateLayerFifo(fifo);
-            GXSetCPUFifo(reinterpret_cast<GXFifoObj*>(layerField<u8*>(layer,0x1990)+8));
-            gsgfx_layer_activeFifo=layerField<void*>(layer,0x1990); gsgfxState->layer=layer;
+void SetupFifo__10GSgfxLayerFv(void* object) {
+    GraphicsLayerState* layer = static_cast<GraphicsLayerState*>(object);
+    if (gsgfx_gpu_mode == 2) {
+        BlendRecord* fifo = static_cast<BlendRecord*>(gsgfx_layer_activeFifo);
+        if (fifo != layer->currentBlend) {
+            if (gsgfx_gpu_mode != 1 && fifo) {
+                updateLayerFifo(fifo);
+            }
+            GXSetCPUFifo(sdk(&layer->currentBlend->fifoObject));
+            gsgfx_layer_activeFifo = layer->currentBlend;
+            gsgfxState->layer = layer;
         }
     }
 }
 }
 extern "C" {
-void GSgfxGPUSetFifoWritePtr__FP15GSgfx_GCFifoObjPv(void*,void*);
 void GSgfxRenderAddToFifoList__FP15GSgfx_GCFifoObjPvPvUlPFPv_vPv(void*,void*,void*,u32,void(*)(void*),void*);
 void GSgfxRenderModuleDoRender__FP10GSgfxLayer14GSgfxLayerPass(void*,s32);
 void EffectDistortion__10GSgfxLayerFv(void*);
@@ -481,7 +484,7 @@ void SendFifoToRenderer__10GSgfxLayerFP15_gsgfxLayerFifo(void* layer,void* objec
     else if (bytes!=32) empty=0;
     else empty=(begin[0]|begin[1]|begin[2]|begin[3]|begin[4]|begin[5]|begin[6]|begin[7])==0;
     if (empty==1) {
-        GSgfxGPUSetFifoWritePtr__FP15GSgfx_GCFifoObjPv(fifo+8,layerField<void*>(fifo,0x88));
+        GSgfxGPUSetFifoWritePtr__FP15GSgfx_GCFifoObjPv(reinterpret_cast<GSgfx_GCFifoObj*>(fifo+8),layerField<void*>(fifo,0x88));
         layerField<void*>(fifo,0x8c)=layerField<void*>(fifo,0x88);
         layerField<u16>(fifo,0xac)=0; layerField<u16>(fifo,0xae)=0;
     }
@@ -521,19 +524,23 @@ void SetPassRedirect__10GSgfxLayerF14GSgfxLayerPassbP10GSgfxLayer14GSgfxLayerPas
         }
     }
 }
-void PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(void* layer,s32 pass) {
-    if (layerField<void*>(layer,0x1818+pass*0xbc)) {
-        u32 visible=pass==0 ? 3 : 5;
-        if (visible==(visible&layerField<u32>(layer,4))) {
-            selectLayerPass(static_cast<GraphicsLayerState*>(layer),pass);
+void PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(GraphicsLayerState* layer, s32 pass) {
+    if (layer->blendRecords[pass].buffer) {
+        u32 visible = pass == 0 ? 3 : 5;
+        if (visible == (visible & layerField<u32>(layer, 4))) {
+            selectLayerPass(layer, pass);
             SetupFifo__10GSgfxLayerFv(layer);
-            GSgfxRenderModuleDoRender__FP10GSgfxLayer14GSgfxLayerPass(layer,pass); return;
+            GSgfxRenderModuleDoRender__FP10GSgfxLayer14GSgfxLayerPass(layer, pass);
+            return;
         }
-        u8* fifo=static_cast<u8*>(layer)+0x1818+pass*0xbc;
-        if (fifo==gsgfx_layer_activeFifo) updateLayerFifo(fifo);
-        GSgfxGPUSetFifoWritePtr__FP15GSgfx_GCFifoObjPv(fifo+8,layerField<void*>(fifo,0x88));
-        layerField<void*>(fifo,0x8c)=layerField<void*>(fifo,0x88);
-        layerField<u16>(fifo,0xac)=0; layerField<u16>(fifo,0xae)=0;
+        BlendRecord* fifo = &layer->blendRecords[pass];
+        if (fifo == gsgfx_layer_activeFifo) {
+            updateLayerFifo(gsgfx_layer_activeFifo);
+        }
+        GSgfxGPUSetFifoWritePtr__FP15GSgfx_GCFifoObjPv(&fifo->fifoObject, layer->blendRecords[pass].start);
+        layer->blendRecords[pass].end = layer->blendRecords[pass].start;
+        layer->blendRecords[pass].wrapCount = 0;
+        layer->blendRecords[pass].overflow = 0;
         InvalidateState__10GSgfxLayerFv(layer);
     }
 }
@@ -558,8 +565,8 @@ static inline void getNextClearFlags(void* layer, bool* color, bool* alpha, bool
     if (depth) *depth = d;
 }
 void Prerender__10GSgfxLayerFv(void* layer) {
-    PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(layer,0);
-    PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(layer,1);
+    PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(static_cast<GraphicsLayerState*>(layer),0);
+    PrerenderPass__10GSgfxLayerF14GSgfxLayerPass(static_cast<GraphicsLayerState*>(layer),1);
     bool color,alpha,depth;
     getNextClearFlags(layer, &color, &alpha, &depth);
     if (layerField<void*>(layer,0x18d4)) selectLayerPass(static_cast<GraphicsLayerState*>(layer),1);

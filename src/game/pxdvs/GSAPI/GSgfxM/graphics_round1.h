@@ -1,6 +1,7 @@
 #ifndef GSGFX_RECOVERY_H
 #define GSGFX_RECOVERY_H
 #include <game/pxdvs/GSAPI/GSgfxM/gamecube_private.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/fifo.hpp>
 #include <dolphin/vi.h>
 #include <dolphin/os.h>
 #include <dolphin/mtx.h>
@@ -8,10 +9,6 @@
 #include <libc/string.h>
 #define ABI_SIZE(t,s) typedef char abi_size_##t[(sizeof(t)==(s))?1:-1]
 #define ABI_OFF(t,f,o) typedef char abi_offset_##t##_##f[(offsetof(t,f)==(o))?1:-1]
-struct GSgfx_GCFifoObj {
-    void *base, *end; u32 size, high, low; void *read, *write;
-    s32 count; u8 wrap, link; u8 pad22[0x2a]; u32 complete; u8 pad50[0x30];
-};
 ABI_SIZE(GSgfx_GCFifoObj,0x80); ABI_OFF(GSgfx_GCFifoObj,complete,0x4c);
 struct RenderEntry { GSgfx_GCFifoObj *fifo; void *start,*end; u32 color; void (*callback)(void*); void *arg; };
 ABI_SIZE(RenderEntry,0x18); ABI_OFF(RenderEntry,callback,0x10);
