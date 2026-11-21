@@ -2815,8 +2815,7 @@ u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* wor
         end.param1=position.param1;end.param2=position.param2;end.param3=position.param3;
         start.param2+=6.0f;end.param2+=6.0f;
         PeopleInfo* info=peopleInfoBiosGetPtr(work->object);
-        f32 radius;
-        if(!info)radius=3.0f;else radius=peopleInfoBiosGetColBallSize(info);
+        f32 radius = info == 0 ? 3.0f : peopleInfoBiosGetColBallSize(info);
         if(peopleBiosCheckFlag(work,0x800) && work->resource==100)heroMoveSetEventList(2,events,GScolsys2ThruGetEventID(&start,&end,events,radius));
         position.param1=end.param1;position.param2=end.param2;position.param3=end.param3;
         if(gimmickBoxIsPushBoxFloor())position.param2=start.param2;
@@ -2834,29 +2833,44 @@ u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* wor
             heroMoveSetEventList(1,events,GScolsys2ThruPassEventID(&start,&position,events));
             if(gimmickBoxIsPushBoxFloor())position.param2=start.param2;
         }
-        if(peopleBiosCheckFlag(work,0x200)) {
-            s32 count=GScolsys2WalkGetHeight(&position,surfaces);
-            if(count>=2) {
-                f32 nearest=-1000000.0f,highest=-1000000.0f;
-                u8 found=0;
-                for(s32 i=0;i<count;++i) {
-                    f32 height=surfaces[i].height;
-                    if(highest<height)highest=height;
-                    if(!(height-position.param2>=10.0f) && nearest<height) {nearest=height;found=1;}
-                }
-                if(found)position.param2=nearest;else position.param2=highest;
-                if((f32)fabs(position.param2-peopleBiosGetPrevPosPtr(work)->param2)>=10.0f) {
-                    f32 height=surfaces[0].height;
-                    f32 difference=(f32)fabs(peopleBiosGetPrevPosPtr(work)->param2-surfaces[0].height);
-                    GSwalkHit* surface=surfaces+1;
-                    for(s32 i=1;i<count;++surface,++i) {
-                        f32 otherDifference=(f32)fabs(peopleBiosGetPrevPosPtr(work)->param2-surface->height);
-                        if(difference>otherDifference) {difference=otherDifference;height=surface->height;}
+        if (peopleBiosCheckFlag(work, 0x200)) {
+            s32 count = GScolsys2WalkGetHeight(&position, surfaces);
+            if (count >= 2) {
+                f32 height, highest, preferred;
+                preferred = -1000000.0f;
+                highest = -1000000.0f;
+                u8 found = 0;
+                for (s32 i = 0; i < count; ++i) {
+                    height = surfaces[i].height;
+                    if (highest < height) highest = height;
+                    if (!(height - position.param2 >= 10.0f) && preferred < height) {
+                        preferred = height;
+                        found = 1;
                     }
-                    position.param2=height;
                 }
-            } else if(count>0)position.param2=surfaces[0].height;
-            else position.param2=0.0f;
+                if (found) position.param2 = preferred;
+                else position.param2 = highest;
+                if ((f32)fabs(position.param2 - peopleBiosGetPrevPosPtr(work)->param2) >= 10.0f) {
+                    f32 chosen = surfaces[0].height;
+                    f32 initialDelta = peopleBiosGetPrevPosPtr(work)->param2 - surfaces[0].height;
+                    f64 magnitude = fabs(initialDelta);
+                    f32 nearest = (f32)magnitude;
+                    GSwalkHit* surface = surfaces + 1;
+                    for (s32 i = 1; i < count; ++surface, ++i) {
+                        f32 distance = (f32)fabs(peopleBiosGetPrevPosPtr(work)->param2 - surface->height);
+                        height = surface->height;
+                        if (nearest > distance) {
+                            nearest = distance;
+                            chosen = height;
+                        }
+                    }
+                    position.param2 = chosen;
+                }
+            } else if (count > 0) {
+                position.param2 = surfaces[0].height;
+            } else {
+                position.param2 = 0.0f;
+            }
         }
         gimmickBoxOnBox(work,&oldPosition,&position);
         output->param1=position.param1;output->param2=position.param2;output->param3=position.param3;
