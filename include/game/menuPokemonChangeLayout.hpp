@@ -12,6 +12,8 @@ typedef float f32;
 typedef double f64;
 #endif
 
+#include <game/pxdvs/app/menu/menuModelPrivate.hpp>
+
 struct tagSPRITE_WORK {
     u8 pad0[6];
     s16 id;
@@ -52,11 +54,6 @@ public:
     u8 reservedA4[4];
     void init();
     void update();
-};
-
-struct MENU_MODEL {
-    u8 data[0xEC];
-    MENU_MODEL();
 };
 
 enum MENU_POKEMON_CB_TYPE {

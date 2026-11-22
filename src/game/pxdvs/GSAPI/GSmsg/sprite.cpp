@@ -1,7 +1,15 @@
 #include <game/pxdvs/GSAPI/GSmsg/spritePrivate.hpp>
 #include <libc/string.h>
-struct _struct__spriteWork_0x10 {f32 unk0,unk4,unk8,unkC;};
-static _struct__spriteWork_0x10 _spriteWork[3]={{0,0,1,1},{0,0,1,1},{0,0,1,1}};
+struct SpriteTransform {
+    f32 offsetX, offsetY;
+    f32 scaleX, scaleY;
+};
+
+static SpriteTransform _spriteWork[3] = {
+    {0, 0, 1, 1},
+    {0, 0, 1, 1},
+    {0, 0, 1, 1}
+};
 extern "C" {
 double tan(double);
 void spriteClearScissor(s32 layer) {
@@ -26,7 +34,7 @@ void spriteSetScissor(s32 layerId, s32 x, s32 y, s32 width, s32 height) {
     f32 scaleX;
     f32 scaleY;
     s16 transformIndex;
-    struct _struct__spriteWork_0x10 *transform;
+    SpriteTransform *transform;
     GSgfxLayer *layer;
 
     s32 menuLayer = floorGetMenuLayerID();
@@ -42,10 +50,10 @@ void spriteSetScissor(s32 layerId, s32 x, s32 y, s32 width, s32 height) {
     layer = GSgfxLayerFindByID(targetLayerId);
     _TargetLayer = layer;
     if (layer != NULL) {
-        scaleX = transform->unk8;
-        scaleY = transform->unkC;
-        x = (s32)(transform->unk0 + (f32)x);
-        y = (s32)(transform->unk4 + (f32)y);
+        scaleX = transform->scaleX;
+        scaleY = transform->scaleY;
+        x = (s32)(transform->offsetX + (f32)x);
+        y = (s32)(transform->offsetY + (f32)y);
         x = (s32)((f32)x * scaleX);
         y = (s32)((f32)y * scaleY);
         width = (s32)((f32)width * scaleX);
@@ -109,6 +117,23 @@ void spriteClearEnv(s32 layer) {
 }
 
 #pragma opt_propagation off
+static inline void spriteCameraVectors(Vec& eye, Vec& center, Vec& up,
+                                       f32 halfWidth, f32 halfHeight, f32 offsetX, f32 offsetY,
+                                       f32 tangent, f32 targetZ) {
+    f32 distance = halfHeight / tangent;
+    center.z = targetZ;
+    up.x = 0.0f;
+    offsetY = halfHeight - offsetY;
+    eye.z = distance;
+    f32 x = halfWidth - offsetX;
+    up.y = -1.0f;
+    eye.x = x;
+    eye.y = offsetY;
+    center.x = x;
+    center.y = offsetY;
+    up.z = 0.0f;
+}
+
 void spriteSetEnv(s32 layerId) {
     Mtx view;
     Mtx44 projection;
@@ -122,7 +147,7 @@ void spriteSetEnv(s32 layerId) {
     SpriteMatrixFrame *temp_r3_2;
     SpriteMatrixFrame *temp_r3_4;
     f32 (*temp_r3_3)[4];
-    struct _struct__spriteWork_0x10 *transform;
+    SpriteTransform *transform;
     GSgfxLayer *temp_r31_2;
     SpriteMatrixStack *temp_r31_3;
     SpriteMatrixStack *temp_r31_4;
@@ -143,32 +168,18 @@ void spriteSetEnv(s32 layerId) {
     if (layer != NULL) {
         f32 scaleX, baseWidth, scaleY, baseHeight;
         baseWidth = 640.0f;
-        scaleX = transform->unk8;
+        scaleX = transform->scaleX;
         baseHeight = 480.0f;
-        scaleY = transform->unkC;
+        scaleY = transform->scaleY;
         viewWidth = baseWidth / scaleX;
         viewHeight = baseHeight / scaleY;
         f32 half = 0.5f;
         halfWidth = viewWidth * half;
         halfHeight = viewHeight * half;
         viewAngle = 0.2617994f;
-        f32 tangent, coordinate, offsetX, viewY, zero;
-        tangent = (f32)tan(viewAngle);
-        zero = 0.0f;
-        viewY = transform->unk4;
-        offsetX = transform->unk0;
-        coordinate = halfHeight / tangent;
-        center.z = zero;
-        up.x = zero;
-        viewY = halfHeight - viewY;
-        eye.z = coordinate;
-        coordinate = halfWidth - offsetX;
-        up.y = -1.0f;
-        eye.x = coordinate;
-        eye.y = viewY;
-        center.x = coordinate;
-        center.y = viewY;
-        up.z = zero;
+        f32 tangent = (f32)tan(viewAngle);
+        spriteCameraVectors(eye, center, up, halfWidth, halfHeight, transform->offsetX,
+                            transform->offsetY, tangent, 0.0f);
         C_MTXLookAt(view, &eye, &up, &center);
         temp_r31_2 = _TargetLayer;
         GSmtx44Perspective(projection, 30.0f, -(viewWidth / viewHeight), 0.1f, 30000.0f);
@@ -256,7 +267,7 @@ void spriteSetEnv(s32 layerId) {
 
 void spriteGetOffset(s32 arg0, s16 *arg1, s16 *arg2) {
     s16 var_r0;
-    struct _struct__spriteWork_0x10 *temp_r3;
+    SpriteTransform *temp_r3;
 
     if (arg0 == floorGetMenuLayerID()) {
         var_r0 = 0;
@@ -267,16 +278,16 @@ void spriteGetOffset(s32 arg0, s16 *arg1, s16 *arg2) {
     }
     temp_r3 = &_spriteWork[var_r0];
     if (arg1 != NULL) {
-        *arg1 = (s16) temp_r3->unk0;
+        *arg1 = (s16) temp_r3->offsetX;
     }
     if (arg2 != NULL) {
-        *arg2 = (s16) temp_r3->unk4;
+        *arg2 = (s16) temp_r3->offsetY;
     }
 }
 
 void spriteSetOffset(s32 arg0, s16 arg1, s16 arg2) {
     s16 var_r5;
-    struct _struct__spriteWork_0x10 *temp_r4;
+    SpriteTransform *temp_r4;
 
     if (arg0 == floorGetMenuLayerID()) {
         var_r5 = 0;
@@ -286,8 +297,8 @@ void spriteSetOffset(s32 arg0, s16 arg1, s16 arg2) {
         var_r5 = 2;
     }
     temp_r4 = &_spriteWork[var_r5];
-    temp_r4->unk0 = (f32) arg1;
-    temp_r4->unk4 = (f32) arg2;
+    temp_r4->offsetX = (f32) arg1;
+    temp_r4->offsetY = (f32) arg2;
 }
 
 }

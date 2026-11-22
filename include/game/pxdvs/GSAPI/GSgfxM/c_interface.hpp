@@ -1,11 +1,26 @@
 #ifndef GSGFX_C_INTERFACE_HPP
 #define GSGFX_C_INTERFACE_HPP
 #include <global.h>
+#include <game/pxdvs/GSAPI/GSgfxM/fifo.hpp>
 #include <libc/stddef.h>
 #include <game/pxdvs/GSAPI/GSgfxM/matrixStack.hpp>
 struct TevOperation { s32 op, bias, scale; bool clamp; u8 pad[3]; s32 output; };
 struct TextureRecord { u8 reserved[7]; u8 dirty; };
-struct BlendRecord { u32 fifo; u8 reserved[0xb8]; };
+struct BlendRecord {
+    void* buffer;
+    u32 size;
+    GSgfx_GCFifoObj fifoObject;
+    void* start;
+    void* end;
+    u8 reserved90[0x1c];
+    u16 wrapCount;
+    u16 overflow;
+    u8 reservedB0[0xc];
+};
+typedef char LayerFifoObjectOffset[offsetof(BlendRecord, fifoObject) == 8 ? 1 : -1];
+typedef char LayerFifoStartOffset[offsetof(BlendRecord, start) == 0x88 ? 1 : -1];
+typedef char LayerFifoWrapOffset[offsetof(BlendRecord, wrapCount) == 0xac ? 1 : -1];
+typedef char LayerFifoSize[sizeof(BlendRecord) == 0xbc ? 1 : -1];
 struct GraphicsLayerState {
     u8 reserved0[0xd34];
     u8 lineWidth;

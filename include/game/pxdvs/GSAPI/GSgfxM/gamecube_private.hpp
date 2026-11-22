@@ -48,6 +48,9 @@ struct GCCombinerInputs { s32 a, b, c, d; };
 struct GCCombinerOperation { s32 operation, bias, scale; u8 clamp; u8 padding[3]; s32 output; };
 struct GCStageSwapCache { s32 raster, texture; };
 struct GCTlutUploadCache { u32 source; u16 count, region; };
+struct RenderEntry;
+struct GSgfx_GCFifoObj;
+
 struct GCGraphicsState {
     u32 dirty;
     u32 dirtyGroups[11];
@@ -100,7 +103,20 @@ struct GCGraphicsState {
     u8 unmodelledB24[0xB64 - 0xB24];
     u8 indirectMode[16];
     GCIndirectOrderCache indirectOrders[4];
-    u8 unmodelledB94[0xC64 - 0xB94];
+    u8 unmodelledB94[0xC24 - 0xB94];
+    f32 viewportX, viewportY, viewportWidth, viewportHeight, viewportNear, viewportFar;
+    u32 viewportField;
+    void* layer;
+    void* xfb;
+    s32 copyState;
+    RenderEntry* list;
+    GSgfx_GCFifoObj* sourceFifo;
+    GSgfx_GCFifoObj* gpuFifo;
+    void* start;
+    void* end;
+    u8 complete;
+    u8 active;
+    u8 padC62[2];
 };
 typedef char GCTextureGeneratorCacheSizeCheck[sizeof(GCTextureGeneratorCache) == 0x14 ? 1 : -1];
 typedef char GCGraphicsStateSizeCheck[sizeof(GCGraphicsState) == 0xC64 ? 1 : -1];
@@ -123,8 +139,6 @@ typedef char GCGraphicsStateIndirectOrdersOffsetCheck[offsetof(GCGraphicsState, 
 struct GCTextureMatrixIndex0 { u32 reserved:2, texture3:6, texture2:6, texture1:6, texture0:6, position:6; };
 struct GCTextureMatrixIndex1 { u32 reserved:8, texture7:6, texture6:6, texture5:6, texture4:6; };
 struct GCIndirectMatrix { f32 a0, a1, a2, b0, b1, b2; };
-struct GCAASamplePattern { u8 groups[4][6]; };
-typedef char GCAASamplePatternSizeCheck[sizeof(GCAASamplePattern) == 24 ? 1 : -1];
 union GCAASampleRegister {
     u32 value;
     struct { u32 address:8, sample5:4, sample4:4, sample3:4, sample2:4, sample1:4, sample0:4; } fields;
@@ -143,15 +157,23 @@ struct GCCopyTextureInfo {
     u8 padding16[2];
 };
 typedef char GCCopyTextureInfoSizeCheck[sizeof(GCCopyTextureInfo) == 0x18 ? 1 : -1];
+#pragma pack(push, 1)
+union GCCopyDisplayColor {
+    GXColor rgba;
+    u32 value;
+};
+#pragma pack(pop)
+
 struct GCCopyDisplayInfo {
     u16 x, y, width, height;
     u16 stride;
     u8 paddingA[2];
-    GXFBClamp clamp;
+    u32 clamp;
     GXCopyMode frameToField;
     GXGamma gamma;
     f32 scale;
-    u8 clear, red, green, blue, alpha;
+    u8 clear;
+    GCCopyDisplayColor color;
     u8 padding21[3];
     u32 depth;
 };
@@ -160,7 +182,14 @@ typedef char GCCopyDisplayInfoStrideOffsetCheck[offsetof(GCCopyDisplayInfo, stri
 typedef char GCCopyDisplayInfoFrameToFieldOffsetCheck[offsetof(GCCopyDisplayInfo, frameToField) == 0x10 ? 1 : -1];
 typedef char GCCopyDisplayInfoGammaOffsetCheck[offsetof(GCCopyDisplayInfo, gamma) == 0x14 ? 1 : -1];
 typedef char GCCopyDisplayInfoScaleOffsetCheck[offsetof(GCCopyDisplayInfo, scale) == 0x18 ? 1 : -1];
-struct GCVertexAttributeFormat { s32 attribute, count, type; u8 fraction; u8 padding[3]; };
+extern "C" void GSgfx_GCWriteVtxAttrFmt(GXVtxFmt formatIndex, const GXVtxAttrFmtList* format);
+typedef char GCCopyDisplayColorOffsetCheck[offsetof(GCCopyDisplayInfo, color) == 0x1d ? 1 : -1];
+
+extern "C" {
+u8* GSgfx_GCWriteCopyDispDirect(u8* output, GCCopyDisplayInfo* info, void* destination, u32 colorUpdate, u32 alphaUpdate, u32 depthUpdate);
+void GSgfx_GCWriteCopyDisp(GCCopyDisplayInfo* info, void* destination, u32 colorUpdate, u32 alphaUpdate, u32 depthUpdate);
+}
+
 struct GCVertexDescriptor { s32 attribute, type; };
 struct GCGlobalRegisterState {
     u8 field0, field1, pixelFormat, depthFormat, field4;
@@ -171,5 +200,33 @@ typedef char GCGlobalRegisterStateSizeCheck[sizeof(GCGlobalRegisterState) == 5 ?
 inline void GCWriteByte(u8 value) { GXWGFifo.u8 = value; }
 inline void GCWriteHalf(u16 value) { GXWGFifo.u16 = value; }
 inline void GCWriteWord(u32 value) { GXWGFifo.u32 = value; }
+
+extern "C" GCGraphicsState* gsgfxState;
+extern "C" GCGlobalRegisterState _gcGlobalRegState;
+
+inline void GSgfx_GCWriteViewport(f32 x, f32 y, f32 width, f32 height, f32 nearZ, f32 farZ, u32 mode) {
+    if (mode == 0) y -= 0.5f;
+    f32 halfWidth = width / 2.0f;
+    f32 halfHeight = height / 2.0f;
+    f32 zScale = 16777216.0f;
+    f32 zOffset = 0.0f;
+    f32 farDepth = farZ * zScale;
+    GCWriteByte(0x10);
+    GCWriteHalf(5);
+    GCWriteHalf(0x101a);
+    GXWGFifo.f32 = halfWidth;
+    GXWGFifo.f32 = -halfHeight;
+    GXWGFifo.f32 = -(nearZ * zScale - farDepth);
+    GXWGFifo.f32 = 342.0f + (x + halfWidth);
+    GXWGFifo.f32 = 342.0f + (y + halfHeight);
+    GXWGFifo.f32 = farDepth + zOffset;
+    gsgfxState->viewportX = x;
+    gsgfxState->viewportY = y;
+    gsgfxState->viewportWidth = width;
+    gsgfxState->viewportHeight = height;
+    gsgfxState->viewportNear = nearZ;
+    gsgfxState->viewportFar = farZ;
+    gsgfxState->viewportField = mode;
+}
 
 #endif

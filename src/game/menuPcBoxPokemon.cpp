@@ -1,6 +1,9 @@
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/hero/hero.hpp>
+#include <game/pxdvs/GSAPI/GSmsg/GSchar.hpp>
+#include <game/menuReliveMeter.h>
 #include <game/menuPcBoxPokemonLayout.hpp>
+#include <game/pxdvs/app/pcbox/pcbox.hpp>
 
 enum MENU_POKEMON_CB_TYPE {
     MENU_POKEMON_CB_TYPE_0,
@@ -29,9 +32,9 @@ void pokemonInit(Pokemon *);
 void *memcpy(void *, const void *, u32);
 void *memset(void *, int, u32);
 tagWINDOW_WORK *windowSearchID(s32);
-void GSmsgPrint2(s32, s32, s32, u32, u32);
+s32 GSmsgPrint2(u32, s32, s32, u32, u32);
 u32 GSmsgGetRect(u32);
-void msgctrlSetValue(u32, u32);
+void msgctrlSetValue(s32, u32);
 void menuModelInit(MENU_MODEL *, s16, s16);
 void menuModelSetSize(MENU_MODEL *, s16, s16, s16, s16);
 void menuModelTerm(MENU_MODEL *);
@@ -45,11 +48,8 @@ u8 menuSubGetPokemonSexForDisp(Pokemon *);
 s32 pokecoloGetCountryCode(void);
 void *itemDataBiosGetPtr(u16);
 u32 itemDataBiosGetName(void *);
-u32 GSmsgGetGSchar(u32);
 u32 pokemonDataBiosGetName(void *);
-s32 menuDrawReliveMeter3(Pokemon *, long, long, long, long, u8, s32);
 u16 zokuseiGetPokemonSpriteID(void *, u16);
-void menuDrawReliveUpdate(void);
 void menuModelRenderOffAll(MENU_MODEL *);
 void GSfsysRead(u32);
 void GSfsysReadWait(u32);
@@ -57,7 +57,6 @@ s32 GSfsysGetStatus(u32);
 void GSfsysFree(u32);
 void GSresFreeGroup(u32);
 void GSthreadSwitch();
-void GScharCpy(u16 *,u16 *);
 u8 GSgfxVideoGetVsyncRate();
 void menuNameEntryCall(s32, s32);
 s32 menuPokemonStatusOpenFromPcBox(Pokemon *, Pokemon *(*)(Pokemon *, MENU_POKEMON_CB_TYPE, long), long);
@@ -75,18 +74,6 @@ inline void CState::change(s32 value) {sub=value;memset(saved,0,0x40);}
 
 inline void *operator new(unsigned long, void *p) { return p; }
 
-class PCBOX {
-public:
-    static PCBOX *getPointer();
-    s8 getPokemonBoxNbUsedSlot(s8);
-    s8 getPokemonBoxNbEmptySlot(s8);
-    void setPokemon(Pokemon *, s8, s8);
-    void addPokemon(Pokemon *, s8);
-    void delPokemon(s8, s8);
-    Pokemon *getPokemon(s8, s8);
-    char *getPokemonBoxName(s8);
-    static s8 lastWatchBoxID;
-};
 
 class CMenuPokemonLeave;
 
@@ -221,11 +208,11 @@ inline void setAntHidden(CAnt *ant, u32 hidden) {
 }  // namespace
 
 long menuPcBoxGetLastViewBox(void) {
-    return *(s32 *)(savedataGetStatus(0, 3) + 0xBC0C);
+    return ((PCBOX*)savedataGetStatus(0, 3))->lastViewBox;
 }
 
 void menuPcBoxSetLastViewBox(long box) {
-    *(s32 *)(savedataGetStatus(0, 3) + 0xBC0C) = box;
+    ((PCBOX*)savedataGetStatus(0, 3))->lastViewBox = box;
 }
 
 namespace {
@@ -451,7 +438,7 @@ void CMenuPokemonLeave::loop() {
             int area;
             Pokemon* p = currentPokemonGetPointer();
             setStatusAndModelDisplayPokemon(p);
-            GScharCpy(buf, (u16*)p->getNicknamePtr());
+            GScharCpy(buf, p->getNicknamePtr());
             area = currentPokemonGetArea();
             CAnt before = *currentAntGetPointer();
             currentPokemonDel(true);
@@ -770,11 +757,11 @@ void CMenuPokemonLeave::depositMenuDraw(long win) {
 void CMenuPokemonLeave::boxNameDraw(int box, long win, u32 item) {
     tagWINDOW_WORK *w = windowSearchID(win);
     tagSPRITE_WORK *sp = menuPtSpriteWorkGetByItemID(w, item, 0);
-    char *name = PCBOX::getPointer()->getPokemonBoxName(box);
+    char16 *name = PCBOX::getPointer()->getPokemonBoxName(box);
     msgctrlSetValue(0x37, (u32)name);
     s16 width = GSmsgGetRect(0x4276) >> 16;
     s16 off = sp->width / 2 - width / 2;
-    GSmsgPrint2(w->layer, w->x + (sp->x + off), w->y + sp->y, -1, 0x4276);
+    GSmsgPrint2(w->layer, w->x + sp->x + off, w->y + sp->y, -1, 0x4276);
 }
 
 void CMenuPokemonLeave::markingMenuItemCallBack(tagWINDOW_WORK *win, tagSPRITE_WORK *sp) {
@@ -1499,12 +1486,12 @@ void CMenuPokemonLeave::drawStatusArea() {
         if (item != 0) {
             void *itemData = itemDataBiosGetPtr(item);
             if (itemData != 0) {
-                msgctrlSetValue(0x37, GSmsgGetGSchar(itemDataBiosGetName(itemData)));
+                msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(itemDataBiosGetName(itemData)));
                 sp = menuPtSpriteWorkGetByItemID(w, 0x3D8, 0);
                 GSmsgPrint2(w->layer, w->x + sp->x, w->y + sp->y, -1, nameMsg);
             }
         }
-        msgctrlSetValue(0x37, GSmsgGetGSchar(pokemonDataBiosGetName(p->getPokemonDataPtr())));
+        msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(pokemonDataBiosGetName(p->getPokemonDataPtr())));
         sp = menuPtSpriteWorkGetByItemID(w, 0x3DC, 0);
         GSmsgPrint2(w->layer, w->x + sp->x, w->y + sp->y, -1, nameMsg);
         msgctrlSetValue(0x37, (u32)p->getNicknamePtr());
@@ -1781,7 +1768,7 @@ int CMenuPokemonLeave::pcBoxEmptyQuantity(int box) {
 }
 
 int CMenuPokemonLeave::pcBoxUsedQuantity(int box) {
-    return PCBOX::getPointer()->getPokemonBoxNbUsedSlot(box);
+    return (s8)PCBOX::getPointer()->getPokemonBoxNbUsedSlot(box);
 }
 
 CAnt *CMenuPokemonLeave::cursorUnderPokemonGetAntPointer() {

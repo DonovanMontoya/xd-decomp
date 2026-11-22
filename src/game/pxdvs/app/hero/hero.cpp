@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/hero/heroParty.hpp>
 #include <game/pxdvs/app/hero/heroPrivate.hpp>
 
 static FloorModuleInterface _floorModuleHero;
@@ -18,8 +19,8 @@ void heroSetStatus(Hero*, u16, u32);
 void heroInit(Hero*);
 u32 heroCreateRnd();
 u8 heroAddPokemon(Hero*, Pokemon*);
-void* heroItemGetItemDataIdToItemAryPtr(Hero*, u16, u16*, u16*, u8*, u8*);
-void* heroItemGetItemKindToItemAryPtr(Hero*, u8, u16*, u16*, u8*, u8*);
+ITEM* heroItemGetItemDataIdToItemAryPtr(Hero*, u16, u16*, u16*, u8*, u8*);
+ITEM* heroItemGetItemKindToItemAryPtr(Hero*, u8, u16*, u16*, u8*, u8*);
 void heroSetFollower(u32, u32, u32);
 }
 
@@ -53,7 +54,7 @@ static void _heroMakeStateData(FloorStateMode mode, void*, unsigned long) {
 
 extern "C" {
 
-u16 heroGetPokeomCount(Hero* hero) {
+u32 heroGetPokeomCount(Hero* hero) {
     u16 i = 0;
     u16 count = 0;
     for (; i < 6; i++) {
@@ -190,54 +191,54 @@ s32 heroItemCheckHaveItemDataId(Hero* hero, u16 id) {
     return itemSearchItemDataIdAry(ary, count, id, 0, max) != 0;
 }
 
-void* heroItemGetItemDataIdToItemAryPtr(Hero* hero, u16 id, u16* count, u16* max, u8* a, u8* b) {
+ITEM* heroItemGetItemDataIdToItemAryPtr(Hero* hero, u16 id, u16* count, u16* max, u8* a, u8* b) {
     return heroItemGetItemKindToItemAryPtr(hero, (u8)itemGetStatus(0, id, 2, 0), count, max, a, b);
 }
 
-void* heroItemGetItemKindToItemAryPtr(Hero* hero, u8 kind, u16* count, u16* max, u8* a, u8* b) {
-    void* ary = 0;
+ITEM* heroItemGetItemKindToItemAryPtr(Hero* hero, u8 kind, u16* count, u16* max, u8* a, u8* b) {
+    ITEM* ary = 0;
     u16 countVal = 0;
     u16 maxVal = 0;
     u8 aVal = 0;
     u8 bVal;
     switch (kind) {
     case 1:
-        ary = (void*)heroGetStatus(hero, 6, 0);
+        ary = (ITEM*)heroGetStatus(hero, 6, 0);
         countVal = 0x10;
         maxVal = 999;
         aVal = 0;
         bVal = 1;
         break;
     case 2:
-        ary = (void*)heroGetStatus(hero, 4, 0);
+        ary = (ITEM*)heroGetStatus(hero, 4, 0);
         countVal = 0x1E;
         maxVal = 999;
         aVal = 0;
         bVal = 1;
         break;
     case 3:
-        ary = (void*)heroGetStatus(hero, 8, 0);
+        ary = (ITEM*)heroGetStatus(hero, 8, 0);
         countVal = 0x2E;
         maxVal = 999;
         aVal = 1;
         bVal = 1;
         break;
     case 4:
-        ary = (void*)heroGetStatus(hero, 7, 0);
+        ary = (ITEM*)heroGetStatus(hero, 7, 0);
         countVal = 0x40;
         maxVal = 999;
         aVal = 1;
         bVal = 0;
         break;
     case 5:
-        ary = (void*)heroGetStatus(hero, 5, 0);
+        ary = (ITEM*)heroGetStatus(hero, 5, 0);
         countVal = 0x2B;
         maxVal = 999;
         aVal = 0;
         bVal = 0;
         break;
     case 6:
-        ary = (void*)heroGetStatus(hero, 9, 0);
+        ary = (ITEM*)heroGetStatus(hero, 9, 0);
         countVal = 3;
         maxVal = 999;
         aVal = 1;
@@ -354,7 +355,7 @@ u32 heroCheckValid(Hero* hero) {
     return (u32)(((2 - type) | (type - 2))) >> 31;
 }
 
-void heroCreate(Hero* hero, void* name, u8 type) {
+void heroCreate(Hero* hero, const u16* name, u8 type) {
     u32 rnd;
     heroInit(hero);
     rnd = heroCreateRnd();
@@ -380,12 +381,12 @@ void heroInit(Hero* hero) {
     heroSetStatus(hero, 1, (u32)&empty);
     heroSetStatus(hero, 2, 0);
     pokemonInitAry((void*)heroGetStatus(hero, 3, 0), 6);
-    itemInitAry((void*)heroGetStatus(hero, 4, 0), 0x1E);
-    itemInitAry((void*)heroGetStatus(hero, 5, 0), 0x2B);
-    itemInitAry((void*)heroGetStatus(hero, 6, 0), 0x10);
-    itemInitAry((void*)heroGetStatus(hero, 7, 0), 0x40);
-    itemInitAry((void*)heroGetStatus(hero, 8, 0), 0x2E);
-    itemInitAry((void*)heroGetStatus(hero, 9, 0), 3);
+    itemInitAry((ITEM*)heroGetStatus(hero, 4, 0), 0x1E);
+    itemInitAry((ITEM*)heroGetStatus(hero, 5, 0), 0x2B);
+    itemInitAry((ITEM*)heroGetStatus(hero, 6, 0), 0x10);
+    itemInitAry((ITEM*)heroGetStatus(hero, 7, 0), 0x40);
+    itemInitAry((ITEM*)heroGetStatus(hero, 8, 0), 0x2E);
+    itemInitAry((ITEM*)heroGetStatus(hero, 9, 0), 3);
     itemInitAry(hero->getDisk(), 0x3C);
     heroSetStatus(hero, 0xB, 2);
     heroSetStatus(hero, 0xC, 0);
@@ -401,7 +402,7 @@ void heroInit(Hero* hero) {
     heroSetStatus(hero, 0x16, 1);
     heroSetStatus(hero, 0x17, (u32)&empty);
     heroSetStatus(hero, 0x18, 0);
-    itemInitAry((void*)heroGetStatus(hero, 0xA, 0), 0xA);
+    itemInitAry((ITEM*)heroGetStatus(hero, 0xA, 0), 0xA);
     heroSetStatus(hero, 0x19, 0);
     hero->setHeroStyle(0, false);
     hero->setFollowerID(0);

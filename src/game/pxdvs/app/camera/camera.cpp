@@ -203,10 +203,10 @@ void* GSmemAllocClr(u32);
 
 #include <game/maximum/GSAPI/baselib/quatlib.h>
 extern "C" {
-u8 GSinputGetRightStickYData(s32, s32);
-u8 GSinputGetRightStickXData(s32, s32);
-u8 GSinputGetLeftStickYData(s32, s32);
-u8 GSinputGetLeftStickXData(s32, s32);
+s8 GSinputGetRightStickYData(s32, s32);
+s8 GSinputGetRightStickXData(s32, s32);
+s8 GSinputGetLeftStickYData(s32, s32);
+s8 GSinputGetLeftStickXData(s32, s32);
 s32 GSinputButtonsChanged(s32);
 u32 GSinputButtonsPressed(s32);
 f32 GSgfxVideoGetLastRenderTime();
@@ -429,8 +429,8 @@ static void _cameraPadMoveUpdate__FP9_GScamera(GScamera* camera) {
         Mtx matrix,yMatrix,zMatrix;
         PSMTXRotRad(matrix,'X',pCamWork->rotation.param1); PSMTXRotRad(yMatrix,'Y',pCamWork->rotation.param2); PSMTXConcat(yMatrix,matrix,matrix);
         PSMTXRotRad(zMatrix,'Z',pCamWork->rotation.param3); PSMTXConcat(zMatrix,matrix,matrix);
-        x=render*(f32)(s8)GSinputGetLeftStickXData(1,0); y=render*(f32)(s8)GSinputGetLeftStickYData(1,0);
-        rx=render*(f32)(s8)GSinputGetRightStickXData(1,0); ry=render*(f32)(s8)GSinputGetRightStickYData(1,0);
+        x=render*(f32)GSinputGetLeftStickXData(1,0); y=render*(f32)GSinputGetLeftStickYData(1,0);
+        rx=render*(f32)GSinputGetRightStickXData(1,0); ry=render*(f32)GSinputGetRightStickYData(1,0);
         if(GSinputButtonsPressed(1)&0x40) divisor*=4.0f;
         Vec world,local;
         if(GSinputButtonsPressed(1)&0x800) { local.x=x/divisor; local.y=-y/divisor; local.z=0.0f; }
@@ -447,10 +447,10 @@ extern "C" {
 static void _cameraPadRotateUpdate__FP9_GScamera(GScamera* camera) {
     if(!dbgMenuIsOpen()) {
         s32 render=(s32)GSgfxVideoGetLastRenderTime();
-        s32 input=(s8)GSinputGetRightStickXData(1,1);
+        s32 input=GSinputGetRightStickXData(1,1);
         s32 horizontal=input*render;
         render=(s32)GSgfxVideoGetLastRenderTime();
-        input=(s8)GSinputGetRightStickYData(1,1);
+        input=GSinputGetRightStickYData(1,1);
         s32 vertical=input*render;
         f32 angle=cameraAngle(pCamWork->height,pCamWork->distance);
         f32 height=pCamWork->height, distance=pCamWork->distance;

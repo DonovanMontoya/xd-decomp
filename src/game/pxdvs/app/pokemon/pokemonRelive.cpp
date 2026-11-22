@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <global.h>
 struct WazaSequenceEntry {u16 unk0,unk2;};
 struct FloorParameter {u32 flags;s32 unk4;FloorParameter(){}};
@@ -11,7 +12,7 @@ void Sequence_DoAnimation(s32,u32);void Sequence_Free(s32);void Sequence_GetPosi
 s32 Sequence_GetWaza(s32,u16,u16);s32 Sequence_LoadPokemon(u16,u32,s32);void Sequence_LoadWaza(s32,u16,u32,s32);void Sequence_SetPosition(s32,const f32*);void Sequence_SetRotation(s32,const f32*);void Sequence_SetScale(s32,const f32*);void Sequence_SetVisibility(s32,s32);
 void WazaSequence_Free(s32);u8 WazaSequence_IsActive(s32);void WazaSequence_Start(s32,s32);
 void darkPokemonBiosSetReliveFlag(u16,u8);s32 evolutionWazaLearn(void*,u16,u8*,s32,s8(*)(void*,u16,s32),s32);void exribbonSetNarionalRibbon(void*);
-void fadeCheck(u8);void fadeSet(u16,f32);void fadeSetToBlackInIfBlack(f32);void fadeSetToBlackOutIfNotBlack(f32);s32 floorGetCurrentGroupID();void floorSetFadeScript(s32,s32);void floorWaitForChange();
+void fadeCheck(u8);void fadeSetToBlackInIfBlack(f32);void fadeSetToBlackOutIfNotBlack(f32);s32 floorGetCurrentGroupID();void floorSetFadeScript(s32,s32);void floorWaitForChange();
 void *getDeckDarkPokemonObj__15DeckDarkPokemonFUl(u32);u16 getBonusExp__15DeckDarkPokemonCFv(void*);u16 getPokemonDataId__7PokemonCFv(void*);void *heroGetStatus(void*,u16,u16);s32 loadSequence(s32*,void*,const WazaSequenceEntry*,s32);
 void menuHologramReloadDatas();void menuHologramUnloadDatas();u8 menuModelGetPokemonAnimationIndexByPointer(void*);void menuModelReSetScale();void menuModelSetScale(f32);
 void menuNameEntryOpenNoFade(s32,void*);s32 menuPokemonOpen(s32,s32,s32);s32 menuPokemonStatusOpenWazaLearn(void*,u16);void menuPtRestoreSound__FP15MenuPtWorkSound(void*);void menuPtStopSound__FP15MenuPtWorkSound(void*);s8 menuSubOpenYesNoField();void msgctrlSetValue(s32,u32);

@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 #pragma defer_codegen on
 // MWCC emits deferred definitions in reverse order; retain the order below.
 #include <global.h>
@@ -15,13 +16,10 @@ void *pokecoloGappThreadHandle,*pokecoloGappPadReadHandle,*pokecoloGappGBAReadHa
 u8 __pokecolo_renderXluc = 1;
 }
 
-static void* _getSaveSystemDataPtr();
+static GamedataSavePayload* _getSaveSystemDataPtr();
 extern "C" {
 void* savedataBiosGetNowSavedataPtr();
 void* savedataBiosGetGamedataPtr(void*);
-void* gamedatasaveBiosGetPtr(void*);
-f64 gamedatasaveBiosGetPlaytime(void*);
-void gamedatasaveBiosSetPlaytime(void*,f64);
 u32 GSflagGet(u32);
 s32 GSfsysGetDriveStatus();
 u8 menuIsCheck(u32);
@@ -117,7 +115,7 @@ void characterInit();
 void cameraInit();
 void lightInit();
 void heroMoveAllInit();
-void peopleInit(u32);
+void peopleInit(s32 count);
 void floorFieldCameraInit();
 void sodateyaHeroCallBackInit();
 void reliveHallCallBackInit();
@@ -396,17 +394,17 @@ s32 _pokecoloCheckExDisc() {if(pokecoloGetRomVersion()==4)return 1;return 0;}
 
 s32 pokecoloGetCountryCode() {return 1;}
 
-static void* _getSaveSystemDataPtr() {
+static GamedataSavePayload* _getSaveSystemDataPtr() {
     void* save=savedataBiosGetNowSavedataPtr();
     if(save){
         void* data=savedataBiosGetGamedataPtr(save);
-        if(data)return gamedatasaveBiosGetPtr(data);
+        if(data)return gamedatasaveBiosGetPtr((GamedataSaveRecord*)data);
     }
     return 0;
 }
 
 static void _countPlayTime() {
-    void* save=_getSaveSystemDataPtr();
+    GamedataSavePayload* save=_getSaveSystemDataPtr();
     if(save && __pokecolo_CountPlayTime==1 && GSflagGet(0x30d)==0){
         f64 time=gamedatasaveBiosGetPlaytime(save);
         f64 elapsed=pokecoloGetFrameTime();
@@ -416,11 +414,11 @@ static void _countPlayTime() {
     }
 }
 
-f64 pokecoloGetPlayTime() {void* save=_getSaveSystemDataPtr();if(save)return gamedatasaveBiosGetPlaytime(save);return 0.0;}
+f64 pokecoloGetPlayTime() {GamedataSavePayload* save=_getSaveSystemDataPtr();if(save)return gamedatasaveBiosGetPlaytime(save);return 0.0;}
 
 u32 pokecoloGetPlayTimeValue() {return (u32)pokecoloGetPlayTime();}
 
-void pokecoloSetPlayTime(f64 value) {void* save=_getSaveSystemDataPtr();if(save)gamedatasaveBiosSetPlaytime(save,value);}
+void pokecoloSetPlayTime(f64 value) {GamedataSavePayload* save=_getSaveSystemDataPtr();if(save)gamedatasaveBiosSetPlaytime(save,value);}
 
 void pokecoloStartCountPlayTime(u8 active) {__pokecolo_CountPlayTime=active;}
 

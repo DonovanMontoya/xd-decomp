@@ -1,6 +1,6 @@
 #include <game/pxdvs/GSAPI/GSparticle/peNodePrivate.hpp>
 
-extern "C" void peNodeTransformsConcat(NodeTransform *out, NodeTransform *parent, NodeTransform *local, u8 billboard) {
+extern "C" void peNodeTransformsConcat(NodeTransform *out, NodeTransform *parent, NodeTransform *local, bool billboard) {
  Mtx matrix;
  Quaternion rotation;
  f32 px=local->position.x*parent->scale.x, py=local->position.y*parent->scale.y, pz=local->position.z*parent->scale.z;

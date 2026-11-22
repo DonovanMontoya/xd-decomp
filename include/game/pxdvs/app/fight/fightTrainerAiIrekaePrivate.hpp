@@ -1,12 +1,11 @@
 #ifndef FIGHT_TRAINER_AI_IREKAE_PRIVATE_HPP
 #define FIGHT_TRAINER_AI_IREKAE_PRIVATE_HPP
 #include <global.h>
-struct ComboId {u8 unk0,unk1,data[10];};
+#include <game/pxdvs/app/fight/fightTrainerAiCombo.h>
 struct FightOutSnapshot {u32 data[0x894/4];};
-typedef char ComboIdSize[sizeof(ComboId)==12?1:-1];
 typedef char FightOutSnapshotSize[sizeof(FightOutSnapshot)==0x894?1:-1];
 extern "C" {
-extern ComboId comboid[];extern u8 fight_action_data_turn[];extern u32 *zokusei_data_number;
+extern u8 fight_action_data_turn[];extern u32 *zokusei_data_number;
 u16 HSD_Rand();u8 dbgMenuFightGetFightTrainerAiLastValueReviseFlag();
 void *fightFloorGetFightOutPokemonPtrToFightTrainerPtr(void*,void*);void *fightFloorGetFightPokemonPtrToFightTrainerPtr(void*,void*);
 u16 fightFloorGetFightTrainerFightOutPokemonPtrAry(void*,void*,void**,u8,u8);u16 fightFloorGetFightTrainerFightPokemonPtrAry(void*,void*,void**,u8,u8);

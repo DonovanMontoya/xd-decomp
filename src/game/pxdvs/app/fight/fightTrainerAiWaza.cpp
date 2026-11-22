@@ -190,7 +190,7 @@ s32 _fightTrainerAiWazaSubWaza__FP13FIGHT_TRAINERP15FightOutPokemonUsPUsPsP15Fig
                     if(type)scores[i]=fightTrainerAiReviseValueByAddsubDataId(scores[i],fightTrainerPokemonPartDB_GetWazaTypeRevise(part,type),trainer,61);
                 }
                 if(element!=9){for(u16 j=0;j<2;j++){
-                    u8 preferred=fightTrainerAiDB_GetZokuseiReviseZokuseiDataId(ai,(u8)j);
+                    u32 preferred=fightTrainerAiDB_GetZokuseiReviseZokuseiDataId(ai,(u8)j);
                     if(preferred!=9&&element==preferred)scores[i]=fightTrainerAiReviseValueByAddsubDataId(scores[i],fightTrainerAiDB_GetZokuseiReviseValue(ai,(u8)j),trainer,62);
                 }}
                 for(u16 j=0;j<3;j++){

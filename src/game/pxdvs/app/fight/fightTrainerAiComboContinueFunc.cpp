@@ -1,4 +1,5 @@
 #include <global.h>
+#include <game/pxdvs/app/fight/fightTrainerAiCombo.h>
 struct FIGHT_TRAINER;
 struct FightOutPokemon;
 struct FightPokemon;
@@ -22,7 +23,7 @@ FightOutPokemon* fightAi_SelectDefPoke(FIGHT_TRAINER*,FightOutPokemon*,FightOutP
 }
 s8 _getWazaMaxValueIndex(u8*,s16*,u16,u8);
 
-extern "C" s32 fightAiCombo_Batontatti_Zikoanzi_Continue(FIGHT_TRAINER* trainer,FightOutPokemon* pokemon) {
+extern "C" u8 fightAiCombo_Batontatti_Zikoanzi_Continue(FIGHT_TRAINER* trainer, FightOutPokemon* pokemon, FightOutPokemon**, u16) {
     u8 scores[4];u16 moves[4];s16 slots[4];
     u8 i;
     u16 count;
@@ -57,7 +58,7 @@ extern "C" s32 fightAiCombo_Batontatti_Zikoanzi_Continue(FIGHT_TRAINER* trainer,
     fightAi_CreateFightActionAttckWaza(pokemon,target,moves[selected],slots[selected]);
     return 1;
 }
-extern "C" s32 fightAiCombo_Batontatti_Nekodamasi_Continue(FIGHT_TRAINER* trainer,FightOutPokemon* pokemon) {
+extern "C" u8 fightAiCombo_Batontatti_Nekodamasi_Continue(FIGHT_TRAINER* trainer, FightOutPokemon* pokemon, FightOutPokemon**, u16) {
     u8 scores[4];u16 moves[4];s16 slots[4];
     u8 i;
     u16 desired=0;
@@ -79,7 +80,7 @@ extern "C" s32 fightAiCombo_Batontatti_Nekodamasi_Continue(FIGHT_TRAINER* traine
     fightAi_CreateFightActionAttckWaza(pokemon,pokemon,moves[selected],slots[selected]);
     return 1;
 }
-extern "C" s32 fightAiCombo_Sukirusuwappu_Irekae_Continue(FIGHT_TRAINER* trainer,FightOutPokemon* pokemon) {
+extern "C" u8 fightAiCombo_Sukirusuwappu_Irekae_Continue(FIGHT_TRAINER* trainer, FightOutPokemon* pokemon, FightOutPokemon**, u16) {
     u16 moves[4];s16 slots[4];
     u8 type=fightFloor_GetFightType(0);
     fightTrainerAiGetFightOutPokemonWazaDataIdAry(trainer,pokemon,moves,slots,1);
@@ -90,7 +91,7 @@ extern "C" s32 fightAiCombo_Sukirusuwappu_Irekae_Continue(FIGHT_TRAINER* trainer
     fightAi_CreateFightActionAttckIrekae(pokemon,selected);
     return 1;
 }
-extern "C" s32 fightAiCombo_Amaikaori_Hubuki_Continue(FIGHT_TRAINER* trainer,FightOutPokemon* pokemon,FightOutPokemon** defenders,u16 defenderCount) {
+extern "C" u8 fightAiCombo_Amaikaori_Hubuki_Continue(FIGHT_TRAINER* trainer,FightOutPokemon* pokemon,FightOutPokemon** defenders,u16 defenderCount) {
     u8 scores[4];u16 moves[4];s16 slots[4];
     u8 i;
     u16 count=fightTrainerAiGetFightOutPokemonWazaDataIdAry(trainer,pokemon,moves,slots,1);
@@ -117,7 +118,7 @@ extern "C" s32 fightAiCombo_Amaikaori_Hubuki_Continue(FIGHT_TRAINER* trainer,Fig
     fightAi_CreateFightActionAttckWaza(pokemon,target,moves[selected],slots[selected]);
     return 1;
 }
-extern "C" s32 fightAiCombo_null_Continue(){return 0;}
+extern "C" u8 fightAiCombo_null_Continue(FIGHT_TRAINER*, FightOutPokemon*, FightOutPokemon**, u16){return 0;}
 s8 _getWazaMaxValueIndex(u8* scores,s16* slots,u16 count,u8 minimum) {
     u8 candidates[64];
     u8 best=minimum;

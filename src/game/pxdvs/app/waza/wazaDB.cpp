@@ -41,7 +41,7 @@ u8 fightWaza_GetDamageValue(FightWazaRecord* data) { if (data == 0) { return 0; 
 
 u8 fightWaza_GetCritical(FightWazaRecord* data) { if (data == 0) { return 0; } else { return data->critical; } }
 
-WazaStatusRecord* fightWaza_GetJoutaiPtr(FightWazaRecord* data, u16 index) { if (!data) return 0; if (index >= 9) return 0; return &data->statuses[index]; }
+FightJoutai* fightWaza_GetJoutaiPtr(FightWazaRecord* data, u16 index) { if (!data) return 0; if (index >= 9) return 0; return &data->statuses[index]; }
 
 u16 fightWaza_GetTargetDataId(FightWazaRecord* data) { if (data == 0) { return 0; } else { return data->targetDataId; } }
 
@@ -49,7 +49,7 @@ u16 fightWaza_GetUseWazaDataId(FightWazaRecord* data) { if (data == 0) { return 
 
 u16 fightWaza_GetMotoWazaDataId(FightWazaRecord* data) { if (data == 0) { return 0; } else { return data->motoWazaDataId; } }
 
-u8 fightWaza_GetWazaBanme(FightWazaRecord* data) { if (data == 0) { return 0; } else { return data->wazaBanme; } }
+s32 fightWaza_GetWazaBanme(FightWazaRecord* data) { if (data == 0) { return 0; } else { return data->wazaBanme; } }
 
 void* wazaDB_GetFightWazaWzxVariationFuncPtr(u32 identifier) { WazaDataRecord* data = wazaDataBiosGetPtr(identifier); if (data == 0) { return 0; } else { WazaFunctionRecord* functions = wazaFuncDataBiosGetPtr(wazaDataBiosGetWazaFuncDataId(data)); if (functions == 0) { return 0; } else { return functions->fightWazaWzxVariation; } } }
 

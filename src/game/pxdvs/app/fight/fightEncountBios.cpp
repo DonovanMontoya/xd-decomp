@@ -18,7 +18,7 @@ u16 fightEncountDataBiosGetDiskId(FightEncountRecord* p) { if (p==0) return 0; e
 u16 fightEncountDataBiosGetWipeEffectSndID(FightEncountWipeRecord* p) { if (p==0) return 0; else return p->effectSndId; }
 f32 fightEncountDataBiosGetWipeEffectTime(FightEncountWipeRecord* p) { if (p==0) return 0.0f; else return p->effectTime; }
 u8 fightEncountDataBiosGetWipeSnapshotUse(FightEncountWipeRecord* p) { if(p==0)return 0; else return p->snapshotUse > 0u; }
-void* fightEncountDataBiosGetWipeFunction(FightEncountWipeRecord* p) { if (p==0) return 0; else return (void*)p->function; }
+FightEncountWipeFunction fightEncountDataBiosGetWipeFunction(FightEncountWipeRecord* p) { if (p==0) return 0; else return p->function; }
 FightEncountWipeRecord* fightEncountWipeDataBiosGetPtr(u32 i) { if (i >= fight_encount_wipe_data_number) return 0; return &fight_encount_wipe_data[i]; }
 void* fightEncountDataBiosGetFightName(FightEncountRecord* p) { if (p==0) return 0; else return (void*)p->fightName; }
 void fightEncountDataBiosSetSyoukaiWzxDataId(FightEncountRecord* p,u32 v) { if(p)p->syoukaiWzxDataId=v; }

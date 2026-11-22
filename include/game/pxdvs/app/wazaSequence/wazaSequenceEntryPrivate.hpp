@@ -1,7 +1,7 @@
 #ifndef WAZA_SEQUENCE_ENTRY_PRIVATE_H
 #define WAZA_SEQUENCE_ENTRY_PRIVATE_H
 
-#include <global.h>
+#include <game/pxdvs/GSAPI/GSgfxM/GSgfxColAu8.hpp>
 
 struct _GScamera;
 class WazaSequence;
@@ -235,11 +235,17 @@ public:
 };
 
 struct EffectTableEntry {
-    u32 f00;
-    u32 f04;
-    f32 time;                       // 0x8
+    union Value {
+        f32 scalar;
+        GSgfxColAu8 color;
+    };
+    Value start;
+    Value end;
+    f32 time;
     u32 f0c;
 };
+
+typedef char EffectTableEntrySize[sizeof(EffectTableEntry) == 16 ? 1 : -1];
 
 class EffectEntry : public SequenceEntry {
 public:

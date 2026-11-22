@@ -1,7 +1,7 @@
 #ifndef PXDVS_APP_ITEM_ITEM_BIOS_LAYOUT_HPP
 #define PXDVS_APP_ITEM_ITEM_BIOS_LAYOUT_HPP
 
-#include <dolphin/types.h>
+#include <game/pxdvs/app/item/item.h>
 #include <libc/stddef.h>
 
 struct ItemParamRecord {
@@ -20,7 +20,7 @@ struct ItemParamRecord {
 };
 struct TasteDataRecord { u8 bytes[0x20]; };
 struct ItemSoubiDataRecord { u16 fightKoukaDataId; };
-struct ItemBiosRecord { u16 itemDataId; u16 num; };
+typedef ITEM ItemBiosRecord;
 struct ItemBallDataRecord { u16 id; u16 reserved; s32 effectIds[15]; };
 struct ItemDataRecord {
     u8 kind; s8 important; s8 useful; u8 deposit; u8 effectParam; u8 reserved5[1];

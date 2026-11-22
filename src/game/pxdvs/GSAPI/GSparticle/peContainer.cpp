@@ -4,13 +4,13 @@ peContainer::peContainer(peEmitterNode* emitter,u32 nodeBytes,u16 maximum):owner
     u32 totalNodes=maximum;
     u32 bytes=totalNodes*nodeBytes;
     u32 localTransform=(owner->emitter->flags>>6)&1;
-    if(localTransform)bytes+=totalNodes*0x28;
+    if(localTransform)bytes+=totalNodes*sizeof(NodeTransform);
     memory=(u8*)GSmemAllocClr(bytes);if(!memory)return;
     u32 size=GSmemGetSize(memory);g_particle_debug_stats.node+=size;g_particle_debug_stats.total+=size;
     freeNodes=(peNode*)memory;peNode* node;u8* cursor=(u8*)freeNodes;peNode* previous=0;
     for(u32 i=0;i<totalNodes;++i) {
         node=(peNode*)cursor;cursor+=nodeBytes;
-        if(localTransform){node->transform=cursor;cursor+=0x28;}else node->transform=emitter->world;
+        if(localTransform){node->transform=(NodeTransform*)cursor;cursor+=sizeof(NodeTransform);}else node->transform=&emitter->world;
         node->previous=previous;if(previous)previous->next=node;previous=node;
     }
     dirty=1;

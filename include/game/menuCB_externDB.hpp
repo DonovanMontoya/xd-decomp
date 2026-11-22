@@ -1,7 +1,7 @@
 #ifndef GAME_MENUCB_EXTERNDB_HPP
 #define GAME_MENUCB_EXTERNDB_HPP
 
-#include <dolphin/types.h>
+#include <game/menuCBRule.hpp>
 typedef struct MenuDBWindow {
     u8 reserved0[0x1];
     u8 unk1;
@@ -36,29 +36,6 @@ typedef struct MenuDBSprite {
     u8 unk66;
     u8 unk67;
 } MenuDBSprite;
-typedef struct MenuDBRule {
-    s16 unk0;
-    s16 unk2;
-    s16 unk4;
-    u8 reserved6[0x2];
-    s32 unk8;
-    u8 unkC;
-    u8 unkD;
-    u8 unkE;
-    u8 unkF;
-    u8 unk10;
-    u8 unk11;
-    u8 unk12;
-    u8 unk13;
-    s16 unk14;
-    s16 unk16;
-    u8 reserved18[0x1];
-    u8 unk19;
-    s16 unk1A;
-    s16 unk1C;
-    u8 reserved1E[0x34];
-    u8 itemFlags[0x3E];
-} MenuDBRule;
 typedef struct MenuDBCursor {
     s32 unk0;
     s32 unk4;
@@ -80,7 +57,7 @@ typedef struct MenuDBState {
     u8 reservedC[0x4];
     s32 unk10;
     u8 reserved14[0x9C64];
-    MenuDBRule * unk9C78;
+    MenuCBRule * unk9C78;
     u8 reserved9C7C[0x1358];
     s32 unkAFD4;
     s32 unkAFD8;
@@ -182,7 +159,11 @@ typedef struct MenuDBState {
     s32 unkB1E0;
     u8 reservedB1E4[0x2BC];
     u8 unkB4A0;
-    u8 reservedB4A1[0x4B5F];
+#if defined(VERSION_NXXJ01)
+    u8 reservedB4A1[0xB4EC - 0xB4A1];
+#else
+    u8 reservedB4A1[0xB5F8 - 0xB4A1];
+#endif
 } MenuDBState;
 extern MenuDBState _CB;
 typedef struct MenuDBGBA {
@@ -252,7 +233,6 @@ extern MenuDBGBA gbaConectGBA_Connect_WORK;
 #ifdef __cplusplus
 extern "C" {
 #endif
-void menuCBRule_Copy(MenuDBRule *, MenuDBRule *);
 void windowDrawSprite3(s16, s16, s16, s16, s32, MenuDBWindow *, u16, s16, s16, s16, s16, s32, s32);
 int abs(int);
 void menuCB_DispEffect(MenuDBWindow *);

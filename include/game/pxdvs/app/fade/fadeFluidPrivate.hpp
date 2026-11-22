@@ -1,6 +1,7 @@
 #ifndef APP_FADE_FLUID_PRIVATE_HPP
 #define APP_FADE_FLUID_PRIVATE_HPP
 #include <global.h>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 
 struct FluidVec {f32 x,y,z;};
 struct FluidUV {f32 u,v;};
@@ -35,7 +36,6 @@ public:
 };
 extern "C" {
 GSgfxLayer *GSgfxLayerFindByID(s32);
-GSgfxVF *GSgfxVFBuildTemp(u32,u32,u32,u32,u32,u32,u32,u32,u32);
 void GSlerpGetLinearInterpolationVector(FluidVec *,FluidVec *,FluidVec *,f32);
 void spriteSetEnv(s32);
 void GSmemFree(void *);

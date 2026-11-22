@@ -1,13 +1,12 @@
 #include <dolphin/types.h>
 #pragma dont_inline on
 #include <game/gbaCommandPrivate.hpp>
+#include <game/pxdvs/GSAPI/GSmsg/GSchar.hpp>
+#include <game/pxdvs/app/waza/wazaStatusAPI.hpp>
 
 extern "C" {
 void *heroBiosGetPokemonPtr(void *, u16);
 u32 pokemonBiosGetPokemonWazaDataId(void *, u16);
-u32 wazaDataBiosGetPtr(u32);
-void wazaDataBiosGetDoc(u32);
-u16 *GSmsgGetGSchar();
 s32 GBAMakeFromGSchar(u8 *, const u16 *, s32);
 s32 gamedataGetStatus(s32, s32);
 void *memset(void *, int, unsigned long);
@@ -33,11 +32,10 @@ extern "C" s32 wazaconv(u32 trainer, GbaWazaText *dst) {
 }
 
 extern "C" s32 GetWazaDocGBA(u8 *dst, s32 id) {
-    u32 data = wazaDataBiosGetPtr(id);
+    WazaDataRecord* data = wazaDataBiosGetPtr(id);
     memset(dst, 0, 0x50);
     if (data != 0) {
-        wazaDataBiosGetDoc(data);
-        const u16 *src = GSmsgGetGSchar();
+        const u16 *src = GSmsgGetGSchar(wazaDataBiosGetDoc(data));
         dst += convline(dst, &src);
         if (*src == 0xFFFF) {
             *dst++ = 0xFE;

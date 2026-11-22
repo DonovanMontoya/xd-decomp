@@ -1,20 +1,9 @@
 #ifndef POKEMON_FIGHT_RECORDS_H
 #define POKEMON_FIGHT_RECORDS_H
+#include <game/pxdvs/app/fight/fightWaza.hpp>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 
 // Opaque record sizes are evidenced by the original embedded-record strides.
-// Member offsets are supplied by joutaiBios getters and condition-copy behavior.
-struct FightJoutai {
-    u16 dataId;
-    u16 userFightTargetId;
-    u8 kaisuu;
-    u8 nowKaisuu;
-    u8 count;
-    u8 reserved07;
-    u32 buff;
-    u16 idBuff;
-};
-struct FightWaza { u8 storage[0xac]; };
 struct FightItem { u8 storage[0xc]; };
 struct FightActionBuff { u8 storage[0x30]; };
 struct FightOutPokemonEnemy { u8 storage[0xc]; };

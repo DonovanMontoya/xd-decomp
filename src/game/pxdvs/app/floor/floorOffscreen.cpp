@@ -8,7 +8,7 @@ extern "C" { void* floorGetActiveOffscreenTexture(); }
 extern "C" { bool floorSetOffscreenIndex(s32 index); }
 extern "C" { void floorReleaseOffscreen(); }
 extern "C" { void floorUpdateOffscreen(); }
-extern "C" { void floorInitOffscreen(FloorOffscreenRoot* root); }
+extern "C" { void floorInitOffscreen(GSfloor_dd_* floor); }
 extern "C++" { static void _floorFreeOffscreenData(); }
 extern "C" { void floorOffscreenMainInit(); }
 static FloorOffscreenData _userOffData;
@@ -107,11 +107,11 @@ extern "C" {
 void floorUpdateOffscreen(){if(!_offData||!_offMdl)return;GSmodelForceAnimTransformUpdate(_offMdl);}
 }
 extern "C" {
-void floorInitOffscreen(FloorOffscreenRoot* root){
-    if(root->data){
-        _offRootDataPtr=(*root->data)->records;
+void floorInitOffscreen(GSfloor_dd_* floor){
+    if(floor->offscreen){
+        _offRootDataPtr=(*floor->offscreen)->records;
         if(_offRootDataPtr){
-            _offRootDataCnt=*(*root->data)->count;
+            _offRootDataCnt=*(*floor->offscreen)->count;
             if(_offRootDataCnt)memset(&_userOffData,0,sizeof(_userOffData));
         }
     }

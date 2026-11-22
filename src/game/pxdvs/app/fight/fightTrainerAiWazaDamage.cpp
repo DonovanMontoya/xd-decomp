@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fight/fightSeq/fightSeqDamage.hpp>
 #include <dolphin/types.h>
 
 extern "C" {
@@ -229,7 +230,6 @@ u8 fightSeqGetJitabataIryoku(u16, u16);
 u16 fightSeqGetKetaguriIryoku(u16);
 u16 fightSeqGetOngaesiIryoku(u8);
 u16 fightSeqGetYatuatariIryoku(u8);
-s32 fightSeqGetNromalWazaDamage(FIGHT_TRAINER *, u16, FightOutPokemon *, FightOutPokemon *, void (*)(FIGHT_TRAINER *, u16, FightOutPokemon *, FightOutPokemon *), void *, void (*)(FIGHT_TRAINER *, u16, FightOutPokemon *, FightOutPokemon *), void *);
 s32 fightSeqWazaDamageCalc(FightOutPokemon *, FightOutPokemon *, FightSide *, u16, u16, u16);
 FightSide * fightTargetGetPtrAsNowFightType(u8, FightOutPokemon *);
 u8 fightTrainerAiGetFightFloorNowTenkouDataId(FIGHT_TRAINER *, void *, u8);

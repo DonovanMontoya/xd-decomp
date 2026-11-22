@@ -28,9 +28,8 @@ s32 Add__16GSgfxLayerConfigFPcUlUlUl14GSgfxLayerTypebbb12GSgfxLayerID16GSgfxLaye
     if (!layer) {
         s32 id=freeConfigLayerID();
         if (id!=-1) {
-            LayerNode* allocated=(LayerNode*)__nw__FUl(0x1a14);
-            if(allocated)allocated=__ct__10GSgfxLayerF12GSgfxLayerIDPcUlUlUl14GSgfxLayerType(allocated,id,name,opaque,translucent,matrices,0);
-            layer=allocated;
+            layer = new GSgfxLayer(static_cast<GSgfxLayerID>(id), name, opaque, translucent,
+                                   matrices, GSgfxLayerType_Default);
         }
         if (!layer) return -1;
     }
@@ -61,12 +60,14 @@ void Setup__16GSgfxLayerConfigFP15_GSgfxLayerData(LayerConfigData* data) {
             if (current->id==255) {
                 s32 id=freeConfigLayerID();
                 if (id!=-1) {
-                    layer=(LayerNode*)__nw__FUl(0x1a14);
-                    if(layer)layer=__ct__10GSgfxLayerF12GSgfxLayerIDPcUlUlUl14GSgfxLayerType(layer,id,current->name,current->opaqueSize,current->translucentSize,current->matrixCount,0);
+                    layer = new GSgfxLayer(static_cast<GSgfxLayerID>(id), current->name,
+                                           current->opaqueSize, current->translucentSize,
+                                           current->matrixCount, GSgfxLayerType_Default);
                 }
             } else {
-                layer=(LayerNode*)__nw__FUl(0x1a14);
-                if(layer)layer=__ct__10GSgfxLayerF12GSgfxLayerIDPcUlUlUl14GSgfxLayerType(layer,current->id,current->name,current->opaqueSize,current->translucentSize,current->matrixCount,0);
+                layer = new GSgfxLayer(static_cast<GSgfxLayerID>(current->id), current->name,
+                                       current->opaqueSize, current->translucentSize,
+                                       current->matrixCount, GSgfxLayerType_Default);
             }
             if (!layer) {++current;continue;}
         }

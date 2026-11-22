@@ -2,7 +2,7 @@
 #define GAME_MENUHOLOGRAM_LAYOUT_HPP
 #include <dolphin/types.h>
 #define POKEMON_HPP_NO_PROTOTYPES
-#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/pcbox/pcbox.hpp>
 
 // Partial views of the relive-hall helper types used by the hologram menu.
 class CMenuGlobalState {
@@ -28,13 +28,6 @@ public:
     Pokemon *getDancerPointer(long);
     s32 getDancerQuantity();
     void pickupVisitor(Pokemon &);
-};
-
-class PCBOX {
-public:
-    static PCBOX *getPointer();
-    void addPokemonLastWatchBox(Pokemon *);
-    bool isPokemonFull();
 };
 
 class CReliveHall {

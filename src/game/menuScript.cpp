@@ -1,4 +1,5 @@
 #include <game/menuScriptLayout.hpp>
+#include <game/pxdvs/GSAPI/GSflag/GSflag.hpp>
 
 struct FLAGETC;
 extern "C" {
@@ -24,7 +25,6 @@ void menuClose(s32);
 s32 menuOpen(s32, s32);
 void menuCloseSync(s32, s32);
 void menuSetPosition(s32, s32, s32);
-void GSflagOn(void *);
 void GSfsysReadWait(s32);
 void GSresFreeGroup(s32);
 void GSthreadSwitch(void);
@@ -58,8 +58,7 @@ u8 GSgfxVideoGetVsyncRate(void);
 void menuCreateOffScreen(f32, f32);
 void menuOffScreenCheckEnable(s32);
 void menuReleaseOffScreen(f32);
-void *mailGetOpenFlag(s32);
-void GSflagSet(void *, s32);
+u32 mailGetOpenFlag(s32);
 void floorSetFadeScript(s32, s32);
 void *pokemonBiosGetNicknamePtr(void *);
 void darkPokemonBiosSetInformationFlag(u16, s32);
@@ -77,8 +76,6 @@ u8 wazaDataBiosGetZokuseiDataId(void *);
 s16 wazaDataBiosGetIryoku(void *);
 u8 wazaDataBiosGetAvg(void *);
 s32 wazaDataBiosGetDoc(void *);
-u32 GSflagGet(s32);
-u8 GSflagTest(void *, u16);
 void winSeqSetMenu(s32, s32);
 void menuSetStatus(s32, s32);
 s32 winSpriteGetLayerID(tagWINDOW_WORK *, tagSPRITE_WORK *);
@@ -95,19 +92,18 @@ u32 pokemonDataBiosGetName(void *);
 void winSpriteSetDisp(tagSPRITE_WORK *, bool);
 u32 windowGetKeyRepeat(void);
 u16 *GSmsgGetGSchar(s32);
-void GSmsgPrint2(s32, s32, s32, s32, u32);
+s32 GSmsgPrint2(u32, s32, s32, u32, u32);
 void *menuDataBiosGetPtr(s32);
 }
 
 extern "C" CURSOR cursorBiosGetPos(s32);
 extern "C" void cursorBiosSetPos(s32, CURSOR *);
 
-
 struct WAZAOSHIE_ENTRY {
     u16 id;
     u16 pad;
     s32 floorIndex;
-    void *flag;
+    s32 flag;
 };
 extern WAZAOSHIE_ENTRY *wazaoshie_data;
 
@@ -121,11 +117,10 @@ struct WAZAOSHIEDEF {
     s16 power;
     u8 accuracy;
     u32 doc;
-    u8 released;
+    bool released;
 };
 static WAZAOSHIEDEF _wazawork;
 static u16 _tempwazaid[0x15];
-
 
 static u16 _WazaNum = 3;
 static s32 _tutorialSelect = -1;
@@ -139,10 +134,647 @@ static u16 _worldmapnum;
 static u8 _mapFlag;
 static u8 _wazaFlag;
 
-
 extern "C" void menuScriptSetMailOpen(u8);
 
 #define WIN_ALPHA(w) (((u8 *)&(w)->color90)[3])
+
+struct POKEMON_DATA_dd_;
+static void _menuScriptTokuseiSetumei(tagWINDOW_WORK *, tagSPRITE_WORK *, CURSOR *, POKEMON_DATA_dd_ *);
+
+struct MENU_ITEM_dd_ {
+    u8 reserved[6];
+    s16 x,y,width,height;
+};
+extern "C" MENU_ITEM_dd_ *menuItemBiosGetPtr(s32, s16);
+extern "C" u32 GSmsgGetCharLength(u16 *);
+extern "C" void *pokemonTokuseiDataBiosGetDoc(void *);
+
+extern "C" void menuScriptUsohachiCtrl(tagWINDOW_WORK *);
+extern "C" void menuScriptEeveeCtrl(tagWINDOW_WORK *);
+
+extern "C" void menuScriptPdaAddFunc(s32);
+static void _menuScriptPdaAddFunc(pdaAddFuncDef);
+static void _menuScriptReadMail(long);
+static void _getWazaData(u16, WAZAOSHIEDEF *);
+static u16 _checkWazaSub(Pokemon *);
+static u16 _checkWaza(long);
+static u16 _checkWaza2(void);
+
+static inline s32 scriptCopyWordPrefix(const u16 *text,u16 *line,const s32 &endWord) {
+    u32 ch;
+    u16 *dst;
+    const u16 *src;
+    s32 spaces;
+    s32 copied;
+    spaces = 0;
+    copied = 0;
+    src = text;
+    dst = line;
+    for (;;) {
+        ch = *src;
+        if (ch == 0x20 || ch == 0x3000) {
+            if (spaces == endWord) break;
+            *dst = ch;
+            spaces++;
+        } else {
+            if (ch == 0) break;
+            *dst = ch;
+        }
+        src++;
+        dst++;
+        copied++;
+    }
+    line[copied++] = 0;
+    return copied;
+}
+
+static inline void _tokuseiSplit(u16 *text, u16 *buf1, u16 *buf2, s32 fitLine) {
+    s32 spaceIdx = 0;
+    s32 count1 = 0;
+    s32 count2 = 0;
+    u8 second = 0;
+    u32 total = GSmsgGetCharLength(text);
+    u16 ch;
+    u16 *src;
+    u32 idx = 0;
+    src = text;
+    for (;; src++, idx++) {
+        ch = *src;
+        if (ch == 0xFFFF) {
+            continue;
+        }
+        if (ch == 0x20 || ch == 0x3000) {
+            if (spaceIdx == fitLine - 1) {
+                second = 1;
+            } else if (second != 0) {
+                buf2[count2++] = ch;
+            } else {
+                buf1[count1++] = ch;
+            }
+            spaceIdx++;
+            continue;
+        }
+        if (ch == 0) {
+            if (total <= idx) {
+                break;
+            }
+            continue;
+        }
+        if (second != 0) {
+            buf2[count2++] = ch;
+        } else {
+            buf1[count1++] = ch;
+        }
+    }
+    buf1[count1] = 0;
+    buf2[count2] = 0;
+}
+
+extern "C" {
+void menuPdaSubCheckUpDownCursor(tagWINDOW_WORK*,tagSPRITE_WORK*,CURSOR*,s32,s32,u8);
+void spriteSetScissor(s32,s32,s32,s32,s32);
+void spriteClearScissor(s32);
+s32 GSmsgPrintRect(u32, s32, s32, s16, s16, u32, u32);
+s32 GSmsgPrintRight(u32, s32, s32, s16, s16, u32, u32);
+void* menuSpriteBiosGetPtr(s16);
+void* menuSpriteBiosGetValPtr(void*);
+u32 heroBiosGetPokecoupon(void*);
+s32 zokuseiBiosGetSpriteID(u8);
+}
+struct ScriptSpriteValue {s16 x,y,width,height;};
+
+u32 deckDataVirtualDB_GetTitle(u16);
+u32 deckDataVirtualDB_GetFlag(u16);
+u32 deckDataVirtualDB_GetExplanetion2(u16);
+
+extern "C" void menuScriptSetOpenWorldMapFlag(u8 flag);
+static void _checkWazaRelease(void);
+static void _checkWaza2Release(void);
+
+extern "C" void menuScriptReciveMail(void) {
+    _menuScriptWork = 0;
+    menuOpenCustom(0x97, windowGetActiveID(), 0, 0, 1, 1, &_menuScriptWork);
+    menuCloseCustom(0x97, 0, 1);
+}
+
+extern "C" void menuScriptInfoEsa(void) {
+    _menuScriptWork = 1;
+    menuOpenCustom(0x97, windowGetActiveID(), 0, 0, 1, 1, &_menuScriptWork);
+    menuCloseCustom(0x97, 0, 1);
+    winMsgOpen(3, 0x3E83, 1, 1);
+    winMsgClose(1);
+}
+
+extern "C" void menuScriptInfoRelive(void *arg, u8 first) {
+    Pokemon *p = (Pokemon *)arg;
+    u16 dark = pokemonBiosGetDarkpokemonDataId(p);
+    _menuScriptWork = 2;
+    menuOpenCustom(0x97, windowGetActiveID(), 0, 0, 1, 1, &_menuScriptWork);
+    menuCloseCustom(0x97, 0, 1);
+    if (p != 0) {
+        void *name = pokemonBiosGetNicknamePtr(p);
+        msgctrlSetValue(0x32, (u32)name);
+        if (first != 0) {
+            winMsgOpen(3, 0x3E81, 1, 1);
+        } else {
+            winMsgOpen(3, 0x3E82, 1, 1);
+        }
+        winMsgClose(1);
+        darkPokemonBiosSetInformationFlag(dark, 1);
+    }
+}
+
+static void _menuScriptReadMail(long id) {
+    u8 rate;
+    GSmodelAllPauseAnimation();
+    menuCreateOffScreen(20.0f / GSgfxVideoGetVsyncRate(), 50.0f);
+    menuOffScreenCheckEnable(1);
+    _menuScriptMailID = id;
+    GSfloorPush(0x393);
+    u32 flag = mailGetOpenFlag(id);
+    if (flag != 0) {
+        GSflagSet(flag, 1);
+    }
+    floorSetFadeScript(0, 0);
+    floorWaitForChange();
+    menuReleaseOffScreen(0.0f / GSgfxVideoGetVsyncRate());
+    GSmodelAllUnpauseAnimation();
+}
+
+extern "C" void menuScriptReadMail(s32 id) {
+    _menuScriptReadMail(id);
+}
+
+static void _menuScriptPdaAddFunc(pdaAddFuncDef def) {
+    u8 rate;
+    GSmodelAllPauseAnimation();
+    menuCreateOffScreen(20.0f / GSgfxVideoGetVsyncRate(), 50.0f);
+    menuOffScreenCheckEnable(1);
+    _PdaAddFunc = def;
+    GSfloorPush(0x38C);
+    floorSetFadeScript(0, 0);
+    floorWaitForChange();
+    menuReleaseOffScreen(0.0f / GSgfxVideoGetVsyncRate());
+    GSmodelAllUnpauseAnimation();
+}
+
+extern "C" void menuScriptPdaAddFunc(s32 def) {
+    _menuScriptPdaAddFunc((pdaAddFuncDef)def);
+}
+
+extern "C" void menuScriptMailOpenInit(void) {
+    cameraPlayAnime(0x17, 0x17CF1800, 0, 0.0f);
+    GSsndPlayNow(0x44F);
+    menuOffScreenSetPriority(0);
+    menuScriptSetMailOpen(1);
+    menuPdaSetModelPointer();
+    menuPdaZoomIn();
+}
+
+extern "C" u8 menuScriptCheckMailOpen(void) {
+    return _menuPdaMailOpenFlag;
+}
+
+void menuScriptSetMailOpen(u8 flag) {
+    _menuPdaMailOpenFlag = flag;
+}
+
+extern "C" void menuScriptMailOpenMain(void) {
+    GSgfxVideoSetLockFrameRate(0);
+    if (menuPdaMailListSortInit(_menuScriptMailID) >= 0) {
+        menuPdaMailXDScript();
+    }
+    GSgfxVideoSetLockFrameRate(1);
+    menuPdaReleaseModelPointer();
+    GSmodelAllPauseAnimation();
+    menuScriptSetMailOpen(0);
+    GSfloorPop();
+}
+
+extern "C" void menuScriptMailOpenExit(void) {
+    menuPdaMailListSortExit();
+}
+
+extern "C" s32 menuScriptEevee(void) {
+    s32 ret;
+    if (GSfloorGetCurrent() != 0x97) {
+        u16 *name = floorGetPlaceName(0x97);
+        msgctrlSetValue(0x31, (u32)name);
+        winMsgOpen(3, 0xEFF7, 1, 1);
+        winMsgClose(1);
+        return -1;
+    }
+    GSfsysReadWait(0x8CA);
+    winMsgOpen(3, 0xA0CF, 0, 1);
+    ret = menuOpen(0xAF, 1);
+    menuClose(0xAF);
+    winMsgClose(1);
+    menuCloseSync(0xAF, 1);
+    GSresFreeGroup(0x8CA);
+    return ret;
+}
+
+extern "C" s32 menuScriptTutorial(void) {
+    s32 args = 0;
+    s32 ret;
+    if (GSfloorGetCurrent() != 0x8D) {
+        u16 *name = floorGetPlaceName(0x8D);
+        msgctrlSetValue(0x31, (u32)name);
+        winMsgOpen(3, 0xEFF7, 1, 1);
+        winMsgClose(1);
+        return -1;
+    }
+    GSfsysReadWait(0x8D1);
+    CURSOR c = cursorBiosGetPos(0xE);
+    c.selected = 0;
+    c.first = 0;
+    CURSOR tmp = c;
+    cursorBiosSetPos(0xE, &tmp);
+    ret = menuOpenCustom(0xB8, windowGetActiveID(), &args, 0, 1, 0);
+    if (ret < 0) {
+        _tutorialSelect = ret;
+    } else {
+        fightEncountDataBiosSetDiskId(fightEncountDataBiosGetPtr(0xD), tutorialdata[ret]);
+    }
+    menuClose(0xB8);
+    menuCloseSync(0xB8, 1);
+    GSresFreeGroup(0x8D1);
+    if ((u32)*tutorialdata_number == (u32)(_tutorialSelect + 1)) {
+        _tutorialSelect = -1;
+    }
+    return _tutorialSelect;
+}
+
+extern "C" void menuScriptOpenWorldMap(u16 num) {
+    _worldmapnum = num;
+    GSthreadSwitch();
+    menuScriptSetOpenWorldMapFlag(1);
+    GSfloorPush(0x3A8);
+    floorWaitForChange();
+}
+
+extern "C" u16 menuScriptOpenWorldMapGetMapNumber(void) {
+    return _worldmapnum;
+}
+
+extern "C" u8 menuScriptGetOpenWorldMapFlag(void) {
+    return _mapFlag;
+}
+
+extern "C" void menuScriptSetOpenWorldMapFlag(u8 flag) {
+    _mapFlag = flag;
+}
+
+extern "C" void menuScriptUsohachi(void) {
+    GSfsysReadWait(0x923);
+    menuOpen(0xD9, 1);
+    menuClose(0xD9);
+    menuCloseSync(0xD9, 1);
+    GSresFreeGroup(0x923);
+}
+
+extern "C" void menuScriptUsohachi2(void) {
+    GSfsysReadWait(0x923);
+    menuOpen(0x101, 1);
+    menuClose(0x101);
+    menuCloseSync(0x101, 1);
+    GSresFreeGroup(0x923);
+}
+
+extern "C" s32 menuScriptWazaMeijin(s32 pokemonIndex) {
+    s32 ret;
+    _WazaNum = _checkWaza(pokemonIndex);
+    if (_WazaNum == 0) {
+        ret = -1;
+    } else {
+        ret = menuOpen(0xE4, 1);
+        if (ret >= 0) {
+            if (_WazaNum == ret + 1) {
+                ret = -1;
+            } else {
+                ret = _wazalist[ret].id;
+            }
+        }
+        menuClose(0xE4);
+        menuCloseSync(0xE4, 1);
+    }
+    _checkWazaRelease();
+    return ret;
+}
+
+extern "C" u8 menuScriptWazaBasanCheck(void) {
+    return _wazaFlag;
+}
+
+extern "C" s32 menuScriptWazaBasan(s8 *flag) {
+    s32 ret;
+    *flag = 0;
+    _wazaFlag = 0;
+    _WazaNum = _checkWaza2();
+    if (_WazaNum == 0) {
+        ret = 0;
+    } else {
+        CURSOR c = cursorBiosGetPos(0xF);
+        s32 sel = c.selected;
+        ret = menuOpenCustom(0xE5, windowGetActiveID(), &sel, 0, 1, 0);
+        if (ret >= 0) {
+            if (_WazaNum == ret + 1) {
+                ret = -1;
+            } else {
+                if (_wazalist[ret].released != 0) {
+                    if (flag != 0) {
+                        *flag = 1;
+                    }
+                    _wazaFlag = 1;
+                }
+                ret = wazaoshie_data[(u16)ret].id;
+            }
+        }
+        menuClose(0xE5);
+        menuCloseSync(0xE5, 1);
+    }
+    _checkWaza2Release();
+    return ret;
+}
+
+extern "C" void menuScriptSetWazaOboetaFlag(u16 id) {
+    u16 i;
+    for (i = 0; i < *wazaoshie_data_number; i++) {
+        WAZAOSHIE_ENTRY *e = &wazaoshie_data[i];
+        if (id == e->id) {
+            GSflagOn(e->flag);
+        }
+    }
+}
+
+extern "C" void menuScriptMoneyOpen(s32 x, s32 y) {
+    menuOpen(0xD8, 0);
+    menuSetPosition(0xD8, x, y);
+}
+
+extern "C" void menuScriptMoneyClose(void) {
+    menuClose(0xD8);
+}
+
+extern "C" void menuScriptCouponOpen(s32 x, s32 y) {
+    menuOpen(0x102, 0);
+    menuSetPosition(0x102, x, y);
+}
+
+extern "C" void menuScriptCouponClose(void) {
+    menuClose(0x102);
+}
+
+extern "C" s32 menuScriptMoneyDraw(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
+    if (win->menu == 0xD8) {
+        switch (sprite->id) {
+        case 0x65B:
+            msgctrlSetValue(0x50, (u32)heroGetStatus(0, 0xC, 0));
+            GSmsgPrint2(win->layer, (s16)(sprite->width - (s16)(GSmsgGetRect(0x434E) >> 16)), 0, -1, 0x434E);
+            break;
+        case 0x65A:
+            windowDrawSprite2(0, 0, sprite->width, sprite->height, win->color90, win, 0x2D3, 0, winSpriteGetLayerID(win, sprite));
+            break;
+        }
+    } else {
+        switch (sprite->id) {
+        case 0x65B:
+            msgctrlSetValue(0x50, (u32)heroGetStatus(0, 0xD, 0));
+            GSmsgPrint2(win->layer, (s16)(sprite->width - (s16)(GSmsgGetRect(0x434E) >> 16)), 0, -1, 0x434E);
+            break;
+        case 0x65A:
+            windowDrawSprite2(0, 0, sprite->width, sprite->height, win->color90, win, 0x2F9, 0, winSpriteGetLayerID(win, sprite));
+            break;
+        }
+    }
+    return 0;
+}
+
+static void _getWazaData(u16 id, WAZAOSHIEDEF *out) {
+    void *data;
+    WAZAOSHIEDEF *w;
+    data = wazaDataBiosGetPtr(id);
+    if (out != 0) w = out; else w = &_wazawork;
+    w->id = id;
+    w->name = wazaDataBiosGetName(data);
+    w->pp = wazaDataBiosGetPp(data);
+    w->type = wazaDataBiosGetZokuseiDataId(data);
+    w->power = wazaDataBiosGetIryoku(data);
+    w->accuracy = wazaDataBiosGetAvg(data);
+    w->doc = wazaDataBiosGetDoc(data);
+    w->released = false;
+}
+
+static Pokemon *_getPokemonPtr(long index) {
+    Pokemon *p = heroBiosGetPokemonPtr(savedataGetStatus(0, 2), index);
+    if (pokemonCheckValid(p)) {
+        return p;
+    }
+    return 0;
+}
+
+static bool _checkRelive(Pokemon *p) {
+    if (!pokemonCheckValid(p)) {
+        return false;
+    }
+    u16 dark = pokemonBiosGetDarkpokemonDataId(p);
+    if (dark != 0) {
+        return darkPokemonBiosGetReliveFlag(dark) != 0;
+    }
+    return true;
+}
+
+static bool _checkWazaOverlap(u16 *list, u16 id, u16 count) {
+    u16 i;
+    for (i = 0; i < count; i++) {
+        if (id == list[i]) {
+            return true;
+        }
+    }
+    list[count] = id;
+    return false;
+}
+
+static u16 _checkWazaSub(Pokemon *p) {
+    void *data;
+    u16 count;
+    u16 i;
+    u32 did = pokemonBiosGetPokemonDataId(p);
+    data = pokemonDataBiosGetPtr(did);
+    count = 0;
+    memset(_tempwazaid, 0, 0x2A);
+    if (data != 0) {
+        for (i = 0; i < 0x14; i++) {
+            u8 lv = pokemonDataBiosGetGetWazaLevel(data, i);
+            if (lv == 0) {
+                break;
+            }
+            if (pokemonBiosGetLevel(p) >= lv && !_checkWazaOverlap(_tempwazaid, pokemonDataBiosGetGetWazaDataId(data, i), count)) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+static u16 _checkWaza(long index) {
+    Pokemon *p;
+    u16 count = 0;
+    u16 i;
+    p = _getPokemonPtr(index);
+    if (p != 0 && _checkRelive(p)) {
+        count = _checkWazaSub(p);
+    }
+    if (count != 0) {
+        count++;
+        _wazalist = (WAZAOSHIEDEF *)__nwa__FUl(count * 0x18);
+        for (i = 0; i < (u16)count - 1; i++) {
+            _getWazaData(_tempwazaid[i], &_wazalist[i]);
+        }
+        _wazalist[i].id = 0;
+    }
+    return count;
+}
+
+static void _checkWazaRelease(void) {
+    if (_wazalist != 0) {
+        __dla__FPv(_wazalist);
+        _wazalist = 0;
+    }
+}
+
+static u16 _checkWaza2(void) {
+    s32 i;
+    u16 count = 0;
+    u16 released = 0;
+    u16 *ids = (u16 *)__nwa__FUl(*wazaoshie_data_number * 2);
+    bool *releasedFlags = (bool *)__nwa__FUl(*wazaoshie_data_number);
+    for (i = 0; i < *wazaoshie_data_number; i++) {
+        struct { s32 value; } idx;
+        idx.value = wazaoshie_data[i].floorIndex;
+        if (GSflagGet(0x3C4) >= flag_etc[idx.value].value) {
+            u16 id = wazaoshie_data[i].id;
+            ids[(u16)count] = id;
+            releasedFlags[(u16)count] = GSflagTest(wazaoshie_data[i].flag);
+            if (releasedFlags[(u16)count]) {
+                released++;
+            }
+            count++;
+        }
+    }
+    if (released == count) {
+        count = 0;
+    } else if (count != 0) {
+        count++;
+        _wazalist = (WAZAOSHIEDEF *)__nwa__FUl(count * 0x18);
+        for (i = 0; i < (u16)count - 1; i++) {
+            _getWazaData(ids[i], &_wazalist[i]);
+            _wazalist[i].released = releasedFlags[i];
+        }
+        _wazalist[i].id = 0;
+    }
+    __dla__FPv(ids);
+    __dla__FPv(releasedFlags);
+    return count;
+}
+
+static void _checkWaza2Release(void) {
+    if (_wazalist != 0) {
+        __dla__FPv(_wazalist);
+        _wazalist = 0;
+    }
+}
+
+static WAZAOSHIEDEF *_getWaza2Pointer(long index) {
+    if (_wazalist == 0) {
+        return 0;
+    }
+    return _wazalist + index;
+}
+
+extern "C" void menuScriptEeveeCtrl(tagWINDOW_WORK *win) {
+    switch (win->phase) {
+    case 0:
+        if (win->step == 0) {
+            winSeqSetMenu(win->menu, 0x24);
+            win->step = 1;
+            switch (win->menu) {
+            case 0xD9:
+                break;
+            case 0xAF:
+                menuSetStatus(win->menu, 8);
+                break;
+            }
+        }
+        break;
+    case 3:
+        if (win->step == 0) {
+            winSeqSetMenu(win->menu, 0x17B);
+            win->step = 1;
+        }
+        break;
+    }
+}
+
+static void _menuScriptTokuseiSetumei(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite, CURSOR *cursor, POKEMON_DATA_dd_ *pdata) {
+    MENU_ITEM_dd_ *item = menuItemBiosGetPtr(0xAF, sprite->id);
+    if (u8 tokusei = pokemonDataBiosGetTokuseiDataId(pdata, 0)) {
+        u16 *buf1;
+        u16 *text;
+        u32 size;
+        u16 *buf2;
+        s32 line;
+        u32 len;
+        s32 fitLine;
+        u8 overflow;
+        text = GSmsgGetGSchar((s32)pokemonTokuseiDataBiosGetDoc(pokemonTokuseiDataBiosGetPtr(tokusei)));
+        len = GSmsgGetCharLength(text);
+        size = (len + 2) * 2;
+        buf1 = (u16 *)__nwa__FUl(size);
+        buf2 = (u16 *)__nwa__FUl(size);
+        line = 0;
+        fitLine = 0;
+        overflow = 0;
+        for (;;) {
+            s32 out = scriptCopyWordPrefix(text,buf1,line++);
+            msgctrlSetValue(0x37, (u32)buf1);
+            u32 rect = GSmsgGetRect(0x4276);
+            if ((rect >> 16) <= (u32)item->width) {
+                fitLine = line;
+            }
+            if (!((rect / 65536) <= (u32)*(volatile s16 *)&item->width)) {
+                overflow = 1;
+            }
+            if (!((u32)out < len)) {
+                break;
+            }
+        }
+        if (overflow != 0) {
+            _tokuseiSplit(text, buf1, buf2, fitLine);
+            msgctrlSetValue(0x37, (u32)buf1);
+            GSmsgPrint2(win->layer, 0, 0, WIN_ALPHA(win) | ~0xFF, 0x4276);
+            msgctrlSetValue(0x37, (u32)buf2);
+            GSmsgPrint2(win->layer, 0, 0x12, WIN_ALPHA(win) | ~0xFF, 0x4276);
+        } else {
+            msgctrlSetValue(0x37, (u32)text);
+            GSmsgPrint2(win->layer, 0, 0, WIN_ALPHA(win) | ~0xFF, 0x4276);
+        }
+        __dla__FPv(buf1);
+        __dla__FPv(buf2);
+    }
+}
+
+extern "C" void menuUsohachiHook(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
+    switch (sprite->id) {
+    case 0x661:
+        if (win->menu == 0xD9) {
+            windowDrawSprite(0, 0, win, 0x2D8, 0, winSpriteGetLayerID(win, sprite));
+        } else {
+            windowDrawSprite(0, 0, win, 0x341, 0, winSpriteGetLayerID(win, sprite));
+        }
+        break;
+    }
+}
 
 extern "C" void fn_8005DE84(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
     const u16 ids[5] = {0x4EF, 0x4F2, 0x4F3, 0x4F4, 0x4F5};
@@ -157,18 +789,6 @@ extern "C" void fn_8005DE84(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
         }
     }
 }
-
-struct POKEMON_DATA_dd_;
-static void _menuScriptTokuseiSetumei(tagWINDOW_WORK *, tagSPRITE_WORK *, CURSOR *, POKEMON_DATA_dd_ *);
-
-struct MENU_ITEM_dd_ {
-    u8 reserved[6];
-    s16 x,y,width,height;
-};
-extern "C" MENU_ITEM_dd_ *menuItemBiosGetPtr(s32, s16);
-extern "C" u32 GSmsgGetCharLength(u16 *);
-extern "C" void *pokemonTokuseiDataBiosGetDoc(void *);
-
 
 extern "C" void menuScriptEeveeHook(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
     CURSOR c;
@@ -256,426 +876,68 @@ extern "C" void menuScriptEeveeHook(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite)
     }
 }
 
-
-extern "C" void menuScriptPdaAddFuncExit(void) {
-}
-
-extern "C" void menuScriptPdaAddFuncMain(void) {
-    GSgfxVideoSetLockFrameRate(0);
-    menuOffScreenSetPriority(0);
-    menuPdaSetModelPointer();
-    menuPdaModelVisibility(0x17CF1000, true);
-    menuPdaAddFunc();
-    menuPdaScript(_PdaAddFunc);
-    GSgfxVideoSetLockFrameRate(1);
-    menuPdaReleaseModelPointer();
-    GSmodelAllPauseAnimation();
-    GSfloorPop();
-}
-
-extern "C" void menuScriptPdaAddFuncInit(void) {
-    GSsndPlayNow(0x454);
-    cameraPlayAnime(0x17, 0x17CF1800, 0, 0.0f);
-    menuPdaModelVisibility(0x17CF1000, false);
-}
-
-static u32 _wazaOshieWazaNum(tagWINDOW_WORK *win) {
-    if (win->menu == 0xE4) {
-        return _WazaNum;
-    }
-    return _WazaNum;
-}
-
-static WAZAOSHIEDEF *_getWaza2Pointer(long index) {
-    if (_wazalist == 0) {
-        return 0;
-    }
-    return _wazalist + index;
-}
-
-static void _checkWaza2Release(void) {
-    if (_wazalist != 0) {
-        __dla__FPv(_wazalist);
-        _wazalist = 0;
-    }
-}
-
-static void _checkWazaRelease(void) {
-    if (_wazalist != 0) {
-        __dla__FPv(_wazalist);
-        _wazalist = 0;
-    }
-}
-
-static bool _checkWazaOverlap(u16 *list, u16 id, u16 count) {
-    u16 i;
-    for (i = 0; i < count; i++) {
-        if (id == list[i]) {
-            return true;
+extern "C" void menuScriptTutorialCtrl(tagWINDOW_WORK *win) {
+    menuDataBiosGetPtr(win->menu);
+    switch (win->phase) {
+    case 0:
+        if (win->step == 0) {
+            winSeqSetMenu(win->menu, 0x24);
+            win->step = 1;
         }
-    }
-    list[count] = id;
-    return false;
-}
-
-static bool _checkRelive(Pokemon *p) {
-    if (!pokemonCheckValid(p)) {
-        return false;
-    }
-    u16 dark = pokemonBiosGetDarkpokemonDataId(p);
-    if (dark != 0) {
-        return darkPokemonBiosGetReliveFlag(dark) != 0;
-    }
-    return true;
-}
-
-static Pokemon *_getPokemonPtr(long index) {
-    Pokemon *p = heroBiosGetPokemonPtr(savedataGetStatus(0, 2), index);
-    if (pokemonCheckValid(p)) {
-        return p;
-    }
-    return 0;
-}
-
-extern "C" void menuScriptCouponClose(void) {
-    menuClose(0x102);
-}
-
-extern "C" void menuScriptCouponOpen(s32 x, s32 y) {
-    menuOpen(0x102, 0);
-    menuSetPosition(0x102, x, y);
-}
-
-extern "C" void menuScriptMoneyClose(void) {
-    menuClose(0xD8);
-}
-
-extern "C" void menuScriptMoneyOpen(s32 x, s32 y) {
-    menuOpen(0xD8, 0);
-    menuSetPosition(0xD8, x, y);
-}
-
-extern "C" void menuScriptSetWazaOboetaFlag(u16 id) {
-    u16 i;
-    for (i = 0; i < *wazaoshie_data_number; i++) {
-        WAZAOSHIE_ENTRY *e = &wazaoshie_data[i];
-        if (id == e->id) {
-            GSflagOn(e->flag);
+        break;
+    case 3:
+        if (win->step == 0) {
+            winSeqSetMenu(win->menu, 0x17B);
+            win->step = 1;
         }
+        break;
     }
 }
 
-extern "C" u8 menuScriptWazaBasanCheck(void) {
-    return _wazaFlag;
-}
-
-extern "C" void menuScriptUsohachi2(void) {
-    GSfsysReadWait(0x923);
-    menuOpen(0x101, 1);
-    menuClose(0x101);
-    menuCloseSync(0x101, 1);
-    GSresFreeGroup(0x923);
-}
-
-extern "C" void menuScriptUsohachi(void) {
-    GSfsysReadWait(0x923);
-    menuOpen(0xD9, 1);
-    menuClose(0xD9);
-    menuCloseSync(0xD9, 1);
-    GSresFreeGroup(0x923);
-}
-
-extern "C" void menuScriptSetOpenWorldMapFlag(u8 flag) {
-    _mapFlag = flag;
-}
-
-extern "C" u8 menuScriptGetOpenWorldMapFlag(void) {
-    return _mapFlag;
-}
-
-extern "C" u16 menuScriptOpenWorldMapGetMapNumber(void) {
-    return _worldmapnum;
-}
-
-extern "C" void menuScriptOpenWorldMap(u16 num) {
-    _worldmapnum = num;
-    GSthreadSwitch();
-    menuScriptSetOpenWorldMapFlag(1);
-    GSfloorPush(0x3A8);
-    floorWaitForChange();
-}
-
-extern "C" void menuScriptMailOpenExit(void) {
-    menuPdaMailListSortExit();
-}
-
-extern "C" void menuScriptMailOpenMain(void) {
-    GSgfxVideoSetLockFrameRate(0);
-    if (menuPdaMailListSortInit(_menuScriptMailID) >= 0) {
-        menuPdaMailXDScript();
+extern "C" void menuScriptTutorialCursor(tagWINDOW_WORK* w)
+{
+    windowGetKeyInfo();
+    s32 total = *tutorialdata_number;
+    int vis = 8;
+    if (total < 8) {
+        vis = total;
     }
-    GSgfxVideoSetLockFrameRate(1);
-    menuPdaReleaseModelPointer();
-    GSmodelAllPauseAnimation();
-    menuScriptSetMailOpen(0);
-    GSfloorPop();
-}
-
-void menuScriptSetMailOpen(u8 flag) {
-    _menuPdaMailOpenFlag = flag;
-}
-
-extern "C" u8 menuScriptCheckMailOpen(void) {
-    return _menuPdaMailOpenFlag;
-}
-
-extern "C" void menuScriptMailOpenInit(void) {
-    cameraPlayAnime(0x17, 0x17CF1800, 0, 0.0f);
-    GSsndPlayNow(0x44F);
-    menuOffScreenSetPriority(0);
-    menuScriptSetMailOpen(1);
-    menuPdaSetModelPointer();
-    menuPdaZoomIn();
-}
-
-extern "C" void menuScriptInfoEsa(void) {
-    _menuScriptWork = 1;
-    menuOpenCustom(0x97, windowGetActiveID(), 0, 0, 1, 1, &_menuScriptWork);
-    menuCloseCustom(0x97, 0, 1);
-    winMsgOpen(3, 0x3E83, 1, 1);
-    winMsgClose(1);
-}
-
-extern "C" void menuScriptReciveMail(void) {
-    _menuScriptWork = 0;
-    menuOpenCustom(0x97, windowGetActiveID(), 0, 0, 1, 1, &_menuScriptWork);
-    menuCloseCustom(0x97, 0, 1);
-}
-
-extern "C" void menuScriptUsohachiCtrl(tagWINDOW_WORK *);
-extern "C" void menuScriptEeveeCtrl(tagWINDOW_WORK *);
-
-extern "C" void menuScriptPdaAddFunc(s32);
-static void _menuScriptPdaAddFunc(pdaAddFuncDef);
-static void _menuScriptReadMail(long);
-static void _getWazaData(u16, WAZAOSHIEDEF *);
-static u16 _checkWazaSub(Pokemon *);
-static u16 _checkWaza(long);
-static u16 _checkWaza2(void);
-
-static void _menuScriptPdaAddFunc(pdaAddFuncDef def) {
-    u8 rate;
-    GSmodelAllPauseAnimation();
-    menuCreateOffScreen(20.0f / GSgfxVideoGetVsyncRate(), 50.0f);
-    menuOffScreenCheckEnable(1);
-    _PdaAddFunc = def;
-    GSfloorPush(0x38C);
-    floorSetFadeScript(0, 0);
-    floorWaitForChange();
-    menuReleaseOffScreen(0.0f / GSgfxVideoGetVsyncRate());
-    GSmodelAllUnpauseAnimation();
-}
-
-extern "C" void menuScriptPdaAddFunc(s32 def) {
-    _menuScriptPdaAddFunc((pdaAddFuncDef)def);
-}
-
-static void _menuScriptReadMail(long id) {
-    u8 rate;
-    GSmodelAllPauseAnimation();
-    menuCreateOffScreen(20.0f / GSgfxVideoGetVsyncRate(), 50.0f);
-    menuOffScreenCheckEnable(1);
-    _menuScriptMailID = id;
-    GSfloorPush(0x393);
-    void *flag = mailGetOpenFlag(id);
-    if (flag != 0) {
-        GSflagSet(flag, 1);
-    }
-    floorSetFadeScript(0, 0);
-    floorWaitForChange();
-    menuReleaseOffScreen(0.0f / GSgfxVideoGetVsyncRate());
-    GSmodelAllUnpauseAnimation();
-}
-
-extern "C" void menuScriptReadMail(s32 id) {
-    _menuScriptReadMail(id);
-}
-
-extern "C" void menuScriptInfoRelive(void *arg, u8 first) {
-    Pokemon *p = (Pokemon *)arg;
-    u16 dark = pokemonBiosGetDarkpokemonDataId(p);
-    _menuScriptWork = 2;
-    menuOpenCustom(0x97, windowGetActiveID(), 0, 0, 1, 1, &_menuScriptWork);
-    menuCloseCustom(0x97, 0, 1);
-    if (p != 0) {
-        void *name = pokemonBiosGetNicknamePtr(p);
-        msgctrlSetValue(0x32, (u32)name);
-        if (first != 0) {
-            winMsgOpen(3, 0x3E81, 1, 1);
-        } else {
-            winMsgOpen(3, 0x3E82, 1, 1);
-        }
-        winMsgClose(1);
-        darkPokemonBiosSetInformationFlag(dark, 1);
-    }
-}
-
-extern "C" s32 menuScriptEevee(void) {
-    s32 ret;
-    if (GSfloorGetCurrent() != 0x97) {
-        u16 *name = floorGetPlaceName(0x97);
-        msgctrlSetValue(0x31, (u32)name);
-        winMsgOpen(3, 0xEFF7, 1, 1);
-        winMsgClose(1);
-        return -1;
-    }
-    GSfsysReadWait(0x8CA);
-    winMsgOpen(3, 0xA0CF, 0, 1);
-    ret = menuOpen(0xAF, 1);
-    menuClose(0xAF);
-    winMsgClose(1);
-    menuCloseSync(0xAF, 1);
-    GSresFreeGroup(0x8CA);
-    return ret;
-}
-
-extern "C" s32 menuScriptTutorial(void) {
-    s32 args = 0;
-    s32 ret;
-    if (GSfloorGetCurrent() != 0x8D) {
-        u16 *name = floorGetPlaceName(0x8D);
-        msgctrlSetValue(0x31, (u32)name);
-        winMsgOpen(3, 0xEFF7, 1, 1);
-        winMsgClose(1);
-        return -1;
-    }
-    GSfsysReadWait(0x8D1);
+    u32 rep = windowGetKeyRepeat();
     CURSOR c = cursorBiosGetPos(0xE);
-    c.selected = 0;
-    c.first = 0;
-    CURSOR tmp = c;
-    cursorBiosSetPos(0xE, &tmp);
-    ret = menuOpenCustom(0xB8, windowGetActiveID(), &args, 0, 1, 0);
-    if (ret < 0) {
-        _tutorialSelect = ret;
-    } else {
-        fightEncountDataBiosSetDiskId(fightEncountDataBiosGetPtr(0xD), tutorialdata[ret]);
+    if (vis != 0) {
+        if ((u16)rep & 1) {
+            c.selected--;
+        } else if ((u16)rep & 2) {
+            c.selected++;
+        }
+        if (c.selected < 0) {
+            c.first += c.selected;
+            c.selected = 0;
+            if (c.first < 0) {
+                c.first = 0;
+                c.selected = 0;
+            }
+        } else if (c.selected >= vis) {
+            c.first += c.selected - (vis - 1);
+            c.selected = (s8)(vis - 1);
+            if (c.first + c.selected >= total) {
+                c.selected = (s8)(vis - 1);
+                c.first = (s8)(total - vis);
+            }
+        }
     }
-    menuClose(0xB8);
-    menuCloseSync(0xB8, 1);
-    GSresFreeGroup(0x8D1);
-    if ((u32)*tutorialdata_number == (u32)(_tutorialSelect + 1)) {
+    if (c.selected == (s8)(*tutorialdata_number - 1)) {
         _tutorialSelect = -1;
-    }
-    return _tutorialSelect;
-}
-
-extern "C" s32 menuScriptWazaBasan(s8 *flag) {
-    s32 ret;
-    *flag = 0;
-    _wazaFlag = 0;
-    _WazaNum = _checkWaza2();
-    if (_WazaNum == 0) {
-        ret = 0;
     } else {
-        CURSOR c = cursorBiosGetPos(0xF);
-        s32 sel = c.selected;
-        ret = menuOpenCustom(0xE5, windowGetActiveID(), &sel, 0, 1, 0);
-        if (ret >= 0) {
-            if (_WazaNum == ret + 1) {
-                ret = -1;
-            } else {
-                if (_wazalist[ret].released != 0) {
-                    if (flag != 0) {
-                        *flag = 1;
-                    }
-                    _wazaFlag = 1;
-                }
-                ret = wazaoshie_data[(u16)ret].id;
-            }
-        }
-        menuClose(0xE5);
-        menuCloseSync(0xE5, 1);
+        _tutorialSelect = c.selected + c.first;
     }
-    _checkWaza2Release();
-    return ret;
+    w->pos.first = c.first;
+    w->pos.selected = c.selected;
+    ((CURSOR(*)(s32,CURSOR))cursorBiosSetPos)(0xE, c);
 }
 
-extern "C" s32 menuScriptWazaMeijin(s32 pokemonIndex) {
-    s32 ret;
-    _WazaNum = _checkWaza(pokemonIndex);
-    if (_WazaNum == 0) {
-        ret = -1;
-    } else {
-        ret = menuOpen(0xE4, 1);
-        if (ret >= 0) {
-            if (_WazaNum == ret + 1) {
-                ret = -1;
-            } else {
-                ret = _wazalist[ret].id;
-            }
-        }
-        menuClose(0xE4);
-        menuCloseSync(0xE4, 1);
-    }
-    _checkWazaRelease();
-    return ret;
-}
-
-static void _getWazaData(u16 id, WAZAOSHIEDEF *out) {
-    void *data;
-    WAZAOSHIEDEF *w;
-    data = wazaDataBiosGetPtr(id);
-    if (out != 0) w = out; else w = &_wazawork;
-    w->id = id;
-    w->name = wazaDataBiosGetName(data);
-    w->pp = wazaDataBiosGetPp(data);
-    w->type = wazaDataBiosGetZokuseiDataId(data);
-    w->power = wazaDataBiosGetIryoku(data);
-    w->accuracy = wazaDataBiosGetAvg(data);
-    w->doc = wazaDataBiosGetDoc(data);
-    w->released = 0;
-}
-
-static u16 _checkWazaSub(Pokemon *p) {
-    void *data;
-    u16 count;
-    u16 i;
-    u32 did = pokemonBiosGetPokemonDataId(p);
-    data = pokemonDataBiosGetPtr(did);
-    count = 0;
-    memset(_tempwazaid, 0, 0x2A);
-    if (data != 0) {
-        for (i = 0; i < 0x14; i++) {
-            u8 lv = pokemonDataBiosGetGetWazaLevel(data, i);
-            if (lv == 0) {
-                break;
-            }
-            if (pokemonBiosGetLevel(p) >= lv && !_checkWazaOverlap(_tempwazaid, pokemonDataBiosGetGetWazaDataId(data, i), count)) {
-                count++;
-            }
-        }
-    }
-    return count;
-}
-
-static u16 _checkWaza(long index) {
-    Pokemon *p;
-    u16 count = 0;
-    u16 i;
-    p = _getPokemonPtr(index);
-    if (p != 0 && _checkRelive(p)) {
-        count = _checkWazaSub(p);
-    }
-    if (count != 0) {
-        count++;
-        _wazalist = (WAZAOSHIEDEF *)__nwa__FUl(count * 0x18);
-        for (i = 0; i < (u16)count - 1; i++) {
-            _getWazaData(_tempwazaid[i], &_wazalist[i]);
-        }
-        _wazalist[i].id = 0;
-    }
-    return count;
+extern "C" void menuScriptUsohachiCtrl(tagWINDOW_WORK *win) {
+    menuScriptEeveeCtrl(win);
 }
 
 extern "C" void menuScriptWazaOshieCtrl(tagWINDOW_WORK *win) {
@@ -698,122 +960,115 @@ extern "C" void menuScriptWazaOshieCtrl(tagWINDOW_WORK *win) {
     }
 }
 
-extern "C" void menuScriptUsohachiCtrl(tagWINDOW_WORK *win) {
-    menuScriptEeveeCtrl(win);
-}
-
-extern "C" void menuScriptTutorialCtrl(tagWINDOW_WORK *win) {
-    menuDataBiosGetPtr(win->menu);
-    switch (win->phase) {
-    case 0:
-        if (win->step == 0) {
-            winSeqSetMenu(win->menu, 0x24);
-            win->step = 1;
-        }
-        break;
-    case 3:
-        if (win->step == 0) {
-            winSeqSetMenu(win->menu, 0x17B);
-            win->step = 1;
-        }
-        break;
+static u16 _wazaOshieWazaNum(tagWINDOW_WORK *win) {
+    if (win->menu == 0xE4) {
+        return _WazaNum;
     }
+    return _WazaNum;
 }
 
-extern "C" void menuScriptEeveeCtrl(tagWINDOW_WORK *win) {
-    switch (win->phase) {
-    case 0:
-        if (win->step == 0) {
-            winSeqSetMenu(win->menu, 0x24);
-            win->step = 1;
-            switch (win->menu) {
-            case 0xD9:
-                break;
-            case 0xAF:
-                menuSetStatus(win->menu, 8);
-                break;
+static void _wazaOshieCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
+    s32 i = 0;
+    CURSOR c = win->pos;
+    const s32 ids[9] = {0x6BB, 0x6BC, 0x6BD, 0x6BE, 0x6BF, 0x6C0, 0x6C1, 0x6C2, 0x6C3};
+    for (i = 0; i < 9; i++) {
+        if (sprite->id == ids[i]) {
+            break;
+        }
+    }
+    if (i == c.selected) {
+        winSpriteSetDisp(sprite, true);
+        return;
+    }
+    winSpriteSetDisp(sprite, false);
+}
+
+extern "C" void menuScriptWazaOshieHook(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite) {
+    u16 index;
+    s16 y;
+    u32 color;
+    u32 layer;
+    u16 count;
+    WAZAOSHIEDEF* selected;
+    CURSOR cursor = window->pos;
+    count = _wazaOshieWazaNum(window);
+    selected = _getWaza2Pointer(cursor.selected + cursor.first);
+    layer = winSpriteGetLayerID(window, sprite);
+    color = WIN_ALPHA(window) | ~0xFF;
+    switch(sprite->id) {
+    case 0x6bb:case 0x6bc:case 0x6bd:case 0x6be:case 0x6bf:case 0x6c0:case 0x6c1:case 0x6c2:case 0x6c3:
+        _wazaOshieCursor(window,sprite);return;
+    case 0x6b6:case 0x6b7:case 0x6b8:
+        if(window->menu==0xe4)winSpriteSetDisp(sprite,true);else winSpriteSetDisp(sprite,false);return;
+    case 0x6b9:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,count,9,0);return;
+    case 0x6ba:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,count,9,1);return;
+    case 0x6d5:
+        if(count) {
+            MENU_ITEM_dd_* clip=menuItemBiosGetPtr(window->menu,0x6d5);
+            MENU_ITEM_dd_* item=menuItemBiosGetPtr(window->menu,sprite->id);
+            spriteSetScissor(layer,clip->x-item->x,clip->y-item->y,clip->width,clip->height);
+            index = 0;
+            y = -cursor.first * 31;
+            for (; index < count; y += 31, index++) {
+                if (index >= cursor.first - 1 && index < cursor.first + 10) {
+                    WAZAOSHIEDEF* entry = _getWaza2Pointer(index);
+                    if(entry->id) {
+                        GSmsgPrint2(layer,0,y,color,entry->name);
+                        if(window->menu==0xe4) {
+                            msgctrlSetValue(0x50,1000);
+                            GSmsgPrint2(layer,(s16)(sprite->width-(GSmsgGetRect(0x4359)>>16)),y,color,0x4359);
+                        }else if(entry->released) {
+                            ScriptSpriteValue* value=(ScriptSpriteValue*)menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x241));
+                            windowDrawSprite((s16)(item->width-value->width),(s16)(y+(18-value->height)/2),window,0x241,0,layer);
+                        }
+                    }else if(window->menu==0xe4)GSmsgPrint2(layer,0,y,color,0x4295);
+                    else GSmsgPrint2(layer,0,y,color,0xc753);
+                }
+            }
+            spriteClearScissor(layer);
+        }
+        return;
+    case 0x6d4:
+        if(selected) {
+            if(selected->id)GSmsgPrint2(layer,0,0,color,selected->doc);
+            else {u32 message;if(window->menu==0xe4)message=0xc6da;else message=0xc73b;GSmsgPrint2(layer,0,0,color,message);}
+        }
+        return;
+    case 0x6d6:
+        if(window->menu==0xe4) {
+            u32 coupons = heroBiosGetPokecoupon(savedataGetStatus(0, 2));
+            msgctrlSetValue(0x50, coupons);
+            GSmsgPrint2(layer,(s16)(sprite->width-(GSmsgGetRect(0x434e)>>16)),0,color,0x434e);
+        }
+        return;
+    case 0x6cf:
+        if(selected && selected->id) {msgctrlSetValue(0x5f,selected->pp);GSmsgPrintRect(layer,0,0,sprite->width,sprite->height,color,0x4287);}
+        return;
+    case 0x6cd:
+        if(selected && selected->id) {
+            u32 accuracy = selected->accuracy;
+            if (accuracy <= 1) {
+                GSmsgPrintRight(layer, 0, 0, sprite->width, sprite->height, color, 0x3af6);
+            } else {
+                msgctrlSetValue(0x34, accuracy);
+                GSmsgPrintRect(layer, 0, 0, sprite->width, sprite->height, color, 0x4287);
             }
         }
-        break;
-    case 3:
-        if (win->step == 0) {
-            winSeqSetMenu(win->menu, 0x17B);
-            win->step = 1;
+        return;
+    case 0x6ce:
+        if(selected && selected->id) {
+            if(selected->power<=1)GSmsgPrintRight(layer,0,0,sprite->width,sprite->height,color,0x3af6);
+            else {msgctrlSetValue(0x34,selected->power);GSmsgPrintRect(layer,0,0,sprite->width,sprite->height,color,0x4287);}
         }
-        break;
+        return;
+    case 0x6b5:
+        if(selected && selected->id) {
+            MENU_ITEM_dd_* item=menuItemBiosGetPtr(window->menu,0x6b5);
+            s32 spriteID=zokuseiBiosGetSpriteID(selected->type);
+            windowDrawSprite2(0,0,item->width,item->height,color,window,spriteID,0,layer);
+        }
+        return;
     }
-}
-
-extern "C" void menuUsohachiHook(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
-    switch (sprite->id) {
-    case 0x661:
-        if (win->menu == 0xD9) {
-            windowDrawSprite(0, 0, win, 0x2D8, 0, winSpriteGetLayerID(win, sprite));
-        } else {
-            windowDrawSprite(0, 0, win, 0x341, 0, winSpriteGetLayerID(win, sprite));
-        }
-        break;
-    }
-}
-
-extern "C" s32 menuScriptMoneyDraw(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
-    if (win->menu == 0xD8) {
-        switch (sprite->id) {
-        case 0x65B:
-            msgctrlSetValue(0x50, (u32)heroGetStatus(0, 0xC, 0));
-            GSmsgPrint2(win->layer, (s16)(sprite->width - (s16)(GSmsgGetRect(0x434E) >> 16)), 0, -1, 0x434E);
-            break;
-        case 0x65A:
-            windowDrawSprite2(0, 0, sprite->width, sprite->height, win->color90, win, 0x2D3, 0, winSpriteGetLayerID(win, sprite));
-            break;
-        }
-    } else {
-        switch (sprite->id) {
-        case 0x65B:
-            msgctrlSetValue(0x50, (u32)heroGetStatus(0, 0xD, 0));
-            GSmsgPrint2(win->layer, (s16)(sprite->width - (s16)(GSmsgGetRect(0x434E) >> 16)), 0, -1, 0x434E);
-            break;
-        case 0x65A:
-            windowDrawSprite2(0, 0, sprite->width, sprite->height, win->color90, win, 0x2F9, 0, winSpriteGetLayerID(win, sprite));
-            break;
-        }
-    }
-    return 0;
-}
-
-static u16 _checkWaza2(void) {
-    s32 i;
-    u16 count = 0;
-    u16 released = 0;
-    u16 *ids = (u16 *)__nwa__FUl(*wazaoshie_data_number * 2);
-    u8 *rel = (u8 *)__nwa__FUl(*wazaoshie_data_number);
-    for (i = 0; i < *wazaoshie_data_number; i++) {
-        struct { s32 value; } idx;
-        idx.value = wazaoshie_data[i].floorIndex;
-        if (GSflagGet(0x3C4) >= flag_etc[idx.value].value) {
-            u16 id = wazaoshie_data[i].id;
-            ids[(u16)count] = id;
-            rel[(u16)count] = GSflagTest(wazaoshie_data[i].flag, id);
-            if (rel[(u16)count] != 0) {
-                released++;
-            }
-            count++;
-        }
-    }
-    if (released == count) {
-        count = 0;
-    } else if (count != 0) {
-        count++;
-        _wazalist = (WAZAOSHIEDEF *)__nwa__FUl(count * 0x18);
-        for (i = 0; i < (u16)count - 1; i++) {
-            _getWazaData(ids[i], &_wazalist[i]);
-            _wazalist[i].released = rel[i];
-        }
-        _wazalist[i].id = 0;
-    }
-    __dla__FPv(ids);
-    __dla__FPv(rel);
-    return count;
 }
 
 extern "C" s32 menuScriptWazaOshieCursor(tagWINDOW_WORK *win) {
@@ -868,276 +1123,6 @@ extern "C" s32 menuScriptWazaOshieCursor(tagWINDOW_WORK *win) {
     return 0;
 }
 
-static void _wazaOshieCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
-    s32 i = 0;
-    CURSOR c = win->pos;
-    const s32 ids[9] = {0x6BB, 0x6BC, 0x6BD, 0x6BE, 0x6BF, 0x6C0, 0x6C1, 0x6C2, 0x6C3};
-    for (i = 0; i < 9; i++) {
-        if (sprite->id == ids[i]) {
-            break;
-        }
-    }
-    if (i == c.selected) {
-        winSpriteSetDisp(sprite, true);
-        return;
-    }
-    winSpriteSetDisp(sprite, false);
-}
-
-extern "C" void menuScriptTutorialCursor(tagWINDOW_WORK* w)
-{
-    windowGetKeyInfo();
-    s32 total = *tutorialdata_number;
-    int vis = 8;
-    if (total < 8) {
-        vis = total;
-    }
-    u32 rep = windowGetKeyRepeat();
-    CURSOR c = cursorBiosGetPos(0xE);
-    if (vis != 0) {
-        if ((u16)rep & 1) {
-            c.selected--;
-        } else if ((u16)rep & 2) {
-            c.selected++;
-        }
-        if (c.selected < 0) {
-            c.first += c.selected;
-            c.selected = 0;
-            if (c.first < 0) {
-                c.first = 0;
-                c.selected = 0;
-            }
-        } else if (c.selected >= vis) {
-            c.first += c.selected - (vis - 1);
-            c.selected = (s8)(vis - 1);
-            if (c.first + c.selected >= total) {
-                c.selected = (s8)(vis - 1);
-                c.first = (s8)(total - vis);
-            }
-        }
-    }
-    if (c.selected == (s8)(*tutorialdata_number - 1)) {
-        _tutorialSelect = -1;
-    } else {
-        _tutorialSelect = c.selected + c.first;
-    }
-    w->pos.first = c.first;
-    w->pos.selected = c.selected;
-    ((CURSOR(*)(s32,CURSOR))cursorBiosSetPos)(0xE, c);
-}
-
-
-static inline s32 scriptCopyWordPrefix(const u16 *text,u16 *line,const s32 &endWord) {
-    u32 ch;
-    u16 *dst;
-    const u16 *src;
-    s32 spaces;
-    s32 copied;
-    spaces = 0;
-    copied = 0;
-    src = text;
-    dst = line;
-    for (;;) {
-        ch = *src;
-        if (ch == 0x20 || ch == 0x3000) {
-            if (spaces == endWord) break;
-            *dst = ch;
-            spaces++;
-        } else {
-            if (ch == 0) break;
-            *dst = ch;
-        }
-        src++;
-        dst++;
-        copied++;
-    }
-    line[copied++] = 0;
-    return copied;
-}
-
-static inline void _tokuseiSplit(u16 *text, u16 *buf1, u16 *buf2, s32 fitLine) {
-    s32 spaceIdx = 0;
-    s32 count1 = 0;
-    s32 count2 = 0;
-    u8 second = 0;
-    u32 total = GSmsgGetCharLength(text);
-    u16 ch;
-    u16 *src;
-    u32 idx = 0;
-    src = text;
-    for (;; src++, idx++) {
-        ch = *src;
-        if (ch == 0xFFFF) {
-            continue;
-        }
-        if (ch == 0x20 || ch == 0x3000) {
-            if (spaceIdx == fitLine - 1) {
-                second = 1;
-            } else if (second != 0) {
-                buf2[count2++] = ch;
-            } else {
-                buf1[count1++] = ch;
-            }
-            spaceIdx++;
-            continue;
-        }
-        if (ch == 0) {
-            if (total <= idx) {
-                break;
-            }
-            continue;
-        }
-        if (second != 0) {
-            buf2[count2++] = ch;
-        } else {
-            buf1[count1++] = ch;
-        }
-    }
-    buf1[count1] = 0;
-    buf2[count2] = 0;
-}
-
-static void _menuScriptTokuseiSetumei(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite, CURSOR *cursor, POKEMON_DATA_dd_ *pdata) {
-    MENU_ITEM_dd_ *item = menuItemBiosGetPtr(0xAF, sprite->id);
-    if (u8 tokusei = pokemonDataBiosGetTokuseiDataId(pdata, 0)) {
-        u16 *buf1;
-        u16 *text;
-        u32 size;
-        u16 *buf2;
-        s32 line;
-        u32 len;
-        s32 fitLine;
-        u8 overflow;
-        text = GSmsgGetGSchar((s32)pokemonTokuseiDataBiosGetDoc(pokemonTokuseiDataBiosGetPtr(tokusei)));
-        len = GSmsgGetCharLength(text);
-        size = (len + 2) * 2;
-        buf1 = (u16 *)__nwa__FUl(size);
-        buf2 = (u16 *)__nwa__FUl(size);
-        line = 0;
-        fitLine = 0;
-        overflow = 0;
-        for (;;) {
-            s32 out = scriptCopyWordPrefix(text,buf1,line++);
-            msgctrlSetValue(0x37, (u32)buf1);
-            u32 rect = GSmsgGetRect(0x4276);
-            if ((rect >> 16) <= (u32)item->width) {
-                fitLine = line;
-            }
-            if (!((rect / 65536) <= (u32)*(volatile s16 *)&item->width)) {
-                overflow = 1;
-            }
-            if (!((u32)out < len)) {
-                break;
-            }
-        }
-        if (overflow != 0) {
-            _tokuseiSplit(text, buf1, buf2, fitLine);
-            msgctrlSetValue(0x37, (u32)buf1);
-            GSmsgPrint2(win->layer, 0, 0, WIN_ALPHA(win) | ~0xFF, 0x4276);
-            msgctrlSetValue(0x37, (u32)buf2);
-            GSmsgPrint2(win->layer, 0, 0x12, WIN_ALPHA(win) | ~0xFF, 0x4276);
-        } else {
-            msgctrlSetValue(0x37, (u32)text);
-            GSmsgPrint2(win->layer, 0, 0, WIN_ALPHA(win) | ~0xFF, 0x4276);
-        }
-        __dla__FPv(buf1);
-        __dla__FPv(buf2);
-    }
-}
-
-extern "C" {
-void menuPdaSubCheckUpDownCursor(tagWINDOW_WORK*,tagSPRITE_WORK*,CURSOR*,u32,s32,s32);
-void spriteSetScissor(s32,s32,s32,s32,s32);
-void spriteClearScissor(s32);
-void GSmsgPrintRect(s32,s32,s32,s32,s32,u32,u32);
-void GSmsgPrintRight(s32,s32,s32,s32,s32,u32,u32);
-void* menuSpriteBiosGetPtr(s16);
-void* menuSpriteBiosGetValPtr(void*);
-u32 heroBiosGetPokecoupon(void*);
-s32 zokuseiBiosGetSpriteID(u8);
-}
-struct ScriptSpriteValue {s16 x,y,width,height;};
-extern "C" void menuScriptWazaOshieHook(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite) {
-    CURSOR cursor;
-    *(u32*)&cursor=*(u32*)&window->pos;
-    u32 count=_wazaOshieWazaNum(window);
-    WAZAOSHIEDEF* selected=_getWaza2Pointer(cursor.selected+cursor.first);
-    u32 color;
-    s32 layer=winSpriteGetLayerID(window,sprite);
-    color=WIN_ALPHA(window)|~255;
-    switch(sprite->id) {
-    case 0x6bb:case 0x6bc:case 0x6bd:case 0x6be:case 0x6bf:case 0x6c0:case 0x6c1:case 0x6c2:case 0x6c3:
-        _wazaOshieCursor(window,sprite);return;
-    case 0x6b6:case 0x6b7:case 0x6b8:
-        if(window->menu==0xe4)winSpriteSetDisp(sprite,true);else winSpriteSetDisp(sprite,false);return;
-    case 0x6b9:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,(u16)count,9,0);return;
-    case 0x6ba:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,(u16)count,9,1);return;
-    case 0x6d5:
-        if((u16)count) {
-            MENU_ITEM_dd_* clip=menuItemBiosGetPtr(window->menu,0x6d5);
-            MENU_ITEM_dd_* item=menuItemBiosGetPtr(window->menu,sprite->id);
-            spriteSetScissor(layer,clip->x-item->x,clip->y-item->y,clip->width,clip->height);
-            u32 index=0;s16 y=-cursor.first*31;
-            count=(u16)count;
-            for(;index<count;index++,y+=31) {
-                if((u16)index>=cursor.first-1 && (u16)index<cursor.first+10) {
-                    WAZAOSHIEDEF* entry=_getWaza2Pointer((u16)index);
-                    if(entry->id) {
-                        GSmsgPrint2(layer,0,y,color,entry->name);
-                        if(window->menu==0xe4) {
-                            msgctrlSetValue(0x50,1000);
-                            GSmsgPrint2(layer,(s16)(sprite->width-(GSmsgGetRect(0x4359)>>16)),y,color,0x4359);
-                        }else if(entry->released) {
-                            ScriptSpriteValue* value=(ScriptSpriteValue*)menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(0x241));
-                            windowDrawSprite((s16)(item->width-value->width),(s16)(y+(18-value->height)/2),window,0x241,0,layer);
-                        }
-                    }else if(window->menu==0xe4)GSmsgPrint2(layer,0,y,color,0x4295);
-                    else GSmsgPrint2(layer,0,y,color,0xc753);
-                }
-            }
-            spriteClearScissor(layer);
-        }
-        return;
-    case 0x6d4:
-        if(selected) {
-            if(selected->id)GSmsgPrint2(layer,0,0,color,selected->doc);
-            else {u32 message;if(window->menu==0xe4)message=0xc6da;else message=0xc73b;GSmsgPrint2(layer,0,0,color,message);}
-        }
-        return;
-    case 0x6d6:
-        if(window->menu==0xe4) {
-            msgctrlSetValue(0x50,heroBiosGetPokecoupon(savedataGetStatus(0,2)));
-            GSmsgPrint2(layer,(s16)(sprite->width-(GSmsgGetRect(0x434e)>>16)),0,color,0x434e);
-        }
-        return;
-    case 0x6cf:
-        if(selected && selected->id) {msgctrlSetValue(0x5f,selected->pp);GSmsgPrintRect(layer,0,0,sprite->width,sprite->height,color,0x4287);}
-        return;
-    case 0x6cd:
-        if(selected && selected->id) {
-            if((u8)selected->accuracy<=1)GSmsgPrintRight(layer,0,0,sprite->width,sprite->height,color,0x3af6);
-            else {msgctrlSetValue(0x34,(u8)selected->accuracy);GSmsgPrintRect(layer,0,0,sprite->width,sprite->height,color,0x4287);}
-        }
-        return;
-    case 0x6ce:
-        if(selected && selected->id) {
-            if(selected->power<=1)GSmsgPrintRight(layer,0,0,sprite->width,sprite->height,color,0x3af6);
-            else {msgctrlSetValue(0x34,selected->power);GSmsgPrintRect(layer,0,0,sprite->width,sprite->height,color,0x4287);}
-        }
-        return;
-    case 0x6b5:
-        if(selected && selected->id) {
-            MENU_ITEM_dd_* item=menuItemBiosGetPtr(window->menu,0x6b5);
-            s32 spriteID=zokuseiBiosGetSpriteID(selected->type);
-            windowDrawSprite2(0,0,item->width,item->height,color,window,spriteID,0,layer);
-        }
-        return;
-    }
-}
-
-u32 deckDataVirtualDB_GetTitle(u16);
-u32 deckDataVirtualDB_GetFlag(u16);
-u32 deckDataVirtualDB_GetExplanetion2(u16);
 extern "C" void menuScriptTutorialHook(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite) {
     CURSOR cursor=cursorBiosGetPos(14);
     switch(sprite->id) {
@@ -1171,7 +1156,11 @@ extern "C" void menuScriptTutorialHook(tagWINDOW_WORK* window,tagSPRITE_WORK* sp
         while(index<8) {if(sprite->id==*entry)break;entry++;index++;}
         u16 id=tutorialdata[index+cursor.first];
         u32 flag=id?deckDataVirtualDB_GetFlag(id):0;
-        if(((u8(*)(void*))GSflagTest)((void*)flag) && flag)winSpriteSetDisp(sprite,true);else winSpriteSetDisp(sprite,false);
+        if (GSflagTest(flag) && flag != 0) {
+            winSpriteSetDisp(sprite, true);
+        } else {
+            winSpriteSetDisp(sprite, false);
+        }
         return;
     }
     case 0x7ee: {
@@ -1181,4 +1170,26 @@ extern "C" void menuScriptTutorialHook(tagWINDOW_WORK* window,tagSPRITE_WORK* sp
     case 0x7f0:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,*tutorialdata_number,8,0);return;
     case 0x7f1:menuPdaSubCheckUpDownCursor(window,sprite,&cursor,*tutorialdata_number,8,1);return;
     }
+}
+
+extern "C" void menuScriptPdaAddFuncInit(void) {
+    GSsndPlayNow(0x454);
+    cameraPlayAnime(0x17, 0x17CF1800, 0, 0.0f);
+    menuPdaModelVisibility(0x17CF1000, false);
+}
+
+extern "C" void menuScriptPdaAddFuncMain(void) {
+    GSgfxVideoSetLockFrameRate(0);
+    menuOffScreenSetPriority(0);
+    menuPdaSetModelPointer();
+    menuPdaModelVisibility(0x17CF1000, true);
+    menuPdaAddFunc();
+    menuPdaScript(_PdaAddFunc);
+    GSgfxVideoSetLockFrameRate(1);
+    menuPdaReleaseModelPointer();
+    GSmodelAllPauseAnimation();
+    GSfloorPop();
+}
+
+extern "C" void menuScriptPdaAddFuncExit(void) {
 }

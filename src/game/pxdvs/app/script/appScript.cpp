@@ -325,8 +325,8 @@ int AppScript::getExtendVariable(tigaVariant* var, int id, int) {
     }
     if (id >= 0x200 && id <= 0x2FF) {
         int idx = id - 0x200;
-        if (idx >= 0 && idx < field968) {
-            appScriptSetVar(var, 7, (void*)((s32*)field96C)[idx]);
+        if (idx >= 0 && idx < arrayCount) {
+            appScriptSetVar(var, 7, arrays[idx]);
         } else {
             var->type = 1;
             var->value.integer = 0;
@@ -352,28 +352,28 @@ int AppScript::fncPrintf(tigaVariant* args) {
                 if (args[argument].type == 1) {
                     length = sprintf(buffer.text, "%s%d", buffer.text, appScriptGetInt(&args[argument]));
                 } else {
-                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->lineNumber, argument);
                     return 0;
                 }
             } else if (*format == 'f' || *format == 'F') {
                 if (args[argument].type == 2) {
                     length = sprintf(buffer.text, "%s%f", buffer.text, appScriptGetFloat(&args[argument]));
                 } else {
-                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->lineNumber, argument);
                     return 0;
                 }
             } else if (*format == 's' || *format == 'S') {
                 if (args[argument].type == 3) {
                     length = sprintf(buffer.text, "%s%s", buffer.text, scriptPrintString(&args[argument], (char*)field954));
                 } else {
-                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->lineNumber, argument);
                     return 0;
                 }
             } else if (*format == 'c' || *format == 'C') {
                 if (args[argument].type == 3) {
                     length = sprintf(buffer.text, "%s%c", buffer.text, scriptPrintString(&args[argument], (char*)field954));
                 } else {
-                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->lineNumber, argument);
                     return 0;
                 }
             } else if (*format == 'v' || *format == 'V') {
@@ -381,7 +381,7 @@ int AppScript::fncPrintf(tigaVariant* args) {
                     GSvec* vector = appScriptGetVec(&args[argument]);
                     length = sprintf(buffer.text, "%s x:%f y:%f z:%f", buffer.text, vector->param1, vector->param2, vector->param3);
                 } else {
-                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->lineNumber, argument);
                     return 0;
                 }
             } else if (*format == 'p' || *format == 'P') {
@@ -389,7 +389,7 @@ int AppScript::fncPrintf(tigaVariant* args) {
                     GSresID* person = scriptPrintPeople(&args[argument]);
                     length = sprintf(buffer.text, "%s grpID:%d resID:%d", buffer.text, person->group, person->id);
                 } else {
-                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->field14C, argument);
+                    GSlogWrite("script error line[%d] : printf argument %d error \n", Tiga::m_cpCurrentObject->currentThread->lineNumber, argument);
                     return 0;
                 }
             }

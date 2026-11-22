@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fight/fightMenuMessage.hpp>
 #include <global.h>
 extern "C" f64 sqrt(f64);
 extern "C" {
@@ -5,7 +6,7 @@ extern u8 ActionSeqNo,WildPokemonCatchFlag;extern u8 ServerWork[8];extern u32 Ge
 const u16 *GSmsgGetGSchar(u32);u32 GSthreadGetCurrentThread();u16 HSD_Rand();u8 darkPokemonBiosGetHokakuritu(u16);u8 darkPokemonBiosGetSnatchSuccessFlag(u16);u8 darkPokemonBiosGetLevel(u16);void *darkPokemonGetDarkPokemon(u32);
 void *fightFloorGetFightOutPokemonPtrToFightTrainerPtr(void*,void*);void *fightFloorGetFightOutPokemonPtrToHeroPtr(void*,void*);s32 fightFloorGetFightPokemonEntryCntInc(void*);u32 fightFloor_GetEncountDataId(void*);u32 fightFloor_GetEncountFloorId();u8 fightFloor_GetFightKind(void*);u8 fightFloor_GetFightKindBossFlag(void*);u8 fightFloor_GetFightKindDoZukanTukamaetaFlag(void*);u8 fightFloor_GetFightKindGetFriendFlag(void*);u8 fightFloor_GetFightType(void*);u8 fightFloor_GetFightTypeEntryPokemonNum(void*);s32 fightFloor_GetStockPokemonNum(void*);u8 fightFloor_GetTikeiDataId(void*);u8 fightFloor_GetTrainer(void*);u32 fightFloor_GetTurnCount(void*);
 void fightFloor_SetStockPokemonBallID(void*,s32,u8);void fightFloor_SetStockPokemonNum(void*,u8);void fightFloor_SetStockPokemonPtr(void*,s32,void*);u32 fightItem_GetCount(void*);u16 fightItem_GetItemDataId(void*);
-void fightMainAllCamera(s32,s32);void fightMenuCloseMsg();u32 fightMenuGetFightOutPokemonPtrToStatusMenuId(void*,u32,s32);void fightMenuOpenMsg(u32);void fightMsgctrlSetValue(u32,u32);
+void fightMainAllCamera(s32,s32);void fightMenuCloseMsg();u32 fightMenuGetFightOutPokemonPtrToStatusMenuId(void*,u32,s32);void fightMsgctrlSetValue(u32,u32);
 const u16 *fightOutPokemonGetNicknamePtr(void*);void *fightOutPokemonGetPokemonPtr(void*);void fightOutPokemonHokakuEffect(void*,u8,u16,u8,u8*);u8 fightOutPokemonIsJoutaiDataId(void*,u16);u8 fightOutPokemonIsZokuseiDataId(void*,u16);void *fightOutPokemon_GetFightItemPtr(void*);void *fightOutPokemon_GetFightPokemonPtr(void*);void *fightOutPokemon_GetMotoFightPokemonPtr(void*);
 void fightPokemonCreate(void*,void*,void*,s32);void fightPokemonGetFriendFormPokemonFriendFilterId(void*,s32);void *fightPokemonGetPokemonPtr(void*);void fightPokemon_SetCatchEntryFlag(void*,u8);void fightPokemon_SetHokakuFlag(void*,u8);void fightSeqCheckSetHensinBuffToMotoFightPokemon(void*,u16);void fightSeqKizetuInit(void*);void fightSeqOpenMsg(u32);u8 *fightSeq_GetWazaSeq();void fightSeq_JumpWazaSeq(const u8*);void fightSeq_NextWazaSeq(u32);
 void *fightTargetGetPtrAsNowFightType(u32,s32);void fightTrainerHokakuThrowEffect(void*,u16,u8);u8 fightTrainerIsGcHero(void*);void *fightTrainerSearchInvalidFightPokemonPtr(void*,u8);void fightTrainer_SetNigeruCount(void*,u32);u8 figthOutPokemonGetLevel(void*);
@@ -116,9 +117,9 @@ u8 fightSeqItemSeq_AddPoke__FP7PokemonUcP13FIGHT_TRAINERP4Hero(void *arg0, u8 ar
     u32 exp;
     u8 revers;
     void *temp_r3_3;
-    u16 temp_r20;
-    u16 temp_r30;
-    u16 var_r4;
+    u16 hpPercent;
+    u16 previousHP;
+    u16 restoredHP;
 
     var_r29 = 0;
     temp_r28 = fightFloor_GetEncountFloorId();
@@ -134,18 +135,20 @@ u8 fightSeqItemSeq_AddPoke__FP7PokemonUcP13FIGHT_TRAINERP4Hero(void *arg0, u8 ar
         }
     }
     if (pokemonIsDarkPokemon(arg0) == 1) {
-        temp_r30 = pokemon_GetHp(arg0);
-        temp_r20 = (u16) (100 * temp_r30 / (s32) pokemon_GetMaxHp(arg0));
+        previousHP = pokemon_GetHp(arg0);
+        u16 maxHP = pokemon_GetMaxHp(arg0);
+        hpPercent = previousHP * 100 / maxHP;
         temp_r3 = darkPokemonBiosGetLevel(pokemon_GetDarkpokemonDataId(arg0));
         pokemon_SetLevel(arg0, temp_r3);
         exp = pokemonGetLevelToExp(arg0, temp_r3);
         pokemon_SetExp(arg0, exp);
         pokemonResetBasisStatus(arg0);
-        var_r4 = (u16) ((s32) (temp_r20 * pokemon_GetMaxHp(arg0)) / 100);
-        if ((var_r4 == 0) && (temp_r30 != 0)) {
-            var_r4 = 1;
+        maxHP = pokemon_GetMaxHp(arg0);
+        restoredHP = hpPercent * maxHP / 100;
+        if ((restoredHP == 0) && (previousHP != 0)) {
+            restoredHP = 1;
         }
-        pokemon_SetHp(arg0, var_r4);
+        pokemon_SetHp(arg0, restoredHP);
     }
     revers = getRevers__15DeckDarkPokemonCFv(temp_r25);
     setReversPattern__11DarkPokemonFUc(temp_r26, revers);
@@ -189,10 +192,10 @@ void WS_BALL_THROW(void) {
     void *temp_r27;
     void *temp_r29;
     void *temp_r30;
-    s32 temp_r5;
-    s32 temp_r6;
-    s32 temp_r20;
-    u32 temp_r21;
+    s32 ballRate;
+    s32 hpScale;
+    s32 maxHP;
+    u32 currentHP;
     u16 temp_r24;
     u16 temp_r25;
     u32 temp_r20_2;
@@ -203,7 +206,6 @@ void WS_BALL_THROW(void) {
     u8 var_r28;
     u8 var_r29;
     u8 var_r31;
-    u8 *temp_r20_3;
 
     var_r28 = 0;
     var_r31 = 0;
@@ -219,8 +221,8 @@ void WS_BALL_THROW(void) {
     temp_r25 = pokemon_GetDarkpokemonDataId(temp_r26);
     temp_r19_2 = pokemon_GetPokemonDataId(temp_r26);
     temp_r22 = (u8)figthOutPokemonGetLevel(temp_r27);
-    temp_r21 = (u16)pokemon_GetHp(temp_r26);
-    temp_r20 = (u16)pokemon_GetMaxHp(temp_r26);
+    currentHP = (u16)pokemon_GetHp(temp_r26);
+    maxHP = (u16)pokemon_GetMaxHp(temp_r26);
     temp_r30 = fightFloorGetFightOutPokemonPtrToFightTrainerPtr(0, temp_r29);
     if (pokemonIsDarkPokemon(temp_r26) == 1) {
         var_r29 = darkPokemonBiosGetHokakuritu(temp_r25);
@@ -290,19 +292,19 @@ void WS_BALL_THROW(void) {
     if ((temp_r24 == 1) || (temp_r25 == 1)) {
         var_r28 = 4;
     } else {
-        temp_r5 = (s32) (var_r29 * var_r28) / 10;
-        temp_r6 = temp_r20 * 3;
-        temp_r20 = (s32) (temp_r5 * (temp_r6 - (temp_r21 * 2))) / temp_r6;
+        ballRate = (s32) (var_r29 * var_r28) / 10;
+        hpScale = maxHP * 3;
+        s32 catchRate = (s32) (ballRate * (hpScale - (currentHP * 2))) / hpScale;
         if ((fightOutPokemonIsJoutaiDataId(temp_r27, 8) == 1) || (fightOutPokemonIsJoutaiDataId(temp_r27, 7) == 1)) {
-            temp_r20 *= 2;
+            catchRate *= 2;
         }
         if ((fightOutPokemonIsJoutaiDataId(temp_r27, 3) == 1) || (fightOutPokemonIsJoutaiDataId(temp_r27, 4) == 1) || (fightOutPokemonIsJoutaiDataId(temp_r27, 5) == 1) || (fightOutPokemonIsJoutaiDataId(temp_r27, 6) == 1)) {
-            temp_r20 = (s32) ((u32) (temp_r20 * 0xF) / 10U);
+            catchRate = (s32) ((u32) (catchRate * 0xF) / 10U);
         }
-        if ((u32) temp_r20 >= 0xFFU) {
+        if ((u32) catchRate >= 0xFFU) {
             var_r28 = 4;
         } else {
-            temp_r3 = 0xFF0000U / (u32) temp_r20;
+            temp_r3 = 0xFF0000U / (u32) catchRate;
             temp_r3_2 = (u32) sqrt((f64) temp_r3);
             temp_r20_2 = 0xFFFF0U / (u32) sqrt((f64) temp_r3_2);
             for (var_r28 = 0; var_r28 < 4U; ++var_r28) {
@@ -348,12 +350,12 @@ void WS_BALL_THROW(void) {
         fightSeq_JumpWazaSeq(ITEM_MonsGetSuccess);
     } else {
         fightOutPokemonHokakuEffect(temp_r27, var_r28, temp_r24, 2, &sp8);
-        temp_r20_3 = ServerWork;
-        temp_r20_3[5] = var_r28;
+        u8& failedShakes = ServerWork[5];
+        failedShakes = var_r28;
         if ((fightFloor_GetFightKind(0) == 0xC) || (fightFloor_GetFightKind(0) == 0xD)) {
-            fightMenuOpenMsg(GetYaseiFailMsgTbl[temp_r20_3[5]]);
+            fightMenuOpenMsg(GetYaseiFailMsgTbl[failedShakes]);
         } else {
-            fightMenuOpenMsg(GetFailMsgTbl[temp_r20_3[5]]);
+            fightMenuOpenMsg(GetFailMsgTbl[failedShakes]);
         }
         fightOutPokemonHokakuEffect(temp_r27, var_r28, temp_r24, 3, &sp8);
         fightMenuCloseMsg();

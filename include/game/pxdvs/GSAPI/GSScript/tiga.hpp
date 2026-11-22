@@ -134,7 +134,14 @@ struct GSBinReadStream {
         return c.f;
     }
 };
-struct TPCCode;
+struct TPCCode {
+    u8 opcode;
+    u8 subcode;
+    union Operand {
+        s16 signedValue;
+        u16 unsignedValue;
+    } argument;
+};
 
 class CChank {
 public:
@@ -165,6 +172,7 @@ public:
 };
 
 class Tiga;
+struct TigaFunctionEntry;
 
 class TigaThread {
 public:
@@ -173,16 +181,15 @@ public:
     TPCCode* code;              // 0x08
     tigaVariant* stackPtr0C;    // 0x0c
     tigaVariant* stackPtr10;    // 0x10
-    s32* stackPtr14;            // 0x14
-    tigaVariant retVar;         // 0x18
-    u8 pad20[0x18];
+    tigaVariant** frameStackPtr;// 0x14
+    tigaVariant registers[4];   // 0x18 (slot 0 holds the return value)
     tigaVariant* stackBase38;   // 0x38
-    s32* stackBase3C;           // 0x3c
+    tigaVariant** frameStackBase;// 0x3c
     u8 pad40[0x10C];
-    s32 field14C;               // 0x14c
+    s32 lineNumber;             // 0x14c
     tigaVariant* stackArea;     // 0x150
     s32 stackCount;             // 0x154
-    s32* stackArea2;            // 0x158
+    tigaVariant** frameStack;   // 0x158
     s32 stackCount2;            // 0x15c
     u8 timerIndex;              // 0x160
     u8 pad161[3];
@@ -254,7 +261,7 @@ public:
     tigaVariant* resultVar;         // 0x938
     s32 funcCount;                  // 0x93c
     s32 field940;                   // 0x940
-    s32 field944;                   // 0x944
+    TPCCode* codeBase;              // 0x944
     s32 globalCount;                // 0x948
     tigaVariant* globals;           // 0x94c
     s32 field950;                   // 0x950
@@ -263,10 +270,10 @@ public:
     s32 field95C;                   // 0x95c
     s32 resIdCount;                 // 0x960
     u32* resIdTable;                // 0x964
-    s32 field968;                   // 0x968
-    s32 field96C;                   // 0x96c
+    s32 arrayCount;                 // 0x968
+    tigaArrayFixed** arrays;        // 0x96c
     s32 codeCount;                  // 0x970
-    u32* codeTable;                 // 0x974
+    TigaFunctionEntry* codeTable;   // 0x974
     s32 field978;                   // 0x978
     u8 field97C;                    // 0x97c
     u8 pad97D[3];
@@ -299,7 +306,7 @@ public:
     void makeStateData(GSBinWriteStream*);
     int getNameToFuncId(const char*);
     int getResultValue(long);
-    void* getIdToCodeAdress(int);
+    TPCCode* getIdToCodeAdress(int);
     u32* searchResID(unsigned long, unsigned long);
     int setPresetVar(tigaVariant*, int, int);
     void getPresetVar(tigaVariant*, int, int);

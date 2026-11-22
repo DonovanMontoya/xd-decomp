@@ -2,7 +2,7 @@
 #pragma defer_codegen off
 #include <game/pxdvs/GSAPI/GScolsys/GScolsys2DrawPrivate.hpp>
 #include <libc/string.h>
-static DrawList _colsysDL;
+static DLDisplayList _colsysDL;
 union CollisionDebugColor { u8 channels[4]; u32 packed; };
 
 inline void writeCollisionDebugColor(u8 red, u8 green, u8 blue, u8 alpha)
@@ -115,7 +115,7 @@ static void drawWalkMdl(CCD_WALKMDL_HEAD *model, GSmtx *matrix, GSmtx *rotation)
 }
 
 #pragma dont_inline reset
-static DrawList* makeDisplayListFixedObj(void)
+static DLDisplayList* makeDisplayListFixedObj(void)
 {
     u32 i;
     DrawObject* object;
@@ -125,7 +125,7 @@ static DrawList* makeDisplayListFixedObj(void)
     if (file == 0) {
         return 0;
     }
-    memset(&_colsysDL, 0, 0x10);
+    memset(&_colsysDL, 0, sizeof(_colsysDL));
     GSgfxDLBegin(&_colsysDL, GScolsys2.format, 0x400, 0x8000);
     object = file->objects;
     for (i = 0; i < (u32)file->count; i++, object++) {
@@ -165,10 +165,10 @@ extern "C" void GScolsys2Draw(void)
     u32 i;
     DrawObject* object;
     DrawFile* file;
-    DrawStateObject* draw;
+    GSCOLSYS2_OBJ* draw;
     GSmtx obj;
     GSmtx rot;
-    DrawList* list;
+    DLDisplayList* list;
 
     file = GScolsys2GetCCDFileHead();
     if (file == 0) {
@@ -187,7 +187,7 @@ extern "C" void GScolsys2Draw(void)
     GSgfxZCompare(GX_TRUE, GX_LEQUAL);
     GSgfxPixelMode(GX_TRUE, GX_TRUE, GX_TRUE);
     object = file->objects;
-    draw = GScolsys2.floors[GScolsys2.currentFloor].objects;
+    draw = GScolsys2.floor[GScolsys2.currentFloor].objects;
     for (i = 0;
          i < (u32)file->count; i++, object++, draw++) {
         /* Draw only moving objects whose floor record is enabled. */

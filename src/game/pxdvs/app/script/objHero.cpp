@@ -32,9 +32,9 @@ int AppScript::cmpHero(int method,GSscript::tigaVariant *args,GSscript::tigaVari
     case 0x26:R(scriptGetDarkPointZeroPokemonNum());break;
     case 0x27:recoveryPokemon();break;
     case 0x28:R((bool)scriptBattleMountainEnd((bool)I(1)));break;
-    case 0x29:R(heroGetLivingPokemonCount());break;
-    case 0x2A:R(heroGetEmptySlot());break;
-    case 0x2B:R(heroGetPokeomCount());break;
+    case 0x29:R(heroGetLivingPokemonCount(hero));break;
+    case 0x2A:R(heroGetEmptySlot(hero));break;
+    case 0x2B:R(heroGetPokeomCount(hero));break;
     case 0x2C:appScriptSetVar(result,0x25,getPokemon__4HeroFl(hero,(u16)I(1)));break;
     case 0x2D:R(heroIsMinePokemon(hero,appScriptGetPokemon(&args[1])));break;
     case 0x2E:peopleChangeFollower(I(1));break;

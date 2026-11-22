@@ -1,4 +1,4 @@
-#include <global.h>
+#include <game/pxdvs/app/menu/winSpritePrivate.hpp>
 
 extern "C" {
 void menuClose(s32);
@@ -13,9 +13,8 @@ extern "C" void fn_8000FF9C(void);
 extern "C" void menuFlashTestInit(void);
 
 extern "C" {
-s32 winSpriteGetLayerID(void);
-void winSpriteSetDisp(void*, u8);
-s32 windowDrawSprite(s32, s32, s32, u16, s32, s32);
+void winSpriteSetDisp(tagSPRITE_WORK*, u8);
+void windowDrawSprite(s16, s16, tagWINDOW_WORK*, u16, u32, s32);
 }
 
 extern "C" f32 lbl_804E7E68[2] = {0.0f, 0.0f};
@@ -25,11 +24,9 @@ extern "C" u8 lbl_804E7E7C = 1;
 extern "C" u8 lbl_804EA6F0[8];
 u8 lbl_804EA6F0[8];
 
-extern "C" s32 fn_8000FDA8(s32 arg0, void* sprite);
-
-extern "C" s32 fn_8000FDA8(s32 arg0, void* sprite) {
-    s32 layer = winSpriteGetLayerID();
-    switch (*(s16*)((u8*)sprite + 6)) {
+extern "C" s32 fn_8000FDA8(tagWINDOW_WORK* window, tagSPRITE_WORK* sprite) {
+    s32 layer = winSpriteGetLayerID(window, (WindowSprite*)sprite);
+    switch (sprite->itemID) {
     case 0x155:
         winSpriteSetDisp(sprite, lbl_804E7E7C);
         break;
@@ -47,10 +44,10 @@ extern "C" s32 fn_8000FDA8(s32 arg0, void* sprite) {
         break;
     case 0x698:
         if (lbl_804EA6F0[0]) {
-            windowDrawSprite((s32)lbl_804E7E68[0], (s32)lbl_804E7E68[1], arg0, lbl_804E7E70[0], 0, layer);
-            windowDrawSprite((s32)lbl_804E7E68[0], (s32)lbl_804E7E68[1], arg0, lbl_804E7E70[1], 0, layer);
-            windowDrawSprite((s32)lbl_804E7E68[0], (s32)lbl_804E7E68[1], arg0, lbl_804E7E70[2], 0, layer);
-            windowDrawSprite((s32)lbl_804E7E68[0], (s32)lbl_804E7E68[1], arg0, lbl_804E7E70[3], 0, layer);
+            windowDrawSprite((s16)lbl_804E7E68[0], (s16)lbl_804E7E68[1], window, lbl_804E7E70[0], 0, layer);
+            windowDrawSprite((s16)lbl_804E7E68[0], (s16)lbl_804E7E68[1], window, lbl_804E7E70[1], 0, layer);
+            windowDrawSprite((s16)lbl_804E7E68[0], (s16)lbl_804E7E68[1], window, lbl_804E7E70[2], 0, layer);
+            windowDrawSprite((s16)lbl_804E7E68[0], (s16)lbl_804E7E68[1], window, lbl_804E7E70[3], 0, layer);
         }
         break;
     }

@@ -1,6 +1,6 @@
 #ifndef FIGHT_SEQ_WAZASEQ_PRIVATE_HPP
 #define FIGHT_SEQ_WAZASEQ_PRIVATE_HPP
-#include <dolphin/types.h>
+#include <game/pxdvs/app/fight/fightWaza.hpp>
 
 struct FightOutPokemon;
 struct FightPokemon;
@@ -171,7 +171,6 @@ u16 fightTrainerGetIrekaeFightPokemonAry(void*, void**);
 Hero * fightTrainer_GetHeroPtr(void*);
 u32 fightTrainer_GetKoban(void*);
 u32 fightTrainer_GetOkaneBai(void*);
-s32 fightWazaBiosCopy(void *, void *);
 void fightWazaInitJoutaiDataId(void*, u16);
 u8 fightWazaIsHit(void*);
 void fightWazaSetUseWazaStatus(void *, u16);
@@ -179,7 +178,6 @@ u32 fightWaza_GetDamage(void*);
 s32 fightWaza_GetHitDamage(void*);
 u16 fightWaza_GetIryoku(void*);
 u16 fightWaza_GetTargetDataId(void*);
-s32 fightWaza_GetWazaBanme(void*);
 u32 fightWaza_GetZokusei(void*);
 void fightWaza_SetDamage(void*, s32);
 void fightWaza_SetDamageValue(void*,u8);
@@ -196,7 +194,6 @@ u32 heroGetStatus(void*, u16, u16);
 u32 itemDB_GetName(u16);
 u8 itemDataCheckValid(u16);
 u8 joutaiDataBiosGetMaxCount(u16);
-void menuFightStatusSetHP(s32, s32);
 u8 pokemonCheckFightOut(void*);
 u16 pokemonDB_GetBasisPhyAtk(u16);
 u32 pokemonDB_GetBasisPhyDef(u32);

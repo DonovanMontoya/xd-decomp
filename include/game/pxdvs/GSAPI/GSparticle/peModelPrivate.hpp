@@ -3,9 +3,8 @@
 #include <game/pxdvs/GSAPI/GSparticle/peShapePrivate.hpp>
 struct ModelJObj {u8 prefix[0x14];u32 flags;u8 reserved18[0x2c];Mtx matrix;};
 struct ModelCamera {u8 reserved00[8];void *camera;};
-struct _peModel {u32 flags;Vec rotation,angularSpeed,scale,scaleRange;ShapeSpline *rotationSpline[3],*scaleSpline[3];union {ModelJObj *jobj;u32 primitive;} resource;f32 duration;};
 struct peModelNode:peNode {
- Vec worldPosition;Quaternion worldRotation;Vec worldScale;u16 flips;s16 instance;
+ NodeTransform world;u16 flips;s16 instance;
  Quaternion randomRotation,localRotation;Vec baseScale,angularSpeed;f32 depth;
  void Start(peEmitterNode*,_peModel*,_EmitParams*);u8 Update(peEmitterNode*,_peModel*,f32);
 };

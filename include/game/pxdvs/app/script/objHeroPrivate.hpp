@@ -1,5 +1,6 @@
 #ifndef APP_SCRIPT_OBJ_HERO_PRIVATE_HPP
 #define APP_SCRIPT_OBJ_HERO_PRIVATE_HPP
+#include <game/pxdvs/app/hero/heroParty.hpp>
 #include <game/pxdvs/app/script/appScriptPrivate.hpp>
 extern "C" {
 Hero *getHeroPtr__4HeroFv();
@@ -14,7 +15,7 @@ s32 heroMoveInit(GSvec *,GSvec *);s32 heroMoveMain();
 void heroMoveInitEvent();void heroMoveTermEvent();
 void heroMoveAddAutoEvent(s32,s32,s32,s32,s32);
 u8 heroMoveSetNeckMode(s32,s32);void heroMoveSetSmoothFloorLink(u8);void heroMoveSlowStop();
-s32 heroGetEmptySlot();s32 heroGetFollower();s32 heroGetLivingPokemonCount();s32 heroGetPokeomCount();
+s32 heroGetFollower();
 u8 heroIsMinePokemon(Hero *,Pokemon *);
 void heroSetFollower(u32,u32,s32);void heroSetFollowerWithID(u8,u8);
 void peopleChangeFollower(s32);void recoveryEventCommon(s32);void recoveryPokemon();

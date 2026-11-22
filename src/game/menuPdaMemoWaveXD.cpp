@@ -1,4 +1,5 @@
 #include <dolphin/types.h>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <dolphin/gx/GXVert.h>
 
 #pragma peephole off
@@ -96,7 +97,6 @@ public:
 extern "C" {
 void* __nw__FUl(unsigned long);
 GSgfxLayer* GSgfxLayerFindByID(s32);
-GSgfxVF* GSgfxVFBuildTemp(s32, s32, s32, s32, s32, s32, s32, s32, s32);
 u32 GSinputButtonsChanged(s32);
 u32 GSinputButtonsPressed(s32);
 void GSthreadSwitch(void);

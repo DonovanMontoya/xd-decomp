@@ -205,7 +205,6 @@ static void _lensFlareRender__FP10GSgfxLayer14GSgfxLayerPass(GSgfxLayer* layer,s
         if (header->flags&0x10) {
             if (header->flags&0x20) {
                 GSvec points[21]; u8 blocked[21];
-                __construct_array(points,__ct__5GSvecFv,0,12,21);
                 f32 step=0.2f*header->sampleRadius;
                 for (u16 j=0;j<5;j++) {
                     f32 spread=step*lensU16(j);

@@ -20,7 +20,7 @@ u32 fightWazaWzxVariationFuncNull(u32, FightOutPokemon*, FightTarget*, u32);
 u32 wazaDB_GetIryoku(u32);
 u32 wazaDB_GetZokuseiDataId(u32);
 void fightWaza_SetWazaBanme(FightWaza*, s32);
-void fightWaza_SetTargetDataId(FightWaza*, u32);
+void fightWaza_SetTargetDataId(FightWaza*, u16);
 void fightWaza_SetMotoWazaDataId(FightWaza*, u32);
 void fightWaza_SetUseWazaDataId(FightWaza*, u32);
 void fightWaza_SetAutoMakeFlag(FightWaza*, u8);
@@ -102,7 +102,7 @@ void fightWazaInitJoutaiDataId(FightWaza* move, u16 condition) {
     if (joutaiDataBiosGetStatus(condition) == 0x2a) joutaiInitJoutaiDataId(move, condition);
 }
 
-void fightWazaCreate(FightWaza* move, s32 slot, u32 id, u32 target, u8 automatic) {
+void fightWazaCreate(FightWaza* move, s32 slot, u32 id, u16 target, u8 automatic) {
     if (move != nullptr) {
         fightWazaInit(move);
         fightWaza_SetWazaBanme(move, slot);

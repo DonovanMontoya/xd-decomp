@@ -1,27 +1,8 @@
 #ifndef TOOLENTRY_PRIVATE_H
 #define TOOLENTRY_PRIVATE_H
 
-#include <global.h>
-
-extern "C" void* memcpy(void*, const void*, unsigned long);
-
-class Pokemon {
-public:
-    u8 raw[0xC4];
-    Pokemon& operator=(const Pokemon& o) {
-        memcpy(this, &o, sizeof(Pokemon));
-        return *this;
-    }
-};
-
-class Hero {
-public:
-    u8 raw[0x978];
-    Hero& operator=(const Hero& o) {
-        memcpy(this, &o, sizeof(Hero));
-        return *this;
-    }
-};
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/hero/hero.hpp>
 
 struct ToolentryCBTrainer {
     u16 trainerDataId;      // 0x0

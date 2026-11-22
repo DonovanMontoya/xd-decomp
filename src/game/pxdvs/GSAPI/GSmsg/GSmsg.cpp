@@ -1,6 +1,7 @@
 #pragma dollar_identifiers on
 extern "C" {
 #include <libc/string.h>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 }
 #include <game/pxdvs/GSAPI/GSmsg/GSchar.hpp>
 #include <game/pxdvs/GSAPI/GSmsg/message_layout.hpp>
@@ -596,7 +597,7 @@ extern "C" s32 GScharMakeFromGBA(u16* destination, u8* source, s32 count, s32 la
     case 1:
         switch (locale) {
         case 1: return convertGbaCharacters(output, input, remaining, gba_code);
-        case 7: case 8: break;
+        case 2: case 3: case 4: case 5: case 6: case 8: break;
         default: break;
         }
         return convertGbaCharacters(output, input, remaining, gba_international_code);
@@ -605,7 +606,7 @@ extern "C" s32 GScharMakeFromGBA(u16* destination, u8* source, s32 count, s32 la
         case 1: return convertGbaCharacters(output, input, remaining, gba_code);
         case 3: return convertGbaQuotes(output, input, remaining, 0x201e, 0x201c);
         case 4: return convertGbaQuotes(output, input, remaining, 0xab, 0xbb);
-        case 0: case 2: case 5: case 6: case 7: case 8:
+        case 2: case 5: case 6: case 8:
         default: return convertGbaCharacters(output, input, remaining, gba_international_code);
         }
     }
@@ -644,10 +645,8 @@ static inline s32 encodeGbaQuotes(u8* destination, const u16* source) {
         case 0xab: case 0x201e: index = 0xb1; break;
         case 0xbb: case 0x201c: index = 0xb2; break;
         default:
-            const u16* entry = gba_international_code;
-            while (code != *entry) {
+            while (code != gba_international_code[index]) {
                 ++index;
-                ++entry;
                 if (index >= 256) { index = 0xb7; break; }
             }
             break;
@@ -664,7 +663,7 @@ extern "C" s32 GBAMakeFromGSchar(u8* destination, const u16* source, s32 languag
     case 1:
         switch (language) {
         case 1: return encodeGbaCharacters(destination, source, gba_code);
-        case 7: case 8: break;
+        case 2: case 3: case 4: case 5: case 6: case 8: break;
         default: break;
         }
         return encodeGbaCharacters(destination, source, gba_international_code);
@@ -672,7 +671,7 @@ extern "C" s32 GBAMakeFromGSchar(u8* destination, const u16* source, s32 languag
         switch (language) {
         case 1: return encodeGbaCharacters(destination, source, gba_code);
         case 3: case 4: return encodeGbaQuotes(destination, source);
-        case 7: case 8:
+        case 2: case 5: case 6: case 8:
         default: return encodeGbaCharacters(destination, source, gba_international_code);
         }
     }
@@ -899,7 +898,6 @@ void _msgDispRuby(MSG_TASK_WORK* t)
 
 extern "C" {
 void spriteSetEnv(s32);s32 timeGetLastFrameTime();u16 *windowGetKeyInfo();
-void *GSgfxVFBuildTemp(s32,s32,u8,s32,u8,s32,u8,s32,s32);
 void setRenderStateAndSelect__10GSgfxLayerFP7GSgfxVF(GSgfxLayer*,void*);
 void beginSurface__10GSgfxLayerFUs(GSgfxLayer*,u16);void endSurface__10GSgfxLayerFv(GSgfxLayer*);
 s32 GSsndPlayNow(u32);s32 menuSubGetKaiwaCsrID();s32 menuSubGetKaiwaCloseWindowID();
@@ -915,8 +913,10 @@ static inline u8 &msgLayerByte(GSgfxLayer* layer,u32 offset) {return *((u8*)laye
 #pragma dont_inline off
 extern "C" u8 lbl_804E834C=3;
 extern "C" {
-static s32 cnt$2342, cnt$2348;
-static s8 init$2343, init$2349;
+static s32 cnt$2342;
+static s8 init$2343;
+static s32 cnt$2348;
+static s8 init$2349;
 }
 s32 _msgMainSub__FP13MSG_TASK_WORKUcUlb(MsgTask *task,u8 mode,u32 buttons,bool paused) {
  u8 quote=0,speaking=0;MsgColor white={0xffffffff};

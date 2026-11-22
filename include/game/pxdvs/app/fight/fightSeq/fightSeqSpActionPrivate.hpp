@@ -1,6 +1,7 @@
 #ifndef FIGHT_SEQ_SP_ACTION_PRIVATE_HPP
 #define FIGHT_SEQ_SP_ACTION_PRIVATE_HPP
-#include <dolphin/types.h>
+#include <game/pxdvs/app/fight/fightMenuMessage.hpp>
+#include <game/pxdvs/app/fight/fightWaza.hpp>
 
 struct FightOutPokemon;
 struct FightPokemon;
@@ -10,6 +11,7 @@ struct FightWaza;
 struct FightItem;
 struct FightMenuLvupStatus;
 struct Pokemon;
+struct SpActionItemEffect;
 struct Hero;
 
 // Eight-byte command-server record at 0x804e85c0, accessed through SDA.
@@ -60,7 +62,7 @@ void fightFloor_SetAppointPokemonPtr(void*, FightOutPokemon*);
 void fightFloor_SetAttackPokemonPtr(void*, FightOutPokemon*);
 void fightFloor_SetDefPokemonAndAtkFightWazaTargetId(void*, FightOutPokemon*);
 void fightFloor_SetIrekaePokemonPtr(void*, FightOutPokemon*);
-s32 fightItem_GetItemDataId(FightItem*);
+u16 fightItem_GetItemDataId(FightItem*);
 void fightMenuCloseLevelUpStatusMenu();
 void fightMenuCloseMsg();
 void fightMenuFightOutPokemonCloseStatusMenu(FightOutPokemon*, u8, u32);
@@ -68,7 +70,6 @@ void fightMenuFightOutPokemonCloseStatusMenuAnotherMine(s32, FightOutPokemon*, u
 void fightMenuFightOutPokemonOpenStatusMenu(FightOutPokemon*, u8, u32);
 void fightMenuFightOutPokemonOpenStatusMenuStart(FightOutPokemon*, u8, u32);
 void fightMenuOpenLevelUpStatusMenu(void*, u32);
-u8 fightMenuOpenMsg(u32);
 void fightMenuSubMenuLvupStatus(void*, void*, void*);
 s32 fightMenuWazaWasure(Pokemon*, u16);
 u8 fightMenuYesNo();
@@ -127,7 +128,7 @@ void fightSeqFightOutPokemonDarkCheckAppear(FightOutPokemon*, u8);
 void fightSeqFightOutPokemonEffect(u32, FightOutPokemon*, u8, u8);
 void fightSeqFightOutPokemonTokuseiCheckAppear(FightOutPokemon*);
 FightOutPokemon* fightSeqGetEnemyFightSideKonoyubitomareFightOutPokemonPtr(FightOutPokemon*);
-u8 fightSeqGetItemType(s32, FightOutPokemon*);
+u8 fightSeqGetItemType(u16, FightOutPokemon*);
 void fightSeqIrekaeInit(FightOutPokemon*, FightOutPokemon*, u8);
 void fightSeqPokemonSoubiItemCheckAppear(FightOutPokemon*);
 FightOutPokemon* fightSeqSelectDefensePokemonPtr(FightOutPokemon*, u16, u8, void*, u8, u8, s16);
@@ -161,7 +162,6 @@ u8 fightTrainer_GetOkaneBai(FIGHT_TRAINER*);
 void* fightTrainer_GetSequencePtr(FIGHT_TRAINER*);
 void fightTrainer_SetEnemyStoreTokuseiData(FIGHT_TRAINER*, s32, s32);
 void fightTrainer_SetEnemyTokuseiFlag(FIGHT_TRAINER*, s32, u8);
-void fightWazaBiosCopy(void*, void*);
 void fightWazaInitJoutai(FightWaza*);
 u8 fightWazaIsHit(FightWaza*);
 void fightWazaSetUseWazaStatus(FightWaza*, u16);
@@ -171,7 +171,7 @@ void fightWaza_SetMotoWazaDataId(FightWaza*, u16);
 u8 figthPokemonGetLevel(FightPokemon*);
 void heroAddPokedoru(Hero*, u32);
 u32 heroGetStatus(Hero*, u32, u32);
-s16 itemUse2Pokemon(void*, s32, FightPokemon*, s32, s32);
+s16 itemUse2Pokemon(SpActionItemEffect*, Pokemon*, FightPokemon*, u16, u8);
 void menuFaceLoadFightPokemon(FightPokemon*, s32, s32);
 void* pokemonCreateSequence(FightPokemon*);
 u8 pokemonGetOboeWazaDataBanme(Pokemon*, u8);

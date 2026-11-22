@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuColosseumBattleLayout.hpp>
 
 #pragma force_active on
@@ -61,9 +62,6 @@ void menuCBTrainerBios_SetControlerID(_MENUCBTRAINER*, s32);
 void menuCBBios_InitVersusTrainer(_MENUCBTRAINER*, Hero*);
 s32 openMenuGBA(s32, s32, Hero**);
 void heroBiosSetHomePlace(Hero*, s32);
-void menuCBRule_Copy(CBRule*, CBRule*);
-CBRule* menuCBRule_ConstantRule2(s32);
-u8 menuCBRule_IsEquals(CBRule*, CBRule*);
 s32 menuCB_GCEntry_SubWindow_Disp(void);
 void menuCBGCEntryPokemon(void);
 void menuCBReliveHallCursolInit(void);
@@ -100,7 +98,6 @@ u8 gbaCommandIsConnected(s32);
 s32 menuCB_MenuPop(void);
 void menuCB_MenuPush(s32);
 void menuCB_WaitGCControler1(void);
-void fadeSet(s32, f32);
 void systemInit__4CAntFv(void);
 void menuCB2DPokemonALLClear(void);
 void cursorBiosInit(void);
@@ -140,8 +137,8 @@ struct CBTemp {
     u8 reserved0[0x1320];
     Hero heroes[4];
     u8 reserved3900[0x90];
-    CBRule ruleOrg;             // 0x3990
-    CBRule ruleEdit;            // 0x3A20
+    MenuCBRule ruleOrg;             // 0x3990
+    MenuCBRule ruleEdit;            // 0x3A20
 };
 static CBTemp* _menuCB_Temp;
 extern struct FlagEtc { u8 reserved0[0x428]; u32 unk428; }* flag_etc;

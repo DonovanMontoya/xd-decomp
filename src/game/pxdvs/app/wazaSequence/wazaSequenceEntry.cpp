@@ -146,9 +146,9 @@ public:
 class filterEffect : public GSeffect {
 public:
     void *target;                   // 0xc
-    u8 original[4];
+    GSgfxColAu8 original;
     u8 pe, combine, saved, pad17, modulation;
-    u8 color[4];
+    GSgfxColAu8 color;
 };
 class billboardEffect : public GSeffect {
 public:
@@ -1628,12 +1628,12 @@ bool EffectEntry::Start() {
                 fe->combine = visible;
             }
         }
-        u8 *c = (u8 *)table + index * 16;
-        fe->color[0] = c[0];
-        fe->color[1] = c[1];
-        fe->color[2] = c[2];
+        const EffectTableEntry& key = table[index];
+        fe->color.r = key.start.color.r;
+        fe->color.g = key.start.color.g;
+        fe->color.b = key.start.color.b;
         useAlpha = fe->modulation == 0 || fe->pe != 0;
-        fe->color[3] = useAlpha ? c[3] : 255;
+        fe->color.a = useAlpha ? key.start.color.a : 255;
         break;
     }
     case 6: {
@@ -1642,7 +1642,7 @@ bool EffectEntry::Start() {
             return false;
         }
         ee->model = model;
-        ee->value = *(f32 *)((u8 *)table + index * 16);
+        ee->value = table[index].start.scalar;
         break;
     }
     case 7: {
@@ -1655,7 +1655,7 @@ bool EffectEntry::Start() {
                 be->model = model;
             }
         }
-        be->value = *(f32 *)((u8 *)table + index * 16);
+        be->value = table[index].start.scalar;
         break;
     }
     case 5: {
@@ -1765,34 +1765,32 @@ bool EffectEntry::Update(f32 dt) {
     switch (effectType) {
     case 0: {
         filterEffect *fe = (filterEffect *)effect;
-        u8 *c = (u8 *)table + index * 16;
+        const EffectTableEntry& key = table[index];
         f32 t = rate;
         if (t < 0.0f) t = 0.0f;
         if (t > 1.0f) t = 1.0f;
-        u32 red = interpolateEffectChannel(t, c[0], c[4]);
-        u32 green = interpolateEffectChannel(t, c[1], c[5]);
-        u32 blue = interpolateEffectChannel(t, c[2], c[6]);
-        u32 alpha = interpolateEffectChannel(t, c[3], c[7]);
+        u32 red = interpolateEffectChannel(t, key.start.color.r, key.end.color.r);
+        u32 green = interpolateEffectChannel(t, key.start.color.g, key.end.color.g);
+        u32 blue = interpolateEffectChannel(t, key.start.color.b, key.end.color.b);
+        u32 alpha = interpolateEffectChannel(t, key.start.color.a, key.end.color.a);
         bool useAlpha = false;
-        fe->color[0] = red;
-        fe->color[1] = green;
-        fe->color[2] = blue;
+        fe->color.r = red;
+        fe->color.g = green;
+        fe->color.b = blue;
         if (fe->modulation == 0 || fe->pe != 0) {
             useAlpha = true;
         }
-        fe->color[3] = useAlpha ? alpha : 255;
+        fe->color.a = useAlpha ? (u8)alpha : 255;
         break;
     }
     case 6: {
-        f32 *e = (f32 *)table;
-        f32 a = e[index * 4];
-        ((envMapEffect *)effect)->value = a + rate * (e[index * 4 + 1] - a);
+        f32 a = table[index].start.scalar;
+        ((envMapEffect *)effect)->value = a + rate * (table[index].end.scalar - a);
         break;
     }
     case 7: {
-        f32 *e = (f32 *)table;
-        f32 a = e[index * 4];
-        ((blurEffect *)effect)->value = a + rate * (e[index * 4 + 1] - a);
+        f32 a = table[index].start.scalar;
+        ((blurEffect *)effect)->value = a + rate * (table[index].end.scalar - a);
         break;
     }
     case 1:

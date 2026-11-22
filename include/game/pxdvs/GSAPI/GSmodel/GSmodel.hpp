@@ -4,6 +4,7 @@
 #include <dolphin/mtx.h>
 #include <game/pxdvs/GSAPI/GSmaterial/GSmaterial.hpp>
 #include <game/maximum/GSAPI/baselib/aobj.h>
+#include <game/maximum/GSAPI/baselib/scene.h>
 struct GScamera;
 struct GSparticleBank;
 struct GSbound;
@@ -15,7 +16,7 @@ struct GSmodelPartAnimMix {
     GSvec position, rotation, scale;
 };
 typedef char GSmodelPartAnimMixSizeCheck[sizeof(GSmodelPartAnimMix) == 0x38 ? 1 : -1];
-struct GSmodelScene { HSD_Joint* joint; HSD_AnimJoint** animations; HSD_MatAnimJoint** materialAnimations; HSD_ShapeAnimJoint** shapeAnimations; };
+typedef _HSD_SceneModelSet GSmodelScene;
 // Only confirmed fields are named. Reserved spans belong to unrecovered state.
 struct GSmodel {
     u32 flags;

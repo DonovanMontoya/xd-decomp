@@ -1073,7 +1073,7 @@ extern "C" {
 void wazaSequenceSysUpdate() {
     u8 rate = GSgfxVideoGetVsyncRate();
     f32 fr = rate;
-    f32 dt = GSgfxVideoGetLastRenderTime(rate) / fr;
+    f32 dt = GSgfxVideoGetLastRenderTime() / fr;
     WazaSequence* w;
     Sequence* seq = g_Sequences;
     u32 camera;

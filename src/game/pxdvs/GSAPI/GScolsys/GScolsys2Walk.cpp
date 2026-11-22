@@ -1,4 +1,4 @@
-#include <dolphin/types.h>
+#include <game/pxdvs/GSAPI/GScolsys/GScolsys2Walk.hpp>
 
 struct GSvec {
     f32 x, y, z;
@@ -52,21 +52,12 @@ struct CCD_FILEHEAD {
     u32 numObjs;
 };
 
-struct GSwalkHit {
-    f32 height;
-    u16 attrHi;
-    u16 attrLo;
-    u8 layer;
-    u8 subLayer;
-};
-
 extern "C" {
 void PSMTXMultVec(const GSmtx m, const GSvec* src, GSvec* dst);
 CCD_FILEHEAD* GScolsys2GetCCDFileHead(void);
 void GScolsys2GetObjEnable(u32 index, bool* enable);
 void GScolsys2GetObjMatrix(GSmtx m, u32 index);
 void GScolsys2GetObjRotMatrix(GSmtx m, u32 index);
-s32 GScolsys2WalkGetHeight(GSvec* pos, GSwalkHit* hits);
 }
 
 static bool getCpPolyVec(GSvec* out, GSvec* point, GSvec* vertices, GSvec* plane);

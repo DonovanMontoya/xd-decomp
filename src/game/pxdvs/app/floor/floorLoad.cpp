@@ -1,11 +1,14 @@
 #include <global.h>
 
+struct GScamera;
+struct GSmodel;
+
 extern "C" {
 void* HSD_ArchiveGetPublicAddress(void*, const char*);
 void* GScameraLoad(void*);
-void GScameraFree();
+void GScameraFree(GScamera*);
 void* GSmodelLoad(void*, void*);
-void GSmodelFree();
+void GSmodelFree(GSmodel*);
 void GSresRegisterResource(void*, s32, u32, s32 (*)(void*, u32, u32));
 }
 
@@ -43,12 +46,12 @@ extern "C" void loadModel(void* data, s32 resourceId, u32 modelIndex, u32 flags)
     }
 }
 
-static s32 _unloadCamera(void*, u32, u32) {
-    GScameraFree();
+static s32 _unloadCamera(void* camera, u32, u32) {
+    GScameraFree((GScamera*)camera);
     return 1;
 }
 
-static s32 _unloadModel(void*, u32, u32) {
-    GSmodelFree();
+static s32 _unloadModel(void* model, u32, u32) {
+    GSmodelFree((GSmodel*)model);
     return 1;
 }

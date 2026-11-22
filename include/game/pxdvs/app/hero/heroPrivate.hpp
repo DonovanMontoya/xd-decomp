@@ -84,7 +84,6 @@ void pokemonCheckSetMonohiroi(void*);
 void pokemonInitAry(void*, u32);
 void pokemonBiosCopy(void*, void*);
 void pokemonSetCatchStatus(void*, u32, u32, u32, u32, u32, void*);
-void itemInitAry(void*, u32);
 u32 itemGetStatus(void*, u16, u32, u32);
 s32 itemCheckAddItemDataIdAry(void*, u16, u16, u16, u8);
 s32 itemDecItemDataIdAry(void*, u16, u16, s32, s32, u16, u8);

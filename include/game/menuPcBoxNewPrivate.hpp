@@ -4,7 +4,7 @@
 struct tagWINDOW_WORK {u8 pad0;s8 mode,sub;u8 pad3;s32 id;};
 struct tagSPRITE_WORK {u8 pad0[0x4C];u32 message;};
 #define POKEMON_HPP_NO_PROTOTYPES
-#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/pcbox/pcbox.hpp>
 struct MenuPtWorkSound {u32 bgm,env;u8 volume[4];};
 class CMenuGlobalState {public:
     enum enumCallFrom {Pc,Relive,Hologram,Tutorial};
@@ -44,6 +44,5 @@ struct MenuBaseLayout {
 };
 class CMetaMenuBase {public:union{u8 bytes[0x330];MenuBaseLayout base;u64 alignment;};};
 class CMetaMenu:public CMetaMenuBase {public:virtual void drawAll()=0;virtual bool isAnimationStateNone();virtual void updateAll();virtual void tutorialExitKick();void localWindowSetTable(long*);void localWindowCreateAll();void localWindowDeleteAll();static long defautlLocalWindowOpenTable[];void systemFadeOutSetAndWait(f32);static void systemFadeInKick();void systemFadeWaitToEnd();};
-class PCBOX {public:static PCBOX *getPointer();void init();void setPokemon(Pokemon*,signed char,signed char);};
 class CReliveHall {public:static CReliveHall *getPointer();void init();void allocMakeBackup();void checkWithBackupSet();static u8 isOpen();};
 #endif

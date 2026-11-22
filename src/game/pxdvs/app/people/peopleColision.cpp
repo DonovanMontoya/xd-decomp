@@ -54,8 +54,7 @@ u8 peopleLineCheck(u32 arg0, u32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg
         GScameraLoadActiveCameraMatrix(2);
         GSgfxCullMode(0);
         sp8 = 0;
-        GSgfxVFBuildTemp(1, 4, 0, 0, 1, 5, 0, 0, 0);
-        GSgfxSetupRenderAndSelect();
+        GSgfxSetupRenderAndSelect(GSgfxVFBuildTemp(1, 4, 0, 0, 1, 5, 0, 0, 0));
         GSgfxBlendMode(1, 4, 5);
         GSgfxZCompare(1, 1);
         GSgfxPixelMode(1, 1, 1);
@@ -236,8 +235,7 @@ u8 peopleRectCheck(u32 arg0, u32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg
         GScameraLoadActiveCameraMatrix(2);
         GSgfxCullMode(0);
         sp8 = 0;
-        GSgfxVFBuildTemp(1, 4, 0, 0, 1, 5, 0, 0, 0);
-        GSgfxSetupRenderAndSelect();
+        GSgfxSetupRenderAndSelect(GSgfxVFBuildTemp(1, 4, 0, 0, 1, 5, 0, 0, 0));
         GSgfxBlendMode(1, 4, 5);
         GSgfxZCompare(1, 1);
         GSgfxPixelMode(1, 1, 1);

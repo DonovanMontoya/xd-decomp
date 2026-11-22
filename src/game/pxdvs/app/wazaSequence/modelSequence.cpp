@@ -1301,9 +1301,7 @@ void ModelSequence::Sleep() {
                 if (part != 0) {
                     f32 s = GetSizeScale();
                     GSvec v;
-                    v.param1 = s;
-                    v.param2 = s;
-                    v.param3 = s;
+                    v.set(s,s,s);
                     GSparticleSetOffsetRotationInLocal(sleepGenerator, 1, 0);
                     GSparticleSetParticleTextureScaling(sleepGenerator, 1);
                     GSparticleSetTornadoScaling(sleepGenerator, 0, 0);
@@ -1346,9 +1344,7 @@ void ModelSequence::Freeze() {
                 if (part != 0) {
                     f32 s = GetSizeScale();
                     GSvec v;
-                    v.param1 = s;
-                    v.param2 = s;
-                    v.param3 = s;
+                    v.set(s,s,s);
                     GSparticleSetOffsetRotationInLocal(iceGenerator, 1, 0);
                     GSparticleSetParticleTextureScaling(iceGenerator, 1);
                     GSparticleSetTornadoScaling(iceGenerator, 0, 0);

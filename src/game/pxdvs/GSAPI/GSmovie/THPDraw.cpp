@@ -1,3 +1,4 @@
+#include <game/pxdvs/GSAPI/GSmovie/THPDraw.hpp>
 #include <game/pxdvs/GSAPI/GSmovie/THPDrawPrivate.hpp>
 #include <libc/string.h>
 extern "C" {
@@ -22,33 +23,28 @@ static inline void bindTexture(GSgfxLayer* layer, GStexture* texture) {
     }
 }
 extern "C" {
-u16 THPGXYuv2RgbDraw(void* arg0, void* arg1, void* arg2, u16 arg3, u16 arg4, s16 arg5, s16 arg6, u16 arg7, s16 arg_sp8) {
-    GStexture sp108;
-    GStexture sp88;
-    GStexture sp8;
-    s16 temp_r6;
-    s16 temp_r3;
-    s32 temp_r24;
-    s32 temp_r31;
+u16 THPGXYuv2RgbDraw(void* yPlane, void* uPlane, void* vPlane, s16 x, s16 y,
+                     s16 textureWidth, s16 textureHeight, s16 drawWidth, s16 drawHeight) {
+    GStexture yTexture;
+    GStexture uTexture;
+    GStexture vTexture;
 
-    GStextureCreateFromMemory(&sp108, (u16)arg5, (u16)arg6, arg0, 0x42, 0, 0);
-    bindTexture<0>(thpLayer, &sp108);
-    temp_r31 = (s16) arg5 >> 1;
-    temp_r24 = (s16) arg6 >> 1;
-    GStextureCreateFromMemory(&sp88, (u16) temp_r31, (u16) temp_r24, arg1, 0x42, 0, 0);
-    bindTexture<1>(thpLayer, &sp88);
-    GStextureCreateFromMemory(&sp8, (u16) temp_r31, (u16) temp_r24, arg2, 0x42, 0, 0);
-    bindTexture<2>(thpLayer, &sp8);
+    GStextureCreateFromMemory(&yTexture, textureWidth, textureHeight, yPlane, 0x42, 0, 0);
+    bindTexture<0>(thpLayer, &yTexture);
+    GStextureCreateFromMemory(&uTexture, textureWidth >> 1, textureHeight >> 1, uPlane, 0x42, 0, 0);
+    bindTexture<1>(thpLayer, &uTexture);
+    GStextureCreateFromMemory(&vTexture, textureWidth >> 1, textureHeight >> 1, vPlane, 0x42, 0, 0);
+    bindTexture<2>(thpLayer, &vTexture);
     thpLayer->field199C = GSgfxVFGetPredef(8);
     thpLayer->field1998 = 0x80;
     thpLayer->beginSurface(4);
-    GXPosition2s16((s16)arg3, (s16)arg4);
+    GXPosition2s16(x, y);
     GXTexCoord2u8(0, 0);
-    GXPosition2s16((s16)arg3 + (s16)arg7, (s16)arg4);
+    GXPosition2s16(x + drawWidth, y);
     GXTexCoord2u8(1, 0);
-    GXPosition2s16((s16)arg3 + (s16)arg7, (s16)arg4 + arg_sp8);
+    GXPosition2s16(x + drawWidth, y + drawHeight);
     GXTexCoord2u8(1, 1);
-    GXPosition2s16((s16)arg3, (s16)arg4 + arg_sp8);
+    GXPosition2s16(x, y + drawHeight);
     GXTexCoord2u8(0, 1);
     thpLayer->endSurface();
     return thpLayer->tokenMark();

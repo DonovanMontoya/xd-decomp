@@ -2,15 +2,13 @@
 #define PE_SPLINE_PRIVATE_HPP
 #include <global.h>
 #include <libc/stddef.h>
-struct PeColor {
-    u8 r, g, b, unused;
-};
+#include <game/pxdvs/GSAPI/GSgfxM/GSgfxColAu8.hpp>
 struct PeColorSpline {
     u8 count, interval;
     u8 reserved[2];
-    PeColor value;
+    GSgfxColAu8 value;
     f32 time;
-    PeColor points[1];
+    GSgfxColAu8 points[1];
 };
 struct PeSpline {
     u8 flags, count;
@@ -19,4 +17,6 @@ struct PeSpline {
     f32 points[1];
 };
 typedef char PeColorSplinePointsOffset[offsetof(PeColorSpline, points)==12 ? 1 : -1];
+extern "C" f32 peSplineGetValue(PeSpline* spline, f32 time);
+extern "C" void peColorSplineGetValue(GSgfxColAu8* result, PeColorSpline* spline, f32 time);
 #endif

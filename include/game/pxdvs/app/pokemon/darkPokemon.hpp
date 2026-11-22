@@ -91,6 +91,12 @@ struct DarkPokemon {
     u8 getSnatchIndex() const;
     struct ModeFlags { u8 reserved:1; u8 revers:1; u8 update:1; u8 wazaNew:3; u8 remainder:2; };
 };
+struct DarkPokemonSaveData {
+    enum Capacity { EntryCount = 128 };
+    DarkPokemon entries[EntryCount];
+};
+typedef char DarkPokemonSaveDataSize[sizeof(DarkPokemonSaveData) == 0x2400 ? 1 : -1];
+
 typedef char DarkPokemon_size_check[(sizeof(DarkPokemon) == 0x48) ? 1 : -1];
 typedef char DarkPokemon_statusRnd_check[(offsetof(DarkPokemon, statusRnd) == 0x0B) ? 1 : -1];
 typedef char DarkPokemon_placeIndex_check[(offsetof(DarkPokemon, placeIndex) == 0x11) ? 1 : -1];

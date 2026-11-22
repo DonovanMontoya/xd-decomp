@@ -1,7 +1,7 @@
 #include <game/pxdvs/GSAPI/GSparticle/peDistortionPrivate.hpp>
 #include <dolphin/os/OSFastCast.h>
 #include <dolphin/os.h>
-static inline f32 spline(ShapeSpline *s,f32 t) {
+static inline f32 spline(PeSpline *s,f32 t) {
  if(!s || !(s->flags&3))return 1.0f;
  f32 d=s->time-t;if(d<0)d=-d;
  return d<=0.00001f?s->value:peSplineGetValue(s,t);
@@ -114,7 +114,7 @@ static inline s32 distortionFloatClass(f32 x) {
     }
     return result;
 }
-static inline f32 distortionSpline(ShapeSpline* spline,f32 progress) {
+static inline f32 distortionSpline(PeSpline* spline,f32 progress) {
     if(!spline || !(spline->flags&3))return 1.0f;
     f32 difference=spline->time-progress;
     if(difference<0.0f)difference=-difference;
@@ -131,14 +131,14 @@ void peDistortionNode::UpdateRenderData(peEmitterNode* emitter,_peDistortion* de
     Quaternion inverseRightResult,inverseUpResult;
     DistortionColor color;
     u32 flags=definition->flags;
-    ShapeTransform* transform=(ShapeTransform*)this->transform;
+    NodeTransform* transform=this->transform;
 f32 cx=position.x*transform->scale.x;
 f32 cy=position.y*transform->scale.y;
 f32 cz=position.z*transform->scale.z;
 center.x=cx;center.y=cy;center.z=cz;
     PSMTXQuat(m39c,&transform->rotation);
     PSMTXMultVecSR(m39c,&center,&center);
-    PSVECAdd(&center,&((ShapeTransform*)this->transform)->position,&center);
+    PSVECAdd(&center,&this->transform->position,&center);
 
     if(flags&0x100) {
         if(flags&0x400) {
@@ -172,8 +172,8 @@ center.x=cx;center.y=cy;center.z=cz;
             PSMTXQuat(m36c,&orientation);PSMTXMultVecSR(m36c,&right,&right);
             PSMTXQuat(m33c,&orientation);PSMTXMultVecSR(m33c,&up,&up);
         }
-        PSMTXQuat(m30c,&((ShapeTransform*)this->transform)->rotation);PSMTXMultVecSR(m30c,&right,&right);
-        PSMTXQuat(m2dc,&((ShapeTransform*)this->transform)->rotation);PSMTXMultVecSR(m2dc,&up,&up);
+        PSMTXQuat(m30c,&this->transform->rotation);PSMTXMultVecSR(m30c,&right,&right);
+        PSMTXQuat(m2dc,&this->transform->rotation);PSMTXMultVecSR(m2dc,&up,&up);
     }
     PSVECCrossProduct(&up,&right,&crossNormal);normal=crossNormal;
 
@@ -189,17 +189,17 @@ f32 baseAngle=0.0f;
             PSMTXQuat(m27c,&rotationBefore);PSMTXMultVecSR(m27c,&right,&right);
         }
     }
-    PSQUATInverse(&((ShapeTransform*)this->transform)->rotation,&inverseRightResult);
+    PSQUATInverse(&this->transform->rotation,&inverseRightResult);
     inverseRight=inverseRightResult;
     PSMTXQuat(m18c,&inverseRight);PSMTXMultVecSR(m18c,&right,&localRight);work=localRight;
-    transform=(ShapeTransform*)this->transform;
+    transform=this->transform;
     work.x*=transform->scale.x;work.y*=transform->scale.y;work.z*=transform->scale.z;
     PSMTXQuat(m24c,&transform->rotation);PSMTXMultVecSR(m24c,&work,&work);
     PSVECScale(&right,&right,PSVECDotProduct(&right,&work));
-    PSQUATInverse(&((ShapeTransform*)this->transform)->rotation,&inverseUpResult);
+    PSQUATInverse(&this->transform->rotation,&inverseUpResult);
     inverseUp=inverseUpResult;
     PSMTXQuat(m15c,&inverseUp);PSMTXMultVecSR(m15c,&up,&localUp);work=localUp;
-    transform=(ShapeTransform*)this->transform;
+    transform=this->transform;
     work.x*=transform->scale.x;work.y*=transform->scale.y;work.z*=transform->scale.z;
     PSMTXQuat(m21c,&transform->rotation);PSMTXMultVecSR(m21c,&work,&work);
     PSVECScale(&up,&up,PSVECDotProduct(&up,&work));

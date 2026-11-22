@@ -20,11 +20,16 @@ struct MenuItemRecord {
     s16 sprite;
     u8 reserved10[12];
 };
-struct MenuSpriteValue { u8 data[12]; };
+struct MenuSpriteValue {
+    s16 x, y, width, height;
+    u32 resource;
+};
 struct MenuSpriteRecord { u8 header[8]; MenuSpriteValue values[5]; u8 tail[4]; };
 struct MenuSequenceRecord { u8 data[12]; };
 struct MenuSoundRecord { u16 sounds[6]; };
 typedef char MenuDataRecordSize[sizeof(MenuDataRecord)==28?1:-1];
 typedef char MenuItemRecordSize[sizeof(MenuItemRecord)==28?1:-1];
 typedef char MenuSpriteRecordSize[sizeof(MenuSpriteRecord)==72?1:-1];
+extern "C" MenuSpriteRecord* menuSpriteBiosGetPtr(u32 index);
+extern "C" MenuSpriteValue* menuSpriteBiosGetValPtr(MenuSpriteRecord* sprite);
 #endif

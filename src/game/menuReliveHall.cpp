@@ -1,5 +1,8 @@
 #include <game/menuReliveHallLayout.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
+#include <game/menuReliveMeter.h>
 #include <game/maximum/GSAPI/baselib/math_support.h>
+#include <game/pxdvs/app/pcbox/pcbox.hpp>
 
 inline void *operator new(unsigned long, void *p) {
     return p;
@@ -23,7 +26,6 @@ void GSmodelSetTexAnimIndex(void *, s32);
 void GSmodelSetTexAnimType(void *, s32);
 void GSmodelStartTexAnimation(void *);
 void *memset(void *, int, u32);
-s32 menuDrawReliveMeter3(Pokemon *, long, long, long, long, u8, GSgfxLayerID, long);
 void GSprimSetBlendMode(s32);
 void GSprimDraw2DPixelListC(void *, s32, void *);
 s8 GSinputGetLeftStickXData(s32, s32);
@@ -49,7 +51,6 @@ void msgctrlSetValue(s32, const void *);
 GSgfxLayer *GSgfxLayerFindByID(s32);
 void GSprimSetLineWidth(f32);
 void GSprimDraw2DLine(f32, f32, f32, f32, const GSgfxColAu8 *, const GSgfxColAu8 *);
-void menuDrawReliveUpdate();
 MENU_ITEM_dd_ *menuItemBiosGetPtr(s32, s16);
 tagWINDOW_WORK *windowSearchID(s32);
 u16 zokuseiGetPokemonSpriteID(void *, u16);
@@ -97,12 +98,6 @@ public:
     void putVisitor(Pokemon &);
     void pickupDancer(Pokemon &, long);
     void pickupVisitor(Pokemon &);
-};
-
-class PCBOX {
-public:
-    static PCBOX *getPointer();
-    bool isPokemonFull();
 };
 
 class CReliveHall {
@@ -352,7 +347,7 @@ void _antDraw(SPokemonView &view, PocketVec<short> position);
 void _stateDirChangeProcHook(CMetaMenu *menu, long arg);
 Pokemon *_cbMenuPokemonStatus(Pokemon *pokemon, MENU_POKEMON_CB_TYPE type, long);
 u8 isDirRegionInReverseClockwise(f32 a, f32 b, f32 c);
-s32 _menuDrawReliveMeter(Pokemon *p, long a, long b, long c, long d, u8 e, GSgfxLayerID layer, long f);
+void _menuDrawReliveMeter(Pokemon *p, long x, long y, long width, long height, u8 alpha, GSgfxLayerID layer, long);
 u8 rate01ToAlphaFrom50(f32 rate);
 void thisExec(CMenuGlobalState &);
 void thisFree();
@@ -581,7 +576,6 @@ void* GSresGetResourceAllGroup(u32);
 u16 GStextureGetXsize(void*);
 u16 GStextureGetYsize(void*);
 void GSprimSetQuadVertexOrder(s32);
-void* GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);
 void GSgfxSetupRenderAndSelect(void*);
 void GSgfxSetTUnitUserColorArg(s32,s32,s32,s32,s32);
 void GSgfxSetTUnitUserColorOp(s32,s32,s32,s32,s32,s32);
@@ -651,8 +645,8 @@ u8 rate01ToAlphaFrom50(f32 rate) {
     return 205.0f * rate + 50.0f;
 }
 
-s32 _menuDrawReliveMeter(Pokemon *p, long a, long b, long c, long d, u8 e, GSgfxLayerID layer, long f) {
-    return menuDrawReliveMeter3(p, a, b, c, d, e, layer, f);
+void _menuDrawReliveMeter(Pokemon *p, long x, long y, long width, long height, u8 alpha, GSgfxLayerID layer, long) {
+    menuDrawReliveMeter3(p, x, y, width, height, alpha, layer);
 }
 
 Pokemon *SPokemonView::getPokemon() {

@@ -1,11 +1,10 @@
 #ifndef FLOOR_PRIVATE_HPP
 #define FLOOR_PRIVATE_HPP
-#include <dolphin/types.h>
+#include <game/pxdvs/app/floor/floorData.hpp>
 
 struct GSthread;
 struct _GSmodel;
 struct _GSlight;
-struct GSfloor_dd_;
 
 enum FloorStateMode { FloorStateModeNone };
 enum FloorEnterMode { FloorEnterModeNone };
@@ -110,12 +109,6 @@ struct FloorPosition {
 struct FloorPositionList {
     u32 *count;
     FloorPosition *entries;
-};
-struct GSfloor_dd_ {
-    u8 area, kind;
-    u16 floorID;
-    u32 mapResourceID;
-    u32 pad8[14];
 };
 
 struct floorCharacter_dd_ {

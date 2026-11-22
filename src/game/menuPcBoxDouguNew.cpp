@@ -1,4 +1,5 @@
 #pragma defer_codegen on
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuPcBoxDouguNewLayout.hpp>
 #pragma force_active on
 
@@ -47,7 +48,6 @@ void winMsgOpen(s32, s32, s32, s32);
 void winMsgClose(s32);
 s32 heroItemCheckAddItemDataId(s32, u16);
 void heroItemAddItemDataId(s32, u16, u16, s32);
-void fadeSet(s32, f32);
 void fadeCheck(s32);
 }
 

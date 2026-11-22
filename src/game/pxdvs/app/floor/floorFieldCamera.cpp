@@ -82,8 +82,8 @@ static void _fieldCameraExitFloor(unsigned int, FloorEnterMode mode) {
     }
 }
 
-static void _fieldCameraEnterFloor(unsigned int, FloorEnterMode mode) {
-    GSfloor_dd_* floor = floorDataBiosGetPtr();
+static void _fieldCameraEnterFloor(unsigned int floorID, FloorEnterMode mode) {
+    GSfloor_dd_* floor = floorDataBiosGetPtr(floorID);
     if (floor == 0 || (mode != 0 && mode != 1)) {
         return;
     }
@@ -126,8 +126,10 @@ static unsigned long _fieldCameraGetStateSize(FloorStateMode mode) {
 static void _fieldCameraRestoreStateData(FloorStateMode mode, void* data, unsigned long size) {
     if (mode == 3 || mode == 1) {
         GSBinReadStream stream(data, size);
-        if (stream.readU16() == 0x3C7 && stream.readU8() == 0 && floorDataBiosGetCurrentPtr() != 0) {
-            FieldCameraList* list = (FieldCameraList*)floorDataBiosGetFieldCameraListPtr();
+        if (stream.readU16() == 0x3C7 && stream.readU8() == 0) {
+            GSfloor_dd_* floor = floorDataBiosGetCurrentPtr();
+            if (floor == 0) return;
+            FieldCameraList* list = floorDataBiosGetFieldCameraListPtr(floor);
             if (list != 0) {
                 gNumFieldCameras = *list->count;
                 gFieldCameraList = list->entries;
@@ -185,8 +187,8 @@ void floorReleaseFieldCamera() {
     gFieldCameraList = 0;
 }
 
-void floorInitFieldCamera(GSfloor_dd_*) {
-    FieldCameraList* list = (FieldCameraList*)floorDataBiosGetFieldCameraListPtr();
+void floorInitFieldCamera(GSfloor_dd_* floor) {
+    FieldCameraList* list = floorDataBiosGetFieldCameraListPtr(floor);
     gNumFieldCameras = 0;
     gFieldCameraList = 0;
     gCameraVarsInitialised = 0;

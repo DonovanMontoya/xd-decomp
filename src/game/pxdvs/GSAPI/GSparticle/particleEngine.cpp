@@ -1,6 +1,7 @@
 #include <game/pxdvs/GSAPI/GSparticle/particleEnginePrivate.hpp>
+#include <game/pxdvs/GSAPI/GSparticle/particleDebugStats.hpp>
 extern "C" {
-u32 g_particle_debug_stats[9];
+ParticleDebugStats g_particle_debug_stats;
 Vec g_CameraPosition,g_CameraLookDir,g_CameraUpDir,g_CameraSideDir;
 GSgfxVF g_vertex_format,g_ext_vertex_format;
 EngineBank* g_particleBanks;
@@ -793,7 +794,7 @@ void particleEngineInit(void) {
     GSgfxVFSetArray(&g_vertex_format, 9, 3, 0, 0, -1);
     GSgfxVFSetArray(&g_vertex_format, 0xB, 3, 0, 0, -1);
     GSgfxVFSetArray(&g_vertex_format, 0xD, 3, 0, 0, -1);
-    memset(&g_particle_debug_stats, 0, 0x24);
+    memset(&g_particle_debug_stats, 0, sizeof(g_particle_debug_stats));
 }
 
 }

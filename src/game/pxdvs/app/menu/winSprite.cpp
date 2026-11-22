@@ -2,6 +2,7 @@
 // Needs extra cflags: -inline noauto,deferred -opt nopeephole
 // Native definitions follow retail order; scratch storage retains its recovered layout.
 #include <game/pxdvs/app/menu/winSpritePrivate.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <libc/string.h>
 #include <dolphin/gx/GXVert.h>
 #include <game/pxdvs/app/menu/menuOffScreenPrivate.hpp>
@@ -12,7 +13,7 @@ void GSlogWrite(const char *, ...);
 MenuData *menuDataBiosGetPtr(s32);
 MENU_ITEM_dd_ *menuItemBiosGetPtr(s32, s16);
 u32 menuSeqBiosGetPtr(u32);
-s32 menuBiosGetCursorSize();
+u32 menuBiosGetCursorSize(tagWINDOW_WORK* window);
 s32 dbgMenuGetLayerID();
 s32 floorGetMenuLayerID();
 tagWINDOW_WORK *windowSearchID(s32);
@@ -61,10 +62,8 @@ extern "C++" { static void _winSeqMoveSub(SEQ_WORK_COMMON *common, tagSEQ_WORK *
 extern "C++" { static void _winSeqMoveMenu(tagWINDOW_WORK *win); }
 extern "C++" { static void _winSeqMoveSprite(s32 id, tagSPRITE_WORK *sprite); }
 extern "C" { void winSeqMoveMenu(tagWINDOW_WORK *win); }
-extern "C" { s32 winSeqCheckMove(s32 id); }
 extern "C" {
 
-GSgfxVF* GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);
 void* GSresGetResourceAllGroup(u32);
 u16 GStextureGetXsize(void*);
 u16 GStextureGetYsize(void*);
@@ -104,7 +103,7 @@ static inline void spritePrimitive(GSgfxLayer* layer,u32 primitive,u16 vertices)
 
 #pragma force_active on
 extern "C" {
-s32 winSeqCheckMove(s32 id) {
+u8 winSeqCheckMove(s32 id) {
     tagWINDOW_WORK *win = windowSearchID(id);
     if (win == 0) {
         return 0;
@@ -707,7 +706,7 @@ void winSpriteDraw(tagWINDOW_WORK* window,tagSPRITE_WORK* sprite) {
 }
 extern "C" {
 void winAnimeCursor(tagWINDOW_WORK *win, tagSPRITE_WORK *sprite) {
-    menuBiosGetCursorSize();
+    menuBiosGetCursorSize(win);
     if (*(s16 *)((u8 *)win + 0xA2) != win->cursorIndex) {
         winSetSequence(sprite->sequence, 0x141);
     }

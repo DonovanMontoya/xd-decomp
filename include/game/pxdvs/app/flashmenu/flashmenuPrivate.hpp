@@ -1,10 +1,9 @@
 #ifndef PXDVS_APP_FLASHMENU_FLASHMENU_PRIVATE_HPP
 #define PXDVS_APP_FLASHMENU_FLASHMENU_PRIVATE_HPP
 
-#include <dolphin/types.h>
+#include <game/pxdvs/app/flashmenu/flashShape.hpp>
 
 struct _PLACEOBJECT2;
-struct _SHAPERECORD;
 struct _DEFINETEXT;
 struct _DEFINEFONT2;
 struct _DEFINESHAPE;
@@ -15,17 +14,6 @@ struct GSgfxLayer;
 enum GSgfxLayerID { GSGFX_LAYER_ID_DUMMY };
 struct tagWINDOW_WORK;
 struct tagSPRITE_WORK;
-
-struct FLASHMATRIX {
-    s32 m[6];
-};
-struct FLASHMATRIXF {
-    f32 m[6];
-};
-
-struct FLASHCXFORM {
-    f32 m[4];
-};
 
 struct FlashHeader {
     u8 reserved0[6];
@@ -43,8 +31,8 @@ struct FlashItem {
     f32 depth;
     FLASHCXFORM cxform;
     s32 field30;
-    s32 field34;
-    void *extra;
+    _PLACEOBJECT2 *placement;
+    u16 *layerFrames;
     u8 flag;
     u8 reserved3D[3];
 };
@@ -103,7 +91,7 @@ public:
     FlashMenuTextureSlot textures[30];
     FlashMenuLabel *labels;
 
-    void Init(void*,unsigned long);
+    u32 Init(void*,unsigned long);
     FlashMenu();
     ~FlashMenu();
     GStexture *GetGStexture(long);

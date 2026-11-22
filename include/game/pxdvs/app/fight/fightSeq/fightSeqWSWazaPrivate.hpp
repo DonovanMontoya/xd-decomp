@@ -1,5 +1,8 @@
 #ifndef FIGHT_SEQ_WSWAZA_PRIVATE_HPP
 #define FIGHT_SEQ_WSWAZA_PRIVATE_HPP
+#include <game/pxdvs/app/fight/fightMenuMessage.hpp>
+#include <game/pxdvs/app/fight/fightPokemonDarkEffects.hpp>
+#include <game/pxdvs/app/fight/fightSeq/fightSeqDamage.hpp>
 #include <game/pxdvs/app/fight/fightSeq/fightSeqWazaseqPrivate.hpp>
 #define POKEMON_HPP_NO_PROTOTYPES
 #define POKEMON_FIGHT_RECORDS_NO_PROTOTYPES
@@ -25,7 +28,6 @@ extern s32 fight_waza_critical_data_number;
 u8 fightWaza_GetCritical(void*);
 void fightWaza_SetCritical(void*, u8);
 u8 fightWaza_GetDamageValue(void*);
-s32 fightSeqWazaDamageCalcHikaePokemon(void*, void*, void*, u16, u16, u16);
 void* fightPokemon_GetPokemonBuffPtr(void*);
 u16 pokemon_GetPokemonDataId(void*);
 u8 pokemon_GetTokuseiFlag(void*);
@@ -52,7 +54,6 @@ void wazaSequenceSysFreeAllWaza(void);
 void fightMenuAllFightTrainerCloseStatusMenu(u8);
 void fightMenuAllFightOutPokemonCloseStatusMenu(u8);
 void fightMenuCloseMsg(void);
-u8 fightMenuOpenMsg(u32);
 u8 fightSeqFightActionCreateAndFlowFifo(void*, void*, u16, s32, void*, void*);
 u8 fightSeqFightActionCreate(void*, void*, void*, u16, s32, void*, void*);
 void fightSeqSpecificationActionCounterInit(void*);
@@ -77,7 +78,6 @@ u8 fightOutPokemon_GetAbicntAverage(void*);
 void fightOutPokemon_SetAbicntAverage(void*, u8);
 u8 pokemonGetDarkPokemonCallKakuritu(void*);
 void fightTrainerCallEffect(void*, u8);
-void fightOutPokemonDarkPokemonKaijoEffect(void*, u8, u8, u8, u32, u8);
 void* fightTrainerGetNamePtr(void*);
 void fightMainAllCamera(u32, u32);
 void fightMainWaitFrame(s16);

@@ -76,16 +76,16 @@ extern "C" {
 void GSinputMotorStart(s32 id, u8 mode, u8 intensity, s32 duration, u8 fade);
 }
 extern "C" {
-u8 GSinputGetRightStickYData(s32 id, s32 smoothed);
+s8 GSinputGetRightStickYData(s32 id, s32 smoothed);
 }
 extern "C" {
-u8 GSinputGetRightStickXData(s32 id, s32 smoothed);
+s8 GSinputGetRightStickXData(s32 id, s32 smoothed);
 }
 extern "C" {
-u8 GSinputGetLeftStickYData(s32 id, s32 smoothed);
+s8 GSinputGetLeftStickYData(s32 id, s32 smoothed);
 }
 extern "C" {
-u8 GSinputGetLeftStickXData(s32 id, s32 smoothed);
+s8 GSinputGetLeftStickXData(s32 id, s32 smoothed);
 }
 extern "C" {
 s32 GSinputButtonsRepeat(s32 id);
@@ -600,7 +600,7 @@ s32 GSinputButtonsRepeat(s32 id) {
 }
 
 extern "C" {
-u8 GSinputGetLeftStickXData(s32 id, s32 smoothed) {
+s8 GSinputGetLeftStickXData(s32 id, s32 smoothed) {
     InputDevice* device = _inputFindDevice(id);
     if (!device) return 0;
     if (smoothed == 1) return device->leftX;
@@ -609,7 +609,7 @@ u8 GSinputGetLeftStickXData(s32 id, s32 smoothed) {
 }
 
 extern "C" {
-u8 GSinputGetLeftStickYData(s32 id, s32 smoothed) {
+s8 GSinputGetLeftStickYData(s32 id, s32 smoothed) {
     InputDevice* device = _inputFindDevice(id);
     if (!device) return 0;
     if (smoothed == 1) return device->leftY;
@@ -618,7 +618,7 @@ u8 GSinputGetLeftStickYData(s32 id, s32 smoothed) {
 }
 
 extern "C" {
-u8 GSinputGetRightStickXData(s32 id, s32 smoothed) {
+s8 GSinputGetRightStickXData(s32 id, s32 smoothed) {
     InputDevice* device = _inputFindDevice(id);
     if (!device) return 0;
     if (smoothed == 1) return device->rightX;
@@ -627,7 +627,7 @@ u8 GSinputGetRightStickXData(s32 id, s32 smoothed) {
 }
 
 extern "C" {
-u8 GSinputGetRightStickYData(s32 id, s32 smoothed) {
+s8 GSinputGetRightStickYData(s32 id, s32 smoothed) {
     InputDevice* device = _inputFindDevice(id);
     if (!device) return 0;
     if (smoothed == 1) return device->rightY;

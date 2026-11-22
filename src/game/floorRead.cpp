@@ -197,9 +197,9 @@ void *floorReadParticlePostFunc(u32 group, u32 id, u32 extra) {
         if (map == 0) return 0;
         _HSD_SceneDesc *scene = (_HSD_SceneDesc *)HSD_ArchiveGetPublicAddress(map, "scene_data");
         if (scene == 0) return 0;
-        if (scene->jobjs) {
+        if (scene->models) {
             u32 base = floorReadMakeModelResID(data->mapResourceID);
-            for (u32 i = 0; scene->jobjs[i]; ++i, ++index) {
+            for (u32 i = 0; scene->models[i]; ++i, ++index) {
                 void *model = GSresGetResource(floorGetCurrentGroupID(), base | index);
                 if (model) GSmodelLinkToGSparticleBank(model, particle);
             }
@@ -289,9 +289,9 @@ void *floorReadObjPostFunc(u32 group, u32 id, u32 extra) {
     scene = _makeArchiveHeader(group, id, extra);
     if (scene == 0) return 0;
     u32 base = floorReadMakeModelResID(id);
-    if (scene->jobjs) {
-        for (u32 i = 0; scene->jobjs[i]; ++i, ++index) {
-            GSresRegisterResource(scene->jobjs[i], group, base | index, 0);
+    if (scene->models) {
+        for (u32 i = 0; scene->models[i]; ++i, ++index) {
+            GSresRegisterResource(scene->models[i], group, base | index, 0);
         }
     }
     return scene;
@@ -312,10 +312,10 @@ void *floorReadMapPostFunc(u32 group, u32 id, u32 extra) {
     u32 i;
     scene = _makeArchiveHeader(group, id, extra);
     if (scene == 0) return 0;
-    if (scene->jobjs) {
+    if (scene->models) {
         base = floorReadMakeModelResID(id);
-        for (i = 0; scene->jobjs[i]; ++i, ++modelIndex) {
-            GSresRegisterResource(scene->jobjs[i], group, base | modelIndex, 0);
+        for (i = 0; scene->models[i]; ++i, ++modelIndex) {
+            GSresRegisterResource(scene->models[i], group, base | modelIndex, 0);
         }
     }
     if (scene->lights) {
@@ -421,8 +421,8 @@ static u8 _unloadObject(void *, u32 group, u32 id) {
     if (res == 0) return 0;
     _HSD_SceneDesc *scene = (_HSD_SceneDesc *)HSD_ArchiveGetPublicAddress(res, "scene_data");
     u32 base = floorReadMakeModelResID(id);
-    if (scene->jobjs) {
-        for (u32 i = 0; scene->jobjs[i]; ++i, ++index) {
+    if (scene->models) {
+        for (u32 i = 0; scene->models[i]; ++i, ++index) {
             GSresFreeResource(group, base | index);
         }
     }
@@ -482,8 +482,8 @@ static u8 _unloadMsg(void *p, u32, u32) {
     return 1;
 }
 
-static u8 _unloadColsys(void *p, u32, u32) {
-    GScolsys2UnloadCCD(p);
+static u8 _unloadColsys(void *, u32, u32) {
+    GScolsys2UnloadCCD();
     return 1;
 }
 

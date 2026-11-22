@@ -275,6 +275,31 @@ ring updates. Bounded execution of the retail and candidate instruction words
 agrees in 260 cases. Register assignments still differ, so the callback remains
 partially matching and contributes no new exact bytes.
 
+The TEV expression optimizer's `SimplifyByMerge` and its merge checks were
+adapted from `src/game/maximum/GSAPI/baselib/texpopt.cpp` at XD commit
+`f109416dd73aa8100b15d5b74381442509211343`. All six functions in the unit
+match, and linking the compiled unit reproduces the retail USA DOL.
+
+The spot-texture renderer in `game/pxdvs/app/wazaSequence/pachiru.cpp` uses the pixel bounds and spot iteration from the same XD checkpoint, with the local texture API. All three functions match the retail link.
+
+Particle generation was adapted from the same XD checkpoint. The double-precision absolute-value wrapper preserves the retail instructions in all six magnitude checks.
+
+The floor map resource iterator uses separate resource indices and table cursors as in the same XD checkpoint.
+
+The Poké Spot food placement routine uses the inventory and storage accounting from the same XD checkpoint.
+
+Battle status recovery uses the item effect buffer and item ID width from the same XD checkpoint.
+
+The hologram renderer uses the GX vertex writes and hall alpha field identified in the same XD checkpoint.
+
+Particle model rendering follows the per-node render routine from the same XD checkpoint, using the local matrix and shape APIs.
+
+The PDA monitor location sort follows the same XD checkpoint. The party slot has an eight-bit index, and the monitor routines follow the order of the retail object.
+
+The runtime light setup and active light list follow the same XD checkpoint, adapted to the local light object and matrix interfaces.
+
+Three cable battle menu routines and the rules controller were adapted from the same XD checkpoint. The cable battle state declaration follows the extent in each version’s symbol map.
+
 ## Colosseum license notice
 
 ```text

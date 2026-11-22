@@ -1,72 +1,15 @@
 #pragma peephole off
 #pragma pool_strings off
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <dolphin/types.h>
+#include <game/maximum/app/bingo/bingoBios.hpp>
 #include <game/menuBingoLayout.hpp>
+#include <game/menuDataBiosPrivate.hpp>
 
-struct BINGO_PANEL_dd_ {
-    u8 type;
-    u8 tokusei;
-    u8 unk2[2];
-    u16 no;
-    u16 waza;
-    u16 hosei;
-};
-
-struct BINGO_GRID_dd_ {
-    u8 grid;
-    u8 pos;
-};
-
-struct BINGO_DATA_dd_ {
-    u8 no;
-    u8 unk1[2];
-    u8 level;
-    u8 unk4;
-    u8 ball;
-    u8 unk6[0x10 - 6];
-    u16 score[10];
-    BINGO_PANEL_dd_ panel[14];
-    BINGO_GRID_dd_ grid[3];
-    u8 unkB6[2];
-};
-
-class bingo_bios {
-public:
-    bool isClearPlus(u32 index);
-    void setClear(u32 index);
-    static void setSelect(u32 index);
-    bool isSelect(u32 index);
-    bool isClear(u32 index);
-    u32 getClearLv();
-    u16 getScore(BINGO_DATA_dd_* data, u8 index);
-    u8 getGridPos(BINGO_DATA_dd_* data, u32 index);
-    u8 getGridGrid(BINGO_DATA_dd_* data, u32 index);
-    static u8 getPanelHoseiVal(BINGO_DATA_dd_* data, u32 index);
-    static u8 getPanelHoseiKind(BINGO_DATA_dd_* data, u32 index);
-    u16 getPanelWaza(BINGO_DATA_dd_* data, u32 index);
-    u16 getPanelNo(BINGO_DATA_dd_* data, u32 index);
-    u8 getPanelTokusei(BINGO_DATA_dd_* data, u32 index);
-    u8 getPanelType(BINGO_DATA_dd_* data, u32 index);
-    u8 getBall(BINGO_DATA_dd_* data);
-    u8 getLevel(BINGO_DATA_dd_* data);
-    u8 getNo(BINGO_DATA_dd_* data);
-    static u8 getStaticIdx(u8 index);
-    static void setStaticIdx(u8 idx0, u8 idx1);
-    static u8 getStaticResult();
-    static void setStaticResult(u8 result);
-    static void decStaticBall();
-    static u8 getStaticBall();
-    static void setStaticBall(u8 ball);
-    static BINGO_DATA_dd_* getStaticSheet();
-    static void setStaticNo(u8 no);
-};
-
-class Pokemon {
-public:
-    void* getPokemonDataPtr() const;
-    u8 data[0xC4];
-    char* getNicknamePtr();
-};
+#include <game/pxdvs/GSAPI/GSmsg/GSchar.hpp>
+#define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#undef POKEMON_HPP_NO_PROTOTYPES
 
 struct BingoPokemon {
     Pokemon pkm;
@@ -86,7 +29,7 @@ struct BingoPanel {
 
 class cBingo {
 public:
-    u32 save;
+    BingoSaveFlags* save;
     BINGO_DATA_dd_* sheet;
     BingoPanel panel[16];
     BingoPanel shuf[16];
@@ -301,12 +244,6 @@ struct GSvec2 {
     f32 y;
 };
 
-struct MenuSpriteVal {
-    u8 pad0[4];
-    s16 w;
-    s16 h;
-};
-
 extern "C" {
 s16 lbl_804EAA00;
 }
@@ -315,7 +252,7 @@ static cBingo gBingo;
 #define mPokemon cBingo::mPokemon
 
 extern "C" {
-void* savedataGetStatus(void* save, s32 kind);
+u32 savedataGetStatus(void* save, u16 kind);
 s32 GSfloorGetCurrent(void);
 void GSthreadSwitch(void);
 u32 HSD_Rand(void);
@@ -331,11 +268,9 @@ void menuFaceDispFromID2(tagWINDOW_WORK*, tagSPRITE_WORK*, u16, GSvec2*);
 u16 pokemonDataBiosGetStatusFaceMenuSpriteId(void* pdata, u16 unk);
 void GSmsgPrint2(s32, s32, s32, u32, s32);
 u32 GSmsgGetRect(u32 msg);
-char* GSmsgGetGSchar(u32 msg);
 u32 pokemonGetStatus(void* ptr, u16 pokemonDataId, u16 kind, u16 index);
 s32 menuSubGetPokemonSexForDisp(void* pokemon);
 u16 zokuseiGetPokemonSpriteID(void* pokemon, u16 idx);
-MenuSpriteVal* menuSpriteBiosGetValPtr(void);
 void FlashSystemSetNowFrame(u32 id, u32 frame);
 void windowDrawSprite2(s16 x, s16 y, s16 w, s16 h, u32 color, void* ctx, u16 key, u32 flags, s32 layer);
 f32 timeGetLastFrameSec(void);
@@ -353,8 +288,6 @@ s32 pokecoloGetLanguage(void);
 u32 floorGetCurrentGroupID(void);
 s8 fadeCheck(s32);
 u16 fadeGetType(void);
-void fadeSet(s32 type, f32 time);
-void* menuSpriteBiosGetPtr(u32 id);
 u32 windowGetKeyRepeat(void);
 u16 windowGetKeyTrg(void);
 void menuPlaySe(s32 menu, s32 se);
@@ -420,7 +353,7 @@ void menuCloseCustom(s32 menuID, s32 a, s32 b);
 }
 
 extern "C" {
-void menuSubCalcColor(void);
+u32 menuSubCalcColor(tagWINDOW_WORK*, tagSPRITE_WORK*);
 u16 pokemon_GetPokemonDataId(void* poke);
 u8 pokemonDB_GetTokuseiDataId(u16 id, u16 idx);
 u32 pokemonTokuseiDataBiosGetPtr(u16 index);
@@ -566,7 +499,7 @@ s32 menuBingoPokemonDraw(tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
     u16 tok;
     BingoPokemon* q;
     u32 n = 0;
-    menuSubCalcColor();
+    menuSubCalcColor(w, sp);
     u32 rf_t = gBingo.f12c;
     int cur = findPokemonOrder(rf_t + 1);
     BingoPokemon* p = &mPokemon[cur];
@@ -697,11 +630,16 @@ static inline BingoPokemon* panelPokemon(int i) {
     return &mPokemon[gBingo.panel[i].idx];
 }
 
+static inline void setBingoNicknameMessage(tagSPRITE_WORK* sp, u32 msg, u16* nickname) {
+    msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(msg));
+    msgctrlSetValue(0x32, (u32)nickname);
+    sp->msgID = 0x4276;
+}
+
 s32 menuBingoMessageDraw(tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
     enum TsE { TsE0 };
     s16 b;
     u32 msg = gBingo.f13c;
-    char* nick;
     switch (sp->id) {
     case 0x8D8: {
         gBingo.f140 += timeGetLastFrameSec();
@@ -738,26 +676,17 @@ s32 menuBingoMessageDraw(tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
         case 0xDAF3:
         case 0xDB22:
             if (panelPokemon(gBingo.f134) == 0) break;
-            nick = panelPokemon(gBingo.f134)->pkm.getNicknamePtr();
-            msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(msg));
-            msgctrlSetValue(0x32, (u32)nick);
-            sp->msgID = 0x4276;
+            setBingoNicknameMessage(sp, msg, panelPokemon(gBingo.f134)->pkm.getNicknamePtr());
             break;
         case 0xDAF4: {
             if (panelPokemon(gBingo.f138) == 0) break;
-            nick = panelPokemon(gBingo.f138)->pkm.getNicknamePtr();
-            msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(msg));
-            msgctrlSetValue(0x32, (u32)nick);
-            sp->msgID = 0x4276;
+            setBingoNicknameMessage(sp, msg, panelPokemon(gBingo.f138)->pkm.getNicknamePtr());
             break;
         }
         case 0xDAE7: {
             if (pokemonNo(gBingo.f12c) == 0) break;
             int j = findPokemonNo(gBingo.f12c);
-            nick = mPokemon[j].pkm.getNicknamePtr();
-            msgctrlSetValue(0x37, (u32)GSmsgGetGSchar(msg));
-            msgctrlSetValue(0x32, (u32)nick);
-            sp->msgID = 0x4276;
+            setBingoNicknameMessage(sp, msg, mPokemon[j].pkm.getNicknamePtr());
             break;
         }
         case 0xDAEA: {
@@ -2225,7 +2154,7 @@ void menuBingoMain(void) {
 
 void menuBingoInit(void) {
     if ((u32)GSfloorGetCurrent() == 0x388) {
-        gBingo.save = (u32)savedataGetStatus(0, 0x1B);
+        gBingo.save = (BingoSaveFlags*)savedataGetStatus(0, 0x1B);
     }
 }
 
@@ -2818,14 +2747,13 @@ void cBingo::dispPkmPanel(u32 n, tagWINDOW_WORK* w, tagSPRITE_WORK* sp) {
             GSmsgPrint2(layer, xoff + 0xA0, 9, color | w->alpha, 0x4278);
         }
         u32 spr = zokuseiGetPokemonSpriteID(pk->pkm.getPokemonDataPtr(), 0);
-        menuSpriteBiosGetPtr(spr);
-        MenuSpriteVal* val = menuSpriteBiosGetValPtr();
+        MenuSpriteValue* val = menuSpriteBiosGetValPtr(menuSpriteBiosGetPtr(spr));
         if (spr != 0) {
-            windowDrawSprite2((s16)(xoff + 0x66), 0x19, val->w, val->h, color | w->alpha, w, spr, 0, layer);
+            windowDrawSprite2((s16)(xoff + 0x66), 0x19, val->width, val->height, color | w->alpha, w, spr, 0, layer);
             if (spr != zokuseiGetPokemonSpriteID(pk->pkm.getPokemonDataPtr(), 1)) {
-                menuSpriteBiosGetPtr(zokuseiGetPokemonSpriteID(pk->pkm.getPokemonDataPtr(), 1));
-                MenuSpriteVal* val2 = menuSpriteBiosGetValPtr();
-                windowDrawSprite2((s16)(xoff + 0x66), 0x2D, val2->w, val2->h, color | w->alpha, w,
+                MenuSpriteValue* val2 = menuSpriteBiosGetValPtr(
+                    menuSpriteBiosGetPtr(zokuseiGetPokemonSpriteID(pk->pkm.getPokemonDataPtr(), 1)));
+                windowDrawSprite2((s16)(xoff + 0x66), 0x2D, val2->width, val2->height, color | w->alpha, w,
                                   zokuseiGetPokemonSpriteID(pk->pkm.getPokemonDataPtr(), 1), 0, layer);
             }
         }
@@ -2949,7 +2877,7 @@ void cBingo::SetupSheet(u32 n) {
     menuFaceLoad(0, loadPkmFace, &idx);
 }
 
-void* cBingo::loadPkmFace(void* arg) {
+inline void* cBingo::loadPkmFace(void* arg) {
     u32* counter = (u32*)arg;
     BingoPokemon* result = 0;
     if (*counter < 14) {

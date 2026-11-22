@@ -95,46 +95,54 @@ void WS_SUBROUTINE_CALL(void) {
 }
 
 struct SpActionItemEffect {
-    s32 id;
+    s32 type;
     s16 value;
+    u16 extra;
 };
 
 void WS_STATUS_RECOVER(void) {
-    Pokemon* poke;
-    FightWaza* waza;
-    s32 damage;
-    s32 hp;
-    FightOutPokemon* pokemon;
-    FightPokemon* fightPokemon;
-    FightPokemon* motoPokemon;
-    s32 itemId;
+    SpActionItemEffect entries[33];
+    FightOutPokemon* p;
     u8 itemType;
-    void* sequence;
+    FightPokemon* fp;
+    FightPokemon* moto;
+    Pokemon* pk;
+    FightWaza* waza;
     s16 count;
+    u16 item;
     u16 i;
-    SpActionItemEffect effects[32];
-    damage = 0;
+    s32 amount;
+    s32 hp;
+    void* seq;
+    amount = 0;
     fightSeq_GetWazaSeq();
-    pokemon = fightTargetGetPtrAsNowFightType(0x11, 0);
-    waza = fightOutPokemon_GetFightWazaPtr(pokemon);
-    fightPokemon = fightOutPokemon_GetFightPokemonPtr(pokemon);
-    motoPokemon = fightOutPokemon_GetMotoFightPokemonPtr(pokemon);
-    poke = fightPokemonGetPokemonPtr(fightPokemon);
-    hp = pokemon_GetHp(poke);
-    itemId = fightItem_GetItemDataId(fightOutPokemon_GetFightItemPtr(pokemon));
-    itemType = fightSeqGetItemType(itemId, pokemon);
-    sequence = fightOutPokemon_GetSequencePtr(pokemon);
-    count = itemUse2Pokemon(effects, 0, motoPokemon, itemId, 0);
+    p = fightTargetGetPtrAsNowFightType(0x11, 0);
+    waza = fightOutPokemon_GetFightWazaPtr(p);
+    fp = fightOutPokemon_GetFightPokemonPtr(p);
+    moto = fightOutPokemon_GetMotoFightPokemonPtr(p);
+    pk = fightPokemonGetPokemonPtr(fp);
+    hp = pokemon_GetHp(pk);
+    item = fightItem_GetItemDataId(fightOutPokemon_GetFightItemPtr(p));
+    itemType = fightSeqGetItemType(item, p);
+    seq = fightOutPokemon_GetSequencePtr(p);
+    count = itemUse2Pokemon(entries, 0, moto, item, 0);
     if (itemType == 1 || itemType == 2) {
         for (i = 0; i < count; i++) {
-            if (effects[i].id == 0x15) damage = effects[i].value;
+            if (entries[i].type == 0x15) {
+                amount = entries[i].value;
+            }
         }
-        pokemon_SetHp(poke, hp);
-        fightWaza_SetDamage(waza, -damage);
+        pokemon_SetHp(pk, hp);
+        amount = -amount;
+        fightWaza_SetDamage(waza, amount);
     }
     for (i = 0; i < count; i++) {
-        if (effects[i].id == 0xf) Sequence_ResetStatus(sequence, 2);
-        if (effects[i].id == 9) Sequence_ResetStatus(sequence, 1);
+        if (entries[i].type == 0xf) {
+            Sequence_ResetStatus(seq, 2);
+        }
+        if (entries[i].type == 9) {
+            Sequence_ResetStatus(seq, 1);
+        }
     }
     fightSeq_NextWazaSeq(1);
 }
@@ -599,7 +607,7 @@ void WS_TRAINER_APPEAR(void) {
 }
 
 void WS_POKE_RESHUFFLE_END(void) {
-    u8 saved[0xac];
+    FightWaza saved;
     u8* seq = fightSeq_GetWazaSeq();
     FightOutPokemon* pokemon = fightTargetGetPtrAsNowFightType(seq[1], 0);
     FightSide* side = (FightSide*)fightTargetGetPtrAsNowFightType(2, pokemon);
@@ -615,7 +623,7 @@ void WS_POKE_RESHUFFLE_END(void) {
         fightOutPokemonInitJoutaiDataId(pokemon, 0x15);
         u16 damage = fightOutPokemonMaxHpWaruValue(pokemon, (5 - fightSideGetCountAsJoutaiDataId(side, 0x4a)) * 2);
         FightWaza* waza = fightOutPokemon_GetFightWazaPtr(fightTargetGetPtrAsNowFightType(0x11, 0));
-        fightWazaBiosCopy(saved, waza);
+        fightWazaBiosCopy(&saved, waza);
         fightWaza_SetDamage(waza, damage);
         fightWazaInitJoutai(waza);
         fightFloor_SetAppointPokemonPtr(0, pokemon);
@@ -629,7 +637,7 @@ void WS_POKE_RESHUFFLE_END(void) {
             callSeq = WAZA_MakibishiK;
         }
         fightSeq_CallWazaSeq(callSeq);
-        fightWazaBiosCopy(waza, saved);
+        fightWazaBiosCopy(waza, &saved);
         if (fightSide_GetMakibisiCheckFlag(side) == 0) {
             fightSeq_NextWazaSeq(2);
             return;

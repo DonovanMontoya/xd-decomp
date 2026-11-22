@@ -32,12 +32,10 @@ __declspec(weak) void setupChanReg(PSParticle *arg0);
 __declspec(weak) void setupTevReg(PSParticle *arg0);
 __declspec(weak) void psDispSubAPPSRTPoint(PSParticle *arg0);
 __declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *arg0);
-__declspec(weak) void psDispSubAppSRT(PSParticle *arg0, u32 *arg1);
-__declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5, f32 farg6, f32 farg7, f32 arg_sp8, f32 arg_spC, f32 arg_sp10, f32 arg_sp14);
-__declspec(weak) void psDispSub(PSParticle *arg0, u32 *arg1);
-static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3);
-void psDispSetProjection(f32 *arg0);
-void psDispParticles(u32 arg0, s32 arg1, u32 arg2);
+__declspec(weak) void psDispSubAppSRT(PSParticle *arg0, const PSForm *form);
+__declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, const PSForm *form, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5, f32 farg6, f32 farg7, f32 arg_sp8, f32 arg_spC, f32 arg_sp10, f32 arg_sp14);
+__declspec(weak) void psDispSub(PSParticle *arg0, const PSForm *form);
+static void _psDispParticlesSub(u32 linkMask, s32 pass, PSGenerator *generator, void *camera);
 
 void psDispBeginFrame(void) {
     u8 var_r0;
@@ -175,6 +173,28 @@ __declspec(weak) void setupTevReg(PSParticle *pp) {
     }
 }
 
+enum HSD_ParticleKind {
+    Tornado = 1 << 2,
+    TexEdge = 1 << 3,
+    ComTLUT = 1 << 4,
+    MirrorS = 1 << 5,
+    MirrorT = 1 << 6,
+    PrimEnv = 1 << 7,
+    TexInterpNear = 1 << 9,
+    DispTexture = 1 << 10,
+    TexFlipS = 1 << 18,
+    TexFlipT = 1 << 19,
+    Trail = 1 << 20,
+    DirVec = 1 << 21,
+    DispFog = 1 << 24,
+    NoZComp = 1 << 28,
+    DispPoint = 1 << 30,
+    DispLighting = 1 << 31
+};
+
+static inline void setVtxDesc(s32 fmt);
+static inline void psSetCurrentMtx(GXPosNrmMtx idx);
+
 static inline void calcTornadoAnchor(PSParticle* pp, f32* x, f32* y, f32* z) {
     f32 cosb,cosa,sinb,sina,radius;
     f32 px,py,pz;
@@ -240,7 +260,6 @@ static inline void reuseCalcTornadoLastPos(PSParticle* pp, f32* x, f32* y, f32* 
     *y = -px * sina * sinb + py * cosa + pz * sina * cosb + gp->position.y;
     *z = -px * cosa * sinb - py * sina + pz * cosa * cosb + gp->position.z;
 }
-void HSD_MtxSRT(PSMtx,PSVec*,PSVec*,PSVec*,PSVec*);
 #pragma push
 #pragma optimization_level 3
 void psDispSubAPPSRTPoint(PSParticle *arg0)
@@ -304,7 +323,7 @@ void psDispSubAPPSRTPoint(PSParticle *arg0)
   {
     if (((u8) temp_r6->status) != 2)
     {
-      HSD_MtxSRT((f32 (*)[4]) temp_r6->matrix[0], &temp_r6->scale, &temp_r6->rotation, &temp_r6->translate, 0);
+      HSD_MtxSRT(temp_r6->matrix, &temp_r6->scale, &temp_r6->rotation, &temp_r6->translate, 0);
     }
     temp_r3 = arg0->appsrt;
     if (((u8) temp_r3->status) == 1)
@@ -477,158 +496,59 @@ void psDispSubAPPSRTPoint(PSParticle *arg0)
   }
 }
 
-#pragma pop
+__declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *particle) {
+    GXColor color, environment;
+    f32 startX, startY, startZ;
+    u8 width;
+    u32 kind;
 
-__declspec(weak) PSParticle *psDispSubPointTrail(PSParticle *arg0) {
-    union { f64 alignment; u8 bytes[43]; } stack;
-    s16 sz0, sy0, sx0, sz1, sy1, sx1;
-    PSGenerator *temp_r30;
-    f32 temp_f0;
-    f32 temp_f1;
-    f32 temp_f22;
-    f32 temp_f23;
-    f32 temp_f24;
-    f32 temp_f25;
-    f32 temp_f29;
-    f32 temp_f30;
-    f32 temp_f30_2;
-    f32 temp_f31;
-    f32 temp_f5;
-    f32 temp_f9;
-    f32 var_f0;
-    f32 var_f19;
-    f32 var_f1;
-    f32 var_f20;
-    f32 var_f21;
-    f32 var_f29;
-    s32 temp_r11;
-    s32 temp_r3;
-    s32 temp_r4;
-    s32 temp_r7_2;
-    u16 temp_r5;
-    u32 temp_r0;
-    s32 temp_r12;
-    s32 temp_r30_2;
-    s32 temp_r6;
-    s32 temp_r7;
-
-    if ((s32) currentMtx != 0) {
-        currentMtx = 0;
-        GXSetCurrentMtx(0U);
+    psSetCurrentMtx(GX_PNMTX0);
+    width = particle->size > 42.5 ? 255.0f : 6.0f * particle->size;
+    if (prevLineWidth != width) {
+        prevLineWidth = width;
+        GXSetLineWidth(width, GX_TO_ONE);
     }
-    temp_f1 = arg0->size;
-    if (temp_f1 > 42.5) {
-        var_f0 = 255.0f;
+    if (particle->kind & Tornado) {
+        calcTornadoAnchor(particle, &startX, &startY, &startZ);
     } else {
-        var_f0 = 6.0f * temp_f1;
+        startX = particle->position.x - particle->velocity.x;
+        startY = particle->position.y - particle->velocity.y;
+        startZ = particle->position.z - particle->velocity.z;
     }
-    temp_r3 = (s32) var_f0;
-    if ((s32) prevLineWidth != (s32) (u8) temp_r3) {
-        prevLineWidth = (s32) (u8) temp_r3;
-        GXSetLineWidth((u8) temp_r3, GX_TO_ONE);
-    }
-    if (arg0->kind & 4) {
-        temp_r30 = arg0->generator;
-        if (temp_r30 == NULL) {
-            var_f21 = arg0->position.x;
-            var_f20 = arg0->position.y;
-            var_f19 = arg0->position.z;
-        } else {
-            temp_f25 = (f32) sin((f64) arg0->gravity);
-            temp_f24 = (f32) sin((f64) arg0->friction);
-            temp_f23 = (f32) cos((f64) arg0->gravity);
-            temp_f22 = (f32) cos((f64) arg0->friction);
-            temp_f31 = arg0->velocity.z - temp_r30->param1;
-            var_f29 = temp_r30->radius;
-            temp_f30 = arg0->velocity.x - temp_r30->gravity;
-            if (var_f29 < 0.0f) {
-                var_f29 = -var_f29;
-            }
-            var_f1 = temp_r30->angle;
-            if (var_f1 < 0.0f) {
-                var_f1 = -var_f1;
-            }
-            temp_f29 = ((temp_f31 * (f32) tan((f64) var_f1)) + var_f29) * arg0->velocity.y;
-            temp_f30_2 = temp_f29 * (f32) cos((f64) temp_f30);
-            temp_f9 = -temp_f30_2;
-            temp_f5 = temp_f29 * (f32) sin((f64) temp_f30);
-            var_f21 = temp_r30->position.x + ((temp_f30_2 * temp_f22) + (temp_f31 * temp_f24));
-            var_f20 = temp_r30->position.y + ((temp_f22 * (temp_f31 * temp_f25)) + ((temp_f24 * (temp_f9 * temp_f25)) + (temp_f5 * temp_f23)));
-            var_f19 = temp_r30->position.z + ((temp_f22 * (temp_f31 * temp_f23)) + ((temp_f24 * (temp_f9 * temp_f23)) - (temp_f5 * temp_f25)));
-        }
-    } else {
-        var_f21 = arg0->position.x - arg0->velocity.x;
-        var_f20 = arg0->position.y - arg0->velocity.y;
-        var_f19 = arg0->position.z - arg0->velocity.z;
-    }
-    temp_r0 = arg0->kind;
-    temp_r4 = temp_r0 & 0x80000080;
-    switch (temp_r4) {                              /* irregular */
-    case 0x80000000:
-    case 0x0:
-        temp_r5 = arg0->primCount;
-        if (temp_r5 != 0) {
-            temp_r6 = arg0->primTarget[0];
-            temp_r7 = arg0->primTarget[1];
-            temp_r11 = (s32) (arg0->primRemain << 0x10) / (s32) temp_r5;
-            temp_r12 = arg0->primTarget[2];
-            temp_r30_2 = arg0->primTarget[3];
-            (*(s8*)(stack.bytes+0x20)) = (s8) ((s32) ((temp_r6 << 0x10) + (temp_r11 * (arg0->primColor[0] - temp_r6))) >> 0x10);
-            (*(u8*)(stack.bytes+0x21)) = (u8) ((s32) ((temp_r7 << 0x10) + (temp_r11 * (arg0->primColor[1] - temp_r7))) >> 0x10);
-            (*(u8*)(stack.bytes+0x22)) = (u8) ((s32) ((temp_r12 << 0x10) + (temp_r11 * (arg0->primColor[2] - temp_r12))) >> 0x10);
-            (*(u8*)(stack.bytes+0x23)) = (u8) ((s32) ((temp_r30_2 << 0x10) + (temp_r11 * (arg0->primColor[3] - temp_r30_2))) >> 0x10);
-        } else {
-            *(u32*)&(*(s8*)(stack.bytes+0x20)) = (s32) *(u32*)arg0->primColor;
-        }
+    kind = particle->kind;
+    switch ((s32)(kind & (DispLighting | PrimEnv))) {
+    case 0:
+    case DispLighting:
+        getColorPrimEnv(particle, &color, &environment);
         break;
-    case 0x80:
-    case 0x80000080:
-        (*(u8*)(stack.bytes+0x23)) = 0xFF;
-        (*(u8*)(stack.bytes+0x22)) = 0xFF;
-        (*(u8*)(stack.bytes+0x21)) = 0xFF;
-        (*(u8*)(stack.bytes+0x20)) = 0xFF;
+    case PrimEnv:
+    case DispLighting | PrimEnv:
+        color.r = color.g = color.b = color.a = 255;
         break;
     }
-    if (temp_r0 & 0x400) {
-        GXClearVtxDesc();
-        GXInvalidateVtxCache();
-        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX8);
-        GXBegin(GX_LINES, GX_VTXFMT2, 2U);
+
+    if (kind & DispTexture) {
+        setVtxDesc(GX_VTXFMT2);
+        GXBegin(GX_LINES, GX_VTXFMT2, 2);
     } else {
-        GXClearVtxDesc();
-        GXInvalidateVtxCache();
-        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-        GXBegin(GX_LINES, GX_VTXFMT3, 2U);
+        setVtxDesc(GX_VTXFMT3);
+        GXBegin(GX_LINES, GX_VTXFMT3, 2);
     }
-    sz0 = PS_FIXED6(var_f19);
-    sy0 = PS_FIXED6(var_f20);
-    sx0 = PS_FIXED6(var_f21);
-    *(volatile s16 *)0xCC008000 = sx0;
-    *(volatile s16 *)0xCC008000 = sy0;
-    *(volatile s16 *)0xCC008000 = sz0;
-    temp_r7_2 = (((((*(u8*)(stack.bytes+0x21)) * 0x10) & 0xF00 & ~0xF000) | (((u8) (*(s8*)(stack.bytes+0x20)) << 8) & 0xF000)) & ~0xF0) | ((*(u8*)(stack.bytes+0x22)) & 0xF0);
-    temp_f0 = (f32) (*(u8*)(stack.bytes+0x23)) * arg0->textureScale;
-    *(volatile s16 *)0xCC008000 = (temp_r7_2 & ~0xF) | (((u32) (s32) temp_f0 >> 4U) & 0xF);
-    if (arg0->kind & 0x400) {
-        *(volatile u8 *)0xCC008000 = 0;
-    }
-    sz1 = PS_FIXED6(arg0->position.z);
-    sy1 = PS_FIXED6(arg0->position.y);
-    sx1 = PS_FIXED6(arg0->position.x);
-    *(volatile s16 *)0xCC008000 = sx1;
-    *(volatile s16 *)0xCC008000 = sy1;
-    *(volatile s16 *)0xCC008000 = sz1;
-    *(volatile s16 *)0xCC008000 = (s16) ((((*(u8*)(stack.bytes+0x23)) >> 4U) & 0xF) | temp_r7_2);
-    if (arg0->kind & 0x400) {
-        *(volatile u8 *)0xCC008000 = 1;
-    }
-    return arg0;
+    GXPosition3s16(PS_FIXED6(startX), PS_FIXED6(startY), PS_FIXED6(startZ));
+    emitParticleColor(color.r, color.g, color.b, (u8)(color.a * particle->textureScale));
+    if (particle->kind & DispTexture) GXTexCoord1x8(0);
+
+    GXPosition3s16(PS_FIXED6(particle->position.x), PS_FIXED6(particle->position.y),
+                  PS_FIXED6(particle->position.z));
+    emitParticleColor(color.r, color.g, color.b, color.a);
+    if (particle->kind & DispTexture) GXTexCoord1x8(1);
+    return particle;
 }
 
-__declspec(weak) void psDispSubAppSRT(PSParticle* pp, u32* texform)
+#pragma pop
+
+
+__declspec(weak) void psDispSubAppSRT(PSParticle* pp, const PSForm* texform)
 {
     PSMtx mtx;
     PSVec v;
@@ -847,7 +767,7 @@ __declspec(weak) void psDispSubAppSRT(PSParticle* pp, u32* texform)
                          right_z, up_x, up_y, up_z);
 }
 
-__declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5, f32 farg6, f32 farg7, f32 arg_sp8, f32 arg_spC, f32 arg_sp10, f32 arg_sp14) {
+__declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, const PSForm *form, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5, f32 farg6, f32 farg7, f32 arg_sp8, f32 arg_spC, f32 arg_sp10, f32 arg_sp14) {
     f32 radialAngleNoSRT;
     f32 radialXNoSRT;
     f32 radialAngle;
@@ -866,9 +786,6 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
     s16 trailFarZ;
     s16 trailFarY;
     s16 trailFarX;
-    s16 trailCustomZ;
-    s16 trailCustomY;
-    s16 trailCustomX;
     s16 billboardMinusZ;
     s16 billboardMinusY;
     s16 billboardMinusX;
@@ -881,9 +798,6 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
     s16 billboardFarZ;
     s16 billboardFarY;
     s16 billboardFarX;
-    s16 customZ;
-    s16 customY;
-    s16 customX;
     f32 directionZ;
     f32 directionY;
     f32 directionX;
@@ -925,13 +839,9 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
     f32 temp_f21_2;
     f32 temp_f22;
     f32 temp_f22_2;
-    f32 temp_f2_4;
-    f32 temp_f3;
-    f32 temp_f3_2;
-    f32 temp_f3_3;
-    f32 temp_f4;
-    f32 temp_f4_2;
-    f32 temp_f4_3;
+    f32 dy;
+    f32 dx;
+    f32 dz;
     f32 temp_f5;
     f32 temp_f5_2;
     f32 temp_f8;
@@ -946,12 +856,8 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
     f32 var_f1;
     f32 var_f1_2;
     f32 var_f1_3;
-    f32 var_f1_4;
-    f32 var_f1_5;
     f32 var_f21;
     f32 var_f22;
-    f32 var_f2;
-    f32 var_f2_2;
     f32 var_f5;
     f64 temp_f2;
     f64 temp_f2_2;
@@ -967,34 +873,21 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
     s32 temp_r4;
     s32 var_r0;
     s32 var_r0_2;
-    s32 var_r5;
     u16 temp_r5;
-    u32 *var_r29;
-    u32 *var_r29_2;
     u32 temp_r0;
     u32 temp_r3;
     u32 temp_r3_2;
-    u32 temp_r3_5;
     u32 temp_r3_6;
     u32 temp_r3_7;
     u32 temp_r3_8;
-    u32 temp_r3_9;
     u32 temp_r4_2;
     u32 temp_r5_2;
     u32 temp_r6_3;
     u32 temp_r6_4;
-    u32 var_r25;
-    u32 var_r30;
     u8 temp_r12;
-    u8 temp_r25;
-    u8 temp_r26;
-    u8 temp_r26_2;
     u8 temp_r27_3;
-    u8 temp_r27_4;
     u8 temp_r6_2;
     u8 temp_r7;
-    u32 var_ctr;
-    u32 var_ctr_2;
 
     directionX = farg3;
     directionY = farg4;
@@ -1111,7 +1004,7 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
         default:
             break;
         }
-        if (arg1 == NULL) {
+        if (form == NULL) {
             if (temp_r0 & 0x400) {
                 GXClearVtxDesc();
                 GXInvalidateVtxCache();
@@ -1231,10 +1124,17 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                 }
             }
             if (!(fabs(var_f0) < __float_min[0])) {
-                temp_f3 = farg0 - var_f14_2;
-                temp_f2_4 = farg1 - var_f15_2;
-                temp_f4 = farg2 - var_f16_2;
-                var_f5 = (temp_f4 * temp_f4) + ((temp_f3 * temp_f3) + (temp_f2_4 * temp_f2_4));
+                const PSFormPrimitive* primitive;
+                u32 remaining;
+                u32 packedRGB;
+                f32 dx2, dy2, dz2;
+                dx = farg0 - var_f14_2;
+                dy = farg1 - var_f15_2;
+                dz = farg2 - var_f16_2;
+                dx2 = dx * dx;
+                dy2 = dy * dy;
+                dz2 = dz * dz;
+                var_f5 = dz2 + (dx2 + dy2);
                 if (var_f5 > 0.0f) {
                     temp_f2_5 = __frsqrte(var_f5);
                     temp_f2_6 = 0.5 * temp_f2_5 * -(((f64) var_f5 * (temp_f2_5 * temp_f2_5)) - 3.0);
@@ -1272,68 +1172,63 @@ __declspec(weak) void psDispSubMakePolygon(PSParticle *arg0, u32 *arg1, f32 farg
                 if (var_f1_3 < 1.0f) {
                     var_f1_3 = 1.0f;
                 }
-                var_r30 = *arg1;
-                var_r29 = (u32*)((u8*)arg1 + 4);
-loop_99:
-                if (var_r30 != 0) {
-                    temp_r26 = ((u8*)var_r29)[0x0];
-                    temp_r25 = ((u8*)var_r29)[0x1];
-                    var_r29 = (u32*)((u8*)var_r29 + 4);
-                    if (arg0->kind & 0x400) {
-                        GXClearVtxDesc();
-                        GXInvalidateVtxCache();
-                        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-                        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-                        GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
-                        GXBegin((enum _GXPrimitive) temp_r26, GX_VTXFMT5, (u16) temp_r25);
-                    } else {
-                        GXClearVtxDesc();
-                        GXInvalidateVtxCache();
-                        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-                        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-                        GXBegin((enum _GXPrimitive) temp_r26, GX_VTXFMT3, (u16) temp_r25);
-                    }
-                    for (var_ctr = 0; var_ctr < temp_r25; ++var_ctr) {
-                        var_f1_4 = *(f32*)var_r29;
-                        temp_r3_5 = arg0->kind;
-                        temp_f3_2 = 2.0f * (var_f1_4 - 0.5f);
-                        if (temp_r3_5 & 0x40000) {
-                            var_f1_4 = 1.0f - var_f1_4;
-                        }
-                        var_f2 = *(f32*)((u8*)var_r29+4);
-                        var_r29 = (u32*)((u8*)var_r29 + 8);
-                        var_r5 = (s32) -((var_f2 * temp_f17_3) - 255.0f);
-                        if (var_r5 < 0) {
-                            var_r5 = 0;
-                        }
-                        if (var_r5 > 0xFF) {
-                            var_r5 = 0xFF;
-                        }
-                        temp_f4_2 = 2.0f * (var_f2 - 0.5f);
-                        if (temp_r3_5 & 0x80000) {
-                            var_f2 = 1.0f - var_f2;
-                        }
-                        trailCustomZ = PS_FIXED6((arg_sp14 * var_f1_3 * temp_f4_2) + ((arg_sp8 * temp_f3_2) + farg2));
-                        saved390 = (f64) ((farg7 * temp_f3_2) + farg1);
+                arg_spC *= var_f1_3;
+                arg_sp10 *= var_f1_3;
+                arg_sp14 *= var_f1_3;
+                packedRGB = ((color.r << 8) & 0xF000) | ((color.g << 4) & 0x0F00) | (color.b & 0xF0);
+                primitive = (const PSFormPrimitive*) (form + 1);
 
-                        trailCustomY = PS_FIXED6((arg_sp10 * var_f1_3 * temp_f4_2) + (f32) saved390);
-                        saved390 = (f64) ((farg6 * temp_f3_2) + farg0);
-                        trailCustomX = PS_FIXED6((arg_spC * var_f1_3 * temp_f4_2) + (f32) saved390);
-                        *(volatile s16 *)0xCC008000 = trailCustomX;
-                        *(volatile s16 *)0xCC008000 = trailCustomY;
-                        *(volatile s16 *)0xCC008000 = trailCustomZ;
-                        *(volatile s16 *)0xCC008000 = (s16) ((((u32) var_r5 >> 4U) & 0xF) | (((((color.g * 0x10) & 0xF00 & ~0xF000) | (((u8) color.r << 8) & 0xF000)) & ~0xF0) | (color.b & 0xF0)));
-                        if (arg0->kind & 0x400) {
-                            *(volatile f32 *)0xCC008000 = var_f1_4;
-                            *(volatile f32 *)0xCC008000 = var_f2;
+                for (remaining = form->primitiveCount; remaining != 0; --remaining) {
+                    GXPrimitive type = (GXPrimitive) primitive->type;
+                    s32 vertexCount = primitive->vertexCount;
+                    const PSFormVertex* vertex = primitive->vertices;
+                    s32 i;
+
+                    if (arg0->kind & DispTexture) {
+                        setVtxDesc(GX_VTXFMT5);
+                        GXBegin(type, GX_VTXFMT5, vertexCount);
+                    } else {
+                        setVtxDesc(GX_VTXFMT3);
+                        GXBegin(type, GX_VTXFMT3, vertexCount);
+                    }
+                    for (i = 0; i < vertexCount; ++i) {
+                        f32 u = vertex->u;
+                        f32 v;
+                        u32 kind = arg0->kind;
+                        f32 across = 2.0f * (u - 0.5f);
+                        f32 along;
+                        s32 alpha;
+
+                        if (kind & TexFlipS) {
+                            u = 1.0f - u;
                         }
-                }
-                    var_r30 -= 1;
-                    goto loop_99;
+                        v = vertex->v;
+                        ++vertex;
+                        alpha = (s32) (255.0f - v * temp_f17_3);
+                        if (alpha < 0) {
+                            alpha = 0;
+                        }
+                        if (alpha > 255) {
+                            alpha = 255;
+                        }
+                        along = 2.0f * (v - 0.5f);
+                        if (kind & TexFlipT) {
+                            v = 1.0f - v;
+                        }
+                        GXPosition3s16(PS_FIXED6(arg_spC * along + (farg6 * across + farg0)),
+                                       PS_FIXED6(arg_sp10 * along + (farg7 * across + farg1)),
+                                       PS_FIXED6(arg_sp14 * along + (arg_sp8 * across + farg2)));
+                        GXWGFifo.u16 = packedRGB | (alpha >> 4);
+                        if (arg0->kind & DispTexture) {
+                            GXWGFifo.f32 = u;
+                            GXWGFifo.f32 = v;
+                        }
+                    }
+                    primitive = (const PSFormPrimitive*) vertex;
                 }
             }
         }
-    } else if (arg1 == NULL) {
+    } else if (form == NULL) {
         if (temp_r3 & 0x400) {
             GXClearVtxDesc();
             GXInvalidateVtxCache();
@@ -1395,59 +1290,52 @@ loop_99:
             *(volatile u8 *)0xCC008000 = (s8) (((temp_r3_8 >> 0x10U) & 0xC) + 3);
         }
     } else {
-        var_r25 = *arg1;
-        var_r29_2 = (u32*)((u8*)arg1 + 4);
-loop_126:
-        if (var_r25 != 0) {
-            temp_r26_2 = ((u8*)var_r29_2)[0x0];
-            temp_r27_4 = ((u8*)var_r29_2)[0x1];
-            var_r29_2 = (u32*)((u8*)var_r29_2 + 4);
-            if (arg0->kind & 0x400) {
-                GXClearVtxDesc();
-                GXInvalidateVtxCache();
-                GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-                GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
-                GXBegin((enum _GXPrimitive) temp_r26_2, GX_VTXFMT4, (u16) temp_r27_4);
-            } else {
-                GXClearVtxDesc();
-                GXInvalidateVtxCache();
-                GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-                GXBegin((enum _GXPrimitive) temp_r26_2, GX_VTXFMT1, (u16) temp_r27_4);
-            }
-            for (var_ctr_2 = 0; var_ctr_2 < temp_r27_4; ++var_ctr_2) {
-                var_f1_5 = *(f32*)var_r29_2;
-                temp_r3_9 = arg0->kind;
-                temp_f3_3 = 2.0f * (var_f1_5 - 0.5f);
-                if (temp_r3_9 & 0x40000) {
-                    var_f1_5 = 1.0f - var_f1_5;
-                }
-                var_f2_2 = *(f32*)((u8*)var_r29_2+4);
-                var_r29_2 = (u32*)((u8*)var_r29_2 + 8);
-                temp_f4_3 = 2.0f * (var_f2_2 - 0.5f);
-                if (temp_r3_9 & 0x80000) {
-                    var_f2_2 = 1.0f - var_f2_2;
-                }
-                customZ = PS_FIXED6((arg_sp14 * temp_f4_3) + ((arg_sp8 * temp_f3_3) + farg2));
-                saved390 = (f64) ((farg7 * temp_f3_3) + farg1);
+        const PSFormPrimitive* primitive = (const PSFormPrimitive*) (form + 1);
+        u32 remaining;
 
-                customY = PS_FIXED6((arg_sp10 * temp_f4_3) + (f32) saved390);
-                saved390 = (f64) ((farg6 * temp_f3_3) + farg0);
-                customX = PS_FIXED6((arg_spC * temp_f4_3) + (f32) saved390);
-                *(volatile s16 *)0xCC008000 = customX;
-                *(volatile s16 *)0xCC008000 = customY;
-                *(volatile s16 *)0xCC008000 = customZ;
-                if (arg0->kind & 0x400) {
-                    *(volatile f32 *)0xCC008000 = var_f1_5;
-                    *(volatile f32 *)0xCC008000 = var_f2_2;
+        for (remaining = form->primitiveCount; remaining != 0; --remaining) {
+            GXPrimitive type = (GXPrimitive) primitive->type;
+            s32 vertexCount = primitive->vertexCount;
+            const PSFormVertex* vertex = primitive->vertices;
+            s32 i;
+
+            if (arg0->kind & DispTexture) {
+                setVtxDesc(GX_VTXFMT4);
+                GXBegin(type, GX_VTXFMT4, vertexCount);
+            } else {
+                setVtxDesc(GX_VTXFMT1);
+                GXBegin(type, GX_VTXFMT1, vertexCount);
+            }
+            for (i = 0; i < vertexCount; ++i) {
+                f32 u = vertex->u;
+                f32 v;
+                u32 kind = arg0->kind;
+                f32 across = 2.0f * (u - 0.5f);
+                f32 along;
+
+                if (kind & TexFlipS) {
+                    u = 1.0f - u;
                 }
-        }
-            var_r25 -= 1;
-            goto loop_126;
+                v = vertex->v;
+                ++vertex;
+                along = 2.0f * (v - 0.5f);
+                if (kind & TexFlipT) {
+                    v = 1.0f - v;
+                }
+                GXPosition3s16(PS_FIXED6(arg_spC * along + (farg6 * across + farg0)),
+                               PS_FIXED6(arg_sp10 * along + (farg7 * across + farg1)),
+                               PS_FIXED6(arg_sp14 * along + (arg_sp8 * across + farg2)));
+                if (arg0->kind & DispTexture) {
+                    GXWGFifo.f32 = u;
+                    GXWGFifo.f32 = v;
+                }
+            }
+            primitive = (const PSFormPrimitive*) vertex;
         }
     }
 }
 
-__declspec(weak) void psDispSub(PSParticle* pp, u32* texform)
+__declspec(weak) void psDispSub(PSParticle* pp, const PSForm* texform)
 {
     f32 x;
     f32 y;
@@ -1590,25 +1478,6 @@ __declspec(weak) void psDispSub(PSParticle* pp, u32* texform)
                          up_z);
 }
 
-enum HSD_ParticleKind {
-    Tornado = 1 << 2,
-    TexEdge = 1 << 3,
-    ComTLUT = 1 << 4,
-    MirrorS = 1 << 5,
-    MirrorT = 1 << 6,
-    PrimEnv = 1 << 7,
-    TexInterpNear = 1 << 9,
-    DispTexture = 1 << 10,
-    TexFlipS = 1 << 18,
-    TexFlipT = 1 << 19,
-    Trail = 1 << 20,
-    DirVec = 1 << 21,
-    DispFog = 1 << 24,
-    NoZComp = 1 << 28,
-    DispPoint = 1 << 30,
-    DispLighting = 1 << 31
-};
-
 #define PS_FLAG_HIDDEN 0x20000000
 
 static inline void setVtxDesc(s32 fmt)
@@ -1736,17 +1605,13 @@ static inline void psSetupVtxFormat(GXVtxFmt format, BOOL has_color,
     }
 }
 
-static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3) {
+static void _psDispParticlesSub(u32 linkMask, s32 pass, PSGenerator *generator, void *camera) {
     typedef struct _HSD_TlutDesc {
         u16* lut;
         GXTlutFmt fmt;
         u32 tlut_name;
         u16 n_entries;
     } HSD_TlutDesc;
-    typedef struct _HSD_PSFormGroup {
-        u32 num;
-        u8* formTable[1];
-    } HSD_PSFormGroup;
     s32 linkNo;
     u32 prevTexEdge;
     s32 alpha_compare_mode;
@@ -1771,9 +1636,9 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
     prevACmpParam2 = 0xFF;
     needs_setup = 1;
     for (linkNo = 0; linkNo < 16; linkNo++) {
-        if (arg0 & (1 << linkNo)) {
+        if (linkMask & (1 << linkNo)) {
             particleSort(linkNo, &sorted_particles, &non_edge_particles);
-            switch (arg1) {
+            switch (pass) {
             case 1:
                 pp = sorted_particles;
                 break;
@@ -1785,9 +1650,9 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
             }
             while (pp != NULL) {
                 PSTex* tex_group = NULL;
-                HSD_PSFormGroup* form_group = NULL;
-                HSD_PSFormGroup** form_groups;
-                u8* form = NULL;
+                PSFormGroup* form_group = NULL;
+                PSFormGroup** form_groups;
+                const PSForm* form = NULL;
                 GXTexFmt fmt;
                 int blend_mode;
                 u8 alpha0;
@@ -1801,12 +1666,12 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
                 GXTexWrapMode wrap_t;
                 void** tex_table;
 
-                if (((u32) arg1 == 1) && !(pp->kind & TexEdge)) {
+                if (((u32) pass == 1) && !(pp->kind & TexEdge)) {
                     break;
                 }
                 if (!(pp->size < __float_epsilon[0]) &&
-                    (arg2 == NULL || pp->id == arg2->id) &&
-                    (u32) pp->generator->camera == arg3 &&
+                    (generator == NULL || pp->id == generator->id) &&
+                    pp->generator->camera == camera &&
                     !(pp->kind & PS_FLAG_HIDDEN))
                 {
                     if (needs_setup != 0) {
@@ -1817,7 +1682,7 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
                         prevChanCtrl = -1;
                         psSetupTevInvalidState();
                         prevMirror = (u32) -1;
-                        prev_kind &= 0xFEFFFFFF;
+                        prev_kind = 0;
                         prevTexEdge = (u32) -1;
                         HSD_FogSet(NULL);
                         prevChanMat.r = prevChanMat.g = prevChanMat.b = 0xFF;
@@ -1940,7 +1805,7 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
 
 
 
-                    form_groups = (HSD_PSFormGroup**) psFormGroupArray[pp->bank];
+                    form_groups = psFormGroupArray[pp->bank];
                     if (form_groups != NULL &&
                         (form_group = form_groups[pp->texGroup]) != NULL
                         && form_group->formTable != NULL
@@ -2103,9 +1968,9 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
                             }
                         }
                     } else if (pp->appsrt != NULL) {
-                        psDispSubAppSRT(pp, (u32*) form);
+                        psDispSubAppSRT(pp, form);
                     } else {
-                        psDispSub(pp, (u32*) form);
+                        psDispSub(pp, form);
                     }
                 }
 
@@ -2119,10 +1984,10 @@ static void _psDispParticlesSub(u32 arg0, s32 arg1, PSGenerator *arg2, u32 arg3)
     }
 }
 
-void psDispSetProjection(f32 *arg0) {
-    memcpy(prj, arg0, 0x1CU);
+void psDispSetProjection(const PSProjection *projection) {
+    memcpy(prj, projection, sizeof(prj));
 }
 
-void psDispParticles(u32 arg0, s32 arg1, u32 arg2) {
-    _psDispParticlesSub(arg0, arg1, NULL, arg2);
+void psDispParticles(s32 linkMask, s32 pass, void *camera) {
+    _psDispParticlesSub(linkMask, pass, NULL, camera);
 }

@@ -1,4 +1,5 @@
 #pragma force_active on
+#include <game/menuFightAction.hpp>
 #include <dolphin/types.h>
 
 struct FIGHT_FLOOR;
@@ -185,7 +186,7 @@ FightOutPokemon* fightFloorBiosGetKizetuPokemonPtr(FIGHT_FLOOR*);
 FightOutPokemon* fightFloorBiosGetTuikakoukaPokemonPtr(FIGHT_FLOOR*);
 FightOutPokemon* fightFloorBiosGetTokuseiPokemonPtr(FIGHT_FLOOR*);
 TrainerInventoryItem* fightFloorBiosGetItemPokemonPtr(FIGHT_FLOOR*);
-u32 fightFloorBiosGetEncountFloorId(FIGHT_FLOOR*);
+u32 fightFloorBiosGetEncountFloorId();
 FightOutPokemon* fightFloorBiosGetAppointPokemonPtr(FIGHT_FLOOR*);
 FightTrainer* fightFloorBiosGetAppointTrainerPtr(FIGHT_FLOOR*);
 FightWaza* fightFloorBiosGetAppointWazaPtr(FIGHT_FLOOR*);
@@ -434,8 +435,6 @@ extern "C" {
 }
 
 struct FightActionBuff;
-// The action menu begins with an eleven-character name and its escape lock.
-struct FightFloorActionMenu { u16 name[11]; u8 escapeDisabled; };
 struct FightOutPokemonEnemy { u8 reserved[12]; };
 extern "C" {
 u8 fightOutPokemonIsFightActionAttackWazaOut(FightOutPokemon*, u32, u32);
@@ -558,7 +557,6 @@ extern "C" { u8 fightFloorIsNowEncountHostEnemyPokemonKime(FIGHT_FLOOR* floor); 
 extern "C" { u8 fightFloorIsNowEncountSnatchOnly(FIGHT_FLOOR* floor); }
 extern "C" { u8 fightFloorIsNowEncountTuusinTaisen(FIGHT_FLOOR* floor); }
 extern "C" { u32 fightFloorGetBgmSndDataId(FIGHT_FLOOR* floor); }
-extern "C" { void fightFloorSetMenuFightAction(FIGHT_FLOOR* floor, FightOutPokemon* pokemon, FightFloorActionMenu* menu); }
 extern "C" { void fightFloorSetShadow(); }
 extern "C" { u8 fightFloorGetFightTrainerFightOutPokemonIsFightActionAttackWazaOut(FIGHT_FLOOR* floor, void* target, u8 ally, u8 fightOutOnly, u32 move, u32 mode); }
 extern "C" { u16 fightFloorGetFightTrainerFightPokemonPtrAry(FIGHT_FLOOR* floor, void* target, FightPokemon** output, u8 ally, u8 fightOutOnly); }
@@ -2038,7 +2036,7 @@ u32 fightFloorGetStatus(FIGHT_FLOOR* floor, u16 dataId, u16 property, u16 index)
     case FLOOR_STATUS_TUIKAKOUKA_POKEMON_PTR: return reinterpret_cast<u32>(fightFloorBiosGetTuikakoukaPokemonPtr(static_cast<FIGHT_FLOOR*>(object)));
     case FLOOR_STATUS_TOKUSEI_POKEMON_PTR: return reinterpret_cast<u32>(fightFloorBiosGetTokuseiPokemonPtr(static_cast<FIGHT_FLOOR*>(object)));
     case FLOOR_STATUS_ITEM_POKEMON_PTR: return reinterpret_cast<u32>(fightFloorBiosGetItemPokemonPtr(static_cast<FIGHT_FLOOR*>(object)));
-    case FLOOR_STATUS_ENCOUNT_FLOOR_ID: return fightFloorBiosGetEncountFloorId(static_cast<FIGHT_FLOOR*>(object));
+    case FLOOR_STATUS_ENCOUNT_FLOOR_ID: return fightFloorBiosGetEncountFloorId();
     case FLOOR_STATUS_APPOINT_POKEMON_PTR: return reinterpret_cast<u32>(fightFloorBiosGetAppointPokemonPtr(static_cast<FIGHT_FLOOR*>(object)));
     case FLOOR_STATUS_APPOINT_TRAINER_PTR: return reinterpret_cast<u32>(fightFloorBiosGetAppointTrainerPtr(static_cast<FIGHT_FLOOR*>(object)));
     case FLOOR_STATUS_APPOINT_WAZA_PTR: return reinterpret_cast<u32>(fightFloorBiosGetAppointWazaPtr(static_cast<FIGHT_FLOOR*>(object)));

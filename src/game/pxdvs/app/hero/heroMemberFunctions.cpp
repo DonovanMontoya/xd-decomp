@@ -7,10 +7,8 @@
 #include <game/pxdvs/app/pokemon/pokemonBios.hpp>
 
 extern "C" {
-void* heroItemGetItemKindToItemAryPtr(Hero*,u8,u16*,u16*,u8*,u8*);
-void* heroItemGetItemDataIdToItemAryPtr(Hero*,u16,u16*,u16*,u8*,u8*);
-void itemSortAryByPriority(void*,u16,s32);
-u32 itemGetQuantityInAry(void*,u16,u16,u16);
+ITEM* heroItemGetItemKindToItemAryPtr(Hero*,u8,u16*,u16*,u8*,u8*);
+ITEM* heroItemGetItemDataIdToItemAryPtr(Hero*,u16,u16*,u16*,u8*,u8*);
 u32 gamedataGetStatus(u32,u32);
 void pokemonCreate(Pokemon*,u16,u8,u32);
 void pokemonWazaCreate(Pokemon*,u16,u16);
@@ -29,7 +27,7 @@ const f32 unkFloat = 57.29578;
  */
 bool Hero::itemSort(u8 kind) {
     u16 count;
-    void* items = heroItemGetItemKindToItemAryPtr(this,kind,&count,0,0,0);
+    ITEM* items = heroItemGetItemKindToItemAryPtr(this,kind,&count,0,0,0);
     if ((u8)(kind-1)>1) return false;
     itemSortAryByPriority(items,count,kind);
     return true;
@@ -220,7 +218,7 @@ u32 Hero::getLegendPokemonSize() const {
 u32 Hero::itemQuantity(u16 id) {
     u16 count=0,max=0;
     u8 flag;
-    void* items=heroItemGetItemDataIdToItemAryPtr(this,id,&count,&max,&flag,0);
+    ITEM* items=heroItemGetItemDataIdToItemAryPtr(this,id,&count,&max,&flag,0);
     u32 quantity;
     quantity = !items ? 0 : itemGetQuantityInAry(items,count,id,max);
     return quantity;

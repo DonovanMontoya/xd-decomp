@@ -8,6 +8,7 @@ GStexture* GSgfxLayer::distTexPtr;
 s16 GSgfxLayer::fbTexRefCount;
 s16 GSgfxLayer::distTexRefCount;
 
+#include <game/pxdvs/GSAPI/GSgfxM/copyFilter.hpp>
 #include <libc/string.h>
 struct CopyTex {s16 left,top;u16 width,height,destWidth;u16 reserved;s32 format,mode;u8 mipmap,clear;};
 struct RenderMode {u8 reserved[0x19];u8 aa;u8 samples[12][2];};
@@ -19,7 +20,6 @@ GSgfxVF* GSgfxVFGetPredef(u32);
 void GSgfxVideoGetEFBSize(u16*,u16*);
 RenderMode* GSgfxVideoGetRenderMode__Fv();
 void GSgfxVideoResetViewport__Fb(bool);
-void GSgfx_GCWriteCopyFilter(u8,u8 (*)[2],u8,const u8*);
 void GSgfx_GCWriteCopyTex(const CopyTex*,void*);
 void GSmtx44Ortho(Mtx44,f32,f32,f32,f32,f32,f32);
 void beginSurface__10GSgfxLayerFUs(GSgfxLayer*,u16);
@@ -461,12 +461,12 @@ void GSgfxLayer::EffectTextureCopy(GStexture *arg1, bool arg2, u8 *arg3, bool ar
         FlushState__10GSgfxLayerFv(this);
         if (arg2 != 0) {
             if (arg3 == 0) {
-                GSgfx_GCWriteCopyFilter(renderMode->aa, (u8 (*)[2]) renderMode->samples[0], 1U, _layerTexCopyDefaultFilter);
+                GSgfx_GCWriteCopyFilter(renderMode->aa, renderMode->samples, 1U, _layerTexCopyDefaultFilter);
             } else {
-                GSgfx_GCWriteCopyFilter(renderMode->aa, (u8 (*)[2]) renderMode->samples[0], 1U, arg3);
+                GSgfx_GCWriteCopyFilter(renderMode->aa, renderMode->samples, 1U, arg3);
             }
         } else {
-            GSgfx_GCWriteCopyFilter(renderMode->aa, (u8 (*)[2]) renderMode->samples[0], 0U, 0);
+            GSgfx_GCWriteCopyFilter(renderMode->aa, renderMode->samples, 0U, 0);
         }
         copy.left = 0;
         copy.top = 0;

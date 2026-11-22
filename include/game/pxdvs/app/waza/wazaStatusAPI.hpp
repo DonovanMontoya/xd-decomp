@@ -95,11 +95,10 @@ u32 fightWaza_GetHitDamage(FightWazaRecord* data);
 u32 fightWaza_GetDamage(FightWazaRecord* data);
 u8 fightWaza_GetDamageValue(FightWazaRecord* data);
 u8 fightWaza_GetCritical(FightWazaRecord* data);
-WazaStatusRecord* fightWaza_GetJoutaiPtr(FightWazaRecord* data, u16 index);
+FightJoutai* fightWaza_GetJoutaiPtr(FightWazaRecord* data, u16 index);
 u16 fightWaza_GetTargetDataId(FightWazaRecord* data);
 u16 fightWaza_GetUseWazaDataId(FightWazaRecord* data);
 u16 fightWaza_GetMotoWazaDataId(FightWazaRecord* data);
-u8 fightWaza_GetWazaBanme(FightWazaRecord* data);
 void* wazaDB_GetFightWazaWzxVariationFuncPtr(u32 identifier);
 void* wazaDB_GetFightWazaWzxTypeFuncPtr(u32 identifier);
 void* wazaDB_GetFightTrainerAiWazaDamageFightPokemonFuncPtr(u32 identifier);
@@ -158,6 +157,5 @@ u16 fightWazaBiosGetTargetDataId(FightWazaRecord* p);
 u16 fightWazaBiosGetUseWazaDataId(FightWazaRecord* p);
 u16 fightWazaBiosGetMotoWazaDataId(FightWazaRecord* p);
 u8 fightWazaBiosGetWazaBanme(FightWazaRecord* p);
-void fightWazaBiosCopy(FightWazaRecord* dst,const FightWazaRecord* src);
 }
 #endif

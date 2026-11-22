@@ -1,4 +1,5 @@
 #include <game/menuSubLayout.hpp>
+#include <game/pxdvs/app/floor/floorData.hpp>
 
 // Retail retains the entry points used by external menu dispatch.
 #pragma force_active on
@@ -38,7 +39,7 @@ void FlashSystemSetPlayFrameLabel(void*, const char*, const char*);
 s32 GSfloorGetCurrentFloorGroupID(void);
 u8 GSfloorIsPop(void);
 void GSfsysFree(s32);
-void GSfsysPreReadWait(void);
+s32 GSfsysPreReadWait(u32 group);
 void GSfsysReadWait(s32);
 void GSfsysWait(s32);
 void GSmodelGetAnimFrameCount(u32, s16);
@@ -66,8 +67,7 @@ s32 fightEncountDataBiosGetPtr(s32);
 void fightEncountDataBiosSetDiskId(s32, s32);
 void fightEncountDataBiosSetFightTrainerDataId(s32, s32, s32);
 void fightRegWzxLoadAll(s32);
-void floorDataBiosGetFileGroupID(void*);
-void* floorDataBiosGetPtr(s32);
+u32 floorDataBiosGetFileGroupID(GSfloor_dd_* floor);
 s32 floorGetCurrentGroupID(void);
 void floorLink(s32, s32);
 u32 gamedatasaveGetStatus(s32, s32);
@@ -577,8 +577,7 @@ static void _menuTitlePreReadFightRegWzxData(void) {
         GSthreadSwitch();
     }
     menuTitlePlayBGMWait(1);
-    floorDataBiosGetFileGroupID(floorDataBiosGetPtr(0x397));
-    GSfsysPreReadWait();
+    GSfsysPreReadWait(floorDataBiosGetFileGroupID(floorDataBiosGetPtr(0x397)));
     fightRegWzxLoadAll(-1);
     _gsthread_ptr_fight_reg_wzx = 0;
 }

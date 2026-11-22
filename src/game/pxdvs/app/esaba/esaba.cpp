@@ -1,13 +1,11 @@
 #include <global.h>
+#include <game/pxdvs/app/esaba/esaba.hpp>
 #define POKEMON_HPP_NO_PROTOTYPES
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
-struct EsaPokemon {u16 unk0,id;u32 rate,digest;};
-struct EsaList {u32 *count;EsaPokemon *pokemon;};
-struct EsaData {s32 amountFlag,appFlag,stepFlag,pokemonFlag,randomFlag,disableFlag;EsaList **list;};
 struct EsaApp {u16 first,last,interval,randomDiv,mode,pad;u32 unused,progressIndex; s32 progressFlag;};
 struct EsaSpecial {u16 unused,id;u32 rate,digest;};
 extern "C" {
-extern EsaData *esabadata;extern u32 *esabadata_number;extern EsaApp *esabaappdata;extern EsaSpecial *esabapokemondata_EX;struct EsaFlagEtc{u32 a,b,c,d,e,f,g,h;};extern EsaFlagEtc *flag_etc;
+extern EsaApp *esabaappdata;extern EsaSpecial *esabapokemondata_EX;struct EsaFlagEtc{u32 a,b,c,d,e,f,g,h;};extern EsaFlagEtc *flag_etc;
 u32 GSflagGet(s32);void GSflagSet(s32,u32);u8 GSflagTest(s32);s32 HSD_Rand();void GSthreadSwitch();void heroMoveInitEvent();void heroMoveSetColision(s32);void heroMoveTermEvent();void menuScriptInfoEsa();
 u32 heroGetStatus(void*,u16,u32);u32 gamedataGetStatus(void*,u16);void *getHeroPtr__4HeroFv();s32 itemQuantity__4HeroFUs(void*,u16);s32 heroMoveAddStepCallback(void(*)(s32,s32,s32),s32);void underTakerCallBackFunc(s32,s32,s32);u32 underTakerGetMiraboPlace();
 void pokemonCreate(void*,u16,u8,u32);void pokemonBiosSetCatchTrainerRnd(void*,u32);u32 pokemonCreateRnd();u32 pokemonCreateRndFit(void*,s32,s32,s32,u32);
@@ -15,20 +13,34 @@ u8 menuPanelInputNumber(s32,s32*,s32,s32,u8);void msgctrlSetValue(s32,s32);void 
 static void _esabaCallBackFunc__Fl15FootStepCounterl(s32,s32,s32);static void _esabaCallBackAppFunc__FUs15FootStepCounterl(u16,s32,s32);static void _esabaCallBackEsaFunc__FUs15FootStepCounterl(u16,s32,s32);static void _esabaAppearPokemon__FUs(u16);static void _esabaAppearPokemonSub2__FUs(u16);static void _esabaAppearPokemonSub__FUs(u16);
 }
 static s32 _esabaHandle;
-static inline EsaList *getList(u32 area){if(area>=*esabadata_number)return 0;return *esabadata[area].list;}
-static inline u16 listPokemon(u32 area,s32 index){EsaList *list=getList(area);if(list)return list->pokemon[index].id;return 0;}
-static inline u32 listRate(u32 area,s32 index){EsaList *list=getList(area);if(list)return list->pokemon[index].rate;return 0;}
-static inline u32 listDigest(u32 area,s32 index){EsaList *list=getList(area);if(list)return list->pokemon[index].digest;return 0;}
-static inline EsaData *recordAt(s32 offset){return (EsaData*)((u8*)esabadata+offset);}
+static inline u16 esabaTablePokemonID(u32 area, s32 slot) {
+    EsabaPokemonTable* table = esabaGetPokemonTable(area);
+    if (table != 0) {
+        return table->data[slot].pokemonId;
+    }
+    return 0;
+}
+
+static inline u32 listRate(u32 area, s32 index) {
+    EsabaPokemonTable* list = esabaGetPokemonTable(area);
+    if (list != 0) return list->data[index].rate;
+    return 0;
+}
+static inline u32 listDigest(u32 area, s32 index) {
+    EsabaPokemonTable* list = esabaGetPokemonTable(area);
+    if (list != 0) return list->data[index].digest;
+    return 0;
+}
+static inline EsabaData *recordAt(s32 offset){return (EsabaData*)((u8*)esabadata+offset);}
 extern "C" {
 static inline void appearPokemon(u16 area,u16 id){u32 trainer;Pokemon pokemon;GSflagSet(esabadata[area].pokemonFlag,id);GSflagSet(esabadata[area].stepFlag,0);switch((s32)id){case 413:case 414:trainer=heroGetStatus(0,2,0);pokemonCreate(&pokemon,id,10,gamedataGetStatus(0,1));pokemonBiosSetCatchTrainerRnd(&pokemon,trainer);GSflagSet(esabadata[area].randomFlag,pokemonCreateRndFit(&pokemon,-1,-1,0,trainer));break;default:GSflagSet(esabadata[area].randomFlag,pokemonCreateRnd());break;}heroMoveInitEvent();heroMoveSetColision(1);GSthreadSwitch();menuScriptInfoEsa();heroMoveTermEvent();}
 
 void esabaSetPokemon(u16 area,u16 id){if(id==0){GSflagSet(esabadata[area].pokemonFlag,0);GSflagSet(esabadata[area].appFlag,0);return;}appearPokemon(area,id);}
-u16 esabaGetPokemonMax(u16 area){EsaList *list=getList(area);if(list)return *list->count;return 0;}
+u16 esabaGetPokemonMax(u16 area){EsabaPokemonTable *list=esabaGetPokemonTable(area);if(list)return *list->count;return 0;}
 static inline s32 findEsaPokemonIndex(u16 area) {
     u16 count = esabaGetPokemonMax(area);
     for (s32 index = 0; index < count; index++) {
-        if (listPokemon(area, index) == GSflagGet(esabadata[area].pokemonFlag)) {
+        if (esabaTablePokemonID(area, index) == GSflagGet(esabadata[area].pokemonFlag)) {
             return index;
         }
     }
@@ -78,110 +90,103 @@ s32 esabaPut(s32 arg0) {
     return 0;
 }
 
-s32 esabaSet(s32 arg0) {
-    s32 sp8;
-    s32 temp_r4;
-    s32 var_r29;
-    u32 temp_r26;
-    s32 temp_r3;
-    s32 temp_r3_2;
-    s32 var_r28;
-    s32 var_r27;
-    s32 var_r6;
-    u16 temp_r3_3;
+s32 esabaSet(s32 place) {
+    s32 num = GSflagGet(esabadata[place].amountFlag);
+    s32 orig = num;
+    s32 bag = itemQuantity__4HeroFUs(getHeroPtr__4HeroFv(), 0x1FF);
+    s32 diff;
+    s32 fromBag;
+    s32 fromBox;
+    s32 n;
+    s32 max;
+    s32 msg;
 
-    
-    
-    temp_r3 = GSflagGet(esabadata[arg0].amountFlag);
-    sp8 = temp_r3;
-    temp_r26 = itemQuantity__4HeroFUs(getHeroPtr__4HeroFv(),0x1FF);
     GSthreadSwitch();
-    s32 messageId = 0xC92E;
-    messageId += ((s32) (-sp8 | sp8) >> 0x1F);
-    msgctrlSetValue(0x2F, sp8);
-    winMsgOpen(2, messageId, 0, 1);
-    var_r6 = sp8 + temp_r26;
-    if (var_r6 > 0xA) {
-        var_r6 = 0xA;
+    msg = num != 0 ? 0xC92D : 0xC92E;
+    msgctrlSetValue(0x2F, num);
+    winMsgOpen(2, msg, 0, 1);
+    max = num + bag;
+    if (max > 10) {
+        max = 10;
     }
-    if (menuPanelInputNumber(sp8,&sp8,0,var_r6,1) != 0) {
-        var_r27 = (s16) sp8;
-        GSflagSet(esabadata[arg0].amountFlag, var_r27);
-        if (var_r27 == 0) {
-            GSflagSet(esabadata[arg0].appFlag, 0U);
-            GSflagSet(esabadata[arg0].stepFlag, 0U);
+    if (menuPanelInputNumber(num, &num, 0, max, 1)) {
+        n = (s16)num;
+        GSflagSet(esabadata[place].amountFlag, n);
+        if (n == 0) {
+            GSflagSet(esabadata[place].appFlag, 0);
+            GSflagSet(esabadata[place].stepFlag, 0);
         }
-        var_r27 = 0;
-        var_r28 = 0;
-        var_r29 = sp8 - temp_r3;
-        if (var_r29 != 0) {
-            if (var_r29 > 0) {
-                heroItemDecItemDataId(0, 0x1FF, (u16) var_r29, -1);
+        fromBox = 0;
+        diff = num - orig;
+        fromBag = 0;
+        if (diff != 0) {
+            if (diff > 0) {
+                heroItemDecItemDataId(0, 0x1FF, (u16)diff, -1);
             } else {
-                temp_r26 = -var_r29;
-                temp_r3_2 = heroItemAddItemDataId(0, 0x1FF, (u16) temp_r26, -1);
-                if (temp_r3_2 == 0) {
-                    var_r28 = temp_r26;
-                } else if (temp_r3_2 > 0) {
-                    temp_r26 = temp_r3_2;
-                    var_r28 = -(var_r29 + temp_r3_2);
-                    temp_r3_3 = pcboxAddItem(0, 0x1FF, (u16) temp_r3_2);
-                    if (temp_r3_3 != 0) {
-                        var_r27 = temp_r26 - temp_r3_3;
+                s32 need = -diff;
+                s32 rest = heroItemAddItemDataId(0, 0x1FF, (u16)need, -1);
+                if (rest == 0) {
+                    fromBag = need;
+                } else if (rest > 0) {
+                    u32 left = rest;
+                    fromBag = -(diff + rest);
+                    n = (u16)pcboxAddItem(0, 0x1FF, rest);
+                    if (n != 0) {
+                        fromBox = left - n;
                     } else {
-                        var_r27 = temp_r26;
+                        fromBox = left;
                     }
                 }
             }
         }
     } else {
-        var_r29 = 0;
+        diff = 0;
         winMsgClose(1);
     }
-    if (var_r29 != 0) {
-        if (var_r29 >= 0) {
+    if (diff != 0) {
+        if (diff >= 0) {
             winMsgClose(1);
-            msgctrlSetValue(0x2F, var_r29);
+            msgctrlSetValue(0x2F, diff);
             winMsgOpen(2, 0xC930, 1, 1);
             winMsgClose(1);
         } else {
             winMsgClose(1);
-            if ((var_r28 == 0) && (var_r27 == 0)) {
+            if (fromBag == 0 && fromBox == 0) {
                 winMsgOpen(2, 0xC932, 1, 1);
                 winMsgClose(1);
-                var_r29 = 0;
-                var_r27 = (s16) temp_r3;
-                GSflagSet(esabadata[arg0].amountFlag, var_r27);
-                if (var_r27 == 0) {
-                    GSflagSet(esabadata[arg0].appFlag, 0U);
-                    GSflagSet(esabadata[arg0].stepFlag, 0U);
+                n = (s16)orig;
+                diff = 0;
+                GSflagSet(esabadata[place].amountFlag, n);
+                if (n == 0) {
+                    GSflagSet(esabadata[place].appFlag, 0);
+                    GSflagSet(esabadata[place].stepFlag, 0);
                 }
             } else {
-                if (var_r28 > 0) {
-                    msgctrlSetValue(0x2F, var_r28);
+                if (fromBag > 0) {
+                    msgctrlSetValue(0x2F, fromBag);
                     winMsgOpen(2, 0xC92F, 1, 1);
                     winMsgClose(1);
                 }
-                if (var_r27 > 0) {
-                    msgctrlSetValue(0x2F, var_r27);
+                if (fromBox > 0) {
+                    msgctrlSetValue(0x2F, fromBox);
                     winMsgOpen(2, 0xC933, 1, 1);
                     winMsgClose(1);
                 }
-                temp_r4 = (temp_r3 - var_r28) - var_r27;
-                if (temp_r4 != 0) {
-                    var_r29 = -(temp_r3 - temp_r4);
-                    var_r27 = (s16) temp_r4;
-                    GSflagSet(esabadata[arg0].amountFlag, var_r27);
-                    if (var_r27 == 0) {
-                        GSflagSet(esabadata[arg0].appFlag, 0U);
-                        GSflagSet(esabadata[arg0].stepFlag, 0U);
+                s32 t = orig - fromBag - fromBox;
+                if (t != 0) {
+                    diff = -(orig - t);
+                    s32 m = (s16)t;
+                    GSflagSet(esabadata[place].amountFlag, m);
+                    if (m == 0) {
+                        GSflagSet(esabadata[place].appFlag, 0);
+                        GSflagSet(esabadata[place].stepFlag, 0);
                     }
                 }
             }
         }
     }
     winMsgClose(1);
-    return var_r29;
+    return diff;
 }
 
 void esabaHeroCallBackInit(){_esabaHandle=heroMoveAddStepCallback(_esabaCallBackFunc__Fl15FootStepCounterl,0);}
@@ -235,7 +240,7 @@ i=exists;
 exists=esabaExExists(i,exists);
 if(!exists&&(u16)((u16)HSD_Rand()%100)<(u16)esabapokemondata_EX[1].rate){appearPokemon(area,esabapokemondata_EX[1].id);return;}
 u16 random=(u16)HSD_Rand()%100;
-for(s32 i=0;i<count;i++){cumulative+=listRate(area,i);if(cumulative>=random){u16 id=listPokemon(area,i);appearPokemon(area,id);return;}}
+for(s32 i=0;i<count;i++){cumulative+=listRate(area,i);if(cumulative>=random){u16 id=esabaTablePokemonID(area,i);appearPokemon(area,id);return;}}
 }
 static inline u8 esabaExExistsN(u16 i, u8 exists, s32 n){
 for(;i<(u16)*esabadata_number;i++){
@@ -264,6 +269,6 @@ u16 both=first+second;
 if(first==0)both=second;
 if(random<both){appearPokemon(area,esabapokemondata_EX[1].id);return;}
 u16 ordinary=(u16)HSD_Rand()%100;
-for(s32 i=0;i<count;i++){cumulative+=listRate(area,i);if(cumulative>=ordinary){u16 id=listPokemon(area,i);appearPokemon(area,id);return;}}
+for(s32 i=0;i<count;i++){cumulative+=listRate(area,i);if(cumulative>=ordinary){u16 id=esabaTablePokemonID(area,i);appearPokemon(area,id);return;}}
 }
 }

@@ -1,5 +1,6 @@
 #ifndef FLOOR_EVENT_PRIVATE_HPP
 #define FLOOR_EVENT_PRIVATE_HPP
+#include <game/pxdvs/app/floor/floorEvent.hpp>
 #include <game/pxdvs/app/floor/floorBiosPrivate.hpp>
 struct _GSmodel;
 struct GSthread;
@@ -65,8 +66,7 @@ void GSmodelGetFrameCount(_GSmodel *,f32 *,f32 *);
 GSpart *GSmodelGetPart(_GSmodel *,u8);
 void GSpartGetTransform(GSpart *,GSvec *,GSvec *,GSvec *);
 void GSpartFree(GSpart *);
-void __ct__5GSvecFv(GSvec *);
-void peopleWalkTo(u32,u32,u8,GSvec *);
+void peopleWalkTo(u32,u32,u8,GSvecData *);
 void peopleMoveCheck(u32,u32,s32);
 void peopleRotateToAngle(u32,u32,f32,f32);
 void peopleDetach(u32,u32,s32);
@@ -79,8 +79,8 @@ s32 peopleGetFlags(u32,u32);
 void peopleSetFlags(u32,u32,u32);
 void heroMoveInitEvent();
 void heroMoveTermEvent();
-void scriptSetEventColID(u32);
-void floorExecScriptInteger(u32,s32,s32,s32,s32);
+s32 scriptSetEventColID(s32);
+s32 floorExecScriptInteger(int,s32,s32,s32,s32);
 void scriptSoundOpenPlayME(u32,s32,u8);
 }
 void EvlogSet(s8,u32);

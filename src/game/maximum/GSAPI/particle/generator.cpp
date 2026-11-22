@@ -2,6 +2,9 @@
 #define NULL ((void*)0)
 #include "game/maximum/GSAPI/baselib/math_support.h"
 f64 __fabs(f64);
+static inline f64 fabs(f64 x) { return __fabs(x); }
+static inline f32 sinf(f32 x) { return (f32)sin(x); }
+static inline f32 cosf(f32 x) { return (f32)cos(x); }
 static inline f32 generatorAtan2(f32 y, f32 x) { return (f32)atan2(y, x); }
 static void (*psExtExecGenFunc)(PSGenerator*, f32 (*)[4]);
 static void (*psExtCreateGenFunc)(PSGenerator*);
@@ -128,12 +131,6 @@ static inline PSGenerator *psAllocGenerator(void) {
         gen->state = 0;
     }
     return gen;
-}
-
-static inline f32 generatorSingle(f64 value) {return (f32)value;}
-static inline f32 generatorBoundaryCoordinate(f32 coordinate,f32 upper) {
- if(coordinate>0.5f)return upper;
- return 0.0f;
 }
 
 u16 psGetNewIDNum(void) {
@@ -302,723 +299,548 @@ void psKillAllGenerator(void) {
     }
 }
 
-f32 generateParticle(PSGenerator *arg0) {
-    f32 sp8;
-    f32 faceRandom3,faceRandom5,faceRandom6;
-    f32 bits18;
-    f32 bits14;
-    f32 bits10;
-    PSVec baseVelocity;
-    PSVec position;
-    PSVec offset;
-    PSVec velocity;
-    PSVec cameraForward;
-    PSVec cameraUp;
-    PSVec cameraRight;
-    PSVec direction;
-    f32 transform[3][4];
-    f32 rotationX[3][4];
-    f32 rotationY[3][4];
-    f32 rotationZ[3][4];
-    f32 directionMatrix[3][4];
-    PSGenerator *spC;
-    PSWObj *temp_r5;
-    f32 temp_f0;
-    f32 temp_f0_2;
-    f32 temp_f0_3;
-    f32 temp_f0_4;
-    f32 temp_f0_5;
-    f32 temp_f0_6;
-    f32 temp_f19;
-    f32 temp_f1;
-    f32 temp_f1_11;
-    f32 temp_f1_12;
-    f32 temp_f1_13;
-    f32 temp_f1_14;
-    f32 temp_f1_15;
-    f32 temp_f1_16;
-    f32 temp_f1_17;
-    f32 temp_f1_21;
-    f32 temp_f1_22;
-    f32 temp_f1_2;
-    f32 temp_f1_3;
-    f32 temp_f1_7;
-    f32 temp_f20;
-    f32 temp_f20_2;
-    f32 temp_f20_3;
-    f32 temp_f20_4;
-    f32 temp_f21;
-    f32 temp_f21_2;
-    f32 temp_f21_3;
-    f32 temp_f21_4;
-    f32 temp_f22;
-    f32 temp_f22_2;
-    f32 temp_f24;
-    f32 temp_f26;
-    f32 temp_f28;
-    f32 temp_f29;
-    f32 temp_f2;
-    f32 temp_f2_10;
-    f32 temp_f2_11;
-    f32 temp_f2_2;
-    f32 temp_f2_3;
-    f32 temp_f2_4;
-    f32 temp_f2_5;
-    f32 temp_f2_6;
-    f32 temp_f2_7;
-    f32 temp_f2_8;
-    f32 temp_f2_9;
-    f32 temp_f31;
-    f32 temp_f31_2;
-    f32 temp_f3;
-    f32 temp_f3_2;
-    f32 temp_f3_3;
-    f32 temp_f4;
-    f32 temp_f4_2;
-    f32 temp_f5;
-    f32 temp_f5_2;
-    f32 temp_f5_3;
-    f32 temp_f5_4;
-    f32 temp_f6;
-    f32 temp_f6_2;
-    f32 var_f0;
-    f32 var_f0_10;
-    f32 var_f0_11;
-    f32 var_f0_2;
-    f32 var_f0_3;
-    f32 var_f0_4;
-    f32 var_f0_5;
-    f32 var_f0_6;
-    f32 var_f0_7;
-    f32 var_f0_8;
-    f32 var_f0_9;
-    f32 var_f1;
-    f32 var_f20;
-    f32 var_f20_2;
-    f32 var_f21;
-    f32 var_f21_2;
-    f32 var_f22;
-    f32 var_f22_2;
-    f32 var_f23;
-    f32 var_f25;
-    f32 var_f27;
-    f32 var_f30;
-    f32 var_f31;
-    f32 var_f4;
-    f32 var_f4_2;
-    f32 var_f4_3;
-    f64 temp_f1_10;
-    f64 temp_f1_18;
-    f64 temp_f1_19;
-    f64 temp_f1_20;
-    f64 temp_f1_4;
-    f64 temp_f1_5;
-    f64 temp_f1_6;
-    f64 temp_f1_8;
-    f64 temp_f1_9;
-    s32 temp_r0;
-    s32 temp_r0_3;
-    s32 temp_r0_4;
-    s32 temp_r0_5;
-    s32 temp_r3;
-    s32 temp_r3_2;
-    s32 temp_r3_3;
-    s32 var_r0;
-    s32 var_r0_2;
-    s32 var_r0_3;
-    u16 temp_r0_6;
-    u32 temp_r0_2;
+f32 generateParticle(PSGenerator* gp)
+{
+    PSVec vel_copy;
+    PSVec emit_pos;
+    PSVec tmpvec;
+    PSVec vec;
+    f32 rot_mtx[3][4];
+    f32 mtx_x[3][4];
+    f32 mtx_y[3][4];
+    f32 mtx_z[3][4];
+    PSVec look_dir;
+    PSVec cam_up;
+    PSVec cross1;
+    PSVec vel_norm;
+    f32 trig_mtx[3][4];
+    f32 cur_angle;
+    f32 angle_step;
+    f32 scale_x;
+    f32 scale_y;
+    f32 scale_z;
+    f32 vel_mag;
+    f32 angle1;
+    f32 cone_angle;
+    f32 dist;
+    f32 radius;
+    f32 elevation;
+    f32 angle3;
 
-    var_f25 = 0.0f;
-    temp_f1_2 = arg0->count;
-    var_f23 = 0.0f;
-    if (temp_f1_2 < 1.0f) {
-        return temp_f1_2;
+    angle3 = angle1 = 0.0f;
+    if (gp->count < 1.0f) {
+        return gp->count;
     }
-    temp_f2 = arg0->velocity.x;
-    baseVelocity.x = temp_f2;
-    temp_f1_3 = arg0->velocity.y;
-    baseVelocity.y = temp_f1_3;
-    temp_f0 = arg0->velocity.z;
-    baseVelocity.z = temp_f0;
-    temp_f26 = arg0->scale.x;
-    temp_f29 = arg0->scale.y;
-    temp_f28 = arg0->scale.z;
-    if (((s32) (arg0->type & 0xF) == 2) && (arg0->transformFlags & 0x80)) {
-        baseVelocity.x = temp_f2 * temp_f26;
-        baseVelocity.y = temp_f1_3 * temp_f29;
-        baseVelocity.z = temp_f0 * temp_f28;
+
+    vel_copy.x = gp->velocity.x;
+    vel_copy.y = gp->velocity.y;
+    vel_copy.z = gp->velocity.z;
+    scale_x = gp->scale.x;
+    scale_y = gp->scale.y;
+    scale_z = gp->scale.z;
+    if ((gp->type & 0xF) == 2 && (gp->transformFlags & 0x80)) {
+        vel_copy.x *= scale_x;
+        vel_copy.y *= scale_y;
+        vel_copy.z *= scale_z;
     }
-    var_f27 = (baseVelocity.z * baseVelocity.z) + ((baseVelocity.x * baseVelocity.x) + (baseVelocity.y * baseVelocity.y));
-    if (var_f27 > 0.0f) {
-        temp_f1_4 = __frsqrte(var_f27);
-        temp_f1_5 = 0.5 * temp_f1_4 * -(((f64) var_f27 * (temp_f1_4 * temp_f1_4)) - 3.0);
-        temp_f1_6 = 0.5 * temp_f1_5 * -(((f64) var_f27 * (temp_f1_5 * temp_f1_5)) - 3.0);
-        var_f27 = (f32) ((f64) var_f27 * (0.5 * temp_f1_6 * -(((f64) var_f27 * (temp_f1_6 * temp_f1_6)) - 3.0)));
-    } else if (var_f27 < 0.0) {
-        var_f27 = __float_nan[0];
-    } else {
-        bits18 = var_f27;
-        temp_r3 = *(s32*)&bits18 & 0x7F800000;
-        switch (temp_r3) {                          /* switch 1; irregular */
-        case 0x7F800000:                            /* switch 1 */
-            if (*(s32*)&bits18 & 0x7FFFFF) {
-                var_r0 = 1;
+
+    vel_mag = hsdSqrt(vel_copy.z * vel_copy.z +
+                    (vel_copy.x * vel_copy.x + vel_copy.y * vel_copy.y));
+
+    PSMTXIdentity(rot_mtx);
+
+    if (!(gp->kind & 0x30000)) {
+        PSMTXRotRad(mtx_x, 'X', gp->rotation.x);
+        PSMTXRotRad(mtx_y, 'Y', gp->rotation.y);
+        PSMTXRotRad(mtx_z, 'Z', gp->rotation.z);
+        PSMTXConcat(mtx_y, mtx_x, mtx_x);
+        PSMTXConcat(mtx_z, mtx_x, mtx_x);
+
+        vec.x = mtx_x[0][0];
+        vec.y = mtx_x[1][0];
+        vec.z = mtx_x[2][0];
+        PSVECNormalize(&vec, &vec);
+        rot_mtx[0][0] = vec.x;
+        rot_mtx[1][0] = vec.y;
+        rot_mtx[2][0] = vec.z;
+
+        vec.x = mtx_x[0][1];
+        vec.y = mtx_x[1][1];
+        vec.z = mtx_x[2][1];
+        PSVECNormalize(&vec, &vec);
+        rot_mtx[0][1] = vec.x;
+        rot_mtx[1][1] = vec.y;
+        rot_mtx[2][1] = vec.z;
+
+        vec.x = mtx_x[0][2];
+        vec.y = mtx_x[1][2];
+        vec.z = mtx_x[2][2];
+        PSVECNormalize(&vec, &vec);
+        rot_mtx[0][2] = vec.x;
+        rot_mtx[1][2] = vec.y;
+        rot_mtx[2][2] = vec.z;
+
+        rot_mtx[2][3] = 0.0f;
+        rot_mtx[1][3] = 0.0f;
+        rot_mtx[0][3] = 0.0f;
+    }
+
+    if (gp->kind & 0x10000) {
+        if (psCamera == NULL) {
+            __assert("generator.c", 626, "psCamera");
+        }
+        look_dir.x = psCamera->eye->position.x - gp->position.x;
+        look_dir.y = psCamera->eye->position.y - gp->position.y;
+        look_dir.z = psCamera->eye->position.z - gp->position.z;
+        PSVECNormalize(&look_dir, &look_dir);
+        HSD_CObjGetUpVector(psCamera, &cam_up);
+        PSVECNormalize(&cam_up, &cam_up);
+        PSVECCrossProduct(&cam_up, &look_dir, &cross1);
+        PSVECCrossProduct(&look_dir, &cross1, &cam_up);
+
+        rot_mtx[0][0] = cross1.x;
+        rot_mtx[1][0] = cross1.y;
+        rot_mtx[2][0] = cross1.z;
+        rot_mtx[0][1] = cam_up.x;
+        rot_mtx[1][1] = cam_up.y;
+        rot_mtx[2][1] = cam_up.z;
+        rot_mtx[0][2] = look_dir.x;
+        rot_mtx[1][2] = look_dir.y;
+        rot_mtx[2][2] = look_dir.z;
+    }
+
+    if ((gp->type & 0xF) != 1 && vel_mag > __float_epsilon[0]) {
+        f32 yaw;
+        f32 sin_yaw;
+        f32 cos_yaw;
+        f32 pitch;
+        f32 sin_pitch;
+        f32 cos_pitch;
+
+        vel_norm.x = gp->velocity.x;
+        vel_norm.y = gp->velocity.y;
+        vel_norm.z = gp->velocity.z;
+        PSVECNormalize(&vel_norm, &vel_norm);
+
+        if (fabs(vel_norm.z) < __float_min[0]) {
+            if (vel_norm.y >= 0.0f) {
+                yaw = 1.5707964f;
             } else {
-                var_r0 = 2;
+                yaw = -1.5707964f;
             }
+        } else {
+            yaw = generatorAtan2(vel_norm.y, vel_norm.z);
+        }
+        sin_yaw = sinf(yaw);
+        cos_yaw = cosf(yaw);
+
+        {
+            f32 projected_z = vel_norm.y * sin_yaw + vel_norm.z * cos_yaw;
+
+            if (fabs(projected_z) < __float_min[0]) {
+                if (vel_norm.x >= 0.0f) {
+                    pitch = 1.5707964f;
+                } else {
+                    pitch = -1.5707964f;
+                }
+            } else {
+                pitch = generatorAtan2(vel_norm.x, projected_z);
+            }
+        }
+        sin_pitch = sinf(pitch);
+        cos_pitch = cosf(pitch);
+
+        trig_mtx[0][0] = cos_pitch;
+        trig_mtx[0][1] = 0.0f;
+        trig_mtx[0][2] = sin_pitch;
+        trig_mtx[0][3] = 0.0f;
+        trig_mtx[1][0] = -sin_yaw * sin_pitch;
+        trig_mtx[1][1] = cos_yaw;
+        trig_mtx[1][2] = sin_yaw * cos_pitch;
+        trig_mtx[1][3] = 0.0f;
+        trig_mtx[2][0] = -cos_yaw * sin_pitch;
+        trig_mtx[2][1] = -sin_yaw;
+        trig_mtx[2][2] = cos_yaw * cos_pitch;
+        trig_mtx[2][3] = 0.0f;
+        PSMTXConcat(rot_mtx, trig_mtx, rot_mtx);
+    }
+    elevation = vel_mag;
+
+    if ((gp->type & 0xF) == 2) {
+        if (fabs(rot_mtx[2][2]) < __float_min[0]) {
+            if (rot_mtx[1][2] >= 0.0f) {
+                angle1 = 1.5707964f;
+            } else {
+                angle1 = -1.5707964f;
+            }
+        } else {
+            angle1 = generatorAtan2(rot_mtx[1][2], rot_mtx[2][2]);
+        }
+        {
+            f32 comb = rot_mtx[1][2] * sinf(angle1) + rot_mtx[2][2] * cosf(angle1);
+
+            if (fabs(comb) < __float_min[0]) {
+                if (rot_mtx[0][2] >= 0.0f) {
+                    angle3 = 1.5707964f;
+                } else {
+                    angle3 = -1.5707964f;
+                }
+            } else {
+                angle3 = generatorAtan2(rot_mtx[0][2], comb);
+            }
+        }
+    }
+
+    if (gp->angle < 0.0f) {
+        switch (gp->type & 0xF) {
+        case 0:
+        case 3:
+        case 4: {
+            f32 min_a = gp->param1;
+            f32 rnd = HSD_Randf();
+            f32 step = (gp->param2 - min_a) / (f32) (s32) gp->count;
+
+            angle_step = step;
+            cur_angle = step * rnd + min_a;
             break;
-        case 0x0:                                   /* switch 1 */
-            if (*(s32*)&bits18 & 0x7FFFFF) {
-                var_r0 = 5;
-            } else {
-                var_r0 = 3;
-            }
+        }
+        case 6:
+        case 7: {
+            f32 min_a = gp->param1;
+            f32 rnd = HSD_Randf();
+            f32 step = (gp->param2 - min_a) / (f32) (s32) gp->count;
+
+            angle_step = step;
+            cur_angle = step * rnd + min_a;
             break;
-        default:                                    /* switch 1 */
-            var_r0 = 4;
+        }
+        default:
+            cur_angle = (f32) (2.0 * (3.141592653589793 * HSD_Randf()));
+            angle_step = (f32) ((2.0 * 3.141592653589793) / (s32) gp->count);
             break;
         }
-        if (var_r0 == 1) {
-            var_f27 = __float_nan[0];
-        }
     }
-    PSMTXIdentity((f32 (*)[4]) &transform[0][0]);
-    if (!(arg0->kind & 0x30000)) {
-        PSMTXRotRad((f32 (*)[4]) &rotationX[0][0], 0x58, arg0->rotation.x);
-        PSMTXRotRad((f32 (*)[4]) &rotationY[0][0], 0x59, arg0->rotation.y);
-        PSMTXRotRad((f32 (*)[4]) &rotationZ[0][0], 0x5A, arg0->rotation.z);
-        PSMTXConcat((f32 (*)[4]) &rotationY[0][0], (f32 (*)[4]) &rotationX[0][0], (f32 (*)[4]) &rotationX[0][0]);
-        PSMTXConcat((f32 (*)[4]) &rotationZ[0][0], (f32 (*)[4]) &rotationX[0][0], (f32 (*)[4]) &rotationX[0][0]);
-        velocity.x = rotationX[0][0];
-        velocity.y = rotationX[1][0];
-        velocity.z = rotationX[2][0];
-        PSVECNormalize((PSVec *) &velocity.x, (PSVec *) &velocity.x);
-        transform[0][0] = velocity.x;
-        transform[1][0] = velocity.y;
-        transform[2][0] = velocity.z;
-        velocity.x = rotationX[0][1];
-        velocity.y = rotationX[1][1];
-        velocity.z = rotationX[2][1];
-        PSVECNormalize((PSVec *) &velocity.x, (PSVec *) &velocity.x);
-        transform[0][1] = velocity.x;
-        transform[1][1] = velocity.y;
-        transform[2][1] = velocity.z;
-        velocity.x = rotationX[0][2];
-        velocity.y = rotationX[1][2];
-        velocity.z = rotationX[2][2];
-        PSVECNormalize((PSVec *) &velocity.x, (PSVec *) &velocity.x);
-        transform[0][2] = velocity.x;
-        transform[1][2] = velocity.y;
-        transform[2][2] = velocity.z;
-        transform[2][3] = 0.0f;
-        transform[1][3] = 0.0f;
-        transform[0][3] = 0.0f;
-    }
-    if (arg0->kind & 0x10000) {
-        if ((PSCamera *) psCamera == NULL) {
-            __assert("generator.c", 0x272, "psCamera");
-        }
-        temp_r5 = psCamera->eye;
-        cameraForward.x = temp_r5->position.x - arg0->position.x;
-        cameraForward.y = temp_r5->position.y - arg0->position.y;
-        cameraForward.z = temp_r5->position.z - arg0->position.z;
-        PSVECNormalize((PSVec *) &cameraForward.x, (PSVec *) &cameraForward.x);
-        HSD_CObjGetUpVector(psCamera, &cameraUp);
-        PSVECNormalize(&cameraUp, &cameraUp);
-        PSVECCrossProduct(&cameraUp, (PSVec *) &cameraForward.x, &cameraRight);
-        PSVECCrossProduct((PSVec *) &cameraForward.x, &cameraRight, &cameraUp);
-        transform[0][0] = cameraRight.x;
-        transform[1][0] = cameraRight.y;
-        transform[2][0] = cameraRight.z;
-        transform[0][1] = cameraUp.x;
-        transform[1][1] = cameraUp.y;
-        transform[2][1] = cameraUp.z;
-        transform[0][2] = cameraForward.x;
-        transform[1][2] = cameraForward.y;
-        transform[2][2] = cameraForward.z;
-    }
-    if (((s32) (arg0->type & 0xF) != 1) && (var_f27 > __float_epsilon[0])) {
-        direction.x = arg0->velocity.x;
-        direction.y = arg0->velocity.y;
-        direction.z = arg0->velocity.z;
-        PSVECNormalize((PSVec *) &direction.x, (PSVec *) &direction.x);
-        if (__fabs(direction.z) < __float_min[0]) {
-            if (direction.y >= 0.0f) {
-                var_f20 = 1.5707964f;
-            } else {
-                var_f20 = -1.5707964f;
-            }
-        } else {
-            var_f20 = generatorAtan2(direction.y, direction.z);
-        }
-        temp_f22 = (f32) sin((f64) var_f20);
-        temp_f24 = (f32) cos((f64) var_f20);
-        temp_f2_2 = (direction.y * temp_f22) + (direction.z * temp_f24);
-        if (__fabs(temp_f2_2) < __float_min[0]) {
-            if (direction.x >= 0.0f) {
-                var_f21 = 1.5707964f;
-            } else {
-                var_f21 = -1.5707964f;
-            }
-        } else {
-            var_f21 = generatorAtan2(direction.x, temp_f2_2);
-        }
-        temp_f20 = (f32) sin((f64) var_f21);
-        temp_f5 = (f32) cos((f64) var_f21);
-        temp_f6 = -temp_f22;
-        directionMatrix[0][1] = 0.0f;
-        directionMatrix[0][0] = temp_f5;
-        directionMatrix[0][2] = temp_f20;
-        directionMatrix[0][3] = 0.0f;
-        directionMatrix[1][0] = temp_f6 * temp_f20;
-        directionMatrix[1][1] = temp_f24;
-        directionMatrix[1][2] = temp_f22 * temp_f5;
-        directionMatrix[1][3] = 0.0f;
-        directionMatrix[2][0] = -temp_f24 * temp_f20;
-        directionMatrix[2][1] = temp_f6;
-        directionMatrix[2][2] = temp_f24 * temp_f5;
-        directionMatrix[2][3] = 0.0f;
-        PSMTXConcat((f32 (*)[4]) &transform[0][0], (f32 (*)[4]) &directionMatrix[0][0], (f32 (*)[4]) &transform[0][0]);
-    }
-    if ((s32) (arg0->type & 0xF) == 2) {
-        if (__fabs(transform[2][2]) < __float_min[0]) {
-            if (transform[1][2] >= 0.0f) {
-                var_f25 = 1.5707964f;
-            } else {
-                var_f25 = -1.5707964f;
-            }
-        } else {
-            var_f25 = generatorAtan2(transform[1][2], transform[2][2]);
-        }
-        temp_f20_2 = (f32) cos((f64) var_f25);
-        temp_f1 = (f32) sin((f64) var_f25);
-        temp_f2_3 = (transform[1][2] * temp_f1) + (transform[2][2] * temp_f20_2);
-        if (__fabs(temp_f2_3) < __float_min[0]) {
-            if (transform[0][2] >= 0.0f) {
-                var_f23 = 1.5707964f;
-            } else {
-                var_f23 = -1.5707964f;
-            }
-        } else {
-            var_f23 = generatorAtan2(transform[0][2], temp_f2_3);
-        }
-    }
-    if (arg0->angle < 0.0f) {
-        switch (arg0->type & 0xF) {
+
+    while (gp->count >= 1.0f) {
+        switch (gp->type & 0xF) {
         case 0:
         case 3:
         case 4:
-            temp_f20_3 = arg0->param1;
-            temp_f1 = HSD_Randf();
-            temp_f0_2 = (arg0->param2 - temp_f20_3) / (f32) (s32) arg0->count;
-            var_f30 = temp_f0_2;
-            var_f31 = (temp_f0_2 * temp_f1) + temp_f20_3;
-            break;
         case 6:
         case 7:
-            temp_f20_4 = arg0->param1;
-            temp_f1 = HSD_Randf();
-            temp_f0_3 = (arg0->param2 - temp_f20_4) / (f32) (s32) arg0->count;
-            var_f30 = temp_f0_3;
-            var_f31 = (temp_f0_3 * temp_f1) + temp_f20_4;
+            if (gp->radius < 0.0f) {
+                dist = -gp->radius;
+                radius = 1.0f;
+            } else {
+                radius = HSD_Randf();
+                if ((gp->type & 0xF) == 3 || (gp->type & 0xF) == 4) {
+                    radius = hsdSqrt(radius);
+                }
+                dist = radius * gp->radius;
+            }
+
+            switch (gp->type & 0xF) {
+            case 6:
+                if (gp->angle < 0.0f) {
+                    cur_angle += angle_step;
+                    if (fabs(dist) < __float_min[0]) {
+                        if (gp->param3 >= 0.0f) {
+                            cone_angle = -gp->angle;
+                        } else {
+                            cone_angle = (f32) (3.141592653589793 - gp->angle);
+                        }
+                    } else {
+                        cone_angle =
+                            (f32) (1.5707963267948966 - generatorAtan2(gp->param3, dist) -
+                                   gp->angle);
+                    }
+                } else {
+                    f32 min_angle = gp->param1;
+
+                    cur_angle = (gp->param2 - min_angle) * HSD_Randf() + min_angle;
+                    if (fabs(dist) < __float_min[0]) {
+                        if (gp->param3 >= 0.0f) {
+                            cone_angle = gp->angle;
+                        } else {
+                            cone_angle = (f32) (3.141592653589793 + gp->angle);
+                        }
+                    } else {
+                        cone_angle =
+                            (f32) (gp->angle +
+                                   (1.5707963267948966 -
+                                    generatorAtan2(gp->param3, dist)));
+                    }
+                }
+                break;
+            case 7:
+                if (gp->angle < 0.0f) {
+                    cone_angle = (f32) (1.5707963267948966 - gp->angle);
+                    cur_angle += angle_step;
+                } else {
+                    cur_angle = gp->param1;
+                    cur_angle = (gp->param2 - cur_angle) * HSD_Randf() + cur_angle;
+                    cone_angle = (f32) (1.5707963267948966 + gp->angle);
+                }
+                break;
+            default:
+                if (gp->angle < 0.0f) {
+                    cone_angle = -gp->angle;
+                    cur_angle += angle_step;
+                    cone_angle = radius * cone_angle;
+                } else {
+                    cur_angle = gp->param1;
+                    cur_angle = (gp->param2 - cur_angle) * HSD_Randf() + cur_angle;
+                    cone_angle = radius * gp->angle;
+                }
+                break;
+            }
+
+            emit_pos.x = dist * cosf(cur_angle);
+            emit_pos.y = dist * sinf(cur_angle);
+
+            if ((gp->type & 0xF) == 6 || (gp->type & 0xF) == 7) {
+                emit_pos.z = HSD_Randf();
+                if ((gp->type & 0xF) == 6) {
+                    emit_pos.x *= 1.0f - emit_pos.z;
+                    emit_pos.y *= 1.0f - emit_pos.z;
+                }
+                emit_pos.z *= gp->param3;
+            } else {
+                emit_pos.z = 0.0f;
+            }
+
+            {
+                f32 sin_ca = elevation * sinf(cone_angle);
+
+                vec.x = sin_ca * cosf(cur_angle);
+                vec.y = sin_ca * sinf(cur_angle);
+                vec.z = elevation * cosf(cone_angle);
+            }
+
+            if ((gp->type & 0xF) == 3) {
+                vec.x *= radius;
+                vec.y *= radius;
+                vec.z *= radius;
+            }
+
+            PSMTXMultVec(rot_mtx, &emit_pos, &emit_pos);
+            emit_pos.x += gp->position.x;
+            emit_pos.y += gp->position.y;
+            emit_pos.z += gp->position.z;
+            PSMTXMultVec(rot_mtx, &vec, &vec);
+
+            psGenerateParticle(gp->link, gp->bank, 0, gp->kind,
+                               gp->texGroup, gp->commands, gp->particleLife,
+                               emit_pos.x, emit_pos.y, emit_pos.z,
+                               vec.x * scale_x, vec.y * scale_y,
+                               vec.z * scale_z, gp->size, gp->gravity,
+                               gp->friction, 0, gp);
             break;
+
+        case 1: {
+            f32 rnd = HSD_Randf();
+
+            emit_pos.x = rnd * gp->param1;
+            emit_pos.y = rnd * gp->param2;
+            emit_pos.z = rnd * gp->param3;
+
+            PSMTXMultVec(rot_mtx, &emit_pos, &emit_pos);
+            emit_pos.x += gp->position.x;
+            emit_pos.y += gp->position.y;
+            emit_pos.z += gp->position.z;
+            PSMTXMultVec(rot_mtx, &vel_copy, &vec);
+
+            psGenerateParticle(gp->link, gp->bank, 0, gp->kind,
+                               gp->texGroup, gp->commands, gp->particleLife,
+                               emit_pos.x, emit_pos.y, emit_pos.z,
+                               vec.x * scale_x, vec.y * scale_y,
+                               vec.z * scale_z, gp->size, gp->gravity,
+                               gp->friction, 0, gp);
+            break;
+        }
+
+        case 2:
+            if (gp->radius < 0.0f) {
+                dist = 1.0f;
+            } else {
+                dist = HSD_Randf();
+            }
+            if (gp->angle < 0.0f) {
+                cur_angle += angle_step;
+            } else {
+                cur_angle = (f32) (2.0 * (3.141592653589793 * HSD_Randf()));
+            }
+            gp->param1 = elevation;
+            psGenerateParticle(gp->link, gp->bank, 0, gp->kind | 4,
+                               gp->texGroup, gp->commands, gp->particleLife,
+                               0.0f, 0.0f, 0.0f, cur_angle, dist, 0.0f,
+                               gp->size, angle1, angle3, 0, gp);
+            break;
+
+        case 5:
+            emit_pos.x = HSD_Randf();
+            emit_pos.y = HSD_Randf();
+            emit_pos.z = HSD_Randf();
+
+            switch (gp->edgeFlags) {
+            case 0:
+                break;
+            case 1:
+                emit_pos.x = emit_pos.x > 0.5f ? 1.0f : 0.0f;
+                break;
+            case 2:
+                emit_pos.y = emit_pos.y > 0.5f ? 1.0f : 0.0f;
+                break;
+            case 3: {
+                f32 rnd = HSD_Randf();
+                f32 a2 = gp->param1;
+
+                if (rnd > a2 / (a2 + gp->param2)) {
+                    emit_pos.y = emit_pos.y > 0.5f ? 1.0f : 0.0f;
+                } else {
+                    emit_pos.x = emit_pos.x > 0.5f ? 1.0f : 0.0f;
+                }
+                break;
+            }
+            case 4:
+                emit_pos.z = emit_pos.z > 0.5f ? 1.0f : 0.0f;
+                break;
+            case 5: {
+                f32 rnd = HSD_Randf();
+                f32 a2 = gp->param1;
+
+                if (rnd > a2 / (a2 + gp->param3)) {
+                    emit_pos.z = emit_pos.z > 0.5f ? 1.0f : 0.0f;
+                } else {
+                    emit_pos.x = emit_pos.x > 0.5f ? 1.0f : 0.0f;
+                }
+                break;
+            }
+            case 6: {
+                f32 rnd = HSD_Randf();
+                f32 a2 = gp->param2;
+
+                if (rnd > a2 / (a2 + gp->param3)) {
+                    emit_pos.z = emit_pos.z > 0.5f ? 1.0f : 0.0f;
+                } else {
+                    emit_pos.y = emit_pos.y > 0.5f ? 1.0f : 0.0f;
+                }
+                break;
+            }
+            case 7: {
+                f32 rnd = HSD_Randf();
+                f32 a2 = gp->param3;
+                f32 b2 = gp->param2;
+                f32 c2 = gp->param1;
+                f32 r0 = 1.0f / (c2 * (b2 + a2) + b2 * a2);
+
+                if (rnd < r0 * (c2 * b2)) {
+                    emit_pos.z = emit_pos.z > 0.5f ? 1.0f : 0.0f;
+                } else if (rnd > 1.0f - r0 * (c2 * a2)) {
+                    emit_pos.y = emit_pos.y > 0.5f ? 1.0f : 0.0f;
+                } else {
+                    emit_pos.x = emit_pos.x > 0.5f ? 1.0f : 0.0f;
+                }
+                break;
+            }
+            }
+
+            emit_pos.x -= 0.5f;
+            emit_pos.y -= 0.5f;
+            emit_pos.z -= 0.5f;
+
+            tmpvec.x = (gp->axisXX * emit_pos.x + gp->axisYX * emit_pos.y) + gp->axisZX * emit_pos.z;
+            tmpvec.y = (gp->axisXY * emit_pos.x + gp->axisYY * emit_pos.y) + gp->axisZY * emit_pos.z;
+            tmpvec.z = (gp->axisXZ * emit_pos.x + gp->axisYZ * emit_pos.y) + gp->axisZZ * emit_pos.z;
+
+            PSMTXMultVec(rot_mtx, &tmpvec, &emit_pos);
+            emit_pos.x += gp->position.x;
+            emit_pos.y += gp->position.y;
+            emit_pos.z += gp->position.z;
+
+            {
+                f32 mag = hsdSqrt(gp->axisZX * gp->axisZX +
+                                gp->axisZY * gp->axisZY +
+                                gp->axisZZ * gp->axisZZ);
+                f32 scale = elevation / mag;
+
+                vec.x = gp->axisZX * scale;
+                vec.y = gp->axisZY * scale;
+                vec.z = gp->axisZZ * scale;
+            }
+
+            PSMTXMultVec(rot_mtx, &vec, &vec);
+
+            psGenerateParticle(gp->link, gp->bank, 0, gp->kind,
+                               gp->texGroup, gp->commands, gp->particleLife,
+                               emit_pos.x, emit_pos.y, emit_pos.z,
+                               vec.x * scale_x, vec.y * scale_y,
+                               vec.z * scale_z, gp->size, gp->gravity,
+                               gp->friction, 0, gp);
+            break;
+
+        case 8: {
+            f32 lat;
+            f32 lon;
+
+            if (0.0f == gp->param3) {
+                lat = (f32) (3.141592653589793 * HSD_Randf());
+            } else {
+                lat = gp->param3 * HSD_Randf();
+            }
+            lon = (f32) (2.0 * (3.141592653589793 * HSD_Randf()));
+            {
+                f32 r2 = gp->radius;
+
+                if (r2 < 0.0f) {
+                    dist = -r2;
+                } else {
+                    dist = r2 * HSD_Randf();
+                }
+            }
+
+            vec.x = sinf(lat) * cosf(lon);
+            vec.y = sinf(lat) * sinf(lon);
+            vec.z = cosf(lat);
+
+            PSMTXMultVec(rot_mtx, &vec, &emit_pos);
+
+            vec.x = emit_pos.x * gp->param1;
+            vec.y = emit_pos.y * gp->param1;
+            vec.z = emit_pos.z * gp->param1;
+
+            if (gp->radius >= 0.0f && gp->param1 < 0.0f) {
+                f32 scale = dist / gp->radius;
+
+                vec.x *= scale;
+                vec.y *= scale;
+                vec.z *= scale;
+            }
+
+            emit_pos.x = dist * emit_pos.x + gp->position.x;
+            emit_pos.y = dist * emit_pos.y + gp->position.y;
+            emit_pos.z = dist * emit_pos.z + gp->position.z;
+
+            psGenerateParticle(gp->link, gp->bank, 0, gp->kind,
+                               gp->texGroup, gp->commands, gp->particleLife,
+                               emit_pos.x, emit_pos.y, emit_pos.z,
+                               vec.x * scale_x, vec.y * scale_y,
+                               vec.z * scale_z, gp->size, gp->gravity,
+                               gp->friction, 0, gp);
+            break;
+        }
+
         default:
-            var_f31 = (f32) (2.0 * (3.141592653589793 * HSD_Randf()));
-            var_f30 = (f32) (6.283185307179586 / (f64) (s32) arg0->count);
-            break;
-        }
-    }
-    goto generation_test;
-loop_215:
-    {
-        temp_r0_2 = arg0->type & 0xF;
-        switch (temp_r0_2) {                        /* switch 2 */
-        case 0:                                     /* switch 2 */
-        case 3:                                     /* switch 2 */
-        case 4:                                     /* switch 2 */
-        case 6:                                     /* switch 2 */
-        case 7:                                     /* switch 2 */
-            temp_f1_7 = arg0->radius;
-            if (temp_f1_7 < 0.0f) {
-                var_f21_2 = -temp_f1_7;
-                var_f20_2 = 1.0f;
-            } else {
-                var_f20_2 = HSD_Randf();
-                temp_r0_3 = arg0->type & 0xF;
-                if ((temp_r0_3 == 3) || (temp_r0_3 == 4)) {
-                    if (var_f20_2 > 0.0f) {
-                        temp_f1_8 = __frsqrte(var_f20_2);
-                        temp_f1_9 = 0.5 * temp_f1_8 * -(((f64) var_f20_2 * (temp_f1_8 * temp_f1_8)) - 3.0);
-                        temp_f1_10 = 0.5 * temp_f1_9 * -(((f64) var_f20_2 * (temp_f1_9 * temp_f1_9)) - 3.0);
-                        var_f0 = (f32) ((f64) var_f20_2 * (0.5 * temp_f1_10 * -(((f64) var_f20_2 * (temp_f1_10 * temp_f1_10)) - 3.0)));
-                    } else if (var_f20_2 < 0.0) {
-                        var_f0 = __float_nan[0];
-                    } else {
-                        bits14 = var_f20_2;
-                        temp_r3_2 = *(s32*)&bits14 & 0x7F800000;
-                        switch (temp_r3_2) {        /* switch 3; irregular */
-                        case 0x7F800000:            /* switch 3 */
-                            if (*(s32*)&bits14 & 0x7FFFFF) {
-                                var_r0_2 = 1;
-                            } else {
-                                var_r0_2 = 2;
-                            }
-                            break;
-                        case 0x0:                   /* switch 3 */
-                            if (*(s32*)&bits14 & 0x7FFFFF) {
-                                var_r0_2 = 5;
-                            } else {
-                                var_r0_2 = 3;
-                            }
-                            break;
-                        default:                    /* switch 3 */
-                            var_r0_2 = 4;
-                            break;
-                        }
-                        if (var_r0_2 == 1) {
-                            var_f0 = __float_nan[0];
-                        } else {
-                            var_f0 = var_f20_2;
-                        }
-                    }
-                    var_f20_2 = var_f0;
-                }
-                var_f21_2 = var_f20_2 * arg0->radius;
-            }
-            temp_r0_4 = arg0->type & 0xF;
-            switch (temp_r0_4) {                    /* switch 4; irregular */
-            case 6:                                 /* switch 4 */
-                temp_f2_4 = arg0->angle;
-                if (temp_f2_4 < 0.0f) {
-                    var_f31 += var_f30;
-                    if (__fabs(var_f21_2) < __float_min[0]) {
-                        if (arg0->param3 >= 0.0f) {
-                            var_f22 = -temp_f2_4;
-                        } else {
-                            var_f22 = (f32) (3.141592653589793 - (f64) temp_f2_4);
-                        }
-                    } else {
-                        var_f22 = (f32) ((1.5707963267948966 - (f64) (f32) atan2((f64) arg0->param3, (f64) var_f21_2)) - (f64) arg0->angle);
-                    }
-                } else {
-                    temp_f22_2 = arg0->param1;
-                    var_f31 = ((arg0->param2 - temp_f22_2) * HSD_Randf()) + temp_f22_2;
-                    if (__fabs(var_f21_2) < __float_min[0]) {
-                        if (arg0->param3 >= 0.0f) {
-                            var_f22 = arg0->angle;
-                        } else {
-                            var_f22 = (f32) (3.141592653589793 + (f64) arg0->angle);
-                        }
-                    } else {
-                        var_f22 = (f32) ((f64) arg0->angle + (1.5707963267948966 - (f64) (f32) atan2((f64) arg0->param3, (f64) var_f21_2)));
-                    }
-                }
-                break;
-            case 7:                                 /* switch 4 */
-                temp_f1_11 = arg0->angle;
-                if (temp_f1_11 < 0.0f) {
-                    var_f31 += var_f30;
-                    var_f22 = (f32) (1.5707963267948966 - (f64) temp_f1_11);
-                } else {
-                    temp_f31 = arg0->param1;
-                    var_f31 = ((arg0->param2 - temp_f31) * HSD_Randf()) + temp_f31;
-                    var_f22 = (f32) (1.5707963267948966 + (f64) arg0->angle);
-                }
-                break;
-            default:                                /* switch 4 */
-                temp_f1_12 = arg0->angle;
-                if (temp_f1_12 < 0.0f) {
-                    var_f31 += var_f30;
-                    var_f22 = var_f20_2 * -temp_f1_12;
-                } else {
-                    temp_f31_2 = arg0->param1;
-                    var_f31 = ((arg0->param2 - temp_f31_2) * HSD_Randf()) + temp_f31_2;
-                    var_f22 = var_f20_2 * arg0->angle;
-                }
-                break;
-            }
-            position.x = var_f21_2 * (f32) cos((f64) var_f31);
-            position.y = var_f21_2 * (f32) sin((f64) var_f31);
-            temp_r0_5 = arg0->type & 0xF;
-            if ((temp_r0_5 == 6) || (temp_r0_5 == 7)) {
-                temp_f1_13 = HSD_Randf();
-                position.z = temp_f1_13;
-                if ((s32) (arg0->type & 0xF) == 6) {
-                    temp_f2_5 = 1.0f - generatorSingle(temp_f1_13);
-                    position.x *= temp_f2_5;
-                    position.y *= temp_f2_5;
-                }
-                position.z *= arg0->param3;
-            } else {
-                position.z = 0.0f;
-            }
-            temp_f21 = var_f27 * (f32) sin((f64) var_f22);
-            velocity.x = temp_f21 * (f32) cos((f64) var_f31);
-            velocity.y = temp_f21 * (f32) sin((f64) var_f31);
-            temp_f0_4 = var_f27 * (f32) cos((f64) var_f22);
-            velocity.z = temp_f0_4;
-            if ((s32) (arg0->type & 0xF) == 3) {
-                velocity.z = temp_f0_4 * var_f20_2;
-                velocity.x *= var_f20_2;
-                velocity.y *= var_f20_2;
-            }
-            PSMTXMultVec((f32 (*)[4]) &transform[0][0], (PSVec *) &position.x, (PSVec *) &position.x);
-            position.x += arg0->position.x;
-            position.y += arg0->position.y;
-            position.z += arg0->position.z;
-            PSMTXMultVec((f32 (*)[4]) &transform[0][0], (PSVec *) &velocity.x, (PSVec *) &velocity.x);
-            sp8 = arg0->friction;
-            spC = arg0;
-            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, (s32) arg0->particleLife, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, sp8, 0, spC);
-            break;
-        case 1:                                     /* switch 2 */
-            temp_f1_14 = HSD_Randf();
-            position.x = temp_f1_14 * arg0->param1;
-            position.y = temp_f1_14 * arg0->param2;
-            position.z = temp_f1_14 * arg0->param3;
-            PSMTXMultVec((f32 (*)[4]) &transform[0][0], (PSVec *) &position.x, (PSVec *) &position.x);
-            position.x += arg0->position.x;
-            position.y += arg0->position.y;
-            position.z += arg0->position.z;
-            PSMTXMultVec((f32 (*)[4]) &transform[0][0], (PSVec *) &baseVelocity.x, (PSVec *) &velocity.x);
-            sp8 = arg0->friction;
-            spC = arg0;
-            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, (s32) arg0->particleLife, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, sp8, 0, spC);
-            break;
-        case 2:                                     /* switch 2 */
-            if (arg0->radius < 0.0f) {
-                var_f1 = 1.0f;
-            } else {
-                var_f1 = HSD_Randf();
-            }
-            if (arg0->angle < 0.0f) {
-                var_f4 = var_f31 + var_f30;
-            } else {
-                var_f4 = (f32) (2.0 * (3.141592653589793 * HSD_Randf()));
-            }
-            arg0->param1 = var_f27;
-            var_f31 = var_f4;
-            sp8 = var_f23;
-            spC = arg0;
-            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind | 4, (s32) arg0->texGroup, arg0->commands, (s32) arg0->particleLife, 0.0f, 0.0f, 0.0f, var_f4, var_f1, 0.0f, arg0->size, var_f25, sp8, 0, spC);
-            break;
-        case 5:                                     /* switch 2 */
-            position.x = HSD_Randf();
-            position.y = HSD_Randf();
-            temp_f1_15 = HSD_Randf();
-            position.z = temp_f1_15;
-            temp_r0_6 = arg0->edgeFlags;
-            switch (temp_r0_6) {                    /* switch 5 */
-            case 1:                                 /* switch 5 */
-                if (position.x > 0.5f) {
-                    var_f0_2 = 1.0f;
-                } else {
-                    var_f0_2 = 0.0f;
-                }
-                position.x = var_f0_2;
-                break;
-            case 2:                                 /* switch 5 */
-                if (position.y > 0.5f) {
-                    var_f0_3 = 1.0f;
-                } else {
-                    var_f0_3 = 0.0f;
-                }
-                position.y = var_f0_3;
-                break;
-            case 3:                                 /* switch 5 */
-                faceRandom3=HSD_Randf();
-                temp_f2_6 = arg0->param1;
-                if (faceRandom3 > (temp_f2_6 / (temp_f2_6 + arg0->param2))) {
-                    if (position.y > 0.5f) {
-                        var_f0_4 = 1.0f;
-                    } else {
-                        var_f0_4 = 0.0f;
-                    }
-                    position.y = var_f0_4;
-                } else {
-                    if (position.x > 0.5f) {
-                        var_f0_5 = 1.0f;
-                    } else {
-                        var_f0_5 = 0.0f;
-                    }
-                    position.x = var_f0_5;
-                }
-                break;
-            case 4:                                 /* switch 5 */
-                if (generatorSingle(temp_f1_15) > 0.5f) {
-                    var_f0_6 = 1.0f;
-                } else {
-                    var_f0_6 = 0.0f;
-                }
-                position.z = var_f0_6;
-                break;
-            case 5:                                 /* switch 5 */
-                faceRandom5=HSD_Randf();
-                temp_f2_7 = arg0->param1;
-                if (faceRandom5 > (temp_f2_7 / (temp_f2_7 + arg0->param3))) {
-                    if (position.z > 0.5f) {
-                        var_f0_7 = 1.0f;
-                    } else {
-                        var_f0_7 = 0.0f;
-                    }
-                    position.z = var_f0_7;
-                } else {
-                    if (position.x > 0.5f) {
-                        var_f0_8 = 1.0f;
-                    } else {
-                        var_f0_8 = 0.0f;
-                    }
-                    position.x = var_f0_8;
-                }
-                break;
-            case 6:                                 /* switch 5 */
-                faceRandom6=HSD_Randf();
-                temp_f2_8 = arg0->param2;
-                if (faceRandom6 > (temp_f2_8 / (temp_f2_8 + arg0->param3))) {
-                    if (position.z > 0.5f) {
-                        var_f0_9 = 1.0f;
-                    } else {
-                        var_f0_9 = 0.0f;
-                    }
-                    position.z = var_f0_9;
-                } else {
-                    if (position.y > 0.5f) {
-                        var_f0_10 = 1.0f;
-                    } else {
-                        var_f0_10 = 0.0f;
-                    }
-                    position.y = var_f0_10;
-                }
-                break;
-            case 7:                                 /* switch 5 */
-                temp_f1_16 = HSD_Randf();
-                temp_f5_2 = arg0->param3;
-                temp_f0_5 = arg0->param2;
-                temp_f6_2 = arg0->param1;
-                var_f4_2 = 1.0f;
-                temp_f2_9 = 1.0f / ((temp_f6_2 * (temp_f0_5 + temp_f5_2)) + (temp_f0_5 * temp_f5_2));
-                if (temp_f1_16 < (temp_f2_9 * (temp_f6_2 * temp_f0_5))) {
-                    position.z = generatorBoundaryCoordinate(position.z,var_f4_2);
-                } else if (temp_f1_16 > -((temp_f2_9 * (temp_f6_2 * temp_f5_2)) - 1.0f)) {
-                    position.y = generatorBoundaryCoordinate(position.y,var_f4_2);
-                } else {
-                    position.x = generatorBoundaryCoordinate(position.x,var_f4_2);
-                }
-                break;
-            }
-            temp_f5_3 = position.x - 0.5f;
-            temp_f4 = position.y - 0.5f;
-            temp_f3 = position.z - 0.5f;
-            position.x = temp_f5_3;
-            position.y = temp_f4;
-            position.z = temp_f3;
-            offset.x = (arg0->axisZX * temp_f3) + ((arg0->axisXX * temp_f5_3) + (arg0->axisYX * temp_f4));
-            offset.y = (arg0->axisZY * temp_f3) + ((arg0->axisXY * temp_f5_3) + (arg0->axisYY * temp_f4));
-            offset.z = (arg0->axisZZ * temp_f3) + ((arg0->axisXZ * temp_f5_3) + (arg0->axisYZ * temp_f4));
-            PSMTXMultVec((f32 (*)[4]) &transform[0][0], (PSVec *) &offset.x, (PSVec *) &position.x);
-            position.x += arg0->position.x;
-            position.y += arg0->position.y;
-            position.z += arg0->position.z;
-            temp_f2_10 = arg0->axisZX;
-            temp_f1_17 = arg0->axisZY;
-            temp_f3_2 = arg0->axisZZ;
-            var_f4_3 = (f32)(temp_f3_2 * temp_f3_2) + ((f32)(temp_f2_10 * temp_f2_10) + (f32)(temp_f1_17 * temp_f1_17));
-            if (var_f4_3 > 0.0f) {
-                temp_f1_18 = __frsqrte(var_f4_3);
-                temp_f1_19 = 0.5 * temp_f1_18 * -(((f64) var_f4_3 * (temp_f1_18 * temp_f1_18)) - 3.0);
-                temp_f1_20 = 0.5 * temp_f1_19 * -(((f64) var_f4_3 * (temp_f1_19 * temp_f1_19)) - 3.0);
-                var_f4_3 = (f32) ((f64) var_f4_3 * (0.5 * temp_f1_20 * -(((f64) var_f4_3 * (temp_f1_20 * temp_f1_20)) - 3.0)));
-            } else if (var_f4_3 < 0.0) {
-                var_f4_3 = __float_nan[0];
-            } else {
-                bits10 = var_f4_3;
-                temp_r3_3 = *(s32*)&bits10 & 0x7F800000;
-                switch (temp_r3_3) {                /* switch 6; irregular */
-                case 0x7F800000:                    /* switch 6 */
-                    if (*(s32*)&bits10 & 0x7FFFFF) {
-                        var_r0_3 = 1;
-                    } else {
-                        var_r0_3 = 2;
-                    }
-                    break;
-                case 0x0:                           /* switch 6 */
-                    if (*(s32*)&bits10 & 0x7FFFFF) {
-                        var_r0_3 = 5;
-                    } else {
-                        var_r0_3 = 3;
-                    }
-                    break;
-                default:                            /* switch 6 */
-                    var_r0_3 = 4;
-                    break;
-                }
-                if (var_r0_3 == 1) {
-                    var_f4_3 = __float_nan[0];
-                }
-            }
-            temp_f1_21 = var_f27 / var_f4_3;
-            velocity.x = arg0->axisZX * temp_f1_21;
-            velocity.y = arg0->axisZY * temp_f1_21;
-            velocity.z = arg0->axisZZ * temp_f1_21;
-            PSMTXMultVec((f32 (*)[4]) &transform[0][0], (PSVec *) &velocity.x, (PSVec *) &velocity.x);
-            sp8 = arg0->friction;
-            spC = arg0;
-            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, (s32) arg0->particleLife, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, sp8, 0, spC);
-            break;
-        case 8:                                     /* switch 2 */
-            if (arg0->param3 == 0.0f) {
-                var_f0_11 = (f32) (3.141592653589793 * HSD_Randf());
-            } else {
-                var_f0_11 = arg0->param3 * HSD_Randf();
-            }
-            temp_f19 = (f32) (2.0 * (3.141592653589793 * HSD_Randf()));
-            temp_f21_2 = arg0->radius;
-            if (temp_f21_2 < 0.0f) {
-                var_f22_2 = -temp_f21_2;
-            } else {
-                var_f22_2 = temp_f21_2 * HSD_Randf();
-            }
-            temp_f21_3 = (f32) cos((f64) temp_f19);
-            velocity.x = (f32) sin((f64) var_f0_11) * temp_f21_3;
-            temp_f21_4 = (f32) sin((f64) temp_f19);
-            velocity.y = (f32) sin((f64) var_f0_11) * temp_f21_4;
-            velocity.z = (f32) cos((f64) var_f0_11);
-            PSMTXMultVec((f32 (*)[4]) &transform[0][0], (PSVec *) &velocity.x, (PSVec *) &position.x);
-            temp_f2_11 = position.x;
-            temp_f5_4 = arg0->param1;
-            temp_f2_11 = temp_f2_11 * temp_f5_4;
-            temp_f4_2 = position.y * temp_f5_4;
-            temp_f3_3 = position.z * temp_f5_4;
-            velocity.x = temp_f2_11;
-            velocity.y = temp_f4_2;
-            velocity.z = temp_f3_3;
-            temp_f1_22 = arg0->radius;
-            if ((temp_f1_22 >= 0.0f) && (temp_f5_4 < 0.0f)) {
-                temp_f0_6 = var_f22_2 / temp_f1_22;
-                velocity.x = temp_f2_11 * temp_f0_6;
-                velocity.y = temp_f4_2 * temp_f0_6;
-                velocity.z = temp_f3_3 * temp_f0_6;
-            }
-            position.x = (var_f22_2 * position.x) + arg0->position.x;
-            position.y = (var_f22_2 * position.y) + arg0->position.y;
-            position.z = (var_f22_2 * position.z) + arg0->position.z;
-            sp8 = arg0->friction;
-            spC = arg0;
-            psGenerateParticle((s32) arg0->link, (s32) arg0->bank, 0, arg0->kind, (s32) arg0->texGroup, arg0->commands, (s32) arg0->particleLife, position.x, position.y, position.z, velocity.x * temp_f26, velocity.y * temp_f29, velocity.z * temp_f28, arg0->size, arg0->gravity, sp8, 0, spC);
-            break;
-        default:                                    /* switch 2 */
-            if (((void (*)(PSGenerator *, f32 (*)[4])) psExtExecGenFunc) != NULL) {
-                psExtExecGenFunc(arg0, (f32 (*)[4]) &transform[0][0]);
+            if (psExtExecGenFunc != 0) {
+                psExtExecGenFunc(gp, rot_mtx);
             }
             break;
         }
-        arg0->count -= 1.0f;
+
+        gp->count -= 1.0f;
     }
-generation_test:
-    temp_f1 = arg0->count;
-    if (temp_f1 >= 1.0f) goto loop_215;
-    return temp_f1;
+
+    return gp->count;
 }
 
 void psExecGenerator(s32 arg0) {
@@ -1331,10 +1153,10 @@ void psSetBillboardCamera(PSCamera *arg0) {
     }
 }
 
-void psGeneratorSetCamera(PSGenerator *arg0, s32 arg1) {
-    arg0->camera = arg1;
+void psGeneratorSetCamera(PSGenerator *generator, void *camera) {
+    generator->camera = camera;
 }
 
-s32 psGeneratorGetCamera(PSGenerator *arg0) {
-    return arg0->camera;
+void* psGeneratorGetCamera(PSGenerator *generator) {
+    return generator->camera;
 }

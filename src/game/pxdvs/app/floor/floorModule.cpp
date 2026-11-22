@@ -55,79 +55,85 @@ void FloorModuleList::executeAll(unsigned int a, FloorState state, FloorModuleTy
     }
 }
 
-void FloorModuleList::restorePopState(void *buf, FloorStateMode mode, bool freeBuf) {
-    u32 *hdr;
-    char *end;
+struct FloorModuleStateHeader {
     u32 id;
-    u32 sz;
-    char *p;
-    FloorModuleEntry *e;
-    FloorModuleInterface *m;
-    if (buf) {
+    u32 size;
+};
+
+void FloorModuleList::restorePopState(void* buffer, FloorStateMode mode, bool freeBuffer) {
+    u8* start = (u8*)buffer;
+    if (start) {
         dumpModule();
-        hdr = (u32 *)buf;
-        p = (char *)(hdr + 2);
-        end = (char *)buf + hdr[1];
-        if (hdr[0] == 0x464C4F52) {
-            while (p < end) {
-                id = ((u32 *)p)[0];
-                sz = ((u32 *)p)[1];
-                p += 8;
-                for (e = head; e; e = e->getNext()) {
-                    m = e->getModuleInterface();
-                    if (m && m->getStateSize && id == m->getStateID()) {
-                        m->loadState(mode, p, sz - 8);
-                        p += sz - 8;
-                        break;
-                    }
+        u32* words = (u32*)start;
+        u32 id = *words++;
+        u32 recordSize = *words++;
+        u8* cursor = (u8*)words;
+        u8* end = start + recordSize;
+        if (id != 'FLOR') return;
+
+        while (cursor < end) {
+            words = (u32*)cursor;
+            id = *words++;
+            recordSize = *words++;
+            cursor = (u8*)words;
+            for (FloorModuleEntry* entry = head; entry; entry = entry->getNext()) {
+                FloorModuleInterface* module = entry->getModuleInterface();
+                if (module && module->getStateSize && id == module->getStateID()) {
+                    module->loadState(mode, cursor, recordSize - sizeof(FloorModuleStateHeader));
+                    cursor += recordSize - sizeof(FloorModuleStateHeader);
+                    break;
                 }
             }
-            if (freeBuf) GSmemFree(buf);
         }
+        if (freeBuffer) GSmemFree(start);
     }
 }
 
-void *FloorModuleList::makePushState(FloorStateMode mode) {
-    FloorModuleEntry *e;
+void* FloorModuleList::makePushState(FloorStateMode mode) {
+    FloorModuleEntry* entry;
     u32 aligned;
-    FloorModuleInterface *m;
-    char *p;
-    u32 sz;
-    char *data;
+    FloorModuleInterface* module;
+    u8* cursor;
+    u32 payloadSize;
+    u8* data;
     u32 total;
+    void* buffer;
     dumpModule();
     total = 0;
-    for (e = head; e; e = e->getNext()) {
-        m = e->getModuleInterface();
-        if (m && m->getStateSize) {
-            sz = m->getStateSize(mode);
-            if (sz) total += ((sz + 3) & ~3) + 8;
+    for (FloorModuleEntry* sizingEntry = head; sizingEntry; sizingEntry = sizingEntry->getNext()) {
+        module = sizingEntry->getModuleInterface();
+        if (module && module->getStateSize) {
+            payloadSize = module->getStateSize(mode);
+            if (payloadSize) total += ((payloadSize + 3) & ~3) + sizeof(FloorModuleStateHeader);
         }
     }
-    u32 *buf = (u32 *)GSmemAlloc(total + 8);
-    if (!buf) return 0;
-    size = total + 8;
-    buf[0] = 0x464C4F52;
-    buf[1] = total + 8;
-    p = (char *)(buf + 2);
-    for (e = head; e; e = e->getNext()) {
-        m = e->getModuleInterface();
-        if (m && m->getStateSize) {
-            sz = m->getStateSize(mode);
-            if (sz == 0) {
-                if (mode == 3) m->saveState(mode, 0, 0);
+    FloorModuleStateHeader* header = (FloorModuleStateHeader*)GSmemAlloc(total + sizeof(*header));
+    buffer = header;
+    if (!header) return 0;
+    size = total + sizeof(FloorModuleStateHeader);
+    u32* words = (u32*)header;
+    *words++ = 'FLOR';
+    *words++ = total + sizeof(*header);
+    cursor = (u8*)words;
+    for (entry = head; entry; entry = entry->getNext()) {
+        module = entry->getModuleInterface();
+        if (module && module->getStateSize) {
+            payloadSize = module->getStateSize(mode);
+            if (payloadSize == 0) {
+                if (mode == 3) module->saveState(mode, 0, 0);
             } else {
-                aligned = (sz + 3) & ~3;
-                if (!m->getStateID) return 0;
-                ((u32 *)p)[0] = m->getStateID();
-                ((u32 *)p)[1] = aligned + 8;
-                data = p + 8;
-                m->saveState(mode, data, aligned);
-                p = data + aligned;
+                aligned = (payloadSize + 3) & ~3;
+                if (!module->getStateID) return 0;
+                FloorModuleStateHeader* record = (FloorModuleStateHeader*)cursor;
+                record->id = module->getStateID();
+                record->size = aligned + sizeof(*record);
+                data = (u8*)(record + 1);
+                module->saveState(mode, data, aligned);
+                cursor = data + aligned;
             }
         }
     }
-    return buf;
+    return buffer;
 }
 
 void FloorModuleList::killModuleGroup(u32 group) {
@@ -466,6 +472,129 @@ void ScriptTpcNode::setID(u32 v) {
     thread = 0;
 }
 
+// MWCC emits these definitions in reverse order, after the virtual table.
+#pragma defer_codegen on
+
+inline void GSscript::tigaVariant::setInteger(s32 v) {
+    type = 1;
+    value = v;
+}
+
+inline void FloorScriptModule::setIDs(u32 a, u32 b, u32 c) {
+    nodes[0].setID(a);
+    nodes[1].setID(b);
+    nodes[2].setID(c);
+}
+
+inline bool FloorModuleEntry::isTpcScript() const {
+    return type == FloorTypeTpc;
+}
+
+inline bool FloorModuleEntry::isEmpty() const {
+    return handle == 0;
+}
+
+inline u8 FloorModuleEntry::getPriority() const {
+    return priority;
+}
+
+inline void FloorModuleEntry::setNext(FloorModuleEntry *n) {
+    next = n;
+}
+
+inline void FloorModuleEntry::setPrev(FloorModuleEntry *p) {
+    prev = p;
+}
+
+inline u32 FloorModuleList::getNewHandle() {
+    handleCounter = handleCounter + 1;
+    if (handleCounter == 0) handleCounter = handleCounter + 1;
+    return handleCounter;
+}
+
+inline void FloorModuleEntry::setHandle(u32 h) {
+    handle = h;
+}
+
+inline u32 FloorModuleEntry::getHandle() const {
+    return handle;
+}
+
+inline FloorModuleInterface *FloorModuleEntry::getModuleInterface() {
+    if (type == FloorTypeFunc) return &module;
+    return 0;
+}
+
+inline FloorModuleEntry *FloorModuleEntry::getPrev() const {
+    return prev;
+}
+
+inline u32 FloorModuleEntry::getGroupID() const {
+    return groupID;
+}
+
+inline FloorModuleType FloorModuleEntry::getType() const {
+    return type;
+}
+
+inline u8 FloorModuleEntry::isBlock() const {
+    return blocked;
+}
+
+inline FloorModuleEntry *FloorModuleEntry::getNext() const {
+    return next;
+}
+
+static const char *_floorStateToStr(FloorState s) {
+    switch (s) {
+    case FloorStateUnused:
+        return "FloorStateUnused";
+    case FloorStateCreate:
+        return "FloorStateCreate";
+    case FloorStatePre:
+        return "FloorStatePre";
+    case FloorStatePreWait:
+        return "FloorStatePreWait";
+    case FloorStateNormal:
+        return "FloorStateNormal";
+    case FloorStateNormalWait:
+        return "FloorStateNormalWait";
+    case FloorStatePost:
+        return "FloorStatePost";
+    case FloorStatePostWait:
+        return "FloorStatePostWait";
+    case FloorStateFree:
+        return "FloorStateFree";
+    default:
+        return "unknownState";
+    }
+}
+
+static const char *_floorTypeToStr(FloorModuleType t) {
+    switch (t) {
+    case FloorTypeFunc:
+        return "FloorTypeFunc";
+    case FloorTypeGSvm:
+        return "FloorTypeGSvm";
+    case FloorTypeTpc:
+        return "FloorTypeTpc";
+    case FloorTypeSingleGSvm:
+        return "FloorTypeSingleGSvm";
+    case FloorTypeSingleTpc:
+        return "FloorTypeSingleTpc";
+    case FloorTypeAny:
+        return "FloorTypeAny";
+    default:
+        return "FloorUnknown";
+    }
+}
+
+void FloorModuleInterface_clear(FloorModuleInterface *m) {
+    memset(m, 0, sizeof(FloorModuleInterface));
+}
+
+static void _dispModuleName(FloorModuleInterface *, const char *) {}
+
 u8 FloorModuleInterface_exec(FloorModuleInterface *m, FloorState state, u32 a, FloorEnterMode mode, bool createThread) {
     switch (state) {
     case FloorStateCreate:
@@ -508,54 +637,4 @@ u8 FloorModuleInterface_exec(FloorModuleInterface *m, FloorState state, u32 a, F
         break;
     }
     return 0;
-}
-
-static void _dispModuleName(FloorModuleInterface *, const char *) {}
-
-void FloorModuleInterface_clear(FloorModuleInterface *m) {
-    memset(m, 0, sizeof(FloorModuleInterface));
-}
-
-static const char *_floorTypeToStr(FloorModuleType t) {
-    switch (t) {
-    case FloorTypeFunc:
-        return "FloorTypeFunc";
-    case FloorTypeGSvm:
-        return "FloorTypeGSvm";
-    case FloorTypeTpc:
-        return "FloorTypeTpc";
-    case FloorTypeSingleGSvm:
-        return "FloorTypeSingleGSvm";
-    case FloorTypeSingleTpc:
-        return "FloorTypeSingleTpc";
-    case FloorTypeAny:
-        return "FloorTypeAny";
-    default:
-        return "FloorUnknown";
-    }
-}
-
-static const char *_floorStateToStr(FloorState s) {
-    switch (s) {
-    case FloorStateUnused:
-        return "FloorStateUnused";
-    case FloorStateCreate:
-        return "FloorStateCreate";
-    case FloorStatePre:
-        return "FloorStatePre";
-    case FloorStatePreWait:
-        return "FloorStatePreWait";
-    case FloorStateNormal:
-        return "FloorStateNormal";
-    case FloorStateNormalWait:
-        return "FloorStateNormalWait";
-    case FloorStatePost:
-        return "FloorStatePost";
-    case FloorStatePostWait:
-        return "FloorStatePostWait";
-    case FloorStateFree:
-        return "FloorStateFree";
-    default:
-        return "unknownState";
-    }
 }

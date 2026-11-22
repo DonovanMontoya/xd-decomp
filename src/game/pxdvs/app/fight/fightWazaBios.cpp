@@ -1,7 +1,6 @@
 #include <game/pxdvs/app/fight/fightWazaBiosLayout.hpp>
 #include <game/pxdvs/app/pokemon/pokemonFightRecords.hpp>
 #include <game/pxdvs/app/waza/wazaLayout.hpp>
-#pragma dont_inline on
 extern "C" {
 extern FightWazaHitKakurituBiosRecord fight_waza_hit_kakuritu_data[];
 extern u32 fight_waza_hit_kakuritu_data_number;
@@ -33,10 +32,14 @@ u32 fightWazaBiosGetHitDamage(FightWazaRecord* p){if(p==0){return 0;}else{return
 u32 fightWazaBiosGetDamage(FightWazaRecord* p){if(p==0){return 0;}else{return p->damage;}}
 u8 fightWazaBiosGetDamageValue(FightWazaRecord* p){if(p==0){return 0;}else{return p->damageValue;}}
 u8 fightWazaBiosGetCritical(FightWazaRecord* p){if(p==0){return 0;}else{return p->critical;}}
-FightJoutai* fightWazaBiosGetJoutaiPtr(FightWazaRecord* p,u16 index){if(p==0)return 0;if(index>=9)return 0;return (FightJoutai*)((u8*)p+8+index*0x10);}
+FightJoutai* fightWazaBiosGetJoutaiPtr(FightWazaRecord* p,u16 index){if(p==0)return 0;if(index>=9)return 0;return &p->statuses[index];}
 u16 fightWazaBiosGetTargetDataId(FightWazaRecord* p){if(p==0){return 0;}else{return p->targetDataId;}}
 u16 fightWazaBiosGetUseWazaDataId(FightWazaRecord* p){if(p==0){return 0;}else{return p->useWazaDataId;}}
 u16 fightWazaBiosGetMotoWazaDataId(FightWazaRecord* p){if(p==0){return 0;}else{return p->motoWazaDataId;}}
 u8 fightWazaBiosGetWazaBanme(FightWazaRecord* p){if(p==0){return 0;}else{return p->wazaBanme;}}
-void fightWazaBiosCopy(FightWazaRecord* dst,const FightWazaRecord* src){if(dst==0)return;if(src==0)return;dst->wazaBanme=src->wazaBanme;dst->motoWazaDataId=src->motoWazaDataId;dst->useWazaDataId=src->useWazaDataId;dst->targetDataId=src->targetDataId;const u32* s;u32* d;d=(u32*)dst+1;s=(const u32*)src+1;for(u32 i=0;i<0x12;++i){u32 b;u32 a=s[1];++s;b=s[1];++s;d[1]=a;++d;d[1]=b;++d;}dst->critical=src->critical;dst->damageValue=src->damageValue;dst->damage=src->damage;dst->hitDamage=src->hitDamage;dst->iryoku=src->iryoku;dst->zokusei=src->zokusei;dst->kaisuu=src->kaisuu;dst->autoMakeFlag=src->autoMakeFlag;}
+void fightWazaBiosCopy(FightWazaRecord* dst, const FightWazaRecord* src) {
+    if (dst == 0) return;
+    if (src == 0) return;
+    *dst = *src;
+}
 }

@@ -2,10 +2,10 @@
 #include <dolphin/gx.h>
 static u32 _primitive_instance_memory;
 static inline void updatePrimitiveMemory() {
- g_particle_debug_stats.reserved10-=_primitive_instance_memory;
+ g_particle_debug_stats.primitiveMemory-=_primitive_instance_memory;
  g_particle_debug_stats.total-=_primitive_instance_memory;
  _primitive_instance_memory=shapeGetInstancedMemorySizeAll();
- g_particle_debug_stats.reserved10+=_primitive_instance_memory;
+ g_particle_debug_stats.primitiveMemory+=_primitive_instance_memory;
  g_particle_debug_stats.total+=_primitive_instance_memory;
 }
 static inline void freeModelInstance(peModelNode *node,_peModel *model) {
@@ -45,51 +45,60 @@ static inline void setModelMatrix(ModelJObj *jobj,Mtx matrix) {
  }
 }
 #pragma opt_loop_invariants off
-void peModelContainer::Render() {
- Mtx transform,rotation;
- if(active&&modelVisible(this)) {
-  if(!(model->flags&0x40)) {
-   ModelCamera *camera=GScameraGetActiveCamera();
-   if(!camera)return;
-   GXSetClipMode(GX_CLIP_ENABLE);HSD_StateInvalidate(-1);
-   HSD_CObjSetCurrent(camera->camera);GSlightSetupLights(camera->camera);
-  }
-  peModelNode *node=(peModelNode*)nodes;
-  while(node) {
-   _peModel *definition=model;
-   PSMTXQuat(rotation,&node->worldRotation);
-   PSMTXScale(transform,node->worldScale.x,node->worldScale.y,node->worldScale.z);
-   PSMTXConcat(rotation,transform,transform);
-   PSMTXTransApply(transform,transform,node->worldPosition.x,node->worldPosition.y,node->worldPosition.z);
-   if(definition->flags&0x40) {
-    u16 primitive=definition->resource.primitive-1;
-    shapeUpdate(primitive,node->life-node->time,node->instance);
-    pushMult__16GSgfxMatrixStackFP5GSmtx(((ParticleLayerState*)g_current_layer)->unk19A0,transform);
-    shapeRender(primitive,node->instance,((ParticleLayerState*)g_current_layer)->unk28);
-    pop__16GSgfxMatrixStackFv(((ParticleLayerState*)g_current_layer)->unk19A0);
-   } else {
-    ModelJObj *jobj=definition->resource.jobj;
-    if(jobj) {
-     u32 mask;
-     switch(g_render_pass) {
-     case 0:mask=1;break;
-     case 1:mask=6;break;
-     default:goto nextNode;
-     }
-     setModelMatrix(jobj,transform);
-     if(definition->duration>0.00001f) {
-      f32 rate=GSgfxVideoGetVsyncRate();f32 elapsed=node->life-node->time;
-      HSD_JObjReqAnimAll(jobj,(f32)fmod(elapsed*rate,definition->duration));
-      HSD_JObjAnimAll(jobj);HSD_JObjDispAll(jobj,0,mask,0);
-     }
+static inline void renderModelNode(peModelNode *node, _peModel *definition) {
+    Mtx rotation;
+    Mtx transform;
+    u16 primitive;
+    u32 mask;
+    ModelJObj *jobj;
+    PSMTXQuat(rotation, &node->world.rotation);
+    PSMTXScale(transform, node->world.scale.x, node->world.scale.y, node->world.scale.z);
+    PSMTXConcat(rotation, transform, transform);
+    PSMTXTransApply(transform, transform, node->world.position.x, node->world.position.y, node->world.position.z);
+    if (definition->flags & 0x40) {
+        primitive = definition->resource.primitive - 1;
+        shapeUpdate(primitive, node->life - node->time, node->instance);
+        pushMult__16GSgfxMatrixStackFP5GSmtx(((ParticleLayerState *)g_current_layer)->unk19A0, transform);
+        shapeRender(primitive, node->instance, ((ParticleLayerState *)g_current_layer)->unk28);
+        pop__16GSgfxMatrixStackFv(((ParticleLayerState *)g_current_layer)->unk19A0);
+    } else {
+        jobj = reinterpret_cast<ModelJObj*>(definition->resource.jobj);
+        if (jobj) {
+            switch (g_render_pass) {
+            case 0: mask = 1; break;
+            case 1: mask = 6; break;
+            default: return;
+            }
+            setModelMatrix(jobj, transform);
+            if (definition->duration > 0.00001f) {
+                f32 time = (node->life - node->time) * (f32)GSgfxVideoGetVsyncRate();
+                f32 frame = (f32)fmod(time, definition->duration);
+                HSD_JObjReqAnimAll(jobj, frame);
+                HSD_JObjAnimAll(jobj);
+                HSD_JObjDispAll(jobj, 0, mask, 0);
+            }
+        }
     }
-   }
-nextNode:
-   node=(peModelNode*)node->next;
-  }
-  if(!(model->flags&0x40))InvalidateState__10GSgfxLayerFv(g_current_layer);
-  particleEngineSetDefaultRenderState(1);
- }
+}
+
+void peModelContainer::Render() {
+    if (active && modelVisible(this)) {
+        if (!(model->flags & 0x40)) {
+            ModelCamera *camera = GScameraGetActiveCamera();
+            if (!camera) return;
+            GXSetClipMode(GX_CLIP_ENABLE);
+            HSD_StateInvalidate(-1);
+            HSD_CObjSetCurrent(camera->camera);
+            GSlightSetupLights(camera->camera);
+        }
+        for (peNode *node = nodes; node; node = node->next) {
+            renderModelNode((peModelNode *)node, model);
+        }
+        if (!(model->flags & 0x40)) {
+            InvalidateState__10GSgfxLayerFv(g_current_layer);
+        }
+        particleEngineSetDefaultRenderState(1);
+    }
 }
 #pragma opt_loop_invariants reset
 void peModelContainer::Update(f32 time) {
@@ -121,7 +130,7 @@ u16 peModelContainer::Emit(u16 requested) {
 }
 peModelContainer::~peModelContainer(){g_particle_debug_stats.node-=0x24;g_particle_debug_stats.total-=0x24;}
 peModelContainer::peModelContainer(peEmitterNode *emitter,_peModel *data,u16 maximum):peContainer(emitter,0x98,maximum) {model=data;g_particle_debug_stats.node+=0x24;g_particle_debug_stats.total+=0x24;}
-static inline f32 modelSpline(ShapeSpline *spline,f32 progress) {
+static inline f32 modelSpline(PeSpline *spline,f32 progress) {
  if(!spline||!(spline->flags&3))return 1.0f;
  f32 difference=spline->time-progress;if(difference<0.0f)difference=-difference;
  if(difference<=0.00001f)return spline->value;
@@ -139,7 +148,7 @@ static inline s32 modelFloatClass(f32 x) {
 }
 extern "C" f32 __float_nan[];
 u8 peModelNode::Update(peEmitterNode *emitter,_peModel *model,f32 delta) {
- ShapeTransform local;
+ NodeTransform local;
  Mtx matrix;
  Vec angles;
  Quaternion flipped;
@@ -184,8 +193,8 @@ u8 peModelNode::Update(peEmitterNode *emitter,_peModel *model,f32 delta) {
  angles.y=baseScale.y*modelSpline(model->scaleSpline[1],progress);
  angles.z=baseScale.z*modelSpline(model->scaleSpline[2],progress);
  local.position=position;PSQUATMultiply(&randomRotation,&flipped,&combined);local.rotation=combined;local.scale=angles;
- peNodeTransformsConcat((ShapeTransform*)&worldPosition,transform,&local,0);
- PSVECSubtract(&worldPosition,&g_CameraPosition,&distance);copy.x=distance.x;copy.y=distance.y;copy.z=distance.z;depth=PSVECDotProduct(&g_CameraLookDir,&copy);
+ peNodeTransformsConcat(&world,transform,&local,false);
+ PSVECSubtract(&world.position,&g_CameraPosition,&distance);copy.x=distance.x;copy.y=distance.y;copy.z=distance.z;depth=PSVECDotProduct(&g_CameraLookDir,&copy);
  return 1;
 }
 void peModelNode::Start(peEmitterNode *emitter,_peModel *model,_EmitParams *params) {
@@ -194,8 +203,8 @@ void peModelNode::Start(peEmitterNode *emitter,_peModel *model,_EmitParams *para
  PSVECScale(&model->scaleRange,&scale,HSD_Randf());
  f32 sy=scale.y,sz=scale.z,sx=scale.x;baseScale.x=sx;baseScale.y=sy;baseScale.z=sz;PSVECAdd(&baseScale,&model->scale,&baseScale);
  randomRotation.x=0.0f;randomRotation.y=0.0f;randomRotation.z=0.0f;randomRotation.w=1.0f;
- worldPosition.x=0.0f;worldPosition.y=0.0f;worldPosition.z=0.0f;
- worldRotation.x=0.0f;worldRotation.y=0.0f;worldRotation.z=0.0f;worldRotation.w=1.0f;worldScale=unitScaleVector;
+ world.position.x=0.0f;world.position.y=0.0f;world.position.z=0.0f;
+ world.rotation.x=0.0f;world.rotation.y=0.0f;world.rotation.z=0.0f;world.rotation.w=1.0f;world.scale=unitScaleVector;
  if(!(emitter->emitter->flags&0x400)) {
   EulerToQuat(&model->rotation,&localRotation);
   if(flags&0xe380) {

@@ -1,7 +1,7 @@
 #include <game/pxdvs/GSAPI/GScolsys/GScolsys2HumanPrivate.hpp>
 static inline s32 getHuman(int index,GSCOLSYS2_HUMAN **out) {
     if(index<0 || index>=48) return 4;
-    HumanFloor *floor=GScolsys2GetCurFloor();
+    GSCOLSYS2_FLOOR *floor=GScolsys2GetCurFloor();
     if(!floor) return 1;
     GSCOLSYS2_HUMAN *human=&floor->humans[index];
     if(!(human->flags&1)) return 4;
@@ -15,13 +15,12 @@ extern "C" f32 GScolsys2HumanGetHumanRadius(int index) {
 }
 extern "C" void GScolsys2HumanDispColision() {
     GSvec position;
-    HumanFloor *floor=GScolsys2GetCurFloor();
+    GSCOLSYS2_FLOOR *floor=GScolsys2GetCurFloor();
     if(floor) {
         GSgfxLayerSetActive(2);
         GScameraLoadActiveCameraMatrix(2);
         GSgfxCullMode(0);
-        GSgfxVFBuildTemp(1,4,0,0,1,5,0,0,0);
-        GSgfxSetupRenderAndSelect();
+        GSgfxSetupRenderAndSelect(GSgfxVFBuildTemp(1,4,0,0,1,5,0,0,0));
         GSgfxBlendMode(1,4,5);
         GSgfxPixelMode(1,1,1);
         GSgfxSetLineWidth(2.0f);
@@ -132,7 +131,7 @@ static u8 checkCollisionHeadToHead(GSCOLSYS2_HUMAN *other,GSCOLSYS2_HUMAN *self,
     return 1;
 }
 static u8 checkCollision(GSCOLSYS2_HUMAN *self,int index,GSvec *start,GSvec *end,GSvec *out) {
-    HumanFloor *floor;
+    GSCOLSYS2_FLOOR *floor;
     s32 i;
     s32 passes;
     GSCOLSYS2_HUMAN *other;
@@ -193,7 +192,7 @@ extern "C" s32 GScolsys2HumanEnable(int index,u8 enabled) {
     return 0;
 }
 extern "C" s32 GScolsys2HumanAddCurrentFloor(int *index,GSCOLSYS2_HUMAN *input) {
-    HumanFloor *floor=GScolsys2GetCurFloor();
+    GSCOLSYS2_FLOOR *floor=GScolsys2GetCurFloor();
     if(!floor) return 1;
     s32 i=0;
     for(;i<48;i++) if(!(floor->humans[i].flags&1)) break;
@@ -210,7 +209,7 @@ extern "C" s32 GScolsys2HumanAddCurrentFloor(int *index,GSCOLSYS2_HUMAN *input) 
     return 0;
 }
 extern "C" f32 GScolsys2HumanGetWalkHeight(GSvec *input) {
-    HumanHeight heights[8];
+    GSwalkHit heights[8];
     GSvec point;
     point.x=input->x;point.y=input->y;point.z=input->z;
     s32 count=GScolsys2WalkGetHeight(&point,heights);
@@ -219,7 +218,7 @@ extern "C" f32 GScolsys2HumanGetWalkHeight(GSvec *input) {
         preferred=-1000000.0f;
         u8 found=0;
         highest=-1000000.0f;
-        HumanHeight *entry=heights;
+        GSwalkHit *entry=heights;
         for(s32 i=0;i<count;i++,entry++) {
             height=entry->height;
             if(highest<height) highest=height;
@@ -248,12 +247,12 @@ extern "C" f32 GScolsys2HumanGetWalkHeight(GSvec *input) {
     return point.y;
 }
 extern "C" f32 GScolsys2HumanGetWalkHighest(GSvec *input) {
-    HumanHeight heights[8];
+    GSwalkHit heights[8];
     GSvec point;
     point.x=input->x;point.y=input->y;point.z=input->z;
     s32 count=GScolsys2WalkGetHeight(&point,heights);
     if(count>=2) {
-        HumanHeight *entry=heights;
+        GSwalkHit *entry=heights;
         f32 highest=-1000000.0f;
         for(s32 i=0;i<count;i++,entry++) if(highest<entry->height) highest=entry->height;
         return highest;

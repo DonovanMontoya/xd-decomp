@@ -13,7 +13,7 @@ static f32 _primTextYpel = 6.0f;
 static u8 _primTextColor[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
 static u32 _primRenderBuf(f32, f32, char*, unsigned long, bool);
-static u8* _primChar2Ptr(char);
+static const LineGlyph* _primChar2Ptr(char);
 static inline void textState() {
     if (primData.lineState != 2) {
         GSprimLayer()->setLineWidth((s32)(6.0f * primData.textWidth), 0);
@@ -69,8 +69,9 @@ static inline u8 hexDigit(char c) {
     default: return 0;
     }
 }
-static u32 _primRenderBuf(f32 x, f32 y, char* text, unsigned long length, bool draw) {
+static u32 _primRenderBuf(f32 x, f32 y, char* buffer, unsigned long length, bool draw) {
     u32 total = 0;
+    char* text = buffer;
     while (length--) {
         switch (*text) {
         case '\n': case '\r': break;
@@ -84,13 +85,15 @@ static u32 _primRenderBuf(f32 x, f32 y, char* text, unsigned long length, bool d
             text += 6;
             break;
         default: {
-            u8* glyph = _primChar2Ptr(*text);
-            s32 count = *glyph++;
+            const LineGlyph* glyph = _primChar2Ptr(*text);
+            s32 count = glyph->count;
+            const LineStroke* stroke = glyph->strokes;
             total += count;
             if (draw == true) {
                 while (count--) {
-                    s32 first = glyph[0], second = glyph[1];
-                    glyph += 2;
+                    s32 first = stroke->first;
+                    s32 second = stroke->second;
+                    ++stroke;
                     GXPosition2f32((0.11f * (first >> 4)) * _primTextXpel + x,
                                    (0.11f * (first & 15)) * _primTextYpel + y);
                     GXColor4u8(_primTextColor[0], _primTextColor[1], _primTextColor[2], _primTextColor[3]);
@@ -108,7 +111,7 @@ static u32 _primRenderBuf(f32 x, f32 y, char* text, unsigned long length, bool d
     }
     return total;
 }
-static u8* _primChar2Ptr(char c) {
+static const LineGlyph* _primChar2Ptr(char c) {
     s32 index;
     if (c >= '0' && c <= '9') index = c - '0';
     else if (c >= 'A' && c <= 'Z') index = c - 'A' + 10;
@@ -136,5 +139,5 @@ static u8* _primChar2Ptr(char c) {
     case '"': index = 55; break;
     default: index = 37; break;
     }
-    return _primLineFont[index];
+    return &_primLineFont[index];
 }

@@ -1,15 +1,13 @@
+#include <game/pxdvs/GSAPI/GScolsys/GScolsys2.hpp>
 #include <game/pxdvs/GSAPI/GScolsys/GScolsys2Private.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/dlPrivate.hpp>
 #include <libc/string.h>
 extern "C" {
 GSCOLSYS2_STATE GScolsys2;
 FloorModuleInterface _floorModuleColsys;
-static u8 _colsysVF[0x440];
+static GSgfxVF _colsysVF;
 s32 _hModuleField;
 extern Mtx mtxIdent;
-void GSgfxDLFree(void *);
-void GSgfxVFInit(void *);
-void GSgfxVFCreate(void *);
-void GSgfxVFSetElement(void *, s32, s32, s32, u8);
 void FloorModuleInterface_clear(FloorModuleInterface *);
 s32 floorRegisterModule(u32, u32, FloorModuleInterface *);
 
@@ -93,6 +91,8 @@ s32 GScolsys2UnloadCCD(void) {
     }
     return 1;
 }
+}
+
 static inline void offsetGeometry(CCDGeometry *&geometry, u8 *base) {
     if (geometry) {
         geometry = reinterpret_cast<CCDGeometry *>((u32)geometry + (u32)base);
@@ -109,7 +109,8 @@ static inline void offsetReference(CCDReference *&reference, u8 *base) {
         if (value->entries) value->entries = reinterpret_cast<void *>((u32)value->entries + (u32)base);
     }
 }
-static void _offsetCCD__FP12CCD_FILEHEAD(CCD_FILEHEAD *head) {
+
+static void _offsetCCD(CCD_FILEHEAD *head) {
     if (head) {
         u8 *base = reinterpret_cast<u8 *>(head);
         head->objects = reinterpret_cast<CCDObject *>((u32)head->objects + (u32)base);
@@ -124,16 +125,20 @@ static void _offsetCCD__FP12CCD_FILEHEAD(CCD_FILEHEAD *head) {
         }
     }
 }
-s32 GScolsys2LoadCCD(CCD_FILEHEAD *head) {
+
+extern "C" {
+s32 GScolsys2LoadCCD(void *resource) {
+    CCD_FILEHEAD *head = static_cast<CCD_FILEHEAD *>(resource);
     if (GScolsys2.currentFloor < 0) return 0;
     GSCOLSYS2_FLOOR *floor = &GScolsys2.floor[GScolsys2.currentFloor];
-    for (u32 i = 0; i < 48; ++i) floor->auxiliary[i].flags &= ~1;
-    _offsetCCD__FP12CCD_FILEHEAD(head);
-    GScolsys2.head = head;
-    if (head) {
-        CCDObject *source = head->objects;
+    for (u32 i = 0; i < 48; ++i) floor->humans[i].flags &= ~1;
+    _offsetCCD(head);
+    GScolsys2.head = static_cast<CCD_FILEHEAD *>(resource);
+    const CCD_FILEHEAD *file = GScolsys2.head;
+    if (file) {
+        CCDObject *source = file->objects;
         GSCOLSYS2_OBJ *object = GScolsys2.floor[GScolsys2.currentFloor].objects;
-        for (u32 i = 0; i < head->count; ++i, ++object, ++source) {
+        for (u32 i = 0; i < file->count; ++i, ++object, ++source) {
             object->position[0] = source->position[0];
             object->position[1] = source->position[1];
             object->position[2] = source->position[2];
@@ -182,11 +187,11 @@ static void _gscolsysMakeStateData__F14FloorStateModePvUl(FloorStateMode mode, v
 void GScolsys2Init(void) {
     GScolsys2.currentFloor = 0;
     GScolsys2.displayList = 0;
-    GSgfxVFInit(_colsysVF);
-    GSgfxVFCreate(_colsysVF);
-    GScolsys2.format = _colsysVF;
-    GSgfxVFSetElement(GScolsys2.format, 9, 1, 4, 0);
-    GSgfxVFSetElement(GScolsys2.format, 11, 1, 5, 0);
+    GSgfxVFInit(&_colsysVF);
+    GSgfxVFCreate(&_colsysVF);
+    GScolsys2.format = &_colsysVF;
+    GSgfxVFSetElement(GScolsys2.format, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GSgfxVFSetElement(GScolsys2.format, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
     FloorModuleInterface_clear(&_floorModuleColsys);
     _floorModuleColsys.saveState = _gscolsysMakeStateData__F14FloorStateModePvUl;
     _floorModuleColsys.loadState = _gscolsysRestoreStateData__F14FloorStateModePvUl;

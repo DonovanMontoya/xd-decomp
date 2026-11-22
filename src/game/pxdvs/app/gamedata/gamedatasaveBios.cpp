@@ -4,33 +4,147 @@
 extern "C" {
 void gamedataBiosSetZukanFLag(u16* flags,u16 index,u16 value){if(flags==0)return;if(index>0x10)return;u16 bit=(u16)(1u<<index);if(value==1){*flags|=bit;}else{*flags=*flags&~bit;}}
 u32 gamedataBiosGetZukanFlag(const u16* flags,u16 index){if(flags){if(index>0x10)return 0;u16 bit=(u16)(1u<<index);bit&=*flags;return bit!=0;}return 0;}
-void* gamedatasaveBiosGetplaydata(GamedataSaveRecord* p){if(p==0)return 0;return (u8*)p+0x40;}
-void gamedatasaveBiosSetSysHeadChecksum(GamedataSaveRecord* p,u32 value){if(p)p->payload.checksumWords.sysHeadChecksum=value;}
-u32 gamedatasaveBiosGetSysHeadChecksum(GamedataSaveRecord* p){if(p)return p->payload.checksumWords.sysHeadChecksum;return 0;}
-void fn_801577B4(GamedataSaveRecord* p,u8 value){if(p)p->payload.flags20.flagBytes.flag23=value;}
-u8 fn_801577C4(GamedataSaveRecord* p){if(p)return p->payload.flags20.flagBytes.flag23;return 0;}
-void gamedatasaveBiosSetParChecksum(GamedataSaveRecord* p,u32 value){if(p)p->payload.parChecksum=value;}
-u32 gamedatasaveBiosGetParChecksum(GamedataSaveRecord* p){if(p)return p->payload.parChecksum;return 0;}
-void gamedatasaveBiosSetOptionAudio(GamedataSaveRecord* p,u8 value){if(p)p->payload.flags20.flagBytes.audioOption=value;}
-void gamedatasaveBiosSetOptionNoVibration(GamedataSaveRecord* p,u8 value){if(p)p->payload.flags20.flagBytes.noVibration=value;}
-void gamedatasaveBiosSetFloorposindex(GamedataSaveRecord* p,u8 value){if(p)p->payload.flags20.flagBytes.floorPositionIndex=value;}
-void gamedatasaveBiosSetPrevfloorid(GamedataSaveRecord* p,u32 value){if(p)p->payload.previousFloorId=value;}
-void gamedatasaveBiosSetPlaytime(GamedataSaveRecord* p,f64 value){if(p)p->payload.playtime=value;}
-void gamedatasaveBiosSetFloorid(GamedataSaveRecord* p,u32 value){if(p)p->payload.floorId=value;}
-void gamedatasaveBiosSetSavecount(GamedataSaveRecord* p,u32 value){if(p)p->payload.saveCount=value;}
-void gamedatasaveBiosSetMemcardID(GamedataSaveRecord* p,u64 value){if(p)p->memcardId=value;}
-void gamedatasaveBiosSetSavernd(GamedataSaveRecord* p,u32 value){if(p)p->payload.saveRandom=value;}
-u8 gamedatasaveBiosGetOptionAudio(GamedataSaveRecord* p){if(p)return p->payload.flags20.flagBytes.audioOption;return 0;}
-u8 gamedatasaveBiosGetOptionNoVibration(GamedataSaveRecord* p){if(p)return p->payload.flags20.flagBytes.noVibration;return 0;}
-u8 gamedatasaveBiosGetFloorposindex(GamedataSaveRecord* p){if(p)return p->payload.flags20.flagBytes.floorPositionIndex;return 0;}
-u32 gamedatasaveBiosGetPrevfloorid(GamedataSaveRecord* p){if(p)return p->payload.previousFloorId;return 0;}
-f64 gamedatasaveBiosGetPlaytime(GamedataSaveRecord* p){if(p)return p->payload.playtime;return 0.0;}
-u32 gamedatasaveBiosGetFloorid(GamedataSaveRecord* p){if(p)return p->payload.floorId;return 0;}
-u32 gamedatasaveBiosGetSavecount(GamedataSaveRecord* p){if(p)return p->payload.saveCount;return 0;}
-u64 gamedatasaveBiosGetMemcardID(GamedataSaveRecord* p){if(p)return p->memcardId;return 0;}
-u32 gamedatasaveBiosGetSavernd(GamedataSaveRecord* p){if(p)return p->payload.saveRandom;return 0;}
-void gamedatasaveBiosSetPtr(GamedataSaveRecord* dst,const GamedataSavePayload* src){if(dst==0||src==0)return;*(u64*)&dst->payload.saveCount=*(const u64*)&src->saveCount;dst->payload.parChecksum=src->parChecksum;dst->payload.floorId=src->floorId;dst->payload.copiedWord18=src->copiedWord18;dst->payload.previousFloorId=src->previousFloorId;dst->payload.flags20.copiedFloat20=src->flags20.copiedFloat20;dst->payload.flags20.copiedWords20[1]=src->flags20.copiedWords20[1];dst->payload.raw28.copiedByte28=src->raw28.copiedByte28;dst->payload.raw28.copiedBytes29to2b[0]=src->raw28.copiedBytes29to2b[0];dst->payload.raw28.copiedBytes29to2b[1]=src->raw28.copiedBytes29to2b[1];dst->payload.raw28.copiedBytes29to2b[2]=src->raw28.copiedBytes29to2b[2];dst->payload.copiedAggregateDouble30=src->copiedAggregateDouble30;dst->payload.copiedWord38=src->copiedWord38;}
-GamedataSavePayload* gamedatasaveBiosGetPtr(GamedataSaveRecord* p){if(p==0)return 0;return &p->payload;}
-void gamedatasaveInit(GamedataSaveRecord* p){GamedataSavePayload* pl; if(p==0)pl=0; else pl=&p->payload; if(pl)pl->parChecksum=0;}
+
+u16* gamedatasaveBiosGetplaydata(GamedataSaveRecord* record) {
+    if (record == 0) return 0;
+    return &record->zukanFlags;
+}
+
+void gamedatasaveBiosSetSysHeadChecksum(GamedataSavePayload* payload, u32 value) {
+    if (payload) payload->sysHeadChecksum = value;
+}
+
+u32 gamedatasaveBiosGetSysHeadChecksum(GamedataSavePayload* payload) {
+    if (payload) return payload->sysHeadChecksum;
+    return 0;
+}
+
+void fn_801577B4(GamedataSavePayload* payload, u8 value) {
+    if (payload) payload->language = value;
+}
+
+u8 fn_801577C4(GamedataSavePayload* payload) {
+    if (payload) return payload->language;
+    return 0;
+}
+
+void gamedatasaveBiosSetParChecksum(GamedataSavePayload* payload, u32 value) {
+    if (payload) payload->parChecksum = value;
+}
+
+u32 gamedatasaveBiosGetParChecksum(GamedataSavePayload* payload) {
+    if (payload) return payload->parChecksum;
+    return 0;
+}
+
+void gamedatasaveBiosSetOptionAudio(GamedataSavePayload* payload, u8 value) {
+    if (payload) payload->audioOption = value;
+}
+
+void gamedatasaveBiosSetOptionNoVibration(GamedataSavePayload* payload, u8 value) {
+    if (payload) payload->noVibration = value;
+}
+
+void gamedatasaveBiosSetFloorposindex(GamedataSavePayload* payload, u8 value) {
+    if (payload) payload->floorPositionIndex = value;
+}
+
+void gamedatasaveBiosSetPrevfloorid(GamedataSavePayload* payload, u32 value) {
+    if (payload) payload->previousFloorId = value;
+}
+
+void gamedatasaveBiosSetPlaytime(GamedataSavePayload* payload, f64 value) {
+    if (payload) payload->playtime = value;
+}
+
+void gamedatasaveBiosSetFloorid(GamedataSavePayload* payload, u32 value) {
+    if (payload) payload->floorId = value;
+}
+
+void gamedatasaveBiosSetSavecount(GamedataSavePayload* payload, u32 value) {
+    if (payload) payload->saveCount = value;
+}
+
+void gamedatasaveBiosSetMemcardID(GamedataSavePayload* payload, u64 value) {
+    if (payload) payload->memcardId = value;
+}
+
+void gamedatasaveBiosSetSavernd(GamedataSavePayload* payload, u32 value) {
+    if (payload) payload->saveRandom = value;
+}
+
+u8 gamedatasaveBiosGetOptionAudio(GamedataSavePayload* payload) {
+    if (payload) return payload->audioOption;
+    return 0;
+}
+
+u8 gamedatasaveBiosGetOptionNoVibration(GamedataSavePayload* payload) {
+    if (payload) return payload->noVibration;
+    return 0;
+}
+
+u8 gamedatasaveBiosGetFloorposindex(GamedataSavePayload* payload) {
+    if (payload) return payload->floorPositionIndex;
+    return 0;
+}
+
+u32 gamedatasaveBiosGetPrevfloorid(GamedataSavePayload* payload) {
+    if (payload) return payload->previousFloorId;
+    return 0;
+}
+
+f64 gamedatasaveBiosGetPlaytime(GamedataSavePayload* payload) {
+    if (payload) return payload->playtime;
+    return 0.0;
+}
+
+u32 gamedatasaveBiosGetFloorid(GamedataSavePayload* payload) {
+    if (payload) return payload->floorId;
+    return 0;
+}
+
+u32 gamedatasaveBiosGetSavecount(GamedataSavePayload* payload) {
+    if (payload) return payload->saveCount;
+    return 0;
+}
+
+u64 gamedatasaveBiosGetMemcardID(GamedataSavePayload* payload) {
+    if (payload) return payload->memcardId;
+    return 0;
+}
+
+u32 gamedatasaveBiosGetSavernd(GamedataSavePayload* payload) {
+    if (payload) return payload->saveRandom;
+    return 0;
+}
+
+void gamedatasaveBiosSetPtr(GamedataSaveRecord* dst, const GamedataSavePayload* src) {
+    if (dst == 0 || src == 0) return;
+    dst->payload.memcardId = src->memcardId;
+    dst->payload.saveCount = src->saveCount;
+    dst->payload.saveRandom = src->saveRandom;
+    dst->payload.parChecksum = src->parChecksum;
+    dst->payload.floorId = src->floorId;
+    dst->payload.field18 = src->field18;
+    dst->payload.previousFloorId = src->previousFloorId;
+    dst->payload.floorPositionIndex = src->floorPositionIndex;
+    dst->payload.noVibration = src->noVibration;
+    dst->payload.audioOption = src->audioOption;
+    dst->payload.language = src->language;
+    dst->payload.playtime = src->playtime;
+    dst->payload.sysHeadChecksum = src->sysHeadChecksum;
+}
+
+GamedataSavePayload* gamedatasaveBiosGetPtr(GamedataSaveRecord* record) {
+    if (record == 0) return 0;
+    return &record->payload;
+}
+
+void gamedatasaveInit(GamedataSaveRecord* record) {
+    GamedataSavePayload* payload;
+    if (record == 0) payload = 0;
+    else payload = &record->payload;
+    if (payload) payload->saveCount = 0;
+}
 }
 #pragma force_active reset

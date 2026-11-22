@@ -1,11 +1,12 @@
 #pragma defer_codegen on
 #pragma force_active on
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuPocketToolLayout.hpp>
 
 extern "C" {
 u32 soundGetBGMID(void);
 u32 soundGetEnvID(void);
-s32 soundGetVolume(void);
+u32 soundGetVolume(u32);
 void soundOpenPlayEnv(u32, s32, u8);
 void GSthreadSwitch(void);
 u16 windowGetKeyTrg(void);
@@ -34,7 +35,6 @@ u32 timeGetLastFrameTime(void);
 s8 fadeCheck(s32);
 void fadeSetToBlackOutIfNotBlack(f32);
 void fadeSetToBlackInIfBlack(f32);
-void fadeSet(s32, f32);
 void GSprimSetQuadVertexOrder(s32);
 void GSprimDraw2DQuad4V(const f32 (*)[2], GSgfxColAu8);
 u8 GSgfxVideoGetVsyncRate(void);
@@ -1392,14 +1392,14 @@ void menuPtStopSound(MenuPtWorkSound *work) {
     u8 envVolume;
     bgm = soundGetBGMID();
     if (bgm != 0) {
-        bgmVolume = soundGetVolume();
+        bgmVolume = soundGetVolume(bgm);
         soundOpenPlay(8, 0x32, 0xFF);
     } else {
         bgmVolume = 0;
     }
     env = soundGetEnvID();
     if (env != 0) {
-        envVolume = soundGetVolume();
+        envVolume = soundGetVolume(env);
     } else {
         envVolume = 0;
     }
@@ -1416,13 +1416,13 @@ void menuPtSaveSound(MenuPtWorkSound *work) {
     u8 envVolume;
     bgm = soundGetBGMID();
     if (bgm != 0) {
-        bgmVolume = soundGetVolume();
+        bgmVolume = soundGetVolume(bgm);
     } else {
         bgmVolume = 0;
     }
     env = soundGetEnvID();
     if (env != 0) {
-        envVolume = soundGetVolume();
+        envVolume = soundGetVolume(env);
     } else {
         envVolume = 0;
     }

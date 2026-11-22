@@ -1,11 +1,12 @@
 #ifndef SCRIPT_PRIVATE_HPP
 #define SCRIPT_PRIVATE_HPP
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <global.h>
 #include <game/pxdvs/GSAPI/GSmath/GSvec.hpp>
 #include <game/pxdvs/app/hero/heroPokemonGet.hpp>
 #include <game/pxdvs/app/pokemon/darkPokemon.hpp>
 #include <game/pxdvs/app/people/runtime.hpp>
-#include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/pxdvs/app/pcbox/pcbox.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
 struct _GSmodel;
 struct FloorBgmMask {
@@ -27,10 +28,6 @@ struct glowEffect : GSeffect {
     u8 r, g, b, flag, blend;
     glowEffect();
 };
-struct PCBOX {
-    static PCBOX* getPointer();
-    Pokemon* getPokemon(s8, s8);
-};
 struct PeopleRangeInfo_t;
 struct GSlight;
 struct GSpart;
@@ -46,7 +43,7 @@ extern "C" {
 FloorBgmMask* floorSound_getBgmMaskObj();
 u32 soundGetBGMID();
 u32 soundGetEnvID();
-u32 soundGetVolume();
+u32 soundGetVolume(u32);
 void GSflagSet(u32, u32);
 void GSsndPause(u32, u32, u32);
 void GSsndContinue(u32, u32, u32);
@@ -84,7 +81,7 @@ void peopleGetPos(u32, u32, GSvec*);
 void peopleGetNeckPos(u32, u32, GSvec*);
 void peopleInitEvent(u32, u32);
 void peopleTermEvent(u32, u32);
-void peopleWalkTo(u32, u32, u8, GSvec*);
+void peopleWalkTo(u32, u32, u8, GSvecData*);
 void peopleRotateToXYZ(u32, u32, f32, f32, f32, f32);
 PeopleInfo* peopleInfoBiosGetPtr(u32);
 f32 peopleInfoBiosGetColBallSize(PeopleInfo*);
@@ -165,7 +162,6 @@ u32 fightEncount(u32);
 u8 fightEncountDataBiosGetZenmetuFlag(void*);
 u32 fightGetFightResultId();
 u8 fightFloorIsGcHeroWin(s32, u32);
-void fadeSet(s32, f32);
 s32 floorEventCtrlElevatorHero(u32, u32, u16, u32);
 s32 floorEventCtrlElevatorFollower(u32, u32, u16, u32);
 s32 scriptGetPoint();

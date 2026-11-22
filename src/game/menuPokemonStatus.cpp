@@ -1,7 +1,9 @@
 #pragma defer_codegen on
 #pragma force_active on
 #define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
+#include <game/menuReliveMeter.h>
 #include <game/menuPokemonStatusLayout.hpp>
 
 extern "C" {
@@ -28,10 +30,8 @@ void floorWaitForChange(void);
 void menuOpen(s32, s32);
 void menuClose(s32);
 void* memset(void*, int, u32);
-void menuDrawReliveUpdate(void);
 Pokemon* heroBiosGetPokemonPtr(Hero*, u16);
 void fadeCheck(s32);
-void fadeSet(s32, f32);
 void GSfloorPop(void);
 void GSsndPlayNow(s32);
 void menuModelInit(void*, s16, s16);
@@ -94,7 +94,6 @@ u32 pokemonGetTokuseiDataId(Pokemon*);
 void* pokemonTokuseiDataBiosGetPtr(u16);
 void* pokemonTokuseiDataBiosGetDoc(void*);
 void* pokemonTokuseiDataBiosGetName(void*);
-void menuDrawReliveMeter(Pokemon*, s32, s32, s32);
 u8 pokemonDataBiosGetZokuseiDataId(void*, s32);
 u32 zokuseiGetPokemonSpriteID(void*, u16);
 void GSmsgPrint2(s32, s32, s32, u32, u32);

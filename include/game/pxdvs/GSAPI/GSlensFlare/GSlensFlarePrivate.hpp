@@ -106,8 +106,6 @@ u8 GScolsys2Sun(GSvec*,GSvec*);
 void GSmtx44Ortho(f32 (*)[4],f32,f32,f32,f32,f32,f32);
 GSgfxVF* GSgfxVFGetPredef(s32);
 extern Mtx mtxIdent;
-void __ct__5GSvecFv(GSvec*);
-void __construct_array(void*,void (*)(GSvec*),void*,u32,u32);
 f64 atan2(f64,f64);
 void GSlensFlareSetVisible(u32,bool);
 void GSlensFlareSetSunPosition(u32,GSvec*);

@@ -286,7 +286,7 @@ int Tiga::cmpThread(int operation, tigaVariant* args, tigaVariant* result) {
     switch (operation) {
     case 0x10: {
         s32 index = expressionInteger(&args[1]);
-        if (makeThread((TPCCode*)(field944 + index * 4), (int&)spawnArg, (long&)handle)) {
+        if (makeThread(codeBase + index, (int&)spawnArg, (long&)handle)) {
             expressionSetInteger(result, handle);
         }
         break;

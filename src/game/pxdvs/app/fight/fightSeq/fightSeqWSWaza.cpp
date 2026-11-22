@@ -1,5 +1,8 @@
 #pragma force_active on
-#include <dolphin/types.h>
+#include <game/pxdvs/app/fight/fightMenuMessage.hpp>
+#include <game/pxdvs/app/fight/fightPokemonDarkEffects.hpp>
+#include <game/pxdvs/app/fight/fightSeq/fightSeqDamage.hpp>
+#include <game/pxdvs/app/fight/fightWaza.hpp>
 
 #pragma auto_inline off
 
@@ -8,9 +11,6 @@ struct FightOutPokemon {
 };
 struct Pokemon {
     u8 data[0xC4];
-};
-struct FightWaza {
-    u8 data[0xAC];
 };
 struct FightAction {
     u8 data[0x38];
@@ -24,7 +24,6 @@ struct ServerWorkData {
 };
 
 typedef void (*WazaSeqFunc)(void);
-typedef void (*FightSeqDamageFunc)(void*, u16, FightOutPokemon*, void*);
 typedef u8 (*FightFloorLoopFunc)(void*, u16, void*);
 
 static u8 _fightSeqInitSubFightOutPokemon(void*, u16, void*);
@@ -85,7 +84,6 @@ void* fightSeq_GetWazaSeq(void);
 void fightSeq_JumpWazaSeq(void*);
 void fightSeq_CallWazaSeqCustom(void*, void*, u8);
 void fightSeqTypeCheckHikaePokemon(void*, u8, u8, u8);
-s32 fightSeqWazaDamageCalcHikaePokemon(FightOutPokemon*, void*, FightOutPokemon*, u16, s32, s32);
 
 u8 fightSeqWazaOutBeforeCheckSub(void*, u16, void*);
 u8 fightSeqTameWazaCheck(u16);
@@ -105,13 +103,12 @@ void fightOutPokemonBiosCopy(FightOutPokemon*, FightOutPokemon*);
 void pokemonBiosCopy(Pokemon*, Pokemon*);
 Pokemon* fightPokemon_GetPokemonBuffPtr(void*);
 FightWaza* fightOutPokemon_GetFightWazaPtr(FightOutPokemon*);
-void fightWazaBiosCopy(FightWaza*, FightWaza*);
 void fightWazaInit(FightWaza*);
 void fightWazaCreate(FightWaza*, u32, u16, u32, u32);
 u8 fightWazaIsHit(FightWaza*);
 s32 fightWaza_GetDamage(FightWaza*);
 void fightWaza_SetDamage(FightWaza*, s32);
-s32 fightWaza_GetIryoku(FightWaza*);
+u16 fightWaza_GetIryoku(FightWaza*);
 u16 fightWaza_GetZokusei(FightWaza*);
 u8 fightWaza_GetCritical(FightWaza*);
 u8 fightWaza_GetDamageValue(FightWaza*);
@@ -139,7 +136,6 @@ s32 fightOutPokemonGetBuffJoutaiDataId(FightOutPokemon*, u16);
 FightAction* fightOutPokemonCreateFightActionAttackWaza(FightOutPokemon*, s32, s32, s32, void*, u16, u16, s8, u8);
 u8 fightOutPokemon_GetAbicntAverage(FightOutPokemon*);
 void fightOutPokemon_SetAbicntAverage(FightOutPokemon*, u8);
-void fightOutPokemonDarkPokemonKaijoEffect(FightOutPokemon*, u8, u8, u8, u16, u8);
 u8 fightOutPokemonIsGcHeroFightOutPokemon(FightOutPokemon*);
 u32 fightOutPokemonGetNicknamePtr(FightOutPokemon*);
 void fightOutPokemon_SetHitWazaDataId(FightOutPokemon*, u16);
@@ -213,7 +209,6 @@ u32 GSmsgGetGSchar(u32);
 void fightMsgctrlSetValue(s32, u32);
 void fightMainAllCamera(u32, u32);
 void fightMainWaitFrame(u32);
-u8 fightMenuOpenMsg(u32);
 void fightMenuCloseMsg(void);
 void fightMenuFightOutPokemonOpenStatusMenu(FightOutPokemon*, u8, u32);
 void fightMenuFightOutPokemonCloseStatusMenu(FightOutPokemon*, u8, u32);
@@ -224,7 +219,7 @@ void fightMenuAllFightOutPokemonCloseStatusMenu(void*);
 
 extern "C" {
 void CriticalCheckHikaePokemon(void* hikae);
-void DamageCalcHikaePokemon(void* hikae);
+void DamageCalcHikaePokemon(FightPokemon* hikae);
 void fightSeqClearOneTurnCount(u8 flag);
 void fightSeqClearOneSelfTurnCount(void);
 void fightSeqTurnCheck(void);
@@ -761,8 +756,8 @@ static inline void ServerWorkClear(void) {
 
 extern "C" {
 
-s32 fightSeqGetWazaDamageHikaePokemon(void* floor, u16 wazaId, FightOutPokemon* attack, void* hikae, u8 critical,
-                                      FightSeqDamageFunc before, FightSeqDamageFunc after) {
+s32 fightSeqGetWazaDamageHikaePokemon(FIGHT_TRAINER* trainer, u16 wazaId, FightOutPokemon* attack, FightPokemon* hikae, u8 critical,
+                                      FightSeqHikaeDamageFunc before, FightSeqHikaeDamageFunc after) {
     ServerWorkData work;
     Pokemon pokemonSave;
     FightWaza* waza;
@@ -790,7 +785,7 @@ s32 fightSeqGetWazaDamageHikaePokemon(void* floor, u16 wazaId, FightOutPokemon* 
     ServerStatusFlag = 0;
     ServerWorkClear();
     if (before != 0) {
-        before(floor, wazaId, attack, hikae);
+        before(trainer, wazaId, attack, hikae);
     }
     if (critical == 1) {
         CriticalCheckHikaePokemon(hikae);
@@ -798,7 +793,7 @@ s32 fightSeqGetWazaDamageHikaePokemon(void* floor, u16 wazaId, FightOutPokemon* 
     DamageCalcHikaePokemon(hikae);
     fightSeqTypeCheckHikaePokemon(hikae, 1, 1, 0);
     if (after != 0) {
-        after(floor, wazaId, attack, hikae);
+        after(trainer, wazaId, attack, hikae);
     }
     damage = fightWazaIsHit(waza) == 1 ? fightWaza_GetDamage(waza) : 0;
     fightFloor_SetAttackPokemonPtr(0, oldAttack);
@@ -813,17 +808,17 @@ s32 fightSeqGetWazaDamageHikaePokemon(void* floor, u16 wazaId, FightOutPokemon* 
     return damage;
 }
 
-void DamageCalcHikaePokemon(void* hikae) {
+void DamageCalcHikaePokemon(FightPokemon* hikae) {
     FightOutPokemon* attack;
-    FightOutPokemon* side;
+    FightSide* side;
     u16 zokusei;
     u16 wazaId;
-    s32 iryoku;
+    u16 iryoku;
     FightWaza* waza;
     s32 damage;
 
     attack = fightTargetGetPtrAsNowFightType(0x11, 0);
-    side = fightTargetGetPtrAsNowFightType(3, attack);
+    side = (FightSide*)fightTargetGetPtrAsNowFightType(3, attack);
     wazaId = fightOutPokemon_GetUseWazaDataId(attack);
     waza = fightOutPokemon_GetFightWazaPtr(attack);
     iryoku = fightWaza_GetIryoku(waza);
@@ -888,7 +883,7 @@ void CriticalCheckHikaePokemon(void* hikae) {
     }
 }
 
-s32 fightSeqGetNromalWazaDamage(void* floor, u16 wazaId, FightOutPokemon* attack, FightOutPokemon* defense, u8 critical, u8 loss,
+s32 fightSeqGetNromalWazaDamage(FIGHT_TRAINER* trainer, u16 wazaId, FightOutPokemon* attack, FightOutPokemon* defense, u8 critical, u8 loss,
                                 FightSeqDamageFunc before, FightSeqDamageFunc after) {
     FightOutPokemon attackSave;
     FightWaza* waza;
@@ -920,7 +915,7 @@ s32 fightSeqGetNromalWazaDamage(void* floor, u16 wazaId, FightOutPokemon* attack
     ServerStatusFlag = 0;
     ServerWorkClear();
     if (before != 0) {
-        before(floor, wazaId, attack, defense);
+        before(trainer, wazaId, attack, defense);
     }
     if (critical == 1) {
         WS_CRITICAL_CHECK();
@@ -931,7 +926,7 @@ s32 fightSeqGetNromalWazaDamage(void* floor, u16 wazaId, FightOutPokemon* attack
         WS_DAMAGE_LOSS();
     }
     if (after != 0) {
-        after(floor, wazaId, attack, defense);
+        after(trainer, wazaId, attack, defense);
     }
     damage = fightWazaIsHit(waza) == 1 ? fightWaza_GetDamage(waza) : 0;
     fightFloor_SetAttackPokemonPtr(0, oldAttack);
@@ -1442,7 +1437,7 @@ extern "C" void fightSeqCallExec(void)
     }
 
     fightTrainerCallEffect(trainer, 0);
-    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 0);
+    fightOutPokemonDarkPokemonKaijoEffect(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 0);
     fightMsgctrlSetValue(19, (u32)fightTrainerGetNamePtr(trainer));
     fightMainAllCamera(1, 0);
     fightMenuOpenMsg(20432);
@@ -1468,12 +1463,12 @@ extern "C" void fightSeqCallExec(void)
             fightSeqCheckSetHensinBuffToMotoPokemon(attacker, 197);
         }
     }
-    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, msgId, 1);
-    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 2);
+    fightOutPokemonDarkPokemonKaijoEffect(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, msgId, 1);
+    fightOutPokemonDarkPokemonKaijoEffect(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 2);
     fightMenuCloseMsg();
     fightMenuFightOutPokemonCloseStatusMenu(attacker, fightType, 0);
     fightTrainerCallEffect(trainer, 3);
-    ((void(*)(FightOutPokemon*,u8,u8,u8,s32,s32))fightOutPokemonDarkPokemonKaijoEffect)(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 3);
+    fightOutPokemonDarkPokemonKaijoEffect(attacker, wokeFromSleep, endedHyperMode, raisedAccuracy, 0, 3);
     wazaSequenceSysFreeAllWaza();
     fightMenuAllFightTrainerCloseStatusMenu(0);
     fightMenuAllFightOutPokemonCloseStatusMenu(0);

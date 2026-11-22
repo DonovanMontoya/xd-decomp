@@ -5,7 +5,7 @@ void *GSmemAllocAlign(u32, u32);
 void GSmemShrink(void *, u32);
 void GSmemFree(void *);
 void GSlogWrite(const char *, ...);
-static u16 _dlCalculateStride__FP7GSgfxVF(DLVertexFormat *);
+static u16 _dlCalculateStride__FP7GSgfxVF(GSgfxVF *);
 static u8 *_dlParseSurface__F13GSgfxPrimTypeP16_HSD_VtxDescListPUcUsP22GSgfxParseCallbackListPv(s32, DLInputDescriptor *, u8 *, u16, DLParseCallbacks *, void *);
 static u8 *_dlParseVertex__FP16_HSD_VtxDescListPUcP22GSgfxParseCallbackListPv(DLInputDescriptor *, u8 *, DLParseCallbacks *, void *);
 static s32 _dlPrimType = 0x90;
@@ -59,7 +59,7 @@ void GSgfxDLEnd(void) {
     _dlCurPtr = 0;
 }
 #pragma opt_propagation off
-void GSgfxDLBegin(DLDisplayList *list, DLVertexFormat *format, u16 surfaces, u16 vertices) {
+void GSgfxDLBegin(DLDisplayList *list, GSgfxVF *format, u16 surfaces, u16 vertices) {
     list->stride = _dlCalculateStride__FP7GSgfxVF(format);
     u32 surfaceBytes = surfaces << 5;
     u32 vertexBytes = vertices * list->stride;
@@ -84,7 +84,7 @@ void GSgfxDLFree(DLDisplayList *list) {
         list->flags &= ~1;
     }
 }
-void GSgfxDLCreate(DLDisplayList *list, s32 primitive, DLVertexFormat *format, u16 count) {
+void GSgfxDLCreate(DLDisplayList *list, s32 primitive, GSgfxVF *format, u16 count) {
     list->stride = _dlCalculateStride__FP7GSgfxVF(format);
     list->size = (count * list->stride + 0x22) & ~31;
     list->data = static_cast<u8 *>(GSmemAllocAlign(list->size, 32));
@@ -257,9 +257,9 @@ emit:
 }
 #pragma opt_lifetimes reset
 #pragma opt_propagation reset
-static u16 _dlCalculateStride__FP7GSgfxVF(DLVertexFormat *format) {
-    DLAttributeFormat *attribute = format->formats;
-    DLVertexDescriptor *descriptor = format->descriptors;
+static u16 _dlCalculateStride__FP7GSgfxVF(GSgfxVF *format) {
+    VFAttribute *attribute = format->formats;
+    VFDescriptor *descriptor = format->descriptors;
     u16 stride = 0;
     u16 components;
     for (; descriptor->attribute != 255; ++attribute, ++descriptor) {

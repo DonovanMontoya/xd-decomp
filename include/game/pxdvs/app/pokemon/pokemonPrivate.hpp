@@ -156,7 +156,7 @@ bool pokemonCheckCanGetFriend(Pokemon*, u16);
 u16* pokemon_GetNicknamePtr(Pokemon*);
 void GScharCpy(void*, const void*);
 u16 menuFaceGetID(Pokemon*);
-u16 menuFaceGetID3(Pokemon*, u8, u32);
+u16 menuFaceGetID3(Pokemon*, u8, s8);
 u8 menuSubGetPokemonSexForFightDisp(Pokemon*);
 const char* wazaDB_GetName(u16);
 const char* zokuseiBiosGetName(u8);

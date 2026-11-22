@@ -6,10 +6,7 @@ namespace GSscript {
 struct tigaVariant {
     s16 type, flags;
     s32 value;
-    void setInteger(s32 v) {
-        type = 1;
-        value = v;
-    }
+    void setInteger(s32 v);
 };
 struct Tiga {
     s32 runParams(int, tigaVariant *, int, bool);
@@ -82,11 +79,7 @@ struct FloorScriptModule {
     void block();
     void exec(FloorState, u8, u32, FloorEnterMode);
     ScriptTpcNode *stateToNode(FloorState);
-    void setIDs(u32 a, u32 b, u32 c) {
-        nodes[0].setID(a);
-        nodes[1].setID(b);
-        nodes[2].setID(c);
-    }
+    void setIDs(u32 a, u32 b, u32 c);
 };
 
 struct FloorModuleEntry {
@@ -115,22 +108,19 @@ struct FloorModuleEntry {
     void block();
     void setScriptModule(u8, u32, u32, u32, u32);
     void setModule(u8, u32, FloorModuleInterface *);
-    FloorModuleEntry *getNext() const { return next; }
-    u8 isBlock() const { return blocked; }
-    FloorModuleType getType() const { return type; }
-    u32 getGroupID() const { return groupID; }
-    FloorModuleEntry *getPrev() const { return prev; }
-    FloorModuleInterface *getModuleInterface() {
-        if (type == FloorTypeFunc) return &module;
-        return 0;
-    }
-    u32 getHandle() const { return handle; }
-    void setHandle(u32 h) { handle = h; }
-    void setPrev(FloorModuleEntry *p) { prev = p; }
-    void setNext(FloorModuleEntry *n) { next = n; }
-    u8 getPriority() const { return priority; }
-    bool isEmpty() const { return handle == 0; }
-    bool isTpcScript() const { return type == FloorTypeTpc; }
+    FloorModuleEntry *getNext() const;
+    u8 isBlock() const;
+    FloorModuleType getType() const;
+    u32 getGroupID() const;
+    FloorModuleEntry *getPrev() const;
+    FloorModuleInterface *getModuleInterface();
+    u32 getHandle() const;
+    void setHandle(u32 h);
+    void setPrev(FloorModuleEntry *p);
+    void setNext(FloorModuleEntry *n);
+    u8 getPriority() const;
+    bool isEmpty() const;
+    bool isTpcScript() const;
 };
 
 struct FloorModuleList {
@@ -162,11 +152,7 @@ struct FloorModuleList {
     FloorModuleEntry *findHandle(u32);
     FloorModuleEntry *findFree();
     FloorModuleEntry *getFMEEnd();
-    u32 getNewHandle() {
-        handleCounter = handleCounter + 1;
-        if (handleCounter == 0) handleCounter = handleCounter + 1;
-        return handleCounter;
-    }
+    u32 getNewHandle();
 };
 
 extern "C" {

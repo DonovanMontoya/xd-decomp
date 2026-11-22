@@ -1,3 +1,4 @@
+#include <game/menuFightStatus.hpp>
 #include <game/pxdvs/app/fight/fightSeq/fightSeqWazaseqPrivate.hpp>
 
 extern "C" {

@@ -183,10 +183,10 @@ void GSgfxVFSetElement(GSgfxVF* vf, s32 a, s32 b, s32 c, s32 d);
 void GSresRegisterResource(void* mem, u32 grp, u32 id, void* freeFunc);
 void* GStextureLoad(void* tex);
 u8 GSinputIsConnected(s32 pad);
-u32 GSinputGetLeftStickXData(s32 pad, s32 mode);
-u32 GSinputGetLeftStickYData(s32 pad, s32 mode);
-u32 GSinputGetRightStickXData(s32 pad, s32 mode);
-u32 GSinputGetRightStickYData(s32 pad, s32 mode);
+s8 GSinputGetLeftStickXData(s32 pad, s32 mode);
+s8 GSinputGetLeftStickYData(s32 pad, s32 mode);
+s8 GSinputGetRightStickXData(s32 pad, s32 mode);
+s8 GSinputGetRightStickYData(s32 pad, s32 mode);
 u32 GSinputButtonsPressed(s32 pad);
 u8 gbaCommandIsConnected(s32 gba);
 u16 gbaCommandKeyPressed(s32 gba);
@@ -195,14 +195,38 @@ void* memset(void* dst, int val, u32 size);
 
 extern WINDOW_SYS_WORK winSysWork;
 extern WINDOW_SYS_WORK winSysWork2;
+#if defined(VERSION_GXXE01)
+static u8 uv_cmn_win_00[] __attribute__((aligned(32))) = {
+#include <game/menu/uv_cmn_win_00.inc>
+};
+static u8 tex_warning[] __attribute__((aligned(32))) = {
+#include <game/menu/tex_warning.inc>
+};
+static u8 tex_warning_pstar[] __attribute__((aligned(32))) = {
+#include <game/menu/tex_warning_pstar.inc>
+};
+static u8 uv_cmn_csr_00[] __attribute__((aligned(32))) = {
+#include <game/menu/uv_cmn_csr_00.inc>
+};
+static u8 uv_common_icon_00[] __attribute__((aligned(32))) = {
+#include <game/menu/uv_common_icon_00.inc>
+};
+#else
 extern u8 uv_cmn_win_00[];
 extern u8 tex_warning[];
 extern u8 tex_warning_pstar[];
 extern u8 uv_cmn_csr_00[];
 extern u8 uv_common_icon_00[];
+#endif
 }
 
 GSgfxVF menuHyperModeVf;
+
+struct MenuPadIds {
+    s32 ids[4];
+};
+
+static const MenuPadIds menuPadIds = { 1, 2, 3, 4 };
 
 static u8 connect_bak[4];
 static u8 connect[4];
@@ -1023,18 +1047,18 @@ static u8 _menuGetAgbKeyInfo(s32 port, u16* keys) {
 }
 
 static u8 _menuGetGcKeyInfo(s32 port, u16* keys, u16* keys2) {
-    s32 padIds[4] = { 1, 2, 3, 4 };
+    MenuPadIds padIds = menuPadIds;
     u16 result = 0;
     u16 result2 = 0;
     s32 padId;
-    u32 lx;
-    u32 ly;
-    u32 rx;
-    u32 ry;
+    s8 lx;
+    s8 ly;
+    s8 rx;
+    s8 ry;
     u32 buttons;
     f32 angle;
 
-    padId = padIds[port];
+    padId = padIds.ids[port];
     if (GSinputIsConnected(padId) == 0) {
         return 0;
     }
@@ -1044,8 +1068,8 @@ static u8 _menuGetGcKeyInfo(s32 port, u16* keys, u16* keys2) {
     ry = GSinputGetRightStickYData(padId, 0);
     rx = GSinputGetRightStickXData(padId, 0);
 
-    if (((s8)lx < 0 ? -(s8)lx : (s8)lx) > 0x20 || ((s8)ly < 0 ? -(s8)ly : (s8)ly) > 0x20) {
-        angle = atan2((s8)lx, (s8)ly);
+    if ((lx < 0 ? -lx : lx) > 0x20 || (ly < 0 ? -ly : ly) > 0x20) {
+        angle = atan2(lx, ly);
         if ((angle > 0.0f ? angle : -angle) < 0.9599311f) {
             result |= 2;
         } else if ((angle > 0.0f ? angle : -angle) > 2.1816616f) {
@@ -1061,8 +1085,8 @@ static u8 _menuGetGcKeyInfo(s32 port, u16* keys, u16* keys2) {
         }
     }
 
-    if (((s8)rx < 0 ? -(s8)rx : (s8)rx) > 0x16 || ((s8)ry < 0 ? -(s8)ry : (s8)ry) > 0x16) {
-        angle = atan2((s8)rx, (s8)ry);
+    if ((rx < 0 ? -rx : rx) > 0x16 || (ry < 0 ? -ry : ry) > 0x16) {
+        angle = atan2(rx, ry);
         if ((angle > 0.0f ? angle : -angle) < 0.9599311f) {
             result2 |= 2;
         } else if ((angle > 0.0f ? angle : -angle) > 2.1816616f) {
@@ -1098,24 +1122,19 @@ static u8 _menuGetGcKeyInfo(s32 port, u16* keys, u16* keys2) {
 }
 
 static void _menuUpdateKeyInfo(WINDOW_SYS_WORK* a, WINDOW_SYS_WORK* b) {
+    s32 i;
     KeyInfo* k1;
-    u16 bit;
+    u16 bit2;
+    KeyInfo* k2;
     s32 port;
     u16 keys;
-    KeyInfo* k2;
     u16 keys2;
-    s32 i;
-    u16 repeat;
-    u16 held;
-    u16 pressed;
     MenuWindow* window;
-    u16 repeat2;
     u8 type;
-    u16 held2;
 
     for (port = 0; port < 4; port++) {
-        k2 = &winSysWork2.port[port];
         k1 = &winSysWork.port[port];
+        k2 = &winSysWork2.port[port];
         connect_bak[port] = connect[port];
         keys = 0;
         keys2 = 0;
@@ -1166,67 +1185,74 @@ static void _menuUpdateKeyInfo(WINDOW_SYS_WORK* a, WINDOW_SYS_WORK* b) {
             break;
         }
 
-        k1->up = k1->on;
-        pressed = (k1->up ^ 0xFFFF) & keys;
-        repeat = 0;
-        held = 0;
-        for (i = 0; i < 16; i++) {
-            bit = 1 << i;
-            if (bit & pressed) {
-                k1->timer[i] = 15;
-                repeat |= bit;
-            } else if (keys & bit) {
-                k1->timer[i] -= timeGetLastFrameTime();
-                if (k1->timer[i] <= 0) {
-                    k1->timer[i] = 5;
+        {
+            u16 pressed, repeat, held;
+            u16 bit;
+            k1->up = k1->on;
+            pressed = (k1->up ^ 0xFFFF) & keys;
+            repeat = 0;
+            held = 0;
+            for (i = 0; i < 16; i++) {
+                bit = 1 << i;
+                if (pressed & bit) {
+                    k1->timer[i] = 15;
                     repeat |= bit;
-                    held |= bit;
-                } else {
-                    held |= bit & k1->rel;
+                } else if (keys & bit) {
+                    k1->timer[i] -= timeGetLastFrameTime();
+                    if (k1->timer[i] <= 0) {
+                        k1->timer[i] = 5;
+                        repeat |= bit;
+                        held |= bit;
+                    } else {
+                        held |= bit & k1->rel;
+                    }
                 }
             }
+            if (pressed & 0xF) {
+                k1->timer[0] = 15;
+                k1->timer[1] = 15;
+                k1->timer[2] = 15;
+                k1->timer[3] = 15;
+            }
+            k1->on = keys;
+            k1->trg = pressed;
+            k1->rep = repeat;
+            k1->rel = held;
         }
-        if (pressed & 0xF) {
-            k1->timer[0] = 15;
-            k1->timer[1] = 15;
-            k1->timer[2] = 15;
-            k1->timer[3] = 15;
-        }
-        k1->on = keys;
-        k1->trg = pressed;
-        k1->rep = repeat;
-        k1->rel = held;
 
-        k2->up = k2->on;
-        pressed = (k2->up ^ 0xFFFF) & keys2;
-        repeat2 = 0;
-        held2 = 0;
-        for (i = 0; i < 16; i++) {
-            bit = 1 << i;
-            if (pressed & bit) {
-                k2->timer[i] = 15;
-                repeat2 |= bit;
-            } else if (keys2 & bit) {
-                k2->timer[i] -= timeGetLastFrameTime();
-                if (k2->timer[i] <= 0) {
-                    k2->timer[i] = 5;
-                    repeat2 |= bit;
-                    held2 |= bit;
-                } else {
-                    held2 |= bit & k2->rel;
+        {
+            u16 pressed, repeat2, held2;
+            k2->up = k2->on;
+            pressed = (k2->up ^ 0xFFFF) & keys2;
+            repeat2 = 0;
+            held2 = 0;
+            for (i = 0; i < 16; i++) {
+                bit2 = 1 << i;
+                if (pressed & bit2) {
+                    k2->timer[i] = 15;
+                    repeat2 |= bit2;
+                } else if (keys2 & bit2) {
+                    k2->timer[i] -= timeGetLastFrameTime();
+                    if (k2->timer[i] <= 0) {
+                        k2->timer[i] = 5;
+                        repeat2 |= bit2;
+                        held2 |= bit2;
+                    } else {
+                        held2 |= bit2 & k2->rel;
+                    }
                 }
             }
+            if (pressed & 0xF) {
+                k2->timer[0] = 15;
+                k2->timer[1] = 15;
+                k2->timer[2] = 15;
+                k2->timer[3] = 15;
+            }
+            k2->on = keys2;
+            k2->trg = pressed;
+            k2->rep = repeat2;
+            k2->rel = held2;
         }
-        if (pressed & 0xF) {
-            k2->timer[0] = 15;
-            k2->timer[1] = 15;
-            k2->timer[2] = 15;
-            k2->timer[3] = 15;
-        }
-        k2->on = keys2;
-        k2->trg = pressed;
-        k2->rep = repeat2;
-        k2->rel = held2;
     }
 
     window = windowSearchID(windowGetActiveID());

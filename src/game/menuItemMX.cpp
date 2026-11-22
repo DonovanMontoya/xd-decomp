@@ -29,7 +29,7 @@ extern s32 BattleDiskBorADraw(struct tagWINDOW_WORK *, struct tagSPRITE_WORK *);
 extern s32 BattleDiskContentsDraw(struct tagWINDOW_WORK*, struct tagSPRITE_WORK*);
 extern s32 BattleDiskItemDraw(struct tagWINDOW_WORK *, struct tagSPRITE_WORK *);
 extern s32 BattleDiskStatus(struct tagWINDOW_WORK *, struct tagSPRITE_WORK *);
-extern s32 fn_8000FDA8(s32, void*);
+extern s32 fn_8000FDA8(struct tagWINDOW_WORK *, struct tagSPRITE_WORK *);
 extern void fn_8007E5AC(struct MenuSubWindow *, struct MenuSubSprite *);
 extern s32 menuBingoMessageDraw(struct tagWINDOW_WORK*, struct tagSPRITE_WORK*);
 extern s32 menuBingoPanelDraw(struct tagWINDOW_WORK*, struct tagSPRITE_WORK*);

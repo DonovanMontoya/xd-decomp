@@ -1,10 +1,13 @@
+#pragma defer_codegen on
+// MWCC emits these definitions in reverse order.
+#include <game/pxdvs/GSAPI/GSgfxM/copyFilter.hpp>
 #include <game/pxdvs/GSAPI/GSgfxM/gamecube_private.hpp>
+#include <dolphin/gd/GDGeometry.h>
 #include <libc/string.h>
 #include <dolphin/os/OSFastCast.h>
 
 extern "C" {
 
-extern GCGraphicsState *gsgfxState;
 struct GCTmemRegion { u32 even, odd; };
 GCTmemRegion GSgfx_GCTmemRegions[8] = {
     {0, 0x80000}, {0x10000, 0x88000}, {0x20000, 0x90000}, {0x30000, 0x98000},
@@ -15,7 +18,10 @@ u32 GSgfx_GCTlutRegions[20] = {
     0xd0000, 0xd2000, 0xd4000, 0xd6000, 0xd8000, 0xda000, 0xdc000, 0xde000,
     0xe0000, 0xe8000, 0xf0000, 0xf8000
 };
-static GCAASamplePattern _gcDefaultAASample = {{{6,6,6,6,6,6},{6,6,6,6,6,6},{6,6,6,6,6,6},{6,6,6,6,6,6}}};
+static u8 _gcDefaultAASample[12][2] = {
+    {6, 6}, {6, 6}, {6, 6}, {6, 6}, {6, 6}, {6, 6},
+    {6, 6}, {6, 6}, {6, 6}, {6, 6}, {6, 6}, {6, 6}
+};
 u8 GSgfx_GCTexMode0Ids[8] = {0x80, 0x81, 0x82, 0x83, 0xa0, 0xa1, 0xa2, 0xa3};
 u8 GSgfx_GCTexMode1Ids[8] = {0x84, 0x85, 0x86, 0x87, 0xa4, 0xa5, 0xa6, 0xa7};
 u8 GSgfx_GCTexImage0Ids[8] = {0x88, 0x89, 0x8a, 0x8b, 0xa8, 0xa9, 0xaa, 0xab};
@@ -76,26 +82,6 @@ inline void GSgfx_GCSetScissorCached(u16 x, u16 y, u16 w, u16 h, s32 ox, s32 oy)
     GC_HALF(0x448) = w; GC_HALF(0x44a) = h;
     GC_WORD(0x44c) = ox; GC_WORD(0x450) = oy;
 }
-inline void GSgfx_GCWriteViewport(f32 x, f32 y, f32 width, f32 height, f32 nearZ, f32 farZ, u32 mode) {
-    if (mode == 0) y -= 0.5f;
-    f32 halfWidth = width / 2.0f;
-    f32 halfHeight = height / 2.0f;
-    f32 zScale = 16777216.0f;
-    f32 zOffset = 0.0f;
-    f32 farDepth = farZ * zScale;
-    GCWriteByte(0x10); GCWriteHalf(5); GCWriteHalf(0x101a);
-    GXWGFifo.f32 = halfWidth;
-    GXWGFifo.f32 = -halfHeight;
-    GXWGFifo.f32 = -(nearZ * zScale - farDepth);
-    GXWGFifo.f32 = 342.0f + (x + halfWidth);
-    GXWGFifo.f32 = 342.0f + (y + halfHeight);
-    GXWGFifo.f32 = farDepth + zOffset;
-    GC_FLOAT(0xc24) = x; GC_FLOAT(0xc28) = y;
-    GC_FLOAT(0xc2c) = width; GC_FLOAT(0xc30) = height;
-    GC_FLOAT(0xc34) = nearZ; GC_FLOAT(0xc38) = farZ;
-    GC_WORD(0xc3c) = mode;
-}
-
 inline void GSgfx_GCWriteChanCtrl(s32 chan, u8 enable, s32 ambient, s32 material, s32 lights, s32 diffuse, s32 attenuation) {
     s32 diffuseFunction = diffuse;
     if (attenuation == 0) diffuseFunction = 0;
@@ -108,136 +94,31 @@ inline void GSgfx_GCWriteChanCtrl(s32 chan, u8 enable, s32 ambient, s32 material
     GC_FIELD(s32, chan * 24 + 0x468) = diffuse; GC_FIELD(s32, chan * 24 + 0x46c) = attenuation;
 }
 
-static inline u8 *GCAppendBP(u8 *destination, const void *registerValue) {
-    u8 *out = static_cast<u8 *>(destination);
-    out[0] = GX_LOAD_BP_REG;
-    *reinterpret_cast<u32 *>(out + 1) = *static_cast<const u32 *>(registerValue);
-    return out + 5;
+#pragma pack(push, 1)
+struct GCDisplayListBP {
+    u8 opcode;
+    u32 value;
+};
+#pragma pack(pop)
+typedef char GCDisplayListBPSizeCheck[sizeof(GCDisplayListBP) == 5 ? 1 : -1];
+
+static inline u8* GCAppendBP(u8* destination, const void* registerValue) {
+    GCDisplayListBP* command = reinterpret_cast<GCDisplayListBP*>(destination);
+    command->opcode = GX_LOAD_BP_REG;
+    command->value = *static_cast<const u32*>(registerValue);
+    return destination + sizeof(*command);
 }
 
-u8 *GSgfx_GCWriteCopyFilterDirect(u8 *destination, u8 antialias, const GCAASamplePattern *samples, u8 verticalFilter, const u8 filter[7]) {
-    if (antialias == 0) samples = &_gcDefaultAASample;
-    if (verticalFilter == 0) filter = _gcDefaultVFilt;
-    GCAASampleRegister sample;
-    GCCopyFilterRegister coefficients;
-    for (s32 i = 0; i < 4; ++i) {
-        sample.fields.address = i + 1;
-        sample.fields.sample0 = samples->groups[i][0];
-        sample.fields.sample1 = samples->groups[i][1];
-        sample.fields.sample2 = samples->groups[i][2];
-        sample.fields.sample3 = samples->groups[i][2];
-        sample.fields.sample4 = samples->groups[i][4];
-        sample.fields.sample5 = samples->groups[i][4];
-        destination = GCAppendBP(destination, &sample);
-    }
-    coefficients.fields.address = 0x53;
-    coefficients.fields.coefficient0 = filter[0];
-    coefficients.fields.coefficient1 = filter[1];
-    coefficients.fields.coefficient2 = filter[2];
-    coefficients.fields.coefficient3 = filter[3];
-    destination = GCAppendBP(destination, &coefficients);
-    coefficients.fields.address = 0x54;
-    coefficients.fields.coefficient0 = filter[4];
-    coefficients.fields.coefficient1 = filter[5];
-    coefficients.fields.coefficient2 = filter[6];
-    coefficients.fields.coefficient3 = 0;
-    return GCAppendBP(destination, &coefficients);
-}
+static inline void GCFlushBP(u32 value) { GCWriteByte(GX_LOAD_BP_REG); GCWriteWord(value); }
 
-void GSgfx_GCWriteCopyFilter( u8 antialias, const GCAASamplePattern *samples, u8 verticalFilter, const u8 filter[7]) {
-    if (antialias == 0) samples = &_gcDefaultAASample;
-    if (verticalFilter == 0) filter = _gcDefaultVFilt;
-    GCAASampleRegister sample;
-    GCCopyFilterRegister coefficients;
-    for (s32 i = 0; i < 4; ++i) {
-        sample.fields.address = i + 1;
-        sample.fields.sample0 = samples->groups[i][0];
-        sample.fields.sample1 = samples->groups[i][1];
-        sample.fields.sample2 = samples->groups[i][2];
-        sample.fields.sample3 = samples->groups[i][2];
-        sample.fields.sample4 = samples->groups[i][4];
-        sample.fields.sample5 = samples->groups[i][4];
-        GCWriteByte(GX_LOAD_BP_REG);
-        GCWriteWord(sample.value);
-    }
-    coefficients.fields.address = 0x53;
-    coefficients.fields.coefficient0 = filter[0];
-    coefficients.fields.coefficient1 = filter[1];
-    coefficients.fields.coefficient2 = filter[2];
-    coefficients.fields.coefficient3 = filter[3];
+static inline void GCFlushRegister(const GCBPRegister* reg) {
     GCWriteByte(GX_LOAD_BP_REG);
-    GCWriteWord(coefficients.value);
-    coefficients.fields.address = 0x54;
-    coefficients.fields.coefficient0 = filter[4];
-    coefficients.fields.coefficient1 = filter[5];
-    coefficients.fields.coefficient2 = filter[6];
-    coefficients.fields.coefficient3 = 0;
-    GCWriteByte(GX_LOAD_BP_REG);
-    GCWriteWord(coefficients.value);
+    GCWriteWord(reg->value);
 }
 
-void GSgfx_GCWriteFog(u32 type, f32 start, f32 end, f32 nearPlane, f32 farPlane) {
-    f32 c;
-    f32 a;
-    s32 exponent;
-    s32 function = type & 7;
-    u32 projection = (type >> 3) & 1;
-    if (function != 0) {
-        u32 magnitude;
-        if (projection != 0) {
-            if (farPlane == nearPlane || end == start) {
-                a = 0.0f;
-                c = 0.0f;
-            } else {
-                f32 reciprocal = 1.0f / (end - start);
-                a = reciprocal * (farPlane - nearPlane);
-                c = reciprocal * (start - nearPlane);
-            }
-            exponent = 0;
-            magnitude = 0;
-        } else {
-            f32 numerator;
-            f32 mantissa;
-            if (farPlane == nearPlane || end == start) {
-                numerator = 0.0f;
-                mantissa = 0.5f;
-                c = 0.0f;
-            } else {
-                f32 depthRange = farPlane - nearPlane;
-                f32 fogRange = end - start;
-                mantissa = farPlane / depthRange;
-                numerator = (farPlane * nearPlane) / (depthRange * fogRange);
-                c = start / fogRange;
-            }
-            exponent = 1;
-            while (mantissa > 1.0f) {
-                mantissa *= 0.5f;
-                ++exponent;
-            }
-            while (mantissa > 0.0f && mantissa < 0.5f) {
-                mantissa *= 2.0f;
-                --exponent;
-            }
-            a = numerator / static_cast<f32>(1 << exponent);
-            magnitude = static_cast<u32>(8.388638e6f * mantissa);
-        }
-        u32 aBits = *reinterpret_cast<u32 *>(&a);
-        u32 cBits = *reinterpret_cast<u32 *>(&c);
-        gsgfxState->fogA.parameter = aBits >> 12;
-        gsgfxState->fogB.parameter = magnitude;
-        gsgfxState->fogExponent.parameter = exponent;
-        gsgfxState->fogC.parameter = cBits >> 12;
-        gsgfxState->fogC.projection = projection;
-        GC_WORD(0) |= 0x8000;
-    }
-    gsgfxState->fogC.function = function;
-    GC_WORD(0) |= 0x10000;
-    GC_WORD(0xBF4) = type;
-    GC_FLOAT(0xBF8) = start;
-    GC_FLOAT(0xBFC) = end;
-    GC_FLOAT(0xC00) = nearPlane;
-    GC_FLOAT(0xC04) = farPlane;
-}
+static inline u8 gcCopyCompare() { return GC_BYTE(0xbf0); }
+static inline s32 gcCopyBlend() { return GC_WORD(0xbb4); }
+static inline u32 gcCopyTexFormat(const GCCopyTextureInfo* i) { return i->format; }
 
 static inline void GCSetIndTexMtx(GXIndTexMtxID mtxId, const f32 offset[2][3], s8 scaleExp) {
     s32 mtx[6];
@@ -281,20 +162,6 @@ static inline void GCSetTevIndirect(s32 tevStage, u8 indirectStage, u8 format, u
     gsgfxState->indirectMode[stage] = 2;
 }
 
-void GSgfx_GCWriteTevIndBumpST(s32 stage, s32 indirectStage, s32 matrix) {
-    s32 sMatrix;
-    u8 tMatrix;
-    switch (matrix) {
-    case 1: sMatrix = 5; tMatrix = 9; break;
-    case 2: sMatrix = 6; tMatrix = 10; break;
-    case 3: sMatrix = 7; tMatrix = 11; break;
-    default: return;
-    }
-    GCSetTevIndirect(stage, indirectStage, GX_ITF_8, GX_ITB_ST, (GXIndTexMtxID)sMatrix, GX_ITW_0, GX_ITW_0, 0, 0, GX_ITBA_OFF);
-    GCSetTevIndirect(stage + 1, indirectStage, GX_ITF_8, GX_ITB_ST, (GXIndTexMtxID)tMatrix, GX_ITW_0, GX_ITW_0, 1, 0, GX_ITBA_OFF);
-    GCSetTevIndirect(stage + 2, indirectStage, GX_ITF_8, GX_ITB_NONE, GX_ITM_OFF, GX_ITW_OFF, GX_ITW_OFF, 1, 0, GX_ITBA_OFF);
-}
-
 static inline void GCTileWriteBP(u32 v) {
     GXWGFifo.u8 = 0x61;
     GXWGFifo.u32 = v;
@@ -328,697 +195,204 @@ static inline void GCTileSetTevIndirect(u32 stage, u8 indId, u8 fmt, u8 bias, u8
     gsgfxState->dirtyGroups[10] |= 1 << stage;
     gsgfxState->indirectMode[stage] = 2;
 }
-void GSgfx_GCWriteTevIndTile(u32 stage, u8 indId, u16 sizeS, u16 sizeT, u16 spaceS, u16 spaceT, u32 fmt, s32 mtx,
-                             u32 bias, u32 alpha) {
-    u32 ws, wt, id;
-    f32 m[6];
-    switch (sizeS) {
-    case 0x100: ws = 1; break;
-    case 0x80: ws = 2; break;
-    case 0x40: ws = 3; break;
-    case 0x20: ws = 4; break;
-    case 0x10: ws = 5; break;
-    default: return;
+
+static inline void GCFlushXF(u16 address, u32 value) {
+    GCWriteByte(0x10); GCWriteHalf(0); GCWriteHalf(address); GCWriteWord(value);
+}
+struct GCColor4 { u8 r, g, b, a; };
+static inline void GCFlushXFColor(u16 address, GCColor4 c) {
+    GCWriteByte(0x10); GCWriteHalf(0); GCWriteHalf(address);
+    GCWriteWord((c.r << 24) | (c.g << 16) | (c.b << 8) | c.a);
+}
+inline void GSgfx_GCWriteAmbColor(s32 chan, GCColor4 color) {
+    s32 idx = chan - 4;
+    GCWriteByte(0x10); GCWriteHalf(0); GCWriteHalf(0x100a + (chan & 1));
+    GCWriteWord((color.r << 24) | (color.g << 16) | (color.b << 8) | color.a);
+    GC_FIELD(u32, idx * 5 + 0x4b9) = *(u32 *)&color;
+    GC_FIELD(u8, idx * 5 + 0x4b8) = 0;
+}
+inline void GSgfx_GCWriteMatColor(s32 chan, GCColor4 color) {
+    s32 idx = chan - 4;
+    GCWriteByte(0x10); GCWriteHalf(0); GCWriteHalf(0x100c + (chan & 1));
+    GCWriteWord((color.r << 24) | (color.g << 16) | (color.b << 8) | color.a);
+    GC_FIELD(u32, idx * 5 + 0x4c3) = *(u32 *)&color;
+    GC_FIELD(u8, idx * 5 + 0x4c2) = 0;
+}
+inline void GSgfx_GCWriteTevOrder(s32 stage, s32 coord, s32 map, s32 color) {
+    static u8 c2r[16] = {0, 1, 0, 1, 0, 1, 7, 5, 6, 0, 0, 0, 0, 0, 0, 7};
+    s32 reg = stage >> 1;
+    if (stage & 1) {
+        gsgfxState->tevOrder[reg].order.texture1 = map & 7;
+        gsgfxState->tevOrder[reg].order.coordinate1 = coord & 7;
+        gsgfxState->tevOrder[reg].order.enabled1 = map != 255 && !(map & 0x100);
+        gsgfxState->tevOrder[reg].order.channel1 = c2r[color & 15];
+    } else {
+        gsgfxState->tevOrder[reg].order.texture0 = map & 7;
+        gsgfxState->tevOrder[reg].order.coordinate0 = coord & 7;
+        gsgfxState->tevOrder[reg].order.enabled0 = map != 255 && !(map & 0x100);
+        gsgfxState->tevOrder[reg].order.channel0 = c2r[color & 15];
     }
-    switch (sizeT) {
-    case 0x100: wt = 1; break;
-    case 0x80: wt = 2; break;
-    case 0x40: wt = 3; break;
-    case 0x20: wt = 4; break;
-    case 0x10: wt = 5; break;
-    default: return;
+    gsgfxState->dirtyGroups[0] |= 1 << reg;
+    if (coord != 255) gsgfxState->dirtyGroups[2] |= 1 << coord;
+    GC_FIELD(s32, (u32)stage * 12 + 0x4cc) = coord;
+    GC_FIELD(s32, (u32)stage * 12 + 0x4d0) = map;
+    GC_FIELD(s32, (u32)stage * 12 + 0x4d4) = color;
+}
+union GCTevColorEnvRegister {
+    u32 value;
+    struct { u32 address:8, dest:2, shift:2, clamp:1, sub:1, bias:2, a:4, b:4, c:4, d:4; } fields;
+};
+union GCTevAlphaEnvRegister {
+    u32 value;
+    struct { u32 address:8, dest:2, shift:2, clamp:1, sub:1, bias:2, a:3, b:3, c:3, d:3, textureSwap:2, rasterSwap:2; } fields;
+};
+struct GCTevEnvRegisters { u8 reserved[0x224]; GCTevColorEnvRegister color[16]; GCTevAlphaEnvRegister alpha[16]; };
+#define GC_TEV_ENV (reinterpret_cast<GCTevEnvRegisters *>(gsgfxState))
+inline void GSgfx_GCWriteTevColorIn(s32 stage, s32 a, s32 b, s32 c, s32 d) {
+    GC_TEV_ENV->color[stage].fields.a = a;
+    GC_TEV_ENV->color[stage].fields.b = b;
+    GC_TEV_ENV->color[stage].fields.c = c;
+    GC_TEV_ENV->color[stage].fields.d = d;
+    gsgfxState->dirtyGroups[6] |= 1 << stage;
+    GC_FIELD(s32, (u32)stage * 16 + 0x590) = a; GC_FIELD(s32, (u32)stage * 16 + 0x594) = b;
+    GC_FIELD(s32, (u32)stage * 16 + 0x598) = c; GC_FIELD(s32, (u32)stage * 16 + 0x59c) = d;
+}
+inline void GSgfx_GCWriteTevAlphaIn(s32 stage, s32 a, s32 b, s32 c, s32 d) {
+    GC_TEV_ENV->alpha[stage].fields.a = a;
+    GC_TEV_ENV->alpha[stage].fields.b = b;
+    GC_TEV_ENV->alpha[stage].fields.c = c;
+    GC_TEV_ENV->alpha[stage].fields.d = d;
+    gsgfxState->dirtyGroups[7] |= 1 << stage;
+    GC_FIELD(s32, (u32)stage * 16 + 0x690) = a; GC_FIELD(s32, (u32)stage * 16 + 0x694) = b;
+    GC_FIELD(s32, (u32)stage * 16 + 0x698) = c; GC_FIELD(s32, (u32)stage * 16 + 0x69c) = d;
+}
+inline void GSgfx_GCWriteTevColorOp(s32 stage, s32 operation, s32 bias, s32 scale, u8 clamp, s32 output) {
+    GC_TEV_ENV->color[stage].fields.bias = bias;
+    GC_TEV_ENV->color[stage].fields.sub = operation;
+    GC_TEV_ENV->color[stage].fields.clamp = clamp;
+    GC_TEV_ENV->color[stage].fields.shift = scale;
+    GC_TEV_ENV->color[stage].fields.dest = output;
+    gsgfxState->dirtyGroups[6] |= 1 << stage;
+    GC_FIELD(s32, (u32)stage * 20 + 0x790) = operation; GC_FIELD(s32, (u32)stage * 20 + 0x794) = bias;
+    GC_FIELD(s32, (u32)stage * 20 + 0x798) = scale; GC_FIELD(u8, (u32)stage * 20 + 0x79c) = clamp;
+    GC_FIELD(s32, (u32)stage * 20 + 0x7a0) = output;
+}
+inline void GSgfx_GCWriteTevAlphaOp(s32 stage, s32 operation, s32 bias, s32 scale, u8 clamp, s32 output) {
+    GC_TEV_ENV->alpha[stage].fields.bias = bias;
+    GC_TEV_ENV->alpha[stage].fields.sub = operation;
+    GC_TEV_ENV->alpha[stage].fields.clamp = clamp;
+    GC_TEV_ENV->alpha[stage].fields.shift = scale;
+    GC_TEV_ENV->alpha[stage].fields.dest = output;
+    gsgfxState->dirtyGroups[7] |= 1 << stage;
+    GC_FIELD(s32, (u32)stage * 20 + 0x8d0) = operation; GC_FIELD(s32, (u32)stage * 20 + 0x8d4) = bias;
+    GC_FIELD(s32, (u32)stage * 20 + 0x8d8) = scale; GC_FIELD(u8, (u32)stage * 20 + 0x8dc) = clamp;
+    GC_FIELD(s32, (u32)stage * 20 + 0x8e0) = output;
+}
+union GCTevColorRegister {
+    u32 value;
+    struct { u32 address:8, bank:1, high:11, reserved:1, low:11; } fields;
+};
+struct GCTevColorRegisters { u8 reserved[0x2c4]; GCTevColorRegister ra[4]; GCTevColorRegister bg[4]; };
+#define GC_TEV_COLOR (reinterpret_cast<GCTevColorRegisters *>(gsgfxState))
+inline void GSgfx_GCWriteTevColor(s32 id, GCColor4 color) {
+    GC_TEV_COLOR->ra[id].fields.low = color.r;
+    GC_TEV_COLOR->ra[id].fields.high = color.a;
+    GC_TEV_COLOR->bg[id].fields.low = color.b;
+    GC_TEV_COLOR->bg[id].fields.high = color.g;
+    gsgfxState->dirtyGroups[9] |= 1 << id;
+    GC_FIELD(u32, (u32)id * 5 + 0xa11) = *(u32 *)&color;
+    GC_FIELD(u8, (u32)id * 5 + 0xa10) = 0;
+}
+union GCTevKSelRegister {
+    u32 value;
+    struct { u32 address:8, kasel1:5, kcsel1:5, kasel0:5, kcsel0:5, swap1:2, swap0:2; } fields;
+};
+struct GCTevKSelRegisters { u8 reserved[0x204]; GCTevKSelRegister ksel[8]; };
+#define GC_TEV_KSEL (reinterpret_cast<GCTevKSelRegisters *>(gsgfxState))
+inline void GSgfx_GCWriteTevKColorSel(s32 stage, s32 sel) {
+    s32 reg = stage >> 1;
+    if (stage & 1) GC_TEV_KSEL->ksel[reg].fields.kcsel1 = sel;
+    else GC_TEV_KSEL->ksel[reg].fields.kcsel0 = sel;
+    gsgfxState->dirtyGroups[5] |= 1 << reg;
+    GC_FIELD(s32, (u32)stage * 4 + 0xa24) = sel;
+}
+inline void GSgfx_GCWriteTevKAlphaSel(s32 stage, s32 sel) {
+    s32 reg = stage >> 1;
+    if (stage & 1) GC_TEV_KSEL->ksel[reg].fields.kasel1 = sel;
+    else GC_TEV_KSEL->ksel[reg].fields.kasel0 = sel;
+    gsgfxState->dirtyGroups[5] |= 1 << reg;
+    GC_FIELD(s32, (u32)stage * 4 + 0xa64) = sel;
+}
+inline void GSgfx_GCWriteTevSwapMode(s32 stage, s32 raster, s32 texture) {
+    GC_TEV_ENV->alpha[stage].fields.rasterSwap = raster;
+    GC_TEV_ENV->alpha[stage].fields.textureSwap = texture;
+    gsgfxState->dirtyGroups[7] |= 1 << stage;
+    GC_FIELD(s32, (u32)stage * 8 + 0xaa4) = raster; GC_FIELD(s32, (u32)stage * 8 + 0xaa8) = texture;
+}
+inline void GSgfx_GCWriteTevSwapModeTable(s32 table, s32 red, s32 green, s32 blue, s32 alpha) {
+    GC_TEV_KSEL->ksel[table * 2].fields.swap0 = red;
+    GC_TEV_KSEL->ksel[table * 2].fields.swap1 = green;
+    GC_TEV_KSEL->ksel[table * 2 + 1].fields.swap0 = blue;
+    GC_TEV_KSEL->ksel[table * 2 + 1].fields.swap1 = alpha;
+    gsgfxState->dirtyGroups[5] |= 1 << (table * 2);
+    gsgfxState->dirtyGroups[5] |= 1 << (table * 2 + 1);
+    GC_FIELD(s32, (u32)table * 16 + 0xb24) = red; GC_FIELD(s32, (u32)table * 16 + 0xb28) = green;
+    GC_FIELD(s32, (u32)table * 16 + 0xb2c) = blue; GC_FIELD(s32, (u32)table * 16 + 0xb30) = alpha;
+}
+union GCIndScaleRegister {
+    u32 value;
+    struct { u32 address:8, reserved:8, t1:4, s1:4, t0:4, s0:4; } fields;
+};
+struct GCIndScaleRegisters { u8 reserved[0x7c]; GCIndScaleRegister scale[2]; };
+#define GC_IND_SCALE (reinterpret_cast<GCIndScaleRegisters *>(gsgfxState))
+inline void GSgfx_GCWriteIndTexOrder(s32 stage, s32 coord, s32 map) {
+    switch (stage) {
+    case 0: gsgfxState->indirectReference.indirectOrder.texture0 = map; gsgfxState->indirectReference.indirectOrder.coordinate0 = coord; break;
+    case 1: gsgfxState->indirectReference.indirectOrder.texture1 = map; gsgfxState->indirectReference.indirectOrder.coordinate1 = coord; break;
+    case 2: gsgfxState->indirectReference.indirectOrder.texture2 = map; gsgfxState->indirectReference.indirectOrder.coordinate2 = coord; break;
+    case 3: gsgfxState->indirectReference.indirectOrder.texture3 = map; gsgfxState->indirectReference.indirectOrder.coordinate3 = coord; break;
     }
-    m[0] = spaceS / 1024.0f;
-    m[4] = spaceT / 1024.0f;
-    m[1] = 0.0f;
-    m[2] = 0.0f;
-    m[3] = 0.0f;
-    m[5] = 0.0f;
-    switch (mtx) {
-    case 1: id = 0; break;
-    case 2: id = 3; break;
-    case 3: id = 6; break;
+    gsgfxState->dirty |= 0x2000;
+    gsgfxState->dirtyGroups[2] |= 1 << coord;
+    GC_FIELD(s32, (u32)stage * 8 + 0xb74) = coord; GC_FIELD(s32, (u32)stage * 8 + 0xb78) = map;
+}
+inline void GSgfx_GCWriteIndTexCoordScale(s32 stage, s32 scaleS, s32 scaleT) {
+    s32 reg = stage >> 1;
+    if (stage & 1) {
+        GC_IND_SCALE->scale[reg].fields.s1 = scaleS;
+        GC_IND_SCALE->scale[reg].fields.t1 = scaleT;
+    } else {
+        GC_IND_SCALE->scale[reg].fields.s0 = scaleS;
+        GC_IND_SCALE->scale[reg].fields.t1 = scaleT;
     }
-    GCTileWriteIndTexMtx(id, m, 10);
-    GCTileSetTevIndirect(stage, (u16)indId, fmt, bias, mtx, ws, wt, 0, 1, alpha);
+    gsgfxState->dirtyGroups[1] |= 1 << reg;
+    GC_FIELD(s32, (u32)stage * 8 + 0xb94) = scaleS; GC_FIELD(s32, (u32)stage * 8 + 0xb98) = scaleT;
+}
+inline void GSgfx_GCWriteFogColor(GCColor4 color) {
+    gsgfxState->fogColor.bytes.payload[0] = color.r;
+    gsgfxState->fogColor.bytes.payload[1] = color.g;
+    gsgfxState->fogColor.bytes.payload[2] = color.b;
+    gsgfxState->dirty |= 0x20000;
+    GC_FIELD(u32, 0xc09) = *(u32 *)&color;
+    GC_FIELD(u8, 0xc08) = 0;
+}
+static inline void GCFlushCP(u8 address, u32 value) {
+    GCWriteByte(8); GCWriteByte(address); GCWriteWord(value);
 }
 
-void GSgfx_GCWriteIndTexMtx(GXIndTexMtxID index, const f32 offset[2][3], s8 scaleExp) {
-    GCSetIndTexMtx(index, offset, scaleExp);
-}
+extern void GSgfxVideoGetEFBSize(u16 *width, u16 *height);
 
-void GSgfx_GCWriteTexCoordGen(u32 coordinate, s32 type, u32 source, s32 matrix, u8 normalize, s32 postMatrix) {
-    u32 inputForm = 0;
-    u32 generationMode;
-    u32 projection = 0;
-    u32 sourceRow = 5;
-    u32 embossSource = 5;
-    u32 embossLight = 0;
-    switch (source) {
-    case 0: sourceRow = 0; inputForm = 1; break;
-    case 1: sourceRow = 1; inputForm = 1; break;
-    case 2: sourceRow = 3; inputForm = 1; break;
-    case 3: sourceRow = 4; inputForm = 1; break;
-    case 19: sourceRow = 2; break;
-    case 20: sourceRow = 2; break;
-    case 4: sourceRow = 5; break;
-    case 5: sourceRow = 6; break;
-    case 6: sourceRow = 7; break;
-    case 7: sourceRow = 8; break;
-    case 8: sourceRow = 9; break;
-    case 9: sourceRow = 10; break;
-    case 10: sourceRow = 11; break;
-    case 11: sourceRow = 12; break;
-    case 12: embossSource = 0; break;
-    case 13: embossSource = 1; break;
-    case 14: embossSource = 2; break;
-    case 15: embossSource = 3; break;
-    case 16: embossSource = 4; break;
-    case 17: embossSource = 5; break;
-    case 18: embossSource = 6; break;
-    }
-    switch (type) {
-    case 1: generationMode = 0; break;
-    case 0: generationMode = 0; projection = 1; break;
-    case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
-        embossLight = type - 2; generationMode = 1; break;
-    case 10:
-        if (static_cast<s32>(source) == 19) generationMode = 2;
-        else generationMode = 3;
-        break;
-    }
-    switch (coordinate) {
-    case 0:
-        reinterpret_cast<GCTextureMatrixIndex0 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f0)->texture0 = matrix;
-        gsgfxState->dirty |= 0x40;
-        break;
-    case 1:
-        reinterpret_cast<GCTextureMatrixIndex0 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f0)->texture1 = matrix;
-        gsgfxState->dirty |= 0x40;
-        break;
-    case 2:
-        reinterpret_cast<GCTextureMatrixIndex0 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f0)->texture2 = matrix;
-        gsgfxState->dirty |= 0x40;
-        break;
-    case 3:
-        reinterpret_cast<GCTextureMatrixIndex0 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f0)->texture3 = matrix;
-        gsgfxState->dirty |= 0x40;
-        break;
-    case 4:
-        reinterpret_cast<GCTextureMatrixIndex1 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f4)->texture4 = matrix;
-        gsgfxState->dirty |= 0x80;
-        break;
-    case 5:
-        reinterpret_cast<GCTextureMatrixIndex1 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f4)->texture5 = matrix;
-        gsgfxState->dirty |= 0x80;
-        break;
-    case 6:
-        reinterpret_cast<GCTextureMatrixIndex1 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f4)->texture6 = matrix;
-        gsgfxState->dirty |= 0x80;
-        break;
-    case 7:
-        reinterpret_cast<GCTextureMatrixIndex1 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f4)->texture7 = matrix;
-        gsgfxState->dirty |= 0x80;
-        break;
-    }
-    GCWriteByte(GX_LOAD_XF_REG);
-    GCWriteHalf(0);
-    GCWriteHalf(coordinate + 0x1040);
-    GCWriteWord((embossLight << 15) | ((embossSource << 12) | ((sourceRow << 7) | ((generationMode << 4) | ((projection * 2) | (inputForm * 4))))));
-    GCWriteByte(GX_LOAD_XF_REG);
-    GCWriteHalf(0);
-    GCWriteHalf(coordinate + 0x1050);
-    GCWriteWord((postMatrix - 0x40) | ((normalize << 8) & 0xFF00));
-    gsgfxState->textureGenerators[coordinate].type = type;
-    gsgfxState->textureGenerators[coordinate].source = source;
-    gsgfxState->textureGenerators[coordinate].matrix = matrix;
-    gsgfxState->textureGenerators[coordinate].normalize = normalize;
-    gsgfxState->textureGenerators[coordinate].postMatrix = postMatrix;
-}
+void GSgfx_GCWriteFog(u32 type, f32 start, f32 end, f32 nearPlane, f32 farPlane);
+void GSgfx_GCWriteTexCoordGen(u32 coordinate, s32 type, u32 source, s32 matrix, u8 normalize, s32 postMatrix);
+void GSgfx_GCFlushState(void);
 
-void GSgfx_GCWriteLoadTlut(GXTlutObj *object, GXTlut name) {
-    _gcLastTlutObj = object;
-    _gcLastTlutName = name;
-}
-
-void GSgfx_GCWriteVtxAttrFmt(s32 formatIndex, const GCVertexAttributeFormat *formats) {
-    s32 positionCount;
-    s32 positionType;
-    s32 positionFraction;
-    s32 normalCount;
-    s32 normalType;
-    s32 normalIndex3;
-    s32 color0Count;
-    s32 color0Type;
-    s32 color1Count;
-    s32 color1Type;
-    s32 tex0Count;
-    s32 tex0Type;
-    s32 tex0Fraction;
-    s32 tex1Count;
-    s32 tex1Type;
-    s32 tex1Fraction;
-    s32 tex2Count;
-    s32 tex2Type;
-    s32 tex2Fraction;
-    s32 tex3Count;
-    s32 tex3Type;
-    s32 tex3Fraction;
-    s32 tex4Count;
-    s32 tex4Type;
-    s32 tex4Fraction;
-    s32 tex5Count;
-    s32 tex5Type;
-    s32 tex5Fraction;
-    s32 tex6Count;
-    s32 tex6Type;
-    s32 tex6Fraction;
-    s32 tex7Count;
-    s32 tex7Type;
-    s32 tex7Fraction;
-    s32 attribute;
-    s32 count;
-    const GCVertexAttributeFormat *format;
-
-    format = formats;
-    tex0Type = 4;
-    tex1Count = 1;
-    tex1Type = 4;
-    color0Count = 1;
-    tex1Fraction = 0;
-    tex2Count = 1;
-    color0Type = 5;
-    tex2Type = 4;
-    tex2Fraction = 0;
-    positionCount = 1;
-    tex3Count = 1;
-    tex3Type = 4;
-    color1Count = 1;
-    tex3Fraction = 0;
-    tex4Count = 1;
-    positionType = 4;
-    tex4Type = 4;
-    tex4Fraction = 0;
-    color1Type = 5;
-    tex5Count = 1;
-    tex5Type = 4;
-    positionFraction = 0;
-    normalCount = 0;
-    tex5Fraction = 0;
-    tex6Count = 1;
-    normalType = 4;
-    normalIndex3 = 0;
-    tex6Type = 4;
-    tex6Fraction = 0;
-    tex0Count = 1;
-    tex0Fraction = 0;
-    tex7Count = 1;
-    tex7Type = 4;
-    tex7Fraction = 0;
-while ((attribute = format->attribute) != 0xFF) {
-        switch (attribute) {
-        case 9:
-            positionCount = format->count;
-            positionType = format->type;
-            positionFraction = (s32) format->fraction;
-            break;
-        case 10:
-        case 25:
-            count = format->count;
-            normalType = format->type;
-            if (count == 2) {
-                normalCount = 1;
-                normalIndex3 = 1;
-            } else {
-                normalCount = count;
-                normalIndex3 = 0;
-            }
-            break;
-        case 11:
-            color0Count = format->count;
-            color0Type = format->type;
-            break;
-        case 12:
-            color1Count = format->count;
-            color1Type = format->type;
-            break;
-        case 13:
-            tex0Type = format->type;
-            tex0Count = format->count;
-            tex0Fraction = format->fraction;
-            break;
-        case 14:
-            tex1Count = format->count;
-            tex1Type = format->type;
-            tex1Fraction = format->fraction;
-            break;
-        case 15:
-            tex2Count = format->count;
-            tex2Type = format->type;
-            tex2Fraction = format->fraction;
-            break;
-        case 16:
-            tex3Count = format->count;
-            tex3Type = format->type;
-            tex3Fraction = format->fraction;
-            break;
-        case 17:
-            tex4Count = format->count;
-            tex4Type = format->type;
-            tex4Fraction = format->fraction;
-            break;
-        case 18:
-            tex5Count = format->count;
-            tex5Type = format->type;
-            tex5Fraction = format->fraction;
-            break;
-        case 19:
-            tex6Count = format->count;
-            tex6Type = format->type;
-            tex6Fraction = format->fraction;
-            break;
-        case 20:
-            tex7Count = format->count;
-            tex7Type = format->type;
-            tex7Fraction = format->fraction;
-            break;
-        }
-        ++format;
-    }
-    GCWriteByte(8);
-    GCWriteByte(formatIndex + 0x70);
-    GCWriteWord((s32) ((normalIndex3 << 0x1F) | ((tex0Fraction << 0x19) | ((tex0Type << 0x16) | ((tex0Count << 0x15) | ((color1Type << 0x12) | ((color1Count << 0x11) | ((color0Type << 0xE) | ((color0Count << 0xD) | ((normalType << 0xA) | ((normalCount << 9) | ((positionFraction * 0x10) | (positionCount | (positionType * 2))))))))))) | 0x40000000)));
-    GCWriteByte(8);
-    GCWriteByte(formatIndex + 0x80);
-    GCWriteWord((s32) ((tex4Type << 0x1C) | ((tex4Count << 0x1B) | ((tex3Fraction << 0x16) | ((tex3Type << 0x13) | ((tex3Count << 0x12) | ((tex2Fraction << 0xD) | ((tex2Type << 0xA) | ((tex2Count << 9) | ((tex1Fraction * 0x10) | (tex1Count | (tex1Type * 2)))))))))) | 0x80000000));
-    GCWriteByte(8);
-    GCWriteByte(formatIndex + 0x90);
-    GCWriteWord((s32) ((tex7Fraction << 0x1B) | ((tex7Type << 0x18) | ((tex7Count << 0x17) | ((tex6Fraction << 0x12) | ((tex6Type << 0xF) | ((tex6Count << 0xE) | ((tex5Fraction << 9) | ((tex5Type << 6) | (tex4Fraction | (tex5Count << 5)))))))))));
-}
-
-
-void GSgfx_GCWriteArray(GXAttr attribute, const void *base, u8 stride) {
-    s32 index = 1;
-    if (attribute != GX_VA_NBT) index = attribute - GX_VA_POS;
-    GCWriteByte(GX_LOAD_CP_REG);
-    GCWriteByte(index + 0xA0);
-    GCWriteWord(reinterpret_cast<u32>(base) & 0x3FFFFFFF);
-    GCWriteByte(GX_LOAD_CP_REG);
-    GCWriteByte(index + 0xB0);
-    GCWriteWord(stride);
-}
-
-void GSgfx_GCWriteVtxDesc(const GCVertexDescriptor *descriptors) {
-    s32 normalComponents;
-    s32 colorComponents;
-    s32 textureComponents;
-    s32 positionMatrix;
-    s32 textureMatrices;
-    s32 position;
-    s32 normal;
-    s32 color0;
-    s32 color1;
-    s32 tex0;
-    s32 tex1;
-    s32 tex2;
-    s32 tex3;
-    s32 tex4;
-    s32 tex5;
-    s32 tex6;
-    s32 tex7;
-    s32 attribute;
-    s32 normalType;
-    s32 nbtType;
-    const GCVertexDescriptor *descriptor;
-
-    descriptor = descriptors;
-    normalComponents = 0;
-    colorComponents = 0;
-    textureComponents = 0;
-    positionMatrix = 0;
-    textureMatrices = 0;
-    position = 1;
-    normal = 0;
-    color0 = 0;
-    color1 = 0;
-    tex0 = 0;
-    tex1 = 0;
-    tex2 = 0;
-    tex3 = 0;
-    tex4 = 0;
-    tex5 = 0;
-    tex6 = 0;
-    tex7 = 0;
-while ((attribute = descriptor->attribute) != 0xFF) {
-        {
-            switch (attribute) {
-            case 0:
-                positionMatrix = descriptor->type;
-                break;
-            case 1:
-                textureMatrices = (textureMatrices & 0xFFFFFFFE) | descriptor->type;
-                break;
-            case 2:
-                textureMatrices = (textureMatrices & 0xFFFFFFFD) | (descriptor->type * 2);
-                break;
-            case 3:
-                textureMatrices = (textureMatrices & 0xFFFFFFFB) | (descriptor->type * 4);
-                break;
-            case 4:
-                textureMatrices = (textureMatrices & 0xFFFFFFF7) | (descriptor->type * 8);
-                break;
-            case 5:
-                textureMatrices = (textureMatrices & 0xFFFFFFEF) | (descriptor->type * 0x10);
-                break;
-            case 6:
-                textureMatrices = (textureMatrices & 0xFFFFFFDF) | (descriptor->type << 5);
-                break;
-            case 7:
-                textureMatrices = (textureMatrices & 0xFFFFFFBF) | (descriptor->type << 6);
-                break;
-            case 8:
-                textureMatrices = (textureMatrices & 0xFFFFFF7F) | (descriptor->type << 7);
-                break;
-            case 9:
-                position = descriptor->type;
-                break;
-            case 10:
-                normalType = descriptor->type;
-                if (normalType != 0) {
-                    normal = normalType;
-                    normalComponents = 1;
-                }
-                break;
-            case 25:
-                nbtType = descriptor->type;
-                if (nbtType != 0) {
-                    normal = nbtType;
-                    normalComponents = 2;
-                }
-                break;
-            case 11:
-                color0 = descriptor->type;
-                colorComponents += color0 != 0;
-                break;
-            case 12:
-                color1 = descriptor->type;
-                colorComponents += color1 != 0;
-                break;
-            case 13:
-                tex0 = descriptor->type;
-                textureComponents += tex0 != 0;
-                break;
-            case 14:
-                tex1 = descriptor->type;
-                textureComponents += tex1 != 0;
-                break;
-            case 15:
-                tex2 = descriptor->type;
-                textureComponents += tex2 != 0;
-                break;
-            case 16:
-                tex3 = descriptor->type;
-                textureComponents += tex3 != 0;
-                break;
-            case 17:
-                tex4 = descriptor->type;
-                textureComponents += tex4 != 0;
-                break;
-            case 18:
-                tex5 = descriptor->type;
-                textureComponents += tex5 != 0;
-                break;
-            case 19:
-                tex6 = descriptor->type;
-                textureComponents += tex6 != 0;
-                break;
-            case 20:
-                tex7 = descriptor->type;
-                textureComponents += tex7 != 0;
-                break;
-            }
-        }
-        ++descriptor;
-    }
-    GCWriteByte(8);
-    GCWriteByte(0x50);
-    GCWriteWord((s32) ((color1 << 0xF) | ((color0 << 0xD) | ((normal << 0xB) | ((position << 9) | (positionMatrix | (textureMatrices * 2)))))));
-    GCWriteByte(8);
-    GCWriteByte(0x60);
-    GCWriteWord((s32) ((tex7 << 0xE) | ((tex6 << 0xC) | ((tex5 << 0xA) | ((tex4 << 8) | ((tex3 << 6) | ((tex2 * 0x10) | (tex0 | (tex1 * 4)))))))));
-    GCWriteByte(0x10);
-    GCWriteHalf(0);
-    GCWriteHalf(0x1008);
-    GCWriteWord((s32) ((textureComponents * 0x10) | (colorComponents | (normalComponents * 4))));
-}
-
-
-void GSgfx_GCInvalidateState(void) {
-    u32 invalid = 0xFEFEFEFE;
-    GC_WORD(0x358) = invalid;
-    GC_WORD(0x35C) = invalid;
-    GC_WORD(0x360) = invalid;
-    GC_BYTE(0x364) = 0xFE;
-    GC_WORD(0x368) = invalid;
-    GC_WORD(0x36C) = invalid;
-    GC_WORD(0x370) = invalid;
-    GC_WORD(0x374) = invalid;
-    GC_BYTE(0x378) = 0xFE;
-    GC_WORD(0x37C) = invalid;
-    GC_WORD(0x380) = invalid;
-    GC_WORD(0x384) = invalid;
-    GC_WORD(0x388) = invalid;
-    GC_BYTE(0x38C) = 0xFE;
-    GC_WORD(0x390) = invalid;
-    GC_WORD(0x394) = invalid;
-    GC_WORD(0x398) = invalid;
-    GC_WORD(0x39C) = invalid;
-    GC_BYTE(0x3A0) = 0xFE;
-    GC_WORD(0x3A4) = invalid;
-    GC_WORD(0x3A8) = invalid;
-    GC_WORD(0x3AC) = invalid;
-    GC_WORD(0x3B0) = invalid;
-    GC_BYTE(0x3B4) = 0xFE;
-    GC_WORD(0x3B8) = invalid;
-    GC_WORD(0x3BC) = invalid;
-    GC_WORD(0x3C0) = invalid;
-    GC_WORD(0x3C4) = invalid;
-    GC_BYTE(0x3C8) = 0xFE;
-    GC_WORD(0x3CC) = invalid;
-    GC_WORD(0x3D0) = invalid;
-    GC_WORD(0x3D4) = invalid;
-    GC_WORD(0x3D8) = invalid;
-    GC_BYTE(0x3DC) = 0xFE;
-    GC_WORD(0x3E0) = invalid;
-    GC_WORD(0x3E4) = invalid;
-    GC_WORD(0x3E8) = invalid;
-    GC_WORD(0x3EC) = invalid;
-    GC_BYTE(0x3F0) = 0xFE;
-    GC_WORD(0x3F4) = invalid;
-    GC_BYTE(0x3F8) = 0xFE;
-    GC_BYTE(0x3FC) = 0;
-    GC_WORD(0x400) = invalid;
-    GC_BYTE(0x404) = 0;
-    GC_WORD(0x408) = invalid;
-    GC_BYTE(0x40C) = 0xFE;
-    GC_BYTE(0x40D) = 0xFE;
-    GC_BYTE(0x40E) = 0xFE;
-    GC_BYTE(0x40F) = 0xFE;
-    GC_BYTE(0x410) = 0xFE;
-    GC_BYTE(0x411) = 0xFE;
-    GC_BYTE(0x412) = 0xFE;
-    GC_BYTE(0x413) = 0xFE;
-    GC_BYTE(0x414) = 0xFE;
-    GC_BYTE(0x415) = 0xFE;
-    GC_BYTE(0x416) = 0xFE;
-    GC_BYTE(0x417) = 0xFE;
-    GC_BYTE(0x418) = 0xFE;
-    GC_BYTE(0x419) = 0xFE;
-    GC_BYTE(0x41A) = 0xFE;
-    GC_BYTE(0x41B) = 0xFE;
-    GC_WORD(0x41C) = invalid;
-    GC_BYTE(0x438) = 0xFE;
-    GC_WORD(0x43C) = invalid;
-    GC_WORD(0x440) = invalid;
-    GC_HALF(0x444) = 0xFEFE;
-    GC_HALF(0x446) = 0xFEFE;
-    GC_HALF(0x448) = 0xFEFE;
-    GC_HALF(0x44A) = 0xFEFE;
-    GC_WORD(0x44C) = invalid;
-    GC_WORD(0x450) = invalid;
-    GC_FLOAT(0xC24) = -1.0f;
-    GC_FLOAT(0xC28) = -1.0f;
-    GC_FLOAT(0xC2C) = -1.0f;
-    GC_FLOAT(0xC30) = -1.0f;
-    GC_FLOAT(0xC34) = 0.0f;
-    GC_FLOAT(0xC38) = 1.0f;
-    GC_WORD(0xC3C) = invalid;
-    GC_BYTE(0x454) = 0xFE;
-    GC_BYTE(0x458) = 0xFE;
-    GC_WORD(0x45C) = invalid;
-    GC_WORD(0x460) = invalid;
-    GC_WORD(0x464) = invalid;
-    GC_WORD(0x468) = invalid;
-    GC_WORD(0x46C) = invalid;
-    GC_BYTE(0x470) = 0xFE;
-    GC_WORD(0x474) = invalid;
-    GC_WORD(0x478) = invalid;
-    GC_WORD(0x47C) = invalid;
-    GC_WORD(0x480) = invalid;
-    GC_WORD(0x484) = invalid;
-    GC_BYTE(0x488) = 0xFE;
-    GC_WORD(0x48C) = invalid;
-    GC_WORD(0x490) = invalid;
-    GC_WORD(0x494) = invalid;
-    GC_WORD(0x498) = invalid;
-    GC_WORD(0x49C) = invalid;
-    GC_BYTE(0x4A0) = 0xFE;
-    GC_WORD(0x4A4) = invalid;
-    GC_WORD(0x4A8) = invalid;
-    GC_WORD(0x4AC) = invalid;
-    GC_WORD(0x4B0) = invalid;
-    GC_WORD(0x4B4) = invalid;
-    GC_BYTE(0x4B8) = 1;
-    GC_BYTE(0x4C2) = 1;
-    GC_BYTE(0x4BD) = 1;
-    GC_BYTE(0x4C7) = 1;
-    for (u32 i = 0; i < 16; ++i) {
-        gsgfxState->stageOrders[i].coordinate = invalid;
-        gsgfxState->stageOrders[i].texture = invalid;
-        gsgfxState->stageOrders[i].channel = invalid;
-    }
-    GC_BYTE(0x58C) = 0xFE;
-    GC_BYTE(0x58D) = 0xFE;
-    for (u32 i = 0; i < 16; ++i) {
-        gsgfxState->colorInputs[i].a = invalid;
-        gsgfxState->colorInputs[i].b = invalid;
-        gsgfxState->colorInputs[i].c = invalid;
-        gsgfxState->colorInputs[i].d = invalid;
-    }
-    for (u32 i = 0; i < 16; ++i) {
-        gsgfxState->alphaInputs[i].a = invalid;
-        gsgfxState->alphaInputs[i].b = invalid;
-        gsgfxState->alphaInputs[i].c = invalid;
-        gsgfxState->alphaInputs[i].d = invalid;
-    }
-    for (u32 i = 0; i < 16; ++i) {
-        gsgfxState->colorOperations[i].operation = invalid;
-        gsgfxState->colorOperations[i].bias = invalid;
-        gsgfxState->colorOperations[i].scale = invalid;
-        gsgfxState->colorOperations[i].clamp = 0xFE;
-        gsgfxState->colorOperations[i].output = invalid;
-    }
-    for (u32 i = 0; i < 16; ++i) {
-        gsgfxState->alphaOperations[i].operation = invalid;
-        gsgfxState->alphaOperations[i].bias = invalid;
-        gsgfxState->alphaOperations[i].scale = invalid;
-        gsgfxState->alphaOperations[i].clamp = 0xFE;
-        gsgfxState->alphaOperations[i].output = invalid;
-    }
-    GC_BYTE(0xA10) = 1;
-    GC_BYTE(0xA15) = 1;
-    GC_BYTE(0xA1A) = 1;
-    GC_BYTE(0xA1F) = 1;
-    GC_WORD(0xA24) = invalid;
-    GC_WORD(0xA28) = invalid;
-    GC_WORD(0xA2C) = invalid;
-    GC_WORD(0xA30) = invalid;
-    GC_WORD(0xA34) = invalid;
-    GC_WORD(0xA38) = invalid;
-    GC_WORD(0xA3C) = invalid;
-    GC_WORD(0xA40) = invalid;
-    GC_WORD(0xA44) = invalid;
-    GC_WORD(0xA48) = invalid;
-    GC_WORD(0xA4C) = invalid;
-    GC_WORD(0xA50) = invalid;
-    GC_WORD(0xA54) = invalid;
-    GC_WORD(0xA58) = invalid;
-    GC_WORD(0xA5C) = invalid;
-    GC_WORD(0xA60) = invalid;
-    GC_WORD(0xA64) = invalid;
-    GC_WORD(0xA68) = invalid;
-    GC_WORD(0xA6C) = invalid;
-    GC_WORD(0xA70) = invalid;
-    GC_WORD(0xA74) = invalid;
-    GC_WORD(0xA78) = invalid;
-    GC_WORD(0xA7C) = invalid;
-    GC_WORD(0xA80) = invalid;
-    GC_WORD(0xA84) = invalid;
-    GC_WORD(0xA88) = invalid;
-    GC_WORD(0xA8C) = invalid;
-    GC_WORD(0xA90) = invalid;
-    GC_WORD(0xA94) = invalid;
-    GC_WORD(0xA98) = invalid;
-    GC_WORD(0xA9C) = invalid;
-    GC_WORD(0xAA0) = invalid;
-    for (u32 i = 0; i < 16; ++i) {
-        gsgfxState->stageSwaps[i].raster = invalid;
-        gsgfxState->stageSwaps[i].texture = invalid;
-    }
-    GC_WORD(0xB24) = invalid;
-    GC_WORD(0xB28) = invalid;
-    GC_WORD(0xB2C) = invalid;
-    GC_WORD(0xB30) = invalid;
-    GC_WORD(0xB34) = invalid;
-    GC_WORD(0xB38) = invalid;
-    GC_WORD(0xB3C) = invalid;
-    GC_WORD(0xB40) = invalid;
-    GC_WORD(0xB44) = invalid;
-    GC_WORD(0xB48) = invalid;
-    GC_WORD(0xB4C) = invalid;
-    GC_WORD(0xB50) = invalid;
-    GC_WORD(0xB54) = invalid;
-    GC_WORD(0xB58) = invalid;
-    GC_WORD(0xB5C) = invalid;
-    GC_WORD(0xB60) = invalid;
-    for (u32 i = 0; i < 16; ++i) {
-        gsgfxState->indirectMode[i] = 0xFE;
-    }
-    GC_WORD(0xB74) = invalid;
-    GC_WORD(0xB78) = invalid;
-    GC_WORD(0xB7C) = invalid;
-    GC_WORD(0xB80) = invalid;
-    GC_WORD(0xB84) = invalid;
-    GC_WORD(0xB88) = invalid;
-    GC_WORD(0xB8C) = invalid;
-    GC_WORD(0xB90) = invalid;
-    GC_WORD(0xB94) = invalid;
-    GC_WORD(0xB98) = invalid;
-    GC_WORD(0xB9C) = invalid;
-    GC_WORD(0xBA0) = invalid;
-    GC_WORD(0xBA4) = invalid;
-    GC_WORD(0xBA8) = invalid;
-    GC_WORD(0xBAC) = invalid;
-    GC_WORD(0xBB0) = invalid;
-    GC_WORD(0xBB4) = invalid;
-    GC_WORD(0xBB8) = invalid;
-    GC_WORD(0xBBC) = invalid;
-    GC_WORD(0xBC0) = invalid;
-    GC_BYTE(0xBC4) = 0xFE;
-    GC_BYTE(0xBC5) = 0xFE;
-    GC_WORD(0xBC8) = invalid;
-    GC_WORD(0xBCC) = invalid;
-    GC_WORD(0xBD0) = invalid;
-    GC_BYTE(0xBD4) = 0xFE;
-    GC_BYTE(0xBD5) = 0xFE;
-    GC_WORD(0xBD8) = invalid;
-    GC_WORD(0xBDC) = invalid;
-    GC_WORD(0xBE0) = invalid;
-    GC_BYTE(0xBE4) = 0xFE;
-    GC_WORD(0xBE8) = invalid;
-    GC_BYTE(0xBEC) = 0xFE;
-    GC_BYTE(0xBF0) = 0xFE;
-    GC_BYTE(0xBF1) = 0xFE;
-    GC_BYTE(0xBF2) = 0xFE;
-    GC_BYTE(0xBF3) = 0xFE;
-    GC_WORD(0xBF4) = invalid;
-    GC_FLOAT(0xBF8) = 4.2781243e9f;
-    GC_FLOAT(0xBFC) = 4.2781243e9f;
-    GC_FLOAT(0xC00) = 4.2781243e9f;
-    GC_FLOAT(0xC04) = 4.2781243e9f;
-    GC_BYTE(0xC08) = 1;
-    GC_HALF(0xC0E) = 0xFEFE;
-    GC_BYTE(0xC0D) = 0xFE;
+void GSgfx_GCFirstInit(void) {
+    memset(&_gcGlobalRegState, 0, sizeof(_gcGlobalRegState));
+    _gcGlobalRegState.field0 = 0;
+    _gcGlobalRegState.field1 = 0;
+    _gcGlobalRegState.pixelFormat = 0;
+    _gcGlobalRegState.depthFormat = 0;
+    _gcGlobalRegState.field4 = 0;
 }
 
 void GSgfx_GCInitState(void) {
@@ -1245,730 +619,6 @@ void GSgfx_GCInitState(void) {
     gsgfxState->dirtyGroups[10] = 0;
 }
 
-void GSgfx_GCFirstInit(void) {
-    memset(&_gcGlobalRegState, 0, sizeof(_gcGlobalRegState));
-    _gcGlobalRegState.field0 = 0;
-    _gcGlobalRegState.field1 = 0;
-    _gcGlobalRegState.pixelFormat = 0;
-    _gcGlobalRegState.depthFormat = 0;
-    _gcGlobalRegState.field4 = 0;
-}
-
-static inline void GCFlushXF(u16 address, u32 value) {
-    GCWriteByte(0x10); GCWriteHalf(0); GCWriteHalf(address); GCWriteWord(value);
-}
-struct GCColor4 { u8 r, g, b, a; };
-static inline void GCFlushXFColor(u16 address, GCColor4 c) {
-    GCWriteByte(0x10); GCWriteHalf(0); GCWriteHalf(address);
-    GCWriteWord((c.r << 24) | (c.g << 16) | (c.b << 8) | c.a);
-}
-inline void GSgfx_GCWriteAmbColor(s32 chan, GCColor4 color) {
-    s32 idx = chan - 4;
-    GCWriteByte(0x10); GCWriteHalf(0); GCWriteHalf(0x100a + (chan & 1));
-    GCWriteWord((color.r << 24) | (color.g << 16) | (color.b << 8) | color.a);
-    GC_FIELD(u32, idx * 5 + 0x4b9) = *(u32 *)&color;
-    GC_FIELD(u8, idx * 5 + 0x4b8) = 0;
-}
-inline void GSgfx_GCWriteMatColor(s32 chan, GCColor4 color) {
-    s32 idx = chan - 4;
-    GCWriteByte(0x10); GCWriteHalf(0); GCWriteHalf(0x100c + (chan & 1));
-    GCWriteWord((color.r << 24) | (color.g << 16) | (color.b << 8) | color.a);
-    GC_FIELD(u32, idx * 5 + 0x4c3) = *(u32 *)&color;
-    GC_FIELD(u8, idx * 5 + 0x4c2) = 0;
-}
-inline void GSgfx_GCWriteTevOrder(s32 stage, s32 coord, s32 map, s32 color) {
-    static u8 c2r[16] = {0, 1, 0, 1, 0, 1, 7, 5, 6, 0, 0, 0, 0, 0, 0, 7};
-    s32 reg = stage >> 1;
-    if (stage & 1) {
-        gsgfxState->tevOrder[reg].order.texture1 = map & 7;
-        gsgfxState->tevOrder[reg].order.coordinate1 = coord & 7;
-        gsgfxState->tevOrder[reg].order.enabled1 = map != 255 && !(map & 0x100);
-        gsgfxState->tevOrder[reg].order.channel1 = c2r[color & 15];
-    } else {
-        gsgfxState->tevOrder[reg].order.texture0 = map & 7;
-        gsgfxState->tevOrder[reg].order.coordinate0 = coord & 7;
-        gsgfxState->tevOrder[reg].order.enabled0 = map != 255 && !(map & 0x100);
-        gsgfxState->tevOrder[reg].order.channel0 = c2r[color & 15];
-    }
-    gsgfxState->dirtyGroups[0] |= 1 << reg;
-    if (coord != 255) gsgfxState->dirtyGroups[2] |= 1 << coord;
-    GC_FIELD(s32, (u32)stage * 12 + 0x4cc) = coord;
-    GC_FIELD(s32, (u32)stage * 12 + 0x4d0) = map;
-    GC_FIELD(s32, (u32)stage * 12 + 0x4d4) = color;
-}
-union GCTevColorEnvRegister {
-    u32 value;
-    struct { u32 address:8, dest:2, shift:2, clamp:1, sub:1, bias:2, a:4, b:4, c:4, d:4; } fields;
-};
-union GCTevAlphaEnvRegister {
-    u32 value;
-    struct { u32 address:8, dest:2, shift:2, clamp:1, sub:1, bias:2, a:3, b:3, c:3, d:3, textureSwap:2, rasterSwap:2; } fields;
-};
-struct GCTevEnvRegisters { u8 reserved[0x224]; GCTevColorEnvRegister color[16]; GCTevAlphaEnvRegister alpha[16]; };
-#define GC_TEV_ENV (reinterpret_cast<GCTevEnvRegisters *>(gsgfxState))
-inline void GSgfx_GCWriteTevColorIn(s32 stage, s32 a, s32 b, s32 c, s32 d) {
-    GC_TEV_ENV->color[stage].fields.a = a;
-    GC_TEV_ENV->color[stage].fields.b = b;
-    GC_TEV_ENV->color[stage].fields.c = c;
-    GC_TEV_ENV->color[stage].fields.d = d;
-    gsgfxState->dirtyGroups[6] |= 1 << stage;
-    GC_FIELD(s32, (u32)stage * 16 + 0x590) = a; GC_FIELD(s32, (u32)stage * 16 + 0x594) = b;
-    GC_FIELD(s32, (u32)stage * 16 + 0x598) = c; GC_FIELD(s32, (u32)stage * 16 + 0x59c) = d;
-}
-inline void GSgfx_GCWriteTevAlphaIn(s32 stage, s32 a, s32 b, s32 c, s32 d) {
-    GC_TEV_ENV->alpha[stage].fields.a = a;
-    GC_TEV_ENV->alpha[stage].fields.b = b;
-    GC_TEV_ENV->alpha[stage].fields.c = c;
-    GC_TEV_ENV->alpha[stage].fields.d = d;
-    gsgfxState->dirtyGroups[7] |= 1 << stage;
-    GC_FIELD(s32, (u32)stage * 16 + 0x690) = a; GC_FIELD(s32, (u32)stage * 16 + 0x694) = b;
-    GC_FIELD(s32, (u32)stage * 16 + 0x698) = c; GC_FIELD(s32, (u32)stage * 16 + 0x69c) = d;
-}
-inline void GSgfx_GCWriteTevColorOp(s32 stage, s32 operation, s32 bias, s32 scale, u8 clamp, s32 output) {
-    GC_TEV_ENV->color[stage].fields.bias = bias;
-    GC_TEV_ENV->color[stage].fields.sub = operation;
-    GC_TEV_ENV->color[stage].fields.clamp = clamp;
-    GC_TEV_ENV->color[stage].fields.shift = scale;
-    GC_TEV_ENV->color[stage].fields.dest = output;
-    gsgfxState->dirtyGroups[6] |= 1 << stage;
-    GC_FIELD(s32, (u32)stage * 20 + 0x790) = operation; GC_FIELD(s32, (u32)stage * 20 + 0x794) = bias;
-    GC_FIELD(s32, (u32)stage * 20 + 0x798) = scale; GC_FIELD(u8, (u32)stage * 20 + 0x79c) = clamp;
-    GC_FIELD(s32, (u32)stage * 20 + 0x7a0) = output;
-}
-inline void GSgfx_GCWriteTevAlphaOp(s32 stage, s32 operation, s32 bias, s32 scale, u8 clamp, s32 output) {
-    GC_TEV_ENV->alpha[stage].fields.bias = bias;
-    GC_TEV_ENV->alpha[stage].fields.sub = operation;
-    GC_TEV_ENV->alpha[stage].fields.clamp = clamp;
-    GC_TEV_ENV->alpha[stage].fields.shift = scale;
-    GC_TEV_ENV->alpha[stage].fields.dest = output;
-    gsgfxState->dirtyGroups[7] |= 1 << stage;
-    GC_FIELD(s32, (u32)stage * 20 + 0x8d0) = operation; GC_FIELD(s32, (u32)stage * 20 + 0x8d4) = bias;
-    GC_FIELD(s32, (u32)stage * 20 + 0x8d8) = scale; GC_FIELD(u8, (u32)stage * 20 + 0x8dc) = clamp;
-    GC_FIELD(s32, (u32)stage * 20 + 0x8e0) = output;
-}
-union GCTevColorRegister {
-    u32 value;
-    struct { u32 address:8, bank:1, high:11, reserved:1, low:11; } fields;
-};
-struct GCTevColorRegisters { u8 reserved[0x2c4]; GCTevColorRegister ra[4]; GCTevColorRegister bg[4]; };
-#define GC_TEV_COLOR (reinterpret_cast<GCTevColorRegisters *>(gsgfxState))
-inline void GSgfx_GCWriteTevColor(s32 id, GCColor4 color) {
-    GC_TEV_COLOR->ra[id].fields.low = color.r;
-    GC_TEV_COLOR->ra[id].fields.high = color.a;
-    GC_TEV_COLOR->bg[id].fields.low = color.b;
-    GC_TEV_COLOR->bg[id].fields.high = color.g;
-    gsgfxState->dirtyGroups[9] |= 1 << id;
-    GC_FIELD(u32, (u32)id * 5 + 0xa11) = *(u32 *)&color;
-    GC_FIELD(u8, (u32)id * 5 + 0xa10) = 0;
-}
-union GCTevKSelRegister {
-    u32 value;
-    struct { u32 address:8, kasel1:5, kcsel1:5, kasel0:5, kcsel0:5, swap1:2, swap0:2; } fields;
-};
-struct GCTevKSelRegisters { u8 reserved[0x204]; GCTevKSelRegister ksel[8]; };
-#define GC_TEV_KSEL (reinterpret_cast<GCTevKSelRegisters *>(gsgfxState))
-inline void GSgfx_GCWriteTevKColorSel(s32 stage, s32 sel) {
-    s32 reg = stage >> 1;
-    if (stage & 1) GC_TEV_KSEL->ksel[reg].fields.kcsel1 = sel;
-    else GC_TEV_KSEL->ksel[reg].fields.kcsel0 = sel;
-    gsgfxState->dirtyGroups[5] |= 1 << reg;
-    GC_FIELD(s32, (u32)stage * 4 + 0xa24) = sel;
-}
-inline void GSgfx_GCWriteTevKAlphaSel(s32 stage, s32 sel) {
-    s32 reg = stage >> 1;
-    if (stage & 1) GC_TEV_KSEL->ksel[reg].fields.kasel1 = sel;
-    else GC_TEV_KSEL->ksel[reg].fields.kasel0 = sel;
-    gsgfxState->dirtyGroups[5] |= 1 << reg;
-    GC_FIELD(s32, (u32)stage * 4 + 0xa64) = sel;
-}
-inline void GSgfx_GCWriteTevSwapMode(s32 stage, s32 raster, s32 texture) {
-    GC_TEV_ENV->alpha[stage].fields.rasterSwap = raster;
-    GC_TEV_ENV->alpha[stage].fields.textureSwap = texture;
-    gsgfxState->dirtyGroups[7] |= 1 << stage;
-    GC_FIELD(s32, (u32)stage * 8 + 0xaa4) = raster; GC_FIELD(s32, (u32)stage * 8 + 0xaa8) = texture;
-}
-inline void GSgfx_GCWriteTevSwapModeTable(s32 table, s32 red, s32 green, s32 blue, s32 alpha) {
-    GC_TEV_KSEL->ksel[table * 2].fields.swap0 = red;
-    GC_TEV_KSEL->ksel[table * 2].fields.swap1 = green;
-    GC_TEV_KSEL->ksel[table * 2 + 1].fields.swap0 = blue;
-    GC_TEV_KSEL->ksel[table * 2 + 1].fields.swap1 = alpha;
-    gsgfxState->dirtyGroups[5] |= 1 << (table * 2);
-    gsgfxState->dirtyGroups[5] |= 1 << (table * 2 + 1);
-    GC_FIELD(s32, (u32)table * 16 + 0xb24) = red; GC_FIELD(s32, (u32)table * 16 + 0xb28) = green;
-    GC_FIELD(s32, (u32)table * 16 + 0xb2c) = blue; GC_FIELD(s32, (u32)table * 16 + 0xb30) = alpha;
-}
-union GCIndScaleRegister {
-    u32 value;
-    struct { u32 address:8, reserved:8, t1:4, s1:4, t0:4, s0:4; } fields;
-};
-struct GCIndScaleRegisters { u8 reserved[0x7c]; GCIndScaleRegister scale[2]; };
-#define GC_IND_SCALE (reinterpret_cast<GCIndScaleRegisters *>(gsgfxState))
-inline void GSgfx_GCWriteIndTexOrder(s32 stage, s32 coord, s32 map) {
-    switch (stage) {
-    case 0: gsgfxState->indirectReference.indirectOrder.texture0 = map; gsgfxState->indirectReference.indirectOrder.coordinate0 = coord; break;
-    case 1: gsgfxState->indirectReference.indirectOrder.texture1 = map; gsgfxState->indirectReference.indirectOrder.coordinate1 = coord; break;
-    case 2: gsgfxState->indirectReference.indirectOrder.texture2 = map; gsgfxState->indirectReference.indirectOrder.coordinate2 = coord; break;
-    case 3: gsgfxState->indirectReference.indirectOrder.texture3 = map; gsgfxState->indirectReference.indirectOrder.coordinate3 = coord; break;
-    }
-    gsgfxState->dirty |= 0x2000;
-    gsgfxState->dirtyGroups[2] |= 1 << coord;
-    GC_FIELD(s32, (u32)stage * 8 + 0xb74) = coord; GC_FIELD(s32, (u32)stage * 8 + 0xb78) = map;
-}
-inline void GSgfx_GCWriteIndTexCoordScale(s32 stage, s32 scaleS, s32 scaleT) {
-    s32 reg = stage >> 1;
-    if (stage & 1) {
-        GC_IND_SCALE->scale[reg].fields.s1 = scaleS;
-        GC_IND_SCALE->scale[reg].fields.t1 = scaleT;
-    } else {
-        GC_IND_SCALE->scale[reg].fields.s0 = scaleS;
-        GC_IND_SCALE->scale[reg].fields.t1 = scaleT;
-    }
-    gsgfxState->dirtyGroups[1] |= 1 << reg;
-    GC_FIELD(s32, (u32)stage * 8 + 0xb94) = scaleS; GC_FIELD(s32, (u32)stage * 8 + 0xb98) = scaleT;
-}
-inline void GSgfx_GCWriteFogColor(GCColor4 color) {
-    gsgfxState->fogColor.bytes.payload[0] = color.r;
-    gsgfxState->fogColor.bytes.payload[1] = color.g;
-    gsgfxState->fogColor.bytes.payload[2] = color.b;
-    gsgfxState->dirty |= 0x20000;
-    GC_FIELD(u32, 0xc09) = *(u32 *)&color;
-    GC_FIELD(u8, 0xc08) = 0;
-}
-static inline void GCFlushCP(u8 address, u32 value) {
-    GCWriteByte(8); GCWriteByte(address); GCWriteWord(value);
-}
-static inline void GCFlushBP(u32 value) { GCWriteByte(GX_LOAD_BP_REG); GCWriteWord(value); }
-#define GC_FLUSH_BP(value) GCFlushBP(value)
-void GSgfx_GCFlushState(void) {
-    u32 i;
-    gsgfxState->bp1EC.coordinateBias.flag = _gcGlobalRegState.field0;
-    gsgfxState->bp354.mode.enabled = _gcGlobalRegState.field1;
-    gsgfxState->bp30[4].pixel.pixelFormat = _gcGlobalRegState.pixelFormat;
-    gsgfxState->bp30[4].pixel.depthFormat = _gcGlobalRegState.depthFormat;
-    gsgfxState->bp30[3].field.mode = _gcGlobalRegState.field4;
-    if (gsgfxState->dirty & 0x1000) GC_FLUSH_BP(gsgfxState->bp354.value);
-    if (gsgfxState->dirtyGroups[3]) {
-        for (i = 0; i < 8; ++i) {
-            if (gsgfxState->dirtyGroups[3] & (1 << i)) {
-                s32 format = gsgfxState->textureImage0[i].image.format;
-                switch (format) {
-                case 8: case 9: case 10:
-                    GC_FLUSH_BP(gsgfxState->textureTlut[i].value);
-                    break;
-                default: break;
-                }
-                GC_FLUSH_BP(gsgfxState->textureMode0[i].value);
-                GC_FLUSH_BP(gsgfxState->textureMode1[i].value);
-                GC_FLUSH_BP(gsgfxState->textureImage0[i].value);
-                GC_FLUSH_BP(gsgfxState->textureImage1[i].value);
-                GC_FLUSH_BP(gsgfxState->textureImage2[i].value);
-                GC_FLUSH_BP(gsgfxState->textureImage3[i].value);
-            }
-        }
-        gsgfxState->dirtyGroups[3] = 0;
-    }
-    if (gsgfxState->dirtyGroups[2]) {
-        for (i = 0; (s32)i < (GC_BYTE(0x31) & 7); ++i) {
-            s32 coordinate = gsgfxState->indirectOrders[i].coordinate;
-            if (gsgfxState->dirtyGroups[2] & (1 << coordinate)) {
-                u32 texture = gsgfxState->indirectOrders[i].texture & 7;
-                gsgfxState->textureSizeS[coordinate].dimension.size = gsgfxState->textureImage0[texture].image.width;
-                gsgfxState->textureSizeT[coordinate].dimension.size = gsgfxState->textureImage0[texture].image.height;
-            }
-        }
-        for (i = 0; (s32)i < ((GC_BYTE(0x32) >> 2) & 15) + 1; ++i) {
-            s32 coordinate = gsgfxState->stageOrders[i].coordinate;
-            if (coordinate != 255 && (gsgfxState->dirtyGroups[2] & (1 << coordinate))) {
-                u32 texture = gsgfxState->stageOrders[i].texture & 7;
-                gsgfxState->textureSizeS[coordinate].dimension.size = gsgfxState->textureImage0[texture].image.width;
-                gsgfxState->textureSizeT[coordinate].dimension.size = gsgfxState->textureImage0[texture].image.height;
-            }
-        }
-        for (i = 0; i < 8; ++i) {
-            if (gsgfxState->dirtyGroups[2] & (1 << i)) {
-                GC_FLUSH_BP(gsgfxState->textureSizeS[i].value);
-                GC_FLUSH_BP(gsgfxState->textureSizeT[i].value);
-            }
-        }
-        gsgfxState->dirtyGroups[2] = 0;
-    }
-    if (gsgfxState->dirtyGroups[4]) {
-        i = 0;
-        GC_FLUSH_BP(gsgfxState->bp350.value);
-        for (; i < 8; ++i) {
-            if (gsgfxState->dirtyGroups[4] & (1 << i)) {
-                gsgfxState->bp1A4[0].tlutSource.source = gsgfxState->tlutUploads[i].source;
-                gsgfxState->bp1A4[1].tlutRegion.count = gsgfxState->tlutUploads[i].count;
-                gsgfxState->bp1A4[1].tlutRegion.region = gsgfxState->tlutUploads[i].region;
-                GC_FLUSH_BP(gsgfxState->bp1A4[0].value);
-                GC_FLUSH_BP(gsgfxState->bp1A4[1].value);
-                GC_FLUSH_BP(gsgfxState->bp350.value);
-            }
-        }
-        gsgfxState->dirty &= ~0x800;
-        gsgfxState->dirtyGroups[4] = 0;
-    }
-    if (gsgfxState->dirty & 0x1) {
-        GC_FLUSH_BP(GC_WORD(0x30));
-    }
-    if (gsgfxState->dirty & 0x2) {
-        GC_FLUSH_BP(GC_WORD(0x34));
-    }
-    if (gsgfxState->dirty & 0x4) {
-        GC_FLUSH_BP(GC_WORD(0x38));
-    }
-    if (gsgfxState->dirty & 0x8) {
-        GC_FLUSH_BP(GC_WORD(0x3c));
-    }
-    if (gsgfxState->dirty & 0x10) {
-        GC_FLUSH_BP(GC_WORD(0x40));
-    }
-    if (gsgfxState->dirty & 0x20) {
-        GC_FLUSH_BP(GC_WORD(0x48));
-        GC_FLUSH_BP(GC_WORD(0x44));
-    }
-    if (gsgfxState->dirty & 0x100) {
-        GC_FLUSH_BP(GC_WORD(0x1f8));
-    }
-    if (gsgfxState->dirty & 0x200) {
-        GC_FLUSH_BP(GC_WORD(0x1fc));
-        GC_FLUSH_BP(GC_WORD(0x200));
-    }
-    if (gsgfxState->dirty & 0x400) {
-        GC_FLUSH_BP(GC_WORD(0x1ec));
-    }
-    if (gsgfxState->dirtyGroups[0]) {
-        for (i = 0; i < 8; ++i) {
-            if (gsgfxState->dirtyGroups[0] & (1 << i)) {
-                GC_FLUSH_BP(gsgfxState->tevOrder[i].value);
-            }
-        }
-        gsgfxState->dirtyGroups[0] = 0;
-    }
-    if (gsgfxState->dirty & 0x2000) GC_FLUSH_BP(gsgfxState->indirectReference.value);
-    if (gsgfxState->dirtyGroups[1]) {
-        for (i = 0; i < 2; ++i) {
-            if (gsgfxState->dirtyGroups[1] & (1 << i)) {
-                GC_FLUSH_BP(gsgfxState->indirectScale[i].value);
-            }
-        }
-        gsgfxState->dirtyGroups[1] = 0;
-    }
-    if (gsgfxState->dirtyGroups[6]) {
-        for (i = 0; i < 16; ++i) {
-            if (gsgfxState->dirtyGroups[6] & (1 << i)) {
-                GC_FLUSH_BP(gsgfxState->tevColorEnvironment[i].value);
-            }
-        }
-        gsgfxState->dirtyGroups[6] = 0;
-    }
-    if (gsgfxState->dirtyGroups[7]) {
-        for (i = 0; i < 16; ++i) {
-            if (gsgfxState->dirtyGroups[7] & (1 << i)) {
-                GC_FLUSH_BP(gsgfxState->tevAlphaEnvironment[i].value);
-            }
-        }
-        gsgfxState->dirtyGroups[7] = 0;
-    }
-    if (gsgfxState->dirtyGroups[8]) {
-        for (i = 0; i < 4; ++i) {
-            if (gsgfxState->dirtyGroups[8] & (1 << i)) {
-                GC_FLUSH_BP(gsgfxState->tevColorA[i].value);
-                GC_FLUSH_BP(gsgfxState->tevColorB[i].value);
-                GC_FLUSH_BP(gsgfxState->tevColorB[i].value);
-                GC_FLUSH_BP(gsgfxState->tevColorB[i].value);
-            }
-        }
-        gsgfxState->dirtyGroups[8] = 0;
-    }
-    if (gsgfxState->dirtyGroups[9]) {
-        for (i = 0; i < 4; ++i) {
-            if (gsgfxState->dirtyGroups[9] & (1 << i)) {
-                GC_FLUSH_BP(gsgfxState->tevConstantColorA[i].value);
-                GC_FLUSH_BP(gsgfxState->tevConstantColorB[i].value);
-            }
-        }
-        gsgfxState->dirtyGroups[9] = 0;
-    }
-    if (gsgfxState->dirtyGroups[5]) {
-        for (i = 0; i < 8; ++i) {
-            if (gsgfxState->dirtyGroups[5] & (1 << i)) {
-                GC_FLUSH_BP(gsgfxState->tevConstantSelect[i].value);
-            }
-        }
-        gsgfxState->dirtyGroups[5] = 0;
-    }
-    if (gsgfxState->dirtyGroups[10]) {
-        for (i = 0; i < 16; ++i) {
-            if (gsgfxState->dirtyGroups[10] & (1 << i)) {
-                GC_FLUSH_BP(gsgfxState->tevIndirect[i].value);
-            }
-        }
-        gsgfxState->dirtyGroups[10] = 0;
-    }
-    if (gsgfxState->dirty & 0x8000) {
-        GC_FLUSH_BP(GC_WORD(0x2e4));
-        GC_FLUSH_BP(GC_WORD(0x2e8));
-        GC_FLUSH_BP(GC_WORD(0x2ec));
-    }
-    if (gsgfxState->dirty & 0x10000) {
-        GC_FLUSH_BP(GC_WORD(0x2f0));
-    }
-    if (gsgfxState->dirty & 0x20000) {
-        GC_FLUSH_BP(GC_WORD(0x2f4));
-    }
-    if (gsgfxState->dirty & 0x80000) {
-        GC_FLUSH_BP(GC_WORD(0x2fc));
-        GC_FLUSH_BP(GC_WORD(0x300));
-        GC_FLUSH_BP(GC_WORD(0x304));
-        GC_FLUSH_BP(GC_WORD(0x308));
-        GC_FLUSH_BP(GC_WORD(0x30c));
-    }
-    if (gsgfxState->dirty & 0x40000) {
-        GC_FLUSH_BP(GC_WORD(0x2f8));
-    }
-    if (gsgfxState->dirty & 0x4000) {
-        GC_FLUSH_BP(GC_WORD(0x4c));
-        GC_FLUSH_BP(GC_WORD(0x50));
-    }
-    if (gsgfxState->dirty & 0x800) {
-        GC_FLUSH_BP(GC_WORD(0x350));
-    }
-    if (gsgfxState->dirty & 0x1000000) {
-        GCFlushXF(0x1009, (GC_BYTE(0x33) >> 4) & 3);
-    }
-    if (gsgfxState->dirty & 0x2000000) {
-        GCFlushXF(0x103f, GC_BYTE(0x33) & 15);
-    }
-    if (gsgfxState->dirty & 0x4000000) {
-        GCFlushXF(0x1005, GC_WORD(0x54));
-    }
-    if (gsgfxState->dirty & 0xc0) {
-        if (gsgfxState->dirty & 0x40) {
-            GCFlushCP(0x30, gsgfxState->matrixIndices[0]);
-        }
-        if (gsgfxState->dirty & 0x80) {
-            GCFlushCP(0x40, gsgfxState->matrixIndices[1]);
-        }
-        if ((gsgfxState->dirty & 0xc0) == 0xc0) {
-            GCWriteByte(0x10);
-            GCWriteHalf(1);
-            GCWriteHalf(0x1018);
-            GCWriteWord(gsgfxState->matrixIndices[0]);
-            GCWriteWord(gsgfxState->matrixIndices[1]);
-        } else if (gsgfxState->dirty & 0x40) {
-            GCFlushXF(0x1018, gsgfxState->matrixIndices[0]);
-        } else {
-            GCFlushXF(0x1019, gsgfxState->matrixIndices[1]);
-        }
-    }
-    gsgfxState->dirty = 0;
-}
-#undef GC_FLUSH_BP
-
-void GSgfx_GCWriteLoadTexObj(const GXTexObj* object, s32 map) {
-    gsgfxState->textureMode0[map].fields.payload = object->dummy[0];
-    gsgfxState->textureMode1[map].fields.payload = object->dummy[1];
-    gsgfxState->textureImage0[map].fields.payload = object->dummy[2];
-    gsgfxState->textureImage1[map].imageCache.type = 0;
-    gsgfxState->textureImage1[map].imageCache.base = GSgfx_GCTmemRegions[map].even >> 5;
-    gsgfxState->textureImage1[map].imageCache.width = 3;
-    gsgfxState->textureImage1[map].imageCache.height = 3;
-    gsgfxState->textureImage2[map].imageCache.base = GSgfx_GCTmemRegions[map].odd >> 5;
-    gsgfxState->textureImage2[map].imageCache.width = 3;
-    gsgfxState->textureImage2[map].imageCache.height = 3;
-    gsgfxState->textureImage3[map].fields.payload = object->dummy[3];
-    switch (gsgfxState->textureImage0[map].image.format) {
-    case 8: case 9: case 10: {
-        u16 region = (GSgfx_GCTlutRegions[_gcLastTlutName] - 0x80000) >> 9;
-        gsgfxState->textureTlut[map].fields.payload = _gcLastTlutObj->dummy[0];
-        gsgfxState->textureTlut[map].texturePalette.region = region;
-        gsgfxState->tlutUploads[map].source = _gcLastTlutObj->dummy[1] & 0xffffff;
-        gsgfxState->tlutUploads[map].count = (s32)*reinterpret_cast<u16 *>(reinterpret_cast<u8 *>(_gcLastTlutObj) + 8) >> 4;
-        gsgfxState->tlutUploads[map].region = region;
-        gsgfxState->dirtyGroups[4] |= 1 << map;
-        break;
-    }
-    default: break;
-    }
-    switch (GC_BYTE(0x31) & 7) {
-    case 4:
-        if (gsgfxState->indirectReference.indirectOrder.texture3 == map)
-            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->indirectReference.indirectOrder.coordinate3;
-    case 3:
-        if (gsgfxState->indirectReference.indirectOrder.texture2 == map)
-            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->indirectReference.indirectOrder.coordinate2;
-    case 2:
-        if (gsgfxState->indirectReference.indirectOrder.texture1 == map)
-            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->indirectReference.indirectOrder.coordinate1;
-    case 1:
-        if (gsgfxState->indirectReference.indirectOrder.texture0 == map)
-            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->indirectReference.indirectOrder.coordinate0;
-        break;
-    }
-    for (u32 i = 0; (s32)i <= ((s32)((GC_BYTE(0x32) >> 2) & 15) >> 1); ++i) {
-        if (gsgfxState->tevOrder[i].order.texture0 == map)
-            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->tevOrder[i].order.coordinate0;
-        if (gsgfxState->tevOrder[i].order.texture1 == map)
-            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->tevOrder[i].order.coordinate1;
-    }
-    gsgfxState->dirtyGroups[3] |= 1 << map;
-}
-
-static inline void GCFlushRegister(const GCBPRegister* reg) {
-    GCWriteByte(GX_LOAD_BP_REG);
-    GCWriteWord(reg->value);
-}
-u8* GSgfx_GCWriteCopyDispDirect(u8* buffer, GCCopyDisplayInfo* info, u32 destination, u8 colorUpdate, u8 alphaUpdate, u8 depthUpdate) {
-    u8* output = buffer;
-    GCBPRegister clearColor, clearDepth, blend, depth, pixel, scale, source, size, stride, address, control;
-    if (info->clear == 1) {
-        pixel.value = 0;
-        blend.value = 0;
-        pixel.copyPixel.pixelFormat = _gcGlobalRegState.pixelFormat;
-        blend.copyBlend.blend = 0;
-        pixel.copyPixel.depthFormat = _gcGlobalRegState.depthFormat;
-        blend.copyBlend.color = colorUpdate;
-        depth.value = 0;
-        blend.fields.address = 0x41;
-        depth.fields.address = 0x40;
-        pixel.fields.address = 0x43;
-        pixel.copyPixel.compare = 0;
-        blend.copyBlend.alpha = alphaUpdate;
-        if ((u8)depthUpdate == 1) {
-            depth.copyDepth.test = 1;
-            depth.copyDepth.function = 7;
-            depth.copyDepth.update = 1;
-        } else {
-            depth.copyDepth.test = 0;
-            depth.copyDepth.update = 0;
-        }
-        output = GCAppendBP(output, &blend);
-        output = GCAppendBP(output, &depth);
-        output = GCAppendBP(output, &pixel);
-    }
-    clearColor.value = 0;
-    clearColor.fields.address = 0x4f;
-    clearColor.bytes.payload[1] = info->alpha;
-    clearColor.bytes.payload[2] = info->red;
-    GCAppendBP(output, &clearColor);
-    clearDepth.fields.address = 0x51;
-    clearColor.fields.address = 0x50;
-    clearColor.bytes.payload[1] = info->green;
-    clearColor.bytes.payload[2] = info->blue;
-    GCAppendBP(output + 5, &clearColor);
-    scale.value = 0;
-    source.value = 0;
-    clearDepth.fields.payload = info->depth;
-    GCAppendBP(output + 10, &clearDepth);
-    size.value = 0;
-    stride.value = 0;
-    address.value = 0;
-    control.value = 0;
-    scale.fields.address = 0x4e;
-    source.fields.address = 0x49;
-    size.fields.address = 0x4a;
-    stride.fields.address = 0x4d;
-    address.fields.address = 0x4b;
-    control.fields.address = 0x52;
-    u16 scaleValue = (u32)(256.0f / info->scale);
-    control.copyControl.display = 1;
-    control.copyControl.clamp = info->clamp;
-    control.copyControl.gamma = (u16)info->gamma;
-    source.copyRectangle.x = info->x;
-    scale.copyScale.scale = scaleValue;
-    size.copyRectangle.x = info->width - 1;
-    control.copyControl.frameToField = (u8)info->frameToField;
-    control.copyControl.clear = info->clear;
-    source.copyRectangle.y = info->y;
-    size.copyRectangle.y = info->height - 1;
-    stride.copyStride.stride = (u16)((s32)info->stride >> 4);
-    address.tlutSource.source = destination >> 5;
-    if (scale.copyScale.scale == 256) control.copyControl.scale = 0;
-    else control.copyControl.scale = 1;
-    GCAppendBP(output + 15, &scale);
-    GCAppendBP(output + 20, &source);
-    GCAppendBP(output + 25, &size);
-    GCAppendBP(output + 30, &stride);
-    GCAppendBP(output + 35, &address);
-    GCAppendBP(output + 40, &control);
-    return output + 45;
-}
-
-void GSgfx_GCWriteCopyDisp(GCCopyDisplayInfo* info, u32 destination, u8 colorUpdate, u8 alphaUpdate, u8 depthUpdate) {
-    GCBPRegister clearColor, clearDepth, blend, depth, pixel, scale, source, size, stride, address, control;
-    if (info->clear == 1) {
-        blend.value = 0;
-        pixel.value = 0;
-        pixel.copyPixel.pixelFormat = _gcGlobalRegState.pixelFormat;
-        blend.copyBlend.blend = 0;
-        pixel.copyPixel.depthFormat = _gcGlobalRegState.depthFormat;
-        blend.copyBlend.color = (u8)colorUpdate;
-        depth.value = 0;
-        blend.fields.address = 0x41;
-        depth.fields.address = 0x40;
-        pixel.fields.address = 0x43;
-        pixel.copyPixel.compare = 0;
-        blend.copyBlend.alpha = (u8)alphaUpdate;
-        if ((u8)depthUpdate == 1) {
-            depth.copyDepth.test = 1;
-            depth.copyDepth.function = 7;
-            depth.copyDepth.update = 1;
-        } else {
-            depth.copyDepth.test = 0;
-            depth.copyDepth.update = 0;
-        }
-        GCFlushRegister(&blend);
-        GCFlushRegister(&depth);
-        GCFlushRegister(&pixel);
-    }
-    clearColor.value = 0;
-    clearColor.fields.address = 0x4f;
-    clearColor.bytes.payload[1] = info->alpha;
-    clearColor.bytes.payload[2] = info->red;
-    GCFlushRegister(&clearColor);
-    clearDepth.fields.address = 0x51;
-    clearColor.fields.address = 0x50;
-    clearColor.bytes.payload[1] = info->green;
-    clearColor.bytes.payload[2] = info->blue;
-    GCFlushRegister(&clearColor);
-    scale.value = 0;
-    source.value = 0;
-    clearDepth.fields.payload = info->depth;
-    GCFlushRegister(&clearDepth);
-    size.value = 0;
-    stride.value = 0;
-    address.value = 0;
-    control.value = 0;
-    scale.fields.address = 0x4e;
-    source.fields.address = 0x49;
-    size.fields.address = 0x4a;
-    stride.fields.address = 0x4d;
-    address.fields.address = 0x4b;
-    control.fields.address = 0x52;
-    scale.copyScale.scale = (u32)(256.0f / info->scale);
-    size.copyRectangle.x = (u16)(info->width - 1);
-    size.copyRectangle.y = info->height - 1;
-    stride.copyStride.stride = (s32)info->stride >> 4;
-    control.copyControl.display = 1;
-    control.copyControl.clamp = info->clamp;
-    source.copyRectangle.x = info->x;
-    control.copyControl.gamma = (u16)info->gamma;
-    source.copyRectangle.y = info->y;
-    control.copyControl.frameToField = (u8)info->frameToField;
-    control.copyControl.clear = info->clear;
-    address.tlutSource.source = destination >> 5;
-    GCFlushRegister(&scale);
-    GCFlushRegister(&source);
-    GCFlushRegister(&size);
-    GCFlushRegister(&stride);
-    GCFlushRegister(&address);
-    GCFlushRegister(&control);
-}
-
-static inline u8 gcCopyCompare() { return GC_BYTE(0xbf0); }
-static inline s32 gcCopyBlend() { return GC_WORD(0xbb4); }
-static inline u32 gcCopyTexFormat(const GCCopyTextureInfo* i) { return i->format; }
-void GSgfx_GCWriteCopyTex(GCCopyTextureInfo* info, u32 destination) {
-    u32 savedFormat;
-    u8 savedCompare = 0xfe;
-    s32 savedBlend = 0xfefefefe;
-    if (info->format & 0x10) {
-        savedFormat = gsgfxState->bp30[4].pixel.pixelFormat;
-        gsgfxState->bp30[4].pixel.pixelFormat = 3;
-        gsgfxState->dirty |= 0x10;
-    }
-    if (info->clear == 1) {
-        u8 compare = gcCopyCompare();
-        if (compare != 0) {
-            savedCompare = compare;
-            gsgfxState->bp30[4].copyPixel.compare = 0;
-            gsgfxState->dirty |= 0x10;
-        }
-        s32 blend = gcCopyBlend();
-        if (blend != 0) {
-            savedBlend = blend;
-            gsgfxState->bp30[2].copyBlend.blend = 0;
-            gsgfxState->dirty |= 4;
-        }
-        if (gsgfxState->dirty & 0x10) GCFlushBP(gsgfxState->bp30[4].value);
-        if (gsgfxState->dirty & 4) GCFlushBP(gsgfxState->bp30[2].value);
-        gsgfxState->dirty &= ~0x14;
-    }
-    GCBPRegister source, size, stride, address, control;
-    stride.value = 0;
-    source.value = 0;
-    size.value = 0;
-    source.fields.address = 0x49;
-    address.value = 0;
-    control.value = 0;
-    size.fields.address = 0x4a;
-    u32 format = gcCopyTexFormat(info);
-    source.copyRectangle.x = info->x;
-    stride.fields.address = 0x4d;
-    address.fields.address = 0x4b;
-    control.fields.address = 0x52;
-    source.copyRectangle.y = info->y;
-    size.copyRectangle.x = info->width - 1;
-    size.copyRectangle.y = info->height - 1;
-    s32 blockWidth;
-    switch (format) {
-    case 0: case 1: case 2: case 0xe: case 0x11: case 0x20: case 0x22:
-    case 0x27: case 0x28: case 0x29: case 0x2a: case 0x30: case 0x39: case 0x3a:
-        blockWidth = 8; break;
-    case 3: case 4: case 5: case 0x13: case 0x23: case 0x2b: case 0x2c: case 0x3c:
-        blockWidth = 4; break;
-    case 6: case 0x16: case 0x26:
-        blockWidth = 2; break;
-    default: blockWidth = 0; break;
-    }
-    GCBPRegister* sp = &stride;
-    switch (blockWidth) {
-    case 2: sp->copyStride.stride = info->stride >> 1; break;
-    case 4: sp->copyStride.stride = info->stride >> 2; break;
-    case 8: sp->copyStride.stride = info->stride >> 3; break;
-    }
-    address.tlutSource.source = (destination & 0x3FFFFFFF) >> 5;
-    control.copyControl.clamp = info->clamp;
-    control.copyControl.conversion = 1;
-    format = gcCopyTexFormat(info);
-    control.copyControl.depth = (format >> 3) & 1;
-    control.copyControl.format = format;
-    control.copyControl.mipmap = info->mipmap;
-    control.copyControl.clear = info->clear;
-    switch (format) {
-    case 0: case 1: case 2: case 3:
-        control.copyControl.intensity = 1; break;
-    default:
-        control.copyControl.intensity = 0; break;
-    }
-    GCFlushBP(source.value);
-    GCFlushBP(size.value);
-    GCFlushBP(stride.value);
-    GCFlushBP(address.value);
-    GCFlushBP(control.value);
-    if (info->format & 0x10) {
-        gsgfxState->bp30[4].pixel.pixelFormat = savedFormat;
-        gsgfxState->dirty |= 0x10;
-    }
-    if (info->clear == 1) {
-        if (savedCompare != 0xfe) {
-            gsgfxState->bp30[4].copyPixel.compare = savedCompare;
-            gsgfxState->dirty |= 0x10;
-        }
-        if (savedBlend != (s32)0xfefefefe) {
-            gsgfxState->bp30[2].copyBlend.blend = 1;
-            gsgfxState->dirty |= 4;
-        }
-        if (gsgfxState->dirty & 0x10) GCFlushBP(gsgfxState->bp30[4].value);
-        if (gsgfxState->dirty & 4) GCFlushBP(gsgfxState->bp30[2].value);
-        gsgfxState->dirty &= ~0x14;
-    }
-}
-
-
-extern void GSgfxVideoGetEFBSize(u16 *width, u16 *height);
-
 void GSgfx_GCReset(void) {
     u32 i;
     GCColor4 colorA = {0, 0, 0, 0};
@@ -2009,14 +659,14 @@ void GSgfx_GCReset(void) {
     GC_WORD(0x44c) = 0; GC_WORD(0x450) = 0;
     GSgfxVideoGetEFBSize(&GC_HALF(0x448), &GC_HALF(0x44a));
     GSgfx_GCSetScissorCached(0, 0, GC_HALF(0x448), GC_HALF(0x44a), 0, 0);
-    GC_FLOAT(0xc24) = 0.0f; GC_FLOAT(0xc28) = 0.0f;
+    gsgfxState->viewportX = 0.0f; gsgfxState->viewportY = 0.0f;
     u16 efbWidth = GC_HALF(0x448);
-    GC_FLOAT(0xc2c) = __OSu16tof32(&efbWidth);
+    gsgfxState->viewportWidth = __OSu16tof32(&efbWidth);
     u16 efbHeight = GC_HALF(0x44a);
-    GC_FLOAT(0xc30) = __OSu16tof32(&efbHeight);
-    GC_FLOAT(0xc34) = 0.0f; GC_FLOAT(0xc38) = 1.0f;
-    GC_WORD(0xc3c) = 1;
-    GSgfx_GCWriteViewport(GC_FLOAT(0xc24), GC_FLOAT(0xc28), GC_FLOAT(0xc2c), GC_FLOAT(0xc30), GC_FLOAT(0xc34), GC_FLOAT(0xc38), GC_WORD(0xc3c));
+    gsgfxState->viewportHeight = __OSu16tof32(&efbHeight);
+    gsgfxState->viewportNear = 0.0f; gsgfxState->viewportFar = 1.0f;
+    gsgfxState->viewportField = 1;
+    GSgfx_GCWriteViewport(gsgfxState->viewportX, gsgfxState->viewportY, gsgfxState->viewportWidth, gsgfxState->viewportHeight, gsgfxState->viewportNear, gsgfxState->viewportFar, gsgfxState->viewportField);
     GC_BYTE(0x454) = 0; GC_REG(0x30, GCGenModeRegister).channels = 0;
     gsgfxState->dirty |= 0x01000001; GC_BYTE(0x454) = 0;
     for (i = 0; i < 4; ++i) {
@@ -2193,6 +843,1317 @@ void GSgfx_GCReset(void) {
     GC_BYTE(0xc0d) = 0;
     GC_HALF(0xc0e) = 0;
     GSgfx_GCFlushState();
+}
+
+void GSgfx_GCInvalidateState(void) {
+    u32 invalid = 0xFEFEFEFE;
+    GC_WORD(0x358) = invalid;
+    GC_WORD(0x35C) = invalid;
+    GC_WORD(0x360) = invalid;
+    GC_BYTE(0x364) = 0xFE;
+    GC_WORD(0x368) = invalid;
+    GC_WORD(0x36C) = invalid;
+    GC_WORD(0x370) = invalid;
+    GC_WORD(0x374) = invalid;
+    GC_BYTE(0x378) = 0xFE;
+    GC_WORD(0x37C) = invalid;
+    GC_WORD(0x380) = invalid;
+    GC_WORD(0x384) = invalid;
+    GC_WORD(0x388) = invalid;
+    GC_BYTE(0x38C) = 0xFE;
+    GC_WORD(0x390) = invalid;
+    GC_WORD(0x394) = invalid;
+    GC_WORD(0x398) = invalid;
+    GC_WORD(0x39C) = invalid;
+    GC_BYTE(0x3A0) = 0xFE;
+    GC_WORD(0x3A4) = invalid;
+    GC_WORD(0x3A8) = invalid;
+    GC_WORD(0x3AC) = invalid;
+    GC_WORD(0x3B0) = invalid;
+    GC_BYTE(0x3B4) = 0xFE;
+    GC_WORD(0x3B8) = invalid;
+    GC_WORD(0x3BC) = invalid;
+    GC_WORD(0x3C0) = invalid;
+    GC_WORD(0x3C4) = invalid;
+    GC_BYTE(0x3C8) = 0xFE;
+    GC_WORD(0x3CC) = invalid;
+    GC_WORD(0x3D0) = invalid;
+    GC_WORD(0x3D4) = invalid;
+    GC_WORD(0x3D8) = invalid;
+    GC_BYTE(0x3DC) = 0xFE;
+    GC_WORD(0x3E0) = invalid;
+    GC_WORD(0x3E4) = invalid;
+    GC_WORD(0x3E8) = invalid;
+    GC_WORD(0x3EC) = invalid;
+    GC_BYTE(0x3F0) = 0xFE;
+    GC_WORD(0x3F4) = invalid;
+    GC_BYTE(0x3F8) = 0xFE;
+    GC_BYTE(0x3FC) = 0;
+    GC_WORD(0x400) = invalid;
+    GC_BYTE(0x404) = 0;
+    GC_WORD(0x408) = invalid;
+    GC_BYTE(0x40C) = 0xFE;
+    GC_BYTE(0x40D) = 0xFE;
+    GC_BYTE(0x40E) = 0xFE;
+    GC_BYTE(0x40F) = 0xFE;
+    GC_BYTE(0x410) = 0xFE;
+    GC_BYTE(0x411) = 0xFE;
+    GC_BYTE(0x412) = 0xFE;
+    GC_BYTE(0x413) = 0xFE;
+    GC_BYTE(0x414) = 0xFE;
+    GC_BYTE(0x415) = 0xFE;
+    GC_BYTE(0x416) = 0xFE;
+    GC_BYTE(0x417) = 0xFE;
+    GC_BYTE(0x418) = 0xFE;
+    GC_BYTE(0x419) = 0xFE;
+    GC_BYTE(0x41A) = 0xFE;
+    GC_BYTE(0x41B) = 0xFE;
+    GC_WORD(0x41C) = invalid;
+    GC_BYTE(0x438) = 0xFE;
+    GC_WORD(0x43C) = invalid;
+    GC_WORD(0x440) = invalid;
+    GC_HALF(0x444) = 0xFEFE;
+    GC_HALF(0x446) = 0xFEFE;
+    GC_HALF(0x448) = 0xFEFE;
+    GC_HALF(0x44A) = 0xFEFE;
+    GC_WORD(0x44C) = invalid;
+    GC_WORD(0x450) = invalid;
+    gsgfxState->viewportX = -1.0f;
+    gsgfxState->viewportY = -1.0f;
+    gsgfxState->viewportWidth = -1.0f;
+    gsgfxState->viewportHeight = -1.0f;
+    gsgfxState->viewportNear = 0.0f;
+    gsgfxState->viewportFar = 1.0f;
+    gsgfxState->viewportField = invalid;
+    GC_BYTE(0x454) = 0xFE;
+    GC_BYTE(0x458) = 0xFE;
+    GC_WORD(0x45C) = invalid;
+    GC_WORD(0x460) = invalid;
+    GC_WORD(0x464) = invalid;
+    GC_WORD(0x468) = invalid;
+    GC_WORD(0x46C) = invalid;
+    GC_BYTE(0x470) = 0xFE;
+    GC_WORD(0x474) = invalid;
+    GC_WORD(0x478) = invalid;
+    GC_WORD(0x47C) = invalid;
+    GC_WORD(0x480) = invalid;
+    GC_WORD(0x484) = invalid;
+    GC_BYTE(0x488) = 0xFE;
+    GC_WORD(0x48C) = invalid;
+    GC_WORD(0x490) = invalid;
+    GC_WORD(0x494) = invalid;
+    GC_WORD(0x498) = invalid;
+    GC_WORD(0x49C) = invalid;
+    GC_BYTE(0x4A0) = 0xFE;
+    GC_WORD(0x4A4) = invalid;
+    GC_WORD(0x4A8) = invalid;
+    GC_WORD(0x4AC) = invalid;
+    GC_WORD(0x4B0) = invalid;
+    GC_WORD(0x4B4) = invalid;
+    GC_BYTE(0x4B8) = 1;
+    GC_BYTE(0x4C2) = 1;
+    GC_BYTE(0x4BD) = 1;
+    GC_BYTE(0x4C7) = 1;
+    for (u32 i = 0; i < 16; ++i) {
+        gsgfxState->stageOrders[i].coordinate = invalid;
+        gsgfxState->stageOrders[i].texture = invalid;
+        gsgfxState->stageOrders[i].channel = invalid;
+    }
+    GC_BYTE(0x58C) = 0xFE;
+    GC_BYTE(0x58D) = 0xFE;
+    for (u32 i = 0; i < 16; ++i) {
+        gsgfxState->colorInputs[i].a = invalid;
+        gsgfxState->colorInputs[i].b = invalid;
+        gsgfxState->colorInputs[i].c = invalid;
+        gsgfxState->colorInputs[i].d = invalid;
+    }
+    for (u32 i = 0; i < 16; ++i) {
+        gsgfxState->alphaInputs[i].a = invalid;
+        gsgfxState->alphaInputs[i].b = invalid;
+        gsgfxState->alphaInputs[i].c = invalid;
+        gsgfxState->alphaInputs[i].d = invalid;
+    }
+    for (u32 i = 0; i < 16; ++i) {
+        gsgfxState->colorOperations[i].operation = invalid;
+        gsgfxState->colorOperations[i].bias = invalid;
+        gsgfxState->colorOperations[i].scale = invalid;
+        gsgfxState->colorOperations[i].clamp = 0xFE;
+        gsgfxState->colorOperations[i].output = invalid;
+    }
+    for (u32 i = 0; i < 16; ++i) {
+        gsgfxState->alphaOperations[i].operation = invalid;
+        gsgfxState->alphaOperations[i].bias = invalid;
+        gsgfxState->alphaOperations[i].scale = invalid;
+        gsgfxState->alphaOperations[i].clamp = 0xFE;
+        gsgfxState->alphaOperations[i].output = invalid;
+    }
+    GC_BYTE(0xA10) = 1;
+    GC_BYTE(0xA15) = 1;
+    GC_BYTE(0xA1A) = 1;
+    GC_BYTE(0xA1F) = 1;
+    GC_WORD(0xA24) = invalid;
+    GC_WORD(0xA28) = invalid;
+    GC_WORD(0xA2C) = invalid;
+    GC_WORD(0xA30) = invalid;
+    GC_WORD(0xA34) = invalid;
+    GC_WORD(0xA38) = invalid;
+    GC_WORD(0xA3C) = invalid;
+    GC_WORD(0xA40) = invalid;
+    GC_WORD(0xA44) = invalid;
+    GC_WORD(0xA48) = invalid;
+    GC_WORD(0xA4C) = invalid;
+    GC_WORD(0xA50) = invalid;
+    GC_WORD(0xA54) = invalid;
+    GC_WORD(0xA58) = invalid;
+    GC_WORD(0xA5C) = invalid;
+    GC_WORD(0xA60) = invalid;
+    GC_WORD(0xA64) = invalid;
+    GC_WORD(0xA68) = invalid;
+    GC_WORD(0xA6C) = invalid;
+    GC_WORD(0xA70) = invalid;
+    GC_WORD(0xA74) = invalid;
+    GC_WORD(0xA78) = invalid;
+    GC_WORD(0xA7C) = invalid;
+    GC_WORD(0xA80) = invalid;
+    GC_WORD(0xA84) = invalid;
+    GC_WORD(0xA88) = invalid;
+    GC_WORD(0xA8C) = invalid;
+    GC_WORD(0xA90) = invalid;
+    GC_WORD(0xA94) = invalid;
+    GC_WORD(0xA98) = invalid;
+    GC_WORD(0xA9C) = invalid;
+    GC_WORD(0xAA0) = invalid;
+    for (u32 i = 0; i < 16; ++i) {
+        gsgfxState->stageSwaps[i].raster = invalid;
+        gsgfxState->stageSwaps[i].texture = invalid;
+    }
+    GC_WORD(0xB24) = invalid;
+    GC_WORD(0xB28) = invalid;
+    GC_WORD(0xB2C) = invalid;
+    GC_WORD(0xB30) = invalid;
+    GC_WORD(0xB34) = invalid;
+    GC_WORD(0xB38) = invalid;
+    GC_WORD(0xB3C) = invalid;
+    GC_WORD(0xB40) = invalid;
+    GC_WORD(0xB44) = invalid;
+    GC_WORD(0xB48) = invalid;
+    GC_WORD(0xB4C) = invalid;
+    GC_WORD(0xB50) = invalid;
+    GC_WORD(0xB54) = invalid;
+    GC_WORD(0xB58) = invalid;
+    GC_WORD(0xB5C) = invalid;
+    GC_WORD(0xB60) = invalid;
+    for (u32 i = 0; i < 16; ++i) {
+        gsgfxState->indirectMode[i] = 0xFE;
+    }
+    GC_WORD(0xB74) = invalid;
+    GC_WORD(0xB78) = invalid;
+    GC_WORD(0xB7C) = invalid;
+    GC_WORD(0xB80) = invalid;
+    GC_WORD(0xB84) = invalid;
+    GC_WORD(0xB88) = invalid;
+    GC_WORD(0xB8C) = invalid;
+    GC_WORD(0xB90) = invalid;
+    GC_WORD(0xB94) = invalid;
+    GC_WORD(0xB98) = invalid;
+    GC_WORD(0xB9C) = invalid;
+    GC_WORD(0xBA0) = invalid;
+    GC_WORD(0xBA4) = invalid;
+    GC_WORD(0xBA8) = invalid;
+    GC_WORD(0xBAC) = invalid;
+    GC_WORD(0xBB0) = invalid;
+    GC_WORD(0xBB4) = invalid;
+    GC_WORD(0xBB8) = invalid;
+    GC_WORD(0xBBC) = invalid;
+    GC_WORD(0xBC0) = invalid;
+    GC_BYTE(0xBC4) = 0xFE;
+    GC_BYTE(0xBC5) = 0xFE;
+    GC_WORD(0xBC8) = invalid;
+    GC_WORD(0xBCC) = invalid;
+    GC_WORD(0xBD0) = invalid;
+    GC_BYTE(0xBD4) = 0xFE;
+    GC_BYTE(0xBD5) = 0xFE;
+    GC_WORD(0xBD8) = invalid;
+    GC_WORD(0xBDC) = invalid;
+    GC_WORD(0xBE0) = invalid;
+    GC_BYTE(0xBE4) = 0xFE;
+    GC_WORD(0xBE8) = invalid;
+    GC_BYTE(0xBEC) = 0xFE;
+    GC_BYTE(0xBF0) = 0xFE;
+    GC_BYTE(0xBF1) = 0xFE;
+    GC_BYTE(0xBF2) = 0xFE;
+    GC_BYTE(0xBF3) = 0xFE;
+    GC_WORD(0xBF4) = invalid;
+    GC_FLOAT(0xBF8) = 4.2781243e9f;
+    GC_FLOAT(0xBFC) = 4.2781243e9f;
+    GC_FLOAT(0xC00) = 4.2781243e9f;
+    GC_FLOAT(0xC04) = 4.2781243e9f;
+    GC_BYTE(0xC08) = 1;
+    GC_HALF(0xC0E) = 0xFEFE;
+    GC_BYTE(0xC0D) = 0xFE;
+}
+
+void GSgfx_GCFlushState(void) {
+    u32 i;
+    gsgfxState->bp1EC.coordinateBias.flag = _gcGlobalRegState.field0;
+    gsgfxState->bp354.mode.enabled = _gcGlobalRegState.field1;
+    gsgfxState->bp30[4].pixel.pixelFormat = _gcGlobalRegState.pixelFormat;
+    gsgfxState->bp30[4].pixel.depthFormat = _gcGlobalRegState.depthFormat;
+    gsgfxState->bp30[3].field.mode = _gcGlobalRegState.field4;
+    if (gsgfxState->dirty & 0x1000) GCFlushBP(gsgfxState->bp354.value);
+    if (gsgfxState->dirtyGroups[3]) {
+        for (i = 0; i < 8; ++i) {
+            if (gsgfxState->dirtyGroups[3] & (1 << i)) {
+                s32 format = gsgfxState->textureImage0[i].image.format;
+                switch (format) {
+                case 8: case 9: case 10:
+                    GCFlushBP(gsgfxState->textureTlut[i].value);
+                    break;
+                default: break;
+                }
+                GCFlushBP(gsgfxState->textureMode0[i].value);
+                GCFlushBP(gsgfxState->textureMode1[i].value);
+                GCFlushBP(gsgfxState->textureImage0[i].value);
+                GCFlushBP(gsgfxState->textureImage1[i].value);
+                GCFlushBP(gsgfxState->textureImage2[i].value);
+                GCFlushBP(gsgfxState->textureImage3[i].value);
+            }
+        }
+        gsgfxState->dirtyGroups[3] = 0;
+    }
+    if (gsgfxState->dirtyGroups[2]) {
+        for (i = 0; (s32)i < (GC_BYTE(0x31) & 7); ++i) {
+            s32 coordinate = gsgfxState->indirectOrders[i].coordinate;
+            if (gsgfxState->dirtyGroups[2] & (1 << coordinate)) {
+                u32 texture = gsgfxState->indirectOrders[i].texture & 7;
+                gsgfxState->textureSizeS[coordinate].dimension.size = gsgfxState->textureImage0[texture].image.width;
+                gsgfxState->textureSizeT[coordinate].dimension.size = gsgfxState->textureImage0[texture].image.height;
+            }
+        }
+        for (i = 0; (s32)i < ((GC_BYTE(0x32) >> 2) & 15) + 1; ++i) {
+            s32 coordinate = gsgfxState->stageOrders[i].coordinate;
+            if (coordinate != 255 && (gsgfxState->dirtyGroups[2] & (1 << coordinate))) {
+                u32 texture = gsgfxState->stageOrders[i].texture & 7;
+                gsgfxState->textureSizeS[coordinate].dimension.size = gsgfxState->textureImage0[texture].image.width;
+                gsgfxState->textureSizeT[coordinate].dimension.size = gsgfxState->textureImage0[texture].image.height;
+            }
+        }
+        for (i = 0; i < 8; ++i) {
+            if (gsgfxState->dirtyGroups[2] & (1 << i)) {
+                GCFlushBP(gsgfxState->textureSizeS[i].value);
+                GCFlushBP(gsgfxState->textureSizeT[i].value);
+            }
+        }
+        gsgfxState->dirtyGroups[2] = 0;
+    }
+    if (gsgfxState->dirtyGroups[4]) {
+        i = 0;
+        GCFlushBP(gsgfxState->bp350.value);
+        for (; i < 8; ++i) {
+            if (gsgfxState->dirtyGroups[4] & (1 << i)) {
+                gsgfxState->bp1A4[0].tlutSource.source = gsgfxState->tlutUploads[i].source;
+                gsgfxState->bp1A4[1].tlutRegion.count = gsgfxState->tlutUploads[i].count;
+                gsgfxState->bp1A4[1].tlutRegion.region = gsgfxState->tlutUploads[i].region;
+                GCFlushBP(gsgfxState->bp1A4[0].value);
+                GCFlushBP(gsgfxState->bp1A4[1].value);
+                GCFlushBP(gsgfxState->bp350.value);
+            }
+        }
+        gsgfxState->dirty &= ~0x800;
+        gsgfxState->dirtyGroups[4] = 0;
+    }
+    if (gsgfxState->dirty & 0x1) {
+        GCFlushBP(GC_WORD(0x30));
+    }
+    if (gsgfxState->dirty & 0x2) {
+        GCFlushBP(GC_WORD(0x34));
+    }
+    if (gsgfxState->dirty & 0x4) {
+        GCFlushBP(GC_WORD(0x38));
+    }
+    if (gsgfxState->dirty & 0x8) {
+        GCFlushBP(GC_WORD(0x3c));
+    }
+    if (gsgfxState->dirty & 0x10) {
+        GCFlushBP(GC_WORD(0x40));
+    }
+    if (gsgfxState->dirty & 0x20) {
+        GCFlushBP(GC_WORD(0x48));
+        GCFlushBP(GC_WORD(0x44));
+    }
+    if (gsgfxState->dirty & 0x100) {
+        GCFlushBP(GC_WORD(0x1f8));
+    }
+    if (gsgfxState->dirty & 0x200) {
+        GCFlushBP(GC_WORD(0x1fc));
+        GCFlushBP(GC_WORD(0x200));
+    }
+    if (gsgfxState->dirty & 0x400) {
+        GCFlushBP(GC_WORD(0x1ec));
+    }
+    if (gsgfxState->dirtyGroups[0]) {
+        for (i = 0; i < 8; ++i) {
+            if (gsgfxState->dirtyGroups[0] & (1 << i)) {
+                GCFlushBP(gsgfxState->tevOrder[i].value);
+            }
+        }
+        gsgfxState->dirtyGroups[0] = 0;
+    }
+    if (gsgfxState->dirty & 0x2000) GCFlushBP(gsgfxState->indirectReference.value);
+    if (gsgfxState->dirtyGroups[1]) {
+        for (i = 0; i < 2; ++i) {
+            if (gsgfxState->dirtyGroups[1] & (1 << i)) {
+                GCFlushBP(gsgfxState->indirectScale[i].value);
+            }
+        }
+        gsgfxState->dirtyGroups[1] = 0;
+    }
+    if (gsgfxState->dirtyGroups[6]) {
+        for (i = 0; i < 16; ++i) {
+            if (gsgfxState->dirtyGroups[6] & (1 << i)) {
+                GCFlushBP(gsgfxState->tevColorEnvironment[i].value);
+            }
+        }
+        gsgfxState->dirtyGroups[6] = 0;
+    }
+    if (gsgfxState->dirtyGroups[7]) {
+        for (i = 0; i < 16; ++i) {
+            if (gsgfxState->dirtyGroups[7] & (1 << i)) {
+                GCFlushBP(gsgfxState->tevAlphaEnvironment[i].value);
+            }
+        }
+        gsgfxState->dirtyGroups[7] = 0;
+    }
+    if (gsgfxState->dirtyGroups[8]) {
+        for (i = 0; i < 4; ++i) {
+            if (gsgfxState->dirtyGroups[8] & (1 << i)) {
+                GCFlushBP(gsgfxState->tevColorA[i].value);
+                GCFlushBP(gsgfxState->tevColorB[i].value);
+                GCFlushBP(gsgfxState->tevColorB[i].value);
+                GCFlushBP(gsgfxState->tevColorB[i].value);
+            }
+        }
+        gsgfxState->dirtyGroups[8] = 0;
+    }
+    if (gsgfxState->dirtyGroups[9]) {
+        for (i = 0; i < 4; ++i) {
+            if (gsgfxState->dirtyGroups[9] & (1 << i)) {
+                GCFlushBP(gsgfxState->tevConstantColorA[i].value);
+                GCFlushBP(gsgfxState->tevConstantColorB[i].value);
+            }
+        }
+        gsgfxState->dirtyGroups[9] = 0;
+    }
+    if (gsgfxState->dirtyGroups[5]) {
+        for (i = 0; i < 8; ++i) {
+            if (gsgfxState->dirtyGroups[5] & (1 << i)) {
+                GCFlushBP(gsgfxState->tevConstantSelect[i].value);
+            }
+        }
+        gsgfxState->dirtyGroups[5] = 0;
+    }
+    if (gsgfxState->dirtyGroups[10]) {
+        for (i = 0; i < 16; ++i) {
+            if (gsgfxState->dirtyGroups[10] & (1 << i)) {
+                GCFlushBP(gsgfxState->tevIndirect[i].value);
+            }
+        }
+        gsgfxState->dirtyGroups[10] = 0;
+    }
+    if (gsgfxState->dirty & 0x8000) {
+        GCFlushBP(GC_WORD(0x2e4));
+        GCFlushBP(GC_WORD(0x2e8));
+        GCFlushBP(GC_WORD(0x2ec));
+    }
+    if (gsgfxState->dirty & 0x10000) {
+        GCFlushBP(GC_WORD(0x2f0));
+    }
+    if (gsgfxState->dirty & 0x20000) {
+        GCFlushBP(GC_WORD(0x2f4));
+    }
+    if (gsgfxState->dirty & 0x80000) {
+        GCFlushBP(GC_WORD(0x2fc));
+        GCFlushBP(GC_WORD(0x300));
+        GCFlushBP(GC_WORD(0x304));
+        GCFlushBP(GC_WORD(0x308));
+        GCFlushBP(GC_WORD(0x30c));
+    }
+    if (gsgfxState->dirty & 0x40000) {
+        GCFlushBP(GC_WORD(0x2f8));
+    }
+    if (gsgfxState->dirty & 0x4000) {
+        GCFlushBP(GC_WORD(0x4c));
+        GCFlushBP(GC_WORD(0x50));
+    }
+    if (gsgfxState->dirty & 0x800) {
+        GCFlushBP(GC_WORD(0x350));
+    }
+    if (gsgfxState->dirty & 0x1000000) {
+        GCFlushXF(0x1009, (GC_BYTE(0x33) >> 4) & 3);
+    }
+    if (gsgfxState->dirty & 0x2000000) {
+        GCFlushXF(0x103f, GC_BYTE(0x33) & 15);
+    }
+    if (gsgfxState->dirty & 0x4000000) {
+        GCFlushXF(0x1005, GC_WORD(0x54));
+    }
+    if (gsgfxState->dirty & 0xc0) {
+        if (gsgfxState->dirty & 0x40) {
+            GCFlushCP(0x30, gsgfxState->matrixIndices[0]);
+        }
+        if (gsgfxState->dirty & 0x80) {
+            GCFlushCP(0x40, gsgfxState->matrixIndices[1]);
+        }
+        if ((gsgfxState->dirty & 0xc0) == 0xc0) {
+            GCWriteByte(0x10);
+            GCWriteHalf(1);
+            GCWriteHalf(0x1018);
+            GCWriteWord(gsgfxState->matrixIndices[0]);
+            GCWriteWord(gsgfxState->matrixIndices[1]);
+        } else if (gsgfxState->dirty & 0x40) {
+            GCFlushXF(0x1018, gsgfxState->matrixIndices[0]);
+        } else {
+            GCFlushXF(0x1019, gsgfxState->matrixIndices[1]);
+        }
+    }
+    gsgfxState->dirty = 0;
+}
+
+void GSgfx_GCWriteVtxDesc(const GCVertexDescriptor *descriptors) {
+    s32 normalComponents;
+    s32 colorComponents;
+    s32 textureComponents;
+    s32 positionMatrix;
+    s32 textureMatrices;
+    s32 position;
+    s32 normal;
+    s32 color0;
+    s32 color1;
+    s32 tex0;
+    s32 tex1;
+    s32 tex2;
+    s32 tex3;
+    s32 tex4;
+    s32 tex5;
+    s32 tex6;
+    s32 tex7;
+    s32 attribute;
+    s32 normalType;
+    s32 nbtType;
+    const GCVertexDescriptor *descriptor;
+
+    descriptor = descriptors;
+    normalComponents = 0;
+    colorComponents = 0;
+    textureComponents = 0;
+    positionMatrix = 0;
+    textureMatrices = 0;
+    position = 1;
+    normal = 0;
+    color0 = 0;
+    color1 = 0;
+    tex0 = 0;
+    tex1 = 0;
+    tex2 = 0;
+    tex3 = 0;
+    tex4 = 0;
+    tex5 = 0;
+    tex6 = 0;
+    tex7 = 0;
+    while ((attribute = descriptor->attribute) != 0xFF) {
+        {
+            switch (attribute) {
+            case 0:
+                positionMatrix = descriptor->type;
+                break;
+            case 1:
+                textureMatrices = (textureMatrices & 0xFFFFFFFE) | descriptor->type;
+                break;
+            case 2:
+                textureMatrices = (textureMatrices & 0xFFFFFFFD) | (descriptor->type * 2);
+                break;
+            case 3:
+                textureMatrices = (textureMatrices & 0xFFFFFFFB) | (descriptor->type * 4);
+                break;
+            case 4:
+                textureMatrices = (textureMatrices & 0xFFFFFFF7) | (descriptor->type * 8);
+                break;
+            case 5:
+                textureMatrices = (textureMatrices & 0xFFFFFFEF) | (descriptor->type * 0x10);
+                break;
+            case 6:
+                textureMatrices = (textureMatrices & 0xFFFFFFDF) | (descriptor->type << 5);
+                break;
+            case 7:
+                textureMatrices = (textureMatrices & 0xFFFFFFBF) | (descriptor->type << 6);
+                break;
+            case 8:
+                textureMatrices = (textureMatrices & 0xFFFFFF7F) | (descriptor->type << 7);
+                break;
+            case 9:
+                position = descriptor->type;
+                break;
+            case 10:
+                normalType = descriptor->type;
+                if (normalType != 0) {
+                    normal = normalType;
+                    normalComponents = 1;
+                }
+                break;
+            case 25:
+                nbtType = descriptor->type;
+                if (nbtType != 0) {
+                    normal = nbtType;
+                    normalComponents = 2;
+                }
+                break;
+            case 11:
+                color0 = descriptor->type;
+                colorComponents += color0 != 0;
+                break;
+            case 12:
+                color1 = descriptor->type;
+                colorComponents += color1 != 0;
+                break;
+            case 13:
+                tex0 = descriptor->type;
+                textureComponents += tex0 != 0;
+                break;
+            case 14:
+                tex1 = descriptor->type;
+                textureComponents += tex1 != 0;
+                break;
+            case 15:
+                tex2 = descriptor->type;
+                textureComponents += tex2 != 0;
+                break;
+            case 16:
+                tex3 = descriptor->type;
+                textureComponents += tex3 != 0;
+                break;
+            case 17:
+                tex4 = descriptor->type;
+                textureComponents += tex4 != 0;
+                break;
+            case 18:
+                tex5 = descriptor->type;
+                textureComponents += tex5 != 0;
+                break;
+            case 19:
+                tex6 = descriptor->type;
+                textureComponents += tex6 != 0;
+                break;
+            case 20:
+                tex7 = descriptor->type;
+                textureComponents += tex7 != 0;
+                break;
+            }
+        }
+        ++descriptor;
+    }
+    GCWriteByte(8);
+    GCWriteByte(0x50);
+    GCWriteWord((s32) ((color1 << 0xF) | ((color0 << 0xD) | ((normal << 0xB) | ((position << 9) | (positionMatrix | (textureMatrices * 2)))))));
+    GCWriteByte(8);
+    GCWriteByte(0x60);
+    GCWriteWord((s32) ((tex7 << 0xE) | ((tex6 << 0xC) | ((tex5 << 0xA) | ((tex4 << 8) | ((tex3 << 6) | ((tex2 * 0x10) | (tex0 | (tex1 * 4)))))))));
+    GCWriteByte(0x10);
+    GCWriteHalf(0);
+    GCWriteHalf(0x1008);
+    GCWriteWord((s32) ((textureComponents * 0x10) | (colorComponents | (normalComponents * 4))));
+}
+
+void GSgfx_GCWriteArray(GXAttr attribute, const void *base, u8 stride) {
+    s32 index = 1;
+    if (attribute != GX_VA_NBT) index = attribute - GX_VA_POS;
+    GCWriteByte(GX_LOAD_CP_REG);
+    GCWriteByte(index + 0xA0);
+    GCWriteWord(reinterpret_cast<u32>(base) & 0x3FFFFFFF);
+    GCWriteByte(GX_LOAD_CP_REG);
+    GCWriteByte(index + 0xB0);
+    GCWriteWord(stride);
+}
+
+void GSgfx_GCWriteVtxAttrFmt(GXVtxFmt formatIndex, const GXVtxAttrFmtList *format) {
+    u32 positionCount = GX_POS_XYZ;
+    u32 positionType = GX_F32;
+    u32 positionFraction = 0;
+    u32 normalCount = GX_NRM_XYZ;
+    u32 normalType = GX_F32;
+    u32 normalIndex3 = 0;
+    u32 color0Count = GX_CLR_RGBA;
+    u32 color0Type = GX_RGBA8;
+    u32 color1Count = GX_CLR_RGBA;
+    u32 color1Type = GX_RGBA8;
+    u32 tex0Count = GX_TEX_ST;
+    u32 tex0Type = GX_F32;
+    u32 tex0Fraction = 0;
+    u32 tex1Count = GX_TEX_ST;
+    u32 tex1Type = GX_F32;
+    u32 tex1Fraction = 0;
+    u32 tex2Count = GX_TEX_ST;
+    u32 tex2Type = GX_F32;
+    u32 tex2Fraction = 0;
+    u32 tex3Count = GX_TEX_ST;
+    u32 tex3Type = GX_F32;
+    u32 tex3Fraction = 0;
+    u32 tex4Count = GX_TEX_ST;
+    u32 tex4Type = GX_F32;
+    u32 tex4Fraction = 0;
+    u32 tex5Count = GX_TEX_ST;
+    u32 tex5Type = GX_F32;
+    u32 tex5Fraction = 0;
+    u32 tex6Count = GX_TEX_ST;
+    u32 tex6Type = GX_F32;
+    u32 tex6Fraction = 0;
+    u32 tex7Count = GX_TEX_ST;
+    u32 tex7Type = GX_F32;
+    u32 tex7Fraction = 0;
+
+    for (; format->attr != GX_VA_NULL; ++format) {
+        switch (format->attr) {
+        case GX_VA_POS:
+            positionCount = format->cnt;
+            positionType = format->type;
+            positionFraction = format->frac;
+            break;
+        case GX_VA_NRM:
+        case GX_VA_NBT:
+            normalType = format->type;
+            if (format->cnt == GX_NRM_NBT3) {
+                normalCount = GX_NRM_NBT;
+                normalIndex3 = 1;
+            } else {
+                normalCount = format->cnt;
+                normalIndex3 = 0;
+            }
+            break;
+        case GX_VA_CLR0:
+            color0Count = format->cnt;
+            color0Type = format->type;
+            break;
+        case GX_VA_CLR1:
+            color1Count = format->cnt;
+            color1Type = format->type;
+            break;
+        case GX_VA_TEX0:
+            tex0Count = format->cnt;
+            tex0Type = format->type;
+            tex0Fraction = format->frac;
+            break;
+        case GX_VA_TEX1:
+            tex1Count = format->cnt;
+            tex1Type = format->type;
+            tex1Fraction = format->frac;
+            break;
+        case GX_VA_TEX2:
+            tex2Count = format->cnt;
+            tex2Type = format->type;
+            tex2Fraction = format->frac;
+            break;
+        case GX_VA_TEX3:
+            tex3Count = format->cnt;
+            tex3Type = format->type;
+            tex3Fraction = format->frac;
+            break;
+        case GX_VA_TEX4:
+            tex4Count = format->cnt;
+            tex4Type = format->type;
+            tex4Fraction = format->frac;
+            break;
+        case GX_VA_TEX5:
+            tex5Count = format->cnt;
+            tex5Type = format->type;
+            tex5Fraction = format->frac;
+            break;
+        case GX_VA_TEX6:
+            tex6Count = format->cnt;
+            tex6Type = format->type;
+            tex6Fraction = format->frac;
+            break;
+        case GX_VA_TEX7:
+            tex7Count = format->cnt;
+            tex7Type = format->type;
+            tex7Fraction = format->frac;
+            break;
+        }
+    }
+
+    GCFlushCP(formatIndex + CP_REG_VAT_GRP0_ID,
+              CP_REG_VAT_GRP0(positionCount, positionType, positionFraction, normalCount, normalType,
+                              color0Count, color0Type, color1Count, color1Type, tex0Count, tex0Type,
+                              tex0Fraction, 1, normalIndex3));
+    GCFlushCP(formatIndex + CP_REG_VAT_GRP1_ID,
+              CP_REG_VAT_GRP1(tex1Count, tex1Type, tex1Fraction, tex2Count, tex2Type, tex2Fraction,
+                              tex3Count, tex3Type, tex3Fraction, tex4Count, tex4Type, 1));
+    GCFlushCP(formatIndex + CP_REG_VAT_GRP2_ID,
+              CP_REG_VAT_GRP2(tex4Fraction, tex5Count, tex5Type, tex5Fraction, tex6Count, tex6Type,
+                              tex6Fraction, tex7Count, tex7Type, tex7Fraction));
+}
+
+void GSgfx_GCWriteLoadTlut(GXTlutObj *object, GXTlut name) {
+    _gcLastTlutObj = object;
+    _gcLastTlutName = name;
+}
+
+void GSgfx_GCWriteLoadTexObj(const GXTexObj* object, s32 map) {
+    gsgfxState->textureMode0[map].fields.payload = object->dummy[0];
+    gsgfxState->textureMode1[map].fields.payload = object->dummy[1];
+    gsgfxState->textureImage0[map].fields.payload = object->dummy[2];
+    gsgfxState->textureImage1[map].imageCache.type = 0;
+    gsgfxState->textureImage1[map].imageCache.base = GSgfx_GCTmemRegions[map].even >> 5;
+    gsgfxState->textureImage1[map].imageCache.width = 3;
+    gsgfxState->textureImage1[map].imageCache.height = 3;
+    gsgfxState->textureImage2[map].imageCache.base = GSgfx_GCTmemRegions[map].odd >> 5;
+    gsgfxState->textureImage2[map].imageCache.width = 3;
+    gsgfxState->textureImage2[map].imageCache.height = 3;
+    gsgfxState->textureImage3[map].fields.payload = object->dummy[3];
+    switch (gsgfxState->textureImage0[map].image.format) {
+    case 8: case 9: case 10: {
+        u16 region = (GSgfx_GCTlutRegions[_gcLastTlutName] - 0x80000) >> 9;
+        gsgfxState->textureTlut[map].fields.payload = _gcLastTlutObj->dummy[0];
+        gsgfxState->textureTlut[map].texturePalette.region = region;
+        gsgfxState->tlutUploads[map].source = _gcLastTlutObj->dummy[1] & 0xffffff;
+        gsgfxState->tlutUploads[map].count = (s32)*reinterpret_cast<u16 *>(reinterpret_cast<u8 *>(_gcLastTlutObj) + 8) >> 4;
+        gsgfxState->tlutUploads[map].region = region;
+        gsgfxState->dirtyGroups[4] |= 1 << map;
+        break;
+    }
+    default: break;
+    }
+    switch (GC_BYTE(0x31) & 7) {
+    case 4:
+        if (gsgfxState->indirectReference.indirectOrder.texture3 == map)
+            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->indirectReference.indirectOrder.coordinate3;
+    case 3:
+        if (gsgfxState->indirectReference.indirectOrder.texture2 == map)
+            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->indirectReference.indirectOrder.coordinate2;
+    case 2:
+        if (gsgfxState->indirectReference.indirectOrder.texture1 == map)
+            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->indirectReference.indirectOrder.coordinate1;
+    case 1:
+        if (gsgfxState->indirectReference.indirectOrder.texture0 == map)
+            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->indirectReference.indirectOrder.coordinate0;
+        break;
+    }
+    for (u32 i = 0; (s32)i <= ((s32)((GC_BYTE(0x32) >> 2) & 15) >> 1); ++i) {
+        if (gsgfxState->tevOrder[i].order.texture0 == map)
+            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->tevOrder[i].order.coordinate0;
+        if (gsgfxState->tevOrder[i].order.texture1 == map)
+            gsgfxState->dirtyGroups[2] |= 1 << gsgfxState->tevOrder[i].order.coordinate1;
+    }
+    gsgfxState->dirtyGroups[3] |= 1 << map;
+}
+
+void GSgfx_GCWriteTexCoordGen(u32 coordinate, s32 type, u32 source, s32 matrix, u8 normalize, s32 postMatrix) {
+    u32 inputForm = 0;
+    u32 generationMode;
+    u32 projection = 0;
+    u32 sourceRow = 5;
+    u32 embossSource = 5;
+    u32 embossLight = 0;
+    switch (source) {
+    case 0: sourceRow = 0; inputForm = 1; break;
+    case 1: sourceRow = 1; inputForm = 1; break;
+    case 2: sourceRow = 3; inputForm = 1; break;
+    case 3: sourceRow = 4; inputForm = 1; break;
+    case 19: sourceRow = 2; break;
+    case 20: sourceRow = 2; break;
+    case 4: sourceRow = 5; break;
+    case 5: sourceRow = 6; break;
+    case 6: sourceRow = 7; break;
+    case 7: sourceRow = 8; break;
+    case 8: sourceRow = 9; break;
+    case 9: sourceRow = 10; break;
+    case 10: sourceRow = 11; break;
+    case 11: sourceRow = 12; break;
+    case 12: embossSource = 0; break;
+    case 13: embossSource = 1; break;
+    case 14: embossSource = 2; break;
+    case 15: embossSource = 3; break;
+    case 16: embossSource = 4; break;
+    case 17: embossSource = 5; break;
+    case 18: embossSource = 6; break;
+    }
+    switch (type) {
+    case 1: generationMode = 0; break;
+    case 0: generationMode = 0; projection = 1; break;
+    case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
+        embossLight = type - 2; generationMode = 1; break;
+    case 10:
+        if (static_cast<s32>(source) == 19) generationMode = 2;
+        else generationMode = 3;
+        break;
+    }
+    switch (coordinate) {
+    case 0:
+        reinterpret_cast<GCTextureMatrixIndex0 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f0)->texture0 = matrix;
+        gsgfxState->dirty |= 0x40;
+        break;
+    case 1:
+        reinterpret_cast<GCTextureMatrixIndex0 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f0)->texture1 = matrix;
+        gsgfxState->dirty |= 0x40;
+        break;
+    case 2:
+        reinterpret_cast<GCTextureMatrixIndex0 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f0)->texture2 = matrix;
+        gsgfxState->dirty |= 0x40;
+        break;
+    case 3:
+        reinterpret_cast<GCTextureMatrixIndex0 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f0)->texture3 = matrix;
+        gsgfxState->dirty |= 0x40;
+        break;
+    case 4:
+        reinterpret_cast<GCTextureMatrixIndex1 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f4)->texture4 = matrix;
+        gsgfxState->dirty |= 0x80;
+        break;
+    case 5:
+        reinterpret_cast<GCTextureMatrixIndex1 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f4)->texture5 = matrix;
+        gsgfxState->dirty |= 0x80;
+        break;
+    case 6:
+        reinterpret_cast<GCTextureMatrixIndex1 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f4)->texture6 = matrix;
+        gsgfxState->dirty |= 0x80;
+        break;
+    case 7:
+        reinterpret_cast<GCTextureMatrixIndex1 *>(reinterpret_cast<u8 *>(gsgfxState) + 0x1f4)->texture7 = matrix;
+        gsgfxState->dirty |= 0x80;
+        break;
+    }
+    GCWriteByte(GX_LOAD_XF_REG);
+    GCWriteHalf(0);
+    GCWriteHalf(coordinate + 0x1040);
+    GCWriteWord((embossLight << 15) | ((embossSource << 12) | ((sourceRow << 7) | ((generationMode << 4) | ((projection * 2) | (inputForm * 4))))));
+    GCWriteByte(GX_LOAD_XF_REG);
+    GCWriteHalf(0);
+    GCWriteHalf(coordinate + 0x1050);
+    GCWriteWord((postMatrix - 0x40) | ((normalize << 8) & 0xFF00));
+    gsgfxState->textureGenerators[coordinate].type = type;
+    gsgfxState->textureGenerators[coordinate].source = source;
+    gsgfxState->textureGenerators[coordinate].matrix = matrix;
+    gsgfxState->textureGenerators[coordinate].normalize = normalize;
+    gsgfxState->textureGenerators[coordinate].postMatrix = postMatrix;
+}
+
+void GSgfx_GCWriteIndTexMtx(GXIndTexMtxID index, const f32 offset[2][3], s8 scaleExp) {
+    GCSetIndTexMtx(index, offset, scaleExp);
+}
+
+void GSgfx_GCWriteTevIndTile(u32 stage, u8 indId, u16 sizeS, u16 sizeT, u16 spaceS, u16 spaceT, u32 fmt, s32 mtx,
+                             u32 bias, u32 alpha) {
+    u32 ws, wt, id;
+    f32 m[6];
+    switch (sizeS) {
+    case 0x100: ws = 1; break;
+    case 0x80: ws = 2; break;
+    case 0x40: ws = 3; break;
+    case 0x20: ws = 4; break;
+    case 0x10: ws = 5; break;
+    default: return;
+    }
+    switch (sizeT) {
+    case 0x100: wt = 1; break;
+    case 0x80: wt = 2; break;
+    case 0x40: wt = 3; break;
+    case 0x20: wt = 4; break;
+    case 0x10: wt = 5; break;
+    default: return;
+    }
+    m[0] = spaceS / 1024.0f;
+    m[4] = spaceT / 1024.0f;
+    m[1] = 0.0f;
+    m[2] = 0.0f;
+    m[3] = 0.0f;
+    m[5] = 0.0f;
+    switch (mtx) {
+    case 1: id = 0; break;
+    case 2: id = 3; break;
+    case 3: id = 6; break;
+    }
+    GCTileWriteIndTexMtx(id, m, 10);
+    GCTileSetTevIndirect(stage, (u16)indId, fmt, bias, mtx, ws, wt, 0, 1, alpha);
+}
+
+void GSgfx_GCWriteTevIndBumpST(s32 stage, s32 indirectStage, s32 matrix) {
+    s32 sMatrix;
+    u8 tMatrix;
+    switch (matrix) {
+    case 1: sMatrix = 5; tMatrix = 9; break;
+    case 2: sMatrix = 6; tMatrix = 10; break;
+    case 3: sMatrix = 7; tMatrix = 11; break;
+    default: return;
+    }
+    GCSetTevIndirect(stage, indirectStage, GX_ITF_8, GX_ITB_ST, (GXIndTexMtxID)sMatrix, GX_ITW_0, GX_ITW_0, 0, 0, GX_ITBA_OFF);
+    GCSetTevIndirect(stage + 1, indirectStage, GX_ITF_8, GX_ITB_ST, (GXIndTexMtxID)tMatrix, GX_ITW_0, GX_ITW_0, 1, 0, GX_ITBA_OFF);
+    GCSetTevIndirect(stage + 2, indirectStage, GX_ITF_8, GX_ITB_NONE, GX_ITM_OFF, GX_ITW_OFF, GX_ITW_OFF, 1, 0, GX_ITBA_OFF);
+}
+
+void GSgfx_GCWriteFog(u32 type, f32 start, f32 end, f32 nearPlane, f32 farPlane) {
+    f32 c;
+    f32 a;
+    s32 exponent;
+    s32 function = type & 7;
+    u32 projection = (type >> 3) & 1;
+    if (function != 0) {
+        u32 magnitude;
+        if (projection != 0) {
+            if (farPlane == nearPlane || end == start) {
+                a = 0.0f;
+                c = 0.0f;
+            } else {
+                f32 reciprocal = 1.0f / (end - start);
+                a = reciprocal * (farPlane - nearPlane);
+                c = reciprocal * (start - nearPlane);
+            }
+            exponent = 0;
+            magnitude = 0;
+        } else {
+            f32 numerator;
+            f32 mantissa;
+            if (farPlane == nearPlane || end == start) {
+                numerator = 0.0f;
+                mantissa = 0.5f;
+                c = 0.0f;
+            } else {
+                f32 depthRange = farPlane - nearPlane;
+                f32 fogRange = end - start;
+                mantissa = farPlane / depthRange;
+                numerator = (farPlane * nearPlane) / (depthRange * fogRange);
+                c = start / fogRange;
+            }
+            exponent = 1;
+            while (mantissa > 1.0f) {
+                mantissa *= 0.5f;
+                ++exponent;
+            }
+            while (mantissa > 0.0f && mantissa < 0.5f) {
+                mantissa *= 2.0f;
+                --exponent;
+            }
+            a = numerator / static_cast<f32>(1 << exponent);
+            magnitude = static_cast<u32>(8.388638e6f * mantissa);
+        }
+        u32 aBits = *reinterpret_cast<u32 *>(&a);
+        u32 cBits = *reinterpret_cast<u32 *>(&c);
+        gsgfxState->fogA.parameter = aBits >> 12;
+        gsgfxState->fogB.parameter = magnitude;
+        gsgfxState->fogExponent.parameter = exponent;
+        gsgfxState->fogC.parameter = cBits >> 12;
+        gsgfxState->fogC.projection = projection;
+        GC_WORD(0) |= 0x8000;
+    }
+    gsgfxState->fogC.function = function;
+    GC_WORD(0) |= 0x10000;
+    GC_WORD(0xBF4) = type;
+    GC_FLOAT(0xBF8) = start;
+    GC_FLOAT(0xBFC) = end;
+    GC_FLOAT(0xC00) = nearPlane;
+    GC_FLOAT(0xC04) = farPlane;
+}
+
+void GSgfx_GCWriteCopyFilter(u8 antialias, const u8 samples[12][2], u8 verticalFilter, const u8 filter[7]) {
+    if (antialias == 0) samples = _gcDefaultAASample;
+    if (verticalFilter == 0) filter = _gcDefaultVFilt;
+    GCAASampleRegister sample;
+    GCCopyFilterRegister coefficients;
+    for (s32 i = 0; i < 4; ++i) {
+        const u8 (*group)[2] = samples + i * 3;
+        sample.fields.address = i + 1;
+        sample.fields.sample0 = group[0][0];
+        sample.fields.sample1 = group[0][1];
+        sample.fields.sample2 = group[1][0];
+        sample.fields.sample3 = group[1][0];
+        sample.fields.sample4 = group[2][0];
+        sample.fields.sample5 = group[2][0];
+        GCWriteByte(GX_LOAD_BP_REG);
+        GCWriteWord(sample.value);
+    }
+    coefficients.fields.address = 0x53;
+    coefficients.fields.coefficient0 = filter[0];
+    coefficients.fields.coefficient1 = filter[1];
+    coefficients.fields.coefficient2 = filter[2];
+    coefficients.fields.coefficient3 = filter[3];
+    GCWriteByte(GX_LOAD_BP_REG);
+    GCWriteWord(coefficients.value);
+    coefficients.fields.address = 0x54;
+    coefficients.fields.coefficient0 = filter[4];
+    coefficients.fields.coefficient1 = filter[5];
+    coefficients.fields.coefficient2 = filter[6];
+    coefficients.fields.coefficient3 = 0;
+    GCWriteByte(GX_LOAD_BP_REG);
+    GCWriteWord(coefficients.value);
+}
+
+void GSgfx_GCWriteCopyTex(GCCopyTextureInfo* info, u32 destination) {
+    u32 savedFormat;
+    u8 savedCompare = 0xfe;
+    s32 savedBlend = 0xfefefefe;
+    if (info->format & 0x10) {
+        savedFormat = gsgfxState->bp30[4].pixel.pixelFormat;
+        gsgfxState->bp30[4].pixel.pixelFormat = 3;
+        gsgfxState->dirty |= 0x10;
+    }
+    if (info->clear == 1) {
+        u8 compare = gcCopyCompare();
+        if (compare != 0) {
+            savedCompare = compare;
+            gsgfxState->bp30[4].copyPixel.compare = 0;
+            gsgfxState->dirty |= 0x10;
+        }
+        s32 blend = gcCopyBlend();
+        if (blend != 0) {
+            savedBlend = blend;
+            gsgfxState->bp30[2].copyBlend.blend = 0;
+            gsgfxState->dirty |= 4;
+        }
+        if (gsgfxState->dirty & 0x10) GCFlushBP(gsgfxState->bp30[4].value);
+        if (gsgfxState->dirty & 4) GCFlushBP(gsgfxState->bp30[2].value);
+        gsgfxState->dirty &= ~0x14;
+    }
+    GCBPRegister source, size, stride, address, control;
+    stride.value = 0;
+    source.value = 0;
+    size.value = 0;
+    source.fields.address = 0x49;
+    address.value = 0;
+    control.value = 0;
+    size.fields.address = 0x4a;
+    u32 format = gcCopyTexFormat(info);
+    source.copyRectangle.x = info->x;
+    stride.fields.address = 0x4d;
+    address.fields.address = 0x4b;
+    control.fields.address = 0x52;
+    source.copyRectangle.y = info->y;
+    size.copyRectangle.x = info->width - 1;
+    size.copyRectangle.y = info->height - 1;
+    s32 blockWidth;
+    switch (format) {
+    case 0: case 1: case 2: case 0xe: case 0x11: case 0x20: case 0x22:
+    case 0x27: case 0x28: case 0x29: case 0x2a: case 0x30: case 0x39: case 0x3a:
+        blockWidth = 8; break;
+    case 3: case 4: case 5: case 0x13: case 0x23: case 0x2b: case 0x2c: case 0x3c:
+        blockWidth = 4; break;
+    case 6: case 0x16: case 0x26:
+        blockWidth = 2; break;
+    default: blockWidth = 0; break;
+    }
+    GCBPRegister* sp = &stride;
+    switch (blockWidth) {
+    case 2: sp->copyStride.stride = info->stride >> 1; break;
+    case 4: sp->copyStride.stride = info->stride >> 2; break;
+    case 8: sp->copyStride.stride = info->stride >> 3; break;
+    }
+    address.tlutSource.source = (destination & 0x3FFFFFFF) >> 5;
+    control.copyControl.clamp = info->clamp;
+    control.copyControl.conversion = 1;
+    format = gcCopyTexFormat(info);
+    control.copyControl.depth = (format >> 3) & 1;
+    control.copyControl.format = format;
+    control.copyControl.mipmap = info->mipmap;
+    control.copyControl.clear = info->clear;
+    switch (format) {
+    case 0: case 1: case 2: case 3:
+        control.copyControl.intensity = 1; break;
+    default:
+        control.copyControl.intensity = 0; break;
+    }
+    GCFlushBP(source.value);
+    GCFlushBP(size.value);
+    GCFlushBP(stride.value);
+    GCFlushBP(address.value);
+    GCFlushBP(control.value);
+    if (info->format & 0x10) {
+        gsgfxState->bp30[4].pixel.pixelFormat = savedFormat;
+        gsgfxState->dirty |= 0x10;
+    }
+    if (info->clear == 1) {
+        if (savedCompare != 0xfe) {
+            gsgfxState->bp30[4].copyPixel.compare = savedCompare;
+            gsgfxState->dirty |= 0x10;
+        }
+        if (savedBlend != (s32)0xfefefefe) {
+            gsgfxState->bp30[2].copyBlend.blend = 1;
+            gsgfxState->dirty |= 4;
+        }
+        if (gsgfxState->dirty & 0x10) GCFlushBP(gsgfxState->bp30[4].value);
+        if (gsgfxState->dirty & 4) GCFlushBP(gsgfxState->bp30[2].value);
+        gsgfxState->dirty &= ~0x14;
+    }
+}
+
+void GSgfx_GCWriteCopyDisp(GCCopyDisplayInfo* info, void* destination, u32 colorUpdate, u32 alphaUpdate, u32 depthUpdate) {
+    GCBPRegister clearColor, clearDepth, blend, depth, pixel, scale, source, size, stride, address, control;
+    if (info->clear == 1) {
+        blend.value = 0;
+        pixel.value = 0;
+        pixel.copyPixel.pixelFormat = _gcGlobalRegState.pixelFormat;
+        blend.copyBlend.blend = 0;
+        pixel.copyPixel.depthFormat = _gcGlobalRegState.depthFormat;
+        blend.copyBlend.color = (u8)colorUpdate;
+        depth.value = 0;
+        blend.fields.address = 0x41;
+        depth.fields.address = 0x40;
+        pixel.fields.address = 0x43;
+        pixel.copyPixel.compare = 0;
+        blend.copyBlend.alpha = (u8)alphaUpdate;
+        if ((u8)depthUpdate == 1) {
+            depth.copyDepth.test = 1;
+            depth.copyDepth.function = 7;
+            depth.copyDepth.update = 1;
+        } else {
+            depth.copyDepth.test = 0;
+            depth.copyDepth.update = 0;
+        }
+        GCFlushRegister(&blend);
+        GCFlushRegister(&depth);
+        GCFlushRegister(&pixel);
+    }
+    clearColor.value = 0;
+    clearColor.fields.address = 0x4f;
+    clearColor.bytes.payload[1] = info->color.rgba.a;
+    clearColor.bytes.payload[2] = info->color.rgba.r;
+    GCFlushRegister(&clearColor);
+    clearDepth.fields.address = 0x51;
+    clearColor.fields.address = 0x50;
+    clearColor.bytes.payload[1] = info->color.rgba.g;
+    clearColor.bytes.payload[2] = info->color.rgba.b;
+    GCFlushRegister(&clearColor);
+    scale.value = 0;
+    source.value = 0;
+    clearDepth.fields.payload = info->depth;
+    GCFlushRegister(&clearDepth);
+    size.value = 0;
+    stride.value = 0;
+    address.value = 0;
+    control.value = 0;
+    scale.fields.address = 0x4e;
+    source.fields.address = 0x49;
+    size.fields.address = 0x4a;
+    stride.fields.address = 0x4d;
+    address.fields.address = 0x4b;
+    control.fields.address = 0x52;
+    scale.copyScale.scale = (u32)(256.0f / info->scale);
+    size.copyRectangle.x = (u16)(info->width - 1);
+    size.copyRectangle.y = info->height - 1;
+    stride.copyStride.stride = (s32)info->stride >> 4;
+    control.copyControl.display = 1;
+    control.copyControl.clamp = info->clamp;
+    source.copyRectangle.x = info->x;
+    control.copyControl.gamma = (u16)info->gamma;
+    source.copyRectangle.y = info->y;
+    control.copyControl.frameToField = (u8)info->frameToField;
+    control.copyControl.clear = info->clear;
+    address.tlutSource.source = reinterpret_cast<u32>(destination) >> 5;
+    GCFlushRegister(&scale);
+    GCFlushRegister(&source);
+    GCFlushRegister(&size);
+    GCFlushRegister(&stride);
+    GCFlushRegister(&address);
+    GCFlushRegister(&control);
+}
+
+u8 *GSgfx_GCWriteCopyFilterDirect(u8 *destination, u8 antialias, const u8 samples[12][2], u8 verticalFilter, const u8 filter[7]) {
+    if (antialias == 0) samples = _gcDefaultAASample;
+    if (verticalFilter == 0) filter = _gcDefaultVFilt;
+    GCAASampleRegister sample;
+    GCCopyFilterRegister coefficients;
+    for (s32 i = 0; i < 4; ++i) {
+        const u8 (*group)[2] = samples + i * 3;
+        sample.fields.address = i + 1;
+        sample.fields.sample0 = group[0][0];
+        sample.fields.sample1 = group[0][1];
+        sample.fields.sample2 = group[1][0];
+        sample.fields.sample3 = group[1][0];
+        sample.fields.sample4 = group[2][0];
+        sample.fields.sample5 = group[2][0];
+        destination = GCAppendBP(destination, &sample);
+    }
+    coefficients.fields.address = 0x53;
+    coefficients.fields.coefficient0 = filter[0];
+    coefficients.fields.coefficient1 = filter[1];
+    coefficients.fields.coefficient2 = filter[2];
+    coefficients.fields.coefficient3 = filter[3];
+    destination = GCAppendBP(destination, &coefficients);
+    coefficients.fields.address = 0x54;
+    coefficients.fields.coefficient0 = filter[4];
+    coefficients.fields.coefficient1 = filter[5];
+    coefficients.fields.coefficient2 = filter[6];
+    coefficients.fields.coefficient3 = 0;
+    return GCAppendBP(destination, &coefficients);
+}
+
+u8* GSgfx_GCWriteCopyDispDirect(u8* output, GCCopyDisplayInfo* info, void* destination, u32 colorUpdate, u32 alphaUpdate, u32 depthUpdate) {
+    GCBPRegister clearColor, clearDepth, blend, depth, pixel, scale, source, size, stride, address, control;
+    if (info->clear == 1) {
+        pixel.value = 0;
+        blend.value = 0;
+        pixel.copyPixel.pixelFormat = _gcGlobalRegState.pixelFormat;
+        blend.copyBlend.blend = 0;
+        pixel.copyPixel.depthFormat = _gcGlobalRegState.depthFormat;
+        blend.copyBlend.color = colorUpdate;
+        depth.value = 0;
+        blend.fields.address = 0x41;
+        depth.fields.address = 0x40;
+        pixel.fields.address = 0x43;
+        pixel.copyPixel.compare = 0;
+        blend.copyBlend.alpha = alphaUpdate;
+        if ((u8)depthUpdate == 1) {
+            depth.copyDepth.test = 1;
+            depth.copyDepth.function = 7;
+            depth.copyDepth.update = 1;
+        } else {
+            depth.copyDepth.test = 0;
+            depth.copyDepth.update = 0;
+        }
+        output = GCAppendBP(output, &blend);
+        output = GCAppendBP(output, &depth);
+        output = GCAppendBP(output, &pixel);
+    }
+    clearColor.value = 0;
+    clearColor.fields.address = 0x4f;
+    clearColor.bytes.payload[1] = info->color.rgba.a;
+    clearColor.bytes.payload[2] = info->color.rgba.r;
+    GCAppendBP(output, &clearColor);
+    clearDepth.fields.address = 0x51;
+    clearColor.fields.address = 0x50;
+    clearColor.bytes.payload[1] = info->color.rgba.g;
+    clearColor.bytes.payload[2] = info->color.rgba.b;
+    GCAppendBP(output + 5, &clearColor);
+    scale.value = 0;
+    source.value = 0;
+    clearDepth.fields.payload = info->depth;
+    GCAppendBP(output + 10, &clearDepth);
+    size.value = 0;
+    stride.value = 0;
+    address.value = 0;
+    control.value = 0;
+    scale.fields.address = 0x4e;
+    source.fields.address = 0x49;
+    size.fields.address = 0x4a;
+    stride.fields.address = 0x4d;
+    address.fields.address = 0x4b;
+    control.fields.address = 0x52;
+    u16 scaleValue = (u32)(256.0f / info->scale);
+    control.copyControl.display = 1;
+    control.copyControl.clamp = info->clamp;
+    control.copyControl.gamma = (u16)info->gamma;
+    source.copyRectangle.x = info->x;
+    scale.copyScale.scale = scaleValue;
+    size.copyRectangle.x = info->width - 1;
+    control.copyControl.frameToField = (u8)info->frameToField;
+    control.copyControl.clear = info->clear;
+    source.copyRectangle.y = info->y;
+    size.copyRectangle.y = info->height - 1;
+    stride.copyStride.stride = (u16)((s32)info->stride >> 4);
+    address.tlutSource.source = reinterpret_cast<u32>(destination) >> 5;
+    if (scale.copyScale.scale == 256) control.copyControl.scale = 0;
+    else control.copyControl.scale = 1;
+    GCAppendBP(output + 15, &scale);
+    GCAppendBP(output + 20, &source);
+    GCAppendBP(output + 25, &size);
+    GCAppendBP(output + 30, &stride);
+    GCAppendBP(output + 35, &address);
+    GCAppendBP(output + 40, &control);
+    return output + 45;
 }
 
 }

@@ -1,5 +1,10 @@
 #include <global.h>
+#include <game/pxdvs/app/memcard/savedataBiosLayout.hpp>
+#include <game/menuCBRule.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
+#include <game/pxdvs/app/hero/heroParty.hpp>
+#include <game/pxdvs/app/sodateya/sodateya.hpp>
+#include <game/pxdvs/app/gamedata/gamedatasaveBiosLayout.hpp>
 
 extern "C" {
 u32 savedataGetStatus(void*,u16);
@@ -30,8 +35,7 @@ void pcboxInit(void*);
 void GSflagClear(s32);
 void GSflagOn(s32);
 void mailInitMailbox(void*);
-void sodateyaInit(void*);
-void menuCB_RULE_INIT(void*);
+void menuCB_RULE_INIT(_TOOL_SAVEDATA*);
 void memoInit(void*);
 void darkpokemonValInit(void*);
 void exribbonInit(void*);
@@ -42,7 +46,6 @@ s32 pokecoloGetRomVersion();
 void gamedataCreate(void*,s32,s32,s32,s32);
 void gamedatasaveSetStatus(void*,s32,s32);
 void GScharMakeFromSJIS(char16*,const char*);
-void heroCreate(Hero*,const char16*,s32);
 u8 heroBiosGetSexDataId(Hero*);
 u32 heroBiosGetRnd(Hero*);
 char16* heroBiosGetNamePtr(Hero*);
@@ -149,13 +152,13 @@ extern "C" void savedataCreate(void* save,const char16* name) {
 }
 
 extern "C" void savedataInit(void* save) {
-    u8 game[0x88];
-    u8 rules[0x364];
-    memcpy(game,(void*)savedataGetStatus(save,1),sizeof(game));
-    memcpy(rules,(void*)savedataGetStatus(save,14),sizeof(rules));
+    GamedataSaveRecord game;
+    _TOOL_SAVEDATA rules;
+    memcpy(&game,(void*)savedataGetStatus(save,1),sizeof(game));
+    memcpy(&rules,(void*)savedataGetStatus(save,14),sizeof(rules));
     memset((void*)savedataGetStatus(0,0),0,0x27FD0);
-    memcpy((void*)savedataGetStatus(save,1),game,sizeof(game));
-    memcpy((void*)savedataGetStatus(save,14),rules,sizeof(rules));
+    memcpy((void*)savedataGetStatus(save,1),&game,sizeof(game));
+    memcpy((void*)savedataGetStatus(save,14),&rules,sizeof(rules));
     gamedataInit((void*)savedataGetStatus(save,1));
     heroInit((void*)savedataGetStatus(save,2));
     pcboxInit((void*)savedataGetStatus(save,3));
@@ -167,8 +170,8 @@ extern "C" void savedataInit(void* save) {
     bytes=savedataGetStatus(save,28)*4;
     memset((void*)savedataGetStatus(save,27),0,bytes);
     mailInitMailbox((void*)savedataGetStatus(save,10));
-    sodateyaInit((void*)savedataGetStatus(save,11));
-    menuCB_RULE_INIT((void*)savedataGetStatus(save,14));
+    sodateyaInit((Sodateya*)savedataGetStatus(save,11));
+    menuCB_RULE_INIT((_TOOL_SAVEDATA*)savedataGetStatus(save,14));
     memoInit((void*)savedataGetStatus(save,12));
     darkpokemonValInit((void*)savedataGetStatus(save,15));
     exribbonInit((void*)savedataGetStatus(save,16));
@@ -186,8 +189,8 @@ extern "C" u32 savedataGetStatus(void* save,u16 section) {
     case 4:return (u32)savedataBiosGetFlagLevel0Ptr(save);
     case 5:return (u32)savedataBiosGetFlagLevel1Ptr(save);
     case 6:return (u32)savedataBiosGetFlagLevel2Ptr(save);
-    case 24:return (u32)((u8*)save+0x10E30);
-    case 27:return (u32)((u8*)save+0x10E38);
+    case 24:return (u32)((u8*)save + SAVEDATA_BATTLE_DISK_FLAGS);
+    case 27:return (u32)((u8*)save + SAVEDATA_BINGO_FLAGS);
     case 7:return 8;
     case 8:return 32;
     case 9:return 384;

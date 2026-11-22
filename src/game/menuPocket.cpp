@@ -1,6 +1,7 @@
 #pragma defer_codegen on
 #pragma force_active on
 #pragma dollar_identifiers on
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuPocketLayout.hpp>
 
 extern "C" {
@@ -43,7 +44,6 @@ s32 menuPokemonOpenItemGive(u8, u8, u16, s32);
 s32 menuPokemonOpenItemUse(s32, s32, s32, s32);
 void menuOffScreenSetPriority(s32);
 void menuCloseCustom(s32, s32, s32);
-void fadeSet(s32, f32);
 void fadeCheck(s32);
 void GSfloorPop(void);
 void GSfloorPush(s32);

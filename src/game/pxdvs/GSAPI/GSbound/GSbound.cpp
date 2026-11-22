@@ -2,6 +2,7 @@
 // Deferred code generation emits these definitions in reverse order.
 #pragma force_active on
 #include <game/pxdvs/GSAPI/GSbound/GSbound.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <game/pxdvs/GSAPI/GSmodel/GSmodel.hpp>
 #include <libc/string.h>
 extern "C" {
@@ -79,7 +80,7 @@ class GSgfxLayer {public:
     GSgfxMatrixStack* field19A0;
     void setRenderState(bool,u8,bool);void beginSurface(u16);void endSurface();
 };
-extern "C" {void GScameraLoadActiveCameraMatrix(s32);GSgfxVF* GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);}
+extern "C" {void GScameraLoadActiveCameraMatrix(s32);}
 
 static inline void boundEulerToQuat(Vec* vector, Quaternion* quaternion) {
     EulerToQuat((HSD_Vec3*)vector, (HSD_Quaternion*)quaternion);

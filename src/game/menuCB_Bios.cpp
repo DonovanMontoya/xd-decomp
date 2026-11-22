@@ -15,9 +15,6 @@ void fightTrainerCreateFightTrainerDataIdToHero(u16, s32, Hero *, s32);
 void pokemonAllKaihuku(Pokemon *);
 u8 menuCBRule_IsBlankPokemon(Pokemon *);
 s16 menuCBRule_ParticipationPokemonMax(void);
-MenuCBBiosRule *menuCBRule_ConstantRule(s32);
-MenuCBBiosRule *menuCBRule_ConstantRule2(s32);
-MenuCBBiosRule *menuCB_OreRule(void);
 void menuCB_InitMenu(s32);
 _TOOL_SAVEDATA *savedataGetStatus(s32, s32);
 
@@ -36,7 +33,6 @@ s32 menuCBBios_PortIDtoControlerID(s32);
 s32 menuCBBios_ControlerIDtoPortID(s32);
 u16 menuCBTrainerBios_GetPlayerID(MenuCBBiosTrainer *);
 s32 menuCBBios_CurrentRuleType(void);
-MenuCBBiosRule *menuCBBios_GetRule(s32);
 u8 menuCBBios_ContextIsLocked(void);
 void menuCBBios_UnlockContext(void);
 void menuCBBios_InitTrainerFromDataID(MenuCBBiosTrainer *, u16, s32);
@@ -310,9 +306,9 @@ s32 menuCBBios_CurrentRuleType(void)
     return _CB.unkC;
 }
 
-MenuCBBiosRule *menuCBBios_CurrentRule(void)
+MenuCBRule *menuCBBios_CurrentRule(void)
 {
-    MenuCBBiosRule *rule = menuCB_OreRule();
+    MenuCBRule *rule = menuCB_OreRule();
     if (rule != 0) {
         return rule;
     }
@@ -333,7 +329,7 @@ MenuCBBiosRule *menuCBBios_CurrentRule(void)
     return menuCBBios_GetRule(menuCBBios_CurrentRuleType());
 }
 
-MenuCBBiosRule *menuCBBios_GetRule(s32 idx)
+MenuCBRule *menuCBBios_GetRule(s32 idx)
 {
     if (idx < 0 || (u32)idx >= 6) {
         return 0;
@@ -374,7 +370,7 @@ void menuCBBios_RuleEditSaveON(u8 on)
 
 void menuCBBios_CurrentlyWorkingToolBattleSet(s8 flag)
 {
-    savedataGetStatus(0, 0xE)->unk360 = flag;
+    savedataGetStatus(0, 0xE)->currentlyWorkingToolBattle = flag;
 }
 
 u8 menuCBBios_CurrentlyWorkingToolBattle(void)
@@ -383,7 +379,7 @@ u8 menuCBBios_CurrentlyWorkingToolBattle(void)
     if (save == 0) {
         return 0;
     }
-    return save->unk360;
+    return save->currentlyWorkingToolBattle;
 }
 
 _MENUCBWORK *menuCBBios_WorkContext(void)
@@ -427,7 +423,7 @@ void menuCB_RULE_INIT(_TOOL_SAVEDATA *save)
         menuCBBios_RuleConstRuleSet();
         return;
     }
-    memset(save, 0, 0x364);
+    memset(save, 0, sizeof(*save));
     save->rules[0] = *menuCBRule_ConstantRule(0);
     save->rules[1] = *menuCBRule_ConstantRule(1);
     save->rules[2] = *menuCBRule_ConstantRule(2);
@@ -492,7 +488,7 @@ void menuCB_RULE_INIT(_TOOL_SAVEDATA *save)
         }
     }
     menuCBBios_InitContextAtFirst(&_CB, save);
-    save->unk360 = 0;
+    save->currentlyWorkingToolBattle = 0;
 }
 }
 
@@ -501,8 +497,8 @@ static void menuCBBios_InitContextAtFirst(_MENUCBWORK *work, _TOOL_SAVEDATA *sav
     u32 i;
     menuCBBios_UnlockContext();
     memset(work, 0, sizeof(_MENUCBWORK));
-    MenuCBBiosRule *r;
-    MenuCBBiosRule *d;
+    MenuCBRule *r;
+    MenuCBRule *d;
     r = menuCBRule_ConstantRule(0);
     d = &work->rules[0];
     *d = *r;

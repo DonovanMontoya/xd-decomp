@@ -6,9 +6,9 @@ u8 fightTrainerAiIrekae_SelComboPartner(void *trainer,void *candidate,void *part
     for(u8 index=0;index<4;index++){
         u16 combo=getComboID__11DeckTrainerCFUc(deck,index);
         if(!combo)continue;
-        ComboId *entry=comboid+combo;
-        u8 mode=entry->unk1;
-        if(entry->unk0==2){
+        FightComboId *entry=comboid+combo;
+        u8 mode=entry->inverted;
+        if(entry->count==2){
             if(!partner)continue;
             void *other=fightOutPokemonGetPokemonPtr(partner);
             u8 otherFirst=pokemon_GetComboPartner(other,index,1);
@@ -18,7 +18,7 @@ u8 fightTrainerAiIrekae_SelComboPartner(void *trainer,void *candidate,void *part
             if(mode==0&&((otherFirst==1&&second==1)||(otherSecond==1&&first==1)))return 1;
             if(mode==1&&otherFirst==1&&second==1)return 2;
         }
-        if(entry->unk0==1){
+        if(entry->count==1){
             u8 first=pokemon_GetComboPartner(pokemon,index,1);
             u8 second=pokemon_GetComboPartner(pokemon,index,0);
             if(first==1||second==1){if(mode==0)return 1;if(mode==1)return 0;}

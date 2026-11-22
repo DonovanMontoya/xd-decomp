@@ -1,8 +1,4 @@
-#include <dolphin/types.h>
-
-typedef struct FightEncountWipeData {
-    u8 snapshotUse; u16 effectSndId; f32 effectTime; void (*function)(void);
-} FightEncountWipeData;
+#include <game/pxdvs/app/fight/fightEncountWipe.h>
 
 extern void fadeEffectHookFunction_fadeout_in_Init(void);
 extern void fadeEffectHookFunction_yoko_Init(void);
@@ -30,7 +26,7 @@ extern void fadeEffectHookFunction_four_ball_Init(void);
 extern void fadeEffectHookFunction_slide_ball_Init(void);
 extern void fadeEffectHookFunction_trainer_second_Init(void);
 
-FightEncountWipeData fight_encount_wipe_data[] = {
+FightEncountWipeRecord fight_encount_wipe_data[] = {
     {1, 0, 0.5f, fadeEffectHookFunction_fadeout_in_Init},
     {1, 34, 2.5f, fadeEffectHookFunction_yoko_Init},
     {1, 34, 2.5f, fadeEffectHookFunction_tate_Init},

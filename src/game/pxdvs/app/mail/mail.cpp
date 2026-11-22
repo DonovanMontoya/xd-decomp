@@ -1,9 +1,7 @@
-#include <dolphin/types.h>
+#include <game/pxdvs/app/mail/mailbox.hpp>
 #include <libc/string.h>
 struct MailData { u32 sender,subject,contents,attach,open; };
-struct Mailbox { u16 ids[32];u16 count;u8 flags[4];u8 sort;u8 pad;u16 sent; };
 typedef char MailDataSize[sizeof(MailData)==0x14?1:-1];
-typedef char MailboxSize[sizeof(Mailbox)==0x4A?1:-1];
 extern MailData *mailData;
 extern u32 *mailData_number;
 extern "C" {
@@ -56,7 +54,7 @@ s32 mailGetNbMailInMailbox();
 void mailInitMailbox(Mailbox *p);
 
 void mailInitMailbox(Mailbox *p) {
- memset(p,0,0x4A);p->sort=0;
+ memset(p,0,sizeof(Mailbox));p->sort=0;
  u32 i;for(i=0;i<32;i++)p->ids[i]=0xFF;
  mailMainInit();
 }

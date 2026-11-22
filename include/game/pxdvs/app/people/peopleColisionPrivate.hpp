@@ -1,5 +1,6 @@
 #ifndef PEOPLE_COLISION_PRIVATE_HPP
 #define PEOPLE_COLISION_PRIVATE_HPP
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <game/pxdvs/app/people/runtime.hpp>
 struct Resource { u8 used; };
 extern "C" {
@@ -21,8 +22,6 @@ f32 PSVECSquareDistance(GSvec*,GSvec*);
 void GSgfxLayerSetActive(s32);
 void GScameraLoadActiveCameraMatrix(s32);
 void GSgfxCullMode(s32);
-void GSgfxVFBuildTemp(s32,s32,s32,s32,s32,s32,s32,s32,s32);
-void GSgfxSetupRenderAndSelect(void);
 void GSgfxBlendMode(s32,s32,s32);
 void GSgfxZCompare(s32,s32);
 void GSgfxPixelMode(s32,s32,s32);

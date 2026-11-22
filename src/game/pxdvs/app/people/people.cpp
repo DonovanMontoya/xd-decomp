@@ -1,6 +1,8 @@
+#include <game/pxdvs/GSAPI/GScolsys/GScolsys2Walk.hpp>
 #include <game/pxdvs/app/people/runtime.hpp>
 #include <game/pxdvs/app/hero/hero.hpp>
-#pragma dont_inline on
+#include <game/pxdvs/app/hero/heroMove.hpp>
+#pragma auto_inline off
 namespace GSscript { struct Tiga { int getNameToFuncId(const char*); }; }
 extern "C" {
 f64 fmod(f64, f64);
@@ -21,7 +23,7 @@ void peoplePartAnimationBlinkStop(tagPeopleWork*);
 void peoplePartAnimationBlinkStart(tagPeopleWork*);
 void peoplePartAnimationBlinkOnce(tagPeopleWork*);
 void GSthreadSwitch();
-void peopleWalkTo(u32, u32, u8, GSvec*);
+void peopleWalkTo(u32, u32, u8, GSvecData*);
 f32 adjustPIPI__Ff(f32);
 void peopleSetCollision(u32, u32, u8);
 tagPeopleWork* peopleGet(u32 group, u32 resource) { return peopleBiosGetPeopleWork(group, resource); }
@@ -679,7 +681,7 @@ void peopleMoveNeckTarget(u32 group, u32 resource, u32 targetGroup, u32 targetRe
 void peopleMoveNeckTargetHero(u32 group, u32 resource, f32 rate) { peopleMoveNeckTarget(group, resource, 0, 100, rate); }
 f64 sin(f64);
 f64 cos(f64);
-#pragma dont_inline reset
+#pragma auto_inline reset
 inline s32 __fpclassifyf(f32 value) {
     union { f32 value; u32 bits; } number;
     number.value = value;
@@ -781,7 +783,7 @@ void peopleMoveNeckAngle(u32 group, u32 resource, f32 yaw, f32 pitch, f32 rate) 
         }
     }
 }
-#pragma dont_inline on
+#pragma auto_inline off
 void fn_8029CD20(u32 group, u32 resource, u32 targetGroup, u32 targetResource, f32 rate) {
     PeopleNeckInfo info;
     tagPeopleWork* work = peopleGet(group, resource);
@@ -1275,7 +1277,7 @@ void peopleRotateToTarget(u32 group, u32 resource, u32 targetGroup, u32 targetRe
         }
     }
 }
-void peopleWalkTo(u32 group, u32 resource, u8 rotate, GSvec* target) {
+void peopleWalkTo(u32 group, u32 resource, u8 rotate, GSvecData* target) {
     GSvec difference, rotation;
     tagPeopleWork* work = peopleGet(group, resource);
     if (work) {
@@ -1659,7 +1661,7 @@ void* floorOpenObject(u32);
 void GSresRegisterResource(void*, u32, u32, void*);
 void* floorCreateThread(u32, u32, u32, void (*)());
 u32 GSthreadGetCurrentThread();
-void peopleBiosAllocWork();
+void peopleBiosAllocWork(s32 count);
 void GSmodelSetVisibility(GSmodel*, u8);
 void GSmodelGetPosition(GSmodel*, GSvec*);
 void GSmodelGetRotation(GSmodel*, GSvec*);
@@ -1717,8 +1719,8 @@ void _peopleInitShadow__Fv() {
         GSlightSetActive(shadowLight[i], 0);
     }
 }
-void peopleInit() {
-    peopleBiosAllocWork();
+void peopleInit(s32 count) {
+    peopleBiosAllocWork(count);
     _peopleInitShadow__Fv();
     FloorModuleInterface_clear(&_floorModulePeople);
     _floorModulePeople.saveState = _peopleMakeStateData__F14FloorStateModePvUl;
@@ -2136,7 +2138,7 @@ static u8 m_hero_move = 1;
 static u8 m_bPeopleOpenWithModel = 1;
 static f32 m_hero_idling_time;
 static f32 m_hero_next_special_idling_time;
-#pragma dont_inline reset
+#pragma auto_inline reset
 u8 isWalkStartMotion__13tagPeopleWorkCFv(tagPeopleWork*);
 u8 gimmickBoxOnBox(tagPeopleWork*, GSvec*, GSvec*);
 u32 _peopleAdjustPosition__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork*, GSvec*, GSvec*);
@@ -2217,7 +2219,7 @@ s32 peopleMoveAlongAngle(u32 group, u32 resource, f32 speed, f32 angle) {
     }
     return _peopleAdjustPosition__FP13tagPeopleWorkP5GSvecP5GSvec(work, &position, &work->previousPosition);
 }
-#pragma dont_inline on
+#pragma auto_inline off
 static s32 m_before_special_effect;
 enum PeopleEnterMode { PEOPLE_ENTER_0 = 0, PEOPLE_ENTER_1 = 1, PEOPLE_ENTER_3 = 3 };
 void _peopleEnterFloor__FUi14FloorEnterMode(u32 floor, s32 modeValue) {
@@ -2578,7 +2580,7 @@ void _peopleAnimEndCallback__FP8_GSmodelP18_GSmodelAnimCBData(GSmodel* model,_GS
 extern "C" {
 u32 getFlags__13tagPeopleWorkCFv(tagPeopleWork*);
 bool GScolsys2HitCollision(GSvec*,GSvec*,f32,GSvec*);
-#pragma dont_inline reset
+#pragma auto_inline reset
 void _peopleUpdateNeck__FP13tagPeopleWorkf(tagPeopleWork* work,f32 limit) {
     PeopleNeckInfo info;
     f32 frame=30.0f*_getLastFrameSec__Fv();
@@ -2599,28 +2601,58 @@ void _peopleUpdateNeck__FP13tagPeopleWorkf(tagPeopleWork* work,f32 limit) {
     case 2:case 3: {
         if(!_getNeck__FP13tagPeopleWorkP14PeopleNeckInfo(work,&info))return;
         f32 distance=PSVECDistance(&work->neckTargetPosition,&info.position);
-        if(distance<=limit || !(limit>=0.0f) || work->neckEnabled==3) {
-            f32 pitch=adjustPIPI__Ff((f32)atan2(info.position.param2-work->neckTargetPosition.param2,distance)-work->chestRotation.param1);
-            f32 rise=info.position.param2-work->neckTargetPosition.param2;
-            if((distance<0.00001f && distance>-0.00001f) || (rise<0.00001f && rise>-0.00001f))pitch=0.0f;
-            if(pitch<info.up)pitch=info.up;else if(pitch>info.down)pitch=info.down;
-            f32 yaw=-adjustPIPI__Ff(_peopleGetDiffAngleFix__Fff(info.rotation.param2+work->chestRotation.param2,(f32)atan2(work->neckTargetPosition.param1-info.position.param1,work->neckTargetPosition.param3-info.position.param3)));
-            if(_distanceXZ__FP5GSvecP5GSvec(&info.position,&work->neckTargetPosition)<0.00001f && _distanceXZ__FP5GSvecP5GSvec(&info.position,&work->neckTargetPosition)>-0.00001f)yaw=0.0f;
-            u8 blocked=0;
-            if((getFlags__13tagPeopleWorkCFv(work)&0x80200000)==0x200000 && distance<limit && peopleBiosCheckFlag(work,0x100) && GScolsys2HitCollision(&info.position,&work->neckTargetPosition,3.0f,0))blocked=1;
-            if(!blocked && yaw>=info.left && yaw<=info.right) {
-                work->neckTargetRotation.param2=yaw;
-                work->neckTargetRotation.param1=pitch;
-            } else if(!blocked && peopleBiosCheckFlag(work,2)) {
-                if(yaw<info.left)yaw=info.left;else if(yaw>info.right)yaw=info.right;
-                work->neckTargetRotation.param2=yaw;
-                work->neckTargetRotation.param1=pitch;
-            } else if(yaw<info.left-0.034906585f || yaw>0.034906585f+info.right) {
-                work->neckTargetPosition.param1=work->unknownEC.param1;work->neckTargetPosition.param2=work->unknownEC.param2;work->neckTargetPosition.param3=work->unknownEC.param3;
-                if(!peopleBiosCheckFlag(work,2)) {
-                    work->neckTargetRotation.param2=0.0f;
-                    work->neckTargetRotation.param1=0.0f;
-                }
+        if (distance > limit && limit >= 0.0f && work->neckEnabled != 3) {
+            break;
+        }
+        f32 pitch = adjustPIPI__Ff(
+            (f32)atan2(info.position.param2 - work->neckTargetPosition.param2, distance) -
+            work->chestRotation.param1);
+        if ((distance < 0.00001f && distance > -0.00001f) ||
+            (info.position.param2 - work->neckTargetPosition.param2 < 0.00001f &&
+             info.position.param2 - work->neckTargetPosition.param2 > -0.00001f)) {
+            pitch = 0.0f;
+        }
+        f32 up = info.up;
+        f32 down = info.down;
+        if (pitch < up) pitch = up;
+        else if (pitch > down) pitch = down;
+        f32 yaw = -adjustPIPI__Ff(_peopleGetDiffAngleFix__Fff(
+            info.rotation.param2 + work->chestRotation.param2,
+            (f32)atan2(work->neckTargetPosition.param1 - info.position.param1,
+                       work->neckTargetPosition.param3 - info.position.param3)));
+        if (_distanceXZ__FP5GSvecP5GSvec(&info.position, &work->neckTargetPosition) < 0.00001f &&
+            _distanceXZ__FP5GSvecP5GSvec(&info.position, &work->neckTargetPosition) > -0.00001f) {
+            yaw = 0.0f;
+        }
+        u8 blocked = 0;
+        if ((getFlags__13tagPeopleWorkCFv(work) & 0x80200000) == 0x200000 &&
+            distance < limit && peopleBiosCheckFlag(work, 0x100) &&
+            GScolsys2HitCollision(&info.position, &work->neckTargetPosition, 3.0f, 0)) {
+            blocked = 1;
+        }
+        if (!blocked) {
+            if (yaw >= info.left && yaw <= info.right) {
+                work->neckTargetRotation.param2 = yaw;
+                work->neckTargetRotation.param1 = pitch;
+                break;
+            }
+            if (peopleBiosCheckFlag(work, 2)) {
+                f32 left = info.left;
+                f32 right = info.right;
+                if (yaw < left) yaw = left;
+                else if (yaw > right) yaw = right;
+                work->neckTargetRotation.param2 = yaw;
+                work->neckTargetRotation.param1 = pitch;
+                break;
+            }
+        }
+        if (yaw < info.left - 0.034906585f || yaw > 0.034906585f + info.right) {
+            work->neckTargetPosition.param1 = work->unknownEC.param1;
+            work->neckTargetPosition.param2 = work->unknownEC.param2;
+            work->neckTargetPosition.param3 = work->unknownEC.param3;
+            if (!peopleBiosCheckFlag(work, 2)) {
+                work->neckTargetRotation.param2 = 0.0f;
+                work->neckTargetRotation.param1 = 0.0f;
             }
         }
         break;
@@ -2634,25 +2666,7 @@ void _peopleUpdateNeck__FP13tagPeopleWorkf(tagPeopleWork* work,f32 limit) {
     }
     f32 pitchDelta=work->neckTargetRotation.param1-work->neckRotation.param1;
     f32 yawDelta=_peopleGetDiffAngleFix__Fff(work->neckTargetRotation.param2,work->neckRotation.param2);
-    f32 distance=pitchDelta*pitchDelta+yawDelta*yawDelta;
-    if(distance>0.0f) {
-        f64 magnitude=distance;
-        f64 guess=__frsqrte(magnitude);
-        guess=0.5*guess*(3.0-guess*guess*magnitude);
-        guess=0.5*guess*(3.0-guess*guess*magnitude);
-        guess=0.5*guess*(3.0-guess*guess*magnitude);
-        distance=(f32)(magnitude*guess);
-    } else if(distance<0.0)distance=*(f32*)__float_nan;
-    else {
-        int category;
-        u32 bits=*(u32*)&distance;
-        switch(bits&0x7f800000) {
-        case 0x7f800000:category=(bits&0x7fffff)?1:2;break;
-        case 0:category=(bits&0x7fffff)?5:3;break;
-        default:category=4;break;
-        }
-        if(category==1)distance=*(f32*)__float_nan;
-    }
+    f32 distance = sqrtf(pitchDelta * pitchDelta + yawDelta * yawDelta);
     if(distance<0.00001f && distance>-0.00001f) {
         work->neckUnknownC3=1;
         if(work->neckInstant==1)work->neckInstant=0;
@@ -2661,7 +2675,7 @@ void _peopleUpdateNeck__FP13tagPeopleWorkf(tagPeopleWork* work,f32 limit) {
         f32 step;
         if(work->neckInstant==1) {step=3.1415927f;work->neckInstant=0;}
         else if(distance<work->neckDistance) {
-            if(work->neckMinStep>0.05f) {work->neckMinStep-=0.019634955f;step=work->neckMinStep;}
+            if (work->neckMinStep > 0.05) {work->neckMinStep-=0.019634955f;step=work->neckMinStep;}
             else {work->neckMinStep=0.015707964f;step=work->neckMinStep;}
         } else {
             if(work->neckMinStep<work->neckMaxStep) {work->neckMinStep+=0.0058904868f;step=work->neckMinStep;}
@@ -2676,7 +2690,7 @@ void _peopleUpdateNeck__FP13tagPeopleWorkf(tagPeopleWork* work,f32 limit) {
         else work->neckRotation.param2+=yawStep;
     }
 }
-#pragma dont_inline on
+#pragma auto_inline off
 }
 
 extern "C" {
@@ -2786,24 +2800,14 @@ s32 _peopleSideStepCheck__Fv() {
 }
 
 extern "C" {
-struct PeopleCollisionSurface { GSvec vertices[3]; u8 reserved[16]; };
-struct PeopleWalkSurface { f32 height; u32 flags[2]; };
-void __ct__5GSvecFv(GSvec*);
-void __construct_array(void*,void*,void*,u32,u32);
-s32 GScolsys2ThruGetEventID(GSvec*,GSvec*,PeopleCollisionSurface*,f32);
-s32 GScolsys2ThruPassEventID(GSvec*,GSvec*,PeopleCollisionSurface*);
-void heroMoveSetEventList(s32,PeopleCollisionSurface*,s32);
+s32 GScolsys2ThruGetEventID(GSvec*,GSvec*,HeroMoveQueuedEvent*,f32);
+s32 GScolsys2ThruPassEventID(GSvec*,GSvec*,HeroMoveQueuedEvent*);
 u8 gimmickBoxIsPushBoxFloor();
-s32 GScolsys2WalkGetHeight(GSvec*,PeopleWalkSurface*);
 GSvec* peopleBiosGetPrevPosPtr(tagPeopleWork*);
 u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* work,GSvec* output,GSvec* previous) {
-    PeopleWalkSurface surfaces[8];
-    PeopleCollisionSurface events[4];
+    GSwalkHit surfaces[8];
+    HeroMoveQueuedEvent events[4];
     GSvec oldPosition,position,start,end,hit;
-    __construct_array(events[0].vertices,(void*)__ct__5GSvecFv,0,12,3);
-    __construct_array(events[1].vertices,(void*)__ct__5GSvecFv,0,12,3);
-    __construct_array(events[2].vertices,(void*)__ct__5GSvecFv,0,12,3);
-    __construct_array(events[3].vertices,(void*)__ct__5GSvecFv,0,12,3);
     if(peopleBiosCheckFlag(work,0x700)) {
         position.param1=output->param1;position.param2=output->param2;position.param3=output->param3;
         oldPosition.param1=previous->param1;oldPosition.param2=previous->param2;oldPosition.param3=previous->param3;
@@ -2811,8 +2815,7 @@ u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* wor
         end.param1=position.param1;end.param2=position.param2;end.param3=position.param3;
         start.param2+=6.0f;end.param2+=6.0f;
         PeopleInfo* info=peopleInfoBiosGetPtr(work->object);
-        f32 radius;
-        if(!info)radius=3.0f;else radius=peopleInfoBiosGetColBallSize(info);
+        f32 radius = info == 0 ? 3.0f : peopleInfoBiosGetColBallSize(info);
         if(peopleBiosCheckFlag(work,0x800) && work->resource==100)heroMoveSetEventList(2,events,GScolsys2ThruGetEventID(&start,&end,events,radius));
         position.param1=end.param1;position.param2=end.param2;position.param3=end.param3;
         if(gimmickBoxIsPushBoxFloor())position.param2=start.param2;
@@ -2830,29 +2833,44 @@ u32 _peopleAdjustPositionSub__FP13tagPeopleWorkP5GSvecP5GSvec(tagPeopleWork* wor
             heroMoveSetEventList(1,events,GScolsys2ThruPassEventID(&start,&position,events));
             if(gimmickBoxIsPushBoxFloor())position.param2=start.param2;
         }
-        if(peopleBiosCheckFlag(work,0x200)) {
-            s32 count=GScolsys2WalkGetHeight(&position,surfaces);
-            if(count>=2) {
-                f32 nearest=-1000000.0f,highest=-1000000.0f;
-                u8 found=0;
-                for(s32 i=0;i<count;++i) {
-                    f32 height=surfaces[i].height;
-                    if(highest<height)highest=height;
-                    if(!(height-position.param2>=10.0f) && nearest<height) {nearest=height;found=1;}
-                }
-                if(found)position.param2=nearest;else position.param2=highest;
-                if((f32)fabs(position.param2-peopleBiosGetPrevPosPtr(work)->param2)>=10.0f) {
-                    f32 height=surfaces[0].height;
-                    f32 difference=(f32)fabs(peopleBiosGetPrevPosPtr(work)->param2-surfaces[0].height);
-                    PeopleWalkSurface* surface=surfaces+1;
-                    for(s32 i=1;i<count;++surface,++i) {
-                        f32 otherDifference=(f32)fabs(peopleBiosGetPrevPosPtr(work)->param2-surface->height);
-                        if(difference>otherDifference) {difference=otherDifference;height=surface->height;}
+        if (peopleBiosCheckFlag(work, 0x200)) {
+            s32 count = GScolsys2WalkGetHeight(&position, surfaces);
+            if (count >= 2) {
+                f32 height, highest, preferred;
+                preferred = -1000000.0f;
+                highest = -1000000.0f;
+                u8 found = 0;
+                for (s32 i = 0; i < count; ++i) {
+                    height = surfaces[i].height;
+                    if (highest < height) highest = height;
+                    if (!(height - position.param2 >= 10.0f) && preferred < height) {
+                        preferred = height;
+                        found = 1;
                     }
-                    position.param2=height;
                 }
-            } else if(count>0)position.param2=surfaces[0].height;
-            else position.param2=0.0f;
+                if (found) position.param2 = preferred;
+                else position.param2 = highest;
+                if ((f32)fabs(position.param2 - peopleBiosGetPrevPosPtr(work)->param2) >= 10.0f) {
+                    f32 chosen = surfaces[0].height;
+                    f32 initialDelta = peopleBiosGetPrevPosPtr(work)->param2 - surfaces[0].height;
+                    f64 magnitude = fabs(initialDelta);
+                    f32 nearest = (f32)magnitude;
+                    GSwalkHit* surface = surfaces + 1;
+                    for (s32 i = 1; i < count; ++surface, ++i) {
+                        f32 distance = (f32)fabs(peopleBiosGetPrevPosPtr(work)->param2 - surface->height);
+                        height = surface->height;
+                        if (nearest > distance) {
+                            nearest = distance;
+                            chosen = height;
+                        }
+                    }
+                    position.param2 = chosen;
+                }
+            } else if (count > 0) {
+                position.param2 = surfaces[0].height;
+            } else {
+                position.param2 = 0.0f;
+            }
         }
         gimmickBoxOnBox(work,&oldPosition,&position);
         output->param1=position.param1;output->param2=position.param2;output->param3=position.param3;
@@ -2931,7 +2949,7 @@ s32 getRunMotion__13tagPeopleWorkFv(tagPeopleWork*);
 void peopleViewerDisplayAnimRate(tagPeopleWork*,f32);
 
 #pragma push
-#pragma dont_inline off
+#pragma auto_inline on
 static inline f32 peopleFrameFraction(f32 frame,f32 count) {
     f32 fraction=0.0f;if(count>0.0f)fraction=frame/count;return fraction;
 }

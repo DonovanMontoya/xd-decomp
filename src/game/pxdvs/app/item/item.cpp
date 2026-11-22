@@ -5,7 +5,6 @@ u16 *currentPriorityTbl;
 u32 currentPriorityTblQuantity;
 
 extern "C" {
-void itemReplace(ITEM *a, ITEM *b);
 u8 itemDataCheckValid(u16 id);
 u8 itemCheckValid(ITEM *item);
 ITEM *itemSearchItemDataIdAry(ITEM *ary, u16 count, u16 id, u8 mode, u16 num);
@@ -367,7 +366,7 @@ static void _itemSortAry(ITEM *ary, u16 count, u8 type) {
                 if (!itemValid(p)) {
                     for (j = i + 1; j < cnt; j++) {
                         if (itemValid(ary + j) == 1) {
-                            itemReplace(p, ary + j);
+                            itemSwap(p, ary + j);
                             break;
                         }
                     }
@@ -390,7 +389,7 @@ static void _itemSortAry(ITEM *ary, u16 count, u8 type) {
                             u16 a = item_GetItemDataId(p);
                             u16 b = item_GetItemDataId(ary + j);
                             if (a > b) {
-                                itemReplace(p, ary + j);
+                                itemSwap(p, ary + j);
                             }
                         }
                     }
@@ -428,7 +427,7 @@ ITEM *itemSearchItemDataIdAry(ITEM *ary, u16 count, u16 id, u8 mode, u16 num) {
     return 0;
 }
 
-s32 itemGetQuantityInAry(ITEM *ary, u16 count, u16 id) {
+s32 itemGetQuantityInAry(ITEM *ary, u16 count, u16 id, u16 max) {
     if (ary == NULL) {
         return 0;
     }

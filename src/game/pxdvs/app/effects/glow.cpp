@@ -1,4 +1,5 @@
 #include <game/pxdvs/app/effects/glowPrivate.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
 #include <libc/string.h>
 #include <dolphin/os/OSFastCast.h>
 void operator delete(void*);
@@ -8,7 +9,6 @@ u8 glowEffect::layer_reference;
 extern "C" {
 GSgfxLayer* GSgfxLayerFindByID(s32);
 void GSgfxTokenWaitForClear(u16);
-GSgfxVF* GSgfxVFBuildTemp(s32,s32,u8,s32,u8,s32,u8,s32,s32);
 void GSmtx44Ortho(Mtx44,f32,f32,f32,f32,f32,f32);
 extern Mtx mtxIdent;
 s32 Add__16GSgfxLayerConfigFPcUlUlUl14GSgfxLayerTypebbb12GSgfxLayerID16GSgfxLayerOffset(char*,u32,u32,u32,s32,bool,bool,bool,s32,s32);

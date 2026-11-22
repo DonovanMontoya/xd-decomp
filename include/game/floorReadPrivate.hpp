@@ -1,15 +1,10 @@
 #ifndef FLOOR_READ_PRIVATE_HPP
 #define FLOOR_READ_PRIVATE_HPP
 #include <dolphin/types.h>
+#include <game/maximum/GSAPI/baselib/scene.h>
+#include <game/pxdvs/GSAPI/GScolsys/GScolsys2.hpp>
 
 typedef u8 (*FloorReadFreeFunc)(void *, u32, u32);
-
-struct _HSD_SceneDesc {
-    void **jobjs;
-    void *cameras;
-    void **lights;
-    void **fogs;
-};
 
 struct FloorReadData {
     u32 reserved0;
@@ -68,12 +63,10 @@ void deckRegister(u32, u32);
 void deckUnRegister(u32, u32);
 void *GStextureLoad(void *);
 void GStextureFree(void *);
-void FlashSystemInit(u32, void *);
+u32 FlashSystemInit(u32, void *);
 void FlashSystemRelease(u32);
 void GSfsysOSLinkPostFunc(u32, u32, u32);
 u8 ModelSequence_Load(void *, u32, u32);
-void *GScolsys2LoadCCD(void *);
-void GScolsys2UnloadCCD(void *);
 FloorReadData *floorDataBiosGetCurrentPtr();
 void floorDataBiosSetMapResID(FloorReadData *, u32);
 void floorSetLightInfo(u32, u32);

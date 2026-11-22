@@ -6,8 +6,6 @@ void GSlogWrite(const char *, ...);
 void GSprint(s32, s32, s32, u32, const char *, ...);
 s32 dbgMenuGetLayerID();
 
-GSfloor_dd_ *floorDataBiosGetPtr(u32);
-GSfloor_dd_ *floorDataBiosGetCurrentPtr();
 u32 floorDataBiosGetGroupID(GSfloor_dd_ *);
 u32 floorDataBiosGetMapResID(GSfloor_dd_ *);
 u8 floorDataBiosGetFloorKind(GSfloor_dd_ *);
@@ -1571,32 +1569,35 @@ extern "C" void floorMapSetDisp(u32 visible) {
 }
 
 extern "C" void floorMapResourceDataIterate(void (*callback)(u32, u32, u32, void *, void *), void *user) {
+    u32 mapRes;
     u32 group;
-    u32 base;
-    u32 j = 0;
-    u32 i = 0;
-    void *res;
-    SceneData *scene;
-    u32 resID;
-    u32 mapRes = floorDataBiosGetMapResID(floorDataBiosGetCurrentPtr());
+    u32 id;
+    u32 modelIdx = 0;
+    u32 lightIdx = 0;
+    mapRes = floorDataBiosGetMapResID(floorDataBiosGetCurrentPtr());
     if (mapRes != 0) {
         group = floorGetCurrentGroupID();
-        scene = (SceneData *)HSD_ArchiveGetPublicAddress(GSresGetResource(group, mapRes), "scene_data");
+        void* archive = GSresGetResource(group, mapRes);
+        SceneData* scene = (SceneData*)HSD_ArchiveGetPublicAddress(archive, "scene_data");
         if (scene != 0) {
             if (scene->models != 0) {
-                base = floorReadMakeModelResID(mapRes);
-                for (; scene->models[i] != 0; i++) {
-                    resID = base | i;
-                    res = GSresGetResource(group, resID);
-                    if (res != 0) callback(1, group, resID, res, user);
+                u32 base = floorReadMakeModelResID(mapRes);
+                for (int i = 0; scene->models[i] != 0; i++, modelIdx++) {
+                    id = base | modelIdx;
+                    void* res = GSresGetResource(group, id);
+                    if (res != 0) {
+                        callback(1, group, id, res, user);
+                    }
                 }
             }
             if (scene->lights != 0) {
-                base = floorReadMakeLightResID(mapRes);
-                for (; scene->lights[j] != 0; j++) {
-                    resID = base | j;
-                    res = GSresGetResource(group, resID);
-                    if (res != 0) callback(2, group, resID, res, user);
+                u32 base = floorReadMakeLightResID(mapRes);
+                for (int i = 0; scene->lights[i] != 0; i++, lightIdx++) {
+                    id = base | lightIdx;
+                    void* res = GSresGetResource(group, id);
+                    if (res != 0) {
+                        callback(2, group, id, res, user);
+                    }
                 }
             }
         }

@@ -1,10 +1,11 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuPcBoxPokemonLayout.hpp>
 struct OptionWork {s32 field0,field4,cycles,direction;f32 rotation,field14,amplitude,dt,timer,frame,frequency;};
 static OptionWork _menuTitleOptionWork;
 static f32 _atable[3];
 static u32 _menuOptionMsgTable[3]={0x42E7,0x42E8,0x42E9};
 extern "C" {void winSpriteSetDisp(tagSPRITE_WORK*,s32);void menuTitleCursorAnime(tagWINDOW_WORK*,tagSPRITE_WORK*);void GSmsgPrint2(s32,s32,s32,u32,u32);}
-extern "C" {void GSinputMotorStart(s32,s32,s32,s32,s32);s32 GSsndGetOutputMode();void GSsndSetOutputMode(s32);void fadeCheck(s32);void fadeSet(s32,f32);void fn_800A3A1C();s32 gamedatasaveGetStatus(void*,s32);void gamedatasaveSetStatus(void*,s32,s32);u8 memcardIsMemCardValid();void memcardTaskCall(s32,s32,s32);void menuButtonNormal(tagWINDOW_WORK*);void menuCloseCustom(s32,s32,s32);void menuCursorNormal(tagWINDOW_WORK*,s32);s32 menuOpen(s32,s32);void menuPdaSubCalcAlpha(void*,s32,s16);void menuPdaSubInitAlpha(void*,s32,s32,void*,f32,f32);void menuPlaySe(s32,s32);s8 menuSubOpenYesNo(s32,s32,s32,s32);void menuTitleCursorAnimeMain();void menuToolSetSelect(s32);f64 sin(f64);f32 timeGetLastFrameSec();void winMsgClose(s32);void winMsgOpen(s32,u32,s32,s32);void winSeqSetMenu(s32,s32);u16 *windowGetKeyInfo();u32 windowGetKeyRepeat();tagWINDOW_WORK *windowSearchID(s32);}
+extern "C" {void GSinputMotorStart(s32,s32,s32,s32,s32);s32 GSsndGetOutputMode();void GSsndSetOutputMode(s32);void fadeCheck(s32);void fn_800A3A1C();s32 gamedatasaveGetStatus(void*,s32);void gamedatasaveSetStatus(void*,s32,s32);u8 memcardIsMemCardValid();void memcardTaskCall(s32,s32,s32);void menuButtonNormal(tagWINDOW_WORK*);void menuCloseCustom(s32,s32,s32);void menuCursorNormal(tagWINDOW_WORK*,s32);s32 menuOpen(s32,s32);void menuPdaSubCalcAlpha(void*,s32,s16);void menuPdaSubInitAlpha(void*,s32,s32,void*,f32,f32);void menuPlaySe(s32,s32);s8 menuSubOpenYesNo(s32,s32,s32,s32);void menuTitleCursorAnimeMain();void menuToolSetSelect(s32);f64 sin(f64);f32 timeGetLastFrameSec();void winMsgClose(s32);void winMsgOpen(s32,u32,s32,s32);void winSeqSetMenu(s32,s32);u16 *windowGetKeyInfo();u32 windowGetKeyRepeat();tagWINDOW_WORK *windowSearchID(s32);}
 
 static void _menuTitleOptionSetFrameSec();
 static void _menuTitleOptionCalcRot();

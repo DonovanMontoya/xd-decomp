@@ -3,12 +3,41 @@
 #include <game/pxdvs/GSAPI/GSshape/GSshape.hpp>
 #include <game/pxdvs/GSAPI/GStexture/GStexture.hpp>
 
-enum GSgfxTunitOp { GSGFX_TUNIT_OP_DEFAULT };
-enum GSgfxTunitBias { GSGFX_TUNIT_BIAS_DEFAULT };
-enum GSgfxTunitScale { GSGFX_TUNIT_SCALE_DEFAULT };
-enum GSgfxTunitReg { GSGFX_TUNIT_REG_DEFAULT };
-enum GSgfxTunitCArg { GSGFX_TUNIT_CARG_DEFAULT };
-enum GSgfxTunitAArg { GSGFX_TUNIT_AARG_DEFAULT };
+enum GSgfxTunitOp {
+    GS_TEV_ADD = GX_TEV_ADD,
+    GS_TEV_SUB = GX_TEV_SUB,
+};
+enum GSgfxTunitBias {
+    GS_TB_ZERO = GX_TB_ZERO,
+};
+enum GSgfxTunitScale {
+    GS_CS_SCALE_1 = GX_CS_SCALE_1,
+};
+enum GSgfxTunitReg {
+    GS_TEVPREV = GX_TEVPREV,
+    GS_TEVREG0 = GX_TEVREG0,
+    GS_TEVREG1 = GX_TEVREG1,
+};
+enum GSgfxTunitCArg {
+    GS_CC_CPREV = GX_CC_CPREV,
+    GS_CC_C0 = GX_CC_C0,
+    GS_CC_C1 = GX_CC_C1,
+    GS_CC_TEXC = GX_CC_TEXC,
+    GS_CC_TEXA = GX_CC_TEXA,
+    GS_CC_RASC = GX_CC_RASC,
+    GS_CC_ONE = GX_CC_ONE,
+    GS_CC_KONST = GX_CC_KONST,
+    GS_CC_ZERO = GX_CC_ZERO,
+};
+enum GSgfxTunitAArg {
+    GS_CA_APREV = GX_CA_APREV,
+    GS_CA_A0 = GX_CA_A0,
+    GS_CA_A1 = GX_CA_A1,
+    GS_CA_TEXA = GX_CA_TEXA,
+    GS_CA_RASA = GX_CA_RASA,
+    GS_CA_KONST = GX_CA_KONST,
+    GS_CA_ZERO = GX_CA_ZERO,
+};
 
 struct GSgfxTunitOpState { u32 operation, bias, scale; u8 clamp; u8 reserved0d[3]; u32 output; };
 struct GSgfxTunitMapState { u32 texture, coordinate, color; };
@@ -96,7 +125,4 @@ typedef char GSgfxLayerShaderOffsetCheck[offsetof(GSgfxLayer, shaders) == 0x1818
 typedef char GSgfxLayerShaderIndexOffsetCheck[offsetof(GSgfxLayer, shaderIndex) == 0x1994 ? 1 : -1];
 typedef char GSgfxLayerDirtyOffsetCheck[offsetof(GSgfxLayer, dirty) == 0x16a8 ? 1 : -1];
 typedef char GSgfxLayerSavedTextureOffsetCheck[offsetof(GSgfxLayer, savedTextures) == 0x17f8 ? 1 : -1];
-struct ShapeTextureBinding {u32 reserved00;u16 index;u8 minFilter,magFilter,wrapS,wrapT,blend;};
-struct ShapeTextureEntry {u8 reserved00[0xe];u8 colorRange;};
-struct GsShapeTexture {ShapeTextureEntry *entry;GStexture *texture;};
 #endif

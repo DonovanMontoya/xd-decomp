@@ -1,3 +1,4 @@
+#include <game/pxdvs/app/fade/fade.hpp>
 #include <game/menuSubLayout.hpp>
 
 #pragma force_active on
@@ -77,7 +78,6 @@ u32 GSinputButtonsChanged(s32);
 u32 GSinputButtonsPressed(s32);
 void* memset(void*, int, u32);
 void fadeCheck(s32);
-void fadeSet(s32, f32);
 void floorLink(s32, s32);
 void floorSetFadeScript(s32, s32);
 u32 floorGetPrevFloorID(void);

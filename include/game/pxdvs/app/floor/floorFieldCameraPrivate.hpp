@@ -2,6 +2,7 @@
 #define FLOOR_FIELD_CAMERA_PRIVATE_H
 
 #include <global.h>
+#include <game/pxdvs/app/floor/floorData.hpp>
 
 struct GSvec {
     f32 x;
@@ -20,7 +21,6 @@ struct GSvec2 {
     f32 y;
 };
 
-struct GSfloor_dd_;
 struct GSthread;
 
 enum FloorStateMode { FloorStateModeNone };
@@ -40,28 +40,6 @@ struct FloorModuleInterface {
     unsigned long (*getStateID)();
 };
 
-
-struct FieldCameraEntry {
-    u8 isBox;           // 0x0
-    u8 pad01[3];
-    f32 x;              // 0x4
-    f32 y;              // 0x8
-    f32 z;              // 0xC
-    f32 distance;       // 0x10
-    f32 height;         // 0x14
-    f32 rotY;           // 0x18
-    f32 radius;         // 0x1C
-    f32 ratio;          // 0x20
-    f32 angle;          // 0x24
-    f32 pow;            // 0x28
-    f32 blendTime;      // 0x2C
-    f32 fov;            // 0x30
-};
-
-struct FieldCameraList {
-    u32* count;
-    FieldCameraEntry* entries;
-};
 
 struct GSBinWriteStream {
     u8* start;          // 0x0
@@ -105,9 +83,6 @@ void FloorModuleInterface_clear(FloorModuleInterface*);
 u32 floorRegisterModule(u8, u32, FloorModuleInterface*);
 void GSmemFree(void*);
 void GSlogWrite(const char*, ...);
-void* floorDataBiosGetFieldCameraListPtr();
-u32 floorDataBiosGetCurrentPtr();
-GSfloor_dd_* floorDataBiosGetPtr();
 u32 GSresGetResource(u32, u32);
 void GSmodelGetPosition(u32, GSvec*);
 void GSvecSet(GSvec*, f32, f32, f32);

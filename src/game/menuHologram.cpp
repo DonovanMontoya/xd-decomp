@@ -1,4 +1,7 @@
 #include <game/menuHologramLayout.hpp>
+#include <game/pxdvs/GSAPI/GSgfxM/vf.hpp>
+#include <game/menuReliveMeter.h>
+#include <dolphin/gx/GXVert.h>
 
 extern "C" {
 void *GSmemAllocClr(u32);
@@ -32,7 +35,8 @@ u8 pokemonIsJoutaiDataId(Pokemon *, s32);
 s32 pokemonGetStatus(Pokemon *, s32, s32, s32);
 void Sequence_SetScale(u32, f32 *);
 struct ReliveHallData {
-    u8 reserved0[4];
+    u8 alpha;
+    u8 reserved1[3];
     u16 unk4;
 };
 extern ReliveHallData *relivehall_data;
@@ -54,7 +58,6 @@ u32 windowGetKeyOn();
 s32 floorGetCurrentGroupID();
 void cameraPlayAnime(s32, u32, f32, s32);
 void GScharCpy(u16 *, u16 *);
-void menuDrawReliveUpdate();
 extern GSgfxColAu8 GSgfxColAu8_Black;
 extern GSgfxColAu8 relivehallAisyou2ColorTbl[];
 }
@@ -120,7 +123,6 @@ void Sequence_SetRotation(u32, f32 *);
 }
 
 extern "C" {
-GSgfxVF *GSgfxVFBuildTemp(s32, s32, s32, s32, s32, s32, s32, s32, s32);
 void spriteSetOffset(s32, s32, s32);
 void spriteClearScissor(s32);
 void spriteSetEnv(s32);
@@ -723,43 +725,18 @@ void CMenuHologram::renderOffscreenData()
                 layer->savedTextureDirty = (s32) (layer->savedTextureDirty | 1);
             }
             layer->beginSurface(4);
-            *(volatile s16 *)0xCC008000 = 0;
-            *(volatile s16 *)0xCC008000 = 0;
-            u8 *hallData = (u8 *)relivehall_data;
-            u8 alpha00 = hallData[0];
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = alpha00;
-            *(volatile u8 *)0xCC008000 = 0;
-            *(volatile u8 *)0xCC008000 = 0;
-            *(volatile s16 *)0xCC008000 = 640;
-            *(volatile s16 *)0xCC008000 = 0;
-            u8 alpha10 = hallData[0];
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = alpha10;
-            *(volatile u8 *)0xCC008000 = 1;
-            *(volatile u8 *)0xCC008000 = 0;
-            *(volatile s16 *)0xCC008000 = 640;
-            *(volatile s16 *)0xCC008000 = 480;
-            u8 alpha11 = hallData[0];
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = alpha11;
-            *(volatile u8 *)0xCC008000 = 1;
-            *(volatile u8 *)0xCC008000 = 1;
-            *(volatile s16 *)0xCC008000 = 0;
-            *(volatile s16 *)0xCC008000 = 480;
-            u8 alpha01 = hallData[0];
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = 255;
-            *(volatile u8 *)0xCC008000 = alpha01;
-            *(volatile u8 *)0xCC008000 = 0;
-            *(volatile u8 *)0xCC008000 = 1;
+            GXWGFifo.s16 = GXWGFifo.s16 = 0;
+            GXColor4u8(255, 255, 255, relivehall_data->alpha);
+            GXTexCoord2u8(0, 0);
+            GXPosition2s16(640, 0);
+            GXColor4u8(255, 255, 255, relivehall_data->alpha);
+            GXTexCoord2u8(1, 0);
+            GXPosition2s16(640, 480);
+            GXColor4u8(255, 255, 255, relivehall_data->alpha);
+            GXTexCoord2u8(1, 1);
+            GXPosition2s16(0, 480);
+            GXColor4u8(255, 255, 255, relivehall_data->alpha);
+            GXTexCoord2u8(0, 1);
             layer->endSurface();
         }
     }

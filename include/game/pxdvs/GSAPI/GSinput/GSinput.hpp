@@ -4,10 +4,10 @@
 extern "C" {
 void GSinputClearButtonData(s32, s32);
 void GSinputMotorStart(s32, u8, u8, s32, u8);
-u8 GSinputGetRightStickYData(s32, s32);
-u8 GSinputGetRightStickXData(s32, s32);
-u8 GSinputGetLeftStickYData(s32, s32);
-u8 GSinputGetLeftStickXData(s32, s32);
+s8 GSinputGetRightStickYData(s32, s32);
+s8 GSinputGetRightStickXData(s32, s32);
+s8 GSinputGetLeftStickYData(s32, s32);
+s8 GSinputGetLeftStickXData(s32, s32);
 s32 GSinputButtonsRepeat(s32);
 s32 GSinputButtonsChanged(s32);
 u16 GSinputButtonsPressed(s32);

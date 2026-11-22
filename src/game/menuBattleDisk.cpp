@@ -2,6 +2,7 @@
 #pragma force_active on
 enum GSgfxLayerID { GSGFX_LAYER_INVALID = -1, GSGFX_LAYER_DEFAULT = 2, GSGFX_LAYER_MENU = 7 };
 #define POKEMON_HPP_NO_PROTOTYPES
+#include <game/pxdvs/app/hero/heroParty.hpp>
 #include <game/pxdvs/app/pokemon/pokemon.hpp>
 #include <game/menuBattleDiskLayout.hpp>
 
@@ -63,7 +64,6 @@ BDiskMenuItem* windowGetCursorToItem(tagWINDOW_WORK*);
 u16* windowGetKeyInfo(void);
 u16* windowGetKeyInfo2(void);
 void fn_8009E6B8(tagWINDOW_WORK*, u8);
-u32 heroGetPokeomCount(Hero*);
 void menuSetPosition(s32, s16, s16);
 void winSeqSetMenu(s32, s32);
 void winSpriteSetDisp(tagSPRITE_WORK*, s32);
